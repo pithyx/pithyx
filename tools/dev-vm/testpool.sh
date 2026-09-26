@@ -3,6 +3,10 @@
 #
 #   testpool.sh [--dry-run] create <pool> [--layout <vdev-type>] <serial>...
 #   testpool.sh [--dry-run] destroy <pool>
+#   testpool.sh [--dry-run] wipe <serial>...
+#
+# zpool destroy leaves the ZFS labels and partitions on the disks. wipe clears them (zpool labelclear, then wipefs on
+# every partition and the disk) so a test disk is empty again; it refuses disks that belong to an imported pool.
 #
 # Pool names must start with "vyxtest". Disks are selected by serial and must match VYXTEST01 to
 # VYXTEST06. If /etc/vyxis/test-disks exists, the serial must also be listed there.
@@ -101,6 +105,39 @@ destroy_pool() {
   run sudo zpool destroy "$pool"
 }
 
+wipe_disks() {
+  [[ $# -gt 0 ]] || die "no disk serials given"
+  local serials=("$@") serial
+  for serial in "${serials[@]}"; do
+    check_serial "$serial"
+  done
+  command -v zpool >/dev/null || die "zpool not found; install zfsutils-linux first"
+  # wipefs lives in /usr/sbin, which is only on sudo's PATH.
+  sudo sh -c 'command -v wipefs' >/dev/null || die "wipefs not found"
+
+  # Every device of an imported pool, resolved to /dev/sdXN, so a live pool can never be wiped.
+  local pool_devices
+  pool_devices=$(sudo zpool status -P -L 2>/dev/null | awk '$1 ~ /^\/dev\// { print $1 }')
+
+  local link disk device fstype
+  for serial in "${serials[@]}"; do
+    link=$(disk_by_serial "$serial")
+    disk=$(readlink -f "$link")
+    local devices=()
+    while read -r device fstype; do
+      if grep -qxE "${device}|${disk}" <<<"$pool_devices"; then
+        die "$device ($serial) belongs to an imported pool; destroy the pool first"
+      fi
+      [[ "$device" == "$disk" ]] || devices+=("$device")
+      if [[ "$fstype" == zfs_member ]]; then
+        run sudo zpool labelclear -f "$device"
+      fi
+    done < <(lsblk -nrpo NAME,FSTYPE "$disk" | awk '{ print $1, ($2 == "" ? "-" : $2) }')
+    # Partitions first, then the disk itself, which removes the partition table.
+    run sudo wipefs --all --quiet "${devices[@]}" "$disk"
+  done
+}
+
 if [[ "${1:-}" == --dry-run ]]; then
   dry_run=true
   shift
@@ -116,7 +153,12 @@ case "${1:-}" in
     [[ $# -eq 2 ]] || die "usage: testpool.sh [--dry-run] destroy <pool>"
     destroy_pool "$2"
     ;;
+  wipe)
+    [[ $# -ge 2 ]] || die "usage: testpool.sh [--dry-run] wipe <serial>..."
+    shift
+    wipe_disks "$@"
+    ;;
   *)
-    die "usage: testpool.sh [--dry-run] create|destroy ..."
+    die "usage: testpool.sh [--dry-run] create|destroy|wipe ..."
     ;;
 esac
