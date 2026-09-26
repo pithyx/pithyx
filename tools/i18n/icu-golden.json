@@ -75,6 +75,26 @@
       },
       "expected": "The user name root is reserved for the system."
     },
+    "realtime.message.invalid": {
+      "params": {},
+      "expected": "The live connection received a message it does not understand."
+    },
+    "realtime.topic.invalid": {
+      "params": {
+        "topic": "storage/#/x"
+      },
+      "expected": "storage/#/x is not a valid topic name or pattern."
+    },
+    "realtime.topic.unknown": {
+      "params": {
+        "topic": "storage/nothing"
+      },
+      "expected": "There is no live data topic named storage/nothing."
+    },
+    "realtime.upgrade.required": {
+      "params": {},
+      "expected": "This address only accepts WebSocket connections."
+    },
     "request.body.invalid": {
       "params": {},
       "expected": "The request contains invalid data."
@@ -94,6 +114,10 @@
     "system.internal.unexpected": {
       "params": {},
       "expected": "Something went wrong on the server. The request id helps to find the details in the logs."
+    },
+    "system.origin.forbidden": {
+      "params": {},
+      "expected": "The request came from another website and was rejected."
     }
   },
   "cases": [

@@ -184,10 +184,10 @@ Goal: one real feature end to end, built on the final architecture. Everything l
 
 ### 3.4 WebSocket and topics
 
-- [ ] `/ws` endpoint, authenticated by the session cookie.
-- [ ] Message protocol: `sub`, `unsub`, `snap`, `event`, `error`, each with the request id. JSON schema in code, types generated for TS.
-- [ ] Topic router with `+` and `#` wildcards, permission check per subscription, throttling per topic.
-- [ ] First topic `system/info`: hostname, uptime, CPU load, memory. 1 Hz.
+- [x] `/ws` endpoint, authenticated by the session cookie.
+- [x] Message protocol: `sub`, `unsub`, `snap`, `event`, `error`, each with the request id. JSON schema in code, types generated for TS. Added `ack` for `sub` and `unsub` (so a wildcard subscription without current matches is confirmed); `snap` carries the `id` of its subscription. Close code 4401 means the session ended.
+- [x] Topic router with `+` and `#` wildcards, permission check per subscription, throttling per topic. Subscriptions are stored as patterns and matched on every publish, so topics created later reach wildcard subscribers; permissions are checked for every snapshot and every event.
+- [x] First topic `system/info`: hostname, uptime, CPU load, memory. 1 Hz.
 
 ### 3.5 First real feature: disks
 

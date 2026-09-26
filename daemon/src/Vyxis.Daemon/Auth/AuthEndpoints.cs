@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Vyxis.Daemon.Errors;
+using Vyxis.Daemon.Realtime;
 
 namespace Vyxis.Daemon.Auth;
 
@@ -71,18 +72,20 @@ public static class AuthEndpoints
     }
 
     private static async Task<Ok<RecoverResponse>> RecoverAsync(
-        RecoverRequest request, AuthService auth, LoginRateLimiter limiter, HttpContext context, CancellationToken cancellationToken)
+        RecoverRequest request, AuthService auth, LoginRateLimiter limiter, TopicHub hub, HttpContext context, CancellationToken cancellationToken)
     {
         limiter.EnsureAllowed(context, request.Username);
-        var recoveryKey = await CountFailuresAsync(limiter, context, request.Username, () => auth.RecoverAsync(request, cancellationToken));
+        var (userId, recoveryKey) = await CountFailuresAsync(limiter, context, request.Username, () => auth.RecoverAsync(request, cancellationToken));
+        hub.CloseUser(userId.ToString(System.Globalization.CultureInfo.InvariantCulture));
         return TypedResults.Ok(new RecoverResponse(recoveryKey));
     }
 
-    private static async Task<NoContent> LogoutAsync(SessionService sessions, HttpContext context, IHostEnvironment environment, CancellationToken cancellationToken)
+    private static async Task<NoContent> LogoutAsync(SessionService sessions, TopicHub hub, HttpContext context, IHostEnvironment environment, CancellationToken cancellationToken)
     {
         if (context.Request.Cookies.TryGetValue(SessionService.CookieName, out var token) && !string.IsNullOrEmpty(token))
         {
             await sessions.DeleteAsync(token, cancellationToken);
+            hub.CloseSession(SessionService.IdOf(token));
         }
         context.Response.Cookies.Delete(SessionService.CookieName, SessionService.CookieOptions(Secure(environment), null));
         return TypedResults.NoContent();

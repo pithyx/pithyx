@@ -180,7 +180,7 @@ public sealed class AuthService(SqliteConnectionFactory connections, PasswordHas
     /// Resets the administrator password with the recovery key, ends all sessions, turns TOTP off (the device may be
     /// lost) and replaces the recovery key. Returns the new key, which is shown once.
     /// </summary>
-    public async Task<string> RecoverAsync(RecoverRequest request, CancellationToken cancellationToken)
+    public async Task<(long UserId, string RecoveryKey)> RecoverAsync(RecoverRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
         CredentialRules.ValidateNewPassword(request.NewPassword);
@@ -211,7 +211,7 @@ public sealed class AuthService(SqliteConnectionFactory connections, PasswordHas
         await connection.ExecuteAsync("DELETE FROM sessions WHERE user_id = @Id", new { user.Id }, transaction);
         await SetSettingAsync(connection, transaction, RecoveryKeySetting, newKeyHash);
         await transaction.CommitAsync(cancellationToken);
-        return newKey;
+        return (user.Id, newKey);
     }
 
     private async Task<bool> TryUseTotpCodeAsync(UserRow user, string code, CancellationToken cancellationToken)

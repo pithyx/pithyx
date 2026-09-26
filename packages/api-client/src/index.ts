@@ -6,6 +6,17 @@ export { errorCodes, type ErrorCode } from './generated/error-codes';
 export type { components, paths } from './generated/schema';
 
 export type ApiProblem = components['schemas']['ApiProblem'];
+
+/** Messages of the WebSocket at `/ws`. */
+export type ClientMessage = components['schemas']['ClientMessage'];
+export type ServerMessage = components['schemas']['ServerMessage'];
+export type TopicSnapshots = components['schemas']['TopicSnapshots'];
+export type TopicEvents = components['schemas']['TopicEvents'];
+/** A topic the daemon publishes, or the pattern of a topic family. */
+export type TopicName = keyof TopicSnapshots;
+
+/** WebSocket close code when the session ended (logout, password reset): go back to the login screen. */
+export const SESSION_ENDED_CLOSE_CODE = 4401;
 export type ApiClient = Client<paths>;
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);

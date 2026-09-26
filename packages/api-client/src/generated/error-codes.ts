@@ -17,11 +17,16 @@ export const errorCodes = [
   'auth.totp.not_enrolled',
   'auth.username.invalid',
   'auth.username.reserved',
+  'realtime.message.invalid',
+  'realtime.topic.invalid',
+  'realtime.topic.unknown',
+  'realtime.upgrade.required',
   'request.body.invalid',
   'request.media_type.unsupported',
   'request.method.not_allowed',
   'request.route.not_found',
   'system.internal.unexpected',
+  'system.origin.forbidden',
 ] as const;
 
 export type ErrorCode = (typeof errorCodes)[number];

@@ -34,3 +34,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Failed login, TOTP and recovery attempts are rate limited (`auth.rate.limited` with `Retry-After`).
 - State-changing API requests require the `X-Vyxis-Request: 1` header (CSRF protection); the generated client sends it.
 - Every API endpoint requires a session unless it is explicitly public.
+- WebSocket at `/ws` for server-pushed data: `sub`/`unsub` with MQTT-style `+` and `#` wildcards, `ack`, `snap` (current state) and `event` (changes) messages with request ids, per-topic permission checks and throttling. Only same-origin connections with a valid session are accepted; logout and password reset close them with code 4401.
+- Topic `system/info` (host name, uptime, load, CPU, memory from `/proc`), published once per second only while someone is subscribed.
+- The generated client includes the WebSocket message types and the data type of every topic.
