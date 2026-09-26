@@ -133,13 +133,13 @@ Goal: anyone can go from a fresh clone to a running daemon and desktop in under 
 
 ### 2.2 Simulation mode
 
-- [ ] `ICommandRunner` interface with `ProcessCommandRunner` (real) and `FixtureCommandRunner` (reads recorded output from `daemon/tests/fixtures/`).
-- [ ] Environment variable `VYXIS_SIMULATE=1` switches the daemon to `FixtureCommandRunner`. In simulation mode the daemon runs on Windows, macOS and Linux.
-- [ ] The simulated state is visible: `GET /api/health` reports `"mode": "simulated"`.
+- [x] `ICommandRunner` interface with `ProcessCommandRunner` (real) and `FixtureCommandRunner` (reads recorded output from `daemon/tests/fixtures/`). Fixtures are recorded with `tools/fixtures/record.sh`.
+- [x] Environment variable `VYXIS_SIMULATE=1` switches the daemon to `FixtureCommandRunner`. In simulation mode the daemon runs on any Linux, including WSL. Native Windows and macOS are not supported.
+- [x] The simulated state is visible: `GET /api/health` reports `"mode": "simulated"`.
 
 ### 2.3 Dev workflow
 
-- [ ] Vite dev server proxies `/api` and `/ws` to the daemon. Target configurable via `VYXIS_DAEMON_URL` (default `http://localhost:8994`).
+- [x] Vite dev server proxies `/api` and `/ws` to the daemon. Target configurable via `VYXIS_DAEMON_URL` (default `http://localhost:8994`).
 - [ ] Development runs over plain HTTP on 8994. Production HTTPS is added later. Document this clearly so nobody ships it.
 - [ ] Root script `pnpm dev` starts the desktop; README documents `dotnet watch` for the daemon (locally in simulation mode or on the VM over Remote-SSH).
 - [ ] README section "Development": prerequisites, both workflows (simulation on the local machine, real on the VM), common problems.
@@ -202,13 +202,13 @@ Goal: one real feature end to end, built on the final architecture. Everything l
 
 ### 3.7 Desktop skeleton
 
-- [ ] i18next with ICU, `i18n/en/*.json` and `i18n/de/*.json`, language from browser with manual override.
-- [ ] CI check: every key exists in `en` and `de`, every error code has an `errors.<code>` key.
+- [ ] i18next with ICU, `i18n/en/*.json` and `i18n/de/*.json`, language from browser with manual override. Base from step 2: i18next with ICU, `i18n/{en,de}/desktop.json`, browser language detection; the manual override is still open.
+- [ ] CI check: every key exists in `en` and `de`, every error code has an `errors.<code>` key. Base from step 2: `desktop/src/i18n.test.ts` compares the `en` and `de` keys and parses every ICU message.
 - [ ] Design tokens as CSS variables with light and dark theme (placeholder values, final design in step 4).
 - [ ] Setup screen (first run) and login screen, functional but unstyled.
 - [ ] Minimal desktop with one fixed window that shows the disk list live via the WebSocket store.
 - [ ] Error dialog: translated message from the error code, request id with a copy button.
-- [ ] TanStack Query for REST, a small Zustand store for WebSocket topics.
+- [ ] TanStack Query for REST, a small Zustand store for WebSocket topics. Base from step 2: TanStack Query is set up and used for `/api/health`.
 
 ### 3.8 Tests
 

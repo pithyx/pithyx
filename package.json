@@ -8,6 +8,7 @@
   },
   "scripts": {
     "prepare": "lefthook install",
+    "dev": "pnpm --filter @vyxis/desktop dev",
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json && pnpm -r --parallel typecheck",
     "test": "pnpm -r test",

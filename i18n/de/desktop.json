@@ -1,0 +1,7 @@
+{
+  "status": {
+    "connecting": "Verbindung zum Daemon wird hergestellt…",
+    "connected": "{mode, select, simulated {Mit dem Daemon verbunden (simuliert)} other {Mit dem Daemon verbunden}}",
+    "unreachable": "Daemon nicht erreichbar"
+  }
+}

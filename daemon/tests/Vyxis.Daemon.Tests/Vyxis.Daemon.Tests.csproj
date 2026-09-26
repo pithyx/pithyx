@@ -12,6 +12,9 @@
     <ProjectReference Include="../../src/Vyxis.Daemon/Vyxis.Daemon.csproj" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="../fixtures/**" LinkBase="fixtures" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
 </Project>

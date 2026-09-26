@@ -1,0 +1,7 @@
+{
+  "command": "uname",
+  "args": [
+    "-srm"
+  ],
+  "exitCode": 0
+}
