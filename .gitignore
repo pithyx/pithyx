@@ -23,6 +23,7 @@ Thumbs.db
 desktop.ini
 
 # Local environment and data
+.vyxis-dev/
 .env
 .env.*
 !.env.example

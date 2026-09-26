@@ -2,11 +2,13 @@ import i18next from 'i18next';
 import ICU from 'i18next-icu';
 import { initReactI18next } from 'react-i18next';
 import deDesktop from '../../i18n/de/desktop.json';
+import deErrors from '../../i18n/de/errors.json';
 import enDesktop from '../../i18n/en/desktop.json';
+import enErrors from '../../i18n/en/errors.json';
 
 export const resources = {
-  en: { desktop: enDesktop },
-  de: { desktop: deDesktop },
+  en: { desktop: enDesktop, errors: enErrors },
+  de: { desktop: deDesktop, errors: deErrors },
 } as const;
 
 export type Language = keyof typeof resources;

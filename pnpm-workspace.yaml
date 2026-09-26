@@ -6,3 +6,8 @@ packages:
 allowBuilds:
   esbuild: true
   lefthook: true
+
+peerDependencyRules:
+  allowedVersions:
+    # openapi-typescript declares typescript ^5 but works with 6; the generated client is checked in CI.
+    openapi-typescript>typescript: '6'

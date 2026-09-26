@@ -29,6 +29,8 @@ jobs:
           cache-dependency-path: daemon/**/packages.lock.json
       - run: dotnet restore daemon/Vyxis.slnx
       - run: dotnet build daemon/Vyxis.slnx --configuration Release --no-restore
+      - name: OpenAPI document is up to date
+        run: git diff --exit-code packages/api-client/openapi.json
       - run: dotnet test --solution daemon/Vyxis.slnx --configuration Release --no-build
       - run: dotnet format daemon/Vyxis.slnx --verify-no-changes --no-restore
 
@@ -54,9 +56,12 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
+      - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
       - run: node tools/checks/repo-check.ts
       - run: shellcheck tools/*/*.sh
       - name: Commit messages
