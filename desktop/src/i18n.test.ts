@@ -26,6 +26,16 @@ describe('translations', () => {
     expect([...de.keys()].sort()).toEqual([...en.keys()].sort());
   });
 
+  it('load every translation file', () => {
+    const files = Object.keys(import.meta.glob('../../i18n/*/*.json')).map((path) =>
+      path.replace('../../i18n/', '').replace('.json', ''),
+    );
+    const loaded = Object.entries(resources).flatMap(([language, namespaces]) =>
+      Object.keys(namespaces).map((ns) => `${language}/${ns}`),
+    );
+    expect(loaded.sort()).toEqual(files.sort());
+  });
+
   it('have a text for every error code', () => {
     for (const code of errorCodes) {
       expect(en.has(`errors.${code}`), `en errors.${code}`).toBe(true);

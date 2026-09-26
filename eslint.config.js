@@ -10,7 +10,12 @@ import tseslint from 'typescript-eslint';
 const fast = process.env.VYXIS_ESLINT_FAST === '1';
 
 const typescriptConfigs = fast
-  ? [tseslint.configs.strict, tseslint.configs.stylistic]
+  ? [
+      tseslint.configs.strict,
+      tseslint.configs.stylistic,
+      // Disable comments for type-aware rules look unused when those rules are off.
+      { linterOptions: { reportUnusedDisableDirectives: 'off' } },
+    ]
   : [
       tseslint.configs.strictTypeChecked,
       tseslint.configs.stylisticTypeChecked,

@@ -39,6 +39,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - WebSocket at `/ws` for server-pushed data: `sub`/`unsub` with MQTT-style `+` and `#` wildcards, `ack`, `snap` (current state) and `event` (changes) messages with request ids, per-topic permission checks and throttling. Only same-origin connections with a valid session are accepted; logout and password reset close them with code 4401.
 - Fixed table of WebSocket close codes shared by daemon and client: 1001 daemon restart and 1008 client too slow (reconnect with backoff and restore subscriptions), 4401 session ended (go to login, also when the session expires while connected) and 4403 origin or permission rejected (no reconnect). Rejections are sent as close codes after the handshake so browsers can tell them from network errors. An open WebSocket keeps its session alive up to the absolute 30-day limit.
 - Topic `system/info` (host name, uptime, load, CPU, memory from `/proc`), published once per second only while someone is subscribed.
+- Desktop walking skeleton: first-run setup with the one-time recovery key (copy and print), sign-in with an optional TOTP step or recovery code, a desktop with a live "Disks" window, two-factor setup with a QR code, sign-out, a language switch (automatic, English, German) and an error dialog that shows the translated message and the request id with a copy button.
+- The desktop keeps one WebSocket per tab, restores subscriptions after reconnecting with backoff and returns to the login screen when the session ends.
+- The daemon serves the built desktop with `index.html` as the fallback for every path outside `/api/` and `/ws`; hashed assets are cached forever.
+- Placeholder design tokens (light and dark) as CSS variables.
+- End-to-end tests with Playwright (setup, disks, sign-out, wrong password with request id, German interface, TOTP), run in CI.
 - Disk list: `GET /api/disks` and the topic `storage/disks` (snapshot plus added, changed and removed disks). The daemon reads `lsblk` at startup and after udev block device events, never on a request and never by polling.
 - `ICommandRunner` can stream the lines of long-running commands such as `udevadm monitor`; simulation replays recorded streams.
 - `tools/fixtures/record.sh` replaces serial numbers and WWNs in recorded JSON with stable pseudonyms.

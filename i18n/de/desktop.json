@@ -3,5 +3,24 @@
     "connecting": "Verbindung zum Daemon wird hergestellt…",
     "connected": "{mode, select, simulated {Mit dem Daemon verbunden (simuliert)} other {Mit dem Daemon verbunden}}",
     "unreachable": "Daemon nicht erreichbar"
-  }
+  },
+  "menu": {
+    "language": "Sprache",
+    "languageAuto": "Automatisch",
+    "twoFactor": "Zwei-Faktor-Authentifizierung",
+    "signOut": "Abmelden",
+    "signedInAs": "Angemeldet als {name}"
+  },
+  "error": {
+    "title": "Etwas ist schiefgelaufen",
+    "requestId": "Request-ID",
+    "copy": "Request-ID kopieren",
+    "close": "Schließen",
+    "network": "Der Daemon ist nicht erreichbar. Prüf die Verbindung und versuch es erneut."
+  },
+  "realtime": {
+    "reconnecting": "Verbindung verloren. Neuer Versuch läuft…",
+    "stopped": "Die Live-Verbindung wurde abgelehnt. Lade die Seite neu."
+  },
+  "brand": "Vyxis"
 }

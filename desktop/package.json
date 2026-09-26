@@ -15,9 +15,11 @@
     "i18next": "^26.4.2",
     "i18next-icu": "^2.4.4",
     "intl-messageformat": "^11.2.15",
+    "qrcode-generator": "^2.0.4",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "react-i18next": "^17.0.15"
+    "react-i18next": "^17.0.15",
+    "zustand": "^5.0.15"
   },
   "devDependencies": {
     "@babel/core": "^8.0.6",
