@@ -60,6 +60,18 @@ Simulation settings:
 
 Fixtures are recorded on a real machine with `tools/fixtures/record.sh <scenario> <id> -- <command> [args...]`, using exactly the arguments the daemon passes.
 
+While the daemon runs in development, the API reference is at http://localhost:8994/api/docs and the OpenAPI document at `/api/openapi.json`. Logs are JSON lines in `.vyxis-dev/logs/daemon.json` (override with `VYXIS_LOG_DIR`); every entry carries the `RequestId` that error responses and the desktop show, so `grep <request id> .vyxis-dev/logs/daemon.json` finds everything that happened for one request.
+
+### API contracts
+
+The daemon build writes `packages/api-client/openapi.json`. The TypeScript types and the error code list in `packages/api-client/src/generated/` are generated from it; never edit them by hand. After changing an endpoint, a response type or an error code, run:
+
+```bash
+pnpm generate
+```
+
+Commit the regenerated files together with the daemon change. `pnpm check:repo` and CI fail when they are out of date. A new error code also needs a text in `i18n/en/errors.json` and `i18n/de/errors.json`.
+
 ### Dev VM
 
 Recommended VM: 4 vCPU, 8 GB RAM, UEFI, a 32 GB system disk and six 10 GB data disks. Give the data disks the serials `VYXTEST01` to `VYXTEST06` (in Proxmox: `serial=VYXTEST01` on each disk). Only disks with these serials are ever used for tests.

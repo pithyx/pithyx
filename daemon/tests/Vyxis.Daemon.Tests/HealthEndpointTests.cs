@@ -1,10 +1,10 @@
 using System.Net;
 using System.Net.Http.Json;
-using Microsoft.AspNetCore.Mvc.Testing;
+using Vyxis.Daemon.Tests.Support;
 
 namespace Vyxis.Daemon.Tests;
 
-public sealed class HealthEndpointTests(WebApplicationFactory<Program> factory) : IClassFixture<WebApplicationFactory<Program>>
+public sealed class HealthEndpointTests(DaemonFactory factory) : IClassFixture<DaemonFactory>
 {
     [Theory]
     [InlineData("0", "real")]

@@ -21,6 +21,10 @@ public sealed partial class ProcessCommandRunner(ILogger<ProcessCommandRunner> l
             startInfo.ArgumentList.Add(argument);
         }
         startInfo.Environment["LC_ALL"] = "C.UTF-8";
+        if (Activity.Current is { IdFormat: ActivityIdFormat.W3C } activity)
+        {
+            startInfo.Environment["TRACEPARENT"] = activity.Id;
+        }
 
         var timeout = request.Timeout ?? _defaultTimeout;
         using var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -40,7 +44,7 @@ public sealed partial class ProcessCommandRunner(ILogger<ProcessCommandRunner> l
         catch (OperationCanceledException)
         {
             process.Kill(entireProcessTree: true);
-            LogCommandAborted(request.FileName, request.Arguments, stopwatch.Elapsed);
+            LogCommandAborted(request.FileName, request.LoggableArguments, stopwatch.Elapsed);
             if (cancellationToken.IsCancellationRequested)
             {
                 throw;
@@ -53,7 +57,7 @@ public sealed partial class ProcessCommandRunner(ILogger<ProcessCommandRunner> l
         {
             var loggedOutput = Truncate(result.StandardOutput);
             var loggedError = Truncate(result.StandardError);
-            LogCommandFinished(request.FileName, request.Arguments, result.ExitCode, result.Duration.TotalMilliseconds, loggedOutput, loggedError);
+            LogCommandFinished(request.FileName, request.LoggableArguments, result.ExitCode, result.Duration.TotalMilliseconds, loggedOutput, loggedError);
         }
         return result;
     }

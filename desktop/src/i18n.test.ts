@@ -1,5 +1,6 @@
 import { IntlMessageFormat } from 'intl-messageformat';
 import { describe, expect, it } from 'vitest';
+import { errorCodes } from '@vyxis/api-client';
 import { detectLanguage, resources } from './i18n';
 
 function flatten(value: object, prefix = ''): Map<string, string> {
@@ -23,6 +24,13 @@ describe('translations', () => {
 
   it('have the same keys in en and de', () => {
     expect([...de.keys()].sort()).toEqual([...en.keys()].sort());
+  });
+
+  it('have a text for every error code', () => {
+    for (const code of errorCodes) {
+      expect(en.has(`errors.${code}`), `en errors.${code}`).toBe(true);
+      expect(de.has(`errors.${code}`), `de errors.${code}`).toBe(true);
+    }
   });
 
   it('are valid ICU messages', () => {

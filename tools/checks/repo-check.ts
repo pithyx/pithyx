@@ -1,7 +1,7 @@
 // Repository-wide checks that linters do not cover. Runs in lefthook and CI.
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
-import { basename, extname } from 'node:path';
+import { existsSync, readFileSync } from 'node:fs';
+import { basename, extname, join, relative } from 'node:path';
 
 interface Problem {
   file: string;
@@ -178,9 +178,23 @@ function checkCommentLanguage(file: string, text: string): Problem[] {
   );
 }
 
-// Wired up in step 3.6 once generated clients exist.
-function checkGenerated(): Problem[] {
-  return [];
+// The daemon build writes openapi.json; the TypeScript generated from it must match what is committed.
+async function checkGenerated(): Promise<Problem[]> {
+  const { generate, generatedDirectory } =
+    await import('../../packages/api-client/scripts/generate.ts');
+  const problems: Problem[] = [];
+  for (const [name, content] of await generate()) {
+    const path = join(generatedDirectory, name);
+    const current = existsSync(path) ? readFileSync(path, 'utf8') : undefined;
+    if (current !== content) {
+      problems.push({
+        file: relative(process.cwd(), path),
+        line: 1,
+        message: 'generated file is out of date, run pnpm generate',
+      });
+    }
+  }
+  return problems;
 }
 
 const problems: Problem[] = [];
@@ -191,7 +205,7 @@ for (const file of listFiles()) {
   }
   problems.push(...checkEmDashes(file, text), ...checkCommentLanguage(file, text));
 }
-problems.push(...checkGenerated());
+problems.push(...(await checkGenerated()));
 
 for (const { file, line, message } of problems) {
   console.error(`${file}:${String(line)}: ${message}`);

@@ -1,0 +1,21 @@
+{
+  "request": {
+    "body": {
+      "invalid": "The request contains invalid data."
+    },
+    "media_type": {
+      "unsupported": "The request uses a content type the server does not accept."
+    },
+    "method": {
+      "not_allowed": "This API endpoint does not support the request method."
+    },
+    "route": {
+      "not_found": "This API endpoint does not exist."
+    }
+  },
+  "system": {
+    "internal": {
+      "unexpected": "Something went wrong on the server. The request id helps to find the details in the logs."
+    }
+  }
+}

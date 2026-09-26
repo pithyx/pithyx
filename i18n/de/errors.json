@@ -1,0 +1,21 @@
+{
+  "request": {
+    "body": {
+      "invalid": "Die Anfrage enthält ungültige Daten."
+    },
+    "media_type": {
+      "unsupported": "Die Anfrage verwendet einen Inhaltstyp, den der Server nicht akzeptiert."
+    },
+    "method": {
+      "not_allowed": "Dieser API-Endpunkt unterstützt die Anfragemethode nicht."
+    },
+    "route": {
+      "not_found": "Diesen API-Endpunkt gibt es nicht."
+    }
+  },
+  "system": {
+    "internal": {
+      "unexpected": "Auf dem Server ist ein Fehler aufgetreten. Mit der Request-ID lassen sich die Details in den Logs finden."
+    }
+  }
+}
