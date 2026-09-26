@@ -66,6 +66,8 @@ While the daemon runs in development, the API reference is at http://localhost:8
 
 `pnpm design` starts a Vite server on port 5174 (all interfaces) with the design mockups at `/design.html`: every screen at phone, tablet and laptop width in light and dark, with switches for accent, taskbar position and language. It is a development tool only; the production build contains just `index.html`.
 
+`pnpm design:shots` renders every screen at full size as `<screen>_<viewport>_<theme>_<lang>.png` into `tools/design-shots/out/` (gitignored). It starts its own design server unless `--base-url` points to a running one; `--screens login,tokens` limits the run.
+
 ### API contracts
 
 The daemon build writes `packages/api-client/openapi.json`. The TypeScript types and the error code list in `packages/api-client/src/generated/` are generated from it; never edit them by hand. After changing an endpoint, a response type or an error code, run:
