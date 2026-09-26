@@ -4,9 +4,12 @@
   "forward": "Vorwärts",
   "path": "Pfad",
   "search": "In {folder} suchen",
+  "searchPlaceholder": "Suchen",
   "places": {
     "title": "Orte",
-    "home": "Persönlicher Ordner"
+    "home": "Persönlicher Ordner",
+    "desktop": "Desktop",
+    "documents": "Dokumente"
   },
   "shares": {
     "title": "Freigaben"

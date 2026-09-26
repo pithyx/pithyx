@@ -2,7 +2,7 @@
 // and the i18n keys of the app namespaces.
 export const filesApp = {
   path: ['alex', 'Photos 2026'],
-  places: ['home', 'Desktop', 'Documents', 'Photos 2026'],
+  places: ['home', 'desktop', 'documents', 'Photos 2026'],
   shares: ['media', 'backup', 'family'],
   entries: [
     { name: 'Holiday Lisbon', kind: 'folder', items: 48, modified: '2026-09-21T10:12:00' },

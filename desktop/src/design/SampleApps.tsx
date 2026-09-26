@@ -35,6 +35,14 @@ const kindIcon = { folder: IconFolderFilled, image: IconPhoto, video: IconMovie 
 
 export type Density = 'comfortable' | 'compact';
 
+// Well-known folders show a translated name; every other place is a user folder and keeps its own name.
+const wellKnownPlaces = ['home', 'desktop', 'documents'] as const;
+type WellKnownPlace = (typeof wellKnownPlaces)[number];
+
+function isWellKnownPlace(place: string): place is WellKnownPlace {
+  return (wellKnownPlaces as readonly string[]).includes(place);
+}
+
 export function FilesContent({ density: initialDensity = 'comfortable' }: { density?: Density }) {
   const { t, i18n } = useTranslation('files');
   const [density, setDensity] = useState<Density>(initialDensity);
@@ -59,7 +67,7 @@ export function FilesContent({ density: initialDensity = 'comfortable' }: { dens
         </nav>
         <SearchField
           label={t('search', { folder: currentFolder })}
-          placeholder={t('search', { folder: currentFolder })}
+          placeholder={t('searchPlaceholder')}
           className={styles.search}
         />
         <ToggleButtonGroup
@@ -100,7 +108,7 @@ export function FilesContent({ density: initialDensity = 'comfortable' }: { dens
               href="#files"
               className={cx(styles.sideItem, place === currentFolder && styles.sideActive)}
             >
-              {place === 'home' ? t('places.home') : place}
+              {isWellKnownPlace(place) ? t(`places.${place}`) : place}
             </a>
           ))}
           <h3 className={styles.sideTitle}>{t('shares.title')}</h3>
