@@ -127,6 +127,17 @@ public static class OpenApiSetup
             Discriminator = new OpenApiDiscriminator { PropertyName = "type", Mapping = mapping },
         };
 
+        var closeCodes = Enum.GetValues<WebSocketCloseCode>();
+        schemas["WebSocketCloseCode"] = new OpenApiSchema
+        {
+            Type = JsonSchemaType.Integer,
+            Enum = [.. closeCodes.Select(code => (JsonNode)JsonValue.Create((int)code))],
+            Extensions = new Dictionary<string, IOpenApiExtension>(StringComparer.Ordinal)
+            {
+                ["x-enum-varnames"] = new JsonNodeExtension(new JsonArray([.. closeCodes.Select(code => (JsonNode)JsonValue.Create(code.ToString()))])),
+            },
+        };
+
         var registry = context.ApplicationServices.GetRequiredService<TopicRegistry>();
         var snapshots = new OpenApiSchema { Type = JsonSchemaType.Object, Properties = new Dictionary<string, IOpenApiSchema>(StringComparer.Ordinal) };
         var events = new OpenApiSchema { Type = JsonSchemaType.Object, Properties = new Dictionary<string, IOpenApiSchema>(StringComparer.Ordinal) };

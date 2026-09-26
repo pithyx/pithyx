@@ -481,6 +481,7 @@
           "auth.credentials.invalid",
           "auth.csrf.header_missing",
           "auth.display_name.invalid",
+          "auth.password.too_common",
           "auth.password.too_long",
           "auth.password.too_short",
           "auth.permission.denied",
@@ -939,6 +940,25 @@
             "type": "boolean"
           }
         }
+      },
+      "WebSocketCloseCode": {
+        "enum": [
+          1000,
+          1001,
+          1008,
+          1009,
+          4401,
+          4403
+        ],
+        "type": "integer",
+        "x-enum-varnames": [
+          "NormalClosure",
+          "DaemonRestart",
+          "ClientTooSlow",
+          "MessageTooBig",
+          "SessionEnded",
+          "Forbidden"
+        ]
       }
     }
   },

@@ -38,7 +38,7 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
             new BoundedChannelOptions(OutboxCapacity) { SingleReader = true, FullMode = BoundedChannelFullMode.Wait });
         public CancellationTokenSource Closing { get; } = new();
 
-        public string? CloseReason { get; private set; }
+        public WebSocketCloseCode? CloseCode { get; private set; }
 
         internal bool AddPattern(string pattern)
         {
@@ -64,9 +64,9 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
             }
         }
 
-        internal void Close(string reason)
+        public void Close(WebSocketCloseCode code)
         {
-            CloseReason ??= reason;
+            CloseCode ??= code;
             Closing.Cancel();
         }
     }
@@ -90,7 +90,7 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
     {
         foreach (var connection in _connections.Values.Where(c => c.SessionId == sessionId))
         {
-            connection.Close("session ended");
+            connection.Close(WebSocketCloseCode.SessionEnded);
         }
     }
 
@@ -99,7 +99,16 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
     {
         foreach (var connection in _connections.Values.Where(c => c.User.FindFirstValue(ClaimTypes.NameIdentifier) == userId))
         {
-            connection.Close("session ended");
+            connection.Close(WebSocketCloseCode.SessionEnded);
+        }
+    }
+
+    /// <summary>Closes every connection because the daemon stops.</summary>
+    public void CloseAll()
+    {
+        foreach (var connection in _connections.Values)
+        {
+            connection.Close(WebSocketCloseCode.DaemonRestart);
         }
     }
 
@@ -196,7 +205,7 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
         {
             // The client does not read fast enough. Dropping it is safer than buffering without limit.
             LogSlowConsumer(connection.Id);
-            connection.Close("slow consumer");
+            connection.Close(WebSocketCloseCode.ClientTooSlow);
         }
     }
 

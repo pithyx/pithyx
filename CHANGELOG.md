@@ -31,9 +31,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Login with Argon2id password hashes (libsodium), session cookies (HttpOnly, SameSite=Strict, 7 days idle, 30 days at most), logout and `/api/auth/session`.
 - Optional TOTP two-factor authentication with ten single-use recovery codes, as a second login step.
 - Password reset only with the recovery key; it ends all sessions, turns TOTP off and issues a new recovery key.
+- New passwords are checked against an offline list of the most used passwords from breach data (`auth.password.too_common`); there are no composition rules.
+- German texts use the informal "du".
 - Failed login, TOTP and recovery attempts are rate limited (`auth.rate.limited` with `Retry-After`).
 - State-changing API requests require the `X-Vyxis-Request: 1` header (CSRF protection); the generated client sends it.
 - Every API endpoint requires a session unless it is explicitly public.
 - WebSocket at `/ws` for server-pushed data: `sub`/`unsub` with MQTT-style `+` and `#` wildcards, `ack`, `snap` (current state) and `event` (changes) messages with request ids, per-topic permission checks and throttling. Only same-origin connections with a valid session are accepted; logout and password reset close them with code 4401.
+- Fixed table of WebSocket close codes shared by daemon and client: 1001 daemon restart and 1008 client too slow (reconnect with backoff and restore subscriptions), 4401 session ended (go to login, also when the session expires while connected) and 4403 origin or permission rejected (no reconnect). Rejections are sent as close codes after the handshake so browsers can tell them from network errors. An open WebSocket keeps its session alive up to the absolute 30-day limit.
 - Topic `system/info` (host name, uptime, load, CPU, memory from `/proc`), published once per second only while someone is subscribed.
 - The generated client includes the WebSocket message types and the data type of every topic.

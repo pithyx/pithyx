@@ -19,6 +19,10 @@
       },
       "expected": "The display name can have at most 64 characters and no control characters."
     },
+    "auth.password.too_common": {
+      "params": {},
+      "expected": "This password is one of the most commonly used passwords. Choose one that is harder to guess."
+    },
     "auth.password.too_long": {
       "params": {
         "maxLength": 1024

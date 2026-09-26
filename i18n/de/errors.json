@@ -1,7 +1,7 @@
 {
   "auth": {
     "challenge": {
-      "expired": "Der Anmeldeschritt ist abgelaufen. Bitte erneut anmelden."
+      "expired": "Der Anmeldeschritt ist abgelaufen. Melde dich bitte erneut an."
     },
     "credentials": {
       "invalid": "Benutzername oder Passwort ist falsch."
@@ -10,23 +10,24 @@
       "header_missing": "Die Anfrage wurde abgelehnt, weil ein Sicherheits-Header fehlt."
     },
     "display_name": {
-      "invalid": "Der Anzeigename darf höchstens {maxLength} Zeichen und keine Steuerzeichen enthalten."
+      "invalid": "Dein Anzeigename darf höchstens {maxLength} Zeichen und keine Steuerzeichen enthalten."
     },
     "password": {
-      "too_long": "Das Passwort darf höchstens {maxLength} Zeichen lang sein.",
-      "too_short": "Das Passwort muss mindestens {minLength} Zeichen lang sein."
+      "too_common": "Dieses Passwort gehört zu den am häufigsten verwendeten Passwörtern. Wähle eins, das schwerer zu erraten ist.",
+      "too_long": "Dein Passwort darf höchstens {maxLength} Zeichen lang sein.",
+      "too_short": "Dein Passwort muss mindestens {minLength} Zeichen lang sein."
     },
     "permission": {
-      "denied": "Für diese Aktion fehlt die Berechtigung."
+      "denied": "Dir fehlt die Berechtigung für diese Aktion."
     },
     "rate": {
-      "limited": "Zu viele Versuche. Erneut möglich in {retryAfterSeconds, plural, one {# Sekunde} other {# Sekunden}}."
+      "limited": "Zu viele Versuche. Versuch es in {retryAfterSeconds, plural, one {# Sekunde} other {# Sekunden}} erneut."
     },
     "recovery": {
       "invalid": "Benutzername oder Wiederherstellungsschlüssel ist falsch."
     },
     "session": {
-      "expired": "Die Sitzung ist abgelaufen. Bitte erneut anmelden."
+      "expired": "Deine Sitzung ist abgelaufen. Melde dich bitte erneut an."
     },
     "setup": {
       "already_done": "Dieses System ist bereits eingerichtet."
@@ -38,7 +39,7 @@
     },
     "username": {
       "invalid": "Benutzernamen beginnen mit einem Kleinbuchstaben oder Unterstrich und enthalten nur Kleinbuchstaben, Ziffern, Unterstriche und Bindestriche, höchstens 32 Zeichen.",
-      "reserved": "Der Benutzername {username} ist für das System reserviert."
+      "reserved": "Den Benutzernamen {username} verwendet das System selbst. Wähle einen anderen."
     }
   },
   "realtime": {
@@ -69,7 +70,7 @@
   },
   "system": {
     "internal": {
-      "unexpected": "Auf dem Server ist ein Fehler aufgetreten. Mit der Request-ID lassen sich die Details in den Logs finden."
+      "unexpected": "Auf dem Server ist ein Fehler aufgetreten. Mit der Request-ID findest du die Details in den Logs."
     },
     "origin": {
       "forbidden": "Die Anfrage kam von einer anderen Website und wurde abgelehnt."

@@ -16,36 +16,59 @@ public static partial class WebSocketEndpoint
 {
     public const string Path = "/ws";
     public const int MaxMessageBytes = 16 * 1024;
+    private static readonly TimeSpan _sessionCheckInterval = TimeSpan.FromHours(1);
 
-    /// <summary>Close status when the session ended (logout, password reset). Clients go back to the login screen.</summary>
-    public const WebSocketCloseStatus SessionEnded = (WebSocketCloseStatus)4401;
+    public static void MapRealtime(this IEndpointRouteBuilder app)
+    {
+        ArgumentNullException.ThrowIfNull(app);
+        app.Map(Path, HandleAsync).ExcludeFromDescription();
+        var lifetime = app.ServiceProvider.GetRequiredService<IHostApplicationLifetime>();
+        var hub = app.ServiceProvider.GetRequiredService<TopicHub>();
+        lifetime.ApplicationStopping.Register(hub.CloseAll);
+    }
 
-    public static void MapRealtime(this IEndpointRouteBuilder app) =>
-        app.Map(Path, HandleAsync).RequireAuthorization().ExcludeFromDescription();
-
-    private static async Task HandleAsync(HttpContext context, TopicHub hub, TopicRegistry registry, IOptions<JsonOptions> json, ILoggerFactory loggers)
+    private static async Task HandleAsync(
+        HttpContext context,
+        TopicHub hub,
+        TopicRegistry registry,
+        SessionService sessions,
+        TimeProvider time,
+        IOptions<JsonOptions> json,
+        ILoggerFactory loggers)
     {
         if (!context.WebSockets.IsWebSocketRequest)
         {
             throw new VyxisException(ErrorCodes.RealtimeUpgradeRequired);
         }
+
+        // Rejections are sent as close codes after the handshake: a browser reports a rejected handshake only as
+        // 1006, which the desktop could not tell apart from a network error. Nothing else is sent before closing.
+        using var socket = await context.WebSockets.AcceptWebSocketAsync();
         if (!IsSameOrigin(context.Request))
         {
             // Browsers send cookies with cross-site WebSocket requests, so the origin is the only protection.
-            throw new VyxisException(ErrorCodes.SystemOriginForbidden);
+            await RejectAsync(socket, WebSocketCloseCode.Forbidden, context.RequestAborted);
+            return;
+        }
+        var sessionId = context.User.FindFirstValue(SessionAuthenticationHandler.SessionIdClaim);
+        if (context.User.Identity?.IsAuthenticated != true || sessionId is null)
+        {
+            await RejectAsync(socket, WebSocketCloseCode.SessionEnded, context.RequestAborted);
+            return;
         }
 
         var logger = loggers.CreateLogger(typeof(WebSocketEndpoint));
-        using var socket = await context.WebSockets.AcceptWebSocketAsync();
-        var connection = hub.Connect(context.User, context.User.FindFirstValue(SessionAuthenticationHandler.SessionIdClaim) ?? "");
+        var connection = hub.Connect(context.User, sessionId);
         LogConnected(logger, connection.Id);
         try
         {
             var writer = WriteAsync(socket, connection, context.RequestAborted);
             var reader = ReadAsync(socket, connection, hub, registry, json.Value.SerializerOptions, logger, context.RequestAborted);
+            var session = WatchSessionAsync(connection, sessions, time, connection.Closing.Token);
             await Task.WhenAny(reader, writer);
-            connection.Close("connection ended");
+            connection.Close(WebSocketCloseCode.NormalClosure);
             await writer;
+            await session;
         }
         catch (Exception exception) when (exception is WebSocketException or OperationCanceledException)
         {
@@ -54,7 +77,47 @@ public static partial class WebSocketEndpoint
         finally
         {
             hub.Disconnect(connection);
-            LogDisconnected(logger, connection.Id, connection.CloseReason ?? "");
+            LogDisconnected(logger, connection.Id, connection.CloseCode ?? WebSocketCloseCode.NormalClosure);
+        }
+    }
+
+    private static async Task RejectAsync(WebSocket socket, WebSocketCloseCode code, CancellationToken aborted)
+    {
+        await socket.CloseOutputAsync((WebSocketCloseStatus)code, null, aborted);
+        // Wait briefly for the client's close frame so the close handshake completes.
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(aborted);
+        timeout.CancelAfter(TimeSpan.FromSeconds(5));
+        try
+        {
+            await socket.ReceiveAsync(new byte[128], timeout.Token);
+        }
+        catch (Exception exception) when (exception is WebSocketException or OperationCanceledException)
+        {
+            // The client is gone already.
+        }
+    }
+
+    // An open desktop keeps its session alive (sliding expiry), but the absolute lifetime still ends it; logout and
+    // password reset close the connection right away through the hub.
+    private static async Task WatchSessionAsync(TopicHub.Connection connection, SessionService sessions, TimeProvider time, CancellationToken closing)
+    {
+        try
+        {
+            while (!closing.IsCancellationRequested)
+            {
+                var absoluteExpiry = await sessions.TouchAsync(connection.SessionId, closing);
+                if (absoluteExpiry is null)
+                {
+                    connection.Close(WebSocketCloseCode.SessionEnded);
+                    return;
+                }
+                var untilExpiry = absoluteExpiry.Value - time.GetUtcNow();
+                await Task.Delay(untilExpiry < _sessionCheckInterval ? untilExpiry : _sessionCheckInterval, time, closing);
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // The connection closed.
         }
     }
 
@@ -83,14 +146,8 @@ public static partial class WebSocketEndpoint
 
         if (socket.State is WebSocketState.Open or WebSocketState.CloseReceived)
         {
-            var status = connection.CloseReason switch
-            {
-                "session ended" => SessionEnded,
-                "slow consumer" => WebSocketCloseStatus.PolicyViolation,
-                "message too big" => WebSocketCloseStatus.MessageTooBig,
-                _ => WebSocketCloseStatus.NormalClosure,
-            };
-            await socket.CloseOutputAsync(status, connection.CloseReason, aborted);
+            var code = connection.CloseCode ?? WebSocketCloseCode.NormalClosure;
+            await socket.CloseOutputAsync((WebSocketCloseStatus)code, null, aborted);
         }
     }
 
@@ -114,7 +171,7 @@ public static partial class WebSocketEndpoint
                 buffer.Advance(result.Count);
                 if (buffer.WrittenCount > MaxMessageBytes)
                 {
-                    connection.Close("message too big");
+                    connection.Close(WebSocketCloseCode.MessageTooBig);
                     return;
                 }
             }
@@ -202,8 +259,8 @@ public static partial class WebSocketEndpoint
     [LoggerMessage(Level = LogLevel.Information, Message = "WebSocket connection {ConnectionId} opened")]
     private static partial void LogConnected(ILogger logger, Guid connectionId);
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "WebSocket connection {ConnectionId} closed: {Reason}")]
-    private static partial void LogDisconnected(ILogger logger, Guid connectionId, string reason);
+    [LoggerMessage(Level = LogLevel.Information, Message = "WebSocket connection {ConnectionId} closed with {CloseCode}")]
+    private static partial void LogDisconnected(ILogger logger, Guid connectionId, WebSocketCloseCode closeCode);
 
     [LoggerMessage(Level = LogLevel.Debug, Message = "WebSocket connection {ConnectionId} subscribed to {Topic}")]
     private static partial void LogSubscribed(ILogger logger, Guid connectionId, string topic);

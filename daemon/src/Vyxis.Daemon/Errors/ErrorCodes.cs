@@ -23,6 +23,9 @@ public static class ErrorCodes
     public const string AuthDisplayNameInvalid = "auth.display_name.invalid";
 
     [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AuthPasswordTooCommon = "auth.password.too_common";
+
+    [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string AuthPasswordTooLong = "auth.password.too_long";
 
     [ErrorStatus(HttpStatusCode.BadRequest)]

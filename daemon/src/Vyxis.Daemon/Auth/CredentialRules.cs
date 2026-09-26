@@ -64,7 +64,21 @@ public static partial class CredentialRules
         {
             throw new VyxisException(ErrorCodes.AuthPasswordTooLong, new Dictionary<string, object?> { ["maxLength"] = MaxPasswordLength });
         }
+        if (_commonPasswords.Value.Contains(password.ToLowerInvariant()))
+        {
+            throw new VyxisException(ErrorCodes.AuthPasswordTooCommon);
+        }
     }
+
+    // The most used passwords from breach data (see Auth/common-passwords.LICENSE.txt), reduced to the ones long
+    // enough to pass the length check. There are no composition rules; length plus this list is the policy.
+    private static readonly Lazy<FrozenSet<string>> _commonPasswords = new(() =>
+    {
+        using var stream = typeof(CredentialRules).Assembly.GetManifestResourceStream("auth/common-passwords.txt")
+            ?? throw new InvalidOperationException("Embedded resource auth/common-passwords.txt is missing.");
+        using var reader = new StreamReader(stream);
+        return reader.ReadToEnd().Split('\n', StringSplitOptions.RemoveEmptyEntries).ToFrozenSet(StringComparer.Ordinal);
+    });
 
     [GeneratedRegex("^[a-z_][a-z0-9_-]{0,31}$", RegexOptions.CultureInvariant)]
     private static partial Regex UsernamePattern();
