@@ -4,6 +4,7 @@ using Scalar.AspNetCore;
 using Serilog;
 using Vyxis.Daemon;
 using Vyxis.Daemon.Commands;
+using Vyxis.Daemon.Database;
 using Vyxis.Daemon.Errors;
 using Vyxis.Daemon.Health;
 using Vyxis.Daemon.Hosting;
@@ -25,6 +26,9 @@ builder.Services.ConfigureHttpJsonOptions(options =>
     options.SerializerOptions.NumberHandling = JsonNumberHandling.Strict;
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
 });
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSingleton(new SqliteConnectionFactory(paths.DatabasePath));
+builder.Services.AddSingleton<MigrationRunner>();
 builder.Services.AddVyxisErrors();
 builder.Services.AddVyxisOpenApi();
 
@@ -44,6 +48,16 @@ var app = builder.Build();
 
 if (!BuildTimeDocument.IsGenerating)
 {
+    try
+    {
+        await app.Services.GetRequiredService<MigrationRunner>().RunAsync(Migration.Embedded(), CancellationToken.None);
+    }
+    catch (Exception exception) when (exception is Microsoft.Data.Sqlite.SqliteException or InvalidOperationException or IOException)
+    {
+        // Already logged by the runner. Exit so systemd sees the failure instead of a daemon without a database.
+        return 1;
+    }
+
     // Plain HTTP is the development transport. HTTPS on 443 arrives with the TLS work in M5.
     HostLog.PlainHttp(app.Logger, HttpPort, mode);
 }
@@ -65,7 +79,8 @@ app.MapGet("/api/health", () => TypedResults.Ok(new HealthResponse("ok", mode)))
     .WithName("GetHealth")
     .WithTags("System");
 
-app.Run();
+await app.RunAsync();
+return 0;
 
 static bool IsApiRequest(PathString path) => path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase);
 

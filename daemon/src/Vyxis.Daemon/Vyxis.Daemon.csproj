@@ -5,7 +5,9 @@
     <OpenApiGenerateDocumentsOptions>--file-name openapi</OpenApiGenerateDocumentsOptions>
   </PropertyGroup>
   <ItemGroup>
+    <PackageReference Include="Dapper" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.Data.Sqlite" />
     <PackageReference Include="Microsoft.Extensions.ApiDescription.Server">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -17,5 +19,6 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="../../../i18n/en/errors.json" LogicalName="i18n/en/errors.json" />
+    <EmbeddedResource Include="Database/Migrations/*.sql" LogicalName="migrations/%(Filename)%(Extension)" />
   </ItemGroup>
 </Project>

@@ -26,3 +26,4 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Generated TypeScript API client (`@vyxis/api-client`) with the error code union, CSRF header middleware and `VyxisApiError`; `pnpm generate` and a drift check keep it in sync with the daemon.
 - Problem details for bare status codes (404, 405) apply only under `/api/`; other paths are left to the desktop.
 - Golden test (`tools/i18n/icu-golden.json`) that renders every error message and formatter edge case with the daemon's and the desktop's ICU implementation and requires identical output.
+- SQLite database (WAL, foreign keys) at `/var/lib/vyxis/vyxis.db` (`VYXIS_DB`). Numbered SQL migrations run at startup, each in its own transaction, after a `VACUUM INTO` backup of an existing database; the daemon refuses to start if a migration fails or the database is newer than the daemon.

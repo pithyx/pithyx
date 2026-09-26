@@ -164,9 +164,9 @@ Goal: one real feature end to end, built on the final architecture. Everything l
 
 ### 3.2 Database
 
-- [ ] SQLite at a configurable path (default `/var/lib/vyxis/vyxis.db`, in simulation mode a local file). WAL mode, foreign keys on.
-- [ ] Migration runner: numbered `.sql` files embedded as resources, a `schema_version` table, runs at startup inside a transaction, refuses to start on a failed migration.
-- [ ] Migration `0001`: `users`, `sessions`.
+- [x] SQLite at a configurable path (default `/var/lib/vyxis/vyxis.db`, in simulation mode a local file). WAL mode, foreign keys on.
+- [x] Migration runner: numbered `.sql` files embedded as resources, a `schema_version` table, runs at startup inside a transaction, refuses to start on a failed migration.
+- [x] Migration `0001`: `users`, `sessions`.
 
 ### 3.3 Authentication
 

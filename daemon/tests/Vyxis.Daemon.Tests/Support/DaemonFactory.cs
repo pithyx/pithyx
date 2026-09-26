@@ -11,6 +11,7 @@ public class DaemonFactory : WebApplicationFactory<Program>
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseSetting("VYXIS_LOG_DIR", Path.Combine(DataDirectory, "logs"));
+        builder.UseSetting("VYXIS_DB", Path.Combine(DataDirectory, "vyxis.db"));
     }
 
     protected override void Dispose(bool disposing)
