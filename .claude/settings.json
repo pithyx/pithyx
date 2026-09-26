@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": ["Bash(tools/dev-vm/testpool.sh *)", "Bash(./tools/dev-vm/testpool.sh *)"],
+    "deny": [
+      "Bash(mkfs*)",
+      "Bash(sudo mkfs*)",
+      "Bash(wipefs *)",
+      "Bash(sudo wipefs *)",
+      "Bash(dd *of=/dev/*)",
+      "Bash(sudo dd *of=/dev/*)",
+      "Bash(zpool create *)",
+      "Bash(sudo zpool create *)",
+      "Bash(zpool destroy *)",
+      "Bash(sudo zpool destroy *)",
+      "Bash(/usr/sbin/zpool create *)",
+      "Bash(sudo /usr/sbin/zpool create *)",
+      "Bash(/usr/sbin/zpool destroy *)",
+      "Bash(sudo /usr/sbin/zpool destroy *)",
+      "Bash(rm -rf /)",
+      "Bash(sudo rm -rf /)",
+      "Bash(rm -rf / *)",
+      "Bash(sudo rm -rf / *)",
+      "Bash(rm -rf --no-preserve-root *)",
+      "Bash(sudo rm -rf --no-preserve-root *)",
+      "Bash(git push --force *)",
+      "Bash(git push -f *)",
+      "Bash(git push --force-with-lease *)",
+      "Bash(git push * --force*)",
+      "Bash(git push * -f *)",
+      "Bash(git push * -f)",
+      "Bash(git push * +master*)",
+      "Bash(git push * +dev*)"
+    ]
+  }
+}

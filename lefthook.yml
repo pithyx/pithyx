@@ -1,0 +1,29 @@
+pre-commit:
+  parallel: true
+  jobs:
+    - name: prettier
+      glob: '*.{ts,tsx,js,json,css,html,md,yml,yaml}'
+      run: pnpm exec prettier --check --ignore-unknown {staged_files}
+    - name: eslint
+      glob: '*.{ts,tsx,js}'
+      exclude:
+        - 'daemon/**'
+      run: pnpm exec eslint --no-warn-ignored {staged_files}
+    - name: repo-check
+      run: node tools/checks/repo-check.ts
+    - name: dotnet-format
+      glob: 'daemon/**/*.cs'
+      run: dotnet format whitespace --folder --verify-no-changes --include {staged_files}
+
+commit-msg:
+  jobs:
+    - name: commit-message
+      run: node tools/checks/commit-msg.ts {1}
+
+pre-push:
+  jobs:
+    # lefthook skips pre-push jobs without push files; the {files} placeholder forces the run.
+    - name: protected-branches
+      run: tools/checks/pre-push.sh {files}
+      files: echo lefthook.yml
+      use_stdin: true

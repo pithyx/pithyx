@@ -1,0 +1,8 @@
+packages:
+  - desktop
+  - sdk
+  - packages/*
+
+allowBuilds:
+  esbuild: true
+  lefthook: true

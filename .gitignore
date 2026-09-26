@@ -1,0 +1,33 @@
+# .NET
+bin/
+obj/
+*.user
+TestResults/
+
+# Node
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+
+# IDEs
+.idea/
+.vs/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Local environment and data
+.env
+.env.*
+!.env.example
+/*.db
+/*.db-*
+
+# Claude Code personal settings
+.claude/settings.local.json
