@@ -58,6 +58,7 @@ jobs:
         with:
           node-version-file: .nvmrc
       - run: node tools/checks/repo-check.ts
+      - run: shellcheck tools/*/*.sh
       - name: Commit messages
         run: node tools/checks/commit-msg.ts --range "$(tools/checks/ci-range.sh)"
         env:

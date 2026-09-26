@@ -51,7 +51,7 @@ disk_by_serial() {
   name=$(lsblk -dn -o NAME,SERIAL,TYPE | awk -v s="$serial" '$2 == s && $3 == "disk" { print $1 }')
   [[ -n "$name" ]] || die "no disk with serial '$serial'"
   [[ $(wc -l <<<"$name") -eq 1 ]] || die "serial '$serial' matches more than one disk"
-  if lsblk -n -o MOUNTPOINTS "/dev/$name" | grep -q '[^[:space:]]'; then
+  if [[ -n "$(lsblk -n -o MOUNTPOINTS "/dev/$name" | tr -d '[:space:]')" ]]; then
     die "disk '$name' ($serial) has mounted filesystems"
   fi
   local link

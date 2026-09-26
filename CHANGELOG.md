@@ -11,3 +11,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Monorepo scaffold: .NET 10 daemon with a health endpoint, React desktop, SDK and API client packages.
 - Tooling: EditorConfig, ESLint, Prettier, Vitest, xUnit, lefthook hooks, repository checks and CI.
 - Project files: AGPL-3.0 license (SDK under MIT), attribution notice, contributing guide, security policy.
+- Dev VM provisioning script (`tools/dev-vm/provision.sh`) for Debian 13: toolchain, ZFS (DKMS), storage and container tools, `en_US.UTF-8` locale, environment and test disk markers.
+- Shell scripts are checked with ShellCheck in the pre-commit hook and CI.

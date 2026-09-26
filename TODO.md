@@ -124,11 +124,11 @@ Goal: anyone can go from a fresh clone to a running daemon and desktop in under 
 
 ### 2.1 Dev VM
 
-- [ ] `tools/dev-vm/provision.sh`: idempotent script for a fresh Debian 13 VM. Installs .NET 10 SDK, Node LTS + pnpm, `zfsutils-linux` (contrib), `mdadm`, `btrfs-progs`, `smartmontools`, `samba`, `nfs-kernel-server`, `docker.io`, `qemu-system-x86`, `ovmf`. Enables contrib and non-free-firmware.
-- [ ] The script reproduces exactly the toolchain installed manually on dev01 for step 1: Microsoft package source for Debian 13 (`packages-microsoft-prod.deb` from `packages.microsoft.com/config/debian/13/`) with `dotnet-sdk-10.0` 10.0.401, NodeSource `node_24.x` with `nodejs` 24.21.0, and `corepack enable` so pnpm comes from `packageManager` (pnpm 12.6.0). Versions must match `global.json`, `.nvmrc` and `package.json`.
-- [ ] The script verifies it runs on Debian 13 and refuses otherwise.
-- [ ] The script sets the system locale to `en_US.UTF-8` (keyboard and time zone stay as they are) so tool output and logs match production.
-- [ ] The script writes `dev` to `/etc/vyxis/environment` and records the test disks by serial in `/etc/vyxis/test-disks`.
+- [x] `tools/dev-vm/provision.sh`: idempotent script for a fresh Debian 13 VM. Installs .NET 10 SDK, Node LTS + pnpm, `zfsutils-linux` (contrib), `mdadm`, `btrfs-progs`, `smartmontools`, `samba`, `nfs-kernel-server`, `docker.io`, `qemu-system-x86`, `ovmf`. Enables contrib and non-free-firmware.
+- [x] The script reproduces exactly the toolchain installed manually on dev01 for step 1: Microsoft package source for Debian 13 (`packages-microsoft-prod.deb` from `packages.microsoft.com/config/debian/13/`) with `dotnet-sdk-10.0` 10.0.401, NodeSource `node_24.x` with `nodejs` 24.21.0, and `corepack enable` so pnpm comes from `packageManager` (pnpm 12.6.0). Versions must match `global.json`, `.nvmrc` and `package.json`.
+- [x] The script verifies it runs on Debian 13 and refuses otherwise.
+- [x] The script sets the system locale to `en_US.UTF-8` (keyboard and time zone stay as they are) so tool output and logs match production.
+- [x] The script writes `dev` to `/etc/vyxis/environment` and records the test disks by serial in `/etc/vyxis/test-disks`.
 - [ ] README section "Development / Dev VM": recommended VM spec (4 vCPU, 8 GB RAM, 32 GB system disk, six 10 GB data disks), how to run the provisioning script, recommendation to snapshot the VM before destructive tests.
 
 ### 2.2 Simulation mode

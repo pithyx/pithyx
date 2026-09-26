@@ -6,7 +6,7 @@ set -euo pipefail
 zero=0000000000000000000000000000000000000000
 status=0
 
-while read -r local_ref local_sha remote_ref remote_sha; do
+while read -r _ local_sha remote_ref remote_sha; do
   case "$remote_ref" in
     refs/heads/master | refs/heads/dev) ;;
     *) continue ;;
