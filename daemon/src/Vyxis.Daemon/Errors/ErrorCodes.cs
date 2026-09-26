@@ -10,6 +10,54 @@ namespace Vyxis.Daemon.Errors;
 /// </summary>
 public static class ErrorCodes
 {
+    [ErrorStatus(HttpStatusCode.Unauthorized)]
+    public const string AuthChallengeExpired = "auth.challenge.expired";
+
+    [ErrorStatus(HttpStatusCode.Unauthorized)]
+    public const string AuthCredentialsInvalid = "auth.credentials.invalid";
+
+    [ErrorStatus(HttpStatusCode.Forbidden)]
+    public const string AuthCsrfHeaderMissing = "auth.csrf.header_missing";
+
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AuthDisplayNameInvalid = "auth.display_name.invalid";
+
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AuthPasswordTooLong = "auth.password.too_long";
+
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AuthPasswordTooShort = "auth.password.too_short";
+
+    [ErrorStatus(HttpStatusCode.Forbidden)]
+    public const string AuthPermissionDenied = "auth.permission.denied";
+
+    [ErrorStatus(HttpStatusCode.TooManyRequests)]
+    public const string AuthRateLimited = "auth.rate.limited";
+
+    [ErrorStatus(HttpStatusCode.Unauthorized)]
+    public const string AuthRecoveryInvalid = "auth.recovery.invalid";
+
+    [ErrorStatus(HttpStatusCode.Unauthorized)]
+    public const string AuthSessionExpired = "auth.session.expired";
+
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string AuthSetupAlreadyDone = "auth.setup.already_done";
+
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string AuthTotpAlreadyEnabled = "auth.totp.already_enabled";
+
+    [ErrorStatus(HttpStatusCode.Unauthorized)]
+    public const string AuthTotpInvalid = "auth.totp.invalid";
+
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string AuthTotpNotEnrolled = "auth.totp.not_enrolled";
+
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AuthUsernameInvalid = "auth.username.invalid";
+
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AuthUsernameReserved = "auth.username.reserved";
+
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string RequestBodyInvalid = "request.body.invalid";
 

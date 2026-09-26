@@ -1,4 +1,46 @@
 {
+  "auth": {
+    "challenge": {
+      "expired": "Der Anmeldeschritt ist abgelaufen. Bitte erneut anmelden."
+    },
+    "credentials": {
+      "invalid": "Benutzername oder Passwort ist falsch."
+    },
+    "csrf": {
+      "header_missing": "Die Anfrage wurde abgelehnt, weil ein Sicherheits-Header fehlt."
+    },
+    "display_name": {
+      "invalid": "Der Anzeigename darf höchstens {maxLength} Zeichen und keine Steuerzeichen enthalten."
+    },
+    "password": {
+      "too_long": "Das Passwort darf höchstens {maxLength} Zeichen lang sein.",
+      "too_short": "Das Passwort muss mindestens {minLength} Zeichen lang sein."
+    },
+    "permission": {
+      "denied": "Für diese Aktion fehlt die Berechtigung."
+    },
+    "rate": {
+      "limited": "Zu viele Versuche. Erneut möglich in {retryAfterSeconds, plural, one {# Sekunde} other {# Sekunden}}."
+    },
+    "recovery": {
+      "invalid": "Benutzername oder Wiederherstellungsschlüssel ist falsch."
+    },
+    "session": {
+      "expired": "Die Sitzung ist abgelaufen. Bitte erneut anmelden."
+    },
+    "setup": {
+      "already_done": "Dieses System ist bereits eingerichtet."
+    },
+    "totp": {
+      "already_enabled": "Die Zwei-Faktor-Authentifizierung ist bereits aktiviert.",
+      "invalid": "Der Code ist falsch oder wurde bereits verwendet.",
+      "not_enrolled": "Die Zwei-Faktor-Authentifizierung wurde noch nicht eingerichtet."
+    },
+    "username": {
+      "invalid": "Benutzernamen beginnen mit einem Kleinbuchstaben oder Unterstrich und enthalten nur Kleinbuchstaben, Ziffern, Unterstriche und Bindestriche, höchstens 32 Zeichen.",
+      "reserved": "Der Benutzername {username} ist für das System reserviert."
+    }
+  },
   "request": {
     "body": {
       "invalid": "Die Anfrage enthält ungültige Daten."

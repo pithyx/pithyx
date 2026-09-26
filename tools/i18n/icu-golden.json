@@ -1,6 +1,80 @@
 {
   "$comment": "Golden cases for the two ICU renderers: IcuMessageFormatter (daemon) and i18next-icu (desktop). Both test suites render every entry and must produce exactly `expected`. Every code in i18n/en/errors.json needs an entry with example params.",
   "errors": {
+    "auth.challenge.expired": {
+      "params": {},
+      "expected": "The sign-in step has expired. Please sign in again."
+    },
+    "auth.credentials.invalid": {
+      "params": {},
+      "expected": "The user name or password is incorrect."
+    },
+    "auth.csrf.header_missing": {
+      "params": {},
+      "expected": "The request was rejected because a security header is missing."
+    },
+    "auth.display_name.invalid": {
+      "params": {
+        "maxLength": 64
+      },
+      "expected": "The display name can have at most 64 characters and no control characters."
+    },
+    "auth.password.too_long": {
+      "params": {
+        "maxLength": 1024
+      },
+      "expected": "The password can have at most 1024 characters."
+    },
+    "auth.password.too_short": {
+      "params": {
+        "minLength": 12
+      },
+      "expected": "The password needs at least 12 characters."
+    },
+    "auth.permission.denied": {
+      "params": {},
+      "expected": "You do not have permission for this action."
+    },
+    "auth.rate.limited": {
+      "params": {
+        "retryAfterSeconds": 1
+      },
+      "expected": "Too many attempts. Try again in 1 second."
+    },
+    "auth.recovery.invalid": {
+      "params": {},
+      "expected": "The user name or recovery key is incorrect."
+    },
+    "auth.session.expired": {
+      "params": {},
+      "expected": "The session has expired. Please sign in again."
+    },
+    "auth.setup.already_done": {
+      "params": {},
+      "expected": "This system has already been set up."
+    },
+    "auth.totp.already_enabled": {
+      "params": {},
+      "expected": "Two-factor authentication is already enabled."
+    },
+    "auth.totp.invalid": {
+      "params": {},
+      "expected": "The code is incorrect or has already been used."
+    },
+    "auth.totp.not_enrolled": {
+      "params": {},
+      "expected": "Two-factor authentication has not been set up yet."
+    },
+    "auth.username.invalid": {
+      "params": {},
+      "expected": "User names start with a lowercase letter or an underscore and contain only lowercase letters, digits, underscores and hyphens, at most 32 characters."
+    },
+    "auth.username.reserved": {
+      "params": {
+        "username": "root"
+      },
+      "expected": "The user name root is reserved for the system."
+    },
     "request.body.invalid": {
       "params": {},
       "expected": "The request contains invalid data."
@@ -98,6 +172,13 @@
       "message": "Use '{braces}' and it''s fine, it's fine",
       "params": {},
       "expected": "Use {braces} and it's fine, it's fine"
+    },
+    {
+      "message": "Too many attempts. Try again in {retryAfterSeconds, plural, one {# second} other {# seconds}}.",
+      "params": {
+        "retryAfterSeconds": 2400
+      },
+      "expected": "Too many attempts. Try again in 2,400 seconds."
     }
   ]
 }

@@ -170,16 +170,17 @@ Goal: one real feature end to end, built on the final architecture. Everything l
 
 ### 3.3 Authentication
 
-- [ ] First-run setup: if no user exists, `POST /api/setup` creates the admin. Afterwards the endpoint returns `auth.setup.already_done`.
-- [ ] Passwords hashed with Argon2id. Parameters documented next to the code.
-- [ ] Login creates a session stored in SQLite and sets an HttpOnly, Secure (outside dev), SameSite=Strict cookie. Logout deletes it.
-- [ ] CSRF protection: SameSite=Strict plus a required custom header on state-changing requests.
-- [ ] Rate limiting on login with ASP.NET Core rate limiter.
-- [ ] Optional TOTP per user: enrollment with QR code, verification as a second step inside the same login card, recovery codes.
+- [x] First-run setup: if no user exists, `POST /api/setup` creates the admin. Afterwards the endpoint returns `auth.setup.already_done`.
+- [x] Passwords hashed with Argon2id. Parameters documented next to the code.
+- [x] Login creates a session stored in SQLite and sets an HttpOnly, Secure (outside dev), SameSite=Strict cookie. Logout deletes it.
+- [x] CSRF protection: SameSite=Strict plus a required custom header on state-changing requests.
+- [x] Rate limiting on login. Implemented as a small fixed-window counter on `TimeProvider` instead of the ASP.NET Core rate limiter: only failed attempts count (5 per user and address, 30 per address, 5 minutes), and tests can move the clock.
+- [ ] Optional TOTP per user: enrollment with QR code, verification as a second step inside the same login card, recovery codes. Daemon side done in step 3 PR 3 (enroll, confirm, disable, login step, recovery codes); the QR code and the login card come with the desktop in 3.7.
+- [x] User names are valid Linux names (`^[a-z_][a-z0-9_-]{0,31}$`), stored in lower case, and must not be a reserved system account (`auth.username.invalid`, `auth.username.reserved`). An optional display name may contain any printable characters.
 - [ ] Login and setup forms use `autocomplete="username"`, `current-password`, `new-password` and `one-time-code` so password managers autofill.
-- [ ] Recovery key: generated during setup, shown once, offered as a printable page. It is the only way to reset the admin password.
-- [ ] Passkeys are out of scope until the TLS decision in M5 is made. Do not design the auth flow around them.
-- [ ] Error codes: `auth.credentials.invalid`, `auth.session.expired`, `auth.rate.limited`, `auth.setup.already_done`, `auth.totp.invalid`, `auth.recovery.invalid`.
+- [x] Recovery key: generated during setup, shown once, offered as a printable page. It is the only way to reset the admin password.
+- [x] Passkeys are out of scope until the TLS decision in M5 is made. Do not design the auth flow around them.
+- [x] Error codes: `auth.credentials.invalid`, `auth.session.expired`, `auth.rate.limited`, `auth.setup.already_done`, `auth.totp.invalid`, `auth.recovery.invalid`.
 
 ### 3.4 WebSocket and topics
 
@@ -329,6 +330,8 @@ Known requirements for later milestones:
 
 - M3: energy settings: spindown per pool (via hd-idle, off by default), power profiles, and a diagnostic that shows what keeps disks awake (process, file) and CPU package C-state residency.
 - M3: permission model from `CLAUDE.md` (groups, users, shares, protocols, apps, special rights), pool encryption with key vault, SFTP instead of plain FTP.
+- M3: when provisioning Linux and Samba users, refuse user names that already exist in `/etc/passwd` or `/etc/group` but are not managed by Vyxis (the static reserved list in `CredentialRules` only covers known system accounts).
+- Third-party notices: generate the list of bundled NuGet and npm packages with their licenses (for example libsodium ISC, NSec MIT, Otp.NET MIT) for the About page, and check it in CI.
 - M3: `[DECISION]` Server-side rendered texts (email, SSH MOTD, push) in the recipient's language need culture data. Decide between keeping `InvariantGlobalization` (small, no libicu, but only invariant formatting and a hand-written plural rule for English and German in `IcuMessageFormatter`) and enabling ICU culture data (libicu in the image, about 30 MB, correct number, date and plural rules for every language). Today the daemon only renders the English `detail` fallback of problem details.
 - M5: web-based installer instead of a TUI. Boot from USB, open the setup page in a browser, choose the system disk, the system installs itself and continues setup in the same page. The console only shows the address.
 - M5: TLS as decided in `CLAUDE.md`: self-signed by default, trust wizard (local CA download with per-OS instructions), optional own domain with Let's Encrypt DNS-01. Passkeys and the service worker switch on once trusted.

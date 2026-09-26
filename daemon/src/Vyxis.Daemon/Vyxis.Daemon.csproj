@@ -8,6 +8,8 @@
     <PackageReference Include="Dapper" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Microsoft.Data.Sqlite" />
+    <PackageReference Include="NSec.Cryptography" />
+    <PackageReference Include="Otp.NET" />
     <PackageReference Include="Microsoft.Extensions.ApiDescription.Server">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -16,6 +18,9 @@
     <PackageReference Include="Serilog.AspNetCore" />
     <PackageReference Include="Serilog.Formatting.Compact" />
     <PackageReference Include="Serilog.Sinks.File" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Vyxis.Daemon.Tests" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="../../../i18n/en/errors.json" LogicalName="i18n/en/errors.json" />
