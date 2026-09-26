@@ -41,6 +41,18 @@
       "reserved": "The user name {username} is reserved for the system."
     }
   },
+  "realtime": {
+    "message": {
+      "invalid": "The live connection received a message it does not understand."
+    },
+    "topic": {
+      "invalid": "{topic} is not a valid topic name or pattern.",
+      "unknown": "There is no live data topic named {topic}."
+    },
+    "upgrade": {
+      "required": "This address only accepts WebSocket connections."
+    }
+  },
   "request": {
     "body": {
       "invalid": "The request contains invalid data."
@@ -58,6 +70,9 @@
   "system": {
     "internal": {
       "unexpected": "Something went wrong on the server. The request id helps to find the details in the logs."
+    },
+    "origin": {
+      "forbidden": "The request came from another website and was rejected."
     }
   }
 }

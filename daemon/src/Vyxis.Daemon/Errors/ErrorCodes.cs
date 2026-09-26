@@ -59,6 +59,18 @@ public static class ErrorCodes
     public const string AuthUsernameReserved = "auth.username.reserved";
 
     [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string RealtimeMessageInvalid = "realtime.message.invalid";
+
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string RealtimeTopicInvalid = "realtime.topic.invalid";
+
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string RealtimeTopicUnknown = "realtime.topic.unknown";
+
+    [ErrorStatus(HttpStatusCode.UpgradeRequired)]
+    public const string RealtimeUpgradeRequired = "realtime.upgrade.required";
+
+    [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string RequestBodyInvalid = "request.body.invalid";
 
     [ErrorStatus(HttpStatusCode.UnsupportedMediaType)]
@@ -72,6 +84,9 @@ public static class ErrorCodes
 
     [ErrorStatus(HttpStatusCode.InternalServerError)]
     public const string SystemInternalUnexpected = "system.internal.unexpected";
+
+    [ErrorStatus(HttpStatusCode.Forbidden)]
+    public const string SystemOriginForbidden = "system.origin.forbidden";
 
     /// <summary>All codes with their HTTP status, ordered by code.</summary>
     public static FrozenDictionary<string, HttpStatusCode> All { get; } = typeof(ErrorCodes)

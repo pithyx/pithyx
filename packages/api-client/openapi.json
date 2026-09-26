@@ -382,6 +382,29 @@
   },
   "components": {
     "schemas": {
+      "AckMessage": {
+        "required": [
+          "id",
+          "type",
+          "requestId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "type": {
+            "enum": [
+              "ack"
+            ],
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          }
+        },
+        "description": "Confirms a `sub` or `unsub`. For `sub`, the snapshots of matching topics follow."
+      },
       "ApiProblem": {
         "required": [
           "type",
@@ -420,6 +443,32 @@
         },
         "description": "RFC 9457 problem details as returned by every failing API call. The detail text is an English fallback;\nclients show the translation of the error code instead."
       },
+      "ClientMessage": {
+        "required": [
+          "type",
+          "id",
+          "topic"
+        ],
+        "type": "object",
+        "properties": {
+          "type": {
+            "enum": [
+              "sub",
+              "unsub"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "type": "string",
+            "description": "Chosen by the client; echoed in the ack, snapshots and errors that answer this message."
+          },
+          "topic": {
+            "type": "string",
+            "description": "Topic name or pattern with `+` and `#`."
+          }
+        },
+        "description": "A message from the client: `sub` or `unsub` for a topic or pattern."
+      },
       "DaemonMode": {
         "enum": [
           "real",
@@ -444,13 +493,75 @@
           "auth.totp.not_enrolled",
           "auth.username.invalid",
           "auth.username.reserved",
+          "realtime.message.invalid",
+          "realtime.topic.invalid",
+          "realtime.topic.unknown",
+          "realtime.upgrade.required",
           "request.body.invalid",
           "request.media_type.unsupported",
           "request.method.not_allowed",
           "request.route.not_found",
-          "system.internal.unexpected"
+          "system.internal.unexpected",
+          "system.origin.forbidden"
         ],
         "type": "string"
+      },
+      "ErrorMessage": {
+        "required": [
+          "id",
+          "code",
+          "params",
+          "type",
+          "requestId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "params": {
+            "type": "object",
+            "additionalProperties": { }
+          },
+          "type": {
+            "enum": [
+              "error"
+            ],
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          }
+        },
+        "description": "A failed client message. `id` is empty when the message could not be parsed."
+      },
+      "EventMessage": {
+        "required": [
+          "topic",
+          "data",
+          "type",
+          "requestId"
+        ],
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string"
+          },
+          "data": { },
+          "type": {
+            "enum": [
+              "event"
+            ],
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          }
+        },
+        "description": "A change of a topic. `requestId` is the id of the action that caused it, if any."
       },
       "HealthResponse": {
         "required": [
@@ -560,6 +671,31 @@
           }
         }
       },
+      "ServerMessage": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/AckMessage"
+          },
+          {
+            "$ref": "#/components/schemas/SnapshotMessage"
+          },
+          {
+            "$ref": "#/components/schemas/EventMessage"
+          },
+          {
+            "$ref": "#/components/schemas/ErrorMessage"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "type",
+          "mapping": {
+            "ack": "#/components/schemas/AckMessage",
+            "snap": "#/components/schemas/SnapshotMessage",
+            "event": "#/components/schemas/EventMessage",
+            "error": "#/components/schemas/ErrorMessage"
+          }
+        }
+      },
       "SetupRequest": {
         "required": [
           "username",
@@ -606,6 +742,105 @@
         "properties": {
           "required": {
             "type": "boolean"
+          }
+        }
+      },
+      "SnapshotMessage": {
+        "required": [
+          "id",
+          "topic",
+          "data",
+          "type",
+          "requestId"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "topic": {
+            "type": "string"
+          },
+          "data": { },
+          "type": {
+            "enum": [
+              "snap"
+            ],
+            "type": "string"
+          },
+          "requestId": {
+            "type": "string"
+          }
+        },
+        "description": "The full current state of a topic, sent after `sub`. Only changes follow as events."
+      },
+      "SystemInfo": {
+        "required": [
+          "hostname",
+          "uptimeSeconds",
+          "loadAverage",
+          "cpuPercent",
+          "memoryTotalBytes",
+          "memoryAvailableBytes"
+        ],
+        "type": "object",
+        "properties": {
+          "hostname": {
+            "type": "string",
+            "description": "The host name of the box."
+          },
+          "uptimeSeconds": {
+            "type": "number",
+            "description": "Seconds since boot.",
+            "format": "double"
+          },
+          "loadAverage": {
+            "type": "array",
+            "items": {
+              "type": "number",
+              "format": "double"
+            },
+            "description": "Over 1, 5 and 15 minutes."
+          },
+          "cpuPercent": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "description": "Usage since the previous sample; null for the very first one.",
+            "format": "double"
+          },
+          "memoryTotalBytes": {
+            "type": "integer",
+            "description": "Physical memory.",
+            "format": "int64"
+          },
+          "memoryAvailableBytes": {
+            "type": "integer",
+            "description": "Memory available for new work without swapping, including reclaimable caches.",
+            "format": "int64"
+          }
+        }
+      },
+      "TopicEvents": {
+        "required": [
+          "system/info"
+        ],
+        "type": "object",
+        "properties": {
+          "system/info": {
+            "$ref": "#/components/schemas/SystemInfo"
+          }
+        }
+      },
+      "TopicSnapshots": {
+        "required": [
+          "system/info"
+        ],
+        "type": "object",
+        "properties": {
+          "system/info": {
+            "$ref": "#/components/schemas/SystemInfo"
           }
         }
       },

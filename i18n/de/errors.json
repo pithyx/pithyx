@@ -41,6 +41,18 @@
       "reserved": "Der Benutzername {username} ist für das System reserviert."
     }
   },
+  "realtime": {
+    "message": {
+      "invalid": "Die Live-Verbindung hat eine unverständliche Nachricht erhalten."
+    },
+    "topic": {
+      "invalid": "{topic} ist kein gültiger Topic-Name und kein gültiges Muster.",
+      "unknown": "Es gibt kein Live-Daten-Topic namens {topic}."
+    },
+    "upgrade": {
+      "required": "Diese Adresse akzeptiert nur WebSocket-Verbindungen."
+    }
+  },
   "request": {
     "body": {
       "invalid": "Die Anfrage enthält ungültige Daten."
@@ -58,6 +70,9 @@
   "system": {
     "internal": {
       "unexpected": "Auf dem Server ist ein Fehler aufgetreten. Mit der Request-ID lassen sich die Details in den Logs finden."
+    },
+    "origin": {
+      "forbidden": "Die Anfrage kam von einer anderen Website und wurde abgelehnt."
     }
   }
 }

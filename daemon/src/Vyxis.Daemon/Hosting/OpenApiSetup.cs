@@ -3,6 +3,7 @@ using System.Text.Json.Serialization.Metadata;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
 using Vyxis.Daemon.Errors;
+using Vyxis.Daemon.Realtime;
 
 namespace Vyxis.Daemon.Hosting;
 
@@ -55,6 +56,8 @@ public static class OpenApiSetup
         problem.Properties["params"] = new OpenApiSchema { Type = JsonSchemaType.Object, AdditionalProperties = new OpenApiSchema() };
         document.Components.Schemas["ApiProblem"] = problem;
 
+        await AddRealtimeContractsAsync(document, context, cancellationToken);
+
         foreach (var path in document.Paths.Values)
         {
             if (path.Operations is null)
@@ -74,5 +77,67 @@ public static class OpenApiSetup
                 };
             }
         }
+    }
+
+    // The WebSocket protocol is not an HTTP operation, so its messages and the data type of every topic are added as
+    // components: ServerMessage (discriminated by type), ClientMessage, TopicSnapshots and TopicEvents.
+    private static async Task AddRealtimeContractsAsync(OpenApiDocument document, OpenApiDocumentTransformerContext context, CancellationToken cancellationToken)
+    {
+        var schemas = document.Components!.Schemas!;
+
+        async Task<IOpenApiSchema> ComponentAsync(string name, Type type, string? typeValue = null)
+        {
+            if (!schemas.ContainsKey(name))
+            {
+                var schema = await context.GetOrCreateSchemaAsync(type, cancellationToken: cancellationToken);
+                if (typeValue is not null)
+                {
+                    schema.Properties!["type"] = new OpenApiSchema { Type = JsonSchemaType.String, Enum = [JsonValue.Create(typeValue)] };
+                }
+                schemas[name] = schema;
+            }
+            return new OpenApiSchemaReference(name, document);
+        }
+
+        var client = await context.GetOrCreateSchemaAsync(typeof(ClientMessage), cancellationToken: cancellationToken);
+        client.Properties!["type"] = new OpenApiSchema { Type = JsonSchemaType.String, Enum = [JsonValue.Create("sub"), JsonValue.Create("unsub")] };
+        schemas["ClientMessage"] = client;
+
+        var variants = new Dictionary<string, (string Name, Type Type)>(StringComparer.Ordinal)
+        {
+            ["ack"] = ("AckMessage", typeof(AckMessage)),
+            ["snap"] = ("SnapshotMessage", typeof(SnapshotMessage)),
+            ["event"] = ("EventMessage", typeof(EventMessage)),
+            ["error"] = ("ErrorMessage", typeof(ErrorMessage)),
+        };
+        var mapping = new Dictionary<string, OpenApiSchemaReference>(StringComparer.Ordinal);
+        var oneOf = new List<IOpenApiSchema>();
+        foreach (var (typeValue, (name, type)) in variants)
+        {
+            var reference = (OpenApiSchemaReference)await ComponentAsync(name, type, typeValue);
+            mapping[typeValue] = reference;
+            oneOf.Add(reference);
+        }
+        var error = (OpenApiSchema)schemas["ErrorMessage"];
+        error.Properties!["code"] = new OpenApiSchemaReference("ErrorCode", document);
+        error.Properties["params"] = new OpenApiSchema { Type = JsonSchemaType.Object, AdditionalProperties = new OpenApiSchema() };
+        schemas["ServerMessage"] = new OpenApiSchema
+        {
+            OneOf = oneOf,
+            Discriminator = new OpenApiDiscriminator { PropertyName = "type", Mapping = mapping },
+        };
+
+        var registry = context.ApplicationServices.GetRequiredService<TopicRegistry>();
+        var snapshots = new OpenApiSchema { Type = JsonSchemaType.Object, Properties = new Dictionary<string, IOpenApiSchema>(StringComparer.Ordinal) };
+        var events = new OpenApiSchema { Type = JsonSchemaType.Object, Properties = new Dictionary<string, IOpenApiSchema>(StringComparer.Ordinal) };
+        foreach (var definition in registry.All)
+        {
+            snapshots.Properties[definition.Pattern] = await ComponentAsync(definition.SnapshotType.Name, definition.SnapshotType);
+            events.Properties[definition.Pattern] = await ComponentAsync(definition.EventType.Name, definition.EventType);
+        }
+        snapshots.Required = new HashSet<string>(snapshots.Properties.Keys, StringComparer.Ordinal);
+        events.Required = new HashSet<string>(events.Properties.Keys, StringComparer.Ordinal);
+        schemas["TopicSnapshots"] = snapshots;
+        schemas["TopicEvents"] = events;
     }
 }

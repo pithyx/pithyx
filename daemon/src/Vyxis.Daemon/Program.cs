@@ -9,6 +9,8 @@ using Vyxis.Daemon.Database;
 using Vyxis.Daemon.Errors;
 using Vyxis.Daemon.Health;
 using Vyxis.Daemon.Hosting;
+using Vyxis.Daemon.Monitoring;
+using Vyxis.Daemon.Realtime;
 
 const int HttpPort = 8994;
 
@@ -33,6 +35,11 @@ builder.Services.AddSingleton(new SqliteConnectionFactory(paths.DatabasePath));
 builder.Services.AddSingleton<MigrationRunner>();
 builder.Services.AddVyxisErrors();
 builder.Services.AddVyxisAuth();
+builder.Services.AddSingleton<TopicRegistry>();
+builder.Services.AddSingleton<TopicHub>();
+builder.Services.AddSingleton<SystemInfoSampler>();
+builder.Services.AddSingleton(services => SystemInfoPublisher.Definition(services.GetRequiredService<SystemInfoSampler>()));
+builder.Services.AddHostedService<SystemInfoPublisher>();
 builder.Services.AddVyxisOpenApi();
 
 if (mode == DaemonMode.Simulated)
@@ -72,6 +79,7 @@ app.UseExceptionHandler();
 // which serves its index.html as the SPA fallback.
 app.UseWhen(context => IsApiRequest(context.Request.Path), api => api.UseStatusCodePages());
 app.UseMiddleware<CsrfMiddleware>();
+app.UseWebSockets(new WebSocketOptions { KeepAliveInterval = TimeSpan.FromSeconds(30), KeepAliveTimeout = TimeSpan.FromSeconds(30) });
 app.UseAuthentication();
 app.UseAuthorization();
 
@@ -90,6 +98,7 @@ api.MapGet("/health", () => TypedResults.Ok(new HealthResponse("ok", mode)))
     .AllowAnonymous();
 
 api.MapAuthEndpoints();
+app.MapRealtime();
 
 await app.RunAsync();
 return 0;

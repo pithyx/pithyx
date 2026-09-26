@@ -165,6 +165,16 @@ export type paths = {
 export type webhooks = Record<string, never>;
 export type components = {
     schemas: {
+        /** @description Confirms a `sub` or `unsub`. For `sub`, the snapshots of matching topics follow. */
+        AckMessage: {
+            id: string;
+            requestId: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "ack";
+        };
         /**
          * @description RFC 9457 problem details as returned by every failing API call. The detail text is an English fallback;
          *     clients show the translation of the error code instead.
@@ -181,10 +191,44 @@ export type components = {
             title: string;
             type: string;
         };
+        /** @description A message from the client: `sub` or `unsub` for a topic or pattern. */
+        ClientMessage: {
+            /** @description Chosen by the client; echoed in the ack, snapshots and errors that answer this message. */
+            id: string;
+            /** @description Topic name or pattern with `+` and `#`. */
+            topic: string;
+            /** @enum {string} */
+            type: "sub" | "unsub";
+        };
         /** @enum {unknown} */
         DaemonMode: "real" | "simulated";
         /** @enum {string} */
-        ErrorCode: "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "system.internal.unexpected";
+        ErrorCode: "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "system.internal.unexpected" | "system.origin.forbidden";
+        /** @description A failed client message. `id` is empty when the message could not be parsed. */
+        ErrorMessage: {
+            code: components["schemas"]["ErrorCode"];
+            id: string;
+            params: {
+                [key: string]: unknown;
+            };
+            requestId: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "error";
+        };
+        /** @description A change of a topic. `requestId` is the id of the action that caused it, if any. */
+        EventMessage: {
+            data: unknown;
+            requestId: string;
+            topic: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "event";
+        };
         HealthResponse: {
             mode: components["schemas"]["DaemonMode"];
             status: string;
@@ -213,6 +257,7 @@ export type components = {
             /** @description Shown exactly once. Each code replaces a TOTP code for one login. */
             codes: string[];
         };
+        ServerMessage: components["schemas"]["AckMessage"] | components["schemas"]["SnapshotMessage"] | components["schemas"]["EventMessage"] | components["schemas"]["ErrorMessage"];
         SetupRequest: {
             displayName?: null | string;
             password: string;
@@ -226,6 +271,50 @@ export type components = {
         };
         SetupStatus: {
             required: boolean;
+        };
+        /** @description The full current state of a topic, sent after `sub`. Only changes follow as events. */
+        SnapshotMessage: {
+            data: unknown;
+            id: string;
+            requestId: string;
+            topic: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "snap";
+        };
+        SystemInfo: {
+            /**
+             * Format: double
+             * @description Usage since the previous sample; null for the very first one.
+             */
+            cpuPercent: null | number;
+            /** @description The host name of the box. */
+            hostname: string;
+            /** @description Over 1, 5 and 15 minutes. */
+            loadAverage: number[];
+            /**
+             * Format: int64
+             * @description Memory available for new work without swapping, including reclaimable caches.
+             */
+            memoryAvailableBytes: number;
+            /**
+             * Format: int64
+             * @description Physical memory.
+             */
+            memoryTotalBytes: number;
+            /**
+             * Format: double
+             * @description Seconds since boot.
+             */
+            uptimeSeconds: number;
+        };
+        TopicEvents: {
+            "system/info": components["schemas"]["SystemInfo"];
+        };
+        TopicSnapshots: {
+            "system/info": components["schemas"]["SystemInfo"];
         };
         TotpConfirmRequest: {
             code: string;

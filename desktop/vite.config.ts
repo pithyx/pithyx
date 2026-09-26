@@ -9,7 +9,18 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': { target: daemonUrl, changeOrigin: true },
-      '/ws': { target: daemonUrl, changeOrigin: true, ws: true },
+      '/ws': {
+        target: daemonUrl,
+        changeOrigin: true,
+        ws: true,
+        // The daemon only accepts WebSocket connections from its own origin. In development the page comes from
+        // the Vite server, so the proxy presents the daemon's origin instead.
+        configure: (proxy) => {
+          proxy.on('proxyReqWs', (proxyRequest) => {
+            proxyRequest.setHeader('origin', new URL(daemonUrl).origin);
+          });
+        },
+      },
     },
   },
 });

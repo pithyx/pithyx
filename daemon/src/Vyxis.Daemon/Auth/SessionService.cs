@@ -84,6 +84,9 @@ public sealed class SessionService(SqliteConnectionFactory connections, TimeProv
         IsEssential = true,
     };
 
+    /// <summary>The public id of a session: hex SHA-256 of its token.</summary>
+    public static string IdOf(string token) => Convert.ToHexString(Secrets.Sha256(token));
+
     internal static string Format(DateTimeOffset value) => value.UtcDateTime.ToString("O", CultureInfo.InvariantCulture);
 
     internal static DateTimeOffset Parse(string value) => DateTimeOffset.Parse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
