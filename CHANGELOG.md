@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Design tokens for the desktop (`desktop/src/theme/`): colors defined once for light and dark with `light-dark()`, seven accent presets with petrol as default, type scale, spacing, radii, elevation and motion. A Vitest check enforces WCAG AA contrast for every preset in both themes.
+- Self-hosted fonts shipped unmodified from their official releases (IBM Plex Sans, Sora, JetBrains Mono) with their licenses, fetched and verified by `tools/fonts/fetch-fonts.sh`, and `desktop/public/third-party-notices.json`.
+- UI primitives on React Aria Components with CSS Modules and Tabler icons, and presentational desktop shell components (wallpaper, taskbar, start menu, windows, desktop icons, sticky notes, notifications, app switcher, sign-in layout).
+- Generated CSS Module class name types (`desktop/scripts/css-module-types.ts`), so an unknown class name is a type error.
+- Developer-only design gallery (`pnpm design`, `design.html` on port 5174) with the step 4 mockups at phone, tablet and laptop width in light and dark. It is not part of the production build.
 - Monorepo scaffold: .NET 10 daemon with a health endpoint, React desktop, SDK and API client packages.
 - Tooling: EditorConfig, ESLint, Prettier, Vitest, xUnit, lefthook hooks, repository checks and CI.
 - Project files: AGPL-3.0 license (SDK under MIT), attribution notice, contributing guide, security policy.

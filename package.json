@@ -9,7 +9,8 @@
   "scripts": {
     "prepare": "lefthook install",
     "dev": "pnpm --filter @vyxis/desktop dev",
-    "lint": "eslint .",
+    "design": "pnpm --filter @vyxis/desktop design",
+    "lint": "pnpm --filter @vyxis/desktop css-types && eslint .",
     "typecheck": "tsc -p tsconfig.json && pnpm -r --parallel typecheck",
     "test": "pnpm -r test",
     "e2e": "pnpm --filter @vyxis/e2e e2e",

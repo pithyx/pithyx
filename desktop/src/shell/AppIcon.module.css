@@ -1,0 +1,60 @@
+.tile {
+  --tone: var(--petrol-500);
+  --tone-bright: var(--petrol-300);
+  display: inline-grid;
+  flex: none;
+  place-items: center;
+  background: linear-gradient(
+    160deg,
+    light-dark(
+      color-mix(in oklab, var(--tone) 12%, white),
+      color-mix(in oklab, var(--tone) 40%, black)
+    ),
+    light-dark(
+      color-mix(in oklab, var(--tone) 24%, white),
+      color-mix(in oklab, var(--tone) 58%, black)
+    )
+  );
+  box-shadow: inset 0 0 0 1px color-mix(in oklab, var(--tone) 30%, transparent);
+  color: light-dark(var(--tone), var(--tone-bright));
+}
+
+.petrol {
+  --tone: #1a6e82;
+  --tone-bright: #8fd0de;
+}
+
+.ocean {
+  --tone: #1f5fae;
+  --tone-bright: #a4cbf6;
+}
+
+.indigo {
+  --tone: #4a4fb8;
+  --tone-bright: #bec1fa;
+}
+
+.plum {
+  --tone: #7d3b8c;
+  --tone-bright: #e3b8ee;
+}
+
+.rose {
+  --tone: #b0305a;
+  --tone-bright: #f8b7c9;
+}
+
+.moss {
+  --tone: #4f6b1f;
+  --tone-bright: #c6e19e;
+}
+
+.amber {
+  --tone: #9a6a12;
+  --tone-bright: #f3cf86;
+}
+
+.graphite {
+  --tone: #3f4a55;
+  --tone-bright: #d3dae0;
+}

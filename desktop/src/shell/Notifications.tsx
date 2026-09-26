@@ -1,0 +1,156 @@
+import { IconX } from '@tabler/icons-react';
+import type { ReactNode } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Button, IconButton } from '../ui/Button';
+import { ProgressBar } from '../ui/Controls';
+import { cx } from '../ui/cx';
+import { AppIcon } from './AppIcon';
+import styles from './Notifications.module.css';
+import type { AppInfo, TaskbarPosition } from './types';
+
+export interface NotificationItem {
+  id: string;
+  app: Pick<AppInfo, 'icon' | 'tone' | 'name'>;
+  title: string;
+  body: string;
+  /** Minutes ago, formatted with Intl.RelativeTimeFormat. */
+  minutesAgo: number;
+  unread?: boolean;
+  tone?: 'default' | 'success' | 'warning' | 'danger';
+  action?: string;
+}
+
+export interface JobItem {
+  id: string;
+  title: string;
+  progress: number;
+  detail: string;
+}
+
+function useRelativeTime(locale: string) {
+  const format = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+  return (minutes: number) =>
+    minutes < 60
+      ? format.format(-minutes, 'minute')
+      : format.format(-Math.round(minutes / 60), 'hour');
+}
+
+function NotificationCard({
+  item,
+  locale,
+  toast = false,
+}: {
+  item: NotificationItem;
+  locale: string;
+  toast?: boolean;
+}) {
+  const { t } = useTranslation();
+  const relative = useRelativeTime(locale);
+  return (
+    <article
+      className={cx(styles.card, toast && styles.toast)}
+      data-tone={item.tone ?? 'default'}
+      data-unread={item.unread === true ? true : undefined}
+    >
+      <AppIcon app={item.app} size={32} />
+      <div className={styles.cardBody}>
+        <p className={styles.meta}>
+          <span>{item.app.name}</span>
+          <span aria-hidden>·</span>
+          <span>{relative(item.minutesAgo)}</span>
+        </p>
+        <h3 className={styles.cardTitle}>{item.title}</h3>
+        <p className={styles.text}>{item.body}</p>
+        {item.action !== undefined && (
+          <div className={styles.actions}>
+            <Button size="sm">{item.action}</Button>
+          </div>
+        )}
+      </div>
+      <IconButton label={t('notifications.dismiss')} size="sm" className={styles.dismiss}>
+        <IconX size={15} stroke={2} />
+      </IconButton>
+    </article>
+  );
+}
+
+/** Toasts appear next to the status area: above a bottom taskbar, below a top one. */
+export function ToastStack({
+  items,
+  locale,
+  position,
+}: {
+  items: NotificationItem[];
+  locale: string;
+  position: TaskbarPosition;
+}) {
+  const { t } = useTranslation();
+  return (
+    <section
+      className={styles.stack}
+      data-position={position}
+      aria-label={t('notifications.toasts')}
+      aria-live="polite"
+    >
+      {items.map((item) => (
+        <NotificationCard key={item.id} item={item} locale={locale} toast />
+      ))}
+    </section>
+  );
+}
+
+/** The panel behind the bell: running jobs first, then notifications. */
+export function NotificationPanel({
+  jobs,
+  items,
+  locale,
+  position,
+  footer,
+}: {
+  jobs: JobItem[];
+  items: NotificationItem[];
+  locale: string;
+  position: TaskbarPosition;
+  footer?: ReactNode;
+}) {
+  const { t } = useTranslation();
+  return (
+    <section
+      className={styles.panel}
+      data-position={position}
+      role="dialog"
+      aria-label={t('notifications.title')}
+    >
+      <header className={styles.panelHeader}>
+        <h2 className={styles.panelTitle}>{t('notifications.title')}</h2>
+        <Button variant="quiet" size="sm">
+          {t('notifications.clearAll')}
+        </Button>
+      </header>
+      <div className={styles.panelBody}>
+        {jobs.length > 0 && (
+          <section className={styles.group} aria-labelledby="panel-jobs">
+            <h3 id="panel-jobs" className={styles.groupTitle}>
+              {t('notifications.jobs')}
+            </h3>
+            {jobs.map((job) => (
+              <div key={job.id} className={styles.job}>
+                <ProgressBar label={job.title} value={job.progress} />
+                <p className={styles.jobDetail}>{job.detail}</p>
+              </div>
+            ))}
+          </section>
+        )}
+        <section className={styles.group} aria-labelledby="panel-items">
+          <h3 id="panel-items" className={styles.groupTitle}>
+            {t('notifications.recent')}
+          </h3>
+          {items.map((item) => (
+            <NotificationCard key={item.id} item={item} locale={locale} />
+          ))}
+        </section>
+      </div>
+      {footer}
+    </section>
+  );
+}

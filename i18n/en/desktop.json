@@ -9,7 +9,8 @@
     "languageAuto": "Automatic",
     "twoFactor": "Two-factor authentication",
     "signOut": "Sign out",
-    "signedInAs": "Signed in as {name}"
+    "signedInAs": "Signed in as {name}",
+    "personalization": "Personalization"
   },
   "error": {
     "title": "Something went wrong",
@@ -22,5 +23,69 @@
     "reconnecting": "Connection lost. Reconnecting…",
     "stopped": "The live connection was refused. Reload the page."
   },
-  "brand": "Vyxis"
+  "brand": "Vyxis",
+  "ui": {
+    "password": {
+      "show": "Show password",
+      "hide": "Hide password"
+    },
+    "search": {
+      "clear": "Clear search"
+    }
+  },
+  "taskbar": {
+    "label": "Taskbar",
+    "start": "Start",
+    "runningApps": "Running apps",
+    "app": "{state, select, minimized {{name}, minimized} focused {{name}, active} other {{name}}}",
+    "switcher": "{count, plural, one {Switch apps, # open} other {Switch apps, # open}}",
+    "jobs": "{count, plural, one {# running task} other {# running tasks}}",
+    "notifications": "{count, plural, =0 {Notifications} one {Notifications, # unread} other {Notifications, # unread}}",
+    "userMenu": "Account menu for {name}"
+  },
+  "start": {
+    "label": "Start menu",
+    "searchLabel": "Search",
+    "search": "Search apps, settings and files",
+    "pinned": "Pinned",
+    "recent": "Recent files",
+    "resultsLabel": "Search results",
+    "results": {
+      "apps": "Apps",
+      "settings": "Settings",
+      "files": "Files"
+    },
+    "noResults": "Nothing found for “{query}”.",
+    "openHint": "Open",
+    "power": "Power options",
+    "restart": "Restart",
+    "shutDown": "Shut down"
+  },
+  "window": {
+    "minimize": "Minimize",
+    "maximize": "Maximize",
+    "restore": "Restore",
+    "close": "Close"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "toasts": "New notifications",
+    "jobs": "Running tasks",
+    "recent": "Recent",
+    "clearAll": "Clear all",
+    "dismiss": "Dismiss"
+  },
+  "switcher": {
+    "title": "Open apps",
+    "closeAll": "Close all",
+    "close": "Close {name}",
+    "open": "Switch to {name}"
+  },
+  "items": {
+    "desktop": "Desktop",
+    "label": "Desktop items",
+    "shortcut": "{name}, shortcut",
+    "note": "Sticky note",
+    "removeNote": "Remove note"
+  }
 }

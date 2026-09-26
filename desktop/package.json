@@ -4,12 +4,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "design": "vite --host --port 5174 --strictPort",
     "build": "vite build",
     "preview": "vite preview",
-    "typecheck": "tsc -p tsconfig.json",
+    "css-types": "node scripts/css-module-types.ts",
+    "typecheck": "node scripts/css-module-types.ts && tsc -p tsconfig.json",
     "test": "vitest run"
   },
   "dependencies": {
+    "@tabler/icons-react": "^3.48.0",
     "@tanstack/react-query": "^5.103.2",
     "@vyxis/api-client": "workspace:*",
     "i18next": "^26.4.2",
@@ -17,6 +20,7 @@
     "intl-messageformat": "^11.2.15",
     "qrcode-generator": "^2.0.4",
     "react": "^19.3.0",
+    "react-aria-components": "^1.21.1",
     "react-dom": "^19.3.0",
     "react-i18next": "^17.0.15",
     "zustand": "^5.0.15"

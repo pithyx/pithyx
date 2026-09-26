@@ -1,0 +1,41 @@
+.mark {
+  flex: none;
+}
+
+/* In the dark theme the deep face would vanish on dark surfaces, so the mark uses the lighter petrol steps. */
+.deep {
+  fill: light-dark(var(--petrol-900), var(--petrol-700));
+}
+
+.left {
+  fill: light-dark(var(--petrol-700), var(--petrol-500));
+}
+
+.right {
+  fill: light-dark(var(--petrol-500), var(--petrol-400));
+}
+
+.top {
+  fill: var(--amber-500);
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.name {
+  font-family: var(--font-display);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-display);
+}
+
+.large {
+  gap: var(--space-3);
+}
+
+.large .name {
+  font-size: var(--font-size-display-1);
+}

@@ -62,6 +62,10 @@ Fixtures are recorded on a real machine with `tools/fixtures/record.sh <scenario
 
 While the daemon runs in development, the API reference is at http://localhost:8994/api/docs and the OpenAPI document at `/api/openapi.json`. The database is `.vyxis-dev/vyxis.db` (override with `VYXIS_DB`); stop the daemon and delete `.vyxis-dev/` to start over with a fresh setup. Logs are JSON lines in `.vyxis-dev/logs/daemon.json` (override with `VYXIS_LOG_DIR`); every entry carries the `RequestId` that error responses and the desktop show, so `grep <request id> .vyxis-dev/logs/daemon.json` finds everything that happened for one request.
 
+### Design gallery
+
+`pnpm design` starts a Vite server on port 5174 (all interfaces) with the design mockups at `/design.html`: every screen at phone, tablet and laptop width in light and dark, with switches for accent, taskbar position and language. It is a development tool only; the production build contains just `index.html`.
+
 ### API contracts
 
 The daemon build writes `packages/api-client/openapi.json`. The TypeScript types and the error code list in `packages/api-client/src/generated/` are generated from it; never edit them by hand. After changing an endpoint, a response type or an error code, run:

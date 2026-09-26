@@ -1,0 +1,49 @@
+[
+  {
+    "name": "IBM Plex Sans",
+    "version": "1.1.0 (@ibm/plex-sans)",
+    "license": "OFL-1.1",
+    "reservedFontName": "Plex",
+    "source": "https://github.com/IBM/plex",
+    "licenseFile": "fonts/ibm-plex-sans/LICENSE.txt",
+    "files": "fonts/ibm-plex-sans/*.woff2",
+    "modified": false
+  },
+  {
+    "name": "Sora",
+    "version": "sora-xor/sora-font@7f9a9c5d0ccd1c099cfac420aa27133df1c5fdc4",
+    "license": "OFL-1.1",
+    "reservedFontName": null,
+    "source": "https://github.com/sora-xor/sora-font",
+    "licenseFile": "fonts/sora/OFL.txt",
+    "files": "fonts/sora/*.woff2",
+    "modified": false,
+    "note": "Upstream publishes WOFF2, shipped unmodified. Its OFL.txt declares no Reserved Font Name (checked 2026-09-26)."
+  },
+  {
+    "name": "JetBrains Mono",
+    "version": "2.304",
+    "license": "OFL-1.1",
+    "reservedFontName": null,
+    "source": "https://github.com/JetBrains/JetBrainsMono",
+    "licenseFile": "fonts/jetbrains-mono/OFL.txt",
+    "files": "fonts/jetbrains-mono/*.woff2",
+    "modified": false
+  },
+  {
+    "name": "Tabler Icons for React",
+    "version": "3.48.0 (@tabler/icons-react)",
+    "license": "MIT",
+    "source": "https://github.com/tabler/tabler-icons",
+    "licenseFile": "licenses/tabler-icons-react.txt",
+    "modified": false
+  },
+  {
+    "name": "React Aria Components",
+    "version": "1.21.1 (react-aria-components)",
+    "license": "Apache-2.0",
+    "source": "https://github.com/adobe/react-spectrum",
+    "licenseFile": "licenses/react-aria-components.txt",
+    "modified": false
+  }
+]

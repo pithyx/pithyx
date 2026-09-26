@@ -1,0 +1,204 @@
+/*
+ * Design tokens. Colors are defined once with light-dark(): the theme follows the system unless
+ * <html data-theme="light|dark"> overrides it. contrast.test.ts checks the text and control pairs in both themes.
+ */
+:root {
+  color-scheme: light dark;
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+}
+
+:root {
+  /* Brand palette from the logo. */
+  --petrol-50: #e8f3f5;
+  --petrol-100: #cde6ec;
+  --petrol-200: #9fd0dc;
+  --petrol-300: #5fb3c6;
+  --petrol-400: #3e93a7;
+  --petrol-500: #1a6e82;
+  --petrol-600: #135d6e;
+  --petrol-700: #0e4a5a;
+  --petrol-800: #0a3945;
+  --petrol-900: #062a33;
+  --petrol-950: #041c22;
+  --amber-100: #fbeccb;
+  --amber-200: #f5d699;
+  --amber-300: #eebf66;
+  --amber-500: #e0a33a;
+  --amber-700: #8f6214;
+  --amber-900: #3d2a08;
+
+  /* Neutrals tinted toward petrol. */
+  --neutral-0: #ffffff;
+  --neutral-25: #f7fafa;
+  --neutral-50: #eff4f5;
+  --neutral-100: #e3ebed;
+  --neutral-200: #cfdbde;
+  --neutral-300: #adbfc4;
+  --neutral-400: #7d9399;
+  --neutral-500: #5e757b;
+  --neutral-600: #475c62;
+  --neutral-700: #33464b;
+  --neutral-750: #283c42;
+  --neutral-800: #1c3036;
+  --neutral-850: #14272c;
+  --neutral-900: #0f2126;
+  --neutral-950: #0a191d;
+  --neutral-1000: #061215;
+
+  /* Semantic colors, separate from the brand. Warning orange is kept clearly apart from the amber accent. */
+  --green-light: #1b7a40;
+  --green-dark: #6fd394;
+  --orange-light: #b3470c;
+  --orange-dark: #ff9b5c;
+  --red-light: #c0262d;
+  --red-dark: #ff8f8a;
+
+  /* Semantic tokens. */
+  --color-bg: light-dark(var(--neutral-50), var(--neutral-1000));
+  --color-surface-1: light-dark(var(--neutral-0), var(--neutral-900));
+  --color-surface-2: light-dark(var(--neutral-25), var(--neutral-950));
+  --color-surface-3: light-dark(var(--neutral-50), var(--neutral-850));
+  --color-surface-hover: light-dark(var(--neutral-100), var(--neutral-800));
+  --color-surface-pressed: light-dark(var(--neutral-200), var(--neutral-750));
+  --color-text: light-dark(var(--neutral-900), #e6f0f2);
+  --color-text-muted: light-dark(var(--neutral-600), #a2b8be);
+  --color-text-disabled: light-dark(var(--neutral-400), var(--neutral-500));
+  --color-border: light-dark(var(--neutral-200), var(--neutral-750));
+  --color-border-strong: light-dark(#71878d, #5d7c85);
+  --color-overlay: light-dark(rgb(6 42 51 / 32%), rgb(0 0 0 / 55%));
+
+  --color-focus: var(--color-accent);
+  --color-selection: var(--color-accent-subtle);
+
+  --color-success: light-dark(var(--green-light), var(--green-dark));
+  --color-success-surface: light-dark(#e3f4e9, #0f2d1c);
+  --color-warning: light-dark(var(--orange-light), var(--orange-dark));
+  --color-warning-surface: light-dark(#fdeee3, #3a1e0c);
+  --color-danger: light-dark(var(--red-light), var(--red-dark));
+  --color-danger-surface: light-dark(#fcebeb, #3a1416);
+  --color-danger-contrast: light-dark(#ffffff, #2a0708);
+
+  /* Amber highlights the brand (logo, badges). Never text on light backgrounds. */
+  --color-highlight: var(--amber-500);
+  --color-highlight-contrast: var(--petrol-900);
+
+  /* Desktop shell. */
+  --color-desktop: light-dark(#dce9ec, var(--petrol-950));
+  --color-taskbar: light-dark(rgb(247 250 250 / 80%), rgb(10 25 29 / 74%));
+  --color-taskbar-solid: light-dark(var(--neutral-25), var(--neutral-950));
+  --color-taskbar-border: light-dark(rgb(6 42 51 / 12%), rgb(255 255 255 / 8%));
+  --color-menu: light-dark(rgb(255 255 255 / 88%), rgb(15 33 38 / 86%));
+  --color-menu-solid: var(--color-surface-1);
+  --color-window-border: light-dark(rgb(6 42 51 / 16%), rgb(255 255 255 / 10%));
+  --color-window-border-focused: light-dark(rgb(6 42 51 / 24%), rgb(255 255 255 / 16%));
+  --color-titlebar: var(--color-surface-1);
+  --color-titlebar-unfocused: var(--color-surface-2);
+  --color-desktop-label: #ffffff;
+  --color-desktop-label-bg: rgb(4 28 34 / 64%);
+  --color-note: light-dark(var(--amber-100), #3a2c10);
+  --color-note-text: light-dark(#3a2a0a, #f6e6c4);
+  --color-note-bar: light-dark(var(--amber-200), #4a3814);
+
+  /* Typography. */
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-display: 'Sora', 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.8125rem;
+  --font-size-md: 0.875rem;
+  --font-size-lg: 1rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-display-1: 2rem;
+  --font-size-display-2: 2.5rem;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --line-height-tight: 1.2;
+  --line-height-normal: 1.45;
+  --line-height-relaxed: 1.6;
+  --letter-spacing-display: -0.02em;
+
+  /* Spacing on a 4 px grid. */
+  --space-0: 2px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  /* Radii. */
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-full: 999px;
+
+  /* Elevation. The shadow color is darker and denser in the dark theme. */
+  --shadow-color: light-dark(rgb(6 42 51 / 14%), rgb(0 0 0 / 45%));
+  --shadow-color-strong: light-dark(rgb(6 42 51 / 22%), rgb(0 0 0 / 60%));
+  --shadow-1: 0 1px 2px var(--shadow-color);
+  --shadow-2: 0 2px 6px var(--shadow-color), 0 1px 2px var(--shadow-color);
+  --shadow-3: 0 10px 28px var(--shadow-color-strong), 0 2px 6px var(--shadow-color);
+  --shadow-4: 0 24px 64px var(--shadow-color-strong), 0 4px 12px var(--shadow-color);
+
+  /* Motion. Fades stay under reduced motion; movement collapses. */
+  --duration-instant: 100ms;
+  --duration-fast: 160ms;
+  --duration-normal: 240ms;
+  --duration-slow: 400ms;
+  --duration-fade: 160ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-enter: cubic-bezier(0, 0, 0, 1);
+  --ease-exit: cubic-bezier(0.3, 0, 1, 1);
+
+  /* Layers. */
+  --z-desktop: 0;
+  --z-windows: 100;
+  --z-taskbar: 5000;
+  --z-menu: 6000;
+  --z-toast: 7000;
+  --z-modal: 8000;
+  --z-tooltip: 9000;
+
+  /* Sizes. */
+  --touch-target: 44px;
+  --control-height: 36px;
+  --taskbar-size: 52px;
+  --titlebar-height: 40px;
+  --desktop-icon-width: 88px;
+}
+
+@media (pointer: coarse) {
+  :root {
+    --control-height: var(--touch-target);
+    --titlebar-height: var(--touch-target);
+    --taskbar-size: 60px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --duration-instant: 1ms;
+    --duration-fast: 1ms;
+    --duration-normal: 1ms;
+    --duration-slow: 1ms;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce), (forced-colors: active) {
+  :root {
+    --color-taskbar: var(--color-taskbar-solid);
+    --color-menu: var(--color-menu-solid);
+  }
+}
