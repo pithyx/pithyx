@@ -1,0 +1,9 @@
+{
+  "command": "udevadm",
+  "args": [
+    "monitor",
+    "--udev",
+    "--subsystem-match=block"
+  ],
+  "exitCode": 0
+}

@@ -68,4 +68,24 @@ public sealed class ProcessCommandRunnerTests
 
         Assert.Equal(activity.Id, result.StandardOutput);
     }
+
+    [Fact]
+    public async Task StreamsLinesAndKillsTheCommandWhenCancelled()
+    {
+        using var cancel = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        var lines = new List<string>();
+        var started = DateTime.UtcNow;
+
+        await foreach (var line in _runner.StreamLinesAsync(new CommandRequest("sh", ["-c", "echo one; echo two; sleep 30"]), cancel.Token))
+        {
+            lines.Add(line);
+            if (lines.Count == 2)
+            {
+                await cancel.CancelAsync();
+            }
+        }
+
+        Assert.Equal(["one", "two"], lines);
+        Assert.True(DateTime.UtcNow - started < TimeSpan.FromSeconds(10));
+    }
 }

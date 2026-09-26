@@ -35,6 +35,36 @@
         }
       }
     },
+    "/api/disks": {
+      "get": {
+        "tags": [
+          "Storage"
+        ],
+        "operationId": "GetDisks",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DiskList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/setup": {
       "get": {
         "tags": [
@@ -475,6 +505,266 @@
           "simulated"
         ]
       },
+      "Disk": {
+        "required": [
+          "id",
+          "name",
+          "path",
+          "serial",
+          "wwn",
+          "model",
+          "vendor",
+          "sizeBytes",
+          "rotational",
+          "transport",
+          "removable",
+          "readOnly",
+          "partitions"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Stable across reboots and device renames: `wwn-...`, else `serial-...`, else `path-...`."
+          },
+          "name": {
+            "type": "string",
+            "description": "Kernel name, for example `sda` or `nvme0n1`. Can change between boots."
+          },
+          "path": {
+            "type": "string",
+            "description": "Device node, for example `/dev/sda`."
+          },
+          "serial": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Serial number as reported by the drive, if any."
+          },
+          "wwn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "World wide name, if any."
+          },
+          "model": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Model name, if any."
+          },
+          "vendor": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Vendor, if any."
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "description": "Capacity in bytes.",
+            "format": "int64"
+          },
+          "rotational": {
+            "type": "boolean",
+            "description": "True for spinning disks."
+          },
+          "transport": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Bus, for example `sata`, `nvme` or `usb`; null for virtual disks."
+          },
+          "removable": {
+            "type": "boolean",
+            "description": "True for removable media."
+          },
+          "readOnly": {
+            "type": "boolean",
+            "description": "True when the kernel exposes the disk read-only."
+          },
+          "partitions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Partition"
+            },
+            "description": "Partitions in on-disk order."
+          }
+        }
+      },
+      "DiskList": {
+        "required": [
+          "disks"
+        ],
+        "type": "object",
+        "properties": {
+          "disks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Disk"
+            }
+          }
+        },
+        "description": "Snapshot of `storage/disks` and response of `GET /api/disks`."
+      },
+      "DisksChanged": {
+        "required": [
+          "upserts",
+          "removals"
+        ],
+        "type": "object",
+        "properties": {
+          "upserts": {
+            "type": "array",
+            "items": {
+              "required": [
+                "id",
+                "name",
+                "path",
+                "serial",
+                "wwn",
+                "model",
+                "vendor",
+                "sizeBytes",
+                "rotational",
+                "transport",
+                "removable",
+                "readOnly",
+                "partitions"
+              ],
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Stable across reboots and device renames: `wwn-...`, else `serial-...`, else `path-...`."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Kernel name, for example `sda` or `nvme0n1`. Can change between boots."
+                },
+                "path": {
+                  "type": "string",
+                  "description": "Device node, for example `/dev/sda`."
+                },
+                "serial": {
+                  "type": [
+                    "null",
+                    "string"
+                  ],
+                  "description": "Serial number as reported by the drive, if any."
+                },
+                "wwn": {
+                  "type": [
+                    "null",
+                    "string"
+                  ],
+                  "description": "World wide name, if any."
+                },
+                "model": {
+                  "type": [
+                    "null",
+                    "string"
+                  ],
+                  "description": "Model name, if any."
+                },
+                "vendor": {
+                  "type": [
+                    "null",
+                    "string"
+                  ],
+                  "description": "Vendor, if any."
+                },
+                "sizeBytes": {
+                  "type": "integer",
+                  "description": "Capacity in bytes.",
+                  "format": "int64"
+                },
+                "rotational": {
+                  "type": "boolean",
+                  "description": "True for spinning disks."
+                },
+                "transport": {
+                  "type": [
+                    "null",
+                    "string"
+                  ],
+                  "description": "Bus, for example `sata`, `nvme` or `usb`; null for virtual disks."
+                },
+                "removable": {
+                  "type": "boolean",
+                  "description": "True for removable media."
+                },
+                "readOnly": {
+                  "type": "boolean",
+                  "description": "True when the kernel exposes the disk read-only."
+                },
+                "partitions": {
+                  "type": "array",
+                  "items": {
+                    "required": [
+                      "name",
+                      "path",
+                      "sizeBytes",
+                      "fileSystem",
+                      "label",
+                      "mountPoints"
+                    ],
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "Kernel name, for example `sda1`."
+                      },
+                      "path": {
+                        "type": "string",
+                        "description": "Device node."
+                      },
+                      "sizeBytes": {
+                        "type": "integer",
+                        "description": "Size in bytes.",
+                        "format": "int64"
+                      },
+                      "fileSystem": {
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "description": "File system or content type, for example `ext4` or `zfs_member`."
+                      },
+                      "label": {
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "description": "File system label, if any."
+                      },
+                      "mountPoints": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "Where the partition is mounted; empty when it is not."
+                      }
+                    }
+                  },
+                  "description": "Partitions in on-disk order."
+                }
+              }
+            }
+          },
+          "removals": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "Event of `storage/disks`: disks that appeared or changed, and ids of disks that disappeared."
+      },
       "ErrorCode": {
         "enum": [
           "auth.challenge.expired",
@@ -623,6 +913,53 @@
               "string"
             ],
             "description": "Pass to `/api/auth/login/totp` within five minutes."
+          }
+        }
+      },
+      "Partition": {
+        "required": [
+          "name",
+          "path",
+          "sizeBytes",
+          "fileSystem",
+          "label",
+          "mountPoints"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Kernel name, for example `sda1`."
+          },
+          "path": {
+            "type": "string",
+            "description": "Device node."
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "description": "Size in bytes.",
+            "format": "int64"
+          },
+          "fileSystem": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "File system or content type, for example `ext4` or `zfs_member`."
+          },
+          "label": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "File system label, if any."
+          },
+          "mountPoints": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Where the partition is mounted; empty when it is not."
           }
         }
       },
@@ -825,10 +1162,14 @@
       },
       "TopicEvents": {
         "required": [
+          "storage/disks",
           "system/info"
         ],
         "type": "object",
         "properties": {
+          "storage/disks": {
+            "$ref": "#/components/schemas/DisksChanged"
+          },
           "system/info": {
             "$ref": "#/components/schemas/SystemInfo"
           }
@@ -836,10 +1177,14 @@
       },
       "TopicSnapshots": {
         "required": [
+          "storage/disks",
           "system/info"
         ],
         "type": "object",
         "properties": {
+          "storage/disks": {
+            "$ref": "#/components/schemas/DiskList"
+          },
           "system/info": {
             "$ref": "#/components/schemas/SystemInfo"
           }
@@ -965,6 +1310,9 @@
   "tags": [
     {
       "name": "System"
+    },
+    {
+      "name": "Storage"
     },
     {
       "name": "Setup"

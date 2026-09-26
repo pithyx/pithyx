@@ -24,6 +24,8 @@ public class DaemonFactory : WebApplicationFactory<Program>
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
+        // Simulation by default, so tests never read the host's disks; a test can still switch to real mode.
+        builder.UseSetting("VYXIS_SIMULATE", "1");
         builder.UseSetting("VYXIS_LOG_DIR", Path.Combine(DataDirectory, "logs"));
         builder.UseSetting("VYXIS_DB", Path.Combine(DataDirectory, "vyxis.db"));
         builder.ConfigureTestServices(services => services.AddSingleton<TimeProvider>(Time));
