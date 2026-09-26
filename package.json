@@ -9,7 +9,10 @@
   "scripts": {
     "prepare": "lefthook install",
     "dev": "pnpm --filter @vyxis/desktop dev",
-    "lint": "eslint .",
+    "design": "pnpm --filter @vyxis/desktop design",
+    "design:shots": "node tools/design-shots/render.ts",
+    "design:test": "playwright test -c tools/design-shots/playwright.config.ts",
+    "lint": "pnpm --filter @vyxis/desktop css-types && eslint .",
     "typecheck": "tsc -p tsconfig.json && pnpm -r --parallel typecheck",
     "test": "pnpm -r test",
     "e2e": "pnpm --filter @vyxis/e2e e2e",
@@ -23,6 +26,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.0",
+    "@playwright/test": "^1.63.0",
     "@types/node": "^24.0.0",
     "eslint": "^10.0.0",
     "eslint-plugin-i18next": "^6.1.5",

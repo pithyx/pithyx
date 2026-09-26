@@ -1,0 +1,104 @@
+.switcher {
+  position: absolute;
+  inset: 0;
+  z-index: var(--z-menu);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  padding-top: env(safe-area-inset-top);
+  background: light-dark(rgb(213 230 234 / 82%), rgb(3 23 28 / 82%));
+  backdrop-filter: blur(24px);
+}
+
+.switcher[data-position='bottom'] {
+  bottom: calc(var(--taskbar-size) + env(safe-area-inset-bottom));
+}
+
+.switcher[data-position='top'] {
+  top: calc(var(--taskbar-size) + env(safe-area-inset-top));
+  padding-top: 0;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4);
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: var(--space-4) var(--space-3);
+  margin: 0;
+  padding: 0 var(--space-4) var(--space-4);
+  overflow: auto;
+  list-style: none;
+}
+
+.card {
+  display: grid;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.cardTitle {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preview {
+  position: relative;
+  display: block;
+  aspect-ratio: 9 / 16;
+  width: 100%;
+  padding: 0;
+  overflow: hidden;
+  border: 1px solid var(--color-window-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-1);
+  box-shadow: var(--shadow-3);
+}
+
+.previewButton {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: 0;
+  border-radius: inherit;
+  background: transparent;
+  cursor: pointer;
+}
+
+.previewButton:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.previewInner {
+  display: block;
+  width: 250%;
+  height: 250%;
+  text-align: start;
+  pointer-events: none;
+  transform: scale(0.4);
+  transform-origin: top left;
+}

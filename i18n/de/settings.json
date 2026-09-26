@@ -1,0 +1,40 @@
+{
+  "sections": "Bereiche der Einstellungen",
+  "nav": {
+    "personalization": "Personalisierung",
+    "users": "Benutzer und Gruppen",
+    "network": "Netzwerk",
+    "storage": "Speicher",
+    "updates": "Updates",
+    "about": "Info"
+  },
+  "personalization": {
+    "theme": "Erscheinungsbild",
+    "themes": {
+      "system": "System",
+      "light": "Hell",
+      "dark": "Dunkel"
+    },
+    "accent": "Akzentfarbe",
+    "accents": {
+      "petrol": "Petrol",
+      "ocean": "Ozean",
+      "indigo": "Indigo",
+      "plum": "Pflaume",
+      "moss": "Moos",
+      "graphite": "Graphit"
+    },
+    "taskbar": "Position der Taskleiste",
+    "positions": {
+      "bottom": "Unten",
+      "top": "Oben"
+    },
+    "wallpaper": "Hintergrundbild",
+    "wallpaperHint": "Nutze das Standardbild, eine einfarbige Fläche oder ein Bild aus deinen Dateien.",
+    "wallpapers": {
+      "default": "Vyxis",
+      "solid": "Einfarbig",
+      "picture": "Bild auswählen"
+    }
+  }
+}

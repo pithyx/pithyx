@@ -1,0 +1,223 @@
+.flow {
+  position: relative;
+  height: 100%;
+}
+
+.form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-4);
+}
+
+.heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-2);
+}
+
+.step {
+  color: var(--color-accent);
+  font-size: var(--font-size-xs);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-display);
+  line-height: var(--line-height-tight);
+}
+
+.intro {
+  color: var(--color-text-muted);
+}
+
+.submit {
+  width: 100%;
+  margin-top: var(--space-1);
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.row > * {
+  flex: 1;
+}
+
+.key {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border: 1px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-3);
+}
+
+.keyIcon {
+  flex: none;
+  color: var(--color-accent);
+}
+
+.keyValue {
+  display: grid;
+  font-size: var(--font-size-lg);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.keyLine {
+  white-space: nowrap;
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+.subtitle {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+.adminBox {
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+}
+
+.userRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: calc(-1 * var(--space-2));
+}
+
+.avatar {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  font-size: 11px;
+  font-weight: var(--font-weight-semibold);
+}
+
+.userName {
+  font-family: var(--font-mono);
+  font-size: var(--font-size-sm);
+}
+
+.links {
+  display: flex;
+  justify-content: center;
+}
+
+.links > * {
+  color: var(--color-accent);
+}
+
+.welcome {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-3);
+  padding: var(--space-4) 0;
+  text-align: center;
+  animation: welcome-in var(--duration-normal) var(--ease-enter);
+}
+
+@keyframes welcome-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+.bigAvatar {
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
+  box-shadow: 0 0 0 6px var(--color-accent-subtle);
+}
+
+.welcomeTitle {
+  font-family: var(--font-display);
+  font-size: var(--font-size-2xl);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-display);
+}
+
+/* The loading hint only appears if loading takes longer than 300 ms. */
+.preparing {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  opacity: 0;
+  animation: appear var(--duration-fade) linear 300ms forwards;
+}
+
+@keyframes appear {
+  to {
+    opacity: 1;
+  }
+}
+
+.indeterminate {
+  position: relative;
+  width: 120px;
+  height: 3px;
+  overflow: hidden;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-pressed);
+}
+
+.indeterminate::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 40%;
+  border-radius: inherit;
+  background: var(--color-accent);
+  animation: slide 1.1s var(--ease-standard) infinite;
+}
+
+@keyframes slide {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(250%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .indeterminate::after {
+    width: 100%;
+    animation: none;
+    opacity: 0.5;
+  }
+}
+
+@media (max-width: 599px) {
+  .title,
+  .welcomeTitle {
+    font-size: var(--font-size-xl);
+  }
+}

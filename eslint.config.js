@@ -32,11 +32,11 @@ const typescriptConfigs = fast
     ];
 
 export default defineConfig(
-  globalIgnores(['**/dist/', '**/generated/', 'daemon/', '**/node_modules/']),
+  globalIgnores(['**/dist/', '**/generated/', '**/.css-types/', 'daemon/', '**/node_modules/']),
   js.configs.recommended,
   ...typescriptConfigs,
   {
-    files: ['*.js', 'tools/**/*.ts', '**/vite.config.ts'],
+    files: ['*.js', 'tools/**/*.ts', 'desktop/scripts/**/*.ts', '**/vite.config.ts'],
     languageOptions: { globals: globals.node },
   },
   {

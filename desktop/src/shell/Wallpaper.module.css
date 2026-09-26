@@ -1,0 +1,35 @@
+.wallpaper {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.base {
+  fill: light-dark(#d5e6ea, #03171c);
+}
+
+.glowInner {
+  stop-color: light-dark(#f4fafb, #0e4a5a);
+}
+
+.glowOuter {
+  stop-color: light-dark(#c3d9df, #03171c);
+}
+
+.top {
+  fill: light-dark(rgb(181 207 214 / 55%), rgb(6 42 51 / 90%));
+}
+
+.left {
+  fill: light-dark(rgb(159 193 202 / 60%), rgb(10 57 69 / 60%));
+}
+
+.right {
+  fill: light-dark(rgb(200 221 226 / 70%), rgb(19 93 110 / 45%));
+}
+
+.lid {
+  fill: light-dark(rgb(224 163 58 / 30%), #5c4521);
+}

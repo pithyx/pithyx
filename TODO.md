@@ -242,14 +242,14 @@ Direction from the owner:
 - Original design. Nothing may resemble DSM icons, layouts or artwork.
 - Starting palette (from the logo, refine in this step): primary petrol `#0E4A5A` / `#1A6E82` (dark theme `#5FB3C6` / `#3E93A7`), deep `#062A33`, accent amber `#E0A33A` used sparingly and never as text on light backgrounds, neutrals tinted toward petrol, semantic colors separate from the brand: success green, warning orange (distinct from the amber accent), danger red. The desktop accent color is user-configurable with petrol as default.
 
-- [ ] `[DECISION]` Styling approach: CSS Modules with CSS variables (default, zero runtime) or Tailwind.
-- [ ] `[DECISION]` Icon set (for example Lucide or Tabler).
+- [x] `[DECISION]` Styling approach (decided 2026-09-26): CSS Modules with CSS variables. `desktop/scripts/css-module-types.ts` generates exact class name types (gitignored `.css-types/`), so a typo is a type error.
+- [x] `[DECISION]` Icon set (decided 2026-09-26): Tabler (`@tabler/icons-react`).
 - [x] Typefaces (decided 2026-09-26): IBM Plex Sans for the UI, Sora for the word mark and large headings, JetBrains Mono for terminal, logs and paths. All SIL OFL 1.1.
-- [ ] Ship the official font files unmodified (IBM Plex has the Reserved Font Name "Plex", so do not subset or convert them ourselves), self-hosted, preloaded, with each license file next to the fonts and listed in third-party notices.
-- [ ] `[DECISION]` Headless component primitives: Radix UI or React Aria for accessible menus, dialogs and focus handling.
-- [ ] Produce static mockups for: setup, login (including the TOTP step and welcome transition), empty desktop, desktop with icons and a sticky note, desktop with three windows, window states (focused, unfocused, maximized, minimized), taskbar, start menu with search, notification, error dialog, mobile layout.
-- [ ] Derive final design tokens: colors (light and dark, based on the logo palette), type scale, spacing, radii, shadows, motion durations.
-- [ ] `[REVIEW]` Owner approves the mockups and tokens. Iterate until approved.
+- [x] Ship the official font files unmodified (IBM Plex has the Reserved Font Name "Plex", so do not subset or convert them ourselves), self-hosted, preloaded, with each license file next to the fonts and listed in third-party notices. `tools/fonts/fetch-fonts.sh` pins and verifies the sources; Sora upstream publishes WOFF2, so nothing is converted. `index.html` gets the preload links when the design is applied.
+- [x] `[DECISION]` Headless component primitives (decided 2026-09-26): React Aria Components.
+- [x] Produce static mockups for: setup, login (including the TOTP step and welcome transition), empty desktop, desktop with icons and a sticky note, desktop with three windows, window states (focused, unfocused, maximized, minimized), taskbar, start menu with search, notification, error dialog, mobile layout.
+- [x] Derive final design tokens: colors (light and dark, based on the logo palette), type scale, spacing, radii, shadows, motion durations. Tokens live in `desktop/src/theme/`, accents are curated presets, and `contrast.test.ts` checks WCAG AA for every preset in both themes. The mockups are a dev-only gallery (`pnpm design`, `design.html`) that is not part of the production build.
+- [ ] `[REVIEW]` Owner approves the mockups and tokens. Iterate until approved. Round 2 (2026-09-27): overflow fixes and `pnpm design:test`, label pills, accent swatches, sample apps and notifications through i18n (notifications as code and params), recovery key in two lines, notes under windows, no rose preset, search field height, shorter start menu placeholder, real wallpaper previews, "Forgot password?", login heading, Files density, taskbar entries sized to content.
 - [ ] Apply the approved tokens and screens to setup and login.
 
 **Done when:** the owner has signed off on the design and setup and login use it.
@@ -275,6 +275,7 @@ Goal: the desktop works like a desktop, and apps can be built against the SDK.
 - [ ] SDK reports the window size class; sample apps use container queries.
 - [ ] Touch: 44 px targets on coarse pointers, swipe to switch apps on compact, no hover-only actions.
 - [ ] Taskbar with running apps, start menu with search, notification toasts.
+- [ ] Taskbar positions left and right (step 4 designed bottom and top only).
 
 ### 5.2 Layout memory
 
@@ -335,7 +336,7 @@ Known requirements for later milestones:
 - M3: energy settings: spindown per pool (via hd-idle, off by default), power profiles, and a diagnostic that shows what keeps disks awake (process, file) and CPU package C-state residency.
 - M3: permission model from `CLAUDE.md` (groups, users, shares, protocols, apps, special rights), pool encryption with key vault, SFTP instead of plain FTP.
 - M3: when provisioning Linux and Samba users, refuse user names that already exist in `/etc/passwd` or `/etc/group` but are not managed by Vyxis (the static reserved list in `CredentialRules` only covers known system accounts).
-- Third-party notices: generate the list of bundled NuGet and npm packages with their licenses (for example libsodium ISC, NSec MIT, Otp.NET MIT) for the About page, and check it in CI.
+- Third-party notices: generate the list of bundled NuGet and npm packages with their licenses (for example libsodium ISC, NSec MIT, Otp.NET MIT) for the About page, and check it in CI. It starts from the hand-written `desktop/public/third-party-notices.json` (fonts, Tabler, React Aria), which does not list transitive packages yet.
 - M3: `[DECISION]` Server-side rendered texts (email, SSH MOTD, push) in the recipient's language need culture data. Decide between keeping `InvariantGlobalization` (small, no libicu, but only invariant formatting and a hand-written plural rule for English and German in `IcuMessageFormatter`) and enabling ICU culture data (libicu in the image, about 30 MB, correct number, date and plural rules for every language). Today the daemon only renders the English `detail` fallback of problem details.
 - M5: web-based installer instead of a TUI. Boot from USB, open the setup page in a browser, choose the system disk, the system installs itself and continues setup in the same page. The console only shows the address.
 - M5: TLS as decided in `CLAUDE.md`: self-signed by default, trust wizard (local CA download with per-OS instructions), optional own domain with Let's Encrypt DNS-01. Passkeys and the service worker switch on once trusted.

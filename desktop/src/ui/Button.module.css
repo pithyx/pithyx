@@ -1,0 +1,118 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--control-height);
+  padding: 0 var(--space-4);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-md);
+  font-weight: var(--font-weight-medium);
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-instant) var(--ease-standard),
+    border-color var(--duration-instant) var(--ease-standard),
+    transform var(--duration-instant) var(--ease-standard);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.button[data-pressed] {
+  transform: scale(0.98);
+}
+
+.button[data-focus-visible] {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.button[data-disabled] {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.button > svg {
+  flex: none;
+}
+
+.primary {
+  background: var(--color-accent);
+  color: var(--color-accent-contrast);
+}
+
+.primary[data-hovered] {
+  background: var(--color-accent-hover);
+}
+
+.primary[data-pressed] {
+  background: var(--color-accent-pressed);
+}
+
+.secondary {
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-1);
+  color: var(--color-text);
+}
+
+.secondary[data-hovered] {
+  background: var(--color-surface-hover);
+}
+
+.secondary[data-pressed] {
+  background: var(--color-surface-pressed);
+}
+
+.quiet {
+  background: transparent;
+  color: var(--color-text);
+}
+
+.quiet[data-hovered] {
+  background: var(--color-surface-hover);
+}
+
+.quiet[data-pressed] {
+  background: var(--color-surface-pressed);
+}
+
+.danger {
+  background: var(--color-danger);
+  color: var(--color-danger-contrast);
+}
+
+.danger[data-hovered] {
+  background: color-mix(in oklab, var(--color-danger) 88%, var(--color-text));
+}
+
+.small {
+  min-height: 28px;
+  padding: 0 var(--space-3);
+  font-size: var(--font-size-sm);
+}
+
+.icon {
+  width: var(--control-height);
+  padding: 0;
+}
+
+.icon.small {
+  width: 28px;
+}
+
+@media (pointer: coarse) {
+  .small {
+    min-height: var(--touch-target);
+  }
+
+  .icon.small {
+    width: var(--touch-target);
+  }
+}
+
+@media (forced-colors: active) {
+  .button {
+    border-color: ButtonText;
+  }
+}

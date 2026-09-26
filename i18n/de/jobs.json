@@ -1,0 +1,14 @@
+{
+  "files": {
+    "copy": {
+      "title": "{count, plural, one {# Datei wird} other {# Dateien werden}} nach {target} kopiert",
+      "detail": "{done} von {total}, noch etwa {minutes, plural, one {# Minute} other {# Minuten}}"
+    }
+  },
+  "snapshot": {
+    "create": {
+      "title": "Snapshot von {dataset}",
+      "detail": "Wird vorbereitet"
+    }
+  }
+}

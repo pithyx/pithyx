@@ -1,0 +1,26 @@
+{
+  "storage": {
+    "scrub": {
+      "finished": {
+        "title": "Scrub finished",
+        "body": "Pool {pool} was checked. {errors, plural, =0 {No errors found.} one {# error found.} other {# errors found.}}"
+      }
+    },
+    "disk": {
+      "warm": {
+        "title": "Disk getting warm",
+        "body": "Disk {disk} in {pool} reports {temperature, number} °C. Check the airflow.",
+        "action": "Show disk"
+      }
+    }
+  },
+  "apps": {
+    "update": {
+      "available": {
+        "title": "Update available",
+        "body": "{app} {version} is ready to install.",
+        "action": "Install"
+      }
+    }
+  }
+}

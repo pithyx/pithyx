@@ -1,0 +1,151 @@
+.window {
+  position: absolute;
+  z-index: calc(var(--z-windows) + var(--layer));
+  top: var(--y);
+  left: var(--x);
+  display: grid;
+  grid-template-rows: var(--titlebar-height) minmax(0, 1fr);
+  width: var(--w);
+  height: var(--h);
+  overflow: hidden;
+  border: 1px solid var(--color-window-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-1);
+  box-shadow: var(--shadow-2);
+  transition:
+    box-shadow var(--duration-fast) var(--ease-standard),
+    border-color var(--duration-fast) var(--ease-standard);
+}
+
+.focused {
+  border-color: var(--color-window-border-focused);
+  box-shadow: var(--shadow-4);
+}
+
+.window[data-maximized] {
+  inset: 0;
+  width: auto;
+  height: auto;
+  border-width: 0;
+  border-radius: 0;
+}
+
+.window[data-minimized] {
+  display: none;
+}
+
+.titlebar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-1) 0 var(--space-3);
+  background: var(--color-titlebar-unfocused);
+  border-bottom: 1px solid var(--color-border);
+  user-select: none;
+}
+
+.focused .titlebar {
+  background: var(--color-titlebar);
+}
+
+.icon {
+  transition: opacity var(--duration-fast) var(--ease-standard);
+}
+
+.window:not(.focused) .icon {
+  opacity: 0.55;
+  filter: grayscale(0.6);
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.window:not(.focused) .title {
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-muted);
+}
+
+.controls {
+  display: flex;
+  gap: 2px;
+}
+
+.control {
+  color: var(--color-text-muted);
+}
+
+.focused .control {
+  color: var(--color-text);
+}
+
+.close[data-hovered] {
+  background: var(--color-danger);
+  color: var(--color-danger-contrast);
+}
+
+.content {
+  min-height: 0;
+  overflow: auto;
+  container: window / inline-size;
+}
+
+/* Medium: windows are maximized by default, or split side by side. */
+@media (min-width: 600px) and (max-width: 1023px) {
+  .window {
+    inset: 0;
+    width: auto;
+    height: auto;
+    border-radius: 0;
+    border-width: 0;
+  }
+
+  .window[data-medium='left'] {
+    right: calc(50% + 3px);
+    border-right-width: 1px;
+  }
+
+  .window[data-medium='right'] {
+    left: calc(50% + 3px);
+    border-left-width: 1px;
+  }
+
+  .window[data-medium='hidden'] {
+    display: none;
+  }
+
+  .maximize {
+    display: none;
+  }
+}
+
+/* Compact: one app at a time, full screen, without window controls except close. */
+@media (max-width: 599px) {
+  .window {
+    inset: 0;
+    width: auto;
+    height: auto;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .window:not([data-compact-active]) {
+    display: none;
+  }
+
+  .titlebar {
+    padding-left: var(--space-4);
+  }
+
+  .control:not(.close) {
+    display: none;
+  }
+}

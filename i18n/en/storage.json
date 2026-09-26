@@ -1,0 +1,15 @@
+{
+  "layout": "{type}, {count, plural, one {# disk} other {# disks}}",
+  "health": {
+    "healthy": "Healthy"
+  },
+  "used": "{used} of {total} used",
+  "disks": "Disks",
+  "disk": "Disk {number}",
+  "state": {
+    "active": "Active",
+    "warm": "Warm",
+    "standby": "Sleeping"
+  },
+  "standbyHint": "Sleeping disks are not woken for status queries."
+}
