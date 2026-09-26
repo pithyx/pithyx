@@ -5,6 +5,7 @@ export const errorCodes = [
   'auth.credentials.invalid',
   'auth.csrf.header_missing',
   'auth.display_name.invalid',
+  'auth.password.too_common',
   'auth.password.too_long',
   'auth.password.too_short',
   'auth.permission.denied',

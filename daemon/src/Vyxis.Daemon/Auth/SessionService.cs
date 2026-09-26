@@ -41,9 +41,18 @@ public sealed class SessionService(SqliteConnectionFactory connections, TimeProv
     }
 
     /// <summary>Returns the user id of a valid session and extends its idle expiry.</summary>
-    public async Task<long?> ValidateAsync(string token, CancellationToken cancellationToken)
+    public async Task<long?> ValidateAsync(string token, CancellationToken cancellationToken) =>
+        (await ValidateByIdAsync(Secrets.Sha256(token), cancellationToken))?.UserId;
+
+    /// <summary>
+    /// Keeps the session of an open WebSocket alive: an open desktop counts as use. Returns when the session ends at the
+    /// latest, or null if it already ended.
+    /// </summary>
+    public async Task<DateTimeOffset?> TouchAsync(string sessionId, CancellationToken cancellationToken) =>
+        (await ValidateByIdAsync(Convert.FromHexString(sessionId), cancellationToken))?.AbsoluteExpiresAt;
+
+    private async Task<(long UserId, DateTimeOffset AbsoluteExpiresAt)?> ValidateByIdAsync(byte[] id, CancellationToken cancellationToken)
     {
-        var id = Secrets.Sha256(token);
         var now = time.GetUtcNow();
         await using var connection = await connections.OpenAsync(cancellationToken);
         var row = await connection.QuerySingleOrDefaultAsync<SessionRow>(
@@ -53,19 +62,20 @@ public sealed class SessionService(SqliteConnectionFactory connections, TimeProv
         {
             return null;
         }
-        if (Parse(row.ExpiresAt) <= now || Parse(row.AbsoluteExpiresAt) <= now)
+        var absolute = Parse(row.AbsoluteExpiresAt);
+        if (Parse(row.ExpiresAt) <= now || absolute <= now)
         {
             await connection.ExecuteAsync("DELETE FROM sessions WHERE id = @id", new { id });
             return null;
         }
         if (now - Parse(row.LastSeenAt) >= _touchInterval)
         {
-            var expiresAt = Min(now + IdleLifetime, Parse(row.AbsoluteExpiresAt));
+            var expiresAt = Min(now + IdleLifetime, absolute);
             await connection.ExecuteAsync(
                 "UPDATE sessions SET last_seen_at = @Now, expires_at = @ExpiresAt WHERE id = @Id",
                 new { Id = id, Now = Format(now), ExpiresAt = Format(expiresAt) });
         }
-        return row.UserId;
+        return (row.UserId, absolute);
     }
 
     public async Task DeleteAsync(string token, CancellationToken cancellationToken)

@@ -15,8 +15,8 @@ export type TopicEvents = components['schemas']['TopicEvents'];
 /** A topic the daemon publishes, or the pattern of a topic family. */
 export type TopicName = keyof TopicSnapshots;
 
-/** WebSocket close code when the session ended (logout, password reset): go back to the login screen. */
-export const SESSION_ENDED_CLOSE_CODE = 4401;
+export { closeCodes, type CloseCodeName } from './generated/close-codes';
+export { closeAction, closeActions, type CloseAction } from './realtime';
 export type ApiClient = Client<paths>;
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);

@@ -2,6 +2,7 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
+using Vyxis.Daemon.Auth;
 using Vyxis.Daemon.Realtime;
 using Vyxis.Daemon.Tests.Auth;
 using Vyxis.Daemon.Tests.Support;
@@ -58,22 +59,80 @@ public sealed class WebSocketTests : IDisposable
         return JsonDocument.Parse(buffer.AsMemory(0, result.Count)).RootElement.Clone();
     }
 
-    [Fact]
-    public async Task ConnectionWithoutSessionIsRejected()
+    private static async Task<WebSocketCloseStatus?> ReceiveCloseAsync(WebSocket socket)
     {
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => ConnectAsync(cookie: null));
+        var buffer = new byte[64 * 1024];
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(Token);
+        timeout.CancelAfter(TimeSpan.FromSeconds(10));
+        WebSocketReceiveResult result;
+        do
+        {
+            result = await socket.ReceiveAsync(buffer, timeout.Token);
+        }
+        while (result.MessageType != WebSocketMessageType.Close);
+        return result.CloseStatus;
+    }
 
-        Assert.Contains("401", exception.Message, StringComparison.Ordinal);
+    private static WebSocketCloseStatus Status(WebSocketCloseCode code) => (WebSocketCloseStatus)code;
+
+    [Fact]
+    public async Task ConnectionWithoutSessionIsClosedWithSessionEnded()
+    {
+        using var socket = await ConnectAsync(cookie: null);
+
+        Assert.Equal(Status(WebSocketCloseCode.SessionEnded), await ReceiveCloseAsync(socket));
     }
 
     [Fact]
-    public async Task ConnectionFromAnotherOriginIsRejected()
+    public async Task ConnectionFromAnotherOriginIsClosedWithForbidden()
+    {
+        using var socket = await ConnectAsync(await SessionCookieAsync(), origin: "https://evil.example");
+
+        Assert.Equal(Status(WebSocketCloseCode.Forbidden), await ReceiveCloseAsync(socket));
+    }
+
+    [Fact]
+    public async Task ExpiredSessionClosesTheOpenConnection()
+    {
+        using var socket = await ConnectAsync(await SessionCookieAsync());
+        await SendAsync(socket, new { type = "unsub", id = "c1", topic = "system/info" });
+        await ReceiveAsync(socket);
+
+        _factory.Time.Advance(SessionService.AbsoluteLifetime);
+
+        Assert.Equal(Status(WebSocketCloseCode.SessionEnded), await ReceiveCloseAsync(socket));
+    }
+
+    [Fact]
+    public async Task OpenConnectionKeepsTheSessionAliveUntilItsAbsoluteEnd()
     {
         var cookie = await SessionCookieAsync();
+        using var socket = await ConnectAsync(cookie);
+        await SendAsync(socket, new { type = "unsub", id = "c1", topic = "system/info" });
+        await ReceiveAsync(socket);
 
-        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => ConnectAsync(cookie, origin: "https://evil.example"));
+        for (var hour = 0; hour < 24 * 10; hour++)
+        {
+            _factory.Time.Advance(TimeSpan.FromHours(1));
+            await Task.Delay(1, Token);
+        }
 
-        Assert.Contains("403", exception.Message, StringComparison.Ordinal);
+        using var session = new HttpRequestMessage(HttpMethod.Get, "/api/auth/session");
+        session.Headers.Add("Cookie", cookie);
+        using var anonymous = _factory.CreateClient(new() { HandleCookies = false });
+        Assert.Equal(System.Net.HttpStatusCode.OK, (await anonymous.SendAsync(session, Token)).StatusCode);
+    }
+
+    [Fact]
+    public async Task StoppingTheDaemonClosesWithDaemonRestart()
+    {
+        using var socket = await ConnectAsync(await SessionCookieAsync());
+        await SendAsync(socket, new { type = "unsub", id = "c1", topic = "system/info" });
+        await ReceiveAsync(socket);
+
+        _factory.Services.GetRequiredService<TopicHub>().CloseAll();
+
+        Assert.Equal(Status(WebSocketCloseCode.DaemonRestart), await ReceiveCloseAsync(socket));
     }
 
     [Fact]
@@ -160,12 +219,7 @@ public sealed class WebSocketTests : IDisposable
         using var anonymous = _factory.CreateClient(new() { HandleCookies = false });
         await anonymous.SendAsync(logout, Token);
 
-        var buffer = new byte[1024];
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(Token);
-        timeout.CancelAfter(TimeSpan.FromSeconds(10));
-        var result = await socket.ReceiveAsync(buffer, timeout.Token);
-        Assert.Equal(WebSocketMessageType.Close, result.MessageType);
-        Assert.Equal(WebSocketEndpoint.SessionEnded, result.CloseStatus);
+        Assert.Equal(Status(WebSocketCloseCode.SessionEnded), await ReceiveCloseAsync(socket));
     }
 
     [Fact]

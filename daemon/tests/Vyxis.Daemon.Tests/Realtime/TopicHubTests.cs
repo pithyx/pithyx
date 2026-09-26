@@ -92,7 +92,7 @@ public sealed class TopicHubTests
         }
 
         Assert.True(connection.Closing.IsCancellationRequested);
-        Assert.Equal("slow consumer", connection.CloseReason);
+        Assert.Equal(WebSocketCloseCode.ClientTooSlow, connection.CloseCode);
     }
 
     [Fact]
