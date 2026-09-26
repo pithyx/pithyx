@@ -108,6 +108,7 @@ website/  landing page and user docs (Starlight, Markdown)
 - Keys: `area.screen.element`, errors under `errors.<code>`.
 - English is the reference language. German must exist from day one.
 - Plurals and parameters use ICU syntax.
+- German texts use informal "du", consistently.
 
 ## Tracing and logging
 

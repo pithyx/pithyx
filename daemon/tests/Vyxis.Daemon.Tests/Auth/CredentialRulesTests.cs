@@ -33,4 +33,16 @@ public sealed class CredentialRulesTests
     [Fact]
     public void DisplayNameWithControlCharactersIsRejected() =>
         Assert.Equal(ErrorCodes.AuthDisplayNameInvalid, Assert.Throws<VyxisException>(() => CredentialRules.NormalizeDisplayName("a\nb")).Code);
+
+    [Theory]
+    [InlineData("qwertyuiopasdfghjkl")]
+    [InlineData("QwertyuiopASDFGHJKL")]
+    [InlineData("1234567890qwerty")]
+    public void RejectsCommonPasswordsInAnyCase(string password) =>
+        Assert.Equal(ErrorCodes.AuthPasswordTooCommon, Assert.Throws<VyxisException>(() => CredentialRules.ValidateNewPassword(password)).Code);
+
+    [Theory]
+    [InlineData("correct horse battery")]
+    [InlineData("no composition rules at all")]
+    public void AcceptsLongUncommonPasswordsWithoutCompositionRules(string password) => CredentialRules.ValidateNewPassword(password);
 }

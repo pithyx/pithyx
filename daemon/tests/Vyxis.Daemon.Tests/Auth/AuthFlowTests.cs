@@ -67,6 +67,15 @@ public sealed class AuthFlowTests : IDisposable
     }
 
     [Fact]
+    public async Task SetupRejectsACommonPassword()
+    {
+        using var response = await _client.PostAsync("/api/setup", new { username = "admin", password = "Qwertyuiopasdfghjkl" });
+
+        Assert.Equal(System.Net.HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("auth.password.too_common", await response.ErrorCodeAsync());
+    }
+
+    [Fact]
     public async Task WrongPasswordAndUnknownUserFailTheSameWay()
     {
         await _client.SetupAdminAsync();

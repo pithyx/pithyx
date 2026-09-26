@@ -25,5 +25,6 @@
   <ItemGroup>
     <EmbeddedResource Include="../../../i18n/en/errors.json" LogicalName="i18n/en/errors.json" />
     <EmbeddedResource Include="Database/Migrations/*.sql" LogicalName="migrations/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="Auth/common-passwords.txt" LogicalName="auth/common-passwords.txt" />
   </ItemGroup>
 </Project>

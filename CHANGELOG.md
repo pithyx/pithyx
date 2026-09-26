@@ -31,6 +31,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Login with Argon2id password hashes (libsodium), session cookies (HttpOnly, SameSite=Strict, 7 days idle, 30 days at most), logout and `/api/auth/session`.
 - Optional TOTP two-factor authentication with ten single-use recovery codes, as a second login step.
 - Password reset only with the recovery key; it ends all sessions, turns TOTP off and issues a new recovery key.
+- New passwords are checked against an offline list of the most used passwords from breach data (`auth.password.too_common`); there are no composition rules.
+- German texts use the informal "du".
 - Failed login, TOTP and recovery attempts are rate limited (`auth.rate.limited` with `Retry-After`).
 - State-changing API requests require the `X-Vyxis-Request: 1` header (CSRF protection); the generated client sends it.
 - Every API endpoint requires a session unless it is explicitly public.
