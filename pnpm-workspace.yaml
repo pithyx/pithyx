@@ -2,6 +2,7 @@ packages:
   - desktop
   - sdk
   - packages/*
+  - e2e
 
 allowBuilds:
   esbuild: true

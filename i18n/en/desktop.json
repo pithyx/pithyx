@@ -3,5 +3,24 @@
     "connecting": "Connecting to daemon…",
     "connected": "{mode, select, simulated {Connected to daemon (simulated)} other {Connected to daemon}}",
     "unreachable": "Daemon not reachable"
-  }
+  },
+  "menu": {
+    "language": "Language",
+    "languageAuto": "Automatic",
+    "twoFactor": "Two-factor authentication",
+    "signOut": "Sign out",
+    "signedInAs": "Signed in as {name}"
+  },
+  "error": {
+    "title": "Something went wrong",
+    "requestId": "Request ID",
+    "copy": "Copy request ID",
+    "close": "Close",
+    "network": "The daemon is not reachable. Check the connection and try again."
+  },
+  "realtime": {
+    "reconnecting": "Connection lost. Reconnecting…",
+    "stopped": "The live connection was refused. Reload the page."
+  },
+  "brand": "Vyxis"
 }

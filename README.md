@@ -48,7 +48,7 @@ Start the desktop in a second terminal:
 pnpm dev
 ```
 
-Open http://localhost:5173. The desktop shows "Connected to daemon (simulated)". The Vite dev server proxies `/api` and `/ws` to the daemon; set `VYXIS_DAEMON_URL` to point it somewhere other than `http://localhost:8994`.
+Open http://localhost:5173. On the first run the desktop asks you to create the administrator and shows the recovery key once; after that you sign in and see the disks. To start over, stop the daemon and delete `.vyxis-dev/`. The Vite dev server proxies `/api` and `/ws` to the daemon; set `VYXIS_DAEMON_URL` to point it somewhere other than `http://localhost:8994`.
 
 Simulation settings:
 
@@ -96,9 +96,21 @@ tools/dev-vm/testpool.sh destroy vyxtest
 
 To develop on the VM from your machine, connect with VS Code Remote-SSH (or any SSH client with port forwarding), run `dotnet watch --project daemon/src/Vyxis.Daemon` without `VYXIS_SIMULATE`, run `pnpm dev`, and forward port 5173.
 
+Without the Vite dev server, the daemon serves the built desktop itself: run `pnpm build`, start the daemon, and open http://localhost:8994 (or the VM's address on port 8994).
+
 ### Checks
 
 `pnpm install` installs the git hooks. Before you push, run `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, `pnpm check:repo` and `dotnet test` in `daemon/`.
+
+The end-to-end tests start their own daemon in simulation mode with a fresh database and drive the built desktop in Chromium:
+
+```bash
+pnpm --filter @vyxis/e2e exec playwright install chromium
+```
+
+```bash
+pnpm build && pnpm e2e
+```
 
 ### Common problems
 

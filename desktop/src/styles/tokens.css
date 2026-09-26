@@ -1,0 +1,53 @@
+/* Placeholder design tokens from the logo palette. The final values come from the design pass in step 4. */
+:root {
+  color-scheme: light dark;
+
+  --color-petrol-900: #062a33;
+  --color-petrol-700: #0e4a5a;
+  --color-petrol-500: #1a6e82;
+  --color-petrol-300: #5fb3c6;
+  --color-amber-500: #e0a33a;
+
+  --color-background: #eef3f4;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f4f7f8;
+  --color-text: #10262c;
+  --color-text-muted: #4a5f64;
+  --color-border: #c9d6d9;
+  --color-primary: var(--color-petrol-700);
+  --color-primary-contrast: #ffffff;
+  --color-desktop: var(--color-petrol-900);
+  --color-focus: var(--color-petrol-500);
+  --color-danger: #b3261e;
+  --color-danger-surface: #fdecea;
+
+  --font-sans: system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-mono: ui-monospace, 'SFMono-Regular', monospace;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --radius-small: 6px;
+  --radius: 10px;
+  --shadow-window: 0 12px 32px rgb(0 0 0 / 30%);
+  --touch-target: 44px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-background: #0b1a1e;
+    --color-surface: #132a30;
+    --color-surface-muted: #0f2328;
+    --color-text: #e3eef0;
+    --color-text-muted: #a3b8bd;
+    --color-border: #2c4a52;
+    --color-primary: var(--color-petrol-300);
+    --color-primary-contrast: #062a33;
+    --color-desktop: #041d24;
+    --color-focus: var(--color-petrol-300);
+    --color-danger: #f2b8b5;
+    --color-danger-surface: #3b1513;
+  }
+}

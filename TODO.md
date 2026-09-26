@@ -176,9 +176,9 @@ Goal: one real feature end to end, built on the final architecture. Everything l
 - [x] Login creates a session stored in SQLite and sets an HttpOnly, Secure (outside dev), SameSite=Strict cookie. Logout deletes it.
 - [x] CSRF protection: SameSite=Strict plus a required custom header on state-changing requests.
 - [x] Rate limiting on login. Implemented as a small fixed-window counter on `TimeProvider` instead of the ASP.NET Core rate limiter: only failed attempts count (5 per user and address, 30 per address, 5 minutes), and tests can move the clock.
-- [ ] Optional TOTP per user: enrollment with QR code, verification as a second step inside the same login card, recovery codes. Daemon side done in step 3 PR 3 (enroll, confirm, disable, login step, recovery codes); the QR code and the login card come with the desktop in 3.7.
+- [x] Optional TOTP per user: enrollment with QR code, verification as a second step inside the same login card, recovery codes. Daemon side done in step 3 PR 3 (enroll, confirm, disable, login step, recovery codes); the QR code and the login card come with the desktop in 3.7.
 - [x] User names are valid Linux names (`^[a-z_][a-z0-9_-]{0,31}$`), stored in lower case, and must not be a reserved system account (`auth.username.invalid`, `auth.username.reserved`). An optional display name may contain any printable characters.
-- [ ] Login and setup forms use `autocomplete="username"`, `current-password`, `new-password` and `one-time-code` so password managers autofill.
+- [x] Login and setup forms use `autocomplete="username"`, `current-password`, `new-password` and `one-time-code` so password managers autofill.
 - [x] Recovery key: generated during setup, shown once, offered as a printable page. It is the only way to reset the admin password.
 - [x] Passkeys are out of scope until the TLS decision in M5 is made. Do not design the auth flow around them.
 - [x] Error codes: `auth.credentials.invalid`, `auth.session.expired`, `auth.rate.limited`, `auth.setup.already_done`, `auth.totp.invalid`, `auth.recovery.invalid`.
@@ -205,20 +205,20 @@ Goal: one real feature end to end, built on the final architecture. Everything l
 
 ### 3.7 Desktop skeleton
 
-- [ ] i18next with ICU, `i18n/en/*.json` and `i18n/de/*.json`, language from browser with manual override. Base from step 2: i18next with ICU, `i18n/{en,de}/desktop.json`, browser language detection; the manual override is still open.
-- [ ] CI check: every key exists in `en` and `de`, every error code has an `errors.<code>` key. Base from step 2: `desktop/src/i18n.test.ts` compares the `en` and `de` keys and parses every ICU message.
-- [ ] Design tokens as CSS variables with light and dark theme (placeholder values, final design in step 4).
-- [ ] Setup screen (first run) and login screen, functional but unstyled.
-- [ ] Minimal desktop with one fixed window that shows the disk list live via the WebSocket store.
-- [ ] The daemon serves the built desktop: static files plus `index.html` as the SPA fallback for every path outside `/api/` and `/ws` (API paths keep answering with problem details).
-- [ ] Error dialog: translated message from the error code, request id with a copy button.
-- [ ] TanStack Query for REST, a small Zustand store for WebSocket topics. Base from step 2: TanStack Query is set up and used for `/api/health`.
+- [x] i18next with ICU, `i18n/en/*.json` and `i18n/de/*.json`, language from browser with manual override. Base from step 2: i18next with ICU, `i18n/{en,de}/desktop.json`, browser language detection; the manual override is still open.
+- [x] CI check: every key exists in `en` and `de`, every error code has an `errors.<code>` key. Base from step 2: `desktop/src/i18n.test.ts` compares the `en` and `de` keys and parses every ICU message.
+- [x] Design tokens as CSS variables with light and dark theme (placeholder values, final design in step 4).
+- [x] Setup screen (first run) and login screen, functional but unstyled.
+- [x] Minimal desktop with one fixed window that shows the disk list live via the WebSocket store.
+- [x] The daemon serves the built desktop: static files plus `index.html` as the SPA fallback for every path outside `/api/` and `/ws` (API paths keep answering with problem details).
+- [x] Error dialog: translated message from the error code, request id with a copy button.
+- [x] TanStack Query for REST, a small Zustand store for WebSocket topics. Base from step 2: TanStack Query is set up and used for `/api/health`.
 
 ### 3.8 Tests
 
-- [ ] Parser fixture tests, auth flow tests (setup, login, wrong password, rate limit, logout), WebSocket subscription test.
-- [ ] One Playwright E2E test: setup admin, log in, see the disk list.
-- [ ] `provision.sh` installs what headless Chromium needs on the dev VM: `fonts-dejavu-core` (without any font, text renders invisible) and the Playwright browser libraries (`libgbm1`, `libxkbcommon0`, `libatk1.0-0t64`, `libatk-bridge2.0-0t64`, `libatspi2.0-0t64`, `libxcomposite1`, `libxdamage1`, `libxfixes3`, `libxrandr2`). They were installed manually on dev01 during step 2.
+- [x] Parser fixture tests, auth flow tests (setup, login, wrong password, rate limit, logout), WebSocket subscription test.
+- [x] One Playwright E2E test: setup admin, log in, see the disk list.
+- [x] `provision.sh` installs what headless Chromium needs on the dev VM: `fonts-dejavu-core` (without any font, text renders invisible) and the Playwright browser libraries (`libgbm1`, `libxkbcommon0`, `libatk1.0-0t64`, `libatk-bridge2.0-0t64`, `libatspi2.0-0t64`, `libxcomposite1`, `libxdamage1`, `libxfixes3`, `libxrandr2`). They were installed manually on dev01 during step 2.
 
 **Done when:** on the dev VM you can create the admin, log in, and see the disk list in a window. Detaching a virtual disk in Proxmox updates the list without a reload. A forced error shows a translated message with a request id that can be found in the logs. All checks are green.
 

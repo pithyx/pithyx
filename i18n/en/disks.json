@@ -1,0 +1,24 @@
+{
+  "window": {
+    "title": "Disks"
+  },
+  "table": {
+    "caption": "Disks in this system",
+    "name": "Name",
+    "model": "Model",
+    "serial": "Serial number",
+    "size": "Size",
+    "type": "Type",
+    "transport": "Connection",
+    "partitions": "Partitions"
+  },
+  "type": {
+    "hdd": "HDD",
+    "ssd": "SSD or virtual"
+  },
+  "transport": {
+    "unknown": "Virtual or unknown"
+  },
+  "empty": "No disks found.",
+  "loading": "Loading disks…"
+}

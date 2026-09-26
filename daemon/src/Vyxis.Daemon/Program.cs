@@ -45,6 +45,7 @@ builder.Services.AddSingleton<DiskInventory>();
 builder.Services.AddSingleton(services => services.GetRequiredService<DiskInventory>().Definition());
 builder.Services.AddHostedService<SystemStateService>();
 builder.Services.AddVyxisOpenApi();
+builder.Services.AddDesktopHosting();
 
 if (mode == DaemonMode.Simulated)
 {
@@ -106,6 +107,7 @@ api.MapGet("/disks", (DiskInventory disks) => TypedResults.Ok(disks.Current))
     .WithName("GetDisks")
     .WithTags("Storage");
 app.MapRealtime();
+app.MapDesktop(paths.DesktopDirectory);
 
 await app.RunAsync();
 return 0;

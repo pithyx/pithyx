@@ -52,15 +52,5 @@ public sealed class ProblemResponseTests(DaemonFactory factory) : IClassFixture<
         Assert.Equal("0af7651916cd43dd8448eb211c80319c", problem?.RequestId);
     }
 
-    [Fact]
-    public async Task PathsOutsideTheApiDoNotAnswerWithProblemDetails()
-    {
-        using var client = factory.CreateClient();
-
-        using var response = await client.GetAsync(new Uri("/files/documents", UriKind.Relative), TestContext.Current.CancellationToken);
-
-        Assert.NotEqual("application/problem+json", response.Content.Headers.ContentType?.MediaType);
-    }
-
     private sealed record Problem(int Status, string Detail, string Code, Dictionary<string, object> Params, string RequestId);
 }

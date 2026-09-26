@@ -60,9 +60,12 @@ export function createApiClient(baseUrl = ''): ApiClient {
   return client;
 }
 
-/** Returns the data of an openapi-fetch result or throws a {@link VyxisApiError}. */
+/**
+ * Returns the data of an openapi-fetch result or throws a {@link VyxisApiError}. A successful response without a
+ * body (204) returns undefined, which its type already says.
+ */
 export function unwrap<T>(result: { data?: T; error?: unknown; response: Response }): T {
-  if (result.error !== undefined || result.data === undefined) {
+  if (result.error !== undefined || !result.response.ok) {
     const { response, error } = result;
     if (isProblem(error)) {
       throw new VyxisApiError(response.status, error);
@@ -77,5 +80,5 @@ export function unwrap<T>(result: { data?: T; error?: unknown; response: Respons
       requestId: response.headers.get('X-Request-Id') ?? '',
     });
   }
-  return result.data;
+  return result.data as T;
 }
