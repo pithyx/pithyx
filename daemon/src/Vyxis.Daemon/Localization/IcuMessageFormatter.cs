@@ -36,7 +36,7 @@ public static class IcuMessageFormatter
             }
             else if (c == '#' && pluralNumber is { } number)
             {
-                builder.Append(number.ToString(culture));
+                builder.Append(FormatNumber(number, culture));
                 i++;
             }
             else if (c == '{')
@@ -120,7 +120,7 @@ public static class IcuMessageFormatter
         switch (type)
         {
             case "number":
-                builder.Append(value is null ? $"{{{name}}}" : FormatValue(value, culture));
+                builder.Append(value is null ? $"{{{name}}}" : FormatNumber(ToDecimal(value), culture));
                 break;
             case "plural":
                 var number = ToDecimal(value);
@@ -131,7 +131,7 @@ public static class IcuMessageFormatter
                 break;
             case "select":
                 var selectCases = ParseCases(options);
-                var key = value is null ? "other" : FormatValue(value, CultureInfo.InvariantCulture);
+                var key = value is null ? "other" : Convert.ToString(value, CultureInfo.InvariantCulture) ?? "other";
                 Render(selectCases.GetValueOrDefault(key) ?? selectCases.GetValueOrDefault("other") ?? "", arguments, culture, null, builder);
                 break;
             default:
@@ -176,6 +176,10 @@ public static class IcuMessageFormatter
         _ => decimal.Parse(value.ToString() ?? "0", CultureInfo.InvariantCulture),
     };
 
+    // Matches the Intl.NumberFormat default the desktop uses: grouping and at most three fraction digits.
+    private static string FormatNumber(decimal number, CultureInfo culture) => number.ToString("#,##0.###", culture);
+
+    // Like intl-messageformat: a plain {arg} is not number-formatted, only {arg, number} and # are.
     private static string FormatValue(object value, CultureInfo culture) => value switch
     {
         IFormattable formattable => formattable.ToString(null, culture),

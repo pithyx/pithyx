@@ -60,7 +60,7 @@ Simulation settings:
 
 Fixtures are recorded on a real machine with `tools/fixtures/record.sh <scenario> <id> -- <command> [args...]`, using exactly the arguments the daemon passes.
 
-While the daemon runs in development, the API reference is at http://localhost:8994/api/docs and the OpenAPI document at `/api/openapi.json`. Logs are JSON lines in `.vyxis-dev/logs/daemon.json` (override with `VYXIS_LOG_DIR`); every entry carries the `RequestId` that error responses and the desktop show, so `grep <request id> .vyxis-dev/logs/daemon.json` finds everything that happened for one request.
+While the daemon runs in development, the API reference is at http://localhost:8994/api/docs and the OpenAPI document at `/api/openapi.json`. The database is `.vyxis-dev/vyxis.db` (override with `VYXIS_DB`); stop the daemon and delete `.vyxis-dev/` to start over with a fresh setup. Logs are JSON lines in `.vyxis-dev/logs/daemon.json` (override with `VYXIS_LOG_DIR`); every entry carries the `RequestId` that error responses and the desktop show, so `grep <request id> .vyxis-dev/logs/daemon.json` finds everything that happened for one request.
 
 ### API contracts
 

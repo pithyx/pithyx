@@ -1,0 +1,103 @@
+{
+  "$comment": "Golden cases for the two ICU renderers: IcuMessageFormatter (daemon) and i18next-icu (desktop). Both test suites render every entry and must produce exactly `expected`. Every code in i18n/en/errors.json needs an entry with example params.",
+  "errors": {
+    "request.body.invalid": {
+      "params": {},
+      "expected": "The request contains invalid data."
+    },
+    "request.media_type.unsupported": {
+      "params": {},
+      "expected": "The request uses a content type the server does not accept."
+    },
+    "request.method.not_allowed": {
+      "params": {},
+      "expected": "This API endpoint does not support the request method."
+    },
+    "request.route.not_found": {
+      "params": {},
+      "expected": "This API endpoint does not exist."
+    },
+    "system.internal.unexpected": {
+      "params": {},
+      "expected": "Something went wrong on the server. The request id helps to find the details in the logs."
+    }
+  },
+  "cases": [
+    {
+      "message": "Pool {pool} is full",
+      "params": {
+        "pool": "tank"
+      },
+      "expected": "Pool tank is full"
+    },
+    {
+      "message": "{count} files",
+      "params": {
+        "count": 1234567
+      },
+      "expected": "1234567 files"
+    },
+    {
+      "message": "{count, number} files",
+      "params": {
+        "count": 1234567
+      },
+      "expected": "1,234,567 files"
+    },
+    {
+      "message": "Ratio {ratio}",
+      "params": {
+        "ratio": 1.5
+      },
+      "expected": "Ratio 1.5"
+    },
+    {
+      "message": "{n, plural, =0 {no attempts} one {# attempt} other {# attempts}} left",
+      "params": {
+        "n": 0
+      },
+      "expected": "no attempts left"
+    },
+    {
+      "message": "{n, plural, =0 {no attempts} one {# attempt} other {# attempts}} left",
+      "params": {
+        "n": 1
+      },
+      "expected": "1 attempt left"
+    },
+    {
+      "message": "{n, plural, =0 {no attempts} one {# attempt} other {# attempts}} left",
+      "params": {
+        "n": 1234
+      },
+      "expected": "1,234 attempts left"
+    },
+    {
+      "message": "{mode, select, simulated {Connected (simulated)} other {Connected}}",
+      "params": {
+        "mode": "simulated"
+      },
+      "expected": "Connected (simulated)"
+    },
+    {
+      "message": "{mode, select, simulated {Connected (simulated)} other {Connected}}",
+      "params": {
+        "mode": "real"
+      },
+      "expected": "Connected"
+    },
+    {
+      "message": "{n, plural, one {Retry in # second on {pool}} other {Retry in # seconds on {pool}}}",
+      "params": {
+        "n": 3,
+        "pool": "tank"
+      },
+      "expected": "Retry in 3 seconds on tank"
+    },
+    {
+      "message": "Use '{braces}' and it''s fine, it's fine",
+      "params": {},
+      "expected": "Use {braces} and it's fine, it's fine"
+    }
+  ]
+}

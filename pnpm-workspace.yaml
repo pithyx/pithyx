@@ -9,5 +9,6 @@ allowBuilds:
 
 peerDependencyRules:
   allowedVersions:
-    # openapi-typescript declares typescript ^5 but works with 6; the generated client is checked in CI.
+    # openapi-typescript 7 declares typescript ^5 but works with 6; the generated client is checked in CI.
+    # Remove this rule once `npm view openapi-typescript peerDependencies` accepts typescript 6.
     openapi-typescript>typescript: '6'
