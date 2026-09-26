@@ -12,7 +12,7 @@
     "lint": "eslint .",
     "typecheck": "tsc -p tsconfig.json && pnpm -r --parallel typecheck",
     "test": "pnpm -r test",
-    "e2e": "pnpm --filter @vyxis/e2e test",
+    "e2e": "pnpm --filter @vyxis/e2e e2e",
     "build": "pnpm -r build",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
