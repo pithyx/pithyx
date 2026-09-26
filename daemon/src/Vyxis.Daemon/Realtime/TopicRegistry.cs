@@ -3,6 +3,11 @@ using System.Collections.Concurrent;
 namespace Vyxis.Daemon.Realtime;
 
 /// <summary>All topic definitions. Modules register theirs at startup; more can be added while running.</summary>
+/// <remarks>
+/// A definition's snapshot delegate must only use a dependency-free state holder (see <c>DiskInventory</c>,
+/// <c>SystemInfoSampler</c>), never a service that needs <see cref="TopicHub"/>: the hub depends on this registry,
+/// and such a cycle through DI factories is not detected but deadlocks, including the build-time OpenAPI run.
+/// </remarks>
 public sealed class TopicRegistry(IEnumerable<TopicDefinition> definitions)
 {
     private readonly ConcurrentDictionary<string, TopicDefinition> _definitions =

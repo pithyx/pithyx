@@ -23,6 +23,7 @@ const SUBJECT_PATTERN = new RegExp(
   'u',
 );
 const MAX_SUBJECT_LENGTH = 100;
+// Written as a code point: Prettier turns a \u escape into the literal character, which the check would flag.
 const EM_DASH = String.fromCodePoint(0x2014);
 
 export function validateSubject(subject: string): string | undefined {

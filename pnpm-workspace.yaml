@@ -4,6 +4,9 @@ packages:
   - packages/*
   - e2e
 
+# pnpm 12 refuses packages published less than a day ago (supply-chain policy). If an install fails with
+# ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION, pin the newest older version instead of adding exclusions.
+# Build scripts run only for the packages listed here (onlyBuiltDependencies is no longer read).
 allowBuilds:
   esbuild: true
   lefthook: true

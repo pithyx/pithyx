@@ -15,6 +15,7 @@ These rules are binding. If a rule blocks you, stop and ask. Do not work around 
 Know where you are before you act. Every machine declares its environment in `/etc/vyxis/environment` (`dev` or `prod`); the owner may also state it ("this is dev", "this is prod"). If neither says anything, treat it as prod.
 
 - **dev** (dev VM, simulation mode, CI): you may create and destroy pools on the VM's test disks, reset the database and restart services freely. Hard limit: never touch disks that are not the VM's declared test disks.
+- On the dev VM, test pools and disks are handled only through `tools/dev-vm/testpool.sh` (`create`, `destroy`, `wipe`), which refuses any disk whose serial is not a test disk (`VYXTEST01` to `VYXTEST06`, listed in `/etc/vyxis/test-disks`). `.claude/settings.json` denies raw `zpool create`/`destroy`, `wipefs`, `mkfs` and `dd` to devices. `zpool destroy` leaves labels and partitions behind; run `testpool.sh wipe` afterwards.
 - **prod** (anything with real data, including the owner's own NAS): read-only by default. Before any write, show the exact command and wait for explicit confirmation. Take a snapshot or backup first. Never run `zpool destroy`, `zpool create`, `mkfs`, `wipefs`, `dd`, `rm -rf` on data paths, `docker volume rm` or database migrations without a confirmed backup.
 - The product follows the same idea: destructive storage actions in the daemon refuse to touch disks that contain partitions or data unless the user confirms with the disk serial.
 
@@ -40,6 +41,8 @@ Claude Code loads them when working in those folders. They are as binding as thi
 - The same format applies to PR titles.
 - Every commit is signed off (`git commit -s`, DCO).
 - Branches: `master` is stable, `dev` is beta and the integration branch. Work in `feature/<name>`, `fix/<name>`, `hotfix/<name>`. PRs target `dev`. Never commit directly to `master` or `dev`.
+- GitHub branch protection is not available on the current plan; the lefthook `pre-push` hook refuses direct pushes to `master` and `dev` instead. New branches are pushed without an upstream on `dev` (`git branch --unset-upstream`), so a bare `git push` can never target `dev`.
+- Claude may squash-merge a PR into `dev` once CI is green; merging into `master` always needs the owner. The squash commit uses the commit format above and ends with `Signed-off-by` for the merging GitHub account exactly as GitHub records the author (profile name and noreply address); otherwise the DCO check on `dev` fails.
 - Every user-visible or developer-relevant change adds a line under `Unreleased` in `CHANGELOG.md` (Keep a Changelog format).
 - Versioning: SemVer for the whole monorepo, releases tagged on `master` as `vX.Y.Z` with a constellation codename.
 
@@ -187,6 +190,7 @@ Everything else is internal and may change at any time.
 Test parsers, decision logic, permission checks, manifest validation and the update state machine.
 Integration tests use loop devices with real zfs and mdadm on Debian 13, run on a self-hosted runner in an ephemeral VM. Self-hosted runners never execute code from forks without approval.
 Do not test getters, DTOs, pass-through controllers or individual React components.
+Daemon tests run in simulation mode by default (`DaemonFactory`), with a fake clock where time matters. End-to-end tests live in `e2e/` (Playwright, run with `pnpm build && pnpm e2e`) and start their own daemon with a fresh database.
 
 ## Before you commit
 
