@@ -22,12 +22,17 @@ public static class OpenApiSetup
             options.AddDocumentTransformer(AddContractsAsync);
         });
 
-    // The daemon always serializes every property, so every property is present in responses.
+    // The daemon always serializes every property, so responses contain all of them (nullable ones as null).
+    // In requests, constructor parameters with a default value may be left out.
     private static Task MarkPropertiesRequired(OpenApiSchema schema, OpenApiSchemaTransformerContext context, CancellationToken cancellationToken)
     {
-        if (context.JsonTypeInfo.Kind == JsonTypeInfoKind.Object && schema.Properties is { Count: > 0 } properties)
+        if (context.JsonTypeInfo.Kind == JsonTypeInfoKind.Object && schema.Properties is { Count: > 0 })
         {
-            schema.Required = new HashSet<string>(properties.Keys, StringComparer.Ordinal);
+            schema.Required = new HashSet<string>(
+                context.JsonTypeInfo.Properties
+                    .Where(property => property.AssociatedParameter is not { HasDefaultValue: true })
+                    .Select(property => property.Name),
+                StringComparer.Ordinal);
         }
         return Task.CompletedTask;
     }

@@ -29,7 +29,10 @@ public sealed class ProblemResponseTests(DaemonFactory factory) : IClassFixture<
     {
         using var client = factory.CreateClient();
 
-        using var response = await client.DeleteAsync(new Uri("/api/health", UriKind.Relative), TestContext.Current.CancellationToken);
+        using var request = new HttpRequestMessage(HttpMethod.Delete, "/api/health");
+        request.Headers.Add("X-Vyxis-Request", "1");
+
+        using var response = await client.SendAsync(request, TestContext.Current.CancellationToken);
         var problem = await response.Content.ReadFromJsonAsync<Problem>(TestContext.Current.CancellationToken);
 
         Assert.Equal(HttpStatusCode.MethodNotAllowed, response.StatusCode);

@@ -3,6 +3,7 @@ using System.Text.Json.Serialization;
 using Scalar.AspNetCore;
 using Serilog;
 using Vyxis.Daemon;
+using Vyxis.Daemon.Auth;
 using Vyxis.Daemon.Commands;
 using Vyxis.Daemon.Database;
 using Vyxis.Daemon.Errors;
@@ -23,6 +24,7 @@ builder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(HttpPort));
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.RespectNullableAnnotations = true;
+    options.SerializerOptions.RespectRequiredConstructorParameters = true;
     options.SerializerOptions.NumberHandling = JsonNumberHandling.Strict;
     options.SerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
 });
@@ -30,6 +32,7 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton(new SqliteConnectionFactory(paths.DatabasePath));
 builder.Services.AddSingleton<MigrationRunner>();
 builder.Services.AddVyxisErrors();
+builder.Services.AddVyxisAuth();
 builder.Services.AddVyxisOpenApi();
 
 if (mode == DaemonMode.Simulated)
@@ -68,16 +71,25 @@ app.UseExceptionHandler();
 // Only the API answers bare status codes with problem details. Every other path belongs to the desktop,
 // which serves its index.html as the SPA fallback.
 app.UseWhen(context => IsApiRequest(context.Request.Path), api => api.UseStatusCodePages());
+app.UseMiddleware<CsrfMiddleware>();
+app.UseAuthentication();
+app.UseAuthorization();
 
-app.MapOpenApi(OpenApiSetup.DocumentPath);
+app.MapOpenApi(OpenApiSetup.DocumentPath).AllowAnonymous();
 if (app.Environment.IsDevelopment())
 {
-    app.MapScalarApiReference("/api/docs", options => options.WithOpenApiRoutePattern(OpenApiSetup.DocumentPath));
+    app.MapScalarApiReference("/api/docs", options => options.WithOpenApiRoutePattern(OpenApiSetup.DocumentPath)).AllowAnonymous();
 }
 
-app.MapGet("/api/health", () => TypedResults.Ok(new HealthResponse("ok", mode)))
+// Every API endpoint requires a session unless it opts out with AllowAnonymous.
+var api = app.MapGroup("/api").RequireAuthorization();
+
+api.MapGet("/health", () => TypedResults.Ok(new HealthResponse("ok", mode)))
     .WithName("GetHealth")
-    .WithTags("System");
+    .WithTags("System")
+    .AllowAnonymous();
+
+api.MapAuthEndpoints();
 
 await app.RunAsync();
 return 0;

@@ -1,4 +1,46 @@
 {
+  "auth": {
+    "challenge": {
+      "expired": "The sign-in step has expired. Please sign in again."
+    },
+    "credentials": {
+      "invalid": "The user name or password is incorrect."
+    },
+    "csrf": {
+      "header_missing": "The request was rejected because a security header is missing."
+    },
+    "display_name": {
+      "invalid": "The display name can have at most {maxLength} characters and no control characters."
+    },
+    "password": {
+      "too_long": "The password can have at most {maxLength} characters.",
+      "too_short": "The password needs at least {minLength} characters."
+    },
+    "permission": {
+      "denied": "You do not have permission for this action."
+    },
+    "rate": {
+      "limited": "Too many attempts. Try again in {retryAfterSeconds, plural, one {# second} other {# seconds}}."
+    },
+    "recovery": {
+      "invalid": "The user name or recovery key is incorrect."
+    },
+    "session": {
+      "expired": "The session has expired. Please sign in again."
+    },
+    "setup": {
+      "already_done": "This system has already been set up."
+    },
+    "totp": {
+      "already_enabled": "Two-factor authentication is already enabled.",
+      "invalid": "The code is incorrect or has already been used.",
+      "not_enrolled": "Two-factor authentication has not been set up yet."
+    },
+    "username": {
+      "invalid": "User names start with a lowercase letter or an underscore and contain only lowercase letters, digits, underscores and hyphens, at most 32 characters.",
+      "reserved": "The user name {username} is reserved for the system."
+    }
+  },
   "request": {
     "body": {
       "invalid": "The request contains invalid data."

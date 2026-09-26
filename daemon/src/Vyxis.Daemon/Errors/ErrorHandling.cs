@@ -39,6 +39,8 @@ public static partial class ErrorHandling
             code = ErrorCodes.SystemInternalUnexpected;
         }
 
+        // RFC 9457: "about:blank" when no more specific type applies, for example 429.
+        problem.Type ??= "about:blank";
         problem.Detail = ErrorMessages.Detail(code, parameters);
         problem.Extensions.Remove("traceId");
         problem.Extensions[CodeKey] = code;
@@ -62,6 +64,10 @@ public static partial class ErrorHandling
             }
 
             httpContext.Response.StatusCode = status;
+            if (parameters.TryGetValue("retryAfterSeconds", out var retryAfter) && retryAfter is not null)
+            {
+                httpContext.Response.Headers.RetryAfter = Convert.ToString(retryAfter, System.Globalization.CultureInfo.InvariantCulture);
+            }
             var problem = new ProblemDetails { Status = status };
             problem.Extensions[CodeKey] = code;
             problem.Extensions[ParamsKey] = parameters;

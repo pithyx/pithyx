@@ -34,6 +34,350 @@
           }
         }
       }
+    },
+    "/api/setup": {
+      "get": {
+        "tags": [
+          "Setup"
+        ],
+        "operationId": "GetSetupStatus",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetupStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Setup"
+        ],
+        "operationId": "Setup",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetupResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "Login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/login/totp": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "LoginTotp",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TotpLoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInfo"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/recover": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "Recover",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RecoverRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoverResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "Logout",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/session": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "GetSession",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInfo"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/totp/enroll": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "EnrollTotp",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TotpEnrollment"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/totp/confirm": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "ConfirmTotp",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TotpConfirmRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryCodes"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/totp/disable": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "DisableTotp",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TotpDisableRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -84,6 +428,22 @@
       },
       "ErrorCode": {
         "enum": [
+          "auth.challenge.expired",
+          "auth.credentials.invalid",
+          "auth.csrf.header_missing",
+          "auth.display_name.invalid",
+          "auth.password.too_long",
+          "auth.password.too_short",
+          "auth.permission.denied",
+          "auth.rate.limited",
+          "auth.recovery.invalid",
+          "auth.session.expired",
+          "auth.setup.already_done",
+          "auth.totp.already_enabled",
+          "auth.totp.invalid",
+          "auth.totp.not_enrolled",
+          "auth.username.invalid",
+          "auth.username.reserved",
           "request.body.invalid",
           "request.media_type.unsupported",
           "request.method.not_allowed",
@@ -106,12 +466,256 @@
             "$ref": "#/components/schemas/DaemonMode"
           }
         }
+      },
+      "LoginRequest": {
+        "required": [
+          "username",
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          }
+        }
+      },
+      "LoginResponse": {
+        "required": [
+          "user",
+          "totpRequired",
+          "challenge"
+        ],
+        "type": "object",
+        "properties": {
+          "user": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Set when the login is complete.",
+                "$ref": "#/components/schemas/UserInfo"
+              }
+            ]
+          },
+          "totpRequired": {
+            "type": "boolean",
+            "description": "True when a TOTP or recovery code must follow."
+          },
+          "challenge": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Pass to `/api/auth/login/totp` within five minutes."
+          }
+        }
+      },
+      "RecoverRequest": {
+        "required": [
+          "username",
+          "recoveryKey",
+          "newPassword"
+        ],
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "recoveryKey": {
+            "type": "string"
+          },
+          "newPassword": {
+            "type": "string"
+          }
+        }
+      },
+      "RecoverResponse": {
+        "required": [
+          "recoveryKey"
+        ],
+        "type": "object",
+        "properties": {
+          "recoveryKey": {
+            "type": "string",
+            "description": "The new recovery key. The old one no longer works."
+          }
+        }
+      },
+      "RecoveryCodes": {
+        "required": [
+          "codes"
+        ],
+        "type": "object",
+        "properties": {
+          "codes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Shown exactly once. Each code replaces a TOTP code for one login."
+          }
+        }
+      },
+      "SetupRequest": {
+        "required": [
+          "username",
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string"
+          },
+          "password": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "SetupResponse": {
+        "required": [
+          "user",
+          "recoveryKey"
+        ],
+        "type": "object",
+        "properties": {
+          "user": {
+            "description": "The administrator, already signed in.",
+            "$ref": "#/components/schemas/UserInfo"
+          },
+          "recoveryKey": {
+            "type": "string",
+            "description": "Shown exactly once. It is the only way to reset the administrator password."
+          }
+        }
+      },
+      "SetupStatus": {
+        "required": [
+          "required"
+        ],
+        "type": "object",
+        "properties": {
+          "required": {
+            "type": "boolean"
+          }
+        }
+      },
+      "TotpConfirmRequest": {
+        "required": [
+          "code"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          }
+        }
+      },
+      "TotpDisableRequest": {
+        "required": [
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "string"
+          }
+        }
+      },
+      "TotpEnrollment": {
+        "required": [
+          "secret",
+          "uri"
+        ],
+        "type": "object",
+        "properties": {
+          "secret": {
+            "type": "string",
+            "description": "Base32 secret for manual entry."
+          },
+          "uri": {
+            "type": "string",
+            "description": "otpauth:// URI for the QR code."
+          }
+        }
+      },
+      "TotpLoginRequest": {
+        "required": [
+          "challenge"
+        ],
+        "type": "object",
+        "properties": {
+          "challenge": {
+            "type": "string",
+            "description": "From the login response."
+          },
+          "code": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Six-digit code from the authenticator app."
+          },
+          "recoveryCode": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "One of the recovery codes shown when TOTP was enabled, instead of a code."
+          }
+        }
+      },
+      "UserInfo": {
+        "required": [
+          "id",
+          "username",
+          "displayName",
+          "isAdmin",
+          "totpEnabled"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "username": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "isAdmin": {
+            "type": "boolean"
+          },
+          "totpEnabled": {
+            "type": "boolean"
+          }
+        }
       }
     }
   },
   "tags": [
     {
       "name": "System"
+    },
+    {
+      "name": "Setup"
+    },
+    {
+      "name": "Auth"
     }
   ]
 }

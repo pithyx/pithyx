@@ -27,3 +27,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Problem details for bare status codes (404, 405) apply only under `/api/`; other paths are left to the desktop.
 - Golden test (`tools/i18n/icu-golden.json`) that renders every error message and formatter edge case with the daemon's and the desktop's ICU implementation and requires identical output.
 - SQLite database (WAL, foreign keys) at `/var/lib/vyxis/vyxis.db` (`VYXIS_DB`). Numbered SQL migrations run at startup, each in its own transaction, after a `VACUUM INTO` backup of an existing database; the daemon refuses to start if a migration fails or the database is newer than the daemon.
+- First-run setup (`/api/setup`) creates the administrator and a recovery key that is shown once. User names must be valid Linux user names and are stored in lower case; an optional display name may contain any characters.
+- Login with Argon2id password hashes (libsodium), session cookies (HttpOnly, SameSite=Strict, 7 days idle, 30 days at most), logout and `/api/auth/session`.
+- Optional TOTP two-factor authentication with ten single-use recovery codes, as a second login step.
+- Password reset only with the recovery key; it ends all sessions, turns TOTP off and issues a new recovery key.
+- Failed login, TOTP and recovery attempts are rate limited (`auth.rate.limited` with `Retry-After`).
+- State-changing API requests require the `X-Vyxis-Request: 1` header (CSRF protection); the generated client sends it.
+- Every API endpoint requires a session unless it is explicitly public.
