@@ -2,7 +2,9 @@
   "status": {
     "connecting": "Verbindung zum Daemon wird hergestellt…",
     "connected": "{mode, select, simulated {Mit dem Daemon verbunden (simuliert)} other {Mit dem Daemon verbunden}}",
-    "unreachable": "Daemon nicht erreichbar"
+    "unreachable": "Daemon nicht erreichbar",
+    "unreachableHint": "Der Daemon antwortet nicht. Prüfe, ob er läuft, und versuche es dann erneut.",
+    "retry": "Erneut versuchen"
   },
   "menu": {
     "language": "Sprache",
@@ -10,7 +12,8 @@
     "twoFactor": "Zwei-Faktor-Authentifizierung",
     "signOut": "Abmelden",
     "signedInAs": "Angemeldet als {name}",
-    "personalization": "Personalisierung"
+    "personalization": "Personalisierung",
+    "languageCurrent": "Sprache: {language}"
   },
   "error": {
     "title": "Etwas ist schiefgelaufen",

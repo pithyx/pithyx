@@ -22,6 +22,8 @@ export interface TextFieldProps extends Omit<AriaTextFieldProps, 'className' | '
   placeholder?: string;
   className?: string;
   inputClassName?: string;
+  /** "none" for user names and codes, so phones do not capitalize the first letter. */
+  autoCapitalize?: 'none' | 'characters';
   /** Trailing content inside the input frame, for example a reveal button. */
   trailing?: ReactNode;
 }
@@ -33,6 +35,7 @@ export function TextField({
   placeholder,
   className,
   inputClassName,
+  autoCapitalize,
   trailing,
   ...props
 }: TextFieldProps) {
@@ -40,7 +43,11 @@ export function TextField({
     <AriaTextField {...props} className={cx(styles.field, className)}>
       <Label className={styles.label}>{label}</Label>
       <div className={styles.frame}>
-        <Input className={cx(styles.input, inputClassName)} placeholder={placeholder ?? ''} />
+        <Input
+          className={cx(styles.input, inputClassName)}
+          placeholder={placeholder ?? ''}
+          {...(autoCapitalize === undefined ? {} : { autoCapitalize })}
+        />
         {trailing}
       </div>
       {description !== undefined && (
@@ -88,7 +95,6 @@ export function OtpField(props: Omit<TextFieldProps, 'type' | 'inputMode' | 'aut
       {...props}
       inputMode="numeric"
       autoComplete="one-time-code"
-      pattern="[0-9 ]{6,7}"
       maxLength={7}
       inputClassName={styles.otp}
     />

@@ -1,13 +1,19 @@
+import { IconCopy, IconShieldLock } from '@tabler/icons-react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { unwrap, type components } from '@vyxis/api-client';
-import { useEffect, useRef, type SubmitEvent } from 'react';
+import type { SyntheticEvent } from 'react';
+import { Form } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { queryKeys } from '../api/queries';
 import { copyText } from '../errors/copyText';
 import { describeError } from '../errors/describe';
-import { field } from '../forms';
 import { ErrorNotice } from '../errors/ErrorNotice';
+import { field } from '../forms';
+import { Button } from '../ui/Button';
+import { Dialog } from '../ui/Dialog';
+import { OtpField, PasswordField } from '../ui/TextField';
+import styles from './TotpSetup.module.css';
 
 type User = components['schemas']['UserInfo'];
 
@@ -26,14 +32,28 @@ function QrCode({ uri }: { uri: string }) {
     staleTime: Infinity,
   });
   return image.data === undefined ? null : (
-    <img className="qr" src={image.data} alt={t('totpSetup.qrAlt')} width={180} height={180} />
+    <img
+      className={styles.qr}
+      src={image.data}
+      alt={t('totpSetup.qrAlt')}
+      width={180}
+      height={180}
+    />
   );
 }
 
-export function TotpSetup({ user, onClose }: { user: User; onClose: () => void }) {
+/** Turns TOTP on (QR code, first code, recovery codes) or off (with the password). */
+export function TotpSetup({
+  user,
+  isOpen,
+  onClose,
+}: {
+  user: User;
+  isOpen: boolean;
+  onClose: () => void;
+}) {
   const { t } = useTranslation('auth');
   const queryClient = useQueryClient();
-  const dialog = useRef<HTMLDialogElement>(null);
 
   const enroll = useMutation({
     mutationFn: async () => unwrap(await api.POST('/api/auth/totp/enroll')),
@@ -54,17 +74,19 @@ export function TotpSetup({ user, onClose }: { user: User; onClose: () => void }
     },
   });
 
-  // Opens the native modal dialog once it is in the DOM.
-  useEffect(() => {
-    dialog.current?.showModal();
-  }, []);
+  function close() {
+    enroll.reset();
+    confirm.reset();
+    disable.reset();
+    onClose();
+  }
 
-  function submitCode(event: SubmitEvent<HTMLFormElement>) {
+  function submitCode(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     confirm.mutate(field(new FormData(event.currentTarget), 'code').trim());
   }
 
-  function submitDisable(event: SubmitEvent<HTMLFormElement>) {
+  function submitDisable(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     disable.mutate(field(new FormData(event.currentTarget), 'password'));
   }
@@ -74,95 +96,85 @@ export function TotpSetup({ user, onClose }: { user: User; onClose: () => void }
     const codes = confirm.data.codes;
     content = (
       <>
-        <h3>{t('totpSetup.recoveryCodesTitle')}</h3>
+        <h3 className={styles.subtitle}>{t('totpSetup.recoveryCodesTitle')}</h3>
         <p>{t('totpSetup.recoveryCodesIntro')}</p>
-        <ul className="recovery-codes">
+        <ul className={styles.codes}>
           {codes.map((code) => (
             <li key={code}>
               <code>{code}</code>
             </li>
           ))}
         </ul>
-        <button type="button" className="button" onClick={() => void copyText(codes.join('\n'))}>
+        <Button onPress={() => void copyText(codes.join('\n'))}>
+          <IconCopy size={18} stroke={1.75} aria-hidden />
           {t('totpSetup.copyCodes')}
-        </button>
+        </Button>
       </>
     );
   } else if (user.totpEnabled) {
     content = (
-      <form onSubmit={submitDisable}>
+      <Form className={styles.form} onSubmit={submitDisable} validationBehavior="aria">
         <p>{t('totpSetup.on')}</p>
-        <p className="field">
-          <label htmlFor="totp-disable-password">{t('totpSetup.disablePassword')}</label>
-          <input
-            id="totp-disable-password"
-            name="password"
-            type="password"
-            autoComplete="current-password"
-            required
-          />
-        </p>
+        <PasswordField
+          label={t('totpSetup.disablePassword')}
+          name="password"
+          autoComplete="current-password"
+          autoFocus
+          isRequired
+        />
         {disable.isError && <ErrorNotice error={describeError(disable.error)} />}
-        <button type="submit" className="button" disabled={disable.isPending}>
+        <Button type="submit" variant="danger" isPending={disable.isPending}>
           {t('totpSetup.disable')}
-        </button>
-      </form>
+        </Button>
+      </Form>
     );
   } else if (enroll.data !== undefined) {
     content = (
-      <form onSubmit={submitCode}>
+      <Form className={styles.form} onSubmit={submitCode} validationBehavior="aria">
         <p>{t('totpSetup.scan')}</p>
         <QrCode uri={enroll.data.uri} />
-        <p>
-          {t('totpSetup.secret')} <code className="mono">{enroll.data.secret}</code>
+        <p className={styles.secret}>
+          {t('totpSetup.secret')} <code>{enroll.data.secret}</code>
         </p>
-        <p className="field">
-          <label htmlFor="totp-setup-code">{t('totpSetup.code')}</label>
-          <input
-            id="totp-setup-code"
-            name="code"
-            autoComplete="one-time-code"
-            inputMode="numeric"
-            pattern="[0-9 ]{6,7}"
-            required
-          />
-        </p>
+        <OtpField label={t('totpSetup.code')} name="code" autoFocus isRequired />
         {confirm.isError && <ErrorNotice error={describeError(confirm.error)} />}
-        <button type="submit" className="button button--primary" disabled={confirm.isPending}>
+        <Button type="submit" variant="primary" isPending={confirm.isPending}>
           {t('totpSetup.confirm')}
-        </button>
-      </form>
+        </Button>
+      </Form>
     );
   } else {
     content = (
       <>
         <p>{t('totpSetup.off')}</p>
         {enroll.isError && <ErrorNotice error={describeError(enroll.error)} />}
-        <button
-          type="button"
-          className="button button--primary"
-          disabled={enroll.isPending}
-          onClick={() => {
+        <Button
+          variant="primary"
+          isPending={enroll.isPending}
+          onPress={() => {
             enroll.mutate();
           }}
         >
           {t('totpSetup.start')}
-        </button>
+        </Button>
       </>
     );
   }
 
   return (
-    <dialog ref={dialog} className="dialog" aria-labelledby="totp-setup-title" onClose={onClose}>
-      <h2 id="totp-setup-title" className="dialog__title">
-        {t('totpSetup.title')}
-      </h2>
+    <Dialog
+      isOpen={isOpen}
+      onOpenChange={(open) => {
+        if (!open) {
+          close();
+        }
+      }}
+      isDismissable
+      icon={<IconShieldLock size={22} stroke={1.75} />}
+      title={t('totpSetup.title')}
+      actions={<Button slot="close">{t('totpSetup.close')}</Button>}
+    >
       {content}
-      <form method="dialog" className="dialog__actions">
-        <button type="submit" className="button">
-          {t('totpSetup.close')}
-        </button>
-      </form>
-    </dialog>
+    </Dialog>
   );
 }

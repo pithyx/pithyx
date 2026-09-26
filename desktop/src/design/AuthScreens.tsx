@@ -1,42 +1,17 @@
-import { IconArrowLeft, IconCopy, IconKey, IconLanguage, IconPrinter } from '@tabler/icons-react';
-import i18next from 'i18next';
+import { IconArrowLeft, IconCopy, IconKey, IconPrinter } from '@tabler/icons-react';
 import { useEffect, useState, type ReactNode, type SyntheticEvent } from 'react';
 import { Form } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
-import { languages } from '../i18n';
+import styles from '../auth/Auth.module.css';
+import { LanguageMenu, RecoveryKeyValue, WelcomeCard } from '../auth/parts';
 import { AuthHeader, AuthLayout } from '../shell/AuthLayout';
 import { Button } from '../ui/Button';
 import { Checkbox } from '../ui/Controls';
-import { Menu, MenuItem, MenuPopover, MenuTrigger } from '../ui/Menu';
 import { cx } from '../ui/cx';
 import { OtpField, PasswordField, TextField } from '../ui/TextField';
-import styles from './AuthScreens.module.css';
 import { hostname, recoveryKey, user } from './sampleData';
 
 const MIN_PASSWORD_LENGTH = 12;
-
-function LanguageMenu() {
-  const { i18n } = useTranslation();
-  const name = (code: string) =>
-    new Intl.DisplayNames([code], { type: 'language' }).of(code) ?? code;
-  return (
-    <MenuTrigger>
-      <Button variant="quiet" size="sm">
-        <IconLanguage size={16} stroke={1.75} aria-hidden />
-        {name(i18n.language)}
-      </Button>
-      <MenuPopover placement="top">
-        <Menu onAction={(key) => void i18next.changeLanguage(String(key))}>
-          {languages.map((code) => (
-            <MenuItem key={code} id={code}>
-              {name(code)}
-            </MenuItem>
-          ))}
-        </Menu>
-      </MenuPopover>
-    </MenuTrigger>
-  );
-}
 
 function preventSubmit(next: () => void) {
   return (event: SyntheticEvent<HTMLFormElement>) => {
@@ -259,17 +234,6 @@ function PasswordStep({ onNext, onForgot }: { onNext: () => void; onForgot: () =
   );
 }
 
-/** Two lines of four groups; the key only breaks at a hyphen. */
-function RecoveryKeyValue({ value }: { value: string }) {
-  const groups = value.split('-');
-  return (
-    <code className={styles.keyValue}>
-      <span className={styles.keyLine}>{`${groups.slice(0, 4).join('-')}-`}</span>
-      <span className={styles.keyLine}>{groups.slice(4).join('-')}</span>
-    </code>
-  );
-}
-
 /** No reset by email: users ask an administrator, administrators use the recovery key (POST /api/auth/recover). */
 function ForgotStep({ onBack }: { onBack: () => void }) {
   const { t } = useTranslation('auth');
@@ -353,17 +317,5 @@ function TotpStep({ onBack, onNext }: { onBack: () => void; onNext: () => void }
 }
 
 function WelcomeStep() {
-  const { t } = useTranslation('auth');
-  return (
-    <div className={styles.welcome} role="status">
-      <span className={styles.bigAvatar} aria-hidden>
-        {user.initials}
-      </span>
-      <h1 className={styles.welcomeTitle}>{t('login.welcome', { name: user.firstName })}</h1>
-      <div className={styles.preparing}>
-        <p>{t('login.preparing')}</p>
-        <span className={styles.indeterminate} aria-hidden />
-      </div>
-    </div>
-  );
+  return <WelcomeCard name={user.firstName} initials={user.initials} />;
 }

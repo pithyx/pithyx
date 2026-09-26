@@ -38,7 +38,7 @@ public static class AuthEndpoints
     }
 
     private static async Task<Ok<SetupStatus>> GetSetupStatusAsync(AuthService auth, CancellationToken cancellationToken) =>
-        TypedResults.Ok(new SetupStatus(await auth.SetupRequiredAsync(cancellationToken)));
+        TypedResults.Ok(new SetupStatus(await auth.SetupRequiredAsync(cancellationToken), Environment.MachineName));
 
     private static async Task<Ok<SetupResponse>> SetupAsync(
         SetupRequest request, AuthService auth, SessionService sessions, HttpContext context, IHostEnvironment environment, CancellationToken cancellationToken)

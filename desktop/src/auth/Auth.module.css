@@ -221,3 +221,9 @@
     font-size: var(--font-size-xl);
   }
 }
+
+@media print {
+  .noPrint {
+    display: none;
+  }
+}

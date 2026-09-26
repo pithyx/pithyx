@@ -2,7 +2,9 @@
   "status": {
     "connecting": "Connecting to daemon…",
     "connected": "{mode, select, simulated {Connected to daemon (simulated)} other {Connected to daemon}}",
-    "unreachable": "Daemon not reachable"
+    "unreachable": "Daemon not reachable",
+    "unreachableHint": "The daemon did not answer. Check that it is running, then try again.",
+    "retry": "Try again"
   },
   "menu": {
     "language": "Language",
@@ -10,7 +12,8 @@
     "twoFactor": "Two-factor authentication",
     "signOut": "Sign out",
     "signedInAs": "Signed in as {name}",
-    "personalization": "Personalization"
+    "personalization": "Personalization",
+    "languageCurrent": "Language: {language}"
   },
   "error": {
     "title": "Something went wrong",

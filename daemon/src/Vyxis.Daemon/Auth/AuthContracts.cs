@@ -2,7 +2,9 @@ namespace Vyxis.Daemon.Auth;
 
 public sealed record UserInfo(long Id, string Username, string? DisplayName, bool IsAdmin, bool TotpEnabled);
 
-public sealed record SetupStatus(bool Required);
+/// <param name="Required">True until the first administrator exists.</param>
+/// <param name="Hostname">Shown on the setup and sign-in screens, so users with several servers know where they sign in.</param>
+public sealed record SetupStatus(bool Required, string Hostname);
 
 public sealed record SetupRequest(string Username, string Password, string? DisplayName = null);
 

@@ -1,61 +1,85 @@
+import { IconCheck, IconCopy, IconKey, IconPrinter } from '@tabler/icons-react';
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { copyText } from '../errors/copyText';
+import { Button } from '../ui/Button';
+import { Checkbox } from '../ui/Controls';
+import { cx } from '../ui/cx';
+import styles from './Auth.module.css';
+import { RecoveryKeyValue } from './parts';
 
-/** Shows the recovery key once. Continuing is possible only after confirming it was stored. */
+/** Shows a recovery key once. Continuing is possible only after confirming it was stored. */
 export function RecoveryKeyCard({
   recoveryKey,
+  step,
+  title,
+  intro,
+  continueLabel,
   onContinue,
 }: {
   recoveryKey: string;
+  step?: string;
+  title: string;
+  intro: string;
+  continueLabel: string;
   onContinue: () => void;
 }) {
   const { t } = useTranslation('auth');
+  const titleId = useId();
   const [stored, setStored] = useState(false);
-  const confirmId = useId();
+  const [copied, setCopied] = useState(false);
 
   return (
-    <section className="card recovery-key" aria-labelledby="recovery-key-title">
-      <h1 id="recovery-key-title" className="card__title">
-        {t('recoveryKey.title')}
-      </h1>
-      <p>{t('recoveryKey.intro')}</p>
-      <p className="recovery-key__value">
-        <code data-testid="recovery-key">{recoveryKey}</code>
-      </p>
-      <div className="card__row no-print">
-        <button type="button" className="button" onClick={() => void copyText(recoveryKey)}>
-          {t('recoveryKey.copy')}
-        </button>
-        <button
-          type="button"
-          className="button"
-          onClick={() => {
+    <section className={styles.form} aria-labelledby={titleId}>
+      <div className={styles.heading}>
+        {step !== undefined && <p className={styles.step}>{step}</p>}
+        <h1 id={titleId} className={styles.title}>
+          {title}
+        </h1>
+        <p className={styles.intro}>{intro}</p>
+      </div>
+      <div className={styles.key}>
+        <IconKey size={20} stroke={1.75} aria-hidden className={styles.keyIcon} />
+        <RecoveryKeyValue value={recoveryKey} />
+      </div>
+      <div className={cx(styles.row, styles.noPrint)}>
+        <Button
+          autoFocus
+          onPress={() => {
+            void copyText(recoveryKey).then(() => {
+              setCopied(true);
+            });
+          }}
+        >
+          {copied ? (
+            <IconCheck size={18} stroke={1.75} aria-hidden />
+          ) : (
+            <IconCopy size={18} stroke={1.75} aria-hidden />
+          )}
+          {copied ? t('recoveryKey.copied') : t('recoveryKey.copy')}
+        </Button>
+        <Button
+          onPress={() => {
             window.print();
           }}
         >
+          <IconPrinter size={18} stroke={1.75} aria-hidden />
           {t('recoveryKey.print')}
-        </button>
+        </Button>
       </div>
-      <p className="field field--inline no-print">
-        <input
-          id={confirmId}
-          type="checkbox"
-          checked={stored}
-          onChange={(event) => {
-            setStored(event.target.checked);
-          }}
-        />
-        <label htmlFor={confirmId}>{t('recoveryKey.confirm')}</label>
-      </p>
-      <button
-        type="button"
-        className="button button--primary no-print"
-        disabled={!stored}
-        onClick={onContinue}
+      <div className={styles.noPrint}>
+        <Checkbox isSelected={stored} onChange={setStored}>
+          {t('recoveryKey.confirm')}
+        </Checkbox>
+      </div>
+      <Button
+        variant="primary"
+        isDisabled={!stored}
+        className={cx(styles.submit, styles.noPrint)}
+        onPress={onContinue}
       >
-        {t('recoveryKey.continue')}
-      </button>
+        {continueLabel}
+      </Button>
     </section>
   );
 }

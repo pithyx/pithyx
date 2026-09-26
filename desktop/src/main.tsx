@@ -1,12 +1,13 @@
 import { QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { I18nProvider } from 'react-aria-components';
+import { useTranslation } from 'react-i18next';
 import { queryKeys } from './api/queries';
 import { App } from './App';
 import { isSessionExpired } from './errors/describe';
 import { initI18n } from './i18n';
-import './styles/tokens.css';
-import './desktop.css';
+import './theme/index.css';
 
 const root = document.getElementById('root');
 if (!root) {
@@ -31,10 +32,20 @@ const queryClient: QueryClient = new QueryClient({
 
 await initI18n();
 
+/** React Aria formats and labels in the language the user picked, not the browser language. */
+function Root() {
+  const { i18n } = useTranslation();
+  return (
+    <I18nProvider locale={i18n.language}>
+      <App />
+    </I18nProvider>
+  );
+}
+
 createRoot(root).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <App />
+      <Root />
     </QueryClientProvider>
   </StrictMode>,
 );

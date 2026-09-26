@@ -1,3 +1,4 @@
+import { IconCheck, IconChevronRight } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import {
   Menu as AriaMenu,
@@ -41,8 +42,22 @@ export function MenuItem({ icon, children, tone = 'default', ...props }: MenuIte
       {...(textValue === undefined ? {} : { textValue })}
       className={cx(styles.item, tone === 'danger' && styles.danger)}
     >
-      {icon !== undefined && <span className={styles.icon}>{icon}</span>}
-      <span className={styles.label}>{children}</span>
+      {({ isSelected, selectionMode, hasSubmenu }) => (
+        <>
+          {icon !== undefined && <span className={styles.icon}>{icon}</span>}
+          <span className={styles.label}>{children}</span>
+          {selectionMode !== 'none' && (
+            <span className={styles.check} aria-hidden>
+              {isSelected && <IconCheck size={16} stroke={2} />}
+            </span>
+          )}
+          {hasSubmenu && (
+            <span className={styles.icon} aria-hidden>
+              <IconChevronRight size={16} stroke={1.75} />
+            </span>
+          )}
+        </>
+      )}
     </AriaMenuItem>
   );
 }

@@ -97,3 +97,27 @@
     padding: var(--space-5);
   }
 }
+
+/* Printing the recovery key: only the card, without wallpaper, shadow or footer. */
+@media print {
+  .auth {
+    position: static;
+    overflow: visible;
+    background: none;
+  }
+
+  .auth > svg,
+  .footer {
+    display: none;
+  }
+
+  .center {
+    display: block;
+    padding: 0;
+  }
+
+  .card {
+    box-shadow: none;
+    animation: none;
+  }
+}

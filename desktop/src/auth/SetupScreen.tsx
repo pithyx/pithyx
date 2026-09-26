@@ -1,117 +1,133 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { unwrap } from '@vyxis/api-client';
-import { useState, type SubmitEvent } from 'react';
+import { useMutation } from '@tanstack/react-query';
+import { unwrap, type components } from '@vyxis/api-client';
+import { useState, type SyntheticEvent } from 'react';
+import { Form } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
-import { queryKeys } from '../api/queries';
 import { describeError } from '../errors/describe';
-import { field } from '../forms';
 import { ErrorNotice } from '../errors/ErrorNotice';
+import { field } from '../forms';
+import { AuthHeader, AuthLayout } from '../shell/AuthLayout';
+import { Button } from '../ui/Button';
+import { PasswordField, TextField } from '../ui/TextField';
+import styles from './Auth.module.css';
+import { LanguageMenu } from './parts';
 import { RecoveryKeyCard } from './RecoveryKeyCard';
 
-const MIN_PASSWORD_LENGTH = 12;
+type User = components['schemas']['UserInfo'];
 
-export function SetupScreen() {
+export const MIN_PASSWORD_LENGTH = 12;
+const STEPS = 2;
+
+/**
+ * First run: create the administrator, then store the recovery key. The setup signs the administrator in.
+ *
+ * Auth forms validate only on submit (validationBehavior "aria" plus errors set by the submit handler) and leave
+ * the rules to the daemon. React Aria's native mode shows errors on blur, and an error appearing or vanishing while
+ * the pointer is on the submit button moves the button away before the click completes.
+ */
+export function SetupScreen({
+  hostname,
+  onSignedIn,
+}: {
+  hostname: string;
+  onSignedIn: (user: User) => void;
+}) {
   const { t } = useTranslation('auth');
-  const queryClient = useQueryClient();
+  const { t: tDesktop } = useTranslation();
   const [mismatch, setMismatch] = useState(false);
   const setup = useMutation({
     mutationFn: async (body: { username: string; password: string; displayName: string | null }) =>
       unwrap(await api.POST('/api/setup', { body })),
   });
 
-  if (setup.data !== undefined) {
-    const { user, recoveryKey } = setup.data;
-    return (
-      <main className="screen">
-        <RecoveryKeyCard
-          recoveryKey={recoveryKey}
-          onContinue={() => {
-            // The setup already signed the administrator in.
-            queryClient.setQueryData(queryKeys.session, user);
-            void queryClient.invalidateQueries({ queryKey: queryKeys.setup });
-          }}
-        />
-      </main>
-    );
-  }
-
-  function submit(event: SubmitEvent<HTMLFormElement>) {
+  function submit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const password = field(form, 'password');
-    const matches = password === field(form, 'confirm');
-    setMismatch(!matches);
-    if (matches) {
-      const displayName = field(form, 'displayName').trim();
-      setup.mutate({
-        username: field(form, 'username'),
-        password,
-        displayName: displayName === '' ? null : displayName,
-      });
+    if (password !== field(form, 'confirm')) {
+      setMismatch(true);
+      return;
     }
+    const displayName = field(form, 'displayName').trim();
+    setup.mutate({
+      username: field(form, 'username'),
+      password,
+      displayName: displayName === '' ? null : displayName,
+    });
   }
 
   return (
-    <main className="screen">
-      <form className="card" onSubmit={submit} aria-labelledby="setup-title">
-        <h1 id="setup-title" className="card__title">
-          {t('setup.title')}
-        </h1>
-        <p>{t('setup.intro')}</p>
-        <p className="field">
-          <label htmlFor="setup-username">{t('setup.username')}</label>
-          <input
-            id="setup-username"
+    <AuthLayout wide footer={<LanguageMenu />}>
+      <AuthHeader host={hostname} product={tDesktop('brand')} />
+      {setup.data === undefined ? (
+        <Form
+          className={styles.form}
+          onSubmit={submit}
+          validationBehavior="aria"
+          aria-labelledby="setup-title"
+        >
+          <div className={styles.heading}>
+            <p className={styles.step}>{t('setup.step', { current: 1, total: STEPS })}</p>
+            <h1 id="setup-title" className={styles.title}>
+              {t('setup.title')}
+            </h1>
+            <p className={styles.intro}>{t('setup.intro')}</p>
+          </div>
+          <TextField
+            label={t('setup.username')}
+            description={t('setup.usernameHint')}
             name="username"
             autoComplete="username"
             autoCapitalize="none"
-            spellCheck={false}
-            required
-            aria-describedby="setup-username-hint"
+            spellCheck="false"
+            autoFocus
+            isRequired
           />
-          <small id="setup-username-hint">{t('setup.usernameHint')}</small>
-        </p>
-        <p className="field">
-          <label htmlFor="setup-display-name">{t('setup.displayName')}</label>
-          <input id="setup-display-name" name="displayName" autoComplete="name" />
-        </p>
-        <p className="field">
-          <label htmlFor="setup-password">{t('setup.password')}</label>
-          <input
-            id="setup-password"
+          <TextField label={t('setup.displayName')} name="displayName" autoComplete="name" />
+          <PasswordField
+            label={t('setup.password')}
+            description={t('setup.passwordHint', { minLength: MIN_PASSWORD_LENGTH })}
             name="password"
-            type="password"
             autoComplete="new-password"
-            minLength={MIN_PASSWORD_LENGTH}
-            required
-            aria-describedby="setup-password-hint"
+            onChange={() => {
+              setMismatch(false);
+            }}
+            isRequired
           />
-          <small id="setup-password-hint">
-            {t('setup.passwordHint', { minLength: MIN_PASSWORD_LENGTH })}
-          </small>
-        </p>
-        <p className="field">
-          <label htmlFor="setup-confirm">{t('setup.confirmPassword')}</label>
-          <input
-            id="setup-confirm"
+          <PasswordField
+            label={t('setup.confirmPassword')}
             name="confirm"
-            type="password"
             autoComplete="new-password"
-            required
-            aria-invalid={mismatch}
+            isInvalid={mismatch}
+            errorMessage={t('setup.passwordMismatch')}
+            onChange={() => {
+              setMismatch(false);
+            }}
+            isRequired
           />
-        </p>
-        {mismatch && (
-          <p className="error-notice" role="alert">
-            {t('setup.passwordMismatch')}
-          </p>
-        )}
-        {setup.isError && <ErrorNotice error={describeError(setup.error)} />}
-        <button type="submit" className="button button--primary" disabled={setup.isPending}>
-          {t('setup.submit')}
-        </button>
-      </form>
-    </main>
+          {setup.isError && <ErrorNotice error={describeError(setup.error)} />}
+          <Button
+            type="submit"
+            variant="primary"
+            className={styles.submit}
+            isPending={setup.isPending}
+          >
+            {t('setup.submit')}
+          </Button>
+        </Form>
+      ) : (
+        <RecoveryKeyCard
+          recoveryKey={setup.data.recoveryKey}
+          step={t('setup.step', { current: 2, total: STEPS })}
+          title={t('recoveryKey.title')}
+          intro={t('recoveryKey.intro')}
+          continueLabel={t('recoveryKey.continue')}
+          onContinue={() => {
+            onSignedIn(setup.data.user);
+          }}
+        />
+      )}
+    </AuthLayout>
   );
 }

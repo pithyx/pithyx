@@ -63,6 +63,13 @@
   flex: 1;
 }
 
+.check {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  color: var(--color-accent);
+}
+
 .danger,
 .danger .icon {
   color: var(--color-danger);

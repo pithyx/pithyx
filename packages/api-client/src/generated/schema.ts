@@ -389,6 +389,9 @@ export type components = {
             user: components["schemas"]["UserInfo"];
         };
         SetupStatus: {
+            /** @description Shown on the setup and sign-in screens, so users with several servers know where they sign in. */
+            hostname: string;
+            /** @description True until the first administrator exists. */
             required: boolean;
         };
         /** @description The full current state of a topic, sent after `sub`. Only changes follow as events. */
