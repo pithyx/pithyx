@@ -4,7 +4,8 @@
 #   tools/fixtures/record.sh <scenario> <id> -- <command> [args...]
 #
 # Writes daemon/tests/fixtures/commands/<scenario>/<id>.json, <id>.stdout and, if not empty, <id>.stderr.
-# Run the command exactly as the daemon does: same program name, same arguments.
+# Run the command exactly as the daemon does: same program name, same arguments. JSON output is passed through
+# tools/fixtures/anonymize.ts, which replaces serial numbers and WWNs with stable pseudonyms.
 set -euo pipefail
 export LC_ALL=C.UTF-8
 
@@ -27,6 +28,7 @@ mkdir -p "$dir"
 exit_code=0
 "$@" >"$dir/$id.stdout" 2>"$dir/$id.stderr" || exit_code=$?
 [[ -s "$dir/$id.stderr" ]] || rm -f "$dir/$id.stderr"
+node "$(git rev-parse --show-toplevel)/tools/fixtures/anonymize.ts" "$dir/$id.stdout"
 
 node -e '
 const [file, exitCode, command, ...args] = process.argv.slice(1);

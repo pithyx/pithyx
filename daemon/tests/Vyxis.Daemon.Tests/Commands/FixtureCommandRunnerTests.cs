@@ -27,4 +27,21 @@ public sealed class FixtureCommandRunnerTests
 
         Assert.Contains("uname -a", exception.Message, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public async Task StreamReplaysRecordedLinesAndStaysOpen()
+    {
+        var runner = FixtureCommandRunner.Load(_defaultScenario);
+        using var cancel = CancellationTokenSource.CreateLinkedTokenSource(TestContext.Current.CancellationToken);
+        cancel.CancelAfter(TimeSpan.FromMilliseconds(300));
+        var lines = new List<string>();
+
+        await foreach (var line in runner.StreamLinesAsync(new CommandRequest("udevadm", ["monitor", "--udev", "--subsystem-match=block"]), cancel.Token))
+        {
+            lines.Add(line);
+        }
+
+        Assert.Equal("monitor will print the received events for:", lines[0]);
+        Assert.True(cancel.IsCancellationRequested);
+    }
 }

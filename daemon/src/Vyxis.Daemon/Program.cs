@@ -11,6 +11,7 @@ using Vyxis.Daemon.Health;
 using Vyxis.Daemon.Hosting;
 using Vyxis.Daemon.Monitoring;
 using Vyxis.Daemon.Realtime;
+using Vyxis.Daemon.Storage;
 
 const int HttpPort = 8994;
 
@@ -40,6 +41,9 @@ builder.Services.AddSingleton<TopicHub>();
 builder.Services.AddSingleton<SystemInfoSampler>();
 builder.Services.AddSingleton(services => SystemInfoPublisher.Definition(services.GetRequiredService<SystemInfoSampler>()));
 builder.Services.AddHostedService<SystemInfoPublisher>();
+builder.Services.AddSingleton<DiskInventory>();
+builder.Services.AddSingleton(services => services.GetRequiredService<DiskInventory>().Definition());
+builder.Services.AddHostedService<SystemStateService>();
 builder.Services.AddVyxisOpenApi();
 
 if (mode == DaemonMode.Simulated)
@@ -98,6 +102,9 @@ api.MapGet("/health", () => TypedResults.Ok(new HealthResponse("ok", mode)))
     .AllowAnonymous();
 
 api.MapAuthEndpoints();
+api.MapGet("/disks", (DiskInventory disks) => TypedResults.Ok(disks.Current))
+    .WithName("GetDisks")
+    .WithTags("Storage");
 app.MapRealtime();
 
 await app.RunAsync();

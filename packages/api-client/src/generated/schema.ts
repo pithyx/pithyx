@@ -129,6 +129,22 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/disks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetDisks"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/health": {
         parameters: {
             query?: never;
@@ -202,6 +218,92 @@ export type components = {
         };
         /** @enum {unknown} */
         DaemonMode: "real" | "simulated";
+        Disk: {
+            /** @description Stable across reboots and device renames: `wwn-...`, else `serial-...`, else `path-...`. */
+            id: string;
+            /** @description Model name, if any. */
+            model: null | string;
+            /** @description Kernel name, for example `sda` or `nvme0n1`. Can change between boots. */
+            name: string;
+            /** @description Partitions in on-disk order. */
+            partitions: components["schemas"]["Partition"][];
+            /** @description Device node, for example `/dev/sda`. */
+            path: string;
+            /** @description True when the kernel exposes the disk read-only. */
+            readOnly: boolean;
+            /** @description True for removable media. */
+            removable: boolean;
+            /** @description True for spinning disks. */
+            rotational: boolean;
+            /** @description Serial number as reported by the drive, if any. */
+            serial: null | string;
+            /**
+             * Format: int64
+             * @description Capacity in bytes.
+             */
+            sizeBytes: number;
+            /** @description Bus, for example `sata`, `nvme` or `usb`; null for virtual disks. */
+            transport: null | string;
+            /** @description Vendor, if any. */
+            vendor: null | string;
+            /** @description World wide name, if any. */
+            wwn: null | string;
+        };
+        /** @description Snapshot of `storage/disks` and response of `GET /api/disks`. */
+        DiskList: {
+            disks: components["schemas"]["Disk"][];
+        };
+        /** @description Event of `storage/disks`: disks that appeared or changed, and ids of disks that disappeared. */
+        DisksChanged: {
+            removals: string[];
+            upserts: {
+                /** @description Stable across reboots and device renames: `wwn-...`, else `serial-...`, else `path-...`. */
+                id: string;
+                /** @description Model name, if any. */
+                model: null | string;
+                /** @description Kernel name, for example `sda` or `nvme0n1`. Can change between boots. */
+                name: string;
+                /** @description Partitions in on-disk order. */
+                partitions: {
+                    /** @description File system or content type, for example `ext4` or `zfs_member`. */
+                    fileSystem: null | string;
+                    /** @description File system label, if any. */
+                    label: null | string;
+                    /** @description Where the partition is mounted; empty when it is not. */
+                    mountPoints: string[];
+                    /** @description Kernel name, for example `sda1`. */
+                    name: string;
+                    /** @description Device node. */
+                    path: string;
+                    /**
+                     * Format: int64
+                     * @description Size in bytes.
+                     */
+                    sizeBytes: number;
+                }[];
+                /** @description Device node, for example `/dev/sda`. */
+                path: string;
+                /** @description True when the kernel exposes the disk read-only. */
+                readOnly: boolean;
+                /** @description True for removable media. */
+                removable: boolean;
+                /** @description True for spinning disks. */
+                rotational: boolean;
+                /** @description Serial number as reported by the drive, if any. */
+                serial: null | string;
+                /**
+                 * Format: int64
+                 * @description Capacity in bytes.
+                 */
+                sizeBytes: number;
+                /** @description Bus, for example `sata`, `nvme` or `usb`; null for virtual disks. */
+                transport: null | string;
+                /** @description Vendor, if any. */
+                vendor: null | string;
+                /** @description World wide name, if any. */
+                wwn: null | string;
+            }[];
+        };
         /** @enum {string} */
         ErrorCode: "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "system.internal.unexpected" | "system.origin.forbidden";
         /** @description A failed client message. `id` is empty when the message could not be parsed. */
@@ -243,6 +345,23 @@ export type components = {
             /** @description True when a TOTP or recovery code must follow. */
             totpRequired: boolean;
             user: null | components["schemas"]["UserInfo"];
+        };
+        Partition: {
+            /** @description File system or content type, for example `ext4` or `zfs_member`. */
+            fileSystem: null | string;
+            /** @description File system label, if any. */
+            label: null | string;
+            /** @description Where the partition is mounted; empty when it is not. */
+            mountPoints: string[];
+            /** @description Kernel name, for example `sda1`. */
+            name: string;
+            /** @description Device node. */
+            path: string;
+            /**
+             * Format: int64
+             * @description Size in bytes.
+             */
+            sizeBytes: number;
         };
         RecoverRequest: {
             newPassword: string;
@@ -311,9 +430,11 @@ export type components = {
             uptimeSeconds: number;
         };
         TopicEvents: {
+            "storage/disks": components["schemas"]["DisksChanged"];
             "system/info": components["schemas"]["SystemInfo"];
         };
         TopicSnapshots: {
+            "storage/disks": components["schemas"]["DiskList"];
             "system/info": components["schemas"]["SystemInfo"];
         };
         TotpConfirmRequest: {
@@ -590,6 +711,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TotpEnrollment"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetDisks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DiskList"];
                 };
             };
             /** @description Problem details with a stable error code. */

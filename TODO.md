@@ -192,9 +192,10 @@ Goal: one real feature end to end, built on the final architecture. Everything l
 
 ### 3.5 First real feature: disks
 
-- [ ] `LsblkParser`: pure static function, parses `lsblk -J -b -O` output. Fixture tests with real output from the dev VM (at least: plain SATA, NVMe, USB disk, virtual disk).
-- [ ] `SystemStateService`: holds the disk list in memory. Refreshes on udev events (listen via `udevadm monitor` as a long-running process or netlink) and at startup.
-- [ ] `GET /api/disks` reads from memory. Topic `storage/disks` pushes changes.
+- [x] `LsblkParser`: pure static function, parses `lsblk -J -b -O` output. Fixture tests with real output from the dev VM (virtual disks). `tools/fixtures/record.sh` anonymizes serials and WWNs with stable pseudonyms.
+- [ ] Owner: record `lsblk -J -b -O` fixtures from real hardware (plain SATA, NVMe, USB disk) with `tools/fixtures/record.sh lsblk-<case> lsblk -- lsblk -J -b -O` and add parser tests for them.
+- [x] `SystemStateService`: holds the disk list in memory. Refreshes on udev events (listen via `udevadm monitor` as a long-running process or netlink) and at startup.
+- [x] `GET /api/disks` reads from memory. Topic `storage/disks` pushes changes.
 
 ### 3.6 Generated contracts
 
