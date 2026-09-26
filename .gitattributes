@@ -16,3 +16,6 @@
 *.gz binary
 *.iso binary
 *.img binary
+
+# Third-party font files and licenses stay byte-identical to their official releases.
+desktop/public/fonts/** -text
