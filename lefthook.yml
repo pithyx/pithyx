@@ -3,12 +3,12 @@ pre-commit:
   jobs:
     - name: prettier
       glob: '*.{ts,tsx,js,json,css,html,md,yml,yaml}'
-      run: pnpm exec prettier --check --ignore-unknown {staged_files}
+      run: pnpm exec prettier --check --cache --cache-location node_modules/.cache/prettier/.prettier-cache --ignore-unknown {staged_files}
     - name: eslint
       glob: '*.{ts,tsx,js}'
       exclude:
         - 'daemon/**'
-      run: pnpm exec eslint --no-warn-ignored {staged_files}
+      run: VYXIS_ESLINT_FAST=1 pnpm exec eslint --cache --cache-location node_modules/.cache/eslint/ --no-warn-ignored {staged_files}
     - name: repo-check
       run: node tools/checks/repo-check.ts
     - name: shellcheck
