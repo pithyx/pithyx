@@ -1,3 +1,4 @@
+import optimizeLocales from '@react-aria/optimize-locales-plugin';
 import babel from '@rolldown/plugin-babel';
 import react, { reactCompilerPreset } from '@vitejs/plugin-react';
 import { defineConfig, type Plugin } from 'vite';
@@ -21,8 +22,16 @@ function cssModuleTypes(): Plugin {
   };
 }
 
+// React Aria ships its own strings for about 30 locales; keep only the languages in src/i18n.ts.
+const ariaLocales = ['en-US', 'de-DE'];
+
 export default defineConfig({
-  plugins: [react(), babel({ presets: [reactCompilerPreset()] }), cssModuleTypes()],
+  plugins: [
+    { ...optimizeLocales.vite({ locales: ariaLocales }), enforce: 'pre' },
+    react(),
+    babel({ presets: [reactCompilerPreset()] }),
+    cssModuleTypes(),
+  ],
   build: {
     rollupOptions: {
       // Only the desktop ships. design.html is the developer-only design gallery served by `pnpm design`.

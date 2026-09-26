@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Setup and sign-in use the step 4 design: one card on the wallpaper with the server name, the setup in two steps (administrator, recovery key in two lines with copy and print), the TOTP step in the same card, a recovery code fallback, "Forgot password?" with the recovery key reset that shows the new key once, and a welcome card that stays only until the desktop's live connection is up. A language menu below the card switches between automatic, English and German.
+- `GET /api/setup` returns the server's `hostname`, shown on the setup and sign-in screens.
+- After sign-in the desktop shows the wallpaper, the taskbar with clock and account menu (two-factor authentication, language, sign out, daemon status) and the disk list in a window. The desktop code loads only after sign-in.
+- React Aria components follow the language picked in Vyxis, and the build keeps only their English and German strings (`@react-aria/optimize-locales-plugin`).
+- End-to-end tests cover setup, recovery key confirmation, TOTP sign-in, the password reset with the recovery key, the language menu and phone sign-in.
 - Design tokens for the desktop (`desktop/src/theme/`): colors defined once for light and dark with `light-dark()`, seven accent presets with petrol as default, type scale, spacing, radii, elevation and motion. A Vitest check enforces WCAG AA contrast for every preset in both themes.
 - Self-hosted fonts shipped unmodified from their official releases (IBM Plex Sans, Sora, JetBrains Mono) with their licenses, fetched and verified by `tools/fonts/fetch-fonts.sh`, and `desktop/public/third-party-notices.json`.
 - UI primitives on React Aria Components with CSS Modules and Tabler icons, and presentational desktop shell components (wallpaper, taskbar, start menu, windows, desktop icons, sticky notes, notifications, app switcher, sign-in layout).
@@ -50,7 +55,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Desktop walking skeleton: first-run setup with the one-time recovery key (copy and print), sign-in with an optional TOTP step or recovery code, a desktop with a live "Disks" window, two-factor setup with a QR code, sign-out, a language switch (automatic, English, German) and an error dialog that shows the translated message and the request id with a copy button.
 - The desktop keeps one WebSocket per tab, restores subscriptions after reconnecting with backoff and returns to the login screen when the session ends.
 - The daemon serves the built desktop with `index.html` as the fallback for every path outside `/api/` and `/ws`; hashed assets are cached forever.
-- Placeholder design tokens (light and dark) as CSS variables.
 - End-to-end tests with Playwright (setup, disks, sign-out, wrong password with request id, German interface, TOTP), run in CI.
 - Disk list: `GET /api/disks` and the topic `storage/disks` (snapshot plus added, changed and removed disks). The daemon reads `lsblk` at startup and after udev block device events, never on a request and never by polling.
 - `ICommandRunner` can stream the lines of long-running commands such as `udevadm monitor`; simulation replays recorded streams.

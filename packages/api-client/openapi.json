@@ -1074,12 +1074,18 @@
       },
       "SetupStatus": {
         "required": [
-          "required"
+          "required",
+          "hostname"
         ],
         "type": "object",
         "properties": {
           "required": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "True until the first administrator exists."
+          },
+          "hostname": {
+            "type": "string",
+            "description": "Shown on the setup and sign-in screens, so users with several servers know where they sign in."
           }
         }
       },

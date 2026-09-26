@@ -1,37 +1,45 @@
-import { useEffect, useRef } from 'react';
+import { IconAlertTriangle } from '@tabler/icons-react';
 import { useTranslation } from 'react-i18next';
-import { ErrorNotice } from './ErrorNotice';
+import { Button } from '../ui/Button';
+import { Dialog } from '../ui/Dialog';
+import type { DescribedError } from './describe';
+import { RequestId, useErrorMessage } from './ErrorNotice';
 import { closeError, useErrorStore } from './errorStore';
 
+function ErrorContent({ error }: { error: DescribedError }) {
+  const message = useErrorMessage(error);
+  return (
+    <>
+      <p>{message}</p>
+      {error.requestId !== '' && <RequestId requestId={error.requestId} />}
+    </>
+  );
+}
+
+/** Errors that do not belong to a form: the translated message and the request id. */
 export function ErrorDialog() {
   const { t } = useTranslation();
   const error = useErrorStore((state) => state.current);
-  const dialog = useRef<HTMLDialogElement>(null);
-
-  // Syncs the store with the native modal dialog, which handles focus and Escape.
-  useEffect(() => {
-    const element = dialog.current;
-    if (error !== null && element !== null && !element.open) {
-      element.showModal();
-    }
-  }, [error]);
-
   return (
-    <dialog
-      ref={dialog}
-      className="dialog"
-      aria-labelledby="error-dialog-title"
-      onClose={closeError}
-    >
-      <h2 id="error-dialog-title" className="dialog__title">
-        {t('error.title')}
-      </h2>
-      {error !== null && <ErrorNotice error={error} />}
-      <form method="dialog" className="dialog__actions">
-        <button type="submit" className="button">
+    <Dialog
+      isOpen={error !== null}
+      onOpenChange={(open) => {
+        if (!open) {
+          closeError();
+        }
+      }}
+      isDismissable
+      role="alertdialog"
+      tone="danger"
+      icon={<IconAlertTriangle size={22} stroke={1.75} />}
+      title={t('error.title')}
+      actions={
+        <Button variant="primary" slot="close" autoFocus>
           {t('error.close')}
-        </button>
-      </form>
-    </dialog>
+        </Button>
+      }
+    >
+      {error !== null && <ErrorContent error={error} />}
+    </Dialog>
   );
 }
