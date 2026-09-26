@@ -207,6 +207,7 @@ Goal: one real feature end to end, built on the final architecture. Everything l
 - [ ] Design tokens as CSS variables with light and dark theme (placeholder values, final design in step 4).
 - [ ] Setup screen (first run) and login screen, functional but unstyled.
 - [ ] Minimal desktop with one fixed window that shows the disk list live via the WebSocket store.
+- [ ] The daemon serves the built desktop: static files plus `index.html` as the SPA fallback for every path outside `/api/` and `/ws` (API paths keep answering with problem details).
 - [ ] Error dialog: translated message from the error code, request id with a copy button.
 - [ ] TanStack Query for REST, a small Zustand store for WebSocket topics. Base from step 2: TanStack Query is set up and used for `/api/health`.
 
@@ -328,6 +329,7 @@ Known requirements for later milestones:
 
 - M3: energy settings: spindown per pool (via hd-idle, off by default), power profiles, and a diagnostic that shows what keeps disks awake (process, file) and CPU package C-state residency.
 - M3: permission model from `CLAUDE.md` (groups, users, shares, protocols, apps, special rights), pool encryption with key vault, SFTP instead of plain FTP.
+- M3: `[DECISION]` Server-side rendered texts (email, SSH MOTD, push) in the recipient's language need culture data. Decide between keeping `InvariantGlobalization` (small, no libicu, but only invariant formatting and a hand-written plural rule for English and German in `IcuMessageFormatter`) and enabling ICU culture data (libicu in the image, about 30 MB, correct number, date and plural rules for every language). Today the daemon only renders the English `detail` fallback of problem details.
 - M5: web-based installer instead of a TUI. Boot from USB, open the setup page in a browser, choose the system disk, the system installs itself and continues setup in the same page. The console only shows the address.
 - M5: TLS as decided in `CLAUDE.md`: self-signed by default, trust wizard (local CA download with per-OS instructions), optional own domain with Let's Encrypt DNS-01. Passkeys and the service worker switch on once trusted.
 - M5: SSH toggle in settings with the logo MOTD.

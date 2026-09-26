@@ -51,7 +51,9 @@ if (!BuildTimeDocument.IsGenerating)
 app.UseMiddleware<RequestIdMiddleware>();
 app.UseSerilogRequestLogging(options => options.Logger = app.Services.GetRequiredService<Serilog.ILogger>());
 app.UseExceptionHandler();
-app.UseStatusCodePages();
+// Only the API answers bare status codes with problem details. Every other path belongs to the desktop,
+// which serves its index.html as the SPA fallback.
+app.UseWhen(context => IsApiRequest(context.Request.Path), api => api.UseStatusCodePages());
 
 app.MapOpenApi(OpenApiSetup.DocumentPath);
 if (app.Environment.IsDevelopment())
@@ -64,5 +66,7 @@ app.MapGet("/api/health", () => TypedResults.Ok(new HealthResponse("ok", mode)))
     .WithTags("System");
 
 app.Run();
+
+static bool IsApiRequest(PathString path) => path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase);
 
 public partial class Program;
