@@ -9,6 +9,7 @@ interface Problem {
   message: string;
 }
 
+// Written as a code point: Prettier turns a \u escape into the literal character, which the check would flag.
 const EM_DASH = String.fromCodePoint(0x2014);
 
 const BINARY_EXTENSIONS = new Set([

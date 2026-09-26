@@ -150,6 +150,8 @@ Goal: anyone can go from a fresh clone to a running daemon and desktop in under 
 
 ## Step 3: Walking skeleton (daemon core, login, first window)
 
+Status: done (2026-09-26). The Proxmox detach test passed on dev01; only the real-hardware lsblk fixtures below are still open.
+
 Effort: high for 3.1, 3.3, 3.4 and 3.6 (they define contracts everything else builds on), medium for the rest.
 
 Goal: one real feature end to end, built on the final architecture. Everything later extends this.

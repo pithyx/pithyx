@@ -12,6 +12,7 @@ public static partial class DesktopHosting
     // Vite puts content-hashed files under /assets/; they never change and may be cached forever.
     private const string ImmutableCache = "public, max-age=31536000, immutable";
 
+    // CreateSlimBuilder has no regex route constraint, so the exclusions are a small constraint of their own.
     public const string PathConstraint = "desktoppath";
 
     /// <summary>Registers the route constraint that keeps the SPA fallback away from API and WebSocket paths.</summary>
