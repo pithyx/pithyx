@@ -6,25 +6,25 @@ import { ProgressBar } from '../ui/Controls';
 import { cx } from '../ui/cx';
 import { AppIcon } from './AppIcon';
 import styles from './Notifications.module.css';
+import { useMessages, type Message } from './messages';
 import type { AppInfo, TaskbarPosition } from './types';
 
+/** A notification as code and params; title, body and an optional action come from the notifications namespace. */
 export interface NotificationItem {
   id: string;
   app: Pick<AppInfo, 'icon' | 'tone' | 'name'>;
-  title: string;
-  body: string;
+  message: Message;
   /** Minutes ago, formatted with Intl.RelativeTimeFormat. */
   minutesAgo: number;
   unread?: boolean;
   tone?: 'default' | 'success' | 'warning' | 'danger';
-  action?: string;
 }
 
+/** A running job; title and detail come from the jobs namespace. */
 export interface JobItem {
   id: string;
-  title: string;
+  message: Message;
   progress: number;
-  detail: string;
 }
 
 function useRelativeTime(locale: string) {
@@ -46,6 +46,8 @@ function NotificationCard({
 }) {
   const { t } = useTranslation();
   const relative = useRelativeTime(locale);
+  const text = useMessages('notifications');
+  const action = text(item.message, 'action');
   return (
     <article
       className={cx(styles.card, toast && styles.toast)}
@@ -59,11 +61,11 @@ function NotificationCard({
           <span aria-hidden>·</span>
           <span>{relative(item.minutesAgo)}</span>
         </p>
-        <h3 className={styles.cardTitle}>{item.title}</h3>
-        <p className={styles.text}>{item.body}</p>
-        {item.action !== undefined && (
+        <h3 className={styles.cardTitle}>{text(item.message, 'title')}</h3>
+        <p className={styles.text}>{text(item.message, 'body')}</p>
+        {action !== undefined && (
           <div className={styles.actions}>
-            <Button size="sm">{item.action}</Button>
+            <Button size="sm">{action}</Button>
           </div>
         )}
       </div>
@@ -114,6 +116,7 @@ export function NotificationPanel({
   footer?: ReactNode;
 }) {
   const { t } = useTranslation();
+  const jobText = useMessages('jobs');
   return (
     <section
       className={styles.panel}
@@ -133,10 +136,10 @@ export function NotificationPanel({
             <h3 id="panel-jobs" className={styles.groupTitle}>
               {t('notifications.jobs')}
             </h3>
-            {jobs.map((job) => (
-              <div key={job.id} className={styles.job}>
-                <ProgressBar label={job.title} value={job.progress} />
-                <p className={styles.jobDetail}>{job.detail}</p>
+            {jobs.map((entry) => (
+              <div key={entry.id} className={styles.job}>
+                <ProgressBar label={jobText(entry.message, 'title')} value={entry.progress} />
+                <p className={styles.jobDetail}>{jobText(entry.message, 'detail')}</p>
               </div>
             ))}
           </section>

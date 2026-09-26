@@ -1,6 +1,7 @@
 /*
  * Accent presets. The accent is chosen from this curated list instead of a free color picker, so every preset keeps
- * AA contrast in both themes (checked by contrast.test.ts). Petrol is the default.
+ * AA contrast in both themes (checked by contrast.test.ts). Petrol is the default. There is no red preset, so the
+ * accent never reads as the danger color.
  */
 :root,
 [data-accent='petrol'] {
@@ -33,14 +34,6 @@
   --color-accent-pressed: light-dark(#50255a, #eac8f1);
   --color-accent-contrast: light-dark(#ffffff, #2a0f31);
   --color-accent-subtle: light-dark(#f5ecf7, #3a2141);
-}
-
-[data-accent='rose'] {
-  --color-accent: light-dark(#b0305a, #f59ab4);
-  --color-accent-hover: light-dark(#93274b, #f7b1c5);
-  --color-accent-pressed: light-dark(#761f3c, #f9c6d4);
-  --color-accent-contrast: light-dark(#ffffff, #33101c);
-  --color-accent-subtle: light-dark(#fbedf1, #45202c);
 }
 
 [data-accent='moss'] {

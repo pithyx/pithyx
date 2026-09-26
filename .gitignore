@@ -42,4 +42,5 @@ desktop.ini
 
 # Design screenshots (tools/design-shots/render.ts)
 tools/design-shots/out/
+tools/design-shots/test-results/
 tools/design-shots/*.zip

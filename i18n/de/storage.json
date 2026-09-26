@@ -1,0 +1,15 @@
+{
+  "layout": "{type}, {count, plural, one {# Laufwerk} other {# Laufwerke}}",
+  "health": {
+    "healthy": "Intakt"
+  },
+  "used": "{used} von {total} belegt",
+  "disks": "Laufwerke",
+  "disk": "Laufwerk {number}",
+  "state": {
+    "active": "Aktiv",
+    "warm": "Warm",
+    "standby": "Im Ruhezustand"
+  },
+  "standbyHint": "Laufwerke im Ruhezustand werden für Statusabfragen nicht geweckt."
+}

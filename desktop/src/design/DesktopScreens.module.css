@@ -37,9 +37,8 @@
 .requestValue {
   flex: 1;
   min-width: 0;
-  overflow: hidden;
   font-size: var(--font-size-sm);
-  text-overflow: ellipsis;
+  word-break: break-all;
 }
 
 .states {

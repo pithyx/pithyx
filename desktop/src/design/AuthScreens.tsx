@@ -8,6 +8,7 @@ import { AuthHeader, AuthLayout } from '../shell/AuthLayout';
 import { Button } from '../ui/Button';
 import { Checkbox } from '../ui/Controls';
 import { Menu, MenuItem, MenuPopover, MenuTrigger } from '../ui/Menu';
+import { cx } from '../ui/cx';
 import { OtpField, PasswordField, TextField } from '../ui/TextField';
 import styles from './AuthScreens.module.css';
 import { hostname, recoveryKey, user } from './sampleData';
@@ -115,7 +116,7 @@ export function SetupRecovery() {
         </div>
         <div className={styles.key}>
           <IconKey size={20} stroke={1.75} aria-hidden className={styles.keyIcon} />
-          <code className={styles.keyValue}>{recoveryKey}</code>
+          <RecoveryKeyValue value={recoveryKey} />
         </div>
         <div className={styles.row}>
           <Button>
@@ -138,7 +139,7 @@ export function SetupRecovery() {
   );
 }
 
-export type LoginStep = 'password' | 'totp' | 'welcome' | 'leaving' | 'desktop';
+export type LoginStep = 'password' | 'forgot' | 'totp' | 'welcome' | 'leaving' | 'desktop';
 
 /**
  * A clickable sign-in: password, then the TOTP step in the same card, then the welcome state for as long as
@@ -177,7 +178,7 @@ export function LoginFlow({
       {showDesktop && desktop(true)}
       {step !== 'desktop' && (
         <AuthLayout
-          footer={step === 'password' || step === 'totp' ? <LanguageMenu /> : undefined}
+          footer={step === 'welcome' || step === 'leaving' ? undefined : <LanguageMenu />}
           leaving={step === 'leaving'}
           onLeft={() => {
             setStep('desktop');
@@ -187,6 +188,16 @@ export function LoginFlow({
             <PasswordStep
               onNext={() => {
                 setStep('totp');
+              }}
+              onForgot={() => {
+                setStep('forgot');
+              }}
+            />
+          )}
+          {step === 'forgot' && (
+            <ForgotStep
+              onBack={() => {
+                setStep('password');
               }}
             />
           )}
@@ -211,7 +222,7 @@ export function LoginFlow({
   );
 }
 
-function PasswordStep({ onNext }: { onNext: () => void }) {
+function PasswordStep({ onNext, onForgot }: { onNext: () => void; onForgot: () => void }) {
   const { t } = useTranslation('auth');
   const { t: tDesktop } = useTranslation();
   return (
@@ -219,7 +230,7 @@ function PasswordStep({ onNext }: { onNext: () => void }) {
       <AuthHeader host={hostname} product={tDesktop('brand')} />
       <Form className={styles.form} onSubmit={preventSubmit(onNext)} aria-labelledby="login-title">
         <h1 id="login-title" className={styles.title}>
-          {t('login.title')}
+          {t('login.heading')}
         </h1>
         <TextField
           label={t('login.username')}
@@ -238,8 +249,77 @@ function PasswordStep({ onNext }: { onNext: () => void }) {
         <Button type="submit" variant="primary" className={styles.submit}>
           {t('login.submit')}
         </Button>
+        <div className={styles.links}>
+          <Button variant="quiet" size="sm" onPress={onForgot}>
+            {t('login.forgot')}
+          </Button>
+        </div>
       </Form>
     </>
+  );
+}
+
+/** Two lines of four groups; the key only breaks at a hyphen. */
+function RecoveryKeyValue({ value }: { value: string }) {
+  const groups = value.split('-');
+  return (
+    <code className={styles.keyValue}>
+      <span className={styles.keyLine}>{`${groups.slice(0, 4).join('-')}-`}</span>
+      <span className={styles.keyLine}>{groups.slice(4).join('-')}</span>
+    </code>
+  );
+}
+
+/** No reset by email: users ask an administrator, administrators use the recovery key (POST /api/auth/recover). */
+function ForgotStep({ onBack }: { onBack: () => void }) {
+  const { t } = useTranslation('auth');
+  return (
+    <Form className={styles.form} onSubmit={preventSubmit(onBack)} aria-labelledby="forgot-title">
+      <div className={styles.heading}>
+        <h1 id="forgot-title" className={styles.title}>
+          {t('forgot.title')}
+        </h1>
+        <p className={styles.intro}>{t('forgot.intro')}</p>
+      </div>
+      <section className={cx(styles.form, styles.adminBox)} aria-labelledby="forgot-admin">
+        <div className={styles.heading}>
+          <h2 id="forgot-admin" className={styles.subtitle}>
+            {t('forgot.adminTitle')}
+          </h2>
+          <p className={styles.intro}>{t('forgot.adminIntro')}</p>
+        </div>
+        <TextField
+          label={t('login.username')}
+          name="username"
+          autoComplete="username"
+          defaultValue={user.username}
+          isRequired
+        />
+        <TextField
+          label={t('forgot.recoveryKey')}
+          name="recoveryKey"
+          autoComplete="off"
+          spellCheck="false"
+          inputClassName={styles.mono}
+          isRequired
+        />
+        <PasswordField
+          label={t('forgot.newPassword')}
+          name="newPassword"
+          autoComplete="new-password"
+          isRequired
+        />
+        <Button type="submit" variant="primary" className={styles.submit}>
+          {t('forgot.submit')}
+        </Button>
+      </section>
+      <div className={styles.links}>
+        <Button variant="quiet" size="sm" onPress={onBack}>
+          <IconArrowLeft size={16} stroke={1.75} aria-hidden />
+          {t('forgot.back')}
+        </Button>
+      </div>
+    </Form>
   );
 }
 
@@ -279,9 +359,7 @@ function WelcomeStep() {
       <span className={styles.bigAvatar} aria-hidden>
         {user.initials}
       </span>
-      <h1 className={styles.welcomeTitle}>
-        {t('login.welcome', { name: user.name.split(' ')[0] })}
-      </h1>
+      <h1 className={styles.welcomeTitle}>{t('login.welcome', { name: user.firstName })}</h1>
       <div className={styles.preparing}>
         <p>{t('login.preparing')}</p>
         <span className={styles.indeterminate} aria-hidden />

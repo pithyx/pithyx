@@ -45,8 +45,8 @@
   },
   "start": {
     "label": "Startmenü",
-    "searchLabel": "Suche",
-    "search": "Apps, Einstellungen und Dateien durchsuchen",
+    "searchLabel": "Apps, Einstellungen und Dateien durchsuchen",
+    "search": "Suchen",
     "pinned": "Angeheftet",
     "recent": "Zuletzt verwendete Dateien",
     "resultsLabel": "Suchergebnisse",
@@ -59,7 +59,9 @@
     "openHint": "Öffnen",
     "power": "Ein/Aus",
     "restart": "Neu starten",
-    "shutDown": "Herunterfahren"
+    "shutDown": "Herunterfahren",
+    "settingsPath": "Einstellungen › {section}",
+    "appDetail": "App"
   },
   "window": {
     "minimize": "Minimieren",
@@ -87,5 +89,19 @@
     "shortcut": "{name}, Verknüpfung",
     "note": "Notizzettel",
     "removeNote": "Notiz entfernen"
+  },
+  "apps": {
+    "files": "Dateien",
+    "storage": "Speicher",
+    "logs": "Protokolle",
+    "settings": "Einstellungen",
+    "photos": "Fotos",
+    "users": "Benutzer",
+    "containers": "Container",
+    "terminal": "Terminal"
+  },
+  "roles": {
+    "administrator": "Administrator",
+    "user": "Benutzer"
   }
 }

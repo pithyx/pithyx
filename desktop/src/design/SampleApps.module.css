@@ -1,6 +1,7 @@
 .files,
 .logs {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto minmax(0, 1fr);
   height: 100%;
 }
@@ -129,9 +130,70 @@
   text-align: left;
 }
 
+.list {
+  --row-height: 36px;
+}
+
+.list[data-density='compact'] {
+  --row-height: 28px;
+}
+
+/* Rows are touch targets: compact still keeps 44 px on coarse pointers. */
+@media (pointer: coarse) {
+  .list {
+    --row-height: 52px;
+  }
+
+  .list[data-density='compact'] {
+    --row-height: var(--touch-target);
+  }
+}
+
 .list td {
-  padding: 6px var(--space-3);
+  height: var(--row-height);
+  padding: 0 var(--space-3);
   white-space: nowrap;
+}
+
+.density {
+  display: inline-flex;
+  flex: none;
+  padding: 2px;
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+}
+
+.densityButton {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 26px;
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--color-text-muted);
+  cursor: pointer;
+}
+
+.densityButton[data-hovered] {
+  background: var(--color-surface-hover);
+}
+
+.densityButton[data-selected] {
+  background: var(--color-accent-subtle);
+  color: var(--color-accent);
+}
+
+.densityButton[data-focus-visible] {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 1px;
+}
+
+@media (pointer: coarse) {
+  .densityButton {
+    width: 40px;
+    height: 40px;
+  }
 }
 
 .list td:not(:first-child) {
@@ -204,6 +266,7 @@
 
 .storage {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   align-content: start;
   gap: var(--space-3);
   padding: var(--space-4);
@@ -251,6 +314,7 @@
 
 .disks {
   display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -258,9 +322,10 @@
 
 .disk {
   display: grid;
-  grid-template-columns: 70px minmax(0, 1fr) 56px 80px;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
   align-items: center;
-  gap: var(--space-3);
+  column-gap: var(--space-3);
   min-height: 38px;
   padding: 0 var(--space-2);
   border-bottom: 1px solid var(--color-border);
@@ -278,18 +343,18 @@
   color: var(--color-success);
 }
 
-.disk[data-state='Warm'] .diskState,
-.disk[data-state='Warm'] .mono:not(.optional) {
+.disk[data-state='warm'] .diskState,
+.disk[data-state='warm'] .temperature {
   color: var(--color-warning);
 }
 
-.disk[data-state='Sleeping'] .diskState {
+.disk[data-state='standby'] .diskState {
   color: var(--color-text-muted);
 }
 
 @container window (max-width: 420px) {
-  .disk {
-    grid-template-columns: minmax(0, 1fr) 56px 80px;
+  .disks {
+    grid-template-columns: minmax(0, 1fr) auto auto;
   }
 }
 
@@ -364,6 +429,7 @@
 
 .settingsBody {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   align-content: start;
   gap: var(--space-5);
   padding: var(--space-5);
@@ -426,6 +492,7 @@
 }
 
 .swatch {
+  display: block;
   width: 32px;
   height: 32px;
   border-radius: var(--radius-full);
@@ -443,28 +510,48 @@
 .wallpapers {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2);
+  gap: var(--space-3);
+}
+
+.wallpaperOption {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-1);
+  font-size: var(--font-size-sm);
+  cursor: pointer;
 }
 
 .wallpaperThumb {
-  width: 112px;
-  height: 70px;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 128px;
+  height: 80px;
+  overflow: hidden;
   border: 1px solid var(--color-border);
   border-radius: var(--radius-sm);
-  background: linear-gradient(135deg, var(--petrol-900), var(--petrol-500));
+  background: var(--color-desktop);
+  color: var(--color-text-muted);
 }
 
-.wallpaperActive {
+.wallpaperOption[data-selected] .wallpaperThumb {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
 }
 
-.wallpaperAlt {
-  background: linear-gradient(160deg, #d5e6ea, #9fc1ca);
+.wallpaperOption[data-focus-visible] .wallpaperThumb {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 4px;
 }
 
-.wallpaperPlain {
-  background: var(--neutral-750);
+.wallpaperSolid {
+  background: light-dark(var(--neutral-200), var(--neutral-800));
+}
+
+.wallpaperPicture {
+  border-style: dashed;
+  border-color: var(--color-border-strong);
+  background: var(--color-surface-2);
 }
 
 @container window (max-width: 560px) {

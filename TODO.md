@@ -249,7 +249,7 @@ Direction from the owner:
 - [x] `[DECISION]` Headless component primitives (decided 2026-09-26): React Aria Components.
 - [x] Produce static mockups for: setup, login (including the TOTP step and welcome transition), empty desktop, desktop with icons and a sticky note, desktop with three windows, window states (focused, unfocused, maximized, minimized), taskbar, start menu with search, notification, error dialog, mobile layout.
 - [x] Derive final design tokens: colors (light and dark, based on the logo palette), type scale, spacing, radii, shadows, motion durations. Tokens live in `desktop/src/theme/`, accents are curated presets, and `contrast.test.ts` checks WCAG AA for every preset in both themes. The mockups are a dev-only gallery (`pnpm design`, `design.html`) that is not part of the production build.
-- [ ] `[REVIEW]` Owner approves the mockups and tokens. Iterate until approved.
+- [ ] `[REVIEW]` Owner approves the mockups and tokens. Iterate until approved. Round 2 (2026-09-27): overflow fixes and `pnpm design:test`, label pills, accent swatches, sample apps and notifications through i18n (notifications as code and params), recovery key in two lines, notes under windows, no rose preset, search field height, shorter start menu placeholder, real wallpaper previews, "Forgot password?", login heading, Files density, taskbar entries sized to content.
 - [ ] Apply the approved tokens and screens to setup and login.
 
 **Done when:** the owner has signed off on the design and setup and login use it.

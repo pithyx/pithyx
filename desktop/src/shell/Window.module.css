@@ -1,5 +1,6 @@
 .window {
   position: absolute;
+  z-index: calc(var(--z-windows) + var(--layer));
   top: var(--y);
   left: var(--x);
   display: grid;

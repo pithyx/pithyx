@@ -5,11 +5,13 @@
 
 .form {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-4);
 }
 
 .heading {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-2);
 }
 
@@ -64,10 +66,30 @@
 }
 
 .keyValue {
+  display: grid;
   font-size: var(--font-size-lg);
   font-weight: 600;
   letter-spacing: 0.04em;
-  word-break: break-all;
+}
+
+.keyLine {
+  white-space: nowrap;
+}
+
+.mono {
+  font-family: var(--font-mono);
+}
+
+.subtitle {
+  font-size: var(--font-size-lg);
+  font-weight: var(--font-weight-semibold);
+}
+
+.adminBox {
+  padding: var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
 }
 
 .userRow {
@@ -190,5 +212,12 @@
     width: 100%;
     animation: none;
     opacity: 0.5;
+  }
+}
+
+@media (max-width: 599px) {
+  .title,
+  .welcomeTitle {
+    font-size: var(--font-size-xl);
   }
 }

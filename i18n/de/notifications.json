@@ -1,0 +1,26 @@
+{
+  "storage": {
+    "scrub": {
+      "finished": {
+        "title": "Scrub abgeschlossen",
+        "body": "Pool {pool} wurde geprüft. {errors, plural, =0 {Keine Fehler gefunden.} one {# Fehler gefunden.} other {# Fehler gefunden.}}"
+      }
+    },
+    "disk": {
+      "warm": {
+        "title": "Laufwerk wird warm",
+        "body": "Laufwerk {disk} in {pool} meldet {temperature, number} °C. Prüf die Belüftung.",
+        "action": "Laufwerk anzeigen"
+      }
+    }
+  },
+  "apps": {
+    "update": {
+      "available": {
+        "title": "Update verfügbar",
+        "body": "{app} {version} kann installiert werden.",
+        "action": "Installieren"
+      }
+    }
+  }
+}

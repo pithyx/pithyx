@@ -1,0 +1,27 @@
+{
+  "windowTitle": "{folder} – Dateien",
+  "back": "Zurück",
+  "forward": "Vorwärts",
+  "path": "Pfad",
+  "search": "In {folder} suchen",
+  "places": {
+    "title": "Orte",
+    "home": "Persönlicher Ordner"
+  },
+  "shares": {
+    "title": "Freigaben"
+  },
+  "columns": {
+    "name": "Name",
+    "size": "Größe",
+    "modified": "Geändert"
+  },
+  "items": "{count, plural, one {# Element} other {# Elemente}}",
+  "summary": "{count, plural, one {# Element} other {# Elemente}}, {size}",
+  "list": "Ordnerinhalt",
+  "density": {
+    "label": "Zeilendichte",
+    "comfortable": "Komfortabel",
+    "compact": "Kompakt"
+  }
+}

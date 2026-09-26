@@ -37,7 +37,7 @@ const statusSwatches: [string, string][] = [
   ['--color-danger', '--color-danger-contrast'],
 ];
 
-const accents = ['petrol', 'ocean', 'indigo', 'plum', 'rose', 'moss', 'graphite'];
+const accents = ['petrol', 'ocean', 'indigo', 'plum', 'moss', 'graphite'];
 
 const typeScale = [
   ['--font-size-display-2', 'display'],

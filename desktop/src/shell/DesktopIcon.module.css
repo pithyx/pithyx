@@ -94,9 +94,4 @@
     max-width: var(--desktop-icon-width);
     padding-inline: 0;
   }
-
-  .label {
-    background: none;
-    text-shadow: 0 1px 3px rgb(0 0 0 / 80%);
-  }
 }

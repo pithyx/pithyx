@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import styles from './Wallpaper.module.css';
 
 interface Cube {
@@ -29,6 +30,7 @@ function points(coordinates: [number, number][], cube: Cube): string {
 
 /** The default wallpaper, drawn in the brand palette. Follows the theme. */
 export function Wallpaper() {
+  const glow = `wallpaper-glow-${useId()}`;
   return (
     <svg
       className={styles.wallpaper}
@@ -37,13 +39,13 @@ export function Wallpaper() {
       aria-hidden
     >
       <defs>
-        <radialGradient id="wallpaper-glow" cx="72%" cy="38%" r="70%">
+        <radialGradient id={glow} cx="72%" cy="38%" r="70%">
           <stop offset="0" className={styles.glowInner} />
           <stop offset="1" className={styles.glowOuter} />
         </radialGradient>
       </defs>
       <rect width="1600" height="1000" className={styles.base} />
-      <rect width="1600" height="1000" fill="url(#wallpaper-glow)" />
+      <rect width="1600" height="1000" fill={`url(#${glow})`} />
       {CUBES.map((cube) => (
         <g key={`${String(cube.x)}-${String(cube.y)}`} opacity={cube.depth}>
           <polygon

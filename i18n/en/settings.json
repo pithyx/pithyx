@@ -1,0 +1,40 @@
+{
+  "sections": "Settings sections",
+  "nav": {
+    "personalization": "Personalization",
+    "users": "Users and groups",
+    "network": "Network",
+    "storage": "Storage",
+    "updates": "Updates",
+    "about": "About"
+  },
+  "personalization": {
+    "theme": "Theme",
+    "themes": {
+      "system": "System",
+      "light": "Light",
+      "dark": "Dark"
+    },
+    "accent": "Accent color",
+    "accents": {
+      "petrol": "Petrol",
+      "ocean": "Ocean",
+      "indigo": "Indigo",
+      "plum": "Plum",
+      "moss": "Moss",
+      "graphite": "Graphite"
+    },
+    "taskbar": "Taskbar position",
+    "positions": {
+      "bottom": "Bottom",
+      "top": "Top"
+    },
+    "wallpaper": "Wallpaper",
+    "wallpaperHint": "Use the default, a solid color or a picture from your files.",
+    "wallpapers": {
+      "default": "Vyxis",
+      "solid": "Solid color",
+      "picture": "Choose a picture"
+    }
+  }
+}

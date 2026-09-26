@@ -1,5 +1,6 @@
 .note {
   position: absolute;
+  z-index: var(--z-desktop);
   top: var(--y);
   left: min(var(--x), calc(100% - 246px));
   display: grid;

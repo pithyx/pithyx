@@ -53,7 +53,7 @@ export function Window({
     '--y': `${String(geometry.y)}%`,
     '--w': `${String(geometry.width)}%`,
     '--h': `${String(geometry.height)}%`,
-    zIndex: `calc(var(--z-windows) + ${String(layer)})`,
+    '--layer': String(layer),
   } as CSSProperties;
 
   return (

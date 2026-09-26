@@ -1,5 +1,7 @@
 .field {
   display: grid;
+  /* An input's intrinsic width must never widen the field beyond its column. */
+  grid-template-columns: minmax(0, 1fr);
   gap: var(--space-1);
 }
 
@@ -89,6 +91,7 @@
 
 .search {
   position: relative;
+  align-self: start;
   display: flex;
   align-items: center;
   min-height: var(--control-height);

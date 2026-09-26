@@ -13,7 +13,7 @@ const devices = [
   { id: 'ultrawide', width: 3440, height: 1440, column: 900 },
 ] as const;
 
-const accents = ['petrol', 'ocean', 'indigo', 'plum', 'rose', 'moss', 'graphite'] as const;
+const accents = ['petrol', 'ocean', 'indigo', 'plum', 'moss', 'graphite'] as const;
 
 interface Options {
   screen: string;

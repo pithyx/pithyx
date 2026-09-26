@@ -13,7 +13,7 @@ import { AppSwitcher } from '../shell/AppSwitcher';
 import { DesktopIcon } from '../shell/DesktopIcon';
 import { DesktopItems, DesktopShell } from '../shell/DesktopShell';
 import { NotificationPanel, ToastStack } from '../shell/Notifications';
-import { StartMenu } from '../shell/StartMenu';
+import { StartMenu, type StartResults } from '../shell/StartMenu';
 import { StickyNote } from '../shell/StickyNote';
 import { Taskbar } from '../shell/Taskbar';
 import type { RunningApp, TaskbarPosition } from '../shell/types';
@@ -25,8 +25,9 @@ import { Menu, MenuItem, MenuPopover, MenuSeparator, MenuTrigger } from '../ui/M
 import styles from './DesktopScreens.module.css';
 import { FilesContent, LogsContent, SettingsContent, StorageContent } from './SampleApps';
 import {
-  apps,
+  currentFolder,
   desktopItems,
+  desktopShortcuts,
   jobs,
   noteText,
   notifications,
@@ -34,9 +35,11 @@ import {
   pinned,
   recent,
   requestId,
+  searchFiles,
   searchQuery,
-  searchResults,
+  useApps,
   user,
+  type Apps,
 } from './sampleData';
 
 export interface SceneContext {
@@ -59,7 +62,7 @@ interface SceneProps {
   entering?: boolean;
 }
 
-function runningApps(windows: WindowSet): RunningApp[] {
+function runningApps(windows: WindowSet, apps: Apps): RunningApp[] {
   if (windows === 'three') {
     return [
       { ...apps.files, state: 'focused' },
@@ -76,12 +79,17 @@ function runningApps(windows: WindowSet): RunningApp[] {
   return [];
 }
 
-function windowsFor(set: WindowSet, accent: string): WindowProps[] {
+function useFilesTitle(): string {
+  const { t } = useTranslation('files');
+  return t('windowTitle', { folder: currentFolder });
+}
+
+function windowsFor(set: WindowSet, apps: Apps, filesTitle: string, accent: string): WindowProps[] {
   if (set === 'three') {
     return [
       {
         app: apps.logs,
-        title: 'Logs',
+        title: apps.logs.name,
         focused: false,
         geometry: { x: 8, y: 40, width: 38, height: 50 },
         medium: 'hidden',
@@ -90,7 +98,7 @@ function windowsFor(set: WindowSet, accent: string): WindowProps[] {
       },
       {
         app: apps.storage,
-        title: 'Storage',
+        title: apps.storage.name,
         focused: false,
         geometry: { x: 52, y: 22, width: 40, height: 62 },
         medium: 'right',
@@ -99,7 +107,7 @@ function windowsFor(set: WindowSet, accent: string): WindowProps[] {
       },
       {
         app: apps.files,
-        title: 'Photos 2026 - Files',
+        title: filesTitle,
         focused: true,
         geometry: { x: 18, y: 5, width: 50, height: 64 },
         medium: 'left',
@@ -113,7 +121,7 @@ function windowsFor(set: WindowSet, accent: string): WindowProps[] {
     return [
       {
         app: apps.files,
-        title: 'Files',
+        title: filesTitle,
         focused: false,
         minimized: true,
         geometry: { x: 10, y: 10, width: 50, height: 60 },
@@ -122,7 +130,7 @@ function windowsFor(set: WindowSet, accent: string): WindowProps[] {
       },
       {
         app: apps.settings,
-        title: 'Settings',
+        title: apps.settings.name,
         focused: true,
         maximized: true,
         geometry: { x: 0, y: 0, width: 100, height: 100 },
@@ -133,6 +141,11 @@ function windowsFor(set: WindowSet, accent: string): WindowProps[] {
     ];
   }
   return [];
+}
+
+function useUser() {
+  const { t } = useTranslation();
+  return { ...user, role: t('roles.administrator') };
 }
 
 function UserMenu({ trigger, open }: { trigger: ReactNode; open: boolean }) {
@@ -175,6 +188,8 @@ export function DesktopScene({
   userMenuOpen = false,
   entering = false,
 }: SceneProps) {
+  const apps = useApps();
+  const filesTitle = useFilesTitle();
   return (
     <DesktopShell
       taskbarPosition={context.taskbar}
@@ -182,7 +197,7 @@ export function DesktopScene({
       taskbar={
         <Taskbar
           position={context.taskbar}
-          apps={runningApps(windows)}
+          apps={runningApps(windows, apps)}
           startOpen={startOpen}
           jobs={windows === 'none' ? 0 : jobs.length}
           unread={windows === 'none' ? 0 : 2}
@@ -207,20 +222,57 @@ export function DesktopScene({
                 selected={index === 1}
               />
             ))}
+            {desktopShortcuts.map((id) => (
+              <DesktopIcon
+                key={id}
+                name={apps[id].name}
+                item={{ kind: 'shortcut', app: apps[id] }}
+              />
+            ))}
           </DesktopItems>
           <div className={styles.noteSlot}>
             <StickyNote text={noteText} x={76} y={6} />
           </div>
         </>
       )}
-      {windowsFor(windows, context.accent).map((props) => (
+      {windowsFor(windows, apps, filesTitle, context.accent).map((props) => (
         <Window key={props.title} {...props} />
       ))}
     </DesktopShell>
   );
 }
 
-export function StartMenuScene({ context, query }: { context: SceneContext; query: string }) {
+function useSearchResults(apps: Apps): StartResults {
+  const { t } = useTranslation();
+  const { t: settings } = useTranslation('settings');
+  return {
+    apps: [
+      { id: 's-photos', name: apps.photos.name, detail: t('start.appDetail'), app: apps.photos },
+    ],
+    settings: [
+      {
+        id: 's-wallpaper',
+        name: settings('personalization.wallpaper'),
+        detail: t('start.settingsPath', { section: settings('nav.personalization') }),
+        icon: IconPalette,
+      },
+      {
+        id: 's-users',
+        name: settings('nav.users'),
+        detail: t('start.settingsPath', { section: settings('nav.users') }),
+        icon: IconShieldLock,
+      },
+    ],
+    files: searchFiles,
+  };
+}
+
+export function StartMenuScene({ context, search }: { context: SceneContext; search: boolean }) {
+  const apps = useApps();
+  const results = useSearchResults(apps);
+  const currentUser = useUser();
+  const { i18n } = useTranslation();
+  const query = search ? searchQuery[i18n.language === 'de' ? 'de' : 'en'] : '';
   return (
     <DesktopScene
       context={context}
@@ -229,20 +281,18 @@ export function StartMenuScene({ context, query }: { context: SceneContext; quer
         <StartMenu
           position={context.taskbar}
           query={query}
-          pinned={pinned}
+          pinned={pinned.map((id) => apps[id])}
           recent={recent}
-          results={searchResults}
-          user={user}
+          results={results}
+          user={currentUser}
         />
       }
     />
   );
 }
 
-export const startSearchQuery = searchQuery;
-
 export function NotificationsScene({ context, panel }: { context: SceneContext; panel: boolean }) {
-  const items = notifications.map((item) => ({ ...item }));
+  const items = notifications(useApps());
   return (
     <DesktopScene
       context={context}
@@ -295,6 +345,8 @@ export function ErrorDialogScene({ context }: { context: SceneContext }) {
 }
 
 export function SwitcherScene({ context }: { context: SceneContext }) {
+  const apps = useApps();
+  const filesTitle = useFilesTitle();
   return (
     <DesktopScene
       context={context}
@@ -304,14 +356,14 @@ export function SwitcherScene({ context }: { context: SceneContext }) {
         <AppSwitcher
           position={context.taskbar}
           cards={[
+            { id: 'files', app: apps.files, title: filesTitle, preview: <FilesContent /> },
             {
-              id: 'files',
-              app: apps.files,
-              title: 'Photos 2026 - Files',
-              preview: <FilesContent />,
+              id: 'storage',
+              app: apps.storage,
+              title: apps.storage.name,
+              preview: <StorageContent />,
             },
-            { id: 'storage', app: apps.storage, title: 'Storage', preview: <StorageContent /> },
-            { id: 'logs', app: apps.logs, title: 'Logs', preview: <LogsContent /> },
+            { id: 'logs', app: apps.logs, title: apps.logs.name, preview: <LogsContent /> },
           ]}
         />
       }
@@ -329,6 +381,7 @@ export function WindowStatesScene({
   heading: string;
   specimens: readonly { name: string; caption: string }[];
 }) {
+  const apps = useApps();
   const specimens: { focused: boolean; maximized?: boolean }[] = [
     { focused: true },
     { focused: false },
@@ -342,14 +395,14 @@ export function WindowStatesScene({
           <div className={styles.stage}>
             <Window
               app={apps.files}
-              title={`Files: ${captions[index]?.name ?? ''}`}
+              title={`${apps.files.name}: ${captions[index]?.name ?? ''}`}
               focused={specimen.focused}
               maximized={specimen.maximized ?? false}
               geometry={{ x: 5, y: 7, width: 90, height: 86 }}
               compactActive
               layer={1}
             >
-              <FilesContent />
+              <FilesContent density={specimen.maximized === true ? 'compact' : 'comfortable'} />
             </Window>
           </div>
           <figcaption className={styles.caption}>{captions[index]?.caption}</figcaption>

@@ -45,8 +45,8 @@
   },
   "start": {
     "label": "Start menu",
-    "searchLabel": "Search",
-    "search": "Search apps, settings and files",
+    "searchLabel": "Search apps, settings and files",
+    "search": "Search",
     "pinned": "Pinned",
     "recent": "Recent files",
     "resultsLabel": "Search results",
@@ -59,7 +59,9 @@
     "openHint": "Open",
     "power": "Power options",
     "restart": "Restart",
-    "shutDown": "Shut down"
+    "shutDown": "Shut down",
+    "settingsPath": "Settings › {section}",
+    "appDetail": "App"
   },
   "window": {
     "minimize": "Minimize",
@@ -87,5 +89,19 @@
     "shortcut": "{name}, shortcut",
     "note": "Sticky note",
     "removeNote": "Remove note"
+  },
+  "apps": {
+    "files": "Files",
+    "storage": "Storage",
+    "logs": "Logs",
+    "settings": "Settings",
+    "photos": "Photos",
+    "users": "Users",
+    "containers": "Containers",
+    "terminal": "Terminal"
+  },
+  "roles": {
+    "administrator": "Administrator",
+    "user": "User"
   }
 }

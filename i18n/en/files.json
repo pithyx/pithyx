@@ -1,0 +1,27 @@
+{
+  "windowTitle": "{folder} - Files",
+  "back": "Back",
+  "forward": "Forward",
+  "path": "Path",
+  "search": "Search in {folder}",
+  "places": {
+    "title": "Places",
+    "home": "Home"
+  },
+  "shares": {
+    "title": "Shares"
+  },
+  "columns": {
+    "name": "Name",
+    "size": "Size",
+    "modified": "Modified"
+  },
+  "items": "{count, plural, one {# item} other {# items}}",
+  "summary": "{count, plural, one {# item} other {# items}}, {size}",
+  "list": "Folder contents",
+  "density": {
+    "label": "Row density",
+    "comfortable": "Comfortable",
+    "compact": "Compact"
+  }
+}

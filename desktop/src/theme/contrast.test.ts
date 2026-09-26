@@ -181,5 +181,5 @@ describe.each(accents)('accent %s', (accent) => {
 });
 
 it('finds every accent preset', () => {
-  expect(accents).toEqual(['petrol', 'ocean', 'indigo', 'plum', 'rose', 'moss', 'graphite']);
+  expect(accents).toEqual(['petrol', 'ocean', 'indigo', 'plum', 'moss', 'graphite']);
 });

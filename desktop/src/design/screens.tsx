@@ -8,7 +8,6 @@ import {
   StartMenuScene,
   SwitcherScene,
   WindowStatesScene,
-  startSearchQuery,
   type SceneContext,
 } from './DesktopScreens';
 import { labels } from './labels';
@@ -73,8 +72,16 @@ export const screens: ScreenDefinition[] = [
     group: 'auth',
     title: 'Sign in',
     description:
-      'Clickable: enter any password to reach the TOTP step, any six digits for the welcome state and the desktop entrance. Replay restarts.',
+      'Clickable: enter any password to reach the TOTP step, any six digits for the welcome state and the desktop entrance. "Forgot password?" opens the reset step. Replay restarts.',
     render: login('password'),
+  },
+  {
+    id: 'login-forgot',
+    group: 'auth',
+    title: 'Sign in: forgot password',
+    description:
+      'No reset by email. Users ask an administrator; administrators reset with the recovery key (POST /api/auth/recover).',
+    render: login('forgot'),
   },
   {
     id: 'login-totp',
@@ -135,7 +142,11 @@ export const screens: ScreenDefinition[] = [
         specimens={[
           { name: 'focused', caption: 'Focused: stronger shadow and border, full-color icon.' },
           { name: 'unfocused', caption: 'Unfocused: flatter, muted title and icon.' },
-          { name: 'maximized', caption: 'Maximized: no radius or border, restore button.' },
+          {
+            name: 'maximized',
+            caption:
+              'Maximized: no radius or border, restore button. Files shown with compact density.',
+          },
           {
             name: 'taskbar',
             caption: 'Taskbar: focused (accent bar), open (dot), minimized (hollow dot, dimmed).',
@@ -157,7 +168,7 @@ export const screens: ScreenDefinition[] = [
     group: 'overlays',
     title: 'Start menu',
     description: 'Search first, pinned apps, recent files, user and power options.',
-    render: (context) => <StartMenuScene context={context} query="" />,
+    render: (context) => <StartMenuScene context={context} search={false} />,
   },
   {
     id: 'start-search',
@@ -165,7 +176,7 @@ export const screens: ScreenDefinition[] = [
     title: 'Start menu search',
     description:
       'Results grouped into apps, settings and files; the first result opens with Enter.',
-    render: (context) => <StartMenuScene context={context} query={startSearchQuery} />,
+    render: (context) => <StartMenuScene context={context} search />,
   },
   {
     id: 'user-menu',

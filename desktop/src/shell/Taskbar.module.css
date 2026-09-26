@@ -80,14 +80,15 @@
 }
 
 .apps > li {
-  flex: 0 1 184px;
+  flex: 0 1 auto;
   min-width: 48px;
+  max-width: 200px;
 }
 
 .app {
   justify-content: flex-start;
   width: 100%;
-  padding: 0 var(--space-2);
+  padding: 0 var(--space-3) 0 var(--space-2);
 }
 
 .app[data-state='focused'] {
@@ -224,6 +225,10 @@
 @media (max-width: 1023px) {
   .apps > li {
     flex-basis: 48px;
+  }
+
+  .app {
+    padding: 0 var(--space-2);
   }
 
   .app {

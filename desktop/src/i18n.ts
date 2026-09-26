@@ -5,14 +5,48 @@ import deAuth from '../../i18n/de/auth.json';
 import deDesktop from '../../i18n/de/desktop.json';
 import deDisks from '../../i18n/de/disks.json';
 import deErrors from '../../i18n/de/errors.json';
+import deFiles from '../../i18n/de/files.json';
+import deJobs from '../../i18n/de/jobs.json';
+import deLogs from '../../i18n/de/logs.json';
+import deNotifications from '../../i18n/de/notifications.json';
+import deSettings from '../../i18n/de/settings.json';
+import deStorage from '../../i18n/de/storage.json';
 import enAuth from '../../i18n/en/auth.json';
 import enDesktop from '../../i18n/en/desktop.json';
 import enDisks from '../../i18n/en/disks.json';
 import enErrors from '../../i18n/en/errors.json';
+import enFiles from '../../i18n/en/files.json';
+import enJobs from '../../i18n/en/jobs.json';
+import enLogs from '../../i18n/en/logs.json';
+import enNotifications from '../../i18n/en/notifications.json';
+import enSettings from '../../i18n/en/settings.json';
+import enStorage from '../../i18n/en/storage.json';
 
 export const resources = {
-  en: { desktop: enDesktop, auth: enAuth, disks: enDisks, errors: enErrors },
-  de: { desktop: deDesktop, auth: deAuth, disks: deDisks, errors: deErrors },
+  en: {
+    desktop: enDesktop,
+    auth: enAuth,
+    disks: enDisks,
+    errors: enErrors,
+    files: enFiles,
+    storage: enStorage,
+    settings: enSettings,
+    notifications: enNotifications,
+    jobs: enJobs,
+    logs: enLogs,
+  },
+  de: {
+    desktop: deDesktop,
+    auth: deAuth,
+    disks: deDisks,
+    errors: deErrors,
+    files: deFiles,
+    storage: deStorage,
+    settings: deSettings,
+    notifications: deNotifications,
+    jobs: deJobs,
+    logs: deLogs,
+  },
 } as const;
 
 export type Language = keyof typeof resources;

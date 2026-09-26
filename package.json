@@ -11,6 +11,7 @@
     "dev": "pnpm --filter @vyxis/desktop dev",
     "design": "pnpm --filter @vyxis/desktop design",
     "design:shots": "node tools/design-shots/render.ts",
+    "design:test": "playwright test -c tools/design-shots/playwright.config.ts",
     "lint": "pnpm --filter @vyxis/desktop css-types && eslint .",
     "typecheck": "tsc -p tsconfig.json && pnpm -r --parallel typecheck",
     "test": "pnpm -r test",
