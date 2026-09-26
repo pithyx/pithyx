@@ -260,6 +260,8 @@ Direction from the owner:
 
 ## Step 5: Window manager and SDK
 
+Status: 5.1, 5.2 and the window manager part of 5.4 in progress in the `feature/window-manager` draft PR (plan and decision log in its comments). 5.3 follows in its own PR after the SDK spec review.
+
 Effort: high for 5.3, medium for the rest.
 
 Goal: the desktop works like a desktop, and apps can be built against the SDK.
