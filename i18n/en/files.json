@@ -4,9 +4,12 @@
   "forward": "Forward",
   "path": "Path",
   "search": "Search in {folder}",
+  "searchPlaceholder": "Search",
   "places": {
     "title": "Places",
-    "home": "Home"
+    "home": "Home",
+    "desktop": "Desktop",
+    "documents": "Documents"
   },
   "shares": {
     "title": "Shares"

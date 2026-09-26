@@ -13,7 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - UI primitives on React Aria Components with CSS Modules and Tabler icons, and presentational desktop shell components (wallpaper, taskbar, start menu, windows, desktop icons, sticky notes, notifications, app switcher, sign-in layout).
 - Generated CSS Module class name types (`desktop/scripts/css-module-types.ts`), so an unknown class name is a type error.
 - Developer-only design gallery (`pnpm design`, `design.html` on port 5174) with the step 4 mockups at phone, tablet and laptop width in light and dark. It is not part of the production build.
-- `pnpm design:test` checks every design gallery screen at phone, tablet and laptop width in English and German for horizontal overflow (document scroll width, elements past the right edge, sideways scrolling containers). It runs in CI.
+- `pnpm design:test` checks every design gallery screen at phone, tablet and laptop width in English and German for horizontal overflow (document scroll width, elements past the right edge, sideways scrolling containers) and for window title bars covered by desktop items such as sticky notes. It runs in CI.
 - `pnpm design:shots` renders every design gallery screen at phone, tablet and laptop size in light and dark, in English and German, as full-size PNGs into `tools/design-shots/out/` (basis for visual regression tests).
 - Monorepo scaffold: .NET 10 daemon with a health endpoint, React desktop, SDK and API client packages.
 - Tooling: EditorConfig, ESLint, Prettier, Vitest, xUnit, lefthook hooks, repository checks and CI.

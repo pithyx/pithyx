@@ -18,10 +18,11 @@ interface Overflow {
 }
 
 // The document scroll width alone misses overflow inside scroll containers such as the sign-in layout, so the test
-// also checks every visible element and every sideways scrolling container.
+// also checks every visible element and every sideways scrolling container. Desktop items such as sticky notes stay
+// below windows, so no point on a shown title bar may hit an element of the workspace outside every window.
 for (const viewport of Object.keys(viewports) as Viewport[]) {
   for (const lang of languages) {
-    test(`no screen overflows horizontally on ${viewport} in ${lang}`, async ({
+    test(`no screen overflows or covers a title bar on ${viewport} in ${lang}`, async ({
       browser,
       baseURL,
     }) => {
@@ -75,6 +76,33 @@ for (const viewport of Object.keys(viewports) as Viewport[]) {
               .map(describe),
           };
         });
+        const covered: string[] = await page.evaluate(() => {
+          const found: string[] = [];
+          for (const frame of document.querySelectorAll('section[data-medium]')) {
+            const titlebar = frame.querySelector(':scope > header');
+            const workspace = frame.closest('main');
+            if (titlebar === null || workspace === null) {
+              continue;
+            }
+            const rect = titlebar.getBoundingClientRect();
+            for (let step = 1; step < 20; step++) {
+              const hit = document.elementFromPoint(
+                rect.left + (rect.width * step) / 20,
+                rect.top + rect.height / 2,
+              );
+              if (
+                hit !== null &&
+                workspace.contains(hit) &&
+                hit.closest('section[data-medium]') === null
+              ) {
+                found.push(`${titlebar.textContent.trim()} under ${hit.tagName.toLowerCase()}`);
+                break;
+              }
+            }
+          }
+          return found;
+        });
+        expect.soft(covered, `${screen}: title bars covered by desktop items`).toEqual([]);
         expect
           .soft(overflow.scrollWidth, `${screen}: document scroll width`)
           .toBeLessThanOrEqual(viewports[viewport].width);
