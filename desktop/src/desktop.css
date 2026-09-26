@@ -203,8 +203,8 @@ select {
 }
 
 .desktop {
-  display: grid;
-  grid-template-rows: auto auto 1fr;
+  display: flex;
+  flex-direction: column;
   height: 100%;
 }
 
@@ -244,6 +244,7 @@ select {
 }
 
 .desktop-surface {
+  flex: 1;
   overflow: auto;
   padding: var(--space-6) var(--space-4);
   background: var(--color-desktop);
@@ -320,6 +321,13 @@ select {
   .table td:nth-child(6),
   .table th:nth-child(7),
   .table td:nth-child(7) {
+    display: none;
+  }
+}
+
+@container (max-width: 420px) {
+  .table th:nth-child(5),
+  .table td:nth-child(5) {
     display: none;
   }
 }
