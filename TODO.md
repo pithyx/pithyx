@@ -129,7 +129,7 @@ Goal: anyone can go from a fresh clone to a running daemon and desktop in under 
 - [x] The script verifies it runs on Debian 13 and refuses otherwise.
 - [x] The script sets the system locale to `en_US.UTF-8` (keyboard and time zone stay as they are) so tool output and logs match production.
 - [x] The script writes `dev` to `/etc/vyxis/environment` and records the test disks by serial in `/etc/vyxis/test-disks`.
-- [ ] README section "Development / Dev VM": recommended VM spec (4 vCPU, 8 GB RAM, 32 GB system disk, six 10 GB data disks), how to run the provisioning script, recommendation to snapshot the VM before destructive tests.
+- [x] README section "Development / Dev VM": recommended VM spec (4 vCPU, 8 GB RAM, 32 GB system disk, six 10 GB data disks), how to run the provisioning script, recommendation to snapshot the VM before destructive tests.
 
 ### 2.2 Simulation mode
 
@@ -140,9 +140,9 @@ Goal: anyone can go from a fresh clone to a running daemon and desktop in under 
 ### 2.3 Dev workflow
 
 - [x] Vite dev server proxies `/api` and `/ws` to the daemon. Target configurable via `VYXIS_DAEMON_URL` (default `http://localhost:8994`).
-- [ ] Development runs over plain HTTP on 8994. Production HTTPS is added later. Document this clearly so nobody ships it.
-- [ ] Root script `pnpm dev` starts the desktop; README documents `dotnet watch` for the daemon (locally in simulation mode or on the VM over Remote-SSH).
-- [ ] README section "Development": prerequisites, both workflows (simulation on the local machine, real on the VM), common problems.
+- [x] Development runs over plain HTTP on 8994. Production HTTPS is added later. Document this clearly so nobody ships it.
+- [x] Root script `pnpm dev` starts the desktop; README documents `dotnet watch` for the daemon (locally in simulation mode or on the VM over Remote-SSH).
+- [x] README section "Development": prerequisites, both workflows (simulation on the local machine, real on the VM), common problems.
 
 **Done when:** following the README on a clean machine shows the desktop in the browser with "Connected to daemon (simulated)" within 15 minutes.
 
@@ -214,6 +214,7 @@ Goal: one real feature end to end, built on the final architecture. Everything l
 
 - [ ] Parser fixture tests, auth flow tests (setup, login, wrong password, rate limit, logout), WebSocket subscription test.
 - [ ] One Playwright E2E test: setup admin, log in, see the disk list.
+- [ ] `provision.sh` installs what headless Chromium needs on the dev VM: `fonts-dejavu-core` (without any font, text renders invisible) and the Playwright browser libraries (`libgbm1`, `libxkbcommon0`, `libatk1.0-0t64`, `libatk-bridge2.0-0t64`, `libatspi2.0-0t64`, `libxcomposite1`, `libxdamage1`, `libxfixes3`, `libxrandr2`). They were installed manually on dev01 during step 2.
 
 **Done when:** on the dev VM you can create the admin, log in, and see the disk list in a window. Detaching a virtual disk in Proxmox updates the list without a reload. A forced error shows a translated message with a request id that can be found in the logs. All checks are green.
 

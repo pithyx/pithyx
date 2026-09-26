@@ -44,7 +44,7 @@ This adds a `Signed-off-by: Your Name <you@example.com>` trailer matching the co
 
 ## Setup
 
-Install the .NET 10 SDK, Node.js 24 and pnpm (through `corepack enable`), then run `pnpm install`. This also installs the git hooks (lefthook).
+See [Development](README.md#development) in the README. `pnpm install` also installs the git hooks (lefthook).
 
 ## Pull request checklist
 
