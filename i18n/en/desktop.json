@@ -1,0 +1,7 @@
+{
+  "status": {
+    "connecting": "Connecting to daemon…",
+    "connected": "{mode, select, simulated {Connected to daemon (simulated)} other {Connected to daemon}}",
+    "unreachable": "Daemon not reachable"
+  }
+}

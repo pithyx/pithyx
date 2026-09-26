@@ -5,21 +5,31 @@ import { defineConfig, globalIgnores } from 'eslint/config';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
+// The pre-commit hook sets VYXIS_ESLINT_FAST=1 to skip type-aware rules and stay under 5 s.
+// CI and `pnpm lint` always run the full type-checked rule set.
+const fast = process.env.VYXIS_ESLINT_FAST === '1';
+
+const typescriptConfigs = fast
+  ? [tseslint.configs.strict, tseslint.configs.stylistic]
+  : [
+      tseslint.configs.strictTypeChecked,
+      tseslint.configs.stylisticTypeChecked,
+      {
+        languageOptions: {
+          parserOptions: {
+            projectService: {
+              allowDefaultProject: ['*.js'],
+            },
+            tsconfigRootDir: import.meta.dirname,
+          },
+        },
+      },
+    ];
+
 export default defineConfig(
   globalIgnores(['**/dist/', '**/generated/', 'daemon/', '**/node_modules/']),
   js.configs.recommended,
-  tseslint.configs.strictTypeChecked,
-  tseslint.configs.stylisticTypeChecked,
-  {
-    languageOptions: {
-      parserOptions: {
-        projectService: {
-          allowDefaultProject: ['*.js'],
-        },
-        tsconfigRootDir: import.meta.dirname,
-      },
-    },
-  },
+  ...typescriptConfigs,
   {
     files: ['*.js', 'tools/**/*.ts', '**/vite.config.ts'],
     languageOptions: { globals: globals.node },
