@@ -46,6 +46,37 @@ export function commandFor(event: KeyInput): KeyCommand | null {
   }
 }
 
+interface FocusTarget {
+  tagName: string;
+  isContentEditable: boolean;
+  type?: string | undefined;
+}
+
+const TEXT_INPUT_TYPES = new Set([
+  'text',
+  'search',
+  'email',
+  'url',
+  'tel',
+  'password',
+  'number',
+  '',
+]);
+
+/**
+ * Whether the element edits text. Window shortcuts stay out of text fields: on macOS Option+Shift with an arrow key
+ * selects by word, which is far more common there than moving a window.
+ */
+export function isTextEditing(target: FocusTarget | null): boolean {
+  if (target === null) {
+    return false;
+  }
+  if (target.isContentEditable || target.tagName === 'TEXTAREA') {
+    return true;
+  }
+  return target.tagName === 'INPUT' && TEXT_INPUT_TYPES.has(target.type ?? '');
+}
+
 const ULTRAWIDE_STEPS: Record<'left' | 'right', SnapZone[]> = {
   left: ['left', 'left-third', 'left-two-thirds'],
   right: ['right', 'right-third', 'right-two-thirds'],

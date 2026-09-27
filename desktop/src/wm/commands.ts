@@ -2,7 +2,7 @@ import i18next from 'i18next';
 import { useEffect } from 'react';
 import { announce } from './announce';
 import { dragRect, isUltrawide, resizeRect } from './geometry';
-import { commandFor, nextSnapZone } from './keys';
+import { commandFor, isTextEditing, nextSnapZone } from './keys';
 import { dispatch, useDesktop } from './store';
 import { useWindowUi } from './ui';
 
@@ -107,6 +107,14 @@ function handleModeKey(event: KeyboardEvent): boolean {
   return false;
 }
 
+function toTarget(element: HTMLElement) {
+  return {
+    tagName: element.tagName,
+    isContentEditable: element.isContentEditable,
+    type: element instanceof HTMLInputElement ? element.type : undefined,
+  };
+}
+
 /** The global Alt+Shift shortcuts for the focused window, and the keys of the keyboard move and size mode. */
 export function useWindowKeys() {
   useEffect(() => {
@@ -123,7 +131,10 @@ export function useWindowKeys() {
       }
       const command = commandFor(event);
       const { focused } = useDesktop.getState();
-      if (command === null) {
+      if (
+        command === null ||
+        isTextEditing(event.target instanceof HTMLElement ? toTarget(event.target) : null)
+      ) {
         return;
       }
       event.preventDefault();

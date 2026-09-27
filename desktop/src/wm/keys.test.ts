@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { commandFor, nextSnapZone } from './keys';
+import { commandFor, isTextEditing, nextSnapZone } from './keys';
 
 // What Option+Space types on macOS.
 const NO_BREAK_SPACE = String.fromCharCode(0xa0);
@@ -53,5 +53,25 @@ describe('nextSnapZone', () => {
     );
     expect(nextSnapZone({ kind: 'snapped', zone: 'left-two-thirds' }, 'left', true)).toBe('left');
     expect(nextSnapZone({ kind: 'snapped', zone: 'left-third' }, 'right', true)).toBe('right');
+  });
+});
+
+describe('isTextEditing', () => {
+  it('recognizes text fields and editable content', () => {
+    expect(isTextEditing({ tagName: 'INPUT', isContentEditable: false, type: 'text' })).toBe(true);
+    expect(isTextEditing({ tagName: 'INPUT', isContentEditable: false, type: 'search' })).toBe(
+      true,
+    );
+    expect(isTextEditing({ tagName: 'TEXTAREA', isContentEditable: false })).toBe(true);
+    expect(isTextEditing({ tagName: 'DIV', isContentEditable: true })).toBe(true);
+  });
+
+  it('leaves buttons, checkboxes and the window itself to the shortcuts', () => {
+    expect(isTextEditing(null)).toBe(false);
+    expect(isTextEditing({ tagName: 'SECTION', isContentEditable: false })).toBe(false);
+    expect(isTextEditing({ tagName: 'BUTTON', isContentEditable: false })).toBe(false);
+    expect(isTextEditing({ tagName: 'INPUT', isContentEditable: false, type: 'checkbox' })).toBe(
+      false,
+    );
   });
 });
