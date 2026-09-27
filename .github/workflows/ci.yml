@@ -20,13 +20,15 @@ env:
   LC_ALL: C.UTF-8
 
 jobs:
-  # Pull requests that change only docs skip the builds and E2E; the daemon job needs a daemon-side change.
+  # Pull requests that change only docs skip the builds and E2E; the daemon job needs a daemon-side change, the storage
+  # job a change to storage code, its tests or the CI setup.
   changes:
     runs-on: ubuntu-24.04
     outputs:
       code: ${{ steps.areas.outputs.code }}
       daemon: ${{ steps.areas.outputs.daemon }}
       frontend: ${{ steps.areas.outputs.frontend }}
+      storage: ${{ steps.areas.outputs.storage }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -57,6 +59,26 @@ jobs:
         run: git diff --exit-code packages/api-client/openapi.json
       - run: dotnet test --solution daemon/Pithyx.slnx --configuration Release --no-build
       - run: dotnet format daemon/Pithyx.slnx --verify-no-changes --no-restore
+
+  # Real OpenZFS on sparse files and loop devices of this throwaway runner, as root. zpool status -j needs OpenZFS 2.3
+  # or newer, which Ubuntu 26.04 ships; the daemon job skips these tests.
+  storage:
+    needs: changes
+    if: needs.changes.outputs.storage == 'true'
+    runs-on: ubuntu-26.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+          cache: true
+          cache-dependency-path: daemon/**/packages.lock.json
+      - run: sudo apt-get update && sudo apt-get install -y zfsutils-linux
+      - run: sudo modprobe zfs
+      - run: zfs version
+      - run: dotnet build daemon/tests/Pithyx.Daemon.Tests --configuration Release
+      - name: Storage integration tests
+        run: sudo -E env "PATH=$PATH" PITHYX_STORAGE_INTEGRATION=1 daemon/tests/Pithyx.Daemon.Tests/bin/Release/net10.0/Pithyx.Daemon.Tests -trait "Category=StorageIntegration"
 
   frontend:
     needs: changes
