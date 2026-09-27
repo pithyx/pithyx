@@ -477,14 +477,14 @@ Goal: pools are created, maintained and watched from the UI, with snapshots that
 
 ### 8.1 Pools
 
-- [ ] Create a pool: single disk, mirror, raidz1, raidz2, raidz3; a stripe only with a warning that one failed disk loses everything. Defaults `ashift=12`, `compression=lz4`, `xattr=sa`, `acltype=posixacl`, `atime=off`, `normalization=formD`.
-- [ ] The create dialog always asks about encryption and explains that it can only be chosen when the pool is created (step 9 adds the key handling; until then encryption is offered only once step 9 is done, and the dialog says so).
-- [ ] Dataset layout (D100, decided): the pool root holds no data; Pithyx datasets live under `<pool>/pithyx/` (`shares/<name>`, `homes/<user>`, `apps/<id>`, `system`), mounted at `/<pool>/<share>`, `/<pool>/homes/<user>` and `/<pool>/.pithyx/...` (the paths in `daemon/CLAUDE.md`).
+- [x] Create a pool: single disk, mirror, raidz1, raidz2, raidz3; a stripe only with a warning that one failed disk loses everything. Defaults `ashift=12`, `compression=lz4`, `xattr=sa`, `acltype=posixacl`, `atime=off`, `normalization=formD`.
+- [x] The create dialog always asks about encryption and explains that it can only be chosen when the pool is created (step 9 adds the key handling; until then encryption is offered only once step 9 is done, and the dialog says so).
+- [x] Dataset layout (D100, decided): the pool root holds no data; Pithyx datasets live under `<pool>/pithyx/` (`shares/<name>`, `homes/<user>`, `apps/<id>`, `system`), mounted at `/<pool>/<share>`, `/<pool>/homes/<user>` and `/<pool>/.pithyx/...` (the paths in `daemon/CLAUDE.md`).
 - [ ] Import an existing pool only as an explicit action, first read-only with a preview of its datasets; export.
 - [ ] Scrub, on demand and on a schedule (default monthly).
-- [ ] Replace a disk, offline and online a disk, add a vdev (with a warning when it lowers redundancy; adding is irreversible), raidz expansion (OpenZFS 2.3).
-- [ ] Destroy a pool only after typing its name, with a list of what it holds.
-- [ ] Block cloning (D90): find out why `copy_file_range` cloned no blocks on dev01 (OpenZFS 2.3.9), whether `zfs_bclone_enabled` is off because of the known block cloning data corruption bug, and enable it only on an OpenZFS version with the fix, with a test on dev01.
+- [ ] Replace a disk, offline and online a disk, add a vdev (with a warning when it lowers redundancy; adding is irreversible), raidz expansion (OpenZFS 2.3). (Replace, offline, online and hot spares are done; adding a vdev and raidz expansion are open.)
+- [x] Destroy a pool only after typing its name, with a list of what it holds.
+- [x] Block cloning (D90): find out why `copy_file_range` cloned no blocks on dev01 (OpenZFS 2.3.9), whether `zfs_bclone_enabled` is off because of the known block cloning data corruption bug, and enable it only on an OpenZFS version with the fix, with a test on dev01. (It is on by default in 2.3.9 and works: a Files copy on a pool share cloned 8 MB on dev01. The step 6 test ran on the ext4 system disk, which cannot clone.)
 
 ### 8.2 Health and warnings
 
