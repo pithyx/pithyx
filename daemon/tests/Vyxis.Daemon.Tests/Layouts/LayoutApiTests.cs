@@ -107,16 +107,19 @@ public sealed class LayoutApiTests : IDisposable
     [InlineData("short")]
     [InlineData("has spaces and ! marks in it")]
     [InlineData("0123456789012345678901234567890123456789012345678901234567890123456789")]
-    public async Task AMalformedDeviceCookieIsReplaced(string value)
+    public async Task AMalformedDeviceCookieIsIgnoredAndTheHandshakeIssuesAnId(string value)
     {
         var cookies = await SetupAsync();
         var session = cookies.Split("; ").Single(cookie => cookie.StartsWith(SessionService.CookieName, StringComparison.Ordinal));
+        var malformed = $"{session}; {DeviceCookie.CookieName}={value}";
 
-        using var state = await SendAsync(HttpMethod.Get, "/api/desktop", $"{session}; {DeviceCookie.CookieName}={value}");
+        using var state = await SendAsync(HttpMethod.Get, "/api/desktop", malformed);
+        using var socket = await ConnectAsync(malformed);
+        var ack = await SaveAsync(socket, Layout());
 
-        var issued = state.Headers.GetValues("Set-Cookie").Single(c => c.StartsWith(DeviceCookie.CookieName + "=", StringComparison.Ordinal));
-        Assert.Matches("^vyxis_device=[A-Za-z0-9_-]{16,64};", issued);
-        Assert.DoesNotContain(value, issued, StringComparison.Ordinal);
+        Assert.Equal(JsonValueKind.Null, (await state.JsonAsync()).GetProperty("layout").ValueKind);
+        Assert.False(state.Headers.TryGetValues("Set-Cookie", out _));
+        Assert.Equal("ack", ack.GetProperty("type").GetString());
     }
 
     [Fact]

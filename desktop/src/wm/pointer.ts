@@ -97,6 +97,15 @@ function track(
     },
     options,
   );
+  // Capture lost without a release (the element was removed, another element took it): the gesture is over.
+  // A normal release aborts these listeners before the browser releases the capture.
+  const onLost = (lostEvent: PointerEvent) => {
+    if (lostEvent.pointerId === pointerId) {
+      finish(handlers.cancel);
+    }
+  };
+  target.addEventListener('lostpointercapture', onLost, { signal: listeners.signal });
+  document.addEventListener('lostpointercapture', onLost, options);
 }
 
 function isPrimary(event: ReactPointerEvent): boolean {
@@ -158,6 +167,11 @@ export function startDrag(event: ReactPointerEvent<HTMLElement>, id: string, fra
         return;
       }
       const finalZone = zone;
+      // Maximized or snapped from the keyboard mid-drag: that placement wins over the drag.
+      if (useDesktop.getState().windows[id]?.placement.kind !== 'free') {
+        frame.style.transform = '';
+        return;
+      }
       flushSync(() => {
         if (finalZone === 'maximize') {
           dispatch({ type: 'maximize', id });
@@ -194,6 +208,7 @@ export function startResize(
   const start = visibleRect(windowState, state.workspace);
   const down: Point = { x: event.clientX, y: event.clientY };
   let rect = start;
+  let moved = false;
   const write = (next: Rect) => {
     frame.style.setProperty('--x', `${String(next.x)}px`);
     frame.style.setProperty('--y', `${String(next.y)}px`);
@@ -203,6 +218,7 @@ export function startResize(
 
   track(event, {
     move(point) {
+      moved = true;
       rect = resizeRect(
         start,
         edge,
@@ -213,8 +229,8 @@ export function startResize(
       write(rect);
     },
     end() {
-      // Maximized or snapped from the keyboard mid-resize: that placement wins over the resize.
-      if (useDesktop.getState().windows[id]?.placement.kind !== 'free') {
+      // A press without movement changes nothing; a keyboard maximize or snap mid-resize wins over the resize.
+      if (!moved || useDesktop.getState().windows[id]?.placement.kind !== 'free') {
         write(start);
         return;
       }

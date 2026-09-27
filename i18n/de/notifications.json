@@ -35,6 +35,10 @@
     "saveFailed": {
       "title": "Fensteranordnung nicht gespeichert",
       "body": "Der Daemon hat das Layout dieses Desktops nicht gespeichert. Deine Fenster bleiben offen. Request-ID {requestId}."
+    },
+    "restoreFailed": {
+      "title": "Gespeicherte Fenster nicht geladen",
+      "body": "Der Daemon hat nicht geantwortet. Änderungen an diesem Desktop werden erst nach dem Neuladen der Seite gespeichert."
     }
   }
 }

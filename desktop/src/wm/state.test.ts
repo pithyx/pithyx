@@ -197,6 +197,24 @@ describe('move', () => {
   });
 });
 
+describe('setGeometry', () => {
+  it('restores rect and placement exactly, without clamping', () => {
+    const state = run(
+      { type: 'open', app: 'a', options: multi },
+      { type: 'maximize', id: 'w1' },
+      { type: 'restore', id: 'w1' },
+      {
+        type: 'setGeometry',
+        id: 'w1',
+        rect: { x: 5000, y: 5000, width: 600, height: 400 },
+        placement: { kind: 'maximized' },
+      },
+    );
+    expect(state.windows.w1?.rect).toEqual({ x: 5000, y: 5000, width: 600, height: 400 });
+    expect(state.windows.w1?.placement).toEqual({ kind: 'maximized' });
+  });
+});
+
 describe('workspace changes', () => {
   it('shows windows reachable in a smaller workspace without changing where they belong', () => {
     const wide = run(

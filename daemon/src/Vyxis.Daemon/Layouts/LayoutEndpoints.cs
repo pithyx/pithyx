@@ -26,11 +26,13 @@ public static class LayoutEndpoints
         desktop.MapPut("/preferences/{appId}", SetPreferenceAsync).WithName("SetWindowPreference");
     }
 
-    private static async Task<Ok<DesktopState>> GetStateAsync(LayoutService layouts, HttpContext context, IHostEnvironment environment, CancellationToken cancellationToken) =>
-        TypedResults.Ok(await layouts.GetStateAsync(CurrentUser.Id(context.User), Device(context, environment), cancellationToken));
+    // Reading needs no device id: a browser without one has no layout yet. Only the WebSocket handshake and the
+    // session start create ids, so this request and the handshake cannot create two at once.
+    private static async Task<Ok<DesktopState>> GetStateAsync(LayoutService layouts, HttpContext context, CancellationToken cancellationToken) =>
+        TypedResults.Ok(await layouts.GetStateAsync(CurrentUser.Id(context.User), DeviceCookie.Read(context.Request) ?? "", cancellationToken));
 
-    private static async Task<Ok<IReadOnlyList<DeviceLayout>>> ListDevicesAsync(LayoutService layouts, HttpContext context, IHostEnvironment environment, CancellationToken cancellationToken) =>
-        TypedResults.Ok(await layouts.ListDevicesAsync(CurrentUser.Id(context.User), Device(context, environment), cancellationToken));
+    private static async Task<Ok<IReadOnlyList<DeviceLayout>>> ListDevicesAsync(LayoutService layouts, HttpContext context, CancellationToken cancellationToken) =>
+        TypedResults.Ok(await layouts.ListDevicesAsync(CurrentUser.Id(context.User), DeviceCookie.Read(context.Request) ?? "", cancellationToken));
 
     private static async Task<Ok<JsonElement>> CopyAsync(CopyLayoutRequest request, LayoutService layouts, HttpContext context, IHostEnvironment environment, CancellationToken cancellationToken) =>
         TypedResults.Ok(await layouts.CopyAsync(
@@ -46,7 +48,7 @@ public static class LayoutEndpoints
         return TypedResults.NoContent();
     }
 
-    // Sessions set the device cookie; this covers browsers that lost it since.
+    // Sessions and the WebSocket handshake set the device cookie; copying may still be the first to need one.
     private static string Device(HttpContext context, IHostEnvironment environment) =>
         DeviceCookie.Ensure(context, secure: !environment.IsDevelopment());
 }

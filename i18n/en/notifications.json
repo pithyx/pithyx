@@ -35,6 +35,10 @@
     "saveFailed": {
       "title": "Window arrangement not saved",
       "body": "The daemon did not save the layout of this desktop. Your windows stay open. Request ID {requestId}."
+    },
+    "restoreFailed": {
+      "title": "Saved windows not loaded",
+      "body": "The daemon did not answer. Changes to this desktop are not saved until you reload the page."
     }
   }
 }

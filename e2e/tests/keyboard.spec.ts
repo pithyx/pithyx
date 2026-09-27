@@ -1,6 +1,14 @@
-import type { Page } from '@playwright/test';
+import type { Locator, Page } from '@playwright/test';
 import { expect, test } from './fixtures';
 import { admin, signInAsAdmin } from './session';
+
+/** The element's box once a restore animation (1 ms under reduced motion) has finished. */
+async function settledBox(locator: Locator) {
+  await locator.evaluate((element) =>
+    Promise.all(element.getAnimations().map((animation) => animation.finished)),
+  );
+  return locator.boundingBox();
+}
 
 /** Presses Tab until the element is focused, like a keyboard user would. */
 async function tabTo(page: Page, name: string, role: 'button' | 'searchbox' = 'button') {
@@ -39,6 +47,27 @@ test('sign in, work with windows and sign out with the keyboard only', async ({ 
     await page.keyboard.type('disks');
     await page.keyboard.press('Enter');
     await expect(page.getByRole('region', { name: 'Disks', exact: true })).toBeFocused();
+  });
+
+  await test.step('minimizing the last window moves focus to the start button', async () => {
+    await page.keyboard.press('Alt+Shift+ArrowDown');
+    await expect(page.getByRole('region', { name: 'Disks', exact: true })).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Start' })).toBeFocused();
+    await page.keyboard.press('Alt+Shift+PageDown');
+    await expect(page.getByRole('region', { name: 'Disks', exact: true })).toBeFocused();
+  });
+
+  await test.step('escape puts the window back where it was before the keyboard move', async () => {
+    const disks = page.getByRole('region', { name: 'Disks', exact: true });
+    const before = await settledBox(disks);
+    await page.keyboard.press('Alt+Shift+Space');
+    await page.getByRole('menuitem', { name: 'Move' }).press('Enter');
+    await page.keyboard.press('ArrowRight');
+    await page.keyboard.press('ArrowDown');
+    await expect.poll(async () => (await settledBox(disks))?.x).toBe((before?.x ?? 0) + 16);
+    await page.keyboard.press('Escape');
+    await expect.poll(async () => (await settledBox(disks))?.x).toBe(before?.x);
+    expect((await settledBox(disks))?.y).toBe(before?.y);
   });
 
   await test.step('close the window from the window menu', async () => {

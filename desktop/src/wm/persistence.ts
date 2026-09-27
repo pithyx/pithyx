@@ -31,13 +31,28 @@ function save() {
   realtime.saveLayout(toLayout(useDesktop.getState()));
 }
 
-/** Sends a pending save right away, for example before signing out or when the page goes away. */
+/** Sends a pending save right away, for example when the page goes away. */
 export function flushLayoutSave(): void {
   if (saveTimer !== undefined) {
     clearTimeout(saveTimer);
     save();
   }
 }
+
+/** How long signing out waits for the daemon to confirm the last save; the sign-out closes the WebSocket. */
+const SIGN_OUT_SAVE_WAIT = 1000;
+
+/** Sends a pending save and waits until the daemon answered it, at most one second. */
+export async function saveLayoutBeforeSignOut(): Promise<void> {
+  flushLayoutSave();
+  await Promise.race([
+    realtime.layoutSaved(),
+    new Promise((resolve) => setTimeout(resolve, SIGN_OUT_SAVE_WAIT)),
+  ]);
+}
+
+/** Retries of the first layout fetch (exponential up to 30 s between attempts), about five minutes in total. */
+const RESTORE_RETRIES = 12;
 
 function persistedChange(next: DesktopState, previous: DesktopState): boolean {
   return (
@@ -91,10 +106,10 @@ function rememberSize(app: string, width: number, height: number) {
  */
 export function useLayoutPersistence() {
   const queryClient = useQueryClient();
-  // A new desktop starts empty. The previous one was already forgotten on unmount; this covers a first start.
+  // The store is empty here: the previous desktop forgot everything on unmount. Resetting it again at mount could
+  // run after a pending save of a replaced desktop was flushed and save an empty layout.
   useLayoutEffect(() => {
     saving = false;
-    forgetDesktop();
   }, []);
 
   const desktop = useQuery({
@@ -103,8 +118,15 @@ export function useLayoutPersistence() {
     staleTime: Infinity,
     gcTime: 0,
     // Saving waits for this, so a daemon restart during sign-in must not disable it for the whole session.
-    retry: (_, error) => !isSessionExpired(error),
+    retry: (failures, error) => !isSessionExpired(error) && failures < RESTORE_RETRIES,
   });
+
+  // Without the saved layout nothing is saved either (it would overwrite it); tell the user once.
+  useEffect(() => {
+    if (desktop.isError && !isSessionExpired(desktop.error)) {
+      notify({ code: 'desktop.restoreFailed', params: {} });
+    }
+  }, [desktop.isError, desktop.error]);
 
   // Moves the fetched layout into the window store once; the store lives outside React.
   useEffect(() => {

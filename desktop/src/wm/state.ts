@@ -157,6 +157,9 @@ export function reduce(state: DesktopState, action: Action): DesktopState {
         placement: FREE,
       });
     }
+    case 'setGeometry':
+      // Undo of a keyboard move or resize: back to exactly what was stored, without clamping.
+      return update(state, action.id, { rect: action.rect, placement: action.placement });
     case 'setWorkspace':
       return action.size.width === state.workspace.width &&
         action.size.height === state.workspace.height

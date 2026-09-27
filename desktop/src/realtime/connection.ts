@@ -36,6 +36,7 @@ class RealtimeConnection {
   private pendingLayout: unknown = undefined;
   private readonly layoutMessages = new Set<string>();
   private layoutFailureShown = false;
+  private layoutWaiters: (() => void)[] = [];
 
   connect(onSessionEnded: () => void): void {
     this.onSessionEnded = onSessionEnded;
@@ -53,6 +54,7 @@ class RealtimeConnection {
     this.pendingLayout = undefined;
     this.layoutMessages.clear();
     this.layoutFailureShown = false;
+    this.settleLayout();
     useRealtime.setState({ status: 'idle', data: {} });
   }
 
@@ -62,15 +64,30 @@ class RealtimeConnection {
     this.flushLayout();
   }
 
+  /** Resolves once every layout handed to saveLayout was answered, or when nothing more can be sent. */
+  layoutSaved(): Promise<void> {
+    return new Promise((resolve) => {
+      this.layoutWaiters.push(resolve);
+      this.settleLayout();
+    });
+  }
+
+  private settleLayout(): void {
+    if (
+      (this.pendingLayout === undefined || this.socket === null) &&
+      this.layoutMessages.size === 0
+    ) {
+      for (const resolve of this.layoutWaiters.splice(0)) {
+        resolve();
+      }
+    }
+  }
+
   private flushLayout(): void {
     if (this.pendingLayout !== undefined && this.socket?.readyState === WebSocket.OPEN) {
-      this.socket.send(
-        JSON.stringify({
-          type: 'layout',
-          id: `c${String(++this.nextId)}`,
-          data: this.pendingLayout,
-        }),
-      );
+      const id = `c${String(++this.nextId)}`;
+      this.layoutMessages.add(id);
+      this.socket.send(JSON.stringify({ type: 'layout', id, data: this.pendingLayout }));
       this.pendingLayout = undefined;
     }
   }
@@ -120,6 +137,9 @@ class RealtimeConnection {
         return;
       }
       this.socket = null;
+      // Saves in flight on this socket are never answered; a pending one is sent again after reconnecting.
+      this.layoutMessages.clear();
+      this.settleLayout();
       switch (closeAction(event.code)) {
         case 'reconnect':
           useRealtime.setState({ status: 'reconnecting' });
@@ -171,6 +191,7 @@ class RealtimeConnection {
             this.layoutFailureShown = true;
             notify({ code: 'desktop.saveFailed', params: { requestId: message.requestId } });
           }
+          this.settleLayout();
           break;
         }
         useErrorStore.setState({
@@ -180,6 +201,7 @@ class RealtimeConnection {
       case 'ack':
         if (this.layoutMessages.delete(message.id)) {
           this.layoutFailureShown = false;
+          this.settleLayout();
         }
         break;
     }

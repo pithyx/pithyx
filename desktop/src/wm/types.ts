@@ -80,6 +80,7 @@ export type Action =
   | { type: 'toggleMaximize'; id: string }
   | { type: 'snap'; id: string; zone: SnapZone }
   | { type: 'move'; id: string; rect: Rect }
+  | { type: 'setGeometry'; id: string; rect: Rect; placement: Placement }
   | { type: 'setWorkspace'; size: Size }
   | { type: 'cycle'; direction: 1 | -1 }
   | { type: 'setTitle'; id: string; title: string | null }

@@ -65,7 +65,7 @@ export function runWindowCommand(id: string, command: WindowCommand) {
     case 'size':
       dispatch({ type: 'restore', id });
       useWindowUi.setState({
-        mode: { id, kind: command, start: visibleRect(target, state.workspace) },
+        mode: { id, kind: command, rect: target.rect, placement: target.placement },
       });
       say(command, id);
       break;
@@ -107,7 +107,7 @@ function handleModeKey(event: KeyboardEvent): boolean {
   }
   if (event.key === 'Enter' || event.key === 'Escape') {
     if (event.key === 'Escape') {
-      dispatch({ type: 'move', id: mode.id, rect: mode.start });
+      dispatch({ type: 'setGeometry', id: mode.id, rect: mode.rect, placement: mode.placement });
     }
     useWindowUi.setState({ mode: null });
     say(event.key === 'Enter' ? 'done' : 'cancelled', mode.id);

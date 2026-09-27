@@ -35,6 +35,23 @@ function goHome() {
   }
 }
 
+function onPopState() {
+  if (consuming) {
+    consuming = false;
+    sync();
+    return;
+  }
+  if (wanted) {
+    goHome();
+  } else {
+    // Forward navigation into the desktop's old entry while no app is shown: drop it again.
+    sync();
+  }
+}
+
+// One listener for the page's whole life, so a pending pop is never missed across sign-out and sign-in.
+let listening = false;
+
 /**
  * Phones: while an app is full screen, one history entry belongs to it, so the Android back gesture and the browser
  * back button return to the home screen instead of leaving the desktop. Leaving the app in another way removes the
@@ -42,19 +59,14 @@ function goHome() {
  */
 export function useBackGesture(active: boolean) {
   useEffect(() => {
-    const onPopState = () => {
-      if (consuming) {
-        consuming = false;
-        sync();
-        return;
-      }
-      if (wanted) {
-        goHome();
-      }
-    };
-    addEventListener('popstate', onPopState);
+    if (!listening) {
+      addEventListener('popstate', onPopState);
+      listening = true;
+    }
     return () => {
-      removeEventListener('popstate', onPopState);
+      // Signed out with an app open: the login screen must not keep a history entry of the desktop.
+      wanted = false;
+      sync();
     };
   }, []);
 

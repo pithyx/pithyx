@@ -32,7 +32,7 @@ import { useDismiss } from '../shell/useDismiss';
 import { cx } from '../ui/cx';
 import { Menu, MenuItem, MenuPopover, MenuSeparator, MenuTrigger } from '../ui/Menu';
 import { useBackGesture } from '../wm/backGesture';
-import { applyLayout, flushLayoutSave, useLayoutPersistence } from '../wm/persistence';
+import { applyLayout, saveLayoutBeforeSignOut, useLayoutPersistence } from '../wm/persistence';
 import { useSizeClass } from '../wm/sizeClass';
 import { dispatch, openApp, useDesktop } from '../wm/store';
 import { WindowLayer } from '../wm/WindowLayer';
@@ -302,10 +302,11 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
 
   // When the last window closes or minimizes, keyboard focus would fall to the page body; the start button takes it.
   useEffect(() => {
-    if (
-      focused === null &&
-      (document.activeElement === document.body || document.activeElement === null)
-    ) {
+    const active = document.activeElement;
+    // A minimized window stays in the page, hidden; focus inside it is lost just the same.
+    const lost =
+      active === null || active === document.body || active.closest('[data-minimized]') !== null;
+    if (focused === null && lost) {
       startButton.current?.focus();
     }
   }, [focused]);
@@ -323,7 +324,7 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   const logout = useMutation({
     mutationFn: async () => {
       // The daemon closes the WebSocket on sign-out; a save still waiting for its debounce goes out first.
-      flushLayoutSave();
+      await saveLayoutBeforeSignOut();
       unwrap(await api.POST('/api/auth/logout'));
     },
     onSuccess: async () => {
