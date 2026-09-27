@@ -14,6 +14,7 @@ using Pithyx.Daemon.Monitoring;
 using Pithyx.Daemon.Realtime;
 using Pithyx.Daemon.Shares;
 using Pithyx.Daemon.Storage;
+using Pithyx.Daemon.Storage.Zfs;
 using Scalar.AspNetCore;
 using Serilog;
 
@@ -51,21 +52,39 @@ builder.Services.AddSingleton(services => SystemInfoPublisher.Definition(service
 builder.Services.AddHostedService<SystemInfoPublisher>();
 builder.Services.AddSingleton<DiskInventory>();
 builder.Services.AddSingleton(services => services.GetRequiredService<DiskInventory>().Definition());
-builder.Services.AddHostedService<SystemStateService>();
+builder.Services.AddSingleton<PoolInventory>();
+builder.Services.AddSingleton(services => services.GetRequiredService<PoolInventory>().Definition());
+builder.Services.AddSingleton<IStorageBackend, ZfsBackend>();
+builder.Services.AddSingleton<DiskProbe>();
+builder.Services.AddSingleton<StorageFacts>();
+builder.Services.AddSingleton<StoragePlanner>();
+builder.Services.AddSingleton<CommandPlanRunner>();
+builder.Services.AddSingleton<SystemStateService>();
+// The build-time OpenAPI run must not read, let alone probe, the build machine's disks.
+if (!BuildTimeDocument.IsGenerating)
+{
+    builder.Services.AddHostedService(services => services.GetRequiredService<SystemStateService>());
+}
 builder.Services.AddPithyxOpenApi();
 builder.Services.AddDesktopHosting();
 
+// PITHYX_ETC_DIR exists for tests and simulation only; a real daemon always reads /etc/pithyx.
+var etcDirectory = builder.Configuration["PITHYX_ETC_DIR"];
 if (mode == DaemonMode.Simulated)
 {
     var fixtures = builder.Configuration["PITHYX_FIXTURES"]
         ?? Path.Combine(builder.Environment.ContentRootPath, "..", "..", "tests", "fixtures");
     var scenario = builder.Configuration["PITHYX_SIMULATE_SCENARIO"] ?? "default";
     builder.Services.AddSingleton<ICommandRunner>(FixtureCommandRunner.Load(Path.Combine(fixtures, "commands", scenario)));
+    builder.Services.AddSingleton(new SystemFiles(Path.Combine(fixtures, "proc", "mountinfo"), Path.Combine(fixtures, "proc", "swaps")));
+    etcDirectory ??= Path.Combine(fixtures, "etc");
 }
 else
 {
     builder.Services.AddSingleton<ICommandRunner, ProcessCommandRunner>();
+    builder.Services.AddSingleton(SystemFiles.Host);
 }
+builder.Services.AddSingleton(DeploymentEnvironment.Load(etcDirectory ?? DeploymentEnvironment.DefaultDirectory));
 
 var app = builder.Build();
 
@@ -120,6 +139,7 @@ api.MapLayoutEndpoints();
 api.MapJobEndpoints();
 api.MapShareEndpoints();
 api.MapFileEndpoints();
+api.MapStorageEndpoints();
 api.MapGet("/disks", (DiskInventory disks) => TypedResults.Ok(disks.Current))
     .WithName("GetDisks")
     .WithTags("Storage");

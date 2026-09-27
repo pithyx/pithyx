@@ -192,6 +192,42 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.NotFound)]
     public const string RequestRouteNotFound = "request.route.not_found";
 
+    /// <summary>A storage command of a plan failed; <c>params.command</c> is the program, <c>params.exitCode</c> its exit code.</summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string StorageCommandFailed = "storage.command.failed";
+
+    /// <summary>A disk named in the request does not exist (any more); <c>params.disk</c> is its id.</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string StorageDiskNotFound = "storage.disk.not_found";
+
+    /// <summary>The disk guard refused a disk; <c>params.disk</c> is its id and <c>params.reason</c> the guard's reason.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StorageDiskRefused = "storage.disk.refused";
+
+    /// <summary>A plan waited too long between being shown and being run; it must be shown again.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StoragePlanExpired = "storage.plan.expired";
+
+    /// <summary>A disk changed after the plan was shown (serial, size, partitions or signatures); <c>params.disk</c> is its id.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StoragePlanStale = "storage.plan.stale";
+
+    /// <summary>The layout needs more or fewer disks; <c>params.layout</c>, <c>params.min</c> and <c>params.count</c> say how many.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string StoragePoolDiskCount = "storage.pool.disk_count";
+
+    /// <summary>Unknown pool layout; <c>params.layout</c> is the value sent.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string StoragePoolLayoutInvalid = "storage.pool.layout_invalid";
+
+    /// <summary>Pool names start with a lowercase letter, then up to 31 lowercase letters, digits, <c>-</c> or <c>_</c>, and are not a ZFS keyword.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string StoragePoolNameInvalid = "storage.pool.name_invalid";
+
+    /// <summary>A pool with this name exists already; <c>params.name</c> is the name.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StoragePoolNameTaken = "storage.pool.name_taken";
+
     [ErrorStatus(HttpStatusCode.InternalServerError)]
     public const string SystemInternalUnexpected = "system.internal.unexpected";
 

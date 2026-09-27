@@ -1658,6 +1658,109 @@
           }
         }
       }
+    },
+    "/api/storage/pools": {
+      "get": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Pools with their vdevs, and datasets, as last read; live through the storage/pools topic.",
+        "operationId": "GetPools",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PoolList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/disks": {
+      "get": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Every disk with the disk guard's verdict: whether a new pool may use it, and why not.",
+        "operationId": "GetStorageDisks",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageDiskList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/pools/preview": {
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Probes the chosen disks, asks the disk guard and returns the exact commands that would create the pool. Runs nothing.",
+        "operationId": "PreviewPoolCreate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PoolCreatePreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PoolCreatePreview"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1776,6 +1879,80 @@
           "real",
           "simulated"
         ]
+      },
+      "Dataset": {
+        "required": [
+          "name",
+          "pool",
+          "type",
+          "usedBytes",
+          "availableBytes",
+          "referencedBytes",
+          "mountPoint",
+          "mounted",
+          "encryption",
+          "keyStatus",
+          "encryptionRoot"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Full dataset name, for example `tank/pithyx/shares/media`."
+          },
+          "pool": {
+            "type": "string",
+            "description": "The pool it belongs to."
+          },
+          "type": {
+            "type": "string",
+            "description": "`filesystem` or `volume`."
+          },
+          "usedBytes": {
+            "type": "integer",
+            "description": "Space used by the dataset and its children.",
+            "format": "int64"
+          },
+          "availableBytes": {
+            "type": "integer",
+            "description": "Space available to it.",
+            "format": "int64"
+          },
+          "referencedBytes": {
+            "type": "integer",
+            "description": "Data the dataset references itself.",
+            "format": "int64"
+          },
+          "mountPoint": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Mount point of a file system, if it has one."
+          },
+          "mounted": {
+            "type": "boolean",
+            "description": "True while the file system is mounted."
+          },
+          "encryption": {
+            "type": "string",
+            "description": "Encryption algorithm, or `off`."
+          },
+          "keyStatus": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "`available` or `unavailable` for encrypted datasets, otherwise null."
+          },
+          "encryptionRoot": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The dataset whose key unlocks this one, if encrypted."
+          }
+        }
       },
       "DesktopItem": {
         "required": [
@@ -2292,6 +2469,15 @@
           "request.media_type.unsupported",
           "request.method.not_allowed",
           "request.route.not_found",
+          "storage.command.failed",
+          "storage.disk.not_found",
+          "storage.disk.refused",
+          "storage.plan.expired",
+          "storage.plan.stale",
+          "storage.pool.disk_count",
+          "storage.pool.layout_invalid",
+          "storage.pool.name_invalid",
+          "storage.pool.name_taken",
           "system.internal.unexpected",
           "system.origin.forbidden"
         ],
@@ -2620,6 +2806,51 @@
           }
         },
         "description": "The snapshot of a folder topic: the folder as the watch sees it."
+      },
+      "GuardDecision": {
+        "enum": [
+          "allowed",
+          "needsSerialConfirmation",
+          "refused"
+        ]
+      },
+      "GuardVerdict": {
+        "required": [
+          "diskId",
+          "decision",
+          "reason",
+          "pool",
+          "contents"
+        ],
+        "type": "object",
+        "properties": {
+          "diskId": {
+            "type": "string",
+            "description": "The disk the verdict is for."
+          },
+          "decision": {
+            "description": "Whether a destructive command may touch the disk.",
+            "$ref": "#/components/schemas/GuardDecision"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why, as a stable code: `system_disk`, `read_only`, `mounted`, `pool_member`, `not_test_disk`,\n`duplicate_serial`, `no_serial`, `not_checked`, `has_data`, `confirmed` or `empty`."
+          },
+          "pool": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The imported pool the disk belongs to, for `pool_member`."
+          },
+          "contents": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "What was found on the disk: partitions and signature types."
+          }
+        }
       },
       "HealthResponse": {
         "required": [
@@ -2959,6 +3190,260 @@
           }
         }
       },
+      "PlannedCommand": {
+        "required": [
+          "program",
+          "arguments"
+        ],
+        "type": "object",
+        "properties": {
+          "program": {
+            "type": "string",
+            "description": "Program name."
+          },
+          "arguments": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Arguments, passed without a shell."
+          }
+        }
+      },
+      "Pool": {
+        "required": [
+          "name",
+          "poolGuid",
+          "state",
+          "sizeBytes",
+          "allocatedBytes",
+          "freeBytes",
+          "capacityPercent",
+          "fragmentationPercent",
+          "readOnly",
+          "dataErrors",
+          "scan",
+          "vdevs"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Pool name."
+          },
+          "poolGuid": {
+            "type": "string",
+            "description": "Pool GUID as decimal text (it does not fit a JSON number)."
+          },
+          "state": {
+            "type": "string",
+            "description": "ZFS state: `ONLINE`, `DEGRADED`, `FAULTED`, `OFFLINE`, `UNAVAIL`, `REMOVED` or `SUSPENDED`."
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "description": "Raw size of all vdevs, parity included.",
+            "format": "int64"
+          },
+          "allocatedBytes": {
+            "type": "integer",
+            "description": "Raw space in use.",
+            "format": "int64"
+          },
+          "freeBytes": {
+            "type": "integer",
+            "description": "Raw space free.",
+            "format": "int64"
+          },
+          "capacityPercent": {
+            "type": "integer",
+            "description": "Share of the raw space in use.",
+            "format": "int32"
+          },
+          "fragmentationPercent": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Free space fragmentation, if known.",
+            "format": "int32"
+          },
+          "readOnly": {
+            "type": "boolean",
+            "description": "True when the pool was imported read-only."
+          },
+          "dataErrors": {
+            "type": "integer",
+            "description": "Number of files with permanent errors.",
+            "format": "int64"
+          },
+          "scan": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "The last or running scrub or resilver, if any.",
+                "$ref": "#/components/schemas/PoolScan"
+              }
+            ]
+          },
+          "vdevs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Vdev"
+            },
+            "description": "Top-level vdevs, including log, cache, special and spare devices."
+          }
+        }
+      },
+      "PoolCreatePreview": {
+        "required": [
+          "disks",
+          "commands",
+          "expiresAt"
+        ],
+        "type": "object",
+        "properties": {
+          "disks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GuardVerdict"
+            },
+            "description": "The guard's verdict for every chosen disk, after probing them again."
+          },
+          "commands": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/PlannedCommand"
+            },
+            "description": "The exact commands the plan would run, or null while a disk is not allowed."
+          },
+          "expiresAt": {
+            "type": "string",
+            "description": "Until when the plan may run once creating pools is available.",
+            "format": "date-time"
+          }
+        },
+        "description": "Response of `POST /api/storage/pools/preview`. Nothing was run."
+      },
+      "PoolCreatePreviewRequest": {
+        "required": [
+          "name",
+          "layout",
+          "diskIds"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Pool name."
+          },
+          "layout": {
+            "type": "string",
+            "description": "`single`, `stripe`, `mirror`, `raidz1`, `raidz2` or `raidz3`."
+          },
+          "diskIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The disks to use, by id."
+          },
+          "confirmations": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "For disks that are not empty: the serial number the user typed, by disk id."
+          }
+        }
+      },
+      "PoolList": {
+        "required": [
+          "pools",
+          "datasets"
+        ],
+        "type": "object",
+        "properties": {
+          "pools": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Pool"
+            }
+          },
+          "datasets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Dataset"
+            }
+          }
+        },
+        "description": "Snapshot and event of `storage/pools`, and response of `GET /api/storage/pools`."
+      },
+      "PoolScan": {
+        "required": [
+          "kind",
+          "state",
+          "paused",
+          "startedAt",
+          "endedAt",
+          "toExamineBytes",
+          "examinedBytes",
+          "errors"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "description": "Scan kind: `scrub` or `resilver`."
+          },
+          "state": {
+            "type": "string",
+            "description": "`scanning`, `finished` or `canceled`."
+          },
+          "paused": {
+            "type": "boolean",
+            "description": "True for a paused scrub."
+          },
+          "startedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the scan started (UTC).",
+            "format": "date-time"
+          },
+          "endedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When it ended (UTC), if it did.",
+            "format": "date-time"
+          },
+          "toExamineBytes": {
+            "type": "integer",
+            "description": "Bytes the scan covers.",
+            "format": "int64"
+          },
+          "examinedBytes": {
+            "type": "integer",
+            "description": "Bytes examined so far.",
+            "format": "int64"
+          },
+          "errors": {
+            "type": "integer",
+            "description": "Errors the scan found.",
+            "format": "int64"
+          }
+        }
+      },
       "RecoverRequest": {
         "required": [
           "username",
@@ -3200,6 +3685,43 @@
         },
         "description": "The full current state of a topic, sent after `sub`. Only changes follow as events."
       },
+      "StorageDisk": {
+        "required": [
+          "disk",
+          "guard"
+        ],
+        "type": "object",
+        "properties": {
+          "disk": {
+            "$ref": "#/components/schemas/Disk"
+          },
+          "guard": {
+            "$ref": "#/components/schemas/GuardVerdict"
+          }
+        },
+        "description": "A disk with the guard's verdict, for the Storage settings page."
+      },
+      "StorageDiskList": {
+        "required": [
+          "disks",
+          "environment"
+        ],
+        "type": "object",
+        "properties": {
+          "disks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StorageDisk"
+            },
+            "description": "Every disk with its verdict."
+          },
+          "environment": {
+            "type": "string",
+            "description": "`dev` or `prod`; on dev only the declared test disks can be used."
+          }
+        },
+        "description": "Response of `GET /api/storage/disks`."
+      },
       "SystemInfo": {
         "required": [
           "hostname",
@@ -3253,6 +3775,7 @@
           "files/+/+",
           "jobs/+",
           "storage/disks",
+          "storage/pools",
           "system/info"
         ],
         "type": "object",
@@ -3266,6 +3789,9 @@
           "storage/disks": {
             "$ref": "#/components/schemas/DisksChanged"
           },
+          "storage/pools": {
+            "$ref": "#/components/schemas/PoolList"
+          },
           "system/info": {
             "$ref": "#/components/schemas/SystemInfo"
           }
@@ -3276,6 +3802,7 @@
           "files/+/+",
           "jobs/+",
           "storage/disks",
+          "storage/pools",
           "system/info"
         ],
         "type": "object",
@@ -3288,6 +3815,9 @@
           },
           "storage/disks": {
             "$ref": "#/components/schemas/DiskList"
+          },
+          "storage/pools": {
+            "$ref": "#/components/schemas/PoolList"
           },
           "system/info": {
             "$ref": "#/components/schemas/SystemInfo"
@@ -3514,6 +4044,76 @@
           },
           "totpEnabled": {
             "type": "boolean"
+          }
+        }
+      },
+      "Vdev": {
+        "required": [
+          "name",
+          "type",
+          "role",
+          "state",
+          "path",
+          "parityDisks",
+          "readErrors",
+          "writeErrors",
+          "checksumErrors",
+          "children"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Vdev name as ZFS shows it: `raidz1-0`, `mirror-1` or the device's by-id name."
+          },
+          "type": {
+            "type": "string",
+            "description": "ZFS vdev type: `disk`, `file`, `mirror`, `raidz`, `draid`, `spare`, `replacing` and so on."
+          },
+          "role": {
+            "type": "string",
+            "description": "What the vdev is for: `data`, `log`, `cache`, `special`, `dedup` or `spare`."
+          },
+          "state": {
+            "type": "string",
+            "description": "ZFS state of the vdev."
+          },
+          "path": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Device path of a leaf vdev, usually below `/dev/disk/by-id`."
+          },
+          "parityDisks": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Parity level of a raidz vdev (1 to 3), otherwise null.",
+            "format": "int32"
+          },
+          "readErrors": {
+            "type": "integer",
+            "description": "Read errors since import or the last clear.",
+            "format": "int64"
+          },
+          "writeErrors": {
+            "type": "integer",
+            "description": "Write errors since import or the last clear.",
+            "format": "int64"
+          },
+          "checksumErrors": {
+            "type": "integer",
+            "description": "Checksum errors since import or the last clear.",
+            "format": "int64"
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Vdev"
+            },
+            "description": "Child vdevs."
           }
         }
       },

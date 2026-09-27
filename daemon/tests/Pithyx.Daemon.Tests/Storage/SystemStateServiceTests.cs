@@ -5,8 +5,10 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 using Pithyx.Daemon.Commands;
+using Pithyx.Daemon.Hosting;
 using Pithyx.Daemon.Realtime;
 using Pithyx.Daemon.Storage;
+using Pithyx.Daemon.Storage.Zfs;
 using Pithyx.Daemon.Tests.Support;
 
 namespace Pithyx.Daemon.Tests.Storage;
@@ -18,14 +20,24 @@ public sealed class SystemStateServiceTests : IAsyncDisposable
     private readonly FakeTimeProvider _time = new(DateTimeOffset.UtcNow);
     private readonly ScriptedCommandRunner _commands = new();
     private readonly DiskInventory _inventory = new();
+    private readonly PoolInventory _pools = new();
     private readonly TopicHub _hub;
     private readonly SystemStateService _service;
     private readonly TopicHub.Connection _subscriber;
 
     public SystemStateServiceTests()
     {
-        _hub = new TopicHub(new TopicRegistry([_inventory.Definition()]), _time, Options.Create(new JsonOptions()), NullLogger<TopicHub>.Instance);
-        _service = new SystemStateService(_commands, _inventory, _hub, _time, NullLogger<SystemStateService>.Instance);
+        _hub = new TopicHub(new TopicRegistry([_inventory.Definition(), _pools.Definition()]), _time, Options.Create(new JsonOptions()), NullLogger<TopicHub>.Instance);
+        _service = new SystemStateService(
+            _commands,
+            _inventory,
+            _pools,
+            new ZfsBackend(_commands),
+            new DiskProbe(_commands),
+            new StorageFacts(_inventory, _pools, DeploymentEnvironment.Prod, SystemFiles.Host),
+            _hub,
+            _time,
+            NullLogger<SystemStateService>.Instance);
         _subscriber = _hub.Connect(new ClaimsPrincipal(new ClaimsIdentity([], "test")), "s");
         SetDisks(_allDisks);
     }

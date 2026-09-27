@@ -26,6 +26,8 @@ export const reducers: { [K in TopicName]: Reducer<K> } = {
   // Folder changes are deltas for the file manager's own listing; the snapshot only says whether the folder is watched.
   'files/+/+': (snapshot) => snapshot ?? { watching: true },
   'jobs/+': (_, event) => event,
+  // Pools are few; every event is the whole state.
+  'storage/pools': (_, event) => event,
   'system/info': (_, event) => event,
 };
 

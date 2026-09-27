@@ -162,6 +162,25 @@
       "closed": "Die Verbindung zwischen App und Desktop ist getrennt. Öffne die App noch einmal."
     }
   },
+  "storage": {
+    "command": {
+      "failed": "Der Speicherbefehl {command} ist fehlgeschlagen (Exit-Code {exitCode}). Danach wurde nichts mehr ausgeführt; Details stehen im Protokoll."
+    },
+    "disk": {
+      "not_found": "Die Platte ist nicht mehr vorhanden. Lade die Liste neu und wähle noch einmal.",
+      "refused": "Die Platte darf nicht verwendet werden: {reason, select, system_disk {sie enthält das System} mounted {ein Dateisystem darauf ist in Benutzung} pool_member {sie gehört zu einem Pool} not_test_disk {sie ist keine eingetragene Testplatte} other {sie ist nicht sicher verwendbar}}."
+    },
+    "plan": {
+      "expired": "Dieser Plan ist älter als 10 Minuten. Zeig ihn noch einmal an, damit die Platten erneut geprüft werden.",
+      "stale": "Eine Platte hat sich geändert, nachdem der Plan angezeigt wurde. Es wurde nichts verändert; zeig den Plan noch einmal an."
+    },
+    "pool": {
+      "disk_count": "{layout} braucht mindestens {min, plural, one {# Platte} other {# Platten}}; {count, plural, one {# ist} other {# sind}} ausgewählt.",
+      "layout_invalid": "Unbekanntes Pool-Layout.",
+      "name_invalid": "Pool-Namen beginnen mit einem Kleinbuchstaben und bestehen aus bis zu 32 Kleinbuchstaben, Ziffern, - und _. Namen wie mirror oder raidz sind reserviert.",
+      "name_taken": "Es gibt schon einen Pool namens {name}."
+    }
+  },
   "system": {
     "internal": {
       "unexpected": "Auf dem Server ist ein Fehler aufgetreten. Mit der Request-ID findest du die Details in den Logs."
