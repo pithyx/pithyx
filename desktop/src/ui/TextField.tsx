@@ -1,4 +1,4 @@
-import { IconEye, IconEyeOff, IconSearch, IconX } from '@tabler/icons-react';
+import { IconEye, IconEyeOff, IconSearch, IconX } from './icons';
 import { useState, type ReactNode } from 'react';
 import {
   Button as AriaButton,

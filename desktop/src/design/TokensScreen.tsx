@@ -7,7 +7,7 @@ import {
   IconSearch,
   IconSettings,
   IconTrash,
-} from '@tabler/icons-react';
+} from '../ui/icons';
 import { useState } from 'react';
 import { Button, IconButton } from '../ui/Button';
 import { Badge, Checkbox, ProgressBar, Switch } from '../ui/Controls';

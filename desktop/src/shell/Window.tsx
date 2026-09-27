@@ -1,4 +1,4 @@
-import { IconArrowsDiagonalMinimize2, IconMinus, IconSquare, IconX } from '@tabler/icons-react';
+import { IconArrowsDiagonalMinimize2, IconMinus, IconSquare, IconX } from '../ui/icons';
 import type { CSSProperties, HTMLAttributes, ReactNode, Ref } from 'react';
 import { useId } from 'react';
 import { useTranslation } from 'react-i18next';

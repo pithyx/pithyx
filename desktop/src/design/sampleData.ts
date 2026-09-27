@@ -13,7 +13,7 @@ import {
   IconSettings,
   IconTerminal2,
   IconUsers,
-} from '@tabler/icons-react';
+} from '../ui/icons';
 import { useTranslation } from 'react-i18next';
 import type { Language } from '../i18n';
 import type { JobItem, NotificationItem } from '../shell/Notifications';

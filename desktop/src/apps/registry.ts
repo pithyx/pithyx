@@ -1,4 +1,4 @@
-import { IconDatabase, IconInfoCircle, type TablerIcon } from '@tabler/icons-react';
+import { IconDatabase, IconInfoCircle, type TablerIcon } from '../ui/icons';
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react';
 import type { AppTone } from '../shell/types';
 import type { WindowOptions } from '../wm/types';

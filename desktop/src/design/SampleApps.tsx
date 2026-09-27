@@ -10,7 +10,7 @@ import {
   IconPhoto,
   IconPhotoPlus,
   IconServer2,
-} from '@tabler/icons-react';
+} from '../ui/icons';
 import { useState } from 'react';
 import {
   Label,

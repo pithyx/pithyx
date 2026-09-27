@@ -1,5 +1,5 @@
-import { IconArrowUpRight } from '@tabler/icons-react';
-import type { TablerIcon } from '@tabler/icons-react';
+import { IconArrowUpRight } from '../ui/icons';
+import type { TablerIcon } from '../ui/icons';
 import { useTranslation } from 'react-i18next';
 import { cx } from '../ui/cx';
 import { AppIcon } from './AppIcon';

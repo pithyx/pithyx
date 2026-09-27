@@ -1,4 +1,4 @@
-import type { TablerIcon } from '@tabler/icons-react';
+import type { TablerIcon } from '../ui/icons';
 
 export type AppTone =
   'petrol' | 'ocean' | 'indigo' | 'plum' | 'rose' | 'moss' | 'amber' | 'graphite';

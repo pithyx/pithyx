@@ -1,4 +1,4 @@
-import { IconX } from '@tabler/icons-react';
+import { IconX } from '../ui/icons';
 import type { ReactNode, Ref } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, IconButton } from '../ui/Button';

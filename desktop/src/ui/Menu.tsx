@@ -1,4 +1,4 @@
-import { IconCheck, IconChevronRight } from '@tabler/icons-react';
+import { IconCheck, IconChevronRight } from './icons';
 import type { ReactNode } from 'react';
 import {
   Keyboard,

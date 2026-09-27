@@ -1,10 +1,5 @@
-import {
-  IconCornerDownLeft,
-  IconLogout,
-  IconPower,
-  IconRotateClockwise,
-} from '@tabler/icons-react';
-import type { TablerIcon } from '@tabler/icons-react';
+import { IconCornerDownLeft, IconLogout, IconPower, IconRotateClockwise } from '../ui/icons';
+import type { TablerIcon } from '../ui/icons';
 import type { ReactNode, Ref } from 'react';
 import {
   GridList,
