@@ -9,7 +9,7 @@ namespace Pithyx.Daemon.Tests.Storage;
 /// </summary>
 public sealed partial class CommandSafetyTests
 {
-    private static readonly string[] _planBuilders = ["Storage/Zfs/ZfsPlans.cs"];
+    private static readonly string[] _planBuilders = ["Storage/Zfs/ZfsPlans.cs", "Storage/Zfs/SnapshotPlans.cs"];
 
     private static IEnumerable<(string File, string Text)> DaemonSources()
     {
@@ -53,8 +53,8 @@ public sealed partial class CommandSafetyTests
     private static partial Regex ImportArgument();
 
     // A zpool or zfs command that changes a pool, or one with -f (only zpool events -f, which follows, is allowed);
-    // and programs that write disks.
-    [GeneratedRegex("CommandRequest\\(\\s*\"(zpool|zfs)\",\\s*\\[\\s*\"(labelclear|destroy|create|add|attach|detach|replace|split|remove|offline|online|clear|export|upgrade|rollback|set|snapshot|rename|promote)\"|CommandRequest\\(\\s*\"(zpool|zfs)\",\\s*\\[\\s*\"(?!events\")[^;]*\"-f\"|CommandRequest\\(\\s*\"(mkfs[.a-z0-9]*|sgdisk|sfdisk|parted|dd|mdadm|blkdiscard)\"")]
+    // and programs that write disks. Both new CommandRequest(...) and a target-typed new(...) count.
+    [GeneratedRegex("(?:CommandRequest|new)\\(\\s*\"(zpool|zfs)\",\\s*\\[\\s*\"(labelclear|destroy|create|add|attach|detach|replace|split|remove|offline|online|clear|export|upgrade|rollback|set|snapshot|rename|promote)\"|CommandRequest\\(\\s*\"(zpool|zfs)\",\\s*\\[\\s*\"(?!events\")[^;]*\"-f\"|CommandRequest\\(\\s*\"(mkfs[.a-z0-9]*|sgdisk|sfdisk|parted|dd|mdadm|blkdiscard)\"")]
     private static partial Regex DestructiveArgument();
 
     [GeneratedRegex("\"wipefs\"[^;]*;")]

@@ -111,6 +111,9 @@
     "upload": {
       "incomplete": "The upload was interrupted. Nothing was saved."
     },
+    "version": {
+      "not_found": "This version is no longer there. The snapshot may have been deleted; reload the list."
+    },
     "volume": {
       "full": "There is not enough free space.",
       "read_only": "The storage is read-only."
@@ -191,6 +194,16 @@
       "name_mismatch": "Type the pool name {name} exactly to confirm.",
       "name_taken": "A pool named {name} exists already.",
       "not_found": "There is no pool named {name}."
+    },
+    "snapshot": {
+      "confirmation_mismatch": "The name you typed does not match the dataset. Nothing was rolled back.",
+      "dataset_not_found": "There is no dataset named {dataset}. Reload the page.",
+      "exists": "A snapshot named {name} exists already. Wait a second and try again.",
+      "held": "The snapshot {name} is held and cannot be deleted. Release the hold first.",
+      "newer_exist": "Rolling back would also delete {count, plural, one {# newer snapshot} other {# newer snapshots}}. Review the list and confirm them all.",
+      "not_found": "There is no snapshot named {name}. Reload the list.",
+      "not_pithyx": "Pithyx deletes only snapshots it took. {name} was made by someone else and stays.",
+      "schedule_invalid": "Each schedule is hourly, daily, weekly or monthly, once, and keeps between 1 and {max} snapshots."
     },
     "vdev": {
       "not_found": "The pool has no such device (any more). Reload and choose again."

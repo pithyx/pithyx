@@ -98,9 +98,6 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string DesktopNoteTooLong = "desktop.note.too_long";
 
-    [ErrorStatus(HttpStatusCode.NotFound)]
-    public const string JobsJobNotFound = "jobs.job.not_found";
-
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string FsCursorInvalid = "fs.cursor.invalid";
 
@@ -162,11 +159,18 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string FsUploadIncomplete = "fs.upload.incomplete";
 
+    /// <summary>The share's dataset has no snapshot of this name, or the path is not in it.</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string FsVersionNotFound = "fs.version.not_found";
+
     [ErrorStatus(HttpStatusCode.InsufficientStorage)]
     public const string FsVolumeFull = "fs.volume.full";
 
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string FsVolumeReadOnly = "fs.volume.read_only";
+
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string JobsJobNotFound = "jobs.job.not_found";
 
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string RealtimeMessageInvalid = "realtime.message.invalid";
@@ -259,6 +263,38 @@ public static class ErrorCodes
     /// <summary>No imported pool has this name; <c>params.name</c> is the name.</summary>
     [ErrorStatus(HttpStatusCode.NotFound)]
     public const string StoragePoolNotFound = "storage.pool.not_found";
+
+    /// <summary>The dataset name typed to confirm a rollback does not match the dataset.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string StorageSnapshotConfirmationMismatch = "storage.snapshot.confirmation_mismatch";
+
+    /// <summary>No such dataset (any more); <c>params.dataset</c> is the name sent.</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string StorageSnapshotDatasetNotFound = "storage.snapshot.dataset_not_found";
+
+    /// <summary>A snapshot of this name exists already (two in the same second); <c>params.name</c> is its name.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StorageSnapshotExists = "storage.snapshot.exists";
+
+    /// <summary>The snapshot has a hold and cannot be destroyed; <c>params.name</c> is its name.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StorageSnapshotHeld = "storage.snapshot.held";
+
+    /// <summary>A rollback would destroy newer snapshots that the request did not list; <c>params.count</c> is how many there are.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StorageSnapshotNewerExist = "storage.snapshot.newer_exist";
+
+    /// <summary>No snapshot of this name on the dataset; <c>params.name</c> is the name sent.</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string StorageSnapshotNotFound = "storage.snapshot.not_found";
+
+    /// <summary>Pithyx deletes only snapshots it took (D104); <c>params.name</c> is the snapshot's name.</summary>
+    [ErrorStatus(HttpStatusCode.Forbidden)]
+    public const string StorageSnapshotNotPithyx = "storage.snapshot.not_pithyx";
+
+    /// <summary>Unknown or repeated schedule kind, or a count outside 1 to <c>params.max</c>.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string StorageSnapshotScheduleInvalid = "storage.snapshot.schedule_invalid";
 
     /// <summary>The pool has no device with this GUID; <c>params.vdev</c> is the GUID.</summary>
     [ErrorStatus(HttpStatusCode.NotFound)]

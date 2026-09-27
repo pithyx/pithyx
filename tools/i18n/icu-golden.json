@@ -220,6 +220,10 @@
       "params": {},
       "expected": "The upload was interrupted. Nothing was saved."
     },
+    "fs.version.not_found": {
+      "params": {},
+      "expected": "This version is no longer there. The snapshot may have been deleted; reload the list."
+    },
     "fs.volume.full": {
       "params": {},
       "expected": "There is not enough free space."
@@ -393,6 +397,52 @@
         "name": "tank"
       },
       "expected": "There is no pool named tank."
+    },
+    "storage.snapshot.confirmation_mismatch": {
+      "params": {},
+      "expected": "The name you typed does not match the dataset. Nothing was rolled back."
+    },
+    "storage.snapshot.dataset_not_found": {
+      "params": {
+        "dataset": "tank/data"
+      },
+      "expected": "There is no dataset named tank/data. Reload the page."
+    },
+    "storage.snapshot.exists": {
+      "params": {
+        "name": "pithyx-manual-20260927T210000Z"
+      },
+      "expected": "A snapshot named pithyx-manual-20260927T210000Z exists already. Wait a second and try again."
+    },
+    "storage.snapshot.held": {
+      "params": {
+        "name": "pithyx-daily-20260927T000000Z"
+      },
+      "expected": "The snapshot pithyx-daily-20260927T000000Z is held and cannot be deleted. Release the hold first."
+    },
+    "storage.snapshot.newer_exist": {
+      "params": {
+        "count": 2
+      },
+      "expected": "Rolling back would also delete 2 newer snapshots. Review the list and confirm them all."
+    },
+    "storage.snapshot.not_found": {
+      "params": {
+        "name": "nightly"
+      },
+      "expected": "There is no snapshot named nightly. Reload the list."
+    },
+    "storage.snapshot.not_pithyx": {
+      "params": {
+        "name": "before-upgrade"
+      },
+      "expected": "Pithyx deletes only snapshots it took. before-upgrade was made by someone else and stays."
+    },
+    "storage.snapshot.schedule_invalid": {
+      "params": {
+        "max": 1000
+      },
+      "expected": "Each schedule is hourly, daily, weekly or monthly, once, and keeps between 1 and 1000 snapshots."
     },
     "storage.vdev.not_found": {
       "params": {

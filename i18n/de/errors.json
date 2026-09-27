@@ -111,6 +111,9 @@
     "upload": {
       "incomplete": "Der Upload wurde unterbrochen. Es wurde nichts gespeichert."
     },
+    "version": {
+      "not_found": "Diese Version gibt es nicht mehr. Vielleicht wurde der Snapshot gelöscht; lade die Liste neu."
+    },
     "volume": {
       "full": "Es ist nicht genug Platz frei.",
       "read_only": "Der Speicher ist schreibgeschützt."
@@ -191,6 +194,16 @@
       "name_mismatch": "Gib zur Bestätigung genau den Pool-Namen {name} ein.",
       "name_taken": "Es gibt schon einen Pool namens {name}.",
       "not_found": "Es gibt keinen Pool namens {name}."
+    },
+    "snapshot": {
+      "confirmation_mismatch": "Der eingegebene Name passt nicht zum Dataset. Es wurde nichts zurückgesetzt.",
+      "dataset_not_found": "Es gibt kein Dataset namens {dataset}. Lade die Seite neu.",
+      "exists": "Es gibt schon einen Snapshot namens {name}. Warte eine Sekunde und versuch es noch einmal.",
+      "held": "Der Snapshot {name} wird festgehalten und kann nicht gelöscht werden. Gib ihn zuerst frei.",
+      "newer_exist": "Das Zurücksetzen würde auch {count, plural, one {# neueren Snapshot} other {# neuere Snapshots}} löschen. Prüf die Liste und bestätige alle.",
+      "not_found": "Es gibt keinen Snapshot namens {name}. Lade die Liste neu.",
+      "not_pithyx": "Pithyx löscht nur Snapshots, die es selbst angelegt hat. {name} stammt von jemand anderem und bleibt.",
+      "schedule_invalid": "Jeder Zeitplan ist stündlich, täglich, wöchentlich oder monatlich, jeweils einmal, und behält zwischen 1 und {max} Snapshots."
     },
     "vdev": {
       "not_found": "Der Pool hat dieses Gerät nicht (mehr). Lade neu und wähle noch einmal."
