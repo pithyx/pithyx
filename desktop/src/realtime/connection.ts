@@ -7,6 +7,7 @@ import {
 } from '@vyxis/api-client';
 import { create } from 'zustand';
 import { useErrorStore } from '../errors/errorStore';
+import { notify } from '../shell/toasts';
 import { applyEvent, reconnectDelay } from './reducers';
 
 export type RealtimeStatus = 'idle' | 'connecting' | 'open' | 'reconnecting' | 'stopped';
@@ -33,6 +34,8 @@ class RealtimeConnection {
   private nextId = 0;
   private onSessionEnded: () => void = () => undefined;
   private pendingLayout: unknown = undefined;
+  private readonly layoutMessages = new Set<string>();
+  private layoutFailureShown = false;
 
   connect(onSessionEnded: () => void): void {
     this.onSessionEnded = onSessionEnded;
@@ -48,6 +51,8 @@ class RealtimeConnection {
     socket?.close(1000);
     this.references.clear();
     this.pendingLayout = undefined;
+    this.layoutMessages.clear();
+    this.layoutFailureShown = false;
     useRealtime.setState({ status: 'idle', data: {} });
   }
 
@@ -160,11 +165,22 @@ class RealtimeConnection {
         break;
       }
       case 'error':
+        // A failed background save is no reason for a modal dialog after every window move: tell once.
+        if (this.layoutMessages.delete(message.id)) {
+          if (!this.layoutFailureShown) {
+            this.layoutFailureShown = true;
+            notify({ code: 'desktop.saveFailed', params: { requestId: message.requestId } });
+          }
+          break;
+        }
         useErrorStore.setState({
           current: { code: message.code, params: message.params, requestId: message.requestId },
         });
         break;
       case 'ack':
+        if (this.layoutMessages.delete(message.id)) {
+          this.layoutFailureShown = false;
+        }
         break;
     }
   }

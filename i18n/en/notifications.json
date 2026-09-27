@@ -31,6 +31,10 @@
     "copied": {
       "title": "Desktop loaded",
       "body": "The windows from {device} are now open here."
+    },
+    "saveFailed": {
+      "title": "Window arrangement not saved",
+      "body": "The daemon did not save the layout of this desktop. Your windows stay open. Request ID {requestId}."
     }
   }
 }

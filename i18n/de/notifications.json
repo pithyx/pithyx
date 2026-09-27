@@ -31,6 +31,10 @@
     "copied": {
       "title": "Desktop geladen",
       "body": "Die Fenster von {device} sind jetzt hier geöffnet."
+    },
+    "saveFailed": {
+      "title": "Fensteranordnung nicht gespeichert",
+      "body": "Der Daemon hat das Layout dieses Desktops nicht gespeichert. Deine Fenster bleiben offen. Request-ID {requestId}."
     }
   }
 }
