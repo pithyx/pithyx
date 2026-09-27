@@ -2,7 +2,7 @@ import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures';
 import { openFromStart, signInAsAdmin } from './session';
 
-// Runs on http://vyxis.test:8994 (playwright.config.ts): a plain HTTP origin that is not localhost, like a box reached
+// Runs on http://pithyx.test:7484 (playwright.config.ts): a plain HTTP origin that is not localhost, like a box reached
 // by its address. Nothing may depend on a secure context there.
 
 function filesWindow(page: Page) {

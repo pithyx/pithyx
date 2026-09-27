@@ -1,5 +1,5 @@
-import { BEFORE_CLOSE_TIMEOUT, BEFORE_LOGOUT_TIMEOUT } from '@vyxis/sdk';
-import type { AppConnection } from '@vyxis/sdk/host';
+import { BEFORE_CLOSE_TIMEOUT, BEFORE_LOGOUT_TIMEOUT } from '@pithyx/sdk';
+import type { AppConnection } from '@pithyx/sdk/host';
 import i18next from 'i18next';
 import { useEffect, type RefObject } from 'react';
 import { guardClose } from '../../wm/commands';

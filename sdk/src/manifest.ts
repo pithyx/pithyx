@@ -1,5 +1,5 @@
 /**
- * The app manifest (`vyxis.json` at the root of an app package). It tells the daemon and the desktop what the app is,
+ * The app manifest (`pithyx.json` at the root of an app package). It tells the daemon and the desktop what the app is,
  * what it may do and how its window and backend behave. The manifest schema is a stable contract: a new optional field
  * is a minor change, anything else a major one.
  *
@@ -51,7 +51,7 @@ export type Permission =
  * on its own, which restarts the backend without it. An update that asks for a new one needs the same confirmation.
  *
  * Except for `host.full`, no right reaches the sessions, password hashes, TOTP secrets or recovery keys of any user.
- * The daemon enforces this: its database and secrets under `/var/lib/vyxis` and `/etc/vyxis` are never mapped into a
+ * The daemon enforces this: its database and secrets under `/var/lib/pithyx` and `/etc/pithyx` are never mapped into a
  * container, the Docker socket is only reachable through the daemon's filtering proxy, and the rights that would
  * reach them anyway (the system disk's block devices, `SYS_ADMIN`, `SYS_PTRACE`, `SYS_MODULE`, `SYS_RAWIO`,
  * `DAC_READ_SEARCH`, `BPF`) are never granted on their own.
@@ -59,7 +59,7 @@ export type Permission =
 export type ElevatedPermission =
   /**
    * The Docker Engine API, through the daemon's filtering proxy: the backend can manage containers, but not start
-   * one that is privileged, joins the host namespaces or mounts Vyxis' own state.
+   * one that is privileged, joins the host namespaces or mounts Pithyx' own state.
    */
   | 'docker.socket'
   /** The host's network namespace: the backend sees and binds every host interface and port. */
@@ -80,7 +80,7 @@ export type ElevatedPermission =
 /**
  * A place for files the app needs, declared by name. At install an administrator maps it to a folder in a real share
  * (and can change that later). The app only ever sees the name and paths inside it: the window reaches it through
- * the SDK file API as `{ storage: id }`, the backend finds it mounted at `/vyxis/storage/<id>`. Users reach it with
+ * the SDK file API as `{ storage: id }`, the backend finds it mounted at `/pithyx/storage/<id>`. Users reach it with
  * their own share rights on the mapped folder, never with more than `access`.
  */
 export interface StorageRequest {

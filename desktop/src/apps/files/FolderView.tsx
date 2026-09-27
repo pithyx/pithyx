@@ -1,5 +1,5 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
-import type { FileEntry, FileItems, Formatters, SortKey, SortOrder } from '@vyxis/sdk';
+import type { FileEntry, FileItems, Formatters, SortKey, SortOrder } from '@pithyx/sdk';
 import {
   useEffect,
   useId,
@@ -25,7 +25,7 @@ import {
 } from './selection';
 
 /** Drag data of entries dragged inside the Files app. */
-export const ENTRIES_TYPE = 'application/x-vyxis-files';
+export const ENTRIES_TYPE = 'application/x-pithyx-files';
 
 export interface FolderViewProps {
   entries: readonly FileEntry[];

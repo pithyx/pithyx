@@ -5,13 +5,13 @@ import { defineConfig, devices } from '@playwright/test';
 
 // A fresh daemon in simulation mode with its own database, serving the built desktop (pnpm build first).
 // Playwright loads this file in every process; the environment variable keeps them on one directory.
-process.env.VYXIS_E2E_DATA ??= mkdtempSync(join(tmpdir(), 'vyxis-e2e-'));
-const dataDirectory = process.env.VYXIS_E2E_DATA;
+process.env.PITHYX_E2E_DATA ??= mkdtempSync(join(tmpdir(), 'pithyx-e2e-'));
+const dataDirectory = process.env.PITHYX_E2E_DATA;
 
-// Chromium resolves vyxis.test to this machine, so the daemon is reached at an origin that is not a secure context.
+// Chromium resolves pithyx.test to this machine, so the daemon is reached at an origin that is not a secure context.
 const insecureOrigin = {
-  baseURL: 'http://vyxis.test:8994',
-  launchOptions: { args: ['--host-resolver-rules=MAP vyxis.test 127.0.0.1'] },
+  baseURL: 'http://pithyx.test:7484',
+  launchOptions: { args: ['--host-resolver-rules=MAP pithyx.test 127.0.0.1'] },
 };
 
 export default defineConfig({
@@ -22,7 +22,7 @@ export default defineConfig({
   retries: 0,
   reporter: process.env.CI ? [['list'], ['html', { open: 'never' }]] : 'list',
   use: {
-    baseURL: 'http://localhost:8994',
+    baseURL: 'http://localhost:7484',
     locale: 'en-US',
     // Motion collapses to 1 ms, so geometry is final when a test measures it; this also covers the reduced-motion path.
     reducedMotion: 'reduce',
@@ -50,16 +50,16 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'dotnet run --project ../daemon/src/Vyxis.Daemon --no-launch-profile',
-    url: 'http://localhost:8994/api/health',
+    command: 'dotnet run --project ../daemon/src/Pithyx.Daemon --no-launch-profile',
+    url: 'http://localhost:7484/api/health',
     timeout: 180_000,
     reuseExistingServer: false,
     env: {
       ASPNETCORE_ENVIRONMENT: 'Development',
-      VYXIS_SIMULATE: '1',
-      VYXIS_DB: join(dataDirectory, 'vyxis.db'),
-      VYXIS_LOG_DIR: join(dataDirectory, 'logs'),
-      VYXIS_DESKTOP_DIR: join(import.meta.dirname, '..', 'desktop', 'dist'),
+      PITHYX_SIMULATE: '1',
+      PITHYX_DB: join(dataDirectory, 'pithyx.db'),
+      PITHYX_LOG_DIR: join(dataDirectory, 'logs'),
+      PITHYX_DESKTOP_DIR: join(import.meta.dirname, '..', 'desktop', 'dist'),
     },
   },
 });

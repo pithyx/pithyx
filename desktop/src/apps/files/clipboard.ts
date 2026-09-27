@@ -1,4 +1,4 @@
-import type { FileItems } from '@vyxis/sdk';
+import type { FileItems } from '@pithyx/sdk';
 import { create } from 'zustand';
 
 /** Entries copied or cut in one Files window, ready to paste in any other. */

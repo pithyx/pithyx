@@ -1,7 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
-import type { components } from '@vyxis/api-client';
-import { PROTOCOL_VERSION, SDK_VERSION, portEndpoint } from '@vyxis/sdk';
-import { serveApp, type AppConnection } from '@vyxis/sdk/host';
+import type { components } from '@pithyx/api-client';
+import { PROTOCOL_VERSION, SDK_VERSION, portEndpoint } from '@pithyx/sdk';
+import { serveApp, type AppConnection } from '@pithyx/sdk/host';
 import i18next from 'i18next';
 import { useRef } from 'react';
 import { queryKeys } from '../../api/queries';
@@ -70,7 +70,7 @@ export function SandboxApp({
       }),
     });
     // The iframe has an opaque origin, so no target origin can be named; the transferred port carries the trust.
-    target.postMessage({ type: 'vyxis:connect' }, '*', [channel.port2]);
+    target.postMessage({ type: 'pithyx:connect' }, '*', [channel.port2]);
   }
 
   useAppLifecycle(windowId, connection);

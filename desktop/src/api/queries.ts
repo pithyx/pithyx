@@ -1,4 +1,4 @@
-import { unwrap } from '@vyxis/api-client';
+import { unwrap } from '@pithyx/api-client';
 import { api } from './client';
 
 export const queryKeys = {

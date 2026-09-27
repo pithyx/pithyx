@@ -75,7 +75,7 @@
   },
   "bin": {
     "title": "Papierkorb von {share}",
-    "empty": "Der Papierkorb ist leer.",
+    "empty": "Leer. Nur die Hoffnung ist geblieben.",
     "never": "Bleibt bis zum Leeren",
     "restore": "Wiederherstellen",
     "delete": "Endgültig löschen",

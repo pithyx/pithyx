@@ -5,7 +5,7 @@
  *
  * Handshake:
  * 1. The desktop creates a `MessageChannel` per window, keeps one port and posts the other to the app's iframe as
- *    `{ type: 'vyxis:connect' }` with the port transferred. The iframe is sandboxed without `allow-same-origin`, so
+ *    `{ type: 'pithyx:connect' }` with the port transferred. The iframe is sandboxed without `allow-same-origin`, so
  *    the target origin is `*`; the port is what identifies the app from then on, never message data.
  * 2. The app sends `hello` with its protocol and SDK version on that port.
  * 3. The desktop answers `init` with the {@link AppContext}, or `refuse` with a problem (for example
@@ -70,7 +70,7 @@ export interface AppContext {
   app: { id: AppId; version: string };
   /** Id of this window, unique per desktop tab. */
   instance: string;
-  /** The signed-in user, for display. A backend identifies the user only by `X-Vyxis-User` (see `auth.token`). */
+  /** The signed-in user, for display. A backend identifies the user only by `X-Pithyx-User` (see `auth.token`). */
   user: { id: number; name: string; displayName: string | null };
   /**
    * BCP 47 tag of the user's language, for example `de-DE`. The SDK sets it as `lang` on the app's root element; the
@@ -132,7 +132,7 @@ export interface Methods {
    * A token for the app's own backend at `/apps/<id>/api/`, valid 5 minutes. Send it as `Authorization: Bearer`.
    * Needs the `backend` permission. Ask again for a new one; do not cache it past `expiresAt`.
    *
-   * The daemon's proxy checks the token and hands the backend the user as `X-Vyxis-User` (and `X-Vyxis-Groups`);
+   * The daemon's proxy checks the token and hands the backend the user as `X-Pithyx-User` (and `X-Pithyx-Groups`);
    * that header is the only identity a backend may trust, never anything the app sends in a request.
    */
   'auth.token': { params: Record<string, never>; result: { token: string; expiresAt: string } };
@@ -312,7 +312,7 @@ export const UNTIMED_METHODS: readonly string[] = ['files.upload'];
 
 /** What the desktop posts to the iframe window, with the app's port transferred. */
 export interface ConnectMessage {
-  type: 'vyxis:connect';
+  type: 'pithyx:connect';
 }
 
 export type AppMessage =

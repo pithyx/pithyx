@@ -149,10 +149,10 @@
   },
   "sdk": {
     "method": {
-      "unknown": "This version of Vyxis does not support what the app asked for ({method})."
+      "unknown": "This version of Pithyx does not support what the app asked for ({method})."
     },
     "protocol": {
-      "unsupported": "This app needs another version of Vyxis (protocol {protocol}, supported {min} to {max})."
+      "unsupported": "This app needs another version of Pithyx (protocol {protocol}, supported {min} to {max})."
     },
     "request": {
       "invalid": "The app sent a request the desktop cannot process ({method}).",

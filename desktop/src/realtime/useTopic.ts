@@ -1,4 +1,4 @@
-import type { TopicName, TopicSnapshots } from '@vyxis/api-client';
+import type { TopicName, TopicSnapshots } from '@pithyx/api-client';
 import { useEffect } from 'react';
 import { realtime, useRealtime } from './connection';
 

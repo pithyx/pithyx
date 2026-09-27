@@ -1,5 +1,5 @@
 /**
- * Every failed SDK call rejects with a {@link VyxisError}. Errors from the daemon keep their RFC 9457 problem details
+ * Every failed SDK call rejects with a {@link PithyxError}. Errors from the daemon keep their RFC 9457 problem details
  * unchanged (`code`, `params`, `detail`, `requestId`), so an app shows the same stable code the API returned.
  * Errors that happen between the app and the desktop use the `sdk.*` codes below. Permission and limit errors are
  * the daemon's (`app.permission.denied`, `app.storage.too_large`), because the daemon is where they are checked.
@@ -23,7 +23,7 @@ export const sdkErrorCodes = [
 
 export type SdkErrorCode = (typeof sdkErrorCodes)[number];
 
-/** A problem as it travels between desktop and app: RFC 9457 fields the Vyxis API uses. */
+/** A problem as it travels between desktop and app: RFC 9457 fields the Pithyx API uses. */
 export interface Problem {
   /** Stable code, `area.object.reason`. */
   code: string;
@@ -35,7 +35,7 @@ export interface Problem {
   requestId?: string;
 }
 
-export class VyxisError extends Error implements Problem {
+export class PithyxError extends Error implements Problem {
   readonly code: string;
   readonly params: Record<string, unknown>;
   readonly detail?: string;
@@ -43,7 +43,7 @@ export class VyxisError extends Error implements Problem {
 
   constructor(problem: Problem) {
     super(problem.detail ?? problem.code);
-    this.name = 'VyxisError';
+    this.name = 'PithyxError';
     this.code = problem.code;
     this.params = problem.params;
     if (problem.detail !== undefined) {
@@ -69,13 +69,13 @@ export function sdkError(
   code: SdkErrorCode,
   params: Record<string, unknown> = {},
   detail?: string,
-): VyxisError {
-  return new VyxisError({ code, params, ...(detail === undefined ? {} : { detail }) });
+): PithyxError {
+  return new PithyxError({ code, params, ...(detail === undefined ? {} : { detail }) });
 }
 
 /** Turns anything a handler threw into a problem that can cross the transport. */
 export function toProblem(error: unknown): Problem {
-  if (error instanceof VyxisError) {
+  if (error instanceof PithyxError) {
     return error.toProblem();
   }
   if (isProblem(error)) {

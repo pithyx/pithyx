@@ -1,4 +1,4 @@
-import { isProblem, sdkError, toProblem, VyxisError } from './errors';
+import { isProblem, sdkError, toProblem, PithyxError } from './errors';
 import type {
   ConflictPolicy,
   FileEntry,
@@ -38,9 +38,9 @@ type QueryHandler<Q extends QueryName> = (
 
 /**
  * The API an app works with. The same object for core apps and sandboxed apps; only the transport differs. Every
- * method that talks to the desktop returns a promise and rejects with a {@link VyxisError}.
+ * method that talks to the desktop returns a promise and rejects with a {@link PithyxError}.
  */
-export interface VyxisApp {
+export interface PithyxApp {
   /**
    * What the desktop told the app at start. `theme`, `locale`, `timeZone`, `sizeClass` and `permissions` stay
    * current.
@@ -186,7 +186,7 @@ export interface CreateAppOptions {
  * Connects an app over a transport end: sends `hello`, waits for `init`, and returns the app API. Rejects with
  * `sdk.protocol.unsupported` when the desktop refuses the app's protocol version.
  */
-export function createApp(endpoint: Endpoint, options: CreateAppOptions = {}): Promise<VyxisApp> {
+export function createApp(endpoint: Endpoint, options: CreateAppOptions = {}): Promise<PithyxApp> {
   const timeout = options.timeout ?? REQUEST_TIMEOUT;
   const themeRoot =
     options.themeRoot === undefined
@@ -196,7 +196,7 @@ export function createApp(endpoint: Endpoint, options: CreateAppOptions = {}): P
       : options.themeRoot;
   const pending = new Map<
     number,
-    { resolve: (value: unknown) => void; reject: (error: VyxisError) => void }
+    { resolve: (value: unknown) => void; reject: (error: PithyxError) => void }
   >();
   const listeners = new Map<string, Set<(data: unknown) => void>>();
   const answers = new Map<string, (data: unknown) => unknown>();
@@ -210,7 +210,7 @@ export function createApp(endpoint: Endpoint, options: CreateAppOptions = {}): P
     }
   }
 
-  return new Promise<VyxisApp>((resolveApp, rejectApp) => {
+  return new Promise<PithyxApp>((resolveApp, rejectApp) => {
     function call(method: string, params: unknown): Promise<unknown> {
       const id = nextId++;
       return new Promise((resolve, reject) => {
@@ -290,7 +290,7 @@ export function createApp(endpoint: Endpoint, options: CreateAppOptions = {}): P
         }
         case 'refuse':
           endpoint.close();
-          rejectApp(new VyxisError(message.problem));
+          rejectApp(new PithyxError(message.problem));
           return;
         case 'response': {
           const entry = pending.get(message.id);
@@ -302,7 +302,7 @@ export function createApp(endpoint: Endpoint, options: CreateAppOptions = {}): P
             entry.resolve(message.result);
           } else {
             entry.reject(
-              new VyxisError(
+              new PithyxError(
                 isProblem(message.problem)
                   ? message.problem
                   : { code: 'system.internal.unexpected', params: {} },
@@ -327,7 +327,7 @@ export function createApp(endpoint: Endpoint, options: CreateAppOptions = {}): P
       return call(method, params);
     }
 
-    const api: VyxisApp = {
+    const api: PithyxApp = {
       get context() {
         if (context === undefined) {
           throw sdkError('sdk.transport.closed');

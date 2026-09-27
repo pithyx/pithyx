@@ -20,9 +20,9 @@ test('the layout survives a reload', async ({ page }) => {
   await page.getByRole('button', { name: 'Start' }).click();
   await page
     .getByRole('dialog', { name: 'Start menu' })
-    .getByRole('row', { name: 'About Vyxis' })
+    .getByRole('row', { name: 'About Pithyx' })
     .click();
-  const about = appWindow(page, 'About Vyxis');
+  const about = appWindow(page, 'About Pithyx');
   await expect(about).toBeFocused();
   await page.keyboard.press('Alt+Shift+ArrowLeft');
   const payload = await saved;
@@ -38,7 +38,7 @@ test('the layout survives a reload', async ({ page }) => {
   await expect(
     page
       .getByRole('navigation', { name: 'Taskbar' })
-      .getByRole('button', { name: 'About Vyxis, active' }),
+      .getByRole('button', { name: 'About Pithyx, active' }),
   ).toBeVisible();
 });
 
@@ -51,7 +51,7 @@ test('another device gets this desktop', async ({ browser }) => {
   await first.getByRole('button', { name: 'Start' }).click();
   await first
     .getByRole('dialog', { name: 'Start menu' })
-    .getByRole('row', { name: 'About Vyxis' })
+    .getByRole('row', { name: 'About Pithyx' })
     .click();
   await saved;
 
@@ -66,7 +66,7 @@ test('another device gets this desktop', async ({ browser }) => {
     .first()
     .click();
   await expect(appWindow(second, 'Disks')).toBeVisible();
-  await expect(appWindow(second, 'About Vyxis')).toBeVisible();
+  await expect(appWindow(second, 'About Pithyx')).toBeVisible();
   await expect(second.getByText('Desktop loaded')).toBeVisible();
 
   await laptop.close();
@@ -94,12 +94,12 @@ test('two tabs of one browser do not overwrite each other unnoticed', async ({ b
     }
   });
   const secondSaved = layoutSaved(second);
-  await openFromDesktop(second, 'About Vyxis');
+  await openFromDesktop(second, 'About Pithyx');
   expect(await secondSaved).toContain('"app":"about"');
   expect(statuses).toEqual([412, 204]);
 
   await first.reload();
-  await expect(appWindow(first, 'About Vyxis')).toBeVisible();
+  await expect(appWindow(first, 'About Pithyx')).toBeVisible();
   await expect(appWindow(first, 'Disks')).toHaveCount(0);
   await context.close();
 });

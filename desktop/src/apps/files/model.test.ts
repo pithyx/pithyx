@@ -1,4 +1,4 @@
-import type { FileEntry, FolderPage } from '@vyxis/sdk';
+import type { FileEntry, FolderPage } from '@pithyx/sdk';
 import { describe, expect, it } from 'vitest';
 import { defaultAction } from './defaultAction';
 import { compareEntries, naturalKey } from './order';

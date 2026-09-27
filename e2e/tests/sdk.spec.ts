@@ -80,7 +80,7 @@ test('lifecycle events reach the app: focus, blur, minimize, restore, theme and 
   await page.emulateMedia({ colorScheme: 'dark' });
   await expect(app.locator('[data-fact="theme"]')).toHaveText('dark');
   await expect(events).toContainText('themeChange');
-  await expect(app.locator('html')).toHaveAttribute('data-vyxis-theme', 'dark');
+  await expect(app.locator('html')).toHaveAttribute('data-pithyx-theme', 'dark');
 
   await openAccountMenu(page);
   await page.getByRole('menuitem', { name: 'Language' }).click();
@@ -127,7 +127,7 @@ test('the sandbox keeps the app away from cookies, the desktop page, browser sto
         const target = parent.document.querySelector('iframe[title="SDK demo"]').contentWindow;
         const channel = new MessageChannel();
         channel.port1.onmessage = () => { parent.postMessage('stranger-heard', '*'); };
-        target.postMessage({ type: 'vyxis:connect' }, '*', [channel.port2]);
+        target.postMessage({ type: 'pithyx:connect' }, '*', [channel.port2]);
       </script>`;
       let heard = false;
       const listener = (event: MessageEvent) => {

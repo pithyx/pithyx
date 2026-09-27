@@ -1,8 +1,14 @@
-# Vyxis
+<img src="desktop/public/logo.svg" alt="" width="96" height="96">
 
-Pronounced "VIK-sis".
+# Pithyx
 
-Vyxis is a free, self-hosted NAS and server operating system with a web desktop. It runs on Debian 13, manages storage with ZFS, shares files over SMB, NFS, SFTP and WebDAV, and runs apps as containers, all from a desktop in the browser that works the same on a phone and on an ultrawide monitor. Everything stays on your box: no telemetry, no cloud accounts, no services the system depends on.
+Pronounced /ˈpɪθɪks/, "PITH-iks".
+
+Pandora never opened a box. She opened a pithos (πίθος), a great storage jar of ancient Greece. Erasmus of Rotterdam later mistranslated it as pyxis, a box, and the box stuck. What stayed inside was hope. Pithyx keeps what matters, on your hardware.
+
+The stem is pithos; the ending -yx is a stylization after Greek models such as onyx and Styx.
+
+Pithyx is a free, self-hosted NAS and server operating system with a web desktop. It runs on Debian 13, manages storage with ZFS, shares files over SMB, NFS, SFTP and WebDAV, and runs apps as containers, all from a desktop in the browser that works the same on a phone and on an ultrawide monitor. Everything stays on your box: no telemetry, no cloud accounts, no services the system depends on.
 
 ## Status
 
@@ -10,7 +16,7 @@ Pre-alpha. Nothing here is usable yet. Do not put data you care about on it.
 
 ## Development
 
-> **Development runs over plain HTTP on port 8994.** HTTPS on 443 arrives in a later milestone. Never expose a development daemon to a network you do not trust, and never ship this setup.
+> **Development runs over plain HTTP on port 7484.** HTTPS on 443 arrives in a later milestone. Never expose a development daemon to a network you do not trust, and never ship this setup.
 
 There are two workflows. Both use the same commands; they differ in where the daemon runs and whether it talks to real tools.
 
@@ -33,13 +39,13 @@ git clone git@github.com:vyxis/vyxis.git
 ```
 
 ```bash
-cd vyxis && pnpm install
+cd pithyx && pnpm install
 ```
 
 Start the daemon in simulation mode in one terminal:
 
 ```bash
-VYXIS_SIMULATE=1 dotnet watch --project daemon/src/Vyxis.Daemon
+PITHYX_SIMULATE=1 dotnet watch --project daemon/src/Pithyx.Daemon
 ```
 
 Start the desktop in a second terminal:
@@ -48,19 +54,19 @@ Start the desktop in a second terminal:
 pnpm dev
 ```
 
-Open http://localhost:5173. On the first run the desktop asks you to create the administrator and shows the recovery key once; after that you sign in and see the disks. To start over, stop the daemon and delete `.vyxis-dev/`. The Vite dev server proxies `/api` and `/ws` to the daemon; set `VYXIS_DAEMON_URL` to point it somewhere other than `http://localhost:8994`.
+Open http://localhost:5173. On the first run the desktop asks you to create the administrator and shows the recovery key once; after that you sign in and see the disks. To start over, stop the daemon and delete `.pithyx-dev/`. The Vite dev server proxies `/api` and `/ws` to the daemon; set `PITHYX_DAEMON_URL` to point it somewhere other than `http://localhost:7484`.
 
 Simulation settings:
 
-| Variable                  | Default                 | Meaning                                                    |
-| ------------------------- | ----------------------- | ---------------------------------------------------------- |
-| `VYXIS_SIMULATE`          | unset                   | `1` answers commands from fixtures instead of running them |
-| `VYXIS_FIXTURES`          | `daemon/tests/fixtures` | Fixture root                                               |
-| `VYXIS_SIMULATE_SCENARIO` | `default`               | Folder under `commands/` to use                            |
+| Variable                   | Default                 | Meaning                                                    |
+| -------------------------- | ----------------------- | ---------------------------------------------------------- |
+| `PITHYX_SIMULATE`          | unset                   | `1` answers commands from fixtures instead of running them |
+| `PITHYX_FIXTURES`          | `daemon/tests/fixtures` | Fixture root                                               |
+| `PITHYX_SIMULATE_SCENARIO` | `default`               | Folder under `commands/` to use                            |
 
 Fixtures are recorded on a real machine with `tools/fixtures/record.sh <scenario> <id> -- <command> [args...]`, using exactly the arguments the daemon passes.
 
-While the daemon runs in development, the API reference is at http://localhost:8994/api/docs and the OpenAPI document at `/api/openapi.json`. The database is `.vyxis-dev/vyxis.db` (override with `VYXIS_DB`); stop the daemon and delete `.vyxis-dev/` to start over with a fresh setup. Logs are JSON lines in `.vyxis-dev/logs/daemon.json` (override with `VYXIS_LOG_DIR`); every entry carries the `RequestId` that error responses and the desktop show, so `grep <request id> .vyxis-dev/logs/daemon.json` finds everything that happened for one request.
+While the daemon runs in development, the API reference is at http://localhost:7484/api/docs and the OpenAPI document at `/api/openapi.json`. The database is `.pithyx-dev/pithyx.db` (override with `PITHYX_DB`); stop the daemon and delete `.pithyx-dev/` to start over with a fresh setup. Logs are JSON lines in `.pithyx-dev/logs/daemon.json` (override with `PITHYX_LOG_DIR`); every entry carries the `RequestId` that error responses and the desktop show, so `grep <request id> .pithyx-dev/logs/daemon.json` finds everything that happened for one request.
 
 ### Design gallery
 
@@ -90,21 +96,21 @@ Install Debian 13, clone the repository, then run:
 sudo tools/dev-vm/provision.sh
 ```
 
-The script is idempotent. It enables `contrib`, installs the toolchain in the pinned versions, ZFS (DKMS), mdadm, btrfs-progs, smartmontools, Samba, NFS, Docker and QEMU, sets the system locale to `en_US.UTF-8` (keyboard and time zone stay unchanged), writes `dev` to `/etc/vyxis/environment` and lists the test disks in `/etc/vyxis/test-disks`. Samba and NFS are disabled until the daemon manages them. If it exits with code 2, reboot and run it again.
+The script is idempotent. It enables `contrib`, installs the toolchain in the pinned versions, ZFS (DKMS), mdadm, btrfs-progs, smartmontools, Samba, NFS, Docker and QEMU, sets the system locale to `en_US.UTF-8` (keyboard and time zone stay unchanged), writes `dev` to `/etc/pithyx/environment` and lists the test disks in `/etc/pithyx/test-disks`. Samba and NFS are disabled until the daemon manages them. If it exits with code 2, reboot and run it again.
 
 Take a VM snapshot before destructive tests. Create and destroy test pools only through the wrapper, which refuses any disk that is not a test disk:
 
 ```bash
-tools/dev-vm/testpool.sh create vyxtest --layout mirror VYXTEST01 VYXTEST02
+tools/dev-vm/testpool.sh create pithyxtest --layout mirror VYXTEST01 VYXTEST02
 ```
 
 ```bash
-tools/dev-vm/testpool.sh destroy vyxtest
+tools/dev-vm/testpool.sh destroy pithyxtest
 ```
 
-To develop on the VM from your machine, connect with VS Code Remote-SSH (or any SSH client with port forwarding), run `dotnet watch --project daemon/src/Vyxis.Daemon` without `VYXIS_SIMULATE`, run `pnpm dev`, and forward port 5173.
+To develop on the VM from your machine, connect with VS Code Remote-SSH (or any SSH client with port forwarding), run `dotnet watch --project daemon/src/Pithyx.Daemon` without `PITHYX_SIMULATE`, run `pnpm dev`, and forward port 5173.
 
-Without the Vite dev server, the daemon serves the built desktop itself: run `pnpm build`, start the daemon, and open http://localhost:8994 (or the VM's address on port 8994).
+Without the Vite dev server, the daemon serves the built desktop itself: run `pnpm build`, start the daemon, and open http://localhost:7484 (or the VM's address on port 7484).
 
 ### Checks
 
@@ -113,7 +119,7 @@ Without the Vite dev server, the daemon serves the built desktop itself: run `pn
 The end-to-end tests start their own daemon in simulation mode with a fresh database and drive the built desktop in Chromium:
 
 ```bash
-pnpm --filter @vyxis/e2e exec playwright install chromium
+pnpm --filter @pithyx/e2e exec playwright install chromium
 ```
 
 ```bash
@@ -122,11 +128,11 @@ pnpm build && pnpm e2e
 
 ### Common problems
 
-- **Port 8994 is already in use:** another daemon is still running. Stop it, or find it with `ss -ltnp | grep 8994`.
+- **Port 7484 is already in use:** another daemon is still running. Stop it, or find it with `ss -ltnp | grep 7484`.
 - **`pnpm: command not found`:** run `corepack enable` (with `sudo` if Node was installed system-wide).
 - **"No simulation fixture for: ..."**: the daemon called a command that has no recording in the active scenario. Record it with `tools/fixtures/record.sh`.
-- **"Simulation fixtures not found"**: the daemon was started from an unusual directory. Set `VYXIS_FIXTURES` to `daemon/tests/fixtures`.
-- **The desktop shows "Daemon not reachable":** the daemon is not running, or `VYXIS_DAEMON_URL` points to the wrong place.
+- **"Simulation fixtures not found"**: the daemon was started from an unusual directory. Set `PITHYX_FIXTURES` to `daemon/tests/fixtures`.
+- **The desktop shows "Daemon not reachable":** the daemon is not running, or `PITHYX_DAEMON_URL` points to the wrong place.
 - **`modprobe zfs` fails after provisioning:** reboot so the DKMS module matches the running kernel, then run `provision.sh` again. Secure Boot must be disabled, because the ZFS module is not signed.
 
 ## Contributing
@@ -135,4 +141,4 @@ See [CONTRIBUTING.md](CONTRIBUTING.md). Security issues: see [SECURITY.md](SECUR
 
 ## License
 
-Vyxis is licensed under the [GNU Affero General Public License v3.0](LICENSE) with an attribution term under section 7(b), see [NOTICE](NOTICE). The app SDK in [`sdk/`](sdk/) is licensed under the [MIT License](sdk/LICENSE) so apps built on it can use any license.
+Pithyx is licensed under the [GNU Affero General Public License v3.0](LICENSE) with an attribution term under section 7(b), see [NOTICE](NOTICE). The app SDK in [`sdk/`](sdk/) is licensed under the [MIT License](sdk/LICENSE) so apps built on it can use any license.

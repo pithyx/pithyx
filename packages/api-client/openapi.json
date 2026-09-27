@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.1",
   "info": {
-    "title": "Vyxis API",
+    "title": "Pithyx API",
     "version": "v1"
   },
   "paths": {
@@ -1037,7 +1037,7 @@
         "tags": [
           "Shares"
         ],
-        "description": "Administrators only. Removes the share from Vyxis; its files stay on the host.",
+        "description": "Administrators only. Removes the share from Pithyx; its files stay on the host.",
         "operationId": "DeleteShare",
         "parameters": [
           {

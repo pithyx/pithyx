@@ -10,7 +10,7 @@ export const admin = {
 /** Signs in, or sets up the administrator first when a spec runs on a fresh database on its own. */
 export async function signInAsAdmin(page: Page) {
   await page.goto('/');
-  const setup = page.getByRole('heading', { name: 'Set up Vyxis' });
+  const setup = page.getByRole('heading', { name: 'Set up Pithyx' });
   const login = page.getByRole('heading', { name: 'Welcome back' });
   await expect(setup.or(login)).toBeVisible();
   if (await setup.isVisible()) {
@@ -69,7 +69,7 @@ export function appWindow(page: Page, name: string) {
  * this grid, so the Files shortcut new users also get is left out; specs open Files from the start menu.
  */
 export async function resetDesktopItems(page: Page) {
-  const headers = { 'X-Vyxis-Request': '1' };
+  const headers = { 'X-Pithyx-Request': '1' };
   const items = (await (await page.request.get('/api/desktop/items')).json()) as { id: number }[];
   for (const item of items) {
     await page.request.delete(`/api/desktop/items/${String(item.id)}`, { headers });

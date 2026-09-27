@@ -350,3 +350,9 @@
     height: var(--touch-target);
   }
 }
+
+.brandTooltip {
+  font-family: var(--font-display);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-display);
+}

@@ -34,8 +34,14 @@ export function AboutApp() {
   return (
     <div className={styles.about}>
       <header className={styles.header}>
-        <Wordmark name={t('brand')} size="lg" />
+        <Wordmark name={t('brand')} mark={t('brandMark')} size="lg" motion="welcome" />
         <p className={styles.tagline}>{t('about.tagline')}</p>
+        <p className={styles.story}>
+          <span className={styles.greek} lang="el">
+            {t('about.greek')}
+          </span>{' '}
+          {t('about.story')}
+        </p>
       </header>
       <section className={styles.section} aria-labelledby="about-license">
         <h2 id="about-license" className={styles.title}>

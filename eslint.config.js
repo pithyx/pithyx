@@ -5,9 +5,9 @@ import { defineConfig, globalIgnores } from 'eslint/config';
 import globals from 'globals';
 import tseslint from 'typescript-eslint';
 
-// The pre-commit hook sets VYXIS_ESLINT_FAST=1 to skip type-aware rules and stay under 5 s.
+// The pre-commit hook sets PITHYX_ESLINT_FAST=1 to skip type-aware rules and stay under 5 s.
 // CI and `pnpm lint` always run the full type-checked rule set.
-const fast = process.env.VYXIS_ESLINT_FAST === '1';
+const fast = process.env.PITHYX_ESLINT_FAST === '1';
 
 const typescriptConfigs = fast
   ? [
@@ -77,7 +77,7 @@ export default defineConfig(
     },
   },
   {
-    // Vyxis works without a secure context (plain HTTP by IP, an untrusted certificate). APIs that need one are
+    // Pithyx works without a secure context (plain HTTP by IP, an untrusted certificate). APIs that need one are
     // reached only through desktop/src/platform/browser.ts, which falls back or reports that they are missing.
     files: ['desktop/src/**/*.{ts,tsx}', 'sdk/src/**/*.ts', 'apps/*/src/**/*.ts'],
     ignores: ['desktop/src/platform/browser.ts', '**/*.test.{ts,tsx}'],

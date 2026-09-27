@@ -7,7 +7,7 @@ import {
   IconShieldLock,
 } from '../ui/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { unwrap, type components } from '@vyxis/api-client';
+import { unwrap, type components } from '@pithyx/api-client';
 import {
   lazy,
   Suspense,

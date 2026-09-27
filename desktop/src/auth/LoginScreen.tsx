@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { unwrap, type components } from '@vyxis/api-client';
+import { unwrap, type components } from '@pithyx/api-client';
 import { useState, type SyntheticEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
@@ -36,7 +36,6 @@ export function LoginScreen({
   hostname: string;
   onSignedIn: (user: User) => void;
 }) {
-  const { t } = useTranslation();
   const [step, setStep] = useState<Step>({ kind: 'password' });
   // Kept across steps, so going back or finishing a reset does not ask for the name again.
   const [username, setUsername] = useState('');
@@ -91,7 +90,7 @@ export function LoginScreen({
   return (
     <AuthLayout wide={step.kind !== 'password' && step.kind !== 'totp'} footer={<LanguageSelect />}>
       {(step.kind === 'password' || step.kind === 'recovered') && (
-        <AuthHeader host={hostname} product={t('brand')} />
+        <AuthHeader host={hostname} motion="closed" />
       )}
       {content}
     </AuthLayout>

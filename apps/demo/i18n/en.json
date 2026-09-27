@@ -1,6 +1,6 @@
 {
   "heading": "SDK demo",
-  "intro": "A third-party app in a sandboxed window. It talks to the desktop only through @vyxis/sdk.",
+  "intro": "A third-party app in a sandboxed window. It talks to the desktop only through @pithyx/sdk.",
   "user": "User",
   "locale": "Language",
   "timeZone": "Time zone",

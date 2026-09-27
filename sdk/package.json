@@ -1,7 +1,7 @@
 {
-  "name": "@vyxis/sdk",
+  "name": "@pithyx/sdk",
   "version": "0.0.0",
-  "description": "SDK for building Vyxis apps",
+  "description": "SDK for building Pithyx apps",
   "license": "MIT",
   "type": "module",
   "files": [
@@ -12,17 +12,17 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
-      "vyxis-source": "./src/index.ts",
+      "pithyx-source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
     },
     "./host": {
-      "vyxis-source": "./src/host.ts",
+      "pithyx-source": "./src/host.ts",
       "types": "./dist/host.d.ts",
       "import": "./dist/host.js"
     },
     "./i18n": {
-      "vyxis-source": "./src/i18n.ts",
+      "pithyx-source": "./src/i18n.ts",
       "types": "./dist/i18n.d.ts",
       "import": "./dist/i18n.js"
     }

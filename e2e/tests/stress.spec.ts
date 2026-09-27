@@ -37,7 +37,7 @@ async function seedLayout(page: Page, layout: unknown) {
   const status = await page.evaluate(async (data) => {
     const response = await fetch('/api/desktop/layout', {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json', 'X-Vyxis-Request': '1' },
+      headers: { 'Content-Type': 'application/json', 'X-Pithyx-Request': '1' },
       body: JSON.stringify(data),
     });
     return response.status;
@@ -59,9 +59,9 @@ test('windows stay reachable after the screen gets smaller', async ({ page }) =>
   await signInAsAdmin(page);
   // Before sign-in the session probe answers 401, which the browser logs; watch from here on.
   const errors = watchErrors(page);
-  await openFromDesktop(page, 'About Vyxis');
-  const about = appWindow(page, 'About Vyxis');
-  const title = await box(about.getByRole('heading', { name: 'About Vyxis', exact: true }));
+  await openFromDesktop(page, 'About Pithyx');
+  const about = appWindow(page, 'About Pithyx');
+  const title = await box(about.getByRole('heading', { name: 'About Pithyx', exact: true }));
   await page.mouse.move(title.x + 20, title.y + 10);
   await page.mouse.down();
   await page.mouse.move(1560, 960, { steps: 10 });
@@ -161,8 +161,8 @@ test('rapid opening, closing and shortcuts leave a consistent desktop', async ({
     0,
   );
 
-  await openFromDesktop(page, 'About Vyxis');
-  const about = appWindow(page, 'About Vyxis');
+  await openFromDesktop(page, 'About Pithyx');
+  const about = appWindow(page, 'About Pithyx');
   await expect(about).toBeFocused();
   const keys = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight'];
   for (let round = 0; round < 4; round++) {
@@ -192,9 +192,9 @@ test('dragging a window causes no long tasks', async ({ page }) => {
   await page.getByRole('button', { name: 'Start' }).click();
   await page
     .getByRole('dialog', { name: 'Start menu' })
-    .getByRole('row', { name: 'About Vyxis' })
+    .getByRole('row', { name: 'About Pithyx' })
     .click();
-  const about = appWindow(page, 'About Vyxis');
+  const about = appWindow(page, 'About Pithyx');
   await expect(about).toBeFocused();
   await page.evaluate(() => {
     const target = window as unknown as { longTasks: number[] };
@@ -206,7 +206,7 @@ test('dragging a window causes no long tasks', async ({ page }) => {
     }).observe({ type: 'longtask' });
   });
 
-  const title = await box(about.getByRole('heading', { name: 'About Vyxis', exact: true }));
+  const title = await box(about.getByRole('heading', { name: 'About Pithyx', exact: true }));
   await page.mouse.move(title.x + 20, title.y + 10);
   await page.mouse.down();
   for (let step = 1; step <= 60; step++) {

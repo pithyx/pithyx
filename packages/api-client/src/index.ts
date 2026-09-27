@@ -22,10 +22,10 @@ export type ApiClient = Client<paths>;
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
 /** Header the daemon requires on state-changing requests (CSRF protection together with SameSite cookies). */
-export const CSRF_HEADER = 'X-Vyxis-Request';
+export const CSRF_HEADER = 'X-Pithyx-Request';
 
 /** A failed API call. Show the translation of `code` with `params`, and offer `requestId` for support. */
-export class VyxisApiError extends Error {
+export class PithyxApiError extends Error {
   readonly status: number;
   readonly code: ErrorCode;
   readonly params: Record<string, unknown>;
@@ -33,7 +33,7 @@ export class VyxisApiError extends Error {
 
   constructor(status: number, problem: ApiProblem) {
     super(problem.detail);
-    this.name = 'VyxisApiError';
+    this.name = 'PithyxApiError';
     this.status = status;
     this.code = problem.code;
     this.params = problem.params;
@@ -61,16 +61,16 @@ export function createApiClient(baseUrl = ''): ApiClient {
 }
 
 /**
- * Returns the data of an openapi-fetch result or throws a {@link VyxisApiError}. A successful response without a
+ * Returns the data of an openapi-fetch result or throws a {@link PithyxApiError}. A successful response without a
  * body (204) returns undefined, which its type already says.
  */
 export function unwrap<T>(result: { data?: T; error?: unknown; response: Response }): T {
   if (result.error !== undefined || !result.response.ok) {
     const { response, error } = result;
     if (isProblem(error)) {
-      throw new VyxisApiError(response.status, error);
+      throw new PithyxApiError(response.status, error);
     }
-    throw new VyxisApiError(response.status, {
+    throw new PithyxApiError(response.status, {
       type: 'about:blank',
       title: response.statusText,
       status: response.status,

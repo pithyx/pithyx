@@ -1,9 +1,9 @@
 /**
- * `@vyxis/sdk/i18n`: an optional helper for apps that keep their texts as ICU MessageFormat JSON, the format the
+ * `@pithyx/sdk/i18n`: an optional helper for apps that keep their texts as ICU MessageFormat JSON, the format the
  * desktop uses. Apps may use any other i18n library instead; the SDK only hands them the locale.
  *
  * ```ts
- * import { createI18n } from '@vyxis/sdk/i18n';
+ * import { createI18n } from '@pithyx/sdk/i18n';
  * import en from './i18n/en.json';
  * import de from './i18n/de.json';
  *
@@ -14,7 +14,7 @@
  * @packageDocumentation
  */
 import { IntlMessageFormat } from 'intl-messageformat';
-import type { VyxisApp } from './app';
+import type { PithyxApp } from './app';
 
 /** Texts of one language: nested objects of ICU messages. */
 export interface Messages {
@@ -52,7 +52,7 @@ export function pickLanguage(locale: string, available: readonly string[]): stri
  * Messages are compiled once per language and key.
  */
 export function createI18n(
-  app: Pick<VyxisApp, 'context'>,
+  app: Pick<PithyxApp, 'context'>,
   messages: { en: Messages } & Partial<Record<string, Messages>>,
 ): I18n {
   const compiled = new Map<string, IntlMessageFormat>();

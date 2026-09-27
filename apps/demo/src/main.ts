@@ -1,7 +1,7 @@
-// A sample third-party app: plain TypeScript, no framework, only @vyxis/sdk. It shows what the desktop hands over,
+// A sample third-party app: plain TypeScript, no framework, only @pithyx/sdk. It shows what the desktop hands over,
 // uses the window, notification and storage calls, logs lifecycle events and checks that its sandbox holds.
-import { connect, type VyxisApp } from '@vyxis/sdk';
-import { createI18n, pickLanguage } from '@vyxis/sdk/i18n';
+import { connect, type PithyxApp } from '@pithyx/sdk';
+import { createI18n, pickLanguage } from '@pithyx/sdk/i18n';
 import de from '../i18n/de.json';
 import en from '../i18n/en.json';
 import './style.css';
@@ -57,7 +57,7 @@ async function probeSandbox(): Promise<Record<keyof Messages['probe'], boolean>>
 }
 
 async function main(root: HTMLElement) {
-  const app: VyxisApp = await connect();
+  const app: PithyxApp = await connect();
   const i18n = createI18n(app, { en, de });
   const t = (key: string, params?: Record<string, unknown>) => i18n.t(key, params);
   let count = (await app.storage.get<number>('count')) ?? 0;

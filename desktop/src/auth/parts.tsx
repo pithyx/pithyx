@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next';
+import { LogoMark } from '../ui/Logo';
 import styles from './Auth.module.css';
 
 /** Two lines of groups; the key only breaks at a hyphen. */
@@ -35,6 +36,7 @@ export function WelcomeCard({ name, initials }: { name: string; initials: string
   const { t } = useTranslation('auth');
   return (
     <div className={styles.welcome} role="status">
+      <LogoMark size={48} motion="welcome" />
       <span className={styles.bigAvatar} aria-hidden>
         {initials}
       </span>

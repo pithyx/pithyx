@@ -1,6 +1,6 @@
 {
   "heading": "SDK-Demo",
-  "intro": "Eine Drittanbieter-App in einem abgeschotteten Fenster. Sie spricht mit dem Desktop nur über @vyxis/sdk.",
+  "intro": "Eine Drittanbieter-App in einem abgeschotteten Fenster. Sie spricht mit dem Desktop nur über @pithyx/sdk.",
   "user": "Benutzer",
   "locale": "Sprache",
   "timeZone": "Zeitzone",

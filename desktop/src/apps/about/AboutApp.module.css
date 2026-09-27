@@ -14,6 +14,16 @@
   color: var(--color-text-muted);
 }
 
+.story {
+  max-width: 60ch;
+  font-size: var(--font-size-sm);
+}
+
+.greek {
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: 0.08em;
+}
+
 .section {
   display: grid;
   gap: var(--space-3);

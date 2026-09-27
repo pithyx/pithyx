@@ -8,7 +8,7 @@ const RAW_COLORS =
 describe('public theme tokens', () => {
   it('are semantic, prefixed and unique', () => {
     for (const name of themeTokenNames) {
-      expect(name).toMatch(/^--vyxis-[a-z]+(-[a-z]+)*$/);
+      expect(name).toMatch(/^--pithyx-[a-z]+(-[a-z]+)*$/);
       expect(name).not.toMatch(RAW_COLORS);
     }
     expect(new Set(themeTokenNames).size).toBe(themeTokenNames.length);

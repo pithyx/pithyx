@@ -5,7 +5,7 @@ import { totp } from './totp';
 
 const password = 'correct horse battery';
 const newPassword = admin.password;
-const recoveryKeyFormat = /^([0-9A-Z]{4}-){6}[0-9A-Z]{2}$/;
+const recoveryKeyFormat = /^PTHX-([0-9A-Z]{4}-){6}[0-9A-Z]{2}$/;
 
 async function signIn(page: Page, secret: string) {
   await page.getByLabel('User name').fill('admin');
@@ -61,11 +61,11 @@ test('setup, recovery key, TOTP sign-in and password reset with the recovery key
   let recoveryKey = '';
   let secret = '';
   await page.goto('/');
-  // This project runs on http://vyxis.test (playwright.config.ts): not localhost, so not a secure context.
+  // This project runs on http://pithyx.test (playwright.config.ts): not localhost, so not a secure context.
   expect(await page.evaluate(() => window.isSecureContext)).toBe(false);
 
   await test.step('set up the administrator', async () => {
-    await expect(page.getByRole('heading', { name: 'Set up Vyxis' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Set up Pithyx' })).toBeVisible();
     await expect(page.getByText('Step 1 of 2')).toBeVisible();
     await page.getByLabel('User name').fill('Admin');
     await page.getByLabel('Display name (optional)').fill('Ada Admin');

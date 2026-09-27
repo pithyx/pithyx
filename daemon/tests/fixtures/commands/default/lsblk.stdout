@@ -398,7 +398,7 @@
           "hctl": null,
           "hotplug": false,
           "kname": "sdb1",
-          "label": "vyxtest",
+          "label": "pithyxtest",
           "log-sec": 512,
           "maj:min": "8:17",
           "maj": "8",

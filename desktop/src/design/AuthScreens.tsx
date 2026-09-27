@@ -23,10 +23,9 @@ function preventSubmit(next: () => void) {
 
 export function SetupAccount() {
   const { t } = useTranslation('auth');
-  const { t: tDesktop } = useTranslation();
   return (
     <AuthLayout wide footer={<LanguageSelect />}>
-      <AuthHeader host={hostname} product={tDesktop('brand')} />
+      <AuthHeader host={hostname} motion="loop" />
       <Form
         className={styles.form}
         onSubmit={preventSubmit(() => undefined)}
@@ -77,11 +76,10 @@ export function SetupAccount() {
 
 export function SetupRecovery() {
   const { t } = useTranslation('auth');
-  const { t: tDesktop } = useTranslation();
   const [stored, setStored] = useState(false);
   return (
     <AuthLayout wide footer={<LanguageSelect />}>
-      <AuthHeader host={hostname} product={tDesktop('brand')} />
+      <AuthHeader host={hostname} motion="loop" />
       <section className={styles.form} aria-labelledby="recovery-title">
         <div className={styles.heading}>
           <p className={styles.step}>{t('setup.step', { current: 2, total: 2 })}</p>
@@ -200,10 +198,9 @@ export function LoginFlow({
 
 function PasswordStep({ onNext, onForgot }: { onNext: () => void; onForgot: () => void }) {
   const { t } = useTranslation('auth');
-  const { t: tDesktop } = useTranslation();
   return (
     <>
-      <AuthHeader host={hostname} product={tDesktop('brand')} />
+      <AuthHeader host={hostname} motion="closed" />
       <Form className={styles.form} onSubmit={preventSubmit(onNext)} aria-labelledby="login-title">
         <h1 id="login-title" className={styles.title}>
           {t('login.heading')}

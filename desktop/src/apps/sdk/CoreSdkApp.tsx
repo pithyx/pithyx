@@ -1,7 +1,13 @@
 import { useQueryClient } from '@tanstack/react-query';
-import type { components } from '@vyxis/api-client';
-import { createApp, inProcessPair, PROTOCOL_VERSION, SDK_VERSION, type VyxisApp } from '@vyxis/sdk';
-import { serveApp, type AppConnection } from '@vyxis/sdk/host';
+import type { components } from '@pithyx/api-client';
+import {
+  createApp,
+  inProcessPair,
+  PROTOCOL_VERSION,
+  SDK_VERSION,
+  type PithyxApp,
+} from '@pithyx/sdk';
+import { serveApp, type AppConnection } from '@pithyx/sdk/host';
 import i18next from 'i18next';
 import { useEffect, useEffectEvent, useRef, useState, type ComponentType } from 'react';
 import { queryKeys } from '../../api/queries';
@@ -17,9 +23,9 @@ import { useAppLifecycle } from './useAppLifecycle';
 
 type User = components['schemas']['UserInfo'];
 
-/** What a core app built on the SDK receives: the same `VyxisApp` a sandboxed app gets from `connect()`. */
+/** What a core app built on the SDK receives: the same `PithyxApp` a sandboxed app gets from `connect()`. */
 export interface SdkAppProps {
-  app: VyxisApp;
+  app: PithyxApp;
 }
 
 /**
@@ -41,7 +47,7 @@ export function CoreSdkApp({
 }) {
   const root = useRef<HTMLDivElement>(null);
   const connection = useRef<AppConnection | null>(null);
-  const [app, setApp] = useState<VyxisApp | null>(null);
+  const [app, setApp] = useState<PithyxApp | null>(null);
   const client = useQueryClient();
   const appName = useAppName();
   const sizeClass = useSizeClass();

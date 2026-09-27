@@ -20,8 +20,8 @@ const BUDGETS = {
 // The real motion: the welcome card must bridge the wait without adding to it.
 test.use({ reducedMotion: 'no-preference', trace: 'off' });
 
-// CI runs the gate on pull requests; the run on dev after a merge skips it (VYXIS_SKIP_BUDGETS=1).
-test.skip(process.env.VYXIS_SKIP_BUDGETS === '1', 'Performance budgets gate pull requests only');
+// CI runs the gate on pull requests; the run on dev after a merge skips it (PITHYX_SKIP_BUDGETS=1).
+test.skip(process.env.PITHYX_SKIP_BUDGETS === '1', 'Performance budgets gate pull requests only');
 
 test('sign-in and reload stay within their budgets on a slow connection', async ({
   browser,
@@ -85,14 +85,14 @@ const FILES_BUDGETS = { visitedFolder: 16, firstPage: 100 } as const;
 
 async function lastShown(page: Page): Promise<number> {
   return page.evaluate(() => {
-    const entries = performance.getEntriesByName('vyxis:files:shown', 'measure');
+    const entries = performance.getEntriesByName('pithyx:files:shown', 'measure');
     return entries.at(-1)?.duration ?? Number.NaN;
   });
 }
 
 test('Files shows a visited folder within a frame and a new one quickly', async ({ page }) => {
   test.setTimeout(120_000);
-  const shared = join(process.env.VYXIS_E2E_DATA ?? '', 'shares', 'shared');
+  const shared = join(process.env.PITHYX_E2E_DATA ?? '', 'shares', 'shared');
   for (let round = 0; round <= ROUNDS; round++) {
     const folder = join(shared, `budget-${String(round)}`);
     mkdirSync(folder, { recursive: true });

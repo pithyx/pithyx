@@ -1,10 +1,11 @@
 import { IconBell, IconLayoutGrid, IconLoader2 } from '../ui/icons';
 import type { Ref } from 'react';
-import { Button as AriaButton } from 'react-aria-components';
+import { Button as AriaButton, Tooltip, TooltipTrigger } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '../ui/Controls';
 import { cx } from '../ui/cx';
 import { LogoMark } from '../ui/Logo';
+import tooltipStyles from '../ui/Tooltip.module.css';
 import { AppIcon } from './AppIcon';
 import styles from './Taskbar.module.css';
 import type { RunningApp, TaskbarPosition } from './types';
@@ -115,16 +116,23 @@ export function Taskbar({
         );
       }}
     >
-      <AriaButton
-        ref={startRef}
-        className={cx(styles.button, styles.start)}
-        aria-label={t('taskbar.start')}
-        aria-expanded={startOpen}
-        data-active={startOpen || undefined}
-        onPress={() => onStart?.()}
-      >
-        <LogoMark size={26} />
-      </AriaButton>
+      <TooltipTrigger delay={600} closeDelay={0}>
+        <AriaButton
+          ref={startRef}
+          className={cx(styles.button, styles.start)}
+          aria-label={t('taskbar.start')}
+          aria-expanded={startOpen}
+          data-active={startOpen || undefined}
+          onPress={() => onStart?.()}
+        >
+          <LogoMark size={26} motion="hover" />
+        </AriaButton>
+        <Tooltip className={cx(tooltipStyles.tooltip, styles.brandTooltip)} offset={6}>
+          <span role="img" aria-label={t('brand')}>
+            {t('brandMark')}
+          </span>
+        </Tooltip>
+      </TooltipTrigger>
 
       <ul className={styles.apps} aria-label={t('taskbar.runningApps')}>
         {apps.map((app) => (

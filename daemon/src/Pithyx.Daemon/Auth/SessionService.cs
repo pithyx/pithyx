@@ -1,0 +1,107 @@
+using System.Globalization;
+using Dapper;
+using Pithyx.Daemon.Database;
+
+namespace Pithyx.Daemon.Auth;
+
+/// <summary>
+/// Browser sessions. The cookie holds a random token; the database stores only its SHA-256. Sessions expire after
+/// seven days without use and thirty days after login at the latest.
+/// </summary>
+public sealed class SessionService(SqliteConnectionFactory connections, TimeProvider time)
+{
+    public const string CookieName = "pithyx_session";
+    public static readonly TimeSpan IdleLifetime = TimeSpan.FromDays(7);
+    public static readonly TimeSpan AbsoluteLifetime = TimeSpan.FromDays(30);
+    private static readonly TimeSpan _touchInterval = TimeSpan.FromMinutes(1);
+
+    public sealed record Session(string Token, DateTimeOffset AbsoluteExpiresAt);
+
+    public async Task<Session> CreateAsync(long userId, string? userAgent, CancellationToken cancellationToken)
+    {
+        var token = Secrets.NewToken();
+        var now = time.GetUtcNow();
+        var absolute = now + AbsoluteLifetime;
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        await connection.ExecuteAsync(
+            """
+            INSERT INTO sessions (id, user_id, created_at, last_seen_at, expires_at, absolute_expires_at, user_agent)
+            VALUES (@Id, @UserId, @Now, @Now, @ExpiresAt, @AbsoluteExpiresAt, @UserAgent)
+            """,
+            new
+            {
+                Id = Secrets.Sha256(token),
+                UserId = userId,
+                Now = Format(now),
+                ExpiresAt = Format(now + IdleLifetime),
+                AbsoluteExpiresAt = Format(absolute),
+                UserAgent = userAgent is { Length: > 256 } ? userAgent[..256] : userAgent,
+            });
+        return new Session(token, absolute);
+    }
+
+    /// <summary>Returns the user id of a valid session and extends its idle expiry.</summary>
+    public async Task<long?> ValidateAsync(string token, CancellationToken cancellationToken) =>
+        (await ValidateByIdAsync(Secrets.Sha256(token), cancellationToken))?.UserId;
+
+    /// <summary>
+    /// Keeps the session of an open WebSocket alive: an open desktop counts as use. Returns when the session ends at the
+    /// latest, or null if it already ended.
+    /// </summary>
+    public async Task<DateTimeOffset?> TouchAsync(string sessionId, CancellationToken cancellationToken) =>
+        (await ValidateByIdAsync(Convert.FromHexString(sessionId), cancellationToken))?.AbsoluteExpiresAt;
+
+    private async Task<(long UserId, DateTimeOffset AbsoluteExpiresAt)?> ValidateByIdAsync(byte[] id, CancellationToken cancellationToken)
+    {
+        var now = time.GetUtcNow();
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        var row = await connection.QuerySingleOrDefaultAsync<SessionRow>(
+            "SELECT user_id AS UserId, last_seen_at AS LastSeenAt, expires_at AS ExpiresAt, absolute_expires_at AS AbsoluteExpiresAt FROM sessions WHERE id = @id",
+            new { id });
+        if (row is null)
+        {
+            return null;
+        }
+        var absolute = Parse(row.AbsoluteExpiresAt);
+        if (Parse(row.ExpiresAt) <= now || absolute <= now)
+        {
+            await connection.ExecuteAsync("DELETE FROM sessions WHERE id = @id", new { id });
+            return null;
+        }
+        if (now - Parse(row.LastSeenAt) >= _touchInterval)
+        {
+            var expiresAt = Min(now + IdleLifetime, absolute);
+            await connection.ExecuteAsync(
+                "UPDATE sessions SET last_seen_at = @Now, expires_at = @ExpiresAt WHERE id = @Id",
+                new { Id = id, Now = Format(now), ExpiresAt = Format(expiresAt) });
+        }
+        return (row.UserId, absolute);
+    }
+
+    public async Task DeleteAsync(string token, CancellationToken cancellationToken)
+    {
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        await connection.ExecuteAsync("DELETE FROM sessions WHERE id = @Id", new { Id = Secrets.Sha256(token) });
+    }
+
+    public static CookieOptions CookieOptions(bool secure, DateTimeOffset? expires) => new()
+    {
+        HttpOnly = true,
+        Secure = secure,
+        SameSite = SameSiteMode.Strict,
+        Path = "/",
+        Expires = expires,
+        IsEssential = true,
+    };
+
+    /// <summary>The public id of a session: hex SHA-256 of its token.</summary>
+    public static string IdOf(string token) => Convert.ToHexString(Secrets.Sha256(token));
+
+    internal static string Format(DateTimeOffset value) => value.UtcDateTime.ToString("O", CultureInfo.InvariantCulture);
+
+    internal static DateTimeOffset Parse(string value) => DateTimeOffset.Parse(value, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind);
+
+    private static DateTimeOffset Min(DateTimeOffset a, DateTimeOffset b) => a < b ? a : b;
+
+    private sealed record SessionRow(long UserId, string LastSeenAt, string ExpiresAt, string AbsoluteExpiresAt);
+}

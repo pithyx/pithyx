@@ -1,6 +1,6 @@
-import { unwrap, VyxisApiError, type components } from '@vyxis/api-client';
-import type { Events, FileEntry, FileLocation, JobInfo, Problem, TrashPage } from '@vyxis/sdk';
-import { VyxisError, type MethodHandlers } from '@vyxis/sdk/host';
+import { unwrap, PithyxApiError, type components } from '@pithyx/api-client';
+import type { Events, FileEntry, FileLocation, JobInfo, Problem, TrashPage } from '@pithyx/sdk';
+import { PithyxError, type MethodHandlers } from '@pithyx/sdk/host';
 import { api } from '../../api/client';
 import { showError } from '../../errors/errorStore';
 import { realtime } from '../../realtime/connection';
@@ -20,25 +20,25 @@ export interface FileBrokerTarget {
 const FINISHED: readonly JobInfo['state'][] = ['succeeded', 'failed', 'cancelled', 'interrupted'];
 
 /** Turns a failed daemon call into the problem the app sees, unchanged. */
-function toVyxisError(error: unknown): VyxisError {
-  if (error instanceof VyxisApiError) {
-    return new VyxisError({
+function toPithyxError(error: unknown): PithyxError {
+  if (error instanceof PithyxApiError) {
+    return new PithyxError({
       code: error.code,
       params: error.params,
       detail: error.message,
       requestId: error.requestId,
     });
   }
-  return error instanceof VyxisError
+  return error instanceof PithyxError
     ? error
-    : new VyxisError({ code: 'system.internal.unexpected', params: {} });
+    : new PithyxError({ code: 'system.internal.unexpected', params: {} });
 }
 
 async function daemon<T>(call: () => Promise<T>): Promise<T> {
   try {
     return await call();
   } catch (error) {
-    throw toVyxisError(error);
+    throw toPithyxError(error);
   }
 }
 
@@ -88,16 +88,16 @@ function toTrashPage(page: ApiTrashPage): TrashPage {
 function shareOf(location: FileLocation): number {
   const id = 'share' in location ? Number(location.share) : Number.NaN;
   if (!Number.isSafeInteger(id)) {
-    throw new VyxisError({ code: 'fs.share.not_found', params: {} });
+    throw new PithyxError({ code: 'fs.share.not_found', params: {} });
   }
   return id;
 }
 
-function problemOf(status: number, body: string): VyxisError {
+function problemOf(status: number, body: string): PithyxError {
   try {
     const problem = JSON.parse(body) as Partial<Problem>;
     if (typeof problem.code === 'string') {
-      return new VyxisError({
+      return new PithyxError({
         code: problem.code,
         params: problem.params ?? {},
         ...(problem.detail === undefined ? {} : { detail: problem.detail }),
@@ -107,7 +107,7 @@ function problemOf(status: number, body: string): VyxisError {
   } catch {
     // Not a problem document; fall through.
   }
-  return new VyxisError({ code: 'system.internal.unexpected', params: { status } });
+  return new PithyxError({ code: 'system.internal.unexpected', params: { status } });
 }
 
 /** Streams a file to the daemon with progress; fetch cannot report upload progress. */
@@ -115,7 +115,7 @@ function put(url: string, data: Blob, onProgress: (loaded: number) => void): Pro
   return new Promise((resolve, reject) => {
     const request = new XMLHttpRequest();
     request.open('PUT', url);
-    request.setRequestHeader('X-Vyxis-Request', '1');
+    request.setRequestHeader('X-Pithyx-Request', '1');
     request.setRequestHeader('Content-Type', 'application/octet-stream');
     request.upload.onprogress = (event) => {
       onProgress(event.loaded);
@@ -128,7 +128,7 @@ function put(url: string, data: Blob, onProgress: (loaded: number) => void): Pro
       }
     };
     request.onerror = () => {
-      reject(new VyxisError({ code: 'fs.upload.incomplete', params: {} }));
+      reject(new PithyxError({ code: 'fs.upload.incomplete', params: {} }));
     };
     request.send(data);
   });
@@ -166,7 +166,7 @@ export function fileBrokerFor(target: FileBrokerTarget): {
 
   const require = (permission: string) => {
     if (!target.permissions.includes(permission)) {
-      throw new VyxisError({ code: 'app.permission.denied', params: { permission } });
+      throw new PithyxError({ code: 'app.permission.denied', params: { permission } });
     }
   };
 
@@ -374,7 +374,7 @@ export function fileBrokerFor(target: FileBrokerTarget): {
     },
     'ui.showError': ({ problem }) => {
       showError(
-        new VyxisApiError(0, {
+        new PithyxApiError(0, {
           type: 'about:blank',
           title: problem.code,
           status: 0,

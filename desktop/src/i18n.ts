@@ -53,7 +53,7 @@ export type Language = keyof typeof resources;
 export const languages = Object.keys(resources) as Language[];
 
 // A per-device convenience; it moves to the user profile once profiles exist.
-const STORAGE_KEY = 'vyxis.language';
+const STORAGE_KEY = 'pithyx.language';
 
 declare module 'i18next' {
   interface CustomTypeOptions {

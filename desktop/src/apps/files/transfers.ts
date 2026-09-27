@@ -1,4 +1,4 @@
-import type { FileOperation, JobInfo } from '@vyxis/sdk';
+import type { FileOperation, JobInfo } from '@pithyx/sdk';
 import { create } from 'zustand';
 
 export interface Upload {

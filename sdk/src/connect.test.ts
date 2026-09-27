@@ -62,14 +62,14 @@ describe('connect', () => {
     const { parent, post, listeners } = fakeWindow();
     const connecting = connect({ themeRoot: null, connectTimeout: 1000 });
     const stranger = {};
-    post(stranger, { type: 'vyxis:connect' }, [desktopPort('evil')]);
+    post(stranger, { type: 'pithyx:connect' }, [desktopPort('evil')]);
     post(parent, { type: 'something-else' }, [desktopPort('evil')]);
-    post(parent, { type: 'vyxis:connect' }, []);
-    post(parent, { type: 'vyxis:connect' }, [desktopPort('evil'), desktopPort('evil')]);
-    post(parent, { type: 'vyxis:connect' }, [desktopPort('real')]);
+    post(parent, { type: 'pithyx:connect' }, []);
+    post(parent, { type: 'pithyx:connect' }, [desktopPort('evil'), desktopPort('evil')]);
+    post(parent, { type: 'pithyx:connect' }, [desktopPort('real')]);
     // After the first valid connect the app no longer listens, so a later port cannot take it over.
     expect(listeners.size).toBe(0);
-    post(parent, { type: 'vyxis:connect' }, [desktopPort('evil')]);
+    post(parent, { type: 'pithyx:connect' }, [desktopPort('evil')]);
     const app = await connecting;
     expect(app.context.app.id).toBe('real');
   });
@@ -86,7 +86,7 @@ describe('connect', () => {
     const self = window as unknown as { parent: unknown };
     self.parent = self;
     const connecting = connect({ themeRoot: null, connectTimeout: 20 });
-    post(self, { type: 'vyxis:connect' }, [desktopPort('evil')]);
+    post(self, { type: 'pithyx:connect' }, [desktopPort('evil')]);
     await expect(connecting).rejects.toMatchObject({ code: 'sdk.transport.closed' });
   });
 });

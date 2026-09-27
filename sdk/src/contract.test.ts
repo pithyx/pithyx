@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createApp } from './app';
-import { VyxisError } from './errors';
+import { PithyxError } from './errors';
 import { serveApp, type MethodHandlers } from './host';
 import type { FileEntry, JobInfo } from './files';
 import type { AppContext } from './protocol';
@@ -87,7 +87,7 @@ describe.each(transports)('over the %s transport', (_, pair) => {
   it('passes daemon problems through unchanged', async () => {
     const { app } = connectTo({
       'storage.set': () => {
-        throw new VyxisError({
+        throw new PithyxError({
           code: 'desktop.item.conflict',
           params: { id: 7, version: 3 },
           detail: 'Changed elsewhere',
@@ -97,7 +97,7 @@ describe.each(transports)('over the %s transport', (_, pair) => {
     });
     const connected = await app;
     const error = await connected.storage.set('k', 1).catch((caught: unknown) => caught);
-    expect(error).toBeInstanceOf(VyxisError);
+    expect(error).toBeInstanceOf(PithyxError);
     expect(error).toMatchObject({
       code: 'desktop.item.conflict',
       params: { id: 7, version: 3 },
@@ -199,7 +199,9 @@ describe.each(transports)('over the %s transport', (_, pair) => {
       },
     });
     const connected = await app;
-    const error = (await connected.window.close().catch((caught: unknown) => caught)) as VyxisError;
+    const error = (await connected.window
+      .close()
+      .catch((caught: unknown) => caught)) as PithyxError;
     expect(error.code).toBe('system.internal.unexpected');
     expect(error.message).not.toContain('secret');
   });

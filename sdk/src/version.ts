@@ -1,5 +1,5 @@
 /**
- * The version of this SDK package. It follows SemVer for the whole Vyxis monorepo: a new method, event or optional
+ * The version of this SDK package. It follows SemVer for the whole Pithyx monorepo: a new method, event or optional
  * field is a minor release, a removed or changed one a major release.
  *
  * Deprecations last one major version: anything marked `@deprecated` in major N keeps working through all of major

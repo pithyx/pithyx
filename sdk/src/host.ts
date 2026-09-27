@@ -1,9 +1,9 @@
 /**
- * The desktop's side of the protocol (`@vyxis/sdk/host`). The desktop serves every app window with one connection;
+ * The desktop's side of the protocol (`@pithyx/sdk/host`). The desktop serves every app window with one connection;
  * the connection is the app's identity, so a handler always knows which app and window called, whatever the message
  * claims. Apps do not use this module.
  */
-import { sdkError, toProblem, VyxisError } from './errors';
+import { sdkError, toProblem, PithyxError } from './errors';
 import {
   isAppMessage,
   type AppContext,
@@ -329,4 +329,4 @@ export function serveApp(endpoint: Endpoint, options: ServeOptions): AppConnecti
   return connection;
 }
 
-export { sdkError, VyxisError };
+export { sdkError, PithyxError };

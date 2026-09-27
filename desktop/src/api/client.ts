@@ -1,3 +1,3 @@
-import { createApiClient } from '@vyxis/api-client';
+import { createApiClient } from '@pithyx/api-client';
 
 export const api = createApiClient();

@@ -1,4 +1,4 @@
-import type { components } from '@vyxis/api-client';
+import type { components } from '@pithyx/api-client';
 import { describe, expect, it } from 'vitest';
 import { applyEvent, patternOf, reconnectDelay } from './reducers';
 

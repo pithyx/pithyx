@@ -16,14 +16,14 @@ test.beforeEach(async ({ page }) => {
 
 test('opens, focuses, minimizes and closes windows', async ({ page }) => {
   const disks = appWindow(page, 'Disks');
-  const about = appWindow(page, 'About Vyxis');
+  const about = appWindow(page, 'About Pithyx');
 
   await test.step('open two apps from the desktop', async () => {
     await openFromDesktop(page, 'Disks');
-    await openFromDesktop(page, 'About Vyxis');
+    await openFromDesktop(page, 'About Pithyx');
     await expect(disks).toBeVisible();
     await expect(about).toBeVisible();
-    await expect(taskbarEntry(page, /^About Vyxis, active$/)).toBeVisible();
+    await expect(taskbarEntry(page, /^About Pithyx, active$/)).toBeVisible();
     await expect(taskbarEntry(page, /^Disks$/)).toBeVisible();
     expect(await zIndex(about)).toBeGreaterThan(await zIndex(disks));
   });
@@ -38,18 +38,18 @@ test('opens, focuses, minimizes and closes windows', async ({ page }) => {
     await page.getByRole('button', { name: 'Start' }).click();
     await page
       .getByRole('dialog', { name: 'Start menu' })
-      .getByRole('row', { name: 'About Vyxis' })
+      .getByRole('row', { name: 'About Pithyx' })
       .click();
-    await expect(page.getByRole('region', { name: 'About Vyxis' })).toHaveCount(1);
+    await expect(page.getByRole('region', { name: 'About Pithyx' })).toHaveCount(1);
     expect(await zIndex(about)).toBeGreaterThan(await zIndex(disks));
   });
 
   await test.step('the taskbar minimizes the active window and restores it', async () => {
-    await taskbarEntry(page, /^About Vyxis, active$/).click();
+    await taskbarEntry(page, /^About Pithyx, active$/).click();
     await expect(about).toBeHidden();
-    await expect(taskbarEntry(page, /^About Vyxis, minimized$/)).toBeVisible();
+    await expect(taskbarEntry(page, /^About Pithyx, minimized$/)).toBeVisible();
     await expect(taskbarEntry(page, /^Disks, active$/)).toBeVisible();
-    await taskbarEntry(page, /^About Vyxis, minimized$/).click();
+    await taskbarEntry(page, /^About Pithyx, minimized$/).click();
     await expect(about).toBeVisible();
     await expect(about).toBeFocused();
   });
@@ -66,7 +66,7 @@ test('opens, focuses, minimizes and closes windows', async ({ page }) => {
   await test.step('close', async () => {
     await about.getByRole('button', { name: 'Close' }).click();
     await expect(about).toHaveCount(0);
-    await expect(taskbarEntry(page, /About Vyxis/)).toHaveCount(0);
+    await expect(taskbarEntry(page, /About Pithyx/)).toHaveCount(0);
     await expect(taskbarEntry(page, /^Disks, active$/)).toBeVisible();
   });
 });
@@ -83,10 +83,10 @@ test('the start menu searches and opens apps', async ({ page }) => {
 
   await start.click();
   await page.keyboard.type('abo');
-  await expect(menu.getByRole('option', { name: /About Vyxis/ })).toBeVisible();
+  await expect(menu.getByRole('option', { name: /About Pithyx/ })).toBeVisible();
   await page.keyboard.press('Enter');
   await expect(menu).toBeHidden();
-  await expect(appWindow(page, 'About Vyxis')).toBeVisible();
+  await expect(appWindow(page, 'About Pithyx')).toBeVisible();
 
   await start.click();
   await menu.getByRole('row', { name: 'Disks' }).click();
@@ -128,9 +128,9 @@ function center(rect: Box) {
 }
 
 test('drag, resize and snap with the mouse', async ({ page }) => {
-  await openFromDesktop(page, 'About Vyxis');
-  const about = appWindow(page, 'About Vyxis');
-  const title = about.getByRole('heading', { name: 'About Vyxis', exact: true });
+  await openFromDesktop(page, 'About Pithyx');
+  const about = appWindow(page, 'About Pithyx');
+  const title = about.getByRole('heading', { name: 'About Pithyx', exact: true });
   const workspace = await box(page.getByRole('main', { name: 'Desktop' }));
 
   await test.step('drag by the title bar', async () => {
@@ -178,8 +178,8 @@ test('drag, resize and snap with the mouse', async ({ page }) => {
 });
 
 test('keyboard shortcuts and the window menu', async ({ page }) => {
-  await openFromDesktop(page, 'About Vyxis');
-  const about = appWindow(page, 'About Vyxis');
+  await openFromDesktop(page, 'About Pithyx');
+  const about = appWindow(page, 'About Pithyx');
   await expect(about).toBeFocused();
   const workspace = await box(page.getByRole('main', { name: 'Desktop' }));
   const free = await box(about);
@@ -197,7 +197,7 @@ test('keyboard shortcuts and the window menu', async ({ page }) => {
   await page.keyboard.press('Alt+Shift+PageDown');
   await expect(about).toBeVisible();
 
-  await about.getByRole('button', { name: 'Window menu for About Vyxis' }).click();
+  await about.getByRole('button', { name: 'Window menu for About Pithyx' }).click();
   await page.getByRole('menuitem', { name: 'Move' }).click();
   const before = await box(about);
   await page.keyboard.press('ArrowRight');
@@ -214,7 +214,7 @@ test('keyboard shortcuts and the window menu', async ({ page }) => {
   await page.keyboard.press('Escape');
   await expect.poll(async () => (await box(about)).width).toBe(sized.width);
 
-  await about.getByRole('button', { name: 'Window menu for About Vyxis' }).click();
+  await about.getByRole('button', { name: 'Window menu for About Pithyx' }).click();
   await page.getByRole('menuitem', { name: 'Close' }).click();
   await expect(about).toHaveCount(0);
 });

@@ -1,10 +1,10 @@
 import { useEffect } from 'react';
 import { dispatch, useDesktop } from './store';
 
-const APP_STATE = 'vyxis-app';
+const APP_STATE = 'pithyx-app';
 
 function inAppEntry(): boolean {
-  return (history.state as { vyxis?: string } | null)?.vyxis === APP_STATE;
+  return (history.state as { pithyx?: string } | null)?.pithyx === APP_STATE;
 }
 
 // Whether an app is full screen right now, and whether the desktop is waiting for its own history.back().
@@ -18,7 +18,7 @@ function sync() {
     return;
   }
   if (wanted && !inAppEntry()) {
-    history.pushState({ vyxis: APP_STATE }, '');
+    history.pushState({ pithyx: APP_STATE }, '');
   } else if (!wanted && inAppEntry()) {
     consuming = true;
     history.back();

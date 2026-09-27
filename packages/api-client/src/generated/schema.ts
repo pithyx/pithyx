@@ -541,7 +541,7 @@ export type paths = {
         get?: never;
         put?: never;
         post?: never;
-        /** @description Administrators only. Removes the share from Vyxis; its files stay on the host. */
+        /** @description Administrators only. Removes the share from Pithyx; its files stay on the host. */
         delete: operations["DeleteShare"];
         options?: never;
         head?: never;

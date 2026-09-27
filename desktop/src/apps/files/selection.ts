@@ -1,4 +1,4 @@
-import type { FileItems } from '@vyxis/sdk';
+import type { FileItems } from '@pithyx/sdk';
 
 /**
  * The selection in a folder. `some` names the selected entries; `all` means every entry of the folder except some,

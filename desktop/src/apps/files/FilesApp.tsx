@@ -9,8 +9,8 @@ import {
   type ShareInfo,
   type SortKey,
   type SortOrder,
-  type VyxisApp,
-} from '@vyxis/sdk';
+  type PithyxApp,
+} from '@pithyx/sdk';
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, IconButton } from '../../ui/Button';
@@ -94,7 +94,7 @@ function isEmpty(items: FileItems): boolean {
  * The file manager. A core app on the SDK like any other: it reaches shares, folders, jobs and the recycle bin only
  * through `app.files`, `app.jobs` and `app.trash`.
  */
-export function FilesApp({ app }: { app: VyxisApp }) {
+export function FilesApp({ app }: { app: PithyxApp }) {
   const { t } = useTranslation('files');
   const client = useQueryClient();
   const [place, setPlace] = useState<Place>(() => restorePlace(app.context.session));
@@ -715,7 +715,7 @@ export function FilesApp({ app }: { app: VyxisApp }) {
               onShown={() => {
                 const started = navigation.current;
                 if (started !== null) {
-                  performance.measure('vyxis:files:shown', {
+                  performance.measure('pithyx:files:shown', {
                     start: started.start,
                     detail: { cached: started.cached },
                   });

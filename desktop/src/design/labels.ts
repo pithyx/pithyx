@@ -1,6 +1,6 @@
 // Labels of the developer-only design gallery. They never ship, so they are not translated.
 export const labels = {
-  title: 'Vyxis design review',
+  title: 'Pithyx design review',
   intro:
     'Step 4 mockups. Every frame is a live page with its own viewport, so the layout reacts exactly as on the device.',
   openFull: 'Open full size',
@@ -57,5 +57,27 @@ export const labels = {
     menu: 'Open menu',
     menuItems: ['Rename', 'Duplicate', 'Delete'],
     tooltip: 'Hover or focus the icon button for a tooltip',
+  },
+  logo: {
+    title: 'Logo',
+    hint: 'Motion uses only transform and opacity. Reduced motion stops every animation; marks under 32 px never glow.',
+    motions: {
+      static: 'Static',
+      closed: 'Closed',
+      hover: 'Hover',
+      welcome: 'Welcome',
+      loop: 'Loop',
+      loading: 'Loading',
+    },
+    uses: {
+      static: 'Favicon, README, small sizes',
+      closed: 'Sign-in card',
+      hover: 'Start button: opens on hover, focus and while the menu is open',
+      welcome: 'Welcome card and About: opens once',
+      loop: 'Setup, later the installer',
+      loading: 'Unreachable screen while retrying',
+    },
+    sizes: 'Sizes (loop)',
+    wordmark: 'Word mark',
   },
 } as const;

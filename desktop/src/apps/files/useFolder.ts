@@ -5,8 +5,8 @@ import type {
   FolderPage,
   SortKey,
   SortOrder,
-  VyxisApp,
-} from '@vyxis/sdk';
+  PithyxApp,
+} from '@pithyx/sdk';
 import { useEffect, useEffectEvent } from 'react';
 import { applyChange, loadedEntries, type FolderPages } from './pages';
 
@@ -69,7 +69,7 @@ export function keepOnly(
  * further pages as the view scrolls, and live changes while it is on screen.
  */
 export function useFolder(
-  app: VyxisApp,
+  app: PithyxApp,
   share: string | null,
   path: string,
   sort: SortKey,

@@ -1,5 +1,5 @@
 import { useQuery, type QueryClient } from '@tanstack/react-query';
-import { unwrap, VyxisApiError, type components } from '@vyxis/api-client';
+import { unwrap, PithyxApiError, type components } from '@pithyx/api-client';
 import { api } from '../api/client';
 import { isSessionExpired } from '../errors/describe';
 import { showError } from '../errors/errorStore';
@@ -63,7 +63,7 @@ function reportFailure(client: QueryClient, error: unknown): void {
 }
 
 function codeOf(error: unknown): string | undefined {
-  return error instanceof VyxisApiError ? error.code : undefined;
+  return error instanceof PithyxApiError ? error.code : undefined;
 }
 
 /** Puts a new item on the desktop right away and saves it. Returns its (temporary) id. */

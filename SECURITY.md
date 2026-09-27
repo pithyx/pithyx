@@ -8,4 +8,4 @@ Report vulnerabilities privately through [GitHub security advisories](https://gi
 
 ## Supported versions
 
-Vyxis is pre-alpha and has no released versions yet. There are no supported versions until the first release.
+Pithyx is pre-alpha and has no released versions yet. There are no supported versions until the first release.
