@@ -4,17 +4,15 @@
          "device": "sda",
          "offset": "0x200",
          "type": "gpt",
-         "uuid": "00000000-0000-0000-0000-000000000000",
+         "uuid": null,
          "label": null
-      },
-      {
+      },{
          "device": "sda",
-         "offset": "0x27ffffe00",
+         "offset": "0xffffffe00",
          "type": "gpt",
-         "uuid": "00000000-0000-0000-0000-000000000000",
+         "uuid": null,
          "label": null
-      },
-      {
+      },{
          "device": "sda",
          "offset": "0x1fe",
          "type": "PMBR",

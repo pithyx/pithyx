@@ -24,10 +24,21 @@ export type MethodHandlers = {
   ) => Methods[M]['result'] | Promise<Methods[M]['result']>;
 };
 
+/**
+ * Methods outside the public protocol that a host serves to its own apps, each with its own parameter check. They are
+ * not versioned, not listed in `capabilities`, and a host never gives them to a third-party app.
+ */
+export type HostExtensions = Record<
+  string,
+  { validate(params: unknown): boolean; handle(params: unknown): unknown }
+>;
+
 export interface ServeOptions {
   /** The init context; `capabilities` is filled in from the handlers. */
   context: Omit<AppContext, 'capabilities'>;
   methods: MethodHandlers;
+  /** Host-only methods for the host's own apps; see {@link HostExtensions}. */
+  extensions?: HostExtensions;
   /** Called when the app completed the handshake. */
   onReady?: (hello: { protocol: number; sdk: string }) => void;
 }
@@ -227,6 +238,20 @@ export function serveApp(endpoint: Endpoint, options: ServeOptions): AppConnecti
 
   async function answer(id: number, method: string, params: unknown) {
     try {
+      const extension =
+        options.extensions !== undefined && Object.hasOwn(options.extensions, method)
+          ? options.extensions[method]
+          : undefined;
+      if (!isMethod(method) && extension !== undefined) {
+        if (!extension.validate(params)) {
+          throw sdkError('sdk.request.invalid', { method });
+        }
+        const result = await extension.handle(params);
+        if (!closed) {
+          endpoint.post({ type: 'response', id, ok: true, result });
+        }
+        return;
+      }
       if (!isMethod(method)) {
         throw sdkError('sdk.method.unknown', { method });
       }

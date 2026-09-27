@@ -24,7 +24,7 @@ import { api } from '../api/client';
 import { queryKeys } from '../api/queries';
 import { runBeforeLogout } from '../apps/lifecycle';
 import { useAppName } from '../apps/names';
-import { coreApps, findApp } from '../apps/registry';
+import { appsFor, findApp } from '../apps/registry';
 import { initialsOf } from '../auth/parts';
 import { clearSessionHint } from '../auth/sessionHint';
 import { LanguageOptions } from './LanguageOptions';
@@ -422,7 +422,7 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
     openApp(id);
   }
 
-  const apps = coreApps.map((app) => ({
+  const apps = appsFor(user.isAdmin).map((app) => ({
     id: app.id,
     name: appName(app.id),
     icon: app.icon,

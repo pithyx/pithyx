@@ -1,4 +1,11 @@
-import { IconApps, IconDatabase, IconFolders, IconInfoCircle, type TablerIcon } from '../ui/icons';
+import {
+  IconApps,
+  IconDatabase,
+  IconFolders,
+  IconInfoCircle,
+  IconSettings,
+  type TablerIcon,
+} from '../ui/icons';
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react';
 import type { AppTone } from '../shell/types';
 import type { WindowOptions } from '../wm/types';
@@ -16,6 +23,8 @@ export interface CoreApp {
   window: WindowOptions;
   /** Loaded when the first window of the app opens, never at sign-in. */
   Component: LazyExoticComponent<ComponentType<AppProps>>;
+  /** Listed only for administrators; the daemon refuses everyone else anyway. */
+  adminOnly?: true;
 }
 
 /**
@@ -58,6 +67,22 @@ export const coreApps: readonly CoreApp[] = [
     ),
   },
   {
+    id: 'settings',
+    icon: IconSettings,
+    tone: 'graphite',
+    adminOnly: true,
+    window: {
+      instances: 'single',
+      defaultSize: { width: 960, height: 640 },
+      minSize: { width: 340, height: 360 },
+    },
+    Component: lazy(() =>
+      Promise.all([import('./settings/SettingsWindow'), loadTranslations('settings')]).then(
+        ([{ SettingsWindow }]) => ({ default: SettingsWindow }),
+      ),
+    ),
+  },
+  {
     id: 'about',
     icon: IconInfoCircle,
     tone: 'graphite',
@@ -94,6 +119,11 @@ export const coreApps: readonly CoreApp[] = [
     ),
   },
 ];
+
+/** The apps a user sees in the start menu and can put on the desktop. */
+export function appsFor(isAdmin: boolean): readonly CoreApp[] {
+  return coreApps.filter((app) => app.adminOnly !== true || isAdmin);
+}
 
 export function findApp(id: string): CoreApp | undefined {
   return coreApps.find((app) => app.id === id);

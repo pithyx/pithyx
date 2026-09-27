@@ -28,6 +28,9 @@ public sealed class DesktopItemService(SqliteConnectionFactory connections, Time
     /// <summary>The shortcuts every new user starts with, one below the other in the first column.</summary>
     public static readonly IReadOnlyList<string> DefaultShortcuts = ["files", "disks", "about"];
 
+    /// <summary>New administrators also get Settings, which only administrators can open.</summary>
+    public static readonly IReadOnlyList<string> DefaultAdminShortcuts = ["files", "disks", "settings", "about"];
+
     private const string SelectColumns =
         """
         SELECT id AS Id, kind AS Kind, json_extract(data, '$.app') AS App, json_extract(data, '$.name') AS Name,
@@ -150,17 +153,18 @@ public sealed class DesktopItemService(SqliteConnectionFactory connections, Time
     }
 
     /// <summary>Puts the default shortcuts on the desktop of a new user, inside the transaction that creates the user.</summary>
-    public static async Task SeedDefaultsAsync(DbConnection connection, DbTransaction transaction, long userId, string now)
+    public static async Task SeedDefaultsAsync(DbConnection connection, DbTransaction transaction, long userId, bool isAdmin, string now)
     {
         ArgumentNullException.ThrowIfNull(connection);
-        for (var row = 0; row < DefaultShortcuts.Count; row++)
+        var shortcuts = isAdmin ? DefaultAdminShortcuts : DefaultShortcuts;
+        for (var row = 0; row < shortcuts.Count; row++)
         {
             await connection.ExecuteAsync(
                 """
                 INSERT INTO desktop_items (user_id, kind, data, grid_column, grid_row, created_at, updated_at)
                 VALUES (@userId, 'shortcut', @data, 0, @row, @now, @now)
                 """,
-                new { userId, data = ShortcutData(DefaultShortcuts[row], null), row, now },
+                new { userId, data = ShortcutData(shortcuts[row], null), row, now },
                 transaction);
         }
     }

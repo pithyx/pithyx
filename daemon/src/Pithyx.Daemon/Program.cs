@@ -68,8 +68,8 @@ if (!BuildTimeDocument.IsGenerating)
 builder.Services.AddPithyxOpenApi();
 builder.Services.AddDesktopHosting();
 
-// PITHYX_ETC_DIR exists for tests and simulation only; a real daemon always reads /etc/pithyx.
-var etcDirectory = builder.Configuration["PITHYX_ETC_DIR"];
+// A real daemon always reads /etc/pithyx: nothing but that file may widen the set of disks the guard allows.
+var etcDirectory = DeploymentEnvironment.DefaultDirectory;
 if (mode == DaemonMode.Simulated)
 {
     var fixtures = builder.Configuration["PITHYX_FIXTURES"]
@@ -77,14 +77,14 @@ if (mode == DaemonMode.Simulated)
     var scenario = builder.Configuration["PITHYX_SIMULATE_SCENARIO"] ?? "default";
     builder.Services.AddSingleton<ICommandRunner>(FixtureCommandRunner.Load(Path.Combine(fixtures, "commands", scenario)));
     builder.Services.AddSingleton(new SystemFiles(Path.Combine(fixtures, "proc", "mountinfo"), Path.Combine(fixtures, "proc", "swaps")));
-    etcDirectory ??= Path.Combine(fixtures, "etc");
+    etcDirectory = builder.Configuration["PITHYX_ETC_DIR"] ?? Path.Combine(fixtures, "etc");
 }
 else
 {
     builder.Services.AddSingleton<ICommandRunner, ProcessCommandRunner>();
     builder.Services.AddSingleton(SystemFiles.Host);
 }
-builder.Services.AddSingleton(DeploymentEnvironment.Load(etcDirectory ?? DeploymentEnvironment.DefaultDirectory));
+builder.Services.AddSingleton(DeploymentEnvironment.Load(etcDirectory));
 
 var app = builder.Build();
 
