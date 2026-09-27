@@ -35,6 +35,92 @@
         }
       }
     },
+    "/api/files/operations": {
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "description": "Starts copying, moving or deleting as a job and answers 202 with it; follow it on jobs/<id>. Access is checked now: read on the sources for copy, write on the sources for move and delete, write on the target. Deleting moves to the share's recycle bin unless permanent is true. onConflict decides about names that exist in the target: fail (default), skip, overwrite (folders are merged) or rename.",
+        "operationId": "StartFileOperation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FileOperationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/shares/{shareId}/trash": {
+      "put": {
+        "tags": [
+          "Shares"
+        ],
+        "description": "Administrators only. Days the recycle bin keeps deleted items (0 to 3650; 0 keeps them until emptied). Applies to items already in the bin.",
+        "operationId": "SetShareTrash",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrashSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/disks": {
       "get": {
         "tags": [
@@ -761,6 +847,817 @@
           }
         }
       }
+    },
+    "/api/jobs": {
+      "get": {
+        "tags": [
+          "Jobs"
+        ],
+        "description": "The signed-in user's 100 most recent jobs, newest first. Finished jobs are kept for 7 days. Live progress comes on the topic jobs/{id}.",
+        "operationId": "ListJobs",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Job"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/jobs/{id}": {
+      "get": {
+        "tags": [
+          "Jobs"
+        ],
+        "description": "A job of the signed-in user; administrators can read every job. Others get 404 jobs.job.not_found.",
+        "operationId": "GetJob",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/jobs/{id}/cancel": {
+      "post": {
+        "tags": [
+          "Jobs"
+        ],
+        "description": "Cancels a queued job right away and asks a running one to stop; it ends as cancelled once its work gives up. Cancelling a finished job changes nothing.",
+        "operationId": "CancelJob",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/shares": {
+      "get": {
+        "tags": [
+          "Shares"
+        ],
+        "description": "The shares the user can use, with the user's access. Administrators get every share and its path on the host.",
+        "operationId": "ListShares",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ShareInfo"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Shares"
+        ],
+        "description": "Administrators only. Registers an existing folder on the host as a share; nobody but administrators has access until it is granted.",
+        "operationId": "CreateShare",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewShare"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareInfo"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/shares/{shareId}": {
+      "delete": {
+        "tags": [
+          "Shares"
+        ],
+        "description": "Administrators only. Removes the share from Vyxis; its files stay on the host.",
+        "operationId": "DeleteShare",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/shares/{shareId}/access/{userId}": {
+      "put": {
+        "tags": [
+          "Shares"
+        ],
+        "description": "Administrators only. Sets a user's access to a share: none, read or readWrite. Applies to the user's next request.",
+        "operationId": "SetShareAccess",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShareAccessRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/files/{shareId}/list": {
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "description": "One page of a folder. Paths are relative to the share with / as separator; \".\" and \"..\" are refused. sort is name (natural order, ignoring case), size or modified, order asc or desc; pass nextCursor as cursor for the next page. Subscribe to topic for live changes of the folder.",
+        "operationId": "ListFolder",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FolderPage"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/files/{shareId}/entry": {
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "operationId": "GetFileEntry",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileEntry"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/files/{shareId}/content": {
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "description": "The file's content with range requests (206, 416), ETag and Last-Modified. Sent as an attachment unless inline=true; always with Content-Security-Policy: sandbox, so a file is never run as part of the desktop.",
+        "operationId": "DownloadFile",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "inline",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Files"
+        ],
+        "description": "Streams the request body into the file at path (the body is the raw content). The file appears only when the body is complete. Fails with fs.entry.exists if the name is taken, unless overwrite=true.",
+        "operationId": "UploadFile",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "overwrite",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileEntry"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/files/{shareId}/folders": {
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "operationId": "CreateFolder",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewFolderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileEntry"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/files/{shareId}/trash": {
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "description": "The share's recycle bin, newest first, with the share's retention. Deleting a file or folder moves it here unless the delete is permanent.",
+        "operationId": "ListTrash",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrashPage"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/files/{shareId}/trash/restore": {
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "description": "Starts a job that puts items back where they were, recreating missing folders. onConflict defaults to rename.",
+        "operationId": "RestoreTrash",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrashItemsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/files/{shareId}/trash/delete": {
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "description": "Starts a job that deletes the given recycle bin items for good.",
+        "operationId": "DeleteTrashItems",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrashItemsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/files/{shareId}/trash/empty": {
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "description": "Starts a job that deletes everything in the share's recycle bin for good.",
+        "operationId": "EmptyTrash",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/files/{shareId}/rename": {
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "description": "Renames a file or folder within its folder. An existing name is never replaced (fs.entry.exists).",
+        "operationId": "RenameFileEntry",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RenameRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileEntry"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -853,6 +1750,15 @@
           }
         },
         "description": "A message from the client: `sub` or `unsub` for a topic or pattern."
+      },
+      "ConflictPolicy": {
+        "enum": [
+          "fail",
+          "skip",
+          "overwrite",
+          "rename",
+          null
+        ]
       },
       "CopyLayoutRequest": {
         "required": [
@@ -1354,6 +2260,28 @@
           "desktop.layout.invalid",
           "desktop.layout.too_large",
           "desktop.note.too_long",
+          "fs.cursor.invalid",
+          "fs.entry.access_denied",
+          "fs.entry.exists",
+          "fs.entry.is_folder",
+          "fs.entry.not_folder",
+          "fs.entry.not_found",
+          "fs.folder.not_empty",
+          "fs.io.failed",
+          "fs.name.invalid",
+          "fs.operation.into_itself",
+          "fs.operation.invalid",
+          "fs.path.invalid",
+          "fs.range.not_satisfiable",
+          "fs.share.exists",
+          "fs.share.invalid",
+          "fs.share.not_found",
+          "fs.share.read_only",
+          "fs.trash.retention_invalid",
+          "fs.upload.incomplete",
+          "fs.volume.full",
+          "fs.volume.read_only",
+          "jobs.job.not_found",
           "realtime.message.invalid",
           "realtime.topic.invalid",
           "realtime.topic.unknown",
@@ -1424,6 +2352,239 @@
         },
         "description": "A change of a topic. `requestId` is the id of the action that caused it, if any."
       },
+      "FileEntry": {
+        "required": [
+          "name",
+          "kind",
+          "size",
+          "modified"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name within its folder."
+          },
+          "kind": {
+            "description": "File, folder, symlink (not followed in listings) or another kind such as a device node.",
+            "$ref": "#/components/schemas/FileKind"
+          },
+          "size": {
+            "type": "integer",
+            "description": "Bytes for files, 0 for folders.",
+            "format": "int64"
+          },
+          "modified": {
+            "type": "string",
+            "description": "Last change of the content, UTC.",
+            "format": "date-time"
+          }
+        },
+        "description": "A file or folder in a share."
+      },
+      "FileKind": {
+        "enum": [
+          "file",
+          "folder",
+          "symlink",
+          "other"
+        ]
+      },
+      "FileLocation": {
+        "required": [
+          "shareId",
+          "path"
+        ],
+        "type": "object",
+        "properties": {
+          "shareId": {
+            "type": "integer",
+            "description": "The share.",
+            "format": "int64"
+          },
+          "path": {
+            "type": "string",
+            "description": "Path relative to the share."
+          }
+        }
+      },
+      "FileOperationKind": {
+        "enum": [
+          "copy",
+          "move",
+          "delete"
+        ]
+      },
+      "FileOperationRequest": {
+        "required": [
+          "kind",
+          "items"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "description": "copy, move or delete.",
+            "$ref": "#/components/schemas/FileOperationKind"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FileLocation"
+            },
+            "description": "The files and folders to work on, at most 1000."
+          },
+          "target": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "The folder to copy or move into; not used for delete.",
+                "$ref": "#/components/schemas/FileLocation"
+              }
+            ]
+          },
+          "onConflict": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "For copy and move; fail when left out.",
+                "$ref": "#/components/schemas/ConflictPolicy"
+              }
+            ]
+          },
+          "permanent": {
+            "type": "boolean",
+            "description": "For delete: remove for good instead of moving to the share's recycle bin. Only when the user asked for it.",
+            "default": false
+          }
+        }
+      },
+      "FolderChanges": {
+        "required": [
+          "changed",
+          "removed",
+          "resync",
+          "gone"
+        ],
+        "type": "object",
+        "properties": {
+          "changed": {
+            "type": "array",
+            "items": {
+              "required": [
+                "name",
+                "kind",
+                "size",
+                "modified"
+              ],
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Name within its folder."
+                },
+                "kind": {
+                  "enum": [
+                    "file",
+                    "folder",
+                    "symlink",
+                    "other"
+                  ]
+                },
+                "size": {
+                  "type": "integer",
+                  "description": "Bytes for files, 0 for folders.",
+                  "format": "int64"
+                },
+                "modified": {
+                  "type": "string",
+                  "description": "Last change of the content, UTC.",
+                  "format": "date-time"
+                }
+              },
+              "description": "A file or folder in a share."
+            },
+            "description": "Entries that appeared or changed, with their current metadata."
+          },
+          "removed": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Names that are gone."
+          },
+          "resync": {
+            "type": "boolean",
+            "description": "True when changes were lost (the kernel queue overflowed); list the folder again."
+          },
+          "gone": {
+            "type": "boolean",
+            "description": "True when the folder itself was deleted or moved away."
+          }
+        },
+        "description": "What a folder topic sends: the names that changed since the last event, or a request to list again."
+      },
+      "FolderPage": {
+        "required": [
+          "path",
+          "folderId",
+          "total",
+          "entries",
+          "nextCursor",
+          "topic"
+        ],
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The folder, relative to the share (\"\" for its root)."
+          },
+          "folderId": {
+            "type": "string",
+            "description": "Stable id of the folder, also after a rename."
+          },
+          "total": {
+            "type": "integer",
+            "description": "Entries in the folder when the listing was made.",
+            "format": "int32"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FileEntry"
+            },
+            "description": "This page, in the requested order."
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Pass as `cursor` for the next page; null on the last page."
+          },
+          "topic": {
+            "type": "string",
+            "description": "WebSocket topic with live changes of this folder while it is subscribed."
+          }
+        },
+        "description": "One page of a folder listing."
+      },
+      "FolderWatchState": {
+        "required": [
+          "watching"
+        ],
+        "type": "object",
+        "properties": {
+          "watching": {
+            "type": "boolean",
+            "description": "Whether changes are being delivered."
+          }
+        },
+        "description": "The snapshot of a folder topic: the folder as the watch sees it."
+      },
       "HealthResponse": {
         "required": [
           "status",
@@ -1438,6 +2599,160 @@
             "$ref": "#/components/schemas/DaemonMode"
           }
         }
+      },
+      "Job": {
+        "required": [
+          "id",
+          "kind",
+          "state",
+          "progress",
+          "parameters",
+          "result",
+          "errorCode",
+          "errorParams",
+          "requestId",
+          "createdAt",
+          "startedAt",
+          "finishedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Also names the job's topic, `jobs/{id}`.",
+            "format": "int64"
+          },
+          "kind": {
+            "type": "string",
+            "description": "What the job does, chosen by the module that started it (for example `files.copy`)."
+          },
+          "state": {
+            "description": "Where the job is in its life.",
+            "$ref": "#/components/schemas/JobState"
+          },
+          "progress": {
+            "description": "Live in the topic; in REST answers of running jobs at most about a second old.",
+            "$ref": "#/components/schemas/JobProgress"
+          },
+          "parameters": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "What the job was started with, as given by the module that started it.",
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            ]
+          },
+          "result": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "What the job produced, if it set a result.",
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            ]
+          },
+          "errorCode": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ErrorCode"
+              }
+            ],
+            "description": "Error code of a failed job."
+          },
+          "errorParams": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": { },
+            "description": "Parameters of the error message of a failed job."
+          },
+          "requestId": {
+            "type": "string",
+            "description": "Request id of the request that started the job; the job's logs carry it."
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "When the job was queued (UTC).",
+            "format": "date-time"
+          },
+          "startedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When it started running (UTC).",
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When it reached a final state (UTC).",
+            "format": "date-time"
+          }
+        },
+        "description": "A long operation of a user, such as copying files. Also the data of the `jobs/{id}` topics."
+      },
+      "JobProgress": {
+        "required": [
+          "itemsDone",
+          "itemsTotal",
+          "bytesDone",
+          "bytesTotal",
+          "currentItem"
+        ],
+        "type": "object",
+        "properties": {
+          "itemsDone": {
+            "type": "integer",
+            "description": "Items (for example files) finished so far.",
+            "format": "int64"
+          },
+          "itemsTotal": {
+            "type": "integer",
+            "description": "Items in the whole job.",
+            "format": "int64"
+          },
+          "bytesDone": {
+            "type": "integer",
+            "description": "Bytes processed so far.",
+            "format": "int64"
+          },
+          "bytesTotal": {
+            "type": "integer",
+            "description": "Bytes in the whole job.",
+            "format": "int64"
+          },
+          "currentItem": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "What the job works on right now, for example a path."
+          }
+        },
+        "description": "How far a job is. Totals are 0 while unknown."
+      },
+      "JobState": {
+        "enum": [
+          "queued",
+          "running",
+          "succeeded",
+          "failed",
+          "cancelled",
+          "interrupted"
+        ],
+        "description": "Where a job is in its life. The last four are final and never change again."
       },
       "JsonElement": { },
       "LoginRequest": {
@@ -1532,6 +2847,35 @@
           }
         }
       },
+      "NewFolderRequest": {
+        "required": [
+          "path"
+        ],
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The new folder, relative to the share. Its parent must exist."
+          }
+        }
+      },
+      "NewShare": {
+        "required": [
+          "name",
+          "path"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Letters, digits, spaces, dots, dashes and underscores, 1 to 64 characters, not starting with a dot."
+          },
+          "path": {
+            "type": "string",
+            "description": "An existing folder on the host: absolute, without symlinks, outside the system directories and not overlapping another share."
+          }
+        }
+      },
       "Partition": {
         "required": [
           "name",
@@ -1622,6 +2966,23 @@
               "type": "string"
             },
             "description": "Shown exactly once. Each code replaces a TOTP code for one login."
+          }
+        }
+      },
+      "RenameRequest": {
+        "required": [
+          "path",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The file or folder to rename."
+          },
+          "name": {
+            "type": "string",
+            "description": "The new name in the same folder."
           }
         }
       },
@@ -1723,6 +3084,57 @@
           }
         }
       },
+      "ShareAccess": {
+        "enum": [
+          "none",
+          "read",
+          "readWrite"
+        ]
+      },
+      "ShareAccessRequest": {
+        "required": [
+          "access"
+        ],
+        "type": "object",
+        "properties": {
+          "access": {
+            "description": "`none` removes the user's access.",
+            "$ref": "#/components/schemas/ShareAccess"
+          }
+        }
+      },
+      "ShareInfo": {
+        "required": [
+          "id",
+          "name",
+          "access",
+          "path"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Stable id; file paths are relative to the share.",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name shown to users."
+          },
+          "access": {
+            "description": "The user's access: read or read and write.",
+            "$ref": "#/components/schemas/ShareAccess"
+          },
+          "path": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The share root on the host. Only administrators get it."
+          }
+        },
+        "description": "A share the user can use."
+      },
       "SnapshotMessage": {
         "required": [
           "id",
@@ -1802,11 +3214,19 @@
       },
       "TopicEvents": {
         "required": [
+          "files/+/+",
+          "jobs/+",
           "storage/disks",
           "system/info"
         ],
         "type": "object",
         "properties": {
+          "files/+/+": {
+            "$ref": "#/components/schemas/FolderChanges"
+          },
+          "jobs/+": {
+            "$ref": "#/components/schemas/Job"
+          },
           "storage/disks": {
             "$ref": "#/components/schemas/DisksChanged"
           },
@@ -1817,11 +3237,19 @@
       },
       "TopicSnapshots": {
         "required": [
+          "files/+/+",
+          "jobs/+",
           "storage/disks",
           "system/info"
         ],
         "type": "object",
         "properties": {
+          "files/+/+": {
+            "$ref": "#/components/schemas/FolderWatchState"
+          },
+          "jobs/+": {
+            "$ref": "#/components/schemas/Job"
+          },
           "storage/disks": {
             "$ref": "#/components/schemas/DiskList"
           },
@@ -1892,6 +3320,133 @@
               "string"
             ],
             "description": "One of the recovery codes shown when TOTP was enabled, instead of a code."
+          }
+        }
+      },
+      "TrashItem": {
+        "required": [
+          "id",
+          "name",
+          "originalPath",
+          "kind",
+          "size",
+          "deletedAt",
+          "deletedBy",
+          "expiresAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Id for restoring or deleting it.",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "description": "Its name when it was deleted."
+          },
+          "originalPath": {
+            "type": "string",
+            "description": "Where it was, relative to the share; restoring puts it back there."
+          },
+          "kind": {
+            "description": "File, folder, symlink or another kind.",
+            "$ref": "#/components/schemas/FileKind"
+          },
+          "size": {
+            "type": "integer",
+            "description": "Bytes, for a folder everything inside it.",
+            "format": "int64"
+          },
+          "deletedAt": {
+            "type": "string",
+            "description": "When it was deleted, UTC.",
+            "format": "date-time"
+          },
+          "deletedBy": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "User name of who deleted it, if that user still exists."
+          },
+          "expiresAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When it is deleted for good, or null when the share keeps deleted items until emptied.",
+            "format": "date-time"
+          }
+        },
+        "description": "One item in a share's recycle bin."
+      },
+      "TrashItemsRequest": {
+        "required": [
+          "ids"
+        ],
+        "type": "object",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Items of the share's recycle bin, at most 1000."
+          },
+          "onConflict": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "For restoring: what happens when the original place is taken; rename when left out.",
+                "$ref": "#/components/schemas/ConflictPolicy"
+              }
+            ]
+          }
+        }
+      },
+      "TrashPage": {
+        "required": [
+          "items",
+          "nextCursor",
+          "retentionDays"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TrashItem"
+            },
+            "description": "Newest first."
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Pass as cursor for the next page; null on the last page."
+          },
+          "retentionDays": {
+            "type": "integer",
+            "description": "Days the share keeps deleted items; 0 keeps them until the bin is emptied.",
+            "format": "int32"
+          }
+        }
+      },
+      "TrashSettingsRequest": {
+        "required": [
+          "retentionDays"
+        ],
+        "type": "object",
+        "properties": {
+          "retentionDays": {
+            "type": "integer",
+            "description": "0 to 3650; 0 keeps deleted items until the bin is emptied.",
+            "format": "int32"
           }
         }
       },
@@ -1993,6 +3548,12 @@
       "name": "System"
     },
     {
+      "name": "Files"
+    },
+    {
+      "name": "Shares"
+    },
+    {
       "name": "Storage"
     },
     {
@@ -2003,6 +3564,9 @@
     },
     {
       "name": "Desktop"
+    },
+    {
+      "name": "Jobs"
     }
   ]
 }

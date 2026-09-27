@@ -83,7 +83,11 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
         ArgumentNullException.ThrowIfNull(connection);
         _connections.TryRemove(connection.Id, out _);
         connection.Outbox.Writer.TryComplete();
+        SubscribersRemoved?.Invoke();
     }
+
+    /// <summary>Raised after a subscription or a connection ended, for publishers that stop work nobody watches.</summary>
+    public event Action? SubscribersRemoved;
 
     /// <summary>Closes every connection of a session, for example after logout.</summary>
     public void CloseSession(string sessionId)
@@ -168,6 +172,7 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
         ArgumentNullException.ThrowIfNull(connection);
         connection.RemovePattern(pattern);
         Send(connection, new AckMessage(id, Tracing.CurrentRequestId));
+        SubscribersRemoved?.Invoke();
     }
 
     public void Send(Connection connection, ServerMessage message)

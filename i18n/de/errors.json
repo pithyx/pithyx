@@ -61,6 +61,58 @@
       "too_long": "Die Notiz ist zu lang. Eine Notiz fasst höchstens {maxLength} Zeichen."
     }
   },
+  "fs": {
+    "cursor": {
+      "invalid": "Die Listenposition ist nicht mehr gültig. Lade den Ordner neu."
+    },
+    "entry": {
+      "access_denied": "Das System erlaubt keinen Zugriff auf dieses Element.",
+      "exists": "„{name}“ gibt es hier schon.",
+      "is_folder": "Das ist ein Ordner, keine Datei.",
+      "not_folder": "Das ist eine Datei, kein Ordner.",
+      "not_found": "Die Datei oder der Ordner wurde nicht gefunden. Vielleicht wurde sie verschoben oder gelöscht."
+    },
+    "folder": {
+      "not_empty": "Der Ordner ist nicht leer."
+    },
+    "io": {
+      "failed": "Das Dateisystem hat einen Fehler gemeldet (errno {errno})."
+    },
+    "name": {
+      "invalid": "Dieser Name geht nicht. Namen dürfen nicht leer sein, keinen Schrägstrich enthalten und höchstens 255 Bytes lang sein."
+    },
+    "operation": {
+      "into_itself": "Ein Ordner kann nicht in sich selbst kopiert oder verschoben werden.",
+      "invalid": "Dieser Dateivorgang ist nicht gültig."
+    },
+    "path": {
+      "invalid": "Dieser Pfad ist ungültig. Pfade gehen vom Share aus, ohne „.“ oder „..“, und sind höchstens {maxBytes} Bytes lang."
+    },
+    "range": {
+      "not_satisfiable": "Den angefragten Teil der Datei gibt es nicht."
+    },
+    "share": {
+      "exists": "Einen Share mit diesem Namen gibt es schon.",
+      "invalid": "Der Share konnte nicht angelegt werden. Er braucht einen Namen und einen vorhandenen Ordner außerhalb der Systemverzeichnisse.",
+      "not_found": "Der Share wurde nicht gefunden, oder du hast keinen Zugriff darauf.",
+      "read_only": "In diesem Share darfst du nur lesen."
+    },
+    "trash": {
+      "retention_invalid": "Der Papierkorb behält Elemente zwischen 0 und {max} Tagen (0 behält sie, bis er geleert wird)."
+    },
+    "upload": {
+      "incomplete": "Der Upload wurde unterbrochen. Es wurde nichts gespeichert."
+    },
+    "volume": {
+      "full": "Es ist nicht genug Platz frei.",
+      "read_only": "Der Speicher ist schreibgeschützt."
+    }
+  },
+  "jobs": {
+    "job": {
+      "not_found": "Diese Aufgabe gibt es nicht oder sie wurde bereits entfernt."
+    }
+  },
   "realtime": {
     "message": {
       "invalid": "Die Live-Verbindung hat eine unverständliche Nachricht erhalten."
