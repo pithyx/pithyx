@@ -71,7 +71,8 @@ test('icons move on the grid by dragging and keep their place after a reload', a
   expect(await cellOf(page, icon(page, 'About Vyxis'))).toEqual({ column: 0, row: 1 });
 
   const response = page.waitForResponse(
-    (entry) => entry.url().endsWith('/api/desktop/items') && entry.request().method() === 'PATCH',
+    (entry) =>
+      /\/api\/desktop\/items\/\d+$/.test(entry.url()) && entry.request().method() === 'PATCH',
   );
   await drag(page, await cellCenter(page, 0, 0), await cellCenter(page, 3, 2));
   expect((await response).status()).toBe(200);
@@ -194,7 +195,8 @@ test('sticky notes keep their text on the daemon, move, stay under windows and a
 
   await test.step('text is saved on the daemon', async () => {
     const saved = page.waitForResponse(
-      (entry) => entry.url().endsWith('/api/desktop/items') && entry.request().method() === 'PATCH',
+      (entry) =>
+        /\/api\/desktop\/items\/\d+$/.test(entry.url()) && entry.request().method() === 'PATCH',
     );
     await text.fill('Replace disk 3 before Friday.');
     await (await saved).finished();

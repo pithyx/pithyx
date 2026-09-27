@@ -7,8 +7,9 @@ using Vyxis.Daemon.Auth;
 namespace Vyxis.Daemon.Layouts;
 
 /// <summary>
-/// Restoring, saving and copying desktop layouts. The desktop debounces saves and sends the version it last read or
-/// saved as <c>If-Match</c>, so a save from another tab of the same browser is never overwritten unnoticed.
+/// Restoring, saving and copying desktop layouts, and the desktop items. The desktop debounces layout saves and sends
+/// the version it last read or saved as <c>If-Match</c>, so a save from another tab of the same browser is never
+/// overwritten unnoticed. Item changes send the item's version the same way.
 /// </summary>
 public static class LayoutEndpoints
 {
@@ -40,28 +41,53 @@ public static class LayoutEndpoints
         desktop.MapPut("/preferences/{appId}", SetPreferenceAsync).WithName("SetWindowPreference");
 
         desktop.MapGet("/items", ListItemsAsync).WithName("ListDesktopItems");
-        desktop.MapPost("/items", CreateItemAsync).WithName("CreateDesktopItem");
-        desktop.MapPatch("/items", ChangeItemsAsync)
-            .WithName("ChangeDesktopItems")
+        desktop.MapPost("/items", CreateItemAsync)
+            .WithName("CreateDesktopItem")
             .WithDescription(
-                "Changes several items at once, all or none. Every change names the version it builds on; if an item "
-                + "changed in between (for example on another device), the answer is 412 with desktop.item.conflict and "
-                + "the item's id and current version in params. Returns the changed items with their new versions.");
-        desktop.MapPost("/items/delete", DeleteItemsAsync).WithName("DeleteDesktopItems");
+                "Creates an item. The answer is 201 with the item, its URL as Location and its version as ETag.");
+        desktop.MapPatch("/items/{id:long}", ChangeItemAsync)
+            .WithName("ChangeDesktopItem")
+            .WithDescription(
+                "Changes one item; fields left out stay. Send the item's version from GET /api/desktop/items or the ETag "
+                + "of its last change as If-Match: \"n\". If the item changed in between (for example on another device), "
+                + "the answer is 412 with desktop.item.conflict and the current version in params.version. Without "
+                + "If-Match the change is unconditional. The new version comes back as ETag.");
+        desktop.MapDelete("/items/{id:long}", DeleteItemAsync)
+            .WithName("DeleteDesktopItem")
+            .WithDescription("Deletes one item. Deleting an item that does not exist (any more) also answers 204.");
     }
 
     private static async Task<Ok<IReadOnlyList<DesktopItem>>> ListItemsAsync(DesktopItemService items, HttpContext context, CancellationToken cancellationToken) =>
         TypedResults.Ok(await items.ListAsync(CurrentUser.Id(context.User), cancellationToken));
 
-    private static async Task<Created<DesktopItem>> CreateItemAsync(NewDesktopItem item, DesktopItemService items, HttpContext context, CancellationToken cancellationToken) =>
-        TypedResults.Created((string?)null, await items.CreateAsync(CurrentUser.Id(context.User), item, cancellationToken));
-
-    private static async Task<Ok<IReadOnlyList<DesktopItem>>> ChangeItemsAsync(IReadOnlyList<DesktopItemChange> changes, DesktopItemService items, HttpContext context, CancellationToken cancellationToken) =>
-        TypedResults.Ok(await items.ChangeAsync(CurrentUser.Id(context.User), changes, cancellationToken));
-
-    private static async Task<NoContent> DeleteItemsAsync(DeleteDesktopItemsRequest request, DesktopItemService items, HttpContext context, CancellationToken cancellationToken)
+    private static async Task<Created<DesktopItem>> CreateItemAsync(NewDesktopItem item, DesktopItemService items, HttpContext context, CancellationToken cancellationToken)
     {
-        await items.DeleteAsync(CurrentUser.Id(context.User), request.Ids, cancellationToken);
+        var created = await items.CreateAsync(CurrentUser.Id(context.User), item, cancellationToken);
+        context.Response.Headers.ETag = EntityTag(created.Version);
+        return TypedResults.Created(string.Create(CultureInfo.InvariantCulture, $"/api/desktop/items/{created.Id}"), created);
+    }
+
+    private static async Task<Ok<DesktopItem>> ChangeItemAsync(
+        long id,
+        [FromBody] DesktopItemChange change,
+        [FromHeader(Name = "If-Match")] string? ifMatch,
+        DesktopItemService items,
+        HttpContext context,
+        CancellationToken cancellationToken)
+    {
+        var changed = await items.ChangeAsync(
+            CurrentUser.Id(context.User),
+            id,
+            change,
+            ifMatch is null ? null : ParseEntityTag(ifMatch),
+            cancellationToken);
+        context.Response.Headers.ETag = EntityTag(changed.Version);
+        return TypedResults.Ok(changed);
+    }
+
+    private static async Task<NoContent> DeleteItemAsync(long id, DesktopItemService items, HttpContext context, CancellationToken cancellationToken)
+    {
+        await items.DeleteAsync(CurrentUser.Id(context.User), id, cancellationToken);
         return TypedResults.NoContent();
     }
 
@@ -90,7 +116,7 @@ public static class LayoutEndpoints
         return TypedResults.NoContent();
     }
 
-    // A malformed tag matches no version, so the save fails with the current one.
+    // A malformed tag matches no version, so the save or change fails with the current one.
     private static long ParseEntityTag(string value) =>
         value.Length > 2 && value[0] == '"' && value[^1] == '"'
             && long.TryParse(value.AsSpan(1, value.Length - 2), NumberStyles.None, CultureInfo.InvariantCulture, out var version)

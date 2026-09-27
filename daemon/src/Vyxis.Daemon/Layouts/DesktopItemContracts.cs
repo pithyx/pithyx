@@ -14,7 +14,7 @@ public enum DesktopItemKind
 /// <param name="Text">Notes: the text.</param>
 /// <param name="Column">Grid cell of the item, counted from the top left corner of the desktop.</param>
 /// <param name="Row">Grid row of the item.</param>
-/// <param name="Version">Increments with every change. Send it with the next change of this item.</param>
+/// <param name="Version">Increments with every change. Send it as <c>If-Match: "n"</c> with the next change of this item.</param>
 public sealed record DesktopItem(long Id, DesktopItemKind Kind, string? App, string? Name, string? Text, int Column, int Row, long Version);
 
 /// <param name="Kind">What to create.</param>
@@ -26,13 +26,8 @@ public sealed record DesktopItem(long Id, DesktopItemKind Kind, string? App, str
 public sealed record NewDesktopItem(DesktopItemKind Kind, int Column, int Row, string? App = null, string? Name = null, string? Text = null);
 
 /// <summary>A change of one item. Fields left out (or null) stay as they are.</summary>
-/// <param name="Id">The item to change.</param>
-/// <param name="Version">The version the change builds on. A different current version fails the whole request with 412.</param>
 /// <param name="Name">Shortcuts: the new label; an empty string goes back to the app's name.</param>
 /// <param name="Text">Notes: the new text.</param>
 /// <param name="Column">New grid column.</param>
 /// <param name="Row">New grid row.</param>
-public sealed record DesktopItemChange(long Id, long Version, string? Name = null, string? Text = null, int? Column = null, int? Row = null);
-
-/// <param name="Ids">Items to delete. Ids that do not exist (any more) are ignored.</param>
-public sealed record DeleteDesktopItemsRequest(IReadOnlyList<long> Ids);
+public sealed record DesktopItemChange(string? Name = null, string? Text = null, int? Column = null, int? Row = null);

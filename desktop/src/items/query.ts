@@ -5,8 +5,9 @@ import { isSessionExpired } from '../errors/describe';
 export const itemsKey = ['desktop', 'items'] as const;
 
 /**
- * Writes of desktop items, one after another, so each names the version the previous one produced. A refetch (for
- * example when the tab gets focus again) waits until none is pending, so it cannot undo a change on its way.
+ * Writes of desktop items, one after another, so each names (If-Match) the versions the previous one produced; the
+ * requests of one write, one per item, go out together. A refetch (for example when the tab gets focus again) waits
+ * until none is pending, so it cannot undo a change on its way.
  */
 export const itemWrites = { pending: 0, queue: Promise.resolve() };
 

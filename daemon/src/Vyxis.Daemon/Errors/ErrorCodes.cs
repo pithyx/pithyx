@@ -64,7 +64,7 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.NotFound)]
     public const string DesktopDeviceNotFound = "desktop.device.not_found";
 
-    /// <summary>A change named an older version of a desktop item; <c>params.id</c> and <c>params.version</c> say which and the current one.</summary>
+    /// <summary>A change of a desktop item named an older version (If-Match); <c>params.version</c> is the current one.</summary>
     [ErrorStatus(HttpStatusCode.PreconditionFailed)]
     public const string DesktopItemConflict = "desktop.item.conflict";
 

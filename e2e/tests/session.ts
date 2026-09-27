@@ -42,11 +42,8 @@ export function appWindow(page: Page, name: string) {
 export async function resetDesktopItems(page: Page) {
   const headers = { 'X-Vyxis-Request': '1' };
   const items = (await (await page.request.get('/api/desktop/items')).json()) as { id: number }[];
-  if (items.length > 0) {
-    await page.request.post('/api/desktop/items/delete', {
-      headers,
-      data: { ids: items.map((item) => item.id) },
-    });
+  for (const item of items) {
+    await page.request.delete(`/api/desktop/items/${String(item.id)}`, { headers });
   }
   for (const [row, app] of ['disks', 'about'].entries()) {
     await page.request.post('/api/desktop/items', {

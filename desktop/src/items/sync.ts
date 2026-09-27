@@ -113,17 +113,77 @@ function applyChange(item: DesktopItem, change: ItemChange): DesktopItem {
   };
 }
 
-async function send(changes: ItemChange[], versions: ReadonlyMap<number, number>) {
-  const body = changes.flatMap((change) => {
-    const id = realId(change.id);
-    const version = id === undefined ? undefined : versions.get(id);
-    return id === undefined || version === undefined ? [] : [{ ...change, id, version }];
-  });
-  return body.length === 0 ? [] : unwrap(await api.PATCH('/api/desktop/items', { body }));
+interface SendResult {
+  saved: DesktopItem[];
+  /** Changes the daemon refused because the item changed or disappeared elsewhere. */
+  refused: ItemChange[];
+  /** The first of those refusals, if any. */
+  refusal?: unknown;
+  /** The first other failure, if any. */
+  failure?: unknown;
+}
+
+function isRefusal(error: unknown): boolean {
+  const code = codeOf(error);
+  return code === 'desktop.item.conflict' || code === 'desktop.item.not_found';
+}
+
+async function patch(id: number, change: ItemChange, version: number): Promise<DesktopItem> {
+  return unwrap(
+    await api.PATCH('/api/desktop/items/{id}', {
+      params: { path: { id }, header: { 'If-Match': `"${String(version)}"` } },
+      // Null leaves a field as it is.
+      body: {
+        name: change.name ?? null,
+        text: change.text ?? null,
+        column: change.column ?? null,
+        row: change.row ?? null,
+      },
+    }),
+  );
+}
+
+/** Saves every change as its own request, all at once, each naming the version of its item that this device knows. */
+async function send(
+  changes: readonly ItemChange[],
+  versions: ReadonlyMap<number, number>,
+): Promise<SendResult> {
+  const result: SendResult = { saved: [], refused: [] };
+  await Promise.all(
+    changes.map(async (change) => {
+      const id = realId(change.id);
+      const version = id === undefined ? undefined : versions.get(id);
+      if (id === undefined || version === undefined) {
+        return;
+      }
+      try {
+        result.saved.push(await patch(id, change, version));
+      } catch (error) {
+        if (isRefusal(error)) {
+          result.refused.push(change);
+          result.refusal ??= error;
+        } else if (result.failure === undefined) {
+          result.failure = error;
+        }
+      }
+    }),
+  );
+  return result;
 }
 
 function versionsOf(items: readonly DesktopItem[]): Map<number, number> {
   return new Map(items.map((item) => [item.id, item.version]));
+}
+
+// Only the version: a later change of the same item is already shown and still queued.
+function takeVersions(client: QueryClient, saved: readonly DesktopItem[]): void {
+  const versions = versionsOf(saved);
+  writeItems(client, (items) =>
+    items.map((item) => {
+      const version = versions.get(item.id);
+      return version === undefined ? item : { ...item, version };
+    }),
+  );
 }
 
 /**
@@ -143,9 +203,9 @@ function keepNoteText(
 }
 
 /**
- * Changes items right away and saves the change. If another device changed an item in between (412), the daemon's
- * items are loaded and the change is saved on top of them once more: the device in use wins, except that note text
- * from the other device is kept (see keepNoteText).
+ * Changes items right away and saves the change, one request per item. If another device changed or deleted an item in
+ * between (412 or 404), the daemon's items are loaded and the refused changes are saved on top of them once more: the
+ * device in use wins, except that note text from the other device is kept (see keepNoteText).
  */
 export function changeItems(client: QueryClient, changes: ItemChange[]): Promise<void> {
   const before = new Map(readItems(client).map((item) => [item.id, item]));
@@ -158,23 +218,13 @@ export function changeItems(client: QueryClient, changes: ItemChange[]): Promise
     }),
   );
   return enqueue(async () => {
-    try {
-      const saved = await send(changes, versionsOf(readItems(client)));
-      const versions = versionsOf(saved);
-      // Only the version: a later change of the same item is already shown and still queued.
-      writeItems(client, (items) =>
-        items.map((item) => {
-          const version = versions.get(item.id);
-          return version === undefined ? item : { ...item, version };
-        }),
-      );
-    } catch (error) {
-      const code = codeOf(error);
-      if (code !== 'desktop.item.conflict' && code !== 'desktop.item.not_found') {
-        reportFailure(client, error);
-        return;
-      }
-      await retryOnTop(client, changes, before);
+    const { saved, refused, failure } = await send(changes, versionsOf(readItems(client)));
+    takeVersions(client, saved);
+    if (refused.length > 0) {
+      await retryOnTop(client, refused, before);
+    }
+    if (failure !== undefined) {
+      reportFailure(client, failure);
     }
   });
 }
@@ -236,15 +286,14 @@ async function retryOnTop(
         return change === undefined ? item : applyChange(item, change);
       }),
     );
-    const saved = await send(again, versionsOf(current));
-    const versions = versionsOf(saved);
-    writeItems(client, (items) =>
-      items.map((item) => {
-        const version = versions.get(item.id);
-        return version === undefined ? item : { ...item, version };
-      }),
-    );
+    const { saved, refusal, failure } = await send(again, versionsOf(current));
+    takeVersions(client, saved);
     keepNoteText(client, lost);
+    // Refused a second time: the daemon's items are the truth.
+    const error = failure ?? refusal;
+    if (error !== undefined) {
+      reportFailure(client, error);
+    }
   } catch (error) {
     reportFailure(client, error);
   }
@@ -263,10 +312,14 @@ export function deleteItems(client: QueryClient, ids: number[]): void {
     if (real.length === 0) {
       return;
     }
-    try {
-      unwrap(await api.POST('/api/desktop/items/delete', { body: { ids: real } }));
-    } catch (error) {
-      reportFailure(client, error);
+    const results = await Promise.allSettled(
+      real.map(async (id) => {
+        unwrap(await api.DELETE('/api/desktop/items/{id}', { params: { path: { id } } }));
+      }),
+    );
+    const failed = results.find((result) => result.status === 'rejected');
+    if (failed !== undefined) {
+      reportFailure(client, failed.reason);
     }
   });
 }

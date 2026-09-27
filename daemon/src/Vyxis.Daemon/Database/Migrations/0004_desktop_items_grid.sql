@@ -1,6 +1,6 @@
 -- Desktop items (step 5): app shortcuts and sticky notes on a grid of cells, shared across the user's devices. Every
--- change increments the item's version, and a change that names an older version is refused, so two devices cannot
--- overwrite each other unnoticed. Files and folders join with the file manager (step 6); the kind 'file' stays.
+-- change increments the item's version, and a change whose If-Match names an older version is refused, so two devices
+-- cannot overwrite each other unnoticed. Files and folders join with the file manager (step 6); the kind 'file' stays.
 
 ALTER TABLE desktop_items DROP COLUMN position;
 ALTER TABLE desktop_items ADD COLUMN grid_column INTEGER NOT NULL DEFAULT 0 CHECK (grid_column >= 0);

@@ -42,8 +42,17 @@ public sealed class DesktopItemApiTests : IDisposable
         return await response.JsonAsync();
     }
 
-    private Task<HttpResponseMessage> ChangeAsync(params object[] changes) =>
-        _client.PatchAsJsonAsync("/api/desktop/items", changes, Token);
+    private async Task<HttpResponseMessage> ChangeAsync(long id, object change, string? ifMatch = null)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Patch, $"/api/desktop/items/{id}") { Content = JsonContent.Create(change) };
+        if (ifMatch is not null)
+        {
+            request.Headers.TryAddWithoutValidation("If-Match", ifMatch);
+        }
+        return await _client.SendAsync(request, Token);
+    }
+
+    private Task<HttpResponseMessage> DeleteAsync(long id) => _client.DeleteAsync($"/api/desktop/items/{id}", Token);
 
     private async Task<long> InsertUserAsync(string username)
     {
@@ -86,44 +95,76 @@ public sealed class DesktopItemApiTests : IDisposable
     }
 
     [Fact]
-    public async Task AChangeMovesItemsAndIncrementsTheirVersions()
+    public async Task CreatingAnswersWithTheItemsUrlAndVersion()
     {
         await _client.SetupAdminAsync();
-        var shortcut = (await ListAsync())[0];
-        var note = await CreateNoteAsync();
 
-        using var response = await ChangeAsync(
-            new { id = shortcut.GetProperty("id").GetInt64(), version = 1, column = 5, row = 2 },
-            new { id = note.GetProperty("id").GetInt64(), version = 1, text = "Done" });
+        using var response = await _client.PostAsync("/api/desktop/items", new { kind = "note", text = "", column = 1, row = 1 });
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var changed = (await response.JsonAsync()).EnumerateArray().ToArray();
-        Assert.Equal((5, 2, 2L), (changed[0].GetProperty("column").GetInt32(), changed[0].GetProperty("row").GetInt32(), changed[0].GetProperty("version").GetInt64()));
-        Assert.Equal(("Done", 3, 2L), (changed[1].GetProperty("text").GetString(), changed[1].GetProperty("column").GetInt32(), changed[1].GetProperty("version").GetInt64()));
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var id = (await response.JsonAsync()).GetProperty("id").GetInt64();
+        Assert.Equal($"/api/desktop/items/{id}", response.Headers.Location?.OriginalString);
+        Assert.Equal("\"1\"", response.Headers.ETag?.Tag);
     }
 
     [Fact]
-    public async Task AStaleVersionRefusesTheWholeChange()
+    public async Task AChangeMovesAnItemAndAnswersWithItsNewVersion()
     {
         await _client.SetupAdminAsync();
-        var items = await ListAsync();
-        var first = items[0].GetProperty("id").GetInt64();
-        var second = items[1].GetProperty("id").GetInt64();
-        using (var other = await ChangeAsync(new { id = second, version = 1, row = 4 }))
+        var shortcut = (await ListAsync())[0].GetProperty("id").GetInt64();
+        var note = (await CreateNoteAsync()).GetProperty("id").GetInt64();
+
+        using var moved = await ChangeAsync(shortcut, new { column = 5, row = 2 }, "\"1\"");
+        using var written = await ChangeAsync(note, new { text = "Done" }, "\"1\"");
+
+        Assert.Equal(HttpStatusCode.OK, moved.StatusCode);
+        Assert.Equal("\"2\"", moved.Headers.ETag?.Tag);
+        var item = await moved.JsonAsync();
+        Assert.Equal((shortcut, 5, 2, 2L), (item.GetProperty("id").GetInt64(), item.GetProperty("column").GetInt32(), item.GetProperty("row").GetInt32(), item.GetProperty("version").GetInt64()));
+        var changedNote = await written.JsonAsync();
+        Assert.Equal(("Done", 3, 2L), (changedNote.GetProperty("text").GetString(), changedNote.GetProperty("column").GetInt32(), changedNote.GetProperty("version").GetInt64()));
+    }
+
+    [Fact]
+    public async Task AStaleOrMalformedIfMatchIsRefusedWithTheCurrentVersion()
+    {
+        await _client.SetupAdminAsync();
+        var id = (await ListAsync())[0].GetProperty("id").GetInt64();
+        using (var other = await ChangeAsync(id, new { row = 4 }, "\"1\""))
         {
             other.EnsureSuccessStatusCode();
         }
 
-        using var stale = await ChangeAsync(new { id = first, version = 1, column = 7 }, new { id = second, version = 1, row = 9 });
+        using var stale = await ChangeAsync(id, new { column = 7 }, "\"1\"");
+        using var malformed = await ChangeAsync(id, new { column = 7 }, "W/\"2\"");
 
         Assert.Equal(HttpStatusCode.PreconditionFailed, stale.StatusCode);
         var problem = await stale.JsonAsync();
         Assert.Equal("desktop.item.conflict", problem.GetProperty("code").GetString());
-        Assert.Equal(second, problem.GetProperty("params").GetProperty("id").GetInt64());
         Assert.Equal(2, problem.GetProperty("params").GetProperty("version").GetInt64());
-        var after = await ListAsync();
-        Assert.Equal(0, after.Single(item => item.GetProperty("id").GetInt64() == first).GetProperty("column").GetInt32());
-        Assert.Equal(4, after.Single(item => item.GetProperty("id").GetInt64() == second).GetProperty("row").GetInt32());
+        Assert.False(problem.GetProperty("params").TryGetProperty("id", out _));
+        Assert.Equal(HttpStatusCode.PreconditionFailed, malformed.StatusCode);
+        Assert.Equal("desktop.item.conflict", await malformed.ErrorCodeAsync());
+        var after = (await ListAsync()).Single(item => item.GetProperty("id").GetInt64() == id);
+        Assert.Equal((0, 4, 2L), (after.GetProperty("column").GetInt32(), after.GetProperty("row").GetInt32(), after.GetProperty("version").GetInt64()));
+    }
+
+    [Fact]
+    public async Task AChangeWithoutIfMatchIsUnconditional()
+    {
+        await _client.SetupAdminAsync();
+        var id = (await ListAsync())[0].GetProperty("id").GetInt64();
+        using (var other = await ChangeAsync(id, new { row = 4 }, "\"1\""))
+        {
+            other.EnsureSuccessStatusCode();
+        }
+
+        using var unconditional = await ChangeAsync(id, new { column = 6 });
+
+        Assert.Equal(HttpStatusCode.OK, unconditional.StatusCode);
+        Assert.Equal("\"3\"", unconditional.Headers.ETag?.Tag);
+        var item = await unconditional.JsonAsync();
+        Assert.Equal((6, 4), (item.GetProperty("column").GetInt32(), item.GetProperty("row").GetInt32()));
     }
 
     [Fact]
@@ -132,11 +173,11 @@ public sealed class DesktopItemApiTests : IDisposable
         await _client.SetupAdminAsync();
         var id = (await ListAsync())[0].GetProperty("id").GetInt64();
 
-        using var renamed = await ChangeAsync(new { id, version = 1, name = "  My disks  " });
-        using var reset = await ChangeAsync(new { id, version = 2, name = "" });
+        using var renamed = await ChangeAsync(id, new { name = "  My disks  " }, "\"1\"");
+        using var reset = await ChangeAsync(id, new { name = "" }, "\"2\"");
 
-        Assert.Equal("My disks", (await renamed.JsonAsync())[0].GetProperty("name").GetString());
-        Assert.Equal(JsonValueKind.Null, (await reset.JsonAsync())[0].GetProperty("name").ValueKind);
+        Assert.Equal("My disks", (await renamed.JsonAsync()).GetProperty("name").GetString());
+        Assert.Equal(JsonValueKind.Null, (await reset.JsonAsync()).GetProperty("name").ValueKind);
     }
 
     [Theory]
@@ -158,19 +199,22 @@ public sealed class DesktopItemApiTests : IDisposable
     }
 
     [Fact]
-    public async Task FieldsOfTheOtherKindAreRefusedOnChange()
+    public async Task InvalidChangesAreRefused()
     {
         await _client.SetupAdminAsync();
         var shortcut = (await ListAsync())[0].GetProperty("id").GetInt64();
         var note = (await CreateNoteAsync()).GetProperty("id").GetInt64();
 
-        using var textOnShortcut = await ChangeAsync(new { id = shortcut, version = 1, text = "x" });
-        using var nameOnNote = await ChangeAsync(new { id = note, version = 1, name = "x" });
-        using var twice = await ChangeAsync(new { id = note, version = 1, row = 1 }, new { id = note, version = 1, row = 2 });
+        using var textOnShortcut = await ChangeAsync(shortcut, new { text = "x" }, "\"1\"");
+        using var nameOnNote = await ChangeAsync(note, new { name = "x" }, "\"1\"");
+        using var outside = await ChangeAsync(note, new { column = DesktopItemService.MaxCell + 1 }, "\"1\"");
+        using var tooLong = await ChangeAsync(note, new { text = new string('x', DesktopItemService.MaxNoteLength + 1) }, "\"1\"");
 
         Assert.Equal("desktop.item.invalid", await textOnShortcut.ErrorCodeAsync());
         Assert.Equal("desktop.item.invalid", await nameOnNote.ErrorCodeAsync());
-        Assert.Equal("desktop.item.invalid", await twice.ErrorCodeAsync());
+        Assert.Equal("desktop.item.invalid", await outside.ErrorCodeAsync());
+        Assert.Equal("desktop.note.too_long", await tooLong.ErrorCodeAsync());
+        Assert.Equal(1, (await ListAsync()).Single(item => item.GetProperty("id").GetInt64() == note).GetProperty("version").GetInt64());
     }
 
     [Fact]
@@ -186,12 +230,17 @@ public sealed class DesktopItemApiTests : IDisposable
                 new { otherUser });
         }
 
-        using var change = await ChangeAsync(new { id = otherItem, version = 1, text = "mine" });
-        using var delete = await _client.PostAsync("/api/desktop/items/delete", new { ids = new[] { otherItem } });
+        using var change = await ChangeAsync(otherItem, new { text = "mine" }, "\"1\"");
+        using var unconditional = await ChangeAsync(otherItem, new { text = "mine" });
+        using var missing = await ChangeAsync(otherItem + 1000, new { row = 1 });
+        using var delete = await DeleteAsync(otherItem);
 
         Assert.DoesNotContain(await ListAsync(), item => item.GetProperty("id").GetInt64() == otherItem);
         Assert.Equal(HttpStatusCode.NotFound, change.StatusCode);
         Assert.Equal("desktop.item.not_found", await change.ErrorCodeAsync());
+        Assert.Equal("desktop.item.not_found", await unconditional.ErrorCodeAsync());
+        Assert.Equal(HttpStatusCode.NotFound, missing.StatusCode);
+        Assert.Equal("desktop.item.not_found", await missing.ErrorCodeAsync());
         Assert.Equal(HttpStatusCode.NoContent, delete.StatusCode);
         await using var check = await _factory.Services.GetRequiredService<SqliteConnectionFactory>().OpenAsync(Token);
         Assert.Equal("{\"text\":\"secret\"}", await check.ExecuteScalarAsync<string>("SELECT data FROM desktop_items WHERE id = @otherItem", new { otherItem }));
@@ -203,11 +252,16 @@ public sealed class DesktopItemApiTests : IDisposable
         await _client.SetupAdminAsync();
         var ids = (await ListAsync()).Select(item => item.GetProperty("id").GetInt64()).ToArray();
 
-        using var first = await _client.PostAsync("/api/desktop/items/delete", new { ids });
-        using var again = await _client.PostAsync("/api/desktop/items/delete", new { ids });
+        foreach (var id in ids)
+        {
+            using var first = await DeleteAsync(id);
+            using var again = await DeleteAsync(id);
+            Assert.Equal(HttpStatusCode.NoContent, first.StatusCode);
+            Assert.Equal(HttpStatusCode.NoContent, again.StatusCode);
+        }
+        using var unknown = await DeleteAsync(ids.Max() + 1000);
 
-        Assert.Equal(HttpStatusCode.NoContent, first.StatusCode);
-        Assert.Equal(HttpStatusCode.NoContent, again.StatusCode);
+        Assert.Equal(HttpStatusCode.NoContent, unknown.StatusCode);
         Assert.Empty(await ListAsync());
     }
 

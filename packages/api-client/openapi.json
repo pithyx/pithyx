@@ -634,6 +634,7 @@
         "tags": [
           "Desktop"
         ],
+        "description": "Creates an item. The answer is 201 with the item, its URL as Location and its version as ETag.",
         "operationId": "CreateDesktopItem",
         "requestBody": {
           "content": {
@@ -667,21 +668,38 @@
             }
           }
         }
-      },
+      }
+    },
+    "/api/desktop/items/{id}": {
       "patch": {
         "tags": [
           "Desktop"
         ],
-        "description": "Changes several items at once, all or none. Every change names the version it builds on; if an item changed in between (for example on another device), the answer is 412 with desktop.item.conflict and the item's id and current version in params. Returns the changed items with their new versions.",
-        "operationId": "ChangeDesktopItems",
+        "description": "Changes one item; fields left out stay. Send the item's version from GET /api/desktop/items or the ETag of its last change as If-Match: \"n\". If the item changed in between (for example on another device), the answer is 412 with desktop.item.conflict and the current version in params.version. Without If-Match the change is unconditional. The new version comes back as ETag.",
+        "operationId": "ChangeDesktopItem",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/DesktopItemChange"
-                }
+                "$ref": "#/components/schemas/DesktopItemChange"
               }
             }
           },
@@ -693,10 +711,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/DesktopItem"
-                  }
+                  "$ref": "#/components/schemas/DesktopItem"
                 }
               }
             }
@@ -712,24 +727,24 @@
             }
           }
         }
-      }
-    },
-    "/api/desktop/items/delete": {
-      "post": {
+      },
+      "delete": {
         "tags": [
           "Desktop"
         ],
-        "operationId": "DeleteDesktopItems",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/DeleteDesktopItemsRequest"
-              }
+        "description": "Deletes one item. Deleting an item that does not exist (any more) also answers 204.",
+        "operationId": "DeleteDesktopItem",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
             }
-          },
-          "required": true
-        },
+          }
+        ],
         "responses": {
           "204": {
             "description": "No Content"
@@ -856,22 +871,6 @@
           "simulated"
         ]
       },
-      "DeleteDesktopItemsRequest": {
-        "required": [
-          "ids"
-        ],
-        "type": "object",
-        "properties": {
-          "ids": {
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "format": "int64"
-            },
-            "description": "Items to delete. Ids that do not exist (any more) are ignored."
-          }
-        }
-      },
       "DesktopItem": {
         "required": [
           "id",
@@ -927,29 +926,15 @@
           },
           "version": {
             "type": "integer",
-            "description": "Increments with every change. Send it with the next change of this item.",
+            "description": "Increments with every change. Send it as `If-Match: \"n\"` with the next change of this item.",
             "format": "int64"
           }
         },
         "description": "An app shortcut or a sticky note on the desktop, shared across the user's devices."
       },
       "DesktopItemChange": {
-        "required": [
-          "id",
-          "version"
-        ],
         "type": "object",
         "properties": {
-          "id": {
-            "type": "integer",
-            "description": "The item to change.",
-            "format": "int64"
-          },
-          "version": {
-            "type": "integer",
-            "description": "The version the change builds on. A different current version fails the whole request with 412.",
-            "format": "int64"
-          },
           "name": {
             "type": [
               "null",

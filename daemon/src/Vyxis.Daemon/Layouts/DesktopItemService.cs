@@ -10,8 +10,9 @@ using Vyxis.Daemon.Errors;
 namespace Vyxis.Daemon.Layouts;
 
 /// <summary>
-/// Desktop items per user, shared across devices: app shortcuts and sticky notes on a grid of cells. Every change names
-/// the item's version, so a change made on another device in between is refused instead of overwritten.
+/// Desktop items per user, shared across devices: app shortcuts and sticky notes on a grid of cells. A change can name
+/// the item's version it builds on (If-Match), so a change made on another device in between is refused instead of
+/// overwritten.
 /// </summary>
 public sealed class DesktopItemService(SqliteConnectionFactory connections, TimeProvider time)
 {
@@ -85,83 +86,67 @@ public sealed class DesktopItemService(SqliteConnectionFactory connections, Time
     }
 
     /// <summary>
-    /// Applies all changes or none. Fails with <see cref="ErrorCodes.DesktopItemNotFound"/> for an item that does not
-    /// exist and with <see cref="ErrorCodes.DesktopItemConflict"/> (current version in the params) for one that changed.
+    /// Changes one item and returns it with its new version. Fails with <see cref="ErrorCodes.DesktopItemNotFound"/> for
+    /// an item that does not exist or belongs to someone else. With <paramref name="expectedVersion"/> the change only
+    /// happens if the item still has that version; otherwise it fails with <see cref="ErrorCodes.DesktopItemConflict"/>
+    /// and the current version in the params.
     /// </summary>
-    public async Task<IReadOnlyList<DesktopItem>> ChangeAsync(long userId, IReadOnlyList<DesktopItemChange> changes, CancellationToken cancellationToken)
+    public async Task<DesktopItem> ChangeAsync(long userId, long id, DesktopItemChange change, long? expectedVersion, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(changes);
-        if (changes.Count is 0 or > MaxItems || changes.DistinctBy(change => change.Id).Count() != changes.Count)
-        {
-            throw new VyxisException(ErrorCodes.DesktopItemInvalid);
-        }
-
+        ArgumentNullException.ThrowIfNull(change);
         var now = SessionService.Format(time.GetUtcNow());
         await using var connection = await connections.OpenAsync(cancellationToken);
         await using var transaction = await connection.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
-        var changed = new List<DesktopItem>(changes.Count);
-        foreach (var change in changes)
+        var current = await connection.QuerySingleOrDefaultAsync<ItemRow>(
+            $"{SelectColumns} WHERE id = @id AND user_id = @userId AND kind IN ('shortcut', 'note')",
+            new { id, userId },
+            transaction)
+            ?? throw new VyxisException(ErrorCodes.DesktopItemNotFound);
+        if (expectedVersion is not null && current.Version != expectedVersion)
         {
-            var current = await connection.QuerySingleOrDefaultAsync<ItemRow>(
-                $"{SelectColumns} WHERE id = @Id AND user_id = @userId AND kind IN ('shortcut', 'note')",
-                new { change.Id, userId },
-                transaction)
-                ?? throw new VyxisException(ErrorCodes.DesktopItemNotFound, new Dictionary<string, object?> { ["id"] = change.Id });
-            if (current.Version != change.Version)
-            {
-                throw new VyxisException(ErrorCodes.DesktopItemConflict, new Dictionary<string, object?>
-                {
-                    ["id"] = change.Id,
-                    ["version"] = current.Version,
-                });
-            }
-
-            var item = ToItem(current);
-            var column = change.Column ?? item.Column;
-            var row = change.Row ?? item.Row;
-            CheckCell(column, row);
-            string data;
-            if (item.Kind == DesktopItemKind.Shortcut)
-            {
-                if (change.Text is not null)
-                {
-                    throw new VyxisException(ErrorCodes.DesktopItemInvalid);
-                }
-                data = ShortcutData(item.App!, change.Name is null ? item.Name : CheckName(change.Name));
-            }
-            else
-            {
-                if (change.Name is not null)
-                {
-                    throw new VyxisException(ErrorCodes.DesktopItemInvalid);
-                }
-                data = NoteData(change.Text is null ? item.Text ?? "" : CheckText(change.Text));
-            }
-
-            var updated = await connection.QuerySingleAsync<ItemRow>(
-                """
-                UPDATE desktop_items SET data = @data, grid_column = @column, grid_row = @row, version = version + 1, updated_at = @now
-                WHERE id = @Id
-                RETURNING id AS Id, kind AS Kind, json_extract(data, '$.app') AS App, json_extract(data, '$.name') AS Name,
-                    json_extract(data, '$.text') AS Text, grid_column AS GridColumn, grid_row AS GridRow, version AS Version
-                """,
-                new { change.Id, data, column, row, now },
-                transaction);
-            changed.Add(ToItem(updated));
+            throw new VyxisException(ErrorCodes.DesktopItemConflict, new Dictionary<string, object?> { ["version"] = current.Version });
         }
+
+        var item = ToItem(current);
+        var column = change.Column ?? item.Column;
+        var row = change.Row ?? item.Row;
+        CheckCell(column, row);
+        string data;
+        if (item.Kind == DesktopItemKind.Shortcut)
+        {
+            if (change.Text is not null)
+            {
+                throw new VyxisException(ErrorCodes.DesktopItemInvalid);
+            }
+            data = ShortcutData(item.App!, change.Name is null ? item.Name : CheckName(change.Name));
+        }
+        else
+        {
+            if (change.Name is not null)
+            {
+                throw new VyxisException(ErrorCodes.DesktopItemInvalid);
+            }
+            data = NoteData(change.Text is null ? item.Text ?? "" : CheckText(change.Text));
+        }
+
+        var updated = await connection.QuerySingleAsync<ItemRow>(
+            """
+            UPDATE desktop_items SET data = @data, grid_column = @column, grid_row = @row, version = version + 1, updated_at = @now
+            WHERE id = @id
+            RETURNING id AS Id, kind AS Kind, json_extract(data, '$.app') AS App, json_extract(data, '$.name') AS Name,
+                json_extract(data, '$.text') AS Text, grid_column AS GridColumn, grid_row AS GridRow, version AS Version
+            """,
+            new { id, data, column, row, now },
+            transaction);
         await transaction.CommitAsync(cancellationToken);
-        return changed;
+        return ToItem(updated);
     }
 
-    public async Task DeleteAsync(long userId, IReadOnlyList<long> ids, CancellationToken cancellationToken)
+    /// <summary>Deletes one item of the user. An item that does not exist (any more) is no error.</summary>
+    public async Task DeleteAsync(long userId, long id, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(ids);
-        if (ids.Count is 0 or > MaxItems)
-        {
-            throw new VyxisException(ErrorCodes.DesktopItemInvalid);
-        }
         await using var connection = await connections.OpenAsync(cancellationToken);
-        await connection.ExecuteAsync("DELETE FROM desktop_items WHERE user_id = @userId AND id IN @ids", new { userId, ids });
+        await connection.ExecuteAsync("DELETE FROM desktop_items WHERE user_id = @userId AND id = @id", new { userId, id });
     }
 
     /// <summary>Puts the default shortcuts on the desktop of a new user, inside the transaction that creates the user.</summary>

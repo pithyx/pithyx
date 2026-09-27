@@ -170,15 +170,15 @@ export type paths = {
         };
         get: operations["ListDesktopItems"];
         put?: never;
+        /** @description Creates an item. The answer is 201 with the item, its URL as Location and its version as ETag. */
         post: operations["CreateDesktopItem"];
         delete?: never;
         options?: never;
         head?: never;
-        /** @description Changes several items at once, all or none. Every change names the version it builds on; if an item changed in between (for example on another device), the answer is 412 with desktop.item.conflict and the item's id and current version in params. Returns the changed items with their new versions. */
-        patch: operations["ChangeDesktopItems"];
+        patch?: never;
         trace?: never;
     };
-    "/api/desktop/items/delete": {
+    "/api/desktop/items/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -187,11 +187,13 @@ export type paths = {
         };
         get?: never;
         put?: never;
-        post: operations["DeleteDesktopItems"];
-        delete?: never;
+        post?: never;
+        /** @description Deletes one item. Deleting an item that does not exist (any more) also answers 204. */
+        delete: operations["DeleteDesktopItem"];
         options?: never;
         head?: never;
-        patch?: never;
+        /** @description Changes one item; fields left out stay. Send the item's version from GET /api/desktop/items or the ETag of its last change as If-Match: "n". If the item changed in between (for example on another device), the answer is 412 with desktop.item.conflict and the current version in params.version. Without If-Match the change is unconditional. The new version comes back as ETag. */
+        patch: operations["ChangeDesktopItem"];
         trace?: never;
     };
     "/api/desktop/layout": {
@@ -335,10 +337,6 @@ export type components = {
         };
         /** @enum {unknown} */
         DaemonMode: "real" | "simulated";
-        DeleteDesktopItemsRequest: {
-            /** @description Items to delete. Ids that do not exist (any more) are ignored. */
-            ids: number[];
-        };
         /** @description An app shortcut or a sticky note on the desktop, shared across the user's devices. */
         DesktopItem: {
             /** @description Shortcuts: the id of the app it opens. */
@@ -366,7 +364,7 @@ export type components = {
             text: null | string;
             /**
              * Format: int64
-             * @description Increments with every change. Send it with the next change of this item.
+             * @description Increments with every change. Send it as `If-Match: "n"` with the next change of this item.
              */
             version: number;
         };
@@ -377,11 +375,6 @@ export type components = {
              * @description New grid column.
              */
             column?: null | number;
-            /**
-             * Format: int64
-             * @description The item to change.
-             */
-            id: number;
             /** @description Shortcuts: the new label; an empty string goes back to the app's name. */
             name?: null | string;
             /**
@@ -391,11 +384,6 @@ export type components = {
             row?: null | number;
             /** @description Notes: the new text. */
             text?: null | string;
-            /**
-             * Format: int64
-             * @description The version the change builds on. A different current version fails the whole request with 412.
-             */
-            version: number;
         };
         /** @enum {unknown} */
         DesktopItemKind: "shortcut" | "note";
@@ -1117,27 +1105,23 @@ export interface operations {
             };
         };
     };
-    ChangeDesktopItems: {
+    DeleteDesktopItem: {
         parameters: {
             query?: never;
             header?: never;
-            path?: never;
+            path: {
+                id: number;
+            };
             cookie?: never;
         };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["DesktopItemChange"][];
-            };
-        };
+        requestBody?: never;
         responses: {
-            /** @description OK */
-            200: {
+            /** @description No Content */
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["DesktopItem"][];
-                };
+                content?: never;
             };
             /** @description Problem details with a stable error code. */
             default: {
@@ -1150,25 +1134,31 @@ export interface operations {
             };
         };
     };
-    DeleteDesktopItems: {
+    ChangeDesktopItem: {
         parameters: {
             query?: never;
-            header?: never;
-            path?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                id: number;
+            };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DeleteDesktopItemsRequest"];
+                "application/json": components["schemas"]["DesktopItemChange"];
             };
         };
         responses: {
-            /** @description No Content */
-            204: {
+            /** @description OK */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["DesktopItem"];
+                };
             };
             /** @description Problem details with a stable error code. */
             default: {
