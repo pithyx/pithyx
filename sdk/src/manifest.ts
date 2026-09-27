@@ -50,11 +50,11 @@ export type Permission =
  * then carries a permanent badge, every grant and revoke is written to the audit log, and each right can be revoked
  * on its own, which restarts the backend without it. An update that asks for a new one needs the same confirmation.
  *
- * No right, `host.full` included, ever reaches the sessions, password hashes, TOTP secrets or recovery keys of any
- * user. The daemon enforces this for every right below: its database and secrets under `/var/lib/vyxis` and
- * `/etc/vyxis` are never mapped into a container, the Docker socket is only reachable through the daemon's filtering
- * proxy, and the rights that would reach them anyway (the system disk's block devices, `SYS_ADMIN`, `SYS_PTRACE`,
- * `SYS_MODULE`, `SYS_RAWIO`, `DAC_READ_SEARCH`, `BPF`) are never granted.
+ * Except for `host.full`, no right reaches the sessions, password hashes, TOTP secrets or recovery keys of any user.
+ * The daemon enforces this: its database and secrets under `/var/lib/vyxis` and `/etc/vyxis` are never mapped into a
+ * container, the Docker socket is only reachable through the daemon's filtering proxy, and the rights that would
+ * reach them anyway (the system disk's block devices, `SYS_ADMIN`, `SYS_PTRACE`, `SYS_MODULE`, `SYS_RAWIO`,
+ * `DAC_READ_SEARCH`, `BPF`) are never granted on their own.
  */
 export type ElevatedPermission =
   /**
@@ -71,8 +71,9 @@ export type ElevatedPermission =
   /** One Linux capability, for example `capability:NET_ADMIN`. */
   | `capability:${string}`
   /**
-   * Every right above at once, every device except the system disk and every capability except the ones listed
-   * above: for system tools that manage the host itself.
+   * A privileged container with the host's namespaces and devices: for system tools that manage the host itself. This
+   * is technically root on the host, and the install warning says so plainly. The promise that an app never reaches
+   * other users' secrets then holds only for what the SDK API hands out, not for the backend container.
    */
   | 'host.full';
 

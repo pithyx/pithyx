@@ -95,6 +95,21 @@
       "not_found": "Diesen API-Endpunkt gibt es nicht."
     }
   },
+  "sdk": {
+    "method": {
+      "unknown": "Diese Vyxis-Version unterstützt nicht, was die App angefragt hat ({method})."
+    },
+    "protocol": {
+      "unsupported": "Diese App braucht eine andere Vyxis-Version (Protokoll {protocol}, unterstützt {min} bis {max})."
+    },
+    "request": {
+      "invalid": "Die App hat eine Anfrage geschickt, die der Desktop nicht verarbeiten kann ({method}).",
+      "timeout": "Der Desktop hat der App nicht rechtzeitig geantwortet ({method})."
+    },
+    "transport": {
+      "closed": "Die Verbindung zwischen App und Desktop ist getrennt. Öffne die App noch einmal."
+    }
+  },
   "system": {
     "internal": {
       "unexpected": "Auf dem Server ist ein Fehler aufgetreten. Mit der Request-ID findest du die Details in den Logs."

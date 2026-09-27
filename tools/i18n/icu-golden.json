@@ -172,6 +172,36 @@
       "params": {},
       "expected": "This API endpoint does not exist."
     },
+    "sdk.method.unknown": {
+      "params": {
+        "method": "storage.get"
+      },
+      "expected": "This version of Vyxis does not support what the app asked for (storage.get)."
+    },
+    "sdk.protocol.unsupported": {
+      "params": {
+        "protocol": 3,
+        "min": 1,
+        "max": 2
+      },
+      "expected": "This app needs another version of Vyxis (protocol 3, supported 1 to 2)."
+    },
+    "sdk.request.invalid": {
+      "params": {
+        "method": "notify"
+      },
+      "expected": "The app sent a request the desktop cannot process (notify)."
+    },
+    "sdk.request.timeout": {
+      "params": {
+        "method": "notify"
+      },
+      "expected": "The desktop did not answer the app in time (notify)."
+    },
+    "sdk.transport.closed": {
+      "params": {},
+      "expected": "The connection between the app and the desktop is closed. Open the app again."
+    },
     "system.internal.unexpected": {
       "params": {},
       "expected": "Something went wrong on the server. The request id helps to find the details in the logs."
