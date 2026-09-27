@@ -481,34 +481,34 @@ Goal: pools are created, maintained and watched from the UI, with snapshots that
 - [x] The create dialog always asks about encryption and explains that it can only be chosen when the pool is created (step 9 adds the key handling; until then encryption is offered only once step 9 is done, and the dialog says so).
 - [x] Dataset layout (D100, decided): the pool root holds no data; Pithyx datasets live under `<pool>/pithyx/` (`shares/<name>`, `homes/<user>`, `apps/<id>`, `system`), mounted at `/<pool>/<share>`, `/<pool>/homes/<user>` and `/<pool>/.pithyx/...` (the paths in `daemon/CLAUDE.md`).
 - [ ] Import an existing pool only as an explicit action, first read-only with a preview of its datasets; export.
-- [ ] Scrub, on demand and on a schedule (default monthly).
+- [x] Scrub, on demand and on a schedule (default monthly).
 - [ ] Replace a disk, offline and online a disk, add a vdev (with a warning when it lowers redundancy; adding is irreversible), raidz expansion (OpenZFS 2.3). (Replace, offline, online and hot spares are done; adding a vdev and raidz expansion are open.)
 - [x] Destroy a pool only after typing its name, with a list of what it holds.
 - [x] Block cloning (D90): find out why `copy_file_range` cloned no blocks on dev01 (OpenZFS 2.3.9), whether `zfs_bclone_enabled` is off because of the known block cloning data corruption bug, and enable it only on an OpenZFS version with the fix, with a test on dev01. (It is on by default in 2.3.9 and works: a Files copy on a pool share cloned 8 MB on dev01. The step 6 test ran on the ext4 system disk, which cannot clone.)
 
 ### 8.2 Health and warnings
 
-- [ ] SMART with `smartctl -n standby` (never wakes a disk), SMART self-tests on a schedule (short weekly, long monthly by default), skipped while a disk sleeps.
-- [ ] Persistent notifications plus a desktop banner for: pool DEGRADED or FAULTED, SMART failures and warnings (reallocated or pending sectors, failed self-test), scrub errors, and fill level (warning at 80 percent, critical at 90 percent). They stay until the cause is gone; the user can mute but not delete them.
-- [ ] Capabilities are detected: in a VM without SMART, the UI explains why there is no SMART data instead of showing an error.
+- [x] SMART with `smartctl -n standby` (never wakes a disk), SMART self-tests on a schedule (short weekly, long monthly by default), skipped while a disk sleeps.
+- [x] Persistent notifications plus a desktop banner for: pool DEGRADED or FAULTED, SMART failures and warnings (reallocated or pending sectors, failed self-test), scrub errors, and fill level (warning at 80 percent, critical at 90 percent). They stay until the cause is gone; the user can mute but not delete them.
+- [x] Capabilities are detected: in a VM without SMART, the UI explains why there is no SMART data instead of showing an error.
 
 ### 8.3 Datasets and volumes
 
-- [ ] Create, rename, set quota and reservation, compression and record size. Delete only when empty or after typing its name.
+- [ ] Create, rename, set quota and reservation, compression and record size. Delete only when empty or after typing its name. (Creating share datasets is done; rename, quota, reservation, compression, record size and delete are open.)
 - [ ] Volumes (zvols) for VMs later (M5b); created with the same guard.
 - [ ] The dataset API has no share assumptions, so M4 uses it for app datasets (see "Interfaces for M4").
 
 ### 8.4 Snapshots
 
-- [ ] Manual snapshots and schedules with retention (hourly, daily, weekly, monthly), named `pithyx-<schedule>-<utc>`.
-- [ ] Pithyx deletes only snapshots it created (D104, decided); snapshots created by the user or another tool are never pruned.
-- [ ] Holds for snapshots that must stay (pre-update snapshots in M4, snapshots a backup still needs in M6).
-- [ ] Restore a file or folder from a snapshot in Files ("Previous versions", read from `.zfs/snapshot`); rollback of a whole dataset only after typing its name, and never silently discarding newer snapshots (ZFS refuses without `-r`; Pithyx never passes `-r` without listing what goes).
-- [ ] Retention is a pure function tested with time series, including clock jumps (NTP corrections, a box that was off for months).
+- [x] Manual snapshots and schedules with retention (hourly, daily, weekly, monthly), named `pithyx-<schedule>-<utc>`.
+- [x] Pithyx deletes only snapshots it created (D104, decided); snapshots created by the user or another tool are never pruned.
+- [x] Holds for snapshots that must stay (pre-update snapshots in M4, snapshots a backup still needs in M6).
+- [x] Restore a file or folder from a snapshot in Files ("Previous versions", read from `.zfs/snapshot`); rollback of a whole dataset only after typing its name, and never silently discarding newer snapshots (ZFS refuses without `-r`; Pithyx never passes `-r` without listing what goes).
+- [x] Retention is a pure function tested with time series, including clock jumps (NTP corrections, a box that was off for months).
 
 ### 8.5 Settings page Storage
 
-- [ ] Pools with layout, disks, health and fill level; datasets; snapshots with schedules; every destructive action through a command plan dialog.
+- [ ] Pools with layout, disks, health and fill level; datasets; snapshots with schedules; every destructive action through a command plan dialog. (Everything is on the page; pool and disk actions go through plans, snapshot deletion and rollback through a typed-name confirmation of their own API, not yet a plan dialog.)
 - [ ] The Disks app from step 3 is folded into this page or removed once the page shows everything it shows (step 7 kept it).
 
 ### Test on dev01
