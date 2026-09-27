@@ -25,6 +25,57 @@ function cssModuleTypes(): Plugin {
   };
 }
 
+// The dev server sends modules uncompressed (react-dom alone is about 3 MB), which is slow over a VPN such as
+// Tailscale. Text responses are gzipped here; the daemon's API and WebSocket pass through untouched.
+function devCompression(): Plugin {
+  return {
+    name: 'vyxis-dev-compression',
+    apply: 'serve',
+    configureServer(server) {
+      server.middlewares.use((request, response, next) => {
+        const url = request.url ?? '';
+        if (
+          !/\bgzip\b/.test(request.headers['accept-encoding'] ?? '') ||
+          url.startsWith('/api') ||
+          url.startsWith('/ws')
+        ) {
+          next();
+          return;
+        }
+        const chunks: Buffer[] = [];
+        const end = response.end.bind(response);
+        const collect = (chunk: unknown) => {
+          if (typeof chunk === 'string' || chunk instanceof Uint8Array) {
+            chunks.push(Buffer.from(chunk));
+          }
+        };
+        response.write = ((chunk: unknown) => {
+          collect(chunk);
+          return true;
+        }) as typeof response.write;
+        response.end = ((chunk?: unknown) => {
+          collect(chunk);
+          const body = Buffer.concat(chunks);
+          const type = String(response.getHeader('content-type') ?? '');
+          if (
+            body.length < 1024 ||
+            response.getHeader('content-encoding') !== undefined ||
+            !/javascript|css|json|html|svg/.test(type)
+          ) {
+            return end(body);
+          }
+          const compressed = gzipSync(body, { level: 1 });
+          response.setHeader('content-encoding', 'gzip');
+          response.setHeader('content-length', compressed.length);
+          response.setHeader('vary', 'Accept-Encoding');
+          return end(compressed);
+        }) as typeof response.end;
+        next();
+      });
+    },
+  };
+}
+
 // React Aria ships its own strings for about 30 locales; keep only the languages in src/i18n.ts.
 const ariaLocales = ['en-US', 'de-DE'];
 
@@ -105,6 +156,7 @@ export default defineConfig({
     cssModuleTypes(),
     precompress(),
     bundleGraph(),
+    devCompression(),
   ],
   build: {
     rollupOptions: {
@@ -120,6 +172,8 @@ export default defineConfig({
     },
   },
   server: {
+    // Transforms the sign-in path and the desktop before the first request, not while the browser waits.
+    warmup: { clientFiles: ['./src/main.tsx', './src/desktop/Desktop.tsx'] },
     proxy: {
       '/api': { target: daemonUrl, changeOrigin: true },
       '/ws': {
