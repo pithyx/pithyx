@@ -8,10 +8,19 @@
  * apps may use it, any framework, or plain HTML and CSS.
  */
 
-/** Public token names. New names are a minor change; removing or renaming one is a major change. */
+/**
+ * Public token names. New names are a minor change; removing or renaming one is a major change. Every name says what
+ * the value is for, never what it looks like: no raw colors such as petrol or amber.
+ */
 export const themeTokenNames = [
   '--vyxis-color-background',
   '--vyxis-color-surface',
+  /** Menus, popovers and other layers above the surface. */
+  '--vyxis-color-surface-raised',
+  /** Background of a row or control under the pointer. */
+  '--vyxis-color-hover',
+  /** Background of selected rows and items, lighter than the full accent. */
+  '--vyxis-color-selected',
   '--vyxis-color-text',
   '--vyxis-color-text-muted',
   '--vyxis-color-border',

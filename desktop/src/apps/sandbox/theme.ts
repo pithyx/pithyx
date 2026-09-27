@@ -4,6 +4,9 @@ import type { Theme, ThemeTokenName } from '@vyxis/sdk';
 const SOURCES: Record<ThemeTokenName, string> = {
   '--vyxis-color-background': '--color-bg',
   '--vyxis-color-surface': '--color-surface-1',
+  '--vyxis-color-surface-raised': '--color-menu-solid',
+  '--vyxis-color-hover': '--color-surface-hover',
+  '--vyxis-color-selected': '--color-selection',
   '--vyxis-color-text': '--color-text',
   '--vyxis-color-text-muted': '--color-text-muted',
   '--vyxis-color-border': '--color-border',
