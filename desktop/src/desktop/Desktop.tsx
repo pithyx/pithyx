@@ -13,6 +13,7 @@ import { TotpSetup } from '../auth/TotpSetup';
 import { useDaemonStatus } from '../daemonStatus';
 import { showError } from '../errors/errorStore';
 import { realtime, useRealtime } from '../realtime/connection';
+import { AppSwitcher } from '../shell/AppSwitcher';
 import { DesktopIcon } from '../shell/DesktopIcon';
 import { DesktopItems, DesktopShell } from '../shell/DesktopShell';
 import { StartMenu } from '../shell/StartMenu';
@@ -21,6 +22,7 @@ import type { RunningApp, TaskbarPosition } from '../shell/types';
 import { useDismiss } from '../shell/useDismiss';
 import { cx } from '../ui/cx';
 import { Menu, MenuItem, MenuPopover, MenuSeparator, MenuTrigger } from '../ui/Menu';
+import { useBackGesture } from '../wm/backGesture';
 import { useSizeClass } from '../wm/sizeClass';
 import { dispatch, openApp, useDesktop } from '../wm/store';
 import { WindowLayer } from '../wm/WindowLayer';
@@ -179,8 +181,11 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   const [totpOpen, setTotpOpen] = useState(false);
   const [startOpen, setStartOpen] = useState(false);
   const [query, setQuery] = useState('');
+  const [switcherOpen, setSwitcherOpen] = useState(false);
   const startButton = useRef<HTMLButtonElement>(null);
   const startMenu = useRef<HTMLDivElement>(null);
+  const switcherButton = useRef<HTMLButtonElement>(null);
+  const switcher = useRef<HTMLElement>(null);
   const workspace = useWorkspaceSize();
   const running = useRunningApps();
   const focused = useDesktop((state) => state.focused);
@@ -188,6 +193,10 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   // Phones always keep the taskbar at the bottom, next to the thumb.
   const savedPosition = useDesktop((state) => state.taskbar);
   const taskbarPosition = sizeClass === 'compact' ? 'bottom' : savedPosition;
+  const activeApp = useDesktop(
+    (state) => state.focused !== null && state.windows[state.focused]?.minimized === false,
+  );
+  useBackGesture(sizeClass === 'compact' && activeApp);
   const name = user.displayName ?? user.username;
 
   // The WebSocket lives as long as the desktop; a closed session sends the user back to the login screen.
@@ -221,6 +230,12 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   useDismiss(startMenu, startButton, startOpen, (reason) => {
     closeStart(reason === 'escape');
   });
+  useDismiss(switcher, switcherButton, switcherOpen, (reason) => {
+    setSwitcherOpen(false);
+    if (reason === 'escape') {
+      switcherButton.current?.focus();
+    }
+  });
 
   function open(id: string) {
     closeStart(false);
@@ -249,6 +264,18 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
           apps={running}
           startOpen={startOpen}
           startRef={startButton}
+          switcherOpen={switcherOpen}
+          switcherRef={switcherButton}
+          onSwitcher={() => {
+            setSwitcherOpen(!switcherOpen);
+          }}
+          {...(sizeClass === 'compact'
+            ? {
+                onSwipe: (direction: 1 | -1) => {
+                  dispatch({ type: 'cycle', direction });
+                },
+              }
+            : {})}
           onStart={() => {
             if (startOpen) {
               closeStart(false);
@@ -301,6 +328,24 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
               onSignOut={() => {
                 closeStart(false);
                 logout.mutate();
+              }}
+            />
+          )}
+          {switcherOpen && (
+            <AppSwitcher
+              switcherRef={switcher}
+              position={taskbarPosition}
+              cards={running.map((entry) => ({ id: entry.id, app: entry, title: entry.name }))}
+              onOpen={(id) => {
+                setSwitcherOpen(false);
+                dispatch({ type: 'focus', id });
+              }}
+              onClose={(id) => {
+                dispatch({ type: 'close', id });
+              }}
+              onCloseAll={() => {
+                setSwitcherOpen(false);
+                dispatch({ type: 'closeAll' });
               }}
             />
           )}

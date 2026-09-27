@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Phones: apps run full screen; the app switcher in the taskbar shows every open app (tap to switch, close one or all), a horizontal swipe along the taskbar switches to the next or previous app, and the Android back gesture or browser back returns to the home screen without leaving the desktop.
+- Tablets: windows open maximized; snapping from the window menu or the keyboard puts two apps side by side.
 - Windows move by their title bar and resize from every edge and corner with live content, never below the app's minimum size and always with part of the title bar reachable. Dragging to a side edge snaps to a half (thirds on workspaces at least 2400 px wide), dragging to the top edge maximizes, a snapped or maximized window gets its free size back when pulled away, and a double click on the title bar maximizes or restores. A preview shows the snap target.
 - Window menu behind the app icon in the title bar (restore, move, size, minimize, maximize, snap left or right, close) with a keyboard move and size mode (arrow keys, Shift for single pixels, Enter, Escape), and the shortcuts Alt+Shift+Left/Right (snap), Alt+Shift+Up (maximize), Alt+Shift+Down (restore, then minimize), Alt+Shift+PageDown/PageUp (next or previous window) and Alt+Shift+Space (window menu). Keyboard actions are announced to screen readers.
 - The taskbar can sit at the bottom, top, left or right (account menu, "Taskbar position"); phones keep it at the bottom.

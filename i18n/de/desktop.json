@@ -113,7 +113,8 @@
     "title": "Geöffnete Apps",
     "closeAll": "Alle schließen",
     "close": "{name} schließen",
-    "open": "Zu {name} wechseln"
+    "open": "Zu {name} wechseln",
+    "empty": "Es sind keine Apps geöffnet."
   },
   "items": {
     "desktop": "Desktop",

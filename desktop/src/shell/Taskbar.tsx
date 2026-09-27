@@ -27,7 +27,12 @@ export interface TaskbarProps {
   userMenu?: (trigger: ReactNode) => ReactNode;
   startRef?: Ref<HTMLButtonElement>;
   switcherRef?: Ref<HTMLButtonElement>;
+  /** A horizontal swipe along the bar: 1 for the next app, -1 for the previous one. */
+  onSwipe?: (direction: 1 | -1) => void;
 }
+
+/** A swipe must cover this distance and stay mostly horizontal. */
+const SWIPE_DISTANCE = 60;
 
 /** Start button, running apps and the status area (jobs, notifications, clock, user). There is no tray. */
 export function Taskbar({
@@ -48,6 +53,7 @@ export function Taskbar({
   userMenu,
   startRef,
   switcherRef,
+  onSwipe,
 }: TaskbarProps) {
   const { t } = useTranslation();
   const time = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }).format(now);
@@ -72,7 +78,32 @@ export function Taskbar({
   );
 
   return (
-    <nav className={styles.taskbar} data-position={position} aria-label={t('taskbar.label')}>
+    <nav
+      className={styles.taskbar}
+      data-position={position}
+      aria-label={t('taskbar.label')}
+      // Capture phase: React Aria buttons stop the propagation of their pointer events.
+      onPointerDownCapture={(event) => {
+        if (onSwipe === undefined || !event.isPrimary) {
+          return;
+        }
+        const start = { x: event.clientX, y: event.clientY };
+        // Listening on the document instead of capturing keeps the buttons in the bar pressable.
+        document.addEventListener(
+          'pointerup',
+          (up) => {
+            const dx = up.clientX - start.x;
+            if (
+              Math.abs(dx) >= SWIPE_DISTANCE &&
+              Math.abs(up.clientY - start.y) < Math.abs(dx) / 2
+            ) {
+              onSwipe(dx < 0 ? 1 : -1);
+            }
+          },
+          { once: true, capture: true },
+        );
+      }}
+    >
       <AriaButton
         ref={startRef}
         className={cx(styles.button, styles.start)}
@@ -107,6 +138,7 @@ export function Taskbar({
         aria-label={t('taskbar.switcher', { count: apps.length })}
         aria-expanded={switcherOpen}
         onPress={() => onSwitcher?.()}
+        data-active={switcherOpen || undefined}
       >
         <IconLayoutGrid size={22} stroke={1.75} />
         {apps.length > 0 && (

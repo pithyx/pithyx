@@ -113,7 +113,8 @@
     "title": "Open apps",
     "closeAll": "Close all",
     "close": "Close {name}",
-    "open": "Switch to {name}"
+    "open": "Switch to {name}",
+    "empty": "No apps are open."
   },
   "items": {
     "desktop": "Desktop",
