@@ -30,6 +30,16 @@ function row(page: Page, name: string): Locator {
   return grid(page).getByRole('row', { name: new RegExp(`^${name.replace(/[.()]/g, '\\$&')}`) });
 }
 
+/** Goes into a folder of the list and waits until Files shows it, so keys go to the new folder. */
+async function enter(page: Page, name: string) {
+  await row(page, name).dblclick();
+  await expect(
+    filesWindow(page)
+      .getByRole('navigation', { name: 'Path' })
+      .getByRole('button', { name, exact: true }),
+  ).toHaveAttribute('aria-current', 'page');
+}
+
 /** Opens Files and goes into a folder at the share root. */
 async function openFolder(page: Page, folder: string) {
   await signInAsAdmin(page);
@@ -80,15 +90,16 @@ test('copies and moves with the clipboard and asks about a name that exists', as
 
   await row(page, 'a.txt').click();
   await page.keyboard.press('Control+x');
-  await row(page, 'target').dblclick();
+  await enter(page, 'target');
   await page.keyboard.press('Control+v');
   await expect(row(page, 'a.txt')).toBeVisible();
 
   await page.keyboard.press('Backspace');
+  await expect(row(page, 'target')).toBeVisible();
   await expect(row(page, 'a.txt')).toHaveCount(0);
   await row(page, 'b.txt').click();
   await page.keyboard.press('Control+c');
-  await row(page, 'target').dblclick();
+  await enter(page, 'target');
   await page.keyboard.press('Control+v');
   const dialog = page.getByRole('dialog', { name: 'Names already exist' });
   await expect(dialog).toBeVisible();
