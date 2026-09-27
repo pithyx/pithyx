@@ -143,8 +143,8 @@
       "recommend": {
         "single": "Mit einer Platte gibt es keinen Schutz: Fällt sie aus, sind die Daten weg. Halte eine Sicherung bereit.",
         "mirror": "Für {count} Platten empfehlen wir einen Spiegel: Jede Platte enthält alles, deshalb dürfen alle bis auf eine ausfallen.",
-        "raidz1": "Für {count} Platten empfehlen wir RAID-Z1: Eine Platte darf ausfallen, alle anderen speichern Daten. Wie Synology SHR mit einer Platte Schutz.",
-        "raidz2": "Für {count} Platten empfehlen wir RAID-Z2: Zwei Platten dürfen ausfallen. Das zählt, weil die Wiederherstellung großer Platten lange dauert. Wie Synology SHR-2.",
+        "raidz1": "Für {count} Platten empfehlen wir RAID-Z1: Eine Platte darf ausfallen, alle anderen speichern Daten. Das funktioniert wie RAID 5.",
+        "raidz2": "Für {count} Platten empfehlen wir RAID-Z2: Zwei Platten dürfen ausfallen. Das zählt, weil die Wiederherstellung großer Platten lange dauert. Das funktioniert wie RAID 6.",
         "raidz3": "Wir empfehlen RAID-Z3.",
         "mirrors": "Wir empfehlen Spiegelpaare.",
         "stripe": "Wir empfehlen einen Stripe."

@@ -143,8 +143,8 @@
       "recommend": {
         "single": "With one disk there is no protection: when it fails, the data is gone. Keep a backup.",
         "mirror": "For {count} disks we recommend a mirror: every disk holds everything, so all but one may fail.",
-        "raidz1": "For {count} disks we recommend RAID-Z1: one disk may fail, and all others hold data. Like Synology SHR with one disk of protection.",
-        "raidz2": "For {count} disks we recommend RAID-Z2: two disks may fail, which matters because rebuilding large disks takes long. Like Synology SHR-2.",
+        "raidz1": "For {count} disks we recommend RAID-Z1: one disk may fail, and all others hold data. It works like RAID 5.",
+        "raidz2": "For {count} disks we recommend RAID-Z2: two disks may fail, which matters because rebuilding large disks takes long. It works like RAID 6.",
         "raidz3": "We recommend RAID-Z3.",
         "mirrors": "We recommend mirror pairs.",
         "stripe": "We recommend a stripe."

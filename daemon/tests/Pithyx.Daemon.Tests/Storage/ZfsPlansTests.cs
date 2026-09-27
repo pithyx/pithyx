@@ -64,6 +64,11 @@ public sealed class ZfsPlansTests
         Assert.Equal([["zfs", "create", "tank/pithyx/shares/Media"]], ZfsPlans.CreateShareDataset("tank", "Media").Select(Line));
         Assert.Equal(ErrorCodes.StorageDatasetNameInvalid, Assert.Throws<PithyxException>(() => ZfsPlans.CreateShareDataset("tank", "my media")).Code);
         Assert.Equal(ErrorCodes.StorageDatasetNameInvalid, Assert.Throws<PithyxException>(() => ZfsPlans.CreateShareDataset("tank", "../x")).Code);
+        // Commands never pass through a shell, and no name may look like an option.
+        foreach (var hostile in new[] { "-o", "--help", "a;reboot", "$(reboot)", "a b", "a/b", "a@b", "`id`" })
+        {
+            Assert.Equal(ErrorCodes.StorageDatasetNameInvalid, Assert.Throws<PithyxException>(() => ZfsPlans.CreateShareDataset("tank", hostile)).Code);
+        }
     }
 
     [Theory]
@@ -107,6 +112,10 @@ public sealed class ZfsPlansTests
     [InlineData("c0t0")]
     [InlineData("tank space")]
     [InlineData("a23456789012345678901234567890123")]
+    [InlineData("-f")]
+    [InlineData("tank;reboot")]
+    [InlineData("$(reboot)")]
+    [InlineData("tank\nmirror")]
     public void InvalidNamesAreRefused(string name) =>
         Assert.Equal(ErrorCodes.StoragePoolNameInvalid, Assert.Throws<PithyxException>(() => ZfsPlans.ValidateName(name, [])).Code);
 

@@ -189,7 +189,9 @@ public sealed class StorageHealthApiTests : IAsyncLifetime
         Assert.Empty(Messages(user, "snap"));
 
         await SetPoolsAsync(Pool(state: "DEGRADED", capacity: 85));
-        Assert.Contains(true, Messages(admin, "event").Select(Muted));
+        // The health monitor may see the change first and publish it a moment later; one Publish reaches every
+        // connection at once, so after the administrator's event the others have theirs too.
+        Assert.Contains(true, (await EventsAsync(admin)).Select(Muted));
         Assert.DoesNotContain(true, Messages(second, "event").Select(Muted));
         Assert.Empty(Messages(user, "event"));
     }
@@ -206,6 +208,20 @@ public sealed class StorageHealthApiTests : IAsyncLifetime
             }
         }
         return messages;
+    }
+
+    private static async Task<List<JsonElement>> EventsAsync(TopicHub.Connection connection)
+    {
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(Token);
+        timeout.CancelAfter(TimeSpan.FromSeconds(10));
+        while (true)
+        {
+            var message = JsonDocument.Parse(await connection.Outbox.Reader.ReadAsync(timeout.Token)).RootElement.Clone();
+            if (message.GetProperty("type").GetString() == "event")
+            {
+                return [message, .. Messages(connection, "event")];
+            }
+        }
     }
 
     private static bool Muted(JsonElement message) =>

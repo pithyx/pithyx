@@ -114,6 +114,7 @@ website/  landing page and user docs (Starlight, Markdown)
 - English is the reference language. German must exist from day one.
 - Plurals and parameters use ICU syntax.
 - German texts use informal "du", consistently.
+- Texts never name companies or their products (no other NAS vendors); compare with neutral terms such as RAID 5. Open-source projects (Jellyfin, Immich) may be named.
 
 ## Tracing and logging
 
