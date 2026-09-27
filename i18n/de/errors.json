@@ -46,10 +46,19 @@
     "device": {
       "not_found": "Für dieses Gerät wurde kein gespeicherter Desktop gefunden. Er ist vielleicht abgelaufen."
     },
+    "item": {
+      "conflict": "Dieses Desktop-Objekt wurde inzwischen auf einem anderen Gerät geändert.",
+      "invalid": "Das Desktop-Objekt konnte nicht gespeichert werden, weil sein Format unbekannt ist.",
+      "limit_reached": "Der Desktop ist voll. Er fasst höchstens {max} Objekte.",
+      "not_found": "Dieses Desktop-Objekt gibt es nicht mehr. Es wurde vielleicht auf einem anderen Gerät gelöscht."
+    },
     "layout": {
       "conflict": "Das Desktop-Layout wurde inzwischen aus einem anderen Tab gespeichert.",
       "invalid": "Das Desktop-Layout konnte nicht gespeichert werden, weil sein Format unbekannt ist.",
       "too_large": "Das Desktop-Layout ist zu groß zum Speichern. Gespeichert werden höchstens {maxWindows} Fenster und {maxAppDataKb} KB App-Daten."
+    },
+    "note": {
+      "too_long": "Die Notiz ist zu lang. Eine Notiz fasst höchstens {maxLength} Zeichen."
     }
   },
   "realtime": {

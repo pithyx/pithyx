@@ -1,0 +1,119 @@
+/* The desktop items sit on the workspace below every window (z-index of the windows starts at --z-windows). */
+.layer {
+  position: absolute;
+  z-index: var(--z-desktop);
+  inset: 0;
+  touch-action: none;
+}
+
+.icons {
+  position: absolute;
+  inset: 0;
+  outline: none;
+}
+
+.icons[data-focus-visible] {
+  box-shadow: inset 0 0 0 2px var(--color-desktop-label);
+}
+
+.grid .icon {
+  position: absolute;
+  height: calc(var(--desktop-cell-height) - var(--space-2));
+  transition: none;
+}
+
+.icon[data-dragging] {
+  z-index: 1;
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.moving {
+  outline: 2px dashed var(--color-desktop-label);
+  outline-offset: 2px;
+}
+
+.frame {
+  position: absolute;
+  border: 1px solid var(--color-desktop-label);
+  background: color-mix(in oklab, var(--color-accent) 25%, transparent);
+  pointer-events: none;
+}
+
+.notes {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.note {
+  pointer-events: auto;
+}
+
+.freeNote {
+  transform: none;
+}
+
+.note[data-dragging] {
+  z-index: 1;
+  box-shadow: var(--shadow-4, var(--shadow-3));
+}
+
+.grip {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  margin-inline-end: auto;
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: transparent;
+  color: var(--color-note-text);
+  cursor: grab;
+  opacity: 0.7;
+}
+
+.grip:focus-visible {
+  outline: 2px solid var(--color-focus);
+  opacity: 1;
+}
+
+/* An empty anchor at the pointer for the context menu. */
+.anchor {
+  position: fixed;
+  width: 0;
+  height: 0;
+}
+
+/* Compact: a home screen with icons in rows of four and the notes below them. */
+.home {
+  position: static;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-content: start;
+  justify-items: center;
+  gap: var(--space-4) var(--space-1);
+  padding: var(--space-5) var(--space-3);
+}
+
+.home .icon {
+  width: 100%;
+  max-width: var(--desktop-icon-width);
+  padding-inline: 0;
+}
+
+@media (max-width: 599px) {
+  .layer {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    overflow-y: auto;
+    touch-action: pan-y;
+  }
+
+  .notes {
+    position: static;
+    display: grid;
+    gap: var(--space-3);
+    padding-bottom: var(--space-4);
+  }
+}

@@ -71,7 +71,7 @@ test.describe('phone', () => {
 
   test('the app switcher has no accessibility violations', async ({ page }) => {
     await signInAsAdmin(page);
-    await page.getByRole('button', { name: 'Disks, shortcut' }).tap();
+    await page.getByRole('option', { name: 'Disks, shortcut' }).tap();
     await page
       .getByRole('navigation', { name: 'Taskbar' })
       .getByRole('button', { name: /Switch apps/ })

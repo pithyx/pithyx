@@ -4,6 +4,7 @@ using Microsoft.Data.Sqlite;
 using OtpNet;
 using Vyxis.Daemon.Database;
 using Vyxis.Daemon.Errors;
+using Vyxis.Daemon.Layouts;
 
 namespace Vyxis.Daemon.Auth;
 
@@ -56,6 +57,7 @@ public sealed class AuthService(SqliteConnectionFactory connections, PasswordHas
             throw new VyxisException(ErrorCodes.AuthSetupAlreadyDone);
         }
         await SetSettingAsync(connection, transaction, RecoveryKeySetting, recoveryKeyHash);
+        await DesktopItemService.SeedDefaultsAsync(connection, transaction, id.Value, now);
         await transaction.CommitAsync(cancellationToken);
         return (new UserInfo(id.Value, username, displayName, IsAdmin: true, TotpEnabled: false), recoveryKey);
     }

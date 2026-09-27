@@ -31,9 +31,27 @@ export async function signInAsAdmin(page: Page) {
 
 /** Opens a core app from its desktop shortcut. */
 export async function openFromDesktop(page: Page, name: string) {
-  await page.getByRole('button', { name: `${name}, shortcut` }).dblclick();
+  await page.getByRole('option', { name: `${name}, shortcut` }).dblclick();
 }
 
 export function appWindow(page: Page, name: string) {
   return page.getByRole('region', { name, exact: true });
+}
+
+/** Puts the administrator's desktop items back to the two default shortcuts; they are shared by every spec. */
+export async function resetDesktopItems(page: Page) {
+  const headers = { 'X-Vyxis-Request': '1' };
+  const items = (await (await page.request.get('/api/desktop/items')).json()) as { id: number }[];
+  if (items.length > 0) {
+    await page.request.post('/api/desktop/items/delete', {
+      headers,
+      data: { ids: items.map((item) => item.id) },
+    });
+  }
+  for (const [row, app] of ['disks', 'about'].entries()) {
+    await page.request.post('/api/desktop/items', {
+      headers,
+      data: { kind: 'shortcut', app, column: 0, row },
+    });
+  }
 }

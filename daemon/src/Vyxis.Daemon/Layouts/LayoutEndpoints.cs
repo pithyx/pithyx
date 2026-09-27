@@ -18,6 +18,7 @@ public static class LayoutEndpoints
     public static IServiceCollection AddVyxisLayouts(this IServiceCollection services)
     {
         services.AddSingleton<LayoutService>();
+        services.AddSingleton<DesktopItemService>();
         services.AddHostedService<LayoutCleanupService>();
         return services;
     }
@@ -37,6 +38,31 @@ public static class LayoutEndpoints
         desktop.MapGet("/devices", ListDevicesAsync).WithName("ListDesktopDevices");
         desktop.MapPost("/layout/copy", CopyAsync).WithName("CopyDesktopLayout");
         desktop.MapPut("/preferences/{appId}", SetPreferenceAsync).WithName("SetWindowPreference");
+
+        desktop.MapGet("/items", ListItemsAsync).WithName("ListDesktopItems");
+        desktop.MapPost("/items", CreateItemAsync).WithName("CreateDesktopItem");
+        desktop.MapPatch("/items", ChangeItemsAsync)
+            .WithName("ChangeDesktopItems")
+            .WithDescription(
+                "Changes several items at once, all or none. Every change names the version it builds on; if an item "
+                + "changed in between (for example on another device), the answer is 412 with desktop.item.conflict and "
+                + "the item's id and current version in params. Returns the changed items with their new versions.");
+        desktop.MapPost("/items/delete", DeleteItemsAsync).WithName("DeleteDesktopItems");
+    }
+
+    private static async Task<Ok<IReadOnlyList<DesktopItem>>> ListItemsAsync(DesktopItemService items, HttpContext context, CancellationToken cancellationToken) =>
+        TypedResults.Ok(await items.ListAsync(CurrentUser.Id(context.User), cancellationToken));
+
+    private static async Task<Created<DesktopItem>> CreateItemAsync(NewDesktopItem item, DesktopItemService items, HttpContext context, CancellationToken cancellationToken) =>
+        TypedResults.Created((string?)null, await items.CreateAsync(CurrentUser.Id(context.User), item, cancellationToken));
+
+    private static async Task<Ok<IReadOnlyList<DesktopItem>>> ChangeItemsAsync(IReadOnlyList<DesktopItemChange> changes, DesktopItemService items, HttpContext context, CancellationToken cancellationToken) =>
+        TypedResults.Ok(await items.ChangeAsync(CurrentUser.Id(context.User), changes, cancellationToken));
+
+    private static async Task<NoContent> DeleteItemsAsync(DeleteDesktopItemsRequest request, DesktopItemService items, HttpContext context, CancellationToken cancellationToken)
+    {
+        await items.DeleteAsync(CurrentUser.Id(context.User), request.Ids, cancellationToken);
+        return TypedResults.NoContent();
     }
 
     // Reading needs no device id: a browser without one has no layout yet.

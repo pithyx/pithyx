@@ -39,6 +39,10 @@
     "restoreFailed": {
       "title": "Gespeicherte Fenster nicht geladen",
       "body": "Der Daemon hat nicht geantwortet. Änderungen an diesem Desktop werden erst nach dem Neuladen der Seite gespeichert."
+    },
+    "noteKept": {
+      "title": "Notiztext behalten",
+      "body": "{count, plural, one {Eine Notiz wurde auf einem anderen Gerät geändert, während du darauf geschrieben hast. Dein Text steht auf einer neuen Notiz daneben.} other {# Notizen wurden auf einem anderen Gerät geändert, während du darauf geschrieben hast. Deine Texte stehen auf neuen Notizen daneben.}}"
     }
   }
 }
