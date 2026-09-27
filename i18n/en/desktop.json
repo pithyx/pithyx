@@ -28,7 +28,8 @@
     "requestId": "Request ID",
     "copy": "Copy request ID",
     "close": "Close",
-    "network": "The daemon is not reachable. Check the connection and try again."
+    "network": "The daemon is not reachable. Check the connection and try again.",
+    "copyManually": "Selected: press Ctrl+C to copy."
   },
   "realtime": {
     "reconnecting": "Connection lost. Reconnecting…",
@@ -52,7 +53,6 @@
     "switcher": "{count, plural, one {Switch apps, # open} other {Switch apps, # open}}",
     "jobs": "{count, plural, one {# running task} other {# running tasks}}",
     "notifications": "{count, plural, =0 {Notifications} one {Notifications, # unread} other {Notifications, # unread}}",
-    "userMenu": "Account menu for {name}",
     "position": {
       "bottom": "Bottom",
       "top": "Top",
@@ -78,7 +78,8 @@
     "restart": "Restart",
     "shutDown": "Shut down",
     "settingsPath": "Settings › {section}",
-    "appDetail": "App"
+    "appDetail": "App",
+    "userMenu": "Account menu for {name}"
   },
   "window": {
     "minimize": "Minimize",

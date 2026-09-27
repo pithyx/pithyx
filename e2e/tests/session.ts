@@ -34,6 +34,16 @@ export async function openFromDesktop(page: Page, name: string) {
   await page.getByRole('option', { name: `${name}, shortcut` }).dblclick();
 }
 
+/** Opens the account menu from the profile at the bottom of the start menu. */
+export async function openAccountMenu(page: Page, name = admin.displayName) {
+  const start = page.getByRole('dialog', { name: 'Start menu' });
+  if (!(await start.isVisible())) {
+    await page.getByRole('button', { name: 'Start' }).click();
+  }
+  await start.getByRole('button', { name: `Account menu for ${name}` }).click();
+  await expect(page.getByRole('menu', { name: `Account menu for ${name}` })).toBeVisible();
+}
+
 /** Opens an app from the start menu; apps without a desktop shortcut open this way. */
 export async function openFromStart(page: Page, name: string) {
   await page.getByRole('button', { name: 'Start' }).click();

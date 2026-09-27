@@ -64,11 +64,12 @@ type User = components['schemas']['UserInfo'];
 const TASKBAR_POSITIONS: readonly TaskbarPosition[] = ['bottom', 'top', 'left', 'right'];
 
 /** Where a popover opens from the status area, so it never covers the taskbar. */
+// The account menu opens from the profile in the start menu, which sits next to the taskbar.
 const POPOVER_PLACEMENT = {
-  bottom: 'top end',
-  top: 'bottom end',
-  left: 'end bottom',
-  right: 'start bottom',
+  bottom: 'top start',
+  top: 'bottom start',
+  left: 'top start',
+  right: 'top start',
 } as const;
 
 type DeviceLayout = components['schemas']['DeviceLayout'];
@@ -153,6 +154,7 @@ function UserMenu({
   canMoveTaskbar,
   onTwoFactor,
   onSignOut,
+  onDone,
 }: {
   trigger: ReactNode;
   name: string;
@@ -160,6 +162,8 @@ function UserMenu({
   canMoveTaskbar: boolean;
   onTwoFactor: () => void;
   onSignOut: () => void;
+  /** After a choice that changes the desktop (another layout, a taskbar position). */
+  onDone: () => void;
 }) {
   const { t } = useTranslation();
   const status = useDaemonStatus();
@@ -179,7 +183,7 @@ function UserMenu({
       {trigger}
       <MenuPopover placement={POPOVER_PLACEMENT[position]}>
         <Menu
-          aria-label={t('taskbar.userMenu', { name })}
+          aria-label={t('start.userMenu', { name })}
           onAction={(key) => {
             if (key === 'two-factor') {
               onTwoFactor();
@@ -212,6 +216,7 @@ function UserMenu({
                 <DevicesMenu
                   onPick={(device) => {
                     copy.mutate(device);
+                    onDone();
                   }}
                 />
               </MenuPopover>
@@ -230,6 +235,7 @@ function UserMenu({
                       const next = TASKBAR_POSITIONS.find((entry) => entry === key);
                       if (next !== undefined) {
                         dispatch({ type: 'setTaskbar', position: next });
+                        onDone();
                       }
                     }}
                   >
@@ -465,21 +471,6 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
             unread={0}
             now={now}
             locale={i18n.language}
-            user={{ name, initials: initialsOf(name) }}
-            userMenu={(trigger) => (
-              <UserMenu
-                trigger={trigger}
-                name={name}
-                position={taskbarPosition}
-                canMoveTaskbar={sizeClass !== 'compact'}
-                onTwoFactor={() => {
-                  setTotpOpen(true);
-                }}
-                onSignOut={() => {
-                  logout.mutate();
-                }}
-              />
-            )}
           />
         }
         overlays={
@@ -498,6 +489,25 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
                   initials: initialsOf(name),
                   role: user.isAdmin ? t('roles.administrator') : t('roles.user'),
                 }}
+                userMenu={(trigger) => (
+                  <UserMenu
+                    trigger={trigger}
+                    name={name}
+                    position={taskbarPosition}
+                    canMoveTaskbar={sizeClass !== 'compact'}
+                    onTwoFactor={() => {
+                      closeStart(false);
+                      setTotpOpen(true);
+                    }}
+                    onSignOut={() => {
+                      closeStart(false);
+                      logout.mutate();
+                    }}
+                    onDone={() => {
+                      closeStart(false);
+                    }}
+                  />
+                )}
                 power={false}
                 onOpen={open}
                 onSignOut={() => {

@@ -95,6 +95,7 @@ website/  landing page and user docs (Starlight, Markdown)
 - Fixed alternative port 8994. Never change it.
 - HTTPS with a self-signed certificate generated at install by default. A settings wizard makes it trusted: download the box's local CA with per-OS instructions, or use the owner's own domain with a Let's Encrypt wildcard certificate via DNS-01.
 - Everything must work on the untrusted default. Passkeys and the service worker are enabled only once the certificate is trusted.
+- The UI never assumes a secure context: it must work fully over plain HTTP by IP address and with the untrusted self-signed certificate. APIs that need one (`crypto.randomUUID`, `crypto.subtle`, the Clipboard API, service workers, WebAuthn, notifications) are reached only through `desktop/src/platform/browser.ts`, which falls back or reports that they are missing; ESLint refuses them elsewhere. Features that cannot work without one (passkeys, the service worker) are optional and switch on only after the trust step.
 - No subdomains are required for the core system. Existing web apps installed as containers keep their own ports and open in desktop windows.
 - IPv6 is supported everywhere IPv4 is.
 

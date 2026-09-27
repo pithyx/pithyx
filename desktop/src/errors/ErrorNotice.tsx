@@ -1,9 +1,10 @@
 import type { TFunction } from 'i18next';
+import { useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import buttonStyles from '../ui/Button.module.css';
 import { cx } from '../ui/cx';
 import { IconAlertCircle, IconCopy } from '../ui/icons';
-import { copyText } from './copyText';
+import { copyText } from '../platform/browser';
 import type { DescribedError } from './describe';
 import styles from './ErrorNotice.module.css';
 
@@ -26,10 +27,14 @@ export function useErrorMessage(error: DescribedError): string {
 /** The request id with a copy button, so support can find the request in the logs. Plain elements only. */
 export function RequestId({ requestId }: { requestId: string }) {
   const { t } = useTranslation();
+  const value = useRef<HTMLElement>(null);
+  const [manually, setManually] = useState(false);
   return (
     <div className={styles.request}>
       <span className={styles.requestLabel}>{t('error.requestId')}</span>
-      <code className={styles.requestValue}>{requestId}</code>
+      <code ref={value} className={styles.requestValue}>
+        {requestId}
+      </code>
       <button
         type="button"
         data-native
@@ -41,10 +46,17 @@ export function RequestId({ requestId }: { requestId: string }) {
         )}
         aria-label={t('error.copy')}
         title={t('error.copy')}
-        onClick={() => void copyText(requestId)}
+        onClick={() => {
+          void copyText(requestId, value.current).then((done) => {
+            setManually(!done);
+          });
+        }}
       >
         <IconCopy size={16} stroke={1.75} />
       </button>
+      <span className={styles.requestHint} role="status">
+        {manually ? t('error.copyManually') : ''}
+      </span>
     </div>
   );
 }

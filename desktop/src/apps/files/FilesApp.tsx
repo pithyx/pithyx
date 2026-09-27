@@ -28,6 +28,7 @@ import {
   IconUpload,
   IconX,
 } from '../../ui/icons';
+import { randomId } from '../../platform/browser';
 import { setClipboard, useFilesClipboard } from './clipboard';
 import { defaultAction } from './defaultAction';
 import styles from './FilesApp.module.css';
@@ -324,7 +325,7 @@ export function FilesApp({ app }: { app: VyxisApp }) {
     }
     const conflicts: File[] = [];
     for (const file of files) {
-      const id = crypto.randomUUID();
+      const id = randomId();
       const tried = new Set([file.name]);
       let name = file.name;
       transfers.addUpload({ id, name, loaded: 0, total: file.size });

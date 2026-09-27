@@ -82,6 +82,9 @@ test('sign in, work with windows and sign out with the keyboard only', async ({ 
   });
 
   await test.step('sign out from the account menu', async () => {
+    await tabTo(page, 'Start');
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('dialog', { name: 'Start menu' })).toBeVisible();
     await tabTo(page, 'Account menu for Ada Admin');
     await page.keyboard.press('Enter');
     await expect(page.getByRole('menu', { name: 'Account menu for Ada Admin' })).toBeVisible();

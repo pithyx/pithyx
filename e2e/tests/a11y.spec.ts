@@ -3,7 +3,13 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures';
-import { appWindow, openFromDesktop, openFromStart, signInAsAdmin } from './session';
+import {
+  appWindow,
+  openAccountMenu,
+  openFromDesktop,
+  openFromStart,
+  signInAsAdmin,
+} from './session';
 
 // WCAG 2.2 AA (desktop/CLAUDE.md). Contrast of the tokens is checked in desktop/src/theme/contrast.test.ts as well.
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
@@ -63,7 +69,7 @@ test('the desktop with windows, menus and the start menu has no accessibility vi
   expect(await violations(page)).toEqual([]);
   await page.keyboard.press('Escape');
 
-  await page.getByRole('button', { name: 'Account menu for Ada Admin' }).click();
+  await openAccountMenu(page);
   await expect(page.getByRole('menu', { name: 'Account menu for Ada Admin' })).toBeVisible();
   expect(await violations(page)).toEqual([]);
 });
@@ -116,6 +122,18 @@ test.describe('phone', () => {
     expect(await violations(page)).toEqual([]);
     await files.getByRole('button', { name: 'Shares and recycle bin' }).tap();
     await expect(files.getByRole('navigation', { name: 'Shares and recycle bin' })).toBeVisible();
+    expect(await violations(page)).toEqual([]);
+  });
+
+  test('the account menu opens from the start menu by touch', async ({ page }) => {
+    await signInAsAdmin(page);
+    await page.getByRole('button', { name: 'Start' }).tap();
+    await page
+      .getByRole('dialog', { name: 'Start menu' })
+      .getByRole('button', { name: 'Account menu for Ada Admin' })
+      .tap();
+    await expect(page.getByRole('menu', { name: 'Account menu for Ada Admin' })).toBeVisible();
+    await expect(page.getByRole('menuitem', { name: 'Two-factor authentication' })).toBeVisible();
     expect(await violations(page)).toEqual([]);
   });
 });

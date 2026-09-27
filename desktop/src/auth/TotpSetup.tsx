@@ -1,12 +1,12 @@
 import { IconCopy, IconShieldLock } from '../ui/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { unwrap, type components } from '@vyxis/api-client';
-import type { SyntheticEvent } from 'react';
+import { useRef, useState, type SyntheticEvent } from 'react';
 import { Form } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { queryKeys } from '../api/queries';
-import { copyText } from '../errors/copyText';
+import { copyText } from '../platform/browser';
 import { describeError } from '../errors/describe';
 import { ErrorNotice } from '../errors/ErrorNotice';
 import { field } from '../forms';
@@ -54,6 +54,8 @@ export function TotpSetup({
 }) {
   const { t } = useTranslation('auth');
   const queryClient = useQueryClient();
+  const codeList = useRef<HTMLUListElement>(null);
+  const [copyManually, setCopyManually] = useState(false);
 
   const enroll = useMutation({
     mutationFn: async () => unwrap(await api.POST('/api/auth/totp/enroll')),
@@ -98,17 +100,26 @@ export function TotpSetup({
       <>
         <h3 className={styles.subtitle}>{t('totpSetup.recoveryCodesTitle')}</h3>
         <p>{t('totpSetup.recoveryCodesIntro')}</p>
-        <ul className={styles.codes}>
+        <ul ref={codeList} className={styles.codes}>
           {codes.map((code) => (
             <li key={code}>
               <code>{code}</code>
             </li>
           ))}
         </ul>
-        <Button onPress={() => void copyText(codes.join('\n'))}>
+        <Button
+          onPress={() => {
+            void copyText(codes.join('\n'), codeList.current).then((done) => {
+              setCopyManually(!done);
+            });
+          }}
+        >
           <IconCopy size={18} stroke={1.75} aria-hidden />
           {t('totpSetup.copyCodes')}
         </Button>
+        <p className={styles.copyHint} role="status">
+          {copyManually ? t('totpSetup.copyManually') : ''}
+        </p>
       </>
     );
   } else if (user.totpEnabled) {

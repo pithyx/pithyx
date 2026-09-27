@@ -1,6 +1,12 @@
 import { type Page } from '@playwright/test';
 import { expect, test } from './fixtures';
-import { appWindow, openFromDesktop, openFromStart, signInAsAdmin } from './session';
+import {
+  appWindow,
+  openAccountMenu,
+  openFromDesktop,
+  openFromStart,
+  signInAsAdmin,
+} from './session';
 
 async function openDemo(page: Page) {
   // The demo has no desktop shortcut; new users only get the default ones.
@@ -76,7 +82,7 @@ test('lifecycle events reach the app: focus, blur, minimize, restore, theme and 
   await expect(events).toContainText('themeChange');
   await expect(app.locator('html')).toHaveAttribute('data-vyxis-theme', 'dark');
 
-  await page.getByRole('button', { name: 'Account menu for Ada Admin' }).click();
+  await openAccountMenu(page);
   await page.getByRole('menuitem', { name: 'Language' }).click();
   await page.getByRole('menuitemradio', { name: 'Deutsch' }).click();
   await expect(app.getByRole('heading', { name: 'SDK-Demo' })).toBeVisible();

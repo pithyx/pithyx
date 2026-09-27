@@ -8,6 +8,12 @@ import { defineConfig, devices } from '@playwright/test';
 process.env.VYXIS_E2E_DATA ??= mkdtempSync(join(tmpdir(), 'vyxis-e2e-'));
 const dataDirectory = process.env.VYXIS_E2E_DATA;
 
+// Chromium resolves vyxis.test to this machine, so the daemon is reached at an origin that is not a secure context.
+const insecureOrigin = {
+  baseURL: 'http://vyxis.test:8994',
+  launchOptions: { args: ['--host-resolver-rules=MAP vyxis.test 127.0.0.1'] },
+};
+
 export default defineConfig({
   testDir: 'tests',
   fullyParallel: false,
@@ -23,11 +29,22 @@ export default defineConfig({
     trace: 'retain-on-failure',
   },
   projects: [
-    // The first-run flow needs the fresh database; every other spec signs in as the administrator it created.
-    { name: 'first-run', testMatch: 'auth.spec.ts', use: { ...devices['Desktop Chrome'] } },
+    // The first-run flow needs the fresh database; every other spec signs in as the administrator it created. It runs
+    // on a host name that is not localhost, like a box reached by its address over plain HTTP: no secure context.
+    {
+      name: 'first-run',
+      testMatch: 'auth.spec.ts',
+      use: { ...devices['Desktop Chrome'], ...insecureOrigin },
+    },
+    {
+      name: 'insecure-origin',
+      testMatch: 'insecure.spec.ts',
+      dependencies: ['first-run'],
+      use: { ...devices['Desktop Chrome'], ...insecureOrigin },
+    },
     {
       name: 'chromium',
-      testIgnore: 'auth.spec.ts',
+      testIgnore: ['auth.spec.ts', 'insecure.spec.ts'],
       dependencies: ['first-run'],
       use: { ...devices['Desktop Chrome'] },
     },
