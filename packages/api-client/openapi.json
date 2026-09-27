@@ -2200,6 +2200,287 @@
           }
         }
       }
+    },
+    "/api/storage/alerts": {
+      "get": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Current storage alerts with the caller's mute flags, and the SMART state of every disk; live through the storage/alerts topic.",
+        "operationId": "GetStorageAlerts",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageHealth"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/alerts/{key}/mute": {
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Hides a current alert for the caller until it goes away or becomes more severe. Alerts cannot be deleted.",
+        "operationId": "MuteStorageAlert",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageHealth"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Shows a muted alert again.",
+        "operationId": "UnmuteStorageAlert",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageHealth"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/pools/{pool}/scrub": {
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Starts a scrub of the pool, or resumes a paused one, and returns at once; progress arrives on storage/pools.",
+        "operationId": "StartScrub",
+        "parameters": [
+          {
+            "name": "pool",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Stops the running scrub; the next one starts from the beginning.",
+        "operationId": "StopScrub",
+        "parameters": [
+          {
+            "name": "pool",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/pools/{pool}/scrub/pause": {
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Pauses the running scrub; starting it again resumes where it stopped.",
+        "operationId": "PauseScrub",
+        "parameters": [
+          {
+            "name": "pool",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/schedules": {
+      "get": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Scrub schedules per pool and the SMART self-test schedules, with their last and next runs.",
+        "operationId": "GetStorageSchedules",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageScheduleList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Sets how often a pool is scrubbed or the disks run a self-test: off, weekly or monthly.",
+        "operationId": "SetStorageSchedule",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StorageScheduleUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageScheduleList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2909,6 +3190,7 @@
           "request.media_type.unsupported",
           "request.method.not_allowed",
           "request.route.not_found",
+          "storage.alert.not_found",
           "storage.command.failed",
           "storage.dataset.exists",
           "storage.dataset.name_invalid",
@@ -2926,6 +3208,9 @@
           "storage.pool.name_mismatch",
           "storage.pool.name_taken",
           "storage.pool.not_found",
+          "storage.schedule.invalid",
+          "storage.scrub.not_running",
+          "storage.scrub.running",
           "storage.snapshot.confirmation_mismatch",
           "storage.snapshot.dataset_not_found",
           "storage.snapshot.exists",
@@ -4123,6 +4408,123 @@
         },
         "description": "A share the user can use."
       },
+      "SmartReport": {
+        "required": [
+          "diskId",
+          "state",
+          "reason",
+          "asleep",
+          "temperatureCelsius",
+          "powerOnHours",
+          "reallocatedSectors",
+          "pendingSectors",
+          "uncorrectableSectors",
+          "mediaErrors",
+          "criticalWarning",
+          "lastSelfTest",
+          "readAt",
+          "checkedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "diskId": {
+            "type": "string",
+            "description": "The disk's id."
+          },
+          "state": {
+            "type": "string",
+            "description": "`passed`, `warning` (reallocated, pending or uncorrectable sectors, media errors or a failed self-test),\n`failed` (the drive predicts its failure), `unsupported` (no SMART, see Reason) or\n`unknown` (not read yet, asleep since the daemon started, or the read failed)."
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "For `unsupported`: `virtual` (a disk of a virtual machine) or `not_available`. For `unknown`:\n`asleep`, `not_read` or `read_failed`. Otherwise null."
+          },
+          "asleep": {
+            "type": "boolean",
+            "description": "True when the last check found the disk asleep; the values are then from ReadAt."
+          },
+          "temperatureCelsius": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Current temperature, if reported.",
+            "format": "int32"
+          },
+          "powerOnHours": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Power-on time, if reported.",
+            "format": "int64"
+          },
+          "reallocatedSectors": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "ATA attribute 5, raw value.",
+            "format": "int64"
+          },
+          "pendingSectors": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "ATA attribute 197, raw value.",
+            "format": "int64"
+          },
+          "uncorrectableSectors": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "ATA attribute 198, raw value.",
+            "format": "int64"
+          },
+          "mediaErrors": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "NVMe media and data integrity errors.",
+            "format": "int64"
+          },
+          "criticalWarning": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "NVMe critical warning bits; not 0 means the drive reports a critical condition.",
+            "format": "int32"
+          },
+          "lastSelfTest": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Result of the newest self-test: `passed`, `failed`, `aborted` or `running`; null without one."
+          },
+          "readAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When SMART data was last read (UTC); null if never.",
+            "format": "date-time"
+          },
+          "checkedAt": {
+            "type": "string",
+            "description": "When the disk was last checked (UTC), including checks that found it asleep.",
+            "format": "date-time"
+          }
+        },
+        "description": "SMART health of one disk as last read. The API serves it from memory; reading it never runs a command."
+      },
       "Snapshot": {
         "required": [
           "dataset",
@@ -4340,6 +4742,45 @@
         },
         "description": "Schedules of a dataset: all four kinds, in the order hourly, daily, weekly, monthly."
       },
+      "StorageAlert": {
+        "required": [
+          "key",
+          "severity",
+          "code",
+          "params",
+          "since",
+          "muted"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Stable key of the cause, for example `pool.degraded:tank` or `disk.smart_failed:wwn-0x5000c500a1b2c3d4`."
+          },
+          "severity": {
+            "type": "string",
+            "description": "`warning` or `critical`."
+          },
+          "code": {
+            "type": "string",
+            "description": "Message code in the `notifications` namespace (`&lt;code&gt;.title`, `.body`, `.action`)."
+          },
+          "params": {
+            "type": "object",
+            "description": "Message parameters: strings and numbers."
+          },
+          "since": {
+            "type": "string",
+            "description": "When the daemon first saw the cause (UTC); a restart starts it again.",
+            "format": "date-time"
+          },
+          "muted": {
+            "type": "boolean",
+            "description": "True when the user muted this alert at this severity or higher."
+          }
+        },
+        "description": "A storage problem that exists now. Alerts are derived from the current state, never stored."
+      },
       "StorageDisk": {
         "required": [
           "disk",
@@ -4376,6 +4817,30 @@
           }
         },
         "description": "Response of `GET /api/storage/disks`."
+      },
+      "StorageHealth": {
+        "required": [
+          "alerts",
+          "smart"
+        ],
+        "type": "object",
+        "properties": {
+          "alerts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StorageAlert"
+            },
+            "description": "Current alerts, critical first, with the user's mute flags."
+          },
+          "smart": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SmartReport"
+            },
+            "description": "SMART state of every disk."
+          }
+        },
+        "description": "Snapshot and event of `storage/alerts`, and response of `GET /api/storage/alerts`."
       },
       "StoragePlanPreview": {
         "required": [
@@ -4499,6 +4964,84 @@
         },
         "description": "A destructive storage action to plan. Which fields an action needs: `pool.create` Pool, Layout, DiskIds,\nEncryption (and Confirmations for disks that are not empty); `pool.destroy` Pool and ConfirmName;\n`pool.replace` Pool, Vdev and one disk in DiskIds with its serial in Confirmations; `pool.spare.add` Pool\nand one disk; `pool.spare.remove`, `pool.offline` and `pool.online` Pool and Vdev."
       },
+      "StorageSchedule": {
+        "required": [
+          "kind",
+          "target",
+          "frequency",
+          "lastRunAt",
+          "nextRunAt"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "description": "`scrub`, `shortSelfTest` or `longSelfTest`."
+          },
+          "target": {
+            "type": "string",
+            "description": "The pool name for scrubs; empty for self-tests, which cover every disk with SMART."
+          },
+          "frequency": {
+            "type": "string",
+            "description": "`off`, `weekly` or `monthly`."
+          },
+          "lastRunAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When it last ran (UTC); for self-tests the oldest of all disks. Null if never.",
+            "format": "date-time"
+          },
+          "nextRunAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When it runs next (UTC); null when it is off or has nothing to run on.",
+            "format": "date-time"
+          }
+        }
+      },
+      "StorageScheduleList": {
+        "required": [
+          "schedules"
+        ],
+        "type": "object",
+        "properties": {
+          "schedules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StorageSchedule"
+            }
+          }
+        },
+        "description": "Response of `GET /api/storage/schedules`."
+      },
+      "StorageScheduleUpdate": {
+        "required": [
+          "kind",
+          "target",
+          "frequency"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "description": "`scrub`, `shortSelfTest` or `longSelfTest`."
+          },
+          "target": {
+            "type": "string",
+            "description": "The pool name for scrubs; empty for self-tests."
+          },
+          "frequency": {
+            "type": "string",
+            "description": "`off`, `weekly` or `monthly`."
+          }
+        },
+        "description": "Body of `PUT /api/storage/schedules`."
+      },
       "SystemInfo": {
         "required": [
           "hostname",
@@ -4551,6 +5094,7 @@
         "required": [
           "files/+/+",
           "jobs/+",
+          "storage/alerts",
           "storage/disks",
           "storage/pools",
           "system/info"
@@ -4562,6 +5106,9 @@
           },
           "jobs/+": {
             "$ref": "#/components/schemas/Job"
+          },
+          "storage/alerts": {
+            "$ref": "#/components/schemas/StorageHealth"
           },
           "storage/disks": {
             "$ref": "#/components/schemas/DisksChanged"
@@ -4578,6 +5125,7 @@
         "required": [
           "files/+/+",
           "jobs/+",
+          "storage/alerts",
           "storage/disks",
           "storage/pools",
           "system/info"
@@ -4589,6 +5137,9 @@
           },
           "jobs/+": {
             "$ref": "#/components/schemas/Job"
+          },
+          "storage/alerts": {
+            "$ref": "#/components/schemas/StorageHealth"
           },
           "storage/disks": {
             "$ref": "#/components/schemas/DiskList"

@@ -21,6 +21,7 @@ import {
 import { PoolActionDialog, type PoolAction } from './PoolActionDialog';
 import { PoolWizard } from './PoolWizard';
 import { SnapshotsSection } from './SnapshotsSection';
+import { HealthSection } from './HealthSection';
 import styles from './Settings.module.css';
 
 const storageKey = ['settings', 'storage'] as const;
@@ -121,6 +122,8 @@ export function StoragePage({ app }: { app: PithyxApp }) {
         {disks.isError && <ErrorNotice error={describeProblem(disks.error)} />}
         {disks.data !== undefined && <DiskTable disks={disks.data.disks} />}
       </section>
+
+      <HealthSection app={app} pools={pools.data?.pools ?? []} disks={disks.data?.disks ?? []} />
 
       {creating && disks.data !== undefined && (
         <PoolWizard

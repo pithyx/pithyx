@@ -313,6 +313,69 @@
       "rollbackNewer": "{count, plural, one {Dieser neuere Snapshot wird ebenfalls gelöscht:} other {Diese # neueren Snapshots werden ebenfalls gelöscht:}}",
       "typeDataset": "Gib zur Bestätigung {dataset} ein",
       "rollbackConfirm": "Zurücksetzen"
+    },
+    "health": {
+      "title": "Zustand",
+      "alerts": "Speicherhinweise",
+      "noAlerts": "Keine Probleme gefunden.",
+      "severity": {
+        "critical": "Kritisch",
+        "warning": "Warnung"
+      },
+      "mute": "Stummschalten",
+      "unmute": "Wieder zeigen",
+      "muted": "Für dich stummgeschaltet",
+      "never": "Nicht geplant",
+      "next": "Nächster Lauf: {date}",
+      "frequency": {
+        "off": "Aus",
+        "weekly": "Wöchentlich",
+        "monthly": "Monatlich"
+      },
+      "smart": {
+        "title": "Plattenzustand (SMART)",
+        "caption": "SMART-Zustand jeder Platte",
+        "state": "SMART",
+        "details": "Details",
+        "states": {
+          "passed": "Gesund",
+          "warning": "Warnung",
+          "failed": "Fällt aus",
+          "unsupported": "Kein SMART",
+          "unknown": "Unbekannt"
+        },
+        "reasons": {
+          "virtual": "Keine SMART-Daten in einer virtuellen Maschine: Eine virtuelle Platte hat keine Sensoren, die man lesen kann.",
+          "not_available": "Diese Platte oder ihr Adapter liefert keine SMART-Daten.",
+          "asleep": "Schläft seit dem Systemstart. Sie wird nicht nur für eine Prüfung geweckt.",
+          "not_read": "Noch nicht geprüft.",
+          "read_failed": "SMART konnte nicht gelesen werden. Details stehen im Protokoll."
+        },
+        "temperature": "{value, number} °C",
+        "counters": "{reallocated, number} umgelagerte, {pending, number} ausstehende Sektoren, {mediaErrors, number} Medienfehler",
+        "selfTest": {
+          "passed": "letzter Selbsttest bestanden",
+          "failed": "letzter Selbsttest fehlgeschlagen",
+          "aborted": "letzter Selbsttest abgebrochen",
+          "running": "Selbsttest läuft"
+        },
+        "asleep": "schläft, Werte vom {date}"
+      },
+      "scrub": {
+        "title": "Prüfungen (Scrub)",
+        "intro": "Eine Prüfung liest jeden Block eines Pools und repariert, was sich aus der Redundanz reparieren lässt.",
+        "schedule": "{pool} prüfen",
+        "start": "Jetzt prüfen",
+        "resume": "Fortsetzen",
+        "pause": "Pausieren",
+        "stop": "Abbrechen"
+      },
+      "selfTests": {
+        "title": "SMART-Selbsttests",
+        "intro": "Selbsttests laufen in den Platten selbst. Schlafende Platten werden übersprungen und später noch einmal versucht, nie geweckt.",
+        "shortSelfTest": "Kurzer Selbsttest",
+        "longSelfTest": "Langer Selbsttest"
+      }
     }
   }
 }

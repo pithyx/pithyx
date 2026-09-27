@@ -43,6 +43,11 @@ describe('the internal administrator calls', () => {
       'internal.admin.storage.snapshots.delete',
       'internal.admin.storage.snapshots.rollback',
       'internal.admin.storage.snapshots.setSchedules',
+      'internal.admin.storage.health',
+      'internal.admin.storage.mute',
+      'internal.admin.storage.scrub',
+      'internal.admin.storage.schedules',
+      'internal.admin.storage.schedule',
     ];
     for (const name of names) {
       await expect(app.call(name as 'notify', {} as never)).rejects.toMatchObject({

@@ -616,6 +616,41 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/storage/alerts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. Current storage alerts with the caller's mute flags, and the SMART state of every disk; live through the storage/alerts topic. */
+        get: operations["GetStorageAlerts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/storage/alerts/{key}/mute": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Hides a current alert for the caller until it goes away or becomes more severe. Alerts cannot be deleted. */
+        post: operations["MuteStorageAlert"];
+        /** @description Administrators only. Shows a muted alert again. */
+        delete: operations["UnmuteStorageAlert"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/storage/disks": {
         parameters: {
             query?: never;
@@ -677,6 +712,59 @@ export type paths = {
         /** @description Administrators only. Pools with their vdevs, and datasets, as last read; live through the storage/pools topic. */
         get: operations["GetPools"];
         put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/storage/pools/{pool}/scrub": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Starts a scrub of the pool, or resumes a paused one, and returns at once; progress arrives on storage/pools. */
+        post: operations["StartScrub"];
+        /** @description Administrators only. Stops the running scrub; the next one starts from the beginning. */
+        delete: operations["StopScrub"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/storage/pools/{pool}/scrub/pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Pauses the running scrub; starting it again resumes where it stopped. */
+        post: operations["PauseScrub"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/storage/schedules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. Scrub schedules per pool and the SMART self-test schedules, with their last and next runs. */
+        get: operations["GetStorageSchedules"];
+        /** @description Administrators only. Sets how often a pool is scrubbed or the disks run a self-test: off, weekly or monthly. */
+        put: operations["SetStorageSchedule"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1043,7 +1131,7 @@ export type components = {
             }[];
         };
         /** @enum {string} */
-        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.exists" | "fs.share.invalid" | "fs.share.not_found" | "fs.share.read_only" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.command.failed" | "storage.dataset.exists" | "storage.dataset.name_invalid" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.encryption_required" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "system.internal.unexpected" | "system.origin.forbidden";
+        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.exists" | "fs.share.invalid" | "fs.share.not_found" | "fs.share.read_only" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.dataset.exists" | "storage.dataset.name_invalid" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.encryption_required" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "system.internal.unexpected" | "system.origin.forbidden";
         /** @description A failed client message. `id` is empty when the message could not be parsed. */
         ErrorMessage: {
             code: components["schemas"]["ErrorCode"];
@@ -1510,6 +1598,71 @@ export type components = {
             /** @description The share root on the host. Only administrators get it. */
             path: null | string;
         };
+        /** @description SMART health of one disk as last read. The API serves it from memory; reading it never runs a command. */
+        SmartReport: {
+            /** @description True when the last check found the disk asleep; the values are then from ReadAt. */
+            asleep: boolean;
+            /**
+             * Format: date-time
+             * @description When the disk was last checked (UTC), including checks that found it asleep.
+             */
+            checkedAt: string;
+            /**
+             * Format: int32
+             * @description NVMe critical warning bits; not 0 means the drive reports a critical condition.
+             */
+            criticalWarning: null | number;
+            /** @description The disk's id. */
+            diskId: string;
+            /** @description Result of the newest self-test: `passed`, `failed`, `aborted` or `running`; null without one. */
+            lastSelfTest: null | string;
+            /**
+             * Format: int64
+             * @description NVMe media and data integrity errors.
+             */
+            mediaErrors: null | number;
+            /**
+             * Format: int64
+             * @description ATA attribute 197, raw value.
+             */
+            pendingSectors: null | number;
+            /**
+             * Format: int64
+             * @description Power-on time, if reported.
+             */
+            powerOnHours: null | number;
+            /**
+             * Format: date-time
+             * @description When SMART data was last read (UTC); null if never.
+             */
+            readAt: null | string;
+            /**
+             * Format: int64
+             * @description ATA attribute 5, raw value.
+             */
+            reallocatedSectors: null | number;
+            /**
+             * @description For `unsupported`: `virtual` (a disk of a virtual machine) or `not_available`. For `unknown`:
+             *     `asleep`, `not_read` or `read_failed`. Otherwise null.
+             */
+            reason: null | string;
+            /**
+             * @description `passed`, `warning` (reallocated, pending or uncorrectable sectors, media errors or a failed self-test),
+             *     `failed` (the drive predicts its failure), `unsupported` (no SMART, see Reason) or
+             *     `unknown` (not read yet, asleep since the daemon started, or the read failed).
+             */
+            state: string;
+            /**
+             * Format: int32
+             * @description Current temperature, if reported.
+             */
+            temperatureCelsius: null | number;
+            /**
+             * Format: int64
+             * @description ATA attribute 198, raw value.
+             */
+            uncorrectableSectors: null | number;
+        };
         Snapshot: {
             /**
              * Format: date-time
@@ -1601,6 +1754,24 @@ export type components = {
             /** @description One entry per kind; kinds left out of a PUT stay as they are. */
             schedules: components["schemas"]["SnapshotSchedule"][];
         };
+        /** @description A storage problem that exists now. Alerts are derived from the current state, never stored. */
+        StorageAlert: {
+            /** @description Message code in the `notifications` namespace (`&lt;code&gt;.title`, `.body`, `.action`). */
+            code: string;
+            /** @description Stable key of the cause, for example `pool.degraded:tank` or `disk.smart_failed:wwn-0x5000c500a1b2c3d4`. */
+            key: string;
+            /** @description True when the user muted this alert at this severity or higher. */
+            muted: boolean;
+            /** @description Message parameters: strings and numbers. */
+            params: Record<string, never>;
+            /** @description `warning` or `critical`. */
+            severity: string;
+            /**
+             * Format: date-time
+             * @description When the daemon first saw the cause (UTC); a restart starts it again.
+             */
+            since: string;
+        };
         /** @description A disk with the guard's verdict, for the Storage settings page. */
         StorageDisk: {
             disk: components["schemas"]["Disk"];
@@ -1612,6 +1783,13 @@ export type components = {
             disks: components["schemas"]["StorageDisk"][];
             /** @description `dev` or `prod`; on dev only the declared test disks can be used. */
             environment: string;
+        };
+        /** @description Snapshot and event of `storage/alerts`, and response of `GET /api/storage/alerts`. */
+        StorageHealth: {
+            /** @description Current alerts, critical first, with the user's mute flags. */
+            alerts: components["schemas"]["StorageAlert"][];
+            /** @description SMART state of every disk. */
+            smart: components["schemas"]["SmartReport"][];
         };
         /** @description Response of `POST /api/storage/plans`. Nothing was run. */
         StoragePlanPreview: {
@@ -1657,6 +1835,37 @@ export type components = {
             /** @description GUID of the device to replace, take offline, bring online or remove. */
             vdev?: null | string;
         };
+        StorageSchedule: {
+            /** @description `off`, `weekly` or `monthly`. */
+            frequency: string;
+            /** @description `scrub`, `shortSelfTest` or `longSelfTest`. */
+            kind: string;
+            /**
+             * Format: date-time
+             * @description When it last ran (UTC); for self-tests the oldest of all disks. Null if never.
+             */
+            lastRunAt: null | string;
+            /**
+             * Format: date-time
+             * @description When it runs next (UTC); null when it is off or has nothing to run on.
+             */
+            nextRunAt: null | string;
+            /** @description The pool name for scrubs; empty for self-tests, which cover every disk with SMART. */
+            target: string;
+        };
+        /** @description Response of `GET /api/storage/schedules`. */
+        StorageScheduleList: {
+            schedules: components["schemas"]["StorageSchedule"][];
+        };
+        /** @description Body of `PUT /api/storage/schedules`. */
+        StorageScheduleUpdate: {
+            /** @description `off`, `weekly` or `monthly`. */
+            frequency: string;
+            /** @description `scrub`, `shortSelfTest` or `longSelfTest`. */
+            kind: string;
+            /** @description The pool name for scrubs; empty for self-tests. */
+            target: string;
+        };
         SystemInfo: {
             /**
              * Format: double
@@ -1686,6 +1895,7 @@ export type components = {
         TopicEvents: {
             "files/+/+": components["schemas"]["FolderChanges"];
             "jobs/+": components["schemas"]["Job"];
+            "storage/alerts": components["schemas"]["StorageHealth"];
             "storage/disks": components["schemas"]["DisksChanged"];
             "storage/pools": components["schemas"]["PoolList"];
             "system/info": components["schemas"]["SystemInfo"];
@@ -1693,6 +1903,7 @@ export type components = {
         TopicSnapshots: {
             "files/+/+": components["schemas"]["FolderWatchState"];
             "jobs/+": components["schemas"]["Job"];
+            "storage/alerts": components["schemas"]["StorageHealth"];
             "storage/disks": components["schemas"]["DiskList"];
             "storage/pools": components["schemas"]["PoolList"];
             "system/info": components["schemas"]["SystemInfo"];
@@ -3188,6 +3399,97 @@ export interface operations {
             };
         };
     };
+    GetStorageAlerts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageHealth"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    MuteStorageAlert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageHealth"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    UnmuteStorageAlert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageHealth"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
     GetStorageDisks: {
         parameters: {
             query?: never;
@@ -3297,6 +3599,155 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PoolList"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    StartScrub: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pool: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    StopScrub: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pool: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    PauseScrub: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pool: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetStorageSchedules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageScheduleList"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SetStorageSchedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StorageScheduleUpdate"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageScheduleList"];
                 };
             };
             /** @description Problem details with a stable error code. */

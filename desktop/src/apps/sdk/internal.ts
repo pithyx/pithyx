@@ -22,6 +22,13 @@ interface SnapshotRef {
   dataset: string;
   name: string;
 }
+export type StorageHealth = components['schemas']['StorageHealth'];
+export type StorageAlert = components['schemas']['StorageAlert'];
+export type SmartReport = components['schemas']['SmartReport'];
+export type StorageScheduleList = components['schemas']['StorageScheduleList'];
+export type StorageSchedule = components['schemas']['StorageSchedule'];
+export type StorageScheduleUpdate = components['schemas']['StorageScheduleUpdate'];
+export type ScrubAction = 'start' | 'pause' | 'stop';
 
 /**
  * Administrative calls of the desktop's own core apps, outside the public SDK: not versioned, never served to a
@@ -50,6 +57,14 @@ export interface InternalMethods {
     params: SnapshotScheduleList;
     result: SnapshotScheduleList;
   };
+  'internal.admin.storage.health': { params: Record<string, never>; result: StorageHealth };
+  'internal.admin.storage.mute': { params: { key: string; muted: boolean }; result: StorageHealth };
+  'internal.admin.storage.scrub': { params: { pool: string; action: ScrubAction }; result: null };
+  'internal.admin.storage.schedules': {
+    params: Record<string, never>;
+    result: StorageScheduleList;
+  };
+  'internal.admin.storage.schedule': { params: StorageScheduleUpdate; result: StorageScheduleList };
 }
 
 /** Sent to the app when pools or disks changed; the app reads them again. */
@@ -135,6 +150,39 @@ function snapshotAction(
   };
 }
 
+function isMuteRequest(value: unknown): boolean {
+  return isRecord(value) && typeof value.key === 'string' && typeof value.muted === 'boolean';
+}
+
+function isScrubRequest(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    typeof value.pool === 'string' &&
+    (value.action === 'start' || value.action === 'pause' || value.action === 'stop')
+  );
+}
+
+function isScheduleUpdate(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    typeof value.kind === 'string' &&
+    typeof value.target === 'string' &&
+    typeof value.frequency === 'string'
+  );
+}
+
+async function scrub(pool: string, action: ScrubAction): Promise<null> {
+  const options = { params: { path: { pool } } };
+  unwrap(
+    action === 'start'
+      ? await api.POST('/api/storage/pools/{pool}/scrub', options)
+      : action === 'pause'
+        ? await api.POST('/api/storage/pools/{pool}/scrub/pause', options)
+        : await api.DELETE('/api/storage/pools/{pool}/scrub', options),
+  );
+  return null;
+}
+
 async function daemon<T>(call: () => Promise<T>): Promise<T> {
   try {
     return await call();
@@ -164,6 +212,7 @@ export function adminStorageHost(emit: (event: string, data?: unknown) => void):
   const stops = [
     realtime.listen('storage/pools', changed),
     realtime.listen('storage/disks', changed),
+    realtime.listen('storage/alerts', changed),
   ];
   const follow = (job: Job) => {
     stops.push(
@@ -256,6 +305,45 @@ export function adminStorageHost(emit: (event: string, data?: unknown) => void):
             await api.PUT('/api/storage/snapshots/schedules', {
               body: params as SnapshotScheduleList,
             }),
+          ),
+        ),
+    },
+    'internal.admin.storage.health': {
+      validate: isRecord,
+      handle: () => daemon(async () => unwrap(await api.GET('/api/storage/alerts'))),
+    },
+    'internal.admin.storage.mute': {
+      validate: isMuteRequest,
+      handle: (params) =>
+        daemon(async () => {
+          const { key, muted } = params as InternalMethods['internal.admin.storage.mute']['params'];
+          const options = { params: { path: { key } } };
+          return unwrap(
+            muted
+              ? await api.POST('/api/storage/alerts/{key}/mute', options)
+              : await api.DELETE('/api/storage/alerts/{key}/mute', options),
+          );
+        }),
+    },
+    'internal.admin.storage.scrub': {
+      validate: isScrubRequest,
+      handle: (params) =>
+        daemon(() => {
+          const { pool, action } =
+            params as InternalMethods['internal.admin.storage.scrub']['params'];
+          return scrub(pool, action);
+        }),
+    },
+    'internal.admin.storage.schedules': {
+      validate: isRecord,
+      handle: () => daemon(async () => unwrap(await api.GET('/api/storage/schedules'))),
+    },
+    'internal.admin.storage.schedule': {
+      validate: isScheduleUpdate,
+      handle: (params) =>
+        daemon(async () =>
+          unwrap(
+            await api.PUT('/api/storage/schedules', { body: params as StorageScheduleUpdate }),
           ),
         ),
     },

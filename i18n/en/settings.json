@@ -313,6 +313,69 @@
       "rollbackNewer": "{count, plural, one {This newer snapshot is deleted as well:} other {These # newer snapshots are deleted as well:}}",
       "typeDataset": "Type {dataset} to confirm",
       "rollbackConfirm": "Roll back"
+    },
+    "health": {
+      "title": "Health",
+      "alerts": "Storage alerts",
+      "noAlerts": "No problems found.",
+      "severity": {
+        "critical": "Critical",
+        "warning": "Warning"
+      },
+      "mute": "Mute",
+      "unmute": "Show again",
+      "muted": "Muted for you",
+      "never": "Not scheduled",
+      "next": "Next run: {date}",
+      "frequency": {
+        "off": "Off",
+        "weekly": "Weekly",
+        "monthly": "Monthly"
+      },
+      "smart": {
+        "title": "Disk health (SMART)",
+        "caption": "SMART state of every disk",
+        "state": "SMART",
+        "details": "Details",
+        "states": {
+          "passed": "Healthy",
+          "warning": "Warning",
+          "failed": "Failing",
+          "unsupported": "No SMART",
+          "unknown": "Unknown"
+        },
+        "reasons": {
+          "virtual": "No SMART data in a virtual machine: a virtual disk has no sensors to read.",
+          "not_available": "This disk or its adapter does not report SMART data.",
+          "asleep": "Asleep since the system started. It is not woken up just to be checked.",
+          "not_read": "Not checked yet.",
+          "read_failed": "SMART could not be read. The log has the details."
+        },
+        "temperature": "{value, number} °C",
+        "counters": "{reallocated, number} reallocated, {pending, number} pending sectors, {mediaErrors, number} media errors",
+        "selfTest": {
+          "passed": "last self-test passed",
+          "failed": "last self-test failed",
+          "aborted": "last self-test was aborted",
+          "running": "self-test running"
+        },
+        "asleep": "asleep, values from {date}"
+      },
+      "scrub": {
+        "title": "Scrubs",
+        "intro": "A scrub reads every block of a pool and repairs what it can from redundancy.",
+        "schedule": "Scrub {pool}",
+        "start": "Scrub now",
+        "resume": "Resume",
+        "pause": "Pause",
+        "stop": "Stop"
+      },
+      "selfTests": {
+        "title": "SMART self-tests",
+        "intro": "Self-tests run inside the disks. Disks that are asleep are skipped and tried again later, never woken up.",
+        "shortSelfTest": "Short self-test",
+        "longSelfTest": "Long self-test"
+      }
     }
   }
 }
