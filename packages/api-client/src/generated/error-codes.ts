@@ -19,6 +19,7 @@ export const errorCodes = [
   'auth.username.invalid',
   'auth.username.reserved',
   'desktop.device.not_found',
+  'desktop.layout.conflict',
   'desktop.layout.invalid',
   'desktop.layout.too_large',
   'realtime.message.invalid',

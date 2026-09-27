@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import {
-  MIN_VISIBLE,
+  MIN_GRAB,
+  MIN_VISIBLE_END,
+  MIN_VISIBLE_START,
   SNAP_EDGE,
   clampRect,
   dragRect,
@@ -21,16 +23,26 @@ describe('clampRect', () => {
     expect(clampRect(rect, min, laptop)).toEqual(rect);
   });
 
-  it('keeps part of the title bar inside on every side', () => {
+  it('keeps the buttons on the inner side and room to grab inside on every side', () => {
     expect(clampRect({ x: 1439, y: 900, width: 600, height: 400 }, min, laptop)).toEqual({
-      x: laptop.width - MIN_VISIBLE,
+      x: laptop.width - MIN_VISIBLE_START,
       y: laptop.height - 40,
       width: 600,
       height: 400,
     });
     expect(clampRect({ x: -700, y: -20, width: 600, height: 400 }, min, laptop)).toMatchObject({
-      x: MIN_VISIBLE - 600,
+      x: MIN_VISIBLE_END - 600,
       y: 0,
+    });
+    // Past the left edge the three window buttons stay inside, plus 48 px of free title bar.
+    expect(MIN_VISIBLE_END).toBeGreaterThanOrEqual(3 * 44 + MIN_GRAB);
+  });
+
+  it('keeps a narrow window fully reachable', () => {
+    expect(
+      clampRect({ x: -300, y: 0, width: 150, height: 200 }, { width: 100, height: 100 }, laptop),
+    ).toMatchObject({
+      x: 0,
     });
   });
 

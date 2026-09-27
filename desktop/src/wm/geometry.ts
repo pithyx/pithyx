@@ -4,8 +4,18 @@ import type { Point, Rect, Size, SnapZone } from './types';
 export const TITLEBAR_HEIGHT = 40;
 /** Offset between windows opened one after another. */
 export const CASCADE_STEP = 32;
-/** How much of a title bar stays inside the workspace horizontally, so a window can always be dragged back. */
-export const MIN_VISIBLE = 96;
+/** How much free title bar (no buttons) stays inside the workspace, so a window can always be grabbed and dragged back. */
+export const MIN_GRAB = 48;
+/**
+ * Title bar width taken by the window menu at the start and by the window buttons at the end, with touch-sized
+ * targets (the larger case): padding, 44 px buttons and gaps as in Window.module.css.
+ */
+export const TITLEBAR_START = 64;
+export const TITLEBAR_END = 148;
+/** A window past the right edge keeps its title bar start visible: the window menu plus room to grab. */
+export const MIN_VISIBLE_START = TITLEBAR_START + MIN_GRAB;
+/** A window past the left edge keeps its title bar end visible: the window buttons plus room to grab. */
+export const MIN_VISIBLE_END = TITLEBAR_END + MIN_GRAB;
 /** Distance from a workspace edge that triggers a snap zone while dragging. */
 export const SNAP_EDGE = 12;
 /** Workspaces at least this wide offer thirds instead of halves. */
@@ -30,14 +40,15 @@ export function clampSize(size: Size, min: Size, workspace: Size): Size {
 }
 
 /**
- * Keeps a window reachable: the size fits the workspace, the title bar stays fully inside vertically and at least
- * MIN_VISIBLE pixels of it inside horizontally.
+ * Keeps a window reachable: the size fits the workspace, the title bar stays fully inside vertically, and
+ * horizontally enough of it stays inside to show its buttons on that side and MIN_GRAB pixels to drag it by.
  */
 export function clampRect(rect: Rect, min: Size, workspace: Size): Rect {
   const size = clampSize(rect, min, workspace);
-  const visible = Math.min(MIN_VISIBLE, size.width);
+  const start = Math.min(MIN_VISIBLE_START, size.width);
+  const end = Math.min(MIN_VISIBLE_END, size.width);
   return {
-    x: Math.round(clamp(rect.x, visible - size.width, workspace.width - visible)),
+    x: Math.round(clamp(rect.x, end - size.width, workspace.width - start)),
     y: Math.round(clamp(rect.y, 0, workspace.height - TITLEBAR_HEIGHT)),
     ...size,
   };

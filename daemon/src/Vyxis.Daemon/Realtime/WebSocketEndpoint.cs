@@ -8,7 +8,6 @@ using Microsoft.Extensions.Options;
 using Vyxis.Daemon.Auth;
 using Vyxis.Daemon.Errors;
 using Vyxis.Daemon.Hosting;
-using Vyxis.Daemon.Layouts;
 
 namespace Vyxis.Daemon.Realtime;
 
@@ -16,8 +15,7 @@ namespace Vyxis.Daemon.Realtime;
 public static partial class WebSocketEndpoint
 {
     public const string Path = "/ws";
-    // A desktop layout is the largest client message (LayoutRules.MaxLayoutBytes plus the envelope).
-    public const int MaxMessageBytes = 64 * 1024;
+    public const int MaxMessageBytes = 16 * 1024;
     private static readonly TimeSpan _sessionCheckInterval = TimeSpan.FromHours(1);
 
     public static void MapRealtime(this IEndpointRouteBuilder app)
@@ -34,23 +32,13 @@ public static partial class WebSocketEndpoint
         TopicHub hub,
         TopicRegistry registry,
         SessionService sessions,
-        LayoutService layouts,
         TimeProvider time,
         IOptions<JsonOptions> json,
-        IHostEnvironment environment,
         ILoggerFactory loggers)
     {
         if (!context.WebSockets.IsWebSocketRequest)
         {
             throw new VyxisException(ErrorCodes.RealtimeUpgradeRequired);
-        }
-
-        // Layouts are saved per device, so a connection needs a device id. A browser that lost its cookie gets a new
-        // one with the handshake response; only same-origin requests with a session, since the id is theirs.
-        string? deviceId = null;
-        if (context.User.Identity?.IsAuthenticated == true && IsSameOrigin(context.Request))
-        {
-            deviceId = DeviceCookie.Ensure(context, secure: !environment.IsDevelopment());
         }
 
         // Rejections are sent as close codes after the handshake: a browser reports a rejected handshake only as
@@ -71,12 +59,11 @@ public static partial class WebSocketEndpoint
 
         var logger = loggers.CreateLogger(typeof(WebSocketEndpoint));
         var connection = hub.Connect(context.User, sessionId);
-        var client = new ClientContext(layouts, CurrentUser.Id(context.User), deviceId, context.Request.Headers.UserAgent.ToString());
         LogConnected(logger, connection.Id);
         try
         {
             var writer = WriteAsync(socket, connection, context.RequestAborted);
-            var reader = ReadAsync(socket, connection, hub, registry, client, json.Value.SerializerOptions, logger, context.RequestAborted);
+            var reader = ReadAsync(socket, connection, hub, registry, json.Value.SerializerOptions, logger, context.RequestAborted);
             var session = WatchSessionAsync(connection, sessions, time, connection.Closing.Token);
             await Task.WhenAny(reader, writer);
             connection.Close(WebSocketCloseCode.NormalClosure);
@@ -169,7 +156,6 @@ public static partial class WebSocketEndpoint
         TopicHub.Connection connection,
         TopicHub hub,
         TopicRegistry registry,
-        ClientContext client,
         JsonSerializerOptions options,
         ILogger logger,
         CancellationToken aborted)
@@ -195,7 +181,7 @@ public static partial class WebSocketEndpoint
             {
                 return;
             }
-            await HandleMessageAsync(buffer.WrittenSpan.ToArray(), connection, hub, registry, client, options, logger, aborted);
+            await HandleMessageAsync(buffer.WrittenSpan.ToArray(), connection, hub, registry, options, logger, aborted);
         }
     }
 
@@ -204,7 +190,6 @@ public static partial class WebSocketEndpoint
         TopicHub.Connection connection,
         TopicHub hub,
         TopicRegistry registry,
-        ClientContext client,
         JsonSerializerOptions options,
         ILogger logger,
         CancellationToken cancellationToken)
@@ -227,11 +212,6 @@ public static partial class WebSocketEndpoint
             catch (JsonException)
             {
                 message = null;
-            }
-            if (message is { Type: "layout" })
-            {
-                await SaveLayoutAsync(message, connection, hub, client, cancellationToken);
-                return;
             }
             if (message is not { Type: "sub" or "unsub", Topic: not null })
             {
@@ -269,7 +249,7 @@ public static partial class WebSocketEndpoint
         }
         catch (Exception exception) when (exception is not (OperationCanceledException or WebSocketException))
         {
-            // A failing message (for example a busy database while saving a layout) must not end the connection:
+            // A failing message (for example a busy database) must not end the connection:
             // the client would see a normal close and stop receiving live data without knowing why.
             LogMessageFailed(logger, exception, connection.Id);
             Fail(hub, connection, message?.Id ?? "", ErrorCodes.SystemInternalUnexpected, null);
@@ -277,27 +257,6 @@ public static partial class WebSocketEndpoint
         finally
         {
             Activity.Current = connectionActivity;
-        }
-    }
-
-    /// <summary>What the message handler needs to know about the client beyond its subscriptions.</summary>
-    private sealed record ClientContext(LayoutService Layouts, long UserId, string? DeviceId, string UserAgent);
-
-    private static async Task SaveLayoutAsync(ClientMessage message, TopicHub.Connection connection, TopicHub hub, ClientContext client, CancellationToken cancellationToken)
-    {
-        if (client.DeviceId is null || message.Data is not { } data)
-        {
-            Fail(hub, connection, message.Id, ErrorCodes.DesktopLayoutInvalid, null);
-            return;
-        }
-        try
-        {
-            await client.Layouts.SaveAsync(client.UserId, client.DeviceId, client.UserAgent, data, cancellationToken);
-            hub.Send(connection, new AckMessage(message.Id, Tracing.CurrentRequestId));
-        }
-        catch (VyxisException exception)
-        {
-            Fail(hub, connection, message.Id, exception.Code, exception.Parameters);
         }
     }
 

@@ -64,6 +64,10 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.NotFound)]
     public const string DesktopDeviceNotFound = "desktop.device.not_found";
 
+    /// <summary>A layout save named an older version (If-Match); <c>params.version</c> is the current one.</summary>
+    [ErrorStatus(HttpStatusCode.PreconditionFailed)]
+    public const string DesktopLayoutConflict = "desktop.layout.conflict";
+
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string DesktopLayoutInvalid = "desktop.layout.invalid";
 

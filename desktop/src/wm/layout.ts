@@ -28,6 +28,8 @@ export interface LayoutWindow {
 /** What the daemon stores per user and device. It never contains permissions. */
 export interface Layout {
   version: typeof LAYOUT_VERSION;
+  /** The workspace the layout was saved on, in CSS pixels; "Get desktop from ..." shows it to tell devices apart. */
+  viewport: Size;
   taskbar: TaskbarPosition;
   windows: LayoutWindow[];
   order: string[];
@@ -56,6 +58,7 @@ export function toLayout(state: DesktopState): Layout {
   }
   return {
     version: LAYOUT_VERSION,
+    viewport: state.workspace,
     taskbar: state.taskbar,
     windows: Object.values(state.windows).map((window) => ({
       id: window.id,

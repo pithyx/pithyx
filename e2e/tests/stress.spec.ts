@@ -32,27 +32,26 @@ function watchErrors(page: Page): string[] {
   return errors;
 }
 
-/** Saves a layout for this browser through its own WebSocket, the way the desktop does. */
+/** Saves a layout for this browser, the way the desktop does (without a version, so unconditionally). */
 async function seedLayout(page: Page, layout: unknown) {
-  await page.evaluate(async (data) => {
-    await new Promise<void>((resolve, reject) => {
-      const socket = new WebSocket(`ws://${location.host}/ws`);
-      socket.onopen = () => {
-        socket.send(JSON.stringify({ type: 'layout', id: 'seed', data }));
-      };
-      socket.onmessage = (event: MessageEvent<string>) => {
-        const message = JSON.parse(event.data) as { id?: string; type: string; code?: string };
-        if (message.id === 'seed') {
-          socket.close();
-          if (message.type === 'ack') {
-            resolve();
-          } else {
-            reject(new Error(message.code));
-          }
-        }
-      };
+  const status = await page.evaluate(async (data) => {
+    const response = await fetch('/api/desktop/layout', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-Vyxis-Request': '1' },
+      body: JSON.stringify(data),
     });
+    return response.status;
   }, layout);
+  expect(status).toBe(204);
+}
+
+/** At least 48 px of free title bar (the title, between the window menu and the buttons) stay inside. */
+async function expectGrabbable(page: Page, window: Locator) {
+  const workspace = await box(page.getByRole('main', { name: 'Desktop' }));
+  const free = await box(window.getByRole('heading', { level: 2 }).first());
+  const inside =
+    Math.min(free.x + free.width, workspace.x + workspace.width) - Math.max(free.x, workspace.x);
+  expect(inside).toBeGreaterThanOrEqual(48 - 0.5);
 }
 
 test('windows stay reachable after the screen gets smaller', async ({ page }) => {
@@ -71,7 +70,7 @@ test('windows stay reachable after the screen gets smaller', async ({ page }) =>
   const checkReachable = async () => {
     const workspace = await box(page.getByRole('main', { name: 'Desktop' }));
     const rect = await box(about);
-    expect(rect.x + 96).toBeLessThanOrEqual(workspace.x + workspace.width + 0.5);
+    await expectGrabbable(page, about);
     expect(rect.y).toBeGreaterThanOrEqual(workspace.y - 0.5);
     expect(rect.y + 40).toBeLessThanOrEqual(workspace.y + workspace.height + 0.5);
     expect(rect.width).toBeLessThanOrEqual(workspace.width);
@@ -79,8 +78,7 @@ test('windows stay reachable after the screen gets smaller', async ({ page }) =>
   await checkReachable();
 
   await page.setViewportSize({ width: 1100, height: 700 });
-  await expect.poll(async () => (await box(about)).x + 96).toBeLessThanOrEqual(1100);
-  await checkReachable();
+  await expect(checkReachable).toPass();
 
   // Pull it back into view with the keyboard, then check a restored layout is clamped the same way.
   await page.keyboard.press('Alt+Shift+ArrowUp');
@@ -181,7 +179,8 @@ test('rapid opening, closing and shortcuts leave a consistent desktop', async ({
   await expect(about).toBeVisible();
   const workspace = await box(page.getByRole('main', { name: 'Desktop' }));
   const rect = await box(about);
-  expect(rect.x).toBeGreaterThanOrEqual(workspace.x - rect.width + 96);
+  await expectGrabbable(page, about);
+  await expect(about.getByRole('button', { name: 'Close' })).toBeInViewport();
   expect(rect.y).toBeGreaterThanOrEqual(workspace.y);
   expect(errors).toEqual([]);
 });

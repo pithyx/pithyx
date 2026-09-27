@@ -7,7 +7,6 @@ import {
 } from '@vyxis/api-client';
 import { create } from 'zustand';
 import { useErrorStore } from '../errors/errorStore';
-import { notify } from '../shell/toasts';
 import { applyEvent, reconnectDelay } from './reducers';
 
 export type RealtimeStatus = 'idle' | 'connecting' | 'open' | 'reconnecting' | 'stopped';
@@ -33,10 +32,6 @@ class RealtimeConnection {
   private retryTimer: ReturnType<typeof setTimeout> | undefined;
   private nextId = 0;
   private onSessionEnded: () => void = () => undefined;
-  private pendingLayout: unknown = undefined;
-  private readonly layoutMessages = new Set<string>();
-  private layoutFailureShown = false;
-  private layoutWaiters: (() => void)[] = [];
 
   connect(onSessionEnded: () => void): void {
     this.onSessionEnded = onSessionEnded;
@@ -51,45 +46,7 @@ class RealtimeConnection {
     this.socket = null;
     socket?.close(1000);
     this.references.clear();
-    this.pendingLayout = undefined;
-    this.layoutMessages.clear();
-    this.layoutFailureShown = false;
-    this.settleLayout();
     useRealtime.setState({ status: 'idle', data: {} });
-  }
-
-  /** Saves the desktop layout of this browser; sent now or as soon as the connection is open. The latest wins. */
-  saveLayout(layout: unknown): void {
-    this.pendingLayout = layout;
-    this.flushLayout();
-  }
-
-  /** Resolves once every layout handed to saveLayout was answered, or when nothing more can be sent. */
-  layoutSaved(): Promise<void> {
-    return new Promise((resolve) => {
-      this.layoutWaiters.push(resolve);
-      this.settleLayout();
-    });
-  }
-
-  private settleLayout(): void {
-    if (
-      (this.pendingLayout === undefined || this.socket === null) &&
-      this.layoutMessages.size === 0
-    ) {
-      for (const resolve of this.layoutWaiters.splice(0)) {
-        resolve();
-      }
-    }
-  }
-
-  private flushLayout(): void {
-    if (this.pendingLayout !== undefined && this.socket?.readyState === WebSocket.OPEN) {
-      const id = `c${String(++this.nextId)}`;
-      this.layoutMessages.add(id);
-      this.socket.send(JSON.stringify({ type: 'layout', id, data: this.pendingLayout }));
-      this.pendingLayout = undefined;
-    }
   }
 
   /** Subscribes to a topic; call the returned function to release it. */
@@ -127,7 +84,6 @@ class RealtimeConnection {
       for (const topic of this.references.keys()) {
         this.send('sub', topic);
       }
-      this.flushLayout();
     };
     socket.onmessage = (event: MessageEvent<string>) => {
       this.handle(JSON.parse(event.data) as ServerMessage);
@@ -137,9 +93,6 @@ class RealtimeConnection {
         return;
       }
       this.socket = null;
-      // Saves in flight on this socket are never answered; a pending one is sent again after reconnecting.
-      this.layoutMessages.clear();
-      this.settleLayout();
       switch (closeAction(event.code)) {
         case 'reconnect':
           useRealtime.setState({ status: 'reconnecting' });
@@ -185,24 +138,11 @@ class RealtimeConnection {
         break;
       }
       case 'error':
-        // A failed background save is no reason for a modal dialog after every window move: tell once.
-        if (this.layoutMessages.delete(message.id)) {
-          if (!this.layoutFailureShown) {
-            this.layoutFailureShown = true;
-            notify({ code: 'desktop.saveFailed', params: { requestId: message.requestId } });
-          }
-          this.settleLayout();
-          break;
-        }
         useErrorStore.setState({
           current: { code: message.code, params: message.params, requestId: message.requestId },
         });
         break;
       case 'ack':
-        if (this.layoutMessages.delete(message.id)) {
-          this.layoutFailureShown = false;
-          this.settleLayout();
-        }
         break;
     }
   }

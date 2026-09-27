@@ -1,6 +1,5 @@
 using System.Net;
 using System.Net.Http.Json;
-using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using Dapper;
@@ -33,7 +32,7 @@ public sealed class LayoutApiTests : IDisposable
     }
 
     private static string Layout(string app = "disks") =>
-        $$"""{"version":1,"taskbar":"left","windows":[{"id":"w1","app":"{{app}}","screen":1,"title":null,"rect":{"x":10,"y":20,"width":600,"height":400},"placement":{"kind":"free"},"minimized":false,"args":null}],"order":["w1"],"focused":"w1"}""";
+        $$"""{"version":1,"viewport":{"width":1920,"height":1032},"taskbar":"left","windows":[{"id":"w1","app":"{{app}}","screen":1,"title":null,"rect":{"x":10,"y":20,"width":600,"height":400},"placement":{"kind":"free"},"minimized":false,"args":null}],"order":["w1"],"focused":"w1"}""";
 
     private static string Cookies(HttpResponseMessage response) =>
         string.Join("; ", response.Headers.GetValues("Set-Cookie").Select(cookie => cookie.Split(';')[0]));
@@ -66,28 +65,23 @@ public sealed class LayoutApiTests : IDisposable
         return Cookies(login);
     }
 
-    private async Task<WebSocket> ConnectAsync(string cookies)
+    private async Task<HttpResponseMessage> SaveAsync(string cookies, string layout, string? ifMatch = null)
     {
-        var client = _factory.Server.CreateWebSocketClient();
-        client.ConfigureRequest = request =>
+        using var request = new HttpRequestMessage(HttpMethod.Put, "/api/desktop/layout");
+        request.Headers.Add("Cookie", cookies);
+        request.Headers.UserAgent.ParseAdd(Firefox);
+        if (ifMatch is not null)
         {
-            request.Headers.Cookie = cookies;
-            request.Headers.Origin = "http://localhost";
-            request.Headers.UserAgent = Firefox;
-        };
-        return await client.ConnectAsync(new Uri("ws://localhost/ws"), Token);
+            request.Headers.TryAddWithoutValidation("If-Match", ifMatch);
+        }
+        request.Content = new StringContent(layout, Encoding.UTF8, "application/json");
+        return await _client.SendAsync(request, Token);
     }
 
-    private static async Task<JsonElement> SaveAsync(WebSocket socket, string data)
-    {
-        var message = $$"""{"type":"layout","id":"l1","data":{{data}}}""";
-        await socket.SendAsync(Encoding.UTF8.GetBytes(message), WebSocketMessageType.Text, endOfMessage: true, Token);
-        var buffer = new byte[64 * 1024];
-        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(Token);
-        timeout.CancelAfter(TimeSpan.FromSeconds(10));
-        var result = await socket.ReceiveAsync(buffer, timeout.Token);
-        return JsonDocument.Parse(buffer.AsMemory(0, result.Count)).RootElement.Clone();
-    }
+    private static string? SetDevice(HttpResponseMessage response) =>
+        response.Headers.TryGetValues("Set-Cookie", out var cookies)
+            ? cookies.SingleOrDefault(cookie => cookie.StartsWith(DeviceCookie.CookieName + "=", StringComparison.Ordinal))
+            : null;
 
     private static string DeviceId(string cookies) =>
         cookies.Split("; ").Single(cookie => cookie.StartsWith(DeviceCookie.CookieName + "=", StringComparison.Ordinal)).Split('=')[1];
@@ -103,50 +97,102 @@ public sealed class LayoutApiTests : IDisposable
         Assert.Contains("max-age=34560000", cookie, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Fact]
+    public async Task TheDeviceCookieIsSecureOnHttps()
+    {
+        using var client = _factory.CreateClient(new() { BaseAddress = new Uri("https://localhost"), HandleCookies = false });
+        client.DefaultRequestHeaders.Add("X-Vyxis-Request", "1");
+
+        using var setup = await client.PostAsync("/api/setup", new { username = "admin", password = AdminPassword });
+        using var plain = await _client.PostAsync("/api/auth/login", new { username = "admin", password = AdminPassword });
+
+        Assert.Contains("secure", SetDevice(setup), StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("secure", SetDevice(plain), StringComparison.OrdinalIgnoreCase);
+    }
+
     [Theory]
     [InlineData("short")]
     [InlineData("has spaces and ! marks in it")]
     [InlineData("0123456789012345678901234567890123456789012345678901234567890123456789")]
-    public async Task AMalformedDeviceCookieIsIgnoredAndTheHandshakeIssuesAnId(string value)
+    public async Task AMalformedDeviceCookieIsIgnoredAndTheSaveIssuesAnId(string value)
     {
         var cookies = await SetupAsync();
         var session = cookies.Split("; ").Single(cookie => cookie.StartsWith(SessionService.CookieName, StringComparison.Ordinal));
         var malformed = $"{session}; {DeviceCookie.CookieName}={value}";
 
         using var state = await SendAsync(HttpMethod.Get, "/api/desktop", malformed);
-        using var socket = await ConnectAsync(malformed);
-        var ack = await SaveAsync(socket, Layout());
+        using var save = await SaveAsync(malformed, Layout());
 
         Assert.Equal(JsonValueKind.Null, (await state.JsonAsync()).GetProperty("layout").ValueKind);
         Assert.False(state.Headers.TryGetValues("Set-Cookie", out _));
-        Assert.Equal("ack", ack.GetProperty("type").GetString());
+        Assert.Equal(HttpStatusCode.NoContent, save.StatusCode);
+        Assert.DoesNotContain(value, SetDevice(save), StringComparison.Ordinal);
     }
 
     [Fact]
-    public async Task LayoutSavedOverTheWebSocketIsRestoredForTheSameDevice()
+    public async Task ASavedLayoutIsRestoredForTheSameDeviceWithItsVersion()
     {
         var cookies = await SetupAsync();
-        using var socket = await ConnectAsync(cookies);
 
-        var ack = await SaveAsync(socket, Layout());
+        using var save = await SaveAsync(cookies, Layout(), "\"0\"");
         using var state = await SendAsync(HttpMethod.Get, "/api/desktop", cookies);
         var body = await state.JsonAsync();
 
-        Assert.Equal("ack", ack.GetProperty("type").GetString());
-        Assert.Equal("l1", ack.GetProperty("id").GetString());
+        Assert.Equal(HttpStatusCode.NoContent, save.StatusCode);
+        Assert.Equal("\"1\"", save.Headers.ETag?.Tag);
+        Assert.Equal(1, body.GetProperty("layoutVersion").GetInt64());
         Assert.Equal("left", body.GetProperty("layout").GetProperty("taskbar").GetString());
         Assert.Equal("disks", body.GetProperty("layout").GetProperty("windows")[0].GetProperty("app").GetString());
         Assert.Equal(0, body.GetProperty("preferences").GetArrayLength());
     }
 
     [Fact]
-    public async Task ADeviceWithoutLayoutGetsNull()
+    public async Task ADeviceWithoutLayoutGetsNullAndVersionZero()
     {
         var cookies = await SetupAsync();
 
         using var state = await SendAsync(HttpMethod.Get, "/api/desktop", cookies);
+        var body = await state.JsonAsync();
 
-        Assert.Equal(JsonValueKind.Null, (await state.JsonAsync()).GetProperty("layout").ValueKind);
+        Assert.Equal(JsonValueKind.Null, body.GetProperty("layout").ValueKind);
+        Assert.Equal(0, body.GetProperty("layoutVersion").GetInt64());
+    }
+
+    [Fact]
+    public async Task ASaveWithAnOlderVersionIsRefusedWithTheCurrentOne()
+    {
+        var cookies = await SetupAsync();
+        using var first = await SaveAsync(cookies, Layout(), "\"0\"");
+
+        using var stale = await SaveAsync(cookies, Layout("about"), "\"0\"");
+        using var malformed = await SaveAsync(cookies, Layout("about"), "W/\"1\"");
+        using var current = await SaveAsync(cookies, Layout("about"), "\"1\"");
+        using var unconditional = await SaveAsync(cookies, Layout());
+
+        var problem = await stale.JsonAsync();
+        Assert.Equal(HttpStatusCode.PreconditionFailed, stale.StatusCode);
+        Assert.Equal("desktop.layout.conflict", problem.GetProperty("code").GetString());
+        Assert.Equal(1, problem.GetProperty("params").GetProperty("version").GetInt64());
+        Assert.Equal(HttpStatusCode.PreconditionFailed, malformed.StatusCode);
+        Assert.Equal("\"2\"", current.Headers.ETag?.Tag);
+        Assert.Equal("\"3\"", unconditional.Headers.ETag?.Tag);
+    }
+
+    [Fact]
+    public async Task AnExpiredLayoutCountsAsNone()
+    {
+        var cookies = await SetupAsync();
+        using var first = await SaveAsync(cookies, Layout(), "\"0\"");
+        // Only the layout expires here; advancing the clock would end the session as well.
+        await using (var connection = await _factory.Services.GetRequiredService<SqliteConnectionFactory>().OpenAsync(Token))
+        {
+            await connection.ExecuteAsync("UPDATE desktop_layouts SET expires_at = @now", new { now = SessionService.Format(_factory.Time.GetUtcNow()) });
+        }
+
+        using var again = await SaveAsync(cookies, Layout(), "\"0\"");
+
+        Assert.Equal(HttpStatusCode.NoContent, again.StatusCode);
+        Assert.Equal("\"1\"", again.Headers.ETag?.Tag);
     }
 
     [Theory]
@@ -155,47 +201,42 @@ public sealed class LayoutApiTests : IDisposable
     [InlineData("[1,2]", "desktop.layout.invalid")]
     public async Task InvalidLayoutsAreAnsweredWithAnError(string data, string code)
     {
-        using var socket = await ConnectAsync(await SetupAsync());
+        using var save = await SaveAsync(await SetupAsync(), data);
 
-        var error = await SaveAsync(socket, data);
-
-        Assert.Equal("error", error.GetProperty("type").GetString());
-        Assert.Equal("l1", error.GetProperty("id").GetString());
-        Assert.Equal(code, error.GetProperty("code").GetString());
+        Assert.Equal(HttpStatusCode.BadRequest, save.StatusCode);
+        Assert.Equal(code, await save.ErrorCodeAsync());
     }
 
     [Fact]
     public async Task OversizedLayoutsAreAnsweredWithTooLarge()
     {
-        using var socket = await ConnectAsync(await SetupAsync());
         var args = JsonSerializer.Serialize(new string('x', 17 * 1024));
 
-        var error = await SaveAsync(socket, Layout().Replace("\"args\":null", $"\"args\":{args}", StringComparison.Ordinal));
+        using var save = await SaveAsync(await SetupAsync(), Layout().Replace("\"args\":null", $"\"args\":{args}", StringComparison.Ordinal));
 
-        Assert.Equal("desktop.layout.too_large", error.GetProperty("code").GetString());
-        Assert.Equal(50, error.GetProperty("params").GetProperty("maxWindows").GetInt32());
+        var problem = await save.JsonAsync();
+        Assert.Equal(HttpStatusCode.RequestEntityTooLarge, save.StatusCode);
+        Assert.Equal("desktop.layout.too_large", problem.GetProperty("code").GetString());
+        Assert.Equal(50, problem.GetProperty("params").GetProperty("maxWindows").GetInt32());
     }
 
     [Fact]
-    public async Task AConnectionWithoutDeviceCookieGetsOneAndCanSave()
+    public async Task ASaveWithoutDeviceCookieGetsOne()
     {
         var cookies = await SetupAsync();
         var sessionOnly = cookies.Split("; ").Single(cookie => cookie.StartsWith(SessionService.CookieName, StringComparison.Ordinal));
-        using var socket = await ConnectAsync(sessionOnly);
 
-        var ack = await SaveAsync(socket, Layout());
+        using var save = await SaveAsync(sessionOnly, Layout());
 
-        Assert.Equal("ack", ack.GetProperty("type").GetString());
+        Assert.Equal(HttpStatusCode.NoContent, save.StatusCode);
+        Assert.NotNull(SetDevice(save));
     }
 
     [Fact]
     public async Task LayoutsKeepTheirTextAsSent()
     {
         var cookies = await SetupAsync();
-        using (var socket = await ConnectAsync(cookies))
-        {
-            await SaveAsync(socket, Layout().Replace("\"title\":null", "\"title\":\"Übersicht <1> & 2\"", StringComparison.Ordinal));
-        }
+        using var save = await SaveAsync(cookies, Layout().Replace("\"title\":null", "\"title\":\"Übersicht <1> & 2\"", StringComparison.Ordinal));
 
         await using var connection = await _factory.Services.GetRequiredService<SqliteConnectionFactory>().OpenAsync(Token);
         var stored = await connection.ExecuteScalarAsync<string>("SELECT layout FROM desktop_layouts");
@@ -207,10 +248,7 @@ public sealed class LayoutApiTests : IDisposable
     public async Task OtherDevicesAreListedAndTheirLayoutCanBeCopied()
     {
         var laptop = await SetupAsync();
-        using (var socket = await ConnectAsync(laptop))
-        {
-            await SaveAsync(socket, Layout());
-        }
+        using var saved = await SaveAsync(laptop, Layout());
         var phone = await SecondDeviceAsync();
 
         using var devices = await SendAsync(HttpMethod.Get, "/api/desktop/devices", phone);
@@ -220,9 +258,14 @@ public sealed class LayoutApiTests : IDisposable
         Assert.Equal("Firefox", device.GetProperty("browser").GetString());
         Assert.Equal("Linux", device.GetProperty("os").GetString());
         Assert.Equal(1, device.GetProperty("windowCount").GetInt32());
+        Assert.Equal(1920, device.GetProperty("screenWidth").GetInt32());
+        Assert.Equal(1032, device.GetProperty("screenHeight").GetInt32());
 
         using var copy = await SendAsync(HttpMethod.Post, "/api/desktop/layout/copy", phone, new { deviceId = DeviceId(laptop) });
         Assert.Equal(HttpStatusCode.OK, copy.StatusCode);
+        var copied = await copy.JsonAsync();
+        Assert.Equal("left", copied.GetProperty("layout").GetProperty("taskbar").GetString());
+        Assert.Equal(1, copied.GetProperty("version").GetInt64());
         using var state = await SendAsync(HttpMethod.Get, "/api/desktop", phone);
         Assert.Equal("left", (await state.JsonAsync()).GetProperty("layout").GetProperty("taskbar").GetString());
 
@@ -245,10 +288,7 @@ public sealed class LayoutApiTests : IDisposable
     public async Task LayoutsOfOtherUsersStayInvisible()
     {
         var admin = await SetupAsync();
-        using (var socket = await ConnectAsync(admin))
-        {
-            await SaveAsync(socket, Layout());
-        }
+        using var saved = await SaveAsync(admin, Layout());
         var other = await OtherUserAsync();
 
         using var devices = await SendAsync(HttpMethod.Get, "/api/desktop/devices", other);
@@ -291,10 +331,7 @@ public sealed class LayoutApiTests : IDisposable
     public async Task TheHourlyCleanupDeletesLayoutsOnlyAfterTheyExpire()
     {
         var cookies = await SetupAsync();
-        using (var socket = await ConnectAsync(cookies))
-        {
-            await SaveAsync(socket, Layout());
-        }
+        using var saved = await SaveAsync(cookies, Layout());
         var layouts = _factory.Services.GetRequiredService<LayoutService>();
         var userId = await UserIdAsync("admin");
 

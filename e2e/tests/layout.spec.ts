@@ -2,19 +2,15 @@ import { type Page } from '@playwright/test';
 import { expect, test } from './fixtures';
 import { appWindow, openFromDesktop, signInAsAdmin } from './session';
 
-/** Resolves with the next layout the desktop saves over the WebSocket. */
-function layoutSaved(page: Page): Promise<string> {
-  return new Promise((resolve) => {
-    page.on('websocket', (socket) => {
-      socket.on('framesent', (frame) => {
-        const payload =
-          typeof frame.payload === 'string' ? frame.payload : frame.payload.toString();
-        if (payload.includes('"type":"layout"')) {
-          resolve(payload);
-        }
-      });
-    });
-  });
+/** Resolves with the next layout the desktop saved. */
+async function layoutSaved(page: Page): Promise<string> {
+  const response = await page.waitForResponse(
+    (candidate) =>
+      candidate.request().method() === 'PUT' &&
+      candidate.url().endsWith('/api/desktop/layout') &&
+      candidate.status() === 204,
+  );
+  return response.request().postData() ?? '';
 }
 
 test('the layout survives a reload', async ({ page }) => {
@@ -75,4 +71,35 @@ test('another device gets this desktop', async ({ browser }) => {
 
   await laptop.close();
   await phone.close();
+});
+
+test('two tabs of one browser do not overwrite each other unnoticed', async ({ browser }) => {
+  const context = await browser.newContext();
+  const first = await context.newPage();
+  await signInAsAdmin(first);
+  const second = await context.newPage();
+  await second.goto('/');
+  await expect(second.getByRole('navigation', { name: 'Taskbar' })).toBeVisible();
+
+  // Both tabs start from the same saved version; the first one saves a newer one.
+  const firstSaved = layoutSaved(first);
+  await openFromDesktop(first, 'Disks');
+  await firstSaved;
+
+  // The second tab still names the old version, gets 412 and saves its own layout on top, since it is in use.
+  const statuses: number[] = [];
+  second.on('response', (response) => {
+    if (response.request().method() === 'PUT' && response.url().endsWith('/api/desktop/layout')) {
+      statuses.push(response.status());
+    }
+  });
+  const secondSaved = layoutSaved(second);
+  await openFromDesktop(second, 'About Vyxis');
+  expect(await secondSaved).toContain('"app":"about"');
+  expect(statuses).toEqual([412, 204]);
+
+  await first.reload();
+  await expect(appWindow(first, 'About Vyxis')).toBeVisible();
+  await expect(appWindow(first, 'Disks')).toHaveCount(0);
+  await context.close();
 });

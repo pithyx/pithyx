@@ -125,8 +125,8 @@ public static class AuthEndpoints
     {
         var session = await sessions.CreateAsync(userId, context.Request.Headers.UserAgent.ToString(), cancellationToken);
         context.Response.Cookies.Append(SessionService.CookieName, session.Token, SessionService.CookieOptions(Secure(environment), session.AbsoluteExpiresAt));
-        // The WebSocket saves this browser's desktop layout under its device id, so it must exist before the desktop connects.
-        DeviceCookie.Ensure(context, Secure(environment));
+        // The desktop saves this browser's layout under its device id.
+        DeviceCookie.Ensure(context);
     }
 
     // Development runs over plain HTTP, where browsers drop Secure cookies. HTTPS for every other environment is M5.

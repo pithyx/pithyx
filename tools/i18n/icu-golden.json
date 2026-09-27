@@ -83,6 +83,12 @@
       "params": {},
       "expected": "No saved desktop was found for that device. It may have expired."
     },
+    "desktop.layout.conflict": {
+      "params": {
+        "version": 3
+      },
+      "expected": "The desktop layout was saved from another tab in the meantime."
+    },
     "desktop.layout.invalid": {
       "params": {},
       "expected": "The desktop layout could not be saved because it is not in a known format."

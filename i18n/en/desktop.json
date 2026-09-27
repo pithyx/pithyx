@@ -20,7 +20,8 @@
     "device": "{browser} on {os}",
     "unknownBrowser": "A browser",
     "unknownOs": "an unknown system",
-    "deviceDetail": "{count, plural, one {# window} other {# windows}}, {time}"
+    "deviceDetail": "{count, plural, one {# window} other {# windows}}, {time}",
+    "deviceDetailScreen": "{width} × {height}, {count, plural, one {# window} other {# windows}}, {time}"
   },
   "error": {
     "title": "Something went wrong",

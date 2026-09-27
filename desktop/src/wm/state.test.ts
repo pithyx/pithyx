@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CASCADE_STEP, MIN_VISIBLE, TITLEBAR_HEIGHT } from './geometry';
+import { CASCADE_STEP, MIN_VISIBLE_END, MIN_VISIBLE_START, TITLEBAR_HEIGHT } from './geometry';
 import { MAX_WINDOWS, canOpen, initialState, reduce, topVisible, visibleRect } from './state';
 import type { Action, DesktopState, WindowOptions } from './types';
 
@@ -193,7 +193,12 @@ describe('move', () => {
       { type: 'open', app: 'a', options: multi },
       { type: 'move', id: 'w1', rect: { x: -5000, y: -50, width: 600, height: 400 } },
     );
-    expect(state.windows.w1?.rect).toEqual({ x: MIN_VISIBLE - 600, y: 0, width: 600, height: 400 });
+    expect(state.windows.w1?.rect).toEqual({
+      x: MIN_VISIBLE_END - 600,
+      y: 0,
+      width: 600,
+      height: 400,
+    });
   });
 });
 
@@ -228,7 +233,7 @@ describe('workspace changes', () => {
       throw new Error('window missing');
     }
     expect(visibleRect(window, small.workspace)).toEqual({
-      x: 1280 - MIN_VISIBLE,
+      x: 1280 - MIN_VISIBLE_START,
       y: 668 - TITLEBAR_HEIGHT,
       width: 600,
       height: 400,

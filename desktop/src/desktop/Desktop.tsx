@@ -35,7 +35,7 @@ import { useDismiss } from '../shell/useDismiss';
 import { cx } from '../ui/cx';
 import { Menu, MenuItem, MenuPopover, MenuSeparator, MenuTrigger } from '../ui/Menu';
 import { useBackGesture } from '../wm/backGesture';
-import { applyLayout, saveLayoutBeforeSignOut, useLayoutPersistence } from '../wm/persistence';
+import { applySavedLayout, saveLayoutBeforeSignOut, useLayoutPersistence } from '../wm/persistence';
 import { useSizeClass } from '../wm/sizeClass';
 import { dispatch, openApp, useDesktop } from '../wm/store';
 import { WindowLayer } from '../wm/WindowLayer';
@@ -110,10 +110,18 @@ function DevicesMenu({ onPick }: { onPick: (device: DeviceLayout) => void }) {
         >
           <span className={styles.deviceName}>{label(device)}</span>
           <span className={styles.deviceDetail}>
-            {t('menu.deviceDetail', {
-              count: device.windowCount,
-              time: ago(device.updatedAt, i18n.language),
-            })}
+            {device.screenWidth === null || device.screenHeight === null
+              ? t('menu.deviceDetail', {
+                  count: device.windowCount,
+                  time: ago(device.updatedAt, i18n.language),
+                })
+              : t('menu.deviceDetailScreen', {
+                  // Strings, so the size is not formatted with thousands separators.
+                  width: String(device.screenWidth),
+                  height: String(device.screenHeight),
+                  count: device.windowCount,
+                  time: ago(device.updatedAt, i18n.language),
+                })}
           </span>
         </MenuItem>
       ))}
@@ -142,8 +150,8 @@ function UserMenu({
   const copy = useMutation({
     mutationFn: async (device: DeviceLayout) =>
       unwrap(await api.POST('/api/desktop/layout/copy', { body: { deviceId: device.deviceId } })),
-    onSuccess: (layout, device) => {
-      applyLayout(layout);
+    onSuccess: (saved, device) => {
+      applySavedLayout(saved);
       notify({ code: 'desktop.copied', params: { device: label(device) } });
     },
     onError: showError,
@@ -322,7 +330,7 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
 
   const logout = useMutation({
     mutationFn: async () => {
-      // The daemon closes the WebSocket on sign-out; a save still waiting for its debounce goes out first.
+      // After the sign-out a save is refused; one still waiting for its debounce goes out first.
       await saveLayoutBeforeSignOut();
       unwrap(await api.POST('/api/auth/logout'));
     },

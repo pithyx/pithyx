@@ -20,7 +20,8 @@
     "device": "{browser} auf {os}",
     "unknownBrowser": "Ein Browser",
     "unknownOs": "einem unbekannten System",
-    "deviceDetail": "{count, plural, one {# Fenster} other {# Fenster}}, {time}"
+    "deviceDetail": "{count, plural, one {# Fenster} other {# Fenster}}, {time}",
+    "deviceDetailScreen": "{width} × {height}, {count, plural, one {# Fenster} other {# Fenster}}, {time}"
   },
   "error": {
     "title": "Etwas ist schiefgelaufen",

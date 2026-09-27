@@ -1,15 +1,20 @@
+using System.Globalization;
 using System.Text.Json;
 using Microsoft.AspNetCore.Http.HttpResults;
+using Microsoft.AspNetCore.Mvc;
 using Vyxis.Daemon.Auth;
 
 namespace Vyxis.Daemon.Layouts;
 
 /// <summary>
-/// Restoring and copying desktop layouts. Saving goes over the WebSocket (<c>layout</c> message), debounced by the
-/// desktop.
+/// Restoring, saving and copying desktop layouts. The desktop debounces saves and sends the version it last read or
+/// saved as <c>If-Match</c>, so a save from another tab of the same browser is never overwritten unnoticed.
 /// </summary>
 public static class LayoutEndpoints
 {
+    // A layout is at most LayoutRules.MaxLayoutBytes; this also stays within the 64 KB of a keepalive request.
+    private const long MaxRequestBytes = 64 * 1024;
+
     public static IServiceCollection AddVyxisLayouts(this IServiceCollection services)
     {
         services.AddSingleton<LayoutService>();
@@ -21,24 +26,58 @@ public static class LayoutEndpoints
     {
         var desktop = api.MapGroup("/desktop").WithTags("Desktop");
         desktop.MapGet("", GetStateAsync).WithName("GetDesktop");
+        desktop.MapPut("/layout", SaveAsync)
+            .WithName("SaveDesktopLayout")
+            .WithDescription(
+                "Saves this device's layout. Send the version from GET /api/desktop or the ETag of the last save as "
+                + "If-Match: \"n\". If another tab saved in between, the answer is 412 with desktop.layout.conflict and "
+                + "the current version in params.version. Without If-Match the save is unconditional. The new version "
+                + "comes back as ETag.")
+            .WithMetadata(new RequestSizeLimitAttribute(MaxRequestBytes));
         desktop.MapGet("/devices", ListDevicesAsync).WithName("ListDesktopDevices");
         desktop.MapPost("/layout/copy", CopyAsync).WithName("CopyDesktopLayout");
         desktop.MapPut("/preferences/{appId}", SetPreferenceAsync).WithName("SetWindowPreference");
     }
 
-    // Reading needs no device id: a browser without one has no layout yet. Only the WebSocket handshake and the
-    // session start create ids, so this request and the handshake cannot create two at once.
+    // Reading needs no device id: a browser without one has no layout yet.
     private static async Task<Ok<DesktopState>> GetStateAsync(LayoutService layouts, HttpContext context, CancellationToken cancellationToken) =>
         TypedResults.Ok(await layouts.GetStateAsync(CurrentUser.Id(context.User), DeviceCookie.Read(context.Request) ?? "", cancellationToken));
 
     private static async Task<Ok<IReadOnlyList<DeviceLayout>>> ListDevicesAsync(LayoutService layouts, HttpContext context, CancellationToken cancellationToken) =>
         TypedResults.Ok(await layouts.ListDevicesAsync(CurrentUser.Id(context.User), DeviceCookie.Read(context.Request) ?? "", cancellationToken));
 
-    private static async Task<Ok<JsonElement>> CopyAsync(CopyLayoutRequest request, LayoutService layouts, HttpContext context, IHostEnvironment environment, CancellationToken cancellationToken) =>
+    private static async Task<NoContent> SaveAsync(
+        [FromBody] JsonElement layout,
+        [FromHeader(Name = "If-Match")] string? ifMatch,
+        LayoutService layouts,
+        HttpContext context,
+        CancellationToken cancellationToken)
+    {
+        var version = await layouts.SaveAsync(
+            CurrentUser.Id(context.User),
+            Device(context),
+            context.Request.Headers.UserAgent.ToString(),
+            layout,
+            ifMatch is null ? null : ParseEntityTag(ifMatch),
+            cancellationToken);
+        context.Response.Headers.ETag = EntityTag(version);
+        return TypedResults.NoContent();
+    }
+
+    // A malformed tag matches no version, so the save fails with the current one.
+    private static long ParseEntityTag(string value) =>
+        value.Length > 2 && value[0] == '"' && value[^1] == '"'
+            && long.TryParse(value.AsSpan(1, value.Length - 2), NumberStyles.None, CultureInfo.InvariantCulture, out var version)
+            ? version
+            : -1;
+
+    internal static string EntityTag(long version) => string.Create(CultureInfo.InvariantCulture, $"\"{version}\"");
+
+    private static async Task<Ok<SavedLayout>> CopyAsync(CopyLayoutRequest request, LayoutService layouts, HttpContext context, CancellationToken cancellationToken) =>
         TypedResults.Ok(await layouts.CopyAsync(
             CurrentUser.Id(context.User),
             request.DeviceId,
-            Device(context, environment),
+            Device(context),
             context.Request.Headers.UserAgent.ToString(),
             cancellationToken));
 
@@ -48,7 +87,6 @@ public static class LayoutEndpoints
         return TypedResults.NoContent();
     }
 
-    // Sessions and the WebSocket handshake set the device cookie; copying may still be the first to need one.
-    private static string Device(HttpContext context, IHostEnvironment environment) =>
-        DeviceCookie.Ensure(context, secure: !environment.IsDevelopment());
+    // The session start sets the device cookie; a browser that lost it gets a new one with its next save or copy.
+    private static string Device(HttpContext context) => DeviceCookie.Ensure(context);
 }

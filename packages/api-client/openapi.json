@@ -439,6 +439,49 @@
         }
       }
     },
+    "/api/desktop/layout": {
+      "put": {
+        "tags": [
+          "Desktop"
+        ],
+        "description": "Saves this device's layout. Send the version from GET /api/desktop or the ETag of the last save as If-Match: \"n\". If another tab saved in between, the answer is 412 with desktop.layout.conflict and the current version in params.version. Without If-Match the save is unconditional. The new version comes back as ETag.",
+        "operationId": "SaveDesktopLayout",
+        "parameters": [
+          {
+            "name": "If-Match",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/desktop/devices": {
       "get": {
         "tags": [
@@ -494,7 +537,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/JsonElement"
+                  "$ref": "#/components/schemas/SavedLayout"
                 }
               }
             }
@@ -579,7 +622,7 @@
             "type": "string"
           }
         },
-        "description": "Confirms a `sub`, `unsub` or `layout`. For `sub`, the snapshots of matching topics follow."
+        "description": "Confirms a `sub` or `unsub`. For `sub`, the snapshots of matching topics follow."
       },
       "ApiProblem": {
         "required": [
@@ -629,8 +672,7 @@
           "type": {
             "enum": [
               "sub",
-              "unsub",
-              "layout"
+              "unsub"
             ],
             "type": "string"
           },
@@ -643,13 +685,10 @@
               "null",
               "string"
             ],
-            "description": "Topic name or pattern with `+` and `#`; required for `sub` and `unsub`."
-          },
-          "data": {
-            "description": "The layout for `layout`."
+            "description": "Topic name or pattern with `+` and `#`. A message without one is answered with an error."
           }
         },
-        "description": "A message from the client: `sub` or `unsub` for a topic or pattern, or `layout` to save the desktop\nlayout of this browser (debounced by the desktop)."
+        "description": "A message from the client: `sub` or `unsub` for a topic or pattern."
       },
       "CopyLayoutRequest": {
         "required": [
@@ -671,6 +710,7 @@
       "DesktopState": {
         "required": [
           "layout",
+          "layoutVersion",
           "preferences"
         ],
         "type": "object",
@@ -685,6 +725,11 @@
                 "$ref": "#/components/schemas/JsonElement"
               }
             ]
+          },
+          "layoutVersion": {
+            "type": "integer",
+            "description": "Increments with every save of this device's layout, 0 without one. Send it as `If-Match: \"n\"` with the next save.",
+            "format": "int64"
           },
           "preferences": {
             "type": "array",
@@ -701,7 +746,9 @@
           "browser",
           "os",
           "windowCount",
-          "updatedAt"
+          "updatedAt",
+          "screenWidth",
+          "screenHeight"
         ],
         "type": "object",
         "properties": {
@@ -732,6 +779,22 @@
             "type": "string",
             "description": "When the layout was last saved (UTC).",
             "format": "date-time"
+          },
+          "screenWidth": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Width of the desktop the layout was saved on, in CSS pixels, if the layout says.",
+            "format": "int64"
+          },
+          "screenHeight": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Its height.",
+            "format": "int64"
           }
         },
         "description": "Another device of the user with a saved layout."
@@ -1016,6 +1079,7 @@
           "auth.username.invalid",
           "auth.username.reserved",
           "desktop.device.not_found",
+          "desktop.layout.conflict",
           "desktop.layout.invalid",
           "desktop.layout.too_large",
           "realtime.message.invalid",
@@ -1241,6 +1305,24 @@
               "type": "string"
             },
             "description": "Shown exactly once. Each code replaces a TOTP code for one login."
+          }
+        }
+      },
+      "SavedLayout": {
+        "required": [
+          "layout",
+          "version"
+        ],
+        "type": "object",
+        "properties": {
+          "layout": {
+            "description": "The layout now saved for this device.",
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "version": {
+            "type": "integer",
+            "description": "Its version, for `If-Match` on the next save.",
+            "format": "int64"
           }
         }
       },

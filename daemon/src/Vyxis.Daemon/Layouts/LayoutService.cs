@@ -14,16 +14,22 @@ public sealed class LayoutService(SqliteConnectionFactory connections, TimeProvi
 {
     public static readonly TimeSpan Lifetime = TimeSpan.FromDays(90);
 
-    public async Task SaveAsync(long userId, string deviceId, string? userAgent, JsonElement layout, CancellationToken cancellationToken)
+    /// <summary>
+    /// Saves the layout of a device and returns its new version. With <paramref name="expectedVersion"/> the save only
+    /// happens if the stored layout still has that version (0 for none or an expired one); otherwise it throws
+    /// <see cref="ErrorCodes.DesktopLayoutConflict"/> with the current version.
+    /// </summary>
+    public async Task<long> SaveAsync(long userId, string deviceId, string? userAgent, JsonElement layout, long? expectedVersion, CancellationToken cancellationToken)
     {
         var checkedLayout = LayoutRules.Check(layout);
         var device = DeviceNamesParser.Parse(userAgent);
-        var now = time.GetUtcNow();
+        var now = SessionService.Format(time.GetUtcNow());
         await using var connection = await connections.OpenAsync(cancellationToken);
-        await connection.ExecuteAsync(
+        // An expired layout counts as none: the client read it as version 0.
+        var version = await connection.QuerySingleOrDefaultAsync<long?>(
             """
-            INSERT INTO desktop_layouts (user_id, device_id, device_browser, device_os, schema_version, layout, window_count, updated_at, expires_at)
-            VALUES (@UserId, @DeviceId, @Browser, @Os, @Version, @Layout, @WindowCount, @Now, @ExpiresAt)
+            INSERT INTO desktop_layouts (user_id, device_id, device_browser, device_os, schema_version, layout, window_count, updated_at, expires_at, version)
+            VALUES (@UserId, @DeviceId, @Browser, @Os, @SchemaVersion, @Layout, @WindowCount, @Now, @ExpiresAt, 1)
             ON CONFLICT (user_id, device_id) DO UPDATE SET
                 device_browser = excluded.device_browser,
                 device_os = excluded.device_os,
@@ -31,7 +37,11 @@ public sealed class LayoutService(SqliteConnectionFactory connections, TimeProvi
                 layout = excluded.layout,
                 window_count = excluded.window_count,
                 updated_at = excluded.updated_at,
-                expires_at = excluded.expires_at
+                expires_at = excluded.expires_at,
+                version = CASE WHEN desktop_layouts.expires_at <= @Now THEN 1 ELSE desktop_layouts.version + 1 END
+            WHERE @Expected IS NULL
+                OR (CASE WHEN desktop_layouts.expires_at <= @Now THEN 0 ELSE desktop_layouts.version END) = @Expected
+            RETURNING version
             """,
             new
             {
@@ -39,26 +49,36 @@ public sealed class LayoutService(SqliteConnectionFactory connections, TimeProvi
                 DeviceId = deviceId,
                 device.Browser,
                 device.Os,
-                Version = LayoutRules.SchemaVersion,
+                SchemaVersion = LayoutRules.SchemaVersion,
                 Layout = checkedLayout.Json,
                 checkedLayout.WindowCount,
-                Now = SessionService.Format(now),
-                ExpiresAt = SessionService.Format(now + Lifetime),
+                Now = now,
+                ExpiresAt = SessionService.Format(time.GetUtcNow() + Lifetime),
+                Expected = expectedVersion,
             });
+        if (version is null)
+        {
+            var current = await connection.QuerySingleAsync<long>(
+                "SELECT CASE WHEN expires_at <= @now THEN 0 ELSE version END FROM desktop_layouts WHERE user_id = @userId AND device_id = @deviceId",
+                new { userId, deviceId, now });
+            throw new VyxisException(ErrorCodes.DesktopLayoutConflict, new Dictionary<string, object?> { ["version"] = current });
+        }
+        return version.Value;
     }
 
     /// <summary>The saved layout of a device and every window preference of the user.</summary>
     public async Task<DesktopState> GetStateAsync(long userId, string deviceId, CancellationToken cancellationToken)
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
-        var layout = await connection.QuerySingleOrDefaultAsync<string?>(
-            "SELECT layout FROM desktop_layouts WHERE user_id = @userId AND device_id = @deviceId AND expires_at > @now",
+        var layout = await connection.QuerySingleOrDefaultAsync<LayoutRow>(
+            "SELECT layout AS Json, version AS Version FROM desktop_layouts WHERE user_id = @userId AND device_id = @deviceId AND expires_at > @now",
             new { userId, deviceId, now = SessionService.Format(time.GetUtcNow()) });
         var preferences = await connection.QueryAsync<PreferenceRow>(
             "SELECT app_id AS AppId, width AS Width, height AS Height FROM window_preferences WHERE user_id = @userId ORDER BY app_id",
             new { userId });
         return new DesktopState(
-            layout is null ? null : Parse(layout),
+            layout is null ? null : Parse(layout.Json),
+            layout?.Version ?? 0,
             [.. preferences.Select(row => new WindowPreference(row.AppId, (int)row.Width, (int)row.Height))]);
     }
 
@@ -68,17 +88,19 @@ public sealed class LayoutService(SqliteConnectionFactory connections, TimeProvi
         await using var connection = await connections.OpenAsync(cancellationToken);
         var rows = await connection.QueryAsync<DeviceRow>(
             """
-            SELECT device_id AS DeviceId, device_browser AS Browser, device_os AS Os, window_count AS WindowCount, updated_at AS UpdatedAt
+            SELECT device_id AS DeviceId, device_browser AS Browser, device_os AS Os, window_count AS WindowCount, updated_at AS UpdatedAt,
+                CASE WHEN json_type(layout, '$.viewport.width') = 'integer' THEN json_extract(layout, '$.viewport.width') END AS ScreenWidth,
+                CASE WHEN json_type(layout, '$.viewport.height') = 'integer' THEN json_extract(layout, '$.viewport.height') END AS ScreenHeight
             FROM desktop_layouts
             WHERE user_id = @userId AND device_id <> @deviceId AND expires_at > @now
             ORDER BY updated_at DESC
             """,
             new { userId, deviceId, now = SessionService.Format(time.GetUtcNow()) });
-        return [.. rows.Select(row => new DeviceLayout(row.DeviceId, row.Browser, row.Os, row.WindowCount, SessionService.Parse(row.UpdatedAt)))];
+        return [.. rows.Select(row => new DeviceLayout(row.DeviceId, row.Browser, row.Os, row.WindowCount, SessionService.Parse(row.UpdatedAt), row.ScreenWidth, row.ScreenHeight))];
     }
 
-    /// <summary>"Get desktop from ...": copies another device's layout to this device and returns it.</summary>
-    public async Task<JsonElement> CopyAsync(long userId, string fromDeviceId, string toDeviceId, string? userAgent, CancellationToken cancellationToken)
+    /// <summary>"Get desktop from ...": copies another device's layout to this device and returns it with its new version.</summary>
+    public async Task<SavedLayout> CopyAsync(long userId, string fromDeviceId, string toDeviceId, string? userAgent, CancellationToken cancellationToken)
     {
         string? layout;
         await using (var connection = await connections.OpenAsync(cancellationToken))
@@ -92,8 +114,8 @@ public sealed class LayoutService(SqliteConnectionFactory connections, TimeProvi
             throw new VyxisException(ErrorCodes.DesktopDeviceNotFound);
         }
         var element = Parse(layout);
-        await SaveAsync(userId, toDeviceId, userAgent, element, cancellationToken);
-        return element;
+        var version = await SaveAsync(userId, toDeviceId, userAgent, element, expectedVersion: null, cancellationToken);
+        return new SavedLayout(element, version);
     }
 
     public async Task SetPreferenceAsync(long userId, string appId, int width, int height, CancellationToken cancellationToken)
@@ -127,7 +149,20 @@ public sealed class LayoutService(SqliteConnectionFactory connections, TimeProvi
         return document.RootElement.Clone();
     }
 
+    private sealed record LayoutRow(string Json, long Version);
+
     private sealed record PreferenceRow(string AppId, long Width, long Height);
 
-    private sealed record DeviceRow(string DeviceId, string? Browser, string? Os, long WindowCount, string UpdatedAt);
+    // Properties instead of a constructor: SQLite reports no column type for the screen size expressions when no row
+    // matches, which Dapper cannot map to a constructor.
+    private sealed class DeviceRow
+    {
+        public string DeviceId { get; init; } = "";
+        public string? Browser { get; init; }
+        public string? Os { get; init; }
+        public long WindowCount { get; init; }
+        public string UpdatedAt { get; init; } = "";
+        public long? ScreenWidth { get; init; }
+        public long? ScreenHeight { get; init; }
+    }
 }

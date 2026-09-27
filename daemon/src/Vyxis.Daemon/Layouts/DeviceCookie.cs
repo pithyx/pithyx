@@ -21,15 +21,18 @@ public static partial class DeviceCookie
         return request.Cookies.TryGetValue(CookieName, out var value) && value is not null && IdFormat().IsMatch(value) ? value : null;
     }
 
-    /// <summary>Returns the device id and (re)sets the cookie, creating a new id if the request has none.</summary>
-    public static string Ensure(HttpContext context, bool secure)
+    /// <summary>
+    /// Returns the device id and (re)sets the cookie, creating a new id if the request has none. The cookie is
+    /// <c>Secure</c> on HTTPS; plain HTTP exists only in development until TLS lands.
+    /// </summary>
+    public static string Ensure(HttpContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
         var id = Read(context.Request) ?? Secrets.NewToken(16);
         context.Response.Cookies.Append(CookieName, id, new CookieOptions
         {
             HttpOnly = true,
-            Secure = secure,
+            Secure = context.Request.IsHttps,
             SameSite = SameSiteMode.Strict,
             Path = "/",
             MaxAge = _lifetime,
