@@ -35,7 +35,8 @@ public sealed record FileLocation(long ShareId, string Path);
 /// <param name="Items">The files and folders to work on, at most 1000.</param>
 /// <param name="Target">The folder to copy or move into; not used for delete.</param>
 /// <param name="OnConflict">For copy and move; fail when left out.</param>
-public sealed record FileOperationRequest(FileOperationKind Kind, IReadOnlyList<FileLocation> Items, FileLocation? Target = null, ConflictPolicy? OnConflict = null);
+/// <param name="Permanent">For delete: remove for good instead of moving to the share's recycle bin. Only when the user asked for it.</param>
+public sealed record FileOperationRequest(FileOperationKind Kind, IReadOnlyList<FileLocation> Items, FileLocation? Target = null, ConflictPolicy? OnConflict = null, bool Permanent = false);
 
 /// <summary>The result of a finished file operation job.</summary>
 /// <param name="Done">Entries copied, moved or deleted (folders count once, plus their contents).</param>
@@ -48,7 +49,7 @@ public sealed record FileOperationResult(long Done, IReadOnlyList<string> Skippe
 /// renames it into place when complete, so a cancelled or failed copy never leaves half a file under the real name.
 /// Moves within one file system are renames; across file systems they copy, then delete the source.
 /// </summary>
-public sealed class FileOperations(ShareService shares, JobService jobs)
+public sealed class FileOperations(ShareService shares, JobService jobs, TrashService trash)
 {
     public const int MaxItems = 1000;
     private const long CopyChunk = 16L * 1024 * 1024;
@@ -91,8 +92,181 @@ public sealed class FileOperations(ShareService shares, JobService jobs)
         }
 
         var policy = request.OnConflict ?? ConflictPolicy.Fail;
-        var kind = request.Kind.ToString().ToLowerInvariant();
-        return await jobs.StartAsync(CurrentUserId(user), $"files.{kind}", request, context => Task.Run(() => Run(request.Kind, sources, target, policy, context), context.Cancellation), cancellationToken);
+        var toTrash = request.Kind == FileOperationKind.Delete && !request.Permanent;
+        var kind = toTrash ? "trash" : request.Kind.ToString().ToLowerInvariant();
+        var userId = CurrentUserId(user);
+        return await jobs.StartAsync(userId, $"files.{kind}", request, context => Task.Run(() => Run(request.Kind, toTrash, userId, sources, target, policy, context), context.Cancellation), cancellationToken);
+    }
+
+    /// <summary>Puts recycle bin items back where they were, recreating missing parent folders.</summary>
+    public async Task<Job> StartRestoreAsync(ClaimsPrincipal user, long shareId, TrashItemsRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var (share, items) = await ResolveTrashAsync(user, shareId, request.Ids, cancellationToken);
+        var policy = request.OnConflict ?? ConflictPolicy.Rename;
+        return await jobs.StartAsync(CurrentUserId(user), "files.restore", request, context => Task.Run(() => Restore(share, items, policy, context), context.Cancellation), cancellationToken);
+    }
+
+    /// <summary>Deletes recycle bin items for good; all of them when <paramref name="ids"/> is null (emptying the bin).</summary>
+    public async Task<Job> StartPurgeAsync(ClaimsPrincipal user, long shareId, IReadOnlyList<long>? ids, CancellationToken cancellationToken)
+    {
+        var (share, items) = await ResolveTrashAsync(user, shareId, ids, cancellationToken);
+        return await jobs.StartAsync(CurrentUserId(user), ids is null ? "files.empty_trash" : "files.purge", new { shareId, ids }, context => Task.Run(() => Purge(share, items, context), context.Cancellation), cancellationToken);
+    }
+
+    private async Task<(ResolvedShare Share, IReadOnlyList<TrashItem> Items)> ResolveTrashAsync(ClaimsPrincipal user, long shareId, IReadOnlyList<long>? ids, CancellationToken cancellationToken)
+    {
+        if (ids is not null and not { Count: > 0 and <= MaxItems })
+        {
+            throw new VyxisException(ErrorCodes.FsOperationInvalid);
+        }
+        var share = await shares.ResolveAsync(user, shareId, write: true, cancellationToken);
+        return (share, await trash.GetAsync(share.Id, ids, cancellationToken));
+    }
+
+    private void Restore(ResolvedShare share, IReadOnlyList<TrashItem> items, ConflictPolicy policy, JobContext context)
+    {
+        var run = new Progress(context);
+        using var root = FileService.OpenRoot(share);
+        using var bin = TrashService.OpenFolder(root);
+        foreach (var item in items)
+        {
+            run.Count(root, FsPath.Join(TrashService.Folder, Stored(item)));
+        }
+        run.Report(null);
+        foreach (var item in items)
+        {
+            context.Cancellation.ThrowIfCancellationRequested();
+            var stored = Stored(item);
+            if (FileService.TryStat(bin, stored) is null)
+            {
+                // Gone from the bin (removed outside Vyxis): nothing to restore.
+                trash.Forget(item.Id);
+                continue;
+            }
+            var (parent, name) = FsPath.Split(item.OriginalPath);
+            using var folder = MakeParents(root, parent);
+            var targetName = name;
+            if (FileService.TryStat(folder, name) is not null)
+            {
+                switch (policy)
+                {
+                    case ConflictPolicy.Skip:
+                        run.Skip(item.OriginalPath);
+                        continue;
+                    case ConflictPolicy.Fail:
+                        throw new VyxisException(ErrorCodes.FsEntryExists, new Dictionary<string, object?> { ["name"] = name });
+                    case ConflictPolicy.Rename:
+                        targetName = FreeName(folder, name);
+                        break;
+                }
+            }
+            try
+            {
+                LinuxFs.Rename(bin, stored, folder, targetName, replace: policy == ConflictPolicy.Overwrite);
+            }
+            catch (FsError error) when (error.Errno == LinuxFs.EXDEV)
+            {
+                // The item came from another file system (a nested dataset): copy it back.
+                Copy(bin, stored, item.OriginalPath, folder, ConflictPolicy.Fail, run, targetName);
+                TrashService.RemoveTree(bin, stored);
+            }
+            catch (FsError error)
+            {
+                throw FsErrors.From(error, targetName);
+            }
+            trash.Forget(item.Id);
+            run.Add(run.CountOf(FsPath.Join(TrashService.Folder, stored)));
+        }
+        context.SetResult(new FileOperationResult(run.Done, run.Skipped));
+        run.Report(null);
+    }
+
+    private void Purge(ResolvedShare share, IReadOnlyList<TrashItem> items, JobContext context)
+    {
+        var run = new Progress(context);
+        using var root = FileService.OpenRoot(share);
+        using var bin = TrashService.OpenFolder(root);
+        foreach (var item in items)
+        {
+            if (FileService.TryStat(bin, Stored(item)) is not null)
+            {
+                run.Count(root, FsPath.Join(TrashService.Folder, Stored(item)));
+            }
+        }
+        run.Report(null);
+        foreach (var item in items)
+        {
+            Delete(bin, Stored(item), FsPath.Join(TrashService.Folder, Stored(item)), run);
+            trash.Forget(item.Id);
+        }
+        context.SetResult(new FileOperationResult(run.Done, run.Skipped));
+        run.Report(null);
+    }
+
+    private static string Stored(TrashItem item) => item.Id.ToString(CultureInfo.InvariantCulture);
+
+    /// <summary>Opens a folder below the root, creating every missing folder on the way.</summary>
+    private static SafeFileHandle MakeParents(SafeFileHandle root, string path)
+    {
+        var folder = FileService.Open(root, "", LinuxFs.Path | LinuxFs.Directory);
+        foreach (var segment in path.Split('/', StringSplitOptions.RemoveEmptyEntries))
+        {
+            try
+            {
+                LinuxFs.MakeDirectory(folder, segment);
+            }
+            catch (FsError error) when (error.Errno == LinuxFs.EEXIST)
+            {
+                // Already there.
+            }
+            catch (FsError error)
+            {
+                folder.Dispose();
+                throw FsErrors.From(error, segment);
+            }
+            var next = Child(folder, segment, LinuxFs.Path | LinuxFs.Directory);
+            folder.Dispose();
+            folder = next;
+        }
+        return folder;
+    }
+
+    /// <summary>Moves an entry into its share's recycle bin; across file systems it copies, then deletes.</summary>
+    private void MoveToTrash(ResolvedShare share, SafeFileHandle root, SafeFileHandle folder, string name, string path, long userId, Progress run)
+    {
+        var stat = FileService.TryStat(folder, name);
+        if (stat is null)
+        {
+            return;
+        }
+        using var bin = TrashService.OpenFolder(root);
+        var id = trash.Reserve(share.Id, path, stat.Kind, run.BytesOf(path), userId);
+        var stored = id.ToString(CultureInfo.InvariantCulture);
+        try
+        {
+            try
+            {
+                LinuxFs.Rename(folder, name, bin, stored);
+            }
+            catch (FsError error) when (error.Errno == LinuxFs.EXDEV)
+            {
+                Copy(folder, name, path, bin, ConflictPolicy.Fail, run, stored);
+                Delete(folder, name, path, run, counted: false);
+                return;
+            }
+            catch (FsError error)
+            {
+                throw FsErrors.From(error, name);
+            }
+            run.Add(run.CountOf(path));
+            run.Report(path);
+        }
+        catch
+        {
+            trash.Forget(id);
+            throw;
+        }
     }
 
     private async Task<ResolvedShare> ResolveAsync(ClaimsPrincipal user, long shareId, bool write, Dictionary<long, ResolvedShare> resolved, CancellationToken cancellationToken)
@@ -107,7 +281,7 @@ public sealed class FileOperations(ShareService shares, JobService jobs)
 
     private static long CurrentUserId(ClaimsPrincipal user) => Auth.CurrentUser.Id(user);
 
-    private static void Run(FileOperationKind kind, List<(ResolvedShare Share, string Path)> sources, (ResolvedShare Share, string Path)? target, ConflictPolicy policy, JobContext context)
+    private void Run(FileOperationKind kind, bool toTrash, long userId, List<(ResolvedShare Share, string Path)> sources, (ResolvedShare Share, string Path)? target, ConflictPolicy policy, JobContext context)
     {
         var run = new Progress(context);
         foreach (var (share, path) in sources)
@@ -125,7 +299,14 @@ public sealed class FileOperations(ShareService shares, JobService jobs)
             using var sourceFolder = FileService.Open(root, parent, LinuxFs.Path | LinuxFs.Directory);
             if (kind == FileOperationKind.Delete)
             {
-                Delete(sourceFolder, name, path, run);
+                if (toTrash)
+                {
+                    MoveToTrash(share, root, sourceFolder, name, path, userId, run);
+                }
+                else
+                {
+                    Delete(sourceFolder, name, path, run);
+                }
                 continue;
             }
             var (targetShare, targetPath) = target!.Value;
@@ -188,7 +369,7 @@ public sealed class FileOperations(ShareService shares, JobService jobs)
         }
     }
 
-    private static void Copy(SafeFileHandle fromFolder, string name, string path, SafeFileHandle toFolder, ConflictPolicy policy, Progress run)
+    private static void Copy(SafeFileHandle fromFolder, string name, string path, SafeFileHandle toFolder, ConflictPolicy policy, Progress run, string? asName = null)
     {
         run.Cancellation.ThrowIfCancellationRequested();
         var stat = FileService.Stat(fromFolder, name);
@@ -197,8 +378,8 @@ public sealed class FileOperations(ShareService shares, JobService jobs)
             run.Skip(path);
             return;
         }
-        var targetName = name;
-        var existing = FileService.TryStat(toFolder, name);
+        var targetName = asName ?? name;
+        var existing = FileService.TryStat(toFolder, targetName);
         if (existing is not null)
         {
             switch (policy)
@@ -404,6 +585,7 @@ public sealed class FileOperations(ShareService shares, JobService jobs)
     private sealed class Progress(JobContext context)
     {
         private readonly Dictionary<string, long> _counts = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, long> _sizes = new(StringComparer.Ordinal);
         private long _items;
         private long _bytes;
         private long _bytesDone;
@@ -419,11 +601,15 @@ public sealed class FileOperations(ShareService shares, JobService jobs)
             var (parent, name) = FsPath.Split(path);
             using var folder = FileService.Open(root, parent, LinuxFs.Path | LinuxFs.Directory);
             var before = _items;
+            var bytesBefore = _bytes;
             Walk(folder, name);
             _counts[path] = _items - before;
+            _sizes[path] = _bytes - bytesBefore;
         }
 
         public long CountOf(string path) => _counts.GetValueOrDefault(path, 1);
+
+        public long BytesOf(string path) => _sizes.GetValueOrDefault(path);
 
         private void Walk(SafeFileHandle folder, string name)
         {

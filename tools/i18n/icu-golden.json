@@ -198,6 +198,12 @@
       "params": {},
       "expected": "You can only read in this share."
     },
+    "fs.trash.retention_invalid": {
+      "params": {
+        "max": 999
+      },
+      "expected": "The recycle bin keeps items between 0 and 999 days (0 keeps them until it is emptied)."
+    },
     "fs.upload.incomplete": {
       "params": {},
       "expected": "The upload was interrupted. Nothing was saved."

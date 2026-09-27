@@ -97,6 +97,9 @@
       "not_found": "The share was not found, or you have no access to it.",
       "read_only": "You can only read in this share."
     },
+    "trash": {
+      "retention_invalid": "The recycle bin keeps items between 0 and {max} days (0 keeps them until it is emptied)."
+    },
     "upload": {
       "incomplete": "The upload was interrupted. Nothing was saved."
     },

@@ -16,6 +16,9 @@ public static class FsPath
     /// <summary>Hidden temporary files of uploads in progress start with this; listings never show them.</summary>
     public const string UploadPrefix = ".vyxis-upload-";
 
+    /// <summary>The recycle bin folder at a share root. Paths never name it; only the bin's own calls reach it.</summary>
+    public const string TrashFolder = ".vyxis-trash";
+
     /// <summary>The normalized form ("" for the root, otherwise "a/b/c"), or <c>fs.path.invalid</c>.</summary>
     public static string Normalize(string? path)
     {
@@ -35,6 +38,10 @@ public static class FsPath
                 throw Invalid(path);
             }
         }
+        if (segments is [TrashFolder, ..])
+        {
+            throw Invalid(path);
+        }
         return string.Join('/', segments);
     }
 
@@ -49,7 +56,7 @@ public static class FsPath
     /// <summary>Checks a new name for a file or folder the user creates or renames to.</summary>
     public static string CheckName(string? name)
     {
-        if (name is null || !IsName(name) || name.StartsWith(UploadPrefix, StringComparison.Ordinal) || name.Any(char.IsControl))
+        if (name is null || !IsName(name) || name.StartsWith(UploadPrefix, StringComparison.Ordinal) || name == TrashFolder || name.Any(char.IsControl))
         {
             throw new VyxisException(ErrorCodes.FsNameInvalid);
         }

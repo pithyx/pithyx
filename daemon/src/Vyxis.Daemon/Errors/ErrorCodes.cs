@@ -147,6 +147,10 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.Forbidden)]
     public const string FsShareReadOnly = "fs.share.read_only";
 
+    /// <summary><c>params.max</c> is the longest allowed retention in days.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string FsTrashRetentionInvalid = "fs.trash.retention_invalid";
+
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string FsUploadIncomplete = "fs.upload.incomplete";
 

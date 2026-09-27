@@ -97,6 +97,9 @@
       "not_found": "Der Share wurde nicht gefunden, oder du hast keinen Zugriff darauf.",
       "read_only": "In diesem Share darfst du nur lesen."
     },
+    "trash": {
+      "retention_invalid": "Der Papierkorb behält Elemente zwischen 0 und {max} Tagen (0 behält sie, bis er geleert wird)."
+    },
     "upload": {
       "incomplete": "Der Upload wurde unterbrochen. Es wurde nichts gespeichert."
     },

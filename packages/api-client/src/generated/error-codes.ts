@@ -44,6 +44,7 @@ export const errorCodes = [
   'fs.share.invalid',
   'fs.share.not_found',
   'fs.share.read_only',
+  'fs.trash.retention_invalid',
   'fs.upload.incomplete',
   'fs.volume.full',
   'fs.volume.read_only',

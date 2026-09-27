@@ -23,6 +23,8 @@ public sealed class FsPathTests
     [InlineData("./a")]
     [InlineData("a/.")]
     [InlineData("a\0b")]
+    [InlineData(".vyxis-trash")]
+    [InlineData("/.vyxis-trash/1")]
     public void RefusesDotSegmentsAndNul(string path)
     {
         var error = Assert.Throws<VyxisException>(() => FsPath.Normalize(path));

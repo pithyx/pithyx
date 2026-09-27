@@ -18,6 +18,8 @@ public static class FileEndpoints
         services.AddSingleton<FolderCache>();
         services.AddSingleton<FileService>();
         services.AddSingleton<FileOperations>();
+        services.AddSingleton<TrashService>();
+        services.AddHostedService<TrashCleanupService>();
         services.AddSingleton<FolderWatches>();
         services.AddSingleton(provider => FolderWatchPublisher.Definition(
             provider.GetRequiredService<FolderWatches>(),
@@ -34,7 +36,7 @@ public static class FileEndpoints
             .WithDescription(
                 "Starts copying, moving or deleting as a job and answers 202 with it; follow it on jobs/<id>. Access is "
                 + "checked now: read on the sources for copy, write on the sources for move and delete, write on the target. "
-                + "Deleting is permanent. onConflict decides about names that exist in the target: fail (default), skip, "
+                + "Deleting moves to the share's recycle bin unless permanent is true. onConflict decides about names that exist in the target: fail (default), skip, "
                 + "overwrite (folders are merged) or rename.");
         var files = api.MapGroup("/files/{shareId:long}").WithTags("Files");
         files.MapGet("/list", ListAsync)
@@ -56,10 +58,46 @@ public static class FileEndpoints
                 + "body is complete. Fails with fs.entry.exists if the name is taken, unless overwrite=true.")
             .WithMetadata(new DisableRequestSizeLimitAttribute());
         files.MapPost("/folders", CreateFolderAsync).WithName("CreateFolder");
+        files.MapGet("/trash", ListTrashAsync)
+            .WithName("ListTrash")
+            .WithDescription("The share's recycle bin, newest first, with the share's retention. Deleting a file or folder moves it here unless the delete is permanent.");
+        files.MapPost("/trash/restore", RestoreTrashAsync)
+            .WithName("RestoreTrash")
+            .WithDescription("Starts a job that puts items back where they were, recreating missing folders. onConflict defaults to rename.");
+        files.MapPost("/trash/delete", PurgeTrashAsync)
+            .WithName("DeleteTrashItems")
+            .WithDescription("Starts a job that deletes the given recycle bin items for good.");
+        files.MapPost("/trash/empty", EmptyTrashAsync)
+            .WithName("EmptyTrash")
+            .WithDescription("Starts a job that deletes everything in the share's recycle bin for good.");
+        api.MapPut("/shares/{shareId:long}/trash", SetTrashAsync)
+            .WithTags("Shares")
+            .WithName("SetShareTrash")
+            .WithDescription("Administrators only. Days the recycle bin keeps deleted items (0 to 3650; 0 keeps them until emptied). Applies to items already in the bin.");
         files.MapPost("/rename", RenameAsync)
             .WithName("RenameFileEntry")
             .WithDescription("Renames a file or folder within its folder. An existing name is never replaced (fs.entry.exists).");
     }
+
+    private static async Task<Ok<TrashPage>> ListTrashAsync(long shareId, string? cursor, int? limit, TrashService trash, HttpContext context, CancellationToken cancellationToken) =>
+        TypedResults.Ok(await trash.ListAsync(context.User, shareId, cursor, limit, cancellationToken));
+
+    private static async Task<Accepted<Jobs.Job>> RestoreTrashAsync(long shareId, TrashItemsRequest request, FileOperations operations, HttpContext context, CancellationToken cancellationToken) =>
+        Accepted(await operations.StartRestoreAsync(context.User, shareId, request, cancellationToken));
+
+    private static async Task<Accepted<Jobs.Job>> PurgeTrashAsync(long shareId, TrashItemsRequest request, FileOperations operations, HttpContext context, CancellationToken cancellationToken) =>
+        Accepted(await operations.StartPurgeAsync(context.User, shareId, request.Ids, cancellationToken));
+
+    private static async Task<Accepted<Jobs.Job>> EmptyTrashAsync(long shareId, FileOperations operations, HttpContext context, CancellationToken cancellationToken) =>
+        Accepted(await operations.StartPurgeAsync(context.User, shareId, null, cancellationToken));
+
+    private static async Task<NoContent> SetTrashAsync(long shareId, TrashSettingsRequest request, TrashService trash, HttpContext context, CancellationToken cancellationToken)
+    {
+        await trash.SetRetentionAsync(context.User, shareId, request.RetentionDays, cancellationToken);
+        return TypedResults.NoContent();
+    }
+
+    private static Accepted<Jobs.Job> Accepted(Jobs.Job job) => TypedResults.Accepted($"/api/jobs/{job.Id}", job);
 
     private static async Task<Accepted<Jobs.Job>> StartOperationAsync(FileOperationRequest request, FileOperations operations, HttpContext context, CancellationToken cancellationToken)
     {

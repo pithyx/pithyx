@@ -301,7 +301,8 @@ public sealed class FileService(ShareService shares, FolderCache cache, TimeProv
         {
             throw FsErrors.From(error);
         }
-        names.RemoveAll(entry => entry.Name.StartsWith(FsPath.UploadPrefix, StringComparison.Ordinal));
+        names.RemoveAll(entry => entry.Name.StartsWith(FsPath.UploadPrefix, StringComparison.Ordinal)
+            || (normalized.Length == 0 && entry.Name == FsPath.TrashFolder));
         var snapshot = new FolderSnapshot(folderStat.Id, Max(folderStat.Modified, folderStat.Changed), [.. names], now);
         cache.Put(shareId, normalized, snapshot);
         return snapshot;

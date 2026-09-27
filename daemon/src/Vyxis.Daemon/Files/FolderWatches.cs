@@ -185,7 +185,7 @@ public sealed class FolderWatches : IDisposable
                     Schedule(target);
                     continue;
                 }
-                if (name.Length == 0 || name.StartsWith(FsPath.UploadPrefix, StringComparison.Ordinal))
+                if (name.Length == 0 || name.StartsWith(FsPath.UploadPrefix, StringComparison.Ordinal) || (target.Path.Length == 0 && name == FsPath.TrashFolder))
                 {
                     continue;
                 }

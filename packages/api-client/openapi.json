@@ -40,7 +40,7 @@
         "tags": [
           "Files"
         ],
-        "description": "Starts copying, moving or deleting as a job and answers 202 with it; follow it on jobs/<id>. Access is checked now: read on the sources for copy, write on the sources for move and delete, write on the target. Deleting is permanent. onConflict decides about names that exist in the target: fail (default), skip, overwrite (folders are merged) or rename.",
+        "description": "Starts copying, moving or deleting as a job and answers 202 with it; follow it on jobs/<id>. Access is checked now: read on the sources for copy, write on the sources for move and delete, write on the target. Deleting moves to the share's recycle bin unless permanent is true. onConflict decides about names that exist in the target: fail (default), skip, overwrite (folders are merged) or rename.",
         "operationId": "StartFileOperation",
         "requestBody": {
           "content": {
@@ -62,6 +62,51 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/shares/{shareId}/trash": {
+      "put": {
+        "tags": [
+          "Shares"
+        ],
+        "description": "Administrators only. Days the recycle bin keeps deleted items (0 to 3650; 0 keeps them until emptied). Applies to items already in the bin.",
+        "operationId": "SetShareTrash",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrashSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
           },
           "default": {
             "description": "Problem details with a stable error code.",
@@ -1359,6 +1404,209 @@
         }
       }
     },
+    "/api/files/{shareId}/trash": {
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "description": "The share's recycle bin, newest first, with the share's retention. Deleting a file or folder moves it here unless the delete is permanent.",
+        "operationId": "ListTrash",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrashPage"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/files/{shareId}/trash/restore": {
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "description": "Starts a job that puts items back where they were, recreating missing folders. onConflict defaults to rename.",
+        "operationId": "RestoreTrash",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrashItemsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/files/{shareId}/trash/delete": {
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "description": "Starts a job that deletes the given recycle bin items for good.",
+        "operationId": "DeleteTrashItems",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TrashItemsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/files/{shareId}/trash/empty": {
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "description": "Starts a job that deletes everything in the share's recycle bin for good.",
+        "operationId": "EmptyTrash",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/files/{shareId}/rename": {
       "post": {
         "tags": [
@@ -2029,6 +2277,7 @@
           "fs.share.invalid",
           "fs.share.not_found",
           "fs.share.read_only",
+          "fs.trash.retention_invalid",
           "fs.upload.incomplete",
           "fs.volume.full",
           "fs.volume.read_only",
@@ -2205,6 +2454,11 @@
                 "$ref": "#/components/schemas/ConflictPolicy"
               }
             ]
+          },
+          "permanent": {
+            "type": "boolean",
+            "description": "For delete: remove for good instead of moving to the share's recycle bin. Only when the user asked for it.",
+            "default": false
           }
         }
       },
@@ -3069,6 +3323,133 @@
           }
         }
       },
+      "TrashItem": {
+        "required": [
+          "id",
+          "name",
+          "originalPath",
+          "kind",
+          "size",
+          "deletedAt",
+          "deletedBy",
+          "expiresAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Id for restoring or deleting it.",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "description": "Its name when it was deleted."
+          },
+          "originalPath": {
+            "type": "string",
+            "description": "Where it was, relative to the share; restoring puts it back there."
+          },
+          "kind": {
+            "description": "File, folder, symlink or another kind.",
+            "$ref": "#/components/schemas/FileKind"
+          },
+          "size": {
+            "type": "integer",
+            "description": "Bytes, for a folder everything inside it.",
+            "format": "int64"
+          },
+          "deletedAt": {
+            "type": "string",
+            "description": "When it was deleted, UTC.",
+            "format": "date-time"
+          },
+          "deletedBy": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "User name of who deleted it, if that user still exists."
+          },
+          "expiresAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When it is deleted for good, or null when the share keeps deleted items until emptied.",
+            "format": "date-time"
+          }
+        },
+        "description": "One item in a share's recycle bin."
+      },
+      "TrashItemsRequest": {
+        "required": [
+          "ids"
+        ],
+        "type": "object",
+        "properties": {
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Items of the share's recycle bin, at most 1000."
+          },
+          "onConflict": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "For restoring: what happens when the original place is taken; rename when left out.",
+                "$ref": "#/components/schemas/ConflictPolicy"
+              }
+            ]
+          }
+        }
+      },
+      "TrashPage": {
+        "required": [
+          "items",
+          "nextCursor",
+          "retentionDays"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TrashItem"
+            },
+            "description": "Newest first."
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Pass as cursor for the next page; null on the last page."
+          },
+          "retentionDays": {
+            "type": "integer",
+            "description": "Days the share keeps deleted items; 0 keeps them until the bin is emptied.",
+            "format": "int32"
+          }
+        }
+      },
+      "TrashSettingsRequest": {
+        "required": [
+          "retentionDays"
+        ],
+        "type": "object",
+        "properties": {
+          "retentionDays": {
+            "type": "integer",
+            "description": "0 to 3650; 0 keeps deleted items until the bin is emptied.",
+            "format": "int32"
+          }
+        }
+      },
       "UserInfo": {
         "required": [
           "id",
@@ -3170,6 +3551,9 @@
       "name": "Files"
     },
     {
+      "name": "Shares"
+    },
+    {
       "name": "Storage"
     },
     {
@@ -3183,9 +3567,6 @@
     },
     {
       "name": "Jobs"
-    },
-    {
-      "name": "Shares"
     }
   ]
 }

@@ -345,6 +345,74 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/files/{shareId}/trash": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description The share's recycle bin, newest first, with the share's retention. Deleting a file or folder moves it here unless the delete is permanent. */
+        get: operations["ListTrash"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/files/{shareId}/trash/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Starts a job that deletes the given recycle bin items for good. */
+        post: operations["DeleteTrashItems"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/files/{shareId}/trash/empty": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Starts a job that deletes everything in the share's recycle bin for good. */
+        post: operations["EmptyTrash"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/files/{shareId}/trash/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Starts a job that puts items back where they were, recreating missing folders. onConflict defaults to rename. */
+        post: operations["RestoreTrash"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/files/operations": {
         parameters: {
             query?: never;
@@ -354,7 +422,7 @@ export type paths = {
         };
         get?: never;
         put?: never;
-        /** @description Starts copying, moving or deleting as a job and answers 202 with it; follow it on jobs/<id>. Access is checked now: read on the sources for copy, write on the sources for move and delete, write on the target. Deleting is permanent. onConflict decides about names that exist in the target: fail (default), skip, overwrite (folders are merged) or rename. */
+        /** @description Starts copying, moving or deleting as a job and answers 202 with it; follow it on jobs/<id>. Access is checked now: read on the sources for copy, write on the sources for move and delete, write on the target. Deleting moves to the share's recycle bin unless permanent is true. onConflict decides about names that exist in the target: fail (default), skip, overwrite (folders are merged) or rename. */
         post: operations["StartFileOperation"];
         delete?: never;
         options?: never;
@@ -490,6 +558,23 @@ export type paths = {
         get?: never;
         /** @description Administrators only. Sets a user's access to a share: none, read or readWrite. Applies to the user's next request. */
         put: operations["SetShareAccess"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/shares/{shareId}/trash": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description Administrators only. Days the recycle bin keeps deleted items (0 to 3650; 0 keeps them until emptied). Applies to items already in the bin. */
+        put: operations["SetShareTrash"];
         post?: never;
         delete?: never;
         options?: never;
@@ -719,7 +804,7 @@ export type components = {
             }[];
         };
         /** @enum {string} */
-        ErrorCode: "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.exists" | "fs.share.invalid" | "fs.share.not_found" | "fs.share.read_only" | "fs.upload.incomplete" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "system.internal.unexpected" | "system.origin.forbidden";
+        ErrorCode: "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.exists" | "fs.share.invalid" | "fs.share.not_found" | "fs.share.read_only" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "system.internal.unexpected" | "system.origin.forbidden";
         /** @description A failed client message. `id` is empty when the message could not be parsed. */
         ErrorMessage: {
             code: components["schemas"]["ErrorCode"];
@@ -781,6 +866,11 @@ export type components = {
             /** @description copy, move or delete. */
             kind: components["schemas"]["FileOperationKind"];
             onConflict?: null | components["schemas"]["ConflictPolicy"];
+            /**
+             * @description For delete: remove for good instead of moving to the share's recycle bin. Only when the user asked for it.
+             * @default false
+             */
+            permanent: boolean;
             target?: null | components["schemas"]["FileLocation"];
         };
         /** @description What a folder topic sends: the names that changed since the last event, or a request to list again. */
@@ -1099,6 +1189,60 @@ export type components = {
             code?: null | string;
             /** @description One of the recovery codes shown when TOTP was enabled, instead of a code. */
             recoveryCode?: null | string;
+        };
+        /** @description One item in a share's recycle bin. */
+        TrashItem: {
+            /**
+             * Format: date-time
+             * @description When it was deleted, UTC.
+             */
+            deletedAt: string;
+            /** @description User name of who deleted it, if that user still exists. */
+            deletedBy: null | string;
+            /**
+             * Format: date-time
+             * @description When it is deleted for good, or null when the share keeps deleted items until emptied.
+             */
+            expiresAt: null | string;
+            /**
+             * Format: int64
+             * @description Id for restoring or deleting it.
+             */
+            id: number;
+            /** @description File, folder, symlink or another kind. */
+            kind: components["schemas"]["FileKind"];
+            /** @description Its name when it was deleted. */
+            name: string;
+            /** @description Where it was, relative to the share; restoring puts it back there. */
+            originalPath: string;
+            /**
+             * Format: int64
+             * @description Bytes, for a folder everything inside it.
+             */
+            size: number;
+        };
+        TrashItemsRequest: {
+            /** @description Items of the share's recycle bin, at most 1000. */
+            ids: number[];
+            onConflict?: null | components["schemas"]["ConflictPolicy"];
+        };
+        TrashPage: {
+            /** @description Newest first. */
+            items: components["schemas"]["TrashItem"][];
+            /** @description Pass as cursor for the next page; null on the last page. */
+            nextCursor: null | string;
+            /**
+             * Format: int32
+             * @description Days the share keeps deleted items; 0 keeps them until the bin is emptied.
+             */
+            retentionDays: number;
+        };
+        TrashSettingsRequest: {
+            /**
+             * Format: int32
+             * @description 0 to 3650; 0 keeps deleted items until the bin is emptied.
+             */
+            retentionDays: number;
         };
         UserInfo: {
             displayName: null | string;
@@ -1907,6 +2051,141 @@ export interface operations {
             };
         };
     };
+    ListTrash: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                shareId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrashPage"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    DeleteTrashItems: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shareId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TrashItemsRequest"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    EmptyTrash: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shareId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    RestoreTrash: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shareId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TrashItemsRequest"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
     StartFileOperation: {
         parameters: {
             query?: never;
@@ -2224,6 +2503,39 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["ShareAccessRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SetShareTrash: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shareId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TrashSettingsRequest"];
             };
         };
         responses: {
