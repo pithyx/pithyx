@@ -29,12 +29,13 @@ export interface SdkAppProps {
 export function CoreSdkApp({
   windowId,
   app: appId,
-  version,
+  version = SDK_VERSION,
   permissions,
   Component,
 }: AppProps & {
   app: string;
-  version: string;
+  /** Core apps ship with the desktop, so their version is the monorepo's. */
+  version?: string;
   permissions: readonly string[];
   Component: ComponentType<SdkAppProps>;
 }) {

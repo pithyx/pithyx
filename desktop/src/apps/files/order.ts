@@ -21,7 +21,7 @@ export function naturalKey(name: string): string {
         c < 0x80
           ? c >= 97 && c <= 122
             ? String.fromCharCode(c - 32)
-            : name[i]
+            : name.charAt(i)
           : name.charAt(i).toUpperCase();
     }
   }

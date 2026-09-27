@@ -9,6 +9,8 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { unwrap, type components } from '@vyxis/api-client';
 import {
+  lazy,
+  Suspense,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -26,7 +28,6 @@ import { coreApps, findApp } from '../apps/registry';
 import { initialsOf } from '../auth/parts';
 import { clearSessionHint } from '../auth/sessionHint';
 import { LanguageOptions } from './LanguageOptions';
-import { TotpSetup } from '../auth/TotpSetup';
 import { useDaemonStatus } from '../daemonStatus';
 import { showError } from '../errors/errorStore';
 import { useRealtime } from '../realtime/connection';
@@ -258,6 +259,11 @@ function UserMenu({
 
 // The desktop items (icons, notes, their menus and gestures) are a chunk of their own that starts loading together with
 // this one and shows once it and the items query are there; the taskbar and windows never wait for it.
+// Setting up two-factor sign-in is rare; its dialog loads when it is opened, not with the desktop.
+const TotpSetup = lazy(() =>
+  import('../auth/TotpSetup').then(({ TotpSetup }) => ({ default: TotpSetup })),
+);
+
 type ItemsModule = typeof import('../items/ItemsLayer');
 let itemsModule: ItemsModule | undefined;
 const itemsListeners = new Set<() => void>();
@@ -539,13 +545,17 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
                 {t('realtime.stopped')}
               </p>
             )}
-            <TotpSetup
-              user={user}
-              isOpen={totpOpen}
-              onClose={() => {
-                setTotpOpen(false);
-              }}
-            />
+            {totpOpen && (
+              <Suspense>
+                <TotpSetup
+                  user={user}
+                  isOpen
+                  onClose={() => {
+                    setTotpOpen(false);
+                  }}
+                />
+              </Suspense>
+            )}
           </>
         }
       >

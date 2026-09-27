@@ -23,7 +23,7 @@ interface TransfersState {
 export function createTransfers() {
   const store = create<TransfersState>(() => ({ uploads: {}, jobs: {} }));
   return {
-    use: store,
+    useStore: store,
     addUpload(upload: Upload) {
       store.setState((state) => ({ uploads: { ...state.uploads, [upload.id]: upload } }));
     },

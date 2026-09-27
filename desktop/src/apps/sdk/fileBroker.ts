@@ -328,9 +328,9 @@ export function fileBrokerFor(target: FileBrokerTarget): {
       );
     },
     'jobs.cancel': async ({ job }) => {
-      await daemon(async () =>
-        unwrap(await api.POST('/api/jobs/{id}/cancel', { params: { path: { id: job } } })),
-      );
+      await daemon(async () => {
+        unwrap(await api.POST('/api/jobs/{id}/cancel', { params: { path: { id: job } } }));
+      });
     },
     'trash.list': async ({ location, cursor, limit }) => {
       require('files.shares');

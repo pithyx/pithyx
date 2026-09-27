@@ -44,14 +44,14 @@ export function appWindow(page: Page, name: string) {
   return page.getByRole('region', { name, exact: true });
 }
 
-/** Puts the administrator's desktop items back to the two default shortcuts; they are shared by every spec. */
+/** Puts the administrator's desktop items back to the default shortcuts; they are shared by every spec. */
 export async function resetDesktopItems(page: Page) {
   const headers = { 'X-Vyxis-Request': '1' };
   const items = (await (await page.request.get('/api/desktop/items')).json()) as { id: number }[];
   for (const item of items) {
     await page.request.delete(`/api/desktop/items/${String(item.id)}`, { headers });
   }
-  for (const [row, app] of ['disks', 'about'].entries()) {
+  for (const [row, app] of ['files', 'disks', 'about'].entries()) {
     await page.request.post('/api/desktop/items', {
       headers,
       data: { kind: 'shortcut', app, column: 0, row },

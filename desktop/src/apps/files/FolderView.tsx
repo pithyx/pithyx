@@ -1,5 +1,5 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
-import type { FileEntry, SortKey, SortOrder } from '@vyxis/sdk';
+import type { FileEntry, Formatters, SortKey, SortOrder } from '@vyxis/sdk';
 import {
   useEffect,
   useId,
@@ -49,6 +49,8 @@ export interface FolderViewProps {
   /** Called once the rows of a newly shown folder are on screen, for the navigation timing. */
   onShown: () => void;
   folderKey: string;
+  /** The SDK's formatters, in the user's language and time zone. */
+  format: Formatters;
 }
 
 const ROW_HEIGHT = 36;
@@ -66,7 +68,7 @@ function rowHeight(): number {
  */
 export function FolderView(props: FolderViewProps) {
   const { entries, total, selection, onSelect } = props;
-  const { t, i18n } = useTranslation('files');
+  const { t } = useTranslation('files');
   const scroll = useRef<HTMLDivElement>(null);
   const id = useId();
   const [active, setActive] = useState(0);
@@ -85,8 +87,7 @@ export function FolderView(props: FolderViewProps) {
   const lastVisible = items.at(-1)?.index ?? 0;
   const names = entries.map((entry) => entry.name);
   const activeIndex = Math.min(active, Math.max(0, count - 1));
-  const date = new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' });
-  const size = new Intl.NumberFormat(i18n.language, { maximumFractionDigits: 1 });
+  const { format } = props;
 
   // Pages follow the scroll position: syncing with the virtualizer, not deriving state.
   const { hasMore, loading, loadMore } = props;
@@ -449,10 +450,10 @@ export function FolderView(props: FolderViewProps) {
                   </span>
                 </div>
                 <div role="gridcell" className={cx(styles.cell, styles.size)}>
-                  {isFolder ? '' : formatSize(entry.size, size)}
+                  {isFolder ? '' : format.bytes(entry.size)}
                 </div>
                 <div role="gridcell" className={cx(styles.cell, styles.optional)}>
-                  {date.format(new Date(entry.modified))}
+                  {format.dateTime(entry.modified)}
                 </div>
               </div>
             );
@@ -462,19 +463,6 @@ export function FolderView(props: FolderViewProps) {
       {!props.loading && count === 0 && <p className={styles.empty}>{t('emptyFolder')}</p>}
     </div>
   );
-}
-
-const UNITS = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'] as const;
-
-/** Decimal units, as the desktop shows sizes elsewhere. */
-function formatSize(bytes: number, format: Intl.NumberFormat): string {
-  let value = bytes;
-  let unit = 0;
-  while (value >= 1000 && unit < UNITS.length - 1) {
-    value /= 1000;
-    unit++;
-  }
-  return `${format.format(value)} ${UNITS[unit] ?? ''}`;
 }
 
 function RenameInput({
