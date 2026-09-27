@@ -77,6 +77,51 @@ export default defineConfig(
     },
   },
   {
+    // Vyxis works without a secure context (plain HTTP by IP, an untrusted certificate). APIs that need one are
+    // reached only through desktop/src/platform/browser.ts, which falls back or reports that they are missing.
+    files: ['desktop/src/**/*.{ts,tsx}', 'sdk/src/**/*.ts', 'apps/*/src/**/*.ts'],
+    ignores: ['desktop/src/platform/browser.ts', '**/*.test.{ts,tsx}'],
+    rules: {
+      'no-restricted-properties': [
+        'error',
+        ...[
+          ['crypto', 'randomUUID'],
+          ['crypto', 'subtle'],
+          ['navigator', 'clipboard'],
+          ['navigator', 'serviceWorker'],
+          ['navigator', 'credentials'],
+          ['navigator', 'storage'],
+          ['navigator', 'locks'],
+          ['navigator', 'share'],
+          ['navigator', 'mediaDevices'],
+          ['document', 'execCommand'],
+          ['window', 'isSecureContext'],
+          ['window', 'crypto'],
+          ['window', 'navigator'],
+          ['globalThis', 'crypto'],
+          ['globalThis', 'navigator'],
+        ].map(([object, property]) => ({
+          object,
+          property,
+          message: 'Needs a secure context; use desktop/src/platform/browser.ts.',
+        })),
+      ],
+      'no-restricted-globals': [
+        'error',
+        ...[
+          'Notification',
+          'PublicKeyCredential',
+          'isSecureContext',
+          'showSaveFilePicker',
+          'showOpenFilePicker',
+        ].map((name) => ({
+          name,
+          message: 'Needs a secure context; use desktop/src/platform/browser.ts.',
+        })),
+      ],
+    },
+  },
+  {
     files: ['desktop/src/**/*.tsx'],
     ignores: ['**/*.test.tsx'],
     plugins: { i18next },

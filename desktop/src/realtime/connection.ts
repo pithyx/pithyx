@@ -28,6 +28,7 @@ export const useRealtime = create<RealtimeState>(() => ({ status: 'idle', data: 
 class RealtimeConnection {
   private socket: WebSocket | null = null;
   private readonly references = new Map<TopicName, number>();
+  private readonly listeners = new Map<string, Set<(data: unknown) => void>>();
   private attempt = 0;
   private retryTimer: ReturnType<typeof setTimeout> | undefined;
   private nextId = 0;
@@ -58,6 +59,24 @@ class RealtimeConnection {
     }
     return () => {
       this.release(topic);
+    };
+  }
+
+  /**
+   * Subscribes to one concrete topic of a family (a folder, a job) and hands its snapshot and every event to the
+   * listener, which keeps its own state. Call the returned function to release it.
+   */
+  listen(topic: string, listener: (data: unknown) => void): () => void {
+    const set = this.listeners.get(topic) ?? new Set();
+    set.add(listener);
+    this.listeners.set(topic, set);
+    const release = this.subscribe(topic as TopicName);
+    return () => {
+      set.delete(listener);
+      if (set.size === 0) {
+        this.listeners.delete(topic);
+      }
+      release();
     };
   }
 
@@ -116,6 +135,7 @@ class RealtimeConnection {
   private handle(message: ServerMessage): void {
     switch (message.type) {
       case 'snap':
+        this.notify(message.topic, message.data);
         useRealtime.setState((state) => ({
           data: { ...state.data, [message.topic]: message.data },
         }));
@@ -125,6 +145,7 @@ class RealtimeConnection {
         if (!this.references.has(topic)) {
           break;
         }
+        this.notify(topic, message.data);
         useRealtime.setState((state) => ({
           data: {
             ...state.data,
@@ -144,6 +165,12 @@ class RealtimeConnection {
         break;
       case 'ack':
         break;
+    }
+  }
+
+  private notify(topic: string, data: unknown): void {
+    for (const listener of this.listeners.get(topic) ?? []) {
+      listener(data);
     }
   }
 

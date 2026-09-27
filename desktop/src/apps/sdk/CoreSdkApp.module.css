@@ -1,0 +1,7 @@
+.root {
+  height: 100%;
+  min-height: 0;
+  background: var(--vyxis-color-background);
+  color: var(--vyxis-color-text);
+  font-family: var(--vyxis-font-ui);
+}

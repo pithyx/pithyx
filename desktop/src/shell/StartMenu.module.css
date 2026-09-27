@@ -212,7 +212,7 @@
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  padding: var(--space-2) var(--space-3) var(--space-2) var(--space-4);
+  padding: var(--space-2) var(--space-3);
   border-top: 1px solid var(--color-border);
   background: light-dark(rgb(239 244 245 / 70%), rgb(10 25 29 / 55%));
 }
@@ -222,6 +222,25 @@
   align-items: center;
   gap: var(--space-3);
   min-width: 0;
+  min-height: 44px;
+  padding: var(--space-1) var(--space-2) var(--space-1) var(--space-1);
+  border: 0;
+  border-radius: var(--radius-md);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+}
+
+.user[data-hovered],
+.user[data-pressed] {
+  background: var(--color-surface-hover);
+}
+
+.user[data-focus-visible] {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
 }
 
 .avatar {

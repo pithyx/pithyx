@@ -26,5 +26,94 @@
     "label": "Row density",
     "comfortable": "Comfortable",
     "compact": "Compact"
+  },
+  "up": "Up one level",
+  "sidebar": "Shares and recycle bin",
+  "trash": "Recycle bin",
+  "readOnly": "Read only",
+  "loading": "Loading",
+  "selected": "{count, plural, one {# selected} other {# selected}}",
+  "emptyFolder": "This folder is empty. Drop files here to upload them.",
+  "noShares": "You have no shares yet. An administrator can create them.",
+  "menu": {
+    "entries": "Actions for {count, plural, one {# item} other {# items}}",
+    "folder": "Folder actions"
+  },
+  "actions": {
+    "open": "Open",
+    "download": "Download",
+    "upload": "Upload",
+    "newFolder": "New folder",
+    "rename": "Rename",
+    "copy": "Copy",
+    "cut": "Cut",
+    "paste": "Paste",
+    "delete": "Move to recycle bin",
+    "deletePermanent": "Delete permanently",
+    "selectAll": "Select all"
+  },
+  "dialog": {
+    "cancel": "Cancel",
+    "rename": "Rename {name}",
+    "permanentTitle": "Delete permanently?",
+    "permanentBody": "{count, plural, one {# item is} other {# items are}} deleted for good. This cannot be undone.",
+    "permanentConfirm": "Delete permanently",
+    "conflictTitle": "Names already exist",
+    "conflictBody": "The target folder already has entries with the same names. What should happen with them?",
+    "emptyTitle": "Empty the recycle bin?",
+    "emptyBody": "Everything in the recycle bin of {share} is deleted for good. This cannot be undone.",
+    "emptyConfirm": "Empty recycle bin",
+    "purgeTitle": "Delete for good?",
+    "purgeBody": "{count, plural, one {# item is} other {# items are}} deleted for good. This cannot be undone.",
+    "purgeConfirm": "Delete for good",
+    "newFolderName": "New folder",
+    "conflict": {
+      "skip": "Skip them",
+      "overwrite": "Replace them",
+      "rename": "Keep both"
+    }
+  },
+  "bin": {
+    "title": "Recycle bin of {share}",
+    "empty": "The recycle bin is empty.",
+    "never": "Kept until the bin is emptied",
+    "restore": "Restore",
+    "delete": "Delete for good",
+    "emptyBin": "Empty recycle bin",
+    "retention": "Deleted items are kept for {days, plural, one {# day} other {# days}}.",
+    "retentionForever": "Deleted items are kept until the recycle bin is emptied.",
+    "fromPath": "From {path}",
+    "deletedOn": "Deleted {date}",
+    "expiresOn": "Deleted for good: {date}",
+    "more": "Show more"
+  },
+  "job": {
+    "cancel": "Cancel",
+    "uploading": "Uploading {name}",
+    "title": "Transfers and operations",
+    "working": "Working",
+    "kinds": {
+      "files.copy": "Copying",
+      "files.move": "Moving",
+      "files.trash": "Moving to the recycle bin",
+      "files.delete": "Deleting",
+      "files.restore": "Restoring",
+      "files.purge": "Deleting for good",
+      "files.empty_trash": "Emptying the recycle bin"
+    }
+  },
+  "announce": {
+    "copied": "{count, plural, one {# item} other {# items}} copied to the clipboard",
+    "cut": "{count, plural, one {# item} other {# items}} cut to the clipboard"
+  },
+  "loadFailed": "This folder could not be loaded.",
+  "details": "Details",
+  "keys": {
+    "copy": "Ctrl+C",
+    "cut": "Ctrl+X",
+    "paste": "Ctrl+V",
+    "delete": "Del",
+    "deletePermanent": "Shift+Del",
+    "selectAll": "Ctrl+A"
   }
 }

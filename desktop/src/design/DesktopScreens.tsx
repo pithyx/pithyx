@@ -58,7 +58,6 @@ interface SceneProps {
   startOpen?: boolean;
   notificationsOpen?: boolean;
   switcherOpen?: boolean;
-  userMenuOpen?: boolean;
   entering?: boolean;
 }
 
@@ -153,8 +152,8 @@ function UserMenu({ trigger, open }: { trigger: ReactNode; open: boolean }) {
   return (
     <MenuTrigger defaultOpen={open}>
       {trigger}
-      <MenuPopover placement="top end">
-        <Menu aria-label={t('taskbar.userMenu', { name: user.name })}>
+      <MenuPopover placement="top start">
+        <Menu aria-label={t('start.userMenu', { name: user.name })}>
           <MenuSection>
             <Header className={styles.menuHeader}>
               {t('menu.signedInAs', { name: user.name })}
@@ -185,7 +184,6 @@ export function DesktopScene({
   startOpen = false,
   notificationsOpen = false,
   switcherOpen = false,
-  userMenuOpen = false,
   entering = false,
 }: SceneProps) {
   const apps = useApps();
@@ -205,8 +203,6 @@ export function DesktopScene({
           switcherOpen={switcherOpen}
           now={now}
           locale={context.locale}
-          user={user}
-          userMenu={(trigger) => <UserMenu trigger={trigger} open={userMenuOpen} />}
         />
       }
       overlays={overlays}
@@ -267,7 +263,15 @@ function useSearchResults(apps: Apps): StartResults {
   };
 }
 
-export function StartMenuScene({ context, search }: { context: SceneContext; search: boolean }) {
+export function StartMenuScene({
+  context,
+  search,
+  userMenuOpen = false,
+}: {
+  context: SceneContext;
+  search: boolean;
+  userMenuOpen?: boolean;
+}) {
   const apps = useApps();
   const results = useSearchResults(apps);
   const currentUser = useUser();
@@ -285,6 +289,7 @@ export function StartMenuScene({ context, search }: { context: SceneContext; sea
           recent={recent}
           results={results}
           user={currentUser}
+          userMenu={(trigger) => <UserMenu trigger={trigger} open={userMenuOpen} />}
         />
       }
     />
@@ -421,7 +426,6 @@ export function WindowStatesScene({
             unread={3}
             now={now}
             locale={context.locale}
-            user={user}
           />
         </div>
         <figcaption className={styles.caption}>{captions[3]?.caption}</figcaption>

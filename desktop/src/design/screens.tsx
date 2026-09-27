@@ -182,8 +182,8 @@ export const screens: ScreenDefinition[] = [
     id: 'user-menu',
     group: 'overlays',
     title: 'User menu',
-    description: 'Opened from the avatar in the status area.',
-    render: (context) => <DesktopScene context={context} windows="three" userMenuOpen />,
+    description: 'Opened from the profile at the bottom of the start menu.',
+    render: (context) => <StartMenuScene context={context} search={false} userMenuOpen />,
   },
   {
     id: 'notifications',

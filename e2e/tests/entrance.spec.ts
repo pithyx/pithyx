@@ -1,5 +1,5 @@
 import { expect, test } from './fixtures';
-import { admin } from './session';
+import { admin, openAccountMenu } from './session';
 
 test.use({ reducedMotion: 'no-preference' });
 
@@ -24,22 +24,23 @@ test('the taskbar takes no presses while it slides in and slides in only once', 
   await expect(taskbar).toHaveCSS('pointer-events', 'none');
 
   const viewport = page.viewportSize() ?? { width: 1280, height: 720 };
-  // Where the account button ends up; a press there now must reach nothing in the moving taskbar.
-  await page.mouse.click(viewport.width - 30, viewport.height - 26);
+  // Where the start button ends up; a press there now must reach nothing in the moving taskbar.
+  await page.mouse.click(30, viewport.height - 26);
+  await expect(page.getByRole('dialog', { name: 'Start menu' })).toHaveCount(0);
   await expect(page.getByRole('menu')).toHaveCount(0);
 
   await cdp.send('Animation.setPlaybackRate', { playbackRate: 1 });
   await expect(taskbar).toHaveCSS('pointer-events', 'auto');
   await expect.poll(() => taskbar.evaluate((element) => element.getAnimations().length)).toBe(0);
 
-  await page.getByRole('button', { name: 'Account menu for Ada Admin' }).click();
+  await openAccountMenu(page);
   await page.getByRole('menuitem', { name: 'Taskbar position' }).click();
   await page.getByRole('menuitemradio', { name: 'Left' }).click();
   // Moving the taskbar later does not play the entrance again.
   expect(await taskbar.evaluate((element) => element.getAnimations().length)).toBe(0);
   await expect(taskbar).toHaveCSS('pointer-events', 'auto');
 
-  await page.getByRole('button', { name: 'Account menu for Ada Admin' }).click();
+  await openAccountMenu(page);
   await page.getByRole('menuitem', { name: 'Taskbar position' }).click();
   await page.getByRole('menuitemradio', { name: 'Bottom' }).click();
   expect(logouts).toEqual([]);

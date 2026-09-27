@@ -69,9 +69,9 @@ public sealed class DesktopItemApiTests : IDisposable
 
         var items = await ListAsync();
 
-        Assert.Equal(["disks", "about"], items.Select(item => item.GetProperty("app").GetString()));
+        Assert.Equal(["files", "disks", "about"], items.Select(item => item.GetProperty("app").GetString()));
         Assert.All(items, item => Assert.Equal("shortcut", item.GetProperty("kind").GetString()));
-        Assert.Equal([0, 1], items.Select(item => item.GetProperty("row").GetInt32()));
+        Assert.Equal([0, 1, 2], items.Select(item => item.GetProperty("row").GetInt32()));
         Assert.All(items, item => Assert.Equal(0, item.GetProperty("column").GetInt32()));
         Assert.All(items, item => Assert.Equal(JsonValueKind.Null, item.GetProperty("name").ValueKind));
     }

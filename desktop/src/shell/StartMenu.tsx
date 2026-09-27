@@ -2,6 +2,7 @@ import { IconCornerDownLeft, IconLogout, IconPower, IconRotateClockwise } from '
 import type { TablerIcon } from '../ui/icons';
 import type { ReactNode, Ref } from 'react';
 import {
+  Button as AriaButton,
   GridList,
   GridListItem,
   Header,
@@ -73,6 +74,8 @@ export interface StartMenuProps {
   recent: StartEntry[];
   results: StartResults;
   user: { name: string; initials: string; role: string };
+  /** Wraps the profile button in the account menu (two-factor, language, taskbar, sign-out). */
+  userMenu?: (trigger: ReactNode) => ReactNode;
   menuRef?: Ref<HTMLDivElement>;
   /** Opens a pinned app or a search result by its id. */
   onOpen?: (id: string) => void;
@@ -90,6 +93,7 @@ export function StartMenu({
   recent,
   results,
   user,
+  userMenu,
   menuRef,
   onOpen,
   onSignOut,
@@ -103,6 +107,17 @@ export function StartMenu({
     { key: 'files', title: t('start.results.files'), entries: results.files },
   ].filter((group) => group.entries.length > 0);
   const firstId = groups[0]?.entries[0]?.id;
+  const profile = (
+    <AriaButton className={styles.user} aria-label={t('start.userMenu', { name: user.name })}>
+      <span className={styles.avatar} aria-hidden>
+        {user.initials}
+      </span>
+      <span className={styles.entryText}>
+        <span className={styles.entryName}>{user.name}</span>
+        <span className={styles.entryDetail}>{user.role}</span>
+      </span>
+    </AriaButton>
+  );
 
   return (
     <div
@@ -221,15 +236,7 @@ export function StartMenu({
       )}
 
       <footer className={styles.footer}>
-        <span className={styles.user}>
-          <span className={styles.avatar} aria-hidden>
-            {user.initials}
-          </span>
-          <span className={styles.entryText}>
-            <span className={styles.entryName}>{user.name}</span>
-            <span className={styles.entryDetail}>{user.role}</span>
-          </span>
-        </span>
+        {userMenu === undefined ? profile : userMenu(profile)}
         <MenuTrigger>
           <IconButton label={t('start.power')}>
             <IconPower size={20} stroke={1.75} />

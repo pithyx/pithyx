@@ -205,22 +205,6 @@
   color: var(--color-text-muted);
 }
 
-.user {
-  padding: 0 var(--space-1);
-}
-
-.avatar {
-  display: grid;
-  place-items: center;
-  width: 30px;
-  height: 30px;
-  border-radius: var(--radius-full);
-  background: var(--color-accent);
-  color: var(--color-accent-contrast);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-}
-
 /* Left and right: a vertical bar with icon-only apps and the status area at the end. Expanded and medium only. */
 .taskbar[data-position='left'],
 .taskbar[data-position='right'] {

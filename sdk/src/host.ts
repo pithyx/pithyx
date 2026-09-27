@@ -75,11 +75,88 @@ function isLocation(value: unknown): boolean {
   );
 }
 
+/** "" for the root, otherwise names joined by "/": no leading or doubled slash, no "." or "..". */
 function isRelativePath(value: unknown): boolean {
-  return typeof value === 'string' && value.length <= 4096 && !value.includes('\0');
+  return (
+    typeof value === 'string' &&
+    value.length <= 4096 &&
+    !value.includes('\0') &&
+    (value === '' || value.split('/').every((part) => part !== '' && part !== '.' && part !== '..'))
+  );
 }
 
 const isBlob = (value: unknown) => typeof Blob !== 'undefined' && value instanceof Blob;
+
+const MAX_NAMES = 1000;
+
+function isName(value: unknown): boolean {
+  return (
+    typeof value === 'string' && value.length > 0 && value.length <= 255 && !/[/\0]/.test(value)
+  );
+}
+
+function isNames(value: unknown): boolean {
+  return Array.isArray(value) && value.length <= MAX_NAMES && value.every(isName);
+}
+
+function isIds(value: unknown): boolean {
+  return (
+    Array.isArray(value) &&
+    value.length > 0 &&
+    value.length <= MAX_NAMES &&
+    value.every((id) => Number.isSafeInteger(id))
+  );
+}
+
+function isOneOf(value: unknown, allowed: readonly string[], optional = true): boolean {
+  return (
+    (optional && value === undefined) || (typeof value === 'string' && allowed.includes(value))
+  );
+}
+
+const CONFLICTS = ['fail', 'skip', 'overwrite', 'rename'] as const;
+
+function isSelection(value: unknown): boolean {
+  if (
+    !isRecord(value) ||
+    !isLocation(value.location) ||
+    !isRelativePath(value.folder) ||
+    !isRecord(value.items)
+  ) {
+    return false;
+  }
+  const items = value.items;
+  return items.all === true
+    ? isNames(items.except)
+    : isNames(items.names) && (items.names as unknown[]).length > 0;
+}
+
+function isOperation(p: unknown): boolean {
+  if (
+    !isRecord(p) ||
+    !isOneOf(p.kind, ['copy', 'move', 'delete'], false) ||
+    !isSelection(p.source)
+  ) {
+    return false;
+  }
+  const hasTarget = p.target !== undefined;
+  if (hasTarget !== (p.kind !== 'delete')) {
+    return false;
+  }
+  return (
+    (!hasTarget ||
+      (isRecord(p.target) && isLocation(p.target.location) && isRelativePath(p.target.path))) &&
+    isOneOf(p.onConflict, CONFLICTS) &&
+    (p.permanent === undefined || typeof p.permanent === 'boolean')
+  );
+}
+
+const isPage = (p: Record<string, unknown>) =>
+  (p.cursor === undefined || typeof p.cursor === 'string') &&
+  (p.limit === undefined || Number.isSafeInteger(p.limit));
+
+const inLocation = (p: unknown): p is Record<string, unknown> =>
+  isRecord(p) && isLocation(p.location);
 
 /** Parameter checks per method; a call that fails its check never reaches the handler. */
 const validators: Record<MethodName, (params: unknown) => boolean> = {
@@ -108,12 +185,32 @@ const validators: Record<MethodName, (params: unknown) => boolean> = {
   'files.write': (p) => isRecord(p) && isFileRef(p.file) && isBlob(p.data),
   'files.url': (p) => isRecord(p) && isFileRef(p.file),
   'files.list': (p) =>
-    isRecord(p) &&
-    isLocation(p.location) &&
+    inLocation(p) &&
     isRelativePath(p.path) &&
-    (p.cursor === undefined || typeof p.cursor === 'string') &&
-    (p.limit === undefined || Number.isSafeInteger(p.limit)),
+    isPage(p) &&
+    isOneOf(p.sort, ['name', 'size', 'modified']) &&
+    isOneOf(p.order, ['asc', 'desc']),
   'files.open': (p) => isRecord(p) && isLocation(p.location) && isRelativePath(p.path),
+  'files.shares': isRecord,
+  'files.watch': (p) => inLocation(p) && isRelativePath(p.path),
+  'files.unwatch': (p) => isRecord(p) && typeof p.watch === 'string',
+  'files.upload': (p) =>
+    inLocation(p) &&
+    isRelativePath(p.folder) &&
+    isName(p.name) &&
+    isBlob(p.data) &&
+    (p.overwrite === undefined || typeof p.overwrite === 'boolean') &&
+    (p.upload === undefined || typeof p.upload === 'string'),
+  'files.download': (p) => inLocation(p) && isRelativePath(p.path),
+  'files.createFolder': (p) => inLocation(p) && isRelativePath(p.path),
+  'files.rename': (p) => inLocation(p) && isRelativePath(p.path) && isName(p.name),
+  'files.run': isOperation,
+  'jobs.cancel': (p) => isRecord(p) && Number.isSafeInteger(p.job),
+  'trash.list': (p) => inLocation(p) && isPage(p),
+  'trash.restore': (p) => inLocation(p) && isIds(p.ids) && isOneOf(p.onConflict, CONFLICTS),
+  'trash.delete': (p) => inLocation(p) && isIds(p.ids),
+  'trash.empty': inLocation,
+  'ui.showError': (p) => isRecord(p) && isRecord(p.problem) && typeof p.problem.code === 'string',
 };
 
 function isMethod(name: string): name is MethodName {

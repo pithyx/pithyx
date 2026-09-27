@@ -26,18 +26,18 @@ import { portEndpoint } from './transport';
 export { createApp, type CreateAppOptions, type VyxisApp } from './app';
 export { isProblem, sdkErrorCodes, VyxisError, type Problem, type SdkErrorCode } from './errors';
 export { createFormatters, type Formatters } from './format';
+export type * from './files';
 export type * from './manifest';
 export {
   BEFORE_CLOSE_TIMEOUT,
   BEFORE_LOGOUT_TIMEOUT,
   REQUEST_TIMEOUT,
+  UNTIMED_METHODS,
   type AppContext,
   type AppMessage,
   type ConnectMessage,
   type EventName,
   type Events,
-  type FileEntry,
-  type FileLocation,
   type FileRef,
   type HostMessage,
   type LaunchArgs,

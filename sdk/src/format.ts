@@ -32,6 +32,23 @@ const RELATIVE_STEPS: [Intl.RelativeTimeFormatUnit, number][] = [
   ['year', Infinity],
 ];
 
+// Building an Intl formatter costs far more than using one, and a list formats the same way row after row.
+const MAX_CACHED = 64;
+const formatters = new Map<string, unknown>();
+
+function cached<T>(kind: string, locale: string, options: object | undefined, make: () => T): T {
+  const key = `${kind}|${locale}|${JSON.stringify(options ?? {})}`;
+  let formatter = formatters.get(key) as T | undefined;
+  if (formatter === undefined) {
+    if (formatters.size >= MAX_CACHED) {
+      formatters.clear();
+    }
+    formatter = make();
+    formatters.set(key, formatter);
+  }
+  return formatter;
+}
+
 function toDate(value: string | Date): Date {
   return typeof value === 'string' ? new Date(value) : value;
 }
@@ -39,10 +56,10 @@ function toDate(value: string | Date): Date {
 export function createFormatters(current: () => { locale: string; timeZone: string }): Formatters {
   const dateTime = (value: string | Date, options: Intl.DateTimeFormatOptions) => {
     const { locale, timeZone } = current();
-    return new Intl.DateTimeFormat(locale, {
-      ...options,
-      timeZone: options.timeZone ?? timeZone,
-    }).format(toDate(value));
+    const resolved = { ...options, timeZone: options.timeZone ?? timeZone };
+    return cached('date', locale, resolved, () => new Intl.DateTimeFormat(locale, resolved)).format(
+      toDate(value),
+    );
   };
   return {
     date: (value, options = { dateStyle: 'medium' }) => dateTime(value, options),
@@ -59,12 +76,20 @@ export function createFormatters(current: () => { locale: string; timeZone: stri
         }
         amount /= size;
       }
-      return new Intl.RelativeTimeFormat(current().locale, { numeric: 'auto' }).format(
-        Math.round(amount),
-        unit,
+      const { locale } = current();
+      return cached(
+        'relative',
+        locale,
+        undefined,
+        () => new Intl.RelativeTimeFormat(locale, { numeric: 'auto' }),
+      ).format(Math.round(amount), unit);
+    },
+    number: (value, options) => {
+      const { locale } = current();
+      return cached('number', locale, options, () => new Intl.NumberFormat(locale, options)).format(
+        value,
       );
     },
-    number: (value, options) => new Intl.NumberFormat(current().locale, options).format(value),
     bytes: (value) => {
       let amount = value;
       let unit = 0;
@@ -72,14 +97,22 @@ export function createFormatters(current: () => { locale: string; timeZone: stri
         amount /= 1000;
         unit++;
       }
-      return new Intl.NumberFormat(current().locale, {
+      const { locale } = current();
+      const options: Intl.NumberFormatOptions = {
         style: 'unit',
         unit: BYTE_UNITS[unit],
         unitDisplay: 'short',
         maximumFractionDigits: amount < 100 ? 1 : 0,
-      }).format(amount);
+      };
+      return cached('number', locale, options, () => new Intl.NumberFormat(locale, options)).format(
+        amount,
+      );
     },
-    list: (values, options = { type: 'conjunction' }) =>
-      new Intl.ListFormat(current().locale, options).format(values),
+    list: (values, options = { type: 'conjunction' }) => {
+      const { locale } = current();
+      return cached('list', locale, options, () => new Intl.ListFormat(locale, options)).format(
+        values,
+      );
+    },
   };
 }

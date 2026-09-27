@@ -1,6 +1,6 @@
 import type { components } from '@vyxis/api-client';
 import { describe, expect, it } from 'vitest';
-import { applyEvent, reconnectDelay } from './reducers';
+import { applyEvent, patternOf, reconnectDelay } from './reducers';
 
 type Disk = components['schemas']['Disk'];
 
@@ -54,5 +54,14 @@ describe('reconnectDelay', () => {
 
   it('adds jitter down to half the delay', () => {
     expect(reconnectDelay(3, 0)).toBe(2000);
+  });
+});
+
+describe('topic families', () => {
+  it('finds the pattern of a concrete topic', () => {
+    expect(patternOf('storage/disks')).toBe('storage/disks');
+    expect(patternOf('files/3/0.2a.1f')).toBe('files/+/+');
+    expect(patternOf('jobs/12')).toBe('jobs/+');
+    expect(patternOf('files/3')).toBeUndefined();
   });
 });

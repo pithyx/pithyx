@@ -1,5 +1,5 @@
 import { IconBell, IconLayoutGrid, IconLoader2 } from '../ui/icons';
-import type { ReactNode, Ref } from 'react';
+import type { Ref } from 'react';
 import { Button as AriaButton } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '../ui/Controls';
@@ -18,13 +18,11 @@ export interface TaskbarProps {
   notificationsOpen?: boolean;
   now: Date;
   locale: string;
-  user: { name: string; initials: string };
   switcherOpen?: boolean;
   onStart?: () => void;
   onNotifications?: () => void;
   onSwitcher?: () => void;
   onApp?: (id: string) => void;
-  userMenu?: (trigger: ReactNode) => ReactNode;
   startRef?: Ref<HTMLButtonElement>;
   switcherRef?: Ref<HTMLButtonElement>;
   /** A horizontal swipe along the bar: 1 for the next app, -1 for the previous one. */
@@ -50,7 +48,7 @@ function clockFormats(locale: string) {
 /** A swipe must cover this distance and stay mostly horizontal. */
 const SWIPE_DISTANCE = 60;
 
-/** Start button, running apps and the status area (jobs, notifications, clock, user). There is no tray. */
+/** Start button, running apps and the status area (jobs, notifications, clock). The profile is in the start menu. */
 export function Taskbar({
   position,
   apps,
@@ -60,13 +58,11 @@ export function Taskbar({
   notificationsOpen = false,
   now,
   locale,
-  user,
   switcherOpen = false,
   onStart,
   onNotifications,
   onSwitcher,
   onApp,
-  userMenu,
   startRef,
   switcherRef,
   onSwipe,
@@ -76,16 +72,6 @@ export function Taskbar({
   const time = formats.time.format(now);
   const date = formats.date.format(now);
   const longDate = formats.long.format(now);
-  const userButton = (
-    <AriaButton
-      className={cx(styles.button, styles.user)}
-      aria-label={t('taskbar.userMenu', { name: user.name })}
-    >
-      <span className={styles.avatar} aria-hidden>
-        {user.initials}
-      </span>
-    </AriaButton>
-  );
 
   return (
     <nav
@@ -204,7 +190,6 @@ export function Taskbar({
           <span className={styles.time}>{time}</span>
           <span className={styles.date}>{date}</span>
         </AriaButton>
-        {userMenu === undefined ? userButton : userMenu(userButton)}
       </div>
     </nav>
   );

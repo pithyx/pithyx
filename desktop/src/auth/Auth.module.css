@@ -222,6 +222,16 @@
   }
 }
 
+.copyHint {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+}
+
+.copyHint:empty {
+  display: none;
+}
+
 @media print {
   .noPrint {
     display: none;

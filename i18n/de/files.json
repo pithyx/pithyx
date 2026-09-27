@@ -26,5 +26,94 @@
     "label": "Zeilendichte",
     "comfortable": "Komfortabel",
     "compact": "Kompakt"
+  },
+  "up": "Eine Ebene nach oben",
+  "sidebar": "Freigaben und Papierkorb",
+  "trash": "Papierkorb",
+  "readOnly": "Nur lesen",
+  "loading": "Wird geladen",
+  "selected": "{count, plural, one {# ausgewählt} other {# ausgewählt}}",
+  "emptyFolder": "Dieser Ordner ist leer. Zieh Dateien hierher, um sie hochzuladen.",
+  "noShares": "Du hast noch keine Freigaben. Ein Administrator kann sie anlegen.",
+  "menu": {
+    "entries": "Aktionen für {count, plural, one {# Element} other {# Elemente}}",
+    "folder": "Ordneraktionen"
+  },
+  "actions": {
+    "open": "Öffnen",
+    "download": "Herunterladen",
+    "upload": "Hochladen",
+    "newFolder": "Neuer Ordner",
+    "rename": "Umbenennen",
+    "copy": "Kopieren",
+    "cut": "Ausschneiden",
+    "paste": "Einfügen",
+    "delete": "In den Papierkorb",
+    "deletePermanent": "Endgültig löschen",
+    "selectAll": "Alles auswählen"
+  },
+  "dialog": {
+    "cancel": "Abbrechen",
+    "rename": "{name} umbenennen",
+    "permanentTitle": "Endgültig löschen?",
+    "permanentBody": "{count, plural, one {# Element wird} other {# Elemente werden}} endgültig gelöscht. Das lässt sich nicht rückgängig machen.",
+    "permanentConfirm": "Endgültig löschen",
+    "conflictTitle": "Namen gibt es schon",
+    "conflictBody": "Im Zielordner gibt es schon Einträge mit denselben Namen. Was soll mit ihnen passieren?",
+    "emptyTitle": "Papierkorb leeren?",
+    "emptyBody": "Alles im Papierkorb von {share} wird endgültig gelöscht. Das lässt sich nicht rückgängig machen.",
+    "emptyConfirm": "Papierkorb leeren",
+    "purgeTitle": "Endgültig löschen?",
+    "purgeBody": "{count, plural, one {# Element wird} other {# Elemente werden}} endgültig gelöscht. Das lässt sich nicht rückgängig machen.",
+    "purgeConfirm": "Endgültig löschen",
+    "newFolderName": "Neuer Ordner",
+    "conflict": {
+      "skip": "Überspringen",
+      "overwrite": "Ersetzen",
+      "rename": "Beide behalten"
+    }
+  },
+  "bin": {
+    "title": "Papierkorb von {share}",
+    "empty": "Der Papierkorb ist leer.",
+    "never": "Bleibt bis zum Leeren",
+    "restore": "Wiederherstellen",
+    "delete": "Endgültig löschen",
+    "emptyBin": "Papierkorb leeren",
+    "retention": "Gelöschte Elemente bleiben {days, plural, one {# Tag} other {# Tage}} erhalten.",
+    "retentionForever": "Gelöschte Elemente bleiben erhalten, bis der Papierkorb geleert wird.",
+    "fromPath": "Aus {path}",
+    "deletedOn": "Gelöscht am {date}",
+    "expiresOn": "Endgültig gelöscht am {date}",
+    "more": "Mehr anzeigen"
+  },
+  "job": {
+    "cancel": "Abbrechen",
+    "uploading": "{name} wird hochgeladen",
+    "title": "Übertragungen und Vorgänge",
+    "working": "In Arbeit",
+    "kinds": {
+      "files.copy": "Kopieren",
+      "files.move": "Verschieben",
+      "files.trash": "In den Papierkorb verschieben",
+      "files.delete": "Löschen",
+      "files.restore": "Wiederherstellen",
+      "files.purge": "Endgültig löschen",
+      "files.empty_trash": "Papierkorb leeren"
+    }
+  },
+  "announce": {
+    "copied": "{count, plural, one {# Element} other {# Elemente}} in die Zwischenablage kopiert",
+    "cut": "{count, plural, one {# Element} other {# Elemente}} ausgeschnitten"
+  },
+  "loadFailed": "Dieser Ordner konnte nicht geladen werden.",
+  "details": "Details",
+  "keys": {
+    "copy": "Strg+C",
+    "cut": "Strg+X",
+    "paste": "Strg+V",
+    "delete": "Entf",
+    "deletePermanent": "Umschalt+Entf",
+    "selectAll": "Strg+A"
   }
 }

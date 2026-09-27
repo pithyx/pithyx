@@ -2419,8 +2419,7 @@
       },
       "FileOperationRequest": {
         "required": [
-          "kind",
-          "items"
+          "kind"
         ],
         "type": "object",
         "properties": {
@@ -2429,11 +2428,14 @@
             "$ref": "#/components/schemas/FileOperationKind"
           },
           "items": {
-            "type": "array",
+            "type": [
+              "null",
+              "array"
+            ],
             "items": {
               "$ref": "#/components/schemas/FileLocation"
             },
-            "description": "The files and folders to work on, at most 1000."
+            "description": "The files and folders to work on, at most 1000. Leave out when `AllIn` is given."
           },
           "target": {
             "oneOf": [
@@ -2461,6 +2463,17 @@
             "type": "boolean",
             "description": "For delete: remove for good instead of moving to the share's recycle bin. Only when the user asked for it.",
             "default": false
+          },
+          "allIn": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Instead of `Items`: every entry of a folder except the listed names.",
+                "$ref": "#/components/schemas/FolderSelection"
+              }
+            ]
           }
         }
       },
@@ -2573,6 +2586,27 @@
           }
         },
         "description": "One page of a folder listing."
+      },
+      "FolderSelection": {
+        "required": [
+          "folder",
+          "except"
+        ],
+        "type": "object",
+        "properties": {
+          "folder": {
+            "description": "The folder whose entries are meant.",
+            "$ref": "#/components/schemas/FileLocation"
+          },
+          "except": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Names left out, at most 1000."
+          }
+        },
+        "description": "Every entry of a folder except some names: selecting a whole folder without sending its names."
       },
       "FolderWatchState": {
         "required": [

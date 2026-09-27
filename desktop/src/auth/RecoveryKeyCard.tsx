@@ -1,7 +1,7 @@
 import { IconCheck, IconCopy, IconKey, IconPrinter } from '../ui/icons';
-import { useId, useState } from 'react';
+import { useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { copyText } from '../errors/copyText';
+import { copyText } from '../platform/browser';
 import { cx } from '../ui/cx';
 import styles from './Auth.module.css';
 import { Button, Checkbox } from './controls';
@@ -26,7 +26,9 @@ export function RecoveryKeyCard({
   const { t } = useTranslation('auth');
   const titleId = useId();
   const [stored, setStored] = useState(false);
-  const [copied, setCopied] = useState(false);
+  // Outside a secure context copying can fail; the key is then selected for the user to copy.
+  const [copied, setCopied] = useState<'no' | 'yes' | 'manually'>('no');
+  const key = useRef<HTMLDivElement>(null);
 
   return (
     <section className={styles.form} aria-labelledby={titleId}>
@@ -37,7 +39,7 @@ export function RecoveryKeyCard({
         </h1>
         <p className={styles.intro}>{intro}</p>
       </div>
-      <div className={styles.key}>
+      <div ref={key} className={styles.key}>
         <IconKey size={20} stroke={1.75} aria-hidden className={styles.keyIcon} />
         <RecoveryKeyValue value={recoveryKey} />
       </div>
@@ -45,17 +47,17 @@ export function RecoveryKeyCard({
         <Button
           autoFocus
           onClick={() => {
-            void copyText(recoveryKey).then(() => {
-              setCopied(true);
+            void copyText(recoveryKey, key.current).then((done) => {
+              setCopied(done ? 'yes' : 'manually');
             });
           }}
         >
-          {copied ? (
+          {copied === 'yes' ? (
             <IconCheck size={18} stroke={1.75} aria-hidden />
           ) : (
             <IconCopy size={18} stroke={1.75} aria-hidden />
           )}
-          {copied ? t('recoveryKey.copied') : t('recoveryKey.copy')}
+          {copied === 'yes' ? t('recoveryKey.copied') : t('recoveryKey.copy')}
         </Button>
         <Button
           onClick={() => {
@@ -66,6 +68,9 @@ export function RecoveryKeyCard({
           {t('recoveryKey.print')}
         </Button>
       </div>
+      <p className={cx(styles.copyHint, styles.noPrint)} role="status">
+        {copied === 'manually' ? t('recoveryKey.copyManually') : ''}
+      </p>
       <div className={styles.noPrint}>
         <Checkbox checked={stored} onChange={setStored}>
           {t('recoveryKey.confirm')}

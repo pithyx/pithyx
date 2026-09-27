@@ -1,6 +1,6 @@
 import { type Page } from '@playwright/test';
 import { expect, test } from './fixtures';
-import { admin, openFromDesktop } from './session';
+import { admin, openAccountMenu, openFromDesktop } from './session';
 import { totp } from './totp';
 
 const password = 'correct horse battery';
@@ -13,8 +13,24 @@ async function signIn(page: Page, secret: string) {
   await page.getByRole('button', { name: 'Sign in' }).click();
 }
 
+/** What the clipboard holds, pasted with the keyboard into a temporary field (reading it needs a secure context). */
+async function pasted(page: Page): Promise<string> {
+  await page.evaluate(() => {
+    const field = document.createElement('textarea');
+    field.id = 'paste-probe';
+    document.body.append(field);
+    field.focus();
+  });
+  await page.keyboard.press('ControlOrMeta+v');
+  return page.evaluate(() => {
+    const field = document.getElementById('paste-probe') as HTMLTextAreaElement;
+    field.remove();
+    return field.value;
+  });
+}
+
 async function signOut(page: Page) {
-  await page.getByRole('button', { name: 'Account menu for Ada Admin' }).click();
+  await openAccountMenu(page);
   await page.getByRole('menuitem', { name: 'Sign out' }).click();
   await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
 }
@@ -45,6 +61,8 @@ test('setup, recovery key, TOTP sign-in and password reset with the recovery key
   let recoveryKey = '';
   let secret = '';
   await page.goto('/');
+  // This project runs on http://vyxis.test (playwright.config.ts): not localhost, so not a secure context.
+  expect(await page.evaluate(() => window.isSecureContext)).toBe(false);
 
   await test.step('set up the administrator', async () => {
     await expect(page.getByRole('heading', { name: 'Set up Vyxis' })).toBeVisible();
@@ -67,6 +85,9 @@ test('setup, recovery key, TOTP sign-in and password reset with the recovery key
     const key = page.getByTestId('recovery-key');
     await expect(key).toHaveText(recoveryKeyFormat);
     recoveryKey = (await key.textContent()) ?? '';
+    await page.getByRole('button', { name: 'Copy key' }).click();
+    await expect(page.getByRole('button', { name: 'Copied' })).toBeVisible();
+    expect(await pasted(page)).toBe(recoveryKey);
     const next = page.getByRole('button', { name: 'Continue to the desktop' });
     await expect(next).toBeDisabled();
     await confirmStored(page);
@@ -77,7 +98,7 @@ test('setup, recovery key, TOTP sign-in and password reset with the recovery key
     await openDisks(page);
     await expect(disks(page).getByRole('row')).toHaveCount(8);
     await expect(disks(page).getByRole('row', { name: /sdg/ })).toContainText('VYXTEST06');
-    await page.getByRole('button', { name: 'Account menu for Ada Admin' }).click();
+    await openAccountMenu(page);
     await expect(page.getByText('Signed in as Ada Admin')).toBeVisible();
     await expect(page.getByText('Connected to daemon (simulated)')).toBeVisible();
     await page.keyboard.press('Escape');
@@ -89,7 +110,7 @@ test('setup, recovery key, TOTP sign-in and password reset with the recovery key
   });
 
   await test.step('turn on two-factor authentication', async () => {
-    await page.getByRole('button', { name: 'Account menu for Ada Admin' }).click();
+    await openAccountMenu(page);
     await page.getByRole('menuitem', { name: 'Two-factor authentication' }).click();
     const dialog = page.getByRole('dialog', { name: 'Two-factor authentication' });
     await dialog.getByRole('button', { name: 'Set up' }).click();
@@ -141,6 +162,15 @@ test('setup, recovery key, TOTP sign-in and password reset with the recovery key
     const key = page.getByTestId('recovery-key');
     await expect(key).toHaveText(recoveryKeyFormat);
     await expect(key).not.toHaveText(recoveryKey);
+    // A browser that refuses to copy: the key is selected instead, and a hint says how to copy it.
+    await page.evaluate(() => {
+      // eslint-disable-next-line @typescript-eslint/no-deprecated -- replaced to simulate a refusing browser
+      document.execCommand = () => false;
+    });
+    await page.getByRole('button', { name: 'Copy key' }).click();
+    await expect(page.getByRole('status')).toContainText('The key is selected');
+    const selected = await page.evaluate(() => window.getSelection()?.toString() ?? '');
+    expect(selected.replace(/\s/g, '')).toBe((await key.textContent()) ?? '');
     await confirmStored(page);
     await page.getByRole('button', { name: 'Continue to sign in' }).click();
   });

@@ -9,6 +9,8 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { unwrap, type components } from '@vyxis/api-client';
 import {
+  lazy,
+  Suspense,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -26,7 +28,6 @@ import { coreApps, findApp } from '../apps/registry';
 import { initialsOf } from '../auth/parts';
 import { clearSessionHint } from '../auth/sessionHint';
 import { LanguageOptions } from './LanguageOptions';
-import { TotpSetup } from '../auth/TotpSetup';
 import { useDaemonStatus } from '../daemonStatus';
 import { showError } from '../errors/errorStore';
 import { useRealtime } from '../realtime/connection';
@@ -63,11 +64,12 @@ type User = components['schemas']['UserInfo'];
 const TASKBAR_POSITIONS: readonly TaskbarPosition[] = ['bottom', 'top', 'left', 'right'];
 
 /** Where a popover opens from the status area, so it never covers the taskbar. */
+// The account menu opens from the profile in the start menu, which sits next to the taskbar.
 const POPOVER_PLACEMENT = {
-  bottom: 'top end',
-  top: 'bottom end',
-  left: 'end bottom',
-  right: 'start bottom',
+  bottom: 'top start',
+  top: 'bottom start',
+  left: 'top start',
+  right: 'top start',
 } as const;
 
 type DeviceLayout = components['schemas']['DeviceLayout'];
@@ -152,6 +154,7 @@ function UserMenu({
   canMoveTaskbar,
   onTwoFactor,
   onSignOut,
+  onDone,
 }: {
   trigger: ReactNode;
   name: string;
@@ -159,6 +162,8 @@ function UserMenu({
   canMoveTaskbar: boolean;
   onTwoFactor: () => void;
   onSignOut: () => void;
+  /** After a choice that changes the desktop (another layout, a taskbar position). */
+  onDone: () => void;
 }) {
   const { t } = useTranslation();
   const status = useDaemonStatus();
@@ -178,7 +183,7 @@ function UserMenu({
       {trigger}
       <MenuPopover placement={POPOVER_PLACEMENT[position]}>
         <Menu
-          aria-label={t('taskbar.userMenu', { name })}
+          aria-label={t('start.userMenu', { name })}
           onAction={(key) => {
             if (key === 'two-factor') {
               onTwoFactor();
@@ -211,6 +216,7 @@ function UserMenu({
                 <DevicesMenu
                   onPick={(device) => {
                     copy.mutate(device);
+                    onDone();
                   }}
                 />
               </MenuPopover>
@@ -229,6 +235,7 @@ function UserMenu({
                       const next = TASKBAR_POSITIONS.find((entry) => entry === key);
                       if (next !== undefined) {
                         dispatch({ type: 'setTaskbar', position: next });
+                        onDone();
                       }
                     }}
                   >
@@ -258,6 +265,11 @@ function UserMenu({
 
 // The desktop items (icons, notes, their menus and gestures) are a chunk of their own that starts loading together with
 // this one and shows once it and the items query are there; the taskbar and windows never wait for it.
+// Setting up two-factor sign-in is rare; its dialog loads when it is opened, not with the desktop.
+const TotpSetup = lazy(() =>
+  import('../auth/TotpSetup').then(({ TotpSetup }) => ({ default: TotpSetup })),
+);
+
 type ItemsModule = typeof import('../items/ItemsLayer');
 let itemsModule: ItemsModule | undefined;
 const itemsListeners = new Set<() => void>();
@@ -459,21 +471,6 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
             unread={0}
             now={now}
             locale={i18n.language}
-            user={{ name, initials: initialsOf(name) }}
-            userMenu={(trigger) => (
-              <UserMenu
-                trigger={trigger}
-                name={name}
-                position={taskbarPosition}
-                canMoveTaskbar={sizeClass !== 'compact'}
-                onTwoFactor={() => {
-                  setTotpOpen(true);
-                }}
-                onSignOut={() => {
-                  logout.mutate();
-                }}
-              />
-            )}
           />
         }
         overlays={
@@ -492,6 +489,25 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
                   initials: initialsOf(name),
                   role: user.isAdmin ? t('roles.administrator') : t('roles.user'),
                 }}
+                userMenu={(trigger) => (
+                  <UserMenu
+                    trigger={trigger}
+                    name={name}
+                    position={taskbarPosition}
+                    canMoveTaskbar={sizeClass !== 'compact'}
+                    onTwoFactor={() => {
+                      closeStart(false);
+                      setTotpOpen(true);
+                    }}
+                    onSignOut={() => {
+                      closeStart(false);
+                      logout.mutate();
+                    }}
+                    onDone={() => {
+                      closeStart(false);
+                    }}
+                  />
+                )}
                 power={false}
                 onOpen={open}
                 onSignOut={() => {
@@ -539,13 +555,17 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
                 {t('realtime.stopped')}
               </p>
             )}
-            <TotpSetup
-              user={user}
-              isOpen={totpOpen}
-              onClose={() => {
-                setTotpOpen(false);
-              }}
-            />
+            {totpOpen && (
+              <Suspense>
+                <TotpSetup
+                  user={user}
+                  isOpen
+                  onClose={() => {
+                    setTotpOpen(false);
+                  }}
+                />
+              </Suspense>
+            )}
           </>
         }
       >

@@ -1,6 +1,6 @@
 import { type Page } from '@playwright/test';
 import { expect, test } from './fixtures';
-import { appWindow, openFromDesktop, signInAsAdmin } from './session';
+import { appWindow, openAccountMenu, openFromDesktop, signInAsAdmin } from './session';
 
 /** Resolves with the next layout the desktop saved. */
 async function layoutSaved(page: Page): Promise<string> {
@@ -59,7 +59,7 @@ test('another device gets this desktop', async ({ browser }) => {
   const second = await phone.newPage();
   await signInAsAdmin(second);
   await expect(appWindow(second, 'Disks')).toHaveCount(0);
-  await second.getByRole('button', { name: 'Account menu for Ada Admin' }).click();
+  await openAccountMenu(second);
   await second.getByRole('menuitem', { name: 'Get desktop from' }).click();
   await second
     .getByRole('menuitem', { name: /^Chrome on / })

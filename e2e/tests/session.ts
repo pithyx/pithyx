@@ -27,11 +27,31 @@ export async function signInAsAdmin(page: Page) {
     await page.getByRole('button', { name: 'Sign in' }).click();
   }
   await expect(page.getByRole('navigation', { name: 'Taskbar' })).toBeVisible();
+  await desktopReady(page);
+}
+
+/**
+ * Waits until the desktop takes input: the welcome card has left (it is the only <main> without a label) and the
+ * taskbar has slid in. The taskbar ignores presses while it moves, so a click during the entrance would be lost.
+ */
+export async function desktopReady(page: Page) {
+  await expect(page.locator('main:not([aria-label])')).toHaveCount(0);
+  await expect(page.locator('[data-entering]')).toHaveCount(0);
 }
 
 /** Opens a core app from its desktop shortcut. */
 export async function openFromDesktop(page: Page, name: string) {
   await page.getByRole('option', { name: `${name}, shortcut` }).dblclick();
+}
+
+/** Opens the account menu from the profile at the bottom of the start menu. */
+export async function openAccountMenu(page: Page, name = admin.displayName) {
+  const start = page.getByRole('dialog', { name: 'Start menu' });
+  if (!(await start.isVisible())) {
+    await page.getByRole('button', { name: 'Start' }).click();
+  }
+  await start.getByRole('button', { name: `Account menu for ${name}` }).click();
+  await expect(page.getByRole('menu', { name: `Account menu for ${name}` })).toBeVisible();
 }
 
 /** Opens an app from the start menu; apps without a desktop shortcut open this way. */
@@ -44,7 +64,10 @@ export function appWindow(page: Page, name: string) {
   return page.getByRole('region', { name, exact: true });
 }
 
-/** Puts the administrator's desktop items back to the two default shortcuts; they are shared by every spec. */
+/**
+ * Puts the administrator's desktop items back to Disks and About; they are shared by every spec. The item specs measure
+ * this grid, so the Files shortcut new users also get is left out; specs open Files from the start menu.
+ */
 export async function resetDesktopItems(page: Page) {
   const headers = { 'X-Vyxis-Request': '1' };
   const items = (await (await page.request.get('/api/desktop/items')).json()) as { id: number }[];

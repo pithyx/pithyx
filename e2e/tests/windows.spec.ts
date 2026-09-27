@@ -1,6 +1,6 @@
 import { type Locator, type Page } from '@playwright/test';
 import { expect, test } from './fixtures';
-import { appWindow, openFromDesktop, signInAsAdmin } from './session';
+import { appWindow, openAccountMenu, openFromDesktop, signInAsAdmin } from './session';
 
 async function zIndex(window: Locator): Promise<number> {
   return Number(await window.evaluate((element) => getComputedStyle(element).zIndex));
@@ -222,7 +222,7 @@ test('keyboard shortcuts and the window menu', async ({ page }) => {
 test('the taskbar moves to the left and back', async ({ page }) => {
   const taskbar = page.getByRole('navigation', { name: 'Taskbar' });
   const moveTaskbar = async (position: string) => {
-    await page.getByRole('button', { name: 'Account menu for Ada Admin' }).click();
+    await openAccountMenu(page);
     await page.getByRole('menuitem', { name: 'Taskbar position' }).click();
     await page.getByRole('menuitemradio', { name: position }).click();
   };
@@ -236,7 +236,7 @@ test('the taskbar moves to the left and back', async ({ page }) => {
   await expect.poll(async () => (await box(taskbar)).width).toBe(viewport?.width);
 });
 
-test('a press on the account button released over Sign out does not sign out', async ({ page }) => {
+test('a press on the profile released over Sign out does not sign out', async ({ page }) => {
   const logouts: string[] = [];
   page.on('request', (request) => {
     if (request.url().endsWith('/api/auth/logout')) {
@@ -245,7 +245,11 @@ test('a press on the account button released over Sign out does not sign out', a
   });
   // Hovering waits until the button takes presses; React Aria then runs an item that a press from the trigger is
   // released over (press, drag, release).
-  await page.getByRole('button', { name: 'Account menu for Ada Admin' }).hover();
+  await page.getByRole('button', { name: 'Start' }).click();
+  await page
+    .getByRole('dialog', { name: 'Start menu' })
+    .getByRole('button', { name: 'Account menu for Ada Admin' })
+    .hover();
   await page.mouse.down();
   const signOut = page.getByRole('menuitem', { name: 'Sign out' });
   const item = await signOut.boundingBox();
@@ -257,7 +261,7 @@ test('a press on the account button released over Sign out does not sign out', a
   await expect(page.getByRole('navigation', { name: 'Taskbar' })).toBeVisible();
   expect(logouts).toEqual([]);
 
-  await page.getByRole('button', { name: 'Account menu for Ada Admin' }).click();
+  await openAccountMenu(page);
   await page.getByRole('menuitem', { name: 'Sign out' }).click();
   await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
 });
