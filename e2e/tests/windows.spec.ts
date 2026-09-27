@@ -236,6 +236,32 @@ test('the taskbar moves to the left and back', async ({ page }) => {
   await expect.poll(async () => (await box(taskbar)).width).toBe(viewport?.width);
 });
 
+test('a press on the account button released over Sign out does not sign out', async ({ page }) => {
+  const logouts: string[] = [];
+  page.on('request', (request) => {
+    if (request.url().endsWith('/api/auth/logout')) {
+      logouts.push(request.url());
+    }
+  });
+  // Hovering waits until the button takes presses; React Aria then runs an item that a press from the trigger is
+  // released over (press, drag, release).
+  await page.getByRole('button', { name: 'Account menu for Ada Admin' }).hover();
+  await page.mouse.down();
+  const signOut = page.getByRole('menuitem', { name: 'Sign out' });
+  const item = await signOut.boundingBox();
+  if (item === null) {
+    throw new Error('no sign out item');
+  }
+  await page.mouse.move(item.x + item.width / 2, item.y + item.height / 2, { steps: 4 });
+  await page.mouse.up();
+  await expect(page.getByRole('navigation', { name: 'Taskbar' })).toBeVisible();
+  expect(logouts).toEqual([]);
+
+  await page.getByRole('button', { name: 'Account menu for Ada Admin' }).click();
+  await page.getByRole('menuitem', { name: 'Sign out' }).click();
+  await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
+});
+
 test('the start menu signs out through its power menu', async ({ page }) => {
   await page.getByRole('button', { name: 'Start' }).click();
   const menu = page.getByRole('dialog', { name: 'Start menu' });

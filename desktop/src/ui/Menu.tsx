@@ -1,5 +1,5 @@
 import { IconCheck, IconChevronRight } from './icons';
-import type { ReactNode } from 'react';
+import { useRef, type ReactNode } from 'react';
 import {
   Keyboard,
   Menu as AriaMenu,
@@ -68,4 +68,26 @@ export function MenuItem({ icon, children, tone = 'default', shortcut, ...props 
 
 export function MenuSeparator() {
   return <Separator className={styles.separator} />;
+}
+
+/**
+ * React Aria runs a menu item's action when a mouse press that began elsewhere, on the menu's trigger, is released
+ * over the item (press, drag, release). A menu that opens under the pointer can then act on a plain click of its
+ * trigger. Destructive items take their action only from a press that started on them: spread `pressProps` on the
+ * item and ask `confirm()` in the menu's action handler.
+ */
+export function useDeliberatePress() {
+  const armed = useRef(false);
+  return {
+    pressProps: {
+      onPressStart: () => {
+        armed.current = true;
+      },
+    },
+    confirm: () => {
+      const deliberate = armed.current;
+      armed.current = false;
+      return deliberate;
+    },
+  };
 }

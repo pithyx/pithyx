@@ -50,7 +50,11 @@
   list-style: none;
 }
 
-/* Entrance after sign-in: the taskbar slides in from its edge, the workspace fades in. */
+/*
+ * Entrance after sign-in: the taskbar slides in from its edge, the workspace fades in. The taskbar takes no presses
+ * while it moves: a menu opened from a moving button is placed where the button was, and a release over the menu
+ * then picks an item nobody pressed.
+ */
 .shell[data-entering] > nav {
   animation: taskbar-up var(--duration-slow) var(--ease-enter) both;
 }
@@ -67,18 +71,6 @@
   animation-name: taskbar-left;
 }
 
-.shell[data-entering] .shell[data-taskbar='left'] {
-  grid-template-rows: minmax(0, 1fr);
-  grid-template-columns: auto minmax(0, 1fr);
-  grid-template-areas: 'taskbar workspace';
-}
-
-.shell[data-taskbar='right'] {
-  grid-template-rows: minmax(0, 1fr);
-  grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-areas: 'workspace taskbar';
-}
-
 .workspace {
   animation: fade-in var(--duration-slow) var(--ease-enter) 120ms both;
 }
@@ -86,24 +78,44 @@
 @keyframes taskbar-up {
   from {
     transform: translateY(100%);
+    pointer-events: none;
+  }
+
+  99% {
+    pointer-events: none;
   }
 }
 
 @keyframes taskbar-down {
   from {
     transform: translateY(-100%);
+    pointer-events: none;
+  }
+
+  99% {
+    pointer-events: none;
   }
 }
 
 @keyframes taskbar-right {
   from {
     transform: translateX(-100%);
+    pointer-events: none;
+  }
+
+  99% {
+    pointer-events: none;
   }
 }
 
 @keyframes taskbar-left {
   from {
     transform: translateX(100%);
+    pointer-events: none;
+  }
+
+  99% {
+    pointer-events: none;
   }
 }
 

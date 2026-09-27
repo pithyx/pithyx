@@ -40,7 +40,14 @@ import type { RunningApp, TaskbarPosition } from '../shell/types';
 import { dismissToast, notify, useToasts } from '../shell/toasts';
 import { useDismiss } from '../shell/useDismiss';
 import { cx } from '../ui/cx';
-import { Menu, MenuItem, MenuPopover, MenuSeparator, MenuTrigger } from '../ui/Menu';
+import {
+  Menu,
+  MenuItem,
+  MenuPopover,
+  MenuSeparator,
+  MenuTrigger,
+  useDeliberatePress,
+} from '../ui/Menu';
 import { useBackGesture } from '../wm/backGesture';
 import { applySavedLayout, saveLayoutBeforeSignOut, useLayoutPersistence } from '../wm/persistence';
 import { useSizeClass } from '../wm/sizeClass';
@@ -154,6 +161,7 @@ function UserMenu({
   const { t } = useTranslation();
   const status = useDaemonStatus();
   const label = useDeviceLabel();
+  const signOut = useDeliberatePress();
   const copy = useMutation({
     mutationFn: async (device: DeviceLayout) =>
       unwrap(await api.POST('/api/desktop/layout/copy', { body: { deviceId: device.deviceId } })),
@@ -172,7 +180,7 @@ function UserMenu({
           onAction={(key) => {
             if (key === 'two-factor') {
               onTwoFactor();
-            } else if (key === 'sign-out') {
+            } else if (key === 'sign-out' && signOut.confirm()) {
               onSignOut();
             }
           }}
@@ -233,7 +241,11 @@ function UserMenu({
             )}
           </MenuSection>
           <MenuSeparator />
-          <MenuItem id="sign-out" icon={<IconLogout size={18} stroke={1.75} />}>
+          <MenuItem
+            id="sign-out"
+            icon={<IconLogout size={18} stroke={1.75} />}
+            {...signOut.pressProps}
+          >
             {t('menu.signOut')}
           </MenuItem>
         </Menu>
