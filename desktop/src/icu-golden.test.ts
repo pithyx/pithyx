@@ -1,10 +1,12 @@
 // The daemon renders the same messages with IcuMessageFormatter (IcuGoldenTests.cs). Both must match
-// tools/i18n/icu-golden.json exactly.
+// tools/i18n/icu-golden.json exactly. The desktop side goes the production way: compiled at build time, formatted by
+// icuFormat.
 import i18next from 'i18next';
-import ICU from 'i18next-icu';
 import { describe, expect, it } from 'vitest';
 import golden from '../../tools/i18n/icu-golden.json';
-import { resources } from './i18n';
+import enErrors from '../../i18n/en/errors.json';
+import { compileMessages } from '../scripts/compile-messages';
+import { icuFormat } from './icuFormat';
 
 interface GoldenEntry {
   params: Record<string, string | number | boolean>;
@@ -15,15 +17,18 @@ const errors = golden.errors as Record<string, GoldenEntry>;
 const cases = golden.cases as (GoldenEntry & { message: string })[];
 
 const i18n = i18next.createInstance();
-await i18n.use(ICU).init({
+await i18n.use(icuFormat).init({
   lng: 'en',
   resources: {
-    en: {
-      errors: resources.en.errors,
-      golden: Object.fromEntries(
-        cases.map((entry, index) => [`case${String(index)}`, entry.message]),
-      ),
-    },
+    en: compileMessages(
+      {
+        errors: enErrors,
+        golden: Object.fromEntries(
+          cases.map((entry, index) => [`case${String(index)}`, entry.message]),
+        ),
+      },
+      'en',
+    ) as Record<string, object>,
   },
   interpolation: { escapeValue: false },
 });
@@ -43,7 +48,7 @@ function flatten(value: object, prefix = ''): string[] {
 
 describe('ICU golden file', () => {
   it('has an entry for every English error message and no stale ones', () => {
-    expect(Object.keys(errors).sort()).toEqual(flatten(resources.en.errors).sort());
+    expect(Object.keys(errors).sort()).toEqual(flatten(enErrors).sort());
   });
 
   it.each(Object.entries(errors))('renders errors.%s', (code, entry) => {

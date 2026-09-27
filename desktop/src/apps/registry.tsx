@@ -2,6 +2,7 @@ import { IconApps, IconDatabase, IconFolders, IconInfoCircle, type TablerIcon } 
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react';
 import type { AppTone } from '../shell/types';
 import type { WindowOptions } from '../wm/types';
+import { loadTranslations } from '../i18n';
 
 /** What every app component receives. The SDK replaces this in step 5.3. */
 export interface AppProps {
@@ -32,7 +33,11 @@ export const coreApps: readonly CoreApp[] = [
       minSize: { width: 320, height: 280 },
     },
     Component: lazy(() =>
-      import('./files/FilesWindow').then(({ FilesWindow }) => ({ default: FilesWindow })),
+      Promise.all([import('./files/FilesWindow'), loadTranslations('files')]).then(
+        ([{ FilesWindow }]) => ({
+          default: FilesWindow,
+        }),
+      ),
     ),
   },
   {
@@ -45,7 +50,11 @@ export const coreApps: readonly CoreApp[] = [
       minSize: { width: 360, height: 240 },
     },
     Component: lazy(() =>
-      import('./disks/DisksApp').then(({ DisksApp }) => ({ default: DisksApp })),
+      Promise.all([import('./disks/DisksApp'), loadTranslations('disks')]).then(
+        ([{ DisksApp }]) => ({
+          default: DisksApp,
+        }),
+      ),
     ),
   },
   {

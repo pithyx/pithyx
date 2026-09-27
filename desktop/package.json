@@ -12,13 +12,12 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@pithyx/api-client": "workspace:*",
+    "@pithyx/sdk": "workspace:*",
     "@tabler/icons-react": "^3.48.0",
     "@tanstack/react-query": "^5.103.2",
     "@tanstack/react-virtual": "^3.14.13",
-    "@pithyx/api-client": "workspace:*",
-    "@pithyx/sdk": "workspace:*",
     "i18next": "^26.4.2",
-    "i18next-icu": "^2.4.4",
     "intl-messageformat": "^11.2.15",
     "qrcode-generator": "^2.0.4",
     "react": "^19.3.0",
@@ -29,13 +28,14 @@
   },
   "devDependencies": {
     "@babel/core": "^8.0.6",
+    "@formatjs/icu-messageformat-parser": "^3.5.18",
+    "@pithyx/app-demo": "workspace:*",
     "@react-aria/optimize-locales-plugin": "^2.0.2",
     "@rolldown/plugin-babel": "^0.2.4",
     "@types/node": "^24.13.6",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.1",
-    "@pithyx/app-demo": "workspace:*",
     "babel-plugin-react-compiler": "^1.0.0",
     "vite": "^8.3.1",
     "vitest": "^5.0.2"

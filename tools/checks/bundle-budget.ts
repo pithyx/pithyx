@@ -1,6 +1,8 @@
 // Bundle budgets, gzip compressed, run after `pnpm build`:
 // - sign-in: everything index.html loads before the first render. At most 200 KB (desktop/CLAUDE.md).
 // - desktop: what signing in adds on top, the desktop chunk with its imports and CSS. The sign-in screen prefetches it.
+// Both count the texts of the largest language: only the active language's chunks (i18n-<lang> before the first
+// render, i18n-<lang>-desktop with the desktop) are loaded.
 // Each fails more than 5 percent above its recorded baseline. Baselines only go up with the owner's consent.
 //
 //   node tools/checks/bundle-budget.ts            check
@@ -20,6 +22,7 @@ const DESKTOP_MODULE = 'src/desktop/Desktop.tsx';
 
 interface Chunk {
   file: string;
+  name: string;
   module: string | null;
   imports: string[];
   css: string[];
@@ -64,6 +67,18 @@ if (desktopChunk === undefined) {
 }
 collect(desktopChunk.file);
 signIn.forEach((file) => desktop.delete(file));
+
+/** Adds the largest of the chunks whose name matches, one per language. */
+function addLargestTranslation(files: Set<string>, name: RegExp) {
+  const candidates = graph.filter((chunk) => name.test(chunk.name));
+  if (candidates.length === 0) {
+    throw new Error(`No translation chunk matches ${String(name)}`);
+  }
+  const largest = candidates.reduce((a, b) => (gzipBytes(b.file) > gzipBytes(a.file) ? b : a));
+  files.add(largest.file);
+}
+addLargestTranslation(signIn, /^i18n-[a-z]+$/);
+addLargestTranslation(desktop, /^i18n-[a-z]+-desktop$/);
 
 function total(label: string, files: Set<string>): number {
   let sum = 0;

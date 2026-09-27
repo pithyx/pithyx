@@ -13,7 +13,9 @@ import {
 import { dirname, join, relative } from 'node:path';
 import { brotliCompressSync, constants, gzipSync } from 'node:zlib';
 import { defaultClientConditions, defaultServerConditions, defineConfig, type Plugin } from 'vite';
+import { compileMessages } from './scripts/compile-messages.ts';
 import { generateAll, writeDeclaration } from './scripts/css-module-types.ts';
+import { desktopNamespaces, signInNamespaces } from './src/i18nNamespaces.ts';
 
 const daemonUrl = process.env.PITHYX_DAEMON_URL ?? 'http://localhost:7484';
 
@@ -80,6 +82,37 @@ function devCompression(): Plugin {
         }) as typeof response.end;
         next();
       });
+    },
+  };
+}
+
+const COMPILED_TRANSLATION = /[\\/]i18n[\\/]([a-z]+)[\\/][a-z]+\.json\?compiled$/;
+
+/**
+ * Compiles the ICU messages of translation files imported with `?compiled` (src/i18n.ts). The production build then
+ * leaves the ICU parser out: intl-messageformat gets the parser's no-parser entry, which only formats syntax trees.
+ */
+function compiledTranslations(): Plugin {
+  let build = false;
+  return {
+    name: 'pithyx-compiled-translations',
+    enforce: 'pre',
+    configResolved(config) {
+      build = config.command === 'build';
+    },
+    async resolveId(source, importer) {
+      if (build && source === '@formatjs/icu-messageformat-parser') {
+        return this.resolve('@formatjs/icu-messageformat-parser/no-parser.js', importer);
+      }
+      return null;
+    },
+    transform(code, id) {
+      const match = COMPILED_TRANSLATION.exec(id);
+      if (match === null) {
+        return null;
+      }
+      const compiled = compileMessages(JSON.parse(code), match[1] ?? 'en');
+      return { code: `export default ${JSON.stringify(compiled)};`, moduleType: 'js', map: null };
     },
   };
 }
@@ -172,6 +205,7 @@ function bundleGraph(): Plugin {
                 isEntry: output.isEntry,
                 imports: output.imports,
                 css: [...(output.viteMetadata?.importedCss ?? [])],
+                name: output.name,
               },
             ]
           : [],
@@ -182,9 +216,26 @@ function bundleGraph(): Plugin {
   };
 }
 
+const signIn: readonly string[] = signInNamespaces;
+const desktopShell: readonly string[] = desktopNamespaces;
+
+/** The chunk for a translation file, by when its namespace is needed (src/i18nNamespaces.ts). */
+function translationChunk(id: string): string | null {
+  const match = /[\\/]i18n[\\/]([a-z]+)[\\/]([a-z]+)\.json(?:\?compiled)?$/.exec(id);
+  if (match === null) {
+    return null;
+  }
+  const [, language = '', namespace = ''] = match;
+  if (signIn.includes(namespace)) {
+    return `i18n-${language}`;
+  }
+  return `i18n-${language}-${desktopShell.includes(namespace) ? 'desktop' : namespace}`;
+}
+
 export default defineConfig({
   plugins: [
     { ...optimizeLocales.vite({ locales: ariaLocales }), enforce: 'pre' },
+    compiledTranslations(),
     react(),
     babel({ presets: [reactCompilerPreset()] }),
     cssModuleTypes(),
@@ -206,6 +257,12 @@ export default defineConfig({
         // needs goes into one chunk; the desktop and its shared code into another, prefetched by the sign-in screen.
         codeSplitting: {
           groups: [
+            // Each language's texts in chunks by when they are needed; only the active language is ever loaded.
+            {
+              name: translationChunk,
+              test: /[\\/]i18n[\\/][a-z]+[\\/][a-z]+\.json(?:\?compiled)?$/,
+              priority: 3,
+            },
             { name: 'index', tags: ['$initial'], priority: 2 },
             // Code the desktop shares with apps goes into one chunk: split by which apps also use it, every new app
             // would add requests to the desktop and compress worse. The SDK and each app's own folder stay with the

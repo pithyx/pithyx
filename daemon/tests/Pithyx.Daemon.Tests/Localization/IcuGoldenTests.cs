@@ -7,7 +7,7 @@ using Pithyx.Daemon.Tests.Support;
 namespace Pithyx.Daemon.Tests.Localization;
 
 /// <summary>
-/// The desktop renders the same messages with i18next-icu (desktop/src/icu-golden.test.ts). Both must match
+/// The desktop renders the same messages with intl-messageformat (desktop/src/icu-golden.test.ts). Both must match
 /// tools/i18n/icu-golden.json exactly.
 /// </summary>
 public sealed class IcuGoldenTests
