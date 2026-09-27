@@ -1,4 +1,4 @@
-import { IconApps, IconDatabase, IconInfoCircle, type TablerIcon } from '../ui/icons';
+import { IconApps, IconDatabase, IconFolders, IconInfoCircle, type TablerIcon } from '../ui/icons';
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react';
 import type { AppTone } from '../shell/types';
 import type { WindowOptions } from '../wm/types';
@@ -22,6 +22,19 @@ export interface CoreApp {
  * replace it; names come from `apps.<id>` in the desktop namespace.
  */
 export const coreApps: readonly CoreApp[] = [
+  {
+    id: 'files',
+    icon: IconFolders,
+    tone: 'petrol',
+    window: {
+      instances: 'multi',
+      defaultSize: { width: 920, height: 580 },
+      minSize: { width: 320, height: 280 },
+    },
+    Component: lazy(() =>
+      import('./files/FilesWindow').then(({ FilesWindow }) => ({ default: FilesWindow })),
+    ),
+  },
   {
     id: 'disks',
     icon: IconDatabase,

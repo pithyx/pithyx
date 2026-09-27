@@ -59,6 +59,10 @@ async function savedNotes(page: Page) {
 
 test.beforeEach(async ({ page }) => {
   await signInAsAdmin(page);
+  // New users also get a Files shortcut; these tests measure the grid of Disks and About alone.
+  await resetDesktopItems(page);
+  await page.reload();
+  await expect(page.getByRole('navigation', { name: 'Taskbar' })).toBeVisible();
 });
 
 test.afterEach(async ({ page }) => {

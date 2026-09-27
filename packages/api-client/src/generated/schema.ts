@@ -861,8 +861,9 @@ export type components = {
         /** @enum {unknown} */
         FileOperationKind: "copy" | "move" | "delete";
         FileOperationRequest: {
-            /** @description The files and folders to work on, at most 1000. */
-            items: components["schemas"]["FileLocation"][];
+            allIn?: null | components["schemas"]["FolderSelection"];
+            /** @description The files and folders to work on, at most 1000. Leave out when `AllIn` is given. */
+            items?: null | components["schemas"]["FileLocation"][];
             /** @description copy, move or delete. */
             kind: components["schemas"]["FileOperationKind"];
             onConflict?: null | components["schemas"]["ConflictPolicy"];
@@ -916,6 +917,13 @@ export type components = {
              * @description Entries in the folder when the listing was made.
              */
             total: number;
+        };
+        /** @description Every entry of a folder except some names: selecting a whole folder without sending its names. */
+        FolderSelection: {
+            /** @description Names left out, at most 1000. */
+            except: string[];
+            /** @description The folder whose entries are meant. */
+            folder: components["schemas"]["FileLocation"];
         };
         /** @description The snapshot of a folder topic: the folder as the watch sees it. */
         FolderWatchState: {

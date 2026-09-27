@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createApp } from './app';
 import { VyxisError } from './errors';
 import { serveApp, type MethodHandlers } from './host';
+import type { FileEntry, JobInfo } from './files';
 import type { AppContext } from './protocol';
 import { themeTokenNames, type Theme } from './theme';
 import { inProcessPair, portEndpoint, type Endpoint } from './transport';
@@ -120,6 +121,75 @@ describe.each(transports)('over the %s transport', (_, pair) => {
       code: 'sdk.method.unknown',
     });
     expect(setTitle).not.toHaveBeenCalled();
+  });
+
+  it('names a whole folder without its names and refuses malformed file operations', async () => {
+    const job: JobInfo = {
+      id: 1,
+      kind: 'files.copy',
+      state: 'queued',
+      progress: { itemsDone: 0, itemsTotal: 0, bytesDone: 0, bytesTotal: 0, current: null },
+      problem: null,
+      result: null,
+    };
+    const run = vi.fn(() => job);
+    const { app } = connectTo({ 'files.run': run });
+    const connected = await app;
+    const source = { location: { share: '1' }, folder: 'Photos' };
+    const target = { location: { share: '2' }, path: '' };
+
+    await connected.files.run({
+      kind: 'copy',
+      source: { ...source, items: { all: true, except: ['a.jpg'] } },
+      target,
+    });
+    expect(run).toHaveBeenCalledWith(
+      expect.objectContaining({ source: { ...source, items: { all: true, except: ['a.jpg'] } } }),
+    );
+
+    const invalid = [
+      { kind: 'copy', source: { ...source, items: { names: [] } }, target },
+      { kind: 'copy', source: { ...source, items: { names: ['a/b'] } }, target },
+      {
+        kind: 'copy',
+        source: {
+          ...source,
+          items: { names: Array.from({ length: 1001 }, (_, i) => `f${String(i)}`) },
+        },
+        target,
+      },
+      { kind: 'copy', source: { ...source, items: { names: ['a'] } } },
+      { kind: 'delete', source: { ...source, items: { names: ['a'] } }, target },
+      { kind: 'delete', source: { ...source, items: { names: ['a'] } }, permanent: 'yes' },
+      { kind: 'move', source: { ...source, folder: '../x', items: { names: ['a'] } }, target },
+    ];
+    for (const operation of invalid) {
+      await expect(
+        connected.call('files.run', operation as Parameters<typeof connected.files.run>[0]),
+      ).rejects.toMatchObject({ code: 'sdk.request.invalid' });
+    }
+    expect(run).toHaveBeenCalledTimes(1);
+  });
+
+  it('lets an upload take as long as the transfer', async () => {
+    const entry: FileEntry = {
+      name: 'big.bin',
+      kind: 'file',
+      size: 3,
+      modified: '2026-09-27T12:00:00Z',
+    };
+    const { app } = connectTo({
+      'files.upload': () =>
+        new Promise((resolve) => {
+          setTimeout(() => {
+            resolve(entry);
+          }, 700);
+        }),
+    });
+    const connected = await app;
+    await expect(
+      connected.files.upload({ share: '1' }, '', 'big.bin', new Blob(['abc'])),
+    ).resolves.toEqual(entry);
   });
 
   it('turns handler failures that are not problems into an unexpected error', async () => {

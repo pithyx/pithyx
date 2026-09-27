@@ -205,7 +205,19 @@ export default defineConfig({
         // Over HTTP/1.1 (no TLS yet) every extra request on the sign-in path costs a round trip. Everything the entry
         // needs goes into one chunk; the desktop and its shared code into another, prefetched by the sign-in screen.
         codeSplitting: {
-          groups: [{ name: 'index', tags: ['$initial'], priority: 2 }],
+          groups: [
+            { name: 'index', tags: ['$initial'], priority: 2 },
+            // Code the desktop shares with apps goes into one chunk: split by which apps also use it, every new app
+            // would add requests to the desktop and compress worse. The SDK and each app's own folder stay with the
+            // apps.
+            {
+              name: 'shared',
+              test: (id) =>
+                !/[\\/](sdk[\\/]src|desktop[\\/]src[\\/]apps[\\/][^\\/]+)[\\/]/.test(id),
+              minShareCount: 2,
+              priority: 1,
+            },
+          ],
         },
       },
     },

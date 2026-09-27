@@ -148,6 +148,7 @@ public sealed class FileOperationTests : IAsyncLifetime
 
     private static readonly string[] _threeNames = ["a.txt", "b.txt", "c.txt"];
     private static readonly long[] _unknownIds = [999];
+    private static readonly string[] _leaveOut = ["f7.txt"];
 
     private async Task<JsonElement> TrashAsync(HttpClient? client = null)
     {
@@ -275,6 +276,31 @@ public sealed class FileOperationTests : IAsyncLifetime
         Assert.Equal("fs.share.read_only", await empty.ErrorCodeAsync());
         using var retention = await reader.PutAsJsonAsync($"/api/shares/{_mediaId}/trash", new { retentionDays = 1 }, Token);
         Assert.Equal(HttpStatusCode.Forbidden, retention.StatusCode);
+    }
+
+    [Fact]
+    public async Task AWholeFolderSelectionNeedsNoNames()
+    {
+        for (var i = 0; i < 50; i++)
+        {
+            Write($"Big/f{i}.txt");
+        }
+        await RunAsync(new
+        {
+            kind = "copy",
+            allIn = new { folder = new { shareId = _mediaId, path = "Big" }, except = _leaveOut },
+            target = new { shareId = _backupId, path = "" },
+        });
+        Assert.Equal(49, Directory.EnumerateFiles(_backup).Count());
+        Assert.False(File.Exists(Path.Combine(_backup, "f7.txt")));
+
+        using var both = await _admin.PostAsync("/api/files/operations", new
+        {
+            kind = "delete",
+            items = new[] { new { shareId = _mediaId, path = "Big/f1.txt" } },
+            allIn = new { folder = new { shareId = _mediaId, path = "Big" }, except = Array.Empty<string>() },
+        });
+        Assert.Equal("fs.operation.invalid", await both.ErrorCodeAsync());
     }
 
     [Theory]

@@ -29,12 +29,30 @@ export const reducers: { [K in TopicName]: Reducer<K> } = {
   'system/info': (_, event) => event,
 };
 
+/** The pattern a concrete topic belongs to: `files/3/0.2a.1f` belongs to `files/+/+`. */
+export function patternOf(topic: string): TopicName | undefined {
+  if (Object.hasOwn(reducers, topic)) {
+    return topic as TopicName;
+  }
+  const segments = topic.split('/');
+  return (Object.keys(reducers) as TopicName[]).find((pattern) => {
+    const parts = pattern.split('/');
+    return (
+      parts.length === segments.length &&
+      parts.every((part, i) => part === '+' || part === segments[i])
+    );
+  });
+}
+
 export function applyEvent<K extends TopicName>(
   topic: K,
   snapshot: TopicSnapshots[K] | undefined,
   event: TopicEvents[K],
 ): TopicSnapshots[K] {
-  return (reducers[topic] as Reducer<K>)(snapshot, event);
+  const pattern = patternOf(topic);
+  return pattern === undefined
+    ? (event as unknown as TopicSnapshots[K])
+    : (reducers[pattern] as unknown as Reducer<K>)(snapshot, event);
 }
 
 /** Exponential backoff with jitter: 0.5 s, 1 s, 2 s ... up to 30 s, each randomized to 50 to 100 percent. */

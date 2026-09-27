@@ -1,16 +1,27 @@
-import { isProblem, sdkError, VyxisError } from './errors';
+import { isProblem, sdkError, toProblem, VyxisError } from './errors';
+import type {
+  ConflictPolicy,
+  FileEntry,
+  FileLocation,
+  FileOperation,
+  FolderPage,
+  JobInfo,
+  ShareInfo,
+  SortKey,
+  SortOrder,
+  TrashPage,
+} from './files';
 import { createFormatters, type Formatters } from './format';
 import {
   isHostMessage,
   REQUEST_TIMEOUT,
+  UNTIMED_METHODS,
   type AppContext,
   type Events,
   type EventName,
   type HostMessage,
   type MethodName,
   type Methods,
-  type FileEntry,
-  type FileLocation,
   type FileRef,
   type NotificationRequest,
   type Queries,
@@ -57,19 +68,99 @@ export interface VyxisApp {
   readonly auth: {
     token(): Promise<{ token: string; expiresAt: string }>;
   };
-  /** The file API; see {@link Methods} for what each call needs. Served from step 6 on (`supports('files.list')`). */
+  /**
+   * Files. The first group works on files the user handed to the app (`files.read`, `files.write`); the second is the
+   * file manager API over shares and named storage (`files.shares` for shares). See {@link Methods} for every call.
+   */
   readonly files: {
+    /**
+     * Lets the user pick files in the desktop's file dialog. Resolves with an empty list when the user cancels.
+     * Needs `files.read`; must follow a user action in the window.
+     */
     pick(options?: { multiple?: boolean; extensions?: string[] }): Promise<FileRef[]>;
+    /**
+     * Lets the user choose where to save `data` in the desktop's save dialog. Resolves with null when the user
+     * cancels. Needs `files.write`; must follow a user action in the window.
+     */
     saveAs(suggestedName: string, data: Blob): Promise<FileRef | null>;
+    /** The content of a file the app was handed. Needs `files.read`. */
     read(file: FileRef): Promise<Blob>;
+    /** Replaces the content of a writable file the app was handed. Needs `files.write`. */
     write(file: FileRef, data: Blob): Promise<FileRef>;
+    /**
+     * A short-lived URL for `<img>`, `<video>` or `fetch` with range requests, valid 5 minutes and only for this file.
+     * Needs `files.read`.
+     */
     url(file: FileRef): Promise<{ url: string; expiresAt: string }>;
+    /** A handle for a file in a named storage or a share, for `read`, `write` and `url`. */
+    open(location: FileLocation, path: string): Promise<FileRef>;
+    /** The shares the user can use, with the user's access to each. Needs `files.shares`. */
+    shares(): Promise<ShareInfo[]>;
+    /**
+     * One page of a folder (default 100 entries, at most 1000), in natural name order unless `sort` says otherwise.
+     * Pass the page's `nextCursor` as `cursor` for the next one; cursors stay valid while the folder changes.
+     */
     list(
       location: FileLocation,
       path: string,
-      page?: { cursor?: string; limit?: number },
-    ): Promise<{ entries: FileEntry[]; nextCursor: string | null }>;
-    open(location: FileLocation, path: string): Promise<FileRef>;
+      page?: { cursor?: string; limit?: number; sort?: SortKey; order?: SortOrder },
+    ): Promise<FolderPage>;
+    /**
+     * Starts live changes of a folder and resolves with the id that its `folderChanged` events carry. Watch only
+     * folders on screen and call `unwatch` when leaving them; a watch never wakes a sleeping disk.
+     */
+    watch(location: FileLocation, path: string): Promise<string>;
+    /** Ends a watch; no more `folderChanged` events come for it. */
+    unwatch(watch: string): Promise<void>;
+    /**
+     * Uploads `data` as `name` into `folder`. The file appears only when it is complete. An existing name fails with
+     * `fs.entry.exists` unless `overwrite`; with an `upload` id, `uploadProgress` events report the bytes sent. The
+     * call has no time limit, since it lasts as long as the transfer.
+     */
+    upload(
+      location: FileLocation,
+      folder: string,
+      name: string,
+      data: Blob,
+      options?: { overwrite?: boolean; upload?: string },
+    ): Promise<FileEntry>;
+    /** Downloads a file to the user's device through the browser. */
+    download(location: FileLocation, path: string): Promise<void>;
+    /** Creates a folder at `path`; its parent must exist and the name must be free (`fs.entry.exists`). */
+    createFolder(location: FileLocation, path: string): Promise<FileEntry>;
+    /** Renames the entry at `path` to `name` within its folder; an existing name is never replaced. */
+    rename(location: FileLocation, path: string, name: string): Promise<FileEntry>;
+    /**
+     * Starts a copy, move or delete as a job and resolves with it at once; `jobChanged` events follow its progress
+     * until it finishes. A whole folder is named with `{ all: true, except }`, never with every name. Deleting moves
+     * to the share's recycle bin unless `permanent`, which only an explicit request of the user may set.
+     */
+    run(operation: FileOperation): Promise<JobInfo>;
+  };
+  readonly jobs: {
+    /** Cancels a job the app started; a job that already finished stays as it is. */
+    cancel(job: number): Promise<void>;
+  };
+  /** The recycle bin of a share. Reading it needs read access to the share, changing it write access. */
+  readonly trash: {
+    /** One page of the bin, newest first, with the share's retention. */
+    list(location: FileLocation, page?: { cursor?: string; limit?: number }): Promise<TrashPage>;
+    /**
+     * Puts items back where they were, recreating missing folders, as a job. A taken name gets a free one ("name
+     * (2)") unless `onConflict` says otherwise.
+     */
+    restore(location: FileLocation, ids: number[], onConflict?: ConflictPolicy): Promise<JobInfo>;
+    /** Deletes items of the bin for good, as a job. Only after the user confirmed it. */
+    delete(location: FileLocation, ids: number[]): Promise<JobInfo>;
+    /** Deletes everything in the bin for good, as a job. Only after the user confirmed it. */
+    empty(location: FileLocation): Promise<JobInfo>;
+  };
+  readonly ui: {
+    /**
+     * Shows the desktop's error dialog for a failure, with the translated text of its code and the request id to
+     * copy, so the app needs no texts of its own for daemon errors.
+     */
+    showError(error: unknown): Promise<void>;
   };
   /** Whether the desktop supports a method; methods added after 1.0 may be missing on an older desktop. */
   supports(method: MethodName): boolean;
@@ -123,10 +214,12 @@ export function createApp(endpoint: Endpoint, options: CreateAppOptions = {}): P
     function call(method: string, params: unknown): Promise<unknown> {
       const id = nextId++;
       return new Promise((resolve, reject) => {
-        const timer = setTimeout(() => {
-          pending.delete(id);
-          reject(sdkError('sdk.request.timeout', { method }));
-        }, timeout);
+        const timer = UNTIMED_METHODS.includes(method)
+          ? undefined
+          : setTimeout(() => {
+              pending.delete(id);
+              reject(sdkError('sdk.request.timeout', { method }));
+            }, timeout);
         pending.set(id, {
           resolve: (value) => {
             clearTimeout(timer);
@@ -227,6 +320,13 @@ export function createApp(endpoint: Endpoint, options: CreateAppOptions = {}): P
       }
     }
 
+    function typed<M extends MethodName>(
+      method: M,
+      params: Methods[M]['params'],
+    ): Promise<Methods[M]['result']> {
+      return call(method, params);
+    }
+
     const api: VyxisApp = {
       get context() {
         if (context === undefined) {
@@ -268,19 +368,47 @@ export function createApp(endpoint: Endpoint, options: CreateAppOptions = {}): P
         token: async () => (await call('auth.token', {})) as { token: string; expiresAt: string },
       },
       files: {
-        pick: async (options = {}) => (await call('files.pick', options)) as FileRef[],
-        saveAs: async (suggestedName, data) =>
-          (await call('files.saveAs', { suggestedName, data })) as FileRef | null,
-        read: async (file) => (await call('files.read', { file })) as Blob,
-        write: async (file, data) => (await call('files.write', { file, data })) as FileRef,
-        url: async (file) =>
-          (await call('files.url', { file })) as { url: string; expiresAt: string },
-        list: async (location, path, page = {}) =>
-          (await call('files.list', { location, path, ...page })) as {
-            entries: FileEntry[];
-            nextCursor: string | null;
-          },
-        open: async (location, path) => (await call('files.open', { location, path })) as FileRef,
+        pick: async (options = {}) => typed('files.pick', options),
+        saveAs: async (suggestedName, data) => typed('files.saveAs', { suggestedName, data }),
+        read: async (file) => typed('files.read', { file }),
+        write: async (file, data) => typed('files.write', { file, data }),
+        url: async (file) => typed('files.url', { file }),
+        open: async (location, path) => typed('files.open', { location, path }),
+        shares: async () => typed('files.shares', {}),
+        list: async (location, path, page = {}) => typed('files.list', { location, path, ...page }),
+        watch: async (location, path) => (await typed('files.watch', { location, path })).watch,
+        unwatch: async (watch) => {
+          await typed('files.unwatch', { watch });
+        },
+        upload: async (location, folder, name, data, options = {}) =>
+          typed('files.upload', { location, folder, name, data, ...options }),
+        download: async (location, path) => {
+          await typed('files.download', { location, path });
+        },
+        createFolder: async (location, path) => typed('files.createFolder', { location, path }),
+        rename: async (location, path, name) => typed('files.rename', { location, path, name }),
+        run: async (operation) => typed('files.run', operation),
+      },
+      jobs: {
+        cancel: async (job) => {
+          await typed('jobs.cancel', { job });
+        },
+      },
+      trash: {
+        list: async (location, page = {}) => typed('trash.list', { location, ...page }),
+        restore: async (location, ids, onConflict) =>
+          typed('trash.restore', {
+            location,
+            ids,
+            ...(onConflict === undefined ? {} : { onConflict }),
+          }),
+        delete: async (location, ids) => typed('trash.delete', { location, ids }),
+        empty: async (location) => typed('trash.empty', { location }),
+      },
+      ui: {
+        showError: async (error) => {
+          await typed('ui.showError', { problem: toProblem(error) });
+        },
       },
       supports: (method) => context?.capabilities.includes(method) ?? false,
       on: (event, handler) => {
