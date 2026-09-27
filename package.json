@@ -21,6 +21,7 @@
     "format:check": "prettier --check .",
     "generate": "dotnet build daemon/Vyxis.slnx && pnpm --filter @vyxis/api-client generate",
     "check:repo": "node tools/checks/repo-check.ts",
+    "check:bundle": "node tools/checks/bundle-budget.ts",
     "check:commits": "node tools/checks/commit-msg.ts --range",
     "check:dco": "node tools/checks/dco.ts"
   },

@@ -2,6 +2,9 @@ import { expect, test, type Locator } from '@playwright/test';
 import { appWindow, signInAsAdmin } from './session';
 
 async function box(locator: Locator) {
+  await locator.evaluate((element) =>
+    Promise.all(element.getAnimations().map((animation) => animation.finished)),
+  );
   const result = await locator.boundingBox();
   if (result === null) {
     throw new Error('element is not visible');
@@ -97,5 +100,68 @@ test.describe('tablet', () => {
     expect(left.width + right.width).toBeLessThanOrEqual(workspace.width);
     expect(right.x + right.width).toBe(workspace.x + workspace.width);
     await expect(disks).toBeVisible();
+  });
+});
+
+test.describe('ultrawide', () => {
+  test.use({ viewport: { width: 3440, height: 1440 } });
+
+  test('snaps to thirds by dragging and by keyboard', async ({ page }) => {
+    await signInAsAdmin(page);
+    await page.getByRole('button', { name: 'About Vyxis, shortcut' }).dblclick();
+    const about = appWindow(page, 'About Vyxis');
+    const workspace = await box(page.getByRole('main', { name: 'Desktop' }));
+    const third = Math.round(workspace.width / 3);
+
+    const title = await box(about.getByRole('heading', { name: 'About Vyxis', exact: true }));
+    await page.mouse.move(title.x + 20, title.y + 10);
+    await page.mouse.down();
+    await page.mouse.move(workspace.x + 1, title.y + 200, { steps: 10 });
+    await page.mouse.up();
+    await expect.poll(async () => (await box(about)).width).toBe(third);
+
+    await page.keyboard.press('Alt+Shift+ArrowLeft');
+    await expect
+      .poll(async () => (await box(about)).width)
+      .toBe(Math.round((workspace.width * 2) / 3));
+    await page.keyboard.press('Alt+Shift+ArrowLeft');
+    await expect.poll(async () => (await box(about)).width).toBe(Math.round(workspace.width / 2));
+
+    const grip = await box(about.getByRole('heading', { name: 'About Vyxis', exact: true }));
+    await page.mouse.move(grip.x + 20, grip.y + 10);
+    await page.mouse.down();
+    await page.mouse.move(workspace.x + workspace.width / 2, workspace.y + 1, { steps: 10 });
+    await page.mouse.up();
+    await expect.poll(async () => (await box(about)).x).toBe(workspace.x + third);
+    await about.getByRole('button', { name: 'Close' }).click();
+  });
+});
+
+test.describe('touch screen laptop', () => {
+  test.use({ viewport: { width: 1440, height: 900 }, hasTouch: true });
+
+  test('drags a window with a finger', async ({ page }) => {
+    await signInAsAdmin(page);
+    await page.getByRole('button', { name: 'About Vyxis, shortcut' }).tap();
+    const about = appWindow(page, 'About Vyxis');
+    const start = await box(about);
+    const title = await box(about.getByRole('heading', { name: 'About Vyxis', exact: true }));
+    const x = title.x + 20;
+    const y = title.y + 10;
+
+    // Playwright has no touch move, so the gesture goes through the DevTools protocol.
+    const cdp = await page.context().newCDPSession(page);
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y }] });
+    for (let step = 1; step <= 10; step++) {
+      await cdp.send('Input.dispatchTouchEvent', {
+        type: 'touchMove',
+        touchPoints: [{ x: x + step * 15, y: y + step * 8 }],
+      });
+    }
+    await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+
+    await expect.poll(async () => (await box(about)).x).toBeCloseTo(start.x + 150, 0);
+    expect((await box(about)).y).toBeCloseTo(start.y + 80, 0);
+    await about.getByRole('button', { name: 'Close' }).tap();
   });
 });

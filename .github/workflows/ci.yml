@@ -48,6 +48,7 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
+      - run: pnpm check:bundle
       - run: pnpm format:check
 
   repo:

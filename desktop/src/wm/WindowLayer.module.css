@@ -98,6 +98,11 @@
 }
 
 @media (pointer: coarse) {
+  .menuButton {
+    width: var(--touch-target);
+    height: var(--touch-target);
+  }
+
   .handle[data-edge='ne'],
   .handle[data-edge='nw'],
   .handle[data-edge='se'],

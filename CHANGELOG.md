@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- `pnpm check:bundle` fails the build when the initial desktop bundle (everything `index.html` loads before the first render, gzip) exceeds 200 KB or grows more than 5 percent over `tools/checks/bundle-budget.json`. It runs in CI after the build.
+- E2E tests run with reduced motion and cover the window manager at phone, tablet, laptop and ultrawide sizes, with mouse, touch and keyboard.
 - Layout memory: the desktop saves its windows, stacking order, focus and taskbar position per user and device over the WebSocket (new client message `layout`, debounced by one second, flushed before sign-out and when the page goes away) and restores them after sign-in or a reload. Windows of apps that are gone are skipped with a notice, and geometry from a larger screen is brought into view.
 - A long-lived HttpOnly cookie `vyxis_device` identifies each browser profile; it is set when a session starts. "Get desktop from ..." in the account menu lists the user's other devices (browser and system from the User-Agent) and copies a layout to this device (`GET /api/desktop`, `GET /api/desktop/devices`, `POST /api/desktop/layout/copy`).
 - Closing a window on a large screen remembers its size for the app's next window, for the user on every device (`PUT /api/desktop/preferences/{appId}`).

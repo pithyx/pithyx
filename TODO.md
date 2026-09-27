@@ -268,25 +268,25 @@ Goal: the desktop works like a desktop, and apps can be built against the SDK.
 
 ### 5.1 Window manager
 
-- [ ] Zustand store: windows by id, open, close, focus, z-order, minimize, maximize, restore.
-- [ ] Drag via pointer events: write position to the DOM during the drag, commit to the store on `pointerup`.
-- [ ] While dragging or resizing, `pointer-events: none` on all window contents (iframes would swallow events).
-- [ ] Resize from all edges and corners, minimum sizes from the manifest.
-- [ ] Snap to left or right half and maximize by dragging to the top edge.
-- [ ] Keyboard: focus cycling, close, maximize. Visible focus states.
-- [ ] Every window belongs to a `screen` (always 1 for now).
-- [ ] Size classes from `CLAUDE.md` (compact, medium, expanded): full-screen apps with app switcher on compact, maximized windows and split view on medium, free windows and snap zones (thirds on ultrawide) on expanded.
-- [ ] SDK reports the window size class; sample apps use container queries.
-- [ ] Touch: 44 px targets on coarse pointers, swipe to switch apps on compact, no hover-only actions.
-- [ ] Taskbar with running apps, start menu with search, notification toasts.
-- [ ] Taskbar positions left and right (step 4 designed bottom and top only).
+- [x] Zustand store: windows by id, open, close, focus, z-order, minimize, maximize, restore. The rules are a pure reducer in `desktop/src/wm/state.ts`; the store only wraps it.
+- [x] Drag via pointer events: write position to the DOM during the drag, commit to the store on `pointerup`. A transform once per animation frame, committed in `flushSync`.
+- [x] While dragging or resizing, `pointer-events: none` on all window contents (iframes would swallow events).
+- [x] Resize from all edges and corners, minimum sizes from the manifest. Minimum sizes come from the internal app registry until the manifest exists (5.3).
+- [x] Snap to left or right half and maximize by dragging to the top edge.
+- [x] Keyboard: focus cycling, close, maximize. Visible focus states. Alt+Shift shortcuts and a window menu with keyboard move and size modes.
+- [x] Every window belongs to a `screen` (always 1 for now).
+- [x] Size classes from `CLAUDE.md` (compact, medium, expanded): full-screen apps with app switcher on compact, maximized windows and split view on medium, free windows and snap zones (thirds on ultrawide) on expanded.
+- [ ] SDK reports the window size class; sample apps use container queries. Waits for the SDK (5.3); the core apps already use container queries.
+- [x] Touch: 44 px targets on coarse pointers, swipe to switch apps on compact, no hover-only actions. Plus the back gesture on compact.
+- [x] Taskbar with running apps, start menu with search, notification toasts. Toasts are client-side until the daemon sends notifications.
+- [x] Taskbar positions left and right (step 4 designed bottom and top only).
 
 ### 5.2 Layout memory
 
-- [ ] Migration: `desktop_layouts` per user and device with `expires_at`, persistent `window_preferences` per user and app, and `desktop_items` per user (shared across devices).
-- [ ] Device id stored in a long-lived cookie. "Get desktop from ..." lists the user's other devices and copies that layout.
-- [ ] Debounced save over the WebSocket, restore on login with validation (skip windows whose app, path or permission is gone).
-- [ ] Hourly cleanup job for expired layouts.
+- [x] Migration: `desktop_layouts` per user and device with `expires_at`, persistent `window_preferences` per user and app, and `desktop_items` per user (shared across devices). The desktop items UI (files, notes, arranging shortcuts) is still open.
+- [x] Device id stored in a long-lived cookie. "Get desktop from ..." lists the user's other devices and copies that layout.
+- [x] Debounced save over the WebSocket, restore on login with validation (skip windows whose app, path or permission is gone). App ids are checked now; paths and permissions join the same check once apps have them.
+- [x] Hourly cleanup job for expired layouts.
 
 ### 5.3 App runtime and SDK
 
@@ -308,10 +308,10 @@ Spec first, then implementation together with the sample apps. Freeze SDK 1.0 on
 
 ### 5.4 Tests and budgets
 
-- [ ] Unit tests for the window store and the SDK RPC layer.
-- [ ] Playwright: open, drag, resize, maximize, restore, close; layout survives a reload. Run at phone, tablet, laptop and ultrawide sizes with touch and mouse.
+- [ ] Unit tests for the window store and the SDK RPC layer. Window store done (`desktop/src/wm/*.test.ts`); the SDK RPC layer comes with 5.3.
+- [x] Playwright: open, drag, resize, maximize, restore, close; layout survives a reload. Run at phone, tablet, laptop and ultrawide sizes with touch and mouse.
 - [ ] Accessibility checks (axe) in CI; keyboard-only walkthrough of login and desktop.
-- [ ] Performance budgets as CI tests: initial desktop bundle under 200 KB gzip, desktop usable after login under 1 s on repeat visit.
+- [ ] Performance budgets as CI tests: initial desktop bundle under 200 KB gzip, desktop usable after login under 1 s on repeat visit. The bundle budget runs in CI (`pnpm check:bundle`, 5 percent tolerance against `tools/checks/bundle-budget.json`); the login time budget is open.
 
 **Done when:** the plain TypeScript sample app opens in a window, sets its title, sends a notification and restores its state after a reload, and the owner confirms the desktop feels right. `[REVIEW]`
 
