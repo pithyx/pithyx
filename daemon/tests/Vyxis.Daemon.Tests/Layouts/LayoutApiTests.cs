@@ -174,15 +174,30 @@ public sealed class LayoutApiTests : IDisposable
     }
 
     [Fact]
-    public async Task LayoutWithoutDeviceCookieIsRejected()
+    public async Task AConnectionWithoutDeviceCookieGetsOneAndCanSave()
     {
         var cookies = await SetupAsync();
         var sessionOnly = cookies.Split("; ").Single(cookie => cookie.StartsWith(SessionService.CookieName, StringComparison.Ordinal));
         using var socket = await ConnectAsync(sessionOnly);
 
-        var error = await SaveAsync(socket, Layout());
+        var ack = await SaveAsync(socket, Layout());
 
-        Assert.Equal("desktop.device.missing", error.GetProperty("code").GetString());
+        Assert.Equal("ack", ack.GetProperty("type").GetString());
+    }
+
+    [Fact]
+    public async Task LayoutsKeepTheirTextAsSent()
+    {
+        var cookies = await SetupAsync();
+        using (var socket = await ConnectAsync(cookies))
+        {
+            await SaveAsync(socket, Layout().Replace("\"title\":null", "\"title\":\"Übersicht <1> & 2\"", StringComparison.Ordinal));
+        }
+
+        await using var connection = await _factory.Services.GetRequiredService<SqliteConnectionFactory>().OpenAsync(Token);
+        var stored = await connection.ExecuteScalarAsync<string>("SELECT layout FROM desktop_layouts");
+
+        Assert.Contains("\"title\":\"Übersicht <1> & 2\"", stored, StringComparison.Ordinal);
     }
 
     [Fact]

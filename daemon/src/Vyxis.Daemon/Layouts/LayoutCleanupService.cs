@@ -12,10 +12,18 @@ public sealed partial class LayoutCleanupService(LayoutService layouts, TimeProv
         {
             while (await timer.WaitForNextTickAsync(stoppingToken))
             {
-                var deleted = await layouts.DeleteExpiredAsync(stoppingToken);
-                if (deleted > 0)
+                try
                 {
-                    LogDeleted(logger, deleted);
+                    var deleted = await layouts.DeleteExpiredAsync(stoppingToken);
+                    if (deleted > 0)
+                    {
+                        LogDeleted(logger, deleted);
+                    }
+                }
+                catch (Exception exception) when (exception is not OperationCanceledException)
+                {
+                    // A busy or failing database must not stop the daemon; the next hour tries again.
+                    LogFailed(logger, exception);
                 }
             }
         }
@@ -27,4 +35,7 @@ public sealed partial class LayoutCleanupService(LayoutService layouts, TimeProv
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Deleted {Count} expired desktop layouts")]
     private static partial void LogDeleted(ILogger logger, int count);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Deleting expired desktop layouts failed")]
+    private static partial void LogFailed(ILogger logger, Exception exception);
 }

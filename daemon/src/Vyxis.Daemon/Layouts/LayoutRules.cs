@@ -18,7 +18,7 @@ public static class LayoutRules
 
     public sealed record Checked(string Json, int WindowCount);
 
-    /// <summary>Returns the layout as compact JSON with its window count, or throws with a layout error code.</summary>
+    /// <summary>Returns the layout's JSON text with its window count, or throws with a layout error code.</summary>
     public static Checked Check(JsonElement layout)
     {
         if (layout.ValueKind != JsonValueKind.Object
@@ -48,7 +48,8 @@ public static class LayoutRules
             }
         }
 
-        var json = JsonSerializer.Serialize(layout);
+        // The text as the client sent it: re-serializing would escape non-ASCII characters and grow the layout.
+        var json = layout.GetRawText();
         if (count > MaxWindows || appData > MaxAppDataBytes || Encoding.UTF8.GetByteCount(json) > MaxLayoutBytes)
         {
             throw new VyxisException(ErrorCodes.DesktopLayoutTooLarge, new Dictionary<string, object?>

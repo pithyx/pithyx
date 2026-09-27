@@ -18,7 +18,6 @@ export const errorCodes = [
   'auth.totp.not_enrolled',
   'auth.username.invalid',
   'auth.username.reserved',
-  'desktop.device.missing',
   'desktop.device.not_found',
   'desktop.layout.invalid',
   'desktop.layout.too_large',

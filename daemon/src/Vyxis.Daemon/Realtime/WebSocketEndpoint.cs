@@ -37,11 +37,20 @@ public static partial class WebSocketEndpoint
         LayoutService layouts,
         TimeProvider time,
         IOptions<JsonOptions> json,
+        IHostEnvironment environment,
         ILoggerFactory loggers)
     {
         if (!context.WebSockets.IsWebSocketRequest)
         {
             throw new VyxisException(ErrorCodes.RealtimeUpgradeRequired);
+        }
+
+        // Layouts are saved per device, so a connection needs a device id. A browser that lost its cookie gets a new
+        // one with the handshake response; only same-origin requests with a session, since the id is theirs.
+        string? deviceId = null;
+        if (context.User.Identity?.IsAuthenticated == true && IsSameOrigin(context.Request))
+        {
+            deviceId = DeviceCookie.Ensure(context, secure: !environment.IsDevelopment());
         }
 
         // Rejections are sent as close codes after the handshake: a browser reports a rejected handshake only as
@@ -62,7 +71,7 @@ public static partial class WebSocketEndpoint
 
         var logger = loggers.CreateLogger(typeof(WebSocketEndpoint));
         var connection = hub.Connect(context.User, sessionId);
-        var client = new ClientContext(layouts, CurrentUser.Id(context.User), DeviceCookie.Read(context.Request), context.Request.Headers.UserAgent.ToString());
+        var client = new ClientContext(layouts, CurrentUser.Id(context.User), deviceId, context.Request.Headers.UserAgent.ToString());
         LogConnected(logger, connection.Id);
         try
         {
@@ -208,9 +217,9 @@ public static partial class WebSocketEndpoint
             ActivityKind.Server,
             parentContext: default,
             links: connectionActivity is null ? null : [new ActivityLink(connectionActivity.Context)]);
+        ClientMessage? message = null;
         try
         {
-            ClientMessage? message;
             try
             {
                 message = JsonSerializer.Deserialize<ClientMessage>(payload, options);
@@ -258,6 +267,13 @@ public static partial class WebSocketEndpoint
             await hub.SubscribeAsync(connection, message.Id, message.Topic, cancellationToken);
             LogSubscribed(logger, connection.Id, message.Topic);
         }
+        catch (Exception exception) when (exception is not (OperationCanceledException or WebSocketException))
+        {
+            // A failing message (for example a busy database while saving a layout) must not end the connection:
+            // the client would see a normal close and stop receiving live data without knowing why.
+            LogMessageFailed(logger, exception, connection.Id);
+            Fail(hub, connection, message?.Id ?? "", ErrorCodes.SystemInternalUnexpected, null);
+        }
         finally
         {
             Activity.Current = connectionActivity;
@@ -269,12 +285,7 @@ public static partial class WebSocketEndpoint
 
     private static async Task SaveLayoutAsync(ClientMessage message, TopicHub.Connection connection, TopicHub hub, ClientContext client, CancellationToken cancellationToken)
     {
-        if (client.DeviceId is null)
-        {
-            Fail(hub, connection, message.Id, ErrorCodes.DesktopDeviceMissing, null);
-            return;
-        }
-        if (message.Data is not { } data)
+        if (client.DeviceId is null || message.Data is not { } data)
         {
             Fail(hub, connection, message.Id, ErrorCodes.DesktopLayoutInvalid, null);
             return;
@@ -298,6 +309,9 @@ public static partial class WebSocketEndpoint
 
     [LoggerMessage(Level = LogLevel.Information, Message = "WebSocket connection {ConnectionId} closed with {CloseCode}")]
     private static partial void LogDisconnected(ILogger logger, Guid connectionId, WebSocketCloseCode closeCode);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "WebSocket connection {ConnectionId} failed to handle a message")]
+    private static partial void LogMessageFailed(ILogger logger, Exception exception, Guid connectionId);
 
     [LoggerMessage(Level = LogLevel.Debug, Message = "WebSocket connection {ConnectionId} subscribed to {Topic}")]
     private static partial void LogSubscribed(ILogger logger, Guid connectionId, string topic);

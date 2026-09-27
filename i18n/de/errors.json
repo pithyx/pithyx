@@ -44,7 +44,6 @@
   },
   "desktop": {
     "device": {
-      "missing": "Dieser Browser hat keine Geräte-ID. Lade die Seite neu, um eine zu erhalten.",
       "not_found": "Für dieses Gerät wurde kein gespeicherter Desktop gefunden. Er ist vielleicht abgelaufen."
     },
     "layout": {

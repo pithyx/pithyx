@@ -61,9 +61,6 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string AuthUsernameReserved = "auth.username.reserved";
 
-    [ErrorStatus(HttpStatusCode.BadRequest)]
-    public const string DesktopDeviceMissing = "desktop.device.missing";
-
     [ErrorStatus(HttpStatusCode.NotFound)]
     public const string DesktopDeviceNotFound = "desktop.device.not_found";
 

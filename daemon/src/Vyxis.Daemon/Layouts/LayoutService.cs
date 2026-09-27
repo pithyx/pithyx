@@ -58,7 +58,7 @@ public sealed class LayoutService(SqliteConnectionFactory connections, TimeProvi
             "SELECT app_id AS AppId, width AS Width, height AS Height FROM window_preferences WHERE user_id = @userId ORDER BY app_id",
             new { userId });
         return new DesktopState(
-            layout is null ? null : JsonDocument.Parse(layout).RootElement.Clone(),
+            layout is null ? null : Parse(layout),
             [.. preferences.Select(row => new WindowPreference(row.AppId, (int)row.Width, (int)row.Height))]);
     }
 
@@ -91,7 +91,7 @@ public sealed class LayoutService(SqliteConnectionFactory connections, TimeProvi
         {
             throw new VyxisException(ErrorCodes.DesktopDeviceNotFound);
         }
-        var element = JsonDocument.Parse(layout).RootElement.Clone();
+        var element = Parse(layout);
         await SaveAsync(userId, toDeviceId, userAgent, element, cancellationToken);
         return element;
     }
@@ -119,6 +119,12 @@ public sealed class LayoutService(SqliteConnectionFactory connections, TimeProvi
         return await connection.ExecuteAsync(
             "DELETE FROM desktop_layouts WHERE expires_at <= @now",
             new { now = SessionService.Format(time.GetUtcNow()) });
+    }
+
+    private static JsonElement Parse(string json)
+    {
+        using var document = JsonDocument.Parse(json);
+        return document.RootElement.Clone();
     }
 
     private sealed record PreferenceRow(string AppId, long Width, long Height);
