@@ -1,9 +1,10 @@
 import { type Page } from '@playwright/test';
 import { expect, test } from './fixtures';
-import { appWindow, openFromDesktop, signInAsAdmin } from './session';
+import { appWindow, openFromDesktop, openFromStart, signInAsAdmin } from './session';
 
 async function openDemo(page: Page) {
-  await openFromDesktop(page, 'SDK demo');
+  // The demo has no desktop shortcut; new users only get the default ones.
+  await openFromStart(page, 'SDK demo');
   const window = appWindow(page, 'SDK demo');
   await expect(window).toBeVisible();
   const app = page.frameLocator('iframe[src="/apps/demo/index.html"]');
