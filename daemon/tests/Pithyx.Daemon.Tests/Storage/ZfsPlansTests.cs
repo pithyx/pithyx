@@ -61,6 +61,9 @@ public sealed class ZfsPlansTests
         Assert.Equal([["zpool", "offline", "tank", "123"]], ZfsPlans.Offline("tank", "123").Select(Line));
         Assert.Equal([["zpool", "online", "tank", "123"]], ZfsPlans.Online("tank", "123").Select(Line));
         Assert.Equal([["zpool", "destroy", "tank"]], ZfsPlans.DestroyPool("tank").Select(Line));
+        Assert.Equal([["zfs", "create", "tank/pithyx/shares/Media"]], ZfsPlans.CreateShareDataset("tank", "Media").Select(Line));
+        Assert.Equal(ErrorCodes.StorageDatasetNameInvalid, Assert.Throws<PithyxException>(() => ZfsPlans.CreateShareDataset("tank", "my media")).Code);
+        Assert.Equal(ErrorCodes.StorageDatasetNameInvalid, Assert.Throws<PithyxException>(() => ZfsPlans.CreateShareDataset("tank", "../x")).Code);
     }
 
     [Theory]

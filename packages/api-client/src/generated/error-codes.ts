@@ -60,6 +60,8 @@ export const errorCodes = [
   'request.method.not_allowed',
   'request.route.not_found',
   'storage.command.failed',
+  'storage.dataset.exists',
+  'storage.dataset.name_invalid',
   'storage.disk.not_found',
   'storage.disk.refused',
   'storage.encryption.unavailable',

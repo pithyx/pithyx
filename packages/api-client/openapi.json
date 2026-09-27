@@ -2511,6 +2511,8 @@
           "request.method.not_allowed",
           "request.route.not_found",
           "storage.command.failed",
+          "storage.dataset.exists",
+          "storage.dataset.name_invalid",
           "storage.disk.not_found",
           "storage.disk.refused",
           "storage.encryption.unavailable",
@@ -3760,7 +3762,7 @@
         "properties": {
           "action": {
             "type": "string",
-            "description": "`pool.create`, `pool.destroy`, `pool.replace`, `pool.spare.add`, `pool.spare.remove`, `pool.offline` or `pool.online`."
+            "description": "`pool.create`, `pool.destroy`, `pool.replace`, `pool.spare.add`, `pool.spare.remove`, `pool.offline`, `pool.online` or `dataset.create`."
           },
           "pool": {
             "type": "string",
@@ -3782,6 +3784,13 @@
               "type": "string"
             },
             "description": "The disks to use, by id."
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Name of a new share dataset."
           },
           "vdev": {
             "type": [

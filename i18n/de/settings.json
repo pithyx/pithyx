@@ -253,7 +253,19 @@
         "explain": "Der Pool {pool} und alle seine Daten werden gelöscht. Das lässt sich nicht rückgängig machen.",
         "confirm": "Gib {pool} zur Bestätigung ein",
         "run": "Pool löschen"
+      },
+      "datasetCreate": {
+        "button": "Neues Freigabe-Dataset …",
+        "title": "Neues Freigabe-Dataset auf {pool}",
+        "explain": "Ein Dataset für eine Freigabe auf {pool}: Es bekommt eigene Snapshots und ein eigenes Kontingent und wird unter /{pool} eingehängt.",
+        "name": "Name",
+        "nameHint": "Buchstaben, Ziffern, ., - und _; eingehängt unter /{pool}/<Name>.",
+        "run": "Dataset anlegen"
       }
+    },
+    "datasets": {
+      "title": "{count, plural, one {# Dataset} other {# Datasets}}",
+      "notMounted": "nicht eingehängt"
     }
   }
 }

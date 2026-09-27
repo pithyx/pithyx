@@ -166,6 +166,10 @@
     "command": {
       "failed": "The storage command {command} failed (exit code {exitCode}). Nothing after it was run; the log has the details."
     },
+    "dataset": {
+      "exists": "A dataset named {name} exists already.",
+      "name_invalid": "Dataset names use letters, digits, ., - and _, start with a letter or digit and have up to 64 characters."
+    },
     "disk": {
       "not_found": "The disk is no longer there. Reload the list and choose again.",
       "refused": "The disk may not be used: {reason, select, system_disk {it holds the system} mounted {a file system on it is in use} pool_member {it belongs to a pool} not_test_disk {it is not a declared test disk} other {it is not safe to use}}."

@@ -166,6 +166,10 @@
     "command": {
       "failed": "Der Speicherbefehl {command} ist fehlgeschlagen (Exit-Code {exitCode}). Danach wurde nichts mehr ausgeführt; Details stehen im Protokoll."
     },
+    "dataset": {
+      "exists": "Es gibt schon ein Dataset namens {name}.",
+      "name_invalid": "Dataset-Namen bestehen aus Buchstaben, Ziffern, ., - und _, beginnen mit einem Buchstaben oder einer Ziffer und haben bis zu 64 Zeichen."
+    },
     "disk": {
       "not_found": "Die Platte ist nicht mehr vorhanden. Lade die Liste neu und wähle noch einmal.",
       "refused": "Die Platte darf nicht verwendet werden: {reason, select, system_disk {sie enthält das System} mounted {ein Dateisystem darauf ist in Benutzung} pool_member {sie gehört zu einem Pool} not_test_disk {sie ist keine eingetragene Testplatte} other {sie ist nicht sicher verwendbar}}."

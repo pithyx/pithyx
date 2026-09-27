@@ -8,6 +8,7 @@ export type StorageDiskList = components['schemas']['StorageDiskList'];
 export type StorageDisk = components['schemas']['StorageDisk'];
 export type PoolList = components['schemas']['PoolList'];
 export type Pool = components['schemas']['Pool'];
+export type Dataset = components['schemas']['Dataset'];
 export type Vdev = components['schemas']['Vdev'];
 export type StoragePlanRequest = components['schemas']['StoragePlanRequest'];
 export type StoragePlanPreview = components['schemas']['StoragePlanPreview'];

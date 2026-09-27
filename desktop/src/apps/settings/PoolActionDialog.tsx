@@ -18,7 +18,8 @@ export type PoolAction =
   | 'pool.spare.remove'
   | 'pool.offline'
   | 'pool.online'
-  | 'pool.destroy';
+  | 'pool.destroy'
+  | 'dataset.create';
 
 const actionKey = {
   'pool.replace': 'replace',
@@ -27,6 +28,7 @@ const actionKey = {
   'pool.offline': 'offline',
   'pool.online': 'online',
   'pool.destroy': 'destroy',
+  'dataset.create': 'datasetCreate',
 } as const;
 
 /**
@@ -55,6 +57,7 @@ export function PoolActionDialog({
   const [diskId, setDiskId] = useState<string | null>(null);
   const [serial, setSerial] = useState('');
   const [confirmName, setConfirmName] = useState('');
+  const [datasetName, setDatasetName] = useState('');
   const usable = disks.filter(({ guard }) => guard.decision !== 'refused');
   const chosen = usable.find(({ disk }) => disk.id === diskId);
   const plan = useMutation({
@@ -65,6 +68,7 @@ export function PoolActionDialog({
         ...(vdev === undefined ? {} : { vdev: vdev.vdevGuid }),
         ...(diskId === null ? {} : { diskIds: [diskId], confirmations: { [diskId]: serial } }),
         ...(action === 'pool.destroy' ? { confirmName } : {}),
+        ...(action === 'dataset.create' ? { name: datasetName.trim() } : {}),
       }),
   });
   const { run, job } = useRunPlan(app);
@@ -156,6 +160,19 @@ export function PoolActionDialog({
             value={serial}
             onChange={(value) => {
               setSerial(value);
+              plan.reset();
+            }}
+            autoCapitalize="none"
+            autoComplete="off"
+          />
+        )}
+        {action === 'dataset.create' && (
+          <TextField
+            label={t('storage.actions.datasetCreate.name')}
+            description={t('storage.actions.datasetCreate.nameHint', { pool: pool.name })}
+            value={datasetName}
+            onChange={(value) => {
+              setDatasetName(value);
               plan.reset();
             }}
             autoCapitalize="none"

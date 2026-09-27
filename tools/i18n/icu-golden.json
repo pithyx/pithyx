@@ -305,6 +305,18 @@
       },
       "expected": "The storage command zpool failed (exit code 1). Nothing after it was run; the log has the details."
     },
+    "storage.dataset.exists": {
+      "params": {
+        "name": "media"
+      },
+      "expected": "A dataset named media exists already."
+    },
+    "storage.dataset.name_invalid": {
+      "params": {
+        "name": "my media"
+      },
+      "expected": "Dataset names use letters, digits, ., - and _, start with a letter or digit and have up to 64 characters."
+    },
     "storage.disk.not_found": {
       "params": {},
       "expected": "The disk is no longer there. Reload the list and choose again."

@@ -122,6 +122,16 @@ public static partial class ZfsPlans
     public static IReadOnlyList<PlanStep> Online(string pool, string vdevGuid) =>
         [new PlanStep(new CommandRequest("zpool", ["online", pool, vdevGuid]), [])];
 
+    /// <summary>A dataset for a share, mounted at <c>/&lt;pool&gt;/&lt;name&gt;</c> through the <c>shares</c> dataset.</summary>
+    public static IReadOnlyList<PlanStep> CreateShareDataset(string pool, string name)
+    {
+        if (!DatasetName().IsMatch(name))
+        {
+            throw new PithyxException(ErrorCodes.StorageDatasetNameInvalid, new Dictionary<string, object?> { ["name"] = name });
+        }
+        return [new PlanStep(new CommandRequest("zfs", ["create", $"{pool}/pithyx/shares/{name}"]), [])];
+    }
+
     /// <summary>Destroys a pool; never forced, so ZFS refuses while a dataset is busy.</summary>
     public static IReadOnlyList<PlanStep> DestroyPool(string pool) =>
         [new PlanStep(new CommandRequest("zpool", ["destroy", pool], TimeSpan.FromMinutes(5)), [])];
@@ -152,4 +162,7 @@ public static partial class ZfsPlans
 
     [GeneratedRegex("^[a-z][a-z0-9_-]{0,31}$")]
     private static partial Regex PoolName();
+
+    [GeneratedRegex("^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$")]
+    private static partial Regex DatasetName();
 }

@@ -13,6 +13,7 @@ import {
   internalCall,
   onInternal,
   STORAGE_CHANGED,
+  type Dataset,
   type Pool,
   type StorageDisk,
   type Vdev,
@@ -101,6 +102,7 @@ export function StoragePage({ app }: { app: PithyxApp }) {
             <PoolCard
               key={pool.name}
               pool={pool}
+              datasets={pools.data.datasets.filter((dataset) => dataset.pool === pool.name)}
               onAction={(poolAction, vdev) => {
                 setAction({ pool, action: poolAction, ...(vdev === undefined ? {} : { vdev }) });
               }}
@@ -144,7 +146,15 @@ export function StoragePage({ app }: { app: PithyxApp }) {
 
 type OnAction = (action: PoolAction, vdev?: Vdev) => void;
 
-function PoolCard({ pool, onAction }: { pool: Pool; onAction: OnAction }) {
+function PoolCard({
+  pool,
+  datasets,
+  onAction,
+}: {
+  pool: Pool;
+  datasets: Dataset[];
+  onAction: OnAction;
+}) {
   const { t, i18n } = useTranslation('settings');
   const data = pool.vdevs.filter((vdev) => vdev.role === 'data');
   const others = pool.vdevs.filter((vdev) => vdev.role !== 'data');
@@ -179,7 +189,30 @@ function PoolCard({ pool, onAction }: { pool: Pool; onAction: OnAction }) {
           <VdevItem key={vdev.name} vdev={vdev} onAction={onAction} />
         ))}
       </ul>
+      <details className={styles.datasets}>
+        <summary>{t('storage.datasets.title', { count: datasets.length })}</summary>
+        <ul>
+          {datasets.map((dataset) => (
+            <li key={dataset.name}>
+              <span className={styles.mono}>{dataset.name}</span>
+              <span className={styles.muted}>
+                {' '}
+                {dataset.mountPoint ?? t('storage.datasets.notMounted')} ·{' '}
+                {formatBytes(dataset.usedBytes, i18n.language)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </details>
       <div className={styles.poolActions}>
+        <Button
+          size="sm"
+          onPress={() => {
+            onAction('dataset.create');
+          }}
+        >
+          {t('storage.actions.datasetCreate.button')}
+        </Button>
         <Button
           size="sm"
           onPress={() => {

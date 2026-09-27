@@ -196,6 +196,14 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadGateway)]
     public const string StorageCommandFailed = "storage.command.failed";
 
+    /// <summary>A dataset with this name exists already; <c>params.name</c> is the name.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StorageDatasetExists = "storage.dataset.exists";
+
+    /// <summary>Dataset names use letters, digits, <c>.</c>, <c>-</c> and <c>_</c> and start with a letter or digit, up to 64 characters.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string StorageDatasetNameInvalid = "storage.dataset.name_invalid";
+
     /// <summary>A disk named in the request does not exist (any more); <c>params.disk</c> is its id.</summary>
     [ErrorStatus(HttpStatusCode.NotFound)]
     public const string StorageDiskNotFound = "storage.disk.not_found";

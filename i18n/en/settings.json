@@ -253,7 +253,19 @@
         "explain": "The pool {pool} and all its data are deleted. This cannot be undone.",
         "confirm": "Type {pool} to confirm",
         "run": "Destroy pool"
+      },
+      "datasetCreate": {
+        "button": "New share dataset…",
+        "title": "New share dataset on {pool}",
+        "explain": "A dataset for a share on {pool}: it gets its own snapshots and quota and is mounted below /{pool}.",
+        "name": "Name",
+        "nameHint": "Letters, digits, ., - and _; mounted at /{pool}/<name>.",
+        "run": "Create dataset"
       }
+    },
+    "datasets": {
+      "title": "{count, plural, one {# dataset} other {# datasets}}",
+      "notMounted": "not mounted"
     }
   }
 }

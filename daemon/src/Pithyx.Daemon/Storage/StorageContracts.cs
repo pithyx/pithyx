@@ -14,10 +14,11 @@ public sealed record StorageDiskList(IReadOnlyList<StorageDisk> Disks, string En
 /// <c>pool.replace</c> Pool, Vdev and one disk in DiskIds with its serial in Confirmations; <c>pool.spare.add</c> Pool
 /// and one disk; <c>pool.spare.remove</c>, <c>pool.offline</c> and <c>pool.online</c> Pool and Vdev.
 /// </summary>
-/// <param name="Action"><c>pool.create</c>, <c>pool.destroy</c>, <c>pool.replace</c>, <c>pool.spare.add</c>, <c>pool.spare.remove</c>, <c>pool.offline</c> or <c>pool.online</c>.</param>
+/// <param name="Action"><c>pool.create</c>, <c>pool.destroy</c>, <c>pool.replace</c>, <c>pool.spare.add</c>, <c>pool.spare.remove</c>, <c>pool.offline</c>, <c>pool.online</c> or <c>dataset.create</c>.</param>
 /// <param name="Pool">The pool, or the new pool's name.</param>
 /// <param name="Layout"><c>single</c>, <c>stripe</c>, <c>mirror</c>, <c>mirrors</c> (pairs), <c>raidz1</c>, <c>raidz2</c> or <c>raidz3</c>.</param>
 /// <param name="DiskIds">The disks to use, by id.</param>
+/// <param name="Name">Name of a new share dataset.</param>
 /// <param name="Vdev">GUID of the device to replace, take offline, bring online or remove.</param>
 /// <param name="Encryption">The answer to the encryption question of a new pool: <c>none</c>, or <c>key</c> once the key vault exists.</param>
 /// <param name="ConfirmName">The pool's name, typed by the user, to destroy it.</param>
@@ -27,6 +28,7 @@ public sealed record StoragePlanRequest(
     string Pool,
     string? Layout = null,
     IReadOnlyList<string>? DiskIds = null,
+    string? Name = null,
     string? Vdev = null,
     string? Encryption = null,
     string? ConfirmName = null,
