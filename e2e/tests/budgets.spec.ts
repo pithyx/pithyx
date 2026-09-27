@@ -1,10 +1,11 @@
 import { expect, test } from './fixtures';
-import { measureRound, median, type Round } from './performance';
+import { MIN_RUNS, measureRound, median, type Round } from './performance';
 import { admin } from './session';
 
 // Performance budgets against the production build the daemon serves, on Chrome's "Fast 4G" with the CPU slowed
-// down four times. Tracing is off: its snapshots would slow the page down. The median of five sign-ins (each in a fresh context, so the first load is cold) keeps a single
-// slow run on a busy CI machine from failing a budget; one unmeasured round first lets the daemon warm up.
+// down four times. Tracing is off: its snapshots would slow the page down. Every budget is the median of five
+// sign-ins (each in a fresh context, so the first load is cold), at least MIN_RUNS valid ones, so a single slow run
+// on a busy CI machine cannot fail a budget; one unmeasured round first lets the daemon warm up.
 const ROUNDS = 5;
 const BUDGETS = {
   coldToLogin: 1500,
@@ -39,6 +40,7 @@ test('sign-in and reload stay within their budgets on a slow connection', async 
     }
   }
 
+  expect(rounds.length).toBeGreaterThanOrEqual(MIN_RUNS);
   const measured = {
     coldToLogin: rounds.map((round) => round.coldToLogin),
     clickToFeedback: rounds.map((round) => round.clickToFeedback),
