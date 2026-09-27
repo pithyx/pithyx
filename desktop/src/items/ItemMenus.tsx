@@ -2,7 +2,10 @@ import { useRef, useState } from 'react';
 import { Form, Popover } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
 import { useAppName } from '../apps/names';
-import { coreApps } from '../apps/registry';
+import { useQueryClient } from '@tanstack/react-query';
+import type { components } from '@pithyx/api-client';
+import { queryKeys } from '../api/queries';
+import { appsFor } from '../apps/registry';
 import { AppIcon } from '../shell/AppIcon';
 import { Button } from '../ui/Button';
 import { Dialog } from '../ui/Dialog';
@@ -47,6 +50,8 @@ export function ItemMenu({
   const appName = useAppName();
   const anchor = useRef<HTMLDivElement>(null);
   const icon = { size: 18, stroke: 1.75 };
+  const user = useQueryClient().getQueryData<components['schemas']['UserInfo']>(queryKeys.session);
+  const apps = appsFor(user?.isAdmin === true);
   return (
     <>
       <div ref={anchor} className={styles.anchor} style={{ left: x, top: y }} aria-hidden />
@@ -111,7 +116,7 @@ export function ItemMenu({
                       onAction(`shortcut:${String(key)}`);
                     }}
                   >
-                    {coreApps.map((app) => (
+                    {apps.map((app) => (
                       <MenuItem key={app.id} id={app.id} icon={<AppIcon app={app} size={18} />}>
                         {appName(app.id)}
                       </MenuItem>

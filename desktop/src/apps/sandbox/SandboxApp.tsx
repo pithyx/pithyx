@@ -1,6 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import type { components } from '@pithyx/api-client';
-import { PROTOCOL_VERSION, SDK_VERSION, portEndpoint } from '@pithyx/sdk';
+import { PROTOCOL_VERSION, SDK_VERSION, portEndpoint, type Permission } from '@pithyx/sdk';
 import { serveApp, type AppConnection } from '@pithyx/sdk/host';
 import i18next from 'i18next';
 import { useRef } from 'react';
@@ -26,7 +26,7 @@ export function SandboxApp({
   app,
   entry,
   permissions,
-}: AppProps & { app: string; entry: string; permissions: readonly string[] }) {
+}: AppProps & { app: string; entry: string; permissions: readonly Permission[] }) {
   const frame = useRef<HTMLIFrameElement>(null);
   const connection = useRef<AppConnection | null>(null);
   const client = useQueryClient();

@@ -326,3 +326,49 @@ describe('the host side', () => {
     expect(await host.ask('beforeClose', {}, 50)).toBeUndefined();
   });
 });
+
+describe('host extensions', () => {
+  it('serve their own checked methods, outside the capabilities, only where the host passes them', async () => {
+    const [appEnd, hostEnd] = inProcessPair();
+    serveApp(hostEnd, {
+      context,
+      methods: {},
+      extensions: {
+        'host.echo': {
+          validate: (params) => typeof params === 'object' && params !== null && 'text' in params,
+          handle: (params) => params,
+        },
+      },
+    });
+    const connected = await createApp(appEnd, { themeRoot: null, timeout: 500 });
+    const call = (method: string, params: unknown) =>
+      connected.call(method as 'window.close', params as never);
+
+    expect(connected.context.capabilities).toEqual([]);
+    await expect(call('host.echo', { text: 'hi' })).resolves.toEqual({ text: 'hi' });
+    await expect(call('host.echo', {})).rejects.toMatchObject({ code: 'sdk.request.invalid' });
+
+    const [otherApp, otherHost] = inProcessPair();
+    serveApp(otherHost, { context, methods: {} });
+    const sandboxed = await createApp(otherApp, { themeRoot: null, timeout: 500 });
+    const sandboxedCall = (method: string, params: unknown) =>
+      sandboxed.call(method as 'window.close', params as never);
+    await expect(sandboxedCall('host.echo', { text: 'hi' })).rejects.toMatchObject({
+      code: 'sdk.method.unknown',
+    });
+  });
+
+  it('cannot shadow a public method', async () => {
+    const [appEnd, hostEnd] = inProcessPair();
+    serveApp(hostEnd, {
+      context,
+      methods: {},
+      extensions: { notify: { validate: () => true, handle: () => 'shadowed' } },
+    });
+    const connected = await createApp(appEnd, { themeRoot: null, timeout: 500 });
+
+    await expect(connected.notify({ title: 'x' })).rejects.toMatchObject({
+      code: 'sdk.method.unknown',
+    });
+  });
+});

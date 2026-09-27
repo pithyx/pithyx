@@ -36,5 +36,98 @@
       "solid": "Einfarbig",
       "picture": "Bild auswählen"
     }
+  },
+  "storage": {
+    "intro": "Pools speichern deine Daten auf einer oder mehreren Platten. Bei jeder Platte steht, ob ein neuer Pool sie verwenden darf.",
+    "dev": "Entwicklungsrechner: Nur die eingetragenen Testplatten können verwendet werden.",
+    "pools": {
+      "title": "Pools",
+      "empty": "Noch keine Pools.",
+      "used": "{used} von {size} belegt",
+      "layout": "Aufbau: {layout}",
+      "devices": "Geräte von {pool}",
+      "errors": "Fehler: {read} Lesen, {write} Schreiben, {checksum} Prüfsumme"
+    },
+    "state": {
+      "online": "Intakt",
+      "degraded": "Beeinträchtigt",
+      "faulted": "Ausgefallen",
+      "offline": "Offline",
+      "unavail": "Nicht erreichbar",
+      "removed": "Entfernt",
+      "suspended": "Angehalten",
+      "unknown": "Unbekannt"
+    },
+    "vdev": {
+      "mirror": "Spiegel aus {count, plural, one {# Platte} other {# Platten}}",
+      "raidz": "RAID-Z{parity} aus {count, plural, one {# Platte} other {# Platten}}",
+      "single": "Einzelne Platte"
+    },
+    "role": {
+      "log": "Log",
+      "cache": "Cache",
+      "special": "Spezial",
+      "dedup": "Dedup",
+      "spare": "Ersatz"
+    },
+    "scan": {
+      "scrubRunning": "Prüfung läuft, {percent} % geprüft",
+      "resilverRunning": "Wiederherstellung läuft, {percent} % erledigt",
+      "paused": "Prüfung bei {percent} % pausiert",
+      "scrubFinished": "Letzte Prüfung {date}: {errors, plural, =0 {keine Fehler} one {# Fehler} other {# Fehler}}",
+      "resilverFinished": "Letzte Wiederherstellung {date}: {errors, plural, =0 {keine Fehler} one {# Fehler} other {# Fehler}}",
+      "canceled": "Die letzte Prüfung wurde abgebrochen."
+    },
+    "disks": {
+      "title": "Platten",
+      "caption": "Platten und ob ein neuer Pool sie verwenden darf",
+      "name": "Name",
+      "model": "Modell",
+      "serial": "Seriennummer",
+      "size": "Größe",
+      "status": "Für einen neuen Pool"
+    },
+    "decision": {
+      "allowed": "Verfügbar",
+      "needsSerialConfirmation": "Bestätigung nötig",
+      "refused": "Nicht verfügbar"
+    },
+    "reason": {
+      "system_disk": "Enthält das System. Wird nie für Pools verwendet.",
+      "read_only": "Die Platte ist schreibgeschützt.",
+      "mounted": "Ein Dateisystem darauf ist in Benutzung.",
+      "pool_member": "Gehört zum Pool {pool}.",
+      "not_test_disk": "Keine eingetragene Testplatte dieses Entwicklungsrechners.",
+      "duplicate_serial": "Eine andere Platte meldet dieselbe Seriennummer, deshalb lassen sie sich nicht unterscheiden.",
+      "no_serial": "Enthält Daten und hat keine Seriennummer zum Bestätigen.",
+      "not_checked": "Noch nicht geprüft. Bestätige mit ihrer Seriennummer, um sie zu verwenden.",
+      "has_data": "Enthält Daten ({contents}). Bestätige mit ihrer Seriennummer, um sie zu verwenden; alles darauf geht verloren.",
+      "confirmed": "Mit ihrer Seriennummer bestätigt.",
+      "empty": "Leer und bereit."
+    },
+    "layouts": {
+      "single": "Einzelne Platte (keine Redundanz)",
+      "mirror": "Spiegel",
+      "raidz1": "RAID-Z1 (eine Platte darf ausfallen)",
+      "raidz2": "RAID-Z2 (zwei Platten dürfen ausfallen)",
+      "raidz3": "RAID-Z3 (drei Platten dürfen ausfallen)",
+      "stripe": "Stripe (eine ausgefallene Platte kostet alles)"
+    },
+    "create": {
+      "button": "Pool anlegen …",
+      "title": "Pool anlegen",
+      "name": "Name des Pools",
+      "nameHint": "Kleinbuchstaben, Ziffern, - und _; beginnt mit einem Buchstaben.",
+      "layout": "Aufbau",
+      "disks": "Platten",
+      "noDisks": "Gerade kann keine Platte verwendet werden.",
+      "refused": "{count, plural, one {# Platte ist} other {# Platten sind}} nicht verfügbar",
+      "confirm": "Gib die Seriennummer von {disk} ein ({serial})",
+      "preview": "Befehle anzeigen",
+      "commands": "Diese Befehle würden genau so ausgeführt:",
+      "notYet": "Pools von hier aus anlegen kommt mit dem nächsten Update. Es wurde nichts ausgeführt.",
+      "blocked": "Nicht jede gewählte Platte kann verwendet werden:",
+      "close": "Schließen"
+    }
   }
 }

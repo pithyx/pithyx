@@ -6,10 +6,13 @@ namespace Pithyx.Daemon.Storage;
 /// <summary>Parses <c>lsblk -J -b -O</c>. Only whole disks are returned; optical drives, loop and RAM devices are not.</summary>
 public static class LsblkParser
 {
-    public static IReadOnlyList<Disk> Parse(string json)
+    public static IReadOnlyList<Disk> Parse(string json) => ParseWithDevices(json).Select(entry => entry.Disk).ToList();
+
+    /// <summary>The disks, each with its device tree for the disk guard.</summary>
+    public static IReadOnlyList<(Disk Disk, BlockDevice Device)> ParseWithDevices(string json)
     {
         using var document = JsonDocument.Parse(json);
-        var disks = new List<Disk>();
+        var disks = new List<(Disk, BlockDevice)>();
         foreach (var device in document.RootElement.GetProperty("blockdevices").EnumerateArray())
         {
             var name = Text(device, "name") ?? "";
@@ -25,7 +28,7 @@ public static class LsblkParser
                 ? children.EnumerateArray().Where(child => Text(child, "type") == "part").Select(ParsePartition).ToList()
                 : [];
 
-            disks.Add(new Disk(
+            disks.Add((new Disk(
                 wwn is not null ? $"wwn-{wwn}" : serial is not null ? $"serial-{serial}" : $"path-{path}",
                 name,
                 path,
@@ -38,18 +41,34 @@ public static class LsblkParser
                 Text(device, "tran"),
                 Flag(device, "rm"),
                 Flag(device, "ro"),
-                partitions));
+                partitions), ParseDevice(device)));
         }
         return disks;
     }
 
+    private static BlockDevice ParseDevice(JsonElement device)
+    {
+        var name = Text(device, "name") ?? "";
+        return new BlockDevice(
+            name,
+            Text(device, "path") ?? $"/dev/{name}",
+            Text(device, "id-link"),
+            Text(device, "maj:min") ?? "",
+            Text(device, "type") ?? "",
+            Text(device, "fstype"),
+            MountPoints(device),
+            device.TryGetProperty("children", out var children) ? [.. children.EnumerateArray().Select(ParseDevice)] : []);
+    }
+
+    private static List<string> MountPoints(JsonElement device) =>
+        device.TryGetProperty("mountpoints", out var points) && points.ValueKind == JsonValueKind.Array
+            ? [.. points.EnumerateArray().Select(p => p.GetString()).OfType<string>()]
+            : [];
+
     private static Partition ParsePartition(JsonElement partition)
     {
         var name = Text(partition, "name") ?? "";
-        var mountPoints = partition.TryGetProperty("mountpoints", out var points) && points.ValueKind == JsonValueKind.Array
-            ? points.EnumerateArray().Select(p => p.GetString()).OfType<string>().ToList()
-            : [];
-        return new Partition(name, Text(partition, "path") ?? $"/dev/{name}", Number(partition, "size"), Text(partition, "fstype"), Text(partition, "label"), mountPoints);
+        return new Partition(name, Text(partition, "path") ?? $"/dev/{name}", Number(partition, "size"), Text(partition, "fstype"), Text(partition, "label"), MountPoints(partition));
     }
 
     // lsblk pads some strings (vendor, model) with spaces and uses null for missing values.

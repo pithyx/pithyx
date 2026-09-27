@@ -298,6 +298,60 @@
       "params": {},
       "expected": "The connection between the app and the desktop is closed. Open the app again."
     },
+    "storage.command.failed": {
+      "params": {
+        "command": "zpool",
+        "exitCode": 1
+      },
+      "expected": "The storage command zpool failed (exit code 1). Nothing after it was run; the log has the details."
+    },
+    "storage.disk.not_found": {
+      "params": {},
+      "expected": "The disk is no longer there. Reload the list and choose again."
+    },
+    "storage.disk.refused": {
+      "params": {
+        "disk": "serial-A",
+        "reason": "pool_member"
+      },
+      "expected": "The disk may not be used: it belongs to a pool."
+    },
+    "storage.plan.expired": {
+      "params": {},
+      "expected": "This plan is more than 10 minutes old. Show it again to check the disks once more."
+    },
+    "storage.plan.stale": {
+      "params": {
+        "disk": "serial-A"
+      },
+      "expected": "A disk changed after the plan was shown. Nothing was changed; show the plan again."
+    },
+    "storage.pool.disk_count": {
+      "params": {
+        "layout": "raidz2",
+        "min": 4,
+        "count": 3
+      },
+      "expected": "raidz2 needs at least 4 disks; 3 are selected."
+    },
+    "storage.pool.layout_invalid": {
+      "params": {
+        "layout": "raid5"
+      },
+      "expected": "Unknown pool layout."
+    },
+    "storage.pool.name_invalid": {
+      "params": {
+        "name": "Tank"
+      },
+      "expected": "Pool names start with a lowercase letter and use up to 32 lowercase letters, digits, - and _. Names like mirror or raidz are reserved."
+    },
+    "storage.pool.name_taken": {
+      "params": {
+        "name": "tank"
+      },
+      "expected": "A pool named tank exists already."
+    },
     "system.internal.unexpected": {
       "params": {},
       "expected": "Something went wrong on the server. The request id helps to find the details in the logs."

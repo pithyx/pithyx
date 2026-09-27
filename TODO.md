@@ -424,28 +424,28 @@ Goal: the daemon sees real pools on dev01 and cannot write to a disk it must not
 
 ### 7.1 Real mode on dev01
 
-- [ ] A dev systemd unit runs the daemon as root in real mode on dev01 (simulation stays the default for E2E and local development). `/etc/pithyx/environment` decides `dev` or `prod`; a missing file means `prod`.
-- [ ] `IStorageBackend` (one of the two allowed abstractions) with ZFS as its first implementation; mdadm and btrfs come later through the same interface (D111).
-- [ ] Parsers for `zpool status -j`, `zpool list -j`, `zfs list -j` and `zfs get -j` (OpenZFS 2.3 JSON output) as pure functions with fixtures recorded on dev01 with `tools/fixtures/record.sh` (single disk, mirror, raidz1, degraded, resilvering, scrubbing, encrypted, exported).
-- [ ] `SystemStateService` keeps pools and datasets in memory, refreshed from `zpool events -f` (streamed, no polling) and at startup. `GET /api/storage/pools` reads from memory; topic `storage/pools` pushes changes.
+- [x] A dev systemd unit runs the daemon as root in real mode on dev01 (simulation stays the default for E2E and local development). `/etc/pithyx/environment` decides `dev` or `prod`; a missing file means `prod`. (`tools/dev-vm/pithyx-dev.service` with `install-dev-daemon.sh`; the owner installs it, since agents may not install system units.)
+- [x] `IStorageBackend` (one of the two allowed abstractions) with ZFS as its first implementation; mdadm and btrfs come later through the same interface (D111).
+- [x] Parsers for `zpool status -j`, `zpool list -j`, `zfs list -j` and `zfs get -j` (OpenZFS 2.3 JSON output) as pure functions with fixtures recorded on dev01 with `tools/fixtures/record.sh` (single disk, mirror, raidz1, degraded, resilvered, scrub paused and finished, no pools). Encrypted pools are recorded in step 9, exported pools with the import in step 8.
+- [x] `SystemStateService` keeps pools and datasets in memory, refreshed from `zpool events -f` (streamed, no polling) and at startup. `GET /api/storage/pools` reads from memory; topic `storage/pools` pushes changes.
 
 ### 7.2 Disk guard and command plans
 
-- [ ] `DiskGuard` as a pure decision function over the lsblk tree, the mount table and `/etc/pithyx/*`:
+- [x] `DiskGuard` as a pure decision function over the lsblk tree, the mount table and `/etc/pithyx/*`:
   - The system disk (anything holding `/`, `/boot`, `/boot/efi`, swap or `/var/lib/pithyx`) is always refused, with no override.
   - In `dev`, only disks whose serial is listed in `/etc/pithyx/test-disks` are allowed.
   - In `prod`, a disk must be empty (no partitions, no filesystem or RAID signatures, no ZFS labels, not part of an imported pool). Otherwise the user must confirm with the disk's serial number.
-- [ ] Command plans: every destructive action is first built as a list of exact commands, shown to the user, logged with the request id, and only then run as a job. The job re-checks `DiskGuard` right before each command, because disks can change in between.
-- [ ] Pools are never imported automatically, never with `-f`, and never as a side effect of recovery ("Recovery never modifies pools automatically"). Import is an explicit action in step 8.
+- [x] Command plans: every destructive action is first built as a list of exact commands, shown to the user, logged with the request id, and only then run as a job. The job re-checks `DiskGuard` right before each command, because disks can change in between. (Step 7 builds, shows and tests plans; `CommandPlanRunner` gets its endpoint and job in step 8, so nothing destructive runs yet.)
+- [x] Pools are never imported automatically, never with `-f`, and never as a side effect of recovery ("Recovery never modifies pools automatically"). Import is an explicit action in step 8.
 
 ### 7.3 Settings app shell
 
-- [ ] Settings as a core app on the SDK (in-process transport, its own chunk loaded with `import()`), with pages Storage, Users, Shares, Network and Energy that later steps fill. Administrators only; the start menu and the desktop link to it.
+- [x] Settings as a core app on the SDK (in-process transport, its own chunk loaded with `import()`), with pages Storage, Users, Shares, Network and Energy that later steps fill. Administrators only; the start menu and the desktop link to it. (Owner's rule: only finished pages ship, so step 7 has Storage alone. Its administrator calls are the internal `internal.admin.storage.*` methods of `desktop/src/apps/sdk/internal.ts`, not part of `@pithyx/sdk`.)
 
 ### 7.4 CI (D109)
 
-- [ ] `CLAUDE.md` (Tests) says integration tests run on GitHub-hosted runners with file-backed vdevs and loop devices, and that the destructive suite runs on dev01 before a storage PR is merged.
-- [ ] A `storage` CI job that runs only when storage code changes (path filter in `changes`): installs `zfsutils-linux` on the Ubuntu runner, creates pools on sparse files and loop devices, and runs the integration tests against them. Each run is a fresh VM, so nothing survives it.
+- [x] `CLAUDE.md` (Tests) says integration tests run on GitHub-hosted runners with file-backed vdevs and loop devices, and that the destructive suite runs on dev01 before a storage PR is merged.
+- [x] A `storage` CI job that runs only when storage code changes (path filter in `changes`): installs `zfsutils-linux` on the Ubuntu runner, creates pools on sparse files and loop devices, and runs the integration tests against them. Each run is a fresh VM, so nothing survives it.
 
 ### Test on dev01
 
@@ -509,6 +509,7 @@ Goal: pools are created, maintained and watched from the UI, with snapshots that
 ### 8.5 Settings page Storage
 
 - [ ] Pools with layout, disks, health and fill level; datasets; snapshots with schedules; every destructive action through a command plan dialog.
+- [ ] The Disks app from step 3 is folded into this page or removed once the page shows everything it shows (step 7 kept it).
 
 ### Test on dev01
 
@@ -772,6 +773,7 @@ Known requirements for later milestones:
 
 - Website, first task once `website/` exists: an error code reference generated from `i18n/en/errors.json` (and the translated files), plus a CI check that every code in `ErrorCodes` has a doc entry. Until then error codes are documented only through their i18n texts.
 - Website user docs for shares and files from step 6: the Files app (double click downloads files for now, Ctrl+A selects the whole folder, the keyboard shortcuts F2, Delete, Shift+Delete, Ctrl+C/X/V, Backspace and Alt+Up, dropping files from the system to upload, Ctrl or Alt while dropping to copy instead of move, the conflict question, progress and cancel in the status bar), the recycle bin per share (restore, empty, retention, that deleting for good is only explicit), the upload behavior (the file appears only when complete, existing names are never replaced without asking), conflict choices for copy and move (skip, overwrite merges folders, rename to "name (2)"), that symlinks are shown but never copied, and the share rules for administrators (existing folder, no system folders, no overlapping shares).
+- Website user docs for storage from step 7: the Settings page Storage (only administrators see Settings), what each disk verdict means (system disk, pool member, mounted, not a test disk on a development machine, has data and needs its serial, empty), that a pool preview probes the disks again and lists the exact commands, and why a disk with data needs its serial typed.
 - Website user docs for the desktop from step 5: desktop items (selecting with a frame, Ctrl and Shift, moving by dragging and with Move, F2, Delete, Shift+F10, the note grip and its arrow keys, long press on touch, the 200 item and 4000 character limits, and that note text changed on two devices is kept on a second note), window menu and the Alt+Shift shortcuts (and that they do not apply in text fields), snapping and thirds on ultrawide screens, taskbar position, layout memory per device with its 90-day expiry and "Get desktop from ..." (which shows each device's browser, system, screen size and last use), that only the tab in use saves the layout, the phone app switcher, swipe and back gesture, and the `pithyx_device` cookie (what it is, that it holds no personal data, and that it is `Secure` on HTTPS).
 
 - Self-hosted CI runner, parked (D109 in vyxis/vyxis#25: integration tests run on GitHub-hosted runners with file-backed pools, plus the destructive suite on dev01; this proposal is for later, if tests need the exact Debian kernel). A dedicated VM with at least 6 GB RAM, never on the NAS and never on pve02, with egress only to GitHub, npm, NuGet and the Debian mirrors and no access to shares, management interfaces or the LAN. On it: ephemeral runners in Docker containers for the daemon, frontend and E2E jobs (own image built from the pinned `actions/runner` release, one JIT runner config per job from a GitHub App key, `docker run --rm`, non-root, no `docker.sock`, no `--privileged`, no host network, CPU and memory limits, updates only by rebuilding the image in a PR), and a throwaway VM per job for the ZFS and mdadm integration tests (qcow2 overlay on a golden Debian 13 image with `zfs-dkms`, loop devices only inside it). GitHub side: a runner group for `vyxis/vyxis` only, label `pithyx-ci`, `runs-on: ${{ vars.CI_RUNNER || 'ubuntu-24.04' }}` so switching back is one repository variable (see "CI runners" under "Release blockers").

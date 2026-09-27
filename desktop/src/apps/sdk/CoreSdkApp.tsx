@@ -7,7 +7,7 @@ import {
   SDK_VERSION,
   type PithyxApp,
 } from '@pithyx/sdk';
-import { serveApp, type AppConnection } from '@pithyx/sdk/host';
+import { serveApp, type AppConnection, type HostExtensions } from '@pithyx/sdk/host';
 import i18next from 'i18next';
 import { useEffect, useEffectEvent, useRef, useState, type ComponentType } from 'react';
 import { queryKeys } from '../../api/queries';
@@ -37,12 +37,15 @@ export function CoreSdkApp({
   app: appId,
   version = SDK_VERSION,
   permissions,
+  internal,
   Component,
 }: AppProps & {
   app: string;
   /** Core apps ship with the desktop, so their version is the monorepo's. */
   version?: string;
   permissions: readonly string[];
+  /** Internal methods for this core app (apps/sdk/internal.ts); `emit` sends an internal event to this window. */
+  internal?: (emit: (event: string) => void) => { extensions: HostExtensions; close: () => void };
   Component: ComponentType<SdkAppProps>;
 }) {
   const root = useRef<HTMLDivElement>(null);
@@ -64,6 +67,12 @@ export function CoreSdkApp({
       emit: (event, data) => {
         connection.current?.emit(event, data);
       },
+    });
+    const host = internal?.((event) => {
+      (connection.current?.emit as ((event: string, data: unknown) => void) | undefined)?.(
+        event,
+        {},
+      );
     });
     connection.current = serveApp(hostEnd, {
       context: {
@@ -93,6 +102,7 @@ export function CoreSdkApp({
         }),
         ...files.methods,
       },
+      ...(host === undefined ? {} : { extensions: host.extensions }),
     });
     let active = true;
     void createApp(appEnd, { themeRoot: root.current }).then((connected) => {
@@ -103,6 +113,7 @@ export function CoreSdkApp({
     return () => {
       active = false;
       files.close();
+      host?.close();
       connection.current?.close();
       connection.current = null;
     };

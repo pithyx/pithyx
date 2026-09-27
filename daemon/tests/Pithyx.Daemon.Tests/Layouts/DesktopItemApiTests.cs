@@ -63,15 +63,15 @@ public sealed class DesktopItemApiTests : IDisposable
     }
 
     [Fact]
-    public async Task ANewUserStartsWithTheDefaultShortcutsInTheFirstColumn()
+    public async Task ANewAdministratorStartsWithTheDefaultShortcutsAndSettingsInTheFirstColumn()
     {
         await _client.SetupAdminAsync();
 
         var items = await ListAsync();
 
-        Assert.Equal(["files", "disks", "about"], items.Select(item => item.GetProperty("app").GetString()));
+        Assert.Equal(["files", "disks", "settings", "about"], items.Select(item => item.GetProperty("app").GetString()));
         Assert.All(items, item => Assert.Equal("shortcut", item.GetProperty("kind").GetString()));
-        Assert.Equal([0, 1, 2], items.Select(item => item.GetProperty("row").GetInt32()));
+        Assert.Equal([0, 1, 2, 3], items.Select(item => item.GetProperty("row").GetInt32()));
         Assert.All(items, item => Assert.Equal(0, item.GetProperty("column").GetInt32()));
         Assert.All(items, item => Assert.Equal(JsonValueKind.Null, item.GetProperty("name").ValueKind));
     }
@@ -276,7 +276,7 @@ public sealed class DesktopItemApiTests : IDisposable
                 WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < @count)
                 INSERT INTO desktop_items (user_id, kind, data, created_at, updated_at) SELECT 1, 'note', '{"text":""}', 'x', 'x' FROM n
                 """,
-                new { count = DesktopItemService.MaxItems - DesktopItemService.DefaultShortcuts.Count });
+                new { count = DesktopItemService.MaxItems - DesktopItemService.DefaultAdminShortcuts.Count });
         }
 
         using var response = await _client.PostAsync("/api/desktop/items", new { kind = "note", text = "", column = 0, row = 0 });

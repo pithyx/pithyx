@@ -2,7 +2,8 @@
 // WWNs end up in the repository. The same input always yields the same pseudonym, so fixtures recorded at different
 // times stay consistent. Serials of the dev VM's test disks (VYXTEST01 ...) are not hardware and stay readable.
 //
-// Usage: node tools/fixtures/anonymize.ts <file>   rewrites the file in place; files that are not JSON are left alone
+// Usage: node tools/fixtures/anonymize.ts <file>   rewrites the file in place; files that are not JSON or hold no
+// identifiers are left alone
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 
@@ -83,5 +84,14 @@ if (file !== undefined) {
   } catch {
     process.exit(0);
   }
-  writeFileSync(file, `${JSON.stringify(anonymize(document), null, 2)}\n`);
+  const found = new Map<string, string>();
+  collect(document, found);
+  // Replaced as text, so the tool's formatting and numbers beyond 2^53 (ZFS GUIDs) stay exactly as recorded.
+  let anonymized = text;
+  for (const [original, alias] of found) {
+    anonymized = anonymized.split(original).join(alias);
+  }
+  if (anonymized !== text) {
+    writeFileSync(file, anonymized);
+  }
 }

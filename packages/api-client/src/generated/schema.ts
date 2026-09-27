@@ -582,6 +582,57 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/storage/disks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. Every disk with the disk guard's verdict: whether a new pool may use it, and why not. */
+        get: operations["GetStorageDisks"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/storage/pools": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. Pools with their vdevs, and datasets, as last read; live through the storage/pools topic. */
+        get: operations["GetPools"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/storage/pools/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Probes the chosen disks, asks the disk guard and returns the exact commands that would create the pool. Runs nothing. */
+        post: operations["PreviewPoolCreate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 };
 export type webhooks = Record<string, never>;
 export type components = {
@@ -628,6 +679,39 @@ export type components = {
         };
         /** @enum {unknown} */
         DaemonMode: "real" | "simulated";
+        Dataset: {
+            /**
+             * Format: int64
+             * @description Space available to it.
+             */
+            availableBytes: number;
+            /** @description Encryption algorithm, or `off`. */
+            encryption: string;
+            /** @description The dataset whose key unlocks this one, if encrypted. */
+            encryptionRoot: null | string;
+            /** @description `available` or `unavailable` for encrypted datasets, otherwise null. */
+            keyStatus: null | string;
+            /** @description True while the file system is mounted. */
+            mounted: boolean;
+            /** @description Mount point of a file system, if it has one. */
+            mountPoint: null | string;
+            /** @description Full dataset name, for example `tank/pithyx/shares/media`. */
+            name: string;
+            /** @description The pool it belongs to. */
+            pool: string;
+            /**
+             * Format: int64
+             * @description Data the dataset references itself.
+             */
+            referencedBytes: number;
+            /** @description `filesystem` or `volume`. */
+            type: string;
+            /**
+             * Format: int64
+             * @description Space used by the dataset and its children.
+             */
+            usedBytes: number;
+        };
         /** @description An app shortcut or a sticky note on the desktop, shared across the user's devices. */
         DesktopItem: {
             /** @description Shortcuts: the id of the app it opens. */
@@ -804,7 +888,7 @@ export type components = {
             }[];
         };
         /** @enum {string} */
-        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.exists" | "fs.share.invalid" | "fs.share.not_found" | "fs.share.read_only" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "system.internal.unexpected" | "system.origin.forbidden";
+        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.exists" | "fs.share.invalid" | "fs.share.not_found" | "fs.share.read_only" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.command.failed" | "storage.disk.not_found" | "storage.disk.refused" | "storage.plan.expired" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_taken" | "system.internal.unexpected" | "system.origin.forbidden";
         /** @description A failed client message. `id` is empty when the message could not be parsed. */
         ErrorMessage: {
             code: components["schemas"]["ErrorCode"];
@@ -929,6 +1013,23 @@ export type components = {
         FolderWatchState: {
             /** @description Whether changes are being delivered. */
             watching: boolean;
+        };
+        /** @enum {unknown} */
+        GuardDecision: "allowed" | "needsSerialConfirmation" | "refused";
+        GuardVerdict: {
+            /** @description What was found on the disk: partitions and signature types. */
+            contents: string[];
+            /** @description Whether a destructive command may touch the disk. */
+            decision: components["schemas"]["GuardDecision"];
+            /** @description The disk the verdict is for. */
+            diskId: string;
+            /** @description The imported pool the disk belongs to, for `pool_member`. */
+            pool: null | string;
+            /**
+             * @description Why, as a stable code: `system_disk`, `read_only`, `mounted`, `pool_member`, `not_test_disk`,
+             *     `duplicate_serial`, `no_serial`, `not_checked`, `has_data`, `confirmed` or `empty`.
+             */
+            reason: string;
         };
         HealthResponse: {
             mode: components["schemas"]["DaemonMode"];
@@ -1062,6 +1163,117 @@ export type components = {
              */
             sizeBytes: number;
         };
+        PlannedCommand: {
+            /** @description Arguments, passed without a shell. */
+            arguments: string[];
+            /** @description Program name. */
+            program: string;
+        };
+        Pool: {
+            /**
+             * Format: int64
+             * @description Raw space in use.
+             */
+            allocatedBytes: number;
+            /**
+             * Format: int32
+             * @description Share of the raw space in use.
+             */
+            capacityPercent: number;
+            /**
+             * Format: int64
+             * @description Number of files with permanent errors.
+             */
+            dataErrors: number;
+            /**
+             * Format: int32
+             * @description Free space fragmentation, if known.
+             */
+            fragmentationPercent: null | number;
+            /**
+             * Format: int64
+             * @description Raw space free.
+             */
+            freeBytes: number;
+            /** @description Pool name. */
+            name: string;
+            /** @description Pool GUID as decimal text (it does not fit a JSON number). */
+            poolGuid: string;
+            /** @description True when the pool was imported read-only. */
+            readOnly: boolean;
+            scan: null | components["schemas"]["PoolScan"];
+            /**
+             * Format: int64
+             * @description Raw size of all vdevs, parity included.
+             */
+            sizeBytes: number;
+            /** @description ZFS state: `ONLINE`, `DEGRADED`, `FAULTED`, `OFFLINE`, `UNAVAIL`, `REMOVED` or `SUSPENDED`. */
+            state: string;
+            /** @description Top-level vdevs, including log, cache, special and spare devices. */
+            vdevs: components["schemas"]["Vdev"][];
+        };
+        /** @description Response of `POST /api/storage/pools/preview`. Nothing was run. */
+        PoolCreatePreview: {
+            /** @description The exact commands the plan would run, or null while a disk is not allowed. */
+            commands: null | components["schemas"]["PlannedCommand"][];
+            /** @description The guard's verdict for every chosen disk, after probing them again. */
+            disks: components["schemas"]["GuardVerdict"][];
+            /**
+             * Format: date-time
+             * @description Until when the plan may run once creating pools is available.
+             */
+            expiresAt: string;
+        };
+        PoolCreatePreviewRequest: {
+            /** @description For disks that are not empty: the serial number the user typed, by disk id. */
+            confirmations?: null | {
+                [key: string]: string;
+            };
+            /** @description The disks to use, by id. */
+            diskIds: string[];
+            /** @description `single`, `stripe`, `mirror`, `raidz1`, `raidz2` or `raidz3`. */
+            layout: string;
+            /** @description Pool name. */
+            name: string;
+        };
+        /** @description Snapshot and event of `storage/pools`, and response of `GET /api/storage/pools`. */
+        PoolList: {
+            datasets: components["schemas"]["Dataset"][];
+            pools: components["schemas"]["Pool"][];
+        };
+        PoolScan: {
+            /**
+             * Format: date-time
+             * @description When it ended (UTC), if it did.
+             */
+            endedAt: null | string;
+            /**
+             * Format: int64
+             * @description Errors the scan found.
+             */
+            errors: number;
+            /**
+             * Format: int64
+             * @description Bytes examined so far.
+             */
+            examinedBytes: number;
+            /** @description Scan kind: `scrub` or `resilver`. */
+            kind: string;
+            /** @description True for a paused scrub. */
+            paused: boolean;
+            /**
+             * Format: date-time
+             * @description When the scan started (UTC).
+             */
+            startedAt: null | string;
+            /** @description `scanning`, `finished` or `canceled`. */
+            state: string;
+            /**
+             * Format: int64
+             * @description Bytes the scan covers.
+             */
+            toExamineBytes: number;
+        };
         RecoverRequest: {
             newPassword: string;
             recoveryKey: string;
@@ -1140,6 +1352,18 @@ export type components = {
              */
             type: "snap";
         };
+        /** @description A disk with the guard's verdict, for the Storage settings page. */
+        StorageDisk: {
+            disk: components["schemas"]["Disk"];
+            guard: components["schemas"]["GuardVerdict"];
+        };
+        /** @description Response of `GET /api/storage/disks`. */
+        StorageDiskList: {
+            /** @description Every disk with its verdict. */
+            disks: components["schemas"]["StorageDisk"][];
+            /** @description `dev` or `prod`; on dev only the declared test disks can be used. */
+            environment: string;
+        };
         SystemInfo: {
             /**
              * Format: double
@@ -1170,12 +1394,14 @@ export type components = {
             "files/+/+": components["schemas"]["FolderChanges"];
             "jobs/+": components["schemas"]["Job"];
             "storage/disks": components["schemas"]["DisksChanged"];
+            "storage/pools": components["schemas"]["PoolList"];
             "system/info": components["schemas"]["SystemInfo"];
         };
         TopicSnapshots: {
             "files/+/+": components["schemas"]["FolderWatchState"];
             "jobs/+": components["schemas"]["Job"];
             "storage/disks": components["schemas"]["DiskList"];
+            "storage/pools": components["schemas"]["PoolList"];
             "system/info": components["schemas"]["SystemInfo"];
         };
         TotpConfirmRequest: {
@@ -1259,6 +1485,40 @@ export type components = {
             isAdmin: boolean;
             totpEnabled: boolean;
             username: string;
+        };
+        Vdev: {
+            /**
+             * Format: int64
+             * @description Checksum errors since import or the last clear.
+             */
+            checksumErrors: number;
+            /** @description Child vdevs. */
+            children: components["schemas"]["Vdev"][];
+            /** @description Vdev name as ZFS shows it: `raidz1-0`, `mirror-1` or the device's by-id name. */
+            name: string;
+            /**
+             * Format: int32
+             * @description Parity level of a raidz vdev (1 to 3), otherwise null.
+             */
+            parityDisks: null | number;
+            /** @description Device path of a leaf vdev, usually below `/dev/disk/by-id`. */
+            path: null | string;
+            /**
+             * Format: int64
+             * @description Read errors since import or the last clear.
+             */
+            readErrors: number;
+            /** @description What the vdev is for: `data`, `log`, `cache`, `special`, `dedup` or `spare`. */
+            role: string;
+            /** @description ZFS state of the vdev. */
+            state: string;
+            /** @description ZFS vdev type: `disk`, `file`, `mirror`, `raidz`, `draid`, `spare`, `replacing` and so on. */
+            type: string;
+            /**
+             * Format: int64
+             * @description Write errors since import or the last clear.
+             */
+            writeErrors: number;
         };
         /** @enum {integer} */
         WebSocketCloseCode: 1000 | 1001 | 1008 | 1009 | 4401 | 4403;
@@ -2553,6 +2813,97 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetStorageDisks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageDiskList"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetPools: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PoolList"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    PreviewPoolCreate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PoolCreatePreviewRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PoolCreatePreview"];
+                };
             };
             /** @description Problem details with a stable error code. */
             default: {

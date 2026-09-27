@@ -162,6 +162,25 @@
       "closed": "The connection between the app and the desktop is closed. Open the app again."
     }
   },
+  "storage": {
+    "command": {
+      "failed": "The storage command {command} failed (exit code {exitCode}). Nothing after it was run; the log has the details."
+    },
+    "disk": {
+      "not_found": "The disk is no longer there. Reload the list and choose again.",
+      "refused": "The disk may not be used: {reason, select, system_disk {it holds the system} mounted {a file system on it is in use} pool_member {it belongs to a pool} not_test_disk {it is not a declared test disk} other {it is not safe to use}}."
+    },
+    "plan": {
+      "expired": "This plan is more than 10 minutes old. Show it again to check the disks once more.",
+      "stale": "A disk changed after the plan was shown. Nothing was changed; show the plan again."
+    },
+    "pool": {
+      "disk_count": "{layout} needs at least {min, plural, one {# disk} other {# disks}}; {count, plural, one {# is} other {# are}} selected.",
+      "layout_invalid": "Unknown pool layout.",
+      "name_invalid": "Pool names start with a lowercase letter and use up to 32 lowercase letters, digits, - and _. Names like mirror or raidz are reserved.",
+      "name_taken": "A pool named {name} exists already."
+    }
+  },
   "system": {
     "internal": {
       "unexpected": "Something went wrong on the server. The request id helps to find the details in the logs."

@@ -1,0 +1,9 @@
+{
+  "command": "zpool",
+  "args": [
+    "status",
+    "-j",
+    "--json-int"
+  ],
+  "exitCode": 0
+}

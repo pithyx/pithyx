@@ -58,7 +58,7 @@ public sealed class AuthService(SqliteConnectionFactory connections, PasswordHas
             throw new PithyxException(ErrorCodes.AuthSetupAlreadyDone);
         }
         await SetSettingAsync(connection, transaction, RecoveryKeySetting, recoveryKeyHash);
-        await DesktopItemService.SeedDefaultsAsync(connection, transaction, id.Value, now);
+        await DesktopItemService.SeedDefaultsAsync(connection, transaction, id.Value, isAdmin: true, now);
         await transaction.CommitAsync(cancellationToken);
         return (new UserInfo(id.Value, username, displayName, IsAdmin: true, TotpEnabled: false), recoveryKey);
     }

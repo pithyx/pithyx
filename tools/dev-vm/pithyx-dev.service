@@ -1,0 +1,22 @@
+# Managed by pithyx: tools/dev-vm/install-dev-daemon.sh fills in @REPO@ and installs this unit on the dev VM.
+# The daemon runs as root in real mode, like on a box, but from a checkout: a development aid, never a product unit.
+[Unit]
+Description=Pithyx daemon (dev VM, real mode, from @REPO@)
+After=network-online.target zfs.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=@REPO@/daemon/src/Pithyx.Daemon
+Environment=ASPNETCORE_ENVIRONMENT=Development
+Environment=PITHYX_SIMULATE=0
+Environment=PITHYX_DB=/var/lib/pithyx/pithyx.db
+Environment=PITHYX_LOG_DIR=/var/log/pithyx
+Environment=PITHYX_DESKTOP_DIR=@REPO@/desktop/dist
+Environment=DOTNET_CLI_TELEMETRY_OPTOUT=1
+ExecStart=/usr/bin/dotnet @REPO@/daemon/src/Pithyx.Daemon/bin/Release/net10.0/pithyxd.dll
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=multi-user.target
