@@ -190,7 +190,7 @@ Everything else is internal and may change at any time.
 ## Tests
 
 Test parsers, decision logic, permission checks, manifest validation and the update state machine.
-Integration tests use loop devices with real zfs and mdadm on Debian 13, run on a self-hosted runner in an ephemeral VM. Self-hosted runners never execute code from forks without approval.
+Integration tests use file-backed vdevs and loop devices with real zfs (and later mdadm) on GitHub-hosted runners, a fresh VM per run; the `storage` job runs only when storage code changes. Before a storage PR is merged, its destructive suite runs on the dev VM against the declared test disks. A self-hosted runner, if one is ever added, never executes code from forks without approval.
 Do not test getters, DTOs, pass-through controllers or individual React components.
 Daemon tests run in simulation mode by default (`DaemonFactory`), with a fake clock where time matters. End-to-end tests live in `e2e/` (Playwright, run with `pnpm build && pnpm e2e`) and start their own daemon with a fresh database.
 
