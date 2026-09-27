@@ -1,6 +1,7 @@
 import { IntlMessageFormat } from 'intl-messageformat';
 import { describe, expect, it } from 'vitest';
 import { errorCodes } from '@vyxis/api-client';
+import { coreApps } from './apps/registry';
 import { detectLanguage, resources } from './i18n';
 
 function flatten(value: object, prefix = ''): Map<string, string> {
@@ -34,6 +35,12 @@ describe('translations', () => {
       Object.keys(namespaces).map((ns) => `${language}/${ns}`),
     );
     expect(loaded.sort()).toEqual(files.sort());
+  });
+
+  it('name every core app', () => {
+    for (const app of coreApps) {
+      expect(en.has(`desktop.apps.${app.id}`), app.id).toBe(true);
+    }
   });
 
   it('have a text for every error code', () => {

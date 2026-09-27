@@ -5,7 +5,7 @@ import {
   IconRotateClockwise,
 } from '@tabler/icons-react';
 import type { TablerIcon } from '@tabler/icons-react';
-import type { ReactNode } from 'react';
+import type { ReactNode, Ref } from 'react';
 import {
   GridList,
   GridListItem,
@@ -71,6 +71,12 @@ export interface StartMenuProps {
   recent: StartEntry[];
   results: StartResults;
   user: { name: string; initials: string; role: string };
+  menuRef?: Ref<HTMLDivElement>;
+  /** Opens a pinned app or a search result by its id. */
+  onOpen?: (id: string) => void;
+  onSignOut?: () => void;
+  /** Restart and shut down appear once the daemon offers them. */
+  power?: boolean;
 }
 
 /** Start menu with search. Results are grouped into apps, settings and files; Enter opens the first one. */
@@ -82,6 +88,10 @@ export function StartMenu({
   recent,
   results,
   user,
+  menuRef,
+  onOpen,
+  onSignOut,
+  power = true,
 }: StartMenuProps) {
   const { t } = useTranslation();
   const groups = [
@@ -93,6 +103,7 @@ export function StartMenu({
 
   return (
     <div
+      ref={menuRef}
       className={styles.menu}
       role="dialog"
       aria-label={t('start.label')}
@@ -104,6 +115,11 @@ export function StartMenu({
           placeholder={t('start.search')}
           value={query}
           onChange={(value) => onQueryChange?.(value)}
+          onSubmit={() => {
+            if (firstId !== undefined) {
+              onOpen?.(firstId);
+            }
+          }}
           autoFocus
         />
       </div>
@@ -119,6 +135,7 @@ export function StartMenu({
               layout="grid"
               className={styles.pinned}
               items={pinned}
+              onAction={(key) => onOpen?.(String(key))}
             >
               {(app) => (
                 <GridListItem className={styles.tile} textValue={app.name}>
@@ -128,24 +145,31 @@ export function StartMenu({
               )}
             </GridList>
           </section>
-          <section className={styles.section} aria-labelledby="start-recent">
-            <h3 id="start-recent" className={styles.sectionTitle}>
-              {t('start.recent')}
-            </h3>
-            <ListBox aria-labelledby="start-recent" className={styles.list} items={recent}>
-              {(entry) => (
-                <ListBoxItem className={styles.entry} textValue={entry.name}>
-                  <EntryIcon entry={entry} />
-                  <span className={styles.entryText}>
-                    <span className={styles.entryName}>{entry.name}</span>
-                    {entry.detail !== undefined && (
-                      <span className={styles.entryDetail}>{entry.detail}</span>
-                    )}
-                  </span>
-                </ListBoxItem>
-              )}
-            </ListBox>
-          </section>
+          {recent.length > 0 && (
+            <section className={styles.section} aria-labelledby="start-recent">
+              <h3 id="start-recent" className={styles.sectionTitle}>
+                {t('start.recent')}
+              </h3>
+              <ListBox
+                aria-labelledby="start-recent"
+                className={styles.list}
+                items={recent}
+                onAction={(key) => onOpen?.(String(key))}
+              >
+                {(entry) => (
+                  <ListBoxItem className={styles.entry} textValue={entry.name}>
+                    <EntryIcon entry={entry} />
+                    <span className={styles.entryText}>
+                      <span className={styles.entryName}>{entry.name}</span>
+                      {entry.detail !== undefined && (
+                        <span className={styles.entryDetail}>{entry.detail}</span>
+                      )}
+                    </span>
+                  </ListBoxItem>
+                )}
+              </ListBox>
+            </section>
+          )}
         </div>
       ) : (
         <div className={styles.body}>
@@ -157,6 +181,7 @@ export function StartMenu({
               className={styles.list}
               selectionMode="single"
               defaultSelectedKeys={firstId === undefined ? [] : [firstId]}
+              onAction={(key) => onOpen?.(String(key))}
             >
               {groups.map((group) => (
                 <ListBoxSection key={group.key} className={styles.group}>
@@ -207,15 +232,28 @@ export function StartMenu({
             <IconPower size={20} stroke={1.75} />
           </IconButton>
           <MenuPopover placement={position === 'top' ? 'bottom end' : 'top end'}>
-            <Menu aria-label={t('start.power')}>
-              <MenuItem icon={<IconLogout size={18} stroke={1.75} />}>{t('menu.signOut')}</MenuItem>
-              <MenuSeparator />
-              <MenuItem icon={<IconRotateClockwise size={18} stroke={1.75} />}>
-                {t('start.restart')}
+            <Menu
+              aria-label={t('start.power')}
+              onAction={(key) => {
+                if (key === 'sign-out') {
+                  onSignOut?.();
+                }
+              }}
+            >
+              <MenuItem id="sign-out" icon={<IconLogout size={18} stroke={1.75} />}>
+                {t('menu.signOut')}
               </MenuItem>
-              <MenuItem icon={<IconPower size={18} stroke={1.75} />} tone="danger">
-                {t('start.shutDown')}
-              </MenuItem>
+              {power && (
+                <>
+                  <MenuSeparator />
+                  <MenuItem icon={<IconRotateClockwise size={18} stroke={1.75} />}>
+                    {t('start.restart')}
+                  </MenuItem>
+                  <MenuItem icon={<IconPower size={18} stroke={1.75} />} tone="danger">
+                    {t('start.shutDown')}
+                  </MenuItem>
+                </>
+              )}
             </Menu>
           </MenuPopover>
         </MenuTrigger>

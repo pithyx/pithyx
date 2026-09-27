@@ -8,9 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Window manager: windows open from desktop shortcuts and the start menu (search with Enter), come to the front on click, minimize and restore from the taskbar, maximize and close from the title bar. Single-instance apps focus their existing window. Windows keep their DOM position when their stacking order changes, so embedded frames never reload.
+- Core apps "Disks" (the live disk list) and "About Vyxis" (license, the attribution required by `NOTICE`, third-party notices). Apps load only when their first window opens.
 - Setup and sign-in use the step 4 design: one card on the wallpaper with the server name, the setup in two steps (administrator, recovery key in two lines with copy and print), the TOTP step in the same card, a recovery code fallback, "Forgot password?" with the recovery key reset that shows the new key once, and a welcome card that stays only until the desktop's live connection is up. A language menu below the card switches between automatic, English and German.
 - `GET /api/setup` returns the server's `hostname`, shown on the setup and sign-in screens.
-- After sign-in the desktop shows the wallpaper, the taskbar with clock and account menu (two-factor authentication, language, sign out, daemon status) and the disk list in a window. The desktop code loads only after sign-in.
+- After sign-in the desktop shows the wallpaper, the taskbar with clock and account menu (two-factor authentication, language, sign out, daemon status). The desktop code loads only after sign-in.
 - React Aria components follow the language picked in Vyxis, and the build keeps only their English and German strings (`@react-aria/optimize-locales-plugin`).
 - End-to-end tests cover setup, recovery key confirmation, TOTP sign-in, the password reset with the recovery key, the language menu and phone sign-in.
 - Design tokens for the desktop (`desktop/src/theme/`): colors defined once for light and dark with `light-dark()`, seven accent presets with petrol as default, type scale, spacing, radii, elevation and motion. A Vitest check enforces WCAG AA contrast for every preset in both themes.

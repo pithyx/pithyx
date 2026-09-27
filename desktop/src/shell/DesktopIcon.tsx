@@ -16,10 +16,13 @@ export function DesktopIcon({
   name,
   item,
   selected = false,
+  onOpen,
 }: {
   name: string;
   item: DesktopItemKind;
   selected?: boolean;
+  /** Double click with a mouse, a single tap on touch, Enter or Space with the keyboard. */
+  onOpen?: () => void;
 }) {
   const { t } = useTranslation();
   let visual;
@@ -50,6 +53,15 @@ export function DesktopIcon({
         className={cx(styles.icon, selected && styles.selected)}
         aria-pressed={selected}
         aria-label={item.kind === 'shortcut' ? t('items.shortcut', { name }) : name}
+        onClick={(event) => {
+          // detail is 0 for keyboard activation; touch opens on the first tap like on a phone home screen.
+          const pointerType =
+            'pointerType' in event.nativeEvent ? event.nativeEvent.pointerType : '';
+          if (event.detail === 0 || pointerType === 'touch') {
+            onOpen?.();
+          }
+        }}
+        onDoubleClick={onOpen}
       >
         {visual}
         <span className={styles.label} aria-hidden>

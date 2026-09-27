@@ -1,8 +1,9 @@
 import { expect, test, type Page } from '@playwright/test';
+import { admin, openFromDesktop } from './session';
 import { totp } from './totp';
 
 const password = 'correct horse battery';
-const newPassword = 'staple battery horse correct';
+const newPassword = admin.password;
 const recoveryKeyFormat = /^([0-9A-Z]{4}-){6}[0-9A-Z]{2}$/;
 
 async function signIn(page: Page, secret: string) {
@@ -26,7 +27,12 @@ async function confirmStored(page: Page) {
 }
 
 function disks(page: Page) {
-  return page.getByRole('region', { name: 'Disks' });
+  return page.getByRole('region', { name: 'Disks', exact: true });
+}
+
+async function openDisks(page: Page) {
+  await openFromDesktop(page, 'Disks');
+  await expect(disks(page).getByRole('row', { name: /sdg/ })).toBeVisible();
 }
 
 // One flow on one database: the steps depend on each other, and the tests below build on its end state.
@@ -64,6 +70,7 @@ test('setup, recovery key, TOTP sign-in and password reset with the recovery key
   });
 
   await test.step('the desktop shows the disk list live', async () => {
+    await openDisks(page);
     await expect(disks(page).getByRole('row')).toHaveCount(8);
     await expect(disks(page).getByRole('row', { name: /sdg/ })).toContainText('VYXTEST06');
     await page.getByRole('button', { name: 'Account menu for Ada Admin' }).click();
@@ -72,9 +79,9 @@ test('setup, recovery key, TOTP sign-in and password reset with the recovery key
     await page.keyboard.press('Escape');
   });
 
-  await test.step('the desktop survives a reload', async () => {
+  await test.step('the session survives a reload', async () => {
     await page.reload();
-    await expect(disks(page).getByRole('row', { name: /sda/ })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Taskbar' })).toBeVisible();
   });
 
   await test.step('turn on two-factor authentication', async () => {
@@ -113,7 +120,7 @@ test('setup, recovery key, TOTP sign-in and password reset with the recovery key
       .getByLabel('Code from your authenticator app')
       .fill(totp(secret, Date.now() + 30_000));
     await page.getByRole('button', { name: 'Verify' }).click();
-    await expect(disks(page).getByRole('row', { name: /sdg/ })).toBeVisible();
+    await openDisks(page);
   });
 
   await test.step('reset the password with the recovery key', async () => {
@@ -139,7 +146,7 @@ test('setup, recovery key, TOTP sign-in and password reset with the recovery key
     await expect(page.getByRole('alert')).toContainText('The user name or password is incorrect.');
     await page.getByLabel('Password', { exact: true }).fill(newPassword);
     await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(disks(page).getByRole('row', { name: /sdg/ })).toBeVisible();
+    await openDisks(page);
   });
 });
 
@@ -172,6 +179,7 @@ test('phones sign in and see the disks full screen', async ({ browser }) => {
   const page = await context.newPage();
   await page.goto('/');
   await signIn(page, newPassword);
+  await page.getByRole('button', { name: 'Disks, shortcut' }).tap();
   const region = disks(page);
   await expect(region.getByRole('row', { name: /sdg/ })).toBeVisible();
   const box = await region.boundingBox();

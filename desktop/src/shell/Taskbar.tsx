@@ -1,5 +1,5 @@
 import { IconBell, IconLayoutGrid, IconLoader2 } from '@tabler/icons-react';
-import type { ReactNode } from 'react';
+import type { ReactNode, Ref } from 'react';
 import { Button as AriaButton } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '../ui/Controls';
@@ -25,6 +25,8 @@ export interface TaskbarProps {
   onSwitcher?: () => void;
   onApp?: (id: string) => void;
   userMenu?: (trigger: ReactNode) => ReactNode;
+  startRef?: Ref<HTMLButtonElement>;
+  switcherRef?: Ref<HTMLButtonElement>;
 }
 
 /** Start button, running apps and the status area (jobs, notifications, clock, user). There is no tray. */
@@ -44,6 +46,8 @@ export function Taskbar({
   onSwitcher,
   onApp,
   userMenu,
+  startRef,
+  switcherRef,
 }: TaskbarProps) {
   const { t } = useTranslation();
   const time = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }).format(now);
@@ -70,6 +74,7 @@ export function Taskbar({
   return (
     <nav className={styles.taskbar} data-position={position} aria-label={t('taskbar.label')}>
       <AriaButton
+        ref={startRef}
         className={cx(styles.button, styles.start)}
         aria-label={t('taskbar.start')}
         aria-expanded={startOpen}
@@ -97,6 +102,7 @@ export function Taskbar({
       </ul>
 
       <AriaButton
+        ref={switcherRef}
         className={cx(styles.button, styles.switcher)}
         aria-label={t('taskbar.switcher', { count: apps.length })}
         aria-expanded={switcherOpen}

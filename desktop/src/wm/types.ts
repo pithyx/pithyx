@@ -28,6 +28,9 @@ export type SnapZone =
   | 'left-two-thirds'
   | 'right-two-thirds';
 
+/** From the viewport width: below 600 px, 600 to 1023 px, 1024 px and up. */
+export type SizeClass = 'compact' | 'medium' | 'expanded';
+
 export type Placement =
   { kind: 'free' } | { kind: 'maximized' } | { kind: 'snapped'; zone: SnapZone };
 

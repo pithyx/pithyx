@@ -101,10 +101,22 @@
     "photos": "Fotos",
     "users": "Benutzer",
     "containers": "Container",
-    "terminal": "Terminal"
+    "terminal": "Terminal",
+    "disks": "Laufwerke",
+    "about": "Über Vyxis"
   },
   "roles": {
     "administrator": "Administrator",
     "user": "Benutzer"
+  },
+  "about": {
+    "tagline": "Freies, selbst gehostetes NAS- und Server-Betriebssystem mit Web-Desktop.",
+    "licenseTitle": "Lizenz",
+    "license": "Vyxis ist freie Software unter der GNU Affero General Public License Version 3. Das SDK steht unter der MIT-Lizenz.",
+    "attribution": "Based on Vyxis (https://github.com/vyxis/vyxis), created by the Vyxis contributors and licensed under the GNU AGPL-3.0.",
+    "source": "Quellcode",
+    "noticesTitle": "Software von Dritten",
+    "licenseText": "Lizenztext",
+    "noticesMissing": "Die Liste der Software von Dritten konnte nicht geladen werden."
   }
 }

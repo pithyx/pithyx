@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, Ref } from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from './DesktopShell.module.css';
 import type { TaskbarPosition } from './types';
@@ -14,6 +14,7 @@ export function DesktopShell({
   children,
   overlays,
   entering = false,
+  workspaceRef,
 }: {
   taskbar: ReactNode;
   taskbarPosition?: TaskbarPosition;
@@ -21,6 +22,8 @@ export function DesktopShell({
   overlays?: ReactNode;
   /** Plays the entrance after sign-in. */
   entering?: boolean;
+  /** The element windows are positioned in; the window manager measures it. */
+  workspaceRef?: Ref<HTMLElement>;
 }) {
   const { t } = useTranslation();
   return (
@@ -30,7 +33,7 @@ export function DesktopShell({
       data-entering={entering || undefined}
     >
       <Wallpaper />
-      <main className={styles.workspace} aria-label={t('items.desktop')}>
+      <main ref={workspaceRef} className={styles.workspace} aria-label={t('items.desktop')}>
         {children}
       </main>
       {taskbar}
