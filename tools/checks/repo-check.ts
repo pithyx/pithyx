@@ -179,6 +179,35 @@ function checkCommentLanguage(file: string, text: string): Problem[] {
   );
 }
 
+// The project's first working title may only remain where it is outside the repository's control: the GitHub
+// organization and repository, the checkout path on the dev VM and the serials of the dev VM's virtual test disks.
+const OLD_NAME = /vyx(?:is|test)/i;
+const OLD_NAME_ALLOWED = new RegExp(
+  [
+    String.raw`github\.com[/:]vyxis/vyxis`,
+    String.raw`vyxis/vyxis#\d+`,
+    String.raw`:-vyxis/vyxis\}`,
+    '`vyxis/vyxis`',
+    String.raw`code/vyxis\b`,
+    'VYXTEST',
+  ].join('|'),
+  'g',
+);
+
+function checkOldName(file: string, text: string): Problem[] {
+  // This file spells out the exceptions.
+  if (file === 'tools/checks/repo-check.ts') {
+    return [];
+  }
+  return text
+    .split('\n')
+    .flatMap((content, index) =>
+      OLD_NAME.test(content.replace(OLD_NAME_ALLOWED, ''))
+        ? [{ file, line: index + 1, message: 'old project name, the project is called Pithyx' }]
+        : [],
+    );
+}
+
 // The daemon build writes openapi.json; the TypeScript generated from it must match what is committed.
 async function checkGenerated(): Promise<Problem[]> {
   const { generate, generatedDirectory } =
@@ -200,11 +229,22 @@ async function checkGenerated(): Promise<Problem[]> {
 
 const problems: Problem[] = [];
 for (const file of listFiles()) {
+  if (OLD_NAME.test(file.replace(OLD_NAME_ALLOWED, ''))) {
+    problems.push({
+      file,
+      line: 1,
+      message: 'old project name in the path, the project is called Pithyx',
+    });
+  }
   const text = readText(file);
   if (text === undefined) {
     continue;
   }
-  problems.push(...checkEmDashes(file, text), ...checkCommentLanguage(file, text));
+  problems.push(
+    ...checkEmDashes(file, text),
+    ...checkCommentLanguage(file, text),
+    ...checkOldName(file, text),
+  );
 }
 problems.push(...(await checkGenerated()));
 

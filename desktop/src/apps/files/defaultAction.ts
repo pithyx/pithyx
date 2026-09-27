@@ -1,4 +1,4 @@
-import type { FileEntry } from '@vyxis/sdk';
+import type { FileEntry } from '@pithyx/sdk';
 
 /**
  * What a double click, Enter or a tap does with an entry. Files download for now; once viewers exist, this is the one

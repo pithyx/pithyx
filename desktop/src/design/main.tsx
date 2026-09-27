@@ -30,7 +30,7 @@ if (lang === 'en' || lang === 'de') {
 
 const screen = screens.find((entry) => entry.id === params.get('screen'));
 if (screen !== undefined) {
-  document.title = `${screen.title} - Vyxis design`;
+  document.title = `${screen.title} - Pithyx design`;
 }
 
 createRoot(root).render(

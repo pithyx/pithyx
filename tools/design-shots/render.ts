@@ -62,7 +62,7 @@ function startServer(port: string): ChildProcess {
   // Own process group, so stopping it also stops vite below pnpm.
   return spawn(
     'pnpm',
-    ['--filter', '@vyxis/desktop', 'exec', 'vite', '--port', port, '--strictPort'],
+    ['--filter', '@pithyx/desktop', 'exec', 'vite', '--port', port, '--strictPort'],
     { cwd: repoRoot, detached: true, stdio: 'ignore' },
   );
 }

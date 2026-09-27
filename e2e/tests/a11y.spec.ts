@@ -51,9 +51,9 @@ test('the desktop with windows, menus and the start menu has no accessibility vi
   await page.getByRole('button', { name: 'Start' }).click();
   await page
     .getByRole('dialog', { name: 'Start menu' })
-    .getByRole('row', { name: 'About Vyxis' })
+    .getByRole('row', { name: 'About Pithyx' })
     .click();
-  await expect(appWindow(page, 'About Vyxis')).toBeVisible();
+  await expect(appWindow(page, 'About Pithyx')).toBeVisible();
   await expect(appWindow(page, 'Disks').getByRole('row').nth(3)).toBeVisible();
   expect(await violations(page)).toEqual([]);
 
@@ -62,10 +62,10 @@ test('the desktop with windows, menus and the start menu has no accessibility vi
   expect(await violations(page)).toEqual([]);
   await page.keyboard.press('Escape');
 
-  await appWindow(page, 'About Vyxis')
-    .getByRole('button', { name: 'Window menu for About Vyxis' })
+  await appWindow(page, 'About Pithyx')
+    .getByRole('button', { name: 'Window menu for About Pithyx' })
     .click();
-  await expect(page.getByRole('menu', { name: 'Window menu for About Vyxis' })).toBeVisible();
+  await expect(page.getByRole('menu', { name: 'Window menu for About Pithyx' })).toBeVisible();
   expect(await violations(page)).toEqual([]);
   await page.keyboard.press('Escape');
 
@@ -77,7 +77,7 @@ test('the desktop with windows, menus and the start menu has no accessibility vi
 test('the Files app, its menu and its recycle bin have no accessibility violations', async ({
   page,
 }) => {
-  const folder = join(process.env.VYXIS_E2E_DATA ?? '', 'shares', 'shared', 'a11y');
+  const folder = join(process.env.PITHYX_E2E_DATA ?? '', 'shares', 'shared', 'a11y');
   mkdirSync(join(folder, 'Photos'), { recursive: true });
   writeFileSync(join(folder, 'notes.txt'), 'n');
   writeFileSync(join(folder, 'old.txt'), 'o');

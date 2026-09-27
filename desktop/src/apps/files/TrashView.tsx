@@ -1,5 +1,5 @@
 import { useInfiniteQuery } from '@tanstack/react-query';
-import type { JobInfo, TrashEntry, VyxisApp } from '@vyxis/sdk';
+import type { JobInfo, TrashEntry, PithyxApp } from '@pithyx/sdk';
 import { useState } from 'react';
 import { ListBox, ListBoxItem, type Selection as AriaSelection } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
@@ -23,7 +23,7 @@ export function TrashView({
   writable,
   onJob,
 }: {
-  app: VyxisApp;
+  app: PithyxApp;
   share: string;
   shareName: string;
   writable: boolean;

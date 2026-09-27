@@ -4,14 +4,14 @@
 #
 #   idle-check.sh [--seconds 60] [--pid <pid>]
 #
-# Without --pid it measures the process listening on port 8994. Close every desktop tab first: an open desktop keeps
+# Without --pid it measures the process listening on port 7484. Close every desktop tab first: an open desktop keeps
 # its WebSocket and live topics busy, which is not idle.
 set -euo pipefail
 export LC_ALL=C.UTF-8
 
 readonly CPU_BUDGET_PERCENT=1
 readonly RSS_BUDGET_KB=$((200 * 1024))
-readonly PORT=8994
+readonly PORT=7484
 
 seconds=60
 pid=""

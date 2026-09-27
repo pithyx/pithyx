@@ -272,7 +272,7 @@
       "params": {
         "method": "storage.get"
       },
-      "expected": "This version of Vyxis does not support what the app asked for (storage.get)."
+      "expected": "This version of Pithyx does not support what the app asked for (storage.get)."
     },
     "sdk.protocol.unsupported": {
       "params": {
@@ -280,7 +280,7 @@
         "min": 1,
         "max": 2
       },
-      "expected": "This app needs another version of Vyxis (protocol 3, supported 1 to 2)."
+      "expected": "This app needs another version of Pithyx (protocol 3, supported 1 to 2)."
     },
     "sdk.request.invalid": {
       "params": {

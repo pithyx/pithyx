@@ -4,7 +4,7 @@ import {
   type TopicEvents,
   type TopicName,
   type TopicSnapshots,
-} from '@vyxis/api-client';
+} from '@pithyx/api-client';
 import { create } from 'zustand';
 import { useErrorStore } from '../errors/errorStore';
 import { applyEvent, reconnectDelay } from './reducers';

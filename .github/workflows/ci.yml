@@ -43,7 +43,7 @@ jobs:
     if: needs.changes.outputs.daemon == 'true'
     runs-on: ubuntu-24.04
     env:
-      VYXIS_SKIP_BUDGETS: ${{ github.event_name == 'push' && github.ref_name == 'dev' && '1' || '' }}
+      PITHYX_SKIP_BUDGETS: ${{ github.event_name == 'push' && github.ref_name == 'dev' && '1' || '' }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v6
@@ -51,12 +51,12 @@ jobs:
           global-json-file: global.json
           cache: true
           cache-dependency-path: daemon/**/packages.lock.json
-      - run: dotnet restore daemon/Vyxis.slnx
-      - run: dotnet build daemon/Vyxis.slnx --configuration Release --no-restore
+      - run: dotnet restore daemon/Pithyx.slnx
+      - run: dotnet build daemon/Pithyx.slnx --configuration Release --no-restore
       - name: OpenAPI document is up to date
         run: git diff --exit-code packages/api-client/openapi.json
-      - run: dotnet test --solution daemon/Vyxis.slnx --configuration Release --no-build
-      - run: dotnet format daemon/Vyxis.slnx --verify-no-changes --no-restore
+      - run: dotnet test --solution daemon/Pithyx.slnx --configuration Release --no-build
+      - run: dotnet format daemon/Pithyx.slnx --verify-no-changes --no-restore
 
   frontend:
     needs: changes
@@ -119,7 +119,7 @@ jobs:
     runs-on: ubuntu-24.04
     env:
       # The performance gate guards pull requests; after the merge, dev runs the other E2E tests only.
-      VYXIS_SKIP_BUDGETS: ${{ github.event_name == 'push' && github.ref_name == 'dev' && '1' || '' }}
+      PITHYX_SKIP_BUDGETS: ${{ github.event_name == 'push' && github.ref_name == 'dev' && '1' || '' }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v6
@@ -133,9 +133,9 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: dotnet build daemon/Vyxis.slnx
-      - run: pnpm --filter "@vyxis/desktop..." build
-      - run: pnpm --filter @vyxis/e2e exec playwright install --with-deps chromium
+      - run: dotnet build daemon/Pithyx.slnx
+      - run: pnpm --filter "@pithyx/desktop..." build
+      - run: pnpm --filter @pithyx/e2e exec playwright install --with-deps chromium
       - run: pnpm e2e
       - run: pnpm design:test
       - if: failure()

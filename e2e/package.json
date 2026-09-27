@@ -1,5 +1,5 @@
 {
-  "name": "@vyxis/e2e",
+  "name": "@pithyx/e2e",
   "private": true,
   "type": "module",
   "scripts": {

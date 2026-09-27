@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { unwrap } from '@vyxis/api-client';
+import { unwrap } from '@pithyx/api-client';
 import { useTranslation } from 'react-i18next';
 import { api } from './api/client';
 import { queryKeys } from './api/queries';

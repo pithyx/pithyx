@@ -20,7 +20,7 @@ test.describe('phone', () => {
     await signInAsAdmin(page);
     const taskbar = page.getByRole('navigation', { name: 'Taskbar' });
     const disks = appWindow(page, 'Disks');
-    const about = appWindow(page, 'About Vyxis');
+    const about = appWindow(page, 'About Pithyx');
 
     await test.step('a tap opens an app full screen', async () => {
       await page.getByRole('option', { name: 'Disks, shortcut' }).tap();
@@ -37,7 +37,7 @@ test.describe('phone', () => {
     });
 
     await test.step('the app switcher shows open apps and switches between them', async () => {
-      await page.getByRole('option', { name: 'About Vyxis, shortcut' }).tap();
+      await page.getByRole('option', { name: 'About Pithyx, shortcut' }).tap();
       await expect(about).toBeVisible();
       await taskbar.getByRole('button', { name: /Switch apps, 2 open/ }).tap();
       const switcher = page.getByRole('dialog', { name: 'Open apps' });
@@ -87,7 +87,7 @@ test.describe('tablet', () => {
   test('windows open maximized and split side by side', async ({ page }) => {
     await signInAsAdmin(page);
     const disks = appWindow(page, 'Disks');
-    const about = appWindow(page, 'About Vyxis');
+    const about = appWindow(page, 'About Pithyx');
     const workspace = await box(page.getByRole('main', { name: 'Desktop' }));
 
     await page.getByRole('option', { name: 'Disks, shortcut' }).tap();
@@ -98,9 +98,9 @@ test.describe('tablet', () => {
     await page.getByRole('button', { name: 'Start' }).tap();
     await page
       .getByRole('dialog', { name: 'Start menu' })
-      .getByRole('row', { name: 'About Vyxis' })
+      .getByRole('row', { name: 'About Pithyx' })
       .tap();
-    await about.getByRole('button', { name: 'Window menu for About Vyxis' }).tap();
+    await about.getByRole('button', { name: 'Window menu for About Pithyx' }).tap();
     await page.getByRole('menuitem', { name: 'Snap right' }).tap();
 
     await expect
@@ -120,12 +120,12 @@ test.describe('ultrawide', () => {
 
   test('snaps to thirds by dragging and by keyboard', async ({ page }) => {
     await signInAsAdmin(page);
-    await page.getByRole('option', { name: 'About Vyxis, shortcut' }).dblclick();
-    const about = appWindow(page, 'About Vyxis');
+    await page.getByRole('option', { name: 'About Pithyx, shortcut' }).dblclick();
+    const about = appWindow(page, 'About Pithyx');
     const workspace = await box(page.getByRole('main', { name: 'Desktop' }));
     const third = Math.round(workspace.width / 3);
 
-    const title = await box(about.getByRole('heading', { name: 'About Vyxis', exact: true }));
+    const title = await box(about.getByRole('heading', { name: 'About Pithyx', exact: true }));
     await page.mouse.move(title.x + 20, title.y + 10);
     await page.mouse.down();
     await page.mouse.move(workspace.x + 1, title.y + 200, { steps: 10 });
@@ -139,7 +139,7 @@ test.describe('ultrawide', () => {
     await page.keyboard.press('Alt+Shift+ArrowLeft');
     await expect.poll(async () => (await box(about)).width).toBe(Math.round(workspace.width / 2));
 
-    const grip = await box(about.getByRole('heading', { name: 'About Vyxis', exact: true }));
+    const grip = await box(about.getByRole('heading', { name: 'About Pithyx', exact: true }));
     await page.mouse.move(grip.x + 20, grip.y + 10);
     await page.mouse.down();
     await page.mouse.move(workspace.x + workspace.width / 2, workspace.y + 1, { steps: 10 });
@@ -154,10 +154,10 @@ test.describe('touch screen laptop', () => {
 
   test('drags a window with a finger', async ({ page }) => {
     await signInAsAdmin(page);
-    await page.getByRole('option', { name: 'About Vyxis, shortcut' }).tap();
-    const about = appWindow(page, 'About Vyxis');
+    await page.getByRole('option', { name: 'About Pithyx, shortcut' }).tap();
+    const about = appWindow(page, 'About Pithyx');
     const start = await box(about);
-    const title = await box(about.getByRole('heading', { name: 'About Vyxis', exact: true }));
+    const title = await box(about.getByRole('heading', { name: 'About Pithyx', exact: true }));
     const x = title.x + 20;
     const y = title.y + 10;
 

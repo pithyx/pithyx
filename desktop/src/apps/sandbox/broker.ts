@@ -1,4 +1,4 @@
-import { sdkError, VyxisError, type MethodHandlers } from '@vyxis/sdk/host';
+import { sdkError, PithyxError, type MethodHandlers } from '@pithyx/sdk/host';
 import { notify } from '../../shell/toasts';
 import { dispatch, useDesktop } from '../../wm/store';
 
@@ -50,7 +50,7 @@ export function brokerFor(target: BrokerTarget): MethodHandlers {
   const store = storeOf(target.user, target.app);
   const require = (permission: string) => {
     if (!target.permissions.includes(permission)) {
-      throw new VyxisError({ code: 'app.permission.denied', params: { permission } });
+      throw new PithyxError({ code: 'app.permission.denied', params: { permission } });
     }
   };
   return {
@@ -83,7 +83,7 @@ export function brokerFor(target: BrokerTarget): MethodHandlers {
     },
     'session.save': ({ state }) => {
       if (sizeOf(state) > MAX_SESSION) {
-        throw new VyxisError({
+        throw new PithyxError({
           code: 'app.storage.too_large',
           params: { maxKb: MAX_SESSION / 1024 },
         });
@@ -102,7 +102,7 @@ export function brokerFor(target: BrokerTarget): MethodHandlers {
         size,
       );
       if (size > MAX_VALUE || total > MAX_TOTAL) {
-        throw new VyxisError({
+        throw new PithyxError({
           code: 'app.storage.too_large',
           params: { maxKb: (size > MAX_VALUE ? MAX_VALUE : MAX_TOTAL) / 1024 },
         });
@@ -116,7 +116,7 @@ export function brokerFor(target: BrokerTarget): MethodHandlers {
     'auth.token': () => {
       require('backend');
       // Backends arrive with the app runtime (M4); the daemon will issue the token.
-      throw new VyxisError({ code: 'sdk.method.unknown', params: { method: 'auth.token' } });
+      throw new PithyxError({ code: 'sdk.method.unknown', params: { method: 'auth.token' } });
     },
   };
 }

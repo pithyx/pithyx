@@ -2,7 +2,7 @@ import { IconServer2 } from '../ui/icons';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cx } from '../ui/cx';
-import { Wordmark } from '../ui/Logo';
+import { Wordmark, type LogoMotion } from '../ui/Logo';
 import styles from './AuthLayout.module.css';
 import { Wallpaper } from './Wallpaper';
 
@@ -47,11 +47,12 @@ export function AuthLayout({
 }
 
 /** Word mark and the server name, so users with several boxes know where they sign in. */
-export function AuthHeader({ host, product }: { host: string; product: string }) {
+export function AuthHeader({ host, motion }: { host: string; motion: LogoMotion }) {
   const { t } = useTranslation('auth');
+  const { t: tDesktop } = useTranslation('desktop');
   return (
     <div className={styles.header}>
-      <Wordmark name={product} />
+      <Wordmark name={tDesktop('brand')} mark={tDesktop('brandMark')} motion={motion} />
       <p className={styles.host}>
         <IconServer2 size={14} stroke={1.75} aria-hidden />
         <span className="visually-hidden">{t('login.host', { host })}</span>

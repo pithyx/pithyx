@@ -1,6 +1,6 @@
 /**
  * The one place for browser features that exist only in a secure context (HTTPS with a trusted certificate, or
- * localhost). Vyxis must work fully without one: over plain HTTP by IP address and with the self-signed certificate
+ * localhost). Pithyx must work fully without one: over plain HTTP by IP address and with the self-signed certificate
  * of a fresh install. ESLint refuses these APIs everywhere else.
  */
 

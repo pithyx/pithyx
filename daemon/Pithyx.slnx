@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Pithyx.Daemon/Pithyx.Daemon.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Pithyx.Daemon.Tests/Pithyx.Daemon.Tests.csproj" />
+  </Folder>
+</Solution>

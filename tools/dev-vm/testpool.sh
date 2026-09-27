@@ -8,14 +8,14 @@
 # zpool destroy leaves the ZFS labels and partitions on the disks. wipe clears them (zpool labelclear, then wipefs on
 # every partition and the disk) so a test disk is empty again; it refuses disks that belong to an imported pool.
 #
-# Pool names must start with "vyxtest". Disks are selected by serial and must match VYXTEST01 to
-# VYXTEST06. If /etc/vyxis/test-disks exists, the serial must also be listed there.
+# Pool names must start with "pithyxtest". Disks are selected by serial and must match VYXTEST01 to
+# VYXTEST06. If /etc/pithyx/test-disks exists, the serial must also be listed there.
 set -euo pipefail
 export LC_ALL=C.UTF-8
 
 readonly SERIAL_PATTERN='^VYXTEST0[1-6]$'
-readonly POOL_PATTERN='^vyxtest[a-z0-9_-]*$'
-readonly TEST_DISKS_FILE=/etc/vyxis/test-disks
+readonly POOL_PATTERN='^pithyxtest[a-z0-9_-]*$'
+readonly TEST_DISKS_FILE=/etc/pithyx/test-disks
 
 dry_run=false
 

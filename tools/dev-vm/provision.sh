@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Provisions a fresh Debian 13 VM as a Vyxis development machine. Safe to run repeatedly.
+# Provisions a fresh Debian 13 VM as a Pithyx development machine. Safe to run repeatedly.
 #
 #   sudo tools/dev-vm/provision.sh [--test-disk-pattern <regex>]
 #
@@ -13,7 +13,7 @@ readonly NODEJS_PACKAGE='nodejs=24.21.0-1nodesource1'
 readonly NODE_MAJOR=24
 
 readonly OS_RELEASE_FILE=${OS_RELEASE_FILE:-/etc/os-release}
-readonly VYXIS_ETC_DIR=${VYXIS_ETC_DIR:-/etc/vyxis}
+readonly PITHYX_ETC_DIR=${PITHYX_ETC_DIR:-/etc/pithyx}
 
 test_disk_pattern='^VYXTEST0[1-6]$'
 
@@ -37,7 +37,7 @@ check_platform() {
   version_id=$(os_release_value VERSION_ID)
   [[ "$id" == debian && "$version_id" == 13 ]] ||
     die "this script supports Debian 13 only (found ID=$id VERSION_ID=$version_id)"
-  local environment_file="$VYXIS_ETC_DIR/environment"
+  local environment_file="$PITHYX_ETC_DIR/environment"
   if [[ -f "$environment_file" ]]; then
     local environment
     environment=$(tr -d '[:space:]' <"$environment_file")
@@ -234,8 +234,8 @@ write_if_changed() {
 }
 
 write_markers() {
-  install -d -m 755 "$VYXIS_ETC_DIR"
-  write_if_changed "$VYXIS_ETC_DIR/environment" dev
+  install -d -m 755 "$PITHYX_ETC_DIR"
+  write_if_changed "$PITHYX_ETC_DIR/environment" dev
 
   local serials=() name serial type
   while read -r name serial type; do
@@ -246,7 +246,7 @@ write_markers() {
     serials+=("$serial")
   done < <(lsblk -dn -o NAME,SERIAL,TYPE)
   [[ ${#serials[@]} -gt 0 ]] || die "no disks match the test disk pattern $test_disk_pattern"
-  write_if_changed "$VYXIS_ETC_DIR/test-disks" "$(printf '%s\n' "${serials[@]}" | sort)"
+  write_if_changed "$PITHYX_ETC_DIR/test-disks" "$(printf '%s\n' "${serials[@]}" | sort)"
 }
 
 while [[ $# -gt 0 ]]; do
@@ -262,7 +262,7 @@ done
 
 check_platform
 if [[ $EUID -ne 0 ]]; then
-  exec sudo --preserve-env=OS_RELEASE_FILE,VYXIS_ETC_DIR "$0" --test-disk-pattern "$test_disk_pattern"
+  exec sudo --preserve-env=OS_RELEASE_FILE,PITHYX_ETC_DIR "$0" --test-disk-pattern "$test_disk_pattern"
 fi
 
 apt_install ca-certificates curl gnupg

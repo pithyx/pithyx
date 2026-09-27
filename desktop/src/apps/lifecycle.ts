@@ -1,5 +1,5 @@
 // Apps that want a last chance to save before the user signs out register here; the desktop waits for them, but
-// never longer than the SDK promises (BEFORE_LOGOUT_TIMEOUT in @vyxis/sdk).
+// never longer than the SDK promises (BEFORE_LOGOUT_TIMEOUT in @pithyx/sdk).
 const beforeLogout = new Set<() => Promise<unknown>>();
 
 export function onBeforeLogout(hook: () => Promise<unknown>): () => void {

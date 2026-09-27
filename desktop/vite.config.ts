@@ -15,12 +15,12 @@ import { brotliCompressSync, constants, gzipSync } from 'node:zlib';
 import { defaultClientConditions, defaultServerConditions, defineConfig, type Plugin } from 'vite';
 import { generateAll, writeDeclaration } from './scripts/css-module-types.ts';
 
-const daemonUrl = process.env.VYXIS_DAEMON_URL ?? 'http://localhost:8994';
+const daemonUrl = process.env.PITHYX_DAEMON_URL ?? 'http://localhost:7484';
 
 // Keeps the CSS Module declarations current while the dev server runs.
 function cssModuleTypes(): Plugin {
   return {
-    name: 'vyxis-css-module-types',
+    name: 'pithyx-css-module-types',
     apply: 'serve',
     buildStart() {
       generateAll();
@@ -37,7 +37,7 @@ function cssModuleTypes(): Plugin {
 // Tailscale. Text responses are gzipped here; the daemon's API and WebSocket pass through untouched.
 function devCompression(): Plugin {
   return {
-    name: 'vyxis-dev-compression',
+    name: 'pithyx-dev-compression',
     apply: 'serve',
     configureServer(server) {
       server.middlewares.use((request, response, next) => {
@@ -99,7 +99,7 @@ function precompress(): Plugin {
       return statSync(path).isDirectory() ? walk(path) : [path];
     });
   return {
-    name: 'vyxis-precompress',
+    name: 'pithyx-precompress',
     apply: 'build',
     configResolved(config) {
       outDir = config.build.outDir;
@@ -127,7 +127,7 @@ const sampleApps = ['demo'];
 function copySampleApps(): Plugin {
   let outDir = 'dist';
   return {
-    name: 'vyxis-sample-apps',
+    name: 'pithyx-sample-apps',
     apply: 'build',
     configResolved(config) {
       outDir = config.build.outDir;
@@ -137,7 +137,7 @@ function copySampleApps(): Plugin {
         const built = join(import.meta.dirname, '..', 'apps', app, 'dist');
         if (!existsSync(join(built, 'index.html'))) {
           throw new Error(
-            `apps/${app} is not built; build it first (pnpm --filter "@vyxis/desktop..." build).`,
+            `apps/${app} is not built; build it first (pnpm --filter "@pithyx/desktop..." build).`,
           );
         }
         cpSync(built, join(outDir, 'apps', app), { recursive: true });
@@ -157,7 +157,7 @@ export const bundleGraphFile = join(
 /** Records every chunk with its static imports and CSS, keyed by the module it was built from. */
 function bundleGraph(): Plugin {
   return {
-    name: 'vyxis-bundle-graph',
+    name: 'pithyx-bundle-graph',
     apply: 'build',
     writeBundle(_, bundle) {
       const chunks = Object.values(bundle).flatMap((output) =>
@@ -194,9 +194,9 @@ export default defineConfig({
     devCompression(),
   ],
   // Workspace packages (the SDK) are compiled from source.
-  resolve: { conditions: ['vyxis-source', ...defaultClientConditions] },
+  resolve: { conditions: ['pithyx-source', ...defaultClientConditions] },
   // Unit tests run through the server resolver; they compile the SDK from source too, so no SDK build is needed.
-  ssr: { resolve: { conditions: ['vyxis-source', ...defaultServerConditions] } },
+  ssr: { resolve: { conditions: ['pithyx-source', ...defaultServerConditions] } },
   build: {
     rollupOptions: {
       // Only the desktop ships. design.html is the developer-only design gallery served by `pnpm design`.

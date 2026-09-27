@@ -1,7 +1,7 @@
 import { IntlMessageFormat } from 'intl-messageformat';
 import { describe, expect, it } from 'vitest';
-import { errorCodes } from '@vyxis/api-client';
-import { sdkErrorCodes } from '@vyxis/sdk';
+import { errorCodes } from '@pithyx/api-client';
+import { sdkErrorCodes } from '@pithyx/sdk';
 import { coreApps } from './apps/registry';
 import { detectLanguage, resources } from './i18n';
 

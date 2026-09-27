@@ -1,27 +1,27 @@
-import type { Theme, ThemeTokenName } from '@vyxis/sdk';
+import type { Theme, ThemeTokenName } from '@pithyx/sdk';
 
 // The public tokens apps get, from the desktop's own. Internal names may change; these may not.
 const SOURCES: Record<ThemeTokenName, string> = {
-  '--vyxis-color-background': '--color-bg',
-  '--vyxis-color-surface': '--color-surface-1',
-  '--vyxis-color-surface-raised': '--color-menu-solid',
-  '--vyxis-color-hover': '--color-surface-hover',
-  '--vyxis-color-selected': '--color-selection',
-  '--vyxis-color-text': '--color-text',
-  '--vyxis-color-text-muted': '--color-text-muted',
-  '--vyxis-color-border': '--color-border',
-  '--vyxis-color-accent': '--color-accent',
-  '--vyxis-color-accent-text': '--color-accent-contrast',
-  '--vyxis-color-focus': '--color-focus',
-  '--vyxis-color-success': '--color-success',
-  '--vyxis-color-warning': '--color-warning',
-  '--vyxis-color-danger': '--color-danger',
-  '--vyxis-font-ui': '--font-sans',
-  '--vyxis-font-mono': '--font-mono',
-  '--vyxis-font-size': '--font-size-md',
-  '--vyxis-radius': '--radius-md',
-  '--vyxis-space': '--space-2',
-  '--vyxis-control-height': '--control-height',
+  '--pithyx-color-background': '--color-bg',
+  '--pithyx-color-surface': '--color-surface-1',
+  '--pithyx-color-surface-raised': '--color-menu-solid',
+  '--pithyx-color-hover': '--color-surface-hover',
+  '--pithyx-color-selected': '--color-selection',
+  '--pithyx-color-text': '--color-text',
+  '--pithyx-color-text-muted': '--color-text-muted',
+  '--pithyx-color-border': '--color-border',
+  '--pithyx-color-accent': '--color-accent',
+  '--pithyx-color-accent-text': '--color-accent-contrast',
+  '--pithyx-color-focus': '--color-focus',
+  '--pithyx-color-success': '--color-success',
+  '--pithyx-color-warning': '--color-warning',
+  '--pithyx-color-danger': '--color-danger',
+  '--pithyx-font-ui': '--font-sans',
+  '--pithyx-font-mono': '--font-mono',
+  '--pithyx-font-size': '--font-size-md',
+  '--pithyx-radius': '--radius-md',
+  '--pithyx-space': '--space-2',
+  '--pithyx-control-height': '--control-height',
 };
 
 const dark = '(prefers-color-scheme: dark)';

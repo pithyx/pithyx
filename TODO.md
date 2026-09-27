@@ -1,6 +1,6 @@
 # TODO
 
-Step-by-step plan for building the Vyxis foundation. Read `CLAUDE.md` before starting and follow it at every step.
+Step-by-step plan for building the Pithyx foundation. Read `CLAUDE.md` before starting and follow it at every step.
 
 ## How to use this file
 
@@ -30,17 +30,19 @@ Step-by-step plan for building the Vyxis foundation. Read `CLAUDE.md` before sta
 
 Every shortcut taken on purpose during development is listed here. The first release (and making the repository public) waits until every item is done. A new shortcut adds its item here in the same commit that takes it.
 
+The first release, v1.0.0, carries the constellation codename Pyxis: the mariner's compass, and the box Erasmus put into Pandora's hands in place of the pithos.
+
 - [ ] File ownership (D89 in vyxis/vyxis#18, resolved in step 10): files and folders the daemon creates (uploads, copies, restored items, new folders) belong to root until M3 provisions Linux users. They must belong to the requesting user's Linux account (`fchownat`), so SMB, NFS and SFTP see the right owner.
-- [ ] Trust step and TLS: development runs over plain HTTP on 8994. Ship HTTPS on 443 (80 redirects, 8994 as the fixed alternative) with the self-signed certificate from the install, the trust wizard and the "Trust this device" setup step (see the M5 items below); passkeys and the service worker switch on only once trusted.
+- [ ] Trust step and TLS: development runs over plain HTTP on 7484. Ship HTTPS on 443 (80 redirects, 7484 as the fixed alternative) with the self-signed certificate from the install, the trust wizard and the "Trust this device" setup step (see the M5 items below); passkeys and the service worker switch on only once trusted.
 - [ ] Branch protection: only the lefthook `pre-push` hook guards `master` and `dev` today (rulesets need a public repository or a paid plan). Run `tools/github/protect-branches.sh` (PR required, CI green, no force push) before or right when the repository goes public.
 - [ ] CI runners: a self-hosted runner, if one is set up for the private repository, is replaced by GitHub-hosted runners before the repository goes public (`vars.CI_RUNNER` back to the default); integration tests on real ZFS then need an approved environment, and self-hosted runners never run code from forks.
 - [ ] App permissions on the daemon: until the app registry (M4), the desktop broker checks SDK permissions only in the browser. No third-party app is installable before the daemon checks every permission itself (guardrail 1), including the install confirmation for elevated rights and the `host.full` warning (D71).
 - [ ] The SDK demo app (`apps/demo`) is registered as a built-in app for the prototype; remove it from the app list (or make it an installable example) before the release.
-- [ ] Recycle bin over SMB and NFS: hide `.vyxis-trash` (`veto files`) and route Samba's `vfs_recycle` into the same bin (step 12).
+- [ ] Recycle bin over SMB and NFS: hide `.pithyx-trash` (`veto files`) and route Samba's `vfs_recycle` into the same bin (step 12).
 - [ ] Error code docs: every error code needs its entry on the website with a CI completeness check (`CLAUDE.md`, Errors); today codes are documented only through their i18n texts.
 - [ ] Third-party notices: generate the list of bundled npm and NuGet packages with their licenses for the About page and check it in CI (Later milestones item); today only fonts, Tabler and React Aria are listed.
 - [ ] `TopicHub` keeps one throttle per published topic forever (one per job and folder); release them for topics without subscribers.
-- [ ] No real data on Vyxis pools before step 9 (encryption and key vault) is done: encryption can only be chosen when a pool is created, so a pool made earlier would have to be recreated.
+- [ ] No real data on Pithyx pools before step 9 (encryption and key vault) is done: encryption can only be chosen when a pool is created, so a pool made earlier would have to be recreated.
 - [ ] UPS: check before the release whether NUT support (clean shutdown on power loss, pools exported and the key vault untouched) must ship with it (parked under "Later milestones").
 
 ---
@@ -53,7 +55,7 @@ Goal: an empty but complete monorepo where every tool is configured, every check
 
 ### 1.1 Decisions (made 2026-09-26)
 
-- [x] Git host: GitHub, org `vyxis`, CI with GitHub Actions.
+- [x] Git host: GitHub, org `pithyx`, CI with GitHub Actions.
 - [x] SDK license: MIT. Everything else is AGPL-3.0.
 - [x] Contributor terms: DCO sign-off (`Signed-off-by` on every commit, checked in CI).
 - [x] Frontend lint and format: ESLint + Prettier.
@@ -70,7 +72,7 @@ Goal: an empty but complete monorepo where every tool is configured, every check
 - [x] `TODO.md` (this file) in the root.
 - [ ] Logo: put the provided `logo.svg` into `desktop/public/` and `website/public/` (create the folders when those projects exist). It is the source for favicon and app icons. Done for `desktop/public/`; `website/public/` follows when `website/` exists.
 - [x] `.claude/settings.json` with permission deny rules for destructive commands (`rm -rf /`, `dd of=/dev/*`, `mkfs*`, `wipefs`, `zpool destroy`, `zpool create`, `git push --force` to `master` or `dev`). Force pushes are denied for every branch, and every rule has a `sudo` variant. `zpool create` and `zpool destroy` are allowed only through `tools/dev-vm/testpool.sh`.
-- [x] `tools/dev-vm/testpool.sh`: creates and destroys test pools (`vyxtest*`, `autotrim=on`) and refuses any disk whose serial is not `VYXTEST01` to `VYXTEST06` (or not listed in `/etc/vyxis/test-disks` once that file exists).
+- [x] `tools/dev-vm/testpool.sh`: creates and destroys test pools (`pithyxtest*`, `autotrim=on`) and refuses any disk whose serial is not `VYXTEST01` to `VYXTEST06` (or not listed in `/etc/pithyx/test-disks` once that file exists).
 - [x] Commit message check (commitlint or a small script): gitmoji plus Conventional Commits as defined in `CLAUDE.md`, run in lefthook and CI.
 
 ### 1.3 Legal and project files
@@ -89,11 +91,11 @@ Goal: an empty but complete monorepo where every tool is configured, every check
 - [x] `global.json` pinning the .NET 10 SDK.
 - [x] Solution file in `daemon/` (use `.slnx` if the pinned SDK supports it, otherwise `.sln`).
 - [x] Projects:
-  - `daemon/src/Vyxis.Daemon` (ASP.NET Core, the host and all modules as folders)
-  - `daemon/tests/Vyxis.Daemon.Tests` (xUnit v3)
+  - `daemon/src/Pithyx.Daemon` (ASP.NET Core, the host and all modules as folders)
+  - `daemon/tests/Pithyx.Daemon.Tests` (xUnit v3)
 - [x] `Directory.Build.props`: `Nullable` enabled, `ImplicitUsings` enabled, `TreatWarningsAsErrors` true, `AnalysisLevel` latest-recommended, `EnforceCodeStyleInBuild` true, deterministic builds.
 - [x] `Directory.Packages.props`: central package management.
-- [x] Minimal `Program.cs` that starts Kestrel on port 8994 and serves `GET /api/health` returning `{ "status": "ok" }`.
+- [x] Minimal `Program.cs` that starts Kestrel on port 7484 and serves `GET /api/health` returning `{ "status": "ok" }`.
 - [x] One test that calls `/api/health` through `WebApplicationFactory`.
 - [x] `dotnet format --verify-no-changes` passes.
 
@@ -103,7 +105,7 @@ Goal: an empty but complete monorepo where every tool is configured, every check
 - [x] `.nvmrc` or `engines` pinning the Node LTS version.
 - [x] `tsconfig.base.json`: `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, `verbatimModuleSyntax`.
 - [x] `desktop/`: Vite + React + TypeScript. Replace the template content with a single empty desktop surface. Enable the React Compiler.
-- [x] `sdk/`: TypeScript library built with Vite library mode, exports an empty `vyxis` object for now, emits type declarations.
+- [x] `sdk/`: TypeScript library built with Vite library mode, exports an empty `pithyx` object for now, emits type declarations.
 - [x] `packages/api-client/`: placeholder for the generated OpenAPI client.
 - [x] ESLint flat config: typescript-eslint strict, react-hooks, React Compiler rules (part of `eslint-plugin-react-hooks` 6 and later; the separate `eslint-plugin-react-compiler` is deprecated), i18next plugin with "no literal strings in JSX".
 - [x] Prettier config.
@@ -145,19 +147,19 @@ Goal: anyone can go from a fresh clone to a running daemon and desktop in under 
 - [x] The script reproduces exactly the toolchain installed manually on dev01 for step 1: Microsoft package source for Debian 13 (`packages-microsoft-prod.deb` from `packages.microsoft.com/config/debian/13/`) with `dotnet-sdk-10.0` 10.0.401, NodeSource `node_24.x` with `nodejs` 24.21.0, and `corepack enable` so pnpm comes from `packageManager` (pnpm 12.6.0). Versions must match `global.json`, `.nvmrc` and `package.json`.
 - [x] The script verifies it runs on Debian 13 and refuses otherwise.
 - [x] The script sets the system locale to `en_US.UTF-8` (keyboard and time zone stay as they are) so tool output and logs match production.
-- [x] The script writes `dev` to `/etc/vyxis/environment` and records the test disks by serial in `/etc/vyxis/test-disks`.
+- [x] The script writes `dev` to `/etc/pithyx/environment` and records the test disks by serial in `/etc/pithyx/test-disks`.
 - [x] README section "Development / Dev VM": recommended VM spec (4 vCPU, 8 GB RAM, 32 GB system disk, six 10 GB data disks), how to run the provisioning script, recommendation to snapshot the VM before destructive tests.
 
 ### 2.2 Simulation mode
 
 - [x] `ICommandRunner` interface with `ProcessCommandRunner` (real) and `FixtureCommandRunner` (reads recorded output from `daemon/tests/fixtures/`). Fixtures are recorded with `tools/fixtures/record.sh`.
-- [x] Environment variable `VYXIS_SIMULATE=1` switches the daemon to `FixtureCommandRunner`. In simulation mode the daemon runs on any Linux, including WSL. Native Windows and macOS are not supported.
+- [x] Environment variable `PITHYX_SIMULATE=1` switches the daemon to `FixtureCommandRunner`. In simulation mode the daemon runs on any Linux, including WSL. Native Windows and macOS are not supported.
 - [x] The simulated state is visible: `GET /api/health` reports `"mode": "simulated"`.
 
 ### 2.3 Dev workflow
 
-- [x] Vite dev server proxies `/api` and `/ws` to the daemon. Target configurable via `VYXIS_DAEMON_URL` (default `http://localhost:8994`).
-- [x] Development runs over plain HTTP on 8994. Production HTTPS is added later. Document this clearly so nobody ships it.
+- [x] Vite dev server proxies `/api` and `/ws` to the daemon. Target configurable via `PITHYX_DAEMON_URL` (default `http://localhost:7484`).
+- [x] Development runs over plain HTTP on 7484. Production HTTPS is added later. Document this clearly so nobody ships it.
 - [x] Root script `pnpm dev` starts the desktop; README documents `dotnet watch` for the daemon (locally in simulation mode or on the VM over Remote-SSH).
 - [x] README section "Development": prerequisites, both workflows (simulation on the local machine, real on the VM), common problems.
 
@@ -178,12 +180,12 @@ Goal: one real feature end to end, built on the final architecture. Everything l
 - [x] Serilog with JSON output to console (journald in production) and a rotating file with size cap.
 - [x] Request id middleware: accept or create a W3C `traceparent`, expose it as `requestId`, enrich every log entry.
 - [x] Secret masking in logs (passwords, tokens, cookies).
-- [x] Error system: `ErrorCodes` static class with constants, `VyxisException(code, params)`, middleware that maps it to RFC 9457 problem details with `code`, `params`, `detail`, `requestId`. Unknown exceptions map to `system.internal.unexpected`.
+- [x] Error system: `ErrorCodes` static class with constants, `PithyxException(code, params)`, middleware that maps it to RFC 9457 problem details with `code`, `params`, `detail`, `requestId`. Unknown exceptions map to `system.internal.unexpected`.
 - [x] OpenAPI document generated by `Microsoft.AspNetCore.OpenApi`, served at `/api/openapi.json`. Scalar UI at `/api/docs` in development only.
 
 ### 3.2 Database
 
-- [x] SQLite at a configurable path (default `/var/lib/vyxis/vyxis.db`, in simulation mode a local file). WAL mode, foreign keys on.
+- [x] SQLite at a configurable path (default `/var/lib/pithyx/pithyx.db`, in simulation mode a local file). WAL mode, foreign keys on.
 - [x] Migration runner: numbered `.sql` files embedded as resources, a `schema_version` table, runs at startup inside a transaction, refuses to start on a failed migration.
 - [x] Migration `0001`: `users`, `sessions`.
 
@@ -191,7 +193,7 @@ Goal: one real feature end to end, built on the final architecture. Everything l
 
 - [x] First-run setup: if no user exists, `POST /api/setup` creates the admin. Afterwards the endpoint returns `auth.setup.already_done`.
 - [x] Passwords hashed with Argon2id. Parameters documented next to the code.
-- [x] New passwords: 12 to 1024 characters and not in the offline list of common passwords (`daemon/src/Vyxis.Daemon/Auth/common-passwords.txt`, regenerated by `tools/passwords/update-common-passwords.sh`). No composition rules.
+- [x] New passwords: 12 to 1024 characters and not in the offline list of common passwords (`daemon/src/Pithyx.Daemon/Auth/common-passwords.txt`, regenerated by `tools/passwords/update-common-passwords.sh`). No composition rules.
 - [x] Login creates a session stored in SQLite and sets an HttpOnly, Secure (outside dev), SameSite=Strict cookie. Logout deletes it.
 - [x] CSRF protection: SameSite=Strict plus a required custom header on state-changing requests.
 - [x] Rate limiting on login. Implemented as a small fixed-window counter on `TimeProvider` instead of the ASP.NET Core rate limiter: only failed attempts count (5 per user and address, 30 per address, 5 minutes), and tests can move the clock.
@@ -317,9 +319,9 @@ Guardrails (set by the owner on 2026-09-27, binding like `CLAUDE.md`; the spec a
 3. Permissions are declared in the manifest, confirmed by an administrator and revocable (`permissionRevoked`).
 4. SemVer on the SDK interface. Deprecations last one major version.
 5. Everything is async. Errors are RFC 9457 problems with a code and params.
-6. Theme, accent, locale and density reach apps as CSS variables plus events. `@vyxis/ui` stays optional.
+6. Theme, accent, locale and density reach apps as CSS variables plus events. `@pithyx/ui` stays optional.
 7. Apps control only their own windows. No focus stealing without a user action.
-8. App backends are reached through YARP; their only identity source is `X-Vyxis-User`.
+8. App backends are reached through YARP; their only identity source is `X-Pithyx-User`.
 9. File access only through the SDK file API. File types for `openFile` are declared in the manifest.
 10. Not in v1: app-to-app communication, background tasks without a window, widgets.
 11. The SDK provides the locale and formatters, plus an optional i18n helper for ICU JSON. Apps may bring their own i18n.
@@ -336,10 +338,10 @@ Guardrails (set by the owner on 2026-09-27, binding like `CLAUDE.md`; the spec a
 - [ ] App manifest: JSON Schema as the source, C# and TS types generated, validation with clear error codes.
 - [ ] App registry: core apps loaded with `import()` in the desktop context; third-party apps in iframes with `sandbox="allow-scripts allow-forms"` (no `allow-same-origin`), served from the same host.
 - [ ] SDK transport: one `MessageChannel` per app instance, `init` handshake with SDK version, locale and theme tokens.
-- [ ] SDK API v1: `window.setTitle`, `window.close`, `window.setSize`, `notify`, `session.save`, `session.restore`, `storage.get`, `storage.set` (daemon-backed, replaces `localStorage` in opaque-origin iframes), the file API (`files.pick`, `files.saveAs`, `files.read`, `files.write`, `files.url`, `files.list`, `files.open` with opaque file handles, served with step 6), formatters and the optional `@vyxis/sdk/i18n` helper.
+- [ ] SDK API v1: `window.setTitle`, `window.close`, `window.setSize`, `notify`, `session.save`, `session.restore`, `storage.get`, `storage.set` (daemon-backed, replaces `localStorage` in opaque-origin iframes), the file API (`files.pick`, `files.saveAs`, `files.read`, `files.write`, `files.url`, `files.list`, `files.open` with opaque file handles, served with step 6), formatters and the optional `@pithyx/sdk/i18n` helper.
 - [ ] Permission broker in the desktop; app identity comes from the port. The broker only answers early; the daemon checks every permission again (guardrail 1), with `app.permission.denied`.
 - [ ] Daemon side of the manifest permissions (M4): install dialog with confirmation, per-permission revoke pushed as `permissionRevoked`, named storage mapping to share folders, elevated rights with risk texts, password and TOTP confirmation, badge, audit log and the filtering Docker socket proxy (guardrail 13, D71). The `host.full` warning says plainly that it is root on the host and that the promise about other users' secrets then only covers the SDK API.
-- [ ] Two sample apps: one core app in React, one third-party app in plain TypeScript that uses only `@vyxis/sdk`.
+- [ ] Two sample apps: one core app in React, one third-party app in plain TypeScript that uses only `@pithyx/sdk`.
 - [ ] SDK reference generated with TypeDoc.
 
 ### 5.4 Tests and budgets
@@ -367,12 +369,12 @@ Draft PR `feature/file-service`, decisions from D79 in its comments.
 
 - [x] Shares before M3: `shares` and `share_access` (migration 0005), per-user access none, read or readWrite, administrators everything, `GET/POST/DELETE /api/shares`, `PUT /api/shares/{id}/access/{userId}`; a share the caller cannot use answers `fs.share.not_found`. Simulation seeds a share "Shared" in the data directory.
 - [x] File service with access checks on every request and traversal protection by the kernel: every path is opened with `openat2(RESOLVE_BENEATH | RESOLVE_NO_MAGICLINKS)` below the share root, all later calls work on handles; `.` and `..` are refused.
-- [x] Cursor pagination: natural order without a stat per entry, keyset cursors that survive changes, size and date orders; first page of 100,000 entries under 200 ms (xUnit budget, Release build as in CI; 133 ms on dev01).
+- [x] Cursor pagination: natural order without a stat per entry, keyset cursors that survive changes, size and date orders; first page of 100,000 entries under 200 ms (xUnit budget, Release build as in CI; about 80 ms on dev01 since the first page is selected instead of sorting the whole folder, which took 124 to 226 ms depending on the JIT state of the process).
 - [x] Range downloads with ETag and `Content-Security-Policy: sandbox`, streamed uploads into a hidden temporary file renamed into place, new folders, renames.
-- [x] Jobs module (migration 0006) and copy, move and delete as jobs with progress, conflict policies and in-kernel copies (`copy_file_range`). On dev01 ZFS 2.3.9 did not clone blocks (`bcloneused` stayed 0, also for a plain `copy_file_range` outside Vyxis); find out why with M3.
+- [x] Jobs module (migration 0006) and copy, move and delete as jobs with progress, conflict policies and in-kernel copies (`copy_file_range`). On dev01 ZFS 2.3.9 did not clone blocks (`bcloneused` stayed 0, also for a plain `copy_file_range` outside Pithyx); find out why with M3.
 - [x] Live changes of open folders over inotify (`files/<share>/<folder>`), watched only while subscribed, no access or open events, no polling.
-- [x] Recycle bin per share (migration 0007): deleting moves items to the hidden `.vyxis-trash` at the share root (a rename, or copy and delete across file systems), with restore to the original place (missing folders recreated, conflicts renamed by default), deleting single items for good, emptying, and a retention per share set by administrators (default 30 days, 0 keeps items until emptied), enforced hourly. Deleting for good without the bin only with an explicit `permanent: true`.
-- [ ] M3: hide `.vyxis-trash` from SMB and NFS (`veto files`) and let Samba's `vfs_recycle` put SMB deletes into the same bin with a row per item.
+- [x] Recycle bin per share (migration 0007): deleting moves items to the hidden `.pithyx-trash` at the share root (a rename, or copy and delete across file systems), with restore to the original place (missing folders recreated, conflicts renamed by default), deleting single items for good, emptying, and a retention per share set by administrators (default 30 days, 0 keeps items until emptied), enforced hourly. Deleting for good without the bin only with an explicit `permanent: true`.
+- [ ] M3: hide `.pithyx-trash` from SMB and NFS (`veto files`) and let Samba's `vfs_recycle` put SMB deletes into the same bin with a row per item.
 - [ ] Files are created as the daemon's user (root) until M3 provisions Linux users (release blocker, see "Release blockers").
 - [ ] Resumable uploads (tus) on the same temporary-file mechanism.
 - [ ] Files and folders on the desktop: the contents of the `Desktop` folder in the user's home share as desktop items on the same grid (positions stored per user in `desktop_items` with kind `file`), created, renamed and deleted as real files, opened in the file manager. The items UI from step 5 (selection, drag, menus) is ready for them.
@@ -407,9 +409,9 @@ Ordered by risk: what can lose data comes first and gets the strongest tests. De
 
 Rules for every M3 step:
 
-- Destructive storage actions touch only disks that `DiskGuard` (step 7) allows. On dev01 that means the VYXTEST disks listed in `/etc/vyxis/test-disks`; test pools are still cleaned up with `tools/dev-vm/testpool.sh destroy` and `wipe`.
+- Destructive storage actions touch only disks that `DiskGuard` (step 7) allows. On dev01 that means the VYXTEST disks listed in `/etc/pithyx/test-disks`; test pools are still cleaned up with `tools/dev-vm/testpool.sh destroy` and `wipe`.
 - Before a storage PR is merged, its destructive suite runs on dev01 and the result goes into the PR (`[REVIEW]` by the owner for steps 8, 9 and 12).
-- No real data goes on a Vyxis pool before step 9 is done (see "Release blockers").
+- No real data goes on a Pithyx pool before step 9 is done (see "Release blockers").
 - Every settings page ships with its step, in the Settings app from step 7.
 
 ---
@@ -422,16 +424,16 @@ Goal: the daemon sees real pools on dev01 and cannot write to a disk it must not
 
 ### 7.1 Real mode on dev01
 
-- [ ] A dev systemd unit runs the daemon as root in real mode on dev01 (simulation stays the default for E2E and local development). `/etc/vyxis/environment` decides `dev` or `prod`; a missing file means `prod`.
+- [ ] A dev systemd unit runs the daemon as root in real mode on dev01 (simulation stays the default for E2E and local development). `/etc/pithyx/environment` decides `dev` or `prod`; a missing file means `prod`.
 - [ ] `IStorageBackend` (one of the two allowed abstractions) with ZFS as its first implementation; mdadm and btrfs come later through the same interface (D111).
 - [ ] Parsers for `zpool status -j`, `zpool list -j`, `zfs list -j` and `zfs get -j` (OpenZFS 2.3 JSON output) as pure functions with fixtures recorded on dev01 with `tools/fixtures/record.sh` (single disk, mirror, raidz1, degraded, resilvering, scrubbing, encrypted, exported).
 - [ ] `SystemStateService` keeps pools and datasets in memory, refreshed from `zpool events -f` (streamed, no polling) and at startup. `GET /api/storage/pools` reads from memory; topic `storage/pools` pushes changes.
 
 ### 7.2 Disk guard and command plans
 
-- [ ] `DiskGuard` as a pure decision function over the lsblk tree, the mount table and `/etc/vyxis/*`:
-  - The system disk (anything holding `/`, `/boot`, `/boot/efi`, swap or `/var/lib/vyxis`) is always refused, with no override.
-  - In `dev`, only disks whose serial is listed in `/etc/vyxis/test-disks` are allowed.
+- [ ] `DiskGuard` as a pure decision function over the lsblk tree, the mount table and `/etc/pithyx/*`:
+  - The system disk (anything holding `/`, `/boot`, `/boot/efi`, swap or `/var/lib/pithyx`) is always refused, with no override.
+  - In `dev`, only disks whose serial is listed in `/etc/pithyx/test-disks` are allowed.
   - In `prod`, a disk must be empty (no partitions, no filesystem or RAID signatures, no ZFS labels, not part of an imported pool). Otherwise the user must confirm with the disk's serial number.
 - [ ] Command plans: every destructive action is first built as a list of exact commands, shown to the user, logged with the request id, and only then run as a job. The job re-checks `DiskGuard` right before each command, because disks can change in between.
 - [ ] Pools are never imported automatically, never with `-f`, and never as a side effect of recovery ("Recovery never modifies pools automatically"). Import is an explicit action in step 8.
@@ -477,7 +479,7 @@ Goal: pools are created, maintained and watched from the UI, with snapshots that
 
 - [ ] Create a pool: single disk, mirror, raidz1, raidz2, raidz3; a stripe only with a warning that one failed disk loses everything. Defaults `ashift=12`, `compression=lz4`, `xattr=sa`, `acltype=posixacl`, `atime=off`, `normalization=formD`.
 - [ ] The create dialog always asks about encryption and explains that it can only be chosen when the pool is created (step 9 adds the key handling; until then encryption is offered only once step 9 is done, and the dialog says so).
-- [ ] Dataset layout (D100, decided): the pool root holds no data; Vyxis datasets live under `<pool>/vyxis/` (`shares/<name>`, `homes/<user>`, `apps/<id>`, `system`), mounted at `/<pool>/<share>`, `/<pool>/homes/<user>` and `/<pool>/.vyxis/...` (the paths in `daemon/CLAUDE.md`).
+- [ ] Dataset layout (D100, decided): the pool root holds no data; Pithyx datasets live under `<pool>/pithyx/` (`shares/<name>`, `homes/<user>`, `apps/<id>`, `system`), mounted at `/<pool>/<share>`, `/<pool>/homes/<user>` and `/<pool>/.pithyx/...` (the paths in `daemon/CLAUDE.md`).
 - [ ] Import an existing pool only as an explicit action, first read-only with a preview of its datasets; export.
 - [ ] Scrub, on demand and on a schedule (default monthly).
 - [ ] Replace a disk, offline and online a disk, add a vdev (with a warning when it lowers redundancy; adding is irreversible), raidz expansion (OpenZFS 2.3).
@@ -498,10 +500,10 @@ Goal: pools are created, maintained and watched from the UI, with snapshots that
 
 ### 8.4 Snapshots
 
-- [ ] Manual snapshots and schedules with retention (hourly, daily, weekly, monthly), named `vyxis-<schedule>-<utc>`.
-- [ ] Vyxis deletes only snapshots it created (D104, decided); snapshots created by the user or another tool are never pruned.
+- [ ] Manual snapshots and schedules with retention (hourly, daily, weekly, monthly), named `pithyx-<schedule>-<utc>`.
+- [ ] Pithyx deletes only snapshots it created (D104, decided); snapshots created by the user or another tool are never pruned.
 - [ ] Holds for snapshots that must stay (pre-update snapshots in M4, snapshots a backup still needs in M6).
-- [ ] Restore a file or folder from a snapshot in Files ("Previous versions", read from `.zfs/snapshot`); rollback of a whole dataset only after typing its name, and never silently discarding newer snapshots (ZFS refuses without `-r`; Vyxis never passes `-r` without listing what goes).
+- [ ] Restore a file or folder from a snapshot in Files ("Previous versions", read from `.zfs/snapshot`); rollback of a whole dataset only after typing its name, and never silently discarding newer snapshots (ZFS refuses without `-r`; Pithyx never passes `-r` without listing what goes).
 - [ ] Retention is a pure function tested with time series, including clock jumps (NTP corrections, a box that was off for months).
 
 ### 8.5 Settings page Storage
@@ -518,7 +520,7 @@ Goal: pools are created, maintained and watched from the UI, with snapshots that
 ### Must never happen
 
 - A pool created without the encryption question.
-- A snapshot deleted that Vyxis did not create.
+- A snapshot deleted that Pithyx did not create.
 - A rollback that discards newer snapshots without listing them and a typed confirmation.
 - Destroying a pool or dataset without its typed name.
 - Adding a vdev that lowers redundancy without a warning.
@@ -538,9 +540,9 @@ Goal: pools are created, maintained and watched from the UI, with snapshots that
 
 Effort: high.
 
-Goal: pools can be encrypted, unlock after a power loss if the owner wants that, and nobody gets at the data without the key. Real data goes on Vyxis pools only after this step.
+Goal: pools can be encrypted, unlock after a power loss if the owner wants that, and nobody gets at the data without the key. Real data goes on Pithyx pools only after this step.
 
-- [ ] ZFS native encryption per pool (D106, decided): the encryption root is `<pool>/vyxis`, so everything Vyxis stores on the pool is encrypted with one key. Encryption per share can follow later.
+- [ ] ZFS native encryption per pool (D106, decided): the encryption root is `<pool>/pithyx`, so everything Pithyx stores on the pool is encrypted with one key. Encryption per share can follow later.
 - [ ] After creating an encrypted pool, the key must be downloaded or printed and its storage confirmed before the pool can be used, like the recovery key in setup.
 - [ ] Unlock manually with the key, automatically from the key vault on the system disk (root only, mode 0600, never in a support bundle), or from a USB key. The UI explains that the key vault protects against stolen disks, not against a stolen box.
 - [ ] A locked or missing pool stops its shares; the UI says why. The same state is published for M4, where apps with mounts on it do not start.
@@ -571,26 +573,26 @@ Goal: pools can be encrypted, unlock after a power loss if the owner wants that,
 
 Effort: high.
 
-Goal: every Vyxis user is a real Linux and Samba account, and files belong to the user who created them (resolves D89).
+Goal: every Pithyx user is a real Linux and Samba account, and files belong to the user who created them (resolves D89).
 
 - [ ] Migration: `groups`, `group_members`, and uid/gid allocation from fixed ranges (D103, decided): users 20000 to 29999, groups 30000 to 39999, apps 40000 to 49999 (reserved for M4). Numbers are never reused, not even after a user is deleted.
-- [ ] `/etc/login.defs` (`UID_MIN`, `UID_MAX`, `GID_MIN`, `GID_MAX` and the `SYS_*` values) is set so `adduser` and `useradd` outside Vyxis never allocate in 20000 to 49999; the reconciler checks this at startup and warns when it changed.
-- [ ] Reconciler: SQLite is the source of truth; the daemon runs `useradd`, `usermod`, `userdel`, `groupadd` and friends only for accounts in its ranges. A name that already exists in `/etc/passwd` or `/etc/group` but is not managed by Vyxis is refused (the static reserved list in `CredentialRules` only covers known system accounts).
+- [ ] `/etc/login.defs` (`UID_MIN`, `UID_MAX`, `GID_MIN`, `GID_MAX` and the `SYS_*` values) is set so `adduser` and `useradd` outside Pithyx never allocate in 20000 to 49999; the reconciler checks this at startup and warns when it changed.
+- [ ] Reconciler: SQLite is the source of truth; the daemon runs `useradd`, `usermod`, `userdel`, `groupadd` and friends only for accounts in its ranges. A name that already exists in `/etc/passwd` or `/etc/group` but is not managed by Pithyx is refused (the static reserved list in `CredentialRules` only covers known system accounts).
 - [ ] Shell `nologin` unless the user has the SSH login right (step 11).
 - [ ] Samba accounts (`pdbedit`) get their password whenever the daemon has it in plain text: setup, sign-in, password change, admin reset.
 - [ ] File ownership (release blocker D89): the file service sets owner and group with `fchownat` on everything it creates (uploads, copies, restored items, new folders).
-- [ ] A home dataset per user (D105, decided) under `<pool>/vyxis/homes/<user>`, with the `Desktop` folder that step 5's desktop items use.
+- [ ] A home dataset per user (D105, decided) under `<pool>/pithyx/homes/<user>`, with the `Desktop` folder that step 5's desktop items use.
 - [ ] Optional user quotas (`userquota@<user>`) on shares and on the home dataset.
 - [ ] Settings page Users: users and groups, create, disable, delete (with a choice for the home data: keep, move to a share, delete after typing the name), admin password reset, quotas.
 
 ### Test on dev01
 
 - Create a user: `id`, `getent`, `pdbedit -L` show it; upload a file: owner and group are the user's; delete the user: its uid stays reserved and a new user gets another one.
-- `adduser` outside Vyxis allocates below 20000.
+- `adduser` outside Pithyx allocates below 20000.
 
 ### Must never happen
 
-- An account outside the Vyxis ranges changed or deleted.
+- An account outside the Pithyx ranges changed or deleted.
 - A uid or gid reused, so that a new user inherits old files.
 - The last administrator removed or demoted.
 - Home data deleted without an explicit choice.
@@ -615,7 +617,7 @@ Goal: the permission model from `CLAUDE.md`, checked on every request, and the s
 - [ ] The grant subject is general (`user`, `group`, and `app` in M4), and the resolver takes a principal, so M4 needs no rework (see "Interfaces for M4").
 - [ ] The resolver is a pure function with exhaustive and property tests. It is used on every request and every topic; revoking a right is pushed over the WebSocket, and sessions without the desktop login right end.
 - [ ] Migration from `share_access` (per user, step 6) to grants.
-- [ ] Enforcement on disk (D102, decided): generated Linux groups per share (`vs-<id>-r`, `vs-<id>-rw`) and POSIX ACLs on the share dataset, so SMB, NFS, SFTP, the file service and later apps see the same rights. Vyxis is the only source of truth: ACLs are never edited over SMB (step 12), and the reconciler reports every difference between grants and the file system as a warning.
+- [ ] Enforcement on disk (D102, decided): generated Linux groups per share (`vs-<id>-r`, `vs-<id>-rw`) and POSIX ACLs on the share dataset, so SMB, NFS, SFTP, the file service and later apps see the same rights. Pithyx is the only source of truth: ACLs are never edited over SMB (step 12), and the reconciler reports every difference between grants and the file system as a warning.
 - [ ] Optional user quotas from step 10 are part of the share settings.
 - [ ] Settings pages: grants on the Users page (per user and group) and on the Shares page (per share).
 
@@ -644,11 +646,11 @@ Effort: high.
 
 Goal: shares are datasets reachable over SMB, NFS and SFTP with exactly the rights the file service enforces, and one recycle bin for all of them.
 
-- [ ] A share is its own dataset (D101, decided) under `<pool>/vyxis/shares/<name>`, with its own snapshots, quota and recycle bin. The folder shares from step 6 exist only in development and are created again as datasets (no migration of real data).
-- [ ] SMB: `smb.conf` generated from SQLite with the "Managed by vyxis" header; manual overrides in include files that are never touched; checked with `testparm` before every reload.
+- [ ] A share is its own dataset (D101, decided) under `<pool>/pithyx/shares/<name>`, with its own snapshots, quota and recycle bin. The folder shares from step 6 exist only in development and are created again as datasets (no migration of real data).
+- [ ] SMB: `smb.conf` generated from SQLite with the "Managed by pithyx" header; manual overrides in include files that are never touched; checked with `testparm` before every reload.
   - SMB3 only, signing required, encryption optional per share, `fruit` for macOS, `shadow_copy2` so snapshots appear as "Previous versions".
-  - ACL editing over SMB is off (`nt acl support = no` and matching settings): permissions change only in Vyxis (D102).
-  - `veto files` hides `.vyxis-trash`; `vfs_recycle` moves SMB deletes into the same recycle bin with a row per item (release blocker).
+  - ACL editing over SMB is off (`nt acl support = no` and matching settings): permissions change only in Pithyx (D102).
+  - `veto files` hides `.pithyx-trash`; `vfs_recycle` moves SMB deletes into the same recycle bin with a row per item (release blocker).
   - Samba's passdb is owned by root, mode 0600, and never part of a support bundle.
   - The Users page shows which users have no SMB password yet (they never signed in on the web) and asks them to sign in once.
 - [ ] NFS (D107, decided): NFSv4.2 with `sec=sys`, a list of allowed clients per share, `root_squash`, off by default, and a warning that NFS trusts the client's user ids. Kerberos later.
@@ -665,7 +667,7 @@ Goal: shares are datasets reachable over SMB, NFS and SFTP with exactly the righ
 - A half-written or invalid `smb.conf` or `exports` loaded.
 - A manual include file overwritten.
 - A share reachable over a protocol the user has no right for.
-- `.vyxis-trash` visible over any protocol.
+- `.pithyx-trash` visible over any protocol.
 - Deleting a share deletes its data without an explicit choice.
 - An NFS export without `root_squash`.
 - The Samba passdb readable by anyone but root or included in a support bundle.
@@ -714,7 +716,7 @@ Goal: the box sleeps when it can, the user sees what keeps it awake, and network
 ### 14.1 Energy
 
 - [ ] Spindown per pool with hd-idle, off by default.
-- [ ] Snapshot schedules and SMART self-tests follow spindown: a sleeping pool is not woken for a snapshot of unchanged data (a snapshot is taken when the pool is awake anyway or has changed), and idle-check (`tools/dev-vm/idle-check.sh`) verifies that no Vyxis schedule wakes a disk.
+- [ ] Snapshot schedules and SMART self-tests follow spindown: a sleeping pool is not woken for a snapshot of unchanged data (a snapshot is taken when the pool is awake anyway or has changed), and idle-check (`tools/dev-vm/idle-check.sh`) verifies that no Pithyx schedule wakes a disk.
 - [ ] Power profiles (performance, balanced, efficient) set the CPU governor and EPP; SATA ALPM, PCIe ASPM and USB autosuspend stay opt-in.
 - [ ] A diagnostic that shows what keeps disks awake (process and file, through fanotify on the pool mounts and `/proc/<pid>/io`) and CPU package C-state residency.
 - [ ] Capabilities are detected: in a VM without spindown or C-states, the page explains why instead of showing errors.
@@ -723,7 +725,7 @@ Goal: the box sleeps when it can, the user sees what keeps it awake, and network
 
 - [ ] systemd-networkd configuration generated from SQLite: DHCP or static, IPv4 and IPv6, DNS, host name.
 - [ ] Every change applies with a 60 second confirmation timer and rolls back automatically when it is not confirmed.
-- [ ] On dev01 only a dedicated test NIC listed in `/etc/vyxis/test-nics` is ever changed, never the management NIC. Blocked until the owner has added the second NIC to dev01.
+- [ ] On dev01 only a dedicated test NIC listed in `/etc/pithyx/test-nics` is ever changed, never the management NIC. Blocked until the owner has added the second NIC to dev01.
 
 ### 14.3 Settings pages Energy and Network
 
@@ -737,7 +739,7 @@ Goal: the box sleeps when it can, the user sees what keeps it awake, and network
 
 ### Must never happen
 
-- Vyxis waking a disk itself (SMART, logs, listings, schedules).
+- Pithyx waking a disk itself (SMART, logs, listings, schedules).
 - A network change without the rollback timer.
 - The management NIC of dev01 changed.
 - An option known to cause instability on by default.
@@ -746,7 +748,7 @@ Goal: the box sleeps when it can, the user sees what keeps it awake, and network
 
 - Golden tests of the networkd generator; the rollback timer as a state machine with a fake clock; parsers for sysfs, hd-idle and fanotify events.
 
-**Done when:** a network change rolls back after 60 seconds without confirmation, the diagnostic finds what keeps a disk awake, and idle-check shows no disk woken by Vyxis on an idle box.
+**Done when:** a network change rolls back after 60 seconds without confirmation, the diagnostic finds what keeps a disk awake, and idle-check shows no disk woken by Pithyx on an idle box.
 
 ---
 
@@ -754,9 +756,9 @@ Goal: the box sleeps when it can, the user sees what keeps it awake, and network
 
 M3 builds these so M4 (apps) uses them without rework. M4 itself is not part of M3.
 
-- Named storage (SDK guardrail 12): M3 provides shares as datasets with grants and an internal daemon API that resolves a share and a relative path to a mount path. M4 adds `storage_mappings` (app, storage id, share, subpath, access) on top and bind-mounts the folder into the backend at `/vyxis/storage/<id>`. A window's effective access is the lesser of the manifest's access and the user's share right; the backend's access comes from the share groups.
-- Users: `X-Vyxis-User` carries the stable, Linux-valid user name and the user id. Each app backend runs as its own uid and gid from the app range that M3 reserves (40000 to 49999, same allocator), mapped through userns-remap. An app reaches shares only as a member of the share groups from step 11, never with a user's uid.
-- Datasets: one per app under `<pool>/vyxis/apps/<id>`, mounted at `/<pool>/.vyxis/apps/<id>`, with a quota. Before every update a snapshot `vyxis-preupdate-<version>` with a hold, and a rollback when the update fails. M3's dataset, quota, snapshot and hold API carries no share assumptions for this.
+- Named storage (SDK guardrail 12): M3 provides shares as datasets with grants and an internal daemon API that resolves a share and a relative path to a mount path. M4 adds `storage_mappings` (app, storage id, share, subpath, access) on top and bind-mounts the folder into the backend at `/pithyx/storage/<id>`. A window's effective access is the lesser of the manifest's access and the user's share right; the backend's access comes from the share groups.
+- Users: `X-Pithyx-User` carries the stable, Linux-valid user name and the user id. Each app backend runs as its own uid and gid from the app range that M3 reserves (40000 to 49999, same allocator), mapped through userns-remap. An app reaches shares only as a member of the share groups from step 11, never with a user's uid.
+- Datasets: one per app under `<pool>/pithyx/apps/<id>`, mounted at `/<pool>/.pithyx/apps/<id>`, with a quota. Before every update a snapshot `pithyx-preupdate-<version>` with a hold, and a rollback when the update fails. M3's dataset, quota, snapshot and hold API carries no share assumptions for this.
 - Permissions: grant subjects are `user`, `group` and later `app`; "app allowed" is already a resource in M3. M4 adds manifest permissions as their own table but uses the same resolver, the same checks on every request and the same push on revoke.
 - Availability: M3 publishes when a pool or dataset is locked or missing; M4 refuses to start apps with mounts on it and shows why.
 
@@ -770,16 +772,16 @@ Known requirements for later milestones:
 
 - Website, first task once `website/` exists: an error code reference generated from `i18n/en/errors.json` (and the translated files), plus a CI check that every code in `ErrorCodes` has a doc entry. Until then error codes are documented only through their i18n texts.
 - Website user docs for shares and files from step 6: the Files app (double click downloads files for now, Ctrl+A selects the whole folder, the keyboard shortcuts F2, Delete, Shift+Delete, Ctrl+C/X/V, Backspace and Alt+Up, dropping files from the system to upload, Ctrl or Alt while dropping to copy instead of move, the conflict question, progress and cancel in the status bar), the recycle bin per share (restore, empty, retention, that deleting for good is only explicit), the upload behavior (the file appears only when complete, existing names are never replaced without asking), conflict choices for copy and move (skip, overwrite merges folders, rename to "name (2)"), that symlinks are shown but never copied, and the share rules for administrators (existing folder, no system folders, no overlapping shares).
-- Website user docs for the desktop from step 5: desktop items (selecting with a frame, Ctrl and Shift, moving by dragging and with Move, F2, Delete, Shift+F10, the note grip and its arrow keys, long press on touch, the 200 item and 4000 character limits, and that note text changed on two devices is kept on a second note), window menu and the Alt+Shift shortcuts (and that they do not apply in text fields), snapping and thirds on ultrawide screens, taskbar position, layout memory per device with its 90-day expiry and "Get desktop from ..." (which shows each device's browser, system, screen size and last use), that only the tab in use saves the layout, the phone app switcher, swipe and back gesture, and the `vyxis_device` cookie (what it is, that it holds no personal data, and that it is `Secure` on HTTPS).
+- Website user docs for the desktop from step 5: desktop items (selecting with a frame, Ctrl and Shift, moving by dragging and with Move, F2, Delete, Shift+F10, the note grip and its arrow keys, long press on touch, the 200 item and 4000 character limits, and that note text changed on two devices is kept on a second note), window menu and the Alt+Shift shortcuts (and that they do not apply in text fields), snapping and thirds on ultrawide screens, taskbar position, layout memory per device with its 90-day expiry and "Get desktop from ..." (which shows each device's browser, system, screen size and last use), that only the tab in use saves the layout, the phone app switcher, swipe and back gesture, and the `pithyx_device` cookie (what it is, that it holds no personal data, and that it is `Secure` on HTTPS).
 
-- Self-hosted CI runner, parked (D109 in vyxis/vyxis#25: integration tests run on GitHub-hosted runners with file-backed pools, plus the destructive suite on dev01; this proposal is for later, if tests need the exact Debian kernel). A dedicated VM with at least 6 GB RAM, never on the NAS and never on pve02, with egress only to GitHub, npm, NuGet and the Debian mirrors and no access to shares, management interfaces or the LAN. On it: ephemeral runners in Docker containers for the daemon, frontend and E2E jobs (own image built from the pinned `actions/runner` release, one JIT runner config per job from a GitHub App key, `docker run --rm`, non-root, no `docker.sock`, no `--privileged`, no host network, CPU and memory limits, updates only by rebuilding the image in a PR), and a throwaway VM per job for the ZFS and mdadm integration tests (qcow2 overlay on a golden Debian 13 image with `zfs-dkms`, loop devices only inside it). GitHub side: a runner group for `vyxis/vyxis` only, label `vyxis-ci`, `runs-on: ${{ vars.CI_RUNNER || 'ubuntu-24.04' }}` so switching back is one repository variable (see "CI runners" under "Release blockers").
+- Self-hosted CI runner, parked (D109 in vyxis/vyxis#25: integration tests run on GitHub-hosted runners with file-backed pools, plus the destructive suite on dev01; this proposal is for later, if tests need the exact Debian kernel). A dedicated VM with at least 6 GB RAM, never on the NAS and never on pve02, with egress only to GitHub, npm, NuGet and the Debian mirrors and no access to shares, management interfaces or the LAN. On it: ephemeral runners in Docker containers for the daemon, frontend and E2E jobs (own image built from the pinned `actions/runner` release, one JIT runner config per job from a GitHub App key, `docker run --rm`, non-root, no `docker.sock`, no `--privileged`, no host network, CPU and memory limits, updates only by rebuilding the image in a PR), and a throwaway VM per job for the ZFS and mdadm integration tests (qcow2 overlay on a golden Debian 13 image with `zfs-dkms`, loop devices only inside it). GitHub side: a runner group for `vyxis/vyxis` only, label `pithyx-ci`, `runs-on: ${{ vars.CI_RUNNER || 'ubuntu-24.04' }}` so switching back is one repository variable (see "CI runners" under "Release blockers").
 - Third-party notices: generate the list of bundled NuGet and npm packages with their licenses (for example libsodium ISC, NSec MIT, Otp.NET MIT) for the About page, and check it in CI. It starts from the hand-written `desktop/public/third-party-notices.json` (fonts, Tabler, React Aria), which does not list transitive packages yet.
 - `[DECISION]` Server-side rendered texts (email, SSH MOTD, push) in the recipient's language need culture data. Decide between keeping `InvariantGlobalization` (small, no libicu, but only invariant formatting and a hand-written plural rule for English and German in `IcuMessageFormatter`) and enabling ICU culture data (libicu in the image, about 30 MB, correct number, date and plural rules for every language). Today the daemon only renders the English `detail` fallback of problem details.
-- M5: web-based installer instead of a TUI. Boot from USB, open the setup page in a browser, choose the system disk, the system installs itself and continues setup in the same page. The console only shows the address.
+- M5: web-based installer instead of a TUI. Boot from USB, open the setup page in a browser, choose the system disk, the system installs itself and continues setup in the same page. The console only shows the address. The installer announces itself as `pithyx-setup.local`; an installed box gets the default host name `pithyx` and answers as `pithyx.local`.
 - M5: TLS as decided in `CLAUDE.md`: self-signed by default, trust wizard (local CA download with per-OS instructions), optional own domain with Let's Encrypt DNS-01. Passkeys and the service worker switch on once trusted.
   - Chromium does not use its HTTP cache for responses with a certificate error (measured in the #13 review): on the untrusted default every reload downloads the whole desktop again (about 1.1 s instead of 0.4 s on Fast 4G with 4x CPU). After sign-in on an untrusted certificate the desktop shows a dismissible hint that leads to the trust wizard and names faster reloads next to passkeys; the reload budget holds only once trusted. Add an E2E check that a trusted certificate serves `/assets/*` from the disk cache.
-  - Kestrel negotiates HTTP/2 over TLS by default (ALPN); plain HTTP in development is HTTP/1.1 only, so the build keeps the sign-in path to few requests. Verify h2 on 443 and 8994 once TLS lands, and send `vyxis_device` with `Secure` there (it already does on HTTPS requests).
+  - Kestrel negotiates HTTP/2 over TLS by default (ALPN); plain HTTP in development is HTTP/1.1 only, so the build keeps the sign-in path to few requests. Verify h2 on 443 and 7484 once TLS lands, and send `pithyx_device` with `Secure` there (it already does on HTTPS requests).
 - M5: trust step. An optional third setup step "Trust this device" after the administrator and the recovery key: the box generates a local CA whose Name Constraints allow only its host name, its mDNS name (`<host>.local`) and its local IP addresses, and the step offers it for download with per-OS instructions (the same content as the trust wizard in settings). Reason: Chromium caches nothing for a page whose certificate is not trusted (D43 in vyxis/vyxis#13), so every reload downloads the whole desktop, and passkeys and the service worker stay off until the certificate is trusted. The Name Constraints keep an installed CA from being usable for any other site if the box is compromised. Skippable, and the desktop hint from the TLS item above stays for users who skip it.
   - `[DECISION]` Pull the trust step (with the self-signed certificate and the local CA it needs) forward before M5, or build it with the rest of TLS in M5? Pulling it forward makes every later performance measurement reflect what users see; keeping it in M5 avoids building certificate handling twice if the installer changes how the box learns its names and addresses.
-- M5: SSH toggle in settings with the logo MOTD.
+- M5: SSH toggle in settings with the logo MOTD. The shell prompt is `λ pithyx ~ ›`.
 - UPS (NUT): shut down cleanly on power loss (stop shares and apps, export pools, never touch the key vault), with a USB or network UPS; check before the release (see "Release blockers").

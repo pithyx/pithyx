@@ -1,6 +1,6 @@
 import { IconCopy, IconShieldLock } from '../ui/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { unwrap, type components } from '@vyxis/api-client';
+import { unwrap, type components } from '@pithyx/api-client';
 import { useRef, useState, type SyntheticEvent } from 'react';
 import { Form } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';

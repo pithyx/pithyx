@@ -148,7 +148,7 @@ export async function measureRound(
   const signedOut = await page.evaluate(async () => {
     const response = await fetch('/api/auth/logout', {
       method: 'POST',
-      headers: { 'X-Vyxis-Request': '1' },
+      headers: { 'X-Pithyx-Request': '1' },
     });
     return response.ok;
   });

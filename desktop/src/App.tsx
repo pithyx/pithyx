@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import type { components } from '@vyxis/api-client';
+import type { components } from '@pithyx/api-client';
 import { lazy, Suspense, useEffect, useState, useSyncExternalStore } from 'react';
 import { fetchSession, fetchSetupStatus, queryKeys } from './api/queries';
 import { LoginScreen } from './auth/LoginScreen';

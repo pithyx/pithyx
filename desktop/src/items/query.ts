@@ -1,4 +1,4 @@
-import { unwrap } from '@vyxis/api-client';
+import { unwrap } from '@pithyx/api-client';
 import { api } from '../api/client';
 import { isSessionExpired } from '../errors/describe';
 

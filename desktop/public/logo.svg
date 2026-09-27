@@ -1,6 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Vyxis">
-  <polygon points="50,32 82,50 50,68 18,50" fill="#062A33"/>
-  <polygon points="18,50 49,68 49,96 18,78" fill="#0E4A5A"/>
-  <polygon points="51,68 82,50 82,78 51,96" fill="#1A6E82"/>
-  <polygon points="50,6 82,24 50,42 18,24" fill="#E0A33A"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="Pithyx">
+  <polygon class="px-inside" points="50,25.52 82,44 50,62.48 18,44" fill="#062A33"/>
+  <polygon points="18,45.4 49.3,63.47 49.3,90.07 18,72" fill="#0E4A5A"/>
+  <polygon points="50.7,63.47 82,45.4 82,72 50.7,90.07" fill="#1A6E82"/>
+  <g class="px-lid">
+    <polygon points="18,28 50,46.48 50,49.48 18,31" fill="#B37A1F"/>
+    <polygon points="50,46.48 82,28 82,31 50,49.48" fill="#C88B2B"/>
+    <polygon points="50,9.52 82,28 50,46.48 18,28" fill="#E0A33A"/>
+  </g>
 </svg>

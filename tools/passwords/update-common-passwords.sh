@@ -10,7 +10,7 @@ export LC_ALL=C.UTF-8
 
 min_length=${1:-12}
 source_url=https://raw.githubusercontent.com/danielmiessler/SecLists/master/Passwords/Common-Credentials/100k-most-used-passwords-NCSC.txt
-target="$(git rev-parse --show-toplevel)/daemon/src/Vyxis.Daemon/Auth/common-passwords.txt"
+target="$(git rev-parse --show-toplevel)/daemon/src/Pithyx.Daemon/Auth/common-passwords.txt"
 
 curl -fsSL "$source_url" |
   tr -d '\r' |

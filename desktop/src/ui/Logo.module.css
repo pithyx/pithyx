@@ -1,9 +1,11 @@
+/* Geometry and motion paths from the owner's logo file: the closed lid sits 13 units lower. */
 .mark {
   flex: none;
+  overflow: visible;
 }
 
-/* In the dark theme the deep face would vanish on dark surfaces, so the mark uses the lighter petrol steps. */
-.deep {
+/* In the dark theme the deep faces would vanish on dark surfaces, so the mark uses the lighter petrol steps. */
+.inside {
   fill: light-dark(var(--petrol-900), var(--petrol-700));
 }
 
@@ -15,8 +17,151 @@
   fill: light-dark(var(--petrol-500), var(--petrol-400));
 }
 
-.top {
+.lidLeft {
+  fill: var(--amber-650);
+}
+
+.lidRight {
+  fill: var(--amber-600);
+}
+
+.lidTop {
   fill: var(--amber-500);
+}
+
+.glow {
+  fill: var(--amber-400);
+  opacity: 0;
+  transition: opacity 450ms;
+}
+
+.lid {
+  transition: transform 450ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.closed .lid,
+.hover .lid {
+  transform: translateY(13px);
+}
+
+@media (hover: hover) {
+  :is(button, a):hover .hover .lid {
+    transform: none;
+  }
+
+  :is(button, a):hover .hover .glow {
+    opacity: 0.55;
+  }
+}
+
+:is(button, a):is(:focus-visible, [aria-expanded='true']) .hover .lid {
+  transform: none;
+}
+
+:is(button, a):is(:focus-visible, [aria-expanded='true']) .hover .glow {
+  opacity: 0.55;
+}
+
+.welcome .lid {
+  animation: logo-open 700ms 400ms cubic-bezier(0.2, 0.9, 0.25, 1.15) both;
+}
+
+.welcome .glow {
+  opacity: 0.35;
+  animation: logo-glow-in 1100ms 500ms ease-out both;
+}
+
+.loop .lid {
+  animation: logo-lid 3.2s cubic-bezier(0.3, 0.7, 0.2, 1) infinite;
+}
+
+.loop .glow {
+  opacity: 0.5;
+  animation: logo-glow 3.2s ease-in-out infinite;
+}
+
+.loading .lid {
+  animation: logo-breathe 1.6s ease-in-out infinite;
+}
+
+.loading .glow {
+  opacity: 0.4;
+}
+
+@keyframes logo-open {
+  from {
+    transform: translateY(13px);
+  }
+
+  to {
+    transform: none;
+  }
+}
+
+@keyframes logo-glow-in {
+  from {
+    opacity: 0;
+  }
+
+  60% {
+    opacity: 0.7;
+  }
+
+  to {
+    opacity: 0.35;
+  }
+}
+
+@keyframes logo-lid {
+  0%,
+  15% {
+    transform: translateY(13px);
+  }
+
+  40%,
+  75% {
+    transform: none;
+  }
+
+  100% {
+    transform: translateY(13px);
+  }
+}
+
+@keyframes logo-glow {
+  0%,
+  20% {
+    opacity: 0;
+  }
+
+  45%,
+  70% {
+    opacity: 0.6;
+  }
+
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes logo-breathe {
+  0%,
+  100% {
+    transform: none;
+  }
+
+  50% {
+    transform: translateY(-2.5px);
+  }
+}
+
+/* Without motion every variant shows its resting state: open, except the closed and hover marks. */
+@media (prefers-reduced-motion: reduce) {
+  .lid,
+  .glow {
+    animation: none;
+    transition: none;
+  }
 }
 
 .wordmark {
@@ -30,6 +175,15 @@
   font-size: var(--font-size-xl);
   font-weight: var(--font-weight-semibold);
   letter-spacing: var(--letter-spacing-display);
+}
+
+/* Glyph box of the O: 865 by 770 units, 19 of them below the baseline. */
+.theta {
+  width: 0.865em;
+  height: 0.77em;
+  margin-inline-end: var(--letter-spacing-display);
+  vertical-align: -0.019em;
+  fill: currentcolor;
 }
 
 .large {

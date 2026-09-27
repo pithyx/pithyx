@@ -1,6 +1,6 @@
-# Vyxis
+# Pithyx
 
-Free, self-hosted NAS and server OS with a web desktop. Debian 13 base, C# daemon, React desktop, apps as containers. License: AGPL-3.0, SDK under MIT. Hosted on GitHub (org `vyxis`).
+Free, self-hosted NAS and server OS with a web desktop. Debian 13 base, C# daemon, React desktop, apps as containers. License: AGPL-3.0, SDK under MIT. Hosted on GitHub (org `pithyx`).
 
 These rules are binding. If a rule blocks you, stop and ask. Do not work around it.
 
@@ -12,10 +12,10 @@ These rules are binding. If a rule blocks you, stop and ask. Do not work around 
 
 ## Environments
 
-Know where you are before you act. Every machine declares its environment in `/etc/vyxis/environment` (`dev` or `prod`); the owner may also state it ("this is dev", "this is prod"). If neither says anything, treat it as prod.
+Know where you are before you act. Every machine declares its environment in `/etc/pithyx/environment` (`dev` or `prod`); the owner may also state it ("this is dev", "this is prod"). If neither says anything, treat it as prod.
 
 - **dev** (dev VM, simulation mode, CI): you may create and destroy pools on the VM's test disks, reset the database and restart services freely. Hard limit: never touch disks that are not the VM's declared test disks.
-- On the dev VM, test pools and disks are handled only through `tools/dev-vm/testpool.sh` (`create`, `destroy`, `wipe`), which refuses any disk whose serial is not a test disk (`VYXTEST01` to `VYXTEST06`, listed in `/etc/vyxis/test-disks`). `.claude/settings.json` denies raw `zpool create`/`destroy`, `wipefs`, `mkfs` and `dd` to devices. `zpool destroy` leaves labels and partitions behind; run `testpool.sh wipe` afterwards.
+- On the dev VM, test pools and disks are handled only through `tools/dev-vm/testpool.sh` (`create`, `destroy`, `wipe`), which refuses any disk whose serial is not a test disk (`VYXTEST01` to `VYXTEST06`, listed in `/etc/pithyx/test-disks`). Serials keep their historical VYXTEST prefix (virtual hardware in Proxmox). `.claude/settings.json` denies raw `zpool create`/`destroy`, `wipefs`, `mkfs` and `dd` to devices. `zpool destroy` leaves labels and partitions behind; run `testpool.sh wipe` afterwards.
 - **prod** (anything with real data, including the owner's own NAS): read-only by default. Before any write, show the exact command and wait for explicit confirmation. Take a snapshot or backup first. Never run `zpool destroy`, `zpool create`, `mkfs`, `wipefs`, `dd`, `rm -rf` on data paths, `docker volume rm` or database migrations without a confirmed backup.
 - The product follows the same idea: destructive storage actions in the daemon refuse to touch disks that contain partitions or data unless the user confirms with the disk serial.
 
@@ -52,7 +52,7 @@ Claude Code loads them when working in those folders. They are as binding as thi
 - Supported: x86-64-v2 or newer, UEFI, 64-bit only. Code must not rely on anything below that.
 - Community: arm64 (UEFI SystemReady, Raspberry Pi 5 image). Keep code architecture-neutral; no x86-only dependencies.
 - Not supported: any 32-bit platform.
-- Vyxis is not a lightweight NAS OS. The reference class is an Intel N100/N305 or better with 8 GB RAM or more. Single-board computers are not a goal.
+- Pithyx is not a lightweight NAS OS. The reference class is an Intel N100/N305 or better with 8 GB RAM or more. Single-board computers are not a goal.
 - It must still be frugal: the daemon stays below 200 MB RSS and below 1 percent CPU when idle, and nothing polls when an event source exists. These are CI budgets like the frontend ones.
 
 ## Repository
@@ -62,7 +62,7 @@ Single monorepo. Everything that shares an API lives here and ships with one ver
 ```
 daemon/   C# / ASP.NET Core (.NET 10), the only privileged process
 desktop/  Vite + React + TypeScript web desktop
-sdk/      npm package for app developers (@vyxis/sdk)
+sdk/      npm package for app developers (@pithyx/sdk)
 apps/     bundled apps (files, settings, store)
 image/    mmdebstrap, live-build, mkosi
 i18n/     translation files (en is the reference language)
@@ -92,7 +92,7 @@ website/  landing page and user docs (Starlight, Markdown)
 ## Network
 
 - HTTPS on 443, port 80 redirects to it.
-- Fixed alternative port 8994. Never change it.
+- Fixed alternative port 7484 (P-I-T-H on a phone keypad; IANA leaves 7479 to 7490 unassigned). Never change it.
 - HTTPS with a self-signed certificate generated at install by default. A settings wizard makes it trusted: download the box's local CA with per-OS instructions, or use the owner's own domain with a Let's Encrypt wildcard certificate via DNS-01.
 - Everything must work on the untrusted default. Passkeys and the service worker are enabled only once the certificate is trusted.
 - The UI never assumes a secure context: it must work fully over plain HTTP by IP address and with the untrusted self-signed certificate. APIs that need one (`crypto.randomUUID`, `crypto.subtle`, the Clipboard API, service workers, WebAuthn, notifications) are reached only through `desktop/src/platform/browser.ts`, which falls back or reports that they are missing; ESLint refuses them elsewhere. Features that cannot work without one (passkeys, the service worker) are optional and switch on only after the trust step.
@@ -147,8 +147,8 @@ website/  landing page and user docs (Starlight, Markdown)
 - Apps store data through the SDK (backed by the daemon), not through `localStorage` or IndexedDB.
 - App backends are reached through the daemon proxy with a short-lived token issued by the SDK.
 - SDK app backends never publish host ports. They sit on an internal Docker network and are reachable only through YARP at `/apps/<id>/api/`.
-- YARP validates the app token, removes the desktop session cookie from every proxied request, and adds `X-Vyxis-User`, `X-Vyxis-Groups` and the request id. Cookies are scoped to the host, not the port, so stripping the cookie is mandatory for every proxied app, including external web apps on their own ports.
-- One backend instance per app, shared by all users. The backend separates users through `X-Vyxis-User`. No per-user containers.
+- YARP validates the app token, removes the desktop session cookie from every proxied request, and adds `X-Pithyx-User`, `X-Pithyx-Groups` and the request id. Cookies are scoped to the host, not the port, so stripping the cookie is mandatory for every proxied app, including external web apps on their own ports.
+- One backend instance per app, shared by all users. The backend separates users through `X-Pithyx-User`. No per-user containers.
 - Backend lifecycle is declared in the manifest: `always` or `onDemand`. `onDemand` backends run while at least one window of the app is open for any user, plus an idle timeout (default 10 minutes).
 - Open windows are counted through the WebSocket. A lost connection keeps the count for a grace period (2 minutes) so a reload does not stop the backend.
 - Backends that do work without an open window (conversions, sync, schedules) hold a keep-alive lease through the daemon API or declare schedules in the manifest. Without a lease or schedule, idle `onDemand` backends are stopped with SIGTERM and a timeout.
@@ -159,7 +159,7 @@ website/  landing page and user docs (Starlight, Markdown)
 - Desktop and app talk through one MessageChannel per app instance. App identity comes from the port, never from message data.
 - App backends run as non-root containers with userns-remap. No `docker.sock`, `privileged` or host network unless the manifest requests it and the install dialog shows it.
 - Apps open in windows. Redirecting to another page is not allowed. "Open in tab" is optional.
-- Every app, core or third-party, is built on `@vyxis/sdk`. Core apps use an in-process transport, third-party apps a MessageChannel transport. The API is identical.
+- Every app, core or third-party, is built on `@pithyx/sdk`. Core apps use an in-process transport, third-party apps a MessageChannel transport. The API is identical.
 
 ## Dates and times
 
@@ -176,7 +176,7 @@ website/  landing page and user docs (Starlight, Markdown)
 - The daemon runs under systemd with `Restart=on-failure` and a watchdog. It must send `sd_notify` heartbeats.
 - Detect capabilities, never assume them. In VMs or on hardware without sensors, hide or explain missing data (temperatures, SMART) instead of showing errors.
 - Recovery never modifies pools automatically.
-- Vyxis itself never wakes sleeping disks: SMART queries use `smartctl -n standby`, logs and system state live on the system disk, listings are served from ARC or a special vdev. Disk spindown is an option per pool, off by default.
+- Pithyx itself never wakes sleeping disks: SMART queries use `smartctl -n standby`, logs and system state live on the system disk, listings are served from ARC or a special vdev. Disk spindown is an option per pool, off by default.
 - Power profiles (performance, balanced, efficient) set the CPU governor/EPP and optional link power management (SATA ALPM, PCIe ASPM, USB autosuspend). Options that are known to cause instability on some hardware stay opt-in.
 - Host network changes apply with a 60 second confirmation timer and roll back automatically if not confirmed.
 

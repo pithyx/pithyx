@@ -4,7 +4,7 @@
     "lib": ["ES2023"],
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "customConditions": ["vyxis-source"],
+    "customConditions": ["pithyx-source"],
     "strict": true,
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,

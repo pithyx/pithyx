@@ -1,14 +1,14 @@
-/* Only the public --vyxis-* tokens: the app follows light, dark and the accent color without knowing the desktop. */
+/* Only the public --pithyx-* tokens: the app follows light, dark and the accent color without knowing the desktop. */
 :root {
-  font-family: var(--vyxis-font-ui, system-ui, sans-serif);
-  font-size: var(--vyxis-font-size, 14px);
-  color: var(--vyxis-color-text, CanvasText);
-  background: var(--vyxis-color-background, Canvas);
+  font-family: var(--pithyx-font-ui, system-ui, sans-serif);
+  font-size: var(--pithyx-font-size, 14px);
+  color: var(--pithyx-color-text, CanvasText);
+  background: var(--pithyx-color-background, Canvas);
 }
 
 body {
   margin: 0;
-  padding: calc(var(--vyxis-space, 8px) * 2);
+  padding: calc(var(--pithyx-space, 8px) * 2);
 }
 
 h1 {
@@ -33,21 +33,21 @@ dd {
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--vyxis-space, 8px);
+  gap: var(--pithyx-space, 8px);
 }
 
 button {
-  min-height: var(--vyxis-control-height, 36px);
+  min-height: var(--pithyx-control-height, 36px);
   padding: 0 12px;
-  border: 1px solid var(--vyxis-color-border, ButtonBorder);
-  border-radius: var(--vyxis-radius, 6px);
-  background: var(--vyxis-color-accent, ButtonFace);
-  color: var(--vyxis-color-accent-text, ButtonText);
+  border: 1px solid var(--pithyx-color-border, ButtonBorder);
+  border-radius: var(--pithyx-radius, 6px);
+  background: var(--pithyx-color-accent, ButtonFace);
+  color: var(--pithyx-color-accent-text, ButtonText);
   font: inherit;
 }
 
 button:focus-visible,
 input:focus-visible {
-  outline: 2px solid var(--vyxis-color-focus, Highlight);
+  outline: 2px solid var(--pithyx-color-focus, Highlight);
   outline-offset: 2px;
 }

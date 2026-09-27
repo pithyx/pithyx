@@ -6,7 +6,7 @@
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 
-const SALT = 'vyxis-fixtures-v1';
+const SALT = 'pithyx-fixtures-v1';
 const IDENTIFIER_KEYS = new Set(['serial', 'wwn', 'serial_number']);
 const DERIVED_KEYS = new Set(['id', 'id-link']);
 const TEST_DISK_SERIAL = /^VYXTEST\d+$/;

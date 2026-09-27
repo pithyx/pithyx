@@ -11,6 +11,7 @@ import {
   type SceneContext,
 } from './DesktopScreens';
 import { labels } from './labels';
+import { LogoScreen } from './LogoScreen';
 import styles from './screens.module.css';
 import { TokensScreen } from './TokensScreen';
 
@@ -51,6 +52,14 @@ export const screens: ScreenDefinition[] = [
     description:
       'Semantic colors with measured contrast, accent presets, type scale, spacing, radii, elevation, motion and the React Aria primitives.',
     render: () => <TokensScreen />,
+  },
+  {
+    id: 'logo',
+    group: 'foundations',
+    title: 'Logo',
+    description:
+      'All variants of the mark: static, closed, hover (hover or focus the box), welcome (replay), loop and loading, the small sizes and the word mark with a real theta.',
+    render: () => <LogoScreen />,
   },
   {
     id: 'setup',

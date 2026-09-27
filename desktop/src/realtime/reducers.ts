@@ -1,4 +1,4 @@
-import type { TopicEvents, TopicName, TopicSnapshots } from '@vyxis/api-client';
+import type { TopicEvents, TopicName, TopicSnapshots } from '@pithyx/api-client';
 
 type Reducer<K extends TopicName> = (
   snapshot: TopicSnapshots[K] | undefined,

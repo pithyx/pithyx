@@ -1,5 +1,5 @@
 import type { InfiniteData } from '@tanstack/react-query';
-import type { FileEntry, FolderChange, FolderPage, SortKey, SortOrder } from '@vyxis/sdk';
+import type { FileEntry, FolderChange, FolderPage, SortKey, SortOrder } from '@pithyx/sdk';
 import { compareEntries } from './order';
 
 export type FolderPages = InfiniteData<FolderPage, string | null>;

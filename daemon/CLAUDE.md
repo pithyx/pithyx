@@ -18,20 +18,20 @@ Rules for `daemon/`. The root `CLAUDE.md` applies as well.
 - SQLite is the source of truth for users and groups. The daemon provisions Linux users and Samba entries from it.
 - No read request ever spawns a process. Actions that need a CLI (for example `docker compose`) run as jobs with progress. `SystemStateService` keeps disks, pools, shares and containers in memory, updated by events (udev, zed, Docker) and polling only where no events exist.
 - Derived, expensive data uses `HybridCache` without L2. Anything that must survive a restart goes to SQLite.
-- System config files (`smb.conf`, `/etc/exports`, users) are generated from SQLite and reconciled on start and change. Generated files carry a "Managed by vyxis" header. Manual overrides go into include files that are never touched.
-- The system disk is disposable. Everything needed to rebuild it is in the config backup: `vyxis.db`, Samba passdb, TLS certs, SSH host keys.
-- App data and Docker volumes live on a pool under `/<pool>/.vyxis/`, never on the system disk.
+- System config files (`smb.conf`, `/etc/exports`, users) are generated from SQLite and reconciled on start and change. Generated files carry a "Managed by pithyx" header. Manual overrides go into include files that are never touched.
+- The system disk is disposable. Everything needed to rebuild it is in the config backup: `pithyx.db`, Samba passdb, TLS certs, SSH host keys.
+- App data and Docker volumes live on a pool under `/<pool>/.pithyx/`, never on the system disk.
 
 ### Paths
 
 ```
-/usr/lib/vyxis/     binaries, read-only
-/etc/vyxis/         bootstrap only
-/var/lib/vyxis/     database and secrets
-/var/cache/vyxis/   rebuildable, safe to delete
-/var/log/vyxis/     logs
-/run/vyxis/         API socket
-/<pool>/.vyxis/     app data, volumes, thumbnails, config backups
+/usr/lib/pithyx/     binaries, read-only
+/etc/pithyx/         bootstrap only
+/var/lib/pithyx/     database and secrets
+/var/cache/pithyx/   rebuildable, safe to delete
+/var/log/pithyx/     logs
+/run/pithyx/         API socket
+/<pool>/.pithyx/     app data, volumes, thumbnails, config backups
 ```
 
 ## Virtual machines

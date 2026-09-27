@@ -35,7 +35,8 @@
     "reconnecting": "Connection lost. Reconnecting…",
     "stopped": "The live connection was refused. Reload the page."
   },
-  "brand": "Vyxis",
+  "brand": "Pithyx",
+  "brandMark": "PIΘYX",
   "ui": {
     "password": {
       "show": "Show password",
@@ -164,7 +165,7 @@
     "containers": "Containers",
     "terminal": "Terminal",
     "disks": "Disks",
-    "about": "About Vyxis",
+    "about": "About Pithyx",
     "demo": "SDK demo"
   },
   "roles": {
@@ -173,9 +174,11 @@
   },
   "about": {
     "tagline": "Free, self-hosted NAS and server OS with a web desktop.",
+    "greek": "ΠΙΘΥΞ",
+    "story": "Pandora never opened a box: she opened a pithos, a great storage jar, which Erasmus later mistranslated as a box. What stayed inside was hope, and Pithyx keeps what matters, on your hardware.",
     "licenseTitle": "License",
-    "license": "Vyxis is free software under the GNU Affero General Public License version 3. The SDK is licensed under the MIT License.",
-    "attribution": "Based on Vyxis (https://github.com/vyxis/vyxis), created by the Vyxis contributors and licensed under the GNU AGPL-3.0.",
+    "license": "Pithyx is free software under the GNU Affero General Public License version 3. The SDK is licensed under the MIT License.",
+    "attribution": "Based on Pithyx (https://github.com/vyxis/vyxis), created by the Pithyx contributors and licensed under the GNU AGPL-3.0.",
     "source": "Source code",
     "noticesTitle": "Third-party software",
     "licenseText": "License text",

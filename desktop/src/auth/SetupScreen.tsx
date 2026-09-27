@@ -1,5 +1,5 @@
 import { useMutation } from '@tanstack/react-query';
-import { unwrap, type components } from '@vyxis/api-client';
+import { unwrap, type components } from '@pithyx/api-client';
 import type { SyntheticEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
@@ -45,7 +45,6 @@ export function SetupScreen({
   onSignedIn: (user: User) => void;
 }) {
   const { t } = useTranslation('auth');
-  const { t: tDesktop } = useTranslation();
   const form = useFormErrors<SetupField>(FIELD_ORDER);
   const setup = useMutation({
     mutationFn: async (body: { username: string; password: string; displayName: string | null }) =>
@@ -86,7 +85,7 @@ export function SetupScreen({
 
   return (
     <AuthLayout wide footer={<LanguageSelect />}>
-      <AuthHeader host={hostname} product={tDesktop('brand')} />
+      <AuthHeader host={hostname} motion="loop" />
       {setup.data === undefined ? (
         <form className={styles.form} onSubmit={submit} noValidate aria-labelledby="setup-title">
           <div className={styles.heading}>

@@ -1,11 +1,11 @@
-import type { components } from '@vyxis/api-client';
+import type { components } from '@pithyx/api-client';
 
 type User = components['schemas']['UserInfo'];
 
 // The last user whose session the daemon confirmed in this browser. A reload shows the desktop with it right away and
 // checks the session in the background (show cached data first, then reconcile); a rejected session removes it.
 // It holds no secret: the session itself is an HttpOnly cookie the page cannot read.
-const KEY = 'vyxis.session';
+const KEY = 'pithyx.session';
 
 export function readSessionHint(): User | undefined {
   try {

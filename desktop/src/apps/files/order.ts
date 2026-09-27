@@ -1,4 +1,4 @@
-import type { FileEntry, SortKey, SortOrder } from '@vyxis/sdk';
+import type { FileEntry, SortKey, SortOrder } from '@pithyx/sdk';
 
 /**
  * The daemon's natural order (`NaturalSort.Key` in the daemon): digit runs compare by value, letters ignore case, and

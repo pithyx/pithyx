@@ -5,8 +5,8 @@ import { expect, test } from './fixtures';
 import { openFromStart, signInAsAdmin } from './session';
 
 // The simulated share "Shared" lives in the daemon's data directory (playwright.config.ts).
-const shared = join(process.env.VYXIS_E2E_DATA ?? '', 'shares', 'shared');
-const headers = { 'X-Vyxis-Request': '1' };
+const shared = join(process.env.PITHYX_E2E_DATA ?? '', 'shares', 'shared');
+const headers = { 'X-Pithyx-Request': '1' };
 
 /** A fresh folder at the share root for one test, with the given files in it. */
 function prepare(name: string, files: Record<string, string> = {}): string {

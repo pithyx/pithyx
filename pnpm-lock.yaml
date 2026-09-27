@@ -202,7 +202,7 @@ importers:
 
   apps/demo:
     dependencies:
-      '@vyxis/sdk':
+      '@pithyx/sdk':
         specifier: workspace:*
         version: link:../../sdk
     devDependencies:
@@ -221,10 +221,10 @@ importers:
       '@tanstack/react-virtual':
         specifier: ^3.14.13
         version: 3.14.13(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
-      '@vyxis/api-client':
+      '@pithyx/api-client':
         specifier: workspace:*
         version: link:../packages/api-client
-      '@vyxis/sdk':
+      '@pithyx/sdk':
         specifier: workspace:*
         version: link:../sdk
       i18next:
@@ -276,7 +276,7 @@ importers:
       '@vitejs/plugin-react':
         specifier: ^6.1.1
         version: 6.1.1(@rolldown/plugin-babel@0.2.4(@babel/core@8.0.6)(@babel/runtime@7.29.7)(rolldown@1.2.11)(vite@8.3.1(@types/node@24.13.6)))(babel-plugin-react-compiler@1.0.0)(vite@8.3.1(@types/node@24.13.6))
-      '@vyxis/app-demo':
+      '@pithyx/app-demo':
         specifier: workspace:*
         version: link:../apps/demo
       babel-plugin-react-compiler:

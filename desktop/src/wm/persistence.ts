@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { unwrap } from '@vyxis/api-client';
+import { unwrap } from '@pithyx/api-client';
 import { useEffect, useLayoutEffect } from 'react';
 import { api } from '../api/client';
 import { findApp } from '../apps/registry';

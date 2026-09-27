@@ -72,7 +72,7 @@ test.afterEach(async ({ page }) => {
 test('icons move on the grid by dragging and keep their place after a reload', async ({ page }) => {
   const disks = icon(page, 'Disks');
   expect(await cellOf(page, disks)).toEqual({ column: 0, row: 0 });
-  expect(await cellOf(page, icon(page, 'About Vyxis'))).toEqual({ column: 0, row: 1 });
+  expect(await cellOf(page, icon(page, 'About Pithyx'))).toEqual({ column: 0, row: 1 });
 
   const response = page.waitForResponse(
     (entry) =>
@@ -85,7 +85,9 @@ test('icons move on the grid by dragging and keep their place after a reload', a
 
   await test.step('an icon dropped on another one takes the nearest free cell', async () => {
     await drag(page, await cellCenter(page, 0, 1), await cellCenter(page, 3, 2));
-    await expect.poll(() => cellOf(page, icon(page, 'About Vyxis'))).toEqual({ column: 3, row: 3 });
+    await expect
+      .poll(() => cellOf(page, icon(page, 'About Pithyx')))
+      .toEqual({ column: 3, row: 3 });
   });
 
   await page.reload();
@@ -96,7 +98,7 @@ test('a frame, Ctrl and Shift select several icons, which move and go together',
   page,
 }) => {
   const disks = icon(page, 'Disks');
-  const about = icon(page, 'About Vyxis');
+  const about = icon(page, 'About Pithyx');
 
   await test.step('a frame drawn over empty desktop selects the icons it touches', async () => {
     const start = await cellCenter(page, 2, 3);
@@ -149,10 +151,10 @@ test('the keyboard selects, renames, moves and opens icons', async ({ page }) =>
 
   await test.step('arrow keys go to the nearest icon, Shift selects a range', async () => {
     await page.keyboard.press('ArrowDown');
-    await expect(icon(page, 'About Vyxis')).toBeFocused();
+    await expect(icon(page, 'About Pithyx')).toBeFocused();
     await page.keyboard.press('Shift+ArrowUp');
     await expect(disks).toHaveAttribute('aria-selected', 'true');
-    await expect(icon(page, 'About Vyxis')).toHaveAttribute('aria-selected', 'true');
+    await expect(icon(page, 'About Pithyx')).toHaveAttribute('aria-selected', 'true');
     await page.keyboard.press('ArrowDown');
     await expect(disks).toHaveAttribute('aria-selected', 'false');
   });
@@ -179,7 +181,7 @@ test('the keyboard selects, renames, moves and opens icons', async ({ page }) =>
   await test.step('Enter opens the app', async () => {
     await icon(page, 'Info').focus();
     await page.keyboard.press('Enter');
-    await expect(appWindow(page, 'About Vyxis')).toBeVisible();
+    await expect(appWindow(page, 'About Pithyx')).toBeVisible();
   });
 
   await page.reload();
@@ -314,12 +316,12 @@ test.describe('phone', () => {
 
   test('icons flow in rows and notes below them, a tap opens the app', async ({ page }) => {
     await page.request.post('/api/desktop/items', {
-      headers: { 'X-Vyxis-Request': '1' },
+      headers: { 'X-Pithyx-Request': '1' },
       data: { kind: 'note', text: 'Call Sam', column: 6, row: 0 },
     });
     await page.reload();
     const disks = await box(icon(page, 'Disks'));
-    const about = await box(icon(page, 'About Vyxis'));
+    const about = await box(icon(page, 'About Pithyx'));
     expect(Math.abs(disks.y - about.y)).toBeLessThan(2);
     expect(about.x).toBeGreaterThan(disks.x);
     const note = await box(page.getByRole('region', { name: 'Sticky note' }));

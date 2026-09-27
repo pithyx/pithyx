@@ -1,0 +1,33 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <RootNamespace>Pithyx.Daemon</RootNamespace>
+    <AssemblyName>pithyxd</AssemblyName>
+    <OpenApiDocumentsDirectory>$(MSBuildProjectDirectory)/../../../packages/api-client</OpenApiDocumentsDirectory>
+    <OpenApiGenerateDocumentsOptions>--file-name openapi</OpenApiGenerateDocumentsOptions>
+    <!-- Source-generated P/Invoke for the Linux file calls (Files/LinuxFs.cs). -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.Data.Sqlite" />
+    <PackageReference Include="NSec.Cryptography" />
+    <PackageReference Include="Otp.NET" />
+    <PackageReference Include="Microsoft.Extensions.ApiDescription.Server">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Scalar.AspNetCore" />
+    <PackageReference Include="Serilog.AspNetCore" />
+    <PackageReference Include="Serilog.Formatting.Compact" />
+    <PackageReference Include="Serilog.Sinks.File" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Pithyx.Daemon.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="../../../i18n/en/errors.json" LogicalName="i18n/en/errors.json" />
+    <EmbeddedResource Include="Database/Migrations/*.sql" LogicalName="migrations/%(Filename)%(Extension)" />
+    <EmbeddedResource Include="Auth/common-passwords.txt" LogicalName="auth/common-passwords.txt" />
+  </ItemGroup>
+</Project>

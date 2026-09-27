@@ -35,7 +35,8 @@
     "reconnecting": "Verbindung verloren. Neuer Versuch läuft…",
     "stopped": "Die Live-Verbindung wurde abgelehnt. Lade die Seite neu."
   },
-  "brand": "Vyxis",
+  "brand": "Pithyx",
+  "brandMark": "PIΘYX",
   "ui": {
     "password": {
       "show": "Passwort anzeigen",
@@ -164,7 +165,7 @@
     "containers": "Container",
     "terminal": "Terminal",
     "disks": "Laufwerke",
-    "about": "Über Vyxis",
+    "about": "Über Pithyx",
     "demo": "SDK-Demo"
   },
   "roles": {
@@ -173,9 +174,11 @@
   },
   "about": {
     "tagline": "Freies, selbst gehostetes NAS- und Server-Betriebssystem mit Web-Desktop.",
+    "greek": "ΠΙΘΥΞ",
+    "story": "Pandora hat nie eine Büchse geöffnet, sondern einen Pithos, ein großes Vorratsgefäß, das Erasmus später fälschlich als Büchse übersetzte. Drin geblieben ist die Hoffnung, und Pithyx bewahrt, was dir wichtig ist, auf deiner eigenen Hardware.",
     "licenseTitle": "Lizenz",
-    "license": "Vyxis ist freie Software unter der GNU Affero General Public License Version 3. Das SDK steht unter der MIT-Lizenz.",
-    "attribution": "Based on Vyxis (https://github.com/vyxis/vyxis), created by the Vyxis contributors and licensed under the GNU AGPL-3.0.",
+    "license": "Pithyx ist freie Software unter der GNU Affero General Public License Version 3. Das SDK steht unter der MIT-Lizenz.",
+    "attribution": "Based on Pithyx (https://github.com/vyxis/vyxis), created by the Pithyx contributors and licensed under the GNU AGPL-3.0.",
     "source": "Quellcode",
     "noticesTitle": "Software von Dritten",
     "licenseText": "Lizenztext",

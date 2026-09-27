@@ -27,7 +27,7 @@ Thumbs.db
 desktop.ini
 
 # Local environment and data
-.vyxis-dev/
+.pithyx-dev/
 .worktrees/
 .env
 .env.*

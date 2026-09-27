@@ -75,7 +75,7 @@
   },
   "bin": {
     "title": "Recycle bin of {share}",
-    "empty": "The recycle bin is empty.",
+    "empty": "Empty. Only hope remains.",
     "never": "Kept until the bin is emptied",
     "restore": "Restore",
     "delete": "Delete for good",

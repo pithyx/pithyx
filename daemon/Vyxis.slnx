@@ -1,8 +1,0 @@
-<Solution>
-  <Folder Name="/src/">
-    <Project Path="src/Vyxis.Daemon/Vyxis.Daemon.csproj" />
-  </Folder>
-  <Folder Name="/tests/">
-    <Project Path="tests/Vyxis.Daemon.Tests/Vyxis.Daemon.Tests.csproj" />
-  </Folder>
-</Solution>
