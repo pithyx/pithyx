@@ -38,6 +38,17 @@ public sealed class AuthFlowTests : IDisposable
         Assert.Equal("auth.setup.already_done", await second.ErrorCodeAsync());
     }
 
+    [Fact]
+    public async Task PasswordChecksReportTheirArgon2Time()
+    {
+        await _client.SetupAdminAsync();
+        using var login = await _client.LoginAsync("admin", AdminPassword);
+        using var session = await _client.GetAsync("/api/auth/session", Token);
+
+        Assert.Matches(@"^argon2;dur=\d+(\.\d)?$", Assert.Single(login.Headers.GetValues("Server-Timing")));
+        Assert.False(session.Headers.Contains("Server-Timing"));
+    }
+
     [Theory]
     [InlineData("1admin", "auth.username.invalid")]
     [InlineData("ad min", "auth.username.invalid")]
