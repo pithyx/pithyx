@@ -17,6 +17,9 @@ const BUDGETS = {
 // The real motion: the welcome card must bridge the wait without adding to it.
 test.use({ reducedMotion: 'no-preference', trace: 'off' });
 
+// CI runs the gate on pull requests; the run on dev after a merge skips it (VYXIS_SKIP_BUDGETS=1).
+test.skip(process.env.VYXIS_SKIP_BUDGETS === '1', 'Performance budgets gate pull requests only');
+
 test('sign-in and reload stay within their budgets on a slow connection', async ({
   browser,
   baseURL,
