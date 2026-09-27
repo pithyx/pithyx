@@ -3,6 +3,9 @@
  * what it may do and how its window and backend behave. The manifest schema is a stable contract: a new optional field
  * is a minor change, anything else a major one.
  *
+ * Not in manifest version 1: apps that talk to other apps, app code that runs without a window (backends excepted,
+ * see {@link BackendManifest}), and desktop widgets.
+ *
  * @packageDocumentation
  */
 
@@ -19,23 +22,76 @@ export interface WindowSize {
 }
 
 /**
- * Permissions an app asks for. The install dialog lists them; an administrator grants them per user or group, and
- * the desktop checks them on every call. Revoking one ends the affected windows (see the `permissionRevoked` event).
+ * Permissions an app declares. Nothing is granted by using an API: the install dialog lists every declared
+ * permission, an administrator confirms them for the app, and each one can be revoked later (the app gets
+ * `permissionRevoked`). Which users may use the app at all is a separate grant per user and group. The daemon checks
+ * every permission on every call that reaches data or leaves the window; the desktop's own check only answers early.
+ * An update that declares a new permission waits until an administrator confirms it; the old version keeps running.
  */
 export type Permission =
-  /** Read files the user opens with the app or picks in a file dialog. */
+  /** Read files the user opens with the app (`launch`, `openFile`) or picks in a desktop file dialog. */
   | 'files.read'
-  /** Write those files. */
+  /** Write those files, and save new files where the user chooses in a desktop save dialog. */
   | 'files.write'
+  /**
+   * Browse every share the user may access, with the user's own rights on each (the file manager). Paths are relative
+   * to the share, never paths on the host.
+   */
+  | 'files.shares'
   /** Show notifications. */
   | 'notifications'
-  /** Read the list of shares the user can access. */
-  | 'shares.read'
   /** Run a backend container (declared under `backend`). */
   | 'backend';
 
-/** Permissions that let an app escape its sandbox. The install dialog shows them separately and in red. */
-export type ElevatedPermission = 'docker.socket' | 'host.network' | 'privileged';
+/**
+ * Rights beyond the sandbox, each named on its own. They apply to the backend container only, never to the app's
+ * window, which stays in its sandboxed frame. Only administrators can install an app that asks for one, after reading
+ * what each right allows in plain language and confirming with their password (and TOTP when they use it). The app
+ * then carries a permanent badge, every grant and revoke is written to the audit log, and each right can be revoked
+ * on its own, which restarts the backend without it. An update that asks for a new one needs the same confirmation.
+ *
+ * No right, `host.full` included, ever reaches the sessions, password hashes, TOTP secrets or recovery keys of any
+ * user. The daemon enforces this for every right below: its database and secrets under `/var/lib/vyxis` and
+ * `/etc/vyxis` are never mapped into a container, the Docker socket is only reachable through the daemon's filtering
+ * proxy, and the rights that would reach them anyway (the system disk's block devices, `SYS_ADMIN`, `SYS_PTRACE`,
+ * `SYS_MODULE`, `SYS_RAWIO`, `DAC_READ_SEARCH`, `BPF`) are never granted.
+ */
+export type ElevatedPermission =
+  /**
+   * The Docker Engine API, through the daemon's filtering proxy: the backend can manage containers, but not start
+   * one that is privileged, joins the host namespaces or mounts Vyxis' own state.
+   */
+  | 'docker.socket'
+  /** The host's network namespace: the backend sees and binds every host interface and port. */
+  | 'host.network'
+  /** The host's process namespace: the backend sees every process on the host. */
+  | 'host.pid'
+  /** One device node, for example `device:/dev/dri/renderD128` for hardware video decoding. */
+  | `device:${string}`
+  /** One Linux capability, for example `capability:NET_ADMIN`. */
+  | `capability:${string}`
+  /**
+   * Every right above at once, every device except the system disk and every capability except the ones listed
+   * above: for system tools that manage the host itself.
+   */
+  | 'host.full';
+
+/**
+ * A place for files the app needs, declared by name. At install an administrator maps it to a folder in a real share
+ * (and can change that later). The app only ever sees the name and paths inside it: the window reaches it through
+ * the SDK file API as `{ storage: id }`, the backend finds it mounted at `/vyxis/storage/<id>`. Users reach it with
+ * their own share rights on the mapped folder, never with more than `access`.
+ */
+export interface StorageRequest {
+  /** Lowercase letters, digits and dashes, unique within the app. */
+  id: string;
+  /** What the administrator sees in the install dialog, for example "Photo library". */
+  name: LocalizedText;
+  description?: LocalizedText;
+  access: 'read' | 'readWrite';
+  /** The app cannot start until this storage is mapped. */
+  required: boolean;
+}
 
 export interface WindowManifest {
   /**
@@ -81,7 +137,10 @@ export interface BackendManifest {
   schedules?: BackendSchedule[];
 }
 
-/** Files the app can open. The desktop offers the app in "Open with" and sends `openFile` to it. */
+/**
+ * Files the app can open. The desktop offers the app in "Open with" only for these types and sends it only such
+ * files (`launch`, `openFile`).
+ */
 export interface FileHandler {
   /** Lowercase extensions without the dot. */
   extensions: string[];
@@ -106,7 +165,9 @@ export interface AppManifest {
   /** SemVer range of the SDK the app was built with, for example `^1.0.0`. */
   sdk: string;
   permissions: Permission[];
+  /** Needs a `backend`. */
   elevated?: ElevatedPermission[];
+  storage?: StorageRequest[];
   window: WindowManifest;
   backend?: BackendManifest;
   fileHandlers?: FileHandler[];

@@ -1,4 +1,5 @@
 import { isProblem, sdkError, VyxisError } from './errors';
+import { createFormatters, type Formatters } from './format';
 import {
   isHostMessage,
   REQUEST_TIMEOUT,
@@ -8,6 +9,9 @@ import {
   type HostMessage,
   type MethodName,
   type Methods,
+  type FileEntry,
+  type FileLocation,
+  type FileRef,
   type NotificationRequest,
   type Queries,
   type QueryName,
@@ -21,10 +25,18 @@ type QueryHandler<Q extends QueryName> = (
   data: Queries[Q]['data'],
 ) => Queries[Q]['answer'] | Promise<Queries[Q]['answer']>;
 
-/** The API an app works with. The same object for core apps and sandboxed apps. */
+/**
+ * The API an app works with. The same object for core apps and sandboxed apps; only the transport differs. Every
+ * method that talks to the desktop returns a promise and rejects with a {@link VyxisError}.
+ */
 export interface VyxisApp {
-  /** What the desktop told the app at start. `theme`, `locale`, `timeZone` and `sizeClass` stay current. */
+  /**
+   * What the desktop told the app at start. `theme`, `locale`, `timeZone`, `sizeClass` and `permissions` stay
+   * current.
+   */
   readonly context: AppContext;
+  /** Dates, numbers, sizes and lists in the user's language and time zone. */
+  readonly format: Formatters;
   readonly window: {
     setTitle(title: string): Promise<void>;
     close(): Promise<void>;
@@ -33,8 +45,8 @@ export interface VyxisApp {
   notify(notification: NotificationRequest): Promise<void>;
   readonly session: {
     save(state: unknown): Promise<void>;
-    /** The state saved before the last reload, from the init context. */
-    restore(): unknown;
+    /** The state saved before the last reload or on another device, or null. */
+    restore(): Promise<unknown>;
   };
   readonly storage: {
     get<T = unknown>(key: string): Promise<T | null>;
@@ -44,6 +56,20 @@ export interface VyxisApp {
   };
   readonly auth: {
     token(): Promise<{ token: string; expiresAt: string }>;
+  };
+  /** The file API; see {@link Methods} for what each call needs. Served from step 6 on (`supports('files.list')`). */
+  readonly files: {
+    pick(options?: { multiple?: boolean; extensions?: string[] }): Promise<FileRef[]>;
+    saveAs(suggestedName: string, data: Blob): Promise<FileRef | null>;
+    read(file: FileRef): Promise<Blob>;
+    write(file: FileRef, data: Blob): Promise<FileRef>;
+    url(file: FileRef): Promise<{ url: string; expiresAt: string }>;
+    list(
+      location: FileLocation,
+      path: string,
+      page?: { cursor?: string; limit?: number },
+    ): Promise<{ entries: FileEntry[]; nextCursor: string | null }>;
+    open(location: FileLocation, path: string): Promise<FileRef>;
   };
   /** Whether the desktop supports a method; methods added after 1.0 may be missing on an older desktop. */
   supports(method: MethodName): boolean;
@@ -85,6 +111,13 @@ export function createApp(endpoint: Endpoint, options: CreateAppOptions = {}): P
   const answers = new Map<string, (data: unknown) => unknown>();
   let nextId = 1;
   let context: AppContext | undefined;
+  const format = createFormatters(() => context ?? { locale: 'en', timeZone: 'UTC' });
+
+  function applyLocale() {
+    if (themeRoot !== null && context !== undefined) {
+      themeRoot.lang = context.locale;
+    }
+  }
 
   return new Promise<VyxisApp>((resolveApp, rejectApp) => {
     function call(method: string, params: unknown): Promise<unknown> {
@@ -119,6 +152,13 @@ export function createApp(endpoint: Endpoint, options: CreateAppOptions = {}): P
         } else if (event === 'localeChange') {
           const change = data as Events['localeChange'];
           context = { ...context, locale: change.locale, timeZone: change.timeZone };
+          applyLocale();
+        } else if (event === 'permissionRevoked') {
+          const { permission } = data as Events['permissionRevoked'];
+          context = {
+            ...context,
+            permissions: context.permissions.filter((granted) => granted !== permission),
+          };
         } else if (event === 'sizeClassChange') {
           context = { ...context, sizeClass: (data as Events['sizeClassChange']).sizeClass };
         }
@@ -151,6 +191,7 @@ export function createApp(endpoint: Endpoint, options: CreateAppOptions = {}): P
           if (themeRoot !== null) {
             applyTheme(context.theme, themeRoot);
           }
+          applyLocale();
           resolveApp(api);
           return;
         }
@@ -193,6 +234,7 @@ export function createApp(endpoint: Endpoint, options: CreateAppOptions = {}): P
         }
         return context;
       },
+      format,
       window: {
         setTitle: async (title) => {
           await call('window.setTitle', { title });
@@ -210,7 +252,7 @@ export function createApp(endpoint: Endpoint, options: CreateAppOptions = {}): P
         save: async (state) => {
           await call('session.save', { state });
         },
-        restore: () => context?.session ?? null,
+        restore: () => Promise.resolve(context?.session ?? null),
       },
       storage: {
         get: async <T>(key: string) => (await call('storage.get', { key })) as T | null,
@@ -224,6 +266,21 @@ export function createApp(endpoint: Endpoint, options: CreateAppOptions = {}): P
       },
       auth: {
         token: async () => (await call('auth.token', {})) as { token: string; expiresAt: string },
+      },
+      files: {
+        pick: async (options = {}) => (await call('files.pick', options)) as FileRef[],
+        saveAs: async (suggestedName, data) =>
+          (await call('files.saveAs', { suggestedName, data })) as FileRef | null,
+        read: async (file) => (await call('files.read', { file })) as Blob,
+        write: async (file, data) => (await call('files.write', { file, data })) as FileRef,
+        url: async (file) =>
+          (await call('files.url', { file })) as { url: string; expiresAt: string },
+        list: async (location, path, page = {}) =>
+          (await call('files.list', { location, path, ...page })) as {
+            entries: FileEntry[];
+            nextCursor: string | null;
+          },
+        open: async (location, path) => (await call('files.open', { location, path })) as FileRef,
       },
       supports: (method) => context?.capabilities.includes(method) ?? false,
       on: (event, handler) => {

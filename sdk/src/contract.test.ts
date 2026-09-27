@@ -10,6 +10,7 @@ import { PROTOCOL_VERSION } from './version';
 function theme(scheme: 'light' | 'dark'): Theme {
   return {
     scheme,
+    density: 'comfortable',
     tokens: Object.fromEntries(
       themeTokenNames.map((name) => [name, scheme === 'dark' ? '#000' : '#fff']),
     ) as Theme['tokens'],
@@ -56,7 +57,7 @@ describe.each(transports)('over the %s transport', (_, pair) => {
     expect(connected.context.capabilities).toEqual(['window.setTitle', 'notify']);
     expect(connected.supports('notify')).toBe(true);
     expect(connected.supports('storage.get')).toBe(false);
-    expect(connected.session.restore()).toEqual({ folder: '/tank' });
+    await expect(connected.session.restore()).resolves.toEqual({ folder: '/tank' });
   });
 
   it('calls a method with its parameters and returns the result', async () => {
@@ -155,6 +156,8 @@ describe.each(transports)('over the %s transport', (_, pair) => {
     await vi.waitFor(() => {
       expect(connected.context.theme.scheme).toBe('light');
     });
+    expect(connected.context.permissions).not.toContain('notifications');
+    expect(connected.format.date('2026-09-27T23:30:00Z')).toBe('27.09.2026');
     expect(themes).toEqual(['dark']);
   });
 

@@ -1,6 +1,18 @@
 {
   "$comment": "Golden cases for the two ICU renderers: IcuMessageFormatter (daemon) and i18next-icu (desktop). Both test suites render every entry and must produce exactly `expected`. Every code in i18n/en/errors.json needs an entry with example params.",
   "errors": {
+    "app.permission.denied": {
+      "params": {
+        "permission": "notifications"
+      },
+      "expected": "The app is not allowed to do this (notifications)."
+    },
+    "app.storage.too_large": {
+      "params": {
+        "maxKb": 64
+      },
+      "expected": "The app tried to store more than it may keep. The limit is 64 KB."
+    },
     "auth.challenge.expired": {
       "params": {},
       "expected": "The sign-in step has expired. Please sign in again."

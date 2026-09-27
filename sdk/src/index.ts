@@ -13,6 +13,9 @@
  * app.answer('beforeClose', () => ({ allow: !hasUnsavedChanges() }));
  * ```
  *
+ * Core apps use the same API over the in-process transport ({@link createApp} with {@link inProcessPair}); they
+ * never reach the daemon or the desktop past it.
+ *
  * @packageDocumentation
  */
 import { createApp, type CreateAppOptions, type VyxisApp } from './app';
@@ -22,6 +25,7 @@ import { portEndpoint } from './transport';
 
 export { createApp, type CreateAppOptions, type VyxisApp } from './app';
 export { isProblem, sdkErrorCodes, VyxisError, type Problem, type SdkErrorCode } from './errors';
+export { createFormatters, type Formatters } from './format';
 export type * from './manifest';
 export {
   BEFORE_CLOSE_TIMEOUT,
@@ -32,6 +36,9 @@ export {
   type ConnectMessage,
   type EventName,
   type Events,
+  type FileEntry,
+  type FileLocation,
+  type FileRef,
   type HostMessage,
   type LaunchArgs,
   type MethodName,

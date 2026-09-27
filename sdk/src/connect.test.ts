@@ -7,6 +7,7 @@ import { PROTOCOL_VERSION } from './version';
 
 const theme: Theme = {
   scheme: 'light',
+  density: 'comfortable',
   tokens: Object.fromEntries(themeTokenNames.map((name) => [name, '#fff'])) as Theme['tokens'],
 };
 

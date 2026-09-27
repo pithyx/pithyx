@@ -40,13 +40,17 @@ export interface BrokerTarget {
 
 /**
  * What an app window may do, bound to that window. The connection an app talks through decides the window and app
- * here; nothing in a message can point a call at another window or app.
+ * here; nothing in a message can point a call at another window or app. Window calls act on this window only.
+ *
+ * The permission checks here only answer early. The daemon is the authority: once apps are installed on the daemon
+ * (M4), every call that reaches data (storage, files, notifications, backend tokens) goes through an endpoint that
+ * checks the app's permissions and the user's rights again, and fails with the same codes.
  */
 export function brokerFor(target: BrokerTarget): MethodHandlers {
   const store = storeOf(target.user, target.app);
   const require = (permission: string) => {
     if (!target.permissions.includes(permission)) {
-      throw sdkError('sdk.permission.denied', { permission });
+      throw new VyxisError({ code: 'app.permission.denied', params: { permission } });
     }
   };
   return {
@@ -79,7 +83,10 @@ export function brokerFor(target: BrokerTarget): MethodHandlers {
     },
     'session.save': ({ state }) => {
       if (sizeOf(state) > MAX_SESSION) {
-        throw sdkError('sdk.storage.too_large', { maxKb: MAX_SESSION / 1024 });
+        throw new VyxisError({
+          code: 'app.storage.too_large',
+          params: { maxKb: MAX_SESSION / 1024 },
+        });
       }
       dispatch({ type: 'setArgs', id: target.windowId, args: { session: state } });
     },
@@ -95,8 +102,9 @@ export function brokerFor(target: BrokerTarget): MethodHandlers {
         size,
       );
       if (size > MAX_VALUE || total > MAX_TOTAL) {
-        throw sdkError('sdk.storage.too_large', {
-          maxKb: (size > MAX_VALUE ? MAX_VALUE : MAX_TOTAL) / 1024,
+        throw new VyxisError({
+          code: 'app.storage.too_large',
+          params: { maxKb: (size > MAX_VALUE ? MAX_VALUE : MAX_TOTAL) / 1024 },
         });
       }
       store.set(key, json);

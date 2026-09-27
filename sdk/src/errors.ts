@@ -1,7 +1,8 @@
 /**
  * Every failed SDK call rejects with a {@link VyxisError}. Errors from the daemon keep their RFC 9457 problem details
  * unchanged (`code`, `params`, `detail`, `requestId`), so an app shows the same stable code the API returned.
- * Errors that happen between the app and the desktop use the `sdk.*` codes below.
+ * Errors that happen between the app and the desktop use the `sdk.*` codes below. Permission and limit errors are
+ * the daemon's (`app.permission.denied`, `app.storage.too_large`), because the daemon is where they are checked.
  *
  * Apps translate codes themselves (they get the user's locale in the init context); `detail` is an English fallback.
  */
@@ -14,14 +15,10 @@ export const sdkErrorCodes = [
   'sdk.request.invalid',
   /** The desktop did not answer within the time limit. */
   'sdk.request.timeout',
-  /** The app lacks the permission this call needs, or it was revoked. */
-  'sdk.permission.denied',
   /** The connection to the desktop is closed (window closed, app reloaded, desktop signed out). */
   'sdk.transport.closed',
   /** The desktop does not speak the app's protocol version. */
   'sdk.protocol.unsupported',
-  /** A stored value or session state is larger than its limit. */
-  'sdk.storage.too_large',
 ] as const;
 
 export type SdkErrorCode = (typeof sdkErrorCodes)[number];

@@ -40,7 +40,8 @@ export function currentTheme(): Theme {
   const tokens = Object.fromEntries(
     Object.entries(SOURCES).map(([name, source]) => [name, style.getPropertyValue(source).trim()]),
   ) as Theme['tokens'];
-  return { scheme: scheme(), tokens };
+  // The desktop has one density so far; a density setting changes the spacing tokens and this value together.
+  return { scheme: scheme(), density: 'comfortable', tokens };
 }
 
 /** Calls back when the color scheme changes. */

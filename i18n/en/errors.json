@@ -1,4 +1,12 @@
 {
+  "app": {
+    "permission": {
+      "denied": "The app is not allowed to do this ({permission})."
+    },
+    "storage": {
+      "too_large": "The app tried to store more than it may keep. The limit is {maxKb} KB."
+    }
+  },
   "auth": {
     "challenge": {
       "expired": "The sign-in step has expired. Please sign in again."

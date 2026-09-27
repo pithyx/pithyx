@@ -1,4 +1,12 @@
 {
+  "app": {
+    "permission": {
+      "denied": "Die App darf das nicht ({permission})."
+    },
+    "storage": {
+      "too_large": "Die App wollte mehr speichern, als sie behalten darf. Die Grenze liegt bei {maxKb} KB."
+    }
+  },
   "auth": {
     "challenge": {
       "expired": "Der Anmeldeschritt ist abgelaufen. Melde dich bitte erneut an."

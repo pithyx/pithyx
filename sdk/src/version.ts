@@ -1,6 +1,10 @@
 /**
  * The version of this SDK package. It follows SemVer for the whole Vyxis monorepo: a new method, event or optional
  * field is a minor release, a removed or changed one a major release.
+ *
+ * Deprecations last one major version: anything marked `@deprecated` in major N keeps working through all of major
+ * N + 1 and goes away in N + 2 at the earliest. The desktop of major N + 1 still serves apps built against SDK N
+ * (see {@link MIN_PROTOCOL_VERSION}).
  */
 export const SDK_VERSION = '0.1.0';
 

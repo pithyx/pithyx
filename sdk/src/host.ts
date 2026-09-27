@@ -63,6 +63,24 @@ function isKey(value: unknown): boolean {
   );
 }
 
+function isFileRef(value: unknown): boolean {
+  return isRecord(value) && typeof value.ref === 'string' && value.ref.length > 0;
+}
+
+function isLocation(value: unknown): boolean {
+  return (
+    isRecord(value) &&
+    (typeof value.storage === 'string' || typeof value.share === 'string') &&
+    Object.keys(value).length === 1
+  );
+}
+
+function isRelativePath(value: unknown): boolean {
+  return typeof value === 'string' && value.length <= 4096 && !value.includes('\0');
+}
+
+const isBlob = (value: unknown) => typeof Blob !== 'undefined' && value instanceof Blob;
+
 /** Parameter checks per method; a call that fails its check never reaches the handler. */
 const validators: Record<MethodName, (params: unknown) => boolean> = {
   'window.setTitle': (p) =>
@@ -80,6 +98,22 @@ const validators: Record<MethodName, (params: unknown) => boolean> = {
   'storage.remove': isKey,
   'storage.keys': isRecord,
   'auth.token': isRecord,
+  'files.pick': (p) =>
+    isRecord(p) &&
+    (p.multiple === undefined || typeof p.multiple === 'boolean') &&
+    (p.extensions === undefined ||
+      (Array.isArray(p.extensions) && p.extensions.every((e) => typeof e === 'string'))),
+  'files.saveAs': (p) => isRecord(p) && typeof p.suggestedName === 'string' && isBlob(p.data),
+  'files.read': (p) => isRecord(p) && isFileRef(p.file),
+  'files.write': (p) => isRecord(p) && isFileRef(p.file) && isBlob(p.data),
+  'files.url': (p) => isRecord(p) && isFileRef(p.file),
+  'files.list': (p) =>
+    isRecord(p) &&
+    isLocation(p.location) &&
+    isRelativePath(p.path) &&
+    (p.cursor === undefined || typeof p.cursor === 'string') &&
+    (p.limit === undefined || Number.isSafeInteger(p.limit)),
+  'files.open': (p) => isRecord(p) && isLocation(p.location) && isRelativePath(p.path),
 };
 
 function isMethod(name: string): name is MethodName {

@@ -5,9 +5,11 @@ export default defineConfig({
   plugins: [dts({ include: ['src'], exclude: ['src/**/*.test.ts'] })],
   build: {
     lib: {
-      // The host side is its own entry, so apps never bundle the desktop's half of the protocol.
-      entry: { index: 'src/index.ts', host: 'src/host.ts' },
+      // The host side is its own entry, so apps never bundle the desktop's half of the protocol; the i18n helper is
+      // its own entry, so apps without it never bundle a message formatter.
+      entry: { index: 'src/index.ts', host: 'src/host.ts', i18n: 'src/i18n.ts' },
       formats: ['es'],
     },
+    rollupOptions: { external: ['intl-messageformat'] },
   },
 });

@@ -12,6 +12,14 @@
  *    `sdk.protocol.unsupported`), and closes the port after a refusal.
  * 4. From then on the app sends `request`s and gets one `response` each; the desktop sends `event`s, and `query`s that
  *    the app answers with `reply` (used for `beforeClose` and `beforeLogout`).
+ *
+ * Every call that crosses the transport is asynchronous and fails with a problem (RFC 9457 fields `code`, `params`,
+ * `detail`, `requestId`). Only local reads (the context, `supports`, the formatters) and listener registration are
+ * synchronous.
+ *
+ * An app controls its own windows only: every `window.*` method acts on the window that called it. No method brings
+ * a window to the front, focuses it or opens another one; the desktop does that only for a user action (a click in
+ * the taskbar, a launch, "Open with"). A method added later that does so must require a user action in that window.
  */
 import type { Problem } from './errors';
 import type { AppId } from './manifest';
@@ -19,11 +27,43 @@ import type { Theme } from './theme';
 
 export type SizeClass = 'compact' | 'medium' | 'expanded';
 
+/**
+ * A file the user handed to the app (opened with it, or picked in a desktop dialog). The app never learns where the
+ * file is: `ref` is an opaque handle, valid for this user and app, that only the SDK file API accepts.
+ */
+export interface FileRef {
+  ref: string;
+  /** File name with extension, for display. */
+  name: string;
+  /** MIME type, when known. */
+  type?: string;
+  size: number;
+  /** Last change, ISO 8601 UTC. */
+  modified: string;
+  /** Whether the app may write it (`files.write` and the user's rights on it). */
+  writable: boolean;
+}
+
+/**
+ * Where a folder listing starts: a named storage from the manifest, or a share (needs `files.shares`). Paths inside
+ * are relative, with `/` as separator, and never leave it.
+ */
+export type FileLocation = { storage: string } | { share: string };
+
+/** One entry of a folder listing. */
+export interface FileEntry {
+  name: string;
+  kind: 'file' | 'folder';
+  size: number;
+  modified: string;
+  type?: string;
+}
+
 export interface LaunchArgs {
   /** App-defined arguments, for example a view to show. */
   args: unknown;
-  /** A file to open, as a path the user may access. */
-  file?: string;
+  /** A file to open, only of a type the manifest's `fileHandlers` declare. */
+  file?: FileRef;
 }
 
 /** Everything an app needs to start, sent once in `init`. */
@@ -31,8 +71,12 @@ export interface AppContext {
   app: { id: AppId; version: string };
   /** Id of this window, unique per desktop tab. */
   instance: string;
+  /** The signed-in user, for display. A backend identifies the user only by `X-Vyxis-User` (see `auth.token`). */
   user: { id: number; name: string; displayName: string | null };
-  /** BCP 47 tag of the user's language, for example `de-DE`. */
+  /**
+   * BCP 47 tag of the user's language, for example `de-DE`. The SDK sets it as `lang` on the app's root element; the
+   * formatters and the optional i18n helper follow it.
+   */
   locale: string;
   /** IANA time zone of the user, for example `Europe/Berlin`. Dates cross the API as UTC. */
   timeZone: string;
@@ -41,7 +85,7 @@ export interface AppContext {
   launch: LaunchArgs;
   /** The state this window saved with `session.save` before a reload or on another device, or null. */
   session: unknown;
-  /** Permissions granted to this user for this app. */
+  /** Permissions this app holds now; `permissionRevoked` removes one. */
   permissions: string[];
   /** Every method name the desktop supports; check before calling one added after 1.0. */
   capabilities: string[];
@@ -88,8 +132,42 @@ export interface Methods {
   /**
    * A token for the app's own backend at `/apps/<id>/api/`, valid 5 minutes. Send it as `Authorization: Bearer`.
    * Needs the `backend` permission. Ask again for a new one; do not cache it past `expiresAt`.
+   *
+   * The daemon's proxy checks the token and hands the backend the user as `X-Vyxis-User` (and `X-Vyxis-Groups`);
+   * that header is the only identity a backend may trust, never anything the app sends in a request.
    */
   'auth.token': { params: Record<string, never>; result: { token: string; expiresAt: string } };
+  /**
+   * The file API (served from step 6 on; check `supports`). The only way an app reaches files: sandboxed apps have no
+   * file system, and the daemon checks the app's permissions and the user's rights on every call.
+   *
+   * Opens the desktop's file dialog; resolves with the files the user picked, empty when cancelled. Needs `files.read`.
+   */
+  'files.pick': {
+    params: { multiple?: boolean; extensions?: string[] };
+    result: FileRef[];
+  };
+  /** Opens the desktop's save dialog; resolves with the new file, or null when cancelled. Needs `files.write`. */
+  'files.saveAs': {
+    params: { suggestedName: string; data: Blob };
+    result: FileRef | null;
+  };
+  /** Reads a file the app was given. Needs `files.read`. */
+  'files.read': { params: { file: FileRef }; result: Blob };
+  /** Replaces the contents of a writable file. Needs `files.write`. */
+  'files.write': { params: { file: FileRef; data: Blob }; result: FileRef };
+  /**
+   * A URL for `<img>`, `<video>` or `fetch` that streams the file (with range requests) without the desktop session,
+   * valid 5 minutes and only for this file. Needs `files.read`.
+   */
+  'files.url': { params: { file: FileRef }; result: { url: string; expiresAt: string } };
+  /** Lists a folder in a named storage or a share, one page at a time. */
+  'files.list': {
+    params: { location: FileLocation; path: string; cursor?: string; limit?: number };
+    result: { entries: FileEntry[]; nextCursor: string | null };
+  };
+  /** A handle for a file in a named storage or a share, for `files.read`, `files.write` and `files.url`. */
+  'files.open': { params: { location: FileLocation; path: string }; result: FileRef };
 }
 
 export type MethodName = keyof Methods;
@@ -107,14 +185,17 @@ export interface Events {
   themeChange: Theme;
   localeChange: { locale: string; timeZone: string };
   sizeClassChange: { sizeClass: SizeClass };
-  /** The user opened a file with the app while its window was open. */
-  openFile: { file: string };
+  /** The user opened a file with the app while its window was open. Only types from `fileHandlers`. */
+  openFile: { file: FileRef };
   /** A new version of the app is installed; reload to use it (unsaved work first). */
   appUpdated: { version: string };
   /** The app's backend stopped answering; calls to it fail until `backendRestored`. */
   backendUnavailable: Record<string, never>;
   backendRestored: Record<string, never>;
-  /** A permission was revoked. Calls that need it fail with `sdk.permission.denied` from now on. */
+  /**
+   * An administrator revoked a permission of the app. The SDK removes it from `context.permissions`; calls that need
+   * it fail with `app.permission.denied` from now on. Revoking `backend` or access to the app ends its windows.
+   */
   permissionRevoked: { permission: string };
 }
 
