@@ -300,6 +300,16 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   useBackGesture(sizeClass === 'compact' && activeApp);
   const name = user.displayName ?? user.username;
 
+  // When the last window closes or minimizes, keyboard focus would fall to the page body; the start button takes it.
+  useEffect(() => {
+    if (
+      focused === null &&
+      (document.activeElement === document.body || document.activeElement === null)
+    ) {
+      startButton.current?.focus();
+    }
+  }, [focused]);
+
   // The WebSocket lives as long as the desktop; a closed session sends the user back to the login screen.
   useEffect(() => {
     realtime.connect(() => {
