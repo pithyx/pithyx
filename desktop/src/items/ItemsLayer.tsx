@@ -1,5 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import {
+  useEffect,
+  useEffectEvent,
   useRef,
   useState,
   type KeyboardEvent,
@@ -101,7 +103,13 @@ export function ItemsLayer() {
   const [selected, setSelected] = useState<ReadonlySet<number>>(new Set());
   const [menu, setMenu] = useState<MenuState | null>(null);
   const [renaming, setRenaming] = useState<DesktopItem | null>(null);
-  const [keyboardMove, setKeyboardMove] = useState<KeyboardMove | null>(null);
+  const [keyboardMove, setKeyboardMoveState] = useState<KeyboardMove | null>(null);
+  // Key presses can come faster than renders; each one builds on the latest move, not on the last rendered one.
+  const latestMove = useRef<KeyboardMove | null>(null);
+  function setKeyboardMove(move: KeyboardMove | null) {
+    latestMove.current = move;
+    setKeyboardMoveState(move);
+  }
   const [frame, setFrame] = useState<Box | null>(null);
   // A note created from the menu takes focus once it is on screen.
   const [newNote, setNewNote] = useState<number | null>(null);
@@ -299,28 +307,51 @@ export function ItemsLayer() {
     return keyOf(document.activeElement);
   }
 
-  function onKeyDownCapture(event: KeyboardEvent<HTMLDivElement>) {
+  /** The keys of the keyboard move mode, wherever focus is while the item menu hands it back. */
+  const onMoveKey = useEffectEvent((event: globalThis.KeyboardEvent) => {
     const direction = ARROWS[event.key];
-    if (keyboardMove !== null) {
+    const move = latestMove.current;
+    if (move !== null) {
       event.preventDefault();
       event.stopPropagation();
       if (direction !== undefined) {
         const step = STEPS[direction];
         setKeyboardMove({
-          ids: keyboardMove.ids,
+          ids: move.ids,
           delta: {
-            column: keyboardMove.delta.column + step.column,
-            row: keyboardMove.delta.row + step.row,
+            column: move.delta.column + step.column,
+            row: move.delta.row + step.row,
           },
         });
       } else if (event.key === 'Enter') {
-        commitMove(moveIcons(placed, keyboardMove.ids, keyboardMove.delta, size));
+        commitMove(moveIcons(placed, move.ids, move.delta, size));
         setKeyboardMove(null);
         announce(t('items.moveDone'));
       } else if (event.key === 'Escape') {
         setKeyboardMove(null);
         announce(t('items.moveCancelled'));
       }
+    }
+  });
+
+  // Listening on the window catches the first arrow key even before focus is back on the icon after the menu closed.
+  const moving = keyboardMove !== null;
+  useEffect(() => {
+    if (!moving) {
+      return;
+    }
+    const listener = (event: globalThis.KeyboardEvent) => {
+      onMoveKey(event);
+    };
+    window.addEventListener('keydown', listener, true);
+    return () => {
+      window.removeEventListener('keydown', listener, true);
+    };
+  }, [moving]);
+
+  function onKeyDownCapture(event: KeyboardEvent<HTMLDivElement>) {
+    const direction = ARROWS[event.key];
+    if (latestMove.current !== null) {
       return;
     }
     const from = focusedKey();
