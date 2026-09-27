@@ -28,6 +28,7 @@ desktop.ini
 
 # Local environment and data
 .vyxis-dev/
+.worktrees/
 .env
 .env.*
 !.env.example
