@@ -103,6 +103,22 @@ public sealed class LayoutApiTests : IDisposable
         Assert.Contains("max-age=34560000", cookie, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Theory]
+    [InlineData("short")]
+    [InlineData("has spaces and ! marks in it")]
+    [InlineData("0123456789012345678901234567890123456789012345678901234567890123456789")]
+    public async Task AMalformedDeviceCookieIsReplaced(string value)
+    {
+        var cookies = await SetupAsync();
+        var session = cookies.Split("; ").Single(cookie => cookie.StartsWith(SessionService.CookieName, StringComparison.Ordinal));
+
+        using var state = await SendAsync(HttpMethod.Get, "/api/desktop", $"{session}; {DeviceCookie.CookieName}={value}");
+
+        var issued = state.Headers.GetValues("Set-Cookie").Single(c => c.StartsWith(DeviceCookie.CookieName + "=", StringComparison.Ordinal));
+        Assert.Matches("^vyxis_device=[A-Za-z0-9_-]{16,64};", issued);
+        Assert.DoesNotContain(value, issued, StringComparison.Ordinal);
+    }
+
     [Fact]
     public async Task LayoutSavedOverTheWebSocketIsRestoredForTheSameDevice()
     {
