@@ -128,6 +128,45 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
         return await jobs.StartAsync(CurrentUserId(user), ids is null ? "files.empty_trash" : "files.purge", new { shareId, ids }, context => Task.Run(() => Purge(share, items, context), context.Cancellation), cancellationToken);
     }
 
+    /// <summary>
+    /// Copies an entry from outside the shares (a snapshot) into a share folder as a job. The source folder is opened
+    /// when the job runs and paths resolve below it. Without <paramref name="overwrite"/> a taken name gets a free one.
+    /// Access to the target must have been checked.
+    /// </summary>
+    internal Task<Job> StartCopyInAsync(
+        ClaimsPrincipal user,
+        string kind,
+        object parameters,
+        Func<SafeFileHandle> openSource,
+        string sourcePath,
+        ResolvedShare target,
+        string targetFolder,
+        string targetName,
+        bool overwrite,
+        CancellationToken cancellationToken) =>
+        jobs.StartAsync(
+            CurrentUserId(user),
+            kind,
+            parameters,
+            context => Task.Run(() => CopyIn(openSource, sourcePath, target, targetFolder, targetName, overwrite, context), context.Cancellation),
+            cancellationToken);
+
+    private static void CopyIn(Func<SafeFileHandle> openSource, string sourcePath, ResolvedShare target, string targetFolder, string targetName, bool overwrite, JobContext context)
+    {
+        var run = new Progress(context);
+        using var source = openSource();
+        var (parent, name) = FsPath.Split(sourcePath);
+        using var sourceFolder = FileService.Open(source, parent, LinuxFs.ReadOnly | LinuxFs.Directory);
+        run.Count(sourceFolder, name);
+        run.Report(null);
+        using var root = FileService.OpenRoot(target);
+        using var folder = FileService.Open(root, targetFolder, LinuxFs.Path | LinuxFs.Directory);
+        var free = overwrite || FileService.TryStat(folder, targetName) is null ? targetName : FreeName(folder, targetName);
+        Copy(sourceFolder, name, name, folder, overwrite ? ConflictPolicy.Overwrite : ConflictPolicy.Fail, run, free);
+        context.SetResult(new FileOperationResult(run.Done, run.Skipped));
+        run.Report(null);
+    }
+
     private async Task<(ResolvedShare Share, IReadOnlyList<TrashItem> Items)> ResolveTrashAsync(ClaimsPrincipal user, long shareId, IReadOnlyList<long>? ids, CancellationToken cancellationToken)
     {
         if (ids is not null and not { Count: > 0 and <= MaxItems })

@@ -19,6 +19,7 @@ public static class FileEndpoints
         services.AddSingleton<FileService>();
         services.AddSingleton<FileOperations>();
         services.AddSingleton<TrashService>();
+        services.AddSingleton<PreviousVersions>();
         services.AddHostedService<TrashCleanupService>();
         services.AddSingleton<FolderWatches>();
         services.AddSingleton(provider => FolderWatchPublisher.Definition(
@@ -74,6 +75,16 @@ public static class FileEndpoints
             .WithTags("Shares")
             .WithName("SetShareTrash")
             .WithDescription("Administrators only. Days the recycle bin keeps deleted items (0 to 3650; 0 keeps them until emptied). Applies to items already in the bin.");
+        files.MapGet("/versions", ListVersionsAsync)
+            .WithName("ListFileVersions")
+            .WithDescription(
+                "Earlier versions of a file or folder from the snapshots of the share's dataset, newest first; also for an entry deleted since. "
+                + "A file is listed once per distinct content and not while it equals the current file. Empty when the share is not on a ZFS dataset. Needs read access.");
+        files.MapPost("/versions/restore", RestoreVersionAsync)
+            .WithName("RestoreFileVersion")
+            .WithDescription(
+                "Starts a job that copies a version back: next to the current entry as \"name (version yyyy-MM-dd HH.mm UTC)\", or over it with overwrite=true "
+                + "(files are replaced, folders merged). Needs read-write access.");
         files.MapPost("/rename", RenameAsync)
             .WithName("RenameFileEntry")
             .WithDescription("Renames a file or folder within its folder. An existing name is never replaced (fs.entry.exists).");
@@ -96,6 +107,12 @@ public static class FileEndpoints
         await trash.SetRetentionAsync(context.User, shareId, request.RetentionDays, cancellationToken);
         return TypedResults.NoContent();
     }
+
+    private static async Task<Ok<FileVersionList>> ListVersionsAsync(long shareId, string path, PreviousVersions versions, HttpContext context, CancellationToken cancellationToken) =>
+        TypedResults.Ok(await versions.ListAsync(context.User, shareId, path, cancellationToken));
+
+    private static async Task<Accepted<Jobs.Job>> RestoreVersionAsync(long shareId, FileVersionRestoreRequest request, PreviousVersions versions, HttpContext context, CancellationToken cancellationToken) =>
+        Accepted(await versions.StartRestoreAsync(context.User, shareId, request, cancellationToken));
 
     private static Accepted<Jobs.Job> Accepted(Jobs.Job job) => TypedResults.Accepted($"/api/jobs/{job.Id}", job);
 

@@ -413,6 +413,40 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/files/{shareId}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Earlier versions of a file or folder from the snapshots of the share's dataset, newest first; also for an entry deleted since. A file is listed once per distinct content and not while it equals the current file. Empty when the share is not on a ZFS dataset. Needs read access. */
+        get: operations["ListFileVersions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/files/{shareId}/versions/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Starts a job that copies a version back: next to the current entry as "name (version yyyy-MM-dd HH.mm UTC)", or over it with overwrite=true (files are replaced, folders merged). Needs read-write access. */
+        post: operations["RestoreFileVersion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/files/operations": {
         parameters: {
             query?: never;
@@ -974,6 +1008,45 @@ export type components = {
              */
             permanent: boolean;
             target?: null | components["schemas"]["FileLocation"];
+        };
+        FileVersion: {
+            /**
+             * Format: date-time
+             * @description When the snapshot was taken (UTC).
+             */
+            createdAt: string;
+            /** @description File or folder. */
+            kind: components["schemas"]["FileKind"];
+            /**
+             * Format: date-time
+             * @description Last change of the content in that version, UTC.
+             */
+            modified: string;
+            /**
+             * Format: int64
+             * @description Bytes for files, 0 for folders.
+             */
+            size: number;
+            /** @description The snapshot the version is in; pass it to restore. */
+            snapshot: string;
+        };
+        /** @description Response of `GET /api/files/{shareId}/versions`. */
+        FileVersionList: {
+            /** @description The file or folder, relative to the share. */
+            path: string;
+            /** @description Newest first; empty when the share is not on a ZFS dataset. */
+            versions: components["schemas"]["FileVersion"][];
+        };
+        FileVersionRestoreRequest: {
+            /**
+             * @description Replace the current file (folders are merged) instead of restoring next to it.
+             * @default false
+             */
+            overwrite: boolean;
+            /** @description The file or folder, relative to the share; it may have been deleted since. */
+            path: string;
+            /** @description The snapshot to restore from, as listed. */
+            snapshot: string;
         };
         /** @description What a folder topic sends: the names that changed since the last event, or a request to list again. */
         FolderChanges: {
@@ -2470,6 +2543,74 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["TrashItemsRequest"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    ListFileVersions: {
+        parameters: {
+            query: {
+                path: string;
+            };
+            header?: never;
+            path: {
+                shareId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FileVersionList"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    RestoreFileVersion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shareId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FileVersionRestoreRequest"];
             };
         };
         responses: {

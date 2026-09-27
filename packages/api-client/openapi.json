@@ -1607,6 +1607,108 @@
         }
       }
     },
+    "/api/files/{shareId}/versions": {
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "description": "Earlier versions of a file or folder from the snapshots of the share's dataset, newest first; also for an entry deleted since. A file is listed once per distinct content and not while it equals the current file. Empty when the share is not on a ZFS dataset. Needs read access.",
+        "operationId": "ListFileVersions",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileVersionList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/files/{shareId}/versions/restore": {
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "description": "Starts a job that copies a version back: next to the current entry as \"name (version yyyy-MM-dd HH.mm UTC)\", or over it with overwrite=true (files are replaced, folders merged). Needs read-write access.",
+        "operationId": "RestoreFileVersion",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FileVersionRestoreRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/files/{shareId}/rename": {
       "post": {
         "tags": [
@@ -2710,6 +2812,84 @@
                 "$ref": "#/components/schemas/FolderSelection"
               }
             ]
+          }
+        }
+      },
+      "FileVersion": {
+        "required": [
+          "snapshot",
+          "createdAt",
+          "kind",
+          "size",
+          "modified"
+        ],
+        "type": "object",
+        "properties": {
+          "snapshot": {
+            "type": "string",
+            "description": "The snapshot the version is in; pass it to restore."
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "When the snapshot was taken (UTC).",
+            "format": "date-time"
+          },
+          "kind": {
+            "description": "File or folder.",
+            "$ref": "#/components/schemas/FileKind"
+          },
+          "size": {
+            "type": "integer",
+            "description": "Bytes for files, 0 for folders.",
+            "format": "int64"
+          },
+          "modified": {
+            "type": "string",
+            "description": "Last change of the content in that version, UTC.",
+            "format": "date-time"
+          }
+        }
+      },
+      "FileVersionList": {
+        "required": [
+          "path",
+          "versions"
+        ],
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The file or folder, relative to the share."
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FileVersion"
+            },
+            "description": "Newest first; empty when the share is not on a ZFS dataset."
+          }
+        },
+        "description": "Response of `GET /api/files/{shareId}/versions`."
+      },
+      "FileVersionRestoreRequest": {
+        "required": [
+          "path",
+          "snapshot"
+        ],
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The file or folder, relative to the share; it may have been deleted since."
+          },
+          "snapshot": {
+            "type": "string",
+            "description": "The snapshot to restore from, as listed."
+          },
+          "overwrite": {
+            "type": "boolean",
+            "description": "Replace the current file (folders are merged) instead of restoring next to it.",
+            "default": false
           }
         }
       },
