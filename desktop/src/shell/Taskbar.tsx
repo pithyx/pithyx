@@ -4,7 +4,7 @@ import { Button as AriaButton, Tooltip, TooltipTrigger } from 'react-aria-compon
 import { useTranslation } from 'react-i18next';
 import { Badge } from '../ui/Controls';
 import { cx } from '../ui/cx';
-import { LogoMark } from '../ui/Logo';
+import { BrandText, LogoMark } from '../ui/Logo';
 import tooltipStyles from '../ui/Tooltip.module.css';
 import { AppIcon } from './AppIcon';
 import styles from './Taskbar.module.css';
@@ -129,7 +129,7 @@ export function Taskbar({
         </AriaButton>
         <Tooltip className={cx(tooltipStyles.tooltip, styles.brandTooltip)} offset={6}>
           <span role="img" aria-label={t('brand')}>
-            {t('brandMark')}
+            <BrandText text={t('brandMark')} />
           </span>
         </Tooltip>
       </TooltipTrigger>

@@ -185,7 +185,7 @@ Goal: one real feature end to end, built on the final architecture. Everything l
 
 ### 3.2 Database
 
-- [x] SQLite at a configurable path (default `/var/lib/vyxis/vyxis.db`, in simulation mode a local file). WAL mode, foreign keys on.
+- [x] SQLite at a configurable path (default `/var/lib/pithyx/pithyx.db`, in simulation mode a local file). WAL mode, foreign keys on.
 - [x] Migration runner: numbered `.sql` files embedded as resources, a `schema_version` table, runs at startup inside a transaction, refuses to start on a failed migration.
 - [x] Migration `0001`: `users`, `sessions`.
 
@@ -369,7 +369,7 @@ Draft PR `feature/file-service`, decisions from D79 in its comments.
 
 - [x] Shares before M3: `shares` and `share_access` (migration 0005), per-user access none, read or readWrite, administrators everything, `GET/POST/DELETE /api/shares`, `PUT /api/shares/{id}/access/{userId}`; a share the caller cannot use answers `fs.share.not_found`. Simulation seeds a share "Shared" in the data directory.
 - [x] File service with access checks on every request and traversal protection by the kernel: every path is opened with `openat2(RESOLVE_BENEATH | RESOLVE_NO_MAGICLINKS)` below the share root, all later calls work on handles; `.` and `..` are refused.
-- [x] Cursor pagination: natural order without a stat per entry, keyset cursors that survive changes, size and date orders; first page of 100,000 entries under 200 ms (xUnit budget, Release build as in CI; 133 ms on dev01).
+- [x] Cursor pagination: natural order without a stat per entry, keyset cursors that survive changes, size and date orders; first page of 100,000 entries under 200 ms (xUnit budget, Release build as in CI; about 80 ms on dev01 since the first page is selected instead of sorting the whole folder, which took 124 to 226 ms depending on the JIT state of the process).
 - [x] Range downloads with ETag and `Content-Security-Policy: sandbox`, streamed uploads into a hidden temporary file renamed into place, new folders, renames.
 - [x] Jobs module (migration 0006) and copy, move and delete as jobs with progress, conflict policies and in-kernel copies (`copy_file_range`). On dev01 ZFS 2.3.9 did not clone blocks (`bcloneused` stayed 0, also for a plain `copy_file_range` outside Pithyx); find out why with M3.
 - [x] Live changes of open folders over inotify (`files/<share>/<folder>`), watched only while subscribed, no access or open events, no polling.

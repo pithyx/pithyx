@@ -19,15 +19,18 @@ public enum SortOrder
 
 /// <summary>
 /// The names of one folder at one moment, as readdir returned them. Name order needs no stat per entry: the keys of a
-/// folder with 100,000 entries are built and sorted once (a plain ordinal sort of strings, whatever order readdir
-/// used), and every page is a binary search from the cursor. Only the entries that are sent get a stat. Size and date
-/// orders stat every entry once and are built on first use.
+/// folder with 100,000 entries are built once, the first page is picked from them without sorting the rest, and the full
+/// order (a plain ordinal sort of the keys) is built in the background for the pages after it, each a binary search from
+/// the cursor. Only the entries that are sent get a stat. Size and date orders stat every entry once and are built on
+/// first use.
 /// </summary>
 internal sealed class FolderSnapshot(string folderId, DateTimeOffset folderChanged, (string Name, FsKind Kind)[] entries, DateTimeOffset createdAt)
 {
     private readonly Lock _lock = new();
+    private readonly Lock _keysLock = new();
+    private readonly Lock _sortLock = new();
     private string[]? _keys;
-    private string[]? _names;
+    private SortedNames? _sortedNames;
     private (long Value, string Key, string Name)[]? _bySize;
     private (long Value, string Key, string Name)[]? _byModified;
 
@@ -44,7 +47,22 @@ internal sealed class FolderSnapshot(string folderId, DateTimeOffset folderChang
     /// <summary>Up to <paramref name="count"/> entries in natural order after the entry with key <paramref name="afterKey"/>.</summary>
     public IEnumerable<(string Name, string Key)> ByName(string? afterKey, SortOrder order, int count)
     {
-        var (keys, names) = SortedByName();
+        if (afterKey is null && Volatile.Read(ref _sortedNames) is null)
+        {
+            // Sorting every key costs about 1.7 million comparisons for 100,000 entries, and their speed depends on how
+            // the JIT tuned the shared string code for the rest of the process. The first page needs only the smallest
+            // (or largest) keys, which a selection finds with a fraction of that; the pages after it wait for the sort
+            // only if they come quickly.
+            var first = FirstByName(order, count);
+            _ = Task.Run(Sorted);
+            return first;
+        }
+        return PageByName(Sorted(), afterKey, order, count);
+    }
+
+    private static IEnumerable<(string Name, string Key)> PageByName(SortedNames sorted, string? afterKey, SortOrder order, int count)
+    {
+        var (keys, names) = sorted;
         var ascending = order == SortOrder.Asc;
         var start = ascending ? 0 : keys.Length - 1;
         if (afterKey is not null)
@@ -59,14 +77,78 @@ internal sealed class FolderSnapshot(string folderId, DateTimeOffset folderChang
         }
     }
 
-    private (string[] Keys, string[] Names) SortedByName()
+    /// <summary>
+    /// The first <paramref name="count"/> entries in order. A quickselect with random pivots moves them to the front in
+    /// expected linear time, whatever order readdir used (tmpfs, for one, returns the newest entry first); only they are
+    /// sorted.
+    /// </summary>
+    private (string Name, string Key)[] FirstByName(SortOrder order, int count)
     {
-        lock (_lock)
+        var keys = Keys();
+        count = Math.Min(count, keys.Length);
+        if (count <= 0)
         {
-            if (_keys is null || _names is null)
+            return [];
+        }
+        var sign = order == SortOrder.Asc ? 1 : -1;
+        var indexes = new int[keys.Length];
+        for (var i = 0; i < indexes.Length; i++)
+        {
+            indexes[i] = i;
+        }
+        var (low, high) = (0, indexes.Length - 1);
+        while (low < high)
+        {
+            var pivot = keys[indexes[Random.Shared.Next(low, high + 1)]];
+            var (left, right) = (low, high);
+            while (left <= right)
+            {
+                while (sign * string.CompareOrdinal(keys[indexes[left]], pivot) < 0)
+                {
+                    left++;
+                }
+                while (sign * string.CompareOrdinal(keys[indexes[right]], pivot) > 0)
+                {
+                    right--;
+                }
+                if (left <= right)
+                {
+                    (indexes[left], indexes[right]) = (indexes[right], indexes[left]);
+                    left++;
+                    right--;
+                }
+            }
+            // Everything up to right sorts before the pivot, everything from left after it.
+            if (count - 1 <= right)
+            {
+                high = right;
+            }
+            else if (count - 1 >= left)
+            {
+                low = left;
+            }
+            else
+            {
+                break;
+            }
+        }
+        Array.Sort(indexes, 0, count, Comparer<int>.Create((a, b) => sign * string.CompareOrdinal(keys[a], keys[b])));
+        var page = new (string Name, string Key)[count];
+        for (var i = 0; i < count; i++)
+        {
+            page[i] = (Entries[indexes[i]].Name, keys[indexes[i]]);
+        }
+        return page;
+    }
+
+    /// <summary>The natural-order key of every entry, in readdir order.</summary>
+    private string[] Keys()
+    {
+        lock (_keysLock)
+        {
+            if (_keys is null)
             {
                 var keys = new string[Entries.Length];
-                var names = new string[Entries.Length];
                 // Building the keys is a large part of the work for a big folder; it spreads well over the cores.
                 Parallel.ForEach(
                     System.Collections.Concurrent.Partitioner.Create(0, Math.Max(Entries.Length, 1), 4096),
@@ -74,17 +156,32 @@ internal sealed class FolderSnapshot(string folderId, DateTimeOffset folderChang
                     {
                         for (var i = range.Item1; i < Math.Min(range.Item2, Entries.Length); i++)
                         {
-                            names[i] = Entries[i].Name;
                             keys[i] = NaturalSort.Key(Entries[i].Name);
                         }
                     });
-                Array.Sort(keys, names, StringComparer.Ordinal);
                 _keys = keys;
-                _names = names;
             }
-            return (_keys, _names);
+            return _keys;
         }
     }
+
+    private SortedNames Sorted()
+    {
+        lock (_sortLock)
+        {
+            if (_sortedNames is not { } sorted)
+            {
+                var keys = (string[])Keys().Clone();
+                var names = Array.ConvertAll(Entries, entry => entry.Name);
+                Array.Sort(keys, names, StringComparer.Ordinal);
+                sorted = new SortedNames(keys, names);
+                Volatile.Write(ref _sortedNames, sorted);
+            }
+            return sorted;
+        }
+    }
+
+    private sealed record SortedNames(string[] Keys, string[] Names);
 
     /// <summary>Entries sorted by a metadata value, then by name, built once per snapshot from <paramref name="stat"/>.</summary>
     public (long Value, string Key, string Name)[] ByMetadata(FileSort sort, Func<string, FsStat?> stat)

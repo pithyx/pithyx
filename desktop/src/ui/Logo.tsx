@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { Fragment, useId } from 'react';
 import { cx } from './cx';
 import styles from './Logo.module.css';
 
@@ -92,8 +92,32 @@ export function Wordmark({
         role={mark === name ? undefined : 'img'}
         aria-label={mark === name ? undefined : name}
       >
-        {mark}
+        <BrandText text={mark} />
       </span>
     </span>
   );
+}
+
+// Sora has no Greek, so the theta is drawn: Sora SemiBold's O (outline taken from the shipped font, units per em 1000)
+// with a bar as thick and as high as the bar of its H.
+const THETA_PATH =
+  'M433 -19Q334 -19 261 16Q188 51 140.5 107.5Q93 164 70 229.5Q47 295 47 356L47 378Q47 445 71 511Q95 577 143.5 631.5' +
+  'Q192 686 264 718.5Q336 751 433 751Q528 751 600.5 718.5Q673 686 721 631.5Q769 577 793.5 511Q818 445 818 378L818 356' +
+  'Q818 295 794.5 229.5Q771 164 723.5 107.5Q676 51 603.5 16Q531 -19 433 -19ZM433 113Q507 113 561 147.5Q615 182 644.5 240' +
+  'Q674 298 674 366Q674 438 644.5 495.5Q615 553 561 586Q507 619 433 619Q358 619 304 586Q250 553 220.5 495.5' +
+  'Q191 438 191 366Q191 298 220 240Q249 182 303.5 147.5Q358 113 433 113Z' +
+  'M180 303L685 303L685 428L180 428Z';
+
+/** Text in the display font with every capital theta drawn in Sora's style. Screen readers get the text from the caller. */
+export function BrandText({ text }: { text: string }) {
+  return text.split('Θ').map((part, index) => (
+    <Fragment key={index}>
+      {index > 0 && (
+        <svg className={styles.theta} viewBox="0 -751 865 770" aria-hidden>
+          <path d={THETA_PATH} transform="scale(1 -1)" />
+        </svg>
+      )}
+      {part}
+    </Fragment>
+  ));
 }

@@ -177,6 +177,15 @@
   letter-spacing: var(--letter-spacing-display);
 }
 
+/* Glyph box of the O: 865 by 770 units, 19 of them below the baseline. */
+.theta {
+  width: 0.865em;
+  height: 0.77em;
+  margin-inline-end: var(--letter-spacing-display);
+  vertical-align: -0.019em;
+  fill: currentcolor;
+}
+
 .large {
   gap: var(--space-3);
 }

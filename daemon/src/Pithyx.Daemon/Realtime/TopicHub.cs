@@ -171,8 +171,9 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
     {
         ArgumentNullException.ThrowIfNull(connection);
         connection.RemovePattern(pattern);
-        Send(connection, new AckMessage(id, Tracing.CurrentRequestId));
+        // Publishers stop their work first, so it has stopped by the time the client reads the ack.
         SubscribersRemoved?.Invoke();
+        Send(connection, new AckMessage(id, Tracing.CurrentRequestId));
     }
 
     public void Send(Connection connection, ServerMessage message)

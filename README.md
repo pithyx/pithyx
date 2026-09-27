@@ -110,7 +110,7 @@ tools/dev-vm/testpool.sh destroy pithyxtest
 
 To develop on the VM from your machine, connect with VS Code Remote-SSH (or any SSH client with port forwarding), run `dotnet watch --project daemon/src/Pithyx.Daemon` without `PITHYX_SIMULATE`, run `pnpm dev`, and forward port 5173.
 
-Without the Vite dev server, the daemon serves the built desktop itself: run `pnpm build`, start the daemon, and open http://localhost:7484 (or the VM's address on port 7484).
+Without the Vite dev server, the daemon serves the built desktop itself: run `pnpm build`, start the daemon, and open http://localhost:7484 (or the VM's address on port 7484). `tools/dev-vm/start.sh` does both for a test session with its own database in `~/.cache/pithyx-run` (`--reset` starts the setup wizard fresh, `--real` reads the real disks, `--no-build` reuses `desktop/dist`).
 
 ### Checks
 

@@ -135,10 +135,10 @@ public sealed partial class JobService
         {
             switch (entry.State)
             {
-                case JobState.Queued:
+                case JobState.Queued when !entry.CancelRequested:
+                    // Without its work the runner skips the job; it turns cancelled once its row says so.
                     wasQueued = true;
-                    entry.State = JobState.Cancelled;
-                    entry.FinishedAt = _time.GetUtcNow();
+                    entry.CancelRequested = true;
                     entry.Work = null;
                     break;
                 case JobState.Running when !entry.CancelRequested:
@@ -153,8 +153,7 @@ public sealed partial class JobService
         LogCancelRequested(jobId, entry.Kind);
         if (wasQueued)
         {
-            await WriteStateAsync(entry);
-            _hub.Publish(JobBoard.TopicOf(jobId), entry.Snapshot());
+            await CompleteAsync(entry, entry.Snapshot() with { State = JobState.Cancelled, FinishedAt = _time.GetUtcNow() });
             LogFinished(jobId, entry.Kind, JobState.Cancelled);
         }
         else
@@ -289,17 +288,18 @@ public sealed partial class JobService
             var parameters = errorParams is null ? null : ErrorParamsFrom(JsonSerializer.Serialize(errorParams, _storage));
             lock (entry.Lock)
             {
-                entry.State = state;
-                entry.FinishedAt = _time.GetUtcNow();
-                entry.ErrorCode = errorCode;
-                entry.ErrorParams = errorCode is null ? null : parameters ?? new Dictionary<string, object?>();
                 entry.Work = null;
                 entry.Activity = null;
                 entry.PublishThrottle?.Dispose();
                 entry.PersistThrottle?.Dispose();
             }
-            await WriteStateAsync(entry);
-            _hub.Publish(JobBoard.TopicOf(entry.Id), entry.Snapshot());
+            await CompleteAsync(entry, entry.Snapshot() with
+            {
+                State = state,
+                FinishedAt = _time.GetUtcNow(),
+                ErrorCode = errorCode,
+                ErrorParams = errorCode is null ? null : parameters ?? new Dictionary<string, object?>(),
+            });
             if (state == JobState.Failed)
             {
                 LogFailed(entry.Id, entry.Kind, errorCode ?? "");
@@ -311,7 +311,6 @@ public sealed partial class JobService
         }
         catch (Exception exception)
         {
-            // The row stays running and becomes interrupted with the next start.
             LogFinishFailed(exception, entry.Id, entry.Kind);
         }
     }
@@ -399,12 +398,37 @@ public sealed partial class JobService
         }
     }
 
-    private async Task WriteStateAsync(JobEntry entry)
+    /// <summary>
+    /// Writes the final state to the row, and only then shows it in memory and to subscribers, so a job that reads as
+    /// finished is finished in the database too. If the write fails, the job still ends in memory; its row stays
+    /// unfinished and becomes interrupted with the next start.
+    /// </summary>
+    private async Task CompleteAsync(JobEntry entry, Job final)
+    {
+        try
+        {
+            await WriteStateAsync(entry, final);
+        }
+        finally
+        {
+            lock (entry.Lock)
+            {
+                entry.State = final.State;
+                entry.FinishedAt = final.FinishedAt;
+                entry.ErrorCode = final.ErrorCode;
+                entry.ErrorParams = final.ErrorParams;
+            }
+            _hub.Publish(JobBoard.TopicOf(entry.Id), entry.Snapshot());
+        }
+    }
+
+    private Task WriteStateAsync(JobEntry entry) => WriteStateAsync(entry, entry.Snapshot());
+
+    private async Task WriteStateAsync(JobEntry entry, Job job)
     {
         await entry.Writes.WaitAsync(CancellationToken.None);
         try
         {
-            var job = entry.Snapshot();
             await using var connection = await _connections.OpenAsync(CancellationToken.None);
             await connection.ExecuteAsync(
                 """
