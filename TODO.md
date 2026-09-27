@@ -324,7 +324,22 @@ Effort: high.
 
 Goal: the performance showcase. It must feel faster than DSM File Station.
 
-- [ ] Detailed task list to be written together with the owner before starting. `[DECISION]`
+- [ ] Detailed task list to be written together with the owner before starting. `[DECISION]` The owner set the backend scope on 2026-09-27 (6.1); the frontend list follows.
+
+### 6.1 Backend (daemon)
+
+Draft PR `feature/file-service`, decisions from D79 in its comments.
+
+- [x] Shares before M3: `shares` and `share_access` (migration 0005), per-user access none, read or readWrite, administrators everything, `GET/POST/DELETE /api/shares`, `PUT /api/shares/{id}/access/{userId}`; a share the caller cannot use answers `fs.share.not_found`. Simulation seeds a share "Shared" in the data directory.
+- [x] File service with access checks on every request and traversal protection by the kernel: every path is opened with `openat2(RESOLVE_BENEATH | RESOLVE_NO_MAGICLINKS)` below the share root, all later calls work on handles; `.` and `..` are refused.
+- [x] Cursor pagination: natural order without a stat per entry, keyset cursors that survive changes, size and date orders; first page of 100,000 entries under 200 ms (xUnit budget, Release build as in CI; 133 ms on dev01).
+- [x] Range downloads with ETag and `Content-Security-Policy: sandbox`, streamed uploads into a hidden temporary file renamed into place, new folders, renames.
+- [x] Jobs module (migration 0006) and copy, move and delete as jobs with progress, conflict policies and in-kernel copies (`copy_file_range`). On dev01 ZFS 2.3.9 did not clone blocks (`bcloneused` stayed 0, also for a plain `copy_file_range` outside Vyxis); find out why with M3.
+- [x] Live changes of open folders over inotify (`files/<share>/<folder>`), watched only while subscribed, no access or open events, no polling.
+- [ ] Files are created as the daemon's user until M3 provisions Linux users; then create them as the requesting user (`fchownat`) so SMB sees the right owner.
+- [ ] Recycle bin per share together with Samba's `vfs_recycle` in M3 (deleting is permanent until then).
+- [ ] Resumable uploads (tus) on the same temporary-file mechanism.
+- [ ] `TopicHub` keeps one throttle per published topic forever; with one topic per job and per folder, drop throttles of topics without subscribers.
 - [ ] Files and folders on the desktop: the contents of the `Desktop` folder in the user's home share as desktop items on the same grid (positions stored per user in `desktop_items` with kind `file`), created, renamed and deleted as real files, opened in the file manager. The items UI from step 5 (selection, drag, menus) is ready for them.
 - [ ] Scope: streamed listings over the WebSocket, client cache with stale-while-revalidate, inotify on open folders, prefetch on hover, virtualized list, Web Worker for sort and filter, optimistic actions, thumbnails, tus uploads, explorer keyboard controls, viewers and editor.
 - [ ] Budgets as CI tests: previously visited folder under 16 ms, first chunk of a new folder under 100 ms (LAN, warm cache), 10,000 entries listed server-side under 50 ms (warm), steady 60 fps while scrolling 50,000 entries.
@@ -338,6 +353,7 @@ M3 to M6 get their own detailed steps once step 6 is done. Write them into this 
 Known requirements for later milestones:
 
 - Website, first task once `website/` exists: an error code reference generated from `i18n/en/errors.json` (and the translated files), plus a CI check that every code in `ErrorCodes` has a doc entry. Until then error codes are documented only through their i18n texts.
+- Website user docs for shares and files from step 6: that deleting is permanent until the recycle bin arrives, the upload behavior (the file appears only when complete, existing names are never replaced without asking), conflict choices for copy and move (skip, overwrite merges folders, rename to "name (2)"), that symlinks are shown but never copied, and the share rules for administrators (existing folder, no system folders, no overlapping shares).
 - Website user docs for the desktop from step 5: desktop items (selecting with a frame, Ctrl and Shift, moving by dragging and with Move, F2, Delete, Shift+F10, the note grip and its arrow keys, long press on touch, the 200 item and 4000 character limits, and that note text changed on two devices is kept on a second note), window menu and the Alt+Shift shortcuts (and that they do not apply in text fields), snapping and thirds on ultrawide screens, taskbar position, layout memory per device with its 90-day expiry and "Get desktop from ..." (which shows each device's browser, system, screen size and last use), that only the tab in use saves the layout, the phone app switcher, swipe and back gesture, and the `vyxis_device` cookie (what it is, that it holds no personal data, and that it is `Secure` on HTTPS).
 
 - M3: energy settings: spindown per pool (via hd-idle, off by default), power profiles, and a diagnostic that shows what keeps disks awake (process, file) and CPU package C-state residency.

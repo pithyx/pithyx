@@ -20,6 +20,7 @@ public static class ProblemMapping
         StatusCodes.Status404NotFound => ErrorCodes.RequestRouteNotFound,
         StatusCodes.Status405MethodNotAllowed => ErrorCodes.RequestMethodNotAllowed,
         StatusCodes.Status415UnsupportedMediaType => ErrorCodes.RequestMediaTypeUnsupported,
+        StatusCodes.Status416RangeNotSatisfiable => ErrorCodes.FsRangeNotSatisfiable,
         _ => ErrorCodes.SystemInternalUnexpected,
     };
 }

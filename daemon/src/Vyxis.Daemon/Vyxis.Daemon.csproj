@@ -3,6 +3,8 @@
     <RootNamespace>Vyxis.Daemon</RootNamespace>
     <OpenApiDocumentsDirectory>$(MSBuildProjectDirectory)/../../../packages/api-client</OpenApiDocumentsDirectory>
     <OpenApiGenerateDocumentsOptions>--file-name openapi</OpenApiGenerateDocumentsOptions>
+    <!-- Source-generated P/Invoke for the Linux file calls (Files/LinuxFs.cs). -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Dapper" />

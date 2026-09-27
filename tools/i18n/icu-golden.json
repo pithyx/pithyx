@@ -124,6 +124,96 @@
       },
       "expected": "The note is too long. A note holds at most 4000 characters."
     },
+    "fs.cursor.invalid": {
+      "params": {},
+      "expected": "The list position is no longer valid. Load the folder again."
+    },
+    "fs.entry.access_denied": {
+      "params": {},
+      "expected": "The system does not allow access to this item."
+    },
+    "fs.entry.exists": {
+      "params": {
+        "name": "Report.pdf"
+      },
+      "expected": "“Report.pdf” already exists here."
+    },
+    "fs.entry.is_folder": {
+      "params": {},
+      "expected": "This is a folder, not a file."
+    },
+    "fs.entry.not_folder": {
+      "params": {},
+      "expected": "This is a file, not a folder."
+    },
+    "fs.entry.not_found": {
+      "params": {},
+      "expected": "The file or folder was not found. It may have been moved or deleted."
+    },
+    "fs.folder.not_empty": {
+      "params": {},
+      "expected": "The folder is not empty."
+    },
+    "fs.io.failed": {
+      "params": {
+        "errno": 5
+      },
+      "expected": "The file system reported an error (errno 5)."
+    },
+    "fs.name.invalid": {
+      "params": {},
+      "expected": "This name cannot be used. Names must not be empty, contain a slash, or be longer than 255 bytes."
+    },
+    "fs.operation.into_itself": {
+      "params": {},
+      "expected": "A folder cannot be copied or moved into itself."
+    },
+    "fs.operation.invalid": {
+      "params": {},
+      "expected": "This file operation is not valid."
+    },
+    "fs.path.invalid": {
+      "params": {
+        "maxBytes": 999
+      },
+      "expected": "This path is not valid. Paths are relative to the share, without “.” or “..”, and at most 999 bytes long."
+    },
+    "fs.range.not_satisfiable": {
+      "params": {},
+      "expected": "The requested part of the file does not exist."
+    },
+    "fs.share.exists": {
+      "params": {},
+      "expected": "A share with this name already exists."
+    },
+    "fs.share.invalid": {
+      "params": {},
+      "expected": "The share could not be created. It needs a name and an existing folder outside the system directories."
+    },
+    "fs.share.not_found": {
+      "params": {},
+      "expected": "The share was not found, or you have no access to it."
+    },
+    "fs.share.read_only": {
+      "params": {},
+      "expected": "You can only read in this share."
+    },
+    "fs.upload.incomplete": {
+      "params": {},
+      "expected": "The upload was interrupted. Nothing was saved."
+    },
+    "fs.volume.full": {
+      "params": {},
+      "expected": "There is not enough free space."
+    },
+    "fs.volume.read_only": {
+      "params": {},
+      "expected": "The storage is read-only."
+    },
+    "jobs.job.not_found": {
+      "params": {},
+      "expected": "This job does not exist or has already been removed."
+    },
     "realtime.message.invalid": {
       "params": {},
       "expected": "The live connection received a message it does not understand."
