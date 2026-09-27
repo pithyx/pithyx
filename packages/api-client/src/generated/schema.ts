@@ -161,6 +161,41 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/desktop/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListDesktopItems"];
+        put?: never;
+        /** @description Creates an item. The answer is 201 with the item, its URL as Location and its version as ETag. */
+        post: operations["CreateDesktopItem"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/desktop/items/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description Deletes one item. Deleting an item that does not exist (any more) also answers 204. */
+        delete: operations["DeleteDesktopItem"];
+        options?: never;
+        head?: never;
+        /** @description Changes one item; fields left out stay. Send the item's version from GET /api/desktop/items or the ETag of its last change as If-Match: "n". If the item changed in between (for example on another device), the answer is 412 with desktop.item.conflict and the current version in params.version. Without If-Match the change is unconditional. The new version comes back as ETag. */
+        patch: operations["ChangeDesktopItem"];
+        trace?: never;
+    };
     "/api/desktop/layout": {
         parameters: {
             query?: never;
@@ -302,6 +337,56 @@ export type components = {
         };
         /** @enum {unknown} */
         DaemonMode: "real" | "simulated";
+        /** @description An app shortcut or a sticky note on the desktop, shared across the user's devices. */
+        DesktopItem: {
+            /** @description Shortcuts: the id of the app it opens. */
+            app: null | string;
+            /**
+             * Format: int32
+             * @description Grid cell of the item, counted from the top left corner of the desktop.
+             */
+            column: number;
+            /**
+             * Format: int64
+             * @description Stable id of the item.
+             */
+            id: number;
+            /** @description What the item is. */
+            kind: components["schemas"]["DesktopItemKind"];
+            /** @description Shortcuts: the label the user gave it, or null for the app's name in the user's language. */
+            name: null | string;
+            /**
+             * Format: int32
+             * @description Grid row of the item.
+             */
+            row: number;
+            /** @description Notes: the text. */
+            text: null | string;
+            /**
+             * Format: int64
+             * @description Increments with every change. Send it as `If-Match: "n"` with the next change of this item.
+             */
+            version: number;
+        };
+        /** @description A change of one item. Fields left out (or null) stay as they are. */
+        DesktopItemChange: {
+            /**
+             * Format: int32
+             * @description New grid column.
+             */
+            column?: null | number;
+            /** @description Shortcuts: the new label; an empty string goes back to the app's name. */
+            name?: null | string;
+            /**
+             * Format: int32
+             * @description New grid row.
+             */
+            row?: null | number;
+            /** @description Notes: the new text. */
+            text?: null | string;
+        };
+        /** @enum {unknown} */
+        DesktopItemKind: "shortcut" | "note";
         DesktopState: {
             layout: null | components["schemas"]["JsonElement"];
             /**
@@ -428,7 +513,7 @@ export type components = {
             }[];
         };
         /** @enum {string} */
-        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "system.internal.unexpected" | "system.origin.forbidden";
+        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "system.internal.unexpected" | "system.origin.forbidden";
         /** @description A failed client message. `id` is empty when the message could not be parsed. */
         ErrorMessage: {
             code: components["schemas"]["ErrorCode"];
@@ -469,6 +554,26 @@ export type components = {
             /** @description True when a TOTP or recovery code must follow. */
             totpRequired: boolean;
             user: null | components["schemas"]["UserInfo"];
+        };
+        NewDesktopItem: {
+            /** @description Shortcuts: the id of the app to open. Required for shortcuts, not allowed for notes. */
+            app?: null | string;
+            /**
+             * Format: int32
+             * @description Grid column.
+             */
+            column: number;
+            /** @description What to create. */
+            kind: components["schemas"]["DesktopItemKind"];
+            /** @description Shortcuts: an own label, or null for the app's name. */
+            name?: null | string;
+            /**
+             * Format: int32
+             * @description Grid row.
+             */
+            row: number;
+            /** @description Notes: the text, at most 4000 characters. Required for notes, not allowed for shortcuts. */
+            text?: null | string;
         };
         Partition: {
             /** @description File system or content type, for example `ext4` or `zfs_member`. */
@@ -925,6 +1030,134 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["DeviceLayout"][];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    ListDesktopItems: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DesktopItem"][];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    CreateDesktopItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewDesktopItem"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DesktopItem"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    DeleteDesktopItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    ChangeDesktopItem: {
+        parameters: {
+            query?: never;
+            header?: {
+                "If-Match"?: string;
+            };
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DesktopItemChange"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DesktopItem"];
                 };
             };
             /** @description Problem details with a stable error code. */

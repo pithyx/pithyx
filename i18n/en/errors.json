@@ -54,10 +54,19 @@
     "device": {
       "not_found": "No saved desktop was found for that device. It may have expired."
     },
+    "item": {
+      "conflict": "This desktop item was changed on another device in the meantime.",
+      "invalid": "The desktop item could not be saved because it is not in a known format.",
+      "limit_reached": "The desktop is full. It holds at most {max} items.",
+      "not_found": "This desktop item no longer exists. It may have been deleted on another device."
+    },
     "layout": {
       "conflict": "The desktop layout was saved from another tab in the meantime.",
       "invalid": "The desktop layout could not be saved because it is not in a known format.",
       "too_large": "The desktop layout is too large to save. At most {maxWindows} windows and {maxAppDataKb} KB of app data are kept."
+    },
+    "note": {
+      "too_long": "The note is too long. A note holds at most {maxLength} characters."
     }
   },
   "realtime": {

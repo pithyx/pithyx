@@ -11,20 +11,8 @@ export type DesktopItemKind =
   | { kind: 'file'; icon: TablerIcon }
   | { kind: 'shortcut'; app: Pick<AppInfo, 'icon' | 'tone'> };
 
-/** A file, folder or app shortcut on the desktop. */
-export function DesktopIcon({
-  name,
-  item,
-  selected = false,
-  onOpen,
-}: {
-  name: string;
-  item: DesktopItemKind;
-  selected?: boolean;
-  /** Double click with a mouse, a single tap on touch, Enter or Space with the keyboard. */
-  onOpen?: () => void;
-}) {
-  const { t } = useTranslation();
+/** The glyph and label of a desktop item, inside whatever element makes it interactive. */
+export function DesktopItemFace({ name, item }: { name: string; item: DesktopItemKind }) {
   let visual;
   if (item.kind === 'shortcut') {
     visual = (
@@ -45,7 +33,30 @@ export function DesktopIcon({
       </span>
     );
   }
+  return (
+    <>
+      {visual}
+      <span className={styles.label} aria-hidden>
+        {name}
+      </span>
+    </>
+  );
+}
 
+/** A file, folder or app shortcut on the desktop, as the design gallery shows it. */
+export function DesktopIcon({
+  name,
+  item,
+  selected = false,
+  onOpen,
+}: {
+  name: string;
+  item: DesktopItemKind;
+  selected?: boolean;
+  /** Double click with a mouse, a single tap on touch, Enter or Space with the keyboard. */
+  onOpen?: () => void;
+}) {
+  const { t } = useTranslation();
   return (
     <li>
       <button
@@ -63,10 +74,7 @@ export function DesktopIcon({
         }}
         onDoubleClick={onOpen}
       >
-        {visual}
-        <span className={styles.label} aria-hidden>
-          {name}
-        </span>
+        <DesktopItemFace name={name} item={item} />
       </button>
     </li>
   );

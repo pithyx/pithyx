@@ -8,6 +8,7 @@ export { default as IconArrowLeft } from '@tabler/icons-react/dist/esm/icons/Ico
 export { default as IconArrowRight } from '@tabler/icons-react/dist/esm/icons/IconArrowRight.mjs';
 export { default as IconArrowUpRight } from '@tabler/icons-react/dist/esm/icons/IconArrowUpRight.mjs';
 export { default as IconArrowsDiagonalMinimize2 } from '@tabler/icons-react/dist/esm/icons/IconArrowsDiagonalMinimize2.mjs';
+export { default as IconArrowsMove } from '@tabler/icons-react/dist/esm/icons/IconArrowsMove.mjs';
 export { default as IconBaselineDensityMedium } from '@tabler/icons-react/dist/esm/icons/IconBaselineDensityMedium.mjs';
 export { default as IconBaselineDensitySmall } from '@tabler/icons-react/dist/esm/icons/IconBaselineDensitySmall.mjs';
 export { default as IconBell } from '@tabler/icons-react/dist/esm/icons/IconBell.mjs';
@@ -29,6 +30,7 @@ export { default as IconFileZip } from '@tabler/icons-react/dist/esm/icons/IconF
 export { default as IconFolder } from '@tabler/icons-react/dist/esm/icons/IconFolder.mjs';
 export { default as IconFolderFilled } from '@tabler/icons-react/dist/esm/icons/IconFolderFilled.mjs';
 export { default as IconFolders } from '@tabler/icons-react/dist/esm/icons/IconFolders.mjs';
+export { default as IconGripHorizontal } from '@tabler/icons-react/dist/esm/icons/IconGripHorizontal.mjs';
 export { default as IconHome } from '@tabler/icons-react/dist/esm/icons/IconHome.mjs';
 export { default as IconInfoCircle } from '@tabler/icons-react/dist/esm/icons/IconInfoCircle.mjs';
 export { default as IconKey } from '@tabler/icons-react/dist/esm/icons/IconKey.mjs';
@@ -40,7 +42,9 @@ export { default as IconLoader2 } from '@tabler/icons-react/dist/esm/icons/IconL
 export { default as IconLogout } from '@tabler/icons-react/dist/esm/icons/IconLogout.mjs';
 export { default as IconMinus } from '@tabler/icons-react/dist/esm/icons/IconMinus.mjs';
 export { default as IconMovie } from '@tabler/icons-react/dist/esm/icons/IconMovie.mjs';
+export { default as IconNote } from '@tabler/icons-react/dist/esm/icons/IconNote.mjs';
 export { default as IconPalette } from '@tabler/icons-react/dist/esm/icons/IconPalette.mjs';
+export { default as IconPencil } from '@tabler/icons-react/dist/esm/icons/IconPencil.mjs';
 export { default as IconPhoto } from '@tabler/icons-react/dist/esm/icons/IconPhoto.mjs';
 export { default as IconPhotoPlus } from '@tabler/icons-react/dist/esm/icons/IconPhotoPlus.mjs';
 export { default as IconPlugConnectedX } from '@tabler/icons-react/dist/esm/icons/IconPlugConnectedX.mjs';

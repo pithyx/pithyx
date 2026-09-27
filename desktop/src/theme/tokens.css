@@ -177,6 +177,10 @@
   --taskbar-size: 52px;
   --titlebar-height: 40px;
   --desktop-icon-width: 88px;
+  /* The icon grid; keep in step with src/items/grid.ts. */
+  --desktop-cell-width: 96px;
+  --desktop-cell-height: 112px;
+  --desktop-grid-padding: 12px;
 }
 
 @media (pointer: coarse) {

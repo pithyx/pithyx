@@ -5,7 +5,7 @@
 //   node tools/perf/measure.ts --url http://192.168.168.40:8994 [--user admin --password '...'] [--runs 5]
 import { chromium } from '@playwright/test';
 import { parseArgs } from 'node:util';
-import { measureRound, median, type Round } from '../../e2e/tests/performance.ts';
+import { MIN_RUNS, measureRound, median, type Round } from '../../e2e/tests/performance.ts';
 
 const { values: options } = parseArgs({
   options: {
@@ -16,6 +16,12 @@ const { values: options } = parseArgs({
   },
 });
 
+const runCount = Number(options.runs);
+if (!Number.isInteger(runCount) || runCount < MIN_RUNS) {
+  console.error(`--runs must be a whole number of at least ${String(MIN_RUNS)}`);
+  process.exit(2);
+}
+
 const ms = (value: number) => (Number.isNaN(value) ? 'n/a' : `${String(Math.round(value))} ms`);
 const kb = (value: number) => `${(value / 1024).toFixed(0)} KB`;
 
@@ -23,7 +29,7 @@ const browser = await chromium.launch();
 try {
   for (const profile of ['unthrottled', 'fast4g-cpu4x'] as const) {
     const runs: Round[] = [];
-    for (let run = 0; run < Number(options.runs); run++) {
+    for (let run = 0; run < runCount; run++) {
       // A new context has an empty cache: every run starts cold.
       const context = await browser.newContext({
         viewport: { width: 1440, height: 900 },

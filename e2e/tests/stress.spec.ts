@@ -150,7 +150,7 @@ test('rapid opening, closing and shortcuts leave a consistent desktop', async ({
   await signInAsAdmin(page);
   const errors = watchErrors(page);
   const disks = appWindow(page, 'Disks');
-  const shortcut = page.getByRole('button', { name: 'Disks, shortcut' });
+  const shortcut = page.getByRole('option', { name: 'Disks, shortcut' });
 
   for (let round = 0; round < 15; round++) {
     await shortcut.dblclick();

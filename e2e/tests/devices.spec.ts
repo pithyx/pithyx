@@ -23,7 +23,7 @@ test.describe('phone', () => {
     const about = appWindow(page, 'About Vyxis');
 
     await test.step('a tap opens an app full screen', async () => {
-      await page.getByRole('button', { name: 'Disks, shortcut' }).tap();
+      await page.getByRole('option', { name: 'Disks, shortcut' }).tap();
       await expect(disks).toBeVisible();
       const workspace = await box(page.getByRole('main', { name: 'Desktop' }));
       expect((await box(disks)).width).toBe(workspace.width);
@@ -33,11 +33,11 @@ test.describe('phone', () => {
     await test.step('the back gesture returns to the home screen', async () => {
       await page.goBack();
       await expect(disks).toBeHidden();
-      await expect(page.getByRole('button', { name: 'Disks, shortcut' })).toBeVisible();
+      await expect(page.getByRole('option', { name: 'Disks, shortcut' })).toBeVisible();
     });
 
     await test.step('the app switcher shows open apps and switches between them', async () => {
-      await page.getByRole('button', { name: 'About Vyxis, shortcut' }).tap();
+      await page.getByRole('option', { name: 'About Vyxis, shortcut' }).tap();
       await expect(about).toBeVisible();
       await taskbar.getByRole('button', { name: /Switch apps, 2 open/ }).tap();
       const switcher = page.getByRole('dialog', { name: 'Open apps' });
@@ -63,8 +63,8 @@ test.describe('phone', () => {
       await page.goBack();
       await expect(about).toBeHidden();
       await expect(disks).toBeHidden();
-      await expect(page.getByRole('button', { name: 'Disks, shortcut' })).toBeVisible();
-      await page.getByRole('button', { name: 'Disks, shortcut' }).tap();
+      await expect(page.getByRole('option', { name: 'Disks, shortcut' })).toBeVisible();
+      await page.getByRole('option', { name: 'Disks, shortcut' }).tap();
       await expect(disks).toBeVisible();
       await page.goBack();
       await expect(disks).toBeHidden();
@@ -90,7 +90,7 @@ test.describe('tablet', () => {
     const about = appWindow(page, 'About Vyxis');
     const workspace = await box(page.getByRole('main', { name: 'Desktop' }));
 
-    await page.getByRole('button', { name: 'Disks, shortcut' }).tap();
+    await page.getByRole('option', { name: 'Disks, shortcut' }).tap();
     await expect.poll(async () => (await box(disks)).width).toBe(workspace.width);
 
     await disks.getByRole('button', { name: 'Window menu for Disks' }).tap();
@@ -120,7 +120,7 @@ test.describe('ultrawide', () => {
 
   test('snaps to thirds by dragging and by keyboard', async ({ page }) => {
     await signInAsAdmin(page);
-    await page.getByRole('button', { name: 'About Vyxis, shortcut' }).dblclick();
+    await page.getByRole('option', { name: 'About Vyxis, shortcut' }).dblclick();
     const about = appWindow(page, 'About Vyxis');
     const workspace = await box(page.getByRole('main', { name: 'Desktop' }));
     const third = Math.round(workspace.width / 3);
@@ -154,7 +154,7 @@ test.describe('touch screen laptop', () => {
 
   test('drags a window with a finger', async ({ page }) => {
     await signInAsAdmin(page);
-    await page.getByRole('button', { name: 'About Vyxis, shortcut' }).tap();
+    await page.getByRole('option', { name: 'About Vyxis, shortcut' }).tap();
     const about = appWindow(page, 'About Vyxis');
     const start = await box(about);
     const title = await box(about.getByRole('heading', { name: 'About Vyxis', exact: true }));
