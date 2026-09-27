@@ -80,6 +80,49 @@ test('the pool wizard compares layouts, asks about encryption and lists the exac
   await expect(dialog.getByRole('button', { name: 'Create pool' })).toBeEnabled();
 });
 
+test('replacing a device always asks for the serial number of the new disk', async ({ page }) => {
+  const settings = await openStorage(page);
+  const mirror = settings.getByRole('article', { name: 'pithyxtestm' });
+  await mirror
+    .getByRole('listitem')
+    .filter({ hasText: 'drive-scsi5' })
+    .last()
+    .getByRole('button', { name: 'Replace…' })
+    .click();
+  const dialog = page.getByRole('dialog', { name: /^Replace / });
+
+  await dialog.getByRole('radio', { name: /^sdc / }).check();
+  await expect(dialog.getByLabel('Type the serial number of sdc (VYXTEST02)')).toBeVisible();
+  await dialog.getByRole('button', { name: 'Show commands' }).click();
+  await expect(dialog.getByRole('status')).toContainText(
+    'A replacement disk is always confirmed with its serial number.',
+  );
+
+  await dialog.getByLabel('Type the serial number of sdc (VYXTEST02)').fill('VYXTEST02');
+  await dialog.getByRole('button', { name: 'Show commands' }).click();
+  await expect(dialog.getByRole('status').getByRole('listitem')).toHaveText([
+    /^zpool replace pithyxtestm \d+ \/dev\/disk\/by-id\/scsi-0QEMU_QEMU_HARDDISK_drive-scsi2$/,
+  ]);
+  await expect(dialog.getByRole('button', { name: 'Replace', exact: true })).toBeEnabled();
+});
+
+test('destroying a pool needs its name typed and lists its datasets', async ({ page }) => {
+  const settings = await openStorage(page);
+  await settings
+    .getByRole('article', { name: 'pithyxtests' })
+    .getByRole('button', { name: 'Destroy pool…' })
+    .click();
+  const dialog = page.getByRole('dialog', { name: 'Destroy pithyxtests' });
+
+  await expect(dialog.getByRole('button', { name: 'Show commands' })).toBeDisabled();
+  await dialog.getByLabel('Type pithyxtests to confirm').fill('pithyxtests');
+  await dialog.getByRole('button', { name: 'Show commands' }).click();
+  await expect(dialog.getByRole('status')).toContainText('including these datasets');
+  await expect(dialog.getByRole('status').getByRole('listitem').last()).toHaveText(
+    'zpool destroy pithyxtests',
+  );
+});
+
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
 async function violations(page: Page) {
