@@ -50,10 +50,6 @@
   pointer-events: auto;
 }
 
-.freeNote {
-  transform: none;
-}
-
 .note[data-dragging] {
   z-index: 1;
   box-shadow: var(--shadow-4, var(--shadow-3));

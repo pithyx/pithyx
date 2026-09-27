@@ -31,6 +31,7 @@ export function Note({
   cell,
   size,
   free,
+  autoFocus = false,
 }: {
   note: DesktopItem;
   /** Where the note shows now (moved in on small screens). */
@@ -38,6 +39,8 @@ export function Note({
   size: GridSize;
   /** False on phones: notes flow below the icons and do not move. */
   free: boolean;
+  /** Focus the text once the note is on screen, after the menu that created it gave focus back. */
+  autoFocus?: boolean;
 }) {
   const { t } = useTranslation();
   const client = useQueryClient();
@@ -46,6 +49,18 @@ export function Note({
   const [confirming, setConfirming] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const unsaved = useRef<string | null>(null);
+  const textField = useRef<HTMLTextAreaElement>(null);
+  useEffect(() => {
+    if (!autoFocus) {
+      return;
+    }
+    const frame = requestAnimationFrame(() => {
+      textField.current?.focus();
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+    };
+  }, [autoFocus]);
   const text = draft ?? note.text ?? '';
 
   function save(value: string) {
@@ -109,7 +124,7 @@ export function Note({
   return (
     <section
       ref={element}
-      className={cx(noteStyles.note, styles.note, free && styles.freeNote)}
+      className={cx(noteStyles.note, styles.note)}
       style={style}
       aria-label={t('items.note')}
       data-note={note.id}
@@ -163,6 +178,7 @@ export function Note({
         </IconButton>
       </header>
       <textarea
+        ref={textField}
         className={noteStyles.text}
         value={text}
         maxLength={MAX_NOTE_LENGTH}

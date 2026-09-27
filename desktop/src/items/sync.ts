@@ -21,6 +21,12 @@ export interface ItemChange {
 // Items created here get a negative id until the daemon answers; later writes look up the real one.
 let nextTemporaryId = -1;
 const createdIds = new Map<number, number>();
+const temporaryIds = new Map<number, number>();
+
+/** A key that stays the same when a new item gets its real id, so React keeps its element (and focus). */
+export function renderKey(id: number): number {
+  return temporaryIds.get(id) ?? id;
+}
 
 function realId(id: number): number | undefined {
   return id < 0 ? createdIds.get(id) : id;
@@ -81,6 +87,7 @@ export function createItem(client: QueryClient, item: NewDesktopItem): number {
     try {
       const created = unwrap(await api.POST('/api/desktop/items', { body: item }));
       createdIds.set(id, created.id);
+      temporaryIds.set(created.id, id);
       // Changes made while the item was being created stay; they are queued after this write.
       writeItems(client, (items) =>
         items.map((entry) =>

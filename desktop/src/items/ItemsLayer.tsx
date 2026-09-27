@@ -37,7 +37,14 @@ import { ItemMenu, RenameDialog, type ItemAction } from './ItemMenus';
 import styles from './ItemsLayer.module.css';
 import { Note } from './Note';
 import { trackPointer } from './pointer';
-import { changeItems, createItem, deleteItems, useDesktopItems, type DesktopItem } from './sync';
+import {
+  changeItems,
+  createItem,
+  deleteItems,
+  renderKey,
+  useDesktopItems,
+  type DesktopItem,
+} from './sync';
 
 const ARROWS: Record<string, Direction> = {
   ArrowUp: 'up',
@@ -96,6 +103,8 @@ export function ItemsLayer() {
   const [renaming, setRenaming] = useState<DesktopItem | null>(null);
   const [keyboardMove, setKeyboardMove] = useState<KeyboardMove | null>(null);
   const [frame, setFrame] = useState<Box | null>(null);
+  // A note created from the menu takes focus once it is on screen.
+  const [newNote, setNewNote] = useState<number | null>(null);
   const list = useRef<HTMLDivElement>(null);
   const anchorKey = useRef<number | null>(null);
   // Set while a drag ends, so the press that ends it neither changes the selection nor opens the app.
@@ -354,13 +363,7 @@ export function ItemsLayer() {
 
   function create(kind: 'note' | 'shortcut', cell: Cell, app?: string) {
     if (kind === 'note') {
-      const id = createItem(client, { kind: 'note', text: '', ...placeNote(cell, size) });
-      // The new note's text field takes focus once it is on screen.
-      requestAnimationFrame(() => {
-        document
-          .querySelector<HTMLTextAreaElement>(`[data-note="${String(id)}"] textarea`)
-          ?.focus();
-      });
+      setNewNote(createItem(client, { kind: 'note', text: '', ...placeNote(cell, size) }));
       return;
     }
     const taken = new Set(
@@ -413,7 +416,8 @@ export function ItemsLayer() {
     <>
       <div
         className={styles.layer}
-        onPointerDown={onPointerDown}
+        // Capture: React Aria stops press events from bubbling out of the icons.
+        onPointerDownCapture={onPointerDown}
         onPointerUp={() => {
           clearTimeout(longPress.current);
         }}
@@ -491,7 +495,14 @@ export function ItemsLayer() {
         )}
         <div className={styles.notes}>
           {notes.map((note) => (
-            <Note key={note.id} note={note} cell={placeNote(note, size)} size={size} free={free} />
+            <Note
+              key={renderKey(note.id)}
+              note={note}
+              cell={placeNote(note, size)}
+              size={size}
+              free={free}
+              autoFocus={renderKey(note.id) === newNote}
+            />
           ))}
         </div>
       </div>

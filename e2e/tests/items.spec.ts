@@ -26,8 +26,8 @@ async function cellOf(page: Page, locator: Locator) {
   const origin = await box(workspace(page));
   const rect = await box(locator);
   return {
-    column: Math.round((rect.x - origin.x - CELL.padding) / CELL.width),
-    row: Math.round((rect.y - origin.y - CELL.padding) / CELL.height),
+    column: Math.round((rect.x - origin.x - CELL.padding) / CELL.width) || 0,
+    row: Math.round((rect.y - origin.y - CELL.padding) / CELL.height) || 0,
   };
 }
 
@@ -164,7 +164,7 @@ test('the keyboard selects, renames, moves and opens icons', async ({ page }) =>
 
   await test.step('the menu key opens the item menu and Move moves with the arrow keys', async () => {
     await page.keyboard.press('Shift+F10');
-    await page.getByRole('menuitem', { name: 'Move' }).click();
+    await page.getByRole('menuitem', { name: 'Move', exact: true }).click();
     await page.keyboard.press('ArrowRight');
     await page.keyboard.press('ArrowRight');
     await page.keyboard.press('Enter');
@@ -205,10 +205,10 @@ test('sticky notes keep their text on the daemon, move, stay under windows and a
   });
 
   await test.step('the grip moves the note with the arrow keys and the bar by dragging', async () => {
-    await note.getByRole('button', { name: 'Move note' }).focus();
+    await note.getByRole('button', { name: 'Move note', exact: true }).focus();
     await page.keyboard.press('ArrowDown');
     await expect.poll(() => cellOf(page, note)).toEqual({ column: 3, row: 1 });
-    const bar = await box(note.getByRole('button', { name: 'Move note' }));
+    const bar = await box(note.getByRole('button', { name: 'Move note', exact: true }));
     const from = { x: bar.x + bar.width / 2, y: bar.y + bar.height / 2 };
     await drag(page, from, { x: from.x + 2 * CELL.width, y: from.y });
     await expect.poll(() => cellOf(page, note)).toEqual({ column: 5, row: 1 });
