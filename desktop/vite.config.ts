@@ -12,7 +12,7 @@ import {
 } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { brotliCompressSync, constants, gzipSync } from 'node:zlib';
-import { defaultClientConditions, defineConfig, type Plugin } from 'vite';
+import { defaultClientConditions, defaultServerConditions, defineConfig, type Plugin } from 'vite';
 import { generateAll, writeDeclaration } from './scripts/css-module-types.ts';
 
 const daemonUrl = process.env.VYXIS_DAEMON_URL ?? 'http://localhost:8994';
@@ -195,6 +195,8 @@ export default defineConfig({
   ],
   // Workspace packages (the SDK) are compiled from source.
   resolve: { conditions: ['vyxis-source', ...defaultClientConditions] },
+  // Unit tests run through the server resolver; they compile the SDK from source too, so no SDK build is needed.
+  ssr: { resolve: { conditions: ['vyxis-source', ...defaultServerConditions] } },
   build: {
     rollupOptions: {
       // Only the desktop ships. design.html is the developer-only design gallery served by `pnpm design`.
