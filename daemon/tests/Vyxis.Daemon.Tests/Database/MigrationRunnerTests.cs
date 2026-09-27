@@ -71,6 +71,7 @@ public sealed class MigrationRunnerTests : IDisposable
         await Assert.ThrowsAsync<InvalidOperationException>(() => _runner.RunAsync([first], TestContext.Current.CancellationToken));
     }
 
+    // Parallel branches reserve their numbers ahead, so a gap can exist until the branch that owns it is merged.
     [Fact]
     public void EmbeddedMigrationsAreNumberedWithoutGaps() =>
         Assert.Equal(Enumerable.Range(1, Migration.Embedded().Count), Migration.Embedded().Select(m => m.Version));

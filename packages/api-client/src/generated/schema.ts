@@ -261,6 +261,175 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/files/{shareId}/content": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description The file's content with range requests (206, 416), ETag and Last-Modified. Sent as an attachment unless inline=true; always with Content-Security-Policy: sandbox, so a file is never run as part of the desktop. */
+        get: operations["DownloadFile"];
+        /** @description Streams the request body into the file at path (the body is the raw content). The file appears only when the body is complete. Fails with fs.entry.exists if the name is taken, unless overwrite=true. */
+        put: operations["UploadFile"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/files/{shareId}/entry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetFileEntry"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/files/{shareId}/folders": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["CreateFolder"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/files/{shareId}/list": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description One page of a folder. Paths are relative to the share with / as separator; "." and ".." are refused. sort is name (natural order, ignoring case), size or modified, order asc or desc; pass nextCursor as cursor for the next page. Subscribe to topic for live changes of the folder. */
+        get: operations["ListFolder"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/files/{shareId}/rename": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Renames a file or folder within its folder. An existing name is never replaced (fs.entry.exists). */
+        post: operations["RenameFileEntry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/files/{shareId}/trash": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description The share's recycle bin, newest first, with the share's retention. Deleting a file or folder moves it here unless the delete is permanent. */
+        get: operations["ListTrash"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/files/{shareId}/trash/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Starts a job that deletes the given recycle bin items for good. */
+        post: operations["DeleteTrashItems"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/files/{shareId}/trash/empty": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Starts a job that deletes everything in the share's recycle bin for good. */
+        post: operations["EmptyTrash"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/files/{shareId}/trash/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Starts a job that puts items back where they were, recreating missing folders. onConflict defaults to rename. */
+        post: operations["RestoreTrash"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/files/operations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Starts copying, moving or deleting as a job and answers 202 with it; follow it on jobs/<id>. Access is checked now: read on the sources for copy, write on the sources for move and delete, write on the target. Deleting moves to the share's recycle bin unless permanent is true. onConflict decides about names that exist in the target: fail (default), skip, overwrite (folders are merged) or rename. */
+        post: operations["StartFileOperation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/health": {
         parameters: {
             query?: never;
@@ -277,6 +446,57 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description The signed-in user's 100 most recent jobs, newest first. Finished jobs are kept for 7 days. Live progress comes on the topic jobs/{id}. */
+        get: operations["ListJobs"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/jobs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description A job of the signed-in user; administrators can read every job. Others get 404 jobs.job.not_found. */
+        get: operations["GetJob"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/jobs/{id}/cancel": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Cancels a queued job right away and asks a running one to stop; it ends as cancelled once its work gives up. Cancelling a finished job changes nothing. */
+        post: operations["CancelJob"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/setup": {
         parameters: {
             query?: never;
@@ -287,6 +507,75 @@ export type paths = {
         get: operations["GetSetupStatus"];
         put?: never;
         post: operations["Setup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/shares": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description The shares the user can use, with the user's access. Administrators get every share and its path on the host. */
+        get: operations["ListShares"];
+        put?: never;
+        /** @description Administrators only. Registers an existing folder on the host as a share; nobody but administrators has access until it is granted. */
+        post: operations["CreateShare"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/shares/{shareId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description Administrators only. Removes the share from Vyxis; its files stay on the host. */
+        delete: operations["DeleteShare"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/shares/{shareId}/access/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description Administrators only. Sets a user's access to a share: none, read or readWrite. Applies to the user's next request. */
+        put: operations["SetShareAccess"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/shares/{shareId}/trash": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description Administrators only. Days the recycle bin keeps deleted items (0 to 3650; 0 keeps them until emptied). Applies to items already in the bin. */
+        put: operations["SetShareTrash"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -332,6 +621,8 @@ export type components = {
             /** @enum {string} */
             type: "sub" | "unsub";
         };
+        /** @enum {unknown} */
+        ConflictPolicy: "fail" | "skip" | "overwrite" | "rename" | null;
         CopyLayoutRequest: {
             deviceId: string;
         };
@@ -513,7 +804,7 @@ export type components = {
             }[];
         };
         /** @enum {string} */
-        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "system.internal.unexpected" | "system.origin.forbidden";
+        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.exists" | "fs.share.invalid" | "fs.share.not_found" | "fs.share.read_only" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "system.internal.unexpected" | "system.origin.forbidden";
         /** @description A failed client message. `id` is empty when the message could not be parsed. */
         ErrorMessage: {
             code: components["schemas"]["ErrorCode"];
@@ -539,10 +830,171 @@ export type components = {
              */
             type: "event";
         };
+        /** @description A file or folder in a share. */
+        FileEntry: {
+            /** @description File, folder, symlink (not followed in listings) or another kind such as a device node. */
+            kind: components["schemas"]["FileKind"];
+            /**
+             * Format: date-time
+             * @description Last change of the content, UTC.
+             */
+            modified: string;
+            /** @description Name within its folder. */
+            name: string;
+            /**
+             * Format: int64
+             * @description Bytes for files, 0 for folders.
+             */
+            size: number;
+        };
+        /** @enum {unknown} */
+        FileKind: "file" | "folder" | "symlink" | "other";
+        FileLocation: {
+            /** @description Path relative to the share. */
+            path: string;
+            /**
+             * Format: int64
+             * @description The share.
+             */
+            shareId: number;
+        };
+        /** @enum {unknown} */
+        FileOperationKind: "copy" | "move" | "delete";
+        FileOperationRequest: {
+            /** @description The files and folders to work on, at most 1000. */
+            items: components["schemas"]["FileLocation"][];
+            /** @description copy, move or delete. */
+            kind: components["schemas"]["FileOperationKind"];
+            onConflict?: null | components["schemas"]["ConflictPolicy"];
+            /**
+             * @description For delete: remove for good instead of moving to the share's recycle bin. Only when the user asked for it.
+             * @default false
+             */
+            permanent: boolean;
+            target?: null | components["schemas"]["FileLocation"];
+        };
+        /** @description What a folder topic sends: the names that changed since the last event, or a request to list again. */
+        FolderChanges: {
+            /** @description Entries that appeared or changed, with their current metadata. */
+            changed: {
+                /** @enum {unknown} */
+                kind: "file" | "folder" | "symlink" | "other";
+                /**
+                 * Format: date-time
+                 * @description Last change of the content, UTC.
+                 */
+                modified: string;
+                /** @description Name within its folder. */
+                name: string;
+                /**
+                 * Format: int64
+                 * @description Bytes for files, 0 for folders.
+                 */
+                size: number;
+            }[];
+            /** @description True when the folder itself was deleted or moved away. */
+            gone: boolean;
+            /** @description Names that are gone. */
+            removed: string[];
+            /** @description True when changes were lost (the kernel queue overflowed); list the folder again. */
+            resync: boolean;
+        };
+        /** @description One page of a folder listing. */
+        FolderPage: {
+            /** @description This page, in the requested order. */
+            entries: components["schemas"]["FileEntry"][];
+            /** @description Stable id of the folder, also after a rename. */
+            folderId: string;
+            /** @description Pass as `cursor` for the next page; null on the last page. */
+            nextCursor: null | string;
+            /** @description The folder, relative to the share ("" for its root). */
+            path: string;
+            /** @description WebSocket topic with live changes of this folder while it is subscribed. */
+            topic: string;
+            /**
+             * Format: int32
+             * @description Entries in the folder when the listing was made.
+             */
+            total: number;
+        };
+        /** @description The snapshot of a folder topic: the folder as the watch sees it. */
+        FolderWatchState: {
+            /** @description Whether changes are being delivered. */
+            watching: boolean;
+        };
         HealthResponse: {
             mode: components["schemas"]["DaemonMode"];
             status: string;
         };
+        /** @description A long operation of a user, such as copying files. Also the data of the `jobs/{id}` topics. */
+        Job: {
+            /**
+             * Format: date-time
+             * @description When the job was queued (UTC).
+             */
+            createdAt: string;
+            /** @description Error code of a failed job. */
+            errorCode: null | components["schemas"]["ErrorCode"];
+            /** @description Parameters of the error message of a failed job. */
+            errorParams: null | {
+                [key: string]: unknown;
+            };
+            /**
+             * Format: date-time
+             * @description When it reached a final state (UTC).
+             */
+            finishedAt: null | string;
+            /**
+             * Format: int64
+             * @description Also names the job's topic, `jobs/{id}`.
+             */
+            id: number;
+            /** @description What the job does, chosen by the module that started it (for example `files.copy`). */
+            kind: string;
+            parameters: null | components["schemas"]["JsonElement"];
+            /** @description Live in the topic; in REST answers of running jobs at most about a second old. */
+            progress: components["schemas"]["JobProgress"];
+            /** @description Request id of the request that started the job; the job's logs carry it. */
+            requestId: string;
+            result: null | components["schemas"]["JsonElement"];
+            /**
+             * Format: date-time
+             * @description When it started running (UTC).
+             */
+            startedAt: null | string;
+            /** @description Where the job is in its life. */
+            state: components["schemas"]["JobState"];
+        };
+        /** @description How far a job is. Totals are 0 while unknown. */
+        JobProgress: {
+            /**
+             * Format: int64
+             * @description Bytes processed so far.
+             */
+            bytesDone: number;
+            /**
+             * Format: int64
+             * @description Bytes in the whole job.
+             */
+            bytesTotal: number;
+            /** @description What the job works on right now, for example a path. */
+            currentItem: null | string;
+            /**
+             * Format: int64
+             * @description Items (for example files) finished so far.
+             */
+            itemsDone: number;
+            /**
+             * Format: int64
+             * @description Items in the whole job.
+             */
+            itemsTotal: number;
+        };
+        /**
+         * @description Where a job is in its life. The last four are final and never change again.
+         * @enum {unknown}
+         */
+        JobState: "queued" | "running" | "succeeded" | "failed" | "cancelled" | "interrupted";
         JsonElement: unknown;
         LoginRequest: {
             password: string;
@@ -575,6 +1027,16 @@ export type components = {
             /** @description Notes: the text, at most 4000 characters. Required for notes, not allowed for shortcuts. */
             text?: null | string;
         };
+        NewFolderRequest: {
+            /** @description The new folder, relative to the share. Its parent must exist. */
+            path: string;
+        };
+        NewShare: {
+            /** @description Letters, digits, spaces, dots, dashes and underscores, 1 to 64 characters, not starting with a dot. */
+            name: string;
+            /** @description An existing folder on the host: absolute, without symlinks, outside the system directories and not overlapping another share. */
+            path: string;
+        };
         Partition: {
             /** @description File system or content type, for example `ext4` or `zfs_member`. */
             fileSystem: null | string;
@@ -605,6 +1067,12 @@ export type components = {
             /** @description Shown exactly once. Each code replaces a TOTP code for one login. */
             codes: string[];
         };
+        RenameRequest: {
+            /** @description The new name in the same folder. */
+            name: string;
+            /** @description The file or folder to rename. */
+            path: string;
+        };
         SavedLayout: {
             /** @description The layout now saved for this device. */
             layout: components["schemas"]["JsonElement"];
@@ -631,6 +1099,26 @@ export type components = {
             hostname: string;
             /** @description True until the first administrator exists. */
             required: boolean;
+        };
+        /** @enum {unknown} */
+        ShareAccess: "none" | "read" | "readWrite";
+        ShareAccessRequest: {
+            /** @description `none` removes the user's access. */
+            access: components["schemas"]["ShareAccess"];
+        };
+        /** @description A share the user can use. */
+        ShareInfo: {
+            /** @description The user's access: read or read and write. */
+            access: components["schemas"]["ShareAccess"];
+            /**
+             * Format: int64
+             * @description Stable id; file paths are relative to the share.
+             */
+            id: number;
+            /** @description Name shown to users. */
+            name: string;
+            /** @description The share root on the host. Only administrators get it. */
+            path: null | string;
         };
         /** @description The full current state of a topic, sent after `sub`. Only changes follow as events. */
         SnapshotMessage: {
@@ -671,10 +1159,14 @@ export type components = {
             uptimeSeconds: number;
         };
         TopicEvents: {
+            "files/+/+": components["schemas"]["FolderChanges"];
+            "jobs/+": components["schemas"]["Job"];
             "storage/disks": components["schemas"]["DisksChanged"];
             "system/info": components["schemas"]["SystemInfo"];
         };
         TopicSnapshots: {
+            "files/+/+": components["schemas"]["FolderWatchState"];
+            "jobs/+": components["schemas"]["Job"];
             "storage/disks": components["schemas"]["DiskList"];
             "system/info": components["schemas"]["SystemInfo"];
         };
@@ -697,6 +1189,60 @@ export type components = {
             code?: null | string;
             /** @description One of the recovery codes shown when TOTP was enabled, instead of a code. */
             recoveryCode?: null | string;
+        };
+        /** @description One item in a share's recycle bin. */
+        TrashItem: {
+            /**
+             * Format: date-time
+             * @description When it was deleted, UTC.
+             */
+            deletedAt: string;
+            /** @description User name of who deleted it, if that user still exists. */
+            deletedBy: null | string;
+            /**
+             * Format: date-time
+             * @description When it is deleted for good, or null when the share keeps deleted items until emptied.
+             */
+            expiresAt: null | string;
+            /**
+             * Format: int64
+             * @description Id for restoring or deleting it.
+             */
+            id: number;
+            /** @description File, folder, symlink or another kind. */
+            kind: components["schemas"]["FileKind"];
+            /** @description Its name when it was deleted. */
+            name: string;
+            /** @description Where it was, relative to the share; restoring puts it back there. */
+            originalPath: string;
+            /**
+             * Format: int64
+             * @description Bytes, for a folder everything inside it.
+             */
+            size: number;
+        };
+        TrashItemsRequest: {
+            /** @description Items of the share's recycle bin, at most 1000. */
+            ids: number[];
+            onConflict?: null | components["schemas"]["ConflictPolicy"];
+        };
+        TrashPage: {
+            /** @description Newest first. */
+            items: components["schemas"]["TrashItem"][];
+            /** @description Pass as cursor for the next page; null on the last page. */
+            nextCursor: null | string;
+            /**
+             * Format: int32
+             * @description Days the share keeps deleted items; 0 keeps them until the bin is emptied.
+             */
+            retentionDays: number;
+        };
+        TrashSettingsRequest: {
+            /**
+             * Format: int32
+             * @description 0 to 3650; 0 keeps deleted items until the bin is emptied.
+             */
+            retentionDays: number;
         };
         UserInfo: {
             displayName: null | string;
@@ -1299,6 +1845,380 @@ export interface operations {
             };
         };
     };
+    DownloadFile: {
+        parameters: {
+            query: {
+                inline?: boolean;
+                path: string;
+            };
+            header?: never;
+            path: {
+                shareId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    UploadFile: {
+        parameters: {
+            query: {
+                overwrite?: boolean;
+                path: string;
+            };
+            header?: never;
+            path: {
+                shareId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FileEntry"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetFileEntry: {
+        parameters: {
+            query: {
+                path: string;
+            };
+            header?: never;
+            path: {
+                shareId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FileEntry"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    CreateFolder: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shareId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewFolderRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FileEntry"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    ListFolder: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
+                order?: string;
+                path?: string;
+                sort?: string;
+            };
+            header?: never;
+            path: {
+                shareId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FolderPage"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    RenameFileEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shareId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RenameRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FileEntry"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    ListTrash: {
+        parameters: {
+            query?: {
+                cursor?: string;
+                limit?: number;
+            };
+            header?: never;
+            path: {
+                shareId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TrashPage"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    DeleteTrashItems: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shareId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TrashItemsRequest"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    EmptyTrash: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shareId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    RestoreTrash: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shareId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TrashItemsRequest"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    StartFileOperation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FileOperationRequest"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
     GetHealth: {
         parameters: {
             query?: never;
@@ -1316,6 +2236,95 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["HealthResponse"];
                 };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    ListJobs: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"][];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetJob: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    CancelJob: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Problem details with a stable error code. */
             default: {
@@ -1378,6 +2387,164 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["SetupResponse"];
                 };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    ListShares: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShareInfo"][];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    CreateShare: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NewShare"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShareInfo"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    DeleteShare: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shareId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SetShareAccess: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shareId: number;
+                userId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShareAccessRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SetShareTrash: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shareId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TrashSettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Problem details with a stable error code. */
             default: {

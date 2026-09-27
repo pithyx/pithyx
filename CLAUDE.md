@@ -42,6 +42,7 @@ Claude Code loads them when working in those folders. They are as binding as thi
 - Every commit is signed off (`git commit -s`, DCO).
 - Branches: `master` is stable, `dev` is beta and the integration branch. Work in `feature/<name>`, `fix/<name>`, `hotfix/<name>`. PRs target `dev`. Never commit directly to `master` or `dev`.
 - GitHub branch protection is not available on the current plan; the lefthook `pre-push` hook refuses direct pushes to `master` and `dev` instead. New branches are pushed without an upstream on `dev` (`git branch --unset-upstream`), so a bare `git push` can never target `dev`.
+- Parallel work uses git worktrees only under `.worktrees/<name>` in the repository (gitignored), for example `git worktree add .worktrees/<name> -b feature/<name> origin/dev`. Remove a worktree and its local branch as soon as its PR is merged (`git worktree remove .worktrees/<name>`).
 - Claude may squash-merge a PR into `dev` once CI is green; merging into `master` always needs the owner. The squash commit uses the commit format above and ends with `Signed-off-by` for the merging GitHub account exactly as GitHub records the author (profile name and noreply address); otherwise the DCO check on `dev` fails.
 - Every user-visible or developer-relevant change adds a line under `Unreleased` in `CHANGELOG.md` (Keep a Changelog format).
 - Versioning: SemVer for the whole monorepo, releases tagged on `master` as `vX.Y.Z` with a constellation codename.

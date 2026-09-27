@@ -23,6 +23,14 @@ public sealed class SqliteConnectionFactory
 
     public string DatabasePath { get; }
 
+    /// <summary>A connection for synchronous callers such as permission checks of realtime events.</summary>
+    public SqliteConnection Open()
+    {
+        var connection = new SqliteConnection(_connectionString);
+        connection.Open();
+        return connection;
+    }
+
     public async Task<SqliteConnection> OpenAsync(CancellationToken cancellationToken)
     {
         var connection = new SqliteConnection(_connectionString);

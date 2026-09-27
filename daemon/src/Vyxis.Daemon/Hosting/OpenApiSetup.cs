@@ -58,6 +58,22 @@ public static class OpenApiSetup
 
         await AddRealtimeContractsAsync(document, context, cancellationToken);
 
+        // A failed job carries an error code and params, typed like those of a problem.
+        if (document.Components.Schemas.TryGetValue("Job", out var jobSchema) && jobSchema.Properties is { } job)
+        {
+            job["errorCode"] = new OpenApiSchema
+            {
+                OneOf = [new OpenApiSchema { Type = JsonSchemaType.Null }, new OpenApiSchemaReference("ErrorCode", document)],
+                Description = job["errorCode"].Description,
+            };
+            job["errorParams"] = new OpenApiSchema
+            {
+                Type = JsonSchemaType.Null | JsonSchemaType.Object,
+                AdditionalProperties = new OpenApiSchema(),
+                Description = job["errorParams"].Description,
+            };
+        }
+
         foreach (var path in document.Paths.Values)
         {
             if (path.Operations is null)
