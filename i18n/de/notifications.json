@@ -22,5 +22,15 @@
         "action": "Installieren"
       }
     }
+  },
+  "desktop": {
+    "restoreSkipped": {
+      "title": "Einige Fenster wurden nicht wiederhergestellt",
+      "body": "{count, plural, one {# Fenster gehört} other {# Fenster gehören}} zu einer App, die nicht mehr verfügbar ist."
+    },
+    "copied": {
+      "title": "Desktop geladen",
+      "body": "Die Fenster von {device} sind jetzt hier geöffnet."
+    }
   }
 }

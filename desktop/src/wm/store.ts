@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { findApp } from '../apps/registry';
+import { preferredSize } from './preferences';
 import { canOpen, initialState, reduce } from './state';
 import type { Action, DesktopState } from './types';
 
@@ -16,6 +17,13 @@ export function openApp(id: string, args?: unknown): boolean {
   if (app === undefined || !canOpen(useDesktop.getState(), id, app.window.instances)) {
     return false;
   }
-  dispatch({ type: 'open', app: id, options: app.window, ...(args === undefined ? {} : { args }) });
+  const size = preferredSize(id);
+  dispatch({
+    type: 'open',
+    app: id,
+    options: app.window,
+    ...(args === undefined ? {} : { args }),
+    ...(size === undefined ? {} : { size }),
+  });
   return true;
 }

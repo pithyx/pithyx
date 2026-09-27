@@ -31,3 +31,13 @@
   border-color: var(--color-danger);
   background: var(--color-danger-surface);
 }
+
+.deviceName {
+  display: block;
+}
+
+.deviceDetail {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+}

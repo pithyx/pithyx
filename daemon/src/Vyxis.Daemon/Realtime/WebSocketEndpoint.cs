@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using Vyxis.Daemon.Auth;
 using Vyxis.Daemon.Errors;
 using Vyxis.Daemon.Hosting;
+using Vyxis.Daemon.Layouts;
 
 namespace Vyxis.Daemon.Realtime;
 
@@ -15,7 +16,8 @@ namespace Vyxis.Daemon.Realtime;
 public static partial class WebSocketEndpoint
 {
     public const string Path = "/ws";
-    public const int MaxMessageBytes = 16 * 1024;
+    // A desktop layout is the largest client message (LayoutRules.MaxLayoutBytes plus the envelope).
+    public const int MaxMessageBytes = 64 * 1024;
     private static readonly TimeSpan _sessionCheckInterval = TimeSpan.FromHours(1);
 
     public static void MapRealtime(this IEndpointRouteBuilder app)
@@ -32,6 +34,7 @@ public static partial class WebSocketEndpoint
         TopicHub hub,
         TopicRegistry registry,
         SessionService sessions,
+        LayoutService layouts,
         TimeProvider time,
         IOptions<JsonOptions> json,
         ILoggerFactory loggers)
@@ -59,11 +62,12 @@ public static partial class WebSocketEndpoint
 
         var logger = loggers.CreateLogger(typeof(WebSocketEndpoint));
         var connection = hub.Connect(context.User, sessionId);
+        var client = new ClientContext(layouts, CurrentUser.Id(context.User), DeviceCookie.Read(context.Request), context.Request.Headers.UserAgent.ToString());
         LogConnected(logger, connection.Id);
         try
         {
             var writer = WriteAsync(socket, connection, context.RequestAborted);
-            var reader = ReadAsync(socket, connection, hub, registry, json.Value.SerializerOptions, logger, context.RequestAborted);
+            var reader = ReadAsync(socket, connection, hub, registry, client, json.Value.SerializerOptions, logger, context.RequestAborted);
             var session = WatchSessionAsync(connection, sessions, time, connection.Closing.Token);
             await Task.WhenAny(reader, writer);
             connection.Close(WebSocketCloseCode.NormalClosure);
@@ -156,6 +160,7 @@ public static partial class WebSocketEndpoint
         TopicHub.Connection connection,
         TopicHub hub,
         TopicRegistry registry,
+        ClientContext client,
         JsonSerializerOptions options,
         ILogger logger,
         CancellationToken aborted)
@@ -181,7 +186,7 @@ public static partial class WebSocketEndpoint
             {
                 return;
             }
-            await HandleMessageAsync(buffer.WrittenSpan.ToArray(), connection, hub, registry, options, logger, aborted);
+            await HandleMessageAsync(buffer.WrittenSpan.ToArray(), connection, hub, registry, client, options, logger, aborted);
         }
     }
 
@@ -190,6 +195,7 @@ public static partial class WebSocketEndpoint
         TopicHub.Connection connection,
         TopicHub hub,
         TopicRegistry registry,
+        ClientContext client,
         JsonSerializerOptions options,
         ILogger logger,
         CancellationToken cancellationToken)
@@ -213,7 +219,12 @@ public static partial class WebSocketEndpoint
             {
                 message = null;
             }
-            if (message is null || message.Type is not ("sub" or "unsub"))
+            if (message is { Type: "layout" })
+            {
+                await SaveLayoutAsync(message, connection, hub, client, cancellationToken);
+                return;
+            }
+            if (message is not { Type: "sub" or "unsub", Topic: not null })
             {
                 Fail(hub, connection, message?.Id ?? "", ErrorCodes.RealtimeMessageInvalid, null);
                 return;
@@ -250,6 +261,32 @@ public static partial class WebSocketEndpoint
         finally
         {
             Activity.Current = connectionActivity;
+        }
+    }
+
+    /// <summary>What the message handler needs to know about the client beyond its subscriptions.</summary>
+    private sealed record ClientContext(LayoutService Layouts, long UserId, string? DeviceId, string UserAgent);
+
+    private static async Task SaveLayoutAsync(ClientMessage message, TopicHub.Connection connection, TopicHub hub, ClientContext client, CancellationToken cancellationToken)
+    {
+        if (client.DeviceId is null)
+        {
+            Fail(hub, connection, message.Id, ErrorCodes.DesktopDeviceMissing, null);
+            return;
+        }
+        if (message.Data is not { } data)
+        {
+            Fail(hub, connection, message.Id, ErrorCodes.DesktopLayoutInvalid, null);
+            return;
+        }
+        try
+        {
+            await client.Layouts.SaveAsync(client.UserId, client.DeviceId, client.UserAgent, data, cancellationToken);
+            hub.Send(connection, new AckMessage(message.Id, Tracing.CurrentRequestId));
+        }
+        catch (VyxisException exception)
+        {
+            Fail(hub, connection, message.Id, exception.Code, exception.Parameters);
         }
     }
 

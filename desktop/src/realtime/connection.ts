@@ -32,6 +32,7 @@ class RealtimeConnection {
   private retryTimer: ReturnType<typeof setTimeout> | undefined;
   private nextId = 0;
   private onSessionEnded: () => void = () => undefined;
+  private pendingLayout: unknown = undefined;
 
   connect(onSessionEnded: () => void): void {
     this.onSessionEnded = onSessionEnded;
@@ -46,7 +47,27 @@ class RealtimeConnection {
     this.socket = null;
     socket?.close(1000);
     this.references.clear();
+    this.pendingLayout = undefined;
     useRealtime.setState({ status: 'idle', data: {} });
+  }
+
+  /** Saves the desktop layout of this browser; sent now or as soon as the connection is open. The latest wins. */
+  saveLayout(layout: unknown): void {
+    this.pendingLayout = layout;
+    this.flushLayout();
+  }
+
+  private flushLayout(): void {
+    if (this.pendingLayout !== undefined && this.socket?.readyState === WebSocket.OPEN) {
+      this.socket.send(
+        JSON.stringify({
+          type: 'layout',
+          id: `c${String(++this.nextId)}`,
+          data: this.pendingLayout,
+        }),
+      );
+      this.pendingLayout = undefined;
+    }
   }
 
   /** Subscribes to a topic; call the returned function to release it. */
@@ -84,6 +105,7 @@ class RealtimeConnection {
       for (const topic of this.references.keys()) {
         this.send('sub', topic);
       }
+      this.flushLayout();
     };
     socket.onmessage = (event: MessageEvent<string>) => {
       this.handle(JSON.parse(event.data) as ServerMessage);

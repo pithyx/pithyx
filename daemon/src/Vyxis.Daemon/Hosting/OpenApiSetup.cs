@@ -100,7 +100,7 @@ public static class OpenApiSetup
         }
 
         var client = await context.GetOrCreateSchemaAsync(typeof(ClientMessage), cancellationToken: cancellationToken);
-        client.Properties!["type"] = new OpenApiSchema { Type = JsonSchemaType.String, Enum = [JsonValue.Create("sub"), JsonValue.Create("unsub")] };
+        client.Properties!["type"] = new OpenApiSchema { Type = JsonSchemaType.String, Enum = [JsonValue.Create("sub"), JsonValue.Create("unsub"), JsonValue.Create("layout")] };
         schemas["ClientMessage"] = client;
 
         var variants = new Dictionary<string, (string Name, Type Type)>(StringComparer.Ordinal)

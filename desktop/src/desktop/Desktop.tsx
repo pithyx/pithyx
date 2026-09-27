@@ -1,5 +1,12 @@
-import { IconLanguage, IconLayoutBottombar, IconLogout, IconShieldLock } from '@tabler/icons-react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import {
+  IconDeviceDesktop,
+  IconDevices,
+  IconLanguage,
+  IconLayoutBottombar,
+  IconLogout,
+  IconShieldLock,
+} from '@tabler/icons-react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { unwrap, type components } from '@vyxis/api-client';
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { Header, MenuSection, SubmenuTrigger } from 'react-aria-components';
@@ -16,13 +23,16 @@ import { realtime, useRealtime } from '../realtime/connection';
 import { AppSwitcher } from '../shell/AppSwitcher';
 import { DesktopIcon } from '../shell/DesktopIcon';
 import { DesktopItems, DesktopShell } from '../shell/DesktopShell';
+import { ToastStack } from '../shell/Notifications';
 import { StartMenu } from '../shell/StartMenu';
 import { Taskbar } from '../shell/Taskbar';
 import type { RunningApp, TaskbarPosition } from '../shell/types';
+import { dismissToast, notify, useToasts } from '../shell/toasts';
 import { useDismiss } from '../shell/useDismiss';
 import { cx } from '../ui/cx';
 import { Menu, MenuItem, MenuPopover, MenuSeparator, MenuTrigger } from '../ui/Menu';
 import { useBackGesture } from '../wm/backGesture';
+import { applyLayout, flushLayoutSave, useLayoutPersistence } from '../wm/persistence';
 import { useSizeClass } from '../wm/sizeClass';
 import { dispatch, openApp, useDesktop } from '../wm/store';
 import { WindowLayer } from '../wm/WindowLayer';
@@ -41,6 +51,73 @@ const POPOVER_PLACEMENT = {
   right: 'start bottom',
 } as const;
 
+type DeviceLayout = components['schemas']['DeviceLayout'];
+
+function useDeviceLabel(): (device: Pick<DeviceLayout, 'browser' | 'os'>) => string {
+  const { t } = useTranslation();
+  return (device) =>
+    t('menu.device', {
+      browser: device.browser ?? t('menu.unknownBrowser'),
+      os: device.os ?? t('menu.unknownOs'),
+    });
+}
+
+function ago(iso: string, locale: string): string {
+  const format = new Intl.RelativeTimeFormat(locale, { numeric: 'auto' });
+  const minutes = Math.round((new Date(iso).getTime() - Date.now()) / 60_000);
+  if (Math.abs(minutes) < 60) {
+    return format.format(minutes, 'minute');
+  }
+  const hours = Math.round(minutes / 60);
+  return Math.abs(hours) < 48
+    ? format.format(hours, 'hour')
+    : format.format(Math.round(hours / 24), 'day');
+}
+
+/** "Get desktop from ...": the user's other devices with a saved layout, loaded when the submenu opens. */
+function DevicesMenu({ onPick }: { onPick: (device: DeviceLayout) => void }) {
+  const { t, i18n } = useTranslation();
+  const label = useDeviceLabel();
+  const devices = useQuery({
+    queryKey: ['desktop', 'devices'],
+    queryFn: async ({ signal }) => unwrap(await api.GET('/api/desktop/devices', { signal })),
+    staleTime: 0,
+  });
+  return (
+    <Menu
+      aria-label={t('menu.getDesktop')}
+      onAction={(key) => {
+        const device = devices.data?.find((entry) => entry.deviceId === key);
+        if (device !== undefined) {
+          onPick(device);
+        }
+      }}
+    >
+      {devices.data?.length === 0 && (
+        <MenuItem id="none" isDisabled>
+          {t('menu.noDevices')}
+        </MenuItem>
+      )}
+      {devices.data?.map((device) => (
+        <MenuItem
+          key={device.deviceId}
+          id={device.deviceId}
+          textValue={label(device)}
+          icon={<IconDeviceDesktop size={18} stroke={1.75} />}
+        >
+          <span className={styles.deviceName}>{label(device)}</span>
+          <span className={styles.deviceDetail}>
+            {t('menu.deviceDetail', {
+              count: device.windowCount,
+              time: ago(device.updatedAt, i18n.language),
+            })}
+          </span>
+        </MenuItem>
+      ))}
+    </Menu>
+  );
+}
+
 function UserMenu({
   trigger,
   name,
@@ -58,6 +135,16 @@ function UserMenu({
 }) {
   const { t } = useTranslation();
   const status = useDaemonStatus();
+  const label = useDeviceLabel();
+  const copy = useMutation({
+    mutationFn: async (device: DeviceLayout) =>
+      unwrap(await api.POST('/api/desktop/layout/copy', { body: { deviceId: device.deviceId } })),
+    onSuccess: (layout, device) => {
+      applyLayout(layout);
+      notify({ code: 'desktop.copied', params: { device: label(device) } });
+    },
+    onError: showError,
+  });
   return (
     <MenuTrigger>
       {trigger}
@@ -86,6 +173,18 @@ function UserMenu({
               </MenuItem>
               <MenuPopover>
                 <LanguageOptions />
+              </MenuPopover>
+            </SubmenuTrigger>
+            <SubmenuTrigger>
+              <MenuItem id="devices" icon={<IconDevices size={18} stroke={1.75} />}>
+                {t('menu.getDesktop')}
+              </MenuItem>
+              <MenuPopover>
+                <DevicesMenu
+                  onPick={(device) => {
+                    copy.mutate(device);
+                  }}
+                />
               </MenuPopover>
             </SubmenuTrigger>
             {canMoveTaskbar && (
@@ -187,6 +286,8 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   const switcherButton = useRef<HTMLButtonElement>(null);
   const switcher = useRef<HTMLElement>(null);
   const workspace = useWorkspaceSize();
+  useLayoutPersistence();
+  const toasts = useToasts((state) => state.items);
   const running = useRunningApps();
   const focused = useDesktop((state) => state.focused);
   const sizeClass = useSizeClass();
@@ -206,12 +307,13 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
     });
     return () => {
       realtime.disconnect();
-      dispatch({ type: 'closeAll' });
     };
   }, [queryClient]);
 
   const logout = useMutation({
     mutationFn: async () => {
+      // The daemon closes the WebSocket on sign-out; a save still waiting for its debounce goes out first.
+      flushLayoutSave();
       unwrap(await api.POST('/api/auth/logout'));
     },
     onSuccess: async () => {
@@ -331,6 +433,17 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
               }}
             />
           )}
+          <ToastStack
+            position={taskbarPosition}
+            locale={i18n.language}
+            items={toasts.map((toast) => ({
+              id: toast.id,
+              app: { icon: IconDeviceDesktop, tone: 'petrol', name: t('brand') },
+              message: toast.message,
+              minutesAgo: 0,
+            }))}
+            onDismiss={dismissToast}
+          />
           {switcherOpen && (
             <AppSwitcher
               switcherRef={switcher}

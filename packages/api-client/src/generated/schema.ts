@@ -129,6 +129,70 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/desktop": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetDesktop"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/desktop/devices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ListDesktopDevices"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/desktop/layout/copy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["CopyDesktopLayout"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/desktop/preferences/{appId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["SetWindowPreference"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/disks": {
         parameters: {
             query?: never;
@@ -181,7 +245,7 @@ export type paths = {
 export type webhooks = Record<string, never>;
 export type components = {
     schemas: {
-        /** @description Confirms a `sub` or `unsub`. For `sub`, the snapshots of matching topics follow. */
+        /** @description Confirms a `sub`, `unsub` or `layout`. For `sub`, the snapshots of matching topics follow. */
         AckMessage: {
             id: string;
             requestId: string;
@@ -207,17 +271,49 @@ export type components = {
             title: string;
             type: string;
         };
-        /** @description A message from the client: `sub` or `unsub` for a topic or pattern. */
+        /**
+         * @description A message from the client: `sub` or `unsub` for a topic or pattern, or `layout` to save the desktop
+         *     layout of this browser (debounced by the desktop).
+         */
         ClientMessage: {
+            /** @description The layout for `layout`. */
+            data?: unknown;
             /** @description Chosen by the client; echoed in the ack, snapshots and errors that answer this message. */
             id: string;
-            /** @description Topic name or pattern with `+` and `#`. */
-            topic: string;
+            /** @description Topic name or pattern with `+` and `#`; required for `sub` and `unsub`. */
+            topic?: null | string;
             /** @enum {string} */
-            type: "sub" | "unsub";
+            type: "sub" | "unsub" | "layout";
+        };
+        CopyLayoutRequest: {
+            deviceId: string;
         };
         /** @enum {unknown} */
         DaemonMode: "real" | "simulated";
+        DesktopState: {
+            layout: null | components["schemas"]["JsonElement"];
+            /** @description Window preferences of the user for every app, shared across devices. */
+            preferences: components["schemas"]["WindowPreference"][];
+        };
+        /** @description Another device of the user with a saved layout. */
+        DeviceLayout: {
+            /** @description Browser product name from the User-Agent, if known. */
+            browser: null | string;
+            /** @description Pass to `POST /api/desktop/layout/copy`. */
+            deviceId: string;
+            /** @description Operating system name from the User-Agent, if known. */
+            os: null | string;
+            /**
+             * Format: date-time
+             * @description When the layout was last saved (UTC).
+             */
+            updatedAt: string;
+            /**
+             * Format: int64
+             * @description Windows in the layout.
+             */
+            windowCount: number;
+        };
         Disk: {
             /** @description Stable across reboots and device renames: `wwn-...`, else `serial-...`, else `path-...`. */
             id: string;
@@ -305,7 +401,7 @@ export type components = {
             }[];
         };
         /** @enum {string} */
-        ErrorCode: "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "system.internal.unexpected" | "system.origin.forbidden";
+        ErrorCode: "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.missing" | "desktop.device.not_found" | "desktop.layout.invalid" | "desktop.layout.too_large" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "system.internal.unexpected" | "system.origin.forbidden";
         /** @description A failed client message. `id` is empty when the message could not be parsed. */
         ErrorMessage: {
             code: components["schemas"]["ErrorCode"];
@@ -335,6 +431,7 @@ export type components = {
             mode: components["schemas"]["DaemonMode"];
             status: string;
         };
+        JsonElement: unknown;
         LoginRequest: {
             password: string;
             username: string;
@@ -470,6 +567,26 @@ export type components = {
         };
         /** @enum {integer} */
         WebSocketCloseCode: 1000 | 1001 | 1008 | 1009 | 4401 | 4403;
+        WindowPreference: {
+            /** @description The app the preference belongs to. */
+            appId: string;
+            /**
+             * Format: int32
+             * @description Last free height in CSS pixels.
+             */
+            height: number;
+            /**
+             * Format: int32
+             * @description Last free width of the app's windows in CSS pixels.
+             */
+            width: number;
+        };
+        WindowPreferenceRequest: {
+            /** Format: int32 */
+            height: number;
+            /** Format: int32 */
+            width: number;
+        };
     };
     responses: never;
     parameters: never;
@@ -715,6 +832,130 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["TotpEnrollment"];
                 };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetDesktop: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DesktopState"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    ListDesktopDevices: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DeviceLayout"][];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    CopyDesktopLayout: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CopyLayoutRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["JsonElement"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SetWindowPreference: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                appId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WindowPreferenceRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Problem details with a stable error code. */
             default: {

@@ -54,12 +54,12 @@ test('opens, focuses, minimizes and closes windows', async ({ page }) => {
   });
 
   await test.step('maximize and restore', async () => {
-    const before = await about.boundingBox();
+    const before = await box(about);
     await about.getByRole('button', { name: 'Maximize' }).click();
     const workspace = await page.getByRole('main', { name: 'Desktop' }).boundingBox();
-    await expect.poll(async () => (await about.boundingBox())?.width).toBe(workspace?.width);
+    await expect.poll(async () => (await box(about)).width).toBe(workspace?.width);
     await about.getByRole('button', { name: 'Restore' }).click();
-    await expect.poll(async () => (await about.boundingBox())?.width).toBe(before?.width);
+    await expect.poll(async () => (await box(about)).width).toBe(before.width);
   });
 
   await test.step('close', async () => {
@@ -104,6 +104,10 @@ interface Box {
 }
 
 async function box(locator: Locator): Promise<Box> {
+  // A window that was just restored plays its entrance, even if only for a millisecond under reduced motion.
+  await locator.evaluate((element) =>
+    Promise.all(element.getAnimations().map((animation) => animation.finished)),
+  );
   const result = await locator.boundingBox();
   if (result === null) {
     throw new Error('element is not visible');

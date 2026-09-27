@@ -408,6 +408,152 @@
           }
         }
       }
+    },
+    "/api/desktop": {
+      "get": {
+        "tags": [
+          "Desktop"
+        ],
+        "operationId": "GetDesktop",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesktopState"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/desktop/devices": {
+      "get": {
+        "tags": [
+          "Desktop"
+        ],
+        "operationId": "ListDesktopDevices",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DeviceLayout"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/desktop/layout/copy": {
+      "post": {
+        "tags": [
+          "Desktop"
+        ],
+        "operationId": "CopyDesktopLayout",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CopyLayoutRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JsonElement"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/desktop/preferences/{appId}": {
+      "put": {
+        "tags": [
+          "Desktop"
+        ],
+        "operationId": "SetWindowPreference",
+        "parameters": [
+          {
+            "name": "appId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WindowPreferenceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -433,7 +579,7 @@
             "type": "string"
           }
         },
-        "description": "Confirms a `sub` or `unsub`. For `sub`, the snapshots of matching topics follow."
+        "description": "Confirms a `sub`, `unsub` or `layout`. For `sub`, the snapshots of matching topics follow."
       },
       "ApiProblem": {
         "required": [
@@ -476,15 +622,15 @@
       "ClientMessage": {
         "required": [
           "type",
-          "id",
-          "topic"
+          "id"
         ],
         "type": "object",
         "properties": {
           "type": {
             "enum": [
               "sub",
-              "unsub"
+              "unsub",
+              "layout"
             ],
             "type": "string"
           },
@@ -493,17 +639,102 @@
             "description": "Chosen by the client; echoed in the ack, snapshots and errors that answer this message."
           },
           "topic": {
-            "type": "string",
-            "description": "Topic name or pattern with `+` and `#`."
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Topic name or pattern with `+` and `#`; required for `sub` and `unsub`."
+          },
+          "data": {
+            "description": "The layout for `layout`."
           }
         },
-        "description": "A message from the client: `sub` or `unsub` for a topic or pattern."
+        "description": "A message from the client: `sub` or `unsub` for a topic or pattern, or `layout` to save the desktop\nlayout of this browser (debounced by the desktop)."
+      },
+      "CopyLayoutRequest": {
+        "required": [
+          "deviceId"
+        ],
+        "type": "object",
+        "properties": {
+          "deviceId": {
+            "type": "string"
+          }
+        }
       },
       "DaemonMode": {
         "enum": [
           "real",
           "simulated"
         ]
+      },
+      "DesktopState": {
+        "required": [
+          "layout",
+          "preferences"
+        ],
+        "type": "object",
+        "properties": {
+          "layout": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "The saved layout of this device (schema in the desktop, `version` 1), or null.",
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            ]
+          },
+          "preferences": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WindowPreference"
+            },
+            "description": "Window preferences of the user for every app, shared across devices."
+          }
+        }
+      },
+      "DeviceLayout": {
+        "required": [
+          "deviceId",
+          "browser",
+          "os",
+          "windowCount",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "deviceId": {
+            "type": "string",
+            "description": "Pass to `POST /api/desktop/layout/copy`."
+          },
+          "browser": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Browser product name from the User-Agent, if known."
+          },
+          "os": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Operating system name from the User-Agent, if known."
+          },
+          "windowCount": {
+            "type": "integer",
+            "description": "Windows in the layout.",
+            "format": "int64"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "When the layout was last saved (UTC).",
+            "format": "date-time"
+          }
+        },
+        "description": "Another device of the user with a saved layout."
       },
       "Disk": {
         "required": [
@@ -784,6 +1015,10 @@
           "auth.totp.not_enrolled",
           "auth.username.invalid",
           "auth.username.reserved",
+          "desktop.device.missing",
+          "desktop.device.not_found",
+          "desktop.layout.invalid",
+          "desktop.layout.too_large",
           "realtime.message.invalid",
           "realtime.topic.invalid",
           "realtime.topic.unknown",
@@ -869,6 +1104,7 @@
           }
         }
       },
+      "JsonElement": { },
       "LoginRequest": {
         "required": [
           "username",
@@ -1310,6 +1546,47 @@
           "SessionEnded",
           "Forbidden"
         ]
+      },
+      "WindowPreference": {
+        "required": [
+          "appId",
+          "width",
+          "height"
+        ],
+        "type": "object",
+        "properties": {
+          "appId": {
+            "type": "string",
+            "description": "The app the preference belongs to."
+          },
+          "width": {
+            "type": "integer",
+            "description": "Last free width of the app's windows in CSS pixels.",
+            "format": "int32"
+          },
+          "height": {
+            "type": "integer",
+            "description": "Last free height in CSS pixels.",
+            "format": "int32"
+          }
+        }
+      },
+      "WindowPreferenceRequest": {
+        "required": [
+          "width",
+          "height"
+        ],
+        "type": "object",
+        "properties": {
+          "width": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "height": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
       }
     }
   },
@@ -1325,6 +1602,9 @@
     },
     {
       "name": "Auth"
+    },
+    {
+      "name": "Desktop"
     }
   ]
 }

@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Layout memory: the desktop saves its windows, stacking order, focus and taskbar position per user and device over the WebSocket (new client message `layout`, debounced by one second, flushed before sign-out and when the page goes away) and restores them after sign-in or a reload. Windows of apps that are gone are skipped with a notice, and geometry from a larger screen is brought into view.
+- A long-lived HttpOnly cookie `vyxis_device` identifies each browser profile; it is set when a session starts. "Get desktop from ..." in the account menu lists the user's other devices (browser and system from the User-Agent) and copies a layout to this device (`GET /api/desktop`, `GET /api/desktop/devices`, `POST /api/desktop/layout/copy`).
+- Closing a window on a large screen remembers its size for the app's next window, for the user on every device (`PUT /api/desktop/preferences/{appId}`).
+- Saved layouts expire 90 days after their last save; an hourly job deletes them. Layouts hold at most 50 windows and 16 KB of app data. New error codes `desktop.layout.invalid`, `desktop.layout.too_large`, `desktop.device.missing` and `desktop.device.not_found`.
+- Migration 0002 adds `desktop_layouts`, `window_preferences` and `desktop_items` (the desktop items UI follows later).
+- Notification toasts for desktop events, dismissable, gone after eight seconds.
 - Phones: apps run full screen; the app switcher in the taskbar shows every open app (tap to switch, close one or all), a horizontal swipe along the taskbar switches to the next or previous app, and the Android back gesture or browser back returns to the home screen without leaving the desktop.
 - Tablets: windows open maximized; snapping from the window menu or the keyboard puts two apps side by side.
 - Windows move by their title bar and resize from every edge and corner with live content, never below the app's minimum size and always with part of the title bar reachable. Dragging to a side edge snaps to a half (thirds on workspaces at least 2400 px wide), dragging to the top edge maximizes, a snapped or maximized window gets its free size back when pulled away, and a double click on the title bar maximizes or restores. A preview shows the snap target.

@@ -22,5 +22,15 @@
         "action": "Install"
       }
     }
+  },
+  "desktop": {
+    "restoreSkipped": {
+      "title": "Some windows were not restored",
+      "body": "{count, plural, one {# window belongs} other {# windows belong}} to an app that is no longer available."
+    },
+    "copied": {
+      "title": "Desktop loaded",
+      "body": "The windows from {device} are now open here."
+    }
   }
 }

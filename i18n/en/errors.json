@@ -42,6 +42,16 @@
       "reserved": "The user name {username} is reserved for the system."
     }
   },
+  "desktop": {
+    "device": {
+      "missing": "This browser has no device id. Reload the page to get one.",
+      "not_found": "No saved desktop was found for that device. It may have expired."
+    },
+    "layout": {
+      "invalid": "The desktop layout could not be saved because it is not in a known format.",
+      "too_large": "The desktop layout is too large to save. At most {maxWindows} windows and {maxAppDataKb} KB of app data are kept."
+    }
+  },
   "realtime": {
     "message": {
       "invalid": "The live connection received a message it does not understand."

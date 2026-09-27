@@ -62,6 +62,18 @@ public static class ErrorCodes
     public const string AuthUsernameReserved = "auth.username.reserved";
 
     [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string DesktopDeviceMissing = "desktop.device.missing";
+
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string DesktopDeviceNotFound = "desktop.device.not_found";
+
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string DesktopLayoutInvalid = "desktop.layout.invalid";
+
+    [ErrorStatus(HttpStatusCode.RequestEntityTooLarge)]
+    public const string DesktopLayoutTooLarge = "desktop.layout.too_large";
+
+    [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string RealtimeMessageInvalid = "realtime.message.invalid";
 
     [ErrorStatus(HttpStatusCode.BadRequest)]

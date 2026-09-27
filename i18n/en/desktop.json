@@ -14,7 +14,13 @@
     "signedInAs": "Signed in as {name}",
     "personalization": "Personalization",
     "languageCurrent": "Language: {language}",
-    "taskbar": "Taskbar position"
+    "taskbar": "Taskbar position",
+    "getDesktop": "Get desktop from",
+    "noDevices": "No other devices",
+    "device": "{browser} on {os}",
+    "unknownBrowser": "A browser",
+    "unknownOs": "an unknown system",
+    "deviceDetail": "{count, plural, one {# window} other {# windows}}, {time}"
   },
   "error": {
     "title": "Something went wrong",

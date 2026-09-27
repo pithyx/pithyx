@@ -14,7 +14,13 @@
     "signedInAs": "Angemeldet als {name}",
     "personalization": "Personalisierung",
     "languageCurrent": "Sprache: {language}",
-    "taskbar": "Position der Taskleiste"
+    "taskbar": "Position der Taskleiste",
+    "getDesktop": "Desktop holen von",
+    "noDevices": "Keine anderen Geräte",
+    "device": "{browser} auf {os}",
+    "unknownBrowser": "Ein Browser",
+    "unknownOs": "einem unbekannten System",
+    "deviceDetail": "{count, plural, one {# Fenster} other {# Fenster}}, {time}"
   },
   "error": {
     "title": "Etwas ist schiefgelaufen",
