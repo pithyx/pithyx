@@ -310,8 +310,8 @@ Spec first, then implementation together with the sample apps. Freeze SDK 1.0 on
 
 - [ ] Unit tests for the window store and the SDK RPC layer. Window store done (`desktop/src/wm/*.test.ts`); the SDK RPC layer comes with 5.3.
 - [x] Playwright: open, drag, resize, maximize, restore, close; layout survives a reload. Run at phone, tablet, laptop and ultrawide sizes with touch and mouse.
-- [ ] Accessibility checks (axe) in CI; keyboard-only walkthrough of login and desktop.
-- [ ] Performance budgets as CI tests: initial desktop bundle under 200 KB gzip, desktop usable after login under 1 s on repeat visit. The bundle budget runs in CI (`pnpm check:bundle`, 5 percent tolerance against `tools/checks/bundle-budget.json`); the login time budget is open.
+- [ ] Accessibility checks (axe) in CI; keyboard-only walkthrough of login and desktop. axe (WCAG 2.2 AA) runs in E2E for sign-in, reset, desktop, start menu, window and account menus and the phone switcher; the keyboard-only walkthrough is covered in parts (window shortcuts, window menu, start menu) and still needs a full pass.
+- [x] Performance budgets as CI tests: initial desktop bundle under 200 KB gzip, desktop usable after login under 1 s on repeat visit. The bundle budget runs in CI (`pnpm check:bundle`, 5 percent tolerance against `tools/checks/bundle-budget.json`); the sign-in budget is an E2E test (median of three sign-ins under 1 s, about 400 ms on dev01).
 
 **Done when:** the plain TypeScript sample app opens in a window, sets its title, sends a notification and restores its state after a reload, and the owner confirms the desktop feels right. `[REVIEW]`
 
