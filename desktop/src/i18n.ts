@@ -1,56 +1,90 @@
 import i18next from 'i18next';
-import ICU from 'i18next-icu';
 import { initReactI18next } from 'react-i18next';
-import deAuth from '../../i18n/de/auth.json';
-import deDesktop from '../../i18n/de/desktop.json';
-import deDisks from '../../i18n/de/disks.json';
-import deErrors from '../../i18n/de/errors.json';
-import deFiles from '../../i18n/de/files.json';
-import deJobs from '../../i18n/de/jobs.json';
-import deLogs from '../../i18n/de/logs.json';
-import deNotifications from '../../i18n/de/notifications.json';
-import deSettings from '../../i18n/de/settings.json';
-import deStorage from '../../i18n/de/storage.json';
-import enAuth from '../../i18n/en/auth.json';
-import enDesktop from '../../i18n/en/desktop.json';
-import enDisks from '../../i18n/en/disks.json';
-import enErrors from '../../i18n/en/errors.json';
-import enFiles from '../../i18n/en/files.json';
-import enJobs from '../../i18n/en/jobs.json';
-import enLogs from '../../i18n/en/logs.json';
-import enNotifications from '../../i18n/en/notifications.json';
-import enSettings from '../../i18n/en/settings.json';
-import enStorage from '../../i18n/en/storage.json';
+import { icuFormat } from './icuFormat';
+import { desktopNamespaces, signInNamespaces } from './i18nNamespaces';
+import type auth from '../../i18n/en/auth.json';
+import type desktop from '../../i18n/en/desktop.json';
+import type disks from '../../i18n/en/disks.json';
+import type errors from '../../i18n/en/errors.json';
+import type files from '../../i18n/en/files.json';
+import type jobs from '../../i18n/en/jobs.json';
+import type logs from '../../i18n/en/logs.json';
+import type notifications from '../../i18n/en/notifications.json';
+import type settings from '../../i18n/en/settings.json';
+import type storage from '../../i18n/en/storage.json';
 
-export const resources = {
-  en: {
-    desktop: enDesktop,
-    auth: enAuth,
-    disks: enDisks,
-    errors: enErrors,
-    files: enFiles,
-    storage: enStorage,
-    settings: enSettings,
-    notifications: enNotifications,
-    jobs: enJobs,
-    logs: enLogs,
-  },
-  de: {
-    desktop: deDesktop,
-    auth: deAuth,
-    disks: deDisks,
-    errors: deErrors,
-    files: deFiles,
-    storage: deStorage,
-    settings: deSettings,
-    notifications: deNotifications,
-    jobs: deJobs,
-    logs: deLogs,
-  },
-} as const;
+/** The English texts define the keys; every other language has the same (checked by i18n.test.ts). */
+export interface Resources {
+  desktop: typeof desktop;
+  auth: typeof auth;
+  disks: typeof disks;
+  errors: typeof errors;
+  files: typeof files;
+  storage: typeof storage;
+  settings: typeof settings;
+  notifications: typeof notifications;
+  jobs: typeof jobs;
+  logs: typeof logs;
+}
+type Namespace = keyof Resources;
 
-export type Language = keyof typeof resources;
-export const languages = Object.keys(resources) as Language[];
+export const languages = ['en', 'de'] as const;
+export type Language = (typeof languages)[number];
+
+// Only the active language is loaded, each namespace when a chunk needs it (i18nNamespaces.ts).
+// Compiled at build time (scripts/compile-messages.ts), formatted by icuFormat.
+const translationFiles = import.meta.glob<object>('../../i18n/*/*.json', {
+  query: '?compiled',
+  import: 'default',
+});
+// Namespaces asked for so far; a language switch loads the same ones in the new language.
+const requested = new Set<Namespace>();
+let markReady: () => void = () => undefined;
+const ready = new Promise<void>((resolve) => {
+  markReady = resolve;
+});
+
+function fetchNamespaces(
+  language: Language,
+  namespaces: readonly Namespace[],
+): Promise<(readonly [Namespace, object])[]> {
+  namespaces.forEach((namespace) => requested.add(namespace));
+  return Promise.all(
+    namespaces.map(async (namespace) => {
+      const load = translationFiles[`../../i18n/${language}/${namespace}.json`];
+      if (load === undefined) {
+        throw new Error(`Missing translation file ${language}/${namespace}.json`);
+      }
+      return [namespace, await load()] as const;
+    }),
+  );
+}
+
+async function loadNamespaces(language: Language, namespaces: readonly Namespace[]): Promise<void> {
+  for (const [namespace, bundle] of await fetchNamespaces(language, namespaces)) {
+    i18next.addResourceBundle(language, namespace, bundle, true, true);
+  }
+}
+
+/** Loads namespaces in the active language, for a chunk that needs them. May run before initI18n. */
+export async function loadTranslations(...namespaces: Namespace[]): Promise<void> {
+  await ready;
+  const language = languages.find((code) => code === i18next.language) ?? 'en';
+  await loadNamespaces(language, namespaces);
+}
+
+/** Loads every namespace, for the design gallery, which shows every app at once. */
+export function loadAllTranslations(): Promise<void> {
+  const namespaces = Object.keys(translationFiles)
+    .filter((path) => path.startsWith('../../i18n/en/'))
+    .map((path) => path.replace('../../i18n/en/', '').replace('.json', '') as Namespace);
+  return loadTranslations(...namespaces);
+}
+
+/** Loads the texts of the desktop shell; the desktop chunk waits for them. */
+export function loadDesktopTranslations(): Promise<void> {
+  return loadTranslations(...desktopNamespaces);
+}
 
 // A per-device convenience; it moves to the user profile once profiles exist.
 const STORAGE_KEY = 'pithyx.language';
@@ -58,7 +92,7 @@ const STORAGE_KEY = 'pithyx.language';
 declare module 'i18next' {
   interface CustomTypeOptions {
     defaultNS: 'desktop';
-    resources: (typeof resources)['en'];
+    resources: Resources;
   }
 }
 
@@ -98,21 +132,28 @@ export async function setLanguage(language: Language | null): Promise<void> {
     // Storage can be unavailable (private mode); the choice then lasts for this page only.
   }
   const effective = language ?? detectLanguage(navigator.languages);
+  await loadNamespaces(effective, [...requested]);
   document.documentElement.lang = effective;
   await i18next.changeLanguage(effective);
 }
 
-export async function initI18n(): Promise<void> {
-  const language = storedLanguage() ?? detectLanguage(navigator.languages);
-  document.documentElement.lang = language;
+/** Starts i18next with the sign-in texts of the device's language, or of `language` when given. */
+export async function initI18n(language?: Language): Promise<void> {
+  const effective = language ?? storedLanguage() ?? detectLanguage(navigator.languages);
+  document.documentElement.lang = effective;
+  const bundles = await fetchNamespaces(effective, signInNamespaces);
   await i18next
-    .use(ICU)
+    .use(icuFormat)
     .use(initReactI18next)
     .init({
-      resources,
-      lng: language,
-      fallbackLng: 'en',
+      resources: { [effective]: Object.fromEntries(bundles) },
+      partialBundledLanguages: true,
+      lng: effective,
+      // Every language has every key, so no fallback language is loaded.
+      fallbackLng: false,
+      ns: [...signInNamespaces],
       defaultNS: 'desktop',
       interpolation: { escapeValue: false },
     });
+  markReady();
 }

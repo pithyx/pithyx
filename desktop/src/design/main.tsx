@@ -3,7 +3,7 @@ import '../theme/index.css';
 import i18next from 'i18next';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { initI18n } from '../i18n';
+import { initI18n, loadAllTranslations } from '../i18n';
 import { Gallery, taskbarFrom } from './Gallery';
 import { screens } from './screens';
 
@@ -21,12 +21,9 @@ const accent = params.get('accent') ?? 'petrol';
 document.documentElement.dataset.accent = accent;
 const taskbar = taskbarFrom(params.get('taskbar'));
 
-await initI18n();
 const lang = params.get('lang');
-if (lang === 'en' || lang === 'de') {
-  document.documentElement.lang = lang;
-  await i18next.changeLanguage(lang);
-}
+await initI18n(lang === 'en' || lang === 'de' ? lang : undefined);
+await loadAllTranslations();
 
 const screen = screens.find((entry) => entry.id === params.get('screen'));
 if (screen !== undefined) {

@@ -3,7 +3,21 @@ import { describe, expect, it } from 'vitest';
 import { errorCodes } from '@pithyx/api-client';
 import { sdkErrorCodes } from '@pithyx/sdk';
 import { coreApps } from './apps/registry';
-import { detectLanguage, resources } from './i18n';
+import { detectLanguage, languages } from './i18n';
+import { desktopNamespaces, signInNamespaces } from './i18nNamespaces';
+
+const files = import.meta.glob<object>('../../i18n/*/*.json', { eager: true, import: 'default' });
+
+function textsOf(language: string): Record<string, object> {
+  return Object.fromEntries(
+    Object.entries(files)
+      .filter(([path]) => path.startsWith(`../../i18n/${language}/`))
+      .map(([path, texts]) => [
+        path.replace(`../../i18n/${language}/`, '').replace('.json', ''),
+        texts,
+      ]),
+  );
+}
 
 function flatten(value: object, prefix = ''): Map<string, string> {
   const entries = new Map<string, string>();
@@ -21,21 +35,19 @@ function flatten(value: object, prefix = ''): Map<string, string> {
 }
 
 describe('translations', () => {
-  const en = flatten(resources.en);
-  const de = flatten(resources.de);
+  const en = flatten(textsOf('en'));
+  const de = flatten(textsOf('de'));
 
   it('have the same keys in en and de', () => {
     expect([...de.keys()].sort()).toEqual([...en.keys()].sort());
   });
 
-  it('load every translation file', () => {
-    const files = Object.keys(import.meta.glob('../../i18n/*/*.json')).map((path) =>
-      path.replace('../../i18n/', '').replace('.json', ''),
-    );
-    const loaded = Object.entries(resources).flatMap(([language, namespaces]) =>
-      Object.keys(namespaces).map((ns) => `${language}/${ns}`),
-    );
-    expect(loaded.sort()).toEqual(files.sort());
+  it('have the same files in every language, with the sign-in and desktop namespaces among them', () => {
+    const namespaces = Object.keys(textsOf('en')).sort();
+    for (const language of languages) {
+      expect(Object.keys(textsOf(language)).sort(), language).toEqual(namespaces);
+    }
+    expect(namespaces).toEqual(expect.arrayContaining([...signInNamespaces, ...desktopNamespaces]));
   });
 
   it('explain every SDK transport code in en and de', () => {

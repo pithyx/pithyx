@@ -9,12 +9,13 @@ import { SetupScreen } from './auth/SetupScreen';
 import { Unreachable } from './auth/Unreachable';
 import { isSessionExpired } from './errors/describe';
 import { useErrorStore } from './errors/errorStore';
+import { loadDesktopTranslations } from './i18n';
 import { realtime, useRealtime } from './realtime/connection';
 import { AuthLayout } from './shell/AuthLayout';
 
 type User = components['schemas']['UserInfo'];
 
-// The desktop (with React Aria and the window manager) is its own chunk. The sign-in screen prefetches it, so after
+// The desktop (with React Aria, the window manager and the texts of its apps) is its own chunk. The sign-in screen prefetches it, so after
 // signing in only the WebSocket is left to wait for. It is rendered only once loaded instead of through lazy() and
 // Suspense: React holds back content that resolves after suspending for up to 300 ms, which the welcome card would
 // have to cover for nothing.
@@ -24,12 +25,14 @@ const desktopListeners = new Set<() => void>();
 let desktopLoading: Promise<void> | undefined;
 
 function loadDesktop(): Promise<void> {
-  desktopLoading ??= import('./desktop/Desktop').then((module) => {
-    desktopModule = module;
-    for (const listener of desktopListeners) {
-      listener();
-    }
-  });
+  desktopLoading ??= Promise.all([import('./desktop/Desktop'), loadDesktopTranslations()]).then(
+    ([module]) => {
+      desktopModule = module;
+      for (const listener of desktopListeners) {
+        listener();
+      }
+    },
+  );
   return desktopLoading;
 }
 
