@@ -12,7 +12,9 @@ import { useTranslation } from 'react-i18next';
 import { AppSwitcher } from '../shell/AppSwitcher';
 import { DesktopIcon } from '../shell/DesktopIcon';
 import { DesktopItems, DesktopShell } from '../shell/DesktopShell';
-import { NotificationPanel, ToastStack } from '../shell/Notifications';
+import { JobList } from '../shell/JobList';
+import { NotificationPanel } from '../shell/NotificationPanel';
+import { ToastStack } from '../shell/Notifications';
 import { StartMenu, type StartResults } from '../shell/StartMenu';
 import { StickyNote } from '../shell/StickyNote';
 import { Taskbar } from '../shell/Taskbar';
@@ -306,7 +308,7 @@ export function NotificationsScene({ context, panel }: { context: SceneContext; 
       overlays={
         panel ? (
           <NotificationPanel
-            jobs={jobs}
+            jobs={<JobList jobs={jobs} />}
             items={items}
             locale={context.locale}
             position={context.taskbar}

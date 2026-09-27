@@ -36,6 +36,7 @@ import { DesktopShell } from '../shell/DesktopShell';
 import { itemsQuery, settleItemWrites } from '../items/query';
 import { AriaLocale } from '../ui/AriaLocale';
 import { ToastStack } from '../shell/Notifications';
+import { bannerAlert, useStorageAlerts } from '../shell/storageAlerts';
 import { StartMenu } from '../shell/StartMenu';
 import { Taskbar } from '../shell/Taskbar';
 import type { RunningApp, TaskbarPosition } from '../shell/types';
@@ -266,6 +267,13 @@ function UserMenu({
 // The desktop items (icons, notes, their menus and gestures) are a chunk of their own that starts loading together with
 // this one and shows once it and the items query are there; the taskbar and windows never wait for it.
 // Setting up two-factor sign-in is rare; its dialog loads when it is opened, not with the desktop.
+// Storage alerts (banner and notification panel) load when an administrator has one or opens the bell.
+const AlertBanner = lazy(() =>
+  import('../shell/StorageAlertViews').then(({ AlertBanner }) => ({ default: AlertBanner })),
+);
+const AlertPanel = lazy(() =>
+  import('../shell/StorageAlertViews').then(({ AlertPanel }) => ({ default: AlertPanel })),
+);
 const TotpSetup = lazy(() =>
   import('../auth/TotpSetup').then(({ TotpSetup }) => ({ default: TotpSetup })),
 );
@@ -349,6 +357,11 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   const [startOpen, setStartOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [switcherOpen, setSwitcherOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const notificationsButton = useRef<HTMLButtonElement>(null);
+  const notificationsPanel = useRef<HTMLElement>(null);
+  const alerts = useStorageAlerts(user.isAdmin);
+  const banner = bannerAlert(alerts);
   const startButton = useRef<HTMLButtonElement>(null);
   const startMenu = useRef<HTMLDivElement>(null);
   const switcherButton = useRef<HTMLButtonElement>(null);
@@ -410,6 +423,12 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   useDismiss(startMenu, startButton, startOpen, (reason) => {
     closeStart(reason === 'escape');
   });
+  useDismiss(notificationsPanel, notificationsButton, notificationsOpen, (reason) => {
+    setNotificationsOpen(false);
+    if (reason === 'escape') {
+      notificationsButton.current?.focus();
+    }
+  });
   useDismiss(switcher, switcherButton, switcherOpen, (reason) => {
     setSwitcherOpen(false);
     if (reason === 'escape') {
@@ -468,7 +487,12 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
               dispatch(id === focused ? { type: 'minimize', id } : { type: 'focus', id });
             }}
             jobs={0}
-            unread={0}
+            unread={alerts.filter((alert) => !alert.muted).length}
+            notificationsOpen={notificationsOpen}
+            notificationsRef={notificationsButton}
+            onNotifications={() => {
+              setNotificationsOpen(!notificationsOpen);
+            }}
             now={now}
             locale={i18n.language}
           />
@@ -544,6 +568,22 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
                   dispatch({ type: 'closeAll' });
                 }}
               />
+            )}
+            {notificationsOpen && (
+              <Suspense>
+                <AlertPanel
+                  panelRef={notificationsPanel}
+                  alerts={alerts}
+                  now={now}
+                  locale={i18n.language}
+                  position={taskbarPosition}
+                />
+              </Suspense>
+            )}
+            {banner !== undefined && status === 'open' && (
+              <Suspense>
+                <AlertBanner alert={banner} />
+              </Suspense>
             )}
             {status === 'reconnecting' && (
               <p className={styles.banner} role="status">

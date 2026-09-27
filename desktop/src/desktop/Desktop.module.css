@@ -32,6 +32,14 @@
   background: var(--color-danger-surface);
 }
 
+.alertBanner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding-block: var(--space-1);
+  padding-inline-end: var(--space-1);
+}
+
 .deviceName {
   display: block;
 }

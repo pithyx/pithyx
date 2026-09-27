@@ -116,7 +116,12 @@
     "jobs": "Laufende Aufgaben",
     "recent": "Neueste",
     "clearAll": "Alle löschen",
-    "dismiss": "Verwerfen"
+    "dismiss": "Verwerfen",
+    "mute": "Stummschalten",
+    "unmute": "Wieder zeigen",
+    "muted": "Stummgeschaltet",
+    "storage": "Speicherzustand",
+    "empty": "Keine Benachrichtigungen."
   },
   "switcher": {
     "title": "Geöffnete Apps",
@@ -183,5 +188,9 @@
     "noticesTitle": "Software von Dritten",
     "licenseText": "Lizenztext",
     "noticesMissing": "Die Liste der Software von Dritten konnte nicht geladen werden."
+  },
+  "storageAlert": {
+    "open": "Speicher öffnen",
+    "more": "{count, plural, one {und # weiterer Hinweis} other {und # weitere Hinweise}}"
   }
 }

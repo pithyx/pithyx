@@ -116,7 +116,12 @@
     "jobs": "Running tasks",
     "recent": "Recent",
     "clearAll": "Clear all",
-    "dismiss": "Dismiss"
+    "dismiss": "Dismiss",
+    "mute": "Mute",
+    "unmute": "Show again",
+    "muted": "Muted",
+    "storage": "Storage health",
+    "empty": "No notifications."
   },
   "switcher": {
     "title": "Open apps",
@@ -183,5 +188,9 @@
     "noticesTitle": "Third-party software",
     "licenseText": "License text",
     "noticesMissing": "The list of third-party software could not be loaded."
+  },
+  "storageAlert": {
+    "open": "Open Storage",
+    "more": "{count, plural, one {and # more alert} other {and # more alerts}}"
   }
 }
