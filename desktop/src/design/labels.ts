@@ -9,7 +9,7 @@ export const labels = {
   themes: { both: 'Light and dark', light: 'Light', dark: 'Dark' },
   accent: 'Accent',
   taskbar: 'Taskbar',
-  taskbarPositions: { bottom: 'Bottom', top: 'Top' },
+  taskbarPositions: { bottom: 'Bottom', top: 'Top', left: 'Left', right: 'Right' },
   language: 'Language',
   languages: { en: 'English', de: 'German' },
   ultrawide: 'Show ultrawide',
