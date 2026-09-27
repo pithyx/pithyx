@@ -14,6 +14,9 @@ function workspace(page: Page) {
 }
 
 async function box(locator: Locator) {
+  // boundingBox() does not wait, and expect.poll does not retry a callback that throws: a new icon that is still
+  // arriving from the daemon must be on screen first.
+  await locator.waitFor({ state: 'visible' });
   const rect = await locator.boundingBox();
   if (rect === null) {
     throw new Error('element has no box');
