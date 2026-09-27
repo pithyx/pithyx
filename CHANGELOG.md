@@ -79,3 +79,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `ICommandRunner` can stream the lines of long-running commands such as `udevadm monitor`; simulation replays recorded streams.
 - `tools/fixtures/record.sh` replaces serial numbers and WWNs in recorded JSON with stable pseudonyms.
 - The generated client includes the WebSocket message types and the data type of every topic.
+
+### Fixed
+
+- Opening the account menu or the start menu's power menu can no longer sign you out by accident. A menu that opened while its button moved could sit under the pointer, and releasing the button then picked "Sign out"; "Sign out" now needs a press that starts on it. The taskbar also takes no presses while it slides in after sign-in, and it slides in only once instead of again after every move to another screen edge.

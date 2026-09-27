@@ -11,7 +11,14 @@ import {
 } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
 import { IconButton } from '../ui/Button';
-import { Menu, MenuItem, MenuPopover, MenuSeparator, MenuTrigger } from '../ui/Menu';
+import {
+  Menu,
+  MenuItem,
+  MenuPopover,
+  MenuSeparator,
+  MenuTrigger,
+  useDeliberatePress,
+} from '../ui/Menu';
 import { SearchField } from '../ui/TextField';
 import { AppIcon } from './AppIcon';
 import styles from './StartMenu.module.css';
@@ -89,6 +96,7 @@ export function StartMenu({
   power = true,
 }: StartMenuProps) {
   const { t } = useTranslation();
+  const signOut = useDeliberatePress();
   const groups = [
     { key: 'apps', title: t('start.results.apps'), entries: results.apps },
     { key: 'settings', title: t('start.results.settings'), entries: results.settings },
@@ -230,12 +238,16 @@ export function StartMenu({
             <Menu
               aria-label={t('start.power')}
               onAction={(key) => {
-                if (key === 'sign-out') {
+                if (key === 'sign-out' && signOut.confirm()) {
                   onSignOut?.();
                 }
               }}
             >
-              <MenuItem id="sign-out" icon={<IconLogout size={18} stroke={1.75} />}>
+              <MenuItem
+                id="sign-out"
+                icon={<IconLogout size={18} stroke={1.75} />}
+                {...signOut.pressProps}
+              >
                 {t('menu.signOut')}
               </MenuItem>
               {power && (
