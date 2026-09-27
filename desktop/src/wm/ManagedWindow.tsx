@@ -2,10 +2,15 @@ import { Suspense, useEffect, useRef } from 'react';
 import { findApp } from '../apps/registry';
 import { useAppName } from '../apps/names';
 import { WindowFrame, type MediumPlacement } from '../shell/Window';
-import { mediumZone, zoneRect } from './geometry';
+import { mediumZone, zoneRect, type Edge } from './geometry';
+import { startDrag, startResize } from './pointer';
 import { useSizeClass } from './sizeClass';
 import { dispatch, useDesktop } from './store';
 import type { Rect } from './types';
+import { WindowMenu } from './WindowMenu';
+import styles from './WindowLayer.module.css';
+
+const EDGES: readonly Edge[] = ['n', 's', 'e', 'w', 'ne', 'nw', 'se', 'sw'];
 
 function px(value: number): string {
   return `${String(value)}px`;
@@ -35,6 +40,9 @@ export function ManagedWindow({ id }: { id: string }) {
   }
 
   const { placement } = windowState;
+  const title = windowState.title ?? appName(windowState.app);
+  const expanded = sizeClass === 'expanded';
+  const free = expanded && placement.kind === 'free';
   let rect: Rect = windowState.rect;
   let medium: MediumPlacement = 'max';
   if (placement.kind === 'snapped') {
@@ -52,7 +60,7 @@ export function ManagedWindow({ id }: { id: string }) {
     <WindowFrame
       frameRef={frame}
       app={app}
-      title={windowState.title ?? appName(windowState.app)}
+      title={title}
       focused={focused}
       maximized={placement.kind === 'maximized'}
       minimized={windowState.minimized}
@@ -60,6 +68,40 @@ export function ManagedWindow({ id }: { id: string }) {
       medium={medium}
       compactActive={focused && sizeClass === 'compact'}
       layer={layer}
+      icon={<WindowMenu id={id} app={app} title={title} placement={placement} free={free} />}
+      titlebarProps={
+        expanded
+          ? {
+              className: styles.draggable,
+              onPointerDown: (event) => {
+                if (frame.current !== null) {
+                  startDrag(event, id, frame.current);
+                }
+              },
+              onDoubleClick: (event) => {
+                if ((event.target as Element).closest('button') === null) {
+                  dispatch({ type: 'toggleMaximize', id });
+                }
+              },
+            }
+          : undefined
+      }
+      decorations={
+        free &&
+        EDGES.map((edge) => (
+          <div
+            key={edge}
+            className={styles.handle}
+            data-edge={edge}
+            aria-hidden
+            onPointerDown={(event) => {
+              if (frame.current !== null) {
+                startResize(event, id, frame.current, edge);
+              }
+            }}
+          />
+        ))
+      }
       onFocusRequest={request}
       onMinimize={() => {
         dispatch({ type: 'minimize', id });

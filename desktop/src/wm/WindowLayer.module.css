@@ -1,0 +1,127 @@
+.draggable {
+  touch-action: none;
+}
+
+.menuButton {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-left: calc(-1 * var(--space-1));
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  cursor: default;
+}
+
+.menuButton[data-hovered],
+.menuButton[data-pressed] {
+  background: var(--color-surface-hover);
+}
+
+.menuButton[data-focus-visible] {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
+/* Resize handles sit on the inside of the frame, which clips everything outside its border. */
+.handle {
+  position: absolute;
+  z-index: 1;
+  touch-action: none;
+}
+
+.handle[data-edge='n'],
+.handle[data-edge='s'] {
+  right: 12px;
+  left: 12px;
+  height: 6px;
+  cursor: ns-resize;
+}
+
+.handle[data-edge='e'],
+.handle[data-edge='w'] {
+  top: 12px;
+  bottom: 12px;
+  width: 6px;
+  cursor: ew-resize;
+}
+
+.handle[data-edge='n'] {
+  top: 0;
+}
+
+.handle[data-edge='s'] {
+  bottom: 0;
+}
+
+.handle[data-edge='e'] {
+  right: 0;
+}
+
+.handle[data-edge='w'] {
+  left: 0;
+}
+
+.handle[data-edge='ne'],
+.handle[data-edge='nw'],
+.handle[data-edge='se'],
+.handle[data-edge='sw'] {
+  width: 12px;
+  height: 12px;
+}
+
+.handle[data-edge='ne'] {
+  top: 0;
+  right: 0;
+  cursor: nesw-resize;
+}
+
+.handle[data-edge='sw'] {
+  bottom: 0;
+  left: 0;
+  cursor: nesw-resize;
+}
+
+.handle[data-edge='nw'] {
+  top: 0;
+  left: 0;
+  cursor: nwse-resize;
+}
+
+.handle[data-edge='se'] {
+  right: 0;
+  bottom: 0;
+  cursor: nwse-resize;
+}
+
+@media (pointer: coarse) {
+  .handle[data-edge='ne'],
+  .handle[data-edge='nw'],
+  .handle[data-edge='se'],
+  .handle[data-edge='sw'] {
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.preview {
+  position: absolute;
+  z-index: calc(var(--z-taskbar) - 1);
+  top: var(--y);
+  left: var(--x);
+  width: var(--w);
+  height: var(--h);
+  border: 2px solid var(--color-accent);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--color-accent) 16%, transparent);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--duration-fast) var(--ease-standard);
+}
+
+.preview[data-visible='true'] {
+  opacity: 1;
+}

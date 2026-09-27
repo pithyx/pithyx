@@ -95,3 +95,138 @@ test('the start menu searches and opens apps', async ({ page }) => {
   await page.getByRole('main', { name: 'Desktop' }).click({ position: { x: 700, y: 400 } });
   await expect(menu).toBeHidden();
 });
+
+interface Box {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+async function box(locator: Locator): Promise<Box> {
+  const result = await locator.boundingBox();
+  if (result === null) {
+    throw new Error('element is not visible');
+  }
+  return result;
+}
+
+async function drag(page: Page, from: { x: number; y: number }, to: { x: number; y: number }) {
+  await page.mouse.move(from.x, from.y);
+  await page.mouse.down();
+  await page.mouse.move(to.x, to.y, { steps: 10 });
+  await page.mouse.up();
+}
+
+function center(rect: Box) {
+  return { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+}
+
+test('drag, resize and snap with the mouse', async ({ page }) => {
+  await openFromDesktop(page, 'About Vyxis');
+  const about = appWindow(page, 'About Vyxis');
+  const title = about.getByRole('heading', { name: 'About Vyxis', exact: true });
+  const workspace = await box(page.getByRole('main', { name: 'Desktop' }));
+
+  await test.step('drag by the title bar', async () => {
+    const start = await box(about);
+    const grip = center(await box(title));
+    await drag(page, grip, { x: grip.x + 120, y: grip.y + 60 });
+    await expect.poll(async () => (await box(about)).x).toBeCloseTo(start.x + 120, 0);
+    expect((await box(about)).y).toBeCloseTo(start.y + 60, 0);
+  });
+
+  await test.step('resize from the top left corner, not below the minimum size', async () => {
+    const start = await box(about);
+    const corner = { x: start.x + 4, y: start.y + 4 };
+    await drag(page, corner, { x: corner.x - 80, y: corner.y - 40 });
+    await expect.poll(async () => (await box(about)).width).toBeCloseTo(start.width + 80, 0);
+    const grown = await box(about);
+    expect(grown.height).toBeCloseTo(start.height + 40, 0);
+    expect(grown.x + grown.width).toBeCloseTo(start.x + start.width, 0);
+    const again = { x: grown.x + 4, y: grown.y + 4 };
+    await drag(page, again, { x: again.x + 2000, y: again.y });
+    await expect.poll(async () => (await box(about)).width).toBe(320);
+  });
+
+  await test.step('snap to the left half by dragging to the edge', async () => {
+    const grip = center(await box(title));
+    await drag(page, grip, { x: workspace.x + 2, y: grip.y + 100 });
+    await expect.poll(async () => (await box(about)).x).toBe(workspace.x);
+    expect((await box(about)).width).toBe(Math.round(workspace.width / 2));
+    expect((await box(about)).height).toBe(workspace.height);
+  });
+
+  await test.step('pulling a snapped window away restores its size', async () => {
+    const grip = center(await box(title));
+    await drag(page, grip, { x: grip.x + 300, y: grip.y + 150 });
+    await expect.poll(async () => (await box(about)).width).toBe(320);
+  });
+
+  await test.step('maximize by dragging to the top edge, restore by double click', async () => {
+    const grip = center(await box(title));
+    await drag(page, grip, { x: grip.x, y: workspace.y + 1 });
+    await expect.poll(async () => (await box(about)).width).toBe(workspace.width);
+    await title.dblclick();
+    await expect.poll(async () => (await box(about)).width).toBe(320);
+  });
+});
+
+test('keyboard shortcuts and the window menu', async ({ page }) => {
+  await openFromDesktop(page, 'About Vyxis');
+  const about = appWindow(page, 'About Vyxis');
+  await expect(about).toBeFocused();
+  const workspace = await box(page.getByRole('main', { name: 'Desktop' }));
+  const free = await box(about);
+
+  await page.keyboard.press('Alt+Shift+ArrowRight');
+  await expect
+    .poll(async () => (await box(about)).x)
+    .toBe(workspace.x + Math.round(workspace.width / 2));
+  await page.keyboard.press('Alt+Shift+ArrowUp');
+  await expect.poll(async () => (await box(about)).width).toBe(workspace.width);
+  await page.keyboard.press('Alt+Shift+ArrowDown');
+  await expect.poll(async () => (await box(about)).width).toBe(free.width);
+  await page.keyboard.press('Alt+Shift+ArrowDown');
+  await expect(about).toBeHidden();
+  await page.keyboard.press('Alt+Shift+PageDown');
+  await expect(about).toBeVisible();
+
+  await about.getByRole('button', { name: 'Window menu for About Vyxis' }).click();
+  await page.getByRole('menuitem', { name: 'Move' }).click();
+  const before = await box(about);
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('Shift+ArrowDown');
+  await page.keyboard.press('Enter');
+  await expect.poll(async () => (await box(about)).x).toBeCloseTo(before.x + 32, 0);
+  expect((await box(about)).y).toBeCloseTo(before.y + 1, 0);
+
+  await page.keyboard.press('Alt+Shift+Space');
+  await page.getByRole('menuitem', { name: 'Size' }).click();
+  const sized = await box(about);
+  await page.keyboard.press('ArrowRight');
+  await page.keyboard.press('Escape');
+  await expect.poll(async () => (await box(about)).width).toBe(sized.width);
+
+  await about.getByRole('button', { name: 'Window menu for About Vyxis' }).click();
+  await page.getByRole('menuitem', { name: 'Close' }).click();
+  await expect(about).toHaveCount(0);
+});
+
+test('the taskbar moves to the left and back', async ({ page }) => {
+  const taskbar = page.getByRole('navigation', { name: 'Taskbar' });
+  const moveTaskbar = async (position: string) => {
+    await page.getByRole('button', { name: 'Account menu for Ada Admin' }).click();
+    await page.getByRole('menuitem', { name: 'Taskbar position' }).click();
+    await page.getByRole('menuitemradio', { name: position }).click();
+  };
+  await moveTaskbar('Left');
+  const viewport = page.viewportSize();
+  await expect.poll(async () => (await box(taskbar)).height).toBe(viewport?.height);
+  expect((await box(taskbar)).x).toBe(0);
+  const workspace = await box(page.getByRole('main', { name: 'Desktop' }));
+  expect(workspace.x).toBe((await box(taskbar)).width);
+  await moveTaskbar('Bottom');
+  await expect.poll(async () => (await box(taskbar)).width).toBe(viewport?.width);
+});

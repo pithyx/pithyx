@@ -1,4 +1,4 @@
-import { IconLanguage, IconLogout, IconShieldLock } from '@tabler/icons-react';
+import { IconLanguage, IconLayoutBottombar, IconLogout, IconShieldLock } from '@tabler/icons-react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { unwrap, type components } from '@vyxis/api-client';
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
@@ -17,10 +17,11 @@ import { DesktopIcon } from '../shell/DesktopIcon';
 import { DesktopItems, DesktopShell } from '../shell/DesktopShell';
 import { StartMenu } from '../shell/StartMenu';
 import { Taskbar } from '../shell/Taskbar';
-import type { RunningApp } from '../shell/types';
+import type { RunningApp, TaskbarPosition } from '../shell/types';
 import { useDismiss } from '../shell/useDismiss';
 import { cx } from '../ui/cx';
 import { Menu, MenuItem, MenuPopover, MenuSeparator, MenuTrigger } from '../ui/Menu';
+import { useSizeClass } from '../wm/sizeClass';
 import { dispatch, openApp, useDesktop } from '../wm/store';
 import { WindowLayer } from '../wm/WindowLayer';
 import { useMinuteClock } from './clock';
@@ -28,14 +29,28 @@ import styles from './Desktop.module.css';
 
 type User = components['schemas']['UserInfo'];
 
+const TASKBAR_POSITIONS: readonly TaskbarPosition[] = ['bottom', 'top', 'left', 'right'];
+
+/** Where a popover opens from the status area, so it never covers the taskbar. */
+const POPOVER_PLACEMENT = {
+  bottom: 'top end',
+  top: 'bottom end',
+  left: 'end bottom',
+  right: 'start bottom',
+} as const;
+
 function UserMenu({
   trigger,
   name,
+  position,
+  canMoveTaskbar,
   onTwoFactor,
   onSignOut,
 }: {
   trigger: ReactNode;
   name: string;
+  position: TaskbarPosition;
+  canMoveTaskbar: boolean;
   onTwoFactor: () => void;
   onSignOut: () => void;
 }) {
@@ -44,7 +59,7 @@ function UserMenu({
   return (
     <MenuTrigger>
       {trigger}
-      <MenuPopover placement="top end">
+      <MenuPopover placement={POPOVER_PLACEMENT[position]}>
         <Menu
           aria-label={t('taskbar.userMenu', { name })}
           onAction={(key) => {
@@ -71,6 +86,32 @@ function UserMenu({
                 <LanguageOptions />
               </MenuPopover>
             </SubmenuTrigger>
+            {canMoveTaskbar && (
+              <SubmenuTrigger>
+                <MenuItem id="taskbar" icon={<IconLayoutBottombar size={18} stroke={1.75} />}>
+                  {t('menu.taskbar')}
+                </MenuItem>
+                <MenuPopover>
+                  <Menu
+                    aria-label={t('menu.taskbar')}
+                    selectionMode="single"
+                    selectedKeys={[position]}
+                    onAction={(key) => {
+                      const next = TASKBAR_POSITIONS.find((entry) => entry === key);
+                      if (next !== undefined) {
+                        dispatch({ type: 'setTaskbar', position: next });
+                      }
+                    }}
+                  >
+                    {TASKBAR_POSITIONS.map((entry) => (
+                      <MenuItem key={entry} id={entry}>
+                        {t(`taskbar.position.${entry}`)}
+                      </MenuItem>
+                    ))}
+                  </Menu>
+                </MenuPopover>
+              </SubmenuTrigger>
+            )}
           </MenuSection>
           <MenuSeparator />
           <MenuItem id="sign-out" icon={<IconLogout size={18} stroke={1.75} />}>
@@ -143,7 +184,10 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   const workspace = useWorkspaceSize();
   const running = useRunningApps();
   const focused = useDesktop((state) => state.focused);
-  const taskbarPosition = useDesktop((state) => state.taskbar);
+  const sizeClass = useSizeClass();
+  // Phones always keep the taskbar at the bottom, next to the thumb.
+  const savedPosition = useDesktop((state) => state.taskbar);
+  const taskbarPosition = sizeClass === 'compact' ? 'bottom' : savedPosition;
   const name = user.displayName ?? user.username;
 
   // The WebSocket lives as long as the desktop; a closed session sends the user back to the login screen.
@@ -224,6 +268,8 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
             <UserMenu
               trigger={trigger}
               name={name}
+              position={taskbarPosition}
+              canMoveTaskbar={sizeClass !== 'compact'}
               onTwoFactor={() => {
                 setTotpOpen(true);
               }}

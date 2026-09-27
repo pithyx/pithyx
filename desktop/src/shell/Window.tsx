@@ -36,7 +36,7 @@ export interface WindowFrameProps {
   /** Replaces the app icon in the title bar, for example with the window menu button. */
   icon?: ReactNode;
   /** Pointer and mouse handlers of the title bar (dragging, double click). */
-  titlebarProps?: HTMLAttributes<HTMLElement>;
+  titlebarProps?: HTMLAttributes<HTMLElement> | undefined;
   /** Extra elements inside the frame, for example resize handles. */
   decorations?: ReactNode;
   onFocusRequest?: () => void;
@@ -90,7 +90,7 @@ export function WindowFrame({
       onPointerDownCapture={onFocusRequest}
       onFocusCapture={onFocusRequest}
     >
-      <header {...titlebarProps} className={styles.titlebar}>
+      <header {...titlebarProps} className={cx(styles.titlebar, titlebarProps?.className)}>
         {icon ?? <AppIcon app={app} size={20} className={styles.icon} />}
         <h2 id={titleId} className={styles.title}>
           {title}

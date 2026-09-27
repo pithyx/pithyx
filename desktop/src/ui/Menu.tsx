@@ -1,6 +1,7 @@
 import { IconCheck, IconChevronRight } from '@tabler/icons-react';
 import type { ReactNode } from 'react';
 import {
+  Keyboard,
   Menu as AriaMenu,
   MenuItem as AriaMenuItem,
   Popover,
@@ -32,9 +33,11 @@ export interface MenuItemProps extends Omit<AriaMenuItemProps, 'className' | 'ch
   icon?: ReactNode;
   children: ReactNode;
   tone?: 'default' | 'danger';
+  /** Keyboard shortcut shown at the end of the item. */
+  shortcut?: string;
 }
 
-export function MenuItem({ icon, children, tone = 'default', ...props }: MenuItemProps) {
+export function MenuItem({ icon, children, tone = 'default', shortcut, ...props }: MenuItemProps) {
   const textValue = typeof children === 'string' ? children : props.textValue;
   return (
     <AriaMenuItem
@@ -46,6 +49,7 @@ export function MenuItem({ icon, children, tone = 'default', ...props }: MenuIte
         <>
           {icon !== undefined && <span className={styles.icon}>{icon}</span>}
           <span className={styles.label}>{children}</span>
+          {shortcut !== undefined && <Keyboard className={styles.shortcut}>{shortcut}</Keyboard>}
           {selectionMode !== 'none' && (
             <span className={styles.check} aria-hidden>
               {isSelected && <IconCheck size={16} stroke={2} />}

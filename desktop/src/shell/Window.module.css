@@ -14,7 +14,33 @@
   box-shadow: var(--shadow-2);
   transition:
     box-shadow var(--duration-fast) var(--ease-standard),
-    border-color var(--duration-fast) var(--ease-standard);
+    border-color var(--duration-fast) var(--ease-standard),
+    top var(--duration-normal) var(--ease-standard),
+    left var(--duration-normal) var(--ease-standard),
+    width var(--duration-normal) var(--ease-standard),
+    height var(--duration-normal) var(--ease-standard);
+  animation: window-in var(--duration-normal) var(--ease-enter);
+}
+
+@keyframes window-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+/* While a window is dragged or resized, geometry follows the pointer without transitions, and window contents
+   (iframes above all) do not take the pointer events. */
+:root[data-wm-interacting] {
+  user-select: none;
+}
+
+:root[data-wm-interacting] .window {
+  transition: none;
+}
+
+:root[data-wm-interacting] .content {
+  pointer-events: none;
 }
 
 .focused {

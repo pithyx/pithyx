@@ -13,7 +13,8 @@
     "signOut": "Sign out",
     "signedInAs": "Signed in as {name}",
     "personalization": "Personalization",
-    "languageCurrent": "Language: {language}"
+    "languageCurrent": "Language: {language}",
+    "taskbar": "Taskbar position"
   },
   "error": {
     "title": "Something went wrong",
@@ -44,7 +45,13 @@
     "switcher": "{count, plural, one {Switch apps, # open} other {Switch apps, # open}}",
     "jobs": "{count, plural, one {# running task} other {# running tasks}}",
     "notifications": "{count, plural, =0 {Notifications} one {Notifications, # unread} other {Notifications, # unread}}",
-    "userMenu": "Account menu for {name}"
+    "userMenu": "Account menu for {name}",
+    "position": {
+      "bottom": "Bottom",
+      "top": "Top",
+      "left": "Left",
+      "right": "Right"
+    }
   },
   "start": {
     "label": "Start menu",
@@ -70,7 +77,29 @@
     "minimize": "Minimize",
     "maximize": "Maximize",
     "restore": "Restore",
-    "close": "Close"
+    "close": "Close",
+    "menu": "Window menu for {title}",
+    "move": "Move",
+    "size": "Size",
+    "snapLeft": "Snap left",
+    "snapRight": "Snap right",
+    "keys": {
+      "left": "Alt+Shift+←",
+      "right": "Alt+Shift+→",
+      "up": "Alt+Shift+↑",
+      "down": "Alt+Shift+↓"
+    },
+    "announce": {
+      "snapped": "{title} snapped",
+      "maximized": "{title} maximized",
+      "restored": "{title} restored",
+      "minimized": "{title} minimized",
+      "focused": "{title}",
+      "move": "Moving {title}. Arrow keys move it, Shift with an arrow key moves by one pixel, Enter confirms, Escape cancels.",
+      "size": "Resizing {title}. Arrow keys change the size, Shift with an arrow key by one pixel, Enter confirms, Escape cancels.",
+      "done": "{title}: done",
+      "cancelled": "{title}: cancelled"
+    }
   },
   "notifications": {
     "title": "Notifications",

@@ -18,6 +18,8 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:8994',
     locale: 'en-US',
+    // Motion collapses to 1 ms, so geometry is final when a test measures it; this also covers the reduced-motion path.
+    reducedMotion: 'reduce',
     trace: 'retain-on-failure',
   },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],

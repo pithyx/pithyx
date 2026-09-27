@@ -99,6 +99,15 @@
   top: calc(var(--taskbar-size) + env(safe-area-inset-top) + var(--space-3));
 }
 
+/* Next to a vertical taskbar the status area is at its bottom end, so toasts and the panel sit bottom right. */
+.stack:is([data-position='left'], [data-position='right']) {
+  bottom: var(--space-3);
+}
+
+.stack[data-position='right'] {
+  right: calc(var(--taskbar-size) + 8px + var(--space-3));
+}
+
 .panel {
   position: absolute;
   right: var(--space-2);
@@ -121,6 +130,15 @@
 
 .panel[data-position='top'] {
   top: calc(var(--taskbar-size) + env(safe-area-inset-top) + var(--space-2));
+}
+
+.panel:is([data-position='left'], [data-position='right']) {
+  bottom: var(--space-2);
+  max-height: calc(100% - 2 * var(--space-2));
+}
+
+.panel[data-position='right'] {
+  right: calc(var(--taskbar-size) + 8px + var(--space-2));
 }
 
 .panelHeader {
