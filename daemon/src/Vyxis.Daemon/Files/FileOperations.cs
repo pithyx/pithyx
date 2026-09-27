@@ -31,12 +31,24 @@ public enum ConflictPolicy
 /// <param name="Path">Path relative to the share.</param>
 public sealed record FileLocation(long ShareId, string Path);
 
+/// <summary>Every entry of a folder except some names: selecting a whole folder without sending its names.</summary>
+/// <param name="Folder">The folder whose entries are meant.</param>
+/// <param name="Except">Names left out, at most 1000.</param>
+public sealed record FolderSelection(FileLocation Folder, IReadOnlyList<string> Except);
+
 /// <param name="Kind">copy, move or delete.</param>
-/// <param name="Items">The files and folders to work on, at most 1000.</param>
+/// <param name="Items">The files and folders to work on, at most 1000. Leave out when <c>AllIn</c> is given.</param>
 /// <param name="Target">The folder to copy or move into; not used for delete.</param>
 /// <param name="OnConflict">For copy and move; fail when left out.</param>
 /// <param name="Permanent">For delete: remove for good instead of moving to the share's recycle bin. Only when the user asked for it.</param>
-public sealed record FileOperationRequest(FileOperationKind Kind, IReadOnlyList<FileLocation> Items, FileLocation? Target = null, ConflictPolicy? OnConflict = null, bool Permanent = false);
+/// <param name="AllIn">Instead of <c>Items</c>: every entry of a folder except the listed names.</param>
+public sealed record FileOperationRequest(
+    FileOperationKind Kind,
+    IReadOnlyList<FileLocation>? Items = null,
+    FileLocation? Target = null,
+    ConflictPolicy? OnConflict = null,
+    bool Permanent = false,
+    FolderSelection? AllIn = null);
 
 /// <summary>The result of a finished file operation job.</summary>
 /// <param name="Done">Entries copied, moved or deleted (folders count once, plus their contents).</param>
@@ -58,14 +70,16 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
     {
         ArgumentNullException.ThrowIfNull(user);
         ArgumentNullException.ThrowIfNull(request);
-        if (request.Items is not { Count: > 0 and <= MaxItems } || (request.Kind != FileOperationKind.Delete) != (request.Target is not null))
+        var hasItems = request.Items is { Count: > 0 and <= MaxItems };
+        var hasFolder = request.AllIn is { Except.Count: <= MaxItems };
+        if (hasItems == hasFolder || (request.Items is not null && request.AllIn is not null) || (request.Kind != FileOperationKind.Delete) != (request.Target is not null))
         {
             throw new VyxisException(ErrorCodes.FsOperationInvalid);
         }
         var writesSource = request.Kind != FileOperationKind.Copy;
-        var sources = new List<(ResolvedShare Share, string Path)>(request.Items.Count);
+        var sources = new List<(ResolvedShare Share, string Path)>();
         var resolved = new Dictionary<long, ResolvedShare>();
-        foreach (var item in request.Items)
+        foreach (var item in request.Items ?? await ExpandAsync(user, request.AllIn!, writesSource, resolved, cancellationToken))
         {
             var path = FsPath.Normalize(item.Path);
             if (path.Length == 0)
@@ -267,6 +281,32 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
             trash.Forget(id);
             throw;
         }
+    }
+
+    /// <summary>The entries of a folder selection, read on the daemon, so the client never sends a whole folder's names.</summary>
+    private async Task<IReadOnlyList<FileLocation>> ExpandAsync(ClaimsPrincipal user, FolderSelection selection, bool write, Dictionary<long, ResolvedShare> resolved, CancellationToken cancellationToken)
+    {
+        var share = await ResolveAsync(user, selection.Folder.ShareId, write, resolved, cancellationToken);
+        var folder = FsPath.Normalize(selection.Folder.Path);
+        var except = selection.Except.ToHashSet(StringComparer.Ordinal);
+        using var root = FileService.OpenRoot(share);
+        using var handle = FileService.Open(root, folder, LinuxFs.ReadOnly | LinuxFs.Directory);
+        List<(string Name, FsKind Kind)> names;
+        try
+        {
+            names = LinuxFs.ReadNames(handle);
+        }
+        catch (FsError error)
+        {
+            throw FsErrors.From(error);
+        }
+        var items = names
+            .Where(entry => !except.Contains(entry.Name)
+                && !entry.Name.StartsWith(FsPath.UploadPrefix, StringComparison.Ordinal)
+                && !(folder.Length == 0 && entry.Name == FsPath.TrashFolder))
+            .Select(entry => new FileLocation(share.Id, FsPath.Join(folder, entry.Name)))
+            .ToList();
+        return items.Count > 0 ? items : throw new VyxisException(ErrorCodes.FsOperationInvalid);
     }
 
     private async Task<ResolvedShare> ResolveAsync(ClaimsPrincipal user, long shareId, bool write, Dictionary<long, ResolvedShare> resolved, CancellationToken cancellationToken)

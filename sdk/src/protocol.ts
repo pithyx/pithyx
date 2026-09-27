@@ -22,6 +22,20 @@
  * the taskbar, a launch, "Open with"). A method added later that does so must require a user action in that window.
  */
 import type { Problem } from './errors';
+import type {
+  ConflictPolicy,
+  FileEntry,
+  FileLocation,
+  FileOperation,
+  FolderChange,
+  FolderPage,
+  JobInfo,
+  ShareInfo,
+  SortKey,
+  SortOrder,
+  TrashPage,
+  UploadProgress,
+} from './files';
 import type { AppId } from './manifest';
 import type { Theme } from './theme';
 
@@ -42,21 +56,6 @@ export interface FileRef {
   modified: string;
   /** Whether the app may write it (`files.write` and the user's rights on it). */
   writable: boolean;
-}
-
-/**
- * Where a folder listing starts: a named storage from the manifest, or a share (needs `files.shares`). Paths inside
- * are relative, with `/` as separator, and never leave it.
- */
-export type FileLocation = { storage: string } | { share: string };
-
-/** One entry of a folder listing. */
-export interface FileEntry {
-  name: string;
-  kind: 'file' | 'folder';
-  size: number;
-  modified: string;
-  type?: string;
 }
 
 export interface LaunchArgs {
@@ -161,13 +160,90 @@ export interface Methods {
    * valid 5 minutes and only for this file. Needs `files.read`.
    */
   'files.url': { params: { file: FileRef }; result: { url: string; expiresAt: string } };
-  /** Lists a folder in a named storage or a share, one page at a time. */
+  /**
+   * Lists a folder one page at a time (default 100 entries, at most 1000), in natural name order unless `sort` says
+   * otherwise. Pass the page's `nextCursor` for the next one. Needs `files.shares` for a share.
+   */
   'files.list': {
-    params: { location: FileLocation; path: string; cursor?: string; limit?: number };
-    result: { entries: FileEntry[]; nextCursor: string | null };
+    params: {
+      location: FileLocation;
+      path: string;
+      cursor?: string;
+      limit?: number;
+      sort?: SortKey;
+      order?: SortOrder;
+    };
+    result: FolderPage;
   };
   /** A handle for a file in a named storage or a share, for `files.read`, `files.write` and `files.url`. */
   'files.open': { params: { location: FileLocation; path: string }; result: FileRef };
+
+  /*
+   * The file manager API. Everything below needs `files.shares` for shares; the daemon checks the user's rights
+   * on every call. Methods that change files need write access to the share.
+   */
+
+  /** The shares the user can use, with the user's access to each. */
+  'files.shares': { params: Record<string, never>; result: ShareInfo[] };
+  /**
+   * Starts live changes of a folder: `folderChanged` events with the returned `watch` id arrive while the watch is
+   * open. Watch only folders on screen and call `files.unwatch` when leaving them; a watch never wakes a disk.
+   */
+  'files.watch': { params: { location: FileLocation; path: string }; result: { watch: string } };
+  'files.unwatch': { params: { watch: string }; result: undefined };
+  /**
+   * Uploads a file into a folder. The file appears only when it is complete; an existing name fails with
+   * `fs.entry.exists` unless `overwrite`. With an `upload` id, `uploadProgress` events report the bytes sent.
+   */
+  'files.upload': {
+    params: {
+      location: FileLocation;
+      folder: string;
+      name: string;
+      data: Blob;
+      overwrite?: boolean;
+      upload?: string;
+    };
+    result: FileEntry;
+  };
+  /** Downloads a file to the user's device through the browser. */
+  'files.download': { params: { location: FileLocation; path: string }; result: undefined };
+  /** Creates a folder; its parent must exist. */
+  'files.createFolder': { params: { location: FileLocation; path: string }; result: FileEntry };
+  /** Renames an entry within its folder; an existing name is never replaced (`fs.entry.exists`). */
+  'files.rename': {
+    params: { location: FileLocation; path: string; name: string };
+    result: FileEntry;
+  };
+  /**
+   * Starts a copy, move or delete as a job and resolves with it at once; `jobChanged` events follow its progress
+   * until it finishes. Deleting moves to the share's recycle bin unless `permanent`.
+   */
+  'files.run': { params: FileOperation; result: JobInfo };
+  /** Cancels a job the app started; a finished job stays as it is. */
+  'jobs.cancel': { params: { job: number }; result: undefined };
+  /** One page of a share's recycle bin, newest first. Needs read access to the share. */
+  'trash.list': {
+    params: { location: FileLocation; cursor?: string; limit?: number };
+    result: TrashPage;
+  };
+  /**
+   * Puts items back where they were, recreating missing folders, as a job. A taken name gets a free one unless
+   * `onConflict` says otherwise.
+   */
+  'trash.restore': {
+    params: { location: FileLocation; ids: number[]; onConflict?: ConflictPolicy };
+    result: JobInfo;
+  };
+  /** Deletes items of the recycle bin for good, as a job. Only after the user confirmed it. */
+  'trash.delete': { params: { location: FileLocation; ids: number[] }; result: JobInfo };
+  /** Deletes everything in the recycle bin for good, as a job. Only after the user confirmed it. */
+  'trash.empty': { params: { location: FileLocation }; result: JobInfo };
+  /**
+   * Shows the desktop's error dialog for a problem, with its translated text and the request id to copy. Use it for
+   * failures the user has to know about; the app does not need its own error texts for daemon codes.
+   */
+  'ui.showError': { params: { problem: Problem }; result: undefined };
 }
 
 export type MethodName = keyof Methods;
@@ -197,6 +273,12 @@ export interface Events {
    * it fail with `app.permission.denied` from now on. Revoking `backend` or access to the app ends its windows.
    */
   permissionRevoked: { permission: string };
+  /** Changes of a folder watched with `files.watch`. */
+  folderChanged: FolderChange;
+  /** Progress of an upload that has an `upload` id. */
+  uploadProgress: UploadProgress;
+  /** A job the app started changed: progress, then its final state. */
+  jobChanged: JobInfo;
 }
 
 export type EventName = keyof Events;
@@ -218,8 +300,14 @@ export type QueryName = keyof Queries;
 export const BEFORE_CLOSE_TIMEOUT = 5000;
 /** The desktop waits this long for an answer to `beforeLogout`. */
 export const BEFORE_LOGOUT_TIMEOUT = 2000;
-/** An app waits this long for a response before a call fails with `sdk.request.timeout`. */
+/**
+ * An app waits this long for a response before a call fails with `sdk.request.timeout`. Calls that move a whole file
+ * (`files.upload`) take as long as the transfer and have no time limit.
+ */
 export const REQUEST_TIMEOUT = 15_000;
+
+/** Calls without a time limit, because they last as long as a transfer. */
+export const UNTIMED_METHODS: readonly string[] = ['files.upload'];
 
 /** What the desktop posts to the iframe window, with the app's port transferred. */
 export interface ConnectMessage {
