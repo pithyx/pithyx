@@ -17,7 +17,8 @@ import {
   type StorageDisk,
   type Vdev,
 } from '../sdk/internal';
-import { CreatePoolDialog } from './CreatePoolDialog';
+import { PoolActionDialog, type PoolAction } from './PoolActionDialog';
+import { PoolWizard } from './PoolWizard';
 import styles from './Settings.module.css';
 
 const storageKey = ['settings', 'storage'] as const;
@@ -46,6 +47,9 @@ export function StoragePage({ app }: { app: PithyxApp }) {
   const { t } = useTranslation('settings');
   const queryClient = useQueryClient();
   const [creating, setCreating] = useState(false);
+  const [action, setAction] = useState<{ pool: Pool; vdev?: Vdev; action: PoolAction } | null>(
+    null,
+  );
   const pools = useQuery({
     queryKey: [...storageKey, 'pools'],
     queryFn: () => internalCall(app, 'internal.admin.storage.pools', {}),
@@ -94,7 +98,13 @@ export function StoragePage({ app }: { app: PithyxApp }) {
         )}
         <div className={styles.pools}>
           {pools.data?.pools.map((pool) => (
-            <PoolCard key={pool.name} pool={pool} />
+            <PoolCard
+              key={pool.name}
+              pool={pool}
+              onAction={(poolAction, vdev) => {
+                setAction({ pool, action: poolAction, ...(vdev === undefined ? {} : { vdev }) });
+              }}
+            />
           ))}
         </div>
       </section>
@@ -108,7 +118,7 @@ export function StoragePage({ app }: { app: PithyxApp }) {
       </section>
 
       {creating && disks.data !== undefined && (
-        <CreatePoolDialog
+        <PoolWizard
           app={app}
           disks={disks.data.disks}
           onClose={() => {
@@ -116,11 +126,25 @@ export function StoragePage({ app }: { app: PithyxApp }) {
           }}
         />
       )}
+      {action !== null && disks.data !== undefined && (
+        <PoolActionDialog
+          app={app}
+          pool={action.pool}
+          {...(action.vdev === undefined ? {} : { vdev: action.vdev })}
+          action={action.action}
+          disks={disks.data.disks}
+          onClose={() => {
+            setAction(null);
+          }}
+        />
+      )}
     </div>
   );
 }
 
-function PoolCard({ pool }: { pool: Pool }) {
+type OnAction = (action: PoolAction, vdev?: Vdev) => void;
+
+function PoolCard({ pool, onAction }: { pool: Pool; onAction: OnAction }) {
   const { t, i18n } = useTranslation('settings');
   const data = pool.vdevs.filter((vdev) => vdev.role === 'data');
   const others = pool.vdevs.filter((vdev) => vdev.role !== 'data');
@@ -147,16 +171,38 @@ function PoolCard({ pool }: { pool: Pool }) {
         {t('storage.pools.layout', { layout: data.map((vdev) => vdevLabel(t, vdev)).join(' + ') })}
       </p>
       {pool.scan !== null && <p className={styles.muted}>{scanText(t, pool, i18n.language)}</p>}
+      {pool.state !== 'ONLINE' && (
+        <p className={styles.notice}>{t('storage.pools.degradedHint')}</p>
+      )}
       <ul className={styles.vdevs} aria-label={t('storage.pools.devices', { pool: pool.name })}>
         {[...data, ...others].map((vdev) => (
-          <VdevItem key={vdev.name} vdev={vdev} />
+          <VdevItem key={vdev.name} vdev={vdev} onAction={onAction} />
         ))}
       </ul>
+      <div className={styles.poolActions}>
+        <Button
+          size="sm"
+          onPress={() => {
+            onAction('pool.spare.add');
+          }}
+        >
+          {t('storage.actions.spareAdd.button')}
+        </Button>
+        <Button
+          size="sm"
+          variant="danger"
+          onPress={() => {
+            onAction('pool.destroy');
+          }}
+        >
+          {t('storage.actions.destroy.button')}
+        </Button>
+      </div>
     </article>
   );
 }
 
-function VdevItem({ vdev }: { vdev: Vdev }) {
+function VdevItem({ vdev, onAction }: { vdev: Vdev; onAction: OnAction }) {
   const { t } = useTranslation('settings');
   const leaves = vdev.children.length === 0 ? [vdev] : vdev.children;
   return (
@@ -169,6 +215,44 @@ function VdevItem({ vdev }: { vdev: Vdev }) {
           <li key={leaf.name} className={styles.leaf} data-state={leaf.state}>
             <span className={styles.mono}>{leaf.name}</span>
             <Badge tone={stateTone(leaf.state)}>{t(`storage.state.${stateKey(leaf.state)}`)}</Badge>
+            <span className={styles.leafActions}>
+              {vdev.role === 'spare' ? (
+                <Button
+                  size="sm"
+                  variant="quiet"
+                  onPress={() => {
+                    onAction('pool.spare.remove', leaf);
+                  }}
+                >
+                  {t('storage.actions.spareRemove.button')}
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    size="sm"
+                    variant="quiet"
+                    onPress={() => {
+                      onAction(leaf.state === 'OFFLINE' ? 'pool.online' : 'pool.offline', leaf);
+                    }}
+                  >
+                    {t(
+                      leaf.state === 'OFFLINE'
+                        ? 'storage.actions.online.button'
+                        : 'storage.actions.offline.button',
+                    )}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="quiet"
+                    onPress={() => {
+                      onAction('pool.replace', leaf);
+                    }}
+                  >
+                    {t('storage.actions.replace.button')}
+                  </Button>
+                </>
+              )}
+            </span>
             {leaf.readErrors + leaf.writeErrors + leaf.checksumErrors > 0 && (
               <span className={styles.errors}>
                 {t('storage.pools.errors', {

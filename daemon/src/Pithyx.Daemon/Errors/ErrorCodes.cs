@@ -204,9 +204,21 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string StorageDiskRefused = "storage.disk.refused";
 
+    /// <summary>Encryption is chosen when a pool is created, and becomes available with the key vault.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StorageEncryptionUnavailable = "storage.encryption.unavailable";
+
+    /// <summary>Unknown plan action; <c>params.action</c> is the value sent.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string StoragePlanActionInvalid = "storage.plan.action_invalid";
+
     /// <summary>A plan waited too long between being shown and being run; it must be shown again.</summary>
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string StoragePlanExpired = "storage.plan.expired";
+
+    /// <summary>The plan does not exist (any more), was run already or belongs to another user; it must be shown again.</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string StoragePlanNotFound = "storage.plan.not_found";
 
     /// <summary>A disk changed after the plan was shown (serial, size, partitions or signatures); <c>params.disk</c> is its id.</summary>
     [ErrorStatus(HttpStatusCode.Conflict)]
@@ -216,6 +228,10 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string StoragePoolDiskCount = "storage.pool.disk_count";
 
+    /// <summary>A new pool needs the encryption question answered; <c>encryption</c> was missing.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string StoragePoolEncryptionRequired = "storage.pool.encryption_required";
+
     /// <summary>Unknown pool layout; <c>params.layout</c> is the value sent.</summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string StoragePoolLayoutInvalid = "storage.pool.layout_invalid";
@@ -224,9 +240,21 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string StoragePoolNameInvalid = "storage.pool.name_invalid";
 
+    /// <summary>The typed name does not match the pool's name; <c>params.name</c> is the pool's name.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string StoragePoolNameMismatch = "storage.pool.name_mismatch";
+
     /// <summary>A pool with this name exists already; <c>params.name</c> is the name.</summary>
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string StoragePoolNameTaken = "storage.pool.name_taken";
+
+    /// <summary>No imported pool has this name; <c>params.name</c> is the name.</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string StoragePoolNotFound = "storage.pool.not_found";
+
+    /// <summary>The pool has no device with this GUID; <c>params.vdev</c> is the GUID.</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string StorageVdevNotFound = "storage.vdev.not_found";
 
     [ErrorStatus(HttpStatusCode.InternalServerError)]
     public const string SystemInternalUnexpected = "system.internal.unexpected";

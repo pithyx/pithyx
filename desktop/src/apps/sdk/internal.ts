@@ -9,8 +9,9 @@ export type StorageDisk = components['schemas']['StorageDisk'];
 export type PoolList = components['schemas']['PoolList'];
 export type Pool = components['schemas']['Pool'];
 export type Vdev = components['schemas']['Vdev'];
-export type PoolCreatePreviewRequest = components['schemas']['PoolCreatePreviewRequest'];
-export type PoolCreatePreview = components['schemas']['PoolCreatePreview'];
+export type StoragePlanRequest = components['schemas']['StoragePlanRequest'];
+export type StoragePlanPreview = components['schemas']['StoragePlanPreview'];
+export type Job = components['schemas']['Job'];
 
 /**
  * Administrative calls of the desktop's own core apps, outside the public SDK: not versioned, never served to a
@@ -20,11 +21,15 @@ export type PoolCreatePreview = components['schemas']['PoolCreatePreview'];
 export interface InternalMethods {
   'internal.admin.storage.disks': { params: Record<string, never>; result: StorageDiskList };
   'internal.admin.storage.pools': { params: Record<string, never>; result: PoolList };
-  'internal.admin.storage.preview': { params: PoolCreatePreviewRequest; result: PoolCreatePreview };
+  'internal.admin.storage.plan': { params: StoragePlanRequest; result: StoragePlanPreview };
+  'internal.admin.storage.run': { params: { planId: string }; result: Job };
 }
 
 /** Sent to the app when pools or disks changed; the app reads them again. */
 export const STORAGE_CHANGED = 'internal.admin.storage.changed';
+
+/** Sent to the app with every change of a job it started with `internal.admin.storage.run`. */
+export const STORAGE_JOB = 'internal.admin.storage.job';
 
 type InternalName = keyof InternalMethods;
 
@@ -32,13 +37,20 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function isPreviewRequest(value: unknown): boolean {
+function isPlanRequest(value: unknown): boolean {
+  const optionalText = (field: unknown) =>
+    field === undefined || field === null || typeof field === 'string';
   return (
     isRecord(value) &&
-    typeof value.name === 'string' &&
-    typeof value.layout === 'string' &&
-    Array.isArray(value.diskIds) &&
-    value.diskIds.every((id) => typeof id === 'string') &&
+    typeof value.action === 'string' &&
+    typeof value.pool === 'string' &&
+    optionalText(value.layout) &&
+    optionalText(value.vdev) &&
+    optionalText(value.encryption) &&
+    optionalText(value.confirmName) &&
+    (value.diskIds === undefined ||
+      value.diskIds === null ||
+      (Array.isArray(value.diskIds) && value.diskIds.every((id) => typeof id === 'string'))) &&
     (value.confirmations === undefined ||
       value.confirmations === null ||
       (isRecord(value.confirmations) &&
@@ -65,7 +77,7 @@ async function daemon<T>(call: () => Promise<T>): Promise<T> {
  * The host side of the storage calls, for the Settings app's window. `emit` reaches that window only; the returned
  * `close` stops following the storage topics.
  */
-export function adminStorageHost(emit: (event: string) => void): {
+export function adminStorageHost(emit: (event: string, data?: unknown) => void): {
   extensions: HostExtensions;
   close: () => void;
 } {
@@ -76,6 +88,13 @@ export function adminStorageHost(emit: (event: string) => void): {
     realtime.listen('storage/pools', changed),
     realtime.listen('storage/disks', changed),
   ];
+  const follow = (job: Job) => {
+    stops.push(
+      realtime.listen(`jobs/${String(job.id)}`, (data) => {
+        emit(STORAGE_JOB, data);
+      }),
+    );
+  };
   const extensions: Record<InternalName, HostExtensions[string]> = {
     'internal.admin.storage.disks': {
       validate: isRecord,
@@ -85,16 +104,25 @@ export function adminStorageHost(emit: (event: string) => void): {
       validate: isRecord,
       handle: () => daemon(async () => unwrap(await api.GET('/api/storage/pools'))),
     },
-    'internal.admin.storage.preview': {
-      validate: isPreviewRequest,
+    'internal.admin.storage.plan': {
+      validate: isPlanRequest,
       handle: (params) =>
         daemon(async () =>
-          unwrap(
-            await api.POST('/api/storage/pools/preview', {
-              body: params as PoolCreatePreviewRequest,
-            }),
-          ),
+          unwrap(await api.POST('/api/storage/plans', { body: params as StoragePlanRequest })),
         ),
+    },
+    'internal.admin.storage.run': {
+      validate: (params) => isRecord(params) && typeof params.planId === 'string',
+      handle: (params) =>
+        daemon(async () => {
+          const job = unwrap(
+            await api.POST('/api/storage/plans/{planId}/run', {
+              params: { path: { planId: (params as { planId: string }).planId } },
+            }),
+          );
+          follow(job);
+          return job;
+        }),
     },
   };
   return {
@@ -123,8 +151,8 @@ export async function internalCall<M extends InternalName>(
 /** Listens for an internal event; returns the function that stops listening. */
 export function onInternal(
   app: PithyxApp,
-  event: typeof STORAGE_CHANGED,
-  handler: () => void,
+  event: typeof STORAGE_CHANGED | typeof STORAGE_JOB,
+  handler: (data: unknown) => void,
 ): () => void {
   return app.on(event as unknown as EventName, handler);
 }

@@ -40,6 +40,7 @@ public sealed class CommandPlanRunnerTests : IDisposable
         _commands.Results["wipefs"] = Ok("");
         _commands.Results["blkid"] = new CommandResult(2, "", "", TimeSpan.Zero);
         _commands.Results["zpool"] = Ok("");
+        _commands.Results["zfs"] = Ok("");
     }
 
     public void Dispose()
@@ -55,8 +56,8 @@ public sealed class CommandPlanRunnerTests : IDisposable
     private async Task<CommandPlan> MirrorPlanAsync()
     {
         await _state.RefreshDisksAsync([], Token);
-        var (verdicts, plan) = await _planner.PlanPoolCreateAsync(
-            new PoolCreatePreviewRequest("tank", "mirror", ["serial-VYXTEST02", "serial-VYXTEST03"], null), Token);
+        var (verdicts, plan, _) = await _planner.PlanAsync(
+            new StoragePlanRequest("pool.create", "tank", "mirror", ["serial-VYXTEST02", "serial-VYXTEST03"], Encryption: "none"), Token);
         Assert.All(verdicts, verdict => Assert.Equal(GuardDecision.Allowed, verdict.Decision));
         return plan!;
     }
@@ -72,8 +73,9 @@ public sealed class CommandPlanRunnerTests : IDisposable
         await _runner.RunAsync(plan, (index, _) => progress.Add(index), Token);
 
         Assert.Equal(["create"], ZpoolCalls());
-        Assert.Equal([0], progress);
-        Assert.Equal(plan.Steps[0].Command, _commands.Calls.Last());
+        Assert.Equal(["create", "create", "create", "create", "create"], _commands.Calls.Where(call => call.FileName == "zfs").Select(call => call.Arguments[0]));
+        Assert.Equal([0, 1, 2, 3, 4, 5], progress);
+        Assert.Equal(plan.Steps[^1].Command, _commands.Calls.Last());
     }
 
     [Fact]
@@ -119,8 +121,8 @@ public sealed class CommandPlanRunnerTests : IDisposable
     public async Task TheSystemDiskAndANonTestDiskNeverGetAPlanEvenWithTheirSerials()
     {
         await _state.RefreshDisksAsync([], Token);
-        var (verdicts, plan) = await _planner.PlanPoolCreateAsync(
-            new PoolCreatePreviewRequest("tank", "mirror", ["serial-02609329D99", "serial-VYXTEST06"], new Dictionary<string, string> { ["serial-02609329D99"] = "02609329D99", ["serial-VYXTEST06"] = "VYXTEST06" }),
+        var (verdicts, plan, _) = await _planner.PlanAsync(
+            new StoragePlanRequest("pool.create", "tank", "mirror", ["serial-02609329D99", "serial-VYXTEST06"], Encryption: "none", Confirmations: new Dictionary<string, string> { ["serial-02609329D99"] = "02609329D99", ["serial-VYXTEST06"] = "VYXTEST06" }),
             Token);
 
         Assert.Null(plan);
@@ -131,7 +133,7 @@ public sealed class CommandPlanRunnerTests : IDisposable
     public async Task AFailedCommandStopsThePlan()
     {
         var plan = await MirrorPlanAsync();
-        _commands.Results["zpool"] = new CommandResult(1, "", "invalid vdev specification", TimeSpan.Zero);
+        _commands.Results["zpool create"] = new CommandResult(1, "", "invalid vdev specification", TimeSpan.Zero);
 
         var error = await Assert.ThrowsAsync<PithyxException>(() => _runner.RunAsync(plan, null, Token));
 

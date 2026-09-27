@@ -45,7 +45,10 @@ export function CoreSdkApp({
   version?: string;
   permissions: readonly string[];
   /** Internal methods for this core app (apps/sdk/internal.ts); `emit` sends an internal event to this window. */
-  internal?: (emit: (event: string) => void) => { extensions: HostExtensions; close: () => void };
+  internal?: (emit: (event: string, data?: unknown) => void) => {
+    extensions: HostExtensions;
+    close: () => void;
+  };
   Component: ComponentType<SdkAppProps>;
 }) {
   const root = useRef<HTMLDivElement>(null);

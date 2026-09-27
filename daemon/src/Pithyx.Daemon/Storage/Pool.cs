@@ -27,6 +27,7 @@ public sealed record Pool(
     IReadOnlyList<Vdev> Vdevs);
 
 /// <param name="Name">Vdev name as ZFS shows it: <c>raidz1-0</c>, <c>mirror-1</c> or the device's by-id name.</param>
+/// <param name="VdevGuid">Vdev GUID as decimal text; names a device in commands even when it is missing.</param>
 /// <param name="Type">ZFS vdev type: <c>disk</c>, <c>file</c>, <c>mirror</c>, <c>raidz</c>, <c>draid</c>, <c>spare</c>, <c>replacing</c> and so on.</param>
 /// <param name="Role">What the vdev is for: <c>data</c>, <c>log</c>, <c>cache</c>, <c>special</c>, <c>dedup</c> or <c>spare</c>.</param>
 /// <param name="State">ZFS state of the vdev.</param>
@@ -38,6 +39,7 @@ public sealed record Pool(
 /// <param name="Children">Child vdevs.</param>
 public sealed record Vdev(
     string Name,
+    string VdevGuid,
     string Type,
     string Role,
     string State,

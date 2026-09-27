@@ -1721,18 +1721,18 @@
         }
       }
     },
-    "/api/storage/pools/preview": {
+    "/api/storage/plans": {
       "post": {
         "tags": [
           "Storage"
         ],
-        "description": "Administrators only. Probes the chosen disks, asks the disk guard and returns the exact commands that would create the pool. Runs nothing.",
-        "operationId": "PreviewPoolCreate",
+        "description": "Administrators only. Probes the chosen disks, asks the disk guard and returns the exact commands of a destructive storage action, with a plan id to run them. Runs nothing.",
+        "operationId": "PlanStorageAction",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PoolCreatePreviewRequest"
+                "$ref": "#/components/schemas/StoragePlanRequest"
               }
             }
           },
@@ -1744,7 +1744,48 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PoolCreatePreview"
+                  "$ref": "#/components/schemas/StoragePlanPreview"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/plans/{planId}/run": {
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Runs a plan exactly as it was shown, as a job; the disk guard checks every disk again right before each command. A plan runs once and expires after 10 minutes.",
+        "operationId": "RunStoragePlan",
+        "parameters": [
+          {
+            "name": "planId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
                 }
               }
             }
@@ -2472,12 +2513,19 @@
           "storage.command.failed",
           "storage.disk.not_found",
           "storage.disk.refused",
+          "storage.encryption.unavailable",
+          "storage.plan.action_invalid",
           "storage.plan.expired",
+          "storage.plan.not_found",
           "storage.plan.stale",
           "storage.pool.disk_count",
+          "storage.pool.encryption_required",
           "storage.pool.layout_invalid",
           "storage.pool.name_invalid",
+          "storage.pool.name_mismatch",
           "storage.pool.name_taken",
+          "storage.pool.not_found",
+          "storage.vdev.not_found",
           "system.internal.unexpected",
           "system.origin.forbidden"
         ],
@@ -3296,74 +3344,6 @@
           }
         }
       },
-      "PoolCreatePreview": {
-        "required": [
-          "disks",
-          "commands",
-          "expiresAt"
-        ],
-        "type": "object",
-        "properties": {
-          "disks": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/GuardVerdict"
-            },
-            "description": "The guard's verdict for every chosen disk, after probing them again."
-          },
-          "commands": {
-            "type": [
-              "null",
-              "array"
-            ],
-            "items": {
-              "$ref": "#/components/schemas/PlannedCommand"
-            },
-            "description": "The exact commands the plan would run, or null while a disk is not allowed."
-          },
-          "expiresAt": {
-            "type": "string",
-            "description": "Until when the plan may run once creating pools is available.",
-            "format": "date-time"
-          }
-        },
-        "description": "Response of `POST /api/storage/pools/preview`. Nothing was run."
-      },
-      "PoolCreatePreviewRequest": {
-        "required": [
-          "name",
-          "layout",
-          "diskIds"
-        ],
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "description": "Pool name."
-          },
-          "layout": {
-            "type": "string",
-            "description": "`single`, `stripe`, `mirror`, `raidz1`, `raidz2` or `raidz3`."
-          },
-          "diskIds": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "The disks to use, by id."
-          },
-          "confirmations": {
-            "type": [
-              "null",
-              "object"
-            ],
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "For disks that are not empty: the serial number the user typed, by disk id."
-          }
-        }
-      },
       "PoolList": {
         "required": [
           "pools",
@@ -3722,6 +3702,121 @@
         },
         "description": "Response of `GET /api/storage/disks`."
       },
+      "StoragePlanPreview": {
+        "required": [
+          "planId",
+          "disks",
+          "commands",
+          "datasets",
+          "expiresAt"
+        ],
+        "type": "object",
+        "properties": {
+          "planId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Runs the plan exactly as shown with `POST /api/storage/plans/{planId}/run`; null while a disk is not allowed."
+          },
+          "disks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GuardVerdict"
+            },
+            "description": "The guard's verdict for every chosen disk, after probing them again."
+          },
+          "commands": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/PlannedCommand"
+            },
+            "description": "The exact commands, or null while a disk is not allowed."
+          },
+          "datasets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "For destroying a pool: every dataset that goes with it."
+          },
+          "expiresAt": {
+            "type": "string",
+            "description": "Until when the plan may run.",
+            "format": "date-time"
+          }
+        },
+        "description": "Response of `POST /api/storage/plans`. Nothing was run."
+      },
+      "StoragePlanRequest": {
+        "required": [
+          "action",
+          "pool"
+        ],
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "description": "`pool.create`, `pool.destroy`, `pool.replace`, `pool.spare.add`, `pool.spare.remove`, `pool.offline` or `pool.online`."
+          },
+          "pool": {
+            "type": "string",
+            "description": "The pool, or the new pool's name."
+          },
+          "layout": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "`single`, `stripe`, `mirror`, `mirrors` (pairs), `raidz1`, `raidz2` or `raidz3`."
+          },
+          "diskIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "The disks to use, by id."
+          },
+          "vdev": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "GUID of the device to replace, take offline, bring online or remove."
+          },
+          "encryption": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The answer to the encryption question of a new pool: `none`, or `key` once the key vault exists."
+          },
+          "confirmName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The pool's name, typed by the user, to destroy it."
+          },
+          "confirmations": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Serial numbers the user typed, by disk id."
+          }
+        },
+        "description": "A destructive storage action to plan. Which fields an action needs: `pool.create` Pool, Layout, DiskIds,\nEncryption (and Confirmations for disks that are not empty); `pool.destroy` Pool and ConfirmName;\n`pool.replace` Pool, Vdev and one disk in DiskIds with its serial in Confirmations; `pool.spare.add` Pool\nand one disk; `pool.spare.remove`, `pool.offline` and `pool.online` Pool and Vdev."
+      },
       "SystemInfo": {
         "required": [
           "hostname",
@@ -4050,6 +4145,7 @@
       "Vdev": {
         "required": [
           "name",
+          "vdevGuid",
           "type",
           "role",
           "state",
@@ -4065,6 +4161,10 @@
           "name": {
             "type": "string",
             "description": "Vdev name as ZFS shows it: `raidz1-0`, `mirror-1` or the device's by-id name."
+          },
+          "vdevGuid": {
+            "type": "string",
+            "description": "Vdev GUID as decimal text; names a device in commands even when it is missing."
           },
           "type": {
             "type": "string",

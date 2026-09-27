@@ -316,9 +316,23 @@
       },
       "expected": "The disk may not be used: it belongs to a pool."
     },
+    "storage.encryption.unavailable": {
+      "params": {},
+      "expected": "Encryption comes with the key vault in the next update. A pool can only be encrypted when it is created, so create it without encryption only if that is fine for its data."
+    },
+    "storage.plan.action_invalid": {
+      "params": {
+        "action": "pool.import"
+      },
+      "expected": "Unknown storage action."
+    },
     "storage.plan.expired": {
       "params": {},
       "expected": "This plan is more than 10 minutes old. Show it again to check the disks once more."
+    },
+    "storage.plan.not_found": {
+      "params": {},
+      "expected": "This plan is no longer there (it ran already, expired or the daemon restarted). Show it again."
     },
     "storage.plan.stale": {
       "params": {
@@ -334,6 +348,10 @@
       },
       "expected": "raidz2 needs at least 4 disks; 3 are selected."
     },
+    "storage.pool.encryption_required": {
+      "params": {},
+      "expected": "Answer the encryption question first: it can only be decided when the pool is created."
+    },
     "storage.pool.layout_invalid": {
       "params": {
         "layout": "raid5"
@@ -346,11 +364,29 @@
       },
       "expected": "Pool names start with a lowercase letter and use up to 32 lowercase letters, digits, - and _. Names like mirror or raidz are reserved."
     },
+    "storage.pool.name_mismatch": {
+      "params": {
+        "name": "tank"
+      },
+      "expected": "Type the pool name tank exactly to confirm."
+    },
     "storage.pool.name_taken": {
       "params": {
         "name": "tank"
       },
       "expected": "A pool named tank exists already."
+    },
+    "storage.pool.not_found": {
+      "params": {
+        "name": "tank"
+      },
+      "expected": "There is no pool named tank."
+    },
+    "storage.vdev.not_found": {
+      "params": {
+        "vdev": "123"
+      },
+      "expected": "The pool has no such device (any more). Reload and choose again."
     },
     "system.internal.unexpected": {
       "params": {},

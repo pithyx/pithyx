@@ -22,11 +22,45 @@ public sealed class ZfsPlansTests
     {
         var steps = ZfsPlans.CreatePool("tank", "raidz1", [Disk("a", new([])), Disk("b", new([])), Disk("c", new([]))]);
 
-        var create = Assert.Single(steps);
+        var create = steps[0];
         Assert.Equal(
             ["zpool", "create", .. _options, "tank", "raidz1", "/dev/disk/by-id/scsi-a", "/dev/disk/by-id/scsi-b", "/dev/disk/by-id/scsi-c"],
             Line(create));
         Assert.Equal(["id-a", "id-b", "id-c"], create.DiskIds);
+        Assert.Equal(
+            [
+                ["zfs", "create", "-o", "canmount=off", "-o", "mountpoint=none", "tank/pithyx"],
+                ["zfs", "create", "-o", "canmount=off", "-o", "mountpoint=/tank", "tank/pithyx/shares"],
+                ["zfs", "create", "-o", "mountpoint=/tank/homes", "tank/pithyx/homes"],
+                ["zfs", "create", "-o", "canmount=off", "-o", "mountpoint=/tank/.pithyx/apps", "tank/pithyx/apps"],
+                ["zfs", "create", "-o", "mountpoint=/tank/.pithyx/system", "tank/pithyx/system"],
+            ],
+            steps.Skip(1).Select(Line));
+        Assert.All(steps.Skip(1), step => Assert.Empty(step.DiskIds));
+    }
+
+    [Fact]
+    public void MirrorPairsAreMirrorVdevsInTheOrderChosen()
+    {
+        var create = ZfsPlans.CreatePool("tank", "mirrors", [Disk("a", new([])), Disk("b", new([])), Disk("c", new([])), Disk("d", new([]))])[0];
+
+        Assert.Equal(
+            ["tank", "mirror", "/dev/disk/by-id/scsi-a", "/dev/disk/by-id/scsi-b", "mirror", "/dev/disk/by-id/scsi-c", "/dev/disk/by-id/scsi-d"],
+            create.Command.Arguments.Skip(_options.Length + 1));
+        Assert.Equal(ErrorCodes.StoragePoolDiskCount, Assert.Throws<PithyxException>(() => ZfsPlans.ValidateLayout("mirrors", 5)).Code);
+    }
+
+    [Fact]
+    public void RepairsNameDevicesByGuidAndNewDisksByStablePath()
+    {
+        var disk = Disk("e", new([]));
+
+        Assert.Equal([["zpool", "replace", "tank", "123", "/dev/disk/by-id/scsi-e"]], ZfsPlans.Replace("tank", "123", disk).Select(Line));
+        Assert.Equal([["zpool", "add", "tank", "spare", "/dev/disk/by-id/scsi-e"]], ZfsPlans.AddSpare("tank", disk).Select(Line));
+        Assert.Equal([["zpool", "remove", "tank", "123"]], ZfsPlans.RemoveSpare("tank", "123").Select(Line));
+        Assert.Equal([["zpool", "offline", "tank", "123"]], ZfsPlans.Offline("tank", "123").Select(Line));
+        Assert.Equal([["zpool", "online", "tank", "123"]], ZfsPlans.Online("tank", "123").Select(Line));
+        Assert.Equal([["zpool", "destroy", "tank"]], ZfsPlans.DestroyPool("tank").Select(Line));
     }
 
     [Theory]
@@ -39,7 +73,7 @@ public sealed class ZfsPlansTests
     {
         var disks = Enumerable.Range(0, count).Select(index => Disk($"d{index}", new([]))).ToList();
 
-        var create = Assert.Single(ZfsPlans.CreatePool("tank", layout, disks));
+        var create = ZfsPlans.CreatePool("tank", layout, disks)[0];
 
         Assert.Equal([.. vdevType, .. disks.Select(disk => $"/dev/disk/by-id/scsi-{disk.Disk.Name}")], create.Command.Arguments.Skip(_options.Length + 2));
     }
@@ -59,7 +93,7 @@ public sealed class ZfsPlansTests
                 ["wipefs", "--all", "/dev/disk/by-id/scsi-a-part1", "/dev/disk/by-id/scsi-a-part9", "/dev/disk/by-id/scsi-a"],
                 ["zpool", "create", .. _options, "tank", "/dev/disk/by-id/scsi-a"],
             ],
-            steps.Select(Line));
+            steps.Take(3).Select(Line));
     }
 
     [Theory]

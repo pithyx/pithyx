@@ -47,6 +47,7 @@ public static partial class ZpoolStatusParser
         var type = Text(vdev, "vdev_type") ?? "";
         return new Vdev(
             name,
+            vdev.TryGetProperty("guid", out var guid) ? guid.GetRawText().Trim('"') : "",
             type,
             role,
             Text(vdev, "state") ?? "UNKNOWN",

@@ -53,7 +53,7 @@ public sealed class StorageApiTests : IAsyncLifetime
 
     private async Task<JsonElement> PreviewAsync(object request)
     {
-        using var response = await _admin.PostAsJsonAsync("/api/storage/pools/preview", request, Token);
+        using var response = await _admin.PostAsJsonAsync("/api/storage/plans", request, Token);
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         return await response.JsonAsync();
     }
@@ -90,9 +90,10 @@ public sealed class StorageApiTests : IAsyncLifetime
     [Fact]
     public async Task APreviewListsTheExactCommandsAndRunsNothing()
     {
-        var preview = await PreviewAsync(new { name = "tank", layout = "mirror", diskIds = _disks0 });
+        var preview = await PreviewAsync(new { action = "pool.create", encryption = "none", pool = "tank", layout = "mirror", diskIds = _disks0 });
 
-        var command = Assert.Single(preview.GetProperty("commands").EnumerateArray());
+        Assert.Equal(32, preview.GetProperty("planId").GetString()!.Length);
+        var command = preview.GetProperty("commands")[0];
         Assert.Equal("zpool", command.GetProperty("program").GetString());
         var arguments = command.GetProperty("arguments").EnumerateArray().Select(argument => argument.GetString()).ToList();
         Assert.Equal(["tank", "mirror", "/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_drive-scsi2", "/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_drive-scsi3"], arguments[^4..]);
@@ -102,15 +103,16 @@ public sealed class StorageApiTests : IAsyncLifetime
     [Fact]
     public async Task ADiskWithDataNeedsItsSerialAndTheSystemDiskNeverGetsCommands()
     {
-        var unconfirmed = await PreviewAsync(new { name = "tank", layout = "mirror", diskIds = _disks1 });
+        var unconfirmed = await PreviewAsync(new { action = "pool.create", encryption = "none", pool = "tank", layout = "mirror", diskIds = _disks1 });
         Assert.Equal(JsonValueKind.Null, unconfirmed.GetProperty("commands").ValueKind);
+        Assert.Equal(JsonValueKind.Null, unconfirmed.GetProperty("planId").ValueKind);
         Assert.Equal("needsSerialConfirmation", unconfirmed.GetProperty("disks")[0].GetProperty("decision").GetString());
 
-        var confirmed = await PreviewAsync(new { name = "tank", layout = "mirror", diskIds = _disks1, confirmations = new Dictionary<string, string> { ["serial-VYXTEST01"] = "VYXTEST01" } });
+        var confirmed = await PreviewAsync(new { action = "pool.create", encryption = "none", pool = "tank", layout = "mirror", diskIds = _disks1, confirmations = new Dictionary<string, string> { ["serial-VYXTEST01"] = "VYXTEST01" } });
         var programs = confirmed.GetProperty("commands").EnumerateArray().Select(command => $"{command.GetProperty("program").GetString()} {command.GetProperty("arguments")[0].GetString()}");
-        Assert.Equal(["zpool labelclear", "wipefs --all", "zpool create"], programs);
+        Assert.Equal(["zpool labelclear", "wipefs --all", "zpool create", .. Enumerable.Repeat("zfs create", 5)], programs);
 
-        var system = await PreviewAsync(new { name = "tank", layout = "single", diskIds = _disks2, confirmations = new Dictionary<string, string> { ["serial-02609329D99"] = "02609329D99" } });
+        var system = await PreviewAsync(new { action = "pool.create", encryption = "none", pool = "tank", layout = "single", diskIds = _disks2, confirmations = new Dictionary<string, string> { ["serial-02609329D99"] = "02609329D99" } });
         Assert.Equal(JsonValueKind.Null, system.GetProperty("commands").ValueKind);
         Assert.Equal("system_disk", system.GetProperty("disks")[0].GetProperty("reason").GetString());
     }
@@ -120,15 +122,68 @@ public sealed class StorageApiTests : IAsyncLifetime
     {
         async Task<string> CodeAsync(object request)
         {
-            using var response = await _admin.PostAsJsonAsync("/api/storage/pools/preview", request, Token);
+            using var response = await _admin.PostAsJsonAsync("/api/storage/plans", request, Token);
             return await response.ErrorCodeAsync();
         }
 
-        Assert.Equal("storage.pool.name_taken", await CodeAsync(new { name = "pithyxtestm", layout = "single", diskIds = _disks3 }));
-        Assert.Equal("storage.pool.name_invalid", await CodeAsync(new { name = "Tank", layout = "single", diskIds = _disks3 }));
-        Assert.Equal("storage.pool.disk_count", await CodeAsync(new { name = "tank", layout = "raidz1", diskIds = _disks3 }));
-        Assert.Equal("storage.pool.layout_invalid", await CodeAsync(new { name = "tank", layout = "raid5", diskIds = _disks3 }));
-        Assert.Equal("storage.disk.not_found", await CodeAsync(new { name = "tank", layout = "single", diskIds = _disks4 }));
+        Assert.Equal("storage.pool.name_taken", await CodeAsync(new { action = "pool.create", encryption = "none", pool = "pithyxtestm", layout = "single", diskIds = _disks3 }));
+        Assert.Equal("storage.pool.name_invalid", await CodeAsync(new { action = "pool.create", encryption = "none", pool = "Tank", layout = "single", diskIds = _disks3 }));
+        Assert.Equal("storage.pool.disk_count", await CodeAsync(new { action = "pool.create", encryption = "none", pool = "tank", layout = "raidz1", diskIds = _disks3 }));
+        Assert.Equal("storage.pool.layout_invalid", await CodeAsync(new { action = "pool.create", encryption = "none", pool = "tank", layout = "raid5", diskIds = _disks3 }));
+        Assert.Equal("storage.disk.not_found", await CodeAsync(new { action = "pool.create", encryption = "none", pool = "tank", layout = "single", diskIds = _disks4 }));
+    }
+
+    [Fact]
+    public async Task ANewPoolNeedsTheEncryptionAnswerAndEncryptionWaitsForTheKeyVault()
+    {
+        async Task<string> CodeAsync(object request)
+        {
+            using var response = await _admin.PostAsJsonAsync("/api/storage/plans", request, Token);
+            return await response.ErrorCodeAsync();
+        }
+
+        Assert.Equal("storage.pool.encryption_required", await CodeAsync(new { action = "pool.create", pool = "tank", layout = "mirror", diskIds = _disks0 }));
+        Assert.Equal("storage.encryption.unavailable", await CodeAsync(new { action = "pool.create", pool = "tank", layout = "mirror", diskIds = _disks0, encryption = "key" }));
+        Assert.Equal("storage.plan.action_invalid", await CodeAsync(new { action = "pool.import", pool = "tank" }));
+    }
+
+    [Fact]
+    public async Task DestroyingAPoolNeedsItsNameAndListsItsDatasets()
+    {
+        using var mismatch = await _admin.PostAsJsonAsync("/api/storage/plans", new { action = "pool.destroy", pool = "pithyxtestm", confirmName = "pithyxtest" }, Token);
+        Assert.Equal("storage.pool.name_mismatch", await mismatch.ErrorCodeAsync());
+
+        var preview = await PreviewAsync(new { action = "pool.destroy", pool = "pithyxtestm", confirmName = "pithyxtestm" });
+        Assert.Equal(["pithyxtestm"], preview.GetProperty("datasets").EnumerateArray().Select(dataset => dataset.GetString()));
+        var command = Assert.Single(preview.GetProperty("commands").EnumerateArray());
+        Assert.Equal(["destroy", "pithyxtestm"], command.GetProperty("arguments").EnumerateArray().Select(argument => argument.GetString()));
+    }
+
+    [Fact]
+    public async Task AReplacementDiskAlwaysNeedsItsSerialEvenWhenEmpty()
+    {
+        var pools = await (await _admin.GetAsync("/api/storage/pools", Token)).JsonAsync();
+        var leaf = pools.GetProperty("pools")[0].GetProperty("vdevs")[0].GetProperty("children")[1].GetProperty("vdevGuid").GetString();
+
+        var unconfirmed = await PreviewAsync(new { action = "pool.replace", pool = "pithyxtestm", vdev = leaf, diskIds = _disks3 });
+        Assert.Equal(("needsSerialConfirmation", "confirm_replacement"), (unconfirmed.GetProperty("disks")[0].GetProperty("decision").GetString(), unconfirmed.GetProperty("disks")[0].GetProperty("reason").GetString()));
+        Assert.Equal(JsonValueKind.Null, unconfirmed.GetProperty("commands").ValueKind);
+
+        var confirmed = await PreviewAsync(new { action = "pool.replace", pool = "pithyxtestm", vdev = leaf, diskIds = _disks3, confirmations = new Dictionary<string, string> { ["serial-VYXTEST02"] = "VYXTEST02" } });
+        var arguments = confirmed.GetProperty("commands")[0].GetProperty("arguments").EnumerateArray().Select(argument => argument.GetString()).ToList();
+        Assert.Equal(["replace", "pithyxtestm", leaf, "/dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_drive-scsi2"], arguments);
+    }
+
+    [Fact]
+    public async Task APlanRunsOnceAndOnlyForWhoeverSawIt()
+    {
+        using var unknown = await _admin.PostAsync($"/api/storage/plans/{new string('0', 32)}/run", null, Token);
+        Assert.Equal((HttpStatusCode.NotFound, "storage.plan.not_found"), (unknown.StatusCode, await unknown.ErrorCodeAsync()));
+
+        var preview = await PreviewAsync(new { action = "pool.create", encryption = "none", pool = "tank", layout = "mirror", diskIds = _disks0 });
+        using var bob = await UserAsync();
+        using var foreign = await bob.PostAsync($"/api/storage/plans/{preview.GetProperty("planId").GetString()}/run", null, Token);
+        Assert.Equal(HttpStatusCode.Forbidden, foreign.StatusCode);
     }
 
     [Fact]
@@ -141,7 +196,7 @@ public sealed class StorageApiTests : IAsyncLifetime
             using var response = await bob.GetAsync(path, Token);
             Assert.Equal((HttpStatusCode.Forbidden, "auth.permission.denied"), (response.StatusCode, await response.ErrorCodeAsync()));
         }
-        using var preview = await bob.PostAsJsonAsync("/api/storage/pools/preview", new { name = "tank", layout = "single", diskIds = _disks3 }, Token);
+        using var preview = await bob.PostAsJsonAsync("/api/storage/plans", new { action = "pool.create", encryption = "none", pool = "tank", layout = "single", diskIds = _disks3 }, Token);
         Assert.Equal(HttpStatusCode.Forbidden, preview.StatusCode);
         using var anonymous = await _factory.CreateApiClient().GetAsync("/api/storage/pools", Token);
         Assert.Equal(HttpStatusCode.Unauthorized, anonymous.StatusCode);

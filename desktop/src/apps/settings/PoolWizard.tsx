@@ -1,0 +1,392 @@
+import type { PithyxApp } from '@pithyx/sdk';
+import { useMutation } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { formatBytes } from '../../desktop/format';
+import { ErrorNotice } from '../../errors/ErrorNotice';
+import { Badge } from '../../ui/Controls';
+import { Button } from '../../ui/Button';
+import { cx } from '../../ui/cx';
+import { Dialog } from '../../ui/Dialog';
+import { TextField } from '../../ui/TextField';
+import { internalCall, type StorageDisk } from '../sdk/internal';
+import {
+  layoutOptions,
+  recommendedLayout,
+  wastedBytes,
+  type Layout,
+  type LayoutOption,
+} from './layouts';
+import { isFinished, JobStatus, PlanPreview, RunButton, RunError, useRunPlan } from './PlanRun';
+import styles from './Settings.module.css';
+import { describeProblem, guardReason } from './StoragePage';
+
+type Step = 'disks' | 'layout' | 'encryption' | 'review';
+const steps: Step[] = ['disks', 'layout', 'encryption', 'review'];
+
+/**
+ * Creating a pool: choose the disks, compare every layout that works with them, answer the encryption question (it
+ * can only be decided now), name the pool, see the exact commands, and run them. Disks that are not empty need their
+ * serial typed; the daemon checks every disk again before each command.
+ */
+export function PoolWizard({
+  app,
+  disks,
+  onClose,
+}: {
+  app: PithyxApp;
+  disks: StorageDisk[];
+  onClose: () => void;
+}) {
+  const { t, i18n } = useTranslation('settings');
+  const [step, setStep] = useState<Step>('disks');
+  const [selected, setSelected] = useState<readonly string[]>([]);
+  const [confirmations, setConfirmations] = useState<Record<string, string>>({});
+  const [layout, setLayout] = useState<Layout | null>(null);
+  const [encryption, setEncryption] = useState<'none' | null>(null);
+  const [name, setName] = useState('');
+  const usable = disks.filter(({ guard }) => guard.decision !== 'refused');
+  const refused = disks.filter(({ guard }) => guard.decision === 'refused');
+  const chosen = selected
+    .map((id) => disks.find(({ disk }) => disk.id === id))
+    .filter((disk) => disk !== undefined);
+  const sizes = chosen.map(({ disk }) => disk.sizeBytes);
+  const options = layoutOptions(sizes);
+  const recommended = recommendedLayout(sizes.length);
+  const effectiveLayout =
+    layout !== null && options.some((option) => option.layout === layout) ? layout : recommended;
+  const plan = useMutation({
+    mutationFn: () =>
+      internalCall(app, 'internal.admin.storage.plan', {
+        action: 'pool.create',
+        pool: name.trim(),
+        layout: effectiveLayout,
+        diskIds: [...selected],
+        encryption: 'none',
+        confirmations: Object.fromEntries(
+          Object.entries(confirmations).filter(([id]) => selected.includes(id)),
+        ),
+      }),
+  });
+  const { run, job } = useRunPlan(app);
+
+  function toggle(id: string, on: boolean) {
+    setSelected(on ? [...selected, id] : selected.filter((other) => other !== id));
+    plan.reset();
+  }
+
+  const index = steps.indexOf(step);
+  const canContinue =
+    step === 'disks'
+      ? selected.length > 0
+      : step === 'layout'
+        ? true
+        : step === 'encryption'
+          ? encryption !== null
+          : false;
+
+  return (
+    <Dialog
+      isOpen
+      isDismissable={job === null || isFinished(job)}
+      onOpenChange={(open) => {
+        if (!open) {
+          onClose();
+        }
+      }}
+      title={t('storage.create.title')}
+      actions={
+        job !== null ? (
+          <Button variant="primary" isDisabled={!isFinished(job)} onPress={onClose}>
+            {t('storage.create.close')}
+          </Button>
+        ) : (
+          <>
+            {index > 0 ? (
+              <Button
+                onPress={() => {
+                  setStep(steps[index - 1] ?? 'disks');
+                  plan.reset();
+                }}
+              >
+                {t('storage.wizard.back')}
+              </Button>
+            ) : (
+              <Button onPress={onClose}>{t('storage.create.close')}</Button>
+            )}
+            {step === 'review' ? (
+              plan.data?.planId ? (
+                <RunButton
+                  preview={plan.data}
+                  label={t('storage.wizard.create')}
+                  run={run}
+                  job={job}
+                />
+              ) : (
+                <Button
+                  variant="primary"
+                  isDisabled={name.trim() === '' || plan.isPending}
+                  onPress={() => {
+                    plan.mutate();
+                  }}
+                >
+                  {t('storage.create.preview')}
+                </Button>
+              )
+            ) : (
+              <Button
+                variant="primary"
+                isDisabled={!canContinue}
+                onPress={() => {
+                  setStep(steps[index + 1] ?? 'review');
+                }}
+              >
+                {t('storage.wizard.next')}
+              </Button>
+            )}
+          </>
+        )
+      }
+    >
+      <div className={styles.form}>
+        <p className={styles.muted}>
+          {t('storage.wizard.progress', {
+            step: index + 1,
+            count: steps.length,
+            title: t(`storage.wizard.steps.${step}`),
+          })}
+        </p>
+
+        {step === 'disks' && (
+          <fieldset className={styles.diskChoice}>
+            <legend className={styles.fieldLabel}>{t('storage.create.disks')}</legend>
+            {usable.length === 0 && <p className={styles.muted}>{t('storage.create.noDisks')}</p>}
+            {usable.map(({ disk, guard }) => (
+              <div key={disk.id} className={styles.diskOption}>
+                {/* A native checkbox: React Aria's would move into the chunk every app shares with the desktop. */}
+                <label className={styles.check}>
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(disk.id)}
+                    onChange={(event) => {
+                      toggle(disk.id, event.target.checked);
+                    }}
+                  />
+                  <span className={styles.mono}>{disk.name}</span>
+                  <span className={styles.muted}>
+                    {disk.serial ?? ''} · {formatBytes(disk.sizeBytes, i18n.language)}
+                  </span>
+                </label>
+                {guard.decision === 'needsSerialConfirmation' && selected.includes(disk.id) && (
+                  <TextField
+                    label={t('storage.create.confirm', {
+                      disk: disk.name,
+                      serial: disk.serial ?? '',
+                    })}
+                    description={guardReason(t, guard)}
+                    value={confirmations[disk.id] ?? ''}
+                    onChange={(value) => {
+                      setConfirmations({ ...confirmations, [disk.id]: value });
+                      plan.reset();
+                    }}
+                    autoCapitalize="none"
+                    autoComplete="off"
+                  />
+                )}
+              </div>
+            ))}
+            {refused.length > 0 && (
+              <details className={styles.refused}>
+                <summary>{t('storage.create.refused', { count: refused.length })}</summary>
+                <ul>
+                  {refused.map(({ disk, guard }) => (
+                    <li key={disk.id}>
+                      <span className={styles.mono}>{disk.name}</span>: {guardReason(t, guard)}
+                    </li>
+                  ))}
+                </ul>
+              </details>
+            )}
+          </fieldset>
+        )}
+
+        {step === 'layout' && (
+          <>
+            <p className={styles.recommendation}>
+              {t(`storage.wizard.recommend.${recommended}`, { count: sizes.length })}
+            </p>
+            {wastedBytes(sizes) > 0 && (
+              <p className={styles.notice}>
+                {t('storage.wizard.mixedSizes', {
+                  wasted: formatBytes(wastedBytes(sizes), i18n.language),
+                })}
+              </p>
+            )}
+            <div
+              className={styles.layouts}
+              role="radiogroup"
+              aria-label={t('storage.create.layout')}
+            >
+              {options.map((option) => (
+                <LayoutCard
+                  key={option.layout}
+                  option={option}
+                  recommended={option.layout === recommended}
+                  selected={option.layout === effectiveLayout}
+                  onSelect={() => {
+                    setLayout(option.layout);
+                  }}
+                />
+              ))}
+            </div>
+          </>
+        )}
+
+        {step === 'encryption' && (
+          <fieldset className={styles.diskChoice}>
+            <legend className={styles.fieldLabel}>{t('storage.wizard.encryption.question')}</legend>
+            <p className={styles.muted}>{t('storage.wizard.encryption.explain')}</p>
+            <label className={styles.check}>
+              <input
+                type="radio"
+                name="encryption"
+                checked={encryption === 'none'}
+                onChange={() => {
+                  setEncryption('none');
+                }}
+              />
+              <span>{t('storage.wizard.encryption.none')}</span>
+            </label>
+            <p className={cx(styles.muted, styles.indent)}>
+              {t('storage.wizard.encryption.noneHint')}
+            </p>
+            <label className={cx(styles.check, styles.disabled)}>
+              <input type="radio" name="encryption" disabled />
+              <span>{t('storage.wizard.encryption.key')}</span>
+            </label>
+            <p className={cx(styles.muted, styles.indent)}>
+              {t('storage.wizard.encryption.keyLater')}
+            </p>
+          </fieldset>
+        )}
+
+        {step === 'review' && (
+          <>
+            <TextField
+              label={t('storage.create.name')}
+              description={t('storage.create.nameHint')}
+              value={name}
+              onChange={(value) => {
+                setName(value);
+                plan.reset();
+              }}
+              autoCapitalize="none"
+              autoComplete="off"
+              isReadOnly={job !== null}
+            />
+            <p>
+              {t('storage.wizard.summary', {
+                layout: t(`storage.wizard.layouts.${effectiveLayout}.title`),
+                count: selected.length,
+                usable: formatBytes(
+                  options.find((option) => option.layout === effectiveLayout)?.usableBytes ?? 0,
+                  i18n.language,
+                ),
+              })}
+            </p>
+            {plan.isError && <ErrorNotice error={describeProblem(plan.error)} />}
+            {plan.data !== undefined && <PlanPreview preview={plan.data} disks={disks} />}
+            <RunError run={run} />
+            {job !== null && <JobStatus job={job} />}
+          </>
+        )}
+      </div>
+    </Dialog>
+  );
+}
+
+function Meter({ label, value }: { label: string; value: number }) {
+  return (
+    <span className={styles.meter}>
+      <span>{label}</span>
+      <span className={styles.dots} aria-hidden>
+        {[1, 2, 3, 4, 5].map((dot) => (
+          <span key={dot} className={cx(styles.dot, dot <= value && styles.dotOn)} />
+        ))}
+      </span>
+    </span>
+  );
+}
+
+function LayoutCard({
+  option,
+  recommended,
+  selected,
+  onSelect,
+}: {
+  option: LayoutOption;
+  recommended: boolean;
+  selected: boolean;
+  onSelect: () => void;
+}) {
+  const { t, i18n } = useTranslation('settings');
+  const key = `storage.wizard.layouts.${option.layout}` as const;
+  const tolerance =
+    option.tolerance === 0
+      ? t('storage.wizard.tolerance.none')
+      : option.toleranceMax > option.tolerance
+        ? t('storage.wizard.tolerance.pairs', { max: option.toleranceMax })
+        : t('storage.wizard.tolerance.any', { count: option.tolerance });
+  const speeds = ['low', 'low', 'medium', 'good', 'high', 'veryHigh'] as const;
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={selected}
+      className={cx(
+        styles.layoutCard,
+        selected && styles.layoutSelected,
+        option.tolerance === 0 && styles.layoutRisky,
+      )}
+      onClick={onSelect}
+    >
+      <span className={styles.layoutHead}>
+        <span className={styles.layoutTitle}>{t(`${key}.title`)}</span>
+        {recommended && <Badge tone="accent">{t('storage.wizard.recommended')}</Badge>}
+      </span>
+      <span className={styles.drawing} aria-hidden>
+        {option.groups.map((group, groupIndex) => (
+          <span key={groupIndex} className={styles.group}>
+            {group.map((role, index) => (
+              <span key={index} className={styles.diskBox} data-role={role} />
+            ))}
+          </span>
+        ))}
+      </span>
+      <span className={styles.legend}>
+        {t('storage.wizard.drawing', {
+          data: option.groups.flat().filter((role) => role === 'data').length,
+          protection: option.groups.flat().filter((role) => role !== 'data').length,
+        })}
+      </span>
+      <span className={styles.usable}>
+        {t('storage.wizard.usable', { size: formatBytes(option.usableBytes, i18n.language) })}
+      </span>
+      <span className={option.tolerance === 0 ? styles.errors : undefined}>{tolerance}</span>
+      <Meter
+        label={t('storage.wizard.read', {
+          speed: t(`storage.wizard.speed.${speeds[option.read] ?? 'low'}`),
+        })}
+        value={option.read}
+      />
+      <Meter
+        label={t('storage.wizard.write', {
+          speed: t(`storage.wizard.speed.${speeds[option.write] ?? 'low'}`),
+        })}
+        value={option.write}
+      />
+      <span className={styles.goodFor}>{t(`${key}.goodFor`)}</span>
+      <span className={styles.fixed}>{t(`${key}.fixed`)}</span>
+    </button>
+  );
+}

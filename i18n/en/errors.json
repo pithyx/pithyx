@@ -170,15 +170,26 @@
       "not_found": "The disk is no longer there. Reload the list and choose again.",
       "refused": "The disk may not be used: {reason, select, system_disk {it holds the system} mounted {a file system on it is in use} pool_member {it belongs to a pool} not_test_disk {it is not a declared test disk} other {it is not safe to use}}."
     },
+    "encryption": {
+      "unavailable": "Encryption comes with the key vault in the next update. A pool can only be encrypted when it is created, so create it without encryption only if that is fine for its data."
+    },
     "plan": {
+      "action_invalid": "Unknown storage action.",
       "expired": "This plan is more than 10 minutes old. Show it again to check the disks once more.",
+      "not_found": "This plan is no longer there (it ran already, expired or the daemon restarted). Show it again.",
       "stale": "A disk changed after the plan was shown. Nothing was changed; show the plan again."
     },
     "pool": {
       "disk_count": "{layout} needs at least {min, plural, one {# disk} other {# disks}}; {count, plural, one {# is} other {# are}} selected.",
+      "encryption_required": "Answer the encryption question first: it can only be decided when the pool is created.",
       "layout_invalid": "Unknown pool layout.",
       "name_invalid": "Pool names start with a lowercase letter and use up to 32 lowercase letters, digits, - and _. Names like mirror or raidz are reserved.",
-      "name_taken": "A pool named {name} exists already."
+      "name_mismatch": "Type the pool name {name} exactly to confirm.",
+      "name_taken": "A pool named {name} exists already.",
+      "not_found": "There is no pool named {name}."
+    },
+    "vdev": {
+      "not_found": "The pool has no such device (any more). Reload and choose again."
     }
   },
   "system": {

@@ -46,7 +46,8 @@
       "used": "{used} von {size} belegt",
       "layout": "Aufbau: {layout}",
       "devices": "Geräte von {pool}",
-      "errors": "Fehler: {read} Lesen, {write} Schreiben, {checksum} Prüfsumme"
+      "errors": "Fehler: {read} Lesen, {write} Schreiben, {checksum} Prüfsumme",
+      "degradedHint": "Ein Gerät fehlt oder ist ausgefallen. Eine zurückkehrende Platte wird von selbst wiederhergestellt (Resilver); du kannst sie auch durch eine neue Platte ersetzen."
     },
     "state": {
       "online": "Intakt",
@@ -103,15 +104,8 @@
       "not_checked": "Noch nicht geprüft. Bestätige mit ihrer Seriennummer, um sie zu verwenden.",
       "has_data": "Enthält Daten ({contents}). Bestätige mit ihrer Seriennummer, um sie zu verwenden; alles darauf geht verloren.",
       "confirmed": "Mit ihrer Seriennummer bestätigt.",
-      "empty": "Leer und bereit."
-    },
-    "layouts": {
-      "single": "Einzelne Platte (keine Redundanz)",
-      "mirror": "Spiegel",
-      "raidz1": "RAID-Z1 (eine Platte darf ausfallen)",
-      "raidz2": "RAID-Z2 (zwei Platten dürfen ausfallen)",
-      "raidz3": "RAID-Z3 (drei Platten dürfen ausfallen)",
-      "stripe": "Stripe (eine ausgefallene Platte kostet alles)"
+      "empty": "Leer und bereit.",
+      "confirm_replacement": "Eine Ersatzplatte wird immer mit ihrer Seriennummer bestätigt."
     },
     "create": {
       "button": "Pool anlegen …",
@@ -128,6 +122,138 @@
       "notYet": "Pools von hier aus anlegen kommt mit dem nächsten Update. Es wurde nichts ausgeführt.",
       "blocked": "Nicht jede gewählte Platte kann verwendet werden:",
       "close": "Schließen"
+    },
+    "run": {
+      "running": "Schritt {step} von {count} läuft …",
+      "succeeded": "Fertig. Alle Befehle wurden ausgeführt.",
+      "stopped": "Angehalten."
+    },
+    "wizard": {
+      "back": "Zurück",
+      "next": "Weiter",
+      "create": "Pool anlegen",
+      "recommended": "Empfohlen",
+      "progress": "Schritt {step} von {count}: {title}",
+      "steps": {
+        "disks": "Platten",
+        "layout": "Aufbau",
+        "encryption": "Verschlüsselung",
+        "review": "Name und Prüfung"
+      },
+      "recommend": {
+        "single": "Mit einer Platte gibt es keinen Schutz: Fällt sie aus, sind die Daten weg. Halte eine Sicherung bereit.",
+        "mirror": "Für {count} Platten empfehlen wir einen Spiegel: Jede Platte enthält alles, deshalb dürfen alle bis auf eine ausfallen.",
+        "raidz1": "Für {count} Platten empfehlen wir RAID-Z1: Eine Platte darf ausfallen, alle anderen speichern Daten. Wie Synology SHR mit einer Platte Schutz.",
+        "raidz2": "Für {count} Platten empfehlen wir RAID-Z2: Zwei Platten dürfen ausfallen. Das zählt, weil die Wiederherstellung großer Platten lange dauert. Wie Synology SHR-2.",
+        "raidz3": "Wir empfehlen RAID-Z3.",
+        "mirrors": "Wir empfehlen Spiegelpaare.",
+        "stripe": "Wir empfehlen einen Stripe."
+      },
+      "mixedSizes": "Die Platten sind unterschiedlich groß: Jede zählt so groß wie die kleinste, deshalb bleiben {wasted} ungenutzt.",
+      "drawing": "{data, plural, one {# Platte} other {# Platten}} für Daten, {protection, plural, =0 {keine für Schutz} one {# für Schutz} other {# für Schutz}}",
+      "usable": "Etwa {size} nutzbar",
+      "tolerance": {
+        "none": "Keine Platte darf ausfallen: Ein Ausfall kostet alles.",
+        "any": "{count, plural, one {Eine beliebige Platte darf ausfallen.} other {Beliebige # Platten dürfen ausfallen.}}",
+        "pairs": "Pro Paar darf eine Platte ausfallen, insgesamt bis zu {max}."
+      },
+      "read": "Lesen: {speed}",
+      "write": "Schreiben: {speed}",
+      "speed": {
+        "low": "wie eine Platte",
+        "medium": "schneller",
+        "good": "schnell",
+        "high": "sehr schnell",
+        "veryHigh": "am schnellsten"
+      },
+      "summary": "{layout} aus {count, plural, one {# Platte} other {# Platten}}, etwa {usable} nutzbar, unverschlüsselt.",
+      "encryption": {
+        "question": "Soll der Pool verschlüsselt werden?",
+        "explain": "Verschlüsselung lässt sich nur jetzt wählen, beim Anlegen des Pools. Später lässt sie sich nicht einschalten: Der Pool müsste neu angelegt und seine Daten zurückkopiert werden.",
+        "none": "Keine Verschlüsselung",
+        "noneHint": "Wer die Platten hat, kann die Daten lesen. In Ordnung für Medien und Sicherungen von bereits verschlüsselten Daten.",
+        "key": "Mit einem Schlüssel verschlüsseln",
+        "keyLater": "Kommt mit dem Schlüsseltresor im nächsten Update. Wenn dieser Pool verschlüsselt sein soll, warte darauf: Ein jetzt angelegter Pool bleibt unverschlüsselt."
+      },
+      "layouts": {
+        "single": {
+          "title": "Einzelne Platte",
+          "goodFor": "Gut für: Ausprobieren, Daten, die es auch anderswo gibt.",
+          "fixed": "Lässt sich später durch eine zweite Platte zu einem Spiegel machen."
+        },
+        "mirror": {
+          "title": "Spiegel",
+          "goodFor": "Gut für: zwei Platten, die wichtigsten Daten, schnelles Lesen.",
+          "fixed": "Später lassen sich weitere Platten an den Spiegel hängen; der Platz bleibt der einer Platte."
+        },
+        "mirrors": {
+          "title": "Spiegelpaare",
+          "goodFor": "Gut für: Tempo, virtuelle Maschinen und Datenbanken; wächst um je zwei Platten.",
+          "fixed": "Wächst durch ein weiteres Paar. Fallen beide Platten eines Paares aus, ist alles verloren."
+        },
+        "raidz1": {
+          "title": "RAID-Z1",
+          "goodFor": "Gut für: die meisten Haushalte, den meisten Platz mit einer Platte Schutz.",
+          "fixed": "Die Schutzstufe bleibt bei einer Platte. Später lassen sich Platten einzeln hinzufügen (RAID-Z-Erweiterung)."
+        },
+        "raidz2": {
+          "title": "RAID-Z2",
+          "goodFor": "Gut für: sechs Platten und mehr, große Platten, Daten, die zwei Ausfälle überstehen müssen.",
+          "fixed": "Die Schutzstufe bleibt bei zwei Platten. Später lassen sich Platten einzeln hinzufügen."
+        },
+        "raidz3": {
+          "title": "RAID-Z3",
+          "goodFor": "Gut für: viele große Platten und Archive, die drei Ausfälle überstehen müssen.",
+          "fixed": "Die Schutzstufe bleibt bei drei Platten. Später lassen sich Platten einzeln hinzufügen."
+        },
+        "stripe": {
+          "title": "Stripe",
+          "goodFor": "Nur für: Zwischenablagen, deren Verlust egal ist.",
+          "fixed": "Schutz lässt sich nie hinzufügen. Eine ausgefallene Platte kostet den ganzen Pool."
+        }
+      }
+    },
+    "actions": {
+      "disk": "Neue Platte",
+      "datasets": "Alles auf dem Pool geht verloren, auch diese Datasets:",
+      "replace": {
+        "button": "Ersetzen …",
+        "title": "{device} ersetzen",
+        "explain": "Die neue Platte nimmt den Platz von {device} in {pool} ein; ZFS kopiert die Daten darauf (Resilver). Eine neue Platte wird nie von selbst verwendet.",
+        "serialHint": "Gib die Seriennummer ein, die auf der Platte steht, um zu bestätigen, dass du diese meinst.",
+        "run": "Ersetzen"
+      },
+      "spareAdd": {
+        "button": "Hot Spare hinzufügen …",
+        "title": "Hot Spare zu {pool} hinzufügen",
+        "explain": "Ein Hot Spare wartet in {pool}; fällt eine Platte aus, stellt ZFS sofort darauf wieder her.",
+        "run": "Spare hinzufügen"
+      },
+      "spareRemove": {
+        "button": "Spare entfernen",
+        "title": "Spare {device} entfernen",
+        "explain": "{device} ist dann kein Hot Spare von {pool} mehr.",
+        "run": "Entfernen"
+      },
+      "offline": {
+        "button": "Offline nehmen",
+        "title": "{device} offline nehmen",
+        "explain": "{pool} verwendet {device} nicht mehr, zum Beispiel zum Tauschen. Der Pool bleibt nutzbar, solange Schutz übrig ist.",
+        "run": "Offline nehmen"
+      },
+      "online": {
+        "button": "Online bringen",
+        "title": "{device} online bringen",
+        "explain": "{pool} verwendet {device} wieder und stellt nach, was gefehlt hat.",
+        "run": "Online bringen"
+      },
+      "destroy": {
+        "button": "Pool löschen …",
+        "title": "{pool} löschen",
+        "explain": "Der Pool {pool} und alle seine Daten werden gelöscht. Das lässt sich nicht rückgängig machen.",
+        "confirm": "Gib {pool} zur Bestätigung ein",
+        "run": "Pool löschen"
+      }
     }
   }
 }

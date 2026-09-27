@@ -46,7 +46,8 @@
       "used": "{used} of {size} used",
       "layout": "Layout: {layout}",
       "devices": "Devices of {pool}",
-      "errors": "Errors: {read} read, {write} write, {checksum} checksum"
+      "errors": "Errors: {read} read, {write} write, {checksum} checksum",
+      "degradedHint": "A device is missing or failed. A disk that comes back is rebuilt on its own (resilver); you can also replace it with a new disk."
     },
     "state": {
       "online": "Healthy",
@@ -103,15 +104,8 @@
       "not_checked": "Not checked yet. Confirm with its serial number to use it.",
       "has_data": "Holds data ({contents}). Confirm with its serial number to use it; everything on it is lost.",
       "confirmed": "Confirmed with its serial number.",
-      "empty": "Empty and ready."
-    },
-    "layouts": {
-      "single": "Single disk (no redundancy)",
-      "mirror": "Mirror",
-      "raidz1": "RAID-Z1 (one disk may fail)",
-      "raidz2": "RAID-Z2 (two disks may fail)",
-      "raidz3": "RAID-Z3 (three disks may fail)",
-      "stripe": "Stripe (one failed disk loses everything)"
+      "empty": "Empty and ready.",
+      "confirm_replacement": "A replacement disk is always confirmed with its serial number."
     },
     "create": {
       "button": "Create pool…",
@@ -128,6 +122,138 @@
       "notYet": "Creating pools from here comes with the next update. Nothing was run.",
       "blocked": "Not every chosen disk can be used:",
       "close": "Close"
+    },
+    "run": {
+      "running": "Running step {step} of {count}…",
+      "succeeded": "Done. Every command ran.",
+      "stopped": "Stopped."
+    },
+    "wizard": {
+      "back": "Back",
+      "next": "Next",
+      "create": "Create pool",
+      "recommended": "Recommended",
+      "progress": "Step {step} of {count}: {title}",
+      "steps": {
+        "disks": "Disks",
+        "layout": "Layout",
+        "encryption": "Encryption",
+        "review": "Name and check"
+      },
+      "recommend": {
+        "single": "With one disk there is no protection: when it fails, the data is gone. Keep a backup.",
+        "mirror": "For {count} disks we recommend a mirror: every disk holds everything, so all but one may fail.",
+        "raidz1": "For {count} disks we recommend RAID-Z1: one disk may fail, and all others hold data. Like Synology SHR with one disk of protection.",
+        "raidz2": "For {count} disks we recommend RAID-Z2: two disks may fail, which matters because rebuilding large disks takes long. Like Synology SHR-2.",
+        "raidz3": "We recommend RAID-Z3.",
+        "mirrors": "We recommend mirror pairs.",
+        "stripe": "We recommend a stripe."
+      },
+      "mixedSizes": "The disks differ in size: every disk counts as large as the smallest, so {wasted} stay unused.",
+      "drawing": "{data, plural, one {# disk} other {# disks}} for data, {protection, plural, =0 {none for protection} one {# for protection} other {# for protection}}",
+      "usable": "About {size} usable",
+      "tolerance": {
+        "none": "No disk may fail: one failure loses everything.",
+        "any": "{count, plural, one {Any # disk may fail.} other {Any # disks may fail.}}",
+        "pairs": "One disk per pair may fail, up to {max} in total."
+      },
+      "read": "Reading: {speed}",
+      "write": "Writing: {speed}",
+      "speed": {
+        "low": "like one disk",
+        "medium": "faster",
+        "good": "fast",
+        "high": "very fast",
+        "veryHigh": "fastest"
+      },
+      "summary": "{layout} of {count, plural, one {# disk} other {# disks}}, about {usable} usable, not encrypted.",
+      "encryption": {
+        "question": "Should the pool be encrypted?",
+        "explain": "Encryption can only be chosen now, when the pool is created. It cannot be switched on later: the pool would have to be created again and its data copied back.",
+        "none": "No encryption",
+        "noneHint": "Anyone with the disks can read the data. Fine for media and backups of other encrypted data.",
+        "key": "Encrypt with a key",
+        "keyLater": "Comes with the key vault in the next update. To encrypt this pool, wait for it: a pool created now stays unencrypted."
+      },
+      "layouts": {
+        "single": {
+          "title": "Single disk",
+          "goodFor": "Good for: trying things out, data that also lives elsewhere.",
+          "fixed": "Can be turned into a mirror later by attaching a second disk."
+        },
+        "mirror": {
+          "title": "Mirror",
+          "goodFor": "Good for: two disks, the most important data, fast reading.",
+          "fixed": "More disks can be attached to the mirror later; the space stays that of one disk."
+        },
+        "mirrors": {
+          "title": "Mirror pairs",
+          "goodFor": "Good for: speed, virtual machines and databases; grows two disks at a time.",
+          "fixed": "Grows by adding another pair. A pair whose two disks fail loses everything."
+        },
+        "raidz1": {
+          "title": "RAID-Z1",
+          "goodFor": "Good for: most homes, the most space with one disk of protection.",
+          "fixed": "The protection level stays at one disk. Disks can be added one at a time later (RAID-Z expansion)."
+        },
+        "raidz2": {
+          "title": "RAID-Z2",
+          "goodFor": "Good for: six disks or more, large disks, data that must survive two failures.",
+          "fixed": "The protection level stays at two disks. Disks can be added one at a time later."
+        },
+        "raidz3": {
+          "title": "RAID-Z3",
+          "goodFor": "Good for: many large disks and archives where three failures must be survived.",
+          "fixed": "The protection level stays at three disks. Disks can be added one at a time later."
+        },
+        "stripe": {
+          "title": "Stripe",
+          "goodFor": "Only for: scratch space whose loss does not matter.",
+          "fixed": "Protection can never be added. One failed disk loses the whole pool."
+        }
+      }
+    },
+    "actions": {
+      "disk": "New disk",
+      "datasets": "Everything on the pool is lost, including these datasets:",
+      "replace": {
+        "button": "Replace…",
+        "title": "Replace {device}",
+        "explain": "The new disk takes the place of {device} in {pool}; ZFS copies the data onto it (resilver). A new disk is never used on its own.",
+        "serialHint": "Type the serial number printed on the disk to confirm it is the one you mean.",
+        "run": "Replace"
+      },
+      "spareAdd": {
+        "button": "Add hot spare…",
+        "title": "Add a hot spare to {pool}",
+        "explain": "A hot spare waits in {pool}; when a disk fails, ZFS rebuilds onto it right away.",
+        "run": "Add spare"
+      },
+      "spareRemove": {
+        "button": "Remove spare",
+        "title": "Remove the spare {device}",
+        "explain": "{device} stops being a hot spare of {pool}.",
+        "run": "Remove"
+      },
+      "offline": {
+        "button": "Take offline",
+        "title": "Take {device} offline",
+        "explain": "{pool} stops using {device}, for example to swap it. The pool stays usable if it has protection left.",
+        "run": "Take offline"
+      },
+      "online": {
+        "button": "Bring online",
+        "title": "Bring {device} online",
+        "explain": "{pool} uses {device} again and rebuilds what it missed.",
+        "run": "Bring online"
+      },
+      "destroy": {
+        "button": "Destroy pool…",
+        "title": "Destroy {pool}",
+        "explain": "The pool {pool} and all its data are deleted. This cannot be undone.",
+        "confirm": "Type {pool} to confirm",
+        "run": "Destroy pool"
+      }
     }
   }
 }

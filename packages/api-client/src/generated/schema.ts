@@ -599,6 +599,40 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/storage/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Probes the chosen disks, asks the disk guard and returns the exact commands of a destructive storage action, with a plan id to run them. Runs nothing. */
+        post: operations["PlanStorageAction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/storage/plans/{planId}/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Runs a plan exactly as it was shown, as a job; the disk guard checks every disk again right before each command. A plan runs once and expires after 10 minutes. */
+        post: operations["RunStoragePlan"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/storage/pools": {
         parameters: {
             query?: never;
@@ -610,23 +644,6 @@ export type paths = {
         get: operations["GetPools"];
         put?: never;
         post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/storage/pools/preview": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** @description Administrators only. Probes the chosen disks, asks the disk guard and returns the exact commands that would create the pool. Runs nothing. */
-        post: operations["PreviewPoolCreate"];
         delete?: never;
         options?: never;
         head?: never;
@@ -888,7 +905,7 @@ export type components = {
             }[];
         };
         /** @enum {string} */
-        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.exists" | "fs.share.invalid" | "fs.share.not_found" | "fs.share.read_only" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.command.failed" | "storage.disk.not_found" | "storage.disk.refused" | "storage.plan.expired" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_taken" | "system.internal.unexpected" | "system.origin.forbidden";
+        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.exists" | "fs.share.invalid" | "fs.share.not_found" | "fs.share.read_only" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.command.failed" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.encryption_required" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.vdev.not_found" | "system.internal.unexpected" | "system.origin.forbidden";
         /** @description A failed client message. `id` is empty when the message could not be parsed. */
         ErrorMessage: {
             code: components["schemas"]["ErrorCode"];
@@ -1212,30 +1229,6 @@ export type components = {
             /** @description Top-level vdevs, including log, cache, special and spare devices. */
             vdevs: components["schemas"]["Vdev"][];
         };
-        /** @description Response of `POST /api/storage/pools/preview`. Nothing was run. */
-        PoolCreatePreview: {
-            /** @description The exact commands the plan would run, or null while a disk is not allowed. */
-            commands: null | components["schemas"]["PlannedCommand"][];
-            /** @description The guard's verdict for every chosen disk, after probing them again. */
-            disks: components["schemas"]["GuardVerdict"][];
-            /**
-             * Format: date-time
-             * @description Until when the plan may run once creating pools is available.
-             */
-            expiresAt: string;
-        };
-        PoolCreatePreviewRequest: {
-            /** @description For disks that are not empty: the serial number the user typed, by disk id. */
-            confirmations?: null | {
-                [key: string]: string;
-            };
-            /** @description The disks to use, by id. */
-            diskIds: string[];
-            /** @description `single`, `stripe`, `mirror`, `raidz1`, `raidz2` or `raidz3`. */
-            layout: string;
-            /** @description Pool name. */
-            name: string;
-        };
         /** @description Snapshot and event of `storage/pools`, and response of `GET /api/storage/pools`. */
         PoolList: {
             datasets: components["schemas"]["Dataset"][];
@@ -1363,6 +1356,48 @@ export type components = {
             disks: components["schemas"]["StorageDisk"][];
             /** @description `dev` or `prod`; on dev only the declared test disks can be used. */
             environment: string;
+        };
+        /** @description Response of `POST /api/storage/plans`. Nothing was run. */
+        StoragePlanPreview: {
+            /** @description The exact commands, or null while a disk is not allowed. */
+            commands: null | components["schemas"]["PlannedCommand"][];
+            /** @description For destroying a pool: every dataset that goes with it. */
+            datasets: string[];
+            /** @description The guard's verdict for every chosen disk, after probing them again. */
+            disks: components["schemas"]["GuardVerdict"][];
+            /**
+             * Format: date-time
+             * @description Until when the plan may run.
+             */
+            expiresAt: string;
+            /** @description Runs the plan exactly as shown with `POST /api/storage/plans/{planId}/run`; null while a disk is not allowed. */
+            planId: null | string;
+        };
+        /**
+         * @description A destructive storage action to plan. Which fields an action needs: `pool.create` Pool, Layout, DiskIds,
+         *     Encryption (and Confirmations for disks that are not empty); `pool.destroy` Pool and ConfirmName;
+         *     `pool.replace` Pool, Vdev and one disk in DiskIds with its serial in Confirmations; `pool.spare.add` Pool
+         *     and one disk; `pool.spare.remove`, `pool.offline` and `pool.online` Pool and Vdev.
+         */
+        StoragePlanRequest: {
+            /** @description `pool.create`, `pool.destroy`, `pool.replace`, `pool.spare.add`, `pool.spare.remove`, `pool.offline` or `pool.online`. */
+            action: string;
+            /** @description Serial numbers the user typed, by disk id. */
+            confirmations?: null | {
+                [key: string]: string;
+            };
+            /** @description The pool's name, typed by the user, to destroy it. */
+            confirmName?: null | string;
+            /** @description The disks to use, by id. */
+            diskIds?: null | string[];
+            /** @description The answer to the encryption question of a new pool: `none`, or `key` once the key vault exists. */
+            encryption?: null | string;
+            /** @description `single`, `stripe`, `mirror`, `mirrors` (pairs), `raidz1`, `raidz2` or `raidz3`. */
+            layout?: null | string;
+            /** @description The pool, or the new pool's name. */
+            pool: string;
+            /** @description GUID of the device to replace, take offline, bring online or remove. */
+            vdev?: null | string;
         };
         SystemInfo: {
             /**
@@ -1514,6 +1549,8 @@ export type components = {
             state: string;
             /** @description ZFS vdev type: `disk`, `file`, `mirror`, `raidz`, `draid`, `spare`, `replacing` and so on. */
             type: string;
+            /** @description Vdev GUID as decimal text; names a device in commands even when it is missing. */
+            vdevGuid: string;
             /**
              * Format: int64
              * @description Write errors since import or the last clear.
@@ -2854,6 +2891,70 @@ export interface operations {
             };
         };
     };
+    PlanStorageAction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoragePlanRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoragePlanPreview"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    RunStoragePlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                planId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
     GetPools: {
         parameters: {
             query?: never;
@@ -2870,39 +2971,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PoolList"];
-                };
-            };
-            /** @description Problem details with a stable error code. */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ApiProblem"];
-                };
-            };
-        };
-    };
-    PreviewPoolCreate: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["PoolCreatePreviewRequest"];
-            };
-        };
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PoolCreatePreview"];
                 };
             };
             /** @description Problem details with a stable error code. */

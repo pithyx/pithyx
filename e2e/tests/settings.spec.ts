@@ -35,32 +35,49 @@ test('the Storage page shows the pools and whether each disk may be used', async
   await expect(settings).toContainText('only the declared test disks can be used');
 });
 
-test('the pool preview lists the exact commands and asks for the serial of a disk with data', async ({
+test('the pool wizard compares layouts, asks about encryption and lists the exact commands', async ({
   page,
 }) => {
   const settings = await openStorage(page);
   await settings.getByRole('button', { name: 'Create pool…' }).click();
   const dialog = page.getByRole('dialog', { name: 'Create a pool' });
 
-  await dialog.getByLabel('Pool name').fill('tank');
-  await dialog.getByLabel('Layout').selectOption('mirror');
   await dialog.getByRole('checkbox', { name: /^sdb / }).check();
   await dialog.getByRole('checkbox', { name: /^sdc / }).check();
+  await dialog.getByRole('checkbox', { name: /^sdd / }).check();
   await expect(dialog.getByRole('checkbox', { name: /^sda / })).toHaveCount(0);
-  await dialog.getByRole('button', { name: 'Show commands' }).click();
-  await expect(dialog.getByRole('status')).toContainText('Not every chosen disk can be used');
-
   await dialog.getByLabel('Type the serial number of sdb (VYXTEST01)').fill('VYXTEST01');
+  await dialog.getByRole('button', { name: 'Next' }).click();
+
+  await expect(dialog).toContainText('For 3 disks we recommend RAID-Z1');
+  const layouts = dialog.getByRole('radiogroup', { name: 'Layout' });
+  await expect(layouts.getByRole('radio')).toHaveCount(3);
+  await expect(layouts.getByRole('radio', { name: /^RAID-Z1/ })).toHaveAttribute(
+    'aria-checked',
+    'true',
+  );
+  await expect(layouts.getByRole('radio', { name: /^Stripe/ })).toContainText('No disk may fail');
+  await dialog.getByRole('button', { name: 'Next' }).click();
+
+  await expect(dialog.getByRole('radio', { name: 'Encrypt with a key' })).toBeDisabled();
+  await expect(dialog.getByRole('button', { name: 'Next' })).toBeDisabled();
+  await dialog.getByRole('radio', { name: 'No encryption' }).check();
+  await dialog.getByRole('button', { name: 'Next' }).click();
+
+  await dialog.getByLabel('Pool name').fill('tank');
   await dialog.getByRole('button', { name: 'Show commands' }).click();
   const commands = dialog.getByRole('status').getByRole('listitem');
-  await expect(commands).toHaveCount(3);
+  await expect(commands).toHaveCount(8);
   await expect(commands.nth(0)).toHaveText(
     /^zpool labelclear -f \/dev\/disk\/by-id\/scsi-0QEMU_QEMU_HARDDISK_drive-scsi1-part1$/,
   );
   await expect(commands.nth(2)).toHaveText(
-    /zpool create .* tank mirror \/dev\/disk\/by-id\/scsi-0QEMU_QEMU_HARDDISK_drive-scsi1 \/dev\/disk\/by-id\/scsi-0QEMU_QEMU_HARDDISK_drive-scsi2$/,
+    /zpool create .* tank raidz1 \/dev\/disk\/by-id\/scsi-0QEMU_QEMU_HARDDISK_drive-scsi1 .*scsi2 .*scsi3$/,
   );
-  await expect(dialog).toContainText('Nothing was run.');
+  await expect(commands.nth(3)).toHaveText(
+    'zfs create -o canmount=off -o mountpoint=none tank/pithyx',
+  );
+  await expect(dialog.getByRole('button', { name: 'Create pool' })).toBeEnabled();
 });
 
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
@@ -81,7 +98,11 @@ test('the Storage page and the preview have no accessibility violations', async 
   await expect(diskRow(settings, 'sda')).toBeVisible();
   expect(await violations(page)).toEqual([]);
   await settings.getByRole('button', { name: 'Create pool…' }).click();
-  await expect(page.getByRole('dialog', { name: 'Create a pool' })).toBeVisible();
+  const dialog = page.getByRole('dialog', { name: 'Create a pool' });
+  await dialog.getByRole('checkbox', { name: /^sdc / }).check();
+  await dialog.getByRole('checkbox', { name: /^sdd / }).check();
+  await dialog.getByRole('button', { name: 'Next' }).click();
+  await expect(dialog.getByRole('radiogroup', { name: 'Layout' })).toBeVisible();
   expect(await violations(page)).toEqual([]);
 });
 
