@@ -8,9 +8,11 @@ on:
 permissions:
   contents: read
 
+# One run per branch: a new push to a pull request cancels the run it replaces. Runs on dev and master always finish,
+# so every merge is checked.
 concurrency:
-  group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  group: ci-${{ github.head_ref || github.ref_name }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   DOTNET_CLI_TELEMETRY_OPTOUT: '1'
@@ -18,8 +20,30 @@ env:
   LC_ALL: C.UTF-8
 
 jobs:
-  daemon:
+  # Pull requests that change only docs skip the builds and E2E; the daemon job needs a daemon-side change.
+  changes:
     runs-on: ubuntu-24.04
+    outputs:
+      code: ${{ steps.areas.outputs.code }}
+      daemon: ${{ steps.areas.outputs.daemon }}
+      frontend: ${{ steps.areas.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - id: areas
+        run: tools/checks/changed-areas.sh
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+
+  daemon:
+    needs: changes
+    if: needs.changes.outputs.daemon == 'true'
+    runs-on: ubuntu-24.04
+    env:
+      VYXIS_SKIP_BUDGETS: ${{ github.event_name == 'push' && github.ref_name == 'dev' && '1' || '' }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v6
@@ -35,6 +59,8 @@ jobs:
       - run: dotnet format daemon/Vyxis.slnx --verify-no-changes --no-restore
 
   frontend:
+    needs: changes
+    if: needs.changes.outputs.frontend == 'true'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
@@ -49,7 +75,6 @@ jobs:
       - run: pnpm test
       - run: pnpm build
       - run: pnpm check:bundle
-      - run: pnpm format:check
 
   repo:
     runs-on: ubuntu-24.04
@@ -64,6 +89,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: node tools/checks/repo-check.ts
+      - run: pnpm format:check
       - run: shellcheck tools/*/*.sh
       - name: Commit messages
         run: node tools/checks/commit-msg.ts --range "$(tools/checks/ci-range.sh)"
@@ -88,7 +114,12 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
   e2e:
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-24.04
+    env:
+      # The performance gate guards pull requests; after the merge, dev runs the other E2E tests only.
+      VYXIS_SKIP_BUDGETS: ${{ github.event_name == 'push' && github.ref_name == 'dev' && '1' || '' }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v6

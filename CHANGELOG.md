@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Leaner CI: a new push to a pull request cancels its running CI, pull requests that change only Markdown or `website/` skip the builds and E2E, daemon tests run only for daemon-side changes, and the run on `dev` after a merge skips the performance budgets (`VYXIS_SKIP_BUDGETS=1`).
 - Git worktrees for parallel work live under `.worktrees/` (gitignored, skipped by ESLint) and are removed once their PR is merged.
 
 - `pnpm check:bundle` holds two bundle budgets (gzip) against `tools/checks/bundle-budget.json`: the sign-in bundle (everything `index.html` loads before the first render, at most 200 KB) and the desktop bundle that signing in adds. Each fails the build when it grows more than 5 percent over its baseline. It runs in CI after the build.
