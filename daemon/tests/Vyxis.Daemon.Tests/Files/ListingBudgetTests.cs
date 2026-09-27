@@ -30,6 +30,8 @@ public sealed class ListingBudgetTests(ITestOutputHelper output) : IDisposable
         // Debug builds run the daemon without JIT optimizations; CI measures the Release build.
         Assert.Skip("Timing budgets are measured in Release builds (dotnet test -c Release), as in CI.");
 #endif
+        // CI runs the gate on pull requests; the run on dev after a merge skips it.
+        Assert.SkipWhen(Environment.GetEnvironmentVariable("VYXIS_SKIP_BUDGETS") == "1", "Performance budgets gate pull requests only.");
         var root = Directory.CreateDirectory(Path.Combine(_factory.DataDirectory, "pool", "big")).FullName;
         var folder = Directory.CreateDirectory(Path.Combine(root, "photos")).FullName;
         var warmupFolder = Directory.CreateDirectory(Path.Combine(root, "warmup")).FullName;
