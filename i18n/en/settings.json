@@ -259,7 +259,7 @@
         "title": "New share dataset on {pool}",
         "explain": "A dataset for a share on {pool}: it gets its own snapshots and quota and is mounted below /{pool}.",
         "name": "Name",
-        "nameHint": "Letters, digits, ., - and _; mounted at /{pool}/<name>.",
+        "nameHint": "Letters, digits, ., - and _; the dataset is mounted below /{pool}.",
         "run": "Create dataset"
       }
     },

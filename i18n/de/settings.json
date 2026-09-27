@@ -259,7 +259,7 @@
         "title": "Neues Freigabe-Dataset auf {pool}",
         "explain": "Ein Dataset für eine Freigabe auf {pool}: Es bekommt eigene Snapshots und ein eigenes Kontingent und wird unter /{pool} eingehängt.",
         "name": "Name",
-        "nameHint": "Buchstaben, Ziffern, ., - und _; eingehängt unter /{pool}/<Name>.",
+        "nameHint": "Buchstaben, Ziffern, ., - und _; das Dataset wird unter /{pool} eingehängt.",
         "run": "Dataset anlegen"
       }
     },

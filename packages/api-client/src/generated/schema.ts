@@ -684,6 +684,110 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/storage/snapshots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. The snapshots of a dataset as last read, oldest first. pithyxKind is set for snapshots Pithyx took. */
+        get: operations["ListSnapshots"];
+        put?: never;
+        /** @description Administrators only. Takes pithyx-manual-<utc> of the dataset now. Manual snapshots are never pruned by a schedule. */
+        post: operations["CreateSnapshot"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/storage/snapshots/delete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Destroys one snapshot, named exactly. Only snapshots Pithyx took (pithyx-...) can be deleted; held ones are refused. */
+        post: operations["DeleteSnapshot"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/storage/snapshots/hold": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Places the hold "pithyx" on the snapshot, so neither a schedule nor anyone else can destroy it. */
+        post: operations["HoldSnapshot"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/storage/snapshots/release": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Releases the hold "pithyx" of the snapshot. Holds of other tools stay. */
+        post: operations["ReleaseSnapshot"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/storage/snapshots/rollback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Rolls the whole dataset back to the snapshot; changes since are lost. confirmDataset is the dataset name as the user typed it. When newer snapshots exist they are destroyed too, so discardNewer must list every one of them by name, or nothing happens (storage.snapshot.newer_exist). */
+        post: operations["RollbackSnapshot"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/storage/snapshots/schedules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. The hourly, daily, weekly and monthly schedules of a dataset; off with the default counts (24, 7, 4, 6) until saved. */
+        get: operations["GetSnapshotSchedules"];
+        /** @description Administrators only. Saves the given schedules of a dataset. A schedule takes pithyx-<kind>-<utc> once per UTC hour, day, week (from Monday) or month and keeps its newest keep snapshots; it never deletes other snapshots, held ones or ones dated after the current time. */
+        put: operations["SetSnapshotSchedules"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 };
 export type webhooks = Record<string, never>;
 export type components = {
@@ -939,7 +1043,7 @@ export type components = {
             }[];
         };
         /** @enum {string} */
-        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.exists" | "fs.share.invalid" | "fs.share.not_found" | "fs.share.read_only" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.command.failed" | "storage.dataset.exists" | "storage.dataset.name_invalid" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.encryption_required" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.vdev.not_found" | "system.internal.unexpected" | "system.origin.forbidden";
+        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.exists" | "fs.share.invalid" | "fs.share.not_found" | "fs.share.read_only" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.command.failed" | "storage.dataset.exists" | "storage.dataset.name_invalid" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.encryption_required" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "system.internal.unexpected" | "system.origin.forbidden";
         /** @description A failed client message. `id` is empty when the message could not be parsed. */
         ErrorMessage: {
             code: components["schemas"]["ErrorCode"];
@@ -1406,6 +1510,51 @@ export type components = {
             /** @description The share root on the host. Only administrators get it. */
             path: null | string;
         };
+        Snapshot: {
+            /**
+             * Format: date-time
+             * @description When ZFS took it (UTC), by the clock the box had then.
+             */
+            createdAt: string;
+            /**
+             * Format: int64
+             * @description The transaction group it was taken in: the order of snapshots, whatever the clock said.
+             */
+            createTxg: number;
+            /** @description The dataset the snapshot belongs to, for example `tank/pithyx/shares/media`. */
+            dataset: string;
+            fullName: null | string;
+            /**
+             * Format: int32
+             * @description Number of holds (`userrefs`); a held snapshot cannot be destroyed.
+             */
+            holds: number;
+            /** @description The part after `@`, for example `pithyx-daily-20260927T000000Z`. */
+            name: string;
+            /** @description The schedule kind of a snapshot Pithyx created, or null for every other snapshot. */
+            pithyxKind: null | string;
+            /**
+             * Format: int64
+             * @description Data the snapshot references.
+             */
+            referencedBytes: number;
+            /**
+             * Format: int64
+             * @description Space only this snapshot holds.
+             */
+            usedBytes: number;
+        };
+        SnapshotCreateRequest: {
+            /** @description The dataset to snapshot. */
+            dataset: string;
+        };
+        /** @description Response of `GET /api/storage/snapshots`. */
+        SnapshotList: {
+            /** @description The dataset. */
+            dataset: string;
+            /** @description Its snapshots, oldest first. */
+            snapshots: components["schemas"]["Snapshot"][];
+        };
         /** @description The full current state of a topic, sent after `sub`. Only changes follow as events. */
         SnapshotMessage: {
             data: unknown;
@@ -1417,6 +1566,40 @@ export type components = {
              * @enum {string}
              */
             type: "snap";
+        };
+        SnapshotRequest: {
+            /** @description The dataset. */
+            dataset: string;
+            /** @description The exact snapshot name after `@`. */
+            name: string;
+        };
+        SnapshotRollbackRequest: {
+            /** @description The dataset name as the user typed it; must match exactly. */
+            confirmDataset: string;
+            /** @description The dataset to roll back. */
+            dataset: string;
+            /** @description Every newer snapshot by name, as the user was shown them; required when there are any. */
+            discardNewer?: null | string[];
+            /** @description The snapshot to return to. */
+            name: string;
+        };
+        SnapshotSchedule: {
+            /** @description Whether the schedule takes snapshots. */
+            enabled: boolean;
+            /**
+             * Format: int32
+             * @description How many of its snapshots it keeps (1 to 1000).
+             */
+            keep: number;
+            /** @description `hourly`, `daily`, `weekly` or `monthly`. */
+            kind: string;
+        };
+        /** @description Schedules of a dataset: all four kinds, in the order hourly, daily, weekly, monthly. */
+        SnapshotScheduleList: {
+            /** @description The dataset. */
+            dataset: string;
+            /** @description One entry per kind; kinds left out of a PUT stay as they are. */
+            schedules: components["schemas"]["SnapshotSchedule"][];
         };
         /** @description A disk with the guard's verdict, for the Storage settings page. */
         StorageDisk: {
@@ -3114,6 +3297,258 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PoolList"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    ListSnapshots: {
+        parameters: {
+            query: {
+                dataset: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SnapshotList"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    CreateSnapshot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SnapshotCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Snapshot"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    DeleteSnapshot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SnapshotRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    HoldSnapshot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SnapshotRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    ReleaseSnapshot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SnapshotRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    RollbackSnapshot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SnapshotRollbackRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetSnapshotSchedules: {
+        parameters: {
+            query: {
+                dataset: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SnapshotScheduleList"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SetSnapshotSchedules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SnapshotScheduleList"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SnapshotScheduleList"];
                 };
             };
             /** @description Problem details with a stable error code. */

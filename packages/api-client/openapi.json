@@ -1904,6 +1904,302 @@
           }
         }
       }
+    },
+    "/api/storage/snapshots": {
+      "get": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. The snapshots of a dataset as last read, oldest first. pithyxKind is set for snapshots Pithyx took.",
+        "operationId": "ListSnapshots",
+        "parameters": [
+          {
+            "name": "dataset",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Takes pithyx-manual-<utc> of the dataset now. Manual snapshots are never pruned by a schedule.",
+        "operationId": "CreateSnapshot",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SnapshotCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Snapshot"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/snapshots/delete": {
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Destroys one snapshot, named exactly. Only snapshots Pithyx took (pithyx-...) can be deleted; held ones are refused.",
+        "operationId": "DeleteSnapshot",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SnapshotRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/snapshots/hold": {
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Places the hold \"pithyx\" on the snapshot, so neither a schedule nor anyone else can destroy it.",
+        "operationId": "HoldSnapshot",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SnapshotRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/snapshots/release": {
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Releases the hold \"pithyx\" of the snapshot. Holds of other tools stay.",
+        "operationId": "ReleaseSnapshot",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SnapshotRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/snapshots/rollback": {
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Rolls the whole dataset back to the snapshot; changes since are lost. confirmDataset is the dataset name as the user typed it. When newer snapshots exist they are destroyed too, so discardNewer must list every one of them by name, or nothing happens (storage.snapshot.newer_exist).",
+        "operationId": "RollbackSnapshot",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SnapshotRollbackRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/snapshots/schedules": {
+      "get": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. The hourly, daily, weekly and monthly schedules of a dataset; off with the default counts (24, 7, 4, 6) until saved.",
+        "operationId": "GetSnapshotSchedules",
+        "parameters": [
+          {
+            "name": "dataset",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotScheduleList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Saves the given schedules of a dataset. A schedule takes pithyx-<kind>-<utc> once per UTC hour, day, week (from Monday) or month and keeps its newest keep snapshots; it never deletes other snapshots, held ones or ones dated after the current time.",
+        "operationId": "SetSnapshotSchedules",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SnapshotScheduleList"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotScheduleList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2601,6 +2897,7 @@
           "fs.share.read_only",
           "fs.trash.retention_invalid",
           "fs.upload.incomplete",
+          "fs.version.not_found",
           "fs.volume.full",
           "fs.volume.read_only",
           "jobs.job.not_found",
@@ -2629,6 +2926,14 @@
           "storage.pool.name_mismatch",
           "storage.pool.name_taken",
           "storage.pool.not_found",
+          "storage.snapshot.confirmation_mismatch",
+          "storage.snapshot.dataset_not_found",
+          "storage.snapshot.exists",
+          "storage.snapshot.held",
+          "storage.snapshot.newer_exist",
+          "storage.snapshot.not_found",
+          "storage.snapshot.not_pithyx",
+          "storage.snapshot.schedule_invalid",
           "storage.vdev.not_found",
           "system.internal.unexpected",
           "system.origin.forbidden"
@@ -3818,6 +4123,101 @@
         },
         "description": "A share the user can use."
       },
+      "Snapshot": {
+        "required": [
+          "dataset",
+          "name",
+          "createdAt",
+          "usedBytes",
+          "referencedBytes",
+          "holds",
+          "createTxg",
+          "fullName",
+          "pithyxKind"
+        ],
+        "type": "object",
+        "properties": {
+          "dataset": {
+            "type": "string",
+            "description": "The dataset the snapshot belongs to, for example `tank/pithyx/shares/media`."
+          },
+          "name": {
+            "type": "string",
+            "description": "The part after `@`, for example `pithyx-daily-20260927T000000Z`."
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "When ZFS took it (UTC), by the clock the box had then.",
+            "format": "date-time"
+          },
+          "usedBytes": {
+            "type": "integer",
+            "description": "Space only this snapshot holds.",
+            "format": "int64"
+          },
+          "referencedBytes": {
+            "type": "integer",
+            "description": "Data the snapshot references.",
+            "format": "int64"
+          },
+          "holds": {
+            "type": "integer",
+            "description": "Number of holds (`userrefs`); a held snapshot cannot be destroyed.",
+            "format": "int32"
+          },
+          "createTxg": {
+            "type": "integer",
+            "description": "The transaction group it was taken in: the order of snapshots, whatever the clock said.",
+            "format": "int64"
+          },
+          "fullName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "pithyxKind": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The schedule kind of a snapshot Pithyx created, or null for every other snapshot."
+          }
+        }
+      },
+      "SnapshotCreateRequest": {
+        "required": [
+          "dataset"
+        ],
+        "type": "object",
+        "properties": {
+          "dataset": {
+            "type": "string",
+            "description": "The dataset to snapshot."
+          }
+        }
+      },
+      "SnapshotList": {
+        "required": [
+          "dataset",
+          "snapshots"
+        ],
+        "type": "object",
+        "properties": {
+          "dataset": {
+            "type": "string",
+            "description": "The dataset."
+          },
+          "snapshots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Snapshot"
+            },
+            "description": "Its snapshots, oldest first."
+          }
+        },
+        "description": "Response of `GET /api/storage/snapshots`."
+      },
       "SnapshotMessage": {
         "required": [
           "id",
@@ -3846,6 +4246,99 @@
           }
         },
         "description": "The full current state of a topic, sent after `sub`. Only changes follow as events."
+      },
+      "SnapshotRequest": {
+        "required": [
+          "dataset",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "dataset": {
+            "type": "string",
+            "description": "The dataset."
+          },
+          "name": {
+            "type": "string",
+            "description": "The exact snapshot name after `@`."
+          }
+        }
+      },
+      "SnapshotRollbackRequest": {
+        "required": [
+          "dataset",
+          "name",
+          "confirmDataset"
+        ],
+        "type": "object",
+        "properties": {
+          "dataset": {
+            "type": "string",
+            "description": "The dataset to roll back."
+          },
+          "name": {
+            "type": "string",
+            "description": "The snapshot to return to."
+          },
+          "confirmDataset": {
+            "type": "string",
+            "description": "The dataset name as the user typed it; must match exactly."
+          },
+          "discardNewer": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Every newer snapshot by name, as the user was shown them; required when there are any."
+          }
+        }
+      },
+      "SnapshotSchedule": {
+        "required": [
+          "kind",
+          "enabled",
+          "keep"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "description": "`hourly`, `daily`, `weekly` or `monthly`."
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether the schedule takes snapshots."
+          },
+          "keep": {
+            "type": "integer",
+            "description": "How many of its snapshots it keeps (1 to 1000).",
+            "format": "int32"
+          }
+        }
+      },
+      "SnapshotScheduleList": {
+        "required": [
+          "dataset",
+          "schedules"
+        ],
+        "type": "object",
+        "properties": {
+          "dataset": {
+            "type": "string",
+            "description": "The dataset."
+          },
+          "schedules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SnapshotSchedule"
+            },
+            "description": "One entry per kind; kinds left out of a PUT stay as they are."
+          }
+        },
+        "description": "Schedules of a dataset: all four kinds, in the order hourly, daily, weekly, monthly."
       },
       "StorageDisk": {
         "required": [
