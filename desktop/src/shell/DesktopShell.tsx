@@ -1,4 +1,4 @@
-import type { ReactNode, Ref } from 'react';
+import { useState, type ReactNode, type Ref } from 'react';
 import { useTranslation } from 'react-i18next';
 import styles from './DesktopShell.module.css';
 import type { TaskbarPosition } from './types';
@@ -26,11 +26,23 @@ export function DesktopShell({
   workspaceRef?: Ref<HTMLElement>;
 }) {
   const { t } = useTranslation();
+  // The entrance plays once. Without this, moving the taskbar later would change its animation and play it again.
+  const [entered, setEntered] = useState(false);
   return (
     <div
       className={styles.shell}
       data-taskbar={taskbarPosition}
-      data-entering={entering || undefined}
+      data-entering={(entering && !entered) || undefined}
+      onAnimationEnd={(event) => {
+        if (
+          entering &&
+          event.target instanceof HTMLElement &&
+          event.target.parentElement === event.currentTarget &&
+          event.target.localName === 'nav'
+        ) {
+          setEntered(true);
+        }
+      }}
     >
       <Wallpaper />
       <main ref={workspaceRef} className={styles.workspace} aria-label={t('items.desktop')}>
