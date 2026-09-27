@@ -189,9 +189,9 @@ test('dragging a window causes no long tasks', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await signInAsAdmin(page);
   await openFromDesktop(page, 'Disks');
-  await page.getByRole('button', { name: 'Start' }).click();
+  await page.getByRole('button', { name: 'Pithyx menu' }).click();
   await page
-    .getByRole('dialog', { name: 'Start menu' })
+    .getByRole('dialog', { name: 'Pithyx menu' })
     .getByRole('row', { name: 'About Pithyx' })
     .click();
   const about = appWindow(page, 'About Pithyx');

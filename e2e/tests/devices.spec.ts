@@ -95,9 +95,9 @@ test.describe('tablet', () => {
 
     await disks.getByRole('button', { name: 'Window menu for Disks' }).tap();
     await page.getByRole('menuitem', { name: 'Snap left' }).tap();
-    await page.getByRole('button', { name: 'Start' }).tap();
+    await page.getByRole('button', { name: 'Pithyx menu' }).tap();
     await page
-      .getByRole('dialog', { name: 'Start menu' })
+      .getByRole('dialog', { name: 'Pithyx menu' })
       .getByRole('row', { name: 'About Pithyx' })
       .tap();
     await about.getByRole('button', { name: 'Window menu for About Pithyx' }).tap();

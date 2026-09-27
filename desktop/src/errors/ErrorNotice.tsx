@@ -5,7 +5,7 @@ import buttonStyles from '../ui/Button.module.css';
 import { cx } from '../ui/cx';
 import { IconAlertCircle, IconCopy } from '../ui/icons';
 import { copyText } from '../platform/browser';
-import type { DescribedError } from './describe';
+import { isFault, type DescribedError } from './describe';
 import styles from './ErrorNotice.module.css';
 
 /** The translated message of an error code; network failures have no code from the daemon. */
@@ -61,7 +61,10 @@ export function RequestId({ requestId }: { requestId: string }) {
   );
 }
 
-/** An error message with the request id, used inline in forms. */
+/**
+ * An error message, used inline in forms. The request id appears only when the daemon failed; an expected refusal
+ * such as a wrong password needs no support reference (the error dialog always shows it).
+ */
 export function ErrorNotice({ error, className }: { error: DescribedError; className?: string }) {
   const message = useErrorMessage(error);
   return (
@@ -70,7 +73,7 @@ export function ErrorNotice({ error, className }: { error: DescribedError; class
         <IconAlertCircle size={18} stroke={1.75} aria-hidden className={styles.icon} />
         {message}
       </p>
-      {error.requestId !== '' && <RequestId requestId={error.requestId} />}
+      {error.requestId !== '' && isFault(error) && <RequestId requestId={error.requestId} />}
     </div>
   );
 }

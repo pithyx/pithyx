@@ -46,9 +46,9 @@ export async function openFromDesktop(page: Page, name: string) {
 
 /** Opens the account menu from the profile at the bottom of the start menu. */
 export async function openAccountMenu(page: Page, name = admin.displayName) {
-  const start = page.getByRole('dialog', { name: 'Start menu' });
+  const start = page.getByRole('dialog', { name: 'Pithyx menu' });
   if (!(await start.isVisible())) {
-    await page.getByRole('button', { name: 'Start' }).click();
+    await page.getByRole('button', { name: 'Pithyx menu' }).click();
   }
   await start.getByRole('button', { name: `Account menu for ${name}` }).click();
   await expect(page.getByRole('menu', { name: `Account menu for ${name}` })).toBeVisible();
@@ -56,8 +56,8 @@ export async function openAccountMenu(page: Page, name = admin.displayName) {
 
 /** Opens an app from the start menu; apps without a desktop shortcut open this way. */
 export async function openFromStart(page: Page, name: string) {
-  await page.getByRole('button', { name: 'Start' }).click();
-  await page.getByRole('dialog', { name: 'Start menu' }).getByRole('row', { name }).click();
+  await page.getByRole('button', { name: 'Pithyx menu' }).click();
+  await page.getByRole('dialog', { name: 'Pithyx menu' }).getByRole('row', { name }).click();
 }
 
 export function appWindow(page: Page, name: string) {

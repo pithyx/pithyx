@@ -35,9 +35,9 @@ test('opens, focuses, minimizes and closes windows', async ({ page }) => {
   });
 
   await test.step('a single-instance app focuses its window instead of opening another', async () => {
-    await page.getByRole('button', { name: 'Start' }).click();
+    await page.getByRole('button', { name: 'Pithyx menu' }).click();
     await page
-      .getByRole('dialog', { name: 'Start menu' })
+      .getByRole('dialog', { name: 'Pithyx menu' })
       .getByRole('row', { name: 'About Pithyx' })
       .click();
     await expect(page.getByRole('region', { name: 'About Pithyx' })).toHaveCount(1);
@@ -72,9 +72,9 @@ test('opens, focuses, minimizes and closes windows', async ({ page }) => {
 });
 
 test('the start menu searches and opens apps', async ({ page }) => {
-  const start = page.getByRole('button', { name: 'Start' });
+  const start = page.getByRole('button', { name: 'Pithyx menu' });
   await start.click();
-  const menu = page.getByRole('dialog', { name: 'Start menu' });
+  const menu = page.getByRole('dialog', { name: 'Pithyx menu' });
   await expect(menu.getByRole('searchbox')).toBeFocused();
 
   await page.keyboard.press('Escape');
@@ -236,40 +236,18 @@ test('the taskbar moves to the left and back', async ({ page }) => {
   await expect.poll(async () => (await box(taskbar)).width).toBe(viewport?.width);
 });
 
-test('a press on the profile released over Sign out does not sign out', async ({ page }) => {
-  const logouts: string[] = [];
-  page.on('request', (request) => {
-    if (request.url().endsWith('/api/auth/logout')) {
-      logouts.push(request.url());
-    }
-  });
-  // Hovering waits until the button takes presses; React Aria then runs an item that a press from the trigger is
-  // released over (press, drag, release).
-  await page.getByRole('button', { name: 'Start' }).click();
-  await page
-    .getByRole('dialog', { name: 'Start menu' })
-    .getByRole('button', { name: 'Account menu for Ada Admin' })
-    .hover();
-  await page.mouse.down();
-  const signOut = page.getByRole('menuitem', { name: 'Sign out' });
-  const item = await signOut.boundingBox();
-  if (item === null) {
-    throw new Error('no sign out item');
-  }
-  await page.mouse.move(item.x + item.width / 2, item.y + item.height / 2, { steps: 4 });
-  await page.mouse.up();
-  await expect(page.getByRole('navigation', { name: 'Taskbar' })).toBeVisible();
-  expect(logouts).toEqual([]);
-
-  await openAccountMenu(page);
-  await page.getByRole('menuitem', { name: 'Sign out' }).click();
+test('signing out closes the windows, so the next sign-in starts with an empty desktop', async ({
+  page,
+}) => {
+  await openFromDesktop(page, 'Disks');
+  await expect(page.getByRole('region', { name: 'Disks', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Pithyx menu' }).click();
+  const menu = page.getByRole('dialog', { name: 'Pithyx menu' });
+  // Nobody may shut down or restart through this daemon yet, so there is no power button.
+  await expect(menu.getByRole('button', { name: 'Power options' })).toHaveCount(0);
+  await menu.getByRole('button', { name: 'Sign out' }).click();
   await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
-});
 
-test('the start menu signs out through its power menu', async ({ page }) => {
-  await page.getByRole('button', { name: 'Start' }).click();
-  const menu = page.getByRole('dialog', { name: 'Start menu' });
-  await menu.getByRole('button', { name: 'Power options' }).click();
-  await page.getByRole('menuitem', { name: 'Sign out' }).click();
-  await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
+  await signInAsAdmin(page);
+  await expect(page.getByRole('region', { name: 'Disks', exact: true })).toHaveCount(0);
 });

@@ -18,8 +18,8 @@
   stop-color: light-dark(#c3d9df, #03171c);
 }
 
-.top {
-  fill: light-dark(rgb(181 207 214 / 55%), rgb(6 42 51 / 90%));
+.inside {
+  fill: light-dark(rgb(150 185 195 / 55%), rgb(6 42 51 / 90%));
 }
 
 .left {
@@ -32,4 +32,12 @@
 
 .lid {
   fill: light-dark(rgb(224 163 58 / 30%), #5c4521);
+}
+
+.lidLeft {
+  fill: light-dark(rgb(179 122 31 / 30%), #3f2f16);
+}
+
+.lidRight {
+  fill: light-dark(rgb(200 139 43 / 30%), #4d3a1b);
 }

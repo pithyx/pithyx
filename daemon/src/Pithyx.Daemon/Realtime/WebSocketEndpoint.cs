@@ -111,8 +111,11 @@ public static partial class WebSocketEndpoint
                     connection.Close(WebSocketCloseCode.SessionEnded);
                     return;
                 }
+                // The clock may have moved past the expiry since the touch (a jump, or a slow touch); the next touch
+                // then ends the session. A negative delay would throw and leave the connection open for good.
                 var untilExpiry = absoluteExpiry.Value - time.GetUtcNow();
-                await Task.Delay(untilExpiry < _sessionCheckInterval ? untilExpiry : _sessionCheckInterval, time, closing);
+                var wait = untilExpiry < TimeSpan.Zero ? TimeSpan.Zero : untilExpiry < _sessionCheckInterval ? untilExpiry : _sessionCheckInterval;
+                await Task.Delay(wait, time, closing);
             }
         }
         catch (OperationCanceledException)

@@ -217,6 +217,12 @@
   background: light-dark(rgb(239 244 245 / 70%), rgb(10 25 29 / 55%));
 }
 
+.footerActions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
 .user {
   display: flex;
   align-items: center;
