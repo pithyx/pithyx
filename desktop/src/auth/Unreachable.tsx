@@ -1,8 +1,8 @@
-import { IconPlugConnectedX, IconRefresh } from '@tabler/icons-react';
+import { IconPlugConnectedX, IconRefresh } from '../ui/icons';
 import { useTranslation } from 'react-i18next';
 import { AuthLayout } from '../shell/AuthLayout';
-import { Button } from '../ui/Button';
 import styles from './Auth.module.css';
+import { Button } from './controls';
 
 /** Shown instead of setup or sign-in when the daemon does not answer. */
 export function Unreachable({ retrying, onRetry }: { retrying: boolean; onRetry: () => void }) {
@@ -15,7 +15,7 @@ export function Unreachable({ retrying, onRetry }: { retrying: boolean; onRetry:
           <h1 className={styles.title}>{t('status.unreachable')}</h1>
           <p className={styles.intro}>{t('status.unreachableHint')}</p>
         </div>
-        <Button variant="primary" className={styles.submit} isPending={retrying} onPress={onRetry}>
+        <Button variant="primary" className={styles.submit} pending={retrying} onClick={onRetry}>
           <IconRefresh size={18} stroke={1.75} aria-hidden />
           {t('status.retry')}
         </Button>

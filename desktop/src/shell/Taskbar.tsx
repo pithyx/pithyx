@@ -1,4 +1,4 @@
-import { IconBell, IconLayoutGrid, IconLoader2 } from '@tabler/icons-react';
+import { IconBell, IconLayoutGrid, IconLoader2 } from '../ui/icons';
 import type { ReactNode, Ref } from 'react';
 import { Button as AriaButton } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
@@ -31,6 +31,22 @@ export interface TaskbarProps {
   onSwipe?: (direction: 1 | -1) => void;
 }
 
+// Creating Intl formatters is slow; the clock needs the same three for every render.
+const clockFormatCache = new Map<string, Record<'time' | 'date' | 'long', Intl.DateTimeFormat>>();
+
+function clockFormats(locale: string) {
+  let formats = clockFormatCache.get(locale);
+  if (formats === undefined) {
+    formats = {
+      time: new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }),
+      date: new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit', year: 'numeric' }),
+      long: new Intl.DateTimeFormat(locale, { dateStyle: 'full', timeStyle: 'short' }),
+    };
+    clockFormatCache.set(locale, formats);
+  }
+  return formats;
+}
+
 /** A swipe must cover this distance and stay mostly horizontal. */
 const SWIPE_DISTANCE = 60;
 
@@ -56,16 +72,10 @@ export function Taskbar({
   onSwipe,
 }: TaskbarProps) {
   const { t } = useTranslation();
-  const time = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }).format(now);
-  const date = new Intl.DateTimeFormat(locale, {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  }).format(now);
-  const longDate = new Intl.DateTimeFormat(locale, {
-    dateStyle: 'full',
-    timeStyle: 'short',
-  }).format(now);
+  const formats = clockFormats(locale);
+  const time = formats.time.format(now);
+  const date = formats.date.format(now);
+  const longDate = formats.long.format(now);
   const userButton = (
     <AriaButton
       className={cx(styles.button, styles.user)}

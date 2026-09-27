@@ -7,7 +7,25 @@
 }
 
 .leaving {
-  animation: leave var(--duration-slow) var(--ease-exit) forwards;
+  pointer-events: none;
+  animation: leave var(--duration-fast) var(--ease-exit) forwards;
+}
+
+/* Reduced motion: movement collapses, the fade stays (see the motion tokens). */
+@media (prefers-reduced-motion: reduce) {
+  .leaving {
+    animation: fade-out var(--duration-fade) linear forwards;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+.still {
+  animation: none;
 }
 
 .leaving > svg {

@@ -116,3 +116,53 @@
     border-color: ButtonText;
   }
 }
+
+/* Native buttons: the sign-in screens load without React Aria, so their states come from pseudo-classes. */
+.button[data-native]:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.button[data-native]:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
+.button[data-native][aria-busy='true'] {
+  cursor: progress;
+}
+
+.button[data-native]:not(:disabled, [aria-busy='true']):active {
+  transform: scale(0.98);
+}
+
+@media (hover: hover) {
+  .primary[data-native]:not(:disabled, [aria-busy='true']):hover {
+    background: var(--color-accent-hover);
+  }
+
+  .secondary[data-native]:not(:disabled, [aria-busy='true']):hover,
+  .quiet[data-native]:not(:disabled, [aria-busy='true']):hover {
+    background: var(--color-surface-hover);
+  }
+}
+
+.primary[data-native]:not(:disabled, [aria-busy='true']):active {
+  background: var(--color-accent-pressed);
+}
+
+.spinner {
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2.4s;
+  }
+}

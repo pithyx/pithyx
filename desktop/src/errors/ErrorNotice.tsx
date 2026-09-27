@@ -1,14 +1,14 @@
-import { IconAlertCircle, IconCopy } from '@tabler/icons-react';
+import type { TFunction } from 'i18next';
 import { useTranslation } from 'react-i18next';
-import { IconButton } from '../ui/Button';
+import buttonStyles from '../ui/Button.module.css';
 import { cx } from '../ui/cx';
+import { IconAlertCircle, IconCopy } from '../ui/icons';
 import { copyText } from './copyText';
 import type { DescribedError } from './describe';
 import styles from './ErrorNotice.module.css';
 
 /** The translated message of an error code; network failures have no code from the daemon. */
-export function useErrorMessage(error: DescribedError): string {
-  const { t } = useTranslation();
+export function translateError(t: TFunction, error: DescribedError): string {
   return error.code === 'network'
     ? t('error.network')
     : // Error codes come from the generated union, so every one has a key (checked by i18n.test.ts).
@@ -18,16 +18,33 @@ export function useErrorMessage(error: DescribedError): string {
       });
 }
 
-/** The request id with a copy button, so support can find the request in the logs. */
+export function useErrorMessage(error: DescribedError): string {
+  const { t } = useTranslation();
+  return translateError(t, error);
+}
+
+/** The request id with a copy button, so support can find the request in the logs. Plain elements only. */
 export function RequestId({ requestId }: { requestId: string }) {
   const { t } = useTranslation();
   return (
     <div className={styles.request}>
       <span className={styles.requestLabel}>{t('error.requestId')}</span>
       <code className={styles.requestValue}>{requestId}</code>
-      <IconButton label={t('error.copy')} size="sm" onPress={() => void copyText(requestId)}>
+      <button
+        type="button"
+        data-native
+        className={cx(
+          buttonStyles.button,
+          buttonStyles.quiet,
+          buttonStyles.icon,
+          buttonStyles.small,
+        )}
+        aria-label={t('error.copy')}
+        title={t('error.copy')}
+        onClick={() => void copyText(requestId)}
+      >
         <IconCopy size={16} stroke={1.75} />
-      </IconButton>
+      </button>
     </div>
   );
 }

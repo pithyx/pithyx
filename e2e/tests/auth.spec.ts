@@ -19,7 +19,7 @@ async function signOut(page: Page) {
   await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
 }
 
-// The React Aria checkbox hides its input behind the drawn box, so a user clicks the label.
+// The checkbox input is visually hidden behind the drawn box, so a user clicks the label.
 async function confirmStored(page: Page) {
   await page.getByText('I have stored the recovery key').click();
   await expect(
@@ -54,7 +54,10 @@ test('setup, recovery key, TOTP sign-in and password reset with the recovery key
     await page.getByLabel('Password', { exact: true }).fill(password);
     await page.getByLabel('Repeat password').fill(`${password}!`);
     await page.getByRole('button', { name: 'Create administrator' }).click();
-    await expect(page.getByText('The passwords do not match.')).toBeVisible();
+    // A failed submit moves focus to the first invalid field, which describes the error.
+    const repeat = page.getByLabel('Repeat password');
+    await expect(repeat).toBeFocused();
+    await expect(repeat).toHaveAccessibleDescription('The passwords do not match.');
     await page.getByLabel('Repeat password').fill(password);
     await page.getByRole('button', { name: 'Create administrator' }).click();
   });
@@ -110,6 +113,7 @@ test('setup, recovery key, TOTP sign-in and password reset with the recovery key
     const alert = page.getByRole('alert');
     await expect(alert).toContainText('The user name or password is incorrect.');
     await expect(alert.locator('code')).toHaveText(/^[0-9a-f]{32}$/);
+    await expect(page.getByLabel('Password', { exact: true })).toBeFocused();
   });
 
   await test.step('sign in with a code from the authenticator app', async () => {
@@ -161,13 +165,11 @@ test('German browsers get the German interface', async ({ browser }) => {
   await context.close();
 });
 
-test('the language menu switches the sign-in screen', async ({ page }) => {
+test('the language select switches the sign-in screen', async ({ page }) => {
   await page.goto('/');
-  await page.getByRole('button', { name: 'Language: English' }).click();
-  await page.getByRole('menuitemradio', { name: 'Deutsch' }).click();
+  await page.getByRole('combobox', { name: 'Language' }).selectOption({ label: 'Deutsch' });
   await expect(page.getByRole('heading', { name: 'Willkommen zurück' })).toBeVisible();
-  await page.getByRole('button', { name: 'Sprache: Deutsch' }).click();
-  await page.getByRole('menuitemradio', { name: 'Automatisch' }).click();
+  await page.getByRole('combobox', { name: 'Sprache' }).selectOption({ label: 'Automatisch' });
   await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
 });
 

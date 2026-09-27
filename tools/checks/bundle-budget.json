@@ -1,3 +1,4 @@
 {
-  "initialGzipBytes": 197821
+  "signInGzipBytes": 140799,
+  "desktopGzipBytes": 93570
 }

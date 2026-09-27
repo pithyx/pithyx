@@ -5,7 +5,7 @@ import {
   IconLayoutBottombar,
   IconLogout,
   IconShieldLock,
-} from '@tabler/icons-react';
+} from '../ui/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { unwrap, type components } from '@vyxis/api-client';
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
@@ -15,14 +15,17 @@ import { api } from '../api/client';
 import { queryKeys } from '../api/queries';
 import { useAppName } from '../apps/names';
 import { coreApps, findApp } from '../apps/registry';
-import { initialsOf, LanguageOptions } from '../auth/parts';
+import { initialsOf } from '../auth/parts';
+import { clearSessionHint } from '../auth/sessionHint';
+import { LanguageOptions } from './LanguageOptions';
 import { TotpSetup } from '../auth/TotpSetup';
 import { useDaemonStatus } from '../daemonStatus';
 import { showError } from '../errors/errorStore';
-import { realtime, useRealtime } from '../realtime/connection';
+import { useRealtime } from '../realtime/connection';
 import { AppSwitcher } from '../shell/AppSwitcher';
 import { DesktopIcon } from '../shell/DesktopIcon';
 import { DesktopItems, DesktopShell } from '../shell/DesktopShell';
+import { AriaLocale } from '../ui/AriaLocale';
 import { ToastStack } from '../shell/Notifications';
 import { StartMenu } from '../shell/StartMenu';
 import { Taskbar } from '../shell/Taskbar';
@@ -232,14 +235,14 @@ function useWorkspaceSize() {
     if (element === null) {
       return;
     }
-    const measure = () => {
+    // Only the observer measures: it reports right after layout, while reading the size here would force a
+    // layout of its own before the first frame.
+    const observer = new ResizeObserver(() => {
       dispatch({
         type: 'setWorkspace',
         size: { width: element.clientWidth, height: element.clientHeight },
       });
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
+    });
     observer.observe(element);
     return () => {
       observer.disconnect();
@@ -307,19 +310,15 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
     const lost =
       active === null || active === document.body || active.closest('[data-minimized]') !== null;
     if (focused === null && lost) {
-      startButton.current?.focus();
+      // After the frame: focusing recalculates styles, which would delay the first paint of the desktop.
+      const frame = requestAnimationFrame(() => {
+        startButton.current?.focus();
+      });
+      return () => {
+        cancelAnimationFrame(frame);
+      };
     }
   }, [focused]);
-
-  // The WebSocket lives as long as the desktop; a closed session sends the user back to the login screen.
-  useEffect(() => {
-    realtime.connect(() => {
-      void queryClient.invalidateQueries({ queryKey: queryKeys.session });
-    });
-    return () => {
-      realtime.disconnect();
-    };
-  }, [queryClient]);
 
   const logout = useMutation({
     mutationFn: async () => {
@@ -328,6 +327,7 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
       unwrap(await api.POST('/api/auth/logout'));
     },
     onSuccess: async () => {
+      clearSessionHint();
       await queryClient.resetQueries({ queryKey: queryKeys.session });
     },
     onError: showError,
@@ -367,145 +367,147 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
     .map((app) => ({ id: app.id, name: app.name, detail: t('start.appDetail'), app }));
 
   return (
-    <DesktopShell
-      entering={entering}
-      taskbarPosition={taskbarPosition}
-      workspaceRef={workspace}
-      taskbar={
-        <Taskbar
-          position={taskbarPosition}
-          apps={running}
-          startOpen={startOpen}
-          startRef={startButton}
-          switcherOpen={switcherOpen}
-          switcherRef={switcherButton}
-          onSwitcher={() => {
-            setSwitcherOpen(!switcherOpen);
-          }}
-          {...(sizeClass === 'compact'
-            ? {
-                onSwipe: (direction: 1 | -1) => {
-                  dispatch({ type: 'cycle', direction });
-                },
-              }
-            : {})}
-          onStart={() => {
-            if (startOpen) {
-              closeStart(false);
-            } else {
-              setStartOpen(true);
-            }
-          }}
-          onApp={(id) => {
-            dispatch(id === focused ? { type: 'minimize', id } : { type: 'focus', id });
-          }}
-          jobs={0}
-          unread={0}
-          now={now}
-          locale={i18n.language}
-          user={{ name, initials: initialsOf(name) }}
-          userMenu={(trigger) => (
-            <UserMenu
-              trigger={trigger}
-              name={name}
-              position={taskbarPosition}
-              canMoveTaskbar={sizeClass !== 'compact'}
-              onTwoFactor={() => {
-                setTotpOpen(true);
-              }}
-              onSignOut={() => {
-                logout.mutate();
-              }}
-            />
-          )}
-        />
-      }
-      overlays={
-        <>
-          {startOpen && (
-            <StartMenu
-              menuRef={startMenu}
-              position={taskbarPosition}
-              query={query}
-              onQueryChange={setQuery}
-              pinned={apps}
-              recent={[]}
-              results={{ apps: matches, settings: [], files: [] }}
-              user={{
-                name,
-                initials: initialsOf(name),
-                role: user.isAdmin ? t('roles.administrator') : t('roles.user'),
-              }}
-              power={false}
-              onOpen={open}
-              onSignOut={() => {
-                closeStart(false);
-                logout.mutate();
-              }}
-            />
-          )}
-          <ToastStack
+    <AriaLocale>
+      <DesktopShell
+        entering={entering}
+        taskbarPosition={taskbarPosition}
+        workspaceRef={workspace}
+        taskbar={
+          <Taskbar
             position={taskbarPosition}
+            apps={running}
+            startOpen={startOpen}
+            startRef={startButton}
+            switcherOpen={switcherOpen}
+            switcherRef={switcherButton}
+            onSwitcher={() => {
+              setSwitcherOpen(!switcherOpen);
+            }}
+            {...(sizeClass === 'compact'
+              ? {
+                  onSwipe: (direction: 1 | -1) => {
+                    dispatch({ type: 'cycle', direction });
+                  },
+                }
+              : {})}
+            onStart={() => {
+              if (startOpen) {
+                closeStart(false);
+              } else {
+                setStartOpen(true);
+              }
+            }}
+            onApp={(id) => {
+              dispatch(id === focused ? { type: 'minimize', id } : { type: 'focus', id });
+            }}
+            jobs={0}
+            unread={0}
+            now={now}
             locale={i18n.language}
-            items={toasts.map((toast) => ({
-              id: toast.id,
-              app: { icon: IconDeviceDesktop, tone: 'petrol', name: t('brand') },
-              message: toast.message,
-              minutesAgo: 0,
-            }))}
-            onDismiss={dismissToast}
+            user={{ name, initials: initialsOf(name) }}
+            userMenu={(trigger) => (
+              <UserMenu
+                trigger={trigger}
+                name={name}
+                position={taskbarPosition}
+                canMoveTaskbar={sizeClass !== 'compact'}
+                onTwoFactor={() => {
+                  setTotpOpen(true);
+                }}
+                onSignOut={() => {
+                  logout.mutate();
+                }}
+              />
+            )}
           />
-          {switcherOpen && (
-            <AppSwitcher
-              switcherRef={switcher}
+        }
+        overlays={
+          <>
+            {startOpen && (
+              <StartMenu
+                menuRef={startMenu}
+                position={taskbarPosition}
+                query={query}
+                onQueryChange={setQuery}
+                pinned={apps}
+                recent={[]}
+                results={{ apps: matches, settings: [], files: [] }}
+                user={{
+                  name,
+                  initials: initialsOf(name),
+                  role: user.isAdmin ? t('roles.administrator') : t('roles.user'),
+                }}
+                power={false}
+                onOpen={open}
+                onSignOut={() => {
+                  closeStart(false);
+                  logout.mutate();
+                }}
+              />
+            )}
+            <ToastStack
               position={taskbarPosition}
-              cards={running.map((entry) => ({ id: entry.id, app: entry, title: entry.name }))}
-              onOpen={(id) => {
-                setSwitcherOpen(false);
-                dispatch({ type: 'focus', id });
-              }}
-              onClose={(id) => {
-                dispatch({ type: 'close', id });
-              }}
-              onCloseAll={() => {
-                setSwitcherOpen(false);
-                dispatch({ type: 'closeAll' });
+              locale={i18n.language}
+              items={toasts.map((toast) => ({
+                id: toast.id,
+                app: { icon: IconDeviceDesktop, tone: 'petrol', name: t('brand') },
+                message: toast.message,
+                minutesAgo: 0,
+              }))}
+              onDismiss={dismissToast}
+            />
+            {switcherOpen && (
+              <AppSwitcher
+                switcherRef={switcher}
+                position={taskbarPosition}
+                cards={running.map((entry) => ({ id: entry.id, app: entry, title: entry.name }))}
+                onOpen={(id) => {
+                  setSwitcherOpen(false);
+                  dispatch({ type: 'focus', id });
+                }}
+                onClose={(id) => {
+                  dispatch({ type: 'close', id });
+                }}
+                onCloseAll={() => {
+                  setSwitcherOpen(false);
+                  dispatch({ type: 'closeAll' });
+                }}
+              />
+            )}
+            {status === 'reconnecting' && (
+              <p className={styles.banner} role="status">
+                {t('realtime.reconnecting')}
+              </p>
+            )}
+            {status === 'stopped' && (
+              <p className={cx(styles.banner, styles.danger)} role="alert">
+                {t('realtime.stopped')}
+              </p>
+            )}
+            <TotpSetup
+              user={user}
+              isOpen={totpOpen}
+              onClose={() => {
+                setTotpOpen(false);
               }}
             />
-          )}
-          {status === 'reconnecting' && (
-            <p className={styles.banner} role="status">
-              {t('realtime.reconnecting')}
-            </p>
-          )}
-          {status === 'stopped' && (
-            <p className={cx(styles.banner, styles.danger)} role="alert">
-              {t('realtime.stopped')}
-            </p>
-          )}
-          <TotpSetup
-            user={user}
-            isOpen={totpOpen}
-            onClose={() => {
-              setTotpOpen(false);
-            }}
-          />
-        </>
-      }
-    >
-      <DesktopItems>
-        {apps.map((app) => (
-          <DesktopIcon
-            key={app.id}
-            name={app.name}
-            item={{ kind: 'shortcut', app }}
-            onOpen={() => {
-              openApp(app.id);
-            }}
-          />
-        ))}
-      </DesktopItems>
-      <WindowLayer />
-    </DesktopShell>
+          </>
+        }
+      >
+        <DesktopItems>
+          {apps.map((app) => (
+            <DesktopIcon
+              key={app.id}
+              name={app.name}
+              item={{ kind: 'shortcut', app }}
+              onOpen={() => {
+                openApp(app.id);
+              }}
+            />
+          ))}
+        </DesktopItems>
+        <WindowLayer />
+      </DesktopShell>
+    </AriaLocale>
   );
 }

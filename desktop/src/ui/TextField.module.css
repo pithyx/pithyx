@@ -25,7 +25,8 @@
   border-color: var(--color-text-muted);
 }
 
-.frame:has(input[data-focused]) {
+.frame:has(input[data-focused]),
+.frame:has(input:focus) {
   border-color: var(--color-focus);
   outline: 1px solid var(--color-focus);
 }
@@ -69,12 +70,14 @@
   cursor: pointer;
 }
 
-.reveal[data-hovered] {
+.reveal[data-hovered],
+.reveal:hover {
   background: var(--color-surface-hover);
   color: var(--color-text);
 }
 
-.reveal[data-focus-visible] {
+.reveal[data-focus-visible],
+.reveal:focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 0;
 }

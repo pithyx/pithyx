@@ -1,11 +1,10 @@
-import { IconCheck, IconCopy, IconKey, IconPrinter } from '@tabler/icons-react';
+import { IconCheck, IconCopy, IconKey, IconPrinter } from '../ui/icons';
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { copyText } from '../errors/copyText';
-import { Button } from '../ui/Button';
-import { Checkbox } from '../ui/Controls';
 import { cx } from '../ui/cx';
 import styles from './Auth.module.css';
+import { Button, Checkbox } from './controls';
 import { RecoveryKeyValue } from './parts';
 
 /** Shows a recovery key once. Continuing is possible only after confirming it was stored. */
@@ -45,7 +44,7 @@ export function RecoveryKeyCard({
       <div className={cx(styles.row, styles.noPrint)}>
         <Button
           autoFocus
-          onPress={() => {
+          onClick={() => {
             void copyText(recoveryKey).then(() => {
               setCopied(true);
             });
@@ -59,7 +58,7 @@ export function RecoveryKeyCard({
           {copied ? t('recoveryKey.copied') : t('recoveryKey.copy')}
         </Button>
         <Button
-          onPress={() => {
+          onClick={() => {
             window.print();
           }}
         >
@@ -68,15 +67,15 @@ export function RecoveryKeyCard({
         </Button>
       </div>
       <div className={styles.noPrint}>
-        <Checkbox isSelected={stored} onChange={setStored}>
+        <Checkbox checked={stored} onChange={setStored}>
           {t('recoveryKey.confirm')}
         </Checkbox>
       </div>
       <Button
         variant="primary"
-        isDisabled={!stored}
+        disabled={!stored}
         className={cx(styles.submit, styles.noPrint)}
-        onPress={onContinue}
+        onClick={onContinue}
       >
         {continueLabel}
       </Button>
