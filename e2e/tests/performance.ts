@@ -159,7 +159,11 @@ export async function measureRound(
   return round;
 }
 
+/** A budget or a reported number is the median of at least this many runs. */
+export const MIN_RUNS = 3;
+
+/** The median of the valid values, or NaN with fewer than MIN_RUNS of them, so a budget never rests on one run. */
 export function median(values: readonly number[]): number {
   const sorted = values.filter((value) => !Number.isNaN(value)).sort((a, b) => a - b);
-  return sorted[Math.floor(sorted.length / 2)] ?? NaN;
+  return sorted.length < MIN_RUNS ? NaN : (sorted[Math.floor(sorted.length / 2)] ?? NaN);
 }
