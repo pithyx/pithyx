@@ -34,6 +34,12 @@ export async function openFromDesktop(page: Page, name: string) {
   await page.getByRole('option', { name: `${name}, shortcut` }).dblclick();
 }
 
+/** Opens an app from the start menu; apps without a desktop shortcut open this way. */
+export async function openFromStart(page: Page, name: string) {
+  await page.getByRole('button', { name: 'Start' }).click();
+  await page.getByRole('dialog', { name: 'Start menu' }).getByRole('row', { name }).click();
+}
+
 export function appWindow(page: Page, name: string) {
   return page.getByRole('region', { name, exact: true });
 }

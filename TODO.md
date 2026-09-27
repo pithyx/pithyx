@@ -26,6 +26,21 @@ Step-by-step plan for building the Vyxis foundation. Read `CLAUDE.md` before sta
 | M5b Self-hosting        | Docker UI, VM MVP                                   | to be detailed |
 | M6 Backup               | restic, ZFS replication                             | to be detailed |
 
+## Release blockers
+
+Every shortcut taken on purpose during development is listed here. The first release (and making the repository public) waits until every item is done. A new shortcut adds its item here in the same commit that takes it.
+
+- [ ] File ownership (D89 in vyxis/vyxis#18): files and folders the daemon creates (uploads, copies, restored items, new folders) belong to root until M3 provisions Linux users. They must belong to the requesting user's Linux account (`fchownat`), so SMB, NFS and SFTP see the right owner.
+- [ ] Trust step and TLS: development runs over plain HTTP on 8994. Ship HTTPS on 443 (80 redirects, 8994 as the fixed alternative) with the self-signed certificate from the install, the trust wizard and the "Trust this device" setup step (see the M5 items below); passkeys and the service worker switch on only once trusted.
+- [ ] Branch protection: only the lefthook `pre-push` hook guards `master` and `dev` today (rulesets need a public repository or a paid plan). Run `tools/github/protect-branches.sh` (PR required, CI green, no force push) before or right when the repository goes public.
+- [ ] CI runners: a self-hosted runner, if one is set up for the private repository, is replaced by GitHub-hosted runners before the repository goes public (`vars.CI_RUNNER` back to the default); integration tests on real ZFS then need an approved environment, and self-hosted runners never run code from forks.
+- [ ] App permissions on the daemon: until the app registry (M4), the desktop broker checks SDK permissions only in the browser. No third-party app is installable before the daemon checks every permission itself (guardrail 1), including the install confirmation for elevated rights and the `host.full` warning (D71).
+- [ ] The SDK demo app (`apps/demo`) is registered as a built-in app for the prototype; remove it from the app list (or make it an installable example) before the release.
+- [ ] Recycle bin over SMB and NFS: hide `.vyxis-trash` (`veto files`) and route Samba's `vfs_recycle` into the same bin (M3 item).
+- [ ] Error code docs: every error code needs its entry on the website with a CI completeness check (`CLAUDE.md`, Errors); today codes are documented only through their i18n texts.
+- [ ] Third-party notices: generate the list of bundled npm and NuGet packages with their licenses for the About page and check it in CI (Later milestones item); today only fonts, Tabler and React Aria are listed.
+- [ ] `TopicHub` keeps one throttle per published topic forever (one per job and folder); release them for topics without subscribers.
+
 ---
 
 ## Step 1: Repository foundation
@@ -356,9 +371,8 @@ Draft PR `feature/file-service`, decisions from D79 in its comments.
 - [x] Live changes of open folders over inotify (`files/<share>/<folder>`), watched only while subscribed, no access or open events, no polling.
 - [x] Recycle bin per share (migration 0007): deleting moves items to the hidden `.vyxis-trash` at the share root (a rename, or copy and delete across file systems), with restore to the original place (missing folders recreated, conflicts renamed by default), deleting single items for good, emptying, and a retention per share set by administrators (default 30 days, 0 keeps items until emptied), enforced hourly. Deleting for good without the bin only with an explicit `permanent: true`.
 - [ ] M3: hide `.vyxis-trash` from SMB and NFS (`veto files`) and let Samba's `vfs_recycle` put SMB deletes into the same bin with a row per item.
-- [ ] `[RELEASE BLOCKER]` Files are created as the daemon's user (root) until M3 provisions Linux users. Before the first release, every file and folder the daemon creates (uploads, copies, restored items, new folders) must belong to the requesting user's Linux account (`fchownat`), so SMB, NFS and SFTP see the right owner (D89).
+- [ ] Files are created as the daemon's user (root) until M3 provisions Linux users (release blocker, see "Release blockers").
 - [ ] Resumable uploads (tus) on the same temporary-file mechanism.
-- [ ] `TopicHub` keeps one throttle per published topic forever; with one topic per job and per folder, drop throttles of topics without subscribers.
 - [ ] Files and folders on the desktop: the contents of the `Desktop` folder in the user's home share as desktop items on the same grid (positions stored per user in `desktop_items` with kind `file`), created, renamed and deleted as real files, opened in the file manager. The items UI from step 5 (selection, drag, menus) is ready for them.
 - [ ] Scope: streamed listings over the WebSocket, client cache with stale-while-revalidate, inotify on open folders, prefetch on hover, virtualized list, Web Worker for sort and filter, optimistic actions, thumbnails, tus uploads, explorer keyboard controls, viewers and editor.
 - [ ] Budgets as CI tests: previously visited folder under 16 ms, first chunk of a new folder under 100 ms (LAN, warm cache), 10,000 entries listed server-side under 50 ms (warm), steady 60 fps while scrolling 50,000 entries.

@@ -66,6 +66,8 @@ export type Transfers = ReturnType<typeof createTransfers>;
 
 const FINISHED = new Set<JobInfo['state']>(['succeeded', 'failed', 'cancelled', 'interrupted']);
 
-function withoutKey<T>(record: Record<string, T>, key: string): Record<string, T> {
-  return Object.fromEntries(Object.entries(record).filter(([name]) => name !== key));
+function withoutKey<K extends string | number, T>(record: Record<K, T>, key: K): Record<K, T> {
+  return Object.fromEntries(
+    Object.entries(record).filter(([name]) => name !== String(key)),
+  ) as Record<K, T>;
 }
