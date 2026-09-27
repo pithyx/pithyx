@@ -20,7 +20,7 @@ Step-by-step plan for building the Vyxis foundation. Read `CLAUDE.md` before sta
 | M0 Foundation           | Repository, tooling, CI, dev environment            | 1, 2           |
 | M1 Walking skeleton     | Daemon core, login, WebSocket, first window         | 3              |
 | M2 Desktop              | Design, window manager, SDK, file manager           | 4, 5, 6        |
-| M3 NAS core             | Pools, snapshots, users, shares, SSD cache          | to be detailed |
+| M3 NAS core             | Pools, snapshots, users, shares, SSD cache          | 7 to 14        |
 | M4 Apps                 | Manifest, containers, YARP routes, app template     | to be detailed |
 | M5 Image and operations | ISO, installer, updates with rollback, self-healing | to be detailed |
 | M5b Self-hosting        | Docker UI, VM MVP                                   | to be detailed |
@@ -30,16 +30,18 @@ Step-by-step plan for building the Vyxis foundation. Read `CLAUDE.md` before sta
 
 Every shortcut taken on purpose during development is listed here. The first release (and making the repository public) waits until every item is done. A new shortcut adds its item here in the same commit that takes it.
 
-- [ ] File ownership (D89 in vyxis/vyxis#18): files and folders the daemon creates (uploads, copies, restored items, new folders) belong to root until M3 provisions Linux users. They must belong to the requesting user's Linux account (`fchownat`), so SMB, NFS and SFTP see the right owner.
+- [ ] File ownership (D89 in vyxis/vyxis#18, resolved in step 10): files and folders the daemon creates (uploads, copies, restored items, new folders) belong to root until M3 provisions Linux users. They must belong to the requesting user's Linux account (`fchownat`), so SMB, NFS and SFTP see the right owner.
 - [ ] Trust step and TLS: development runs over plain HTTP on 8994. Ship HTTPS on 443 (80 redirects, 8994 as the fixed alternative) with the self-signed certificate from the install, the trust wizard and the "Trust this device" setup step (see the M5 items below); passkeys and the service worker switch on only once trusted.
 - [ ] Branch protection: only the lefthook `pre-push` hook guards `master` and `dev` today (rulesets need a public repository or a paid plan). Run `tools/github/protect-branches.sh` (PR required, CI green, no force push) before or right when the repository goes public.
 - [ ] CI runners: a self-hosted runner, if one is set up for the private repository, is replaced by GitHub-hosted runners before the repository goes public (`vars.CI_RUNNER` back to the default); integration tests on real ZFS then need an approved environment, and self-hosted runners never run code from forks.
 - [ ] App permissions on the daemon: until the app registry (M4), the desktop broker checks SDK permissions only in the browser. No third-party app is installable before the daemon checks every permission itself (guardrail 1), including the install confirmation for elevated rights and the `host.full` warning (D71).
 - [ ] The SDK demo app (`apps/demo`) is registered as a built-in app for the prototype; remove it from the app list (or make it an installable example) before the release.
-- [ ] Recycle bin over SMB and NFS: hide `.vyxis-trash` (`veto files`) and route Samba's `vfs_recycle` into the same bin (M3 item).
+- [ ] Recycle bin over SMB and NFS: hide `.vyxis-trash` (`veto files`) and route Samba's `vfs_recycle` into the same bin (step 12).
 - [ ] Error code docs: every error code needs its entry on the website with a CI completeness check (`CLAUDE.md`, Errors); today codes are documented only through their i18n texts.
 - [ ] Third-party notices: generate the list of bundled npm and NuGet packages with their licenses for the About page and check it in CI (Later milestones item); today only fonts, Tabler and React Aria are listed.
 - [ ] `TopicHub` keeps one throttle per published topic forever (one per job and folder); release them for topics without subscribers.
+- [ ] No real data on Vyxis pools before step 9 (encryption and key vault) is done: encryption can only be chosen when a pool is created, so a pool made earlier would have to be recreated.
+- [ ] UPS: check before the release whether NUT support (clean shutdown on power loss, pools exported and the key vault untouched) must ship with it (parked under "Later milestones").
 
 ---
 
@@ -399,9 +401,370 @@ Decisions from D92 in the PR's comments.
 
 ---
 
+## M3: NAS core (steps 7 to 14)
+
+Ordered by risk: what can lose data comes first and gets the strongest tests. Decisions D100 to D111 are logged in the M3 planning PR (vyxis/vyxis#25); the owner's answers are binding. Every step lists how it is tested on dev01 with the VYXTEST disks, what must never happen, and how CI guards it.
+
+Rules for every M3 step:
+
+- Destructive storage actions touch only disks that `DiskGuard` (step 7) allows. On dev01 that means the VYXTEST disks listed in `/etc/vyxis/test-disks`; test pools are still cleaned up with `tools/dev-vm/testpool.sh destroy` and `wipe`.
+- Before a storage PR is merged, its destructive suite runs on dev01 and the result goes into the PR (`[REVIEW]` by the owner for steps 8, 9 and 12).
+- No real data goes on a Vyxis pool before step 9 is done (see "Release blockers").
+- Every settings page ships with its step, in the Settings app from step 7.
+
+---
+
+## Step 7: Storage safety foundation
+
+Effort: high.
+
+Goal: the daemon sees real pools on dev01 and cannot write to a disk it must not touch. Nothing in M3 writes to a disk before this step is done.
+
+### 7.1 Real mode on dev01
+
+- [ ] A dev systemd unit runs the daemon as root in real mode on dev01 (simulation stays the default for E2E and local development). `/etc/vyxis/environment` decides `dev` or `prod`; a missing file means `prod`.
+- [ ] `IStorageBackend` (one of the two allowed abstractions) with ZFS as its first implementation; mdadm and btrfs come later through the same interface (D111).
+- [ ] Parsers for `zpool status -j`, `zpool list -j`, `zfs list -j` and `zfs get -j` (OpenZFS 2.3 JSON output) as pure functions with fixtures recorded on dev01 with `tools/fixtures/record.sh` (single disk, mirror, raidz1, degraded, resilvering, scrubbing, encrypted, exported).
+- [ ] `SystemStateService` keeps pools and datasets in memory, refreshed from `zpool events -f` (streamed, no polling) and at startup. `GET /api/storage/pools` reads from memory; topic `storage/pools` pushes changes.
+
+### 7.2 Disk guard and command plans
+
+- [ ] `DiskGuard` as a pure decision function over the lsblk tree, the mount table and `/etc/vyxis/*`:
+  - The system disk (anything holding `/`, `/boot`, `/boot/efi`, swap or `/var/lib/vyxis`) is always refused, with no override.
+  - In `dev`, only disks whose serial is listed in `/etc/vyxis/test-disks` are allowed.
+  - In `prod`, a disk must be empty (no partitions, no filesystem or RAID signatures, no ZFS labels, not part of an imported pool). Otherwise the user must confirm with the disk's serial number.
+- [ ] Command plans: every destructive action is first built as a list of exact commands, shown to the user, logged with the request id, and only then run as a job. The job re-checks `DiskGuard` right before each command, because disks can change in between.
+- [ ] Pools are never imported automatically, never with `-f`, and never as a side effect of recovery ("Recovery never modifies pools automatically"). Import is an explicit action in step 8.
+
+### 7.3 Settings app shell
+
+- [ ] Settings as a core app on the SDK (in-process transport, its own chunk loaded with `import()`), with pages Storage, Users, Shares, Network and Energy that later steps fill. Administrators only; the start menu and the desktop link to it.
+
+### 7.4 CI (D109)
+
+- [ ] `CLAUDE.md` (Tests) says integration tests run on GitHub-hosted runners with file-backed vdevs and loop devices, and that the destructive suite runs on dev01 before a storage PR is merged.
+- [ ] A `storage` CI job that runs only when storage code changes (path filter in `changes`): installs `zfsutils-linux` on the Ubuntu runner, creates pools on sparse files and loop devices, and runs the integration tests against them. Each run is a fresh VM, so nothing survives it.
+
+### Test on dev01
+
+- Pools created with `testpool.sh` appear in the API and the topic without a reload; `zpool offline` on a test disk updates the state live.
+- Every command plan against `sda` (the system disk) or a disk that is not listed as a test disk is refused, also with a correct serial typed as confirmation.
+- A plan for a VYXTEST disk lists the exact `zpool` commands; nothing runs until it is confirmed.
+
+### Must never happen
+
+- A write to the system disk or, on dev01, to any disk that is not a VYXTEST disk.
+- `zpool create`, `zpool labelclear`, `wipefs` or a partition change that did not pass `DiskGuard` right before it ran.
+- Importing a pool automatically or with `-f`.
+
+### CI
+
+- Property tests of `DiskGuard` over generated lsblk trees (system disk anywhere in the tree, partitions, signatures, pool members, serial mismatch, duplicate serials).
+- Golden tests of every command plan (exact argument lists).
+- Parser fixture tests; the `storage` job on file-backed pools.
+
+**Done when:** the daemon on dev01 runs in real mode, shows the test pools live, refuses every destructive plan outside the VYXTEST disks, and the `storage` CI job is green.
+
+---
+
+## Step 8: Pools, datasets and snapshots
+
+Effort: high.
+
+Goal: pools are created, maintained and watched from the UI, with snapshots that users can restore from, and nothing is lost by a wrong click.
+
+### 8.1 Pools
+
+- [ ] Create a pool: single disk, mirror, raidz1, raidz2, raidz3; a stripe only with a warning that one failed disk loses everything. Defaults `ashift=12`, `compression=lz4`, `xattr=sa`, `acltype=posixacl`, `atime=off`, `normalization=formD`.
+- [ ] The create dialog always asks about encryption and explains that it can only be chosen when the pool is created (step 9 adds the key handling; until then encryption is offered only once step 9 is done, and the dialog says so).
+- [ ] Dataset layout (D100, decided): the pool root holds no data; Vyxis datasets live under `<pool>/vyxis/` (`shares/<name>`, `homes/<user>`, `apps/<id>`, `system`), mounted at `/<pool>/<share>`, `/<pool>/homes/<user>` and `/<pool>/.vyxis/...` (the paths in `daemon/CLAUDE.md`).
+- [ ] Import an existing pool only as an explicit action, first read-only with a preview of its datasets; export.
+- [ ] Scrub, on demand and on a schedule (default monthly).
+- [ ] Replace a disk, offline and online a disk, add a vdev (with a warning when it lowers redundancy; adding is irreversible), raidz expansion (OpenZFS 2.3).
+- [ ] Destroy a pool only after typing its name, with a list of what it holds.
+- [ ] Block cloning (D90): find out why `copy_file_range` cloned no blocks on dev01 (OpenZFS 2.3.9), whether `zfs_bclone_enabled` is off because of the known block cloning data corruption bug, and enable it only on an OpenZFS version with the fix, with a test on dev01.
+
+### 8.2 Health and warnings
+
+- [ ] SMART with `smartctl -n standby` (never wakes a disk), SMART self-tests on a schedule (short weekly, long monthly by default), skipped while a disk sleeps.
+- [ ] Persistent notifications plus a desktop banner for: pool DEGRADED or FAULTED, SMART failures and warnings (reallocated or pending sectors, failed self-test), scrub errors, and fill level (warning at 80 percent, critical at 90 percent). They stay until the cause is gone; the user can mute but not delete them.
+- [ ] Capabilities are detected: in a VM without SMART, the UI explains why there is no SMART data instead of showing an error.
+
+### 8.3 Datasets and volumes
+
+- [ ] Create, rename, set quota and reservation, compression and record size. Delete only when empty or after typing its name.
+- [ ] Volumes (zvols) for VMs later (M5b); created with the same guard.
+- [ ] The dataset API has no share assumptions, so M4 uses it for app datasets (see "Interfaces for M4").
+
+### 8.4 Snapshots
+
+- [ ] Manual snapshots and schedules with retention (hourly, daily, weekly, monthly), named `vyxis-<schedule>-<utc>`.
+- [ ] Vyxis deletes only snapshots it created (D104, decided); snapshots created by the user or another tool are never pruned.
+- [ ] Holds for snapshots that must stay (pre-update snapshots in M4, snapshots a backup still needs in M6).
+- [ ] Restore a file or folder from a snapshot in Files ("Previous versions", read from `.zfs/snapshot`); rollback of a whole dataset only after typing its name, and never silently discarding newer snapshots (ZFS refuses without `-r`; Vyxis never passes `-r` without listing what goes).
+- [ ] Retention is a pure function tested with time series, including clock jumps (NTP corrections, a box that was off for months).
+
+### 8.5 Settings page Storage
+
+- [ ] Pools with layout, disks, health and fill level; datasets; snapshots with schedules; every destructive action through a command plan dialog.
+
+### Test on dev01
+
+- Create a raidz1 on VYXTEST01 to VYXTEST03 from the UI; detach VYXTEST02 in Proxmox, see DEGRADED with a notification and a banner; replace it with VYXTEST04 and watch the resilver.
+- Snapshot schedules with a moved clock; restore a deleted file from "Previous versions".
+- Fill a small dataset past 80 and 90 percent and see the warnings.
+- Clean up with `testpool.sh destroy` and `wipe`.
+
+### Must never happen
+
+- A pool created without the encryption question.
+- A snapshot deleted that Vyxis did not create.
+- A rollback that discards newer snapshots without listing them and a typed confirmation.
+- Destroying a pool or dataset without its typed name.
+- Adding a vdev that lowers redundancy without a warning.
+- Retention that deletes every snapshot after a clock jump.
+- A health check that wakes a sleeping disk.
+
+### CI
+
+- The `storage` job: create every layout on file vdevs, snapshot, retention, replace a vdev, scrub, import and export.
+- Retention as a pure function with time series; golden command plans; parser fixtures for degraded and resilvering pools.
+
+**Done when:** the dev01 scenario above runs from the UI, no command touched a disk that is not a VYXTEST disk, and the owner has tried it on dev01. `[REVIEW]`
+
+---
+
+## Step 9: Encryption and key vault
+
+Effort: high.
+
+Goal: pools can be encrypted, unlock after a power loss if the owner wants that, and nobody gets at the data without the key. Real data goes on Vyxis pools only after this step.
+
+- [ ] ZFS native encryption per pool (D106, decided): the encryption root is `<pool>/vyxis`, so everything Vyxis stores on the pool is encrypted with one key. Encryption per share can follow later.
+- [ ] After creating an encrypted pool, the key must be downloaded or printed and its storage confirmed before the pool can be used, like the recovery key in setup.
+- [ ] Unlock manually with the key, automatically from the key vault on the system disk (root only, mode 0600, never in a support bundle), or from a USB key. The UI explains that the key vault protects against stolen disks, not against a stolen box.
+- [ ] A locked or missing pool stops its shares; the UI says why. The same state is published for M4, where apps with mounts on it do not start.
+- [ ] Change the key (`zfs change-key`) only after the new key is saved and confirmed; the old key keeps working until then.
+- [ ] Secrets (keys, passphrases) are masked in every log and never written to the pool itself.
+
+### Test on dev01
+
+- An encrypted mirror on VYXTEST05 and VYXTEST06; reboot with the key vault: unlocked; without it: locked, shares off, a clear message.
+- USB key simulated with a loop image; a wrong key is refused; after `zfs change-key` both a reboot and a manual unlock work with the new key only.
+
+### Must never happen
+
+- An encrypted pool whose key the user has not confirmed storing.
+- A key in a log, a support bundle or on the pool.
+- A key vault file readable by anyone but root.
+- A key change that invalidates the old key before the new one is stored.
+
+### CI
+
+- Secret masking tests for every key path; the `storage` job with a passphrase file (create, lock, unlock, change key); unit tests of the lock states.
+
+**Done when:** after a reboot and a simulated power loss the pool is unlocked or locked exactly as configured, data is unreadable without the key, and the owner has tried it on dev01. `[REVIEW]`
+
+---
+
+## Step 10: Users and groups as Linux accounts
+
+Effort: high.
+
+Goal: every Vyxis user is a real Linux and Samba account, and files belong to the user who created them (resolves D89).
+
+- [ ] Migration: `groups`, `group_members`, and uid/gid allocation from fixed ranges (D103, decided): users 20000 to 29999, groups 30000 to 39999, apps 40000 to 49999 (reserved for M4). Numbers are never reused, not even after a user is deleted.
+- [ ] `/etc/login.defs` (`UID_MIN`, `UID_MAX`, `GID_MIN`, `GID_MAX` and the `SYS_*` values) is set so `adduser` and `useradd` outside Vyxis never allocate in 20000 to 49999; the reconciler checks this at startup and warns when it changed.
+- [ ] Reconciler: SQLite is the source of truth; the daemon runs `useradd`, `usermod`, `userdel`, `groupadd` and friends only for accounts in its ranges. A name that already exists in `/etc/passwd` or `/etc/group` but is not managed by Vyxis is refused (the static reserved list in `CredentialRules` only covers known system accounts).
+- [ ] Shell `nologin` unless the user has the SSH login right (step 11).
+- [ ] Samba accounts (`pdbedit`) get their password whenever the daemon has it in plain text: setup, sign-in, password change, admin reset.
+- [ ] File ownership (release blocker D89): the file service sets owner and group with `fchownat` on everything it creates (uploads, copies, restored items, new folders).
+- [ ] A home dataset per user (D105, decided) under `<pool>/vyxis/homes/<user>`, with the `Desktop` folder that step 5's desktop items use.
+- [ ] Optional user quotas (`userquota@<user>`) on shares and on the home dataset.
+- [ ] Settings page Users: users and groups, create, disable, delete (with a choice for the home data: keep, move to a share, delete after typing the name), admin password reset, quotas.
+
+### Test on dev01
+
+- Create a user: `id`, `getent`, `pdbedit -L` show it; upload a file: owner and group are the user's; delete the user: its uid stays reserved and a new user gets another one.
+- `adduser` outside Vyxis allocates below 20000.
+
+### Must never happen
+
+- An account outside the Vyxis ranges changed or deleted.
+- A uid or gid reused, so that a new user inherits old files.
+- The last administrator removed or demoted.
+- Home data deleted without an explicit choice.
+- Linux and Samba accounts out of step after a restart.
+
+### CI
+
+- The reconciler as a pure diff (wanted against actual `passwd`, `group`, Samba state) with table tests; an integration test that runs the real commands on the runner (a fresh VM per run).
+
+**Done when:** Linux and Samba accounts follow SQLite after every change and restart, every file the daemon creates belongs to the requesting user, and the D89 release blocker is checked off.
+
+---
+
+## Step 11: Permission model
+
+Effort: high.
+
+Goal: the permission model from `CLAUDE.md`, checked on every request, and the same on disk for every protocol.
+
+- [ ] Grants to users and groups; effective permissions are the union of all grants; administrators have everything; there are no deny rules.
+- [ ] Resources: shares (none, read, readWrite), protocols (SMB, NFS, SFTP; WebDAV later), apps (allowed or not), special rights (administrator, desktop login, SSH login, reboot and shutdown).
+- [ ] The grant subject is general (`user`, `group`, and `app` in M4), and the resolver takes a principal, so M4 needs no rework (see "Interfaces for M4").
+- [ ] The resolver is a pure function with exhaustive and property tests. It is used on every request and every topic; revoking a right is pushed over the WebSocket, and sessions without the desktop login right end.
+- [ ] Migration from `share_access` (per user, step 6) to grants.
+- [ ] Enforcement on disk (D102, decided): generated Linux groups per share (`vs-<id>-r`, `vs-<id>-rw`) and POSIX ACLs on the share dataset, so SMB, NFS, SFTP, the file service and later apps see the same rights. Vyxis is the only source of truth: ACLs are never edited over SMB (step 12), and the reconciler reports every difference between grants and the file system as a warning.
+- [ ] Optional user quotas from step 10 are part of the share settings.
+- [ ] Settings pages: grants on the Users page (per user and group) and on the Shares page (per share).
+
+### Test on dev01
+
+- Users A (readWrite through a group), B (read) and C (none): the file service, `getfacl` and `sudo -u` access agree for each of them; removing A from the group takes effect on the next request and on disk.
+
+### Must never happen
+
+- A combination of groups that grants more than the union of its grants.
+- A revoked right still working after the next request.
+- ACLs that differ from the grants without a warning.
+- A user without the administrator right reaching an administrator endpoint.
+
+### CI
+
+- Table tests of every combination of grants; an endpoint matrix (every endpoint against every role); golden tests of the ACL and group generator.
+
+**Done when:** the endpoint matrix is green and after every reconcile the file system matches the grants.
+
+---
+
+## Step 12: Shares over SMB, NFS and SFTP
+
+Effort: high.
+
+Goal: shares are datasets reachable over SMB, NFS and SFTP with exactly the rights the file service enforces, and one recycle bin for all of them.
+
+- [ ] A share is its own dataset (D101, decided) under `<pool>/vyxis/shares/<name>`, with its own snapshots, quota and recycle bin. The folder shares from step 6 exist only in development and are created again as datasets (no migration of real data).
+- [ ] SMB: `smb.conf` generated from SQLite with the "Managed by vyxis" header; manual overrides in include files that are never touched; checked with `testparm` before every reload.
+  - SMB3 only, signing required, encryption optional per share, `fruit` for macOS, `shadow_copy2` so snapshots appear as "Previous versions".
+  - ACL editing over SMB is off (`nt acl support = no` and matching settings): permissions change only in Vyxis (D102).
+  - `veto files` hides `.vyxis-trash`; `vfs_recycle` moves SMB deletes into the same recycle bin with a row per item (release blocker).
+  - Samba's passdb is owned by root, mode 0600, and never part of a support bundle.
+  - The Users page shows which users have no SMB password yet (they never signed in on the web) and asks them to sign in once.
+- [ ] NFS (D107, decided): NFSv4.2 with `sec=sys`, a list of allowed clients per share, `root_squash`, off by default, and a warning that NFS trusts the client's user ids. Kerberos later.
+- [ ] SFTP (D108, decided): OpenSSH `internal-sftp` in a chroot with a bind-mount view of the shares the user may use, only with the SFTP right and independent of the SSH login right.
+- [ ] Settings page Shares: protocols, allowed clients, recycle bin retention, snapshot visibility, quotas.
+
+### Test on dev01
+
+- `smbclient` as users A, B and C: read, write and no access as granted; a delete over SMB lands in the recycle bin and can be restored in Files; "Previous versions" lists snapshots; `smbcacls` cannot change permissions.
+- An NFS mount over localhost with a foreign uid is squashed; `sftp` as A shows exactly A's shares.
+
+### Must never happen
+
+- A half-written or invalid `smb.conf` or `exports` loaded.
+- A manual include file overwritten.
+- A share reachable over a protocol the user has no right for.
+- `.vyxis-trash` visible over any protocol.
+- Deleting a share deletes its data without an explicit choice.
+- An NFS export without `root_squash`.
+- The Samba passdb readable by anyone but root or included in a support bundle.
+
+### CI
+
+- Golden files for every generated config, validated with `testparm` and `exportfs` on the runner; an SMB integration test against `smbd` on the runner with three users.
+
+**Done when:** SMB, NFS and SFTP give users A, B and C exactly the rights the file service gives them, deletes over SMB share the recycle bin, the SMB recycle bin release blocker is checked off, and the owner has tried it on dev01. `[REVIEW]`
+
+---
+
+## Step 13: SSD cache with a recommendation
+
+Effort: medium.
+
+Goal: SSDs speed up pools where it helps, and the UI says when it does not.
+
+- [ ] L2ARC (read cache), SLOG (synchronous writes) and special vdevs (metadata and small blocks, which also keep listings off sleeping disks).
+- [ ] A recommendation as a pure function of the disks, the pool layout, ARC statistics and the share of synchronous writes, with the reason in plain language ("Your ARC hit rate is 97 percent; a read cache would not help").
+- [ ] Special vdevs and SLOGs only as mirrors; adding what cannot be removed (a special vdev on raidz) only after typing the pool name.
+
+### Test on dev01
+
+- Add and remove an L2ARC; add a mirrored special vdev on VYXTEST05 and VYXTEST06. The virtual disks all report as non-rotational, so the recommendation is tested with fixtures.
+
+### Must never happen
+
+- A special vdev or SLOG without a mirror (losing it loses the pool).
+- An irreversible vdev added without the typed confirmation.
+
+### CI
+
+- A decision table for the recommendation; golden command plans; the `storage` job adds and removes cache vdevs on file vdevs.
+
+**Done when:** recommendation, adding and removing work on dev01 and the protection rules are tested.
+
+---
+
+## Step 14: Energy and network
+
+Effort: medium.
+
+Goal: the box sleeps when it can, the user sees what keeps it awake, and network changes can never lock the owner out.
+
+### 14.1 Energy
+
+- [ ] Spindown per pool with hd-idle, off by default.
+- [ ] Snapshot schedules and SMART self-tests follow spindown: a sleeping pool is not woken for a snapshot of unchanged data (a snapshot is taken when the pool is awake anyway or has changed), and idle-check (`tools/dev-vm/idle-check.sh`) verifies that no Vyxis schedule wakes a disk.
+- [ ] Power profiles (performance, balanced, efficient) set the CPU governor and EPP; SATA ALPM, PCIe ASPM and USB autosuspend stay opt-in.
+- [ ] A diagnostic that shows what keeps disks awake (process and file, through fanotify on the pool mounts and `/proc/<pid>/io`) and CPU package C-state residency.
+- [ ] Capabilities are detected: in a VM without spindown or C-states, the page explains why instead of showing errors.
+
+### 14.2 Network (D110, decided)
+
+- [ ] systemd-networkd configuration generated from SQLite: DHCP or static, IPv4 and IPv6, DNS, host name.
+- [ ] Every change applies with a 60 second confirmation timer and rolls back automatically when it is not confirmed.
+- [ ] On dev01 only a dedicated test NIC listed in `/etc/vyxis/test-nics` is ever changed, never the management NIC. Blocked until the owner has added the second NIC to dev01.
+
+### 14.3 Settings pages Energy and Network
+
+- [ ] Both pages, with the diagnostic and the confirmation countdown.
+
+### Test on dev01
+
+- Change the test NIC and let the timer run out: it rolls back; confirm: it stays.
+- The diagnostic names a process that writes to a test pool.
+- Spindown and C-states only with fixtures (dev01 is a VM); a hardware test on the owner's N305. `[REVIEW]`
+
+### Must never happen
+
+- Vyxis waking a disk itself (SMART, logs, listings, schedules).
+- A network change without the rollback timer.
+- The management NIC of dev01 changed.
+- An option known to cause instability on by default.
+
+### CI
+
+- Golden tests of the networkd generator; the rollback timer as a state machine with a fake clock; parsers for sysfs, hd-idle and fanotify events.
+
+**Done when:** a network change rolls back after 60 seconds without confirmation, the diagnostic finds what keeps a disk awake, and idle-check shows no disk woken by Vyxis on an idle box.
+
+---
+
+## Interfaces for M4
+
+M3 builds these so M4 (apps) uses them without rework. M4 itself is not part of M3.
+
+- Named storage (SDK guardrail 12): M3 provides shares as datasets with grants and an internal daemon API that resolves a share and a relative path to a mount path. M4 adds `storage_mappings` (app, storage id, share, subpath, access) on top and bind-mounts the folder into the backend at `/vyxis/storage/<id>`. A window's effective access is the lesser of the manifest's access and the user's share right; the backend's access comes from the share groups.
+- Users: `X-Vyxis-User` carries the stable, Linux-valid user name and the user id. Each app backend runs as its own uid and gid from the app range that M3 reserves (40000 to 49999, same allocator), mapped through userns-remap. An app reaches shares only as a member of the share groups from step 11, never with a user's uid.
+- Datasets: one per app under `<pool>/vyxis/apps/<id>`, mounted at `/<pool>/.vyxis/apps/<id>`, with a quota. Before every update a snapshot `vyxis-preupdate-<version>` with a hold, and a rollback when the update fails. M3's dataset, quota, snapshot and hold API carries no share assumptions for this.
+- Permissions: grant subjects are `user`, `group` and later `app`; "app allowed" is already a resource in M3. M4 adds manifest permissions as their own table but uses the same resolver, the same checks on every request and the same push on revoke.
+- Availability: M3 publishes when a pool or dataset is locked or missing; M4 refuses to start apps with mounts on it and shows why.
+
+---
+
 ## Later milestones
 
-M3 to M6 get their own detailed steps once step 6 is done. Write them into this file first and get them reviewed before starting. `[REVIEW]`
+M3 is detailed in steps 7 to 14. M4 to M6 get their own detailed steps once M3 is done. Write them into this file first and get them reviewed before starting. `[REVIEW]`
 
 Known requirements for later milestones:
 
@@ -409,13 +772,9 @@ Known requirements for later milestones:
 - Website user docs for shares and files from step 6: the Files app (double click downloads files for now, Ctrl+A selects the whole folder, the keyboard shortcuts F2, Delete, Shift+Delete, Ctrl+C/X/V, Backspace and Alt+Up, dropping files from the system to upload, Ctrl or Alt while dropping to copy instead of move, the conflict question, progress and cancel in the status bar), the recycle bin per share (restore, empty, retention, that deleting for good is only explicit), the upload behavior (the file appears only when complete, existing names are never replaced without asking), conflict choices for copy and move (skip, overwrite merges folders, rename to "name (2)"), that symlinks are shown but never copied, and the share rules for administrators (existing folder, no system folders, no overlapping shares).
 - Website user docs for the desktop from step 5: desktop items (selecting with a frame, Ctrl and Shift, moving by dragging and with Move, F2, Delete, Shift+F10, the note grip and its arrow keys, long press on touch, the 200 item and 4000 character limits, and that note text changed on two devices is kept on a second note), window menu and the Alt+Shift shortcuts (and that they do not apply in text fields), snapping and thirds on ultrawide screens, taskbar position, layout memory per device with its 90-day expiry and "Get desktop from ..." (which shows each device's browser, system, screen size and last use), that only the tab in use saves the layout, the phone app switcher, swipe and back gesture, and the `vyxis_device` cookie (what it is, that it holds no personal data, and that it is `Secure` on HTTPS).
 
-- M3: block cloning. On dev01 (OpenZFS 2.3.9) `copy_file_range` cloned no blocks. Check whether `zfs_bclone_enabled` or the distribution keeps cloning off because of the known OpenZFS block cloning data corruption bug, and enable it only on an OpenZFS version with the fix (D90).
-- M3: `[DECISION]` Self-hosted CI runner (proposal from the 2026-09-27 run, not set up; CI stays on GitHub-hosted runners until the owner decides). A dedicated VM with at least 6 GB RAM, never on the NAS and never on pve02, with egress only to GitHub, npm, NuGet and the Debian mirrors and no access to shares, management interfaces or the LAN. On it: ephemeral runners in Docker containers for the daemon, frontend and E2E jobs (own image built from the pinned `actions/runner` release, one JIT runner config per job from a GitHub App key, `docker run --rm`, non-root, no `docker.sock`, no `--privileged`, no host network, CPU and memory limits, updates only by rebuilding the image in a PR), and a throwaway VM per job for the ZFS and mdadm integration tests (qcow2 overlay on a golden Debian 13 image with `zfs-dkms`, loop devices only inside it). GitHub side: a runner group for `vyxis/vyxis` only, label `vyxis-ci`, `runs-on: ${{ vars.CI_RUNNER || 'ubuntu-24.04' }}` so switching back is one repository variable (see "CI runners" under "Release blockers").
-- M3: energy settings: spindown per pool (via hd-idle, off by default), power profiles, and a diagnostic that shows what keeps disks awake (process, file) and CPU package C-state residency.
-- M3: permission model from `CLAUDE.md` (groups, users, shares, protocols, apps, special rights), pool encryption with key vault, SFTP instead of plain FTP.
-- M3: when provisioning Linux and Samba users, refuse user names that already exist in `/etc/passwd` or `/etc/group` but are not managed by Vyxis (the static reserved list in `CredentialRules` only covers known system accounts).
+- Self-hosted CI runner, parked (D109 in vyxis/vyxis#25: integration tests run on GitHub-hosted runners with file-backed pools, plus the destructive suite on dev01; this proposal is for later, if tests need the exact Debian kernel). A dedicated VM with at least 6 GB RAM, never on the NAS and never on pve02, with egress only to GitHub, npm, NuGet and the Debian mirrors and no access to shares, management interfaces or the LAN. On it: ephemeral runners in Docker containers for the daemon, frontend and E2E jobs (own image built from the pinned `actions/runner` release, one JIT runner config per job from a GitHub App key, `docker run --rm`, non-root, no `docker.sock`, no `--privileged`, no host network, CPU and memory limits, updates only by rebuilding the image in a PR), and a throwaway VM per job for the ZFS and mdadm integration tests (qcow2 overlay on a golden Debian 13 image with `zfs-dkms`, loop devices only inside it). GitHub side: a runner group for `vyxis/vyxis` only, label `vyxis-ci`, `runs-on: ${{ vars.CI_RUNNER || 'ubuntu-24.04' }}` so switching back is one repository variable (see "CI runners" under "Release blockers").
 - Third-party notices: generate the list of bundled NuGet and npm packages with their licenses (for example libsodium ISC, NSec MIT, Otp.NET MIT) for the About page, and check it in CI. It starts from the hand-written `desktop/public/third-party-notices.json` (fonts, Tabler, React Aria), which does not list transitive packages yet.
-- M3: `[DECISION]` Server-side rendered texts (email, SSH MOTD, push) in the recipient's language need culture data. Decide between keeping `InvariantGlobalization` (small, no libicu, but only invariant formatting and a hand-written plural rule for English and German in `IcuMessageFormatter`) and enabling ICU culture data (libicu in the image, about 30 MB, correct number, date and plural rules for every language). Today the daemon only renders the English `detail` fallback of problem details.
+- `[DECISION]` Server-side rendered texts (email, SSH MOTD, push) in the recipient's language need culture data. Decide between keeping `InvariantGlobalization` (small, no libicu, but only invariant formatting and a hand-written plural rule for English and German in `IcuMessageFormatter`) and enabling ICU culture data (libicu in the image, about 30 MB, correct number, date and plural rules for every language). Today the daemon only renders the English `detail` fallback of problem details.
 - M5: web-based installer instead of a TUI. Boot from USB, open the setup page in a browser, choose the system disk, the system installs itself and continues setup in the same page. The console only shows the address.
 - M5: TLS as decided in `CLAUDE.md`: self-signed by default, trust wizard (local CA download with per-OS instructions), optional own domain with Let's Encrypt DNS-01. Passkeys and the service worker switch on once trusted.
   - Chromium does not use its HTTP cache for responses with a certificate error (measured in the #13 review): on the untrusted default every reload downloads the whole desktop again (about 1.1 s instead of 0.4 s on Fast 4G with 4x CPU). After sign-in on an untrusted certificate the desktop shows a dismissible hint that leads to the trust wizard and names faster reloads next to passkeys; the reload budget holds only once trusted. Add an E2E check that a trusted certificate serves `/assets/*` from the disk cache.
@@ -423,3 +782,4 @@ Known requirements for later milestones:
 - M5: trust step. An optional third setup step "Trust this device" after the administrator and the recovery key: the box generates a local CA whose Name Constraints allow only its host name, its mDNS name (`<host>.local`) and its local IP addresses, and the step offers it for download with per-OS instructions (the same content as the trust wizard in settings). Reason: Chromium caches nothing for a page whose certificate is not trusted (D43 in vyxis/vyxis#13), so every reload downloads the whole desktop, and passkeys and the service worker stay off until the certificate is trusted. The Name Constraints keep an installed CA from being usable for any other site if the box is compromised. Skippable, and the desktop hint from the TLS item above stays for users who skip it.
   - `[DECISION]` Pull the trust step (with the self-signed certificate and the local CA it needs) forward before M5, or build it with the rest of TLS in M5? Pulling it forward makes every later performance measurement reflect what users see; keeping it in M5 avoids building certificate handling twice if the installer changes how the box learns its names and addresses.
 - M5: SSH toggle in settings with the logo MOTD.
+- UPS (NUT): shut down cleanly on power loss (stop shares and apps, export pools, never touch the key vault), with a USB or network UPS; check before the release (see "Release blockers").
