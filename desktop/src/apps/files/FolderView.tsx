@@ -1,5 +1,5 @@
 import { useVirtualizer } from '@tanstack/react-virtual';
-import type { FileEntry, Formatters, SortKey, SortOrder } from '@vyxis/sdk';
+import type { FileEntry, FileItems, Formatters, SortKey, SortOrder } from '@vyxis/sdk';
 import {
   useEffect,
   useId,
@@ -19,6 +19,7 @@ import {
   selectAll,
   selectOnly,
   selectRange,
+  toItems,
   toggle,
   type Selection,
 } from './selection';
@@ -45,7 +46,10 @@ export interface FolderViewProps {
   onKey: (key: 'delete' | 'deletePermanent' | 'rename' | 'copy' | 'cut' | 'paste') => void;
   onMenu: (x: number, y: number, entry: FileEntry | null) => void;
   onDropFiles: (files: File[], folder: string | null) => void;
-  onDropEntries: (data: string, folder: string, copy: boolean) => void;
+  /** What a drag of these entries carries, so another Files window knows where they come from. */
+  dragData: (items: FileItems) => string;
+  /** Entries dropped on a folder row, or on the list itself (null) from another folder. */
+  onDropEntries: (data: string, folder: string | null, copy: boolean) => void;
   /** Called once the rows of a newly shown folder are on screen, for the navigation timing. */
   onShown: () => void;
   folderKey: string;
@@ -240,7 +244,7 @@ export function FolderView(props: FolderViewProps) {
 
   function onDragOver(event: DragEvent, folder: string | null) {
     const kind = dragKind(event);
-    if (kind === null || (kind === 'entries' && folder === null)) {
+    if (kind === null) {
       return;
     }
     event.preventDefault();
@@ -260,7 +264,7 @@ export function FolderView(props: FolderViewProps) {
     event.stopPropagation();
     if (kind === 'files') {
       props.onDropFiles([...event.dataTransfer.files], folder);
-    } else if (folder !== null) {
+    } else {
       props.onDropEntries(
         event.dataTransfer.getData(ENTRIES_TYPE),
         folder,
@@ -384,14 +388,7 @@ export function FolderView(props: FolderViewProps) {
                   if (!selected) {
                     onSelect(dragged);
                   }
-                  event.dataTransfer.setData(
-                    ENTRIES_TYPE,
-                    JSON.stringify(
-                      dragged.kind === 'all'
-                        ? { all: true, except: [...dragged.except] }
-                        : { names: [...dragged.names] },
-                    ),
-                  );
+                  event.dataTransfer.setData(ENTRIES_TYPE, props.dragData(toItems(dragged)));
                   event.dataTransfer.effectAllowed = 'copyMove';
                 }}
                 onDragOver={

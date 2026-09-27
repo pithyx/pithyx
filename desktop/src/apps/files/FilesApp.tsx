@@ -55,6 +55,13 @@ interface Place {
   view: 'folder' | 'trash';
 }
 
+/** What a drag of entries carries between Files windows. */
+interface DraggedEntries {
+  share: string | null;
+  folder: string;
+  items: FileItems;
+}
+
 const FINISHED = new Set<JobInfo['state']>(['succeeded', 'failed', 'cancelled', 'interrupted']);
 
 function restorePlace(saved: unknown): Place {
@@ -478,25 +485,33 @@ export function FilesApp({ app }: { app: VyxisApp }) {
     }
   }
 
-  function dropEntries(data: string, into: string, copy: boolean) {
+  function dragData(items: FileItems): string {
+    return JSON.stringify({ share: shareId, folder: path, items } satisfies DraggedEntries);
+  }
+
+  function dropEntries(data: string, into: string | null, copy: boolean) {
     if (shareId === null || !writable) {
       return;
     }
-    let items: FileItems;
+    let dragged: DraggedEntries;
     try {
-      items = JSON.parse(data) as FileItems;
+      dragged = JSON.parse(data) as DraggedEntries;
     } catch {
       return;
     }
+    const sameFolder = dragged.share === shareId && dragged.folder === path;
+    if (dragged.share === null || (sameFolder && into === null)) {
+      return;
+    }
     // A folder never goes into itself.
-    items = withoutName(items, into);
+    const items = sameFolder && into !== null ? withoutName(dragged.items, into) : dragged.items;
     if (isEmpty(items)) {
       return;
     }
     void run({
       kind: copy ? 'copy' : 'move',
-      source: { location, folder: path, items },
-      target: { location, path: joinPath(path, into) },
+      source: { location: { share: dragged.share }, folder: dragged.folder, items },
+      target: { location, path: into === null ? path : joinPath(path, into) },
     });
   }
 
@@ -694,6 +709,7 @@ export function FilesApp({ app }: { app: VyxisApp }) {
                   void uploadFiles(files, into === null ? path : joinPath(path, into));
                 }
               }}
+              dragData={dragData}
               onDropEntries={dropEntries}
               onShown={() => {
                 const started = navigation.current;

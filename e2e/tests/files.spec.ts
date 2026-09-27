@@ -97,6 +97,16 @@ test('copies and moves with the clipboard and asks about a name that exists', as
   expect(readFileSync(join(shared, 'e2e-clipboard', 'target', 'b.txt'), 'utf8')).toBe('old');
 });
 
+test('moves entries by dragging them onto a folder', async ({ page }) => {
+  prepare('e2e-drag/box');
+  prepare('e2e-drag', { 'photo.jpg': 'p' });
+  await openFolder(page, 'e2e-drag');
+  await row(page, 'photo.jpg').dragTo(row(page, 'box'));
+  await expect(row(page, 'photo.jpg')).toHaveCount(0);
+  await row(page, 'box').dblclick();
+  await expect(row(page, 'photo.jpg')).toBeVisible();
+});
+
 test('deletes into the recycle bin, restores, and deletes for good only after asking', async ({
   page,
 }) => {
