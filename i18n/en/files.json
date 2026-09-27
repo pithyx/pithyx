@@ -50,7 +50,8 @@
     "paste": "Paste",
     "delete": "Move to recycle bin",
     "deletePermanent": "Delete permanently",
-    "selectAll": "Select all"
+    "selectAll": "Select all",
+    "versions": "Previous versions"
   },
   "dialog": {
     "cancel": "Cancel",
@@ -99,7 +100,8 @@
       "files.delete": "Deleting",
       "files.restore": "Restoring",
       "files.purge": "Deleting for good",
-      "files.empty_trash": "Emptying the recycle bin"
+      "files.empty_trash": "Emptying the recycle bin",
+      "files.restore_version": "Restoring a version"
     }
   },
   "announce": {
@@ -115,5 +117,20 @@
     "delete": "Del",
     "deletePermanent": "Shift+Del",
     "selectAll": "Ctrl+A"
+  },
+  "versions": {
+    "title": "Previous versions of {name}",
+    "list": "Versions",
+    "empty": "There are no earlier versions. They come from snapshots of the pool the share is on, which an administrator sets up in Settings under Storage.",
+    "failed": "The versions could not be loaded.",
+    "takenOn": "Snapshot of {date}",
+    "modifiedOn": "Changed {date}",
+    "restore": "Restore",
+    "restoreOne": "Restore the version of {date}",
+    "overwrite": "Replace the current version",
+    "nextToHint": "The version is restored next to the current one, with its date in the name.",
+    "overwriteHint": "The current file is replaced. A folder keeps the files that are not in the version.",
+    "readOnly": "You can only read this share, so versions cannot be restored here.",
+    "close": "Close"
   }
 }

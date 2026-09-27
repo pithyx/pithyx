@@ -152,6 +152,20 @@ export interface TrashPage {
   retentionDays: number;
 }
 
+/** An earlier version of a file or folder, from a snapshot of the share's dataset. */
+export interface FileVersion {
+  /** The snapshot it is in; pass it to `files.restoreVersion`. */
+  snapshot: string;
+  /** When the snapshot was taken, ISO 8601 UTC. */
+  createdAt: string;
+  /** File or folder. */
+  kind: FileKind;
+  /** Bytes for files, 0 for folders. */
+  size: number;
+  /** Last change of the content in that version, ISO 8601 UTC. */
+  modified: string;
+}
+
 /** Changes of a watched folder since the last event. */
 export interface FolderChange {
   /** The id `files.watch` returned. */

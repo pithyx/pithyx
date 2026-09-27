@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createApp } from './app';
 import { PithyxError } from './errors';
 import { serveApp, type MethodHandlers } from './host';
-import type { FileEntry, JobInfo } from './files';
+import type { FileEntry, FileVersion, JobInfo } from './files';
 import type { AppContext } from './protocol';
 import { themeTokenNames, type Theme } from './theme';
 import { inProcessPair, portEndpoint, type Endpoint } from './transport';
@@ -169,6 +169,66 @@ describe.each(transports)('over the %s transport', (_, pair) => {
       ).rejects.toMatchObject({ code: 'sdk.request.invalid' });
     }
     expect(run).toHaveBeenCalledTimes(1);
+  });
+
+  it('lists and restores previous versions and refuses malformed requests', async () => {
+    const version: FileVersion = {
+      snapshot: 'pithyx-daily-20260927T000000Z',
+      createdAt: '2026-09-27T00:00:00Z',
+      kind: 'file',
+      size: 3,
+      modified: '2026-09-26T12:00:00Z',
+    };
+    const job: JobInfo = {
+      id: 7,
+      kind: 'files.restore_version',
+      state: 'queued',
+      progress: { itemsDone: 0, itemsTotal: 0, bytesDone: 0, bytesTotal: 0, current: null },
+      problem: null,
+      result: null,
+    };
+    const versions = vi.fn(() => [version]);
+    const restore = vi.fn(() => job);
+    const { app } = connectTo({ 'files.versions': versions, 'files.restoreVersion': restore });
+    const connected = await app;
+    const location = { share: '1' };
+
+    expect(await connected.files.versions(location, 'Docs/plan.txt')).toEqual([version]);
+    expect(versions).toHaveBeenCalledWith({ location, path: 'Docs/plan.txt' });
+    expect(
+      await connected.files.restoreVersion(location, 'Docs/plan.txt', version.snapshot),
+    ).toEqual(job);
+    await connected.files.restoreVersion(location, 'Docs/plan.txt', version.snapshot, {
+      overwrite: true,
+    });
+    expect(restore).toHaveBeenLastCalledWith({
+      location,
+      path: 'Docs/plan.txt',
+      snapshot: version.snapshot,
+      overwrite: true,
+    });
+
+    await expect(connected.call('files.versions', { location, path: '' })).rejects.toMatchObject({
+      code: 'sdk.request.invalid',
+    });
+    await expect(
+      connected.call('files.versions', { location, path: '../secret' }),
+    ).rejects.toMatchObject({ code: 'sdk.request.invalid' });
+    const invalid = [
+      { location, path: 'a', snapshot: 'x/y' },
+      { location, path: 'a', snapshot: '' },
+      { location, path: 'a', snapshot: 's', overwrite: 'yes' },
+      { location: { share: 1 }, path: 'a', snapshot: 's' },
+    ];
+    for (const params of invalid) {
+      await expect(
+        connected.call(
+          'files.restoreVersion',
+          params as Parameters<typeof connected.call<'files.restoreVersion'>>[1],
+        ),
+      ).rejects.toMatchObject({ code: 'sdk.request.invalid' });
+    }
+    expect(restore).toHaveBeenCalledTimes(2);
   });
 
   it('lets an upload take as long as the transfer', async () => {

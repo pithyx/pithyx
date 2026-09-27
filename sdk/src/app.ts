@@ -10,6 +10,7 @@ import type {
   SortKey,
   SortOrder,
   TrashPage,
+  FileVersion,
 } from './files';
 import { createFormatters, type Formatters } from './format';
 import {
@@ -136,6 +137,21 @@ export interface PithyxApp {
      * to the share's recycle bin unless `permanent`, which only an explicit request of the user may set.
      */
     run(operation: FileOperation): Promise<JobInfo>;
+    /**
+     * Earlier versions of the entry at `path` from the snapshots of the share's dataset, newest first; also of an
+     * entry deleted since. Empty when the share has no snapshots. Needs read access to the share.
+     */
+    versions(location: FileLocation, path: string): Promise<FileVersion[]>;
+    /**
+     * Copies a version back as a job: next to the current entry as "name (version date)", or over it with
+     * `overwrite` (files are replaced, folders merged), which only an explicit request of the user may set.
+     */
+    restoreVersion(
+      location: FileLocation,
+      path: string,
+      snapshot: string,
+      options?: { overwrite?: boolean },
+    ): Promise<JobInfo>;
   };
   readonly jobs: {
     /** Cancels a job the app started; a job that already finished stays as it is. */
@@ -388,6 +404,9 @@ export function createApp(endpoint: Endpoint, options: CreateAppOptions = {}): P
         createFolder: async (location, path) => typed('files.createFolder', { location, path }),
         rename: async (location, path, name) => typed('files.rename', { location, path, name }),
         run: async (operation) => typed('files.run', operation),
+        versions: async (location, path) => typed('files.versions', { location, path }),
+        restoreVersion: async (location, path, snapshot, options = {}) =>
+          typed('files.restoreVersion', { location, path, snapshot, ...options }),
       },
       jobs: {
         cancel: async (job) => {

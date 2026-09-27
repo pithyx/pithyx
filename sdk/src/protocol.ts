@@ -27,6 +27,7 @@ import type {
   FileEntry,
   FileLocation,
   FileOperation,
+  FileVersion,
   FolderChange,
   FolderPage,
   JobInfo,
@@ -221,6 +222,20 @@ export interface Methods {
    * until it finishes. Deleting moves to the share's recycle bin unless `permanent`.
    */
   'files.run': { params: FileOperation; result: JobInfo };
+  /**
+   * Earlier versions of a file or folder from the snapshots of the share's dataset, newest first; also of an entry
+   * deleted since. A file is listed once per distinct content and not while it equals the current file. Empty when
+   * the share has no snapshots. Needs read access to the share.
+   */
+  'files.versions': { params: { location: FileLocation; path: string }; result: FileVersion[] };
+  /**
+   * Copies a version back as a job: next to the current entry as "name (version date)", or over it with
+   * `overwrite` (files are replaced, folders merged). Needs write access to the share.
+   */
+  'files.restoreVersion': {
+    params: { location: FileLocation; path: string; snapshot: string; overwrite?: boolean };
+    result: JobInfo;
+  };
   /** Cancels a job the app started; a finished job stays as it is. */
   'jobs.cancel': { params: { job: number }; result: undefined };
   /** One page of a share's recycle bin, newest first. Needs read access to the share. */

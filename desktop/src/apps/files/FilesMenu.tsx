@@ -7,6 +7,7 @@ import {
   IconDownload,
   IconExternalLink,
   IconFolderPlus,
+  IconHistory,
   IconPencil,
   IconScissors,
   IconSquare,
@@ -25,6 +26,7 @@ export type FilesAction =
   | 'copy'
   | 'paste'
   | 'rename'
+  | 'versions'
   | 'delete'
   | 'deletePermanent'
   | 'newFolder'
@@ -103,6 +105,11 @@ export function FilesMenu({
               {writable && single !== null && (
                 <MenuItem id="rename" icon={<IconPencil {...icon} />} shortcut="F2">
                   {t('actions.rename')}
+                </MenuItem>
+              )}
+              {single !== null && (
+                <MenuItem id="versions" icon={<IconHistory {...icon} />}>
+                  {t('actions.versions')}
                 </MenuItem>
               )}
               {writable && (

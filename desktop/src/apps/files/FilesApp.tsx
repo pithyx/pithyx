@@ -47,6 +47,7 @@ import {
 } from './selection';
 import { createTransfers, type Transfers } from './transfers';
 import { TrashView, trashKey } from './TrashView';
+import { VersionsDialog } from './VersionsDialog';
 import { changeFolder, folderKey, keepOnly, useFolder } from './useFolder';
 
 /** Where a window is: a folder of a share, or the share's recycle bin. Saved with the layout. */
@@ -110,6 +111,11 @@ export function FilesApp({ app }: { app: PithyxApp }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [menu, setMenu] = useState<{ x: number; y: number; entry: FileEntry | null } | null>(null);
   const [confirmPermanent, setConfirmPermanent] = useState<FileItems | null>(null);
+  const [versionsOf, setVersionsOf] = useState<{
+    share: string;
+    path: string;
+    name: string;
+  } | null>(null);
   const [conflict, setConflict] = useState<
     | { kind: 'job'; operation: FileOperation }
     | { kind: 'upload'; files: File[]; folder: string }
@@ -464,6 +470,11 @@ export function FilesApp({ app }: { app: PithyxApp }) {
           setRenaming(entry.name);
         }
         break;
+      case 'versions':
+        if (entry !== undefined && shareId !== null) {
+          setVersionsOf({ share: shareId, path: joinPath(path, entry.name), name: entry.name });
+        }
+        break;
       case 'delete':
         if (writable) {
           remove(toItems(selection), false);
@@ -764,6 +775,21 @@ export function FilesApp({ app }: { app: PithyxApp }) {
           onAction={act}
           onClose={() => {
             setMenu(null);
+          }}
+        />
+      )}
+      {versionsOf !== null && (
+        <VersionsDialog
+          app={app}
+          share={versionsOf.share}
+          path={versionsOf.path}
+          name={versionsOf.name}
+          writable={writable}
+          onJob={(job) => {
+            track(job, null);
+          }}
+          onClose={() => {
+            setVersionsOf(null);
           }}
         />
       )}

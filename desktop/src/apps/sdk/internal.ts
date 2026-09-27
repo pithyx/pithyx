@@ -13,6 +13,15 @@ export type Vdev = components['schemas']['Vdev'];
 export type StoragePlanRequest = components['schemas']['StoragePlanRequest'];
 export type StoragePlanPreview = components['schemas']['StoragePlanPreview'];
 export type Job = components['schemas']['Job'];
+export type Snapshot = components['schemas']['Snapshot'];
+export type SnapshotList = components['schemas']['SnapshotList'];
+export type SnapshotScheduleList = components['schemas']['SnapshotScheduleList'];
+export type SnapshotRollbackRequest = components['schemas']['SnapshotRollbackRequest'];
+
+interface SnapshotRef {
+  dataset: string;
+  name: string;
+}
 
 /**
  * Administrative calls of the desktop's own core apps, outside the public SDK: not versioned, never served to a
@@ -24,6 +33,23 @@ export interface InternalMethods {
   'internal.admin.storage.pools': { params: Record<string, never>; result: PoolList };
   'internal.admin.storage.plan': { params: StoragePlanRequest; result: StoragePlanPreview };
   'internal.admin.storage.run': { params: { planId: string }; result: Job };
+  'internal.admin.storage.snapshots.list': { params: { dataset: string }; result: SnapshotList };
+  'internal.admin.storage.snapshots.create': { params: { dataset: string }; result: Snapshot };
+  'internal.admin.storage.snapshots.delete': { params: SnapshotRef; result: undefined };
+  'internal.admin.storage.snapshots.hold': { params: SnapshotRef; result: undefined };
+  'internal.admin.storage.snapshots.release': { params: SnapshotRef; result: undefined };
+  'internal.admin.storage.snapshots.rollback': {
+    params: SnapshotRollbackRequest;
+    result: undefined;
+  };
+  'internal.admin.storage.snapshots.schedules': {
+    params: { dataset: string };
+    result: SnapshotScheduleList;
+  };
+  'internal.admin.storage.snapshots.setSchedules': {
+    params: SnapshotScheduleList;
+    result: SnapshotScheduleList;
+  };
 }
 
 /** Sent to the app when pools or disks changed; the app reads them again. */
@@ -57,6 +83,56 @@ function isPlanRequest(value: unknown): boolean {
       (isRecord(value.confirmations) &&
         Object.values(value.confirmations).every((serial) => typeof serial === 'string')))
   );
+}
+
+function isDataset(value: unknown): value is Record<string, unknown> & { dataset: string } {
+  return isRecord(value) && typeof value.dataset === 'string' && value.dataset !== '';
+}
+
+function isSnapshotRef(value: unknown): value is Record<string, unknown> & SnapshotRef {
+  return isDataset(value) && typeof value.name === 'string' && value.name !== '';
+}
+
+function isRollback(value: unknown): boolean {
+  return (
+    isSnapshotRef(value) &&
+    typeof value.confirmDataset === 'string' &&
+    (value.discardNewer === undefined ||
+      value.discardNewer === null ||
+      (Array.isArray(value.discardNewer) &&
+        value.discardNewer.every((name) => typeof name === 'string')))
+  );
+}
+
+function isSchedules(value: unknown): boolean {
+  return (
+    isDataset(value) &&
+    Array.isArray(value.schedules) &&
+    value.schedules.every(
+      (schedule) =>
+        isRecord(schedule) &&
+        typeof schedule.kind === 'string' &&
+        typeof schedule.enabled === 'boolean' &&
+        Number.isSafeInteger(schedule.keep),
+    )
+  );
+}
+
+/** A snapshot call that answers 204. */
+function snapshotAction(
+  path:
+    | '/api/storage/snapshots/delete'
+    | '/api/storage/snapshots/hold'
+    | '/api/storage/snapshots/release',
+): HostExtensions[string] {
+  return {
+    validate: isSnapshotRef,
+    handle: (params) =>
+      daemon(async () => {
+        const { dataset, name } = params as SnapshotRef;
+        unwrap(await api.POST(path, { body: { dataset, name } }));
+      }),
+  };
 }
 
 async function daemon<T>(call: () => Promise<T>): Promise<T> {
@@ -124,6 +200,64 @@ export function adminStorageHost(emit: (event: string, data?: unknown) => void):
           follow(job);
           return job;
         }),
+    },
+    'internal.admin.storage.snapshots.list': {
+      validate: isDataset,
+      handle: (params) =>
+        daemon(async () =>
+          unwrap(
+            await api.GET('/api/storage/snapshots', {
+              params: { query: { dataset: (params as { dataset: string }).dataset } },
+            }),
+          ),
+        ),
+    },
+    'internal.admin.storage.snapshots.create': {
+      validate: isDataset,
+      handle: (params) =>
+        daemon(async () =>
+          unwrap(
+            await api.POST('/api/storage/snapshots', {
+              body: { dataset: (params as { dataset: string }).dataset },
+            }),
+          ),
+        ),
+    },
+    'internal.admin.storage.snapshots.delete': snapshotAction('/api/storage/snapshots/delete'),
+    'internal.admin.storage.snapshots.hold': snapshotAction('/api/storage/snapshots/hold'),
+    'internal.admin.storage.snapshots.release': snapshotAction('/api/storage/snapshots/release'),
+    'internal.admin.storage.snapshots.rollback': {
+      validate: isRollback,
+      handle: (params) =>
+        daemon(async () => {
+          unwrap(
+            await api.POST('/api/storage/snapshots/rollback', {
+              body: params as SnapshotRollbackRequest,
+            }),
+          );
+        }),
+    },
+    'internal.admin.storage.snapshots.schedules': {
+      validate: isDataset,
+      handle: (params) =>
+        daemon(async () =>
+          unwrap(
+            await api.GET('/api/storage/snapshots/schedules', {
+              params: { query: { dataset: (params as { dataset: string }).dataset } },
+            }),
+          ),
+        ),
+    },
+    'internal.admin.storage.snapshots.setSchedules': {
+      validate: isSchedules,
+      handle: (params) =>
+        daemon(async () =>
+          unwrap(
+            await api.PUT('/api/storage/snapshots/schedules', {
+              body: params as SnapshotScheduleList,
+            }),
+          ),
+        ),
     },
   };
   return {

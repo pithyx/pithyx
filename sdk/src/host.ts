@@ -216,6 +216,13 @@ const validators: Record<MethodName, (params: unknown) => boolean> = {
   'files.createFolder': (p) => inLocation(p) && isRelativePath(p.path),
   'files.rename': (p) => inLocation(p) && isRelativePath(p.path) && isName(p.name),
   'files.run': isOperation,
+  'files.versions': (p) => inLocation(p) && isRelativePath(p.path) && p.path !== '',
+  'files.restoreVersion': (p) =>
+    inLocation(p) &&
+    isRelativePath(p.path) &&
+    p.path !== '' &&
+    isName(p.snapshot) &&
+    (p.overwrite === undefined || typeof p.overwrite === 'boolean'),
   'jobs.cancel': (p) => isRecord(p) && Number.isSafeInteger(p.job),
   'trash.list': (p) => inLocation(p) && isPage(p),
   'trash.restore': (p) => inLocation(p) && isIds(p.ids) && isOneOf(p.onConflict, CONFLICTS),

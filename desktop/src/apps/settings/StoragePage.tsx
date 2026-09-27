@@ -20,6 +20,7 @@ import {
 } from '../sdk/internal';
 import { PoolActionDialog, type PoolAction } from './PoolActionDialog';
 import { PoolWizard } from './PoolWizard';
+import { SnapshotsSection } from './SnapshotsSection';
 import styles from './Settings.module.css';
 
 const storageKey = ['settings', 'storage'] as const;
@@ -110,6 +111,8 @@ export function StoragePage({ app }: { app: PithyxApp }) {
           ))}
         </div>
       </section>
+
+      {pools.data !== undefined && <SnapshotsSection app={app} datasets={pools.data.datasets} />}
 
       <section aria-labelledby="storage-disks" className={styles.section}>
         <h3 id="storage-disks" className={styles.sectionTitle}>

@@ -50,7 +50,8 @@
     "paste": "Einfügen",
     "delete": "In den Papierkorb",
     "deletePermanent": "Endgültig löschen",
-    "selectAll": "Alles auswählen"
+    "selectAll": "Alles auswählen",
+    "versions": "Frühere Versionen"
   },
   "dialog": {
     "cancel": "Abbrechen",
@@ -99,7 +100,8 @@
       "files.delete": "Löschen",
       "files.restore": "Wiederherstellen",
       "files.purge": "Endgültig löschen",
-      "files.empty_trash": "Papierkorb leeren"
+      "files.empty_trash": "Papierkorb leeren",
+      "files.restore_version": "Version wird wiederhergestellt"
     }
   },
   "announce": {
@@ -115,5 +117,20 @@
     "delete": "Entf",
     "deletePermanent": "Umschalt+Entf",
     "selectAll": "Strg+A"
+  },
+  "versions": {
+    "title": "Frühere Versionen von {name}",
+    "list": "Versionen",
+    "empty": "Es gibt keine früheren Versionen. Sie stammen aus Snapshots des Pools, auf dem die Freigabe liegt; ein Administrator richtet sie in den Einstellungen unter Speicher ein.",
+    "failed": "Die Versionen konnten nicht geladen werden.",
+    "takenOn": "Snapshot vom {date}",
+    "modifiedOn": "Geändert am {date}",
+    "restore": "Wiederherstellen",
+    "restoreOne": "Version vom {date} wiederherstellen",
+    "overwrite": "Aktuelle Version ersetzen",
+    "nextToHint": "Die Version wird neben der aktuellen wiederhergestellt, mit ihrem Datum im Namen.",
+    "overwriteHint": "Die aktuelle Datei wird ersetzt. Ein Ordner behält die Dateien, die nicht in der Version sind.",
+    "readOnly": "Du kannst diese Freigabe nur lesen, deshalb kannst du hier keine Versionen wiederherstellen.",
+    "close": "Schließen"
   }
 }

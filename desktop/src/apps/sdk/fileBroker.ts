@@ -1,5 +1,13 @@
 import { unwrap, PithyxApiError, type components } from '@pithyx/api-client';
-import type { Events, FileEntry, FileLocation, JobInfo, Problem, TrashPage } from '@pithyx/sdk';
+import type {
+  Events,
+  FileEntry,
+  FileLocation,
+  FileVersion,
+  JobInfo,
+  Problem,
+  TrashPage,
+} from '@pithyx/sdk';
 import { PithyxError, type MethodHandlers } from '@pithyx/sdk/host';
 import { api } from '../../api/client';
 import { showError } from '../../errors/errorStore';
@@ -8,6 +16,7 @@ import { realtime } from '../../realtime/connection';
 type ApiEntry = components['schemas']['FileEntry'];
 type ApiJob = components['schemas']['Job'];
 type ApiTrashPage = components['schemas']['TrashPage'];
+type ApiFileVersionList = components['schemas']['FileVersionList'];
 
 /** Sends an event to the app that owns this broker. */
 export type Emit = <E extends keyof Events>(event: E, data: Events[E]) => void;
@@ -82,6 +91,16 @@ function toTrashPage(page: ApiTrashPage): TrashPage {
     nextCursor: page.nextCursor ?? null,
     retentionDays: page.retentionDays,
   };
+}
+
+function toVersions(list: ApiFileVersionList): FileVersion[] {
+  return list.versions.map((version) => ({
+    snapshot: version.snapshot,
+    createdAt: version.createdAt,
+    kind: version.kind,
+    size: version.size,
+    modified: version.modified,
+  }));
 }
 
 /** The daemon's share id of a location. Named storage arrives with app installation (M4) and has no mapping yet. */
@@ -324,6 +343,29 @@ export function fileBrokerFor(target: FileBrokerTarget): {
             ...(onConflict === undefined ? {} : { onConflict }),
             permanent: permanent === true,
           },
+        }),
+      );
+    },
+    'files.versions': async ({ location, path }) => {
+      require('files.shares');
+      const shareId = shareOf(location);
+      return toVersions(
+        await daemon(async () =>
+          unwrap(
+            await api.GET('/api/files/{shareId}/versions', {
+              params: { path: { shareId }, query: { path } },
+            }),
+          ),
+        ),
+      );
+    },
+    'files.restoreVersion': async ({ location, path, snapshot, overwrite }) => {
+      require('files.shares');
+      const shareId = shareOf(location);
+      return started(() =>
+        api.POST('/api/files/{shareId}/versions/restore', {
+          params: { path: { shareId } },
+          body: { path, snapshot, overwrite: overwrite === true },
         }),
       );
     },

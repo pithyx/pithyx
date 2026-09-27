@@ -266,6 +266,53 @@
     "datasets": {
       "title": "{count, plural, one {# dataset} other {# datasets}}",
       "notMounted": "not mounted"
+    },
+    "layouts": {
+      "single": "Single disk (no redundancy)",
+      "mirror": "Mirror",
+      "raidz1": "RAID-Z1 (one disk may fail)",
+      "raidz2": "RAID-Z2 (two disks may fail)",
+      "raidz3": "RAID-Z3 (three disks may fail)",
+      "stripe": "Stripe (one failed disk loses everything)"
+    },
+    "snapshots": {
+      "title": "Snapshots",
+      "intro": "A snapshot keeps the state of a dataset at one moment. Users restore files from them under Previous versions in Files. Schedules delete only the snapshots they took.",
+      "noDatasets": "No datasets yet.",
+      "dataset": "Dataset",
+      "take": "Take snapshot",
+      "empty": "This dataset has no snapshots yet.",
+      "name": "Name",
+      "created": "Taken",
+      "used": "Space",
+      "actions": "Actions",
+      "foreign": "Other",
+      "held": "Held",
+      "hold": "Hold",
+      "release": "Release",
+      "rollback": "Roll back",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "kinds": {
+        "hourly": "Hourly",
+        "daily": "Daily",
+        "weekly": "Weekly",
+        "monthly": "Monthly",
+        "manual": "Manual"
+      },
+      "schedules": "Schedules",
+      "keep": "Keep",
+      "save": "Save schedules",
+      "schedulesHint": "Schedules take one snapshot per hour, day, week (from Monday) or month in UTC and keep the given number of their own snapshots. Held snapshots and snapshots taken by hand or by other tools are never deleted.",
+      "deleteTitle": "Delete snapshot",
+      "deleteBody": "The snapshot {name} is deleted for good, with every earlier version it holds.",
+      "typeName": "Type the name of the snapshot to confirm",
+      "deleteConfirm": "Delete snapshot",
+      "rollbackTitle": "Roll back {dataset}",
+      "rollbackBody": "The whole dataset returns to the snapshot {name} of {date}. Every change since then is lost.",
+      "rollbackNewer": "{count, plural, one {This newer snapshot is deleted as well:} other {These # newer snapshots are deleted as well:}}",
+      "typeDataset": "Type {dataset} to confirm",
+      "rollbackConfirm": "Roll back"
     }
   }
 }
