@@ -69,6 +69,58 @@
       "too_long": "The note is too long. A note holds at most {maxLength} characters."
     }
   },
+  "fs": {
+    "cursor": {
+      "invalid": "The list position is no longer valid. Load the folder again."
+    },
+    "entry": {
+      "access_denied": "The system does not allow access to this item.",
+      "exists": "“{name}” already exists here.",
+      "is_folder": "This is a folder, not a file.",
+      "not_folder": "This is a file, not a folder.",
+      "not_found": "The file or folder was not found. It may have been moved or deleted."
+    },
+    "folder": {
+      "not_empty": "The folder is not empty."
+    },
+    "io": {
+      "failed": "The file system reported an error (errno {errno})."
+    },
+    "name": {
+      "invalid": "This name cannot be used. Names must not be empty, contain a slash, or be longer than 255 bytes."
+    },
+    "operation": {
+      "into_itself": "A folder cannot be copied or moved into itself.",
+      "invalid": "This file operation is not valid."
+    },
+    "path": {
+      "invalid": "This path is not valid. Paths are relative to the share, without “.” or “..”, and at most {maxBytes} bytes long."
+    },
+    "range": {
+      "not_satisfiable": "The requested part of the file does not exist."
+    },
+    "share": {
+      "exists": "A share with this name already exists.",
+      "invalid": "The share could not be created. It needs a name and an existing folder outside the system directories.",
+      "not_found": "The share was not found, or you have no access to it.",
+      "read_only": "You can only read in this share."
+    },
+    "trash": {
+      "retention_invalid": "The recycle bin keeps items between 0 and {max} days (0 keeps them until it is emptied)."
+    },
+    "upload": {
+      "incomplete": "The upload was interrupted. Nothing was saved."
+    },
+    "volume": {
+      "full": "There is not enough free space.",
+      "read_only": "The storage is read-only."
+    }
+  },
+  "jobs": {
+    "job": {
+      "not_found": "This job does not exist or has already been removed."
+    }
+  },
   "realtime": {
     "message": {
       "invalid": "The live connection received a message it does not understand."
