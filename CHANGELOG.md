@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Git worktrees for parallel work live under `.worktrees/` (gitignored, skipped by ESLint) and are removed once their PR is merged.
+
 - `pnpm check:bundle` holds two bundle budgets (gzip) against `tools/checks/bundle-budget.json`: the sign-in bundle (everything `index.html` loads before the first render, at most 200 KB) and the desktop bundle that signing in adds. Each fails the build when it grows more than 5 percent over its baseline. It runs in CI after the build.
 - E2E tests run with reduced motion and cover the window manager at phone, tablet, laptop and ultrawide sizes, with mouse, touch and keyboard. They check WCAG 2.2 AA with axe and fail on uncaught page errors.
 - Performance budgets as an E2E test against the production build on Chrome's "Fast 4G" with a four times slower CPU (median of five fresh sign-ins; a median of fewer than three valid runs fails the budget): sign-in screen usable within 1.5 s from a cold cache, visible feedback within 100 ms of clicking "Sign in", desktop usable within 1 s of the click without the Argon2 time, and within 500 ms of a reload. `node tools/perf/measure.ts --url <address>` prints the same measurements, unthrottled and throttled, for any running daemon, as medians of `--runs` runs (default 5, at least 3).

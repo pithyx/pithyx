@@ -32,7 +32,14 @@ const typescriptConfigs = fast
     ];
 
 export default defineConfig(
-  globalIgnores(['**/dist/', '**/generated/', '**/.css-types/', 'daemon/', '**/node_modules/']),
+  globalIgnores([
+    '**/dist/',
+    '**/generated/',
+    '**/.css-types/',
+    'daemon/',
+    '**/node_modules/',
+    '.worktrees/',
+  ]),
   js.configs.recommended,
   ...typescriptConfigs,
   {
