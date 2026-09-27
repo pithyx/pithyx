@@ -1,9 +1,10 @@
-import { IconArrowLeft, IconCopy, IconKey, IconPrinter } from '@tabler/icons-react';
+import { IconArrowLeft, IconCopy, IconKey, IconPrinter } from '../ui/icons';
 import { useEffect, useState, type ReactNode, type SyntheticEvent } from 'react';
 import { Form } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
 import styles from '../auth/Auth.module.css';
-import { LanguageMenu, RecoveryKeyValue, WelcomeCard } from '../auth/parts';
+import { LanguageSelect } from '../auth/controls';
+import { RecoveryKeyValue, WelcomeCard } from '../auth/parts';
 import { AuthHeader, AuthLayout } from '../shell/AuthLayout';
 import { Button } from '../ui/Button';
 import { Checkbox } from '../ui/Controls';
@@ -24,7 +25,7 @@ export function SetupAccount() {
   const { t } = useTranslation('auth');
   const { t: tDesktop } = useTranslation();
   return (
-    <AuthLayout wide footer={<LanguageMenu />}>
+    <AuthLayout wide footer={<LanguageSelect />}>
       <AuthHeader host={hostname} product={tDesktop('brand')} />
       <Form
         className={styles.form}
@@ -79,7 +80,7 @@ export function SetupRecovery() {
   const { t: tDesktop } = useTranslation();
   const [stored, setStored] = useState(false);
   return (
-    <AuthLayout wide footer={<LanguageMenu />}>
+    <AuthLayout wide footer={<LanguageSelect />}>
       <AuthHeader host={hostname} product={tDesktop('brand')} />
       <section className={styles.form} aria-labelledby="recovery-title">
         <div className={styles.heading}>
@@ -153,7 +154,7 @@ export function LoginFlow({
       {showDesktop && desktop(true)}
       {step !== 'desktop' && (
         <AuthLayout
-          footer={step === 'welcome' || step === 'leaving' ? undefined : <LanguageMenu />}
+          footer={step === 'welcome' || step === 'leaving' ? undefined : <LanguageSelect />}
           leaving={step === 'leaving'}
           onLeft={() => {
             setStep('desktop');

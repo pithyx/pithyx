@@ -1,5 +1,5 @@
-import { IconBell, IconLayoutGrid, IconLoader2 } from '@tabler/icons-react';
-import type { ReactNode } from 'react';
+import { IconBell, IconLayoutGrid, IconLoader2 } from '../ui/icons';
+import type { ReactNode, Ref } from 'react';
 import { Button as AriaButton } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
 import { Badge } from '../ui/Controls';
@@ -25,7 +25,30 @@ export interface TaskbarProps {
   onSwitcher?: () => void;
   onApp?: (id: string) => void;
   userMenu?: (trigger: ReactNode) => ReactNode;
+  startRef?: Ref<HTMLButtonElement>;
+  switcherRef?: Ref<HTMLButtonElement>;
+  /** A horizontal swipe along the bar: 1 for the next app, -1 for the previous one. */
+  onSwipe?: (direction: 1 | -1) => void;
 }
+
+// Creating Intl formatters is slow; the clock needs the same three for every render.
+const clockFormatCache = new Map<string, Record<'time' | 'date' | 'long', Intl.DateTimeFormat>>();
+
+function clockFormats(locale: string) {
+  let formats = clockFormatCache.get(locale);
+  if (formats === undefined) {
+    formats = {
+      time: new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }),
+      date: new Intl.DateTimeFormat(locale, { day: '2-digit', month: '2-digit', year: 'numeric' }),
+      long: new Intl.DateTimeFormat(locale, { dateStyle: 'full', timeStyle: 'short' }),
+    };
+    clockFormatCache.set(locale, formats);
+  }
+  return formats;
+}
+
+/** A swipe must cover this distance and stay mostly horizontal. */
+const SWIPE_DISTANCE = 60;
 
 /** Start button, running apps and the status area (jobs, notifications, clock, user). There is no tray. */
 export function Taskbar({
@@ -44,18 +67,15 @@ export function Taskbar({
   onSwitcher,
   onApp,
   userMenu,
+  startRef,
+  switcherRef,
+  onSwipe,
 }: TaskbarProps) {
   const { t } = useTranslation();
-  const time = new Intl.DateTimeFormat(locale, { hour: '2-digit', minute: '2-digit' }).format(now);
-  const date = new Intl.DateTimeFormat(locale, {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  }).format(now);
-  const longDate = new Intl.DateTimeFormat(locale, {
-    dateStyle: 'full',
-    timeStyle: 'short',
-  }).format(now);
+  const formats = clockFormats(locale);
+  const time = formats.time.format(now);
+  const date = formats.date.format(now);
+  const longDate = formats.long.format(now);
   const userButton = (
     <AriaButton
       className={cx(styles.button, styles.user)}
@@ -68,8 +88,49 @@ export function Taskbar({
   );
 
   return (
-    <nav className={styles.taskbar} data-position={position} aria-label={t('taskbar.label')}>
+    <nav
+      className={styles.taskbar}
+      data-position={position}
+      aria-label={t('taskbar.label')}
+      // Capture phase: React Aria buttons stop the propagation of their pointer events.
+      onPointerDownCapture={(event) => {
+        if (onSwipe === undefined || !event.isPrimary) {
+          return;
+        }
+        const start = { x: event.clientX, y: event.clientY };
+        const pointerId = event.pointerId;
+        // Listening on the document instead of capturing keeps the buttons in the bar pressable.
+        const listeners = new AbortController();
+        document.addEventListener(
+          'pointerup',
+          (up) => {
+            if (up.pointerId !== pointerId) {
+              return;
+            }
+            listeners.abort();
+            const dx = up.clientX - start.x;
+            if (
+              Math.abs(dx) >= SWIPE_DISTANCE &&
+              Math.abs(up.clientY - start.y) < Math.abs(dx) / 2
+            ) {
+              onSwipe(dx < 0 ? 1 : -1);
+            }
+          },
+          { capture: true, signal: listeners.signal },
+        );
+        document.addEventListener(
+          'pointercancel',
+          (cancel) => {
+            if (cancel.pointerId === pointerId) {
+              listeners.abort();
+            }
+          },
+          { capture: true, signal: listeners.signal },
+        );
+      }}
+    >
       <AriaButton
+        ref={startRef}
         className={cx(styles.button, styles.start)}
         aria-label={t('taskbar.start')}
         aria-expanded={startOpen}
@@ -97,10 +158,12 @@ export function Taskbar({
       </ul>
 
       <AriaButton
+        ref={switcherRef}
         className={cx(styles.button, styles.switcher)}
         aria-label={t('taskbar.switcher', { count: apps.length })}
         aria-expanded={switcherOpen}
         onPress={() => onSwitcher?.()}
+        data-active={switcherOpen || undefined}
       >
         <IconLayoutGrid size={22} stroke={1.75} />
         {apps.length > 0 && (

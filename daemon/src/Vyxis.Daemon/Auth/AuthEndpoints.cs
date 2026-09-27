@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http.HttpResults;
 using Vyxis.Daemon.Errors;
+using Vyxis.Daemon.Layouts;
 using Vyxis.Daemon.Realtime;
 
 namespace Vyxis.Daemon.Auth;
@@ -124,6 +125,8 @@ public static class AuthEndpoints
     {
         var session = await sessions.CreateAsync(userId, context.Request.Headers.UserAgent.ToString(), cancellationToken);
         context.Response.Cookies.Append(SessionService.CookieName, session.Token, SessionService.CookieOptions(Secure(environment), session.AbsoluteExpiresAt));
+        // The desktop saves this browser's layout under its device id.
+        DeviceCookie.Ensure(context);
     }
 
     // Development runs over plain HTTP, where browsers drop Secure cookies. HTTPS for every other environment is M5.

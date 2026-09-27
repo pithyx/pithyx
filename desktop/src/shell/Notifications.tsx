@@ -1,4 +1,4 @@
-import { IconX } from '@tabler/icons-react';
+import { IconX } from '../ui/icons';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, IconButton } from '../ui/Button';
@@ -39,10 +39,12 @@ function NotificationCard({
   item,
   locale,
   toast = false,
+  onDismiss,
 }: {
   item: NotificationItem;
   locale: string;
   toast?: boolean;
+  onDismiss?: (id: string) => void;
 }) {
   const { t } = useTranslation();
   const relative = useRelativeTime(locale);
@@ -69,7 +71,12 @@ function NotificationCard({
           </div>
         )}
       </div>
-      <IconButton label={t('notifications.dismiss')} size="sm" className={styles.dismiss}>
+      <IconButton
+        label={t('notifications.dismiss')}
+        size="sm"
+        className={styles.dismiss}
+        onPress={() => onDismiss?.(item.id)}
+      >
         <IconX size={15} stroke={2} />
       </IconButton>
     </article>
@@ -81,10 +88,12 @@ export function ToastStack({
   items,
   locale,
   position,
+  onDismiss,
 }: {
   items: NotificationItem[];
   locale: string;
   position: TaskbarPosition;
+  onDismiss?: (id: string) => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -95,7 +104,13 @@ export function ToastStack({
       aria-live="polite"
     >
       {items.map((item) => (
-        <NotificationCard key={item.id} item={item} locale={locale} toast />
+        <NotificationCard
+          key={item.id}
+          item={item}
+          locale={locale}
+          toast
+          {...(onDismiss === undefined ? {} : { onDismiss })}
+        />
       ))}
     </section>
   );

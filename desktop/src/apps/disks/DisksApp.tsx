@@ -1,11 +1,11 @@
 import { useTranslation } from 'react-i18next';
-import { useTopic } from '../realtime/useTopic';
-import { cx } from '../ui/cx';
-import styles from './DisksContent.module.css';
-import { formatBytes } from './format';
+import { formatBytes } from '../../desktop/format';
+import { useTopic } from '../../realtime/useTopic';
+import { cx } from '../../ui/cx';
+import styles from './DisksApp.module.css';
 
 /** The live disk list from the topic storage/disks. */
-export function DisksContent() {
+export function DisksApp() {
   const { t, i18n } = useTranslation('disks');
   const snapshot = useTopic('storage/disks');
 

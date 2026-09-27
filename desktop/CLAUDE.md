@@ -34,5 +34,5 @@ Rules for `desktop/`. The root `CLAUDE.md` applies as well.
 - The taskbar defaults to the bottom and can be moved.
 - Layouts live in SQLite with `expires_at`. No Redis.
 - Layouts never contain permissions. Every access is checked live. On restore, skip windows whose app, path or permission no longer exists.
-- Layouts carry a schema version. Saves are debounced over the WebSocket.
+- Layouts carry a schema version. Saves are debounced and go over REST (`PUT /api/desktop/layout`) with the layout's version as `If-Match`; only the visible, focused tab saves.
 - App data in a layout is capped at 16 KB.

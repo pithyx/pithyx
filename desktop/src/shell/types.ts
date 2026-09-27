@@ -1,4 +1,4 @@
-import type { TablerIcon } from '@tabler/icons-react';
+import type { TablerIcon } from '../ui/icons';
 
 export type AppTone =
   'petrol' | 'ocean' | 'indigo' | 'plum' | 'rose' | 'moss' | 'amber' | 'graphite';
@@ -16,4 +16,4 @@ export interface RunningApp extends AppInfo {
   state: RunningState;
 }
 
-export type TaskbarPosition = 'bottom' | 'top';
+export type TaskbarPosition = 'bottom' | 'top' | 'left' | 'right';

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.Net.Http.Headers;
 
@@ -11,6 +12,10 @@ public static partial class DesktopHosting
 {
     // Vite puts content-hashed files under /assets/; they never change and may be cached forever.
     private const string ImmutableCache = "public, max-age=31536000, immutable";
+
+    // The build writes Brotli and gzip copies next to every text asset; the best one the browser accepts is served.
+    private static readonly (string Token, string Extension)[] _encodings = [("br", ".br"), ("gzip", ".gz")];
+    private const string EncodingItem = "vyxis.content-encoding";
 
     // CreateSlimBuilder has no regex route constraint, so the exclusions are a small constraint of their own.
     public const string PathConstraint = "desktoppath";
@@ -28,14 +33,63 @@ public static partial class DesktopHosting
             return;
         }
 
+        var provider = new PhysicalFileProvider(desktopDirectory);
         var files = new StaticFileOptions
         {
-            FileProvider = new PhysicalFileProvider(desktopDirectory),
-            OnPrepareResponse = context => context.Context.Response.Headers[HeaderNames.CacheControl] =
-                context.Context.Request.Path.StartsWithSegments("/assets", StringComparison.Ordinal) ? ImmutableCache : "no-cache",
+            FileProvider = provider,
+            ContentTypeProvider = new PrecompressedContentTypes(),
+            OnPrepareResponse = context =>
+            {
+                var headers = context.Context.Response.Headers;
+                headers[HeaderNames.CacheControl] =
+                    context.Context.Request.Path.StartsWithSegments("/assets", StringComparison.Ordinal) ? ImmutableCache : "no-cache";
+                if (context.Context.Items[EncodingItem] is string encoding)
+                {
+                    headers[HeaderNames.ContentEncoding] = encoding;
+                    headers[HeaderNames.Vary] = HeaderNames.AcceptEncoding;
+                }
+            },
         };
+        app.Use((context, next) =>
+        {
+            ServePrecompressed(context, provider);
+            return next(context);
+        });
         app.UseStaticFiles(files);
         app.MapFallbackToFile($"{{*path:{PathConstraint}}}", "index.html", files).AllowAnonymous();
+    }
+
+    /// <summary>Points the request at the .br or .gz copy of a static file when one exists and the browser accepts it.</summary>
+    private static void ServePrecompressed(HttpContext context, PhysicalFileProvider provider)
+    {
+        var path = context.Request.Path;
+        if (!(HttpMethods.IsGet(context.Request.Method) || HttpMethods.IsHead(context.Request.Method)) || !path.HasValue)
+        {
+            return;
+        }
+        var accepted = context.Request.Headers.AcceptEncoding.ToString();
+        foreach (var (token, extension) in _encodings)
+        {
+            if (accepted.Contains(token, StringComparison.OrdinalIgnoreCase) && provider.GetFileInfo(path.Value + extension).Exists)
+            {
+                context.Request.Path = path.Value + extension;
+                context.Items[EncodingItem] = token;
+                return;
+            }
+        }
+    }
+
+    /// <summary>Content types by the original extension, so <c>index-abc.js.br</c> is still JavaScript.</summary>
+    private sealed class PrecompressedContentTypes : IContentTypeProvider
+    {
+        private readonly FileExtensionContentTypeProvider _types = new();
+
+        public bool TryGetContentType(string subpath, out string contentType)
+        {
+            ArgumentNullException.ThrowIfNull(subpath);
+            var original = subpath.EndsWith(".br", StringComparison.Ordinal) || subpath.EndsWith(".gz", StringComparison.Ordinal) ? subpath[..^3] : subpath;
+            return _types.TryGetContentType(original, out contentType!);
+        }
     }
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "No desktop build in {Directory}; only the API is served. Run pnpm build or use the Vite dev server.")]

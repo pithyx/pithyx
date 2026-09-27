@@ -1,4 +1,4 @@
-import { IconCheck } from '@tabler/icons-react';
+import { IconCheck } from './icons';
 import type { ReactNode } from 'react';
 import {
   CheckboxButton,

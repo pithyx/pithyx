@@ -18,9 +18,20 @@ export default defineConfig({
   use: {
     baseURL: 'http://localhost:8994',
     locale: 'en-US',
+    // Motion collapses to 1 ms, so geometry is final when a test measures it; this also covers the reduced-motion path.
+    reducedMotion: 'reduce',
     trace: 'retain-on-failure',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    // The first-run flow needs the fresh database; every other spec signs in as the administrator it created.
+    { name: 'first-run', testMatch: 'auth.spec.ts', use: { ...devices['Desktop Chrome'] } },
+    {
+      name: 'chromium',
+      testIgnore: 'auth.spec.ts',
+      dependencies: ['first-run'],
+      use: { ...devices['Desktop Chrome'] },
+    },
+  ],
   webServer: {
     command: 'dotnet run --project ../daemon/src/Vyxis.Daemon --no-launch-profile',
     url: 'http://localhost:8994/api/health',

@@ -260,31 +260,33 @@ Direction from the owner:
 
 ## Step 5: Window manager and SDK
 
+Status: 5.1, 5.2 and the window manager part of 5.4 in progress in the `feature/window-manager` draft PR (plan and decision log in its comments). 5.3 follows in its own PR after the SDK spec review.
+
 Effort: high for 5.3, medium for the rest.
 
 Goal: the desktop works like a desktop, and apps can be built against the SDK.
 
 ### 5.1 Window manager
 
-- [ ] Zustand store: windows by id, open, close, focus, z-order, minimize, maximize, restore.
-- [ ] Drag via pointer events: write position to the DOM during the drag, commit to the store on `pointerup`.
-- [ ] While dragging or resizing, `pointer-events: none` on all window contents (iframes would swallow events).
-- [ ] Resize from all edges and corners, minimum sizes from the manifest.
-- [ ] Snap to left or right half and maximize by dragging to the top edge.
-- [ ] Keyboard: focus cycling, close, maximize. Visible focus states.
-- [ ] Every window belongs to a `screen` (always 1 for now).
-- [ ] Size classes from `CLAUDE.md` (compact, medium, expanded): full-screen apps with app switcher on compact, maximized windows and split view on medium, free windows and snap zones (thirds on ultrawide) on expanded.
-- [ ] SDK reports the window size class; sample apps use container queries.
-- [ ] Touch: 44 px targets on coarse pointers, swipe to switch apps on compact, no hover-only actions.
-- [ ] Taskbar with running apps, start menu with search, notification toasts.
-- [ ] Taskbar positions left and right (step 4 designed bottom and top only).
+- [x] Zustand store: windows by id, open, close, focus, z-order, minimize, maximize, restore. The rules are a pure reducer in `desktop/src/wm/state.ts`; the store only wraps it.
+- [x] Drag via pointer events: write position to the DOM during the drag, commit to the store on `pointerup`. A transform once per animation frame, committed in `flushSync`.
+- [x] While dragging or resizing, `pointer-events: none` on all window contents (iframes would swallow events).
+- [x] Resize from all edges and corners, minimum sizes from the manifest. Minimum sizes come from the internal app registry until the manifest exists (5.3).
+- [x] Snap to left or right half and maximize by dragging to the top edge.
+- [x] Keyboard: focus cycling, close, maximize. Visible focus states. Alt+Shift shortcuts and a window menu with keyboard move and size modes.
+- [x] Every window belongs to a `screen` (always 1 for now).
+- [x] Size classes from `CLAUDE.md` (compact, medium, expanded): full-screen apps with app switcher on compact, maximized windows and split view on medium, free windows and snap zones (thirds on ultrawide) on expanded.
+- [ ] SDK reports the window size class; sample apps use container queries. Waits for the SDK (5.3); the core apps already use container queries.
+- [x] Touch: 44 px targets on coarse pointers, swipe to switch apps on compact, no hover-only actions. Plus the back gesture on compact.
+- [x] Taskbar with running apps, start menu with search, notification toasts. Toasts are client-side until the daemon sends notifications.
+- [x] Taskbar positions left and right (step 4 designed bottom and top only).
 
 ### 5.2 Layout memory
 
-- [ ] Migration: `desktop_layouts` per user and device with `expires_at`, persistent `window_preferences` per user and app, and `desktop_items` per user (shared across devices).
-- [ ] Device id stored in a long-lived cookie. "Get desktop from ..." lists the user's other devices and copies that layout.
-- [ ] Debounced save over the WebSocket, restore on login with validation (skip windows whose app, path or permission is gone).
-- [ ] Hourly cleanup job for expired layouts.
+- [x] Migration: `desktop_layouts` per user and device with `expires_at`, persistent `window_preferences` per user and app, and `desktop_items` per user (shared across devices). The desktop items UI (files, notes, arranging shortcuts) is still open.
+- [x] Device id stored in a long-lived cookie. "Get desktop from ..." lists the user's other devices and copies that layout.
+- [x] Debounced save over the WebSocket, restore on login with validation (skip windows whose app, path or permission is gone). App ids are checked now; paths and permissions join the same check once apps have them.
+- [x] Hourly cleanup job for expired layouts.
 
 ### 5.3 App runtime and SDK
 
@@ -306,10 +308,10 @@ Spec first, then implementation together with the sample apps. Freeze SDK 1.0 on
 
 ### 5.4 Tests and budgets
 
-- [ ] Unit tests for the window store and the SDK RPC layer.
-- [ ] Playwright: open, drag, resize, maximize, restore, close; layout survives a reload. Run at phone, tablet, laptop and ultrawide sizes with touch and mouse.
-- [ ] Accessibility checks (axe) in CI; keyboard-only walkthrough of login and desktop.
-- [ ] Performance budgets as CI tests: initial desktop bundle under 200 KB gzip, desktop usable after login under 1 s on repeat visit.
+- [ ] Unit tests for the window store and the SDK RPC layer. Window store done (`desktop/src/wm/*.test.ts`); the SDK RPC layer comes with 5.3.
+- [x] Playwright: open, drag, resize, maximize, restore, close; layout survives a reload. Run at phone, tablet, laptop and ultrawide sizes with touch and mouse.
+- [x] Accessibility checks (axe) in CI; keyboard-only walkthrough of login and desktop. axe (WCAG 2.2 AA) runs in E2E for sign-in, reset, desktop, start menu, window and account menus and the phone switcher; `e2e/tests/keyboard.spec.ts` signs in, opens an app, closes it and signs out with the keyboard only.
+- [x] Performance budgets as CI tests: initial desktop bundle under 200 KB gzip, desktop usable after login under 1 s on repeat visit. The bundle budget runs in CI (`pnpm check:bundle`, 5 percent tolerance against `tools/checks/bundle-budget.json`); the bundle budget is split into sign-in and desktop since the #13 review. `e2e/tests/budgets.spec.ts` holds the timing budgets against the production build on Fast 4G with 4x CPU slowdown: sign-in usable under 1.5 s cold, click feedback under 100 ms, desktop under 1 s after the click without Argon2, reload under 500 ms.
 
 **Done when:** the plain TypeScript sample app opens in a window, sets its title, sends a notification and restores its state after a reload, and the owner confirms the desktop feels right. `[REVIEW]`
 
@@ -334,6 +336,7 @@ M3 to M6 get their own detailed steps once step 6 is done. Write them into this 
 Known requirements for later milestones:
 
 - Website, first task once `website/` exists: an error code reference generated from `i18n/en/errors.json` (and the translated files), plus a CI check that every code in `ErrorCodes` has a doc entry. Until then error codes are documented only through their i18n texts.
+- Website user docs for the desktop from step 5: window menu and the Alt+Shift shortcuts (and that they do not apply in text fields), snapping and thirds on ultrawide screens, taskbar position, layout memory per device with its 90-day expiry and "Get desktop from ..." (which shows each device's browser, system, screen size and last use), that only the tab in use saves the layout, the phone app switcher, swipe and back gesture, and the `vyxis_device` cookie (what it is, that it holds no personal data, and that it is `Secure` on HTTPS).
 
 - M3: energy settings: spindown per pool (via hd-idle, off by default), power profiles, and a diagnostic that shows what keeps disks awake (process, file) and CPU package C-state residency.
 - M3: permission model from `CLAUDE.md` (groups, users, shares, protocols, apps, special rights), pool encryption with key vault, SFTP instead of plain FTP.
@@ -342,4 +345,6 @@ Known requirements for later milestones:
 - M3: `[DECISION]` Server-side rendered texts (email, SSH MOTD, push) in the recipient's language need culture data. Decide between keeping `InvariantGlobalization` (small, no libicu, but only invariant formatting and a hand-written plural rule for English and German in `IcuMessageFormatter`) and enabling ICU culture data (libicu in the image, about 30 MB, correct number, date and plural rules for every language). Today the daemon only renders the English `detail` fallback of problem details.
 - M5: web-based installer instead of a TUI. Boot from USB, open the setup page in a browser, choose the system disk, the system installs itself and continues setup in the same page. The console only shows the address.
 - M5: TLS as decided in `CLAUDE.md`: self-signed by default, trust wizard (local CA download with per-OS instructions), optional own domain with Let's Encrypt DNS-01. Passkeys and the service worker switch on once trusted.
+  - Chromium does not use its HTTP cache for responses with a certificate error (measured in the #13 review): on the untrusted default every reload downloads the whole desktop again (about 1.1 s instead of 0.4 s on Fast 4G with 4x CPU). After sign-in on an untrusted certificate the desktop shows a dismissible hint that leads to the trust wizard and names faster reloads next to passkeys; the reload budget holds only once trusted. Add an E2E check that a trusted certificate serves `/assets/*` from the disk cache.
+  - Kestrel negotiates HTTP/2 over TLS by default (ALPN); plain HTTP in development is HTTP/1.1 only, so the build keeps the sign-in path to few requests. Verify h2 on 443 and 8994 once TLS lands, and send `vyxis_device` with `Secure` there (it already does on HTTPS requests).
 - M5: SSH toggle in settings with the logo MOTD.

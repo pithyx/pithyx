@@ -202,9 +202,9 @@ public static partial class WebSocketEndpoint
             ActivityKind.Server,
             parentContext: default,
             links: connectionActivity is null ? null : [new ActivityLink(connectionActivity.Context)]);
+        ClientMessage? message = null;
         try
         {
-            ClientMessage? message;
             try
             {
                 message = JsonSerializer.Deserialize<ClientMessage>(payload, options);
@@ -213,7 +213,7 @@ public static partial class WebSocketEndpoint
             {
                 message = null;
             }
-            if (message is null || message.Type is not ("sub" or "unsub"))
+            if (message is not { Type: "sub" or "unsub", Topic: not null })
             {
                 Fail(hub, connection, message?.Id ?? "", ErrorCodes.RealtimeMessageInvalid, null);
                 return;
@@ -247,6 +247,13 @@ public static partial class WebSocketEndpoint
             await hub.SubscribeAsync(connection, message.Id, message.Topic, cancellationToken);
             LogSubscribed(logger, connection.Id, message.Topic);
         }
+        catch (Exception exception) when (exception is not (OperationCanceledException or WebSocketException))
+        {
+            // A failing message (for example a busy database) must not end the connection:
+            // the client would see a normal close and stop receiving live data without knowing why.
+            LogMessageFailed(logger, exception, connection.Id);
+            Fail(hub, connection, message?.Id ?? "", ErrorCodes.SystemInternalUnexpected, null);
+        }
         finally
         {
             Activity.Current = connectionActivity;
@@ -261,6 +268,9 @@ public static partial class WebSocketEndpoint
 
     [LoggerMessage(Level = LogLevel.Information, Message = "WebSocket connection {ConnectionId} closed with {CloseCode}")]
     private static partial void LogDisconnected(ILogger logger, Guid connectionId, WebSocketCloseCode closeCode);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "WebSocket connection {ConnectionId} failed to handle a message")]
+    private static partial void LogMessageFailed(ILogger logger, Exception exception, Guid connectionId);
 
     [LoggerMessage(Level = LogLevel.Debug, Message = "WebSocket connection {ConnectionId} subscribed to {Topic}")]
     private static partial void LogSubscribed(ILogger logger, Guid connectionId, string topic);

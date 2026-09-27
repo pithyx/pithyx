@@ -1,7 +1,9 @@
+using System.Diagnostics;
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using NSec.Cryptography;
+using Vyxis.Daemon.Hosting;
 
 namespace Vyxis.Daemon.Auth;
 
@@ -58,6 +60,7 @@ public sealed class PasswordHasher : IDisposable
     private async Task<byte[]> DeriveAsync(string password, byte[] salt, long memoryKib, long passes, CancellationToken cancellationToken)
     {
         await _slots.WaitAsync(cancellationToken);
+        var started = Stopwatch.GetTimestamp();
         try
         {
             return await Task.Run(
@@ -76,6 +79,7 @@ public sealed class PasswordHasher : IDisposable
         finally
         {
             _slots.Release();
+            ServerTiming.AddArgon2(Stopwatch.GetElapsedTime(started));
         }
     }
 

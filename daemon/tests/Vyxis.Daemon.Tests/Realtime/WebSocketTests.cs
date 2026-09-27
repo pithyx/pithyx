@@ -193,6 +193,8 @@ public sealed class WebSocketTests : IDisposable
     [InlineData("{\"type\":\"sub\",\"id\":\"c1\",\"topic\":\"storage/#/x\"}", "c1", "realtime.topic.invalid")]
     [InlineData("{\"type\":\"sub\",\"id\":\"c1\",\"topic\":\"nothing/here\"}", "c1", "realtime.topic.unknown")]
     [InlineData("{\"type\":\"publish\",\"id\":\"c1\",\"topic\":\"system/info\"}", "c1", "realtime.message.invalid")]
+    [InlineData("{\"type\":\"sub\",\"id\":\"c1\"}", "c1", "realtime.message.invalid")]
+    [InlineData("{\"type\":\"unsub\",\"id\":\"c1\",\"topic\":null}", "c1", "realtime.message.invalid")]
     [InlineData("not json", "", "realtime.message.invalid")]
     public async Task InvalidMessagesAreAnsweredWithAnError(string raw, string expectedId, string expectedCode)
     {
@@ -205,6 +207,27 @@ public sealed class WebSocketTests : IDisposable
         Assert.Equal(expectedId, error.GetProperty("id").GetString());
         Assert.Equal(expectedCode, error.GetProperty("code").GetString());
         Assert.Equal(WebSocketState.Open, socket.State);
+    }
+
+    [Fact]
+    public async Task MessagesAboveTheLimitCloseTheConnection()
+    {
+        using var socket = await ConnectAsync(await SessionCookieAsync());
+
+        await SendRawAsync(socket, new string(' ', WebSocketEndpoint.MaxMessageBytes + 1));
+
+        Assert.Equal(Status(WebSocketCloseCode.MessageTooBig), await ReceiveCloseAsync(socket));
+    }
+
+    [Fact]
+    public async Task MessagesJustBelowTheLimitAreHandled()
+    {
+        using var socket = await ConnectAsync(await SessionCookieAsync());
+        var padding = new string(' ', WebSocketEndpoint.MaxMessageBytes - 1024);
+
+        await SendRawAsync(socket, "{\"type\":\"unsub\",\"id\":\"c1\",\"topic\":\"system/info\"}" + padding);
+
+        Assert.Equal("ack", (await ReceiveAsync(socket)).GetProperty("type").GetString());
     }
 
     [Fact]

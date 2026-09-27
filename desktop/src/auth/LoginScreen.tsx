@@ -1,19 +1,19 @@
-import { IconArrowLeft } from '@tabler/icons-react';
 import { useMutation } from '@tanstack/react-query';
 import { unwrap, type components } from '@vyxis/api-client';
 import { useState, type SyntheticEvent } from 'react';
-import { Form } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { describeError } from '../errors/describe';
 import { ErrorNotice } from '../errors/ErrorNotice';
 import { field } from '../forms';
 import { AuthHeader, AuthLayout } from '../shell/AuthLayout';
-import { Button } from '../ui/Button';
 import { cx } from '../ui/cx';
-import { OtpField, PasswordField, TextField } from '../ui/TextField';
+import { IconArrowLeft } from '../ui/icons';
+import fieldStyles from '../ui/TextField.module.css';
 import styles from './Auth.module.css';
-import { initialsOf, LanguageMenu } from './parts';
+import { Button, Field, LanguageSelect, PasswordField } from './controls';
+import { useFormErrors } from './formErrors';
+import { initialsOf } from './parts';
 import { RecoveryKeyCard } from './RecoveryKeyCard';
 import { MIN_PASSWORD_LENGTH } from './SetupScreen';
 
@@ -89,7 +89,7 @@ export function LoginScreen({
   }
 
   return (
-    <AuthLayout wide={step.kind !== 'password' && step.kind !== 'totp'} footer={<LanguageMenu />}>
+    <AuthLayout wide={step.kind !== 'password' && step.kind !== 'totp'} footer={<LanguageSelect />}>
       {(step.kind === 'password' || step.kind === 'recovered') && (
         <AuthHeader host={hostname} product={t('brand')} />
       )}
@@ -97,6 +97,8 @@ export function LoginScreen({
     </AuthLayout>
   );
 }
+
+type PasswordFieldName = 'username' | 'password';
 
 function PasswordStep({
   username,
@@ -112,6 +114,7 @@ function PasswordStep({
   onForgot: () => void;
 }) {
   const { t } = useTranslation('auth');
+  const form = useFormErrors<PasswordFieldName>(['username', 'password']);
   const login = useMutation({
     mutationFn: async (body: { username: string; password: string }) =>
       unwrap(await api.POST('/api/auth/login', { body })),
@@ -122,51 +125,70 @@ function PasswordStep({
         onSignedIn(response.user);
       }
     },
+    // Wrong credentials: the notice explains, the password is selected for retyping.
+    onError: () => {
+      form.fail({}, 'password');
+    },
   });
 
   function submit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
-    login.mutate({ username, password: field(new FormData(event.currentTarget), 'password') });
+    if (login.isPending) {
+      return;
+    }
+    const password = field(new FormData(event.currentTarget), 'password');
+    const errors: Partial<Record<PasswordFieldName, string>> = {};
+    if (username.trim() === '') {
+      errors.username = t('validation.usernameRequired');
+    }
+    if (password === '') {
+      errors.password = t('validation.passwordRequired');
+    }
+    if (form.check(errors)) {
+      login.mutate({ username: username.trim(), password });
+    }
   }
 
+  const usernameField = form.register('username');
   return (
-    <Form
-      className={styles.form}
-      onSubmit={submit}
-      validationBehavior="aria"
-      aria-labelledby="login-title"
-    >
+    <form className={styles.form} onSubmit={submit} noValidate aria-labelledby="login-title">
       <h1 id="login-title" className={styles.title}>
         {t('login.heading')}
       </h1>
-      <TextField
+      <Field
+        {...usernameField}
         label={t('login.username')}
         name="username"
         autoComplete="username"
         autoCapitalize="none"
-        spellCheck="false"
+        spellCheck={false}
         value={username}
-        onChange={onUsername}
+        onChange={(event) => {
+          usernameField.onChange();
+          onUsername(event.target.value);
+        }}
         autoFocus={username === ''}
-        isRequired
+        required
       />
       <PasswordField
+        {...form.register('password')}
         label={t('login.password')}
         name="password"
         autoComplete="current-password"
         autoFocus={username !== ''}
-        isRequired
+        required
       />
       {login.isError && <ErrorNotice error={describeError(login.error)} />}
-      <Button type="submit" variant="primary" className={styles.submit} isPending={login.isPending}>
-        {t('login.submit')}
+      {form.announcement}
+      <Button type="submit" variant="primary" className={styles.submit} pending={login.isPending}>
+        {login.isPending ? t('login.submitting') : t('login.submit')}
       </Button>
       <div className={styles.links}>
-        <Button variant="quiet" size="sm" onPress={onForgot}>
+        <Button variant="quiet" size="sm" onClick={onForgot}>
           {t('login.forgot')}
         </Button>
       </div>
-    </Form>
+    </form>
   );
 }
 
@@ -183,6 +205,7 @@ function TotpStep({
 }) {
   const { t } = useTranslation('auth');
   const [useRecoveryCode, setUseRecoveryCode] = useState(false);
+  const form = useFormErrors<'code'>(['code']);
   const verify = useMutation({
     mutationFn: async (body: {
       challenge: string;
@@ -190,27 +213,30 @@ function TotpStep({
       recoveryCode: string | null;
     }) => unwrap(await api.POST('/api/auth/login/totp', { body })),
     onSuccess: onSignedIn,
+    onError: () => {
+      form.fail({}, 'code');
+    },
   });
 
   function submit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (verify.isPending) {
+      return;
+    }
     const value = field(new FormData(event.currentTarget), 'code').trim();
-    verify.mutate({
-      challenge,
-      code: useRecoveryCode ? null : value,
-      recoveryCode: useRecoveryCode ? value : null,
-    });
+    if (form.check(value === '' ? { code: t('validation.codeRequired') } : {})) {
+      verify.mutate({
+        challenge,
+        code: useRecoveryCode ? null : value,
+        recoveryCode: useRecoveryCode ? value : null,
+      });
+    }
   }
 
   return (
-    <Form
-      className={styles.form}
-      onSubmit={submit}
-      validationBehavior="aria"
-      aria-labelledby="totp-title"
-    >
+    <form className={styles.form} onSubmit={submit} noValidate aria-labelledby="totp-title">
       <div className={styles.userRow}>
-        <Button variant="quiet" size="sm" onPress={onBack} aria-label={t('totp.back')}>
+        <Button variant="quiet" size="sm" onClick={onBack} aria-label={t('totp.back')}>
           <IconArrowLeft size={18} stroke={1.75} aria-hidden />
         </Button>
         <span className={styles.avatar} aria-hidden>
@@ -222,34 +248,42 @@ function TotpStep({
         {t('totp.title')}
       </h1>
       {useRecoveryCode ? (
-        <TextField
+        <Field
+          {...form.register('code')}
           key="recovery"
           label={t('totp.recoveryCode')}
           name="code"
           autoComplete="off"
           autoCapitalize="characters"
-          spellCheck="false"
+          spellCheck={false}
           inputClassName={styles.mono}
           autoFocus
-          isRequired
+          required
         />
       ) : (
-        <OtpField key="code" label={t('totp.code')} name="code" autoFocus isRequired />
+        <Field
+          {...form.register('code')}
+          key="code"
+          label={t('totp.code')}
+          name="code"
+          inputMode="numeric"
+          autoComplete="one-time-code"
+          maxLength={7}
+          inputClassName={fieldStyles.otp}
+          autoFocus
+          required
+        />
       )}
       {verify.isError && <ErrorNotice error={describeError(verify.error)} />}
-      <Button
-        type="submit"
-        variant="primary"
-        className={styles.submit}
-        isPending={verify.isPending}
-      >
-        {t('totp.submit')}
+      {form.announcement}
+      <Button type="submit" variant="primary" className={styles.submit} pending={verify.isPending}>
+        {verify.isPending ? t('totp.submitting') : t('totp.submit')}
       </Button>
       <div className={styles.links}>
         <Button
           variant="quiet"
           size="sm"
-          onPress={() => {
+          onClick={() => {
             setUseRecoveryCode(!useRecoveryCode);
             verify.reset();
           }}
@@ -257,9 +291,11 @@ function TotpStep({
           {useRecoveryCode ? t('totp.useCode') : t('totp.useRecoveryCode')}
         </Button>
       </div>
-    </Form>
+    </form>
   );
 }
+
+type ForgotFieldName = 'username' | 'recoveryKey' | 'newPassword';
 
 /** No reset by email: users ask an administrator, administrators use the recovery key. */
 function ForgotStep({
@@ -274,24 +310,51 @@ function ForgotStep({
   onRecovered: (recoveryKey: string) => void;
 }) {
   const { t } = useTranslation('auth');
+  const form = useFormErrors<ForgotFieldName>(['username', 'recoveryKey', 'newPassword']);
   const recover = useMutation({
     mutationFn: async (body: { username: string; recoveryKey: string; newPassword: string }) =>
       unwrap(await api.POST('/api/auth/recover', { body })),
     onSuccess: (response) => {
       onRecovered(response.recoveryKey);
     },
+    onError: (error) => {
+      const described = describeError(error);
+      if (described.code.startsWith('auth.password.')) {
+        form.fail({ newPassword: described }, 'newPassword');
+      } else {
+        form.fail({}, 'recoveryKey');
+      }
+    },
   });
+  const noticeError =
+    recover.isError && !describeError(recover.error).code.startsWith('auth.password.')
+      ? describeError(recover.error)
+      : undefined;
 
   function submit(event: SyntheticEvent<HTMLFormElement>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
-    recover.mutate({
-      username,
-      recoveryKey: field(form, 'recoveryKey'),
-      newPassword: field(form, 'newPassword'),
-    });
+    if (recover.isPending) {
+      return;
+    }
+    const data = new FormData(event.currentTarget);
+    const recoveryKey = field(data, 'recoveryKey').trim();
+    const newPassword = field(data, 'newPassword');
+    const errors: Partial<Record<ForgotFieldName, string>> = {};
+    if (username.trim() === '') {
+      errors.username = t('validation.usernameRequired');
+    }
+    if (recoveryKey === '') {
+      errors.recoveryKey = t('validation.recoveryKeyRequired');
+    }
+    if (newPassword === '') {
+      errors.newPassword = t('validation.passwordRequired');
+    }
+    if (form.check(errors)) {
+      recover.mutate({ username: username.trim(), recoveryKey, newPassword });
+    }
   }
 
+  const usernameField = form.register('username');
   return (
     <div className={styles.form}>
       <div className={styles.heading}>
@@ -300,10 +363,10 @@ function ForgotStep({
         </h1>
         <p className={styles.intro}>{t('forgot.intro')}</p>
       </div>
-      <Form
+      <form
         className={cx(styles.form, styles.adminBox)}
         onSubmit={submit}
-        validationBehavior="aria"
+        noValidate
         aria-labelledby="forgot-admin"
       >
         <div className={styles.heading}>
@@ -312,45 +375,52 @@ function ForgotStep({
           </h2>
           <p className={styles.intro}>{t('forgot.adminIntro')}</p>
         </div>
-        <TextField
+        <Field
+          {...usernameField}
           label={t('login.username')}
           name="username"
           autoComplete="username"
           autoCapitalize="none"
-          spellCheck="false"
+          spellCheck={false}
           value={username}
-          onChange={onUsername}
+          onChange={(event) => {
+            usernameField.onChange();
+            onUsername(event.target.value);
+          }}
           autoFocus
-          isRequired
+          required
         />
-        <TextField
+        <Field
+          {...form.register('recoveryKey')}
           label={t('forgot.recoveryKey')}
           name="recoveryKey"
           autoComplete="off"
           autoCapitalize="characters"
-          spellCheck="false"
+          spellCheck={false}
           inputClassName={styles.mono}
-          isRequired
+          required
         />
         <PasswordField
+          {...form.register('newPassword')}
           label={t('forgot.newPassword')}
           description={t('setup.passwordHint', { minLength: MIN_PASSWORD_LENGTH })}
           name="newPassword"
           autoComplete="new-password"
-          isRequired
+          required
         />
-        {recover.isError && <ErrorNotice error={describeError(recover.error)} />}
+        {noticeError !== undefined && <ErrorNotice error={noticeError} />}
+        {form.announcement}
         <Button
           type="submit"
           variant="primary"
           className={styles.submit}
-          isPending={recover.isPending}
+          pending={recover.isPending}
         >
-          {t('forgot.submit')}
+          {recover.isPending ? t('forgot.submitting') : t('forgot.submit')}
         </Button>
-      </Form>
+      </form>
       <div className={styles.links}>
-        <Button variant="quiet" size="sm" onPress={onBack}>
+        <Button variant="quiet" size="sm" onClick={onBack}>
           <IconArrowLeft size={16} stroke={1.75} aria-hidden />
           {t('forgot.back')}
         </Button>

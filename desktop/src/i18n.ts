@@ -62,6 +62,11 @@ declare module 'i18next' {
   }
 }
 
+/** A language's name in that language, so everyone finds theirs. */
+export function languageName(code: string): string {
+  return new Intl.DisplayNames([code], { type: 'language' }).of(code) ?? code;
+}
+
 export function detectLanguage(preferred: readonly string[]): Language {
   for (const tag of preferred) {
     const base = tag.toLowerCase().split('-')[0];

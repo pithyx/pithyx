@@ -1,4 +1,4 @@
-import { IconServer2 } from '@tabler/icons-react';
+import { IconServer2 } from '../ui/icons';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cx } from '../ui/cx';
@@ -11,18 +11,24 @@ export function AuthLayout({
   children,
   footer,
   wide = false,
+  entrance = true,
   leaving = false,
   onLeft,
 }: {
   children: ReactNode;
   footer?: ReactNode;
   wide?: boolean;
+  /** The card slides in; off for the welcome card, which takes the place of the sign-in card. */
+  entrance?: boolean;
+  /** Fades out; the desktop behind is usable at once, so the fade never adds waiting time. */
   leaving?: boolean;
   onLeft?: () => void;
 }) {
   return (
     <div
       className={cx(styles.auth, leaving && styles.leaving)}
+      data-leaving={leaving || undefined}
+      aria-hidden={leaving || undefined}
       onAnimationEnd={(event) => {
         if (leaving && event.target === event.currentTarget) {
           onLeft?.();
@@ -31,7 +37,9 @@ export function AuthLayout({
     >
       <Wallpaper />
       <div className={styles.center}>
-        <main className={cx(styles.card, wide && styles.wide)}>{children}</main>
+        <main className={cx(styles.card, wide && styles.wide, !entrance && styles.still)}>
+          {children}
+        </main>
         {footer !== undefined && <footer className={styles.footer}>{footer}</footer>}
       </div>
     </div>

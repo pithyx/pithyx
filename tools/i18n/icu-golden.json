@@ -79,6 +79,27 @@
       },
       "expected": "The user name root is reserved for the system."
     },
+    "desktop.device.not_found": {
+      "params": {},
+      "expected": "No saved desktop was found for that device. It may have expired."
+    },
+    "desktop.layout.conflict": {
+      "params": {
+        "version": 3
+      },
+      "expected": "The desktop layout was saved from another tab in the meantime."
+    },
+    "desktop.layout.invalid": {
+      "params": {},
+      "expected": "The desktop layout could not be saved because it is not in a known format."
+    },
+    "desktop.layout.too_large": {
+      "params": {
+        "maxWindows": 50,
+        "maxAppDataKb": 16
+      },
+      "expected": "The desktop layout is too large to save. At most 50 windows and 16 KB of app data are kept."
+    },
     "realtime.message.invalid": {
       "params": {},
       "expected": "The live connection received a message it does not understand."

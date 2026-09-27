@@ -13,7 +13,15 @@
     "signOut": "Abmelden",
     "signedInAs": "Angemeldet als {name}",
     "personalization": "Personalisierung",
-    "languageCurrent": "Sprache: {language}"
+    "languageCurrent": "Sprache: {language}",
+    "taskbar": "Position der Taskleiste",
+    "getDesktop": "Desktop holen von",
+    "noDevices": "Keine anderen Geräte",
+    "device": "{browser} auf {os}",
+    "unknownBrowser": "Ein Browser",
+    "unknownOs": "einem unbekannten System",
+    "deviceDetail": "{count, plural, one {# Fenster} other {# Fenster}}, {time}",
+    "deviceDetailScreen": "{width} × {height}, {count, plural, one {# Fenster} other {# Fenster}}, {time}"
   },
   "error": {
     "title": "Etwas ist schiefgelaufen",
@@ -44,7 +52,13 @@
     "switcher": "{count, plural, one {Apps wechseln, # geöffnet} other {Apps wechseln, # geöffnet}}",
     "jobs": "{count, plural, one {# laufende Aufgabe} other {# laufende Aufgaben}}",
     "notifications": "{count, plural, =0 {Benachrichtigungen} one {Benachrichtigungen, # ungelesen} other {Benachrichtigungen, # ungelesen}}",
-    "userMenu": "Kontomenü von {name}"
+    "userMenu": "Kontomenü von {name}",
+    "position": {
+      "bottom": "Unten",
+      "top": "Oben",
+      "left": "Links",
+      "right": "Rechts"
+    }
   },
   "start": {
     "label": "Startmenü",
@@ -70,7 +84,29 @@
     "minimize": "Minimieren",
     "maximize": "Maximieren",
     "restore": "Wiederherstellen",
-    "close": "Schließen"
+    "close": "Schließen",
+    "menu": "Fenstermenü für {title}",
+    "move": "Verschieben",
+    "size": "Größe ändern",
+    "snapLeft": "Links andocken",
+    "snapRight": "Rechts andocken",
+    "keys": {
+      "left": "Alt+Umschalt+←",
+      "right": "Alt+Umschalt+→",
+      "up": "Alt+Umschalt+↑",
+      "down": "Alt+Umschalt+↓"
+    },
+    "announce": {
+      "snapped": "{title} angedockt",
+      "maximized": "{title} maximiert",
+      "restored": "{title} wiederhergestellt",
+      "minimized": "{title} minimiert",
+      "focused": "{title}",
+      "move": "{title} verschieben. Pfeiltasten verschieben, mit Umschalt um ein Pixel, Eingabe bestätigt, Escape bricht ab.",
+      "size": "Größe von {title} ändern. Pfeiltasten ändern die Größe, mit Umschalt um ein Pixel, Eingabe bestätigt, Escape bricht ab.",
+      "done": "{title}: fertig",
+      "cancelled": "{title}: abgebrochen"
+    }
   },
   "notifications": {
     "title": "Benachrichtigungen",
@@ -84,7 +120,8 @@
     "title": "Geöffnete Apps",
     "closeAll": "Alle schließen",
     "close": "{name} schließen",
-    "open": "Zu {name} wechseln"
+    "open": "Zu {name} wechseln",
+    "empty": "Es sind keine Apps geöffnet."
   },
   "items": {
     "desktop": "Desktop",
@@ -101,10 +138,22 @@
     "photos": "Fotos",
     "users": "Benutzer",
     "containers": "Container",
-    "terminal": "Terminal"
+    "terminal": "Terminal",
+    "disks": "Laufwerke",
+    "about": "Über Vyxis"
   },
   "roles": {
     "administrator": "Administrator",
     "user": "Benutzer"
+  },
+  "about": {
+    "tagline": "Freies, selbst gehostetes NAS- und Server-Betriebssystem mit Web-Desktop.",
+    "licenseTitle": "Lizenz",
+    "license": "Vyxis ist freie Software unter der GNU Affero General Public License Version 3. Das SDK steht unter der MIT-Lizenz.",
+    "attribution": "Based on Vyxis (https://github.com/vyxis/vyxis), created by the Vyxis contributors and licensed under the GNU AGPL-3.0.",
+    "source": "Quellcode",
+    "noticesTitle": "Software von Dritten",
+    "licenseText": "Lizenztext",
+    "noticesMissing": "Die Liste der Software von Dritten konnte nicht geladen werden."
   }
 }

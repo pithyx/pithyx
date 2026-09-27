@@ -131,7 +131,7 @@
   gap: var(--space-3);
   padding: var(--space-4) 0;
   text-align: center;
-  animation: welcome-in var(--duration-normal) var(--ease-enter);
+  animation: welcome-in var(--duration-fast) var(--ease-enter);
 }
 
 @keyframes welcome-in {
@@ -225,5 +225,44 @@
 @media print {
   .noPrint {
     display: none;
+  }
+}
+
+/* The language switch below the card looks like a quiet small button around a native select. */
+.language {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 28px;
+  padding: 0 var(--space-3);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-medium);
+}
+
+.language:hover {
+  background: var(--color-surface-hover);
+}
+
+.language:has(select:focus-visible) {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.languageSelect {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  outline: none;
+}
+
+@media (pointer: coarse) {
+  .language {
+    min-height: var(--touch-target);
   }
 }

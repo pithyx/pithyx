@@ -5,7 +5,7 @@ import {
   IconLogout,
   IconPalette,
   IconShieldLock,
-} from '@tabler/icons-react';
+} from '../ui/icons';
 import type { ReactNode } from 'react';
 import { Header, MenuSection } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';

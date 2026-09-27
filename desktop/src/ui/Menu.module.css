@@ -63,6 +63,12 @@
   flex: 1;
 }
 
+.shortcut {
+  color: var(--color-text-muted);
+  font-family: var(--font-sans);
+  font-size: var(--font-size-xs);
+}
+
 .check {
   display: grid;
   place-items: center;

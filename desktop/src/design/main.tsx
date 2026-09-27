@@ -4,7 +4,7 @@ import i18next from 'i18next';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { initI18n } from '../i18n';
-import { Gallery } from './Gallery';
+import { Gallery, taskbarFrom } from './Gallery';
 import { screens } from './screens';
 
 const root = document.getElementById('root');
@@ -19,7 +19,7 @@ if (theme === 'light' || theme === 'dark') {
 }
 const accent = params.get('accent') ?? 'petrol';
 document.documentElement.dataset.accent = accent;
-const taskbar = params.get('taskbar') === 'top' ? 'top' : 'bottom';
+const taskbar = taskbarFrom(params.get('taskbar'));
 
 await initI18n();
 const lang = params.get('lang');

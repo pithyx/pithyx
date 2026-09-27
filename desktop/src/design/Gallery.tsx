@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Checkbox } from '../ui/Controls';
 import { cx } from '../ui/cx';
 import { Wordmark } from '../ui/Logo';
+import type { TaskbarPosition } from '../shell/types';
 import styles from './Gallery.module.css';
 import { labels } from './labels';
 import { screens, type ScreenDefinition } from './screens';
@@ -14,12 +15,18 @@ const devices = [
 ] as const;
 
 const accents = ['petrol', 'ocean', 'indigo', 'plum', 'moss', 'graphite'] as const;
+const TASKBAR_POSITIONS: readonly TaskbarPosition[] = ['bottom', 'top', 'left', 'right'];
+
+/** The taskbar position from a URL parameter; bottom when missing or unknown. */
+export function taskbarFrom(value: string | null): TaskbarPosition {
+  return TASKBAR_POSITIONS.find((position) => position === value) ?? 'bottom';
+}
 
 interface Options {
   screen: string;
   theme: 'both' | 'light' | 'dark';
   accent: string;
-  taskbar: 'bottom' | 'top';
+  taskbar: TaskbarPosition;
   lang: 'en' | 'de';
   ultrawide: boolean;
 }
@@ -31,7 +38,7 @@ function readOptions(): Options {
     screen: params.get('view') ?? 'login',
     theme: theme === 'light' || theme === 'dark' ? theme : 'both',
     accent: params.get('accent') ?? 'petrol',
-    taskbar: params.get('taskbar') === 'top' ? 'top' : 'bottom',
+    taskbar: taskbarFrom(params.get('taskbar')),
     lang: params.get('lang') === 'de' ? 'de' : 'en',
     ultrawide: params.get('ultrawide') === '1',
   };
@@ -218,7 +225,7 @@ export function Gallery() {
                   update({ taskbar: event.target.value as Options['taskbar'] });
                 }}
               >
-                {(['bottom', 'top'] as const).map((position) => (
+                {TASKBAR_POSITIONS.map((position) => (
                   <option key={position} value={position}>
                     {labels.taskbarPositions[position]}
                   </option>

@@ -22,5 +22,23 @@
         "action": "Installieren"
       }
     }
+  },
+  "desktop": {
+    "restoreSkipped": {
+      "title": "Einige Fenster wurden nicht wiederhergestellt",
+      "body": "{count, plural, one {# Fenster gehört} other {# Fenster gehören}} zu einer App, die nicht mehr verfügbar ist."
+    },
+    "copied": {
+      "title": "Desktop geladen",
+      "body": "Die Fenster von {device} sind jetzt hier geöffnet."
+    },
+    "saveFailed": {
+      "title": "Fensteranordnung nicht gespeichert",
+      "body": "Der Daemon hat das Layout dieses Desktops nicht gespeichert. Deine Fenster bleiben offen. Request-ID {requestId}."
+    },
+    "restoreFailed": {
+      "title": "Gespeicherte Fenster nicht geladen",
+      "body": "Der Daemon hat nicht geantwortet. Änderungen an diesem Desktop werden erst nach dem Neuladen der Seite gespeichert."
+    }
   }
 }

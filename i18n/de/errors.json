@@ -42,6 +42,16 @@
       "reserved": "Den Benutzernamen {username} verwendet das System selbst. Wähle einen anderen."
     }
   },
+  "desktop": {
+    "device": {
+      "not_found": "Für dieses Gerät wurde kein gespeicherter Desktop gefunden. Er ist vielleicht abgelaufen."
+    },
+    "layout": {
+      "conflict": "Das Desktop-Layout wurde inzwischen aus einem anderen Tab gespeichert.",
+      "invalid": "Das Desktop-Layout konnte nicht gespeichert werden, weil sein Format unbekannt ist.",
+      "too_large": "Das Desktop-Layout ist zu groß zum Speichern. Gespeichert werden höchstens {maxWindows} Fenster und {maxAppDataKb} KB App-Daten."
+    }
+  },
   "realtime": {
     "message": {
       "invalid": "Die Live-Verbindung hat eine unverständliche Nachricht erhalten."

@@ -3,8 +3,8 @@ namespace Vyxis.Daemon.Realtime;
 /// <summary>A message from the client: <c>sub</c> or <c>unsub</c> for a topic or pattern.</summary>
 /// <param name="Type"><c>sub</c> or <c>unsub</c>.</param>
 /// <param name="Id">Chosen by the client; echoed in the ack, snapshots and errors that answer this message.</param>
-/// <param name="Topic">Topic name or pattern with <c>+</c> and <c>#</c>.</param>
-public sealed record ClientMessage(string Type, string Id, string Topic);
+/// <param name="Topic">Topic name or pattern with <c>+</c> and <c>#</c>. A message without one is answered with an error.</param>
+public sealed record ClientMessage(string Type, string Id, string? Topic = null);
 
 /// <summary>A message from the server. <c>type</c> tells which of the other fields are set.</summary>
 public abstract record ServerMessage(string Type, string RequestId);

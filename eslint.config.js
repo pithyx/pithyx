@@ -45,6 +45,31 @@ export default defineConfig(
     languageOptions: { globals: globals.browser },
   },
   {
+    // Icons come from desktop/src/ui/icons.ts, one module per icon; the package index pulls in all of them.
+    files: ['desktop/src/**/*.{ts,tsx}'],
+    ignores: ['desktop/src/ui/icons.ts', 'desktop/src/tabler-icons.d.ts'],
+    rules: {
+      '@typescript-eslint/no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@tabler/icons-react',
+              message: 'Import icons from ui/icons.ts (add new ones there as single-icon imports).',
+              allowTypeImports: true,
+            },
+          ],
+          patterns: [
+            {
+              group: ['@tabler/icons-react/*'],
+              message: 'Single-icon imports belong in ui/icons.ts.',
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
     files: ['desktop/src/**/*.tsx'],
     ignores: ['**/*.test.tsx'],
     plugins: { i18next },

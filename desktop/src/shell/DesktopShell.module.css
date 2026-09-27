@@ -19,6 +19,18 @@
     'workspace';
 }
 
+.shell[data-taskbar='left'] {
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas: 'taskbar workspace';
+}
+
+.shell[data-taskbar='right'] {
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'workspace taskbar';
+}
+
 .workspace {
   position: relative;
   grid-area: workspace;
@@ -47,7 +59,27 @@
   animation-name: taskbar-down;
 }
 
-.shell[data-entering] .workspace {
+.shell[data-entering][data-taskbar='left'] > nav {
+  animation-name: taskbar-right;
+}
+
+.shell[data-entering][data-taskbar='right'] > nav {
+  animation-name: taskbar-left;
+}
+
+.shell[data-entering] .shell[data-taskbar='left'] {
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas: 'taskbar workspace';
+}
+
+.shell[data-taskbar='right'] {
+  grid-template-rows: minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: 'workspace taskbar';
+}
+
+.workspace {
   animation: fade-in var(--duration-slow) var(--ease-enter) 120ms both;
 }
 
@@ -60,6 +92,18 @@
 @keyframes taskbar-down {
   from {
     transform: translateY(-100%);
+  }
+}
+
+@keyframes taskbar-right {
+  from {
+    transform: translateX(-100%);
+  }
+}
+
+@keyframes taskbar-left {
+  from {
+    transform: translateX(100%);
   }
 }
 

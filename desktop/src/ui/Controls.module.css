@@ -24,13 +24,15 @@
   transition: background-color var(--duration-instant) var(--ease-standard);
 }
 
-.checkbox[data-selected] .box {
+.checkbox[data-selected] .box,
+.checkbox:has(input:checked) .box {
   border-color: var(--color-accent);
   background: var(--color-accent);
   color: var(--color-accent-contrast);
 }
 
 .checkbox[data-focus-visible] .box,
+.checkbox:has(input:focus-visible) .box,
 .switch[data-focus-visible] .track {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;

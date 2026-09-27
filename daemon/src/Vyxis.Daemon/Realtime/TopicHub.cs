@@ -144,13 +144,22 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
         }
 
         Send(connection, new AckMessage(id, Tracing.CurrentRequestId));
-        foreach (var definition in _registry.All)
+        try
         {
-            foreach (var topic in definition.ExistingTopics().Where(t => TopicPattern.Matches(pattern, t) && definition.IsAllowed(connection.User, t)))
+            foreach (var definition in _registry.All)
             {
-                var data = await definition.Snapshot(topic, cancellationToken);
-                Send(connection, new SnapshotMessage(id, topic, data, Tracing.CurrentRequestId));
+                foreach (var topic in definition.ExistingTopics().Where(t => TopicPattern.Matches(pattern, t) && definition.IsAllowed(connection.User, t)))
+                {
+                    var data = await definition.Snapshot(topic, cancellationToken);
+                    Send(connection, new SnapshotMessage(id, topic, data, Tracing.CurrentRequestId));
+                }
             }
+        }
+        catch
+        {
+            // Without its snapshot the subscription would deliver changes to a state the client never got.
+            connection.RemovePattern(pattern);
+            throw;
         }
     }
 

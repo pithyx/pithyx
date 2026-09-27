@@ -23,6 +23,22 @@
   top: calc(var(--taskbar-size) + env(safe-area-inset-top) + var(--space-2));
 }
 
+.menu[data-position='left'],
+.menu[data-position='right'] {
+  top: var(--space-2);
+  width: min(620px, calc(100% - var(--taskbar-size) - 3 * var(--space-2)));
+  height: min(600px, calc(100% - 2 * var(--space-2)));
+}
+
+.menu[data-position='left'] {
+  left: calc(var(--taskbar-size) + 8px + var(--space-2));
+}
+
+.menu[data-position='right'] {
+  right: calc(var(--taskbar-size) + 8px + var(--space-2));
+  left: auto;
+}
+
 @keyframes open {
   from {
     opacity: 0;

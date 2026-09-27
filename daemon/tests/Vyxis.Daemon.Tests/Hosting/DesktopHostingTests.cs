@@ -14,6 +14,8 @@ public sealed class DesktopHostingTests : IDisposable
         Directory.CreateDirectory(Path.Combine(desktop, "assets"));
         File.WriteAllText(Path.Combine(desktop, "index.html"), "<!doctype html><title>Vyxis</title>");
         File.WriteAllText(Path.Combine(desktop, "assets", "index-abc123.js"), "console.log(1);");
+        File.WriteAllText(Path.Combine(desktop, "assets", "index-abc123.js.br"), "brotli");
+        File.WriteAllText(Path.Combine(desktop, "assets", "index-abc123.js.gz"), "gzip");
         _client = _factory.WithWebHostBuilder(builder => builder.UseSetting("VYXIS_DESKTOP_DIR", desktop)).CreateClient();
     }
 
@@ -43,6 +45,34 @@ public sealed class DesktopHostingTests : IDisposable
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Contains("immutable", string.Join(",", response.Headers.GetValues("Cache-Control")), StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData("br, gzip, deflate", "br", "brotli")]
+    [InlineData("gzip, deflate", "gzip", "gzip")]
+    public async Task PrecompressedAssetsAreServedWhenAccepted(string acceptEncoding, string encoding, string body)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/assets/index-abc123.js");
+        request.Headers.TryAddWithoutValidation("Accept-Encoding", acceptEncoding);
+        using var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(encoding, Assert.Single(response.Content.Headers.ContentEncoding));
+        Assert.Equal("text/javascript", response.Content.Headers.ContentType?.MediaType);
+        Assert.Contains("Accept-Encoding", response.Headers.Vary);
+        Assert.Contains("immutable", string.Join(",", response.Headers.GetValues("Cache-Control")), StringComparison.Ordinal);
+        Assert.Equal(body, await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
+    }
+
+    [Fact]
+    public async Task AssetsAreServedPlainWithoutAcceptEncoding()
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/assets/index-abc123.js");
+        request.Headers.TryAddWithoutValidation("Accept-Encoding", "identity");
+        using var response = await _client.SendAsync(request, TestContext.Current.CancellationToken);
+
+        Assert.Empty(response.Content.Headers.ContentEncoding);
+        Assert.Equal("console.log(1);", await response.Content.ReadAsStringAsync(TestContext.Current.CancellationToken));
     }
 
     [Theory]
