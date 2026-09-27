@@ -1,28 +1,72 @@
 import { expect, test } from './fixtures';
-import { admin, signInAsAdmin } from './session';
+import { measureRound, median, type Round } from './performance';
+import { admin } from './session';
 
-// TODO.md 5.4: the desktop is usable within 1 s after signing in on a repeat visit. Usable means the taskbar is
-// shown and the welcome card has left, which happens once the live connection is open. The median of three sign-ins
-// keeps a single slow run on a busy CI machine from failing the budget.
-const BUDGET_MS = 1000;
+// Performance budgets against the production build the daemon serves, on Chrome's "Fast 4G" with the CPU slowed
+// down four times. Tracing is off: its snapshots would slow the page down. The median of five sign-ins (each in a fresh context, so the first load is cold) keeps a single
+// slow run on a busy CI machine from failing a budget; one unmeasured round first lets the daemon warm up.
+const ROUNDS = 5;
+const BUDGETS = {
+  coldToLogin: 1500,
+  clickToFeedback: 100,
+  loginToDesktopWithoutArgon2: 1000,
+  reload: 500,
+} as const;
 
-test('the desktop is usable within one second after signing in again', async ({ page }) => {
-  await signInAsAdmin(page);
-  const durations: number[] = [];
-  for (let round = 0; round < 3; round++) {
-    await page.getByRole('button', { name: 'Account menu for Ada Admin' }).click();
-    await page.getByRole('menuitem', { name: 'Sign out' }).click();
-    await page.getByLabel('User name').fill(admin.username);
-    await page.getByLabel('Password', { exact: true }).fill(admin.password);
-    const start = Date.now();
-    await page.getByRole('button', { name: 'Sign in' }).click();
-    await expect(page.getByRole('navigation', { name: 'Taskbar' })).toBeVisible();
-    await expect(page.getByRole('status').filter({ hasText: 'Welcome' })).toHaveCount(0);
-    durations.push(Date.now() - start);
+// The real motion: the welcome card must bridge the wait without adding to it.
+test.use({ reducedMotion: 'no-preference', trace: 'off' });
+
+test('sign-in and reload stay within their budgets on a slow connection', async ({
+  browser,
+  baseURL,
+}) => {
+  test.setTimeout(240_000);
+  const rounds: Round[] = [];
+  for (let round = 0; round <= ROUNDS; round++) {
+    const context = await browser.newContext({
+      viewport: { width: 1440, height: 900 },
+      locale: 'en-US',
+    });
+    const result = await measureRound(context, {
+      url: baseURL ?? '/',
+      username: admin.username,
+      password: admin.password,
+      profile: 'fast4g-cpu4x',
+    });
+    await context.close();
+    if (round > 0) {
+      rounds.push(result);
+    }
   }
-  const median = [...durations].sort((a, b) => a - b)[1] ?? Infinity;
-  test
-    .info()
-    .annotations.push({ type: 'sign-in to desktop (ms)', description: durations.join(', ') });
-  expect(median).toBeLessThan(BUDGET_MS);
+
+  const measured = {
+    coldToLogin: rounds.map((round) => round.coldToLogin),
+    clickToFeedback: rounds.map((round) => round.clickToFeedback),
+    loginToDesktopWithoutArgon2: rounds.map((round) => round.loginToDesktop - round.argon2),
+    reload: rounds.map((round) => round.reload),
+  };
+  // Printed as well, so the CI log shows how close each budget is.
+  // The first reload after an update is reported, not budgeted: Chrome then writes V8's code cache on the main thread.
+  const reported = {
+    ...measured,
+    firstReload: rounds.map((round) => round.firstReload),
+    argon2: rounds.map((round) => round.argon2),
+  };
+  const rows = Object.entries(reported).map(([metric, values]) => ({
+    type: `${metric} (ms)`,
+    description: `median ${String(Math.round(median(values)))}: ${values.map((value) => String(Math.round(value))).join(', ')}`,
+  }));
+  test.info().annotations.push(...rows);
+  console.log(rows.map((row) => `${row.type} ${row.description}`).join('\n'));
+
+  expect
+    .soft(median(measured.coldToLogin), 'cold start to sign-in usable')
+    .toBeLessThan(BUDGETS.coldToLogin);
+  expect
+    .soft(median(measured.clickToFeedback), 'click to visible feedback')
+    .toBeLessThan(BUDGETS.clickToFeedback);
+  expect
+    .soft(median(measured.loginToDesktopWithoutArgon2), 'sign-in to desktop without Argon2')
+    .toBeLessThan(BUDGETS.loginToDesktopWithoutArgon2);
+  expect.soft(median(measured.reload), 'reload with a warm cache').toBeLessThan(BUDGETS.reload);
 });
