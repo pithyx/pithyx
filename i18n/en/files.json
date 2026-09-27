@@ -26,5 +26,82 @@
     "label": "Row density",
     "comfortable": "Comfortable",
     "compact": "Compact"
+  },
+  "up": "Up one level",
+  "sidebar": "Shares and recycle bin",
+  "trash": "Recycle bin",
+  "readOnly": "Read only",
+  "loading": "Loading",
+  "selected": "{count, plural, one {# selected} other {# selected}}",
+  "emptyFolder": "This folder is empty. Drop files here to upload them.",
+  "noShares": "You have no shares yet. An administrator can create them.",
+  "menu": {
+    "entries": "Actions for {count, plural, one {# item} other {# items}}",
+    "folder": "Folder actions"
+  },
+  "actions": {
+    "open": "Open",
+    "download": "Download",
+    "upload": "Upload",
+    "newFolder": "New folder",
+    "rename": "Rename",
+    "copy": "Copy",
+    "cut": "Cut",
+    "paste": "Paste",
+    "delete": "Move to recycle bin",
+    "deletePermanent": "Delete permanently",
+    "selectAll": "Select all"
+  },
+  "dialog": {
+    "cancel": "Cancel",
+    "name": "Name",
+    "newFolder": "New folder",
+    "create": "Create",
+    "rename": "Rename {name}",
+    "renameConfirm": "Rename",
+    "permanentTitle": "Delete permanently?",
+    "permanentBody": "{count, plural, one {# item is} other {# items are}} deleted for good. This cannot be undone.",
+    "permanentConfirm": "Delete permanently",
+    "conflictTitle": "Names already exist",
+    "conflictBody": "The target folder already has entries with the same names. What should happen with them?",
+    "conflictSkip": "Skip them",
+    "conflictOverwrite": "Replace them",
+    "conflictRename": "Keep both",
+    "emptyTitle": "Empty the recycle bin?",
+    "emptyBody": "Everything in the recycle bin of {share} is deleted for good. This cannot be undone.",
+    "emptyConfirm": "Empty recycle bin",
+    "purgeTitle": "Delete for good?",
+    "purgeBody": "{count, plural, one {# item is} other {# items are}} deleted for good. This cannot be undone.",
+    "purgeConfirm": "Delete for good"
+  },
+  "bin": {
+    "title": "Recycle bin of {share}",
+    "empty": "The recycle bin is empty.",
+    "originalPath": "Original location",
+    "deletedAt": "Deleted",
+    "expiresAt": "Deleted for good",
+    "never": "Never",
+    "restore": "Restore",
+    "delete": "Delete for good",
+    "emptyBin": "Empty recycle bin",
+    "retention": "Deleted items are kept for {days, plural, one {# day} other {# days}}.",
+    "retentionForever": "Deleted items are kept until the recycle bin is emptied."
+  },
+  "job": {
+    "files.copy": "Copying",
+    "files.move": "Moving",
+    "files.trash": "Moving to the recycle bin",
+    "files.delete": "Deleting",
+    "files.restore": "Restoring",
+    "files.purge": "Deleting for good",
+    "files.empty_trash": "Emptying the recycle bin",
+    "progress": "{done} of {total}",
+    "cancel": "Cancel",
+    "uploading": "Uploading {name}"
+  },
+  "announce": {
+    "copied": "{count, plural, one {# item} other {# items}} copied to the clipboard",
+    "cut": "{count, plural, one {# item} other {# items}} cut to the clipboard",
+    "done": "Done: {what}"
   }
 }

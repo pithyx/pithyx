@@ -1,0 +1,392 @@
+/* The Files app uses only the public --vyxis-* tokens, like any app built on the SDK. */
+.files {
+  container: files / inline-size;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: 100%;
+  background: var(--vyxis-color-background);
+  color: var(--vyxis-color-text);
+  font-size: var(--vyxis-font-size);
+}
+
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  padding: var(--vyxis-space);
+  border-bottom: 1px solid var(--vyxis-color-border);
+}
+
+.breadcrumb {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 0 var(--vyxis-space);
+  overflow: hidden;
+  font-family: var(--vyxis-font-mono);
+  font-size: 0.875em;
+  white-space: nowrap;
+}
+
+.crumb {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  min-width: 0;
+  padding: 2px 4px;
+  border: 0;
+  border-radius: var(--vyxis-radius);
+  background: transparent;
+  color: var(--vyxis-color-text-muted);
+  font: inherit;
+  cursor: pointer;
+}
+
+.crumb:hover,
+.crumb[data-drop-target] {
+  background: var(--vyxis-color-hover);
+}
+
+.crumb:last-child {
+  color: var(--vyxis-color-text);
+}
+
+.crumb:focus-visible {
+  outline: 2px solid var(--vyxis-color-focus);
+  outline-offset: 1px;
+}
+
+.split {
+  position: relative;
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr);
+  min-height: 0;
+}
+
+.sidebar {
+  display: grid;
+  align-content: start;
+  gap: 1px;
+  padding: var(--vyxis-space);
+  border-right: 1px solid var(--vyxis-color-border);
+  background: var(--vyxis-color-surface);
+  overflow: auto;
+}
+
+.sideTitle {
+  margin: 12px 0 4px;
+  padding: 0 var(--vyxis-space);
+  color: var(--vyxis-color-text-muted);
+  font-size: 0.75em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sideTitle:first-child {
+  margin-top: 4px;
+}
+
+.sideItem {
+  display: flex;
+  align-items: center;
+  gap: var(--vyxis-space);
+  min-height: 30px;
+  padding: 0 var(--vyxis-space);
+  border: 0;
+  border-radius: var(--vyxis-radius);
+  background: transparent;
+  color: var(--vyxis-color-text);
+  font: inherit;
+  font-size: 0.875em;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sideItem:hover {
+  background: var(--vyxis-color-hover);
+}
+
+.sideItem:focus-visible {
+  outline: 2px solid var(--vyxis-color-focus);
+  outline-offset: -2px;
+}
+
+.sideItem[aria-current='page'] {
+  background: var(--vyxis-color-selected);
+  color: var(--vyxis-color-accent);
+  font-weight: 500;
+}
+
+.main {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  min-width: 0;
+  min-height: 0;
+}
+
+.scroll {
+  position: relative;
+  min-height: 0;
+  overflow: auto;
+  outline: none;
+}
+
+.scroll[data-drop-target] {
+  box-shadow: inset 0 0 0 2px var(--vyxis-color-accent);
+}
+
+.grid {
+  --row-height: 36px;
+  min-width: 100%;
+  font-size: 0.875em;
+}
+
+@media (pointer: coarse) {
+  .grid {
+    --row-height: 52px;
+  }
+}
+
+.header,
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 110px 150px;
+  align-items: center;
+}
+
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  border-bottom: 1px solid var(--vyxis-color-border);
+  background: var(--vyxis-color-surface);
+}
+
+.sortButton {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  padding: var(--vyxis-space) 12px;
+  border: 0;
+  background: transparent;
+  color: var(--vyxis-color-text-muted);
+  font: inherit;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sortButton:hover {
+  color: var(--vyxis-color-text);
+}
+
+.sortButton:focus-visible {
+  outline: 2px solid var(--vyxis-color-focus);
+  outline-offset: -2px;
+}
+
+.row {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: var(--row-height);
+  cursor: default;
+  user-select: none;
+}
+
+.row:hover {
+  background: var(--vyxis-color-hover);
+}
+
+.row[aria-selected='true'] {
+  background: var(--vyxis-color-selected);
+}
+
+.row[data-active]:focus-visible,
+.row[data-active][data-focused] {
+  outline: 2px solid var(--vyxis-color-focus);
+  outline-offset: -2px;
+}
+
+.row[data-cut] {
+  opacity: 0.55;
+}
+
+.row[data-drop-target] {
+  box-shadow: inset 0 0 0 2px var(--vyxis-color-accent);
+}
+
+.cell {
+  min-width: 0;
+  padding: 0 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cell + .cell {
+  color: var(--vyxis-color-text-muted);
+}
+
+.name {
+  display: flex;
+  align-items: center;
+  gap: var(--vyxis-space);
+  min-width: 0;
+}
+
+.name > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.folderIcon {
+  flex: none;
+  color: var(--vyxis-color-accent);
+}
+
+.fileIcon {
+  flex: none;
+  color: var(--vyxis-color-text-muted);
+}
+
+.placeholder {
+  height: 0.8em;
+  width: 40%;
+  border-radius: var(--vyxis-radius);
+  background: var(--vyxis-color-border);
+}
+
+.empty {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  padding: 24px;
+  color: var(--vyxis-color-text-muted);
+  text-align: center;
+}
+
+.status {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  padding: 4px 12px;
+  border-top: 1px solid var(--vyxis-color-border);
+  color: var(--vyxis-color-text-muted);
+  font-size: 0.75em;
+}
+
+.statusText {
+  flex: 1;
+  min-width: 0;
+}
+
+.transfers {
+  display: grid;
+  gap: 4px;
+  width: 100%;
+}
+
+.transfer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px;
+}
+
+.transferLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bar {
+  grid-column: 1 / -1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--vyxis-color-border);
+  overflow: hidden;
+}
+
+.barFill {
+  height: 100%;
+  background: var(--vyxis-color-accent);
+}
+
+.anchor {
+  position: fixed;
+  width: 0;
+  height: 0;
+}
+
+.hiddenInput {
+  display: none;
+}
+
+.renameInput {
+  width: 100%;
+  min-width: 0;
+  padding: 2px 4px;
+  border: 1px solid var(--vyxis-color-focus);
+  border-radius: var(--vyxis-radius);
+  background: var(--vyxis-color-background);
+  color: var(--vyxis-color-text);
+  font: inherit;
+}
+
+.sidebarToggle {
+  display: none;
+}
+
+@container files (max-width: 560px) {
+  .split {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sidebar {
+    display: none;
+  }
+
+  .split[data-sidebar-open] .sidebar {
+    position: absolute;
+    inset: 0 30% 0 0;
+    z-index: 2;
+    display: grid;
+    box-shadow: 0 8px 24px rgb(0 0 0 / 25%);
+  }
+
+  .sidebarToggle {
+    display: inline-flex;
+  }
+
+  .header,
+  .row {
+    grid-template-columns: minmax(0, 1fr) 90px;
+  }
+
+  .optional {
+    display: none;
+  }
+}
+
+@container files (max-width: 420px) {
+  .breadcrumb {
+    font-size: 0.8em;
+  }
+
+  .header,
+  .row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .size {
+    display: none;
+  }
+}
