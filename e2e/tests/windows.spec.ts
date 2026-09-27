@@ -235,3 +235,11 @@ test('the taskbar moves to the left and back', async ({ page }) => {
   await moveTaskbar('Bottom');
   await expect.poll(async () => (await box(taskbar)).width).toBe(viewport?.width);
 });
+
+test('the start menu signs out through its power menu', async ({ page }) => {
+  await page.getByRole('button', { name: 'Start' }).click();
+  const menu = page.getByRole('dialog', { name: 'Start menu' });
+  await menu.getByRole('button', { name: 'Power options' }).click();
+  await page.getByRole('menuitem', { name: 'Sign out' }).click();
+  await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
+});

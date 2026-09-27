@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import { announce } from './announce';
 import { dragRect, isUltrawide, resizeRect } from './geometry';
 import { commandFor, isTextEditing, nextSnapZone } from './keys';
+import { visibleRect } from './state';
 import { dispatch, useDesktop } from './store';
 import { useWindowUi } from './ui';
 
@@ -63,7 +64,9 @@ export function runWindowCommand(id: string, command: WindowCommand) {
     case 'move':
     case 'size':
       dispatch({ type: 'restore', id });
-      useWindowUi.setState({ mode: { id, kind: command, start: target.rect } });
+      useWindowUi.setState({
+        mode: { id, kind: command, start: visibleRect(target, state.workspace) },
+      });
       say(command, id);
       break;
     case 'close':
@@ -76,8 +79,13 @@ export function runWindowCommand(id: string, command: WindowCommand) {
 function handleModeKey(event: KeyboardEvent): boolean {
   const { mode } = useWindowUi.getState();
   const state = useDesktop.getState();
-  const target = mode === null ? undefined : state.windows[mode.id];
-  if (mode === null || target === undefined) {
+  if (mode === null) {
+    return false;
+  }
+  const target = state.windows[mode.id];
+  if (target === undefined) {
+    // The window closed while in the mode; let the key through and leave the mode.
+    useWindowUi.setState({ mode: null });
     return false;
   }
   const step = event.shiftKey ? 1 : 16;
@@ -89,10 +97,11 @@ function handleModeKey(event: KeyboardEvent): boolean {
   };
   const delta = deltas[event.key];
   if (delta !== undefined) {
+    const shown = visibleRect(target, state.workspace);
     const rect =
       mode.kind === 'move'
-        ? dragRect(target.rect, delta, target.minSize, state.workspace)
-        : resizeRect(target.rect, 'se', delta, target.minSize, state.workspace);
+        ? dragRect(shown, delta, target.minSize, state.workspace)
+        : resizeRect(shown, 'se', delta, target.minSize, state.workspace);
     dispatch({ type: 'move', id: mode.id, rect });
     return true;
   }
@@ -126,8 +135,12 @@ export function useWindowKeys() {
         if (handleModeKey(event)) {
           event.preventDefault();
           event.stopPropagation();
+          return;
         }
-        return;
+        // Other keys pass through to the page while the mode lasts; a mode whose window is gone has ended.
+        if (useWindowUi.getState().mode !== null) {
+          return;
+        }
       }
       const command = commandFor(event);
       const { focused } = useDesktop.getState();

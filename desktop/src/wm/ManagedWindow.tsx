@@ -5,6 +5,7 @@ import { WindowFrame, type MediumPlacement } from '../shell/Window';
 import { mediumZone, zoneRect, type Edge } from './geometry';
 import { startDrag, startResize } from './pointer';
 import { useSizeClass } from './sizeClass';
+import { visibleRect } from './state';
 import { dispatch, useDesktop } from './store';
 import type { Rect } from './types';
 import { WindowMenu } from './WindowMenu';
@@ -43,7 +44,7 @@ export function ManagedWindow({ id }: { id: string }) {
   const title = windowState.title ?? appName(windowState.app);
   const expanded = sizeClass === 'expanded';
   const free = expanded && placement.kind === 'free';
-  let rect: Rect = windowState.rect;
+  let rect: Rect = visibleRect(windowState, workspace);
   let medium: MediumPlacement = 'max';
   if (placement.kind === 'snapped') {
     rect = zoneRect(placement.zone, workspace);

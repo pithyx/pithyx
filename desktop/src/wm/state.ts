@@ -1,6 +1,6 @@
 import type { TaskbarPosition } from '../shell/types';
 import { cascade, clampRect, clampSize } from './geometry';
-import type { Action, DesktopState, Placement, Size, WindowState } from './types';
+import type { Action, DesktopState, Placement, Rect, Size, WindowState } from './types';
 
 /** More windows than this are refused; it also bounds the saved layout. */
 export const MAX_WINDOWS = 50;
@@ -20,6 +20,14 @@ export function topVisible(state: Pick<DesktopState, 'windows' | 'order'>): stri
     }
   }
   return null;
+}
+
+/**
+ * Where a free window is shown: its saved rect, kept reachable in the current workspace. The saved rect itself stays
+ * untouched, so a window returns to its place when the screen grows again.
+ */
+export function visibleRect(window: Pick<WindowState, 'rect' | 'minSize'>, workspace: Size): Rect {
+  return clampRect(window.rect, window.minSize, workspace);
 }
 
 export function canOpen(state: DesktopState, app: string, instances: 'single' | 'multi'): boolean {
@@ -74,7 +82,9 @@ function open(state: DesktopState, action: Extract<Action, { type: 'open' }>): D
   }
   const size = clampSize(action.size ?? options.defaultSize, options.minSize, state.workspace);
   const previousId = state.order.at(-1);
-  const previous = previousId === undefined ? null : (state.windows[previousId]?.rect ?? null);
+  const previousWindow = previousId === undefined ? undefined : state.windows[previousId];
+  const previous =
+    previousWindow === undefined ? null : visibleRect(previousWindow, state.workspace);
   const id = `w${String(state.nextId)}`;
   const window: WindowState = {
     id,
@@ -147,19 +157,11 @@ export function reduce(state: DesktopState, action: Action): DesktopState {
         placement: FREE,
       });
     }
-    case 'setWorkspace': {
-      if (
-        action.size.width === state.workspace.width &&
+    case 'setWorkspace':
+      return action.size.width === state.workspace.width &&
         action.size.height === state.workspace.height
-      ) {
-        return state;
-      }
-      const windows: Record<string, WindowState> = {};
-      for (const [id, window] of Object.entries(state.windows)) {
-        windows[id] = { ...window, rect: clampRect(window.rect, window.minSize, action.size) };
-      }
-      return { ...state, windows, workspace: action.size };
-    }
+        ? state
+        : { ...state, workspace: action.size };
     case 'cycle':
       return cycle(state, action.direction);
     case 'setTitle':

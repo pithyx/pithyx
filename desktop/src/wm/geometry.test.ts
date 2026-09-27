@@ -95,6 +95,20 @@ describe('resizeRect', () => {
     });
   });
 
+  it('does not pull in a window that already reaches past the right or left edge', () => {
+    const past = { x: laptop.width - 300, y: 100, width: 600, height: 400 };
+    expect(resizeRect(past, 'e', { x: 16, y: 0 }, min, laptop).width).toBe(600);
+    expect(resizeRect(past, 'se', { x: -16, y: 16 }, min, laptop)).toMatchObject({
+      width: 584,
+      height: 416,
+    });
+    const left = { x: -200, y: 100, width: 600, height: 400 };
+    expect(resizeRect(left, 'w', { x: 10, y: 0 }, min, laptop)).toMatchObject({
+      x: -190,
+      width: 590,
+    });
+  });
+
   it('changes only the axis of an edge handle', () => {
     expect(resizeRect(start, 'e', { x: 10, y: 99 }, min, laptop)).toMatchObject({
       height: 400,

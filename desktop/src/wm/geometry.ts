@@ -78,15 +78,24 @@ export function resizeRect(
   let { x, y, width, height } = start;
   const right = start.x + start.width;
   const bottom = start.y + start.height;
+  // A window may already reach past an edge (only its title bar must stay reachable); resizing never pulls it in.
   if (edge.includes('e')) {
-    width = clamp(start.width + delta.x, min.width, workspace.width - start.x);
+    width = clamp(
+      start.width + delta.x,
+      min.width,
+      Math.max(start.width, workspace.width - start.x),
+    );
   }
   if (edge.includes('w')) {
-    x = clamp(start.x + delta.x, 0, right - min.width);
+    x = clamp(start.x + delta.x, Math.min(0, start.x), right - min.width);
     width = right - x;
   }
   if (edge.includes('s')) {
-    height = clamp(start.height + delta.y, min.height, workspace.height - start.y);
+    height = clamp(
+      start.height + delta.y,
+      min.height,
+      Math.max(start.height, workspace.height - start.y),
+    );
   }
   if (edge.startsWith('n')) {
     y = clamp(start.y + delta.y, 0, bottom - min.height);

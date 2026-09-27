@@ -331,11 +331,13 @@
   }
 }
 
-/* Compact: a bottom navigation bar with start, app switcher and status. */
+/* Compact: a bottom navigation bar with start, app switcher and status. Horizontal swipes switch apps, so the
+   browser must not claim them for panning. */
 @media (max-width: 599px) {
   .taskbar {
     justify-content: space-between;
     padding: 0 var(--space-3);
+    touch-action: pan-y;
   }
 
   .button {

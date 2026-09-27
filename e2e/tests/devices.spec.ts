@@ -59,6 +59,17 @@ test.describe('phone', () => {
       await expect(disks).toBeHidden();
     });
 
+    await test.step('with two apps open, back still returns to the home screen', async () => {
+      await page.goBack();
+      await expect(about).toBeHidden();
+      await expect(disks).toBeHidden();
+      await expect(page.getByRole('button', { name: 'Disks, shortcut' })).toBeVisible();
+      await page.getByRole('button', { name: 'Disks, shortcut' }).tap();
+      await expect(disks).toBeVisible();
+      await page.goBack();
+      await expect(disks).toBeHidden();
+    });
+
     await test.step('close all from the switcher', async () => {
       await taskbar.getByRole('button', { name: /Switch apps/ }).tap();
       const switcher = page.getByRole('dialog', { name: 'Open apps' });

@@ -88,10 +88,16 @@ export function Taskbar({
           return;
         }
         const start = { x: event.clientX, y: event.clientY };
+        const pointerId = event.pointerId;
         // Listening on the document instead of capturing keeps the buttons in the bar pressable.
+        const listeners = new AbortController();
         document.addEventListener(
           'pointerup',
           (up) => {
+            if (up.pointerId !== pointerId) {
+              return;
+            }
+            listeners.abort();
             const dx = up.clientX - start.x;
             if (
               Math.abs(dx) >= SWIPE_DISTANCE &&
@@ -100,7 +106,16 @@ export function Taskbar({
               onSwipe(dx < 0 ? 1 : -1);
             }
           },
-          { once: true, capture: true },
+          { capture: true, signal: listeners.signal },
+        );
+        document.addEventListener(
+          'pointercancel',
+          (cancel) => {
+            if (cancel.pointerId === pointerId) {
+              listeners.abort();
+            }
+          },
+          { capture: true, signal: listeners.signal },
         );
       }}
     >

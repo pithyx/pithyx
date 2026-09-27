@@ -1,15 +1,17 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { unwrap } from '@vyxis/api-client';
 import { useEffect, useLayoutEffect } from 'react';
 import { api } from '../api/client';
 import { findApp } from '../apps/registry';
 import { realtime } from '../realtime/connection';
-import { notify } from '../shell/toasts';
+import { isSessionExpired } from '../errors/describe';
+import { clearToasts, notify } from '../shell/toasts';
 import { fromLayout, toLayout } from './layout';
-import { setPreferredSize } from './preferences';
+import { clearPreferredSizes, setPreferredSize } from './preferences';
 import { initialState } from './state';
 import { dispatch, useDesktop } from './store';
 import type { DesktopState, WindowOptions } from './types';
+import { useWindowUi } from './ui';
 
 /** Saves are debounced; a drag or a burst of focus changes becomes one message. */
 const SAVE_DELAY = 1000;
@@ -46,13 +48,26 @@ function persistedChange(next: DesktopState, previous: DesktopState): boolean {
   );
 }
 
-/** Replaces the desktop with a saved layout. Returns the app ids of windows that could not be restored. */
-export function applyLayout(layout: unknown): string[] {
-  const { state, skipped } = fromLayout(layout, appOptions, useDesktop.getState().workspace);
+function replaceDesktop(state: DesktopState) {
   replacing = true;
   dispatch({ type: 'replace', state });
   replacing = false;
+  // An open window menu or keyboard mode belongs to windows that are gone now.
+  useWindowUi.setState({ menu: null, mode: null });
+}
+
+/** Replaces the desktop with a saved layout. Returns the app ids of windows that could not be restored. */
+export function applyLayout(layout: unknown): string[] {
+  const { state, skipped } = fromLayout(layout, appOptions, useDesktop.getState().workspace);
+  replaceDesktop(state);
   return skipped;
+}
+
+/** Forgets everything of the signed-in user that lives outside React, so the next user of this tab starts clean. */
+function forgetDesktop() {
+  replaceDesktop(initialState(useDesktop.getState().workspace));
+  clearPreferredSizes();
+  clearToasts();
 }
 
 function rememberSize(app: string, width: number, height: number) {
@@ -75,12 +90,11 @@ function rememberSize(app: string, width: number, height: number) {
  * taskbar position over the WebSocket, debounced. Closing a window remembers its size for the app's next window.
  */
 export function useLayoutPersistence() {
-  // A new desktop starts empty, never with the windows of whoever used this tab before.
+  const queryClient = useQueryClient();
+  // A new desktop starts empty. The previous one was already forgotten on unmount; this covers a first start.
   useLayoutEffect(() => {
     saving = false;
-    replacing = true;
-    dispatch({ type: 'replace', state: initialState(useDesktop.getState().workspace) });
-    replacing = false;
+    forgetDesktop();
   }, []);
 
   const desktop = useQuery({
@@ -88,6 +102,8 @@ export function useLayoutPersistence() {
     queryFn: async ({ signal }) => unwrap(await api.GET('/api/desktop', { signal })),
     staleTime: Infinity,
     gcTime: 0,
+    // Saving waits for this, so a daemon restart during sign-in must not disable it for the whole session.
+    retry: (_, error) => !isSessionExpired(error),
   });
 
   // Moves the fetched layout into the window store once; the store lives outside React.
@@ -129,6 +145,9 @@ export function useLayoutPersistence() {
       removeEventListener('pagehide', flushLayoutSave);
       flushLayoutSave();
       saving = false;
+      // Signed out or session ended: nothing of this user may show up for the next one in this tab.
+      forgetDesktop();
+      queryClient.removeQueries({ queryKey: ['desktop'] });
     };
-  }, []);
+  }, [queryClient]);
 }

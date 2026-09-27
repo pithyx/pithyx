@@ -2,6 +2,7 @@ import { flushSync } from 'react-dom';
 import type { PointerEvent as ReactPointerEvent } from 'react';
 import { dragRect, resizeRect, restoreAnchor, snapZoneAt, zoneRect, type Edge } from './geometry';
 import { showPreview } from './preview';
+import { visibleRect } from './state';
 import { dispatch, useDesktop } from './store';
 import type { Point, Rect, SnapZone } from './types';
 
@@ -25,7 +26,7 @@ function currentRect(id: string): Rect | null {
   }
   switch (windowState.placement.kind) {
     case 'free':
-      return windowState.rect;
+      return visibleRect(windowState, state.workspace);
     case 'maximized':
       return zoneRect('maximize', state.workspace);
     case 'snapped':
@@ -50,6 +51,9 @@ function track(
   target.setPointerCapture(pointerId);
   let latest: Point = { x: event.clientX, y: event.clientY };
   let frame = 0;
+  // The end of the gesture is heard on the window: if the element goes away mid-gesture (its window was closed or
+  // maximized from the keyboard), capture is lost, but release and cancel still arrive there.
+  const listeners = new AbortController();
   const onMove = (moveEvent: PointerEvent) => {
     latest = { x: moveEvent.clientX, y: moveEvent.clientY };
     if (frame === 0) {
@@ -61,9 +65,7 @@ function track(
   };
   const finish = (callback: () => void) => {
     cancelAnimationFrame(frame);
-    target.removeEventListener('pointermove', onMove);
-    target.removeEventListener('pointerup', onUp);
-    target.removeEventListener('pointercancel', onCancel);
+    listeners.abort();
     if (target.hasPointerCapture(pointerId)) {
       target.releasePointerCapture(pointerId);
     }
@@ -73,17 +75,28 @@ function track(
       setInteracting(false);
     });
   };
-  const onUp = (upEvent: PointerEvent) => {
-    finish(() => {
-      handlers.end({ x: upEvent.clientX, y: upEvent.clientY });
-    });
-  };
-  const onCancel = () => {
-    finish(handlers.cancel);
-  };
-  target.addEventListener('pointermove', onMove);
-  target.addEventListener('pointerup', onUp);
-  target.addEventListener('pointercancel', onCancel);
+  const options = { capture: true, signal: listeners.signal };
+  target.addEventListener('pointermove', onMove, { signal: listeners.signal });
+  addEventListener(
+    'pointerup',
+    (upEvent) => {
+      if (upEvent.pointerId === pointerId) {
+        finish(() => {
+          handlers.end({ x: upEvent.clientX, y: upEvent.clientY });
+        });
+      }
+    },
+    options,
+  );
+  addEventListener(
+    'pointercancel',
+    (cancelEvent) => {
+      if (cancelEvent.pointerId === pointerId) {
+        finish(handlers.cancel);
+      }
+    },
+    options,
+  );
 }
 
 function isPrimary(event: ReactPointerEvent): boolean {
@@ -122,7 +135,7 @@ export function startDrag(event: ReactPointerEvent<HTMLElement>, id: string, fra
           start = initial;
         } else {
           // Tear the window off its maximized or snapped place at its free size, under the pointer.
-          const torn = restoreAnchor(windowState.rect, initial, local(down));
+          const torn = restoreAnchor(visibleRect(windowState, workspace), initial, local(down));
           start = torn;
           flushSync(() => {
             dispatch({ type: 'move', id, rect: torn });
@@ -178,7 +191,7 @@ export function startResize(
   event.preventDefault();
   event.stopPropagation();
   setInteracting(true);
-  const start = windowState.rect;
+  const start = visibleRect(windowState, state.workspace);
   const down: Point = { x: event.clientX, y: event.clientY };
   let rect = start;
   const write = (next: Rect) => {
@@ -200,6 +213,11 @@ export function startResize(
       write(rect);
     },
     end() {
+      // Maximized or snapped from the keyboard mid-resize: that placement wins over the resize.
+      if (useDesktop.getState().windows[id]?.placement.kind !== 'free') {
+        write(start);
+        return;
+      }
       flushSync(() => {
         dispatch({ type: 'move', id, rect });
       });

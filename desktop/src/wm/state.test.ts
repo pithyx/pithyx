@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { CASCADE_STEP, MIN_VISIBLE, TITLEBAR_HEIGHT } from './geometry';
-import { MAX_WINDOWS, canOpen, initialState, reduce, topVisible } from './state';
+import { MAX_WINDOWS, canOpen, initialState, reduce, topVisible, visibleRect } from './state';
 import type { Action, DesktopState, WindowOptions } from './types';
 
 const workspace = { width: 1440, height: 848 };
@@ -198,25 +198,49 @@ describe('move', () => {
 });
 
 describe('workspace changes', () => {
-  it('brings windows back into a smaller workspace after a resolution change', () => {
+  it('shows windows reachable in a smaller workspace without changing where they belong', () => {
     const wide = run(
       { type: 'setWorkspace', size: { width: 3440, height: 1388 } },
       { type: 'open', app: 'a', options: multi },
       { type: 'move', id: 'w1', rect: { x: 2800, y: 1200, width: 600, height: 400 } },
     );
     const small = reduce(wide, { type: 'setWorkspace', size: { width: 1280, height: 668 } });
-    const rect = small.windows.w1?.rect;
-    expect(rect?.x).toBe(1280 - MIN_VISIBLE);
-    expect(rect?.y).toBe(668 - TITLEBAR_HEIGHT);
-    expect(rect?.width).toBe(600);
+    const window = small.windows.w1;
+    if (window === undefined) {
+      throw new Error('window missing');
+    }
+    expect(visibleRect(window, small.workspace)).toEqual({
+      x: 1280 - MIN_VISIBLE,
+      y: 668 - TITLEBAR_HEIGHT,
+      width: 600,
+      height: 400,
+    });
+    expect(window.rect).toEqual({ x: 2800, y: 1200, width: 600, height: 400 });
+    const again = reduce(small, { type: 'setWorkspace', size: { width: 3440, height: 1388 } });
+    expect(again.windows.w1).toBe(window);
   });
 
-  it('shrinks windows larger than the new workspace', () => {
+  it('shows windows larger than the workspace at the workspace size', () => {
     const state = run(
       { type: 'open', app: 'a', options: multi, size: { width: 1400, height: 800 } },
       { type: 'setWorkspace', size: { width: 390, height: 780 } },
     );
-    expect(state.windows.w1?.rect).toMatchObject({ width: 390, height: 780 });
+    const window = state.windows.w1;
+    expect(window && visibleRect(window, state.workspace)).toMatchObject({
+      width: 390,
+      height: 780,
+    });
+  });
+
+  it('cascades from where the previous window is shown', () => {
+    const state = run(
+      { type: 'open', app: 'a', options: multi },
+      { type: 'move', id: 'w1', rect: { x: 1300, y: 600, width: 800, height: 500 } },
+      { type: 'setWorkspace', size: { width: 1024, height: 700 } },
+      { type: 'open', app: 'a', options: multi },
+    );
+    const second = state.windows.w2?.rect;
+    expect((second?.x ?? 0) + (second?.width ?? 0)).toBeLessThanOrEqual(1024);
   });
 
   it('returns the same state when the size did not change', () => {

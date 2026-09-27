@@ -14,9 +14,13 @@ export function useDismiss(
     if (!open) {
       return;
     }
+    // Menus opened from inside the overlay (the start menu's power menu) render as React Aria popovers in a portal
+    // on the body; they carry data-trigger and count as inside.
     const inside = (target: EventTarget | null) =>
-      target instanceof Node &&
-      (overlay.current?.contains(target) === true || trigger.current?.contains(target) === true);
+      target instanceof Element &&
+      (overlay.current?.contains(target) === true ||
+        trigger.current?.contains(target) === true ||
+        target.closest('[data-trigger]') !== null);
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && !event.defaultPrevented) {
         onDismiss('escape');

@@ -10,3 +10,7 @@ export function preferredSize(app: string): Size | undefined {
 export function setPreferredSize(app: string, size: Size): void {
   sizes.set(app, size);
 }
+
+export function clearPreferredSizes(): void {
+  sizes.clear();
+}

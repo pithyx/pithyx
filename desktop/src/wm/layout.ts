@@ -1,5 +1,4 @@
 import type { TaskbarPosition } from '../shell/types';
-import { clampRect } from './geometry';
 import { MAX_WINDOWS, initialState, topVisible } from './state';
 import type {
   DesktopState,
@@ -125,8 +124,8 @@ export interface RestoredLayout {
 }
 
 /**
- * Turns a saved layout back into state. Windows whose app is unknown or no longer allowed are skipped, geometry
- * is clamped to the current workspace, and anything malformed is dropped instead of failing the whole layout.
+ * Turns a saved layout back into state. Windows whose app is unknown or no longer allowed are skipped, and anything
+ * malformed is dropped instead of failing the whole layout.
  */
 export function fromLayout(
   input: unknown,
@@ -161,7 +160,9 @@ export function fromLayout(
       app: entry.app,
       screen: 1,
       title: typeof entry.title === 'string' ? entry.title : null,
-      rect: clampRect(rect, options.minSize, workspace),
+      // Kept as saved; windows are shown clamped to the workspace (visibleRect), so a layout from a larger screen
+      // gets its positions back there.
+      rect,
       placement: parsePlacement(entry.placement),
       minimized: entry.minimized === true,
       minSize: options.minSize,

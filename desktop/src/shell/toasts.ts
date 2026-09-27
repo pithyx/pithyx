@@ -24,3 +24,7 @@ export function notify(message: Message): void {
     dismissToast(id);
   }, LIFETIME);
 }
+
+export function clearToasts(): void {
+  useToasts.setState({ items: [] });
+}
