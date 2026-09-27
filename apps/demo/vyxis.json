@@ -1,0 +1,15 @@
+{
+  "manifestVersion": 1,
+  "id": "demo",
+  "version": "0.1.0",
+  "name": { "en": "SDK demo", "de": "SDK-Demo" },
+  "icon": "icon.svg",
+  "entry": "index.html",
+  "sdk": "^0.1.0",
+  "permissions": ["notifications"],
+  "window": {
+    "instances": "single",
+    "defaultSize": { "width": 520, "height": 560 },
+    "minSize": { "width": 320, "height": 320 }
+  }
+}

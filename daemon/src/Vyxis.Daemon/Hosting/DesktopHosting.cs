@@ -41,6 +41,12 @@ public static partial class DesktopHosting
             OnPrepareResponse = context =>
             {
                 var headers = context.Context.Response.Headers;
+                // App pages run in sandboxed iframes with an opaque origin; their module scripts and styles load in
+                // CORS mode. These files are public and served without credentials, so any origin may read them.
+                if (context.Context.Request.Path.StartsWithSegments("/apps", StringComparison.Ordinal))
+                {
+                    headers[HeaderNames.AccessControlAllowOrigin] = "*";
+                }
                 headers[HeaderNames.CacheControl] =
                     context.Context.Request.Path.StartsWithSegments("/assets", StringComparison.Ordinal) ? ImmutableCache : "no-cache";
                 if (context.Context.Items[EncodingItem] is string encoding)

@@ -1,0 +1,53 @@
+/* Only the public --vyxis-* tokens: the app follows light, dark and the accent color without knowing the desktop. */
+:root {
+  font-family: var(--vyxis-font-ui, system-ui, sans-serif);
+  font-size: var(--vyxis-font-size, 14px);
+  color: var(--vyxis-color-text, CanvasText);
+  background: var(--vyxis-color-background, Canvas);
+}
+
+body {
+  margin: 0;
+  padding: calc(var(--vyxis-space, 8px) * 2);
+}
+
+h1 {
+  margin-top: 0;
+  font-size: 1.4em;
+}
+
+h2 {
+  font-size: 1.1em;
+}
+
+dl {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 16px;
+}
+
+dd {
+  margin: 0;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--vyxis-space, 8px);
+}
+
+button {
+  min-height: var(--vyxis-control-height, 36px);
+  padding: 0 12px;
+  border: 1px solid var(--vyxis-color-border, ButtonBorder);
+  border-radius: var(--vyxis-radius, 6px);
+  background: var(--vyxis-color-accent, ButtonFace);
+  color: var(--vyxis-color-accent-text, ButtonText);
+  font: inherit;
+}
+
+button:focus-visible,
+input:focus-visible {
+  outline: 2px solid var(--vyxis-color-focus, Highlight);
+  outline-offset: 2px;
+}

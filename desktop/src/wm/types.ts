@@ -84,5 +84,6 @@ export type Action =
   | { type: 'setWorkspace'; size: Size }
   | { type: 'cycle'; direction: 1 | -1 }
   | { type: 'setTitle'; id: string; title: string | null }
+  | { type: 'setArgs'; id: string; args: unknown }
   | { type: 'setTaskbar'; position: TaskbarPosition }
   | { type: 'replace'; state: DesktopState };

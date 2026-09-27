@@ -40,5 +40,11 @@
       "title": "Gespeicherte Fenster nicht geladen",
       "body": "Der Daemon hat nicht geantwortet. Änderungen an diesem Desktop werden erst nach dem Neuladen der Seite gespeichert."
     }
+  },
+  "app": {
+    "message": {
+      "title": "{title}",
+      "body": "{body}"
+    }
   }
 }

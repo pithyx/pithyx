@@ -1,0 +1,16 @@
+{
+  "name": "@vyxis/app-demo",
+  "private": true,
+  "description": "Sample third-party app: plain TypeScript on @vyxis/sdk in a sandboxed window",
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@vyxis/sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "vite": "^8.3.1"
+  }
+}

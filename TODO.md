@@ -292,7 +292,8 @@ Goal: the desktop works like a desktop, and apps can be built against the SDK.
 
 Spec first, then implementation together with the sample apps. Freeze SDK 1.0 only after the file manager (step 6) runs on it.
 
-- [ ] Write the SDK specification as TypeScript interfaces with TSDoc: transports, handshake, versioning, error model, and the lifecycle below. `[REVIEW]`
+- [ ] Write the SDK specification as TypeScript interfaces with TSDoc: transports, handshake, versioning, error model, and the lifecycle below. `[REVIEW]` Draft in the `feature/sdk-spec` PR (types in `sdk/src/`, prototype `apps/demo`, decisions D54 to D66 in the PR); waits for the owner's review.
+- [ ] After the spec review: daemon-backed app storage (`/api/apps/{id}/storage`, D61), `sdk.*` error texts under `errors.sdk.*` with a completeness test (D57), the "not responding, close anyway?" dialog for `beforeClose` (D62), "Close all" in the app switcher asking guarded windows, relaunch of `single` apps sending `launch`, and the Vite dev server serving `apps/*` (only the production build does today).
 - [ ] Lifecycle events: `launch` (with arguments, for example a file to open), `focus`, `blur`, `minimize`, `restore`, `beforeClose` (can be vetoed for unsaved changes), `beforeLogout` (last chance to save), `themeChange`, `localeChange`, `openFile` (file handler).
 - [ ] Manifest fields for runtime behavior: `window.instances` (`single` or `multi`), `backend.lifecycle` (`always` or `onDemand`), `backend.idleTimeout`, `backend.resources` (memory, CPU), `backend.schedules`.
 - [ ] Lifecycle events for updates and failures: `appUpdated` (reload required), `backendUnavailable`, `backendRestored`, `permissionRevoked`.

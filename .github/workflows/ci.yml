@@ -103,7 +103,7 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: dotnet build daemon/Vyxis.slnx
-      - run: pnpm --filter @vyxis/desktop build
+      - run: pnpm --filter "@vyxis/desktop..." build
       - run: pnpm --filter @vyxis/e2e exec playwright install --with-deps chromium
       - run: pnpm e2e
       - run: pnpm design:test

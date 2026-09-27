@@ -40,5 +40,11 @@
       "title": "Saved windows not loaded",
       "body": "The daemon did not answer. Changes to this desktop are not saved until you reload the page."
     }
+  },
+  "app": {
+    "message": {
+      "title": "{title}",
+      "body": "{body}"
+    }
   }
 }

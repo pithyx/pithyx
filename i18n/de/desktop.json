@@ -140,7 +140,8 @@
     "containers": "Container",
     "terminal": "Terminal",
     "disks": "Laufwerke",
-    "about": "Über Vyxis"
+    "about": "Über Vyxis",
+    "demo": "SDK-Demo"
   },
   "roles": {
     "administrator": "Administrator",

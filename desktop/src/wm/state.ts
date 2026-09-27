@@ -169,6 +169,8 @@ export function reduce(state: DesktopState, action: Action): DesktopState {
       return cycle(state, action.direction);
     case 'setTitle':
       return update(state, action.id, { title: action.title });
+    case 'setArgs':
+      return update(state, action.id, { args: action.args });
     case 'setTaskbar':
       return { ...state, taskbar: action.position };
     case 'replace':

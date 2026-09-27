@@ -30,6 +30,27 @@ function say(message: Announcement, id: string) {
   announce(i18next.t(`window.announce.${message}`, { title }));
 }
 
+// Apps that may keep their window open (unsaved changes) register a guard; every close the user starts asks it.
+const closeGuards = new Map<string, () => Promise<boolean>>();
+
+/** Lets an app window veto a close the user started. Returns a function that removes the guard. */
+export function guardClose(id: string, guard: () => Promise<boolean>): () => void {
+  closeGuards.set(id, guard);
+  return () => {
+    if (closeGuards.get(id) === guard) {
+      closeGuards.delete(id);
+    }
+  };
+}
+
+/** Closes a window unless its app keeps it open. */
+export async function requestClose(id: string): Promise<void> {
+  const guard = closeGuards.get(id);
+  if (guard === undefined || (await guard())) {
+    dispatch({ type: 'close', id });
+  }
+}
+
 /** A window action from the window menu or the keyboard, announced for screen reader users. */
 export function runWindowCommand(id: string, command: WindowCommand) {
   const state = useDesktop.getState();
@@ -70,7 +91,7 @@ export function runWindowCommand(id: string, command: WindowCommand) {
       say(command, id);
       break;
     case 'close':
-      dispatch({ type: 'close', id });
+      void requestClose(id);
       break;
   }
 }
