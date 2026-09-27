@@ -99,6 +99,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- The start menu is now the Pithyx menu. Sign out has its own button next to the power button, which only appears for users who may restart or shut down; the account menu keeps two-factor, language, "Get desktop from ..." and the taskbar position. A tap on the Meta key (the Windows key) opens and closes the Pithyx menu.
+- Signing out closes every window, so the next sign-in starts with an empty desktop; a reload still restores the windows.
+- The wallpaper draws the open boxes and floating lids of the new logo.
+- The word mark's drawn theta carries the real character, so "PIΘYX" can be selected and copied. About no longer says "Based on Pithyx" about Pithyx itself; forks keep that attribution as NOTICE requires.
+- Inline error messages show the request id only when the daemon failed; a wrong password or an invalid name shows just the message. Error dialogs keep it.
+- The search field shows focus with its rounded border instead of a square outline.
 - The sign-in screen loads 15 KB less (gzip): only the active language's texts are loaded, the sign-in screen's before the first render, the desktop shell's with the desktop and each app's with the app; ICU messages are compiled at build time, so the browser no longer loads the ICU parser. Switching the language loads the new language's texts first.
 - The project is now called Pithyx (pronounced "PITH-iks"). Everything carries the new name: the daemon (`Pithyx.Daemon`, assembly `pithyxd`), the npm packages (`@pithyx/*`), environment variables (`PITHYX_*`), headers (`X-Pithyx-*`), cookies (`pithyx_session`, `pithyx_device`, so everyone signs in once more), paths (`/etc/pithyx`, `/var/lib/pithyx`, `/var/log/pithyx`, `.pithyx-trash` in shares), the SDK theme variables (`--pithyx-*`), the app manifest file (`pithyx.json`) and the dev VM's test pools (`pithyxtest*`). The fixed alternative port moves from 8994 to 7484. There is no compatibility with the old name.
 - New logo: an isometric pithos whose lid opens. The start button opens it on hover, focus and while the start menu is open; setup loops it, the welcome card and About open it once, and the "daemon unreachable" screen lets it breathe while retrying. Reduced motion stops every animation. The word mark reads PIΘYX; Sora has no Greek, so its theta is drawn from Sora's O with a bar as strong as the H's. About tells where the name comes from.

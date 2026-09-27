@@ -26,7 +26,7 @@ test('the taskbar takes no presses while it slides in and slides in only once', 
   const viewport = page.viewportSize() ?? { width: 1280, height: 720 };
   // Where the start button ends up; a press there now must reach nothing in the moving taskbar.
   await page.mouse.click(30, viewport.height - 26);
-  await expect(page.getByRole('dialog', { name: 'Start menu' })).toHaveCount(0);
+  await expect(page.getByRole('dialog', { name: 'Pithyx menu' })).toHaveCount(0);
   await expect(page.getByRole('menu')).toHaveCount(0);
 
   await cdp.send('Animation.setPlaybackRate', { playbackRate: 1 });

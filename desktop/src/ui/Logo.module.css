@@ -177,6 +177,20 @@
   letter-spacing: var(--letter-spacing-display);
 }
 
+.thetaGlyph {
+  position: relative;
+  display: inline-block;
+}
+
+/* The copyable character, invisible over the drawn glyph. */
+.thetaText {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  color: transparent;
+  text-align: center;
+}
+
 /* Glyph box of the O: 865 by 770 units, 19 of them below the baseline. */
 .theta {
   width: 0.865em;

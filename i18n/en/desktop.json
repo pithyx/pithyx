@@ -48,7 +48,7 @@
   },
   "taskbar": {
     "label": "Taskbar",
-    "start": "Start",
+    "start": "Pithyx menu",
     "runningApps": "Running apps",
     "app": "{state, select, minimized {{name}, minimized} focused {{name}, active} other {{name}}}",
     "switcher": "{count, plural, one {Switch apps, # open} other {Switch apps, # open}}",
@@ -62,7 +62,7 @@
     }
   },
   "start": {
-    "label": "Start menu",
+    "label": "Pithyx menu",
     "searchLabel": "Search apps, settings and files",
     "search": "Search",
     "pinned": "Pinned",
@@ -178,7 +178,7 @@
     "story": "Pandora never opened a box: she opened a pithos, a great storage jar, which Erasmus later mistranslated as a box. What stayed inside was hope, and Pithyx keeps what matters, on your hardware.",
     "licenseTitle": "License",
     "license": "Pithyx is free software under the GNU Affero General Public License version 3. The SDK is licensed under the MIT License.",
-    "attribution": "Based on Pithyx (https://github.com/vyxis/vyxis), created by the Pithyx contributors and licensed under the GNU AGPL-3.0.",
+    "attribution": "Pithyx (https://github.com/vyxis/vyxis) is created by the Pithyx contributors and licensed under the GNU AGPL-3.0. Modified versions keep this attribution, as NOTICE asks.",
     "source": "Source code",
     "noticesTitle": "Third-party software",
     "licenseText": "License text",

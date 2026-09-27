@@ -48,7 +48,7 @@
   },
   "taskbar": {
     "label": "Taskleiste",
-    "start": "Start",
+    "start": "Pithyx-Menü",
     "runningApps": "Laufende Apps",
     "app": "{state, select, minimized {{name}, minimiert} focused {{name}, aktiv} other {{name}}}",
     "switcher": "{count, plural, one {Apps wechseln, # geöffnet} other {Apps wechseln, # geöffnet}}",
@@ -62,7 +62,7 @@
     }
   },
   "start": {
-    "label": "Startmenü",
+    "label": "Pithyx-Menü",
     "searchLabel": "Apps, Einstellungen und Dateien durchsuchen",
     "search": "Suchen",
     "pinned": "Angeheftet",
@@ -178,7 +178,7 @@
     "story": "Pandora hat nie eine Büchse geöffnet, sondern einen Pithos, ein großes Vorratsgefäß, das Erasmus später fälschlich als Büchse übersetzte. Drin geblieben ist die Hoffnung, und Pithyx bewahrt, was dir wichtig ist, auf deiner eigenen Hardware.",
     "licenseTitle": "Lizenz",
     "license": "Pithyx ist freie Software unter der GNU Affero General Public License Version 3. Das SDK steht unter der MIT-Lizenz.",
-    "attribution": "Based on Pithyx (https://github.com/vyxis/vyxis), created by the Pithyx contributors and licensed under the GNU AGPL-3.0.",
+    "attribution": "Pithyx (https://github.com/vyxis/vyxis) wird von den Pithyx-Mitwirkenden entwickelt und steht unter der GNU AGPL-3.0. Veränderte Fassungen behalten diesen Hinweis, wie es NOTICE verlangt.",
     "source": "Quellcode",
     "noticesTitle": "Software von Dritten",
     "licenseText": "Lizenztext",

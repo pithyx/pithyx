@@ -48,17 +48,17 @@ test('the desktop with windows, menus and the start menu has no accessibility vi
 }) => {
   await signInAsAdmin(page);
   await openFromDesktop(page, 'Disks');
-  await page.getByRole('button', { name: 'Start' }).click();
+  await page.getByRole('button', { name: 'Pithyx menu' }).click();
   await page
-    .getByRole('dialog', { name: 'Start menu' })
+    .getByRole('dialog', { name: 'Pithyx menu' })
     .getByRole('row', { name: 'About Pithyx' })
     .click();
   await expect(appWindow(page, 'About Pithyx')).toBeVisible();
   await expect(appWindow(page, 'Disks').getByRole('row').nth(3)).toBeVisible();
   expect(await violations(page)).toEqual([]);
 
-  await page.getByRole('button', { name: 'Start' }).click();
-  await expect(page.getByRole('dialog', { name: 'Start menu' })).toBeVisible();
+  await page.getByRole('button', { name: 'Pithyx menu' }).click();
+  await expect(page.getByRole('dialog', { name: 'Pithyx menu' })).toBeVisible();
   expect(await violations(page)).toEqual([]);
   await page.keyboard.press('Escape');
 
@@ -127,9 +127,9 @@ test.describe('phone', () => {
 
   test('the account menu opens from the start menu by touch', async ({ page }) => {
     await signInAsAdmin(page);
-    await page.getByRole('button', { name: 'Start' }).tap();
+    await page.getByRole('button', { name: 'Pithyx menu' }).tap();
     await page
-      .getByRole('dialog', { name: 'Start menu' })
+      .getByRole('dialog', { name: 'Pithyx menu' })
       .getByRole('button', { name: 'Account menu for Ada Admin' })
       .tap();
     await expect(page.getByRole('menu', { name: 'Account menu for Ada Admin' })).toBeVisible();

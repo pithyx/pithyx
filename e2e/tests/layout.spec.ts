@@ -17,9 +17,9 @@ test('the layout survives a reload', async ({ page }) => {
   const saved = layoutSaved(page);
   await signInAsAdmin(page);
   await openFromDesktop(page, 'Disks');
-  await page.getByRole('button', { name: 'Start' }).click();
+  await page.getByRole('button', { name: 'Pithyx menu' }).click();
   await page
-    .getByRole('dialog', { name: 'Start menu' })
+    .getByRole('dialog', { name: 'Pithyx menu' })
     .getByRole('row', { name: 'About Pithyx' })
     .click();
   const about = appWindow(page, 'About Pithyx');
@@ -48,9 +48,9 @@ test('another device gets this desktop', async ({ browser }) => {
   const saved = layoutSaved(first);
   await signInAsAdmin(first);
   await openFromDesktop(first, 'Disks');
-  await first.getByRole('button', { name: 'Start' }).click();
+  await first.getByRole('button', { name: 'Pithyx menu' }).click();
   await first
-    .getByRole('dialog', { name: 'Start menu' })
+    .getByRole('dialog', { name: 'Pithyx menu' })
     .getByRole('row', { name: 'About Pithyx' })
     .click();
   await saved;
