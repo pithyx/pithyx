@@ -1,6 +1,18 @@
 {
   "$comment": "Golden cases for the two ICU renderers: IcuMessageFormatter (daemon) and i18next-icu (desktop). Both test suites render every entry and must produce exactly `expected`. Every code in i18n/en/errors.json needs an entry with example params.",
   "errors": {
+    "app.permission.denied": {
+      "params": {
+        "permission": "notifications"
+      },
+      "expected": "The app is not allowed to do this (notifications)."
+    },
+    "app.storage.too_large": {
+      "params": {
+        "maxKb": 64
+      },
+      "expected": "The app tried to store more than it may keep. The limit is 64 KB."
+    },
     "auth.challenge.expired": {
       "params": {},
       "expected": "The sign-in step has expired. Please sign in again."
@@ -255,6 +267,36 @@
     "request.route.not_found": {
       "params": {},
       "expected": "This API endpoint does not exist."
+    },
+    "sdk.method.unknown": {
+      "params": {
+        "method": "storage.get"
+      },
+      "expected": "This version of Vyxis does not support what the app asked for (storage.get)."
+    },
+    "sdk.protocol.unsupported": {
+      "params": {
+        "protocol": 3,
+        "min": 1,
+        "max": 2
+      },
+      "expected": "This app needs another version of Vyxis (protocol 3, supported 1 to 2)."
+    },
+    "sdk.request.invalid": {
+      "params": {
+        "method": "notify"
+      },
+      "expected": "The app sent a request the desktop cannot process (notify)."
+    },
+    "sdk.request.timeout": {
+      "params": {
+        "method": "notify"
+      },
+      "expected": "The desktop did not answer the app in time (notify)."
+    },
+    "sdk.transport.closed": {
+      "params": {},
+      "expected": "The connection between the app and the desktop is closed. Open the app again."
     },
     "system.internal.unexpected": {
       "params": {},

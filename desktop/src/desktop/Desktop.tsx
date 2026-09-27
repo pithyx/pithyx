@@ -20,6 +20,7 @@ import { Header, MenuSection, SubmenuTrigger } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { queryKeys } from '../api/queries';
+import { runBeforeLogout } from '../apps/lifecycle';
 import { useAppName } from '../apps/names';
 import { coreApps, findApp } from '../apps/registry';
 import { initialsOf } from '../auth/parts';
@@ -52,6 +53,7 @@ import { useBackGesture } from '../wm/backGesture';
 import { applySavedLayout, saveLayoutBeforeSignOut, useLayoutPersistence } from '../wm/persistence';
 import { useSizeClass } from '../wm/sizeClass';
 import { dispatch, openApp, useDesktop } from '../wm/store';
+import { requestClose } from '../wm/commands';
 import { WindowLayer } from '../wm/WindowLayer';
 import { useMinuteClock } from './clock';
 import styles from './Desktop.module.css';
@@ -376,7 +378,7 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   const logout = useMutation({
     mutationFn: async () => {
       // After the sign-out a save is refused; one still waiting for its debounce goes out first.
-      await Promise.all([saveLayoutBeforeSignOut(), settleItemWrites()]);
+      await Promise.all([saveLayoutBeforeSignOut(), settleItemWrites(), runBeforeLogout()]);
       unwrap(await api.POST('/api/auth/logout'));
     },
     onSuccess: async () => {
@@ -519,7 +521,7 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
                   dispatch({ type: 'focus', id });
                 }}
                 onClose={(id) => {
-                  dispatch({ type: 'close', id });
+                  void requestClose(id);
                 }}
                 onCloseAll={() => {
                   setSwitcherOpen(false);

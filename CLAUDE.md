@@ -101,7 +101,7 @@ website/  landing page and user docs (Starlight, Markdown)
 ## Errors
 
 - Every error has a stable code: `area.object.reason`, lowercase, dots for hierarchy, underscores inside a word. Example: `fs.file.not_found`.
-- Error codes are defined once as C# constants. The TypeScript union is generated from them.
+- Error codes are defined once as C# constants. The TypeScript union is generated from them. The only exception are the SDK's transport codes (`sdkErrorCodes` in `sdk/src/errors.ts`), which never cross the API; they have texts under `errors.sdk.*`, checked by a test.
 - Responses use RFC 9457 problem details with `code`, `params`, `detail` (English fallback) and `requestId`.
 - The server never returns translated text through the API. Exception: out-of-band channels (email, push, SSH MOTD) are rendered server-side from the same i18n files in the recipient's language.
 - A new error code without an `en` translation fails CI.

@@ -2234,6 +2234,8 @@
       },
       "ErrorCode": {
         "enum": [
+          "app.permission.denied",
+          "app.storage.too_large",
           "auth.challenge.expired",
           "auth.credentials.invalid",
           "auth.csrf.header_missing",

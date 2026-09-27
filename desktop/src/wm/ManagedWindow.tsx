@@ -2,6 +2,7 @@ import { Suspense, useEffect, useRef } from 'react';
 import { findApp } from '../apps/registry';
 import { useAppName } from '../apps/names';
 import { WindowFrame, type MediumPlacement } from '../shell/Window';
+import { requestClose } from './commands';
 import { mediumZone, zoneRect, type Edge } from './geometry';
 import { startDrag, startResize } from './pointer';
 import { useSizeClass } from './sizeClass';
@@ -111,7 +112,7 @@ export function ManagedWindow({ id }: { id: string }) {
         dispatch({ type: 'toggleMaximize', id });
       }}
       onClose={() => {
-        dispatch({ type: 'close', id });
+        void requestClose(id);
       }}
     >
       <Suspense fallback={null}>

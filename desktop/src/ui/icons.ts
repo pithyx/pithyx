@@ -3,6 +3,7 @@
 export type { TablerIcon } from '@tabler/icons-react';
 export { default as IconAlertCircle } from '@tabler/icons-react/dist/esm/icons/IconAlertCircle.mjs';
 export { default as IconAlertTriangle } from '@tabler/icons-react/dist/esm/icons/IconAlertTriangle.mjs';
+export { default as IconApps } from '@tabler/icons-react/dist/esm/icons/IconApps.mjs';
 export { default as IconArrowLeft } from '@tabler/icons-react/dist/esm/icons/IconArrowLeft.mjs';
 export { default as IconArrowRight } from '@tabler/icons-react/dist/esm/icons/IconArrowRight.mjs';
 export { default as IconArrowUpRight } from '@tabler/icons-react/dist/esm/icons/IconArrowUpRight.mjs';

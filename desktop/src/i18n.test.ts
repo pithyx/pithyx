@@ -1,6 +1,7 @@
 import { IntlMessageFormat } from 'intl-messageformat';
 import { describe, expect, it } from 'vitest';
 import { errorCodes } from '@vyxis/api-client';
+import { sdkErrorCodes } from '@vyxis/sdk';
 import { coreApps } from './apps/registry';
 import { detectLanguage, resources } from './i18n';
 
@@ -35,6 +36,13 @@ describe('translations', () => {
       Object.keys(namespaces).map((ns) => `${language}/${ns}`),
     );
     expect(loaded.sort()).toEqual(files.sort());
+  });
+
+  it('explain every SDK transport code in en and de', () => {
+    for (const code of sdkErrorCodes) {
+      expect(en.get(`errors.${code}`), code).toBeDefined();
+      expect(de.get(`errors.${code}`), code).toBeDefined();
+    }
   });
 
   it('name every core app', () => {

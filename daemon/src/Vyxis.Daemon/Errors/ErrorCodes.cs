@@ -10,6 +10,14 @@ namespace Vyxis.Daemon.Errors;
 /// </summary>
 public static class ErrorCodes
 {
+    /// <summary>The app lacks a permission the call needs, or an administrator revoked it; <c>params.permission</c> names it.</summary>
+    [ErrorStatus(HttpStatusCode.Forbidden)]
+    public const string AppPermissionDenied = "app.permission.denied";
+
+    /// <summary>A value an app stores is larger than its limit; <c>params.maxKb</c> is the limit.</summary>
+    [ErrorStatus(HttpStatusCode.RequestEntityTooLarge)]
+    public const string AppStorageTooLarge = "app.storage.too_large";
+
     [ErrorStatus(HttpStatusCode.Unauthorized)]
     public const string AuthChallengeExpired = "auth.challenge.expired";
 

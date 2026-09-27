@@ -44,5 +44,11 @@
       "title": "Note text kept",
       "body": "{count, plural, one {A note was changed on another device while you wrote on it. Your text is on a new note next to it.} other {# notes were changed on another device while you wrote on them. Your texts are on new notes next to them.}}"
     }
+  },
+  "app": {
+    "message": {
+      "title": "{title}",
+      "body": "{body}"
+    }
   }
 }

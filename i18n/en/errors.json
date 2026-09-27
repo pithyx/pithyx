@@ -1,4 +1,12 @@
 {
+  "app": {
+    "permission": {
+      "denied": "The app is not allowed to do this ({permission})."
+    },
+    "storage": {
+      "too_large": "The app tried to store more than it may keep. The limit is {maxKb} KB."
+    }
+  },
   "auth": {
     "challenge": {
       "expired": "The sign-in step has expired. Please sign in again."
@@ -137,6 +145,21 @@
     },
     "route": {
       "not_found": "This API endpoint does not exist."
+    }
+  },
+  "sdk": {
+    "method": {
+      "unknown": "This version of Vyxis does not support what the app asked for ({method})."
+    },
+    "protocol": {
+      "unsupported": "This app needs another version of Vyxis (protocol {protocol}, supported {min} to {max})."
+    },
+    "request": {
+      "invalid": "The app sent a request the desktop cannot process ({method}).",
+      "timeout": "The desktop did not answer the app in time ({method})."
+    },
+    "transport": {
+      "closed": "The connection between the app and the desktop is closed. Open the app again."
     }
   },
   "system": {

@@ -1,4 +1,4 @@
-import { IconDatabase, IconInfoCircle, type TablerIcon } from '../ui/icons';
+import { IconApps, IconDatabase, IconInfoCircle, type TablerIcon } from '../ui/icons';
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react';
 import type { AppTone } from '../shell/types';
 import type { WindowOptions } from '../wm/types';
@@ -46,6 +46,29 @@ export const coreApps: readonly CoreApp[] = [
     },
     Component: lazy(() =>
       import('./about/AboutApp').then(({ AboutApp }) => ({ default: AboutApp })),
+    ),
+  },
+  {
+    // Prototype for the SDK spec: a third-party app in a sandboxed window (apps/demo), until manifests drive this list.
+    id: 'demo',
+    icon: IconApps,
+    tone: 'plum',
+    window: {
+      instances: 'single',
+      defaultSize: { width: 520, height: 560 },
+      minSize: { width: 320, height: 320 },
+    },
+    Component: lazy(() =>
+      import('./sandbox/SandboxApp').then(({ SandboxApp }) => ({
+        default: ({ windowId }: AppProps) => (
+          <SandboxApp
+            windowId={windowId}
+            app="demo"
+            entry="/apps/demo/index.html"
+            permissions={['notifications']}
+          />
+        ),
+      })),
     ),
   },
 ];

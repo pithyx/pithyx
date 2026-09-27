@@ -308,7 +308,24 @@ Goal: the desktop works like a desktop, and apps can be built against the SDK.
 
 Spec first, then implementation together with the sample apps. Freeze SDK 1.0 only after the file manager (step 6) runs on it.
 
-- [ ] Write the SDK specification as TypeScript interfaces with TSDoc: transports, handshake, versioning, error model, and the lifecycle below. `[REVIEW]`
+Guardrails (set by the owner on 2026-09-27, binding like `CLAUDE.md`; the spec and every later SDK change follow them):
+
+1. Apps never see cookies, the session or the desktop DOM. Third-party apps always run in the sandboxed iframe. Permissions are checked on the server.
+2. Core apps use the same API as third-party apps; only the transport differs.
+3. Permissions are declared in the manifest, confirmed by an administrator and revocable (`permissionRevoked`).
+4. SemVer on the SDK interface. Deprecations last one major version.
+5. Everything is async. Errors are RFC 9457 problems with a code and params.
+6. Theme, accent, locale and density reach apps as CSS variables plus events. `@vyxis/ui` stays optional.
+7. Apps control only their own windows. No focus stealing without a user action.
+8. App backends are reached through YARP; their only identity source is `X-Vyxis-User`.
+9. File access only through the SDK file API. File types for `openFile` are declared in the manifest.
+10. Not in v1: app-to-app communication, background tasks without a window, widgets.
+11. The SDK provides the locale and formatters, plus an optional i18n helper for ICU JSON. Apps may bring their own i18n.
+12. Named storage requests in the manifest. An administrator maps them to real shares; the app never sees real paths.
+13. Elevated rights are allowed, each named on its own (`docker.socket`, `host.network`, `device:<path>`, ..., `host.full`). They apply to the backend container only. Installing needs plain-language risk text plus password (and TOTP), by administrators only. New rights in an update need a new confirmation. A permanent badge, an audit log entry, revocable. Never sessions, password hashes or recovery keys of other users.
+
+- [ ] Write the SDK specification as TypeScript interfaces with TSDoc: transports, handshake, versioning, error model, and the lifecycle below. `[REVIEW]` Draft in the `feature/sdk-spec` PR (types in `sdk/src/`, prototype `apps/demo`, decisions D54 to D66 and the guardrail review D68 to D78 in the PR); waits for the owner's review.
+- [ ] After the spec review: daemon-backed app storage (`/api/apps/{id}/storage`, D61), the "not responding, close anyway?" dialog for `beforeClose` (D62), "Close all" in the app switcher asking guarded windows, relaunch of `single` apps sending `launch`, and the Vite dev server serving `apps/*` (only the production build does today).
 - [ ] Lifecycle events: `launch` (with arguments, for example a file to open), `focus`, `blur`, `minimize`, `restore`, `beforeClose` (can be vetoed for unsaved changes), `beforeLogout` (last chance to save), `themeChange`, `localeChange`, `openFile` (file handler).
 - [ ] Manifest fields for runtime behavior: `window.instances` (`single` or `multi`), `backend.lifecycle` (`always` or `onDemand`), `backend.idleTimeout`, `backend.resources` (memory, CPU), `backend.schedules`.
 - [ ] Lifecycle events for updates and failures: `appUpdated` (reload required), `backendUnavailable`, `backendRestored`, `permissionRevoked`.
@@ -317,8 +334,9 @@ Spec first, then implementation together with the sample apps. Freeze SDK 1.0 on
 - [ ] App manifest: JSON Schema as the source, C# and TS types generated, validation with clear error codes.
 - [ ] App registry: core apps loaded with `import()` in the desktop context; third-party apps in iframes with `sandbox="allow-scripts allow-forms"` (no `allow-same-origin`), served from the same host.
 - [ ] SDK transport: one `MessageChannel` per app instance, `init` handshake with SDK version, locale and theme tokens.
-- [ ] SDK API v1: `window.setTitle`, `window.close`, `window.setSize`, `notify`, `session.save`, `session.restore`, `storage.get`, `storage.set` (daemon-backed, replaces `localStorage` in opaque-origin iframes).
-- [ ] Permission broker in the desktop; app identity comes from the port.
+- [ ] SDK API v1: `window.setTitle`, `window.close`, `window.setSize`, `notify`, `session.save`, `session.restore`, `storage.get`, `storage.set` (daemon-backed, replaces `localStorage` in opaque-origin iframes), the file API (`files.pick`, `files.saveAs`, `files.read`, `files.write`, `files.url`, `files.list`, `files.open` with opaque file handles, served with step 6), formatters and the optional `@vyxis/sdk/i18n` helper.
+- [ ] Permission broker in the desktop; app identity comes from the port. The broker only answers early; the daemon checks every permission again (guardrail 1), with `app.permission.denied`.
+- [ ] Daemon side of the manifest permissions (M4): install dialog with confirmation, per-permission revoke pushed as `permissionRevoked`, named storage mapping to share folders, elevated rights with risk texts, password and TOTP confirmation, badge, audit log and the filtering Docker socket proxy (guardrail 13, D71). The `host.full` warning says plainly that it is root on the host and that the promise about other users' secrets then only covers the SDK API.
 - [ ] Two sample apps: one core app in React, one third-party app in plain TypeScript that uses only `@vyxis/sdk`.
 - [ ] SDK reference generated with TypeDoc.
 
