@@ -88,6 +88,7 @@ export function PoolWizard({
   return (
     <Dialog
       isOpen
+      size="large"
       isDismissable={job === null || isFinished(job)}
       onOpenChange={(open) => {
         if (!open) {
