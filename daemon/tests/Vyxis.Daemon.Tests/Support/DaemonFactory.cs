@@ -9,7 +9,17 @@ namespace Vyxis.Daemon.Tests.Support;
 /// <summary>Runs the daemon in memory with its files in a temporary directory.</summary>
 public class DaemonFactory : WebApplicationFactory<Program>
 {
-    public string DataDirectory { get; } = Directory.CreateTempSubdirectory("vyxis-test-").FullName;
+    private string? _dataDirectory;
+
+    /// <summary>A new temporary directory, or the one of an earlier factory to play a daemon restart.</summary>
+    public string DataDirectory
+    {
+        get => _dataDirectory ??= Directory.CreateTempSubdirectory("vyxis-test-").FullName;
+        init => _dataDirectory = value;
+    }
+
+    /// <summary>Leaves the files behind on dispose, for a factory that plays the restart.</summary>
+    public bool KeepDataDirectory { get; init; }
 
     /// <summary>The daemon's clock. Starts at the current time and only moves when a test advances it.</summary>
     public FakeTimeProvider Time { get; } = new(DateTimeOffset.UtcNow);
@@ -34,9 +44,9 @@ public class DaemonFactory : WebApplicationFactory<Program>
     protected override void Dispose(bool disposing)
     {
         base.Dispose(disposing);
-        if (disposing && Directory.Exists(DataDirectory))
+        if (disposing && !KeepDataDirectory && _dataDirectory is not null && Directory.Exists(_dataDirectory))
         {
-            Directory.Delete(DataDirectory, recursive: true);
+            Directory.Delete(_dataDirectory, recursive: true);
         }
     }
 }

@@ -7,11 +7,14 @@ using Vyxis.Daemon.Auth;
 using Vyxis.Daemon.Commands;
 using Vyxis.Daemon.Database;
 using Vyxis.Daemon.Errors;
+using Vyxis.Daemon.Files;
 using Vyxis.Daemon.Health;
 using Vyxis.Daemon.Hosting;
+using Vyxis.Daemon.Jobs;
 using Vyxis.Daemon.Layouts;
 using Vyxis.Daemon.Monitoring;
 using Vyxis.Daemon.Realtime;
+using Vyxis.Daemon.Shares;
 using Vyxis.Daemon.Storage;
 
 const int HttpPort = 8994;
@@ -38,6 +41,9 @@ builder.Services.AddSingleton<MigrationRunner>();
 builder.Services.AddVyxisErrors();
 builder.Services.AddVyxisAuth();
 builder.Services.AddVyxisLayouts();
+builder.Services.AddVyxisJobs();
+builder.Services.AddVyxisShares();
+builder.Services.AddVyxisFiles();
 builder.Services.AddSingleton<TopicRegistry>();
 builder.Services.AddSingleton<TopicHub>();
 builder.Services.AddSingleton<SystemInfoSampler>();
@@ -68,6 +74,11 @@ if (!BuildTimeDocument.IsGenerating)
     try
     {
         await app.Services.GetRequiredService<MigrationRunner>().RunAsync(Migration.Embedded(), CancellationToken.None);
+        if (mode == DaemonMode.Simulated)
+        {
+            var shares = Path.Combine(Path.GetDirectoryName(paths.DatabasePath)!, "shares");
+            await app.Services.GetRequiredService<ShareService>().SeedSimulationAsync(shares, CancellationToken.None);
+        }
     }
     catch (Exception exception) when (exception is Microsoft.Data.Sqlite.SqliteException or InvalidOperationException or IOException)
     {
@@ -106,6 +117,9 @@ api.MapGet("/health", () => TypedResults.Ok(new HealthResponse("ok", mode)))
 
 api.MapAuthEndpoints();
 api.MapLayoutEndpoints();
+api.MapJobEndpoints();
+api.MapShareEndpoints();
+api.MapFileEndpoints();
 api.MapGet("/disks", (DiskInventory disks) => TypedResults.Ok(disks.Current))
     .WithName("GetDisks")
     .WithTags("Storage");
