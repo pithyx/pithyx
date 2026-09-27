@@ -17,12 +17,15 @@
 }
 
 .selected,
-.selected:hover {
+.selected:hover,
+.icon[data-selected],
+.icon[data-selected]:hover {
   border-color: rgb(255 255 255 / 45%);
   background: color-mix(in oklab, var(--color-accent) 35%, transparent);
 }
 
-.icon:focus-visible {
+.icon:focus-visible,
+.icon[data-focus-visible] {
   outline: 2px solid var(--color-desktop-label);
   outline-offset: 0;
   box-shadow: 0 0 0 4px var(--petrol-900);

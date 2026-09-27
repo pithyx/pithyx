@@ -597,6 +597,170 @@
           }
         }
       }
+    },
+    "/api/desktop/items": {
+      "get": {
+        "tags": [
+          "Desktop"
+        ],
+        "operationId": "ListDesktopItems",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DesktopItem"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Desktop"
+        ],
+        "description": "Creates an item. The answer is 201 with the item, its URL as Location and its version as ETag.",
+        "operationId": "CreateDesktopItem",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewDesktopItem"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesktopItem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/desktop/items/{id}": {
+      "patch": {
+        "tags": [
+          "Desktop"
+        ],
+        "description": "Changes one item; fields left out stay. Send the item's version from GET /api/desktop/items or the ETag of its last change as If-Match: \"n\". If the item changed in between (for example on another device), the answer is 412 with desktop.item.conflict and the current version in params.version. Without If-Match the change is unconditional. The new version comes back as ETag.",
+        "operationId": "ChangeDesktopItem",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DesktopItemChange"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DesktopItem"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Desktop"
+        ],
+        "description": "Deletes one item. Deleting an item that does not exist (any more) also answers 204.",
+        "operationId": "DeleteDesktopItem",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -705,6 +869,109 @@
         "enum": [
           "real",
           "simulated"
+        ]
+      },
+      "DesktopItem": {
+        "required": [
+          "id",
+          "kind",
+          "app",
+          "name",
+          "text",
+          "column",
+          "row",
+          "version"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Stable id of the item.",
+            "format": "int64"
+          },
+          "kind": {
+            "description": "What the item is.",
+            "$ref": "#/components/schemas/DesktopItemKind"
+          },
+          "app": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Shortcuts: the id of the app it opens."
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Shortcuts: the label the user gave it, or null for the app's name in the user's language."
+          },
+          "text": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Notes: the text."
+          },
+          "column": {
+            "type": "integer",
+            "description": "Grid cell of the item, counted from the top left corner of the desktop.",
+            "format": "int32"
+          },
+          "row": {
+            "type": "integer",
+            "description": "Grid row of the item.",
+            "format": "int32"
+          },
+          "version": {
+            "type": "integer",
+            "description": "Increments with every change. Send it as `If-Match: \"n\"` with the next change of this item.",
+            "format": "int64"
+          }
+        },
+        "description": "An app shortcut or a sticky note on the desktop, shared across the user's devices."
+      },
+      "DesktopItemChange": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Shortcuts: the new label; an empty string goes back to the app's name."
+          },
+          "text": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Notes: the new text."
+          },
+          "column": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "New grid column.",
+            "format": "int32"
+          },
+          "row": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "New grid row.",
+            "format": "int32"
+          }
+        },
+        "description": "A change of one item. Fields left out (or null) stay as they are."
+      },
+      "DesktopItemKind": {
+        "enum": [
+          "shortcut",
+          "note"
         ]
       },
       "DesktopState": {
@@ -1079,9 +1346,14 @@
           "auth.username.invalid",
           "auth.username.reserved",
           "desktop.device.not_found",
+          "desktop.item.conflict",
+          "desktop.item.invalid",
+          "desktop.item.limit_reached",
+          "desktop.item.not_found",
           "desktop.layout.conflict",
           "desktop.layout.invalid",
           "desktop.layout.too_large",
+          "desktop.note.too_long",
           "realtime.message.invalid",
           "realtime.topic.invalid",
           "realtime.topic.unknown",
@@ -1212,6 +1484,51 @@
               "string"
             ],
             "description": "Pass to `/api/auth/login/totp` within five minutes."
+          }
+        }
+      },
+      "NewDesktopItem": {
+        "required": [
+          "kind",
+          "column",
+          "row"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "description": "What to create.",
+            "$ref": "#/components/schemas/DesktopItemKind"
+          },
+          "column": {
+            "type": "integer",
+            "description": "Grid column.",
+            "format": "int32"
+          },
+          "row": {
+            "type": "integer",
+            "description": "Grid row.",
+            "format": "int32"
+          },
+          "app": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Shortcuts: the id of the app to open. Required for shortcuts, not allowed for notes."
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Shortcuts: an own label, or null for the app's name."
+          },
+          "text": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Notes: the text, at most 4000 characters. Required for notes, not allowed for shortcuts."
           }
         }
       },

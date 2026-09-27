@@ -64,6 +64,19 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.NotFound)]
     public const string DesktopDeviceNotFound = "desktop.device.not_found";
 
+    /// <summary>A change of a desktop item named an older version (If-Match); <c>params.version</c> is the current one.</summary>
+    [ErrorStatus(HttpStatusCode.PreconditionFailed)]
+    public const string DesktopItemConflict = "desktop.item.conflict";
+
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string DesktopItemInvalid = "desktop.item.invalid";
+
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string DesktopItemLimitReached = "desktop.item.limit_reached";
+
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string DesktopItemNotFound = "desktop.item.not_found";
+
     /// <summary>A layout save named an older version (If-Match); <c>params.version</c> is the current one.</summary>
     [ErrorStatus(HttpStatusCode.PreconditionFailed)]
     public const string DesktopLayoutConflict = "desktop.layout.conflict";
@@ -73,6 +86,9 @@ public static class ErrorCodes
 
     [ErrorStatus(HttpStatusCode.RequestEntityTooLarge)]
     public const string DesktopLayoutTooLarge = "desktop.layout.too_large";
+
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string DesktopNoteTooLong = "desktop.note.too_long";
 
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string RealtimeMessageInvalid = "realtime.message.invalid";

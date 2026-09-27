@@ -283,7 +283,8 @@ Goal: the desktop works like a desktop, and apps can be built against the SDK.
 
 ### 5.2 Layout memory
 
-- [x] Migration: `desktop_layouts` per user and device with `expires_at`, persistent `window_preferences` per user and app, and `desktop_items` per user (shared across devices). The desktop items UI (files, notes, arranging shortcuts) is still open.
+- [x] Migration: `desktop_layouts` per user and device with `expires_at`, persistent `window_preferences` per user and app, and `desktop_items` per user (shared across devices).
+- [x] Desktop items: shortcuts and sticky notes on a grid with selection, drag, keyboard, menus, rename and removal, saved over REST with a version per item (migration 0004). Files and folders on the desktop come with the file manager (step 6), backed by the `Desktop` folder in the user's home share.
 - [x] Device id stored in a long-lived cookie. "Get desktop from ..." lists the user's other devices and copies that layout.
 - [x] Debounced save over the WebSocket, restore on login with validation (skip windows whose app, path or permission is gone). App ids are checked now; paths and permissions join the same check once apps have them.
 - [x] Hourly cleanup job for expired layouts.
@@ -324,6 +325,7 @@ Effort: high.
 Goal: the performance showcase. It must feel faster than DSM File Station.
 
 - [ ] Detailed task list to be written together with the owner before starting. `[DECISION]`
+- [ ] Files and folders on the desktop: the contents of the `Desktop` folder in the user's home share as desktop items on the same grid (positions stored per user in `desktop_items` with kind `file`), created, renamed and deleted as real files, opened in the file manager. The items UI from step 5 (selection, drag, menus) is ready for them.
 - [ ] Scope: streamed listings over the WebSocket, client cache with stale-while-revalidate, inotify on open folders, prefetch on hover, virtualized list, Web Worker for sort and filter, optimistic actions, thumbnails, tus uploads, explorer keyboard controls, viewers and editor.
 - [ ] Budgets as CI tests: previously visited folder under 16 ms, first chunk of a new folder under 100 ms (LAN, warm cache), 10,000 entries listed server-side under 50 ms (warm), steady 60 fps while scrolling 50,000 entries.
 
@@ -336,7 +338,7 @@ M3 to M6 get their own detailed steps once step 6 is done. Write them into this 
 Known requirements for later milestones:
 
 - Website, first task once `website/` exists: an error code reference generated from `i18n/en/errors.json` (and the translated files), plus a CI check that every code in `ErrorCodes` has a doc entry. Until then error codes are documented only through their i18n texts.
-- Website user docs for the desktop from step 5: window menu and the Alt+Shift shortcuts (and that they do not apply in text fields), snapping and thirds on ultrawide screens, taskbar position, layout memory per device with its 90-day expiry and "Get desktop from ..." (which shows each device's browser, system, screen size and last use), that only the tab in use saves the layout, the phone app switcher, swipe and back gesture, and the `vyxis_device` cookie (what it is, that it holds no personal data, and that it is `Secure` on HTTPS).
+- Website user docs for the desktop from step 5: desktop items (selecting with a frame, Ctrl and Shift, moving by dragging and with Move, F2, Delete, Shift+F10, the note grip and its arrow keys, long press on touch, the 200 item and 4000 character limits, and that note text changed on two devices is kept on a second note), window menu and the Alt+Shift shortcuts (and that they do not apply in text fields), snapping and thirds on ultrawide screens, taskbar position, layout memory per device with its 90-day expiry and "Get desktop from ..." (which shows each device's browser, system, screen size and last use), that only the tab in use saves the layout, the phone app switcher, swipe and back gesture, and the `vyxis_device` cookie (what it is, that it holds no personal data, and that it is `Secure` on HTTPS).
 
 - M3: energy settings: spindown per pool (via hd-idle, off by default), power profiles, and a diagnostic that shows what keeps disks awake (process, file) and CPU package C-state residency.
 - M3: permission model from `CLAUDE.md` (groups, users, shares, protocols, apps, special rights), pool encryption with key vault, SFTP instead of plain FTP.

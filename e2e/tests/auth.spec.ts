@@ -182,7 +182,7 @@ test('phones sign in and see the disks full screen', async ({ browser }) => {
   const page = await context.newPage();
   await page.goto('/');
   await signIn(page, newPassword);
-  await page.getByRole('button', { name: 'Disks, shortcut' }).tap();
+  await page.getByRole('option', { name: 'Disks, shortcut' }).tap();
   const region = disks(page);
   await expect(region.getByRole('row', { name: /sdg/ })).toBeVisible();
   const box = await region.boundingBox();

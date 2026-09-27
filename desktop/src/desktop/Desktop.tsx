@@ -8,7 +8,14 @@ import {
 } from '../ui/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { unwrap, type components } from '@vyxis/api-client';
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from 'react';
 import { Header, MenuSection, SubmenuTrigger } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
@@ -23,8 +30,8 @@ import { useDaemonStatus } from '../daemonStatus';
 import { showError } from '../errors/errorStore';
 import { useRealtime } from '../realtime/connection';
 import { AppSwitcher } from '../shell/AppSwitcher';
-import { DesktopIcon } from '../shell/DesktopIcon';
-import { DesktopItems, DesktopShell } from '../shell/DesktopShell';
+import { DesktopShell } from '../shell/DesktopShell';
+import { itemsQuery, settleItemWrites } from '../items/query';
 import { AriaLocale } from '../ui/AriaLocale';
 import { ToastStack } from '../shell/Notifications';
 import { StartMenu } from '../shell/StartMenu';
@@ -247,6 +254,30 @@ function UserMenu({
   );
 }
 
+// The desktop items (icons, notes, their menus and gestures) are a chunk of their own that starts loading together with
+// this one and shows once it and the items query are there; the taskbar and windows never wait for it.
+type ItemsModule = typeof import('../items/ItemsLayer');
+let itemsModule: ItemsModule | undefined;
+const itemsListeners = new Set<() => void>();
+void import('../items/ItemsLayer').then((module) => {
+  itemsModule = module;
+  for (const listener of itemsListeners) {
+    listener();
+  }
+});
+
+function useItemsModule(): ItemsModule | undefined {
+  return useSyncExternalStore(
+    (listener) => {
+      itemsListeners.add(listener);
+      return () => {
+        itemsListeners.delete(listener);
+      };
+    },
+    () => itemsModule,
+  );
+}
+
 /** Keeps the window manager's workspace size in sync with the element windows are placed in. */
 function useWorkspaceSize() {
   const workspace = useRef<HTMLElement>(null);
@@ -310,6 +341,8 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   const switcher = useRef<HTMLElement>(null);
   const workspace = useWorkspaceSize();
   useLayoutPersistence();
+  useQuery(itemsQuery);
+  const items = useItemsModule();
   const toasts = useToasts((state) => state.items);
   const running = useRunningApps();
   const focused = useDesktop((state) => state.focused);
@@ -343,7 +376,7 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   const logout = useMutation({
     mutationFn: async () => {
       // After the sign-out a save is refused; one still waiting for its debounce goes out first.
-      await saveLayoutBeforeSignOut();
+      await Promise.all([saveLayoutBeforeSignOut(), settleItemWrites()]);
       unwrap(await api.POST('/api/auth/logout'));
     },
     onSuccess: async () => {
@@ -514,18 +547,7 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
           </>
         }
       >
-        <DesktopItems>
-          {apps.map((app) => (
-            <DesktopIcon
-              key={app.id}
-              name={app.name}
-              item={{ kind: 'shortcut', app }}
-              onOpen={() => {
-                openApp(app.id);
-              }}
-            />
-          ))}
-        </DesktopItems>
+        {items !== undefined && <items.ItemsLayer />}
         <WindowLayer />
       </DesktopShell>
     </AriaLocale>

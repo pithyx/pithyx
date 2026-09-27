@@ -39,6 +39,10 @@
     "restoreFailed": {
       "title": "Saved windows not loaded",
       "body": "The daemon did not answer. Changes to this desktop are not saved until you reload the page."
+    },
+    "noteKept": {
+      "title": "Note text kept",
+      "body": "{count, plural, one {A note was changed on another device while you wrote on it. Your text is on a new note next to it.} other {# notes were changed on another device while you wrote on them. Your texts are on new notes next to them.}}"
     }
   }
 }
