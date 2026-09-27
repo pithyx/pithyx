@@ -139,7 +139,13 @@ public sealed class FolderWatchTests : IDisposable
         Assert.DoesNotContain(done.Changed.Concat(done.Removed), name => name.StartsWith(FsPath.UploadPrefix, StringComparison.Ordinal));
 
         await SendAsync(socket, new { type = "unsub", id = "2", topic });
-        await ReceiveAsync(socket);
+        // A late batch of the upload may still be on its way; the watch is released by the time the ack arrives.
+        JsonElement? message;
+        do
+        {
+            message = await ReceiveAsync(socket);
+        }
+        while (message is { } received && !(received.GetProperty("type").GetString() == "ack" && received.GetProperty("id").GetString() == "2"));
         Assert.DoesNotContain(topic, watches.Watched);
         socket.Dispose();
     }

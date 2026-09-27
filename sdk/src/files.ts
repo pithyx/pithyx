@@ -20,6 +20,7 @@ export type FileLocation = { storage: string } | { share: string };
 export interface FileEntry {
   /** Name within its folder. */
   name: string;
+  /** What the entry is. */
   kind: FileKind;
   /** Bytes for files, 0 for folders. */
   size: number;
@@ -33,11 +34,13 @@ export interface ShareInfo {
   id: string;
   /** Name shown to users. */
   name: string;
+  /** The user's access: `read`, or `readWrite` to change files. */
   access: 'read' | 'readWrite';
 }
 
 /** Order of a folder listing. Name order is natural ("file2" before "file10") and ignores case. */
 export type SortKey = 'name' | 'size' | 'modified';
+/** Ascending or descending; folders count as the smallest size. */
 export type SortOrder = 'asc' | 'desc';
 
 /** One page of a folder. */
@@ -62,9 +65,11 @@ export type FileItems = { names: string[] } | { all: true; except: string[] };
 
 /** A selection in one folder. */
 export interface FileSelection {
+  /** Where the folder is. */
   location: FileLocation;
   /** The folder the names are in. */
   folder: string;
+  /** The entries of the folder that are meant. */
   items: FileItems;
 }
 
@@ -77,7 +82,9 @@ export type ConflictPolicy = 'fail' | 'skip' | 'overwrite' | 'rename';
 
 /** A copy, move or delete that runs as a job. */
 export interface FileOperation {
+  /** What to do. A move within one file system is a rename; across file systems it copies, then deletes. */
   kind: 'copy' | 'move' | 'delete';
+  /** The entries to work on, all in one folder. */
   source: FileSelection;
   /** The folder to copy or move into. Not used for delete. */
   target?: { location: FileLocation; path: string };
@@ -90,14 +97,17 @@ export interface FileOperation {
   permanent?: boolean;
 }
 
+/** Where a job is: waiting, running, or finished in one of four ways (`interrupted` by a daemon restart). */
 export type JobState = 'queued' | 'running' | 'succeeded' | 'failed' | 'cancelled' | 'interrupted';
 
 /** A long operation of the user, and its progress. */
 export interface JobInfo {
+  /** Id for `jobs.cancel` and in `jobChanged` events. */
   id: number;
   /** For example `files.copy`, `files.trash`, `files.restore`. */
   kind: string;
   state: JobState;
+  /** Entries and bytes done and in total; totals grow while a job still counts what it works on. */
   progress: {
     itemsDone: number;
     itemsTotal: number;
@@ -120,9 +130,11 @@ export interface TrashEntry {
   name: string;
   /** Where it was, relative to the share; restoring puts it back there. */
   originalPath: string;
+  /** What it was. */
   kind: FileKind;
   /** Bytes, for a folder everything inside it. */
   size: number;
+  /** When it was deleted, ISO 8601 UTC. */
   deletedAt: string;
   /** User name of who deleted it, if that user still exists. */
   deletedBy: string | null;
@@ -132,7 +144,9 @@ export interface TrashEntry {
 
 /** One page of a recycle bin, newest first. */
 export interface TrashPage {
+  /** This page of the bin. */
   items: TrashEntry[];
+  /** Pass as `cursor` for the next page; null on the last page. */
   nextCursor: string | null;
   /** Days the share keeps deleted items; 0 keeps them until the bin is emptied. */
   retentionDays: number;
@@ -154,8 +168,10 @@ export interface FolderChange {
 
 /** Progress of an upload started with an `upload` id. */
 export interface UploadProgress {
+  /** The id given to `files.upload`. */
   upload: string;
   /** Bytes sent so far. */
   loaded: number;
+  /** Size of the file in bytes. */
   total: number;
 }

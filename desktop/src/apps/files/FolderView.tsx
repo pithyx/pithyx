@@ -75,12 +75,14 @@ export function FolderView(props: FolderViewProps) {
   const [focused, setFocused] = useState(false);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
   const count = Math.max(total, entries.length);
+  // Read once per render: the virtualizer asks for every row's estimate whenever the count changes.
+  const height = rowHeight();
   // The compiler skips this component; the virtualizer's functions are only used here, never passed to memoized children.
   // eslint-disable-next-line react-hooks/incompatible-library
   const virtualizer = useVirtualizer({
     count,
     getScrollElement: () => scroll.current,
-    estimateSize: rowHeight,
+    estimateSize: () => height,
     overscan: 12,
   });
   const items = virtualizer.getVirtualItems();
@@ -130,7 +132,7 @@ export function FolderView(props: FolderViewProps) {
     const entry = entries[activeIndex];
     const control = event.ctrlKey || event.metaKey;
     const pageRows =
-      Math.max(1, Math.floor((scroll.current?.clientHeight ?? 0) / rowHeight()) - 1) || PAGE_ROWS;
+      Math.max(1, Math.floor((scroll.current?.clientHeight ?? 0) / height) - 1) || PAGE_ROWS;
     const handled = (() => {
       switch (event.key) {
         case 'ArrowDown':

@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Locator, Page } from '@playwright/test';
 import { expect, test } from './fixtures';
-import { openFromDesktop, signInAsAdmin } from './session';
+import { openFromStart, signInAsAdmin } from './session';
 
 // The simulated share "Shared" lives in the daemon's data directory (playwright.config.ts).
 const shared = join(process.env.VYXIS_E2E_DATA ?? '', 'shares', 'shared');
@@ -33,7 +33,7 @@ function row(page: Page, name: string): Locator {
 /** Opens Files and goes into a folder at the share root. */
 async function openFolder(page: Page, folder: string) {
   await signInAsAdmin(page);
-  await openFromDesktop(page, 'Files');
+  await openFromStart(page, 'Files');
   await expect(filesWindow(page)).toBeVisible();
   await row(page, folder).dblclick();
   await expect(filesWindow(page).getByRole('navigation', { name: 'Path' })).toContainText(folder);

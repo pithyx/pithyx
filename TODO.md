@@ -357,7 +357,7 @@ Effort: high.
 
 Goal: the performance showcase. It must feel faster than DSM File Station.
 
-- [ ] Detailed task list to be written together with the owner before starting. `[DECISION]` The owner set the backend scope on 2026-09-27 (6.1); the frontend list follows.
+- [x] Detailed task list to be written together with the owner before starting. `[DECISION]` The owner set the backend scope on 2026-09-27 (6.1) and approved the frontend plan the same day (6.2), with the double click as a switchable default action, Ctrl+A as "the whole folder except ..." and the SDK extension under its own decision number.
 
 ### 6.1 Backend (daemon)
 
@@ -374,8 +374,28 @@ Draft PR `feature/file-service`, decisions from D79 in its comments.
 - [ ] Files are created as the daemon's user (root) until M3 provisions Linux users (release blocker, see "Release blockers").
 - [ ] Resumable uploads (tus) on the same temporary-file mechanism.
 - [ ] Files and folders on the desktop: the contents of the `Desktop` folder in the user's home share as desktop items on the same grid (positions stored per user in `desktop_items` with kind `file`), created, renamed and deleted as real files, opened in the file manager. The items UI from step 5 (selection, drag, menus) is ready for them.
-- [ ] Scope: streamed listings over the WebSocket, client cache with stale-while-revalidate, inotify on open folders, prefetch on hover, virtualized list, Web Worker for sort and filter, optimistic actions, thumbnails, tus uploads, explorer keyboard controls, viewers and editor.
-- [ ] Budgets as CI tests: previously visited folder under 16 ms, first chunk of a new folder under 100 ms (LAN, warm cache), 10,000 entries listed server-side under 50 ms (warm), steady 60 fps while scrolling 50,000 entries.
+- [ ] Scope: streamed listings over the WebSocket, client cache with stale-while-revalidate, inotify on open folders, prefetch on hover, virtualized list, Web Worker for sort and filter, optimistic actions, thumbnails, tus uploads, explorer keyboard controls, viewers and editor. Done in 6.2: cursor pages over REST (the approved plan; pages instead of a WebSocket stream), client cache with stale-while-revalidate, live changes on open folders, virtualized list, optimistic actions, keyboard controls. Open: prefetch on hover, Web Worker for filter, thumbnails, tus uploads, viewers and editor.
+- [ ] Budgets as CI tests: previously visited folder under 16 ms, first chunk of a new folder under 100 ms (LAN, warm cache), 10,000 entries listed server-side under 50 ms (warm), steady 60 fps while scrolling 50,000 entries. The first two are E2E budgets since 6.2 (`budgets.spec.ts`); the daemon budgets the first page of 100,000 entries (6.1); 60 fps is measured by hand (too noisy for CI), see vyxis/vyxis#23.
+
+### 6.2 Frontend (Files app)
+
+Decisions from D92 in the PR's comments.
+
+- [x] SDK file manager API (D92): `files.shares`, `files.list` with sort and total, `files.watch`/`unwatch` with `folderChanged`, `files.upload` with `uploadProgress` and no time limit, `files.download`, `files.createFolder`, `files.rename`, `files.run` for copy, move and delete as jobs with `jobChanged` and `jobs.cancel`, `trash.list`/`restore`/`delete`/`empty`, `ui.showError`. Whole folders are named as `{ all: true, except }`; the daemon expands them (`allIn` in `POST /api/files/operations`). The desktop broker passes every call to the REST API; the daemon checks the user's rights.
+- [x] Files as a core app on the SDK's in-process transport, in its own chunk loaded with `import()` when its first window opens; the desktop bundle stays below its budget (D93).
+- [x] Folder view: virtualized grid, cursor pages as the view scrolls, server-side sort by name, size or date, visited folders from the cache and revalidated in the background, live changes from other sessions and the file system.
+- [x] Selection with click, Ctrl, Shift and the keyboard; Ctrl+A selects the whole folder as "everything except ..." without loading or sending its names (D96).
+- [x] Double click, Enter or tap runs the default action: folders open, files download for now; one function decides it, so viewers can take over later (D95).
+- [x] Upload with the button or by dropping files from the system, with progress; downloads through the browser.
+- [x] New folder and rename in the row, copy, cut and paste (also between Files windows), drag and drop onto folders (Ctrl or Alt copies), delete into the recycle bin (Delete) or for good after asking (Shift+Delete), all optimistic with rollback; a name conflict asks once (skip, replace, keep both) and runs the job again.
+- [x] Job and upload progress in the status bar with cancel; errors in the desktop's error dialog with the request id.
+- [x] Recycle bin per share: origin, deletion and expiry, restore, delete for good and empty after asking, retention shown.
+- [x] Current folder saved with the window (`session.save`) and restored after a reload; the sidebar becomes a sheet in narrow windows.
+- [x] Tests: unit tests for natural order, selection, live changes on loaded pages, paths and free names; E2E for listing, upload, download, rename, copy, move, conflict, recycle bin, live changes, a whole-folder selection, keyboard, axe on laptop and phone, and the two navigation budgets.
+- [ ] Prefetch folders on hover.
+- [ ] Filter in the current folder in a Web Worker.
+- [ ] Thumbnails, viewers and the editor; the default action then opens files in a viewer.
+- [ ] Drop onto the breadcrumb and onto shares in the sidebar.
 
 ---
 
@@ -386,7 +406,7 @@ M3 to M6 get their own detailed steps once step 6 is done. Write them into this 
 Known requirements for later milestones:
 
 - Website, first task once `website/` exists: an error code reference generated from `i18n/en/errors.json` (and the translated files), plus a CI check that every code in `ErrorCodes` has a doc entry. Until then error codes are documented only through their i18n texts.
-- Website user docs for shares and files from step 6: the recycle bin per share (restore, empty, retention, that deleting for good is only explicit), the upload behavior (the file appears only when complete, existing names are never replaced without asking), conflict choices for copy and move (skip, overwrite merges folders, rename to "name (2)"), that symlinks are shown but never copied, and the share rules for administrators (existing folder, no system folders, no overlapping shares).
+- Website user docs for shares and files from step 6: the Files app (double click downloads files for now, Ctrl+A selects the whole folder, the keyboard shortcuts F2, Delete, Shift+Delete, Ctrl+C/X/V, Backspace and Alt+Up, dropping files from the system to upload, Ctrl or Alt while dropping to copy instead of move, the conflict question, progress and cancel in the status bar), the recycle bin per share (restore, empty, retention, that deleting for good is only explicit), the upload behavior (the file appears only when complete, existing names are never replaced without asking), conflict choices for copy and move (skip, overwrite merges folders, rename to "name (2)"), that symlinks are shown but never copied, and the share rules for administrators (existing folder, no system folders, no overlapping shares).
 - Website user docs for the desktop from step 5: desktop items (selecting with a frame, Ctrl and Shift, moving by dragging and with Move, F2, Delete, Shift+F10, the note grip and its arrow keys, long press on touch, the 200 item and 4000 character limits, and that note text changed on two devices is kept on a second note), window menu and the Alt+Shift shortcuts (and that they do not apply in text fields), snapping and thirds on ultrawide screens, taskbar position, layout memory per device with its 90-day expiry and "Get desktop from ..." (which shows each device's browser, system, screen size and last use), that only the tab in use saves the layout, the phone app switcher, swipe and back gesture, and the `vyxis_device` cookie (what it is, that it holds no personal data, and that it is `Secure` on HTTPS).
 
 - M3: block cloning. On dev01 (OpenZFS 2.3.9) `copy_file_range` cloned no blocks. Check whether `zfs_bclone_enabled` or the distribution keeps cloning off because of the known OpenZFS block cloning data corruption bug, and enable it only on an OpenZFS version with the fix (D90).

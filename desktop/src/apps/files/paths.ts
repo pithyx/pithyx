@@ -36,8 +36,3 @@ export function freeName(name: string, taken: (candidate: string) => boolean): s
     }
   }
 }
-
-/** Whether moving `source` into `target` would put a folder into itself or leave it where it is. */
-export function isInside(target: string, source: string): boolean {
-  return target === source || target.startsWith(`${source}/`);
-}

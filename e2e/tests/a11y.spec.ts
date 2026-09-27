@@ -1,7 +1,9 @@
 import AxeBuilder from '@axe-core/playwright';
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures';
-import { appWindow, openFromDesktop, signInAsAdmin } from './session';
+import { appWindow, openFromDesktop, openFromStart, signInAsAdmin } from './session';
 
 // WCAG 2.2 AA (desktop/CLAUDE.md). Contrast of the tokens is checked in desktop/src/theme/contrast.test.ts as well.
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
@@ -66,6 +68,32 @@ test('the desktop with windows, menus and the start menu has no accessibility vi
   expect(await violations(page)).toEqual([]);
 });
 
+test('the Files app, its menu and its recycle bin have no accessibility violations', async ({
+  page,
+}) => {
+  const folder = join(process.env.VYXIS_E2E_DATA ?? '', 'shares', 'shared', 'a11y');
+  mkdirSync(join(folder, 'Photos'), { recursive: true });
+  writeFileSync(join(folder, 'notes.txt'), 'n');
+  writeFileSync(join(folder, 'old.txt'), 'o');
+  await signInAsAdmin(page);
+  await openFromStart(page, 'Files');
+  const files = page.getByRole('region', { name: /Files$/ });
+  await files.getByRole('row', { name: /^a11y/ }).dblclick();
+  await files.getByRole('row', { name: /^notes\.txt/ }).click();
+  expect(await violations(page)).toEqual([]);
+
+  await files.getByRole('row', { name: /^notes\.txt/ }).click({ button: 'right' });
+  await expect(page.getByRole('menu', { name: 'Actions for 1 item' })).toBeVisible();
+  expect(await violations(page)).toEqual([]);
+  await page.keyboard.press('Escape');
+
+  await files.getByRole('row', { name: /^old\.txt/ }).click();
+  await page.keyboard.press('Delete');
+  await files.getByRole('button', { name: 'Recycle bin of Shared' }).click();
+  await expect(files.getByRole('option', { name: 'old.txt' })).toBeVisible();
+  expect(await violations(page)).toEqual([]);
+});
+
 test.describe('phone', () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
 
@@ -77,6 +105,17 @@ test.describe('phone', () => {
       .getByRole('button', { name: /Switch apps/ })
       .tap();
     await expect(page.getByRole('dialog', { name: 'Open apps' })).toBeVisible();
+    expect(await violations(page)).toEqual([]);
+  });
+
+  test('the Files app has no accessibility violations', async ({ page }) => {
+    await signInAsAdmin(page);
+    await openFromStart(page, 'Files');
+    const files = page.getByRole('region', { name: /Files$/ });
+    await expect(files.getByRole('grid', { name: 'Folder contents' })).toBeVisible();
+    expect(await violations(page)).toEqual([]);
+    await files.getByRole('button', { name: 'Shares and recycle bin' }).tap();
+    await expect(files.getByRole('navigation', { name: 'Shares and recycle bin' })).toBeVisible();
     expect(await violations(page)).toEqual([]);
   });
 });

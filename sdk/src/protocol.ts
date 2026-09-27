@@ -190,6 +190,7 @@ export interface Methods {
    * open. Watch only folders on screen and call `files.unwatch` when leaving them; a watch never wakes a disk.
    */
   'files.watch': { params: { location: FileLocation; path: string }; result: { watch: string } };
+  /** Ends a watch started with `files.watch`. */
   'files.unwatch': { params: { watch: string }; result: undefined };
   /**
    * Uploads a file into a folder. The file appears only when it is complete; an existing name fails with

@@ -75,8 +75,14 @@ function isLocation(value: unknown): boolean {
   );
 }
 
+/** "" for the root, otherwise names joined by "/": no leading or doubled slash, no "." or "..". */
 function isRelativePath(value: unknown): boolean {
-  return typeof value === 'string' && value.length <= 4096 && !value.includes('\0');
+  return (
+    typeof value === 'string' &&
+    value.length <= 4096 &&
+    !value.includes('\0') &&
+    (value === '' || value.split('/').every((part) => part !== '' && part !== '.' && part !== '..'))
+  );
 }
 
 const isBlob = (value: unknown) => typeof Blob !== 'undefined' && value instanceof Blob;

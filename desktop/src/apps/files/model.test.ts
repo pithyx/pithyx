@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { defaultAction } from './defaultAction';
 import { compareEntries, naturalKey } from './order';
 import { applyChange, loadedEntries, type FolderPages } from './pages';
+import { crumbsOf, freeName, joinPath, parentOf } from './paths';
 import {
   emptySelection,
   forget,
@@ -142,5 +143,26 @@ describe('default action', () => {
     expect(defaultAction(entry('dir', 0, 'folder'))).toEqual({ kind: 'openFolder' });
     expect(defaultAction(entry('a.pdf'))).toEqual({ kind: 'download' });
     expect(defaultAction(entry('dev', 0, 'other'))).toEqual({ kind: 'none' });
+  });
+});
+
+describe('paths', () => {
+  it('walks up and down from the share root', () => {
+    expect(joinPath('', 'Photos')).toBe('Photos');
+    expect(joinPath('Photos', '2026')).toBe('Photos/2026');
+    expect(parentOf('Photos/2026')).toBe('Photos');
+    expect(parentOf('Photos')).toBe('');
+    expect(crumbsOf('')).toEqual([]);
+    expect(crumbsOf('a/b')).toEqual([
+      { name: 'a', path: 'a' },
+      { name: 'b', path: 'a/b' },
+    ]);
+  });
+
+  it('picks the name the daemon would pick to keep both', () => {
+    const taken = new Set(['Report (2).pdf']);
+    expect(freeName('Report.pdf', (name) => taken.has(name))).toBe('Report (3).pdf');
+    expect(freeName('New folder', () => false)).toBe('New folder (2)');
+    expect(freeName('.env', () => false)).toBe('.env (2)');
   });
 });
