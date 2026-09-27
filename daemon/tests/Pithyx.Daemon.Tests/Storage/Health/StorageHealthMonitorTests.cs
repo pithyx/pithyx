@@ -81,6 +81,16 @@ public sealed class StorageHealthMonitorTests : IAsyncDisposable
         Assert.True(condition());
     }
 
+    /// <summary>The monitor writes a run after its command; tests that saw the command wait for the row.</summary>
+    private async Task UntilRunAsync(Func<Dictionary<(string Kind, string Target), DateTimeOffset>, bool> condition)
+    {
+        for (var i = 0; i < 500 && !condition(await RunsAsync()); i++)
+        {
+            await Task.Delay(10, TestContext.Current.CancellationToken);
+        }
+        Assert.True(condition(await RunsAsync()));
+    }
+
     private async Task<Dictionary<(string Kind, string Target), DateTimeOffset>> RunsAsync()
     {
         await using var connection = await _connections.OpenAsync(TestContext.Current.CancellationToken);
@@ -137,7 +147,7 @@ public sealed class StorageHealthMonitorTests : IAsyncDisposable
         _time.Advance(TimeSpan.FromMinutes(2));
         await UntilAsync(() => Calls("zpool", "scrub").Count == 1);
         Assert.Equal(["scrub", "tank"], Calls("zpool", "scrub")[0].Arguments);
-        Assert.True((await RunsAsync())[("scrub", "tank")] > _start);
+        await UntilRunAsync(runs => runs.TryGetValue(("scrub", "tank"), out var run) && run > _start);
     }
 
     [Fact]
@@ -169,7 +179,7 @@ public sealed class StorageHealthMonitorTests : IAsyncDisposable
         _asleep = false;
         _time.Advance(StorageHealthMonitor.RetryDelay);
         await UntilAsync(() => Calls("smartctl", "-t").Count == 2);
-        Assert.Equal(_start.AddDays(7) + StorageHealthMonitor.RetryDelay, (await RunsAsync())[("shortSelfTest", Sdb.Id)]);
+        await UntilRunAsync(runs => runs[("shortSelfTest", Sdb.Id)] == _start.AddDays(7) + StorageHealthMonitor.RetryDelay);
 
         // SMART is read again once the test had time to finish.
         var reads = Calls("smartctl", "-a").Count;
@@ -186,11 +196,9 @@ public sealed class StorageHealthMonitorTests : IAsyncDisposable
 
         _time.Advance(_start.AddMonths(1) - _start);
         await UntilAsync(() => Calls("smartctl", "-t").Count == 1);
-        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await UntilRunAsync(runs => runs[("longSelfTest", Sdb.Id)] > _start && runs[("longSelfTest", Sdb.Id)] == runs[("shortSelfTest", Sdb.Id)]);
 
         Assert.Equal("long", Assert.Single(Calls("smartctl", "-t")).Arguments[4]);
-        var runs = await RunsAsync();
-        Assert.Equal(runs[("longSelfTest", Sdb.Id)], runs[("shortSelfTest", Sdb.Id)]);
     }
 
     [Fact]
