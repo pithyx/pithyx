@@ -71,10 +71,10 @@ export function CoreSdkApp({
         connection.current?.emit(event, data);
       },
     });
-    const host = internal?.((event) => {
+    const host = internal?.((event, data) => {
       (connection.current?.emit as ((event: string, data: unknown) => void) | undefined)?.(
         event,
-        {},
+        data ?? {},
       );
     });
     connection.current = serveApp(hostEnd, {

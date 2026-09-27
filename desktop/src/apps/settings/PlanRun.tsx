@@ -70,20 +70,23 @@ export function PlanPreview({
 
 /** Runs a shown plan as a job and follows it until it ends. */
 export function useRunPlan(app: PithyxApp) {
-  const [job, setJob] = useState<Job | null>(null);
+  const [started, setStarted] = useState<Job | null>(null);
+  // Updates by job id: a short job can report its end before the run call returns its id.
+  const [updates, setUpdates] = useState<Readonly<Record<number, Job>>>({});
   const run = useMutation({
     mutationFn: (planId: string) => internalCall(app, 'internal.admin.storage.run', { planId }),
-    onSuccess: setJob,
+    onSuccess: setStarted,
   });
-  // The desktop forwards the job's topic; this follows the one job this dialog started.
+  // The desktop forwards the job's topic; this follows the jobs this dialog started.
   useEffect(
     () =>
       onInternal(app, STORAGE_JOB, (data) => {
         const update = data as Job;
-        setJob((current) => (current !== null && current.id === update.id ? update : current));
+        setUpdates((current) => ({ ...current, [update.id]: update }));
       }),
     [app],
   );
+  const job = started === null ? null : (updates[started.id] ?? started);
   return { run, job };
 }
 
