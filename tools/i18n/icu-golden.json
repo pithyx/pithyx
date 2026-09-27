@@ -302,6 +302,12 @@
       "params": {},
       "expected": "The connection between the app and the desktop is closed. Open the app again."
     },
+    "storage.alert.not_found": {
+      "params": {
+        "key": "pool.degraded:tank"
+      },
+      "expected": "This alert is no longer active. Its cause is gone."
+    },
     "storage.command.failed": {
       "params": {
         "command": "zpool",
@@ -394,9 +400,29 @@
     },
     "storage.pool.not_found": {
       "params": {
-        "name": "tank"
+        "name": "tank",
+        "pool": "tank"
       },
       "expected": "There is no pool named tank."
+    },
+    "storage.schedule.invalid": {
+      "params": {
+        "kind": "scrub",
+        "frequency": "daily"
+      },
+      "expected": "This schedule cannot be set. Choose Off, Weekly or Monthly for an existing pool."
+    },
+    "storage.scrub.not_running": {
+      "params": {
+        "pool": "tank"
+      },
+      "expected": "Pool tank is not being scrubbed right now."
+    },
+    "storage.scrub.running": {
+      "params": {
+        "pool": "tank"
+      },
+      "expected": "Pool tank is being scrubbed already."
     },
     "storage.snapshot.confirmation_mismatch": {
       "params": {},

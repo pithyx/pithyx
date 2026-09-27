@@ -166,6 +166,9 @@
     }
   },
   "storage": {
+    "alert": {
+      "not_found": "This alert is no longer active. Its cause is gone."
+    },
     "command": {
       "failed": "The storage command {command} failed (exit code {exitCode}). Nothing after it was run; the log has the details."
     },
@@ -194,6 +197,13 @@
       "name_mismatch": "Type the pool name {name} exactly to confirm.",
       "name_taken": "A pool named {name} exists already.",
       "not_found": "There is no pool named {name}."
+    },
+    "schedule": {
+      "invalid": "This schedule cannot be set. Choose Off, Weekly or Monthly for an existing pool."
+    },
+    "scrub": {
+      "not_running": "Pool {pool} is not being scrubbed right now.",
+      "running": "Pool {pool} is being scrubbed already."
     },
     "snapshot": {
       "confirmation_mismatch": "The name you typed does not match the dataset. Nothing was rolled back.",

@@ -196,6 +196,10 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.NotFound)]
     public const string RequestRouteNotFound = "request.route.not_found";
 
+    /// <summary>No current storage alert has this key (it went away); <c>params.key</c> is the key sent.</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string StorageAlertNotFound = "storage.alert.not_found";
+
     /// <summary>A storage command of a plan failed; <c>params.command</c> is the program, <c>params.exitCode</c> its exit code.</summary>
     [ErrorStatus(HttpStatusCode.BadGateway)]
     public const string StorageCommandFailed = "storage.command.failed";
@@ -263,6 +267,18 @@ public static class ErrorCodes
     /// <summary>No imported pool has this name; <c>params.name</c> is the name.</summary>
     [ErrorStatus(HttpStatusCode.NotFound)]
     public const string StoragePoolNotFound = "storage.pool.not_found";
+
+    /// <summary>Unknown schedule kind or frequency, or a scrub schedule for a pool that does not exist; <c>params.kind</c> and <c>params.frequency</c> are the values sent.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string StorageScheduleInvalid = "storage.schedule.invalid";
+
+    /// <summary>The pool has no running scrub to pause or stop; <c>params.pool</c> is its name.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StorageScrubNotRunning = "storage.scrub.not_running";
+
+    /// <summary>The pool is being scrubbed already; <c>params.pool</c> is its name.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StorageScrubRunning = "storage.scrub.running";
 
     /// <summary>The dataset name typed to confirm a rollback does not match the dataset.</summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]

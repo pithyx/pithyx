@@ -15,6 +15,9 @@ public sealed class PoolInventory
 
     public PoolList Current => Volatile.Read(ref _current);
 
+    /// <summary>Raised after <see cref="Replace"/> changed the state, for in-process consumers such as the health monitor.</summary>
+    public event Action? Changed;
+
     /// <summary>False until the first successful read, for example when ZFS is not installed.</summary>
     public bool Available { get; private set; }
 
@@ -33,6 +36,10 @@ public sealed class PoolInventory
         {
             _fingerprint = fingerprint;
             Volatile.Write(ref _current, pools);
+        }
+        if (changed)
+        {
+            Changed?.Invoke();
         }
         Refreshed?.Invoke();
         return changed;

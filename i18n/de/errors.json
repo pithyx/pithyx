@@ -166,6 +166,9 @@
     }
   },
   "storage": {
+    "alert": {
+      "not_found": "Dieser Hinweis ist nicht mehr aktiv. Seine Ursache ist behoben."
+    },
     "command": {
       "failed": "Der Speicherbefehl {command} ist fehlgeschlagen (Exit-Code {exitCode}). Danach wurde nichts mehr ausgeführt; Details stehen im Protokoll."
     },
@@ -194,6 +197,13 @@
       "name_mismatch": "Gib zur Bestätigung genau den Pool-Namen {name} ein.",
       "name_taken": "Es gibt schon einen Pool namens {name}.",
       "not_found": "Es gibt keinen Pool namens {name}."
+    },
+    "schedule": {
+      "invalid": "Dieser Zeitplan lässt sich nicht setzen. Wähle Aus, Wöchentlich oder Monatlich für einen vorhandenen Pool."
+    },
+    "scrub": {
+      "not_running": "Pool {pool} wird gerade nicht geprüft.",
+      "running": "Pool {pool} wird schon geprüft."
     },
     "snapshot": {
       "confirmation_mismatch": "Der eingegebene Name passt nicht zum Dataset. Es wurde nichts zurückgesetzt.",
