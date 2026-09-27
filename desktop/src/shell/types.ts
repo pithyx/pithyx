@@ -16,4 +16,4 @@ export interface RunningApp extends AppInfo {
   state: RunningState;
 }
 
-export type TaskbarPosition = 'bottom' | 'top';
+export type TaskbarPosition = 'bottom' | 'top' | 'left' | 'right';
