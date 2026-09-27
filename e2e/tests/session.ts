@@ -27,6 +27,16 @@ export async function signInAsAdmin(page: Page) {
     await page.getByRole('button', { name: 'Sign in' }).click();
   }
   await expect(page.getByRole('navigation', { name: 'Taskbar' })).toBeVisible();
+  await desktopReady(page);
+}
+
+/**
+ * Waits until the desktop takes input: the welcome card has left (it is the only <main> without a label) and the
+ * taskbar has slid in. The taskbar ignores presses while it moves, so a click during the entrance would be lost.
+ */
+export async function desktopReady(page: Page) {
+  await expect(page.locator('main:not([aria-label])')).toHaveCount(0);
+  await expect(page.locator('[data-entering]')).toHaveCount(0);
 }
 
 /** Opens a core app from its desktop shortcut. */
