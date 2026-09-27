@@ -108,14 +108,20 @@ const THETA_PATH =
   'Q191 438 191 366Q191 298 220 240Q249 182 303.5 147.5Q358 113 433 113Z' +
   'M180 303L685 303L685 428L180 428Z';
 
-/** Text in the display font with every capital theta drawn in Sora's style. Screen readers get the text from the caller. */
+/**
+ * Text in the display font with every capital theta drawn in Sora's style. The real character lies transparent over
+ * the drawing, so selecting and copying the text gives the Greek capital theta. Screen readers get the text from the caller.
+ */
 export function BrandText({ text }: { text: string }) {
   return text.split('Θ').map((part, index) => (
     <Fragment key={index}>
       {index > 0 && (
-        <svg className={styles.theta} viewBox="0 -751 865 770" aria-hidden>
-          <path d={THETA_PATH} transform="scale(1 -1)" />
-        </svg>
+        <span className={styles.thetaGlyph}>
+          <svg className={styles.theta} viewBox="0 -751 865 770" aria-hidden>
+            <path d={THETA_PATH} transform="scale(1 -1)" />
+          </svg>
+          <span className={styles.thetaText}>Θ</span>
+        </span>
       )}
       {part}
     </Fragment>

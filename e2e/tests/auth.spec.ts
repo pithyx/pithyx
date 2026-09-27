@@ -30,8 +30,11 @@ async function pasted(page: Page): Promise<string> {
 }
 
 async function signOut(page: Page) {
-  await openAccountMenu(page);
-  await page.getByRole('menuitem', { name: 'Sign out' }).click();
+  await page.getByRole('button', { name: 'Pithyx menu' }).click();
+  await page
+    .getByRole('dialog', { name: 'Pithyx menu' })
+    .getByRole('button', { name: 'Sign out' })
+    .click();
   await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
 }
 
@@ -129,11 +132,11 @@ test('setup, recovery key, TOTP sign-in and password reset with the recovery key
     await signOut(page);
   });
 
-  await test.step('a wrong password shows a translated error with a request id', async () => {
+  await test.step('a wrong password shows a translated error without a request id', async () => {
     await signIn(page, 'not the right one');
     const alert = page.getByRole('alert');
     await expect(alert).toContainText('The user name or password is incorrect.');
-    await expect(alert.locator('code')).toHaveText(/^[0-9a-f]{32}$/);
+    await expect(alert.locator('code')).toHaveCount(0);
     await expect(page.getByLabel('Password', { exact: true })).toBeFocused();
   });
 

@@ -12,14 +12,7 @@ import {
 } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
 import { IconButton } from '../ui/Button';
-import {
-  Menu,
-  MenuItem,
-  MenuPopover,
-  MenuSeparator,
-  MenuTrigger,
-  useDeliberatePress,
-} from '../ui/Menu';
+import { Menu, MenuItem, MenuPopover, MenuTrigger } from '../ui/Menu';
 import { SearchField } from '../ui/TextField';
 import { AppIcon } from './AppIcon';
 import styles from './StartMenu.module.css';
@@ -74,13 +67,13 @@ export interface StartMenuProps {
   recent: StartEntry[];
   results: StartResults;
   user: { name: string; initials: string; role: string };
-  /** Wraps the profile button in the account menu (two-factor, language, taskbar, sign-out). */
+  /** Wraps the profile button in the account menu (two-factor, language, desktop, taskbar). */
   userMenu?: (trigger: ReactNode) => ReactNode;
   menuRef?: Ref<HTMLDivElement>;
   /** Opens a pinned app or a search result by its id. */
   onOpen?: (id: string) => void;
   onSignOut?: () => void;
-  /** Restart and shut down appear once the daemon offers them. */
+  /** Restart and shut down, for users with that right once the daemon offers them; sign-out has its own button. */
   power?: boolean;
 }
 
@@ -100,7 +93,6 @@ export function StartMenu({
   power = true,
 }: StartMenuProps) {
   const { t } = useTranslation();
-  const signOut = useDeliberatePress();
   const groups = [
     { key: 'apps', title: t('start.results.apps'), entries: results.apps },
     { key: 'settings', title: t('start.results.settings'), entries: results.settings },
@@ -237,40 +229,33 @@ export function StartMenu({
 
       <footer className={styles.footer}>
         {userMenu === undefined ? profile : userMenu(profile)}
-        <MenuTrigger>
-          <IconButton label={t('start.power')}>
-            <IconPower size={20} stroke={1.75} />
+        <div className={styles.footerActions}>
+          <IconButton
+            label={t('menu.signOut')}
+            onPress={() => {
+              onSignOut?.();
+            }}
+          >
+            <IconLogout size={20} stroke={1.75} />
           </IconButton>
-          <MenuPopover placement={position === 'top' ? 'bottom end' : 'top end'}>
-            <Menu
-              aria-label={t('start.power')}
-              onAction={(key) => {
-                if (key === 'sign-out' && signOut.confirm()) {
-                  onSignOut?.();
-                }
-              }}
-            >
-              <MenuItem
-                id="sign-out"
-                icon={<IconLogout size={18} stroke={1.75} />}
-                {...signOut.pressProps}
-              >
-                {t('menu.signOut')}
-              </MenuItem>
-              {power && (
-                <>
-                  <MenuSeparator />
+          {power && (
+            <MenuTrigger>
+              <IconButton label={t('start.power')}>
+                <IconPower size={20} stroke={1.75} />
+              </IconButton>
+              <MenuPopover placement={position === 'top' ? 'bottom end' : 'top end'}>
+                <Menu aria-label={t('start.power')}>
                   <MenuItem icon={<IconRotateClockwise size={18} stroke={1.75} />}>
                     {t('start.restart')}
                   </MenuItem>
                   <MenuItem icon={<IconPower size={18} stroke={1.75} />} tone="danger">
                     {t('start.shutDown')}
                   </MenuItem>
-                </>
-              )}
-            </Menu>
-          </MenuPopover>
-        </MenuTrigger>
+                </Menu>
+              </MenuPopover>
+            </MenuTrigger>
+          )}
+        </div>
       </footer>
     </div>
   );

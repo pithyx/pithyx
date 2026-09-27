@@ -41,7 +41,7 @@ test('sign in, work with windows and sign out with the keyboard only', async ({ 
   });
 
   await test.step('open an app from the start menu', async () => {
-    await expect(page.getByRole('button', { name: 'Start' })).toBeFocused();
+    await expect(page.getByRole('button', { name: 'Pithyx menu' })).toBeFocused();
     await page.keyboard.press('Enter');
     await expect(page.getByRole('searchbox')).toBeFocused();
     await page.keyboard.type('disks');
@@ -52,7 +52,7 @@ test('sign in, work with windows and sign out with the keyboard only', async ({ 
   await test.step('minimizing the last window moves focus to the start button', async () => {
     await page.keyboard.press('Alt+Shift+ArrowDown');
     await expect(page.getByRole('region', { name: 'Disks', exact: true })).toBeHidden();
-    await expect(page.getByRole('button', { name: 'Start' })).toBeFocused();
+    await expect(page.getByRole('button', { name: 'Pithyx menu' })).toBeFocused();
     await page.keyboard.press('Alt+Shift+PageDown');
     await expect(page.getByRole('region', { name: 'Disks', exact: true })).toBeFocused();
   });
@@ -78,18 +78,14 @@ test('sign in, work with windows and sign out with the keyboard only', async ({ 
     await expect(page.getByRole('menuitem', { name: 'Close' })).toBeFocused();
     await page.keyboard.press('Enter');
     await expect(page.getByRole('region', { name: 'Disks', exact: true })).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Start' })).toBeFocused();
+    await expect(page.getByRole('button', { name: 'Pithyx menu' })).toBeFocused();
   });
 
-  await test.step('sign out from the account menu', async () => {
-    await tabTo(page, 'Start');
+  await test.step('sign out with the button of the Pithyx menu', async () => {
+    await tabTo(page, 'Pithyx menu');
     await page.keyboard.press('Enter');
-    await expect(page.getByRole('dialog', { name: 'Start menu' })).toBeVisible();
-    await tabTo(page, 'Account menu for Ada Admin');
-    await page.keyboard.press('Enter');
-    await expect(page.getByRole('menu', { name: 'Account menu for Ada Admin' })).toBeVisible();
-    await page.keyboard.press('End');
-    await expect(page.getByRole('menuitem', { name: 'Sign out' })).toBeFocused();
+    await expect(page.getByRole('dialog', { name: 'Pithyx menu' })).toBeVisible();
+    await tabTo(page, 'Sign out');
     await page.keyboard.press('Enter');
     await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
   });

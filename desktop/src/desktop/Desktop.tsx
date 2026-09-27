@@ -3,7 +3,6 @@ import {
   IconDevices,
   IconLanguage,
   IconLayoutBottombar,
-  IconLogout,
   IconShieldLock,
 } from '../ui/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -12,6 +11,7 @@ import {
   lazy,
   Suspense,
   useEffect,
+  useEffectEvent,
   useLayoutEffect,
   useRef,
   useState,
@@ -36,6 +36,7 @@ import { DesktopShell } from '../shell/DesktopShell';
 import { itemsQuery, settleItemWrites } from '../items/query';
 import { AriaLocale } from '../ui/AriaLocale';
 import { ToastStack } from '../shell/Notifications';
+import { listenForMetaTap } from '../shell/metaTap';
 import { bannerAlert, useStorageAlerts } from '../shell/storageAlerts';
 import { StartMenu } from '../shell/StartMenu';
 import { Taskbar } from '../shell/Taskbar';
@@ -43,14 +44,7 @@ import type { RunningApp, TaskbarPosition } from '../shell/types';
 import { dismissToast, notify, useToasts } from '../shell/toasts';
 import { useDismiss } from '../shell/useDismiss';
 import { cx } from '../ui/cx';
-import {
-  Menu,
-  MenuItem,
-  MenuPopover,
-  MenuSeparator,
-  MenuTrigger,
-  useDeliberatePress,
-} from '../ui/Menu';
+import { Menu, MenuItem, MenuPopover, MenuTrigger } from '../ui/Menu';
 import { useBackGesture } from '../wm/backGesture';
 import { applySavedLayout, saveLayoutBeforeSignOut, useLayoutPersistence } from '../wm/persistence';
 import { useSizeClass } from '../wm/sizeClass';
@@ -154,7 +148,6 @@ function UserMenu({
   position,
   canMoveTaskbar,
   onTwoFactor,
-  onSignOut,
   onDone,
 }: {
   trigger: ReactNode;
@@ -162,14 +155,12 @@ function UserMenu({
   position: TaskbarPosition;
   canMoveTaskbar: boolean;
   onTwoFactor: () => void;
-  onSignOut: () => void;
   /** After a choice that changes the desktop (another layout, a taskbar position). */
   onDone: () => void;
 }) {
   const { t } = useTranslation();
   const status = useDaemonStatus();
   const label = useDeviceLabel();
-  const signOut = useDeliberatePress();
   const copy = useMutation({
     mutationFn: async (device: DeviceLayout) =>
       unwrap(await api.POST('/api/desktop/layout/copy', { body: { deviceId: device.deviceId } })),
@@ -188,8 +179,6 @@ function UserMenu({
           onAction={(key) => {
             if (key === 'two-factor') {
               onTwoFactor();
-            } else if (key === 'sign-out' && signOut.confirm()) {
-              onSignOut();
             }
           }}
         >
@@ -250,14 +239,6 @@ function UserMenu({
               </SubmenuTrigger>
             )}
           </MenuSection>
-          <MenuSeparator />
-          <MenuItem
-            id="sign-out"
-            icon={<IconLogout size={18} stroke={1.75} />}
-            {...signOut.pressProps}
-          >
-            {t('menu.signOut')}
-          </MenuItem>
         </Menu>
       </MenuPopover>
     </MenuTrigger>
@@ -402,8 +383,11 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
 
   const logout = useMutation({
     mutationFn: async () => {
-      // After the sign-out a save is refused; one still waiting for its debounce goes out first.
-      await Promise.all([saveLayoutBeforeSignOut(), settleItemWrites(), runBeforeLogout()]);
+      // Apps may ask first (unsaved changes). Then the windows close, so the next sign-in starts with an empty
+      // desktop; the layout without them is saved before the sign-out, after which a save is refused.
+      await runBeforeLogout();
+      dispatch({ type: 'closeAll' });
+      await Promise.all([saveLayoutBeforeSignOut(), settleItemWrites()]);
       unwrap(await api.POST('/api/auth/logout'));
     },
     onSuccess: async () => {
@@ -412,6 +396,22 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
     },
     onError: showError,
   });
+
+  // Like the Windows key opens Start, a tap on the Meta key opens and closes the Pithyx menu.
+  const toggleStart = useEffectEvent(() => {
+    if (startOpen) {
+      closeStart(true);
+    } else {
+      setStartOpen(true);
+    }
+  });
+  useEffect(
+    () =>
+      listenForMetaTap(() => {
+        toggleStart();
+      }),
+    [],
+  );
 
   function closeStart(returnFocus: boolean) {
     setStartOpen(false);
@@ -522,10 +522,6 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
                     onTwoFactor={() => {
                       closeStart(false);
                       setTotpOpen(true);
-                    }}
-                    onSignOut={() => {
-                      closeStart(false);
-                      logout.mutate();
                     }}
                     onDone={() => {
                       closeStart(false);
