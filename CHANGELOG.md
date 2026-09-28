@@ -116,6 +116,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- A daemon started on a database that a newer daemon wrote (schema versions it does not know) exited with code 1 and no output, and the dev unit restarted it forever. It now logs the database, the unknown versions and what to do, flushes the log, and exits with its own code 65; the unit does not restart it (`RestartPreventExitStatus=65`) and gives up after five failed starts in two minutes. Other database failures at startup are logged too.
+- `tools/dev-vm/install-dev-daemon.sh` builds as the calling user also under `sudo`, so the checkout gets no root-owned files, and refuses a checkout that already has some. `--from <checkout or worktree>` runs the unit from any checkout, for example a pull request's worktree. Before stopping anything it checks the database's schema versions against the checkout (and names a worktree that knows them), lists the unit or process it would stop on port 7484 and asks (`--yes` to skip the question).
+
 - An open WebSocket whose session expired could stay open for good when the clock passed the expiry between the session check and its timer (a clock jump, or a slow check); the next check now ends it.
 - `tools/fixtures/anonymize.ts` keeps the recorded text instead of rewriting the JSON, so 64-bit ZFS GUIDs stay exact; the build-time OpenAPI run no longer reads the build machine's disks.
 - The first page of a large folder no longer waits for the whole folder to be sorted: it is selected directly (about 80 ms instead of 124 to 226 ms for 100,000 entries on the dev VM), and the full order is built in the background for the pages after it. The old sort's speed depended on how the JIT had tuned shared string code for the rest of the process, which made the listing budget test flaky.

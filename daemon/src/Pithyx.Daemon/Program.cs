@@ -99,10 +99,18 @@ if (!BuildTimeDocument.IsGenerating)
             await app.Services.GetRequiredService<ShareService>().SeedSimulationAsync(shares, CancellationToken.None);
         }
     }
+    catch (DatabaseNewerThanDaemonException)
+    {
+        // Logged by the runner. Disposing flushes the log sinks, so the reason reaches the journal and the log file.
+        await app.DisposeAsync();
+        return DaemonExitCode.DatabaseNewerThanDaemon;
+    }
     catch (Exception exception) when (exception is Microsoft.Data.Sqlite.SqliteException or InvalidOperationException or IOException)
     {
-        // Already logged by the runner. Exit so systemd sees the failure instead of a daemon without a database.
-        return 1;
+        // Exit so systemd sees the failure instead of a daemon without a database.
+        HostLog.DatabaseFailed(app.Logger, exception, paths.DatabasePath);
+        await app.DisposeAsync();
+        return DaemonExitCode.DatabaseFailed;
     }
 
     // Plain HTTP is the development transport. HTTPS on 443 arrives with the TLS work in M5.

@@ -68,7 +68,10 @@ public sealed class MigrationRunnerTests : IDisposable
         var second = new Migration(2, "second", "CREATE TABLE b (id INTEGER PRIMARY KEY);");
         await _runner.RunAsync([first, second], TestContext.Current.CancellationToken);
 
-        await Assert.ThrowsAsync<InvalidOperationException>(() => _runner.RunAsync([first], TestContext.Current.CancellationToken));
+        var refused = await Assert.ThrowsAsync<DatabaseNewerThanDaemonException>(() => _runner.RunAsync([first], TestContext.Current.CancellationToken));
+
+        Assert.Equal([2], refused.Versions);
+        Assert.Empty(BackupFiles());
     }
 
     // Parallel branches reserve their numbers ahead, so a gap can exist until the branch that owns it is merged.
