@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { formatBytes } from '../../desktop/format';
 import { ErrorNotice } from '../../errors/ErrorNotice';
 import { Badge } from '../../ui/Controls';
+import { cx } from '../../ui/cx';
 import type { SmartReport, StorageDisk } from '../sdk/internal';
 import {
   describeProblem,
@@ -49,7 +50,7 @@ function DiskTable({ disks, reports }: { disks: StorageDisk[]; reports: SmartRep
   const { t, i18n } = useTranslation('storage');
   const byId = new Map(reports.map((report) => [report.diskId, report]));
   return (
-    <table className={styles.table}>
+    <table className={cx(styles.table, styles.stack)}>
       <caption className="visually-hidden">{t('disks.caption')}</caption>
       <thead>
         <tr>
@@ -74,10 +75,16 @@ function DiskTable({ disks, reports }: { disks: StorageDisk[]; reports: SmartRep
               <th scope="row" className={styles.mono}>
                 {disk.name}
               </th>
-              <td className={styles.optional}>{disk.model ?? ''}</td>
-              <td className={styles.mono}>{disk.serial ?? ''}</td>
-              <td className={styles.number}>{formatBytes(disk.sizeBytes, i18n.language)}</td>
-              <td>
+              <td className={styles.optional} data-label={t('disks.model')}>
+                {disk.model ?? ''}
+              </td>
+              <td className={styles.mono} data-label={t('disks.serial')}>
+                {disk.serial ?? ''}
+              </td>
+              <td className={styles.number} data-label={t('disks.size')}>
+                {formatBytes(disk.sizeBytes, i18n.language)}
+              </td>
+              <td data-label={t('disks.status')}>
                 <div className={styles.verdict}>
                   <Badge
                     tone={
@@ -93,7 +100,7 @@ function DiskTable({ disks, reports }: { disks: StorageDisk[]; reports: SmartRep
                   <span className={styles.reason}>{guardReason(t, guard)}</span>
                 </div>
               </td>
-              <td>
+              <td data-label={t('health.smart.state')}>
                 <div className={styles.verdict}>
                   <Badge
                     tone={

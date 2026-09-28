@@ -8,7 +8,7 @@ import { cx } from '../../ui/cx';
 import type { Dataset } from '../sdk/internal';
 import { DatasetDialog, type DatasetAction } from './DatasetDialog';
 import { canRenameOrDelete, datasetRole } from './datasets';
-import { describeProblem, usePools } from './shared';
+import { breakable, describeProblem, usePools } from './shared';
 import styles from './Storage.module.css';
 
 /** Datasets and volumes of every pool with their space, limits and compression, and the actions on them. */
@@ -94,10 +94,10 @@ function DatasetTable({
           <th scope="col" className={cx(styles.number, styles.optional)}>
             {t('datasets.available')}
           </th>
-          <th scope="col" className={styles.optional}>
+          <th scope="col" className={styles.wide}>
             {t('datasets.quota')}
           </th>
-          <th scope="col" className={styles.optional}>
+          <th scope="col" className={styles.wide}>
             {t('datasets.compression')}
           </th>
           <th scope="col" className={styles.optional}>
@@ -113,8 +113,8 @@ function DatasetTable({
           const movable = canRenameOrDelete(datasetRole(pool, dataset.name));
           return (
             <tr key={dataset.name} data-dataset={dataset.name}>
-              <th scope="row" className={styles.mono}>
-                {dataset.name}
+              <th scope="row" className={styles.datasetName}>
+                {breakable(dataset.name)}
                 {dataset.type === 'volume' && (
                   <span className={styles.muted}> · {t('datasets.volume.label')}</span>
                 )}
@@ -123,14 +123,16 @@ function DatasetTable({
               <td className={cx(styles.number, styles.optional)}>
                 {bytes(dataset.availableBytes)}
               </td>
-              <td className={styles.optional}>
+              <td className={styles.wide}>
                 {dataset.quotaBytes === null ? t('datasets.noQuota') : bytes(dataset.quotaBytes)}
               </td>
-              <td className={styles.optional}>{dataset.compression ?? ''}</td>
-              <td className={cx(styles.mono, styles.optional)}>
+              <td className={styles.wide}>{dataset.compression ?? ''}</td>
+              <td className={cx(styles.datasetName, styles.optional)}>
                 {dataset.type === 'volume'
                   ? t('datasets.volumeSize', { size: bytes(dataset.volumeSizeBytes ?? 0) })
-                  : (dataset.mountPoint ?? t('datasets.notMounted'))}
+                  : dataset.mountPoint === null
+                    ? t('datasets.notMounted')
+                    : breakable(dataset.mountPoint)}
               </td>
               <td>
                 <span className={styles.snapshotActions}>

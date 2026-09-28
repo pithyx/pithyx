@@ -522,6 +522,278 @@ export function samplePlan(request: StoragePlanRequest): StoragePlanPreview {
   }
 }
 
+function at<T>(items: readonly T[], index: number): T {
+  const item = items[index];
+  if (item === undefined) {
+    throw new Error(`The sample has no entry ${String(index)}`);
+  }
+  return item;
+}
+
+const tankPool = at(samplePools, 0);
+const backupPool = at(samplePools, 1);
+
+const verdict = (name: string, reason = 'importable') => {
+  const found = sampleDisks.find(({ disk: entry }) => entry.name === name);
+  return {
+    diskId: found?.disk.id ?? name,
+    decision: 'allowed' as const,
+    reason,
+    pool: null,
+    contents: ['zfs_member'],
+  };
+};
+
+/** What a scan finds: a mirror from an earlier installation, and a pool whose second disk is missing. */
+export const sampleImportScan = {
+  pools: [
+    {
+      name: 'photos',
+      poolGuid: '5561838205117473190',
+      state: 'ONLINE',
+      status: null,
+      action: 'The pool can be imported using its name or numeric identifier.',
+      messageId: null,
+      canImport: true,
+      needsForce: false,
+      nameTaken: false,
+      allowed: true,
+      unknownDevices: [],
+      disks: [verdict('sde'), verdict('sdf')],
+      vdevs: [
+        {
+          name: 'mirror-0',
+          state: 'ONLINE',
+          detail: null,
+          diskId: null,
+          children: [
+            {
+              name: 'ata-NAS_HDD_ZA1B2D7H',
+              state: 'ONLINE',
+              detail: null,
+              diskId: 'serial-ZA1B2D7H',
+              children: [],
+            },
+            {
+              name: 'ata-NAS_HDD_WX41A9QZ',
+              state: 'ONLINE',
+              detail: null,
+              diskId: 'serial-WX41A9QZ',
+              children: [],
+            },
+          ],
+        },
+      ],
+    },
+    {
+      name: 'old-backup',
+      poolGuid: '8810472238916450321',
+      state: 'UNAVAIL',
+      status: 'One or more devices are missing from the system.',
+      action: 'The pool cannot be imported. Attach the missing devices and try again.',
+      messageId: 'ZFS-8000-3C',
+      canImport: false,
+      needsForce: false,
+      nameTaken: false,
+      allowed: false,
+      unknownDevices: [],
+      disks: [],
+      vdevs: [
+        {
+          name: 'mirror-0',
+          state: 'UNAVAIL',
+          detail: 'insufficient replicas',
+          diskId: null,
+          children: [
+            {
+              name: '14120317431289201184',
+              state: 'UNAVAIL',
+              detail: 'cannot open',
+              diskId: null,
+              children: [],
+            },
+            {
+              name: '2230098715612230871',
+              state: 'UNAVAIL',
+              detail: 'cannot open',
+              diskId: null,
+              children: [],
+            },
+          ],
+        },
+      ],
+    },
+  ],
+};
+
+/** The pools after the read-only import of `photos`, for the preview card and the import for use. */
+export const samplePoolsWithPreview = {
+  pools: [
+    ...samplePools,
+    {
+      ...backupPool,
+      name: 'photos',
+      poolGuid: '5561838205117473190',
+      state: 'ONLINE',
+      readOnly: true,
+      capacityPercent: 31,
+      allocatedBytes: 2.5 * TB,
+      freeBytes: 5.5 * TB,
+      sizeBytes: 8 * TB,
+      vdevs: [
+        {
+          ...at(backupPool.vdevs, 0),
+          state: 'ONLINE',
+          children: [
+            leaf('ZA1B2D7H', '3411908277104522671'),
+            leaf('WX41A9QZ', '7203318841902774120'),
+          ],
+        },
+      ],
+    },
+  ] as Pool[],
+  datasets: [
+    ...sampleDatasets,
+    dataset('photos', 2.5 * TB, { mountPoint: '/photos' }),
+    dataset('photos/2019', 0.9 * TB, { mountPoint: '/photos/2019' }),
+    dataset('photos/2020', 1.6 * TB, { mountPoint: '/photos/2020' }),
+    dataset('photos/old-root', 4 * GB, { mountPoint: '/usr/local' }),
+  ],
+};
+
+/** The pools while a disk is added to the RAID-Z1 of tank. */
+export const samplePoolsExpanding = {
+  pools: [
+    {
+      ...tankPool,
+      expansion: {
+        state: 'scanning',
+        vdevGuid: '9206321434375767675',
+        startedAt: '2026-09-26T09:12:00Z',
+        endedAt: null,
+        toReflowBytes: 10.1 * TB,
+        reflowedBytes: 3.8 * TB,
+        waitingForResilver: false,
+      },
+      vdevs: [
+        {
+          ...at(tankPool.vdevs, 0),
+          children: [
+            ...(tankPool.vdevs[0]?.children ?? []),
+            leaf('ZA1B2D7H', '3411908277104522671'),
+          ],
+        },
+      ],
+    },
+    backupPool,
+  ] as Pool[],
+  datasets: sampleDatasets,
+};
+
+export const sampleShares = [
+  {
+    id: 1,
+    name: 'Family',
+    description: 'Photos, documents and the scans of the paperwork',
+    path: '/tank/family',
+    pool: 'tank',
+    dataset: 'tank/pithyx/shares/family',
+    usedBytes: 1.4 * TB,
+    availableBytes: 0.6 * TB,
+    quotaBytes: 2 * TB,
+    readUsers: 1,
+    readWriteUsers: 2,
+  },
+  {
+    id: 2,
+    name: 'Media',
+    description: 'Films and music for the living room',
+    path: '/tank/media',
+    pool: 'tank',
+    dataset: 'tank/pithyx/shares/media',
+    usedBytes: 4.9 * TB,
+    availableBytes: 9.2 * TB,
+    quotaBytes: null,
+    readUsers: 3,
+    readWriteUsers: 1,
+  },
+  {
+    id: 3,
+    name: 'Archive',
+    description: '',
+    path: '/backup/archive',
+    pool: 'backup',
+    dataset: 'backup/pithyx/shares/archive',
+    usedBytes: 2.7 * TB,
+    availableBytes: 1.2 * TB,
+    quotaBytes: null,
+    readUsers: 0,
+    readWriteUsers: 0,
+  },
+];
+
+export const sampleShareAccess = [
+  {
+    userId: 1,
+    username: 'alex',
+    displayName: 'Alex Morgan',
+    administrator: true,
+    access: 'readWrite',
+  },
+  {
+    userId: 2,
+    username: 'sam',
+    displayName: 'Sam Rivera',
+    administrator: false,
+    access: 'readWrite',
+  },
+  {
+    userId: 3,
+    username: 'robin',
+    displayName: 'Robin Keller',
+    administrator: false,
+    access: 'read',
+  },
+  { userId: 4, username: 'kim', displayName: null, administrator: false, access: 'none' },
+];
+
+interface SharePlanRequest {
+  action: string;
+  name?: string | null;
+  pool?: string | null;
+  shareId?: number | null;
+  data?: string | null;
+}
+
+function slug(name: string): string {
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9_.-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+/** The plan the daemon would answer for creating or deleting a shared folder. */
+export function sampleSharePlan(request: SharePlanRequest): StoragePlanPreview {
+  if (request.action === 'share.create') {
+    const target = `${request.pool ?? 'tank'}/pithyx/shares/${slug(request.name ?? '')}`;
+    return preview([`zfs create ${target}`], { datasets: [target] });
+  }
+  const share = sampleShares.find((entry) => entry.id === request.shareId);
+  if (request.data !== 'destroy' || share?.dataset == null) {
+    return preview([], { requiresConfirmName: true });
+  }
+  const snapshots =
+    share.dataset === 'tank/pithyx/shares/family'
+      ? sampleSnapshots.map((entry) => entry.fullName ?? '')
+      : [];
+  return preview([`zfs destroy${snapshots.length > 0 ? ' -r' : ''} ${share.dataset}`], {
+    datasets: [share.dataset, ...snapshots],
+    requiresConfirmName: true,
+  });
+}
+
 export const sampleJob: Job = {
   id: 42,
   kind: 'storage.pool.create',
@@ -573,6 +845,14 @@ function answer(method: string, params: unknown, extra: ExtraAnswers): unknown {
             ? sampleSnapshots
             : [],
       };
+    case 'internal.admin.storage.importScan':
+      return sampleImportScan;
+    case 'internal.admin.shares.list':
+      return sampleShares;
+    case 'internal.admin.shares.access':
+      return sampleShareAccess;
+    case 'internal.admin.shares.plan':
+      return sampleSharePlan(params as SharePlanRequest);
     case 'internal.admin.storage.snapshots.schedules':
       return { ...sampleSnapshotSchedules, dataset: (params as { dataset: string }).dataset };
     default:

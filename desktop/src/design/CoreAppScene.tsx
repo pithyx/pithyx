@@ -25,16 +25,17 @@ const translate = i18next.t as unknown as (key: string, options?: object) => str
 const text = (key: string, params?: Record<string, string>) =>
   key.includes(':') ? translate(key, params) : key;
 
-// The open dialog, else the innermost list item, row or card that contains `inside`, else the page.
-function scope(inside?: string): ParentNode {
+// Where to look, first match wins: the open dialog, or the list items, rows, cards and sections that contain
+// `inside`, innermost first, then the page.
+function scopes(inside?: string): ParentNode[] {
   const dialog = document.querySelector('[role="dialog"]');
   if (inside === undefined) {
-    return dialog ?? document;
+    return [dialog ?? document];
   }
   const holders = [...document.querySelectorAll('li, tr, article, section')].filter((element) =>
     element.textContent.includes(inside),
   );
-  return holders.at(-1) ?? document;
+  return [...holders.reverse(), document];
 }
 
 function byText(root: ParentNode, selector: string, wanted: string): HTMLElement | undefined {
@@ -65,11 +66,12 @@ function setValue(element: HTMLInputElement | HTMLSelectElement, value: string) 
 
 function attempt(step: ScriptStep): boolean {
   if ('press' in step) {
-    const button = byText(
-      scope(step.inside),
-      'button, [role="radio"]',
-      text(step.press, step.params),
-    );
+    const wanted = text(step.press, step.params);
+    // A button or radio by its text, else a native radio button or checkbox by its label.
+    const button =
+      scopes(step.inside)
+        .map((root) => byText(root, 'button, [role="radio"]', wanted))
+        .find((found) => found !== undefined) ?? control(wanted);
     if (
       button === undefined ||
       button.getAttribute('aria-disabled') === 'true' ||

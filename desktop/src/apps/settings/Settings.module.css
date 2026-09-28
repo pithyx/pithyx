@@ -142,7 +142,13 @@
   font-family: var(--font-mono);
   font-size: var(--font-size-xs);
   font-weight: var(--font-weight-regular);
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
+}
+
+.detail {
+  display: block;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
 }
 
 .rowActions {
@@ -285,8 +291,7 @@
   }
 
   .nav {
-    flex-direction: row;
-    overflow-x: auto;
+    flex-flow: row wrap;
     border-inline-end: 0;
     border-bottom: 1px solid var(--color-border);
   }
@@ -299,8 +304,11 @@
   .page {
     padding: var(--space-3);
   }
+}
 
-  /* Each share becomes a card: its name first, then every value with its column name. */
+/* Each share becomes a card below the width where six columns fit: its name first, then every value with its
+   column name. */
+@container window (max-width: 900px) {
   .table thead {
     display: none;
   }

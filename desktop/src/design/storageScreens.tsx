@@ -1,8 +1,15 @@
+import { SettingsApp } from '../apps/settings/SettingsApp';
 import { StorageApp } from '../apps/storage/StorageApp';
-import type { ScreenDefinition } from './screens';
 import { CoreAppScene, type ScriptStep } from './CoreAppScene';
+import type { ScreenDefinition } from './screens';
+import type { ExtraAnswers } from './storageSample';
+import { samplePoolsExpanding, samplePoolsWithPreview } from './storageSample';
 
-function storage(section: string, script: ScriptStep[] = []): ScreenDefinition['render'] {
+function storage(
+  section: string,
+  script: ScriptStep[] = [],
+  answers: ExtraAnswers = {},
+): ScreenDefinition['render'] {
   return (context) => (
     <CoreAppScene
       context={context}
@@ -10,9 +17,20 @@ function storage(section: string, script: ScriptStep[] = []): ScreenDefinition['
       Component={StorageApp}
       launch={{ section }}
       script={script}
+      answers={answers}
     />
   );
 }
+
+function settings(script: ScriptStep[] = []): ScreenDefinition['render'] {
+  return (context) => (
+    <CoreAppScene context={context} app="settings" Component={SettingsApp} script={script} />
+  );
+}
+
+const withPreview: ExtraAnswers = {
+  'internal.admin.storage.pools': () => samplePoolsWithPreview,
+};
 
 const wizardDisks: ScriptStep[] = [
   { press: 'storage:create.button' },
@@ -174,6 +192,141 @@ export const storageScreens: ScreenDefinition[] = [
       { fill: 'storage:datasets.volume.name', value: 'windows-11' },
       { fill: 'storage:datasets.volume.size', value: '128' },
       { press: 'storage:create.preview' },
+    ]),
+  },
+  {
+    id: 'storage-import-scan',
+    group: 'storage',
+    title: 'Import a pool: scan',
+    description:
+      'The scan runs only when asked; an importable mirror with its disks, and a pool that cannot be imported with what ZFS reports.',
+    render: storage('pools', [
+      { press: 'storage:import.button' },
+      { press: 'storage:import.scan' },
+      { press: 'photos' },
+    ]),
+  },
+  {
+    id: 'storage-import-readonly',
+    group: 'storage',
+    title: 'Import a pool: read-only first',
+    description:
+      'The read-only import with its exact command: nothing is mounted and nothing changes.',
+    render: storage('pools', [
+      { press: 'storage:import.button' },
+      { press: 'storage:import.scan' },
+      { press: 'photos' },
+      { press: 'storage:create.preview' },
+    ]),
+  },
+  {
+    id: 'storage-import-preview-card',
+    group: 'storage',
+    title: 'Imported read-only',
+    description:
+      'A pool imported read-only for a look at its datasets, with the two ways on: import for use or export again.',
+    render: storage('pools', [], withPreview),
+  },
+  {
+    id: 'storage-import-for-use',
+    group: 'storage',
+    title: 'Import for use',
+    description:
+      'Which datasets are mounted and which stay unmounted because they would cover a system folder.',
+    render: storage(
+      'pools',
+      [
+        { press: 'storage:change.import.button', inside: 'photos' },
+        { press: 'storage:create.preview' },
+      ],
+      withPreview,
+    ),
+  },
+  {
+    id: 'storage-export',
+    group: 'storage',
+    title: 'Export a pool',
+    description: 'Exporting lists every dataset that becomes unavailable.',
+    render: storage('pools', [
+      { press: 'storage:change.export.button', inside: 'backup' },
+      { press: 'storage:create.preview' },
+    ]),
+  },
+  {
+    id: 'storage-add-disks',
+    group: 'storage',
+    title: 'Add disks to a pool',
+    description:
+      'A single disk added to a RAID-Z1 lowers its protection and cannot be removed again: both are explained, and the pool name must be typed.',
+    render: storage('pools', [
+      { press: 'storage:change.add.button', inside: 'tank' },
+      { check: 'sde' },
+      { press: 'storage:create.preview' },
+      { fill: 'storage:confirmName.label', params: { pool: 'tank' }, value: 'tank' },
+      { press: 'storage:create.preview' },
+    ]),
+  },
+  {
+    id: 'storage-expand',
+    group: 'storage',
+    title: 'Expand a RAID-Z',
+    description:
+      'One more disk for the RAID-Z1 of tank: irreversible, with the typed name and the exact command.',
+    render: storage('pools', [
+      { press: 'storage:change.expand.button', inside: 'tank' },
+      { press: 'sde' },
+      { fill: 'storage:confirmName.label', params: { pool: 'tank' }, value: 'tank' },
+      { press: 'storage:create.preview' },
+    ]),
+  },
+  {
+    id: 'storage-expanding',
+    group: 'storage',
+    title: 'RAID-Z expansion running',
+    description: 'The pool card while ZFS spreads the data over the added disk.',
+    render: storage('pools', [], {
+      'internal.admin.storage.pools': () => samplePoolsExpanding,
+    }),
+  },
+  {
+    id: 'settings-shares',
+    group: 'storage',
+    title: 'Settings: shared folders',
+    description:
+      'Every shared folder with its pool, space or quota, description and rights; Settings points to Storage for everything else.',
+    render: settings(),
+  },
+  {
+    id: 'settings-share-create',
+    group: 'storage',
+    title: 'Create a shared folder',
+    description: 'Name, pool and description, then the dataset it becomes and the exact command.',
+    render: settings([
+      { press: 'settings:shares.create' },
+      { fill: 'settings:shares.createDialog.name', value: 'Holiday photos' },
+      { fill: 'settings:shares.createDialog.description', value: 'Pictures from every trip' },
+      { press: 'settings:shares.createDialog.preview' },
+    ]),
+  },
+  {
+    id: 'settings-share-edit',
+    group: 'storage',
+    title: 'Edit a shared folder',
+    description:
+      'Name and description, and the rights of every user: none, read, or read and write.',
+    render: settings([{ press: 'settings:shares.edit', inside: 'Family' }]),
+  },
+  {
+    id: 'settings-share-delete',
+    group: 'storage',
+    title: 'Delete a shared folder',
+    description:
+      'Deleting asks what happens with the data; deleting it for good lists the dataset and every snapshot.',
+    render: settings([
+      { press: 'settings:shares.delete', inside: 'Family' },
+      { press: 'settings:shares.deleteDialog.destroy' },
+      { fill: 'settings:shares.deleteDialog.confirm', params: { name: 'Family' }, value: 'Family' },
+      { press: 'settings:shares.deleteDialog.preview' },
     ]),
   },
 ];

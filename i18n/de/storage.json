@@ -82,7 +82,7 @@
     "importable": "Lässt sich importieren."
   },
   "create": {
-    "button": "Pool anlegen …",
+    "button": "Pool anlegen…",
     "title": "Pool anlegen",
     "name": "Name des Pools",
     "nameHint": "Kleinbuchstaben, Ziffern, - und _; beginnt mit einem Buchstaben.",
@@ -191,14 +191,14 @@
     "disk": "Neue Platte",
     "datasets": "Alles auf dem Pool geht verloren, auch diese Datasets:",
     "replace": {
-      "button": "Ersetzen …",
+      "button": "Ersetzen…",
       "title": "{device} ersetzen",
       "explain": "Die neue Platte nimmt den Platz von {device} in {pool} ein; ZFS kopiert die Daten darauf (Resilver). Eine neue Platte wird nie von selbst verwendet.",
       "serialHint": "Gib die Seriennummer ein, die auf der Platte steht, um zu bestätigen, dass du diese meinst.",
       "run": "Ersetzen"
     },
     "spareAdd": {
-      "button": "Hot Spare hinzufügen …",
+      "button": "Hot Spare hinzufügen…",
       "title": "Hot Spare zu {pool} hinzufügen",
       "explain": "Ein Hot Spare wartet in {pool}; fällt eine Platte aus, stellt ZFS sofort darauf wieder her.",
       "run": "Spare hinzufügen"
@@ -222,7 +222,7 @@
       "run": "Online bringen"
     },
     "destroy": {
-      "button": "Pool löschen …",
+      "button": "Pool löschen…",
       "title": "{pool} löschen",
       "explain": "Der Pool {pool} und alle seine Daten werden gelöscht. Das lässt sich nicht rückgängig machen.",
       "confirm": "Gib {pool} zur Bestätigung ein",

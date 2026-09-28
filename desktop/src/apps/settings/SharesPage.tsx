@@ -6,7 +6,7 @@ import { ErrorNotice } from '../../errors/ErrorNotice';
 import { Button } from '../../ui/Button';
 import { IconPencil, IconPlus, IconTrash } from '../../ui/icons';
 import type { ShareDetails } from '../sdk/internal';
-import { describeProblem } from '../storage/shared';
+import { breakable, describeProblem } from '../storage/shared';
 import { CreateShareDialog } from './CreateShareDialog';
 import { DeleteShareDialog } from './DeleteShareDialog';
 import { EditShareDialog } from './EditShareDialog';
@@ -109,7 +109,7 @@ function ShareTable({
           <tr key={share.id}>
             <th scope="row" className={styles.shareName}>
               {share.name}
-              <span className={styles.path}>{share.dataset ?? share.path}</span>
+              <span className={styles.path}>{breakable(share.dataset ?? share.path)}</span>
             </th>
             <td data-label={t('shares.columns.pool')}>{share.pool ?? t('shares.folder')}</td>
             <td data-label={t('shares.columns.used')}>
@@ -137,7 +137,7 @@ function ShareTable({
             <td data-label={t('shares.columns.rights')}>
               {t('shares.rights', { count: share.readUsers + share.readWriteUsers })}
               {share.readUsers + share.readWriteUsers > 0 && (
-                <span className={styles.path}>
+                <span className={styles.detail}>
                   {t('shares.rightsDetail', {
                     read: share.readUsers,
                     readWrite: share.readWriteUsers,

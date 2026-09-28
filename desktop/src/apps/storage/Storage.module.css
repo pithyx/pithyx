@@ -404,8 +404,7 @@
   }
 
   .nav {
-    flex-direction: row;
-    overflow-x: auto;
+    flex-flow: row wrap;
     border-inline-end: 0;
     border-bottom: 1px solid var(--color-border);
   }
@@ -687,4 +686,52 @@
 .candidate p {
   margin: 0;
   overflow-wrap: anywhere;
+}
+
+.datasetName {
+  font-family: var(--font-mono);
+  overflow-wrap: break-word;
+}
+
+/* Columns that only fit wide windows. */
+@container window (max-width: 960px) {
+  .wide {
+    display: none;
+  }
+}
+
+/* A table whose rows become cards in narrow windows: the row header first, then every value with its column name. */
+@container window (max-width: 640px) {
+  .stack thead {
+    display: none;
+  }
+
+  .stack,
+  .stack tbody,
+  .stack tr,
+  .stack th,
+  .stack td {
+    display: block;
+  }
+
+  .stack tr {
+    padding: var(--space-2) 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .stack th,
+  .stack td {
+    padding: var(--space-1) 0;
+    border-bottom: 0;
+    text-align: start;
+  }
+
+  .stack td[data-label]::before {
+    content: attr(data-label) ': ';
+    color: var(--color-text-muted);
+  }
+
+  .stack .optional {
+    display: block;
+  }
 }

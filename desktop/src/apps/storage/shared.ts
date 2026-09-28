@@ -1,6 +1,7 @@
 import type { ErrorCode } from '@pithyx/api-client';
 import type { PithyxApp } from '@pithyx/sdk';
 import { useQuery } from '@tanstack/react-query';
+import { createElement, type ReactNode } from 'react';
 import type { useTranslation } from 'react-i18next';
 import type { DescribedError } from '../../errors/describe';
 import { internalCall, type StorageDisk } from '../sdk/internal';
@@ -82,4 +83,13 @@ export function useHealth(app: PithyxApp) {
     queryKey: healthKey,
     queryFn: () => internalCall(app, 'internal.admin.storage.health', {}),
   });
+}
+
+/** A dataset name or path that wraps after its slashes rather than inside a word. */
+export function breakable(path: string): ReactNode[] {
+  return path
+    .split('/')
+    .flatMap((part, index) =>
+      index === 0 ? [part] : ['/', createElement('wbr', { key: index }), part],
+    );
 }
