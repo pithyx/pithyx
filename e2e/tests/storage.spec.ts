@@ -214,6 +214,59 @@ test('deleting a dataset needs its full name typed', async ({ page }) => {
   await expect(dialog.getByRole('button', { name: 'Delete', exact: true })).toHaveCount(0);
 });
 
+test('importing a pool scans only when asked and imports it read-only first', async ({ page }) => {
+  const storage = await openStorage(page);
+  await storage.getByRole('button', { name: 'Import a pool…' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Import a pool' });
+
+  await expect(dialog).toContainText('may wake a sleeping disk');
+  await expect(dialog.getByRole('radio')).toHaveCount(0);
+  await dialog.getByRole('button', { name: 'Scan disks' }).click();
+
+  const oldTank = dialog.getByRole('radio', { name: /^oldtank/ });
+  await expect(oldTank).toBeEnabled();
+  await expect(dialog.getByRole('radio', { name: /^archive/ })).toBeDisabled();
+  await expect(dialog.getByRole('group', { name: 'oldtank' })).toContainText('Can be imported.');
+  await expect(dialog.getByRole('group', { name: 'archive' })).toContainText(
+    'This pool cannot be imported',
+  );
+  expect(await violations(page)).toEqual([]);
+
+  await oldTank.check();
+  await dialog.getByRole('button', { name: 'Show commands' }).click();
+  await expect(dialog.getByRole('status').getByRole('listitem')).toHaveText([
+    'zpool import -o readonly=on -o cachefile=none -N -d /dev/disk/by-id 5249471309174385122',
+  ]);
+  await expect(dialog.getByRole('button', { name: 'Import read-only' })).toBeEnabled();
+});
+
+test('adding a single disk to a mirror warns and needs the pool name typed', async ({ page }) => {
+  const storage = await openStorage(page);
+  await storage
+    .getByRole('article', { name: 'pithyxtestm' })
+    .getByRole('button', { name: 'Add disks…' })
+    .click();
+  const dialog = page.getByRole('dialog', { name: 'Add disks to pithyxtestm' });
+
+  await dialog.getByRole('checkbox', { name: /^sdc / }).check();
+  await expect(dialog.getByRole('radio', { name: 'Single disk, no protection' })).toBeChecked();
+  await dialog.getByRole('button', { name: 'Show commands' }).click();
+  await expect(dialog.getByRole('note', { name: 'Warnings' })).toContainText(
+    'The new disks protect less than the rest of the pool',
+  );
+  await expect(dialog.getByRole('status')).toHaveText(
+    'This changes the pool for good. Type its name to see the commands.',
+  );
+  await expect(dialog.getByRole('button', { name: 'Add disks' })).toHaveCount(0);
+
+  await dialog.getByLabel('Type pithyxtestm to confirm').fill('pithyxtestm');
+  await dialog.getByRole('button', { name: 'Show commands' }).click();
+  await expect(dialog.getByRole('status').getByRole('listitem')).toHaveText([
+    'zpool add --allow-replication-mismatch pithyxtestm /dev/disk/by-id/scsi-0QEMU_QEMU_HARDDISK_drive-scsi2',
+  ]);
+  await expect(dialog.getByRole('button', { name: 'Add disks' })).toBeEnabled();
+});
+
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
 async function violations(page: Page) {

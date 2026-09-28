@@ -14,6 +14,9 @@ export type Vdev = components['schemas']['Vdev'];
 export type StoragePlanRequest = components['schemas']['StoragePlanRequest'];
 export type StoragePlanPreview = components['schemas']['StoragePlanPreview'];
 export type Job = components['schemas']['Job'];
+export type ImportScan = components['schemas']['ImportScan'];
+export type ImportablePool = components['schemas']['ImportablePool'];
+export type ImportVdev = components['schemas']['ImportVdev'];
 export type Snapshot = components['schemas']['Snapshot'];
 export type SnapshotList = components['schemas']['SnapshotList'];
 export type SnapshotScheduleList = components['schemas']['SnapshotScheduleList'];
@@ -41,6 +44,7 @@ export interface InternalMethods {
   'internal.admin.storage.pools': { params: Record<string, never>; result: PoolList };
   'internal.admin.storage.plan': { params: StoragePlanRequest; result: StoragePlanPreview };
   'internal.admin.storage.run': { params: { planId: string }; result: Job };
+  'internal.admin.storage.importScan': { params: Record<string, never>; result: ImportScan };
   'internal.admin.storage.snapshots.list': { params: { dataset: string }; result: SnapshotList };
   'internal.admin.storage.snapshots.create': { params: { dataset: string }; result: Snapshot };
   'internal.admin.storage.snapshots.delete': { params: SnapshotRef; result: undefined };
@@ -96,6 +100,9 @@ function isPlanRequest(value: unknown): boolean {
     optionalText(value.vdev) &&
     optionalText(value.encryption) &&
     optionalText(value.confirmName) &&
+    optionalText(value.poolGuid) &&
+    optionalText(value.newName) &&
+    (value.force === undefined || value.force === null || typeof value.force === 'boolean') &&
     (value.diskIds === undefined ||
       value.diskIds === null ||
       (Array.isArray(value.diskIds) && value.diskIds.every((id) => typeof id === 'string'))) &&
@@ -242,6 +249,10 @@ export function adminStorageHost(emit: (event: string, data?: unknown) => void):
         daemon(async () =>
           unwrap(await api.POST('/api/storage/plans', { body: params as StoragePlanRequest })),
         ),
+    },
+    'internal.admin.storage.importScan': {
+      validate: isRecord,
+      handle: () => daemon(async () => unwrap(await api.POST('/api/storage/import/scan'))),
     },
     'internal.admin.storage.run': {
       validate: (params) => isRecord(params) && typeof params.planId === 'string',

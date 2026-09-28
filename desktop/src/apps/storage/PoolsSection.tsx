@@ -4,19 +4,33 @@ import { useTranslation } from 'react-i18next';
 import { formatBytes } from '../../desktop/format';
 import { ErrorNotice } from '../../errors/ErrorNotice';
 import { Button } from '../../ui/Button';
-import { Badge } from '../../ui/Controls';
+import { Badge, ProgressBar } from '../../ui/Controls';
 import { IconPlus } from '../../ui/icons';
 import type { Dataset, Pool, Vdev } from '../sdk/internal';
+import { ImportDialog } from './ImportDialog';
 import { PoolActionDialog, type PoolAction } from './PoolActionDialog';
+import { PoolChangeDialog, type PoolChange } from './PoolChangeDialog';
 import { PoolWizard } from './PoolWizard';
-import { describeProblem, stateKey, stateTone, useDisks, usePools, type Translate } from './shared';
+import {
+  describeProblem,
+  formatDate,
+  stateKey,
+  stateTone,
+  useDisks,
+  usePools,
+  type Translate,
+} from './shared';
 import styles from './Storage.module.css';
 
 /** Pools with their layout, health and fill level, the pool wizard, and repair and maintenance through plans. */
 export function PoolsSection({ app }: { app: PithyxApp }) {
   const { t } = useTranslation('storage');
   const [creating, setCreating] = useState(false);
+  const [importing, setImporting] = useState(false);
   const [action, setAction] = useState<{ pool: Pool; vdev?: Vdev; action: PoolAction } | null>(
+    null,
+  );
+  const [change, setChange] = useState<{ pool: Pool; vdev?: Vdev; action: PoolChange } | null>(
     null,
   );
   const pools = usePools(app);
@@ -29,16 +43,26 @@ export function PoolsSection({ app }: { app: PithyxApp }) {
           <h2 className={styles.pageTitle}>{t('nav.pools')}</h2>
           <p className={styles.muted}>{t('intro')}</p>
         </div>
-        <Button
-          variant="primary"
-          onPress={() => {
-            setCreating(true);
-          }}
-          isDisabled={disks.data === undefined}
-        >
-          <IconPlus size={16} aria-hidden />
-          {t('create.button')}
-        </Button>
+        <div className={styles.buttons}>
+          <Button
+            onPress={() => {
+              setImporting(true);
+            }}
+            isDisabled={disks.data === undefined}
+          >
+            {t('import.button')}
+          </Button>
+          <Button
+            variant="primary"
+            onPress={() => {
+              setCreating(true);
+            }}
+            isDisabled={disks.data === undefined}
+          >
+            <IconPlus size={16} aria-hidden />
+            {t('create.button')}
+          </Button>
+        </div>
       </header>
       {disks.data?.environment === 'dev' && <p className={styles.notice}>{t('dev')}</p>}
       {pools.isError && <ErrorNotice error={describeProblem(pools.error)} />}
@@ -52,6 +76,9 @@ export function PoolsSection({ app }: { app: PithyxApp }) {
             onAction={(poolAction, vdev) => {
               setAction({ pool, action: poolAction, ...(vdev === undefined ? {} : { vdev }) });
             }}
+            onChange={(poolChange, vdev) => {
+              setChange({ pool, action: poolChange, ...(vdev === undefined ? {} : { vdev }) });
+            }}
           />
         ))}
       </div>
@@ -62,6 +89,27 @@ export function PoolsSection({ app }: { app: PithyxApp }) {
           disks={disks.data.disks}
           onClose={() => {
             setCreating(false);
+          }}
+        />
+      )}
+      {importing && disks.data !== undefined && (
+        <ImportDialog
+          app={app}
+          disks={disks.data.disks}
+          onClose={() => {
+            setImporting(false);
+          }}
+        />
+      )}
+      {change !== null && disks.data !== undefined && (
+        <PoolChangeDialog
+          app={app}
+          pool={change.pool}
+          {...(change.vdev === undefined ? {} : { vdev: change.vdev })}
+          action={change.action}
+          disks={disks.data.disks}
+          onClose={() => {
+            setChange(null);
           }}
         />
       )}
@@ -82,15 +130,18 @@ export function PoolsSection({ app }: { app: PithyxApp }) {
 }
 
 type OnAction = (action: PoolAction, vdev?: Vdev) => void;
+type OnChange = (action: PoolChange, vdev?: Vdev) => void;
 
 function PoolCard({
   pool,
   datasets,
   onAction,
+  onChange,
 }: {
   pool: Pool;
   datasets: Dataset[];
   onAction: OnAction;
+  onChange: OnChange;
 }) {
   const { t, i18n } = useTranslation('storage');
   const data = pool.vdevs.filter((vdev) => vdev.role === 'data');
@@ -101,8 +152,12 @@ function PoolCard({
         <h4 id={`pool-${pool.name}`} className={styles.poolName}>
           {pool.name}
         </h4>
-        <Badge tone={stateTone(pool.state)}>{t(`state.${stateKey(pool.state)}`)}</Badge>
+        <span className={styles.badges}>
+          {pool.readOnly && <Badge tone="neutral">{t('pools.readOnly')}</Badge>}
+          <Badge tone={stateTone(pool.state)}>{t(`state.${stateKey(pool.state)}`)}</Badge>
+        </span>
       </div>
+      {pool.readOnly && <p className={styles.notice}>{t('pools.readOnlyHint')}</p>}
       <div className={styles.usage}>
         <span>
           {t('pools.used', {
@@ -118,13 +173,20 @@ function PoolCard({
         {t('pools.layout', { layout: data.map((vdev) => vdevLabel(t, vdev)).join(' + ') })}
       </p>
       {pool.scan !== null && <p className={styles.muted}>{scanText(t, pool, i18n.language)}</p>}
+      <Expansion pool={pool} />
       {pool.state !== 'ONLINE' && <p className={styles.notice}>{t('pools.degradedHint')}</p>}
       <ul className={styles.vdevs} aria-label={t('pools.devices', { pool: pool.name })}>
         {[...data, ...others].map((vdev) => (
-          <VdevItem key={vdev.name} vdev={vdev} onAction={onAction} />
+          <VdevItem
+            key={vdev.name}
+            vdev={vdev}
+            readOnly={pool.readOnly}
+            onAction={onAction}
+            onChange={onChange}
+          />
         ))}
       </ul>
-      <details className={styles.datasets}>
+      <details className={styles.datasets} open={pool.readOnly}>
         <summary>{t('datasets.title', { count: datasets.length })}</summary>
         <ul>
           {datasets.map((dataset) => (
@@ -140,35 +202,126 @@ function PoolCard({
         </ul>
       </details>
       <div className={styles.poolActions}>
-        <Button
-          size="sm"
-          onPress={() => {
-            onAction('pool.spare.add');
-          }}
-        >
-          {t('actions.spareAdd.button')}
-        </Button>
-        <Button
-          size="sm"
-          variant="danger"
-          onPress={() => {
-            onAction('pool.destroy');
-          }}
-        >
-          {t('actions.destroy.button')}
-        </Button>
+        {pool.readOnly ? (
+          <>
+            <Button
+              size="sm"
+              variant="primary"
+              onPress={() => {
+                onChange('pool.import');
+              }}
+            >
+              {t('change.import.button')}
+            </Button>
+            <Button
+              size="sm"
+              onPress={() => {
+                onChange('pool.export');
+              }}
+            >
+              {t('change.discard.button')}
+            </Button>
+          </>
+        ) : (
+          <>
+            <Button
+              size="sm"
+              onPress={() => {
+                onChange('pool.vdev.add');
+              }}
+            >
+              {t('change.add.button')}
+            </Button>
+            <Button
+              size="sm"
+              onPress={() => {
+                onAction('pool.spare.add');
+              }}
+            >
+              {t('actions.spareAdd.button')}
+            </Button>
+            <Button
+              size="sm"
+              onPress={() => {
+                onChange('pool.export');
+              }}
+            >
+              {t('change.export.button')}
+            </Button>
+            <Button
+              size="sm"
+              variant="danger"
+              onPress={() => {
+                onAction('pool.destroy');
+              }}
+            >
+              {t('actions.destroy.button')}
+            </Button>
+          </>
+        )}
       </div>
     </article>
   );
 }
 
-function VdevItem({ vdev, onAction }: { vdev: Vdev; onAction: OnAction }) {
+/** A running RAID-Z expansion with its progress, or when the last one ended. */
+function Expansion({ pool }: { pool: Pool }) {
+  const { t, i18n } = useTranslation('storage');
+  const expansion = pool.expansion;
+  if (expansion === null || expansion === undefined) {
+    return null;
+  }
+  const vdev =
+    pool.vdevs.find((candidate) => candidate.vdevGuid === expansion.vdevGuid)?.name ?? '';
+  if (expansion.state !== 'scanning') {
+    return expansion.state === 'finished' && expansion.endedAt !== null ? (
+      <p className={styles.muted}>
+        {t('expansion.finished', { vdev, date: formatDate(expansion.endedAt, i18n.language) })}
+      </p>
+    ) : null;
+  }
+  const percent =
+    expansion.toReflowBytes === 0
+      ? 0
+      : Math.min(100, Math.floor((expansion.reflowedBytes / expansion.toReflowBytes) * 100));
+  return (
+    <>
+      <ProgressBar label={t('expansion.running', { vdev })} value={percent} />
+      {expansion.waitingForResilver && (
+        <p className={styles.notice}>{t('expansion.waiting', { vdev })}</p>
+      )}
+    </>
+  );
+}
+
+function VdevItem({
+  vdev,
+  readOnly,
+  onAction,
+  onChange,
+}: {
+  vdev: Vdev;
+  readOnly: boolean;
+  onAction: OnAction;
+  onChange: OnChange;
+}) {
   const { t } = useTranslation('storage');
   const leaves = vdev.children.length === 0 ? [vdev] : vdev.children;
   return (
     <li className={styles.vdev}>
       <span className={styles.vdevType}>
         {vdev.role === 'data' ? vdevLabel(t, vdev) : t(`role.${roleKey(vdev.role)}`)}
+        {!readOnly && vdev.role === 'data' && vdev.type === 'raidz' && (
+          <Button
+            size="sm"
+            variant="quiet"
+            onPress={() => {
+              onChange('pool.raidz.expand', vdev);
+            }}
+          >
+            {t('change.expand.button')}
+          </Button>
+        )}
       </span>
       <ul className={styles.leaves}>
         {leaves.map((leaf) => (
@@ -176,7 +329,7 @@ function VdevItem({ vdev, onAction }: { vdev: Vdev; onAction: OnAction }) {
             <span className={styles.mono}>{leaf.name}</span>
             <Badge tone={stateTone(leaf.state)}>{t(`state.${stateKey(leaf.state)}`)}</Badge>
             <span className={styles.leafActions}>
-              {vdev.role === 'spare' ? (
+              {readOnly ? null : vdev.role === 'spare' ? (
                 <Button
                   size="sm"
                   variant="quiet"

@@ -17,7 +17,9 @@
     "layout": "Layout: {layout}",
     "devices": "Devices of {pool}",
     "errors": "Errors: {read} read, {write} write, {checksum} checksum",
-    "degradedHint": "A device is missing or failed. A disk that comes back is rebuilt on its own (resilver); you can also replace it with a new disk."
+    "degradedHint": "A device is missing or failed. A disk that comes back is rebuilt on its own (resilver); you can also replace it with a new disk.",
+    "readOnly": "Read-only (preview)",
+    "readOnlyHint": "Imported read-only for a preview: nothing is mounted and nothing on it changes. Check its datasets, then import it for use or export it again."
   },
   "state": {
     "online": "Healthy",
@@ -76,7 +78,8 @@
     "has_data": "Holds data ({contents}). Confirm with its serial number to use it; everything on it is lost.",
     "confirmed": "Confirmed with its serial number.",
     "empty": "Empty and ready.",
-    "confirm_replacement": "A replacement disk is always confirmed with its serial number."
+    "confirm_replacement": "A replacement disk is always confirmed with its serial number.",
+    "importable": "Can be imported."
   },
   "create": {
     "button": "Create pool…",
@@ -426,5 +429,98 @@
       "standby": "Sleeping"
     },
     "standbyHint": "Sleeping disks are not woken for status queries."
+  },
+  "import": {
+    "button": "Import a pool…",
+    "title": "Import a pool",
+    "explain": "Pools on disks from another system or an earlier installation can be imported. A pool is first imported read-only: nothing is mounted and nothing on it changes, so you can check its datasets before you use it.",
+    "scanHint": "The scan reads the labels of every disk and may wake a sleeping disk. It runs only when you start it.",
+    "scan": "Scan disks",
+    "rescan": "Scan again",
+    "scanning": "Reading the disks…",
+    "none": "No pool was found that could be imported.",
+    "found": "Pools found on the disks",
+    "layout": "Layout of {pool}",
+    "disks": "Disks of {pool}",
+    "usedElsewhere": "Used by another system",
+    "nameTakenBadge": "Name taken",
+    "unknown": "Pithyx does not know the disk of {devices}, so it cannot check it. This pool cannot be imported.",
+    "cannot": "This pool cannot be imported, usually because disks are missing. Connect them and scan again.",
+    "zfsSays": "What ZFS reports",
+    "newName": "New name for the pool",
+    "nameTaken": "A pool named {name} is imported already. The pool is imported under the new name.",
+    "otherSystem": "{name} was last used by another system and not exported there. Import it only if that system is switched off or no longer uses these disks: two systems writing to one pool destroy it.",
+    "force": "Import it anyway (force)",
+    "run": "Import read-only",
+    "done": "The pool is imported read-only. Check its datasets on its card, then import it for use or export it again."
+  },
+  "change": {
+    "import": {
+      "button": "Import for use…",
+      "title": "Import {pool} for use",
+      "explain": "{pool} is exported and imported again for use. Then the datasets that are safe to mount are mounted; datasets that would cover system folders stay unmounted.",
+      "run": "Import for use",
+      "mounted": "These datasets are mounted:"
+    },
+    "discard": {
+      "button": "Export",
+      "title": "Export {pool} again",
+      "explain": "The read-only preview ends: {pool} is exported and nothing on it was changed. The data stays on the disks.",
+      "run": "Export"
+    },
+    "export": {
+      "button": "Export…",
+      "title": "Export {pool}",
+      "explain": "{pool} is exported: its datasets are unmounted and unavailable until the pool is imported again. The data stays on the disks, which can then be moved to another system.",
+      "run": "Export",
+      "datasets": "These datasets become unavailable:"
+    },
+    "add": {
+      "button": "Add disks…",
+      "title": "Add disks to {pool}",
+      "explain": "The chosen disks become a new group in {pool}, and the pool grows by its space. Data already on the pool stays where it is.",
+      "run": "Add disks"
+    },
+    "expand": {
+      "button": "Expand with a disk…",
+      "title": "Expand {vdev} of {pool}",
+      "explain": "The disk joins {vdev}, and ZFS spreads the data over one more disk. This takes a while; the pool stays usable. The disk can never be removed again, and data already on the pool keeps its old ratio of data to parity until it is written again.",
+      "run": "Expand"
+    },
+    "layouts": {
+      "single": "Single disk, no protection",
+      "mirror": "Mirror of {count} disks",
+      "raidz1": "RAID-Z1 of {count} disks",
+      "raidz2": "RAID-Z2 of {count} disks",
+      "raidz3": "RAID-Z3 of {count} disks"
+    }
+  },
+  "expansion": {
+    "running": "Expanding {vdev}",
+    "waiting": "The expansion of {vdev} waits until a rebuild is done.",
+    "finished": "{vdev} was expanded on {date}."
+  },
+  "warnings": {
+    "label": "Warnings",
+    "lowers_redundancy": "The new disks protect less than the rest of the pool: afterwards the whole pool survives fewer failed disks, and losing this group loses everything on the pool.",
+    "replication_mismatch": "The new group is built differently from the rest of the pool (another width or protection). ZFS only allows it when you confirm, and the pool becomes uneven.",
+    "irreversible": "This cannot be undone: these disks can never be removed from the pool again.",
+    "no_redundancy": "The new disk has no protection: if it fails, everything on the pool is lost.",
+    "other_system": "The pool is imported although another system used it last. Make sure that system no longer uses these disks.",
+    "degraded": "Devices of this pool are missing. It is imported without them and has less protection until they are back or replaced.",
+    "unmounted_datasets": "Some datasets stay unmounted; the list below says why.",
+    "datasets_unavailable": "Shares and apps that use these datasets stop working until the pool is imported again."
+  },
+  "unmounted": {
+    "title": "These datasets stay unmounted:",
+    "system_path": "it would cover a system folder",
+    "shadows_mount": "it would hide something that is mounted there",
+    "duplicate_mountpoint": "another dataset of the pool uses the same folder",
+    "key_unavailable": "it is encrypted and locked",
+    "noauto": "Datasets that would cover system folders or other mounts get canmount=noauto, so they stay unmounted after a restart too."
+  },
+  "confirmName": {
+    "label": "Type {pool} to confirm",
+    "needed": "This changes the pool for good. Type its name to see the commands."
   }
 }
