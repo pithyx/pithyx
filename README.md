@@ -110,6 +110,14 @@ tools/dev-vm/testpool.sh destroy pithyxtest
 
 To develop on the VM from your machine, connect with VS Code Remote-SSH (or any SSH client with port forwarding), run `dotnet watch --project daemon/src/Pithyx.Daemon` without `PITHYX_SIMULATE`, run `pnpm dev`, and forward port 5173.
 
+To run the daemon as root in real mode as the unit `pithyx-dev.service` on port 7484, from this checkout or a worktree (for example a pull request branch in `.worktrees/pools`):
+
+```bash
+tools/dev-vm/install-dev-daemon.sh --from pools
+```
+
+It builds as your user (also under `sudo`), checks first that the checkout knows every schema version in `/var/lib/pithyx/pithyx.db`, says what it would stop on port 7484 and asks before stopping it. `--no-build` reuses the build, `--yes` skips the question, `--uninstall` removes the unit.
+
 Without the Vite dev server, the daemon serves the built desktop itself: run `pnpm build`, start the daemon, and open http://localhost:7484 (or the VM's address on port 7484). `tools/dev-vm/start.sh` does both for a test session with its own database in `~/.cache/pithyx-run` (`--reset` starts the setup wizard fresh, `--real` reads the real disks, `--no-build` reuses `desktop/dist`).
 
 ### Checks
