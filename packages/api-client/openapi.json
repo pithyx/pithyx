@@ -934,7 +934,7 @@
         "tags": [
           "Shares"
         ],
-        "description": "The shares the user can use, with the user's access. Administrators get every share and its path on the host.",
+        "description": "The shares the user can use, with the user's access. Administrators get every share and its path on the host. The shares/list topic says when the list may have changed.",
         "operationId": "ListShares",
         "responses": {
           "200": {
@@ -966,7 +966,7 @@
         "tags": [
           "Shares"
         ],
-        "description": "Administrators only. Registers an existing folder on the host as a share; nobody but administrators has access until it is granted.",
+        "description": "Administrators only, and only on a development machine (fs.share.folder_dev_only elsewhere). Registers an existing folder on the host as a share; nobody but administrators has access until it is granted. Shared folders are otherwise created as datasets with POST /api/shares/plans.",
         "operationId": "CreateShare",
         "requestBody": {
           "content": {
@@ -1002,13 +1002,99 @@
         }
       }
     },
-    "/api/shares/{shareId}": {
-      "delete": {
+    "/api/shares/details": {
+      "get": {
         "tags": [
           "Shares"
         ],
-        "description": "Administrators only. Removes the share from Pithyx; its files stay on the host.",
-        "operationId": "DeleteShare",
+        "description": "Administrators only. Every share with its description, dataset, used and available space, quota and how many users may read or write.",
+        "operationId": "ListShareDetails",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ShareDetails"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/shares/{shareId}": {
+      "patch": {
+        "tags": [
+          "Shares"
+        ],
+        "description": "Administrators only. Changes the name shown and the description; the folder and the dataset stay where they are.",
+        "operationId": "UpdateShare",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShareUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/shares/{shareId}/access": {
+      "get": {
+        "tags": [
+          "Shares"
+        ],
+        "description": "Administrators only. Every user with their access to the share: none, read or readWrite. Administrators use every share anyway.",
+        "operationId": "ListShareAccess",
         "parameters": [
           {
             "name": "shareId",
@@ -1021,8 +1107,18 @@
           }
         ],
         "responses": {
-          "204": {
-            "description": "No Content"
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ShareUserAccess"
+                  }
+                }
+              }
+            }
           },
           "default": {
             "description": "Problem details with a stable error code.",
@@ -1077,6 +1173,47 @@
         "responses": {
           "204": {
             "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/shares/plans": {
+      "post": {
+        "tags": [
+          "Shares"
+        ],
+        "description": "Administrators only. Returns the exact commands of creating a shared folder as a dataset (share.create) or deleting one (share.delete: keep its data, or destroy its dataset with every snapshot listed), with a plan id to run them with POST /api/storage/plans/{planId}/run. Runs nothing.",
+        "operationId": "PlanShareAction",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SharePlanRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoragePlanPreview"
+                }
+              }
+            }
           },
           "default": {
             "description": "Problem details with a stable error code.",
@@ -3333,9 +3470,18 @@
           "fs.operation.invalid",
           "fs.path.invalid",
           "fs.range.not_satisfiable",
+          "fs.share.data_choice_required",
+          "fs.share.dataset_name_invalid",
+          "fs.share.description_invalid",
           "fs.share.exists",
+          "fs.share.folder_dev_only",
           "fs.share.invalid",
+          "fs.share.name_mismatch",
+          "fs.share.name_reserved",
+          "fs.share.no_dataset",
           "fs.share.not_found",
+          "fs.share.path_taken",
+          "fs.share.pool_not_prepared",
           "fs.share.read_only",
           "fs.trash.retention_invalid",
           "fs.upload.incomplete",
@@ -4552,6 +4698,97 @@
           }
         }
       },
+      "ShareDataChoice": {
+        "enum": [
+          "keep",
+          "destroy",
+          null
+        ]
+      },
+      "ShareDetails": {
+        "required": [
+          "id",
+          "name",
+          "description",
+          "path",
+          "pool",
+          "dataset",
+          "usedBytes",
+          "availableBytes",
+          "quotaBytes",
+          "readUsers",
+          "readWriteUsers"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Stable id.",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name shown to users."
+          },
+          "description": {
+            "type": "string",
+            "description": "Free text for administrators and users, may be empty."
+          },
+          "path": {
+            "type": "string",
+            "description": "The share root on the host."
+          },
+          "pool": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The pool of the share's dataset; null for a folder share."
+          },
+          "dataset": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Full name of the share's dataset, for example `tank/pithyx/shares/media`; null for a folder share (development only)."
+          },
+          "usedBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Space the dataset uses with its snapshots; null for a folder share or while the dataset is not there (pool missing).",
+            "format": "int64"
+          },
+          "availableBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Space still available to the dataset; null like UsedBytes.",
+            "format": "int64"
+          },
+          "quotaBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The dataset's quota, or null for none.",
+            "format": "int64"
+          },
+          "readUsers": {
+            "type": "integer",
+            "description": "Users other than administrators who may read.",
+            "format": "int32"
+          },
+          "readWriteUsers": {
+            "type": "integer",
+            "description": "Users other than administrators who may read and write.",
+            "format": "int32"
+          }
+        },
+        "description": "A share with what the Shared folders page shows. Administrators only."
+      },
       "ShareInfo": {
         "required": [
           "id",
@@ -4583,6 +4820,137 @@
           }
         },
         "description": "A share the user can use."
+      },
+      "ShareListRevision": {
+        "required": [
+          "revision"
+        ],
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "description": "Changes whenever a user's list of usable shares may have changed; compare it, do not count on it.",
+            "format": "int64"
+          }
+        },
+        "description": "Snapshot and event of `shares/list`."
+      },
+      "SharePlanRequest": {
+        "required": [
+          "action"
+        ],
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "description": "`share.create` or `share.delete`."
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Name of the new shared folder; its dataset name is derived from it and shown in the plan."
+          },
+          "pool": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Pool of the new shared folder; it needs the Pithyx layout (`&lt;pool&gt;/pithyx/shares`)."
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Description of the new shared folder."
+          },
+          "shareId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The shared folder to delete.",
+            "format": "int64"
+          },
+          "confirmName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The shared folder's name, typed by the user to delete it."
+          },
+          "data": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "`keep` leaves the dataset or folder with its files, `destroy` destroys the dataset and its snapshots (dataset shares only).",
+                "$ref": "#/components/schemas/ShareDataChoice"
+              }
+            ]
+          }
+        },
+        "description": "A shared folder action to plan. `share.create` needs Name and Pool (Description is optional);\n`share.delete` needs ShareId, ConfirmName and Data."
+      },
+      "ShareUpdate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "New name shown to users, unique like every share name."
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "New description, at most 200 characters, empty to remove it."
+          }
+        },
+        "description": "Changes of a share; fields left out stay. The dataset is never renamed by this."
+      },
+      "ShareUserAccess": {
+        "required": [
+          "userId",
+          "username",
+          "displayName",
+          "administrator",
+          "access"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "description": "The user's id, for `PUT /api/shares/{shareId}/access/{userId}`.",
+            "format": "int64"
+          },
+          "username": {
+            "type": "string",
+            "description": "Login name."
+          },
+          "displayName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Name shown, if set."
+          },
+          "administrator": {
+            "type": "boolean",
+            "description": "Administrators use every share with read and write access, whatever Access says."
+          },
+          "access": {
+            "description": "The access granted: `none`, `read` or `readWrite`.",
+            "$ref": "#/components/schemas/ShareAccess"
+          }
+        },
+        "description": "One user's access to a share, for editing rights."
       },
       "SmartReport": {
         "required": [
@@ -5076,7 +5444,7 @@
         "properties": {
           "action": {
             "type": "string",
-            "description": "`pool.create`, `pool.destroy`, `pool.replace`, `pool.spare.add`, `pool.spare.remove`, `pool.offline`, `pool.online`, `dataset.create`, `dataset.rename`, `dataset.set`, `dataset.destroy` or `volume.create`."
+            "description": "`pool.create`, `pool.destroy`, `pool.replace`, `pool.spare.add`, `pool.spare.remove`, `pool.offline`, `pool.online`, `dataset.rename`, `dataset.set`, `dataset.destroy` or `volume.create`."
           },
           "pool": {
             "type": "string",
@@ -5104,7 +5472,7 @@
               "null",
               "string"
             ],
-            "description": "Name of a new share dataset or volume (one path component)."
+            "description": "Name of a new volume (one path component). Shared folders are created with `POST /api/shares/plans`."
           },
           "vdev": {
             "type": [
@@ -5330,6 +5698,7 @@
         "required": [
           "files/+/+",
           "jobs/+",
+          "shares/list",
           "storage/alerts",
           "storage/disks",
           "storage/pools",
@@ -5342,6 +5711,9 @@
           },
           "jobs/+": {
             "$ref": "#/components/schemas/Job"
+          },
+          "shares/list": {
+            "$ref": "#/components/schemas/ShareListRevision"
           },
           "storage/alerts": {
             "$ref": "#/components/schemas/StorageHealth"
@@ -5361,6 +5733,7 @@
         "required": [
           "files/+/+",
           "jobs/+",
+          "shares/list",
           "storage/alerts",
           "storage/disks",
           "storage/pools",
@@ -5373,6 +5746,9 @@
           },
           "jobs/+": {
             "$ref": "#/components/schemas/Job"
+          },
+          "shares/list": {
+            "$ref": "#/components/schemas/ShareListRevision"
           },
           "storage/alerts": {
             "$ref": "#/components/schemas/StorageHealth"

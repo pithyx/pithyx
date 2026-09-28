@@ -5,6 +5,7 @@ using Pithyx.Daemon.Auth;
 using Pithyx.Daemon.Database;
 using Pithyx.Daemon.Errors;
 using Pithyx.Daemon.Files;
+using Pithyx.Daemon.Storage;
 
 namespace Pithyx.Daemon.Shares;
 
@@ -15,6 +16,8 @@ namespace Pithyx.Daemon.Shares;
 public sealed class ShareService(SqliteConnectionFactory connections, TimeProvider time)
 {
     public const int MaxNameLength = 64;
+
+    public const int MaxDescriptionLength = 200;
 
     // System locations that never become a share, and everything below them.
     private static readonly string[] _forbiddenRoots =
@@ -120,13 +123,133 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
         return new ShareInfo(id, name, ShareAccess.ReadWrite, path);
     }
 
-    /// <summary>Removes the share from Pithyx. Its files stay where they are.</summary>
-    public async Task DeleteAsync(ClaimsPrincipal user, long shareId, CancellationToken cancellationToken)
+    /// <summary>Every share with its dataset's space and a summary of the rights, for the Shared folders page.</summary>
+    public async Task<IReadOnlyList<ShareDetails>> ListDetailsAsync(ClaimsPrincipal user, PoolList pools, CancellationToken cancellationToken)
+    {
+        RequireAdmin(user);
+        ArgumentNullException.ThrowIfNull(pools);
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        // Administrators use every share anyway, so the summary counts the others.
+        var rows = await connection.QueryAsync<(long Id, string Name, string Description, string Path, string? Dataset, long ReadUsers, long ReadWriteUsers)>(
+            """
+            SELECT shares.id, shares.name, shares.description, shares.path, shares.dataset,
+                (SELECT COUNT(*) FROM share_access JOIN users ON users.id = share_access.user_id
+                    WHERE share_access.share_id = shares.id AND users.is_admin = 0 AND share_access.level = 'read'),
+                (SELECT COUNT(*) FROM share_access JOIN users ON users.id = share_access.user_id
+                    WHERE share_access.share_id = shares.id AND users.is_admin = 0 AND share_access.level = 'readWrite')
+            FROM shares ORDER BY shares.name
+            """);
+        var datasets = pools.Datasets.ToDictionary(dataset => dataset.Name, StringComparer.Ordinal);
+        return [.. rows.Select(row =>
+        {
+            var dataset = row.Dataset is { } name && datasets.TryGetValue(name, out var found) ? found : null;
+            return new ShareDetails(
+                row.Id,
+                row.Name,
+                row.Description,
+                row.Path,
+                row.Dataset?.Split('/')[0],
+                row.Dataset,
+                dataset?.UsedBytes,
+                dataset?.AvailableBytes,
+                dataset?.QuotaBytes,
+                (int)row.ReadUsers,
+                (int)row.ReadWriteUsers);
+        })];
+    }
+
+    /// <summary>Every user with their access to one share, administrators included and marked.</summary>
+    public async Task<IReadOnlyList<ShareUserAccess>> ListUserAccessAsync(ClaimsPrincipal user, long shareId, CancellationToken cancellationToken)
     {
         RequireAdmin(user);
         await using var connection = await connections.OpenAsync(cancellationToken);
-        await connection.ExecuteAsync("DELETE FROM shares WHERE id = @shareId", new { shareId });
+        if (await connection.ExecuteScalarAsync<long>("SELECT COUNT(*) FROM shares WHERE id = @shareId", new { shareId }) == 0)
+        {
+            throw new PithyxException(ErrorCodes.FsShareNotFound);
+        }
+        var rows = await connection.QueryAsync<(long Id, string Username, string? DisplayName, long IsAdmin, string? Level)>(
+            """
+            SELECT users.id, users.username, users.display_name, users.is_admin, share_access.level
+            FROM users LEFT JOIN share_access ON share_access.user_id = users.id AND share_access.share_id = @shareId
+            ORDER BY users.username
+            """,
+            new { shareId });
+        return [.. rows.Select(row => new ShareUserAccess(row.Id, row.Username, row.DisplayName, row.IsAdmin == 1, row.Level is { } level ? Parse(level) : ShareAccess.None))];
+    }
+
+    /// <summary>Changes the name shown and the description. The folder and the dataset stay where they are.</summary>
+    public async Task UpdateAsync(ClaimsPrincipal user, long shareId, ShareUpdate update, CancellationToken cancellationToken)
+    {
+        RequireAdmin(user);
+        ArgumentNullException.ThrowIfNull(update);
+        var name = update.Name is null ? null : CheckName(update.Name);
+        var description = update.Description is null ? null : CheckDescription(update.Description);
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        if (await FindAsync(connection, shareId) is null)
+        {
+            throw new PithyxException(ErrorCodes.FsShareNotFound);
+        }
+        if (name is not null && await NameTakenAsync(connection, name, shareId))
+        {
+            throw new PithyxException(ErrorCodes.FsShareExists);
+        }
+        await connection.ExecuteAsync(
+            "UPDATE shares SET name = COALESCE(@name, name), description = COALESCE(@description, description), updated_at = @now WHERE id = @shareId",
+            new { shareId, name, description, now = SessionService.Format(time.GetUtcNow()) });
+    }
+
+    /// <summary>The share as stored, or null. Not for callers with a user: it checks no access.</summary>
+    public async Task<ShareRecord?> FindAsync(long shareId, CancellationToken cancellationToken)
+    {
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        return await FindAsync(connection, shareId);
+    }
+
+    /// <summary>Whether another share has this name, compared like the database does (case-insensitive).</summary>
+    public async Task<bool> NameTakenAsync(string name, CancellationToken cancellationToken)
+    {
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        return await NameTakenAsync(connection, name, null);
+    }
+
+    /// <summary>
+    /// Registers the share of a dataset a plan just created, mounted at <paramref name="path"/>. Nobody but
+    /// administrators has access until it is granted.
+    /// </summary>
+    public async Task<long> RegisterDatasetAsync(string name, string description, string dataset, string path, CancellationToken cancellationToken)
+    {
+        name = CheckName(name);
+        description = CheckDescription(description);
+        ArgumentException.ThrowIfNullOrEmpty(dataset);
+        ArgumentException.ThrowIfNullOrEmpty(path);
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        if (await NameTakenAsync(connection, name, null))
+        {
+            throw new PithyxException(ErrorCodes.FsShareExists);
+        }
+        if ((await connection.QueryAsync<string>("SELECT path FROM shares")).Any(other => Overlaps(other, path)))
+        {
+            throw new PithyxException(ErrorCodes.FsSharePathTaken, new Dictionary<string, object?> { ["path"] = path });
+        }
+        var now = SessionService.Format(time.GetUtcNow());
+        return await connection.ExecuteScalarAsync<long>(
+            """
+            INSERT INTO shares (name, path, description, dataset, created_at, updated_at)
+            VALUES (@name, @path, @description, @dataset, @now, @now) RETURNING id
+            """,
+            new { name, path, description, dataset, now });
+    }
+
+    /// <summary>
+    /// Removes the share from Pithyx with its access and recycle bin rows. The folder or dataset is left as it is; a
+    /// plan destroys a dataset before. True when the share was there.
+    /// </summary>
+    public async Task<bool> UnregisterAsync(long shareId, CancellationToken cancellationToken)
+    {
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        var removed = await connection.ExecuteAsync("DELETE FROM shares WHERE id = @shareId", new { shareId }) > 0;
         _readChecks.Clear();
+        return removed;
     }
 
     public async Task SetAccessAsync(ClaimsPrincipal user, long shareId, long userId, ShareAccess access, CancellationToken cancellationToken)
@@ -170,11 +293,32 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
             new { path = Canonical(path), now });
     }
 
-    /// <summary>Every share's name and folder, for the storage planner's checks. Not for callers with a user.</summary>
-    public async Task<IReadOnlyList<(string Name, string Path)>> ListPathsAsync(CancellationToken cancellationToken)
+    /// <summary>Every share's id, name and folder, for the storage planner's checks. Not for callers with a user.</summary>
+    public async Task<IReadOnlyList<(long Id, string Name, string Path)>> ListPathsAsync(CancellationToken cancellationToken)
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
-        return [.. await connection.QueryAsync<(string Name, string Path)>("SELECT name, path FROM shares ORDER BY name")];
+        return [.. await connection.QueryAsync<(long Id, string Name, string Path)>("SELECT id, name, path FROM shares ORDER BY name")];
+    }
+
+    /// <summary>
+    /// After a dataset was renamed: every share whose dataset is <paramref name="oldName"/> or below it gets the same
+    /// name below <paramref name="newName"/>. Returns how many moved.
+    /// </summary>
+    public async Task<int> MoveDatasetsAsync(string oldName, string newName, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(oldName);
+        ArgumentException.ThrowIfNullOrEmpty(newName);
+        if (oldName == newName)
+        {
+            return 0;
+        }
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        return await connection.ExecuteAsync(
+            """
+            UPDATE shares SET dataset = @newName || substr(dataset, length(@oldName) + 1), updated_at = @now
+            WHERE dataset = @oldName OR substr(dataset, 1, length(@oldName) + 1) = @oldName || '/'
+            """,
+            new { oldName, newName, now = SessionService.Format(time.GetUtcNow()) });
     }
 
     /// <summary>
@@ -213,6 +357,15 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
         return valid ? trimmed : throw new PithyxException(ErrorCodes.FsShareInvalid);
     }
 
+    /// <summary>A description: trimmed, at most <see cref="MaxDescriptionLength"/> characters, one line.</summary>
+    public static string CheckDescription(string? description)
+    {
+        var trimmed = description?.Trim() ?? "";
+        return trimmed.Length <= MaxDescriptionLength && !trimmed.Any(char.IsControl)
+            ? trimmed
+            : throw new PithyxException(ErrorCodes.FsShareDescriptionInvalid, new Dictionary<string, object?> { ["max"] = MaxDescriptionLength });
+    }
+
     /// <summary>An existing folder, given as its canonical absolute path, outside the system directories.</summary>
     public static string CheckPath(string? path)
     {
@@ -247,6 +400,19 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
             throw new PithyxException(ErrorCodes.AuthPermissionDenied);
         }
     }
+
+    private static async Task<ShareRecord?> FindAsync(System.Data.Common.DbConnection connection, long shareId)
+    {
+        var row = await connection.QuerySingleOrDefaultAsync<(long Id, string Name, string Path, string Description, string? Dataset)?>(
+            "SELECT id, name, path, description, dataset FROM shares WHERE id = @shareId",
+            new { shareId });
+        return row is { } found ? new ShareRecord(found.Id, found.Name, found.Path, found.Description, found.Dataset) : null;
+    }
+
+    private static async Task<bool> NameTakenAsync(System.Data.Common.DbConnection connection, string name, long? exceptId) =>
+        await connection.ExecuteScalarAsync<long>(
+            "SELECT COUNT(*) FROM shares WHERE name = @name COLLATE NOCASE AND (@exceptId IS NULL OR id <> @exceptId)",
+            new { name, exceptId }) > 0;
 
     private static ShareAccess Parse(string level) => level == "readWrite" ? ShareAccess.ReadWrite : ShareAccess.Read;
 }

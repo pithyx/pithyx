@@ -267,6 +267,14 @@ export function FilesApp({ app }: { app: PithyxApp }) {
 
   // Job progress arrives as SDK events for as long as the window is open.
   useEffect(() => app.on('jobChanged', onJobChanged), [app]);
+  // A share that appears or goes away shows at once; a gone share falls back to the first one left.
+  useEffect(
+    () =>
+      app.on('sharesChanged', () => {
+        void client.invalidateQueries({ queryKey: ['files', 'shares'] });
+      }),
+    [app, client],
+  );
 
   async function run(operation: FileOperation) {
     try {

@@ -293,6 +293,47 @@ describe.each(transports)('over the %s transport', (_, pair) => {
     expect(themes).toEqual(['dark']);
   });
 
+  it('sends sharesChanged only to apps that hold files.shares', async () => {
+    const [appEnd, hostEnd] = pair();
+    const host = serveApp(hostEnd, {
+      context: { ...context, permissions: ['files.shares'] },
+      methods: {},
+    });
+    const connected = await createApp(appEnd, { themeRoot: null, timeout: 500 });
+    const changed = vi.fn();
+    connected.on('sharesChanged', changed);
+    host.emit('sharesChanged', {});
+    await vi.waitFor(() => {
+      expect(changed).toHaveBeenCalledOnce();
+    });
+    host.emit('permissionRevoked', { permission: 'files.shares' });
+    await vi.waitFor(() => {
+      expect(connected.context.permissions).not.toContain('files.shares');
+    });
+    const focus = vi.fn();
+    connected.on('focus', focus);
+    host.emit('sharesChanged', {});
+    // Events arrive in order, so once focus is there a sharesChanged sent before it would be too.
+    host.emit('focus', {});
+    await vi.waitFor(() => {
+      expect(focus).toHaveBeenCalledOnce();
+    });
+    expect(changed).toHaveBeenCalledOnce();
+
+    const { host: other, app } = connectTo({});
+    const without = await app;
+    const never = vi.fn();
+    without.on('sharesChanged', never);
+    const focused = vi.fn();
+    without.on('focus', focused);
+    other.emit('sharesChanged', {});
+    other.emit('focus', {});
+    await vi.waitFor(() => {
+      expect(focused).toHaveBeenCalledOnce();
+    });
+    expect(never).not.toHaveBeenCalled();
+  });
+
   it('lets the app keep a window open and gives up on apps that do not answer', async () => {
     const { host, app } = connectTo({});
     const connected = await app;

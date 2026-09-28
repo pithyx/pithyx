@@ -140,14 +140,50 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.RequestedRangeNotSatisfiable)]
     public const string FsRangeNotSatisfiable = "fs.range.not_satisfiable";
 
+    /// <summary>Deleting a shared folder needs an explicit choice of what happens with its data: <c>keep</c> or <c>destroy</c>.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string FsShareDataChoiceRequired = "fs.share.data_choice_required";
+
+    /// <summary>No dataset name can be made from the shared folder's name (it has no letter or digit from a to z or 0 to 9); <c>params.name</c> is the name.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string FsShareDatasetNameInvalid = "fs.share.dataset_name_invalid";
+
+    /// <summary>A description is longer than <c>params.max</c> characters or holds control characters.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string FsShareDescriptionInvalid = "fs.share.description_invalid";
+
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string FsShareExists = "fs.share.exists";
+
+    /// <summary>Registering an existing folder as a share works only on a development machine; elsewhere shared folders are datasets.</summary>
+    [ErrorStatus(HttpStatusCode.Forbidden)]
+    public const string FsShareFolderDevOnly = "fs.share.folder_dev_only";
 
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string FsShareInvalid = "fs.share.invalid";
 
+    /// <summary>The typed name does not match the shared folder's name; <c>params.name</c> is its name.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string FsShareNameMismatch = "fs.share.name_mismatch";
+
+    /// <summary>The dataset name would take a place Pithyx uses itself (<c>homes</c>); <c>params.name</c> is the dataset name.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string FsShareNameReserved = "fs.share.name_reserved";
+
+    /// <summary>The shared folder is a plain folder, not a dataset, so its files can only be kept.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string FsShareNoDataset = "fs.share.no_dataset";
+
     [ErrorStatus(HttpStatusCode.NotFound)]
     public const string FsShareNotFound = "fs.share.not_found";
+
+    /// <summary>Another dataset already mounts where the new shared folder would; <c>params.path</c> is the place.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string FsSharePathTaken = "fs.share.path_taken";
+
+    /// <summary>The pool has no <c>&lt;pool&gt;/pithyx/shares</c> dataset, so no shared folder is created on it; <c>params.pool</c> is its name.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string FsSharePoolNotPrepared = "fs.share.pool_not_prepared";
 
     [ErrorStatus(HttpStatusCode.Forbidden)]
     public const string FsShareReadOnly = "fs.share.read_only";

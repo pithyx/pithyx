@@ -194,17 +194,65 @@
       "params": {},
       "expected": "The requested part of the file does not exist."
     },
+    "fs.share.data_choice_required": {
+      "params": {},
+      "expected": "Choose what happens with the data: keep it, or delete it for good."
+    },
+    "fs.share.dataset_name_invalid": {
+      "params": {
+        "name": "日本"
+      },
+      "expected": "No dataset name can be made from “日本”. Use at least one letter from a to z or a digit."
+    },
+    "fs.share.description_invalid": {
+      "params": {
+        "max": 200
+      },
+      "expected": "The description can have at most 200 characters and no line breaks."
+    },
     "fs.share.exists": {
       "params": {},
       "expected": "A share with this name already exists."
+    },
+    "fs.share.folder_dev_only": {
+      "params": {},
+      "expected": "Existing folders can only be registered as shares on a development machine. Create a shared folder instead; it gets its own dataset."
     },
     "fs.share.invalid": {
       "params": {},
       "expected": "The share could not be created. It needs a name and an existing folder outside the system directories."
     },
+    "fs.share.name_mismatch": {
+      "params": {
+        "name": "Media"
+      },
+      "expected": "The typed name does not match. Type Media exactly."
+    },
+    "fs.share.name_reserved": {
+      "params": {
+        "name": "homes"
+      },
+      "expected": "The name homes is used by Pithyx itself. Choose another name."
+    },
+    "fs.share.no_dataset": {
+      "params": {},
+      "expected": "This shared folder is a plain folder, not a dataset. Its files can only be kept."
+    },
     "fs.share.not_found": {
       "params": {},
       "expected": "The share was not found, or you have no access to it."
+    },
+    "fs.share.path_taken": {
+      "params": {
+        "path": "/tank/media"
+      },
+      "expected": "Something else is already mounted at /tank/media. Choose another name."
+    },
+    "fs.share.pool_not_prepared": {
+      "params": {
+        "pool": "tank"
+      },
+      "expected": "The pool tank has no place for shared folders (pithyx/shares), so none can be created on it."
     },
     "fs.share.read_only": {
       "params": {},
