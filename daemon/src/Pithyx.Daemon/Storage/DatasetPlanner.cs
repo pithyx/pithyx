@@ -131,12 +131,9 @@ public sealed partial class DatasetPlanner(
     {
         var dataset = Find(request);
         var role = RoleOf(dataset.Pool, dataset.Name);
-        if (role == DatasetRole.Root)
-        {
-            throw new PithyxException(ErrorCodes.StorageDatasetProtected, new Dictionary<string, object?> { ["dataset"] = dataset.Name });
-        }
-        // Volumes take only compression; the layout datasets too, since a limit there would hit everything below.
-        var compressionOnly = dataset.Type == "volume" || role == DatasetRole.Structure;
+        // Volumes take only compression; the pool root and the layout datasets too, since a limit there would hit
+        // everything below.
+        var compressionOnly = dataset.Type == "volume" || role is DatasetRole.Root or DatasetRole.Structure;
         var changes = new List<KeyValuePair<string, string>>();
         var quota = dataset.QuotaBytes ?? 0;
         if (request.QuotaBytes is { } newQuota)

@@ -369,13 +369,13 @@
         "dataset": "tank/pithyx/volumes/vm1",
         "property": "recordsize"
       },
-      "expected": "tank/pithyx/volumes/vm1 does not take the setting recordsize. Volumes take only compression, record size is for file systems only, and the datasets of the Pithyx layout take only compression."
+      "expected": "tank/pithyx/volumes/vm1 does not take the setting recordsize. Volumes, the pool root and the datasets of the Pithyx layout take only compression, and record size is for file systems only."
     },
     "storage.dataset.protected": {
       "params": {
         "dataset": "tank/pithyx/shares"
       },
-      "expected": "tank/pithyx/shares is the pool root or part of the Pithyx layout. Pithyx does not rename, delete or limit it."
+      "expected": "tank/pithyx/shares is the pool root or part of the Pithyx layout. Pithyx does not rename or delete it."
     },
     "storage.dataset.quota_below_used": {
       "params": {

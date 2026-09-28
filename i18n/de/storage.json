@@ -237,9 +237,69 @@
     "quota": "Limit",
     "compression": "Kompression",
     "location": "Ordner oder Größe",
-    "volume": "Volume",
     "noQuota": "keins",
-    "volumeSize": "Volume, {size}"
+    "volumeSize": "Volume, {size}",
+    "actions": "Aktionen",
+    "units": {
+      "mb": "MB",
+      "gb": "GB",
+      "tb": "TB"
+    },
+    "volume": {
+      "label": "Volume",
+      "button": "Volume anlegen…",
+      "unprepared": "Pithyx hat diesen Pool nicht eingerichtet, deshalb legt es darauf keine Volumes an.",
+      "title": "Volume auf {pool} anlegen",
+      "explain": "Ein Volume ist ein Blockgerät, zum Beispiel die Festplatte einer virtuellen Maschine. Es entsteht in {parent}.",
+      "name": "Name",
+      "size": "Größe",
+      "sizeHint": "Wird auf ganze Blöcke zu 16 KiB aufgerundet, mindestens 1 MiB.",
+      "sparse": "Sparse-Volume",
+      "sparseHint": "Reserviert vorab keinen Platz. Wird der Pool voll, kann ihm der Platz ausgehen, und was es nutzt, bekommt dann Schreibfehler.",
+      "run": "Volume anlegen"
+    },
+    "rename": {
+      "button": "Umbenennen…",
+      "label": "{dataset} umbenennen",
+      "title": "{dataset} umbenennen",
+      "explain": "Das Dataset behält seine Daten und bleibt in {parent}. Sein Ordner zieht mit dem neuen Namen um, freigegebene Ordner darin ziehen mit.",
+      "newName": "Neuer Name",
+      "hint": "Jetzt: {name}. Buchstaben, Ziffern, ., - und _.",
+      "listed": "Diese Datasets bekommen einen neuen Namen:",
+      "run": "Umbenennen"
+    },
+    "limits": {
+      "button": "Grenzen…",
+      "label": "Grenzen für {dataset}",
+      "title": "Grenzen und Kompression von {dataset}",
+      "explain": "Lass eine Größe leer, wenn es keine Grenze geben soll. Gesendet wird nur, was du änderst.",
+      "compressionOnly": "Dieses Dataset nimmt nur eine Kompression an: Es ist ein Volume, die Wurzel des Pools oder Teil des Pithyx-Layouts.",
+      "quota": "Kontingent",
+      "quotaHint": "Höchstens so viel darf das Dataset mit seinen Unter-Datasets und Snapshots belegen. Jetzt belegt es {used}.",
+      "reservation": "Reservierung",
+      "reservationHint": "Platz, der für dieses Dataset mit seinen Unter-Datasets und Snapshots freigehalten wird und den sonst nichts im Pool belegen darf.",
+      "compression": "Kompression",
+      "compressionHint": "Gilt für Daten, die ab jetzt geschrieben werden. Höhere zstd-Stufen sparen mehr Platz und kosten mehr Rechenzeit.",
+      "compressionOff": "Aus",
+      "compressionDefault": "{name} (Standard)",
+      "recordSize": "Record-Größe",
+      "recordSizeHint": "Der größte Block einer Datei. 1 MiB passt zu großen Dateien wie Videos, 16 KiB zu Datenbanken; 128 KiB ist der Standard.",
+      "kib": "{value} KiB",
+      "mib": "{value} MiB",
+      "invalidNumber": "Gib eine Zahl ein oder lass das Feld leer.",
+      "unit": "Einheit von {field}",
+      "run": "Übernehmen"
+    },
+    "destroy": {
+      "button": "Löschen…",
+      "label": "{dataset} löschen",
+      "title": "{dataset} löschen",
+      "explain": "{dataset} und alle Dateien darin werden gelöscht, mit seinen Unter-Datasets und allen ihren Snapshots. Das lässt sich nicht rückgängig machen.",
+      "explainVolume": "Das Volume {dataset} und alle seine Daten werden gelöscht, mit seinen Snapshots. Das lässt sich nicht rückgängig machen.",
+      "confirm": "Gib zur Bestätigung {dataset} ein",
+      "listed": "Diese Datasets und Snapshots werden gelöscht:",
+      "run": "Löschen"
+    }
   },
   "layouts": {
     "single": "Einzelne Platte (keine Redundanz)",

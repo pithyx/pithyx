@@ -19,9 +19,12 @@ import { describeProblem, guardReason } from './shared';
 export function PlanPreview({
   preview,
   disks,
+  datasetsLabel,
 }: {
   preview: StoragePlanPreview;
   disks: StorageDisk[];
+  /** What the listed datasets are; by default everything a destroyed pool holds. */
+  datasetsLabel?: string | undefined;
 }) {
   const { t } = useTranslation('storage');
   if (preview.commands === null) {
@@ -48,7 +51,7 @@ export function PlanPreview({
     <div className={styles.preview} role="status">
       {preview.datasets.length > 0 && (
         <>
-          <p>{t('actions.datasets')}</p>
+          <p>{datasetsLabel ?? t('actions.datasets')}</p>
           <ul className={styles.mono}>
             {preview.datasets.map((dataset) => (
               <li key={dataset}>{dataset}</li>

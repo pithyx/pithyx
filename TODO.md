@@ -494,7 +494,7 @@ Goal: pools are created, maintained and watched from the UI, with snapshots that
 
 ### 8.3 Datasets and volumes
 
-- [x] Create, rename, set quota and reservation, compression and record size. Delete only when empty or after typing its name. (Creating datasets happens through shared folders. Rename, quota, reservation, compression, record size and delete are command plans (`dataset.rename`, `dataset.set`, `dataset.destroy`); delete always needs the full name typed and lists every child and snapshot that goes. The pool root, the layout datasets and what Pithyx finds by name (homes, apps, system) are never renamed or deleted; datasets holding a share or a held snapshot are not deleted.)
+- [x] Create, rename, set quota and reservation, compression and record size. Delete only when empty or after typing its name. (Creating datasets happens through shared folders. In the Storage app's Datasets section; rename, quota, reservation, compression, record size and delete are command plans (`dataset.rename`, `dataset.set`, `dataset.destroy`); delete always needs the full name typed and lists every child and snapshot that goes. The pool root, the layout datasets and what Pithyx finds by name (homes, apps, system) are never renamed or deleted; datasets holding a share or a held snapshot are not deleted.)
 - [x] Volumes (zvols) for VMs later (M5b); created with the same guard. (`volume.create` below `<pool>/pithyx/volumes`, sparse or thick, 16 KiB blocks; deleted with `dataset.destroy`.)
 - [x] The dataset API has no share assumptions, so M4 uses it for app datasets (see "Interfaces for M4"). (`dataset.set` takes app datasets; renaming and deleting them stays with M4's own lifecycle, since apps find them by name.)
 
@@ -508,7 +508,7 @@ Goal: pools are created, maintained and watched from the UI, with snapshots that
 
 ### 8.5 Storage app
 
-- [ ] Pools with layout, disks, health and fill level; datasets; snapshots with schedules; every destructive action through a command plan dialog. (Everything is in the app; pool and disk actions go through plans, snapshot deletion and rollback through a typed-name confirmation of their own API, not yet a plan dialog.)
+- [ ] Pools with layout, disks, health and fill level; datasets; snapshots with schedules; every destructive action through a command plan dialog. (Everything is in the app; pool, disk, dataset and volume actions go through plan dialogs (the Datasets section renames, limits, deletes and creates volumes), snapshot deletion and rollback through a typed-name confirmation of their own API, not yet a plan dialog.)
 - [x] The Disks app from step 3 became the Storage app (owner's decision on 2026-09-28): an administrator app with its own icon and chunk, in the Pithyx menu and on administrators' desktops, with sections for pools (wizard, repair and maintenance), disks (guard verdict and SMART), datasets and volumes, snapshots, and health and maintenance. The Settings page Storage is gone; Settings points to the app.
 
 ### Test on dev01

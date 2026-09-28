@@ -237,9 +237,69 @@
     "quota": "Limit",
     "compression": "Compression",
     "location": "Folder or size",
-    "volume": "volume",
     "noQuota": "none",
-    "volumeSize": "{size} volume"
+    "volumeSize": "{size} volume",
+    "actions": "Actions",
+    "units": {
+      "mb": "MB",
+      "gb": "GB",
+      "tb": "TB"
+    },
+    "volume": {
+      "label": "volume",
+      "button": "Create volume…",
+      "unprepared": "Pithyx did not set up this pool, so it creates no volumes on it.",
+      "title": "Create a volume on {pool}",
+      "explain": "A volume is a block device, for example the disk of a virtual machine. It is created in {parent}.",
+      "name": "Name",
+      "size": "Size",
+      "sizeHint": "Rounded up to whole 16 KiB blocks, at least 1 MiB.",
+      "sparse": "Sparse volume",
+      "sparseHint": "Reserves no space up front. It can run out of space when the pool fills up, and whatever uses it then sees write errors.",
+      "run": "Create volume"
+    },
+    "rename": {
+      "button": "Rename…",
+      "label": "Rename {dataset}",
+      "title": "Rename {dataset}",
+      "explain": "The dataset keeps its data and stays in {parent}. Its folder moves with the new name, and shared folders in it follow.",
+      "newName": "New name",
+      "hint": "Now: {name}. Letters, digits, ., - and _.",
+      "listed": "These datasets get a new name:",
+      "run": "Rename"
+    },
+    "limits": {
+      "button": "Limits…",
+      "label": "Limits for {dataset}",
+      "title": "Limits and compression of {dataset}",
+      "explain": "Leave a size empty for no limit. Only what you change is sent.",
+      "compressionOnly": "This dataset takes only a compression setting: it is a volume, the pool root or part of the Pithyx layout.",
+      "quota": "Quota",
+      "quotaHint": "The most the dataset may hold, with its child datasets and snapshots. It uses {used} now.",
+      "reservation": "Reservation",
+      "reservationHint": "Space kept for this dataset, with its child datasets and snapshots, that nothing else on the pool may use.",
+      "compression": "Compression",
+      "compressionHint": "Applies to data written from now on. Higher zstd levels save more space and cost more processor time.",
+      "compressionOff": "Off",
+      "compressionDefault": "{name} (default)",
+      "recordSize": "Record size",
+      "recordSizeHint": "The largest block of a file. 1 MiB suits large files such as videos, 16 KiB databases; 128 KiB is the default.",
+      "kib": "{value} KiB",
+      "mib": "{value} MiB",
+      "invalidNumber": "Enter a number, or leave the field empty.",
+      "unit": "Unit of {field}",
+      "run": "Apply"
+    },
+    "destroy": {
+      "button": "Delete…",
+      "label": "Delete {dataset}",
+      "title": "Delete {dataset}",
+      "explain": "{dataset} and every file in it are deleted, with its child datasets and all their snapshots. This cannot be undone.",
+      "explainVolume": "The volume {dataset} and all its data are deleted, with its snapshots. This cannot be undone.",
+      "confirm": "Type {dataset} to confirm",
+      "listed": "These datasets and snapshots are deleted:",
+      "run": "Delete"
+    }
   },
   "layouts": {
     "single": "Single disk (no redundancy)",

@@ -141,6 +141,79 @@ test('destroying a pool needs its name typed and lists its datasets', async ({ p
   );
 });
 
+async function openDatasets(storage: ReturnType<typeof appWindow>) {
+  await storage.getByRole('button', { name: 'Datasets and volumes', exact: true }).click();
+  await expect(
+    storage.getByRole('heading', { name: 'Datasets and volumes', level: 2 }),
+  ).toBeVisible();
+}
+
+test('the Datasets section lists every dataset and explains pools without the Pithyx layout', async ({
+  page,
+}) => {
+  const storage = await openStorage(page);
+  await openDatasets(storage);
+
+  const mirror = storage.getByRole('table', { name: 'Datasets and volumes of pithyxtestm' });
+  await expect(mirror.getByRole('rowheader', { name: 'pithyxtestm', exact: true })).toBeVisible();
+  await expect(
+    storage
+      .getByRole('table', { name: 'Datasets and volumes of pithyxtests' })
+      .getByRole('rowheader', { name: 'pithyxtests', exact: true }),
+  ).toBeVisible();
+  // The simulated pools were not created by Pithyx: no volumes, and their roots are never renamed or deleted.
+  await expect(storage.getByRole('button', { name: 'Create volume…' })).toHaveCount(0);
+  await expect(storage.getByText('Pithyx did not set up this pool').first()).toBeVisible();
+  await expect(storage.getByRole('button', { name: 'Delete pithyxtestm' })).toHaveCount(0);
+  await expect(storage.getByRole('button', { name: 'Rename pithyxtestm' })).toHaveCount(0);
+});
+
+test('the limits dialog shows the exact zfs set command before it runs', async ({ page }) => {
+  const storage = await openStorage(page);
+  await openDatasets(storage);
+  await storage.getByRole('button', { name: 'Limits for pithyxtestm' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Limits and compression of pithyxtestm' });
+
+  await expect(dialog).toContainText('takes only a compression setting');
+  await expect(dialog.getByLabel('Quota')).toHaveCount(0);
+  await expect(dialog.getByRole('button', { name: 'Show commands' })).toBeDisabled();
+  await dialog.getByLabel('Compression').selectOption('zstd-3');
+  expect(await violations(page)).toEqual([]);
+  await dialog.getByRole('button', { name: 'Show commands' }).click();
+
+  await expect(dialog.getByRole('status').getByRole('listitem')).toHaveText([
+    'zfs set compression=zstd-3 pithyxtestm',
+  ]);
+  await expect(dialog.getByRole('button', { name: 'Apply' })).toBeEnabled();
+});
+
+test('deleting a dataset needs its full name typed', async ({ page }) => {
+  // The simulated pools hold only their roots, which are never deleted; a child is added to what the page reads.
+  await page.route('**/api/storage/pools', async (route) => {
+    const response = await route.fetch();
+    const list = (await response.json()) as { datasets: Record<string, unknown>[] };
+    const root = list.datasets.find((dataset) => dataset.name === 'pithyxtestm');
+    list.datasets.push({ ...root, name: 'pithyxtestm/data', mountPoint: '/pithyxtestm/data' });
+    await route.fulfill({ response, json: list });
+  });
+  const storage = await openStorage(page);
+  await openDatasets(storage);
+  await storage.getByRole('button', { name: 'Delete pithyxtestm/data' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Delete pithyxtestm/data' });
+  const show = dialog.getByRole('button', { name: 'Show commands' });
+
+  await expect(show).toBeDisabled();
+  await dialog.getByLabel('Type pithyxtestm/data to confirm').fill('data');
+  await expect(show).toBeDisabled();
+  await dialog.getByLabel('Type pithyxtestm/data to confirm').fill('pithyxtestm/data');
+  await expect(show).toBeEnabled();
+
+  // The daemon has no such dataset and says so, with the request id.
+  await show.click();
+  await expect(dialog).toContainText('There is no dataset named pithyxtestm/data.');
+  await expect(dialog.getByRole('button', { name: 'Delete', exact: true })).toHaveCount(0);
+});
+
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
 async function violations(page: Page) {
