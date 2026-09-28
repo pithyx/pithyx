@@ -37,13 +37,30 @@ public sealed record PlannedDisk(string DiskId, string? Serial, long SizeBytes, 
 /// Runs in the plan's job once every command succeeded, for the daemon's own bookkeeping (for example registering the
 /// share a new dataset belongs to). It never runs a command of its own.
 /// </param>
+/// <param name="Releases">
+/// Mount points the plan unmounts (destroy, rename, export). Before the first command the daemon closes its own
+/// handles below them, the live folder views of Files, because ZFS cannot unmount a dataset that a handle holds.
+/// </param>
 public sealed record CommandPlan(
     string Kind,
     IReadOnlyList<PlanStep> Steps,
     IReadOnlyList<PlannedDisk> Disks,
     IReadOnlyDictionary<string, string> Confirmations,
     DateTimeOffset ExpiresAt,
-    Func<CancellationToken, Task>? AfterRun = null)
+    Func<CancellationToken, Task>? AfterRun = null,
+    IReadOnlyList<string>? Releases = null)
 {
     public static readonly TimeSpan Lifetime = TimeSpan.FromMinutes(10);
+}
+
+/// <summary>Finds the mount points of datasets for <see cref="CommandPlan.Releases"/>.</summary>
+public static class PlanReleases
+{
+    /// <summary>The mount points of the named datasets (snapshot names are skipped), as the pools were last read.</summary>
+    public static IReadOnlyList<string> MountPointsOf(PoolList pools, IEnumerable<string> datasets)
+    {
+        ArgumentNullException.ThrowIfNull(pools);
+        var names = datasets.ToHashSet(StringComparer.Ordinal);
+        return [.. pools.Datasets.Where(dataset => names.Contains(dataset.Name) && dataset.MountPoint is not null).Select(dataset => dataset.MountPoint!).Distinct(StringComparer.Ordinal)];
+    }
 }

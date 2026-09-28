@@ -311,6 +311,8 @@ public sealed class DatasetPlannerTests : IAsyncLifetime
                 "tank/pithyx/shares/media/photos@pithyx-manual-20260927T000000Z",
             ],
             datasets);
+        // Live folder views below it are closed before zfs destroy, so the unmount is not busy.
+        Assert.Contains("/tank/media", plan.Releases!);
         await plan.AfterRun!(Token);
         Assert.Equal(["tank/pithyx/shares/docs"], await ScheduledDatasetsAsync());
         var held = await Assert.ThrowsAsync<PithyxException>(() => PlanAsync(Destroy("tank/pithyx/shares/docs")));

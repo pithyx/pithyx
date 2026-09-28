@@ -132,6 +132,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- Importing a pool for use after its read-only preview failed with `storage.plan.stale` (found on dev01): the disks of a pool imported read-only are not probed, and after the plan's export step they are, so their signatures looked changed. Import steps now compare serial, size and partitions, not the ZFS labels they expect.
+- Destroying a shared folder's dataset (and renaming a dataset, exporting or destroying a pool) failed with "pool or dataset is busy" while a Files window showed a folder in it (found on dev01): the live folder view held a handle on the folder. Such plans now close the daemon's own handles below the mount points they unmount before the first command, and the open Files window is told the folder is gone.
 - A daemon started on a database that a newer daemon wrote (schema versions it does not know) exited with code 1 and no output, and the dev unit restarted it forever. It now logs the database, the unknown versions and what to do, flushes the log, and exits with its own code 65; the unit does not restart it (`RestartPreventExitStatus=65`) and gives up after five failed starts in two minutes. Other database failures at startup are logged too.
 - `tools/dev-vm/install-dev-daemon.sh` builds as the calling user also under `sudo`, so the checkout gets no root-owned files, and refuses a checkout that already has some. `--from <checkout or worktree>` runs the unit from any checkout, for example a pull request's worktree. Before stopping anything it checks the database's schema versions against the checkout (and names a worktree that knows them), lists the unit or process it would stop on port 7484 and asks (`--yes` to skip the question).
 

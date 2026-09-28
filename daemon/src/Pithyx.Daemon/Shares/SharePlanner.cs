@@ -173,7 +173,17 @@ public sealed partial class SharePlanner(
     }
 
     private StoragePlanner.Result Result(SharePlanRequest request, IReadOnlyList<PlanStep> steps, IReadOnlyList<string> datasets, Func<CancellationToken, Task> afterRun) =>
-        new([], new CommandPlan(request.Action, steps, [], new Dictionary<string, string>(), time.GetUtcNow() + CommandPlan.Lifetime, afterRun), datasets);
+        new(
+            [],
+            new CommandPlan(
+                request.Action,
+                steps,
+                [],
+                new Dictionary<string, string>(),
+                time.GetUtcNow() + CommandPlan.Lifetime,
+                afterRun,
+                PlanReleases.MountPointsOf(pools.Current, datasets)),
+            datasets);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Created shared folder {Share} ({ShareId}) as dataset {Dataset}")]
     private partial void LogCreated(string share, long shareId, string dataset);

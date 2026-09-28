@@ -257,6 +257,7 @@ public sealed class SharePlannerTests : IAsyncLifetime
                 "tank/pithyx/shares/media/photos@before",
             ],
             datasets);
+        Assert.Contains("/tank/media", plan.Releases!);
         var revision = _changes.Revision;
         await plan.AfterRun!(Token);
         Assert.Equal(0L, await ScalarAsync<long>("SELECT COUNT(*) FROM shares"));

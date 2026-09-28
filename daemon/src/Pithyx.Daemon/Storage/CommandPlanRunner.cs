@@ -1,5 +1,6 @@
 using Pithyx.Daemon.Commands;
 using Pithyx.Daemon.Errors;
+using Pithyx.Daemon.Files;
 
 namespace Pithyx.Daemon.Storage;
 
@@ -9,7 +10,7 @@ namespace Pithyx.Daemon.Storage;
 /// the plan before anything is written to it. Steps of an import are checked with the import rule, after the pools were
 /// read again. When the plan ends, the pools are read again, so an imported or exported pool shows at once.
 /// </summary>
-public sealed class CommandPlanRunner(ICommandRunner commands, SystemStateService state, StorageFacts facts, TimeProvider time)
+public sealed class CommandPlanRunner(ICommandRunner commands, SystemStateService state, StorageFacts facts, TimeProvider time, FolderWatches? watches = null)
 {
     /// <param name="plan">The plan as shown.</param>
     /// <param name="progress">Called before each step with its index and the step count.</param>
@@ -31,6 +32,10 @@ public sealed class CommandPlanRunner(ICommandRunner commands, SystemStateServic
 
     private async Task RunStepsAsync(CommandPlan plan, Action<int, int>? progress, CancellationToken cancellationToken)
     {
+        if (plan.Releases is { Count: > 0 } releases)
+        {
+            watches?.ReleaseBelow(releases);
+        }
         var touched = new HashSet<string>(StringComparer.Ordinal);
         for (var index = 0; index < plan.Steps.Count; index++)
         {
@@ -85,7 +90,7 @@ public sealed class CommandPlanRunner(ICommandRunner commands, SystemStateServic
             var planned = plan.Disks.Single(disk => disk.DiskId == diskId);
             var disk = current.Disks.FirstOrDefault(candidate => candidate.Disk.Id == diskId);
             var sameDisk = disk is not null && disk.Disk.Serial == planned.Serial && disk.Disk.SizeBytes == planned.SizeBytes;
-            if (!sameDisk || (!touched.Contains(diskId) && DiskGuard.Fingerprint(disk!) != planned.Fingerprint))
+            if (!sameDisk || (!touched.Contains(diskId) && DiskGuard.Fingerprint(disk!, step.Rule) != planned.Fingerprint))
             {
                 throw new PithyxException(ErrorCodes.StoragePlanStale, new Dictionary<string, object?> { ["disk"] = diskId });
             }

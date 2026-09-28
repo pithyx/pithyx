@@ -150,6 +150,25 @@ public sealed class FolderWatchTests : IDisposable
         socket.Dispose();
     }
 
+    // Found on dev01: an open Files window kept the share's dataset busy, so zfs destroy could not unmount it.
+    [Fact]
+    public async Task ReleasingAMountPointClosesTheWatchHandlesAndReportsTheFolderGone()
+    {
+        var (socket, _) = await OpenFolderAsync();
+        var watches = _factory.Services.GetRequiredService<FolderWatches>();
+        Assert.Contains(OpenHandles(), target => target == _root);
+
+        Assert.Equal(1, watches.ReleaseBelow([Path.GetDirectoryName(_root)!]));
+
+        var gone = await NextEventAsync(socket);
+        Assert.True(gone.GetProperty("gone").GetBoolean());
+        Assert.DoesNotContain(OpenHandles(), target => target.StartsWith(_root, StringComparison.Ordinal));
+        Assert.Empty(watches.Watched);
+    }
+
+    private static IEnumerable<string> OpenHandles() =>
+        new DirectoryInfo("/proc/self/fd").EnumerateFileSystemInfos().Select(link => link.LinkTarget ?? "");
+
     [Fact]
     public async Task ReportsAFolderThatWasDeleted()
     {

@@ -80,17 +80,17 @@ public sealed class StoragePlanner(
                         throw new PithyxException(ErrorCodes.StoragePoolNameMismatch, new Dictionary<string, object?> { ["name"] = pool.Name });
                     }
                     var datasets = pools.Current.Datasets.Where(dataset => dataset.Pool == pool.Name).Select(dataset => dataset.Name).ToList();
-                    return Plan(request, ZfsPlans.DestroyPool(pool.Name)) with { Datasets = datasets, RequiresConfirmName = true };
+                    return Releasing(Plan(request, ZfsPlans.DestroyPool(pool.Name)) with { Datasets = datasets, RequiresConfirmName = true });
                 }
             case "pool.export":
                 {
                     var pool = Pool(request.Pool);
                     var datasets = pools.Current.Datasets.Where(dataset => dataset.Pool == pool.Name).ToList();
-                    return Plan(request, ImportPlans.Export(pool.Name)) with
+                    return Releasing(Plan(request, ImportPlans.Export(pool.Name)) with
                     {
                         Datasets = [.. datasets.Select(dataset => dataset.Name)],
                         Warnings = datasets.Any(dataset => dataset.Mounted || dataset.Type == "volume") ? ["datasets_unavailable"] : [],
-                    };
+                    });
                 }
             case "pool.import.readonly":
                 return await PlanReadOnlyImportAsync(request, cancellationToken);
@@ -265,7 +265,7 @@ public sealed class StoragePlanner(
         return new CommandPlan(
             request.Action,
             steps,
-            [.. current.Disks.Where(disk => diskIds.Contains(disk.Disk.Id)).Select(disk => new PlannedDisk(disk.Disk.Id, disk.Disk.Serial, disk.Disk.SizeBytes, DiskGuard.Fingerprint(disk)))],
+            [.. current.Disks.Where(disk => diskIds.Contains(disk.Disk.Id)).Select(disk => new PlannedDisk(disk.Disk.Id, disk.Disk.Serial, disk.Disk.SizeBytes, DiskGuard.Fingerprint(disk, GuardRule.Import)))],
             new Dictionary<string, string>(),
             time.GetUtcNow() + CommandPlan.Lifetime);
     }
@@ -288,6 +288,10 @@ public sealed class StoragePlanner(
         var pool = Pool(name);
         return pool.ReadOnly ? throw new PithyxException(ErrorCodes.StoragePoolReadOnly, new Dictionary<string, object?> { ["name"] = pool.Name }) : pool;
     }
+
+    // Exporting or destroying a pool unmounts every dataset it lists.
+    private Result Releasing(Result result) =>
+        result.Plan is null ? result : result with { Plan = result.Plan with { Releases = PlanReleases.MountPointsOf(pools.Current, result.Datasets) } };
 
     private static void RequireEncryptionAnswer(string? encryption)
     {

@@ -322,7 +322,18 @@ public sealed partial class DatasetPlanner(
     private static string Number(long bytes) => bytes.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
     private StoragePlanner.Result Result(StoragePlanRequest request, IReadOnlyList<PlanStep> steps, IReadOnlyList<string> datasets, Func<CancellationToken, Task>? afterRun) =>
-        new([], new CommandPlan(request.Action, steps, [], new Dictionary<string, string>(), time.GetUtcNow() + CommandPlan.Lifetime, afterRun), datasets);
+        new(
+            [],
+            new CommandPlan(
+                request.Action,
+                steps,
+                [],
+                new Dictionary<string, string>(),
+                time.GetUtcNow() + CommandPlan.Lifetime,
+                afterRun,
+                // Renaming and destroying unmount the datasets.
+                request.Action is "dataset.rename" or "dataset.destroy" ? PlanReleases.MountPointsOf(pools.Current, datasets) : null),
+            datasets);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Renamed dataset {OldName} to {NewName}; {Shares} share folders moved")]
     private partial void LogRenamed(string oldName, string newName, int shares);

@@ -282,6 +282,31 @@ public sealed class PoolOperationPlannerTests : IDisposable
             _commands.Calls.Where(call => call.Arguments[0] is "export" or "import" or "set" or "mount").Select(call => $"{call.FileName} {call.Arguments[0]}"));
     }
 
+    // Found on dev01: the disks of a pool imported read-only are not probed, and after the export step they are, so
+    // their signatures changed between the plan and the import step without the disks changing.
+    [Fact]
+    public async Task AReadWriteImportIsNotStaleWhenTheExportStepMakesItsDisksProbeable()
+    {
+        Pools("zfs-import-handwritten-readonly");
+        var plan = (await PlanAsync(new StoragePlanRequest("pool.import", "oldtank", ConfirmName: "oldtank"))).Plan!;
+        _commands.Calls.Clear();
+        _commands.Handler = call =>
+        {
+            if (call.Arguments is ["export", ..])
+            {
+                Pools("zfs-empty");
+            }
+            return null;
+        };
+        _commands.Results["zpool export"] = Ok("");
+        _commands.Results["zpool import"] = Ok("");
+
+        await _runner.RunAsync(plan, null, Token);
+
+        Assert.Contains(_commands.Calls, call => call.Arguments is ["import", ..]);
+        Assert.Contains(_commands.Calls, call => call.FileName == "wipefs");
+    }
+
     [Fact]
     public async Task AnImportThatZfsWantsForcedFailsWithTheForceCode()
     {
@@ -304,6 +329,7 @@ public sealed class PoolOperationPlannerTests : IDisposable
 
         Assert.Equal([["zpool", "export", "pithyxtestr"]], result.Plan!.Steps.Select(Line));
         Assert.Equal(["pithyxtestr"], result.Datasets);
+        Assert.Equal(["/pithyxtestr"], result.Plan.Releases);
         Assert.Equal(["datasets_unavailable"], result.Warnings);
         Assert.False(result.RequiresConfirmName);
     }

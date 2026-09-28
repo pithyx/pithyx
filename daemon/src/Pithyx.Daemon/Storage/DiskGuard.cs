@@ -193,10 +193,17 @@ public static class DiskGuard
     /// What a plan compares right before each command: if serial, size, partitions or signatures changed since the plan
     /// was shown, the disk is not the one the user saw.
     /// </summary>
-    public static string Fingerprint(GuardDisk disk)
+    /// <param name="disk">The disk as it is now.</param>
+    /// <param name="rule">
+    /// For <see cref="GuardRule.Import"/> the probed signatures are left out: the disks of a pool are expected to carry
+    /// ZFS labels, and they are probed only while their pool is not imported, so the export step of an import changes
+    /// what a probe shows without the disk changing.
+    /// </param>
+    public static string Fingerprint(GuardDisk disk, GuardRule rule = GuardRule.NewData)
     {
         ArgumentNullException.ThrowIfNull(disk);
         var devices = disk.Device.SelfAndDescendants().Select(device => $"{device.Name}:{device.Type}:{device.FileSystem}");
-        return string.Join('|', [disk.Disk.Serial ?? "", disk.Disk.SizeBytes.ToString(System.Globalization.CultureInfo.InvariantCulture), .. devices, .. disk.Signatures?.Types ?? ["unprobed"]]);
+        var signatures = rule == GuardRule.Import ? [] : disk.Signatures?.Types ?? ["unprobed"];
+        return string.Join('|', [disk.Disk.Serial ?? "", disk.Disk.SizeBytes.ToString(System.Globalization.CultureInfo.InvariantCulture), .. devices, .. signatures]);
     }
 }
