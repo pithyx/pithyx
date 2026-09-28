@@ -508,7 +508,7 @@ Goal: pools are created, maintained and watched from the UI, with snapshots that
 
 ### 8.5 Storage app
 
-- [ ] Pools with layout, disks, health and fill level; datasets; snapshots with schedules; every destructive action through a command plan dialog. (Everything is in the app; pool, disk, dataset and volume actions go through plan dialogs (the Datasets section renames, limits, deletes and creates volumes), snapshot deletion and rollback through a typed-name confirmation of their own API, not yet a plan dialog.)
+- [x] Pools with layout, disks, health and fill level; datasets; snapshots with schedules; every destructive action through a command plan dialog. (Pool, disk, dataset and volume actions go through plan dialogs; deleting a snapshot and rolling back are the plans `snapshot.destroy` and `snapshot.rollback` with the same preview, the rollback after typing the dataset name and with every newer snapshot listed, checked again under the snapshot lock when it runs.)
 - [x] The Disks app from step 3 became the Storage app (owner's decision on 2026-09-28): an administrator app with its own icon and chunk, in the Pithyx menu and on administrators' desktops, with sections for pools (wizard, repair and maintenance), disks (guard verdict and SMART), datasets and volumes, snapshots, and health and maintenance. The Settings page Storage is gone; Settings points to the app.
 
 ### Test on dev01

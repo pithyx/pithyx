@@ -302,6 +302,20 @@
       "confirm": "Gib zur Bestätigung {dataset} ein",
       "listed": "Diese Datasets und Snapshots werden gelöscht:",
       "run": "Löschen"
+    },
+    "snapshotDestroy": {
+      "title": "Snapshot löschen",
+      "explain": "Der Snapshot {name} von {dataset} wird endgültig gelöscht. Dateien, die nur noch in ihm stecken, lassen sich danach nicht mehr wiederherstellen.",
+      "listed": "Dieser Snapshot wird gelöscht:",
+      "run": "Snapshot löschen"
+    },
+    "rollback": {
+      "title": "{dataset} zurücksetzen",
+      "explain": "Das ganze Dataset kehrt zum Snapshot {name} vom {date} zurück.",
+      "newer": "{count, plural, one {# neuerer Snapshot wird ebenfalls gelöscht; die Vorschau listet ihn auf.} other {# neuere Snapshots werden ebenfalls gelöscht; die Vorschau listet sie auf.}}",
+      "confirm": "Gib {dataset} ein, um zu bestätigen",
+      "listed": "Diese neueren Snapshots werden ebenfalls gelöscht:",
+      "run": "Zurücksetzen"
     }
   },
   "layouts": {
@@ -329,7 +343,6 @@
     "release": "Freigeben",
     "rollback": "Zurücksetzen",
     "delete": "Löschen",
-    "cancel": "Abbrechen",
     "kinds": {
       "hourly": "Stündlich",
       "daily": "Täglich",
@@ -340,16 +353,7 @@
     "schedules": "Zeitpläne",
     "keep": "Behalten",
     "save": "Zeitpläne speichern",
-    "schedulesHint": "Zeitpläne legen pro Stunde, Tag, Woche (ab Montag) oder Monat in UTC einen Snapshot an und behalten die angegebene Zahl ihrer eigenen Snapshots. Festgehaltene Snapshots und solche, die von Hand oder von anderen Programmen angelegt wurden, werden nie gelöscht.",
-    "deleteTitle": "Snapshot löschen",
-    "deleteBody": "Der Snapshot {name} wird endgültig gelöscht, mit allen früheren Versionen, die er enthält.",
-    "typeName": "Gib zur Bestätigung den Namen des Snapshots ein",
-    "deleteConfirm": "Snapshot löschen",
-    "rollbackTitle": "{dataset} zurücksetzen",
-    "rollbackBody": "Das ganze Dataset kehrt zum Snapshot {name} vom {date} zurück. Alle Änderungen seitdem gehen verloren.",
-    "rollbackNewer": "{count, plural, one {Dieser neuere Snapshot wird ebenfalls gelöscht:} other {Diese # neueren Snapshots werden ebenfalls gelöscht:}}",
-    "typeDataset": "Gib zur Bestätigung {dataset} ein",
-    "rollbackConfirm": "Zurücksetzen"
+    "schedulesHint": "Zeitpläne legen pro Stunde, Tag, Woche (ab Montag) oder Monat in UTC einen Snapshot an und behalten die angegebene Zahl ihrer eigenen Snapshots. Festgehaltene Snapshots und solche, die von Hand oder von anderen Programmen angelegt wurden, werden nie gelöscht."
   },
   "health": {
     "title": "Zustand",
@@ -509,7 +513,9 @@
     "other_system": "Der Pool wird importiert, obwohl ein anderes System ihn zuletzt benutzt hat. Stell sicher, dass dieses System die Platten nicht mehr benutzt.",
     "degraded": "Geräte dieses Pools fehlen. Er wird ohne sie importiert und ist schlechter geschützt, bis sie zurück sind oder ersetzt wurden.",
     "unmounted_datasets": "Einige Datasets bleiben ausgehängt; die Liste unten sagt, warum.",
-    "datasets_unavailable": "Freigaben und Apps, die diese Datasets nutzen, funktionieren erst wieder, wenn der Pool importiert ist."
+    "datasets_unavailable": "Freigaben und Apps, die diese Datasets nutzen, funktionieren erst wieder, wenn der Pool importiert ist.",
+    "changes_lost": "Jede Änderung am Dataset seit dem Snapshot geht verloren, für alle, die es nutzen. Das lässt sich nicht rückgängig machen.",
+    "newer_snapshots": "Die unten aufgeführten neueren Snapshots werden ebenfalls gelöscht."
   },
   "unmounted": {
     "title": "Diese Datasets bleiben ausgehängt:",

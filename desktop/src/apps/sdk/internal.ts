@@ -20,7 +20,6 @@ export type ImportVdev = components['schemas']['ImportVdev'];
 export type Snapshot = components['schemas']['Snapshot'];
 export type SnapshotList = components['schemas']['SnapshotList'];
 export type SnapshotScheduleList = components['schemas']['SnapshotScheduleList'];
-export type SnapshotRollbackRequest = components['schemas']['SnapshotRollbackRequest'];
 
 interface SnapshotRef {
   dataset: string;
@@ -51,13 +50,8 @@ export interface InternalMethods {
   'internal.admin.storage.importScan': { params: Record<string, never>; result: ImportScan };
   'internal.admin.storage.snapshots.list': { params: { dataset: string }; result: SnapshotList };
   'internal.admin.storage.snapshots.create': { params: { dataset: string }; result: Snapshot };
-  'internal.admin.storage.snapshots.delete': { params: SnapshotRef; result: undefined };
   'internal.admin.storage.snapshots.hold': { params: SnapshotRef; result: undefined };
   'internal.admin.storage.snapshots.release': { params: SnapshotRef; result: undefined };
-  'internal.admin.storage.snapshots.rollback': {
-    params: SnapshotRollbackRequest;
-    result: undefined;
-  };
   'internal.admin.storage.snapshots.schedules': {
     params: { dataset: string };
     result: SnapshotScheduleList;
@@ -140,17 +134,6 @@ function isSnapshotRef(value: unknown): value is Record<string, unknown> & Snaps
   return isDataset(value) && typeof value.name === 'string' && value.name !== '';
 }
 
-function isRollback(value: unknown): boolean {
-  return (
-    isSnapshotRef(value) &&
-    typeof value.confirmDataset === 'string' &&
-    (value.discardNewer === undefined ||
-      value.discardNewer === null ||
-      (Array.isArray(value.discardNewer) &&
-        value.discardNewer.every((name) => typeof name === 'string')))
-  );
-}
-
 function isSchedules(value: unknown): boolean {
   return (
     isDataset(value) &&
@@ -167,10 +150,7 @@ function isSchedules(value: unknown): boolean {
 
 /** A snapshot call that answers 204. */
 function snapshotAction(
-  path:
-    | '/api/storage/snapshots/delete'
-    | '/api/storage/snapshots/hold'
-    | '/api/storage/snapshots/release',
+  path: '/api/storage/snapshots/hold' | '/api/storage/snapshots/release',
 ): HostExtensions[string] {
   return {
     validate: isSnapshotRef,
@@ -360,20 +340,8 @@ export function adminStorageHost(emit: (event: string, data?: unknown) => void):
           ),
         ),
     },
-    'internal.admin.storage.snapshots.delete': snapshotAction('/api/storage/snapshots/delete'),
     'internal.admin.storage.snapshots.hold': snapshotAction('/api/storage/snapshots/hold'),
     'internal.admin.storage.snapshots.release': snapshotAction('/api/storage/snapshots/release'),
-    'internal.admin.storage.snapshots.rollback': {
-      validate: isRollback,
-      handle: (params) =>
-        daemon(async () => {
-          unwrap(
-            await api.POST('/api/storage/snapshots/rollback', {
-              body: params as SnapshotRollbackRequest,
-            }),
-          );
-        }),
-    },
     'internal.admin.storage.snapshots.schedules': {
       validate: isDataset,
       handle: (params) =>

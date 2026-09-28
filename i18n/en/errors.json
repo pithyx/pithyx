@@ -234,7 +234,7 @@
       "dataset_not_found": "There is no dataset named {dataset}. Reload the page.",
       "exists": "A snapshot named {name} exists already. Wait a second and try again.",
       "held": "The snapshot {name} is held and cannot be deleted. Release the hold first.",
-      "newer_exist": "Rolling back would also delete {count, plural, one {# newer snapshot} other {# newer snapshots}}. Review the list and confirm them all.",
+      "newer_exist": "The newer snapshots changed since the plan was shown: the dataset now has {count, plural, one {# newer snapshot} other {# newer snapshots}}. Nothing was rolled back; show the plan again.",
       "not_found": "There is no snapshot named {name}. Reload the list.",
       "not_pithyx": "Pithyx deletes only snapshots it took. {name} was made by someone else and stays.",
       "schedule_invalid": "Each schedule is hourly, daily, weekly or monthly, once, and keeps between 1 and {max} snapshots."

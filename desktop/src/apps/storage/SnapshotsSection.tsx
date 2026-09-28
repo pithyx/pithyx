@@ -6,26 +6,22 @@ import { formatBytes } from '../../desktop/format';
 import { ErrorNotice } from '../../errors/ErrorNotice';
 import { Button } from '../../ui/Button';
 import { Badge } from '../../ui/Controls';
-import { Dialog } from '../../ui/Dialog';
 import { IconCamera } from '../../ui/icons';
-import { TextField } from '../../ui/TextField';
-import { internalCall, type Snapshot, type SnapshotScheduleList } from '../sdk/internal';
+import { internalCall, type Dataset, type SnapshotScheduleList } from '../sdk/internal';
+import { DatasetDialog, type DatasetAction } from './DatasetDialog';
 import styles from './Storage.module.css';
 import { describeProblem, storageKey, usePools } from './shared';
 
 type Kind = 'hourly' | 'daily' | 'weekly' | 'monthly';
-type Pending =
-  | { kind: 'delete'; snapshot: Snapshot }
-  | { kind: 'rollback'; snapshot: Snapshot; newer: Snapshot[] };
 
 function snapshotsKey(dataset: string) {
   return [...storageKey, 'snapshots', dataset] as const;
 }
 
 /**
- * Snapshots of one dataset at a time: the list, taking one now, the schedules with their counts, holds, deleting a
- * snapshot Pithyx took after its name was typed, and rolling back after the dataset name was typed with every newer
- * snapshot listed.
+ * Snapshots of one dataset at a time: the list, taking one now, the schedules with their counts, holds, and the
+ * command plans that delete a snapshot Pithyx took or roll back to one after the dataset name was typed, with every
+ * newer snapshot listed.
  */
 export function SnapshotsSection({ app }: { app: PithyxApp }) {
   const { t } = useTranslation('storage');
@@ -65,18 +61,18 @@ export function SnapshotsSection({ app }: { app: PithyxApp }) {
               ))}
             </select>
           </label>
-          <DatasetSnapshots key={dataset.name} app={app} dataset={dataset.name} />
+          <DatasetSnapshots key={dataset.name} app={app} dataset={dataset} />
         </section>
       )}
     </div>
   );
 }
 
-function DatasetSnapshots({ app, dataset }: { app: PithyxApp; dataset: string }) {
+function DatasetSnapshots({ app, dataset: target }: { app: PithyxApp; dataset: Dataset }) {
   const { t, i18n } = useTranslation('storage');
   const client = useQueryClient();
-  const [pending, setPending] = useState<Pending | null>(null);
-  const [typed, setTyped] = useState('');
+  const dataset = target.name;
+  const [pending, setPending] = useState<DatasetAction | null>(null);
   const list = useQuery({
     queryKey: [...snapshotsKey(dataset), 'list'],
     queryFn: () => internalCall(app, 'internal.admin.storage.snapshots.list', { dataset }),
@@ -88,34 +84,6 @@ function DatasetSnapshots({ app, dataset }: { app: PithyxApp; dataset: string })
   });
   const snapshots = [...(list.data?.snapshots ?? [])].reverse();
 
-  function close() {
-    setPending(null);
-    setTyped('');
-  }
-
-  function confirmPending() {
-    const current = pending;
-    close();
-    if (current?.kind === 'delete') {
-      action.mutate(() =>
-        internalCall(app, 'internal.admin.storage.snapshots.delete', {
-          dataset,
-          name: current.snapshot.name,
-        }),
-      );
-    } else if (current?.kind === 'rollback') {
-      action.mutate(() =>
-        internalCall(app, 'internal.admin.storage.snapshots.rollback', {
-          dataset,
-          name: current.snapshot.name,
-          confirmDataset: typed,
-          discardNewer: current.newer.map((snapshot) => snapshot.name),
-        }),
-      );
-    }
-  }
-
-  const expected = pending?.kind === 'delete' ? pending.snapshot.name : dataset;
   return (
     <div className={styles.snapshots}>
       <div className={styles.snapshotBar}>
@@ -197,10 +165,11 @@ function DatasetSnapshots({ app, dataset }: { app: PithyxApp; dataset: string })
                       onPress={() => {
                         setPending({
                           kind: 'rollback',
+                          dataset: target,
                           snapshot,
                           newer: (list.data?.snapshots ?? []).filter(
                             (other) => other.createTxg > snapshot.createTxg,
-                          ),
+                          ).length,
                         });
                       }}
                     >
@@ -212,7 +181,7 @@ function DatasetSnapshots({ app, dataset }: { app: PithyxApp; dataset: string })
                         variant="quiet"
                         isDisabled={action.isPending}
                         onPress={() => {
-                          setPending({ kind: 'delete', snapshot });
+                          setPending({ kind: 'snapshotDestroy', dataset: target, snapshot });
                         }}
                       >
                         {t('snapshots.delete')}
@@ -225,69 +194,16 @@ function DatasetSnapshots({ app, dataset }: { app: PithyxApp; dataset: string })
           </tbody>
         </table>
       )}
-      <Dialog
-        isOpen={pending !== null}
-        onOpenChange={(open) => {
-          if (!open) {
-            close();
-          }
-        }}
-        role="alertdialog"
-        tone="danger"
-        title={
-          pending?.kind === 'rollback'
-            ? t('snapshots.rollbackTitle', { dataset })
-            : t('snapshots.deleteTitle')
-        }
-        actions={
-          <>
-            <Button onPress={close}>{t('snapshots.cancel')}</Button>
-            <Button variant="danger" isDisabled={typed !== expected} onPress={confirmPending}>
-              {pending?.kind === 'rollback'
-                ? t('snapshots.rollbackConfirm')
-                : t('snapshots.deleteConfirm')}
-            </Button>
-          </>
-        }
-      >
-        <div className={styles.form}>
-          {pending?.kind === 'rollback' ? (
-            <>
-              <p>
-                {t('snapshots.rollbackBody', {
-                  name: pending.snapshot.name,
-                  date: app.format.dateTime(pending.snapshot.createdAt),
-                })}
-              </p>
-              {pending.newer.length > 0 && (
-                <>
-                  <p>{t('snapshots.rollbackNewer', { count: pending.newer.length })}</p>
-                  <ul className={styles.commands}>
-                    {pending.newer.map((snapshot) => (
-                      <li key={snapshot.name} className={styles.mono}>
-                        {snapshot.name}
-                      </li>
-                    ))}
-                  </ul>
-                </>
-              )}
-            </>
-          ) : (
-            <p>{t('snapshots.deleteBody', { name: pending?.snapshot.name ?? '' })}</p>
-          )}
-          <TextField
-            label={
-              pending?.kind === 'rollback'
-                ? t('snapshots.typeDataset', { dataset })
-                : t('snapshots.typeName')
-            }
-            value={typed}
-            onChange={setTyped}
-            autoCapitalize="none"
-            inputClassName={styles.mono}
-          />
-        </div>
-      </Dialog>
+      {pending !== null && (
+        <DatasetDialog
+          app={app}
+          action={pending}
+          onClose={() => {
+            setPending(null);
+            void reload();
+          }}
+        />
+      )}
     </div>
   );
 }

@@ -20,7 +20,14 @@ public sealed class CommandPlanRunner(ICommandRunner commands, SystemStateServic
         ArgumentNullException.ThrowIfNull(plan);
         try
         {
-            await RunStepsAsync(plan, progress, cancellationToken);
+            if (plan.Within is { } within)
+            {
+                await within(token => RunStepsAsync(plan, progress, token), cancellationToken);
+            }
+            else
+            {
+                await RunStepsAsync(plan, progress, cancellationToken);
+            }
         }
         catch
         {

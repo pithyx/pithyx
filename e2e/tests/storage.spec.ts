@@ -214,6 +214,69 @@ test('deleting a dataset needs its full name typed', async ({ page }) => {
   await expect(dialog.getByRole('button', { name: 'Delete', exact: true })).toHaveCount(0);
 });
 
+async function openSnapshots(storage: ReturnType<typeof appWindow>) {
+  await storage.getByRole('button', { name: 'Snapshots', exact: true }).click();
+  await expect(storage.getByRole('heading', { name: 'Snapshots', level: 2 })).toBeVisible();
+  await storage.getByLabel('Dataset').selectOption('pithyxtestm');
+}
+
+function snapshotRow(storage: ReturnType<typeof appWindow>, name: string) {
+  return storage.getByRole('row', { name: new RegExp(name) });
+}
+
+test('deleting a snapshot shows the exact zfs destroy command before it runs', async ({ page }) => {
+  const storage = await openStorage(page);
+  await openSnapshots(storage);
+  // Snapshots of other tools have no delete button (D104).
+  await expect(
+    snapshotRow(storage, 'before-upgrade').getByRole('button', { name: 'Delete' }),
+  ).toHaveCount(0);
+  await snapshotRow(storage, 'pithyx-manual-20260920T101500Z')
+    .getByRole('button', { name: 'Delete' })
+    .click();
+  const dialog = page.getByRole('dialog', { name: 'Delete snapshot' });
+
+  await expect(dialog.getByRole('button', { name: 'Delete snapshot' })).toHaveCount(0);
+  await dialog.getByRole('button', { name: 'Show commands' }).click();
+
+  await expect(dialog.getByRole('status')).toContainText(
+    'pithyxtestm@pithyx-manual-20260920T101500Z',
+  );
+  await expect(dialog.getByRole('status').getByRole('code')).toHaveText([
+    'zfs destroy pithyxtestm@pithyx-manual-20260920T101500Z',
+  ]);
+  await expect(dialog.getByRole('button', { name: 'Delete snapshot' })).toBeEnabled();
+  expect(await violations(page)).toEqual([]);
+});
+
+test('rolling back needs the dataset name and lists the newer snapshots it deletes', async ({
+  page,
+}) => {
+  const storage = await openStorage(page);
+  await openSnapshots(storage);
+  await snapshotRow(storage, 'pithyx-daily-20260926T000000Z')
+    .getByRole('button', { name: 'Roll back' })
+    .click();
+  const dialog = page.getByRole('dialog', { name: 'Roll back pithyxtestm' });
+  const show = dialog.getByRole('button', { name: 'Show commands' });
+
+  await expect(dialog).toContainText('1 newer snapshot is deleted as well');
+  await expect(show).toBeDisabled();
+  await dialog.getByLabel('Type pithyxtestm to confirm').fill('pithyxtestm');
+  await show.click();
+
+  await expect(dialog.getByRole('note', { name: 'Warnings' })).toContainText(
+    'Every change made to the dataset',
+  );
+  await expect(dialog.getByRole('status')).toContainText(
+    'pithyxtestm@pithyx-daily-20260927T000000Z',
+  );
+  await expect(dialog.getByRole('status').getByRole('code')).toHaveText([
+    'zfs rollback -r pithyxtestm@pithyx-daily-20260926T000000Z',
+  ]);
+  await expect(dialog.getByRole('button', { name: 'Roll back' })).toBeEnabled();
+});
+
 test('importing a pool scans only when asked and imports it read-only first', async ({ page }) => {
   const storage = await openStorage(page);
   await storage.getByRole('button', { name: 'Import a pool…' }).click();

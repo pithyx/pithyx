@@ -234,7 +234,7 @@
       "dataset_not_found": "Es gibt kein Dataset namens {dataset}. Lade die Seite neu.",
       "exists": "Es gibt schon einen Snapshot namens {name}. Warte eine Sekunde und versuch es noch einmal.",
       "held": "Der Snapshot {name} wird festgehalten und kann nicht gelöscht werden. Gib ihn zuerst frei.",
-      "newer_exist": "Das Zurücksetzen würde auch {count, plural, one {# neueren Snapshot} other {# neuere Snapshots}} löschen. Prüf die Liste und bestätige alle.",
+      "newer_exist": "Die neueren Snapshots haben sich seit der Vorschau geändert: Das Dataset hat jetzt {count, plural, one {# neueren Snapshot} other {# neuere Snapshots}}. Es wurde nichts zurückgesetzt; zeig den Plan noch einmal an.",
       "not_found": "Es gibt keinen Snapshot namens {name}. Lade die Liste neu.",
       "not_pithyx": "Pithyx löscht nur Snapshots, die es selbst angelegt hat. {name} stammt von jemand anderem und bleibt.",
       "schedule_invalid": "Jeder Zeitplan ist stündlich, täglich, wöchentlich oder monatlich, jeweils einmal, und behält zwischen 1 und {max} Snapshots."

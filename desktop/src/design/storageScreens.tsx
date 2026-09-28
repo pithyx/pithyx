@@ -87,6 +87,33 @@ export const storageScreens: ScreenDefinition[] = [
     render: storage('snapshots'),
   },
   {
+    id: 'storage-snapshot-delete',
+    group: 'storage',
+    title: 'Delete a snapshot',
+    description:
+      'A snapshot Pithyx took is deleted through a plan that shows the exact zfs destroy.',
+    render: storage('snapshots', [
+      { press: 'storage:snapshots.delete', inside: 'pithyx-daily-20260925T000000Z' },
+      { press: 'storage:create.preview' },
+    ]),
+  },
+  {
+    id: 'storage-snapshot-rollback',
+    group: 'storage',
+    title: 'Roll back to a snapshot',
+    description:
+      'Rolling back needs the dataset name typed, warns that changes are lost and lists every newer snapshot that goes.',
+    render: storage('snapshots', [
+      { press: 'storage:snapshots.rollback', inside: 'pithyx-daily-20260925T000000Z' },
+      {
+        fill: 'storage:datasets.rollback.confirm',
+        params: { dataset: 'tank/pithyx/shares/family' },
+        value: 'tank/pithyx/shares/family',
+      },
+      { press: 'storage:create.preview' },
+    ]),
+  },
+  {
     id: 'storage-maintenance',
     group: 'storage',
     title: 'Storage: health and maintenance',

@@ -9,7 +9,7 @@ using static Pithyx.Daemon.Tests.Auth.AuthApi;
 
 namespace Pithyx.Daemon.Tests.Storage;
 
-/// <summary>Schedules, retention and the snapshot actions against a played ZFS, with a fake clock.</summary>
+/// <summary>Schedules, retention, holds and refreshes against a played ZFS, with a fake clock.</summary>
 public sealed class SnapshotSchedulerTests : IAsyncLifetime
 {
     private const string Data = "tank/data";
@@ -251,23 +251,6 @@ public sealed class SnapshotSchedulerTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task OnlyPithyxSnapshotsWithoutHoldsCanBeDeleted()
-    {
-        _zfs.Add(Data, "before-upgrade", _start.AddDays(-1));
-        _zfs.Add(Data, "pithyx-manual-20260926T000000Z", _start.AddDays(-1), holds: 1);
-        _zfs.Add(Data, "pithyx-manual-20260927T000000Z", _start.AddHours(-1));
-
-        Assert.Equal(ErrorCodes.StorageSnapshotNotPithyx, (await Assert.ThrowsAsync<PithyxException>(() => _service.DeleteAsync(Data, "before-upgrade", Token))).Code);
-        Assert.Equal(ErrorCodes.StorageSnapshotHeld, (await Assert.ThrowsAsync<PithyxException>(() => _service.DeleteAsync(Data, "pithyx-manual-20260926T000000Z", Token))).Code);
-        Assert.Equal(ErrorCodes.StorageSnapshotNotFound, (await Assert.ThrowsAsync<PithyxException>(() => _service.DeleteAsync(Data, "pithyx-manual-2026", Token))).Code);
-        Assert.Equal(ErrorCodes.StorageSnapshotDatasetNotFound, (await Assert.ThrowsAsync<PithyxException>(() => _service.DeleteAsync("tank/gone", "pithyx-manual-20260927T000000Z", Token))).Code);
-        await _service.DeleteAsync(Data, "pithyx-manual-20260927T000000Z", Token);
-
-        Assert.Equal(["zfs destroy tank/data@pithyx-manual-20260927T000000Z"], _zfs.Changes);
-        Assert.Equal(["before-upgrade", "pithyx-manual-20260926T000000Z"], Names());
-    }
-
-    [Fact]
     public async Task HoldAndReleaseUseThePithyxTag()
     {
         _zfs.Add(Data, "before-upgrade", _start.AddDays(-1));
@@ -278,50 +261,6 @@ public sealed class SnapshotSchedulerTests : IAsyncLifetime
 
         Assert.Equal(["zfs hold pithyx tank/data@before-upgrade", "zfs release pithyx tank/data@before-upgrade"], _zfs.Changes);
         Assert.Equal(0, _inventory.Find(Data, "before-upgrade")!.Holds);
-    }
-
-    [Fact]
-    public async Task RollbackToTheNewestSnapshotNeedsTheTypedNameAndNoMinusR()
-    {
-        _zfs.Add(Data, "before-upgrade", _start.AddDays(-1));
-
-        var mismatch = await Assert.ThrowsAsync<PithyxException>(() => _service.RollbackAsync(new SnapshotRollbackRequest(Data, "before-upgrade", "tank/Data"), Token));
-        Assert.Equal(ErrorCodes.StorageSnapshotConfirmationMismatch, mismatch.Code);
-        await _service.RollbackAsync(new SnapshotRollbackRequest(Data, "before-upgrade", Data), Token);
-
-        Assert.Equal(["zfs rollback tank/data@before-upgrade"], _zfs.Changes);
-    }
-
-    [Fact]
-    public async Task RollbackPastNewerSnapshotsRunsOnlyWhenTheyAreAllListed()
-    {
-        _zfs.Add(Data, "before-upgrade", _start.AddDays(-3));
-        _zfs.Add(Data, "pithyx-daily-20260926T000000Z", _start.AddDays(-2));
-        _zfs.Add(Data, "someone-elses", _start.AddDays(-1));
-
-        var none = await Assert.ThrowsAsync<PithyxException>(() => _service.RollbackAsync(new SnapshotRollbackRequest(Data, "before-upgrade", Data), Token));
-        var some = await Assert.ThrowsAsync<PithyxException>(() => _service.RollbackAsync(new SnapshotRollbackRequest(Data, "before-upgrade", Data, ["pithyx-daily-20260926T000000Z"]), Token));
-        var extra = await Assert.ThrowsAsync<PithyxException>(() => _service.RollbackAsync(new SnapshotRollbackRequest(Data, "before-upgrade", Data, ["pithyx-daily-20260926T000000Z", "someone-elses", "invented"]), Token));
-        Assert.All([none, some, extra], error => Assert.Equal(ErrorCodes.StorageSnapshotNewerExist, error.Code));
-        Assert.Equal(2, none.Parameters["count"]);
-        Assert.Empty(_zfs.Changes);
-
-        await _service.RollbackAsync(new SnapshotRollbackRequest(Data, "before-upgrade", Data, ["someone-elses", "pithyx-daily-20260926T000000Z"]), Token);
-
-        Assert.Equal(["zfs rollback -r tank/data@before-upgrade"], _zfs.Changes);
-        Assert.Equal(["before-upgrade"], Names());
-    }
-
-    [Fact]
-    public async Task RollbackPastAHeldSnapshotIsRefused()
-    {
-        _zfs.Add(Data, "before-upgrade", _start.AddDays(-3));
-        _zfs.Add(Data, "pithyx-daily-20260926T000000Z", _start.AddDays(-2), holds: 1);
-
-        var error = await Assert.ThrowsAsync<PithyxException>(() => _service.RollbackAsync(new SnapshotRollbackRequest(Data, "before-upgrade", Data, ["pithyx-daily-20260926T000000Z"]), Token));
-
-        Assert.Equal(ErrorCodes.StorageSnapshotHeld, error.Code);
-        Assert.Empty(_zfs.Changes);
     }
 
     [Fact]

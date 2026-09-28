@@ -52,10 +52,10 @@ public sealed class SnapshotApiTests : IAsyncLifetime
     {
         { "GET", "/api/storage/snapshots?dataset=pithyxtestm", null },
         { "POST", "/api/storage/snapshots", new { dataset = "pithyxtestm" } },
-        { "POST", "/api/storage/snapshots/delete", new { dataset = "pithyxtestm", name = "pithyx-manual-20260920T101500Z" } },
         { "POST", "/api/storage/snapshots/hold", new { dataset = "pithyxtestm", name = "before-upgrade" } },
         { "POST", "/api/storage/snapshots/release", new { dataset = "pithyxtestm", name = "before-upgrade" } },
-        { "POST", "/api/storage/snapshots/rollback", new { dataset = "pithyxtestm", name = "before-upgrade", confirmDataset = "pithyxtestm" } },
+        { "POST", "/api/storage/plans", new { action = "snapshot.destroy", pool = "pithyxtestm", dataset = "pithyxtestm", name = "pithyx-manual-20260920T101500Z" } },
+        { "POST", "/api/storage/plans", new { action = "snapshot.rollback", pool = "pithyxtestm", dataset = "pithyxtestm", name = "before-upgrade", confirmName = "pithyxtestm" } },
         { "GET", "/api/storage/snapshots/schedules?dataset=pithyxtestm", null },
         { "PUT", "/api/storage/snapshots/schedules", new { dataset = "pithyxtestm", schedules = new[] { new { kind = "daily", enabled = true, keep = 7 } } } },
     };
@@ -130,29 +130,37 @@ public sealed class SnapshotApiTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task SnapshotsOfOthersCannotBeDeleted()
+    public async Task SnapshotsOfOthersCannotBeDestroyed()
     {
-        using var response = await _admin.PostAsJsonAsync("/api/storage/snapshots/delete", new { dataset = "pithyxtestm", name = "before-upgrade" }, Token);
+        using var response = await _admin.PostAsJsonAsync("/api/storage/plans", new { action = "snapshot.destroy", pool = "pithyxtestm", dataset = "pithyxtestm", name = "before-upgrade" }, Token);
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         Assert.Equal("storage.snapshot.not_pithyx", (await response.JsonAsync()).GetProperty("code").GetString());
     }
 
     [Fact]
-    public async Task RollbackListsWhatWouldGo()
+    public async Task ARollbackPreviewListsTheNewerSnapshotsAndWaitsForTheTypedName()
     {
         using var mismatch = await _admin.PostAsJsonAsync(
-            "/api/storage/snapshots/rollback",
-            new { dataset = "pithyxtestm", name = "pithyx-daily-20260926T000000Z", confirmDataset = "pithyxtest" },
+            "/api/storage/plans",
+            new { action = "snapshot.rollback", pool = "pithyxtestm", dataset = "pithyxtestm", name = "pithyx-daily-20260926T000000Z", confirmName = "pithyxtest" },
             Token);
-        using var newer = await _admin.PostAsJsonAsync(
-            "/api/storage/snapshots/rollback",
-            new { dataset = "pithyxtestm", name = "pithyx-daily-20260926T000000Z", confirmDataset = "pithyxtestm" },
-            Token);
+        var awaiting = await (await _admin.PostAsJsonAsync(
+            "/api/storage/plans",
+            new { action = "snapshot.rollback", pool = "pithyxtestm", dataset = "pithyxtestm", name = "pithyx-daily-20260926T000000Z" },
+            Token)).JsonAsync();
+        var ready = await (await _admin.PostAsJsonAsync(
+            "/api/storage/plans",
+            new { action = "snapshot.rollback", pool = "pithyxtestm", dataset = "pithyxtestm", name = "pithyx-daily-20260926T000000Z", confirmName = "pithyxtestm" },
+            Token)).JsonAsync();
 
         Assert.Equal("storage.snapshot.confirmation_mismatch", (await mismatch.JsonAsync()).GetProperty("code").GetString());
-        var problem = await newer.JsonAsync();
-        Assert.Equal(HttpStatusCode.Conflict, newer.StatusCode);
-        Assert.Equal(("storage.snapshot.newer_exist", 1), (problem.GetProperty("code").GetString(), problem.GetProperty("params").GetProperty("count").GetInt32()));
+        Assert.Equal(System.Text.Json.JsonValueKind.Null, awaiting.GetProperty("planId").ValueKind);
+        Assert.True(awaiting.GetProperty("requiresConfirmName").GetBoolean());
+        Assert.Equal(["pithyxtestm@pithyx-daily-20260927T000000Z"], ready.GetProperty("datasets").EnumerateArray().Select(dataset => dataset.GetString()));
+        Assert.Equal(
+            ["zfs", "rollback", "-r", "pithyxtestm@pithyx-daily-20260926T000000Z"],
+            ready.GetProperty("commands")[0].GetProperty("arguments").EnumerateArray().Select(argument => argument.GetString()).Prepend(ready.GetProperty("commands")[0].GetProperty("program").GetString()));
+        Assert.NotNull(ready.GetProperty("planId").GetString());
     }
 }

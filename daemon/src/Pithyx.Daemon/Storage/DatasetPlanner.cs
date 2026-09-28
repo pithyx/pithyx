@@ -29,7 +29,8 @@ public enum DatasetRole
 }
 
 /// <summary>
-/// Plans renaming, changing and destroying datasets and volumes and creating volumes. It decides which dataset may be
+/// Plans renaming, changing and destroying datasets and volumes, creating volumes, and destroying and rolling back to
+/// snapshots. It decides which dataset may be
 /// changed how; <see cref="ZfsDatasetPlans"/> builds the commands. Nothing here assumes a dataset is a share, so apps
 /// (M4) use the same actions for their datasets.
 /// </summary>
@@ -48,6 +49,8 @@ public sealed partial class DatasetPlanner(
         "dataset.set",
         "dataset.destroy",
         "volume.create",
+        "snapshot.destroy",
+        "snapshot.rollback",
     };
 
     private static readonly HashSet<string> _managedParents = ["homes", "apps", "system"];
@@ -93,6 +96,8 @@ public sealed partial class DatasetPlanner(
             "dataset.set" => Set(request),
             "dataset.destroy" => await DestroyAsync(request, cancellationToken),
             "volume.create" => CreateVolume(request),
+            "snapshot.destroy" => await DestroySnapshotAsync(request, cancellationToken),
+            "snapshot.rollback" => await RollbackAsync(request, cancellationToken),
             _ => throw new PithyxException(ErrorCodes.StoragePlanActionInvalid, new Dictionary<string, object?> { ["action"] = request.Action }),
         };
     }
@@ -272,6 +277,51 @@ public sealed partial class DatasetPlanner(
         return Result(request, ZfsDatasetPlans.CreateVolume(pool.Name, request.Name!, size, sparse, createParent: parent is null), [], null);
     }
 
+    /// <summary>One snapshot Pithyx took, not held (D104). The preview lists it; no name needs to be typed.</summary>
+    private async Task<StoragePlanner.Result> DestroySnapshotAsync(StoragePlanRequest request, CancellationToken cancellationToken)
+    {
+        var dataset = Find(request);
+        var snapshot = await snapshotService.DestroyableAsync(dataset.Name, request.Name ?? "", cancellationToken);
+        var steps = new[] { new PlanStep(SnapshotPlans.Destroy(dataset.Name, snapshot.Name), []) };
+        return Result(request, steps, [snapshot.FullName], _ =>
+        {
+            snapshotService.LogUserDestroyed(dataset.Name, snapshot.Name);
+            return Task.CompletedTask;
+        }, SnapshotChange(dataset.Name, snapshot.Name, null));
+    }
+
+    /// <summary>
+    /// Rolls the dataset back after its full name was typed. The preview lists every newer snapshot, which ZFS destroys
+    /// with <c>-r</c>; the run refuses when they are no longer exactly those (<c>storage.snapshot.newer_exist</c>).
+    /// </summary>
+    private async Task<StoragePlanner.Result> RollbackAsync(StoragePlanRequest request, CancellationToken cancellationToken)
+    {
+        var dataset = Find(request);
+        var name = request.Name ?? "";
+        var newer = await snapshotService.NewerThanAsync(dataset.Name, name, cancellationToken);
+        var listed = newer.Select(snapshot => snapshot.FullName).ToList();
+        IReadOnlyList<string> warnings = newer.Count > 0 ? ["changes_lost", "newer_snapshots"] : ["changes_lost"];
+        if (string.IsNullOrEmpty(request.ConfirmName))
+        {
+            return new StoragePlanner.Result([], null, listed) { Warnings = warnings, RequiresConfirmName = true, AwaitsConfirmName = true };
+        }
+        if (TypedName.Confirm(dataset.Name, request.ConfirmName) is null)
+        {
+            throw new PithyxException(ErrorCodes.StorageSnapshotConfirmationMismatch, new Dictionary<string, object?> { ["dataset"] = dataset.Name });
+        }
+        var names = newer.Select(snapshot => snapshot.Name).ToList();
+        var steps = new[] { new PlanStep(SnapshotPlans.Rollback(dataset.Name, name, discardNewer: newer.Count > 0), []) };
+        var result = Result(request, steps, listed, _ =>
+        {
+            snapshotService.LogRollback(dataset.Name, name, names.Count);
+            return Task.CompletedTask;
+        }, SnapshotChange(dataset.Name, name, names));
+        return result with { Warnings = warnings, RequiresConfirmName = true };
+    }
+
+    private Func<Func<CancellationToken, Task>, CancellationToken, Task> SnapshotChange(string dataset, string name, IReadOnlyCollection<string>? newer) =>
+        (run, cancellationToken) => snapshotService.RunCheckedAsync(dataset, name, newer, run, cancellationToken);
+
     private Dataset Find(StoragePlanRequest request) =>
         pools.Current.Datasets.FirstOrDefault(candidate => candidate.Name == request.Dataset && candidate.Pool == request.Pool)
         ?? throw new PithyxException(ErrorCodes.StorageDatasetNotFound, new Dictionary<string, object?> { ["dataset"] = request.Dataset });
@@ -321,7 +371,12 @@ public sealed partial class DatasetPlanner(
 
     private static string Number(long bytes) => bytes.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
-    private StoragePlanner.Result Result(StoragePlanRequest request, IReadOnlyList<PlanStep> steps, IReadOnlyList<string> datasets, Func<CancellationToken, Task>? afterRun) =>
+    private StoragePlanner.Result Result(
+        StoragePlanRequest request,
+        IReadOnlyList<PlanStep> steps,
+        IReadOnlyList<string> datasets,
+        Func<CancellationToken, Task>? afterRun,
+        Func<Func<CancellationToken, Task>, CancellationToken, Task>? within = null) =>
         new(
             [],
             new CommandPlan(
@@ -332,7 +387,8 @@ public sealed partial class DatasetPlanner(
                 time.GetUtcNow() + CommandPlan.Lifetime,
                 afterRun,
                 // Renaming and destroying unmount the datasets.
-                request.Action is "dataset.rename" or "dataset.destroy" ? PlanReleases.MountPointsOf(pools.Current, datasets) : null),
+                request.Action is "dataset.rename" or "dataset.destroy" ? PlanReleases.MountPointsOf(pools.Current, datasets) : null,
+                within),
             datasets);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Renamed dataset {OldName} to {NewName}; {Shares} share folders moved")]

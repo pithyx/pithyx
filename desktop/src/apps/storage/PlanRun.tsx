@@ -48,6 +48,8 @@ const WARNINGS = new Set([
   'degraded',
   'unmounted_datasets',
   'datasets_unavailable',
+  'changes_lost',
+  'newer_snapshots',
 ]);
 
 function PlanWarnings({ t, warnings }: { t: Translate; warnings: string[] }) {

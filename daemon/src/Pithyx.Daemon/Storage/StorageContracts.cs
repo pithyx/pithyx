@@ -20,13 +20,14 @@ public sealed record StorageDiskList(IReadOnlyList<StorageDisk> Disks, string En
 /// <c>pool.raidz.expand</c> Pool, Vdev (the raidz vdev), one disk and ConfirmName;
 /// <c>dataset.rename</c> Pool, Dataset and NewName; <c>dataset.set</c> Pool, Dataset and at least one of QuotaBytes,
 /// ReservationBytes, Compression and RecordSizeBytes; <c>dataset.destroy</c> Pool, Dataset and ConfirmName;
-/// <c>volume.create</c> Pool, Name, SizeBytes and Sparse.
+/// <c>volume.create</c> Pool, Name, SizeBytes and Sparse; <c>snapshot.destroy</c> Pool, Dataset and the snapshot's
+/// Name; <c>snapshot.rollback</c> Pool, Dataset, the snapshot's Name and the dataset's full name in ConfirmName.
 /// </summary>
-/// <param name="Action"><c>pool.create</c>, <c>pool.destroy</c>, <c>pool.replace</c>, <c>pool.spare.add</c>, <c>pool.spare.remove</c>, <c>pool.offline</c>, <c>pool.online</c>, <c>pool.import.readonly</c>, <c>pool.import</c>, <c>pool.export</c>, <c>pool.vdev.add</c>, <c>pool.raidz.expand</c>, <c>dataset.rename</c>, <c>dataset.set</c>, <c>dataset.destroy</c> or <c>volume.create</c>.</param>
+/// <param name="Action"><c>pool.create</c>, <c>pool.destroy</c>, <c>pool.replace</c>, <c>pool.spare.add</c>, <c>pool.spare.remove</c>, <c>pool.offline</c>, <c>pool.online</c>, <c>pool.import.readonly</c>, <c>pool.import</c>, <c>pool.export</c>, <c>pool.vdev.add</c>, <c>pool.raidz.expand</c>, <c>dataset.rename</c>, <c>dataset.set</c>, <c>dataset.destroy</c>, <c>volume.create</c>, <c>snapshot.destroy</c> or <c>snapshot.rollback</c>.</param>
 /// <param name="Pool">The pool, or the new pool's name; for <c>pool.import.readonly</c> the scanned name (the GUID decides).</param>
 /// <param name="Layout"><c>single</c>, <c>stripe</c>, <c>mirror</c>, <c>mirrors</c> (pairs), <c>raidz1</c>, <c>raidz2</c> or <c>raidz3</c>.</param>
 /// <param name="DiskIds">The disks to use, by id.</param>
-/// <param name="Name">Name of a new volume (one path component). Shared folders are created with <c>POST /api/shares/plans</c>.</param>
+/// <param name="Name">Name of a new volume (one path component), or the snapshot after <c>@</c> for the snapshot actions. Shared folders are created with <c>POST /api/shares/plans</c>.</param>
 /// <param name="Vdev">GUID of the device to replace, take offline, bring online or remove, or of the raidz vdev to expand.</param>
 /// <param name="Encryption">The answer to the encryption question of a new pool: <c>none</c>, or <c>key</c> once the key vault exists.</param>
 /// <param name="ConfirmName">The pool's name, or the dataset's full name, typed by the user where the preview says <c>requiresConfirmName</c> and to destroy.</param>
@@ -77,7 +78,8 @@ public sealed record PlannedCommand(string Program, IReadOnlyList<string> Argume
 /// For destroying or exporting a pool: every dataset that goes or becomes unavailable; for <c>pool.import</c>: the
 /// datasets it mounts. For destroying a dataset: the dataset, its children and every snapshot of them
 /// (<c>dataset@snapshot</c>), each dataset followed by its snapshots. For renaming a dataset: the dataset and its
-/// children, whose names change.
+/// children, whose names change. For destroying a snapshot: the snapshot (<c>dataset@snapshot</c>); for rolling back:
+/// every newer snapshot, which goes too.
 /// </param>
 /// <param name="ExpiresAt">Until when the plan may run.</param>
 /// <param name="Warnings">
@@ -86,9 +88,10 @@ public sealed record PlannedCommand(string Program, IReadOnlyList<string> Argume
 /// layout ZFS calls a replication mismatch, it can never be removed, it has no redundancy), <c>irreversible</c> (RAID-Z
 /// expansion), <c>other_system</c> (an import forced over another system's claim), <c>degraded</c> (the pool is imported
 /// with devices missing), <c>unmounted_datasets</c> (<paramref name="Unmounted"/> stay unmounted) and
-/// <c>datasets_unavailable</c> (exporting a pool with datasets in use).
+/// <c>datasets_unavailable</c> (exporting a pool with datasets in use); for a rollback <c>changes_lost</c> (every change
+/// since the snapshot is lost) and <c>newer_snapshots</c> (the listed newer snapshots are destroyed).
 /// </param>
-/// <param name="RequiresConfirmName">True when the plan runs only with the pool's name typed in <c>confirmName</c>.</param>
+/// <param name="RequiresConfirmName">True when the plan runs only with the pool's name (for a rollback the dataset's full name) typed in <c>confirmName</c>.</param>
 /// <param name="Unmounted">For <c>pool.import</c>: datasets that stay unmounted, and why; those that would hide part of the system also get <c>canmount=noauto</c>.</param>
 public sealed record StoragePlanPreview(
     string? PlanId,

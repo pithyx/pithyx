@@ -513,6 +513,26 @@ export function samplePlan(request: StoragePlanRequest): StoragePlanPreview {
         requiresConfirmName: true,
       });
     }
+    case 'snapshot.destroy':
+      return preview([`zfs destroy ${request.dataset ?? ''}@${request.name ?? ''}`], {
+        datasets: [`${request.dataset ?? ''}@${request.name ?? ''}`],
+      });
+    case 'snapshot.rollback': {
+      const target = sampleSnapshots.find((entry) => entry.name === request.name);
+      const newer = sampleSnapshots
+        .filter((entry) => target !== undefined && entry.createTxg > target.createTxg)
+        .map((entry) => entry.fullName ?? '');
+      return preview(
+        [
+          `zfs rollback${newer.length > 0 ? ' -r' : ''} ${request.dataset ?? ''}@${request.name ?? ''}`,
+        ],
+        {
+          datasets: newer,
+          requiresConfirmName: true,
+          warnings: newer.length > 0 ? ['changes_lost', 'newer_snapshots'] : ['changes_lost'],
+        },
+      );
+    }
     case 'volume.create':
       return preview([
         `zfs create -V ${String(request.sizeBytes ?? 0)}${request.sparse ? ' -s' : ''} -o volblocksize=16K ${pool}/pithyx/volumes/${request.name ?? ''}`,

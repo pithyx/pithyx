@@ -11,9 +11,9 @@ using Pithyx.Daemon.Storage.Zfs;
 namespace Pithyx.Daemon.Storage.Snapshots;
 
 /// <summary>
-/// Takes, destroys, holds, releases and rolls back snapshots, and stores the schedules. Changes run one at a time;
-/// after each the snapshot list is read again. The list is also read after every pool refresh (a <c>zpool events</c>
-/// line), so snapshots taken outside Pithyx show up without polling.
+/// Takes, holds and releases snapshots, checks and runs the plans that destroy one or roll back to one, and stores
+/// the schedules. Changes run one at a time; after each the snapshot list is read again. The list is also read after
+/// every pool refresh (a <c>zpool events</c> line), so snapshots taken outside Pithyx show up without polling.
 /// </summary>
 public sealed partial class SnapshotService : IDisposable
 {
@@ -98,24 +98,21 @@ public sealed partial class SnapshotService : IDisposable
     }
 
     /// <summary>
-    /// Destroys one snapshot Pithyx created, named exactly. Snapshots of users and other tools, and held ones, are
-    /// refused (D104).
+    /// The snapshot as ZFS has it now, when it may be destroyed: only snapshots Pithyx created, and never held ones
+    /// (D104). The plan <c>snapshot.destroy</c> asks this before it shows the command.
     /// </summary>
-    public async Task DeleteAsync(string dataset, string name, CancellationToken cancellationToken)
+    public async Task<Snapshot> DestroyableAsync(string dataset, string name, CancellationToken cancellationToken)
     {
-        await ChangeAsync(dataset, name, snapshot =>
+        var snapshot = await CurrentAsync(dataset, name, cancellationToken);
+        if (snapshot.PithyxKind is null)
         {
-            if (snapshot.PithyxKind is null)
-            {
-                throw new PithyxException(ErrorCodes.StorageSnapshotNotPithyx, new Dictionary<string, object?> { ["name"] = name });
-            }
-            if (snapshot.Holds > 0)
-            {
-                throw new PithyxException(ErrorCodes.StorageSnapshotHeld, new Dictionary<string, object?> { ["name"] = name });
-            }
-            return SnapshotPlans.Destroy(dataset, name);
-        }, cancellationToken);
-        LogDestroyed(dataset, name, "user");
+            throw new PithyxException(ErrorCodes.StorageSnapshotNotPithyx, new Dictionary<string, object?> { ["name"] = name });
+        }
+        if (snapshot.Holds > 0)
+        {
+            throw new PithyxException(ErrorCodes.StorageSnapshotHeld, new Dictionary<string, object?> { ["name"] = name });
+        }
+        return snapshot;
     }
 
     public Task HoldAsync(string dataset, string name, CancellationToken cancellationToken) =>
@@ -125,32 +122,65 @@ public sealed partial class SnapshotService : IDisposable
         ChangeAsync(dataset, name, _ => SnapshotPlans.Release(dataset, name), cancellationToken);
 
     /// <summary>
-    /// Rolls the dataset back to a snapshot. The typed dataset name must match. Newer snapshots are destroyed by ZFS
-    /// with <c>-r</c>, so they must all be named back exactly as they were listed; otherwise nothing runs.
+    /// The snapshots a rollback to <paramref name="name"/> destroys as ZFS has them now: every newer one, oldest
+    /// first. A held one refuses the rollback, since ZFS would stop halfway.
     /// </summary>
-    public async Task RollbackAsync(SnapshotRollbackRequest request, CancellationToken cancellationToken)
+    public async Task<IReadOnlyList<Snapshot>> NewerThanAsync(string dataset, string name, CancellationToken cancellationToken)
     {
-        ArgumentNullException.ThrowIfNull(request);
-        if (request.ConfirmDataset != request.Dataset)
+        var target = await CurrentAsync(dataset, name, cancellationToken);
+        var newer = NewerThan(target);
+        if (newer.FirstOrDefault(snapshot => snapshot.Holds > 0) is { } held)
         {
-            throw new PithyxException(ErrorCodes.StorageSnapshotConfirmationMismatch);
+            throw new PithyxException(ErrorCodes.StorageSnapshotHeld, new Dictionary<string, object?> { ["name"] = held.Name });
         }
-        await ChangeAsync(request.Dataset, request.Name, target =>
-        {
-            var newer = _inventory.Of(request.Dataset).Where(snapshot => snapshot.CreateTxg > target.CreateTxg).ToList();
-            var confirmed = (request.DiscardNewer ?? []).ToHashSet(StringComparer.Ordinal);
-            if (!confirmed.SetEquals(newer.Select(snapshot => snapshot.Name)))
-            {
-                throw new PithyxException(ErrorCodes.StorageSnapshotNewerExist, new Dictionary<string, object?> { ["count"] = newer.Count });
-            }
-            if (newer.FirstOrDefault(snapshot => snapshot.Holds > 0) is { } held)
-            {
-                throw new PithyxException(ErrorCodes.StorageSnapshotHeld, new Dictionary<string, object?> { ["name"] = held.Name });
-            }
-            return SnapshotPlans.Rollback(request.Dataset, request.Name, discardNewer: newer.Count > 0);
-        }, cancellationToken);
-        LogRolledBack(request.Dataset, request.Name, request.DiscardNewer?.Count ?? 0);
+        return newer;
     }
+
+    /// <summary>
+    /// Runs a plan's commands for one snapshot while no other snapshot change runs, so no schedule takes or prunes a
+    /// snapshot in between. The list is read first: the snapshot must still be there, and when
+    /// <paramref name="newer"/> is given, its newer snapshots must be exactly those names, none of them held;
+    /// otherwise nothing runs. The list is read again afterwards.
+    /// </summary>
+    public async Task RunCheckedAsync(string dataset, string name, IReadOnlyCollection<string>? newer, Func<CancellationToken, Task> run, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(run);
+        await _changes.WaitAsync(cancellationToken);
+        try
+        {
+            await ReadAsync(cancellationToken);
+            var target = _inventory.Find(dataset, name)
+                ?? throw new PithyxException(ErrorCodes.StorageSnapshotNotFound, new Dictionary<string, object?> { ["name"] = name });
+            if (newer is not null)
+            {
+                var current = NewerThan(target);
+                if (!current.Select(snapshot => snapshot.Name).ToHashSet(StringComparer.Ordinal).SetEquals(newer))
+                {
+                    throw new PithyxException(ErrorCodes.StorageSnapshotNewerExist, new Dictionary<string, object?> { ["count"] = current.Count });
+                }
+                if (current.FirstOrDefault(snapshot => snapshot.Holds > 0) is { } held)
+                {
+                    throw new PithyxException(ErrorCodes.StorageSnapshotHeld, new Dictionary<string, object?> { ["name"] = held.Name });
+                }
+            }
+            try
+            {
+                await run(cancellationToken);
+            }
+            finally
+            {
+                await RefreshAsync(CancellationToken.None);
+            }
+        }
+        finally
+        {
+            _changes.Release();
+        }
+    }
+
+    internal void LogUserDestroyed(string dataset, string name) => LogDestroyed(dataset, name, "user");
+
+    internal void LogRollback(string dataset, string name, int discarded) => LogRolledBack(dataset, name, discarded);
 
     /// <summary>
     /// Destroys what retention picked for one schedule, one command per snapshot. Each name is checked against the
@@ -281,6 +311,18 @@ public sealed partial class SnapshotService : IDisposable
             throw new PithyxException(ErrorCodes.StorageSnapshotDatasetNotFound, new Dictionary<string, object?> { ["dataset"] = dataset });
         }
     }
+
+    /// <summary>Reads the list again, since it may be seconds old, and finds the snapshot.</summary>
+    private async Task<Snapshot> CurrentAsync(string dataset, string name, CancellationToken cancellationToken)
+    {
+        RequireDataset(dataset);
+        await ReadAsync(cancellationToken);
+        return _inventory.Find(dataset, name)
+            ?? throw new PithyxException(ErrorCodes.StorageSnapshotNotFound, new Dictionary<string, object?> { ["name"] = name });
+    }
+
+    private List<Snapshot> NewerThan(Snapshot target) =>
+        [.. _inventory.Of(target.Dataset).Where(snapshot => snapshot.CreateTxg > target.CreateTxg)];
 
     /// <summary>Reads the list again, finds the snapshot and runs the command <paramref name="plan"/> builds for it.</summary>
     private async Task ChangeAsync(string dataset, string name, Func<Snapshot, CommandRequest> plan, CancellationToken cancellationToken)

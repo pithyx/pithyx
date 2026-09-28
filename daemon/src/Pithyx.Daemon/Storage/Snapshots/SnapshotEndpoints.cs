@@ -5,7 +5,10 @@ using Pithyx.Daemon.Hosting;
 
 namespace Pithyx.Daemon.Storage.Snapshots;
 
-/// <summary>Snapshots and their schedules for the Storage settings page. Administrators only.</summary>
+/// <summary>
+/// Snapshots and their schedules for the Storage app. Administrators only. Destroying a snapshot and rolling back to
+/// one are the command plans <c>snapshot.destroy</c> and <c>snapshot.rollback</c> of <c>POST /api/storage/plans</c>.
+/// </summary>
 public static class SnapshotEndpoints
 {
     public static IServiceCollection AddPithyxSnapshots(this IServiceCollection services)
@@ -37,14 +40,6 @@ public static class SnapshotEndpoints
             })
             .WithName("CreateSnapshot")
             .WithDescription("Administrators only. Takes pithyx-manual-<utc> of the dataset now. Manual snapshots are never pruned by a schedule.");
-        snapshots.MapPost("/delete", async (SnapshotRequest request, SnapshotService service, HttpContext context, CancellationToken cancellationToken) =>
-            {
-                RequireAdmin(context.User);
-                await service.DeleteAsync(request.Dataset, request.Name, cancellationToken);
-                return TypedResults.NoContent();
-            })
-            .WithName("DeleteSnapshot")
-            .WithDescription("Administrators only. Destroys one snapshot, named exactly. Only snapshots Pithyx took (pithyx-...) can be deleted; held ones are refused.");
         snapshots.MapPost("/hold", async (SnapshotRequest request, SnapshotService service, HttpContext context, CancellationToken cancellationToken) =>
             {
                 RequireAdmin(context.User);
@@ -61,16 +56,6 @@ public static class SnapshotEndpoints
             })
             .WithName("ReleaseSnapshot")
             .WithDescription("Administrators only. Releases the hold \"pithyx\" of the snapshot. Holds of other tools stay.");
-        snapshots.MapPost("/rollback", async (SnapshotRollbackRequest request, SnapshotService service, HttpContext context, CancellationToken cancellationToken) =>
-            {
-                RequireAdmin(context.User);
-                await service.RollbackAsync(request, cancellationToken);
-                return TypedResults.NoContent();
-            })
-            .WithName("RollbackSnapshot")
-            .WithDescription(
-                "Administrators only. Rolls the whole dataset back to the snapshot; changes since are lost. confirmDataset is the dataset name as the user typed it. "
-                + "When newer snapshots exist they are destroyed too, so discardNewer must list every one of them by name, or nothing happens (storage.snapshot.newer_exist).");
         snapshots.MapGet("/schedules", async (string dataset, SnapshotService service, HttpContext context, CancellationToken cancellationToken) =>
             {
                 RequireAdmin(context.User);

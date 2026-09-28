@@ -41,6 +41,10 @@ public sealed record PlannedDisk(string DiskId, string? Serial, long SizeBytes, 
 /// Mount points the plan unmounts (destroy, rename, export). Before the first command the daemon closes its own
 /// handles below them, the live folder views of Files, because ZFS cannot unmount a dataset that a handle holds.
 /// </param>
+/// <param name="Within">
+/// Wraps the whole run for a condition that must hold while the commands run, for example that a rollback still
+/// discards exactly the snapshots the user saw. It calls the run it is given once, or throws without running it.
+/// </param>
 public sealed record CommandPlan(
     string Kind,
     IReadOnlyList<PlanStep> Steps,
@@ -48,7 +52,8 @@ public sealed record CommandPlan(
     IReadOnlyDictionary<string, string> Confirmations,
     DateTimeOffset ExpiresAt,
     Func<CancellationToken, Task>? AfterRun = null,
-    IReadOnlyList<string>? Releases = null)
+    IReadOnlyList<string>? Releases = null,
+    Func<Func<CancellationToken, Task>, CancellationToken, Task>? Within = null)
 {
     public static readonly TimeSpan Lifetime = TimeSpan.FromMinutes(10);
 }

@@ -579,7 +579,7 @@
       "params": {
         "count": 2
       },
-      "expected": "Rolling back would also delete 2 newer snapshots. Review the list and confirm them all."
+      "expected": "The newer snapshots changed since the plan was shown: the dataset now has 2 newer snapshots. Nothing was rolled back; show the plan again."
     },
     "storage.snapshot.not_found": {
       "params": {

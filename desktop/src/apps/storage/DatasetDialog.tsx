@@ -7,7 +7,12 @@ import { ErrorNotice } from '../../errors/ErrorNotice';
 import { Button } from '../../ui/Button';
 import { Dialog } from '../../ui/Dialog';
 import { TextField } from '../../ui/TextField';
-import { internalCall, type Dataset, type StoragePlanRequest } from '../sdk/internal';
+import {
+  internalCall,
+  type Dataset,
+  type Snapshot,
+  type StoragePlanRequest,
+} from '../sdk/internal';
 import {
   COMPRESSIONS,
   compressionOnly,
@@ -26,11 +31,25 @@ export type DatasetAction =
   | { kind: 'rename'; dataset: Dataset }
   | { kind: 'limits'; dataset: Dataset }
   | { kind: 'destroy'; dataset: Dataset }
-  | { kind: 'volume'; pool: string };
+  | { kind: 'volume'; pool: string }
+  | { kind: 'snapshotDestroy'; dataset: Dataset; snapshot: Snapshot }
+  | { kind: 'rollback'; dataset: Dataset; snapshot: Snapshot; newer: number };
+
+/** A snapshot is deleted without typing anything: the preview names it and the run button confirms. */
+function initialRequest(action: DatasetAction): StoragePlanRequest | null {
+  return action.kind === 'snapshotDestroy'
+    ? {
+        action: 'snapshot.destroy',
+        pool: action.dataset.pool,
+        dataset: action.dataset.name,
+        name: action.snapshot.name,
+      }
+    : null;
+}
 
 /**
- * One dataset or volume action through a command plan: fill in the fields, see the exact commands (and for a delete
- * everything that goes), run them. The daemon decides what is allowed; its refusals show with their request id.
+ * One dataset, volume or snapshot action through a command plan: fill in the fields, see the exact commands (and for
+ * a delete or rollback everything that goes), run them. The daemon decides what is allowed; its refusals show with their request id.
  */
 export function DatasetDialog({
   app,
@@ -42,13 +61,14 @@ export function DatasetDialog({
   onClose: () => void;
 }) {
   const { t } = useTranslation('storage');
-  const [request, setRequest] = useState<StoragePlanRequest | null>(null);
+  const [request, setRequest] = useState(() => initialRequest(action));
   const plan = useMutation({
     mutationFn: (body: StoragePlanRequest) =>
       internalCall(app, 'internal.admin.storage.plan', body),
   });
   const { run, job } = useRunPlan(app);
-  const destroy = action.kind === 'destroy';
+  const destroy =
+    action.kind === 'destroy' || action.kind === 'snapshotDestroy' || action.kind === 'rollback';
   const target = action.kind === 'volume' ? action.pool : action.dataset.name;
   const change = (next: StoragePlanRequest | null) => {
     setRequest(next);
@@ -104,17 +124,35 @@ export function DatasetDialog({
         {action.kind === 'limits' && <LimitFields dataset={action.dataset} onChange={change} />}
         {action.kind === 'destroy' && <DestroyFields dataset={action.dataset} onChange={change} />}
         {action.kind === 'volume' && <VolumeFields pool={action.pool} onChange={change} />}
+        {action.kind === 'snapshotDestroy' && (
+          <p>
+            {t('datasets.snapshotDestroy.explain', {
+              name: action.snapshot.name,
+              dataset: action.dataset.name,
+            })}
+          </p>
+        )}
+        {action.kind === 'rollback' && (
+          <RollbackFields
+            dataset={action.dataset}
+            snapshot={action.snapshot}
+            newer={action.newer}
+            date={app.format.dateTime(action.snapshot.createdAt)}
+            onChange={change}
+          />
+        )}
         {plan.isError && <ErrorNotice error={describeProblem(plan.error)} />}
         {plan.data !== undefined && (
           <PlanPreview
             preview={plan.data}
             disks={[]}
             datasetsLabel={
-              destroy
-                ? t('datasets.destroy.listed')
-                : action.kind === 'rename'
-                  ? t('datasets.rename.listed')
-                  : undefined
+              action.kind === 'destroy' ||
+              action.kind === 'rename' ||
+              action.kind === 'snapshotDestroy' ||
+              action.kind === 'rollback'
+                ? t(`datasets.${action.kind}.listed`)
+                : undefined
             }
           />
         )}
@@ -301,6 +339,51 @@ function DestroyFields({ dataset, onChange }: { dataset: Dataset; onChange: OnCh
                   action: 'dataset.destroy',
                   pool: dataset.pool,
                   dataset: dataset.name,
+                  confirmName: value,
+                }
+              : null,
+          );
+        }}
+        autoCapitalize="none"
+        autoComplete="off"
+        spellCheck="false"
+        inputClassName={styles.mono}
+      />
+    </>
+  );
+}
+
+function RollbackFields({
+  dataset,
+  snapshot,
+  newer,
+  date,
+  onChange,
+}: {
+  dataset: Dataset;
+  snapshot: Snapshot;
+  newer: number;
+  date: string;
+  onChange: OnChange;
+}) {
+  const { t } = useTranslation('storage');
+  const [typed, setTyped] = useState('');
+  return (
+    <>
+      <p>{t('datasets.rollback.explain', { name: snapshot.name, date })}</p>
+      {newer > 0 && <p>{t('datasets.rollback.newer', { count: newer })}</p>}
+      <TextField
+        label={t('datasets.rollback.confirm', { dataset: dataset.name })}
+        value={typed}
+        onChange={(value) => {
+          setTyped(value);
+          onChange(
+            value === dataset.name
+              ? {
+                  action: 'snapshot.rollback',
+                  pool: dataset.pool,
+                  dataset: dataset.name,
+                  name: snapshot.name,
                   confirmName: value,
                 }
               : null,

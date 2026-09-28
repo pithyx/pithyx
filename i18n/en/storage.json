@@ -302,6 +302,20 @@
       "confirm": "Type {dataset} to confirm",
       "listed": "These datasets and snapshots are deleted:",
       "run": "Delete"
+    },
+    "snapshotDestroy": {
+      "title": "Delete snapshot",
+      "explain": "The snapshot {name} of {dataset} is deleted for good. Files that only it still holds can no longer be restored.",
+      "listed": "This snapshot is deleted:",
+      "run": "Delete snapshot"
+    },
+    "rollback": {
+      "title": "Roll back {dataset}",
+      "explain": "The whole dataset returns to the snapshot {name} of {date}.",
+      "newer": "{count, plural, one {# newer snapshot is deleted as well; the preview lists it.} other {# newer snapshots are deleted as well; the preview lists them.}}",
+      "confirm": "Type {dataset} to confirm",
+      "listed": "These newer snapshots are deleted as well:",
+      "run": "Roll back"
     }
   },
   "layouts": {
@@ -329,7 +343,6 @@
     "release": "Release",
     "rollback": "Roll back",
     "delete": "Delete",
-    "cancel": "Cancel",
     "kinds": {
       "hourly": "Hourly",
       "daily": "Daily",
@@ -340,16 +353,7 @@
     "schedules": "Schedules",
     "keep": "Keep",
     "save": "Save schedules",
-    "schedulesHint": "Schedules take one snapshot per hour, day, week (from Monday) or month in UTC and keep the given number of their own snapshots. Held snapshots and snapshots taken by hand or by other tools are never deleted.",
-    "deleteTitle": "Delete snapshot",
-    "deleteBody": "The snapshot {name} is deleted for good, with every earlier version it holds.",
-    "typeName": "Type the name of the snapshot to confirm",
-    "deleteConfirm": "Delete snapshot",
-    "rollbackTitle": "Roll back {dataset}",
-    "rollbackBody": "The whole dataset returns to the snapshot {name} of {date}. Every change since then is lost.",
-    "rollbackNewer": "{count, plural, one {This newer snapshot is deleted as well:} other {These # newer snapshots are deleted as well:}}",
-    "typeDataset": "Type {dataset} to confirm",
-    "rollbackConfirm": "Roll back"
+    "schedulesHint": "Schedules take one snapshot per hour, day, week (from Monday) or month in UTC and keep the given number of their own snapshots. Held snapshots and snapshots taken by hand or by other tools are never deleted."
   },
   "health": {
     "title": "Health",
@@ -509,7 +513,9 @@
     "other_system": "The pool is imported although another system used it last. Make sure that system no longer uses these disks.",
     "degraded": "Devices of this pool are missing. It is imported without them and has less protection until they are back or replaced.",
     "unmounted_datasets": "Some datasets stay unmounted; the list below says why.",
-    "datasets_unavailable": "Shares and apps that use these datasets stop working until the pool is imported again."
+    "datasets_unavailable": "Shares and apps that use these datasets stop working until the pool is imported again.",
+    "changes_lost": "Every change made to the dataset since the snapshot is lost, for everyone who uses it. This cannot be undone.",
+    "newer_snapshots": "The newer snapshots listed below are deleted as well."
   },
   "unmounted": {
     "title": "These datasets stay unmounted:",

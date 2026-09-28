@@ -842,23 +842,6 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
-    "/api/storage/snapshots/delete": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** @description Administrators only. Destroys one snapshot, named exactly. Only snapshots Pithyx took (pithyx-...) can be deleted; held ones are refused. */
-        post: operations["DeleteSnapshot"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/storage/snapshots/hold": {
         parameters: {
             query?: never;
@@ -887,23 +870,6 @@ export type paths = {
         put?: never;
         /** @description Administrators only. Releases the hold "pithyx" of the snapshot. Holds of other tools stay. */
         post: operations["ReleaseSnapshot"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/storage/snapshots/rollback": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** @description Administrators only. Rolls the whole dataset back to the snapshot; changes since are lost. confirmDataset is the dataset name as the user typed it. When newer snapshots exist they are destroyed too, so discardNewer must list every one of them by name, or nothing happens (storage.snapshot.newer_exist). */
-        post: operations["RollbackSnapshot"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2032,16 +1998,6 @@ export type components = {
             /** @description The exact snapshot name after `@`. */
             name: string;
         };
-        SnapshotRollbackRequest: {
-            /** @description The dataset name as the user typed it; must match exactly. */
-            confirmDataset: string;
-            /** @description The dataset to roll back. */
-            dataset: string;
-            /** @description Every newer snapshot by name, as the user was shown them; required when there are any. */
-            discardNewer?: null | string[];
-            /** @description The snapshot to return to. */
-            name: string;
-        };
         SnapshotSchedule: {
             /** @description Whether the schedule takes snapshots. */
             enabled: boolean;
@@ -2105,7 +2061,8 @@ export type components = {
              * @description For destroying or exporting a pool: every dataset that goes or becomes unavailable; for `pool.import`: the
              *     datasets it mounts. For destroying a dataset: the dataset, its children and every snapshot of them
              *     (`dataset@snapshot`), each dataset followed by its snapshots. For renaming a dataset: the dataset and its
-             *     children, whose names change.
+             *     children, whose names change. For destroying a snapshot: the snapshot (`dataset@snapshot`); for rolling back:
+             *     every newer snapshot, which goes too.
              */
             datasets: string[];
             /** @description The guard's verdict for every chosen disk, after probing them again. */
@@ -2120,7 +2077,7 @@ export type components = {
              *     while RequiresConfirmName is true and the name was not typed yet.
              */
             planId: null | string;
-            /** @description True when the plan runs only with the pool's name typed in `confirmName`. */
+            /** @description True when the plan runs only with the pool's name (for a rollback the dataset's full name) typed in `confirmName`. */
             requiresConfirmName: boolean;
             /** @description For `pool.import`: datasets that stay unmounted, and why; those that would hide part of the system also get `canmount=noauto`. */
             unmounted: components["schemas"]["UnmountedDataset"][];
@@ -2130,7 +2087,8 @@ export type components = {
              *     layout ZFS calls a replication mismatch, it can never be removed, it has no redundancy), `irreversible` (RAID-Z
              *     expansion), `other_system` (an import forced over another system's claim), `degraded` (the pool is imported
              *     with devices missing), `unmounted_datasets` (Unmounted stay unmounted) and
-             *     `datasets_unavailable` (exporting a pool with datasets in use).
+             *     `datasets_unavailable` (exporting a pool with datasets in use); for a rollback `changes_lost` (every change
+             *     since the snapshot is lost) and `newer_snapshots` (the listed newer snapshots are destroyed).
              */
             warnings: string[];
         };
@@ -2146,10 +2104,11 @@ export type components = {
          *     `pool.raidz.expand` Pool, Vdev (the raidz vdev), one disk and ConfirmName;
          *     `dataset.rename` Pool, Dataset and NewName; `dataset.set` Pool, Dataset and at least one of QuotaBytes,
          *     ReservationBytes, Compression and RecordSizeBytes; `dataset.destroy` Pool, Dataset and ConfirmName;
-         *     `volume.create` Pool, Name, SizeBytes and Sparse.
+         *     `volume.create` Pool, Name, SizeBytes and Sparse; `snapshot.destroy` Pool, Dataset and the snapshot's
+         *     Name; `snapshot.rollback` Pool, Dataset, the snapshot's Name and the dataset's full name in ConfirmName.
          */
         StoragePlanRequest: {
-            /** @description `pool.create`, `pool.destroy`, `pool.replace`, `pool.spare.add`, `pool.spare.remove`, `pool.offline`, `pool.online`, `pool.import.readonly`, `pool.import`, `pool.export`, `pool.vdev.add`, `pool.raidz.expand`, `dataset.rename`, `dataset.set`, `dataset.destroy` or `volume.create`. */
+            /** @description `pool.create`, `pool.destroy`, `pool.replace`, `pool.spare.add`, `pool.spare.remove`, `pool.offline`, `pool.online`, `pool.import.readonly`, `pool.import`, `pool.export`, `pool.vdev.add`, `pool.raidz.expand`, `dataset.rename`, `dataset.set`, `dataset.destroy`, `volume.create`, `snapshot.destroy` or `snapshot.rollback`. */
             action: string;
             /** @description New compression: `off`, `lz4`, `zle`, `zstd`, `zstd-1` to `zstd-19`, `gzip`, `gzip-1` to `gzip-9`; null leaves it. */
             compression?: null | string;
@@ -2169,7 +2128,7 @@ export type components = {
             force?: null | boolean;
             /** @description `single`, `stripe`, `mirror`, `mirrors` (pairs), `raidz1`, `raidz2` or `raidz3`. */
             layout?: null | string;
-            /** @description Name of a new volume (one path component). Shared folders are created with `POST /api/shares/plans`. */
+            /** @description Name of a new volume (one path component), or the snapshot after `@` for the snapshot actions. Shared folders are created with `POST /api/shares/plans`. */
             name?: null | string;
             /** @description The new last component of a renamed dataset (it stays below the same parent), or for `pool.import.readonly` the name to import the pool under when its own is taken. */
             newName?: null | string;
@@ -4305,37 +4264,6 @@ export interface operations {
             };
         };
     };
-    DeleteSnapshot: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SnapshotRequest"];
-            };
-        };
-        responses: {
-            /** @description No Content */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Problem details with a stable error code. */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ApiProblem"];
-                };
-            };
-        };
-    };
     HoldSnapshot: {
         parameters: {
             query?: never;
@@ -4377,37 +4305,6 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["SnapshotRequest"];
-            };
-        };
-        responses: {
-            /** @description No Content */
-            204: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content?: never;
-            };
-            /** @description Problem details with a stable error code. */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ApiProblem"];
-                };
-            };
-        };
-    };
-    RollbackSnapshot: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["SnapshotRollbackRequest"];
             };
         };
         responses: {

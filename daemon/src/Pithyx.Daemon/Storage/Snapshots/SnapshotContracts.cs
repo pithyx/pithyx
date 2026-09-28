@@ -12,12 +12,6 @@ public sealed record SnapshotCreateRequest(string Dataset);
 /// <param name="Name">The exact snapshot name after <c>@</c>.</param>
 public sealed record SnapshotRequest(string Dataset, string Name);
 
-/// <param name="Dataset">The dataset to roll back.</param>
-/// <param name="Name">The snapshot to return to.</param>
-/// <param name="ConfirmDataset">The dataset name as the user typed it; must match exactly.</param>
-/// <param name="DiscardNewer">Every newer snapshot by name, as the user was shown them; required when there are any.</param>
-public sealed record SnapshotRollbackRequest(string Dataset, string Name, string ConfirmDataset, IReadOnlyList<string>? DiscardNewer = null);
-
 /// <param name="Kind"><c>hourly</c>, <c>daily</c>, <c>weekly</c> or <c>monthly</c>.</param>
 /// <param name="Enabled">Whether the schedule takes snapshots.</param>
 /// <param name="Keep">How many of its snapshots it keeps (1 to 1000).</param>

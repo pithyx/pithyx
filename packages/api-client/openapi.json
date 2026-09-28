@@ -2123,40 +2123,6 @@
         }
       }
     },
-    "/api/storage/snapshots/delete": {
-      "post": {
-        "tags": [
-          "Storage"
-        ],
-        "description": "Administrators only. Destroys one snapshot, named exactly. Only snapshots Pithyx took (pithyx-...) can be deleted; held ones are refused.",
-        "operationId": "DeleteSnapshot",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SnapshotRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "204": {
-            "description": "No Content"
-          },
-          "default": {
-            "description": "Problem details with a stable error code.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiProblem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/storage/snapshots/hold": {
       "post": {
         "tags": [
@@ -2203,40 +2169,6 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/SnapshotRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "204": {
-            "description": "No Content"
-          },
-          "default": {
-            "description": "Problem details with a stable error code.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiProblem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/storage/snapshots/rollback": {
-      "post": {
-        "tags": [
-          "Storage"
-        ],
-        "description": "Administrators only. Rolls the whole dataset back to the snapshot; changes since are lost. confirmDataset is the dataset name as the user typed it. When newer snapshots exist they are destroyed too, so discardNewer must list every one of them by name, or nothing happens (storage.snapshot.newer_exist).",
-        "operationId": "RollbackSnapshot",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SnapshotRollbackRequest"
               }
             }
           },
@@ -5465,38 +5397,6 @@
           }
         }
       },
-      "SnapshotRollbackRequest": {
-        "required": [
-          "dataset",
-          "name",
-          "confirmDataset"
-        ],
-        "type": "object",
-        "properties": {
-          "dataset": {
-            "type": "string",
-            "description": "The dataset to roll back."
-          },
-          "name": {
-            "type": "string",
-            "description": "The snapshot to return to."
-          },
-          "confirmDataset": {
-            "type": "string",
-            "description": "The dataset name as the user typed it; must match exactly."
-          },
-          "discardNewer": {
-            "type": [
-              "null",
-              "array"
-            ],
-            "items": {
-              "type": "string"
-            },
-            "description": "Every newer snapshot by name, as the user was shown them; required when there are any."
-          }
-        }
-      },
       "SnapshotSchedule": {
         "required": [
           "kind",
@@ -5683,7 +5583,7 @@
             "items": {
               "type": "string"
             },
-            "description": "For destroying or exporting a pool: every dataset that goes or becomes unavailable; for `pool.import`: the\ndatasets it mounts. For destroying a dataset: the dataset, its children and every snapshot of them\n(`dataset@snapshot`), each dataset followed by its snapshots. For renaming a dataset: the dataset and its\nchildren, whose names change."
+            "description": "For destroying or exporting a pool: every dataset that goes or becomes unavailable; for `pool.import`: the\ndatasets it mounts. For destroying a dataset: the dataset, its children and every snapshot of them\n(`dataset@snapshot`), each dataset followed by its snapshots. For renaming a dataset: the dataset and its\nchildren, whose names change. For destroying a snapshot: the snapshot (`dataset@snapshot`); for rolling back:\nevery newer snapshot, which goes too."
           },
           "expiresAt": {
             "type": "string",
@@ -5695,11 +5595,11 @@
             "items": {
               "type": "string"
             },
-            "description": "Stable codes for what the user must know before running it: `lowers_redundancy`, `replication_mismatch`,\n`irreversible` and `no_redundancy` (adding a vdev: it tolerates fewer failed disks than the pool, it has a\nlayout ZFS calls a replication mismatch, it can never be removed, it has no redundancy), `irreversible` (RAID-Z\nexpansion), `other_system` (an import forced over another system's claim), `degraded` (the pool is imported\nwith devices missing), `unmounted_datasets` (Unmounted stay unmounted) and\n`datasets_unavailable` (exporting a pool with datasets in use)."
+            "description": "Stable codes for what the user must know before running it: `lowers_redundancy`, `replication_mismatch`,\n`irreversible` and `no_redundancy` (adding a vdev: it tolerates fewer failed disks than the pool, it has a\nlayout ZFS calls a replication mismatch, it can never be removed, it has no redundancy), `irreversible` (RAID-Z\nexpansion), `other_system` (an import forced over another system's claim), `degraded` (the pool is imported\nwith devices missing), `unmounted_datasets` (Unmounted stay unmounted) and\n`datasets_unavailable` (exporting a pool with datasets in use); for a rollback `changes_lost` (every change\nsince the snapshot is lost) and `newer_snapshots` (the listed newer snapshots are destroyed)."
           },
           "requiresConfirmName": {
             "type": "boolean",
-            "description": "True when the plan runs only with the pool's name typed in `confirmName`."
+            "description": "True when the plan runs only with the pool's name (for a rollback the dataset's full name) typed in `confirmName`."
           },
           "unmounted": {
             "type": "array",
@@ -5720,7 +5620,7 @@
         "properties": {
           "action": {
             "type": "string",
-            "description": "`pool.create`, `pool.destroy`, `pool.replace`, `pool.spare.add`, `pool.spare.remove`, `pool.offline`, `pool.online`, `pool.import.readonly`, `pool.import`, `pool.export`, `pool.vdev.add`, `pool.raidz.expand`, `dataset.rename`, `dataset.set`, `dataset.destroy` or `volume.create`."
+            "description": "`pool.create`, `pool.destroy`, `pool.replace`, `pool.spare.add`, `pool.spare.remove`, `pool.offline`, `pool.online`, `pool.import.readonly`, `pool.import`, `pool.export`, `pool.vdev.add`, `pool.raidz.expand`, `dataset.rename`, `dataset.set`, `dataset.destroy`, `volume.create`, `snapshot.destroy` or `snapshot.rollback`."
           },
           "pool": {
             "type": "string",
@@ -5748,7 +5648,7 @@
               "null",
               "string"
             ],
-            "description": "Name of a new volume (one path component). Shared folders are created with `POST /api/shares/plans`."
+            "description": "Name of a new volume (one path component), or the snapshot after `@` for the snapshot actions. Shared folders are created with `POST /api/shares/plans`."
           },
           "vdev": {
             "type": [
@@ -5856,7 +5756,7 @@
             "description": "For imports: import a pool that was last used by another system; needs ConfirmName."
           }
         },
-        "description": "A destructive storage action to plan. Which fields an action needs: `pool.create` Pool, Layout, DiskIds,\nEncryption (and Confirmations for disks that are not empty); `pool.destroy` Pool and ConfirmName;\n`pool.replace` Pool, Vdev and one disk in DiskIds with its serial in Confirmations; `pool.spare.add` Pool\nand one disk; `pool.spare.remove`, `pool.offline` and `pool.online` Pool and Vdev;\n`pool.import.readonly` PoolGuid from the import scan, NewName when the name is taken, and Force with the pool\nname in ConfirmName when the scan says `needsForce`; `pool.import` Pool (imported read-only), and Force with\nConfirmName to force it; `pool.export` Pool; `pool.vdev.add` Pool, Layout (`single`, `mirror`,\n`raidz1` to `raidz3`), DiskIds, Confirmations, and ConfirmName when the preview says so;\n`pool.raidz.expand` Pool, Vdev (the raidz vdev), one disk and ConfirmName;\n`dataset.rename` Pool, Dataset and NewName; `dataset.set` Pool, Dataset and at least one of QuotaBytes,\nReservationBytes, Compression and RecordSizeBytes; `dataset.destroy` Pool, Dataset and ConfirmName;\n`volume.create` Pool, Name, SizeBytes and Sparse."
+        "description": "A destructive storage action to plan. Which fields an action needs: `pool.create` Pool, Layout, DiskIds,\nEncryption (and Confirmations for disks that are not empty); `pool.destroy` Pool and ConfirmName;\n`pool.replace` Pool, Vdev and one disk in DiskIds with its serial in Confirmations; `pool.spare.add` Pool\nand one disk; `pool.spare.remove`, `pool.offline` and `pool.online` Pool and Vdev;\n`pool.import.readonly` PoolGuid from the import scan, NewName when the name is taken, and Force with the pool\nname in ConfirmName when the scan says `needsForce`; `pool.import` Pool (imported read-only), and Force with\nConfirmName to force it; `pool.export` Pool; `pool.vdev.add` Pool, Layout (`single`, `mirror`,\n`raidz1` to `raidz3`), DiskIds, Confirmations, and ConfirmName when the preview says so;\n`pool.raidz.expand` Pool, Vdev (the raidz vdev), one disk and ConfirmName;\n`dataset.rename` Pool, Dataset and NewName; `dataset.set` Pool, Dataset and at least one of QuotaBytes,\nReservationBytes, Compression and RecordSizeBytes; `dataset.destroy` Pool, Dataset and ConfirmName;\n`volume.create` Pool, Name, SizeBytes and Sparse; `snapshot.destroy` Pool, Dataset and the snapshot's\nName; `snapshot.rollback` Pool, Dataset, the snapshot's Name and the dataset's full name in ConfirmName."
       },
       "StorageSchedule": {
         "required": [
