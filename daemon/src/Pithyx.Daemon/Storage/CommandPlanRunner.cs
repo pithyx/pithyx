@@ -6,7 +6,8 @@ namespace Pithyx.Daemon.Storage;
 /// <summary>
 /// Runs a <see cref="CommandPlan"/> exactly as it was shown. Before every command it reads the disks again, probes the
 /// ones the plan touches and asks <see cref="DiskGuard"/> once more: a disk that changed or is no longer allowed stops
-/// the plan before anything is written to it. Step 8 runs plans as jobs; there is no endpoint for it yet.
+/// the plan before anything is written to it. Steps of an import are checked with the import rule, after the pools were
+/// read again. When the plan ends, the pools are read again, so an imported or exported pool shows at once.
 /// </summary>
 public sealed class CommandPlanRunner(ICommandRunner commands, SystemStateService state, StorageFacts facts, TimeProvider time)
 {
@@ -16,6 +17,18 @@ public sealed class CommandPlanRunner(ICommandRunner commands, SystemStateServic
     public async Task RunAsync(CommandPlan plan, Action<int, int>? progress, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(plan);
+        try
+        {
+            await RunStepsAsync(plan, progress, cancellationToken);
+        }
+        finally
+        {
+            await state.RefreshPoolsAsync(CancellationToken.None);
+        }
+    }
+
+    private async Task RunStepsAsync(CommandPlan plan, Action<int, int>? progress, CancellationToken cancellationToken)
+    {
         var touched = new HashSet<string>(StringComparer.Ordinal);
         for (var index = 0; index < plan.Steps.Count; index++)
         {
@@ -26,10 +39,20 @@ public sealed class CommandPlanRunner(ICommandRunner commands, SystemStateServic
                 throw new PithyxException(ErrorCodes.StoragePlanExpired);
             }
             progress?.Invoke(index, plan.Steps.Count);
+            if (step.Rule == GuardRule.Import)
+            {
+                // Which pool a disk belongs to decides the import rule, so the pools must be current, not as of the last event.
+                await state.RefreshPoolsAsync(cancellationToken);
+            }
             await state.RefreshDisksAsync(step.DiskIds, cancellationToken);
             CheckDisks(plan, step, touched);
 
             var result = await commands.RunAsync(step.Command, cancellationToken);
+            if (result.ExitCode != 0 && Zfs.ImportPlans.AsksForForce(step.Command, result))
+            {
+                // ZFS found the pool in use by another system after all; only a new plan with the typed name may force it.
+                throw new PithyxException(ErrorCodes.StorageImportForceRequired);
+            }
             if (result.ExitCode != 0)
             {
                 throw new PithyxException(
@@ -47,7 +70,8 @@ public sealed class CommandPlanRunner(ICommandRunner commands, SystemStateServic
     private void CheckDisks(CommandPlan plan, PlanStep step, HashSet<string> touched)
     {
         var current = facts.Current();
-        var verdicts = DiskGuard.Evaluate(current, plan.Confirmations).ToDictionary(verdict => verdict.DiskId, StringComparer.Ordinal);
+        var verdicts = (step.Rule == GuardRule.Import ? DiskGuard.EvaluateImport(current, step.ImportingPool) : DiskGuard.Evaluate(current, plan.Confirmations))
+            .ToDictionary(verdict => verdict.DiskId, StringComparer.Ordinal);
         foreach (var diskId in step.DiskIds)
         {
             var planned = plan.Disks.Single(disk => disk.DiskId == diskId);

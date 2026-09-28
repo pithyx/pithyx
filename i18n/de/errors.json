@@ -183,6 +183,13 @@
     "encryption": {
       "unavailable": "Verschlüsselung kommt mit dem Schlüsseltresor im nächsten Update. Ein Pool lässt sich nur beim Anlegen verschlüsseln; leg ihn also nur dann unverschlüsselt an, wenn das für seine Daten in Ordnung ist."
     },
+    "import": {
+      "device_unknown": "Das Gerät {device} dieses Pools liegt auf keiner Platte, die Pithyx kennt, deshalb kann Pithyx es nicht prüfen. Es wurde nichts importiert.",
+      "force_required": "Der Pool {name} wurde zuletzt von einem anderen System benutzt. Importiere ihn nur, wenn dieses System ihn nicht mehr benutzt: Wähle den erzwungenen Import und gib den Pool-Namen ein.",
+      "not_found": "Dieser Pool ist auf den Platten nicht mehr zu finden. Such noch einmal.",
+      "not_importable": "Der Pool {name} lässt sich nicht importieren ({state}). Schließ die fehlenden Platten an und such noch einmal.",
+      "preview_required": "Importiere den Pool {name} zuerst schreibgeschützt und prüf seine Datasets, dann importiere ihn zur Nutzung."
+    },
     "plan": {
       "action_invalid": "Unbekannte Speicheraktion.",
       "expired": "Dieser Plan ist älter als 10 Minuten. Zeig ihn noch einmal an, damit die Platten erneut geprüft werden.",
@@ -192,11 +199,13 @@
     "pool": {
       "disk_count": "{layout} braucht mindestens {min, plural, one {# Platte} other {# Platten}}; {count, plural, one {# ist} other {# sind}} ausgewählt.",
       "encryption_required": "Beantworte zuerst die Frage zur Verschlüsselung: Sie lässt sich nur beim Anlegen des Pools entscheiden.",
+      "expanding": "Der Pool {name} wird schon erweitert. Die nächste Platte kannst du hinzufügen, wenn das fertig ist.",
       "layout_invalid": "Unbekanntes Pool-Layout.",
       "name_invalid": "Pool-Namen beginnen mit einem Kleinbuchstaben und bestehen aus bis zu 32 Kleinbuchstaben, Ziffern, - und _. Namen wie mirror oder raidz sind reserviert.",
       "name_mismatch": "Gib zur Bestätigung genau den Pool-Namen {name} ein.",
       "name_taken": "Es gibt schon einen Pool namens {name}.",
-      "not_found": "Es gibt keinen Pool namens {name}."
+      "not_found": "Es gibt keinen Pool namens {name}.",
+      "read_only": "Der Pool {name} ist schreibgeschützt importiert und lässt sich nicht ändern. Importiere ihn zuerst zur Nutzung."
     },
     "schedule": {
       "invalid": "Dieser Zeitplan lässt sich nicht setzen. Wähle Aus, Wöchentlich oder Monatlich für einen vorhandenen Pool."
@@ -216,7 +225,8 @@
       "schedule_invalid": "Jeder Zeitplan ist stündlich, täglich, wöchentlich oder monatlich, jeweils einmal, und behält zwischen 1 und {max} Snapshots."
     },
     "vdev": {
-      "not_found": "Der Pool hat dieses Gerät nicht (mehr). Lade neu und wähle noch einmal."
+      "not_found": "Der Pool hat dieses Gerät nicht (mehr). Lade neu und wähle noch einmal.",
+      "not_raidz": "Nur eine RAID-Z-Gruppe lässt sich um eine Platte erweitern; {vdev} ist keine."
     }
   },
   "system": {

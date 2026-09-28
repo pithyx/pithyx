@@ -1,0 +1,9 @@
+{
+  "command": "zpool",
+  "args": [
+    "import",
+    "-d",
+    "/dev/disk/by-id"
+  ],
+  "exitCode": 0
+}

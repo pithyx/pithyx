@@ -34,7 +34,7 @@ public sealed class CommandPlanRunnerTests : IDisposable
         _facts = new StorageFacts(_disks, _pools, environment, new SystemFiles(Path.Combine(_proc, "mountinfo"), Path.Combine(_proc, "swaps")));
         var hub = new TopicHub(new TopicRegistry([_disks.Definition(), _pools.Definition()]), _time, Options.Create(new JsonOptions()), NullLogger<TopicHub>.Instance);
         _state = new SystemStateService(_commands, _disks, _pools, new ZfsBackend(_commands), new DiskProbe(_commands), _facts, hub, _time, NullLogger<SystemStateService>.Instance);
-        _planner = new StoragePlanner(_state, _facts, _pools, _time);
+        _planner = new StoragePlanner(_state, _facts, _pools, new PoolImportScanner(_commands, _state, _facts, _pools), _commands, _time);
         _runner = new CommandPlanRunner(_commands, _state, _facts, _time);
         _commands.Results["lsblk"] = Ok(Read("default", "lsblk"));
         _commands.Results["wipefs"] = Ok("");
@@ -62,7 +62,8 @@ public sealed class CommandPlanRunnerTests : IDisposable
         return plan!;
     }
 
-    private List<string> ZpoolCalls() => [.. _commands.Calls.Where(call => call.FileName == "zpool").Select(call => call.Arguments[0])];
+    /// <summary>zpool calls that change something; the runner reads the pools again after every plan.</summary>
+    private List<string> ZpoolCalls() => [.. _commands.Calls.Where(call => call.FileName == "zpool" && call.Arguments[0] is not ("status" or "list")).Select(call => call.Arguments[0])];
 
     [Fact]
     public async Task RunsThePlanAsShown()
@@ -73,9 +74,11 @@ public sealed class CommandPlanRunnerTests : IDisposable
         await _runner.RunAsync(plan, (index, _) => progress.Add(index), Token);
 
         Assert.Equal(["create"], ZpoolCalls());
-        Assert.Equal(["create", "create", "create", "create", "create"], _commands.Calls.Where(call => call.FileName == "zfs").Select(call => call.Arguments[0]));
+        Assert.Equal(["create", "create", "create", "create", "create"], _commands.Calls.Where(call => call.FileName == "zfs" && call.Arguments[0] != "list").Select(call => call.Arguments[0]));
         Assert.Equal([0, 1, 2, 3, 4, 5], progress);
-        Assert.Equal(plan.Steps[^1].Command, _commands.Calls.Last());
+        // The last command of the plan, then the pools are read again: zpool status, zpool list and zfs list.
+        Assert.Equal(plan.Steps[^1].Command, _commands.Calls[^4]);
+        Assert.Equal(ZfsBackend.Datasets, _commands.Calls[^1]);
     }
 
     [Fact]

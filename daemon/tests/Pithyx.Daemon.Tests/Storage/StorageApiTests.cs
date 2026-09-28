@@ -144,7 +144,7 @@ public sealed class StorageApiTests : IAsyncLifetime
 
         Assert.Equal("storage.pool.encryption_required", await CodeAsync(new { action = "pool.create", pool = "tank", layout = "mirror", diskIds = _disks0 }));
         Assert.Equal("storage.encryption.unavailable", await CodeAsync(new { action = "pool.create", pool = "tank", layout = "mirror", diskIds = _disks0, encryption = "key" }));
-        Assert.Equal("storage.plan.action_invalid", await CodeAsync(new { action = "pool.import", pool = "tank" }));
+        Assert.Equal("storage.plan.action_invalid", await CodeAsync(new { action = "pool.import.all", pool = "tank" }));
     }
 
     [Fact]
@@ -175,6 +175,74 @@ public sealed class StorageApiTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task TheImportScanListsExportedPoolsWithTheGuardsVerdictAndImportsNothing()
+    {
+        using var response = await _admin.PostAsync("/api/storage/import/scan", null, Token);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var scan = await response.JsonAsync();
+
+        var pools = scan.GetProperty("pools").EnumerateArray().ToList();
+        Assert.Equal(["oldtank", "archive"], pools.Select(pool => pool.GetProperty("name").GetString()));
+        Assert.Equal("5249471309174385122", pools[0].GetProperty("poolGuid").GetString());
+        Assert.True(pools[0].GetProperty("allowed").GetBoolean());
+        Assert.Equal("serial-VYXTEST01", pools[0].GetProperty("vdevs")[0].GetProperty("diskId").GetString());
+        Assert.Equal(("allowed", "importable"), (pools[0].GetProperty("disks")[0].GetProperty("decision").GetString(), pools[0].GetProperty("disks")[0].GetProperty("reason").GetString()));
+        Assert.False(pools[1].GetProperty("canImport").GetBoolean());
+        Assert.Equal(2, (await (await _admin.GetAsync("/api/storage/pools", Token)).JsonAsync()).GetProperty("pools").GetArrayLength());
+    }
+
+    [Fact]
+    public async Task AReadOnlyImportPreviewShowsTheCommandAndTheNewFields()
+    {
+        var preview = await PreviewAsync(new { action = "pool.import.readonly", pool = "oldtank", poolGuid = "5249471309174385122" });
+
+        Assert.Equal(32, preview.GetProperty("planId").GetString()!.Length);
+        var arguments = preview.GetProperty("commands")[0].GetProperty("arguments").EnumerateArray().Select(argument => argument.GetString());
+        Assert.Equal(["import", "-o", "readonly=on", "-o", "cachefile=none", "-N", "-d", "/dev/disk/by-id", "5249471309174385122"], arguments);
+        Assert.Equal(0, preview.GetProperty("warnings").GetArrayLength());
+        Assert.False(preview.GetProperty("requiresConfirmName").GetBoolean());
+        Assert.Equal(0, preview.GetProperty("unmounted").GetArrayLength());
+    }
+
+    [Fact]
+    public async Task PoolOperationsRefuseWithTheirCodes()
+    {
+        async Task<string> CodeAsync(object request)
+        {
+            using var response = await _admin.PostAsJsonAsync("/api/storage/plans", request, Token);
+            return await response.ErrorCodeAsync();
+        }
+
+        Assert.Equal("storage.import.preview_required", await CodeAsync(new { action = "pool.import", pool = "pithyxtestm" }));
+        Assert.Equal("storage.import.not_found", await CodeAsync(new { action = "pool.import.readonly", pool = "x", poolGuid = "1" }));
+        Assert.Equal("storage.import.not_importable", await CodeAsync(new { action = "pool.import.readonly", pool = "archive", poolGuid = "7733120945871106301" }));
+        Assert.Equal("storage.vdev.not_raidz", await CodeAsync(new { action = "pool.raidz.expand", pool = "pithyxtestm", vdev = "11762469217994242773", diskIds = _disks3 }));
+    }
+
+    [Fact]
+    public async Task AddingASingleDiskToTheMirrorWarnsAndWaitsForTheName()
+    {
+        var awaiting = await PreviewAsync(new { action = "pool.vdev.add", pool = "pithyxtestm", layout = "single", diskIds = _disks3 });
+
+        Assert.Equal(["lowers_redundancy"], awaiting.GetProperty("warnings").EnumerateArray().Select(warning => warning.GetString()));
+        Assert.True(awaiting.GetProperty("requiresConfirmName").GetBoolean());
+        Assert.Equal((JsonValueKind.Null, JsonValueKind.Null), (awaiting.GetProperty("planId").ValueKind, awaiting.GetProperty("commands").ValueKind));
+
+        var confirmed = await PreviewAsync(new { action = "pool.vdev.add", pool = "pithyxtestm", layout = "single", diskIds = _disks3, confirmName = "pithyxtestm" });
+        Assert.Equal(32, confirmed.GetProperty("planId").GetString()!.Length);
+        Assert.Equal("--allow-replication-mismatch", confirmed.GetProperty("commands")[0].GetProperty("arguments")[1].GetString());
+    }
+
+    [Fact]
+    public async Task ExportingAPoolListsItsDatasets()
+    {
+        var preview = await PreviewAsync(new { action = "pool.export", pool = "pithyxtestm" });
+
+        Assert.Equal(["export", "pithyxtestm"], preview.GetProperty("commands")[0].GetProperty("arguments").EnumerateArray().Select(argument => argument.GetString()));
+        Assert.Equal(["pithyxtestm"], preview.GetProperty("datasets").EnumerateArray().Select(dataset => dataset.GetString()));
+    }
+
+    [Fact]
     public async Task APlanRunsOnceAndOnlyForWhoeverSawIt()
     {
         using var unknown = await _admin.PostAsync($"/api/storage/plans/{new string('0', 32)}/run", null, Token);
@@ -198,6 +266,8 @@ public sealed class StorageApiTests : IAsyncLifetime
         }
         using var preview = await bob.PostAsJsonAsync("/api/storage/plans", new { action = "pool.create", encryption = "none", pool = "tank", layout = "single", diskIds = _disks3 }, Token);
         Assert.Equal(HttpStatusCode.Forbidden, preview.StatusCode);
+        using var scan = await bob.PostAsync("/api/storage/import/scan", null, Token);
+        Assert.Equal(HttpStatusCode.Forbidden, scan.StatusCode);
         using var anonymous = await _factory.CreateApiClient().GetAsync("/api/storage/pools", Token);
         Assert.Equal(HttpStatusCode.Unauthorized, anonymous.StatusCode);
     }

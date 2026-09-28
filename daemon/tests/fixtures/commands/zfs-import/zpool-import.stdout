@@ -1,0 +1,11 @@
+  pool: pithyxtesti
+    id: 12476398662218235294
+ state: ONLINE
+action: The pool can be imported using its name or numeric identifier.
+config:
+
+	pithyxtesti                   ONLINE
+	  raidz1-0                          ONLINE
+	    /tmp/pithyxci-fixture/vdev0.img  ONLINE
+	    /tmp/pithyxci-fixture/vdev1.img  ONLINE
+	    /tmp/pithyxci-fixture/vdev2.img  ONLINE

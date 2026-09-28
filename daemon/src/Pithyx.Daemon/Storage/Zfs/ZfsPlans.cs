@@ -132,6 +132,40 @@ public static partial class ZfsPlans
         return [new PlanStep(new CommandRequest("zfs", ["create", $"{pool}/pithyx/shares/{name}"]), [])];
     }
 
+    private static readonly string[] _allowReplicationMismatch = ["--allow-replication-mismatch"];
+
+    /// <summary>Layouts of a data vdev that can be added to a pool.</summary>
+    public static readonly IReadOnlyList<string> AddLayouts = ["single", "mirror", "raidz1", "raidz2", "raidz3"];
+
+    /// <summary>
+    /// Adds a data vdev. Disks that are not empty (confirmed by serial) are cleared first. <c>zpool add</c> refuses a vdev
+    /// whose replication differs from the pool's; <c>--allow-replication-mismatch</c> overrides only that check (not
+    /// disks in use, not a different sector size, unlike <c>-f</c>) and is passed only with the typed pool name.
+    /// </summary>
+    public static IReadOnlyList<PlanStep> AddVdev(string pool, string layout, IReadOnlyList<GuardDisk> disks, TypedName? allowReplicationMismatch)
+    {
+        ArgumentNullException.ThrowIfNull(disks);
+        var steps = disks.SelectMany(Clear).ToList();
+        var paths = disks.Select(disk => StablePath(disk.Device));
+        steps.Add(new PlanStep(
+            new CommandRequest(
+                "zpool",
+                ["add", .. allowReplicationMismatch is null ? [] : _allowReplicationMismatch, pool, .. layout == "single" ? paths : paths.Prepend(layout)],
+                TimeSpan.FromMinutes(5)),
+            [.. disks.Select(disk => disk.Disk.Id)]));
+        return steps;
+    }
+
+    /// <summary>
+    /// Attaches a disk to a raidz vdev (OpenZFS 2.3 RAID-Z expansion); ZFS then spreads the data over one more disk. The
+    /// vdev is named by its GUID, which <c>zpool attach</c> accepts like its name <c>raidz1-0</c>.
+    /// </summary>
+    public static IReadOnlyList<PlanStep> ExpandRaidz(string pool, string vdevGuid, GuardDisk disk)
+    {
+        ArgumentNullException.ThrowIfNull(disk);
+        return [.. Clear(disk), new PlanStep(new CommandRequest("zpool", ["attach", pool, vdevGuid, StablePath(disk.Device)], TimeSpan.FromMinutes(5)), [disk.Disk.Id])];
+    }
+
     /// <summary>Destroys a pool; never forced, so ZFS refuses while a dataset is busy.</summary>
     public static IReadOnlyList<PlanStep> DestroyPool(string pool) =>
         [new PlanStep(new CommandRequest("zpool", ["destroy", pool], TimeSpan.FromMinutes(5)), [])];

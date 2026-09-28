@@ -31,6 +31,13 @@ public static class StorageEndpoints
             })
             .WithName("GetStorageDisks")
             .WithDescription("Administrators only. Every disk with the disk guard's verdict: whether a new pool may use it, and why not.");
+        storage.MapPost("/import/scan", async (PoolImportScanner scanner, HttpContext context, CancellationToken cancellationToken) =>
+            {
+                RequireAdmin(context.User);
+                return TypedResults.Ok(await scanner.ScanAsync(cancellationToken));
+            })
+            .WithName("ScanImportablePools")
+            .WithDescription("Administrators only. Looks for pools on the disks that are not imported (zpool import, which reads every disk's labels and may wake a sleeping disk) and returns each with its layout and the disk guard's import verdict. Imports nothing; importing is the plan pool.import.readonly, then pool.import.");
         storage.MapPost("/plans", PlanAsync)
             .WithName("PlanStorageAction")
             .WithDescription("Administrators only. Probes the chosen disks, asks the disk guard and returns the exact commands of a destructive storage action, with a plan id to run them. Runs nothing.");
@@ -49,7 +56,10 @@ public static class StorageEndpoints
             result.Verdicts,
             plan?.Steps.Select(step => new PlannedCommand(step.Command.FileName, step.Command.Arguments)).ToList(),
             result.Datasets,
-            plan?.ExpiresAt ?? DateTimeOffset.UtcNow));
+            plan?.ExpiresAt ?? DateTimeOffset.UtcNow,
+            result.Warnings,
+            result.RequiresConfirmName,
+            result.Unmounted));
     }
 
     private static async Task<Accepted<Job>> RunAsync(string planId, CommandPlanStore plans, CommandPlanRunner runner, JobService jobs, HttpContext context, CancellationToken cancellationToken)

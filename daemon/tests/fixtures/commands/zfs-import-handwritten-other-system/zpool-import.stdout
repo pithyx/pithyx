@@ -1,0 +1,35 @@
+  pool: backup
+    id: 9012345678901234567
+ state: ONLINE
+status: The pool was last accessed by another system.
+action: The pool can be imported using its name or numeric identifier and
+	the '-f' flag.
+   see: https://openzfs.github.io/openzfs-docs/msg/ZFS-8000-EY
+config:
+
+	backup                                ONLINE
+	  mirror-0                            ONLINE
+	    wwn-0x5000c500a1b2c3d4            ONLINE
+	    wwn-0x5000c500a1b2c3d5            ONLINE
+	logs
+	  nvme-PCIE_SSD_1TB_S1234-part1       ONLINE
+	cache
+	  nvme-PCIE_SSD_1TB_S1234-part2
+	spares
+	  wwn-0x5000c500a1b2c3d6
+
+  pool: Media
+    id: 1834567890123456789
+ state: DEGRADED
+status: One or more devices contains corrupted data.
+action: The pool can be imported despite missing or damaged devices.  The
+	fault tolerance of the pool may be compromised if imported.
+   see: https://openzfs.github.io/openzfs-docs/msg/ZFS-8000-4J
+config:
+
+	Media                                 DEGRADED
+	  raidz2-0                            DEGRADED
+	    ata-DISK_A-part1                  ONLINE
+	    ata-DISK_B-part1                  ONLINE
+	    ata-DISK_C-part1                  ONLINE
+	    11470926838497291122              FAULTED  corrupted data

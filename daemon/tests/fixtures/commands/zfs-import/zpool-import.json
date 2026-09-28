@@ -1,0 +1,9 @@
+{
+  "command": "zpool",
+  "args": [
+    "import",
+    "-d",
+    "/tmp/pithyxci-fixture"
+  ],
+  "exitCode": 0
+}
