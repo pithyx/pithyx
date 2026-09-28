@@ -5,7 +5,8 @@
     "users": "Users and groups",
     "network": "Network",
     "updates": "Updates",
-    "about": "About"
+    "about": "About",
+    "shares": "Shared folders"
   },
   "personalization": {
     "theme": "Theme",
@@ -37,8 +38,79 @@
     }
   },
   "storagePointer": {
-    "title": "Pools and disks live in Storage",
-    "body": "Pools, disks, datasets and volumes, snapshots, and health and maintenance have their own app.",
     "open": "Open Storage"
+  },
+  "shares": {
+    "title": "Shared folders",
+    "intro": "Every shared folder is its own dataset on a pool, with its own space and snapshots. Choose who may read or change its files.",
+    "create": "Create shared folder…",
+    "caption": "Shared folders with their pool, space, description and rights",
+    "loading": "Loading shared folders…",
+    "empty": "No shared folders yet. Create one to store files together.",
+    "columns": {
+      "name": "Name",
+      "pool": "Pool",
+      "used": "Used",
+      "description": "Description",
+      "rights": "Rights",
+      "actions": "Actions"
+    },
+    "folder": "Folder",
+    "missing": "Dataset not found",
+    "used": "{used} used, {free} free",
+    "usedQuota": "{used} of {quota}",
+    "noDescription": "No description",
+    "rights": "{count, plural, =0 {Administrators only} one {# user} other {# users}}",
+    "rightsDetail": "{readWrite} read and write, {read} read only",
+    "edit": "Edit",
+    "editLabel": "Edit {name}",
+    "delete": "Delete…",
+    "deleteLabel": "Delete {name}",
+    "close": "Close",
+    "createDialog": {
+      "title": "Create a shared folder",
+      "name": "Name",
+      "nameHint": "Letters, digits, spaces, dots, dashes and underscores.",
+      "pool": "Pool",
+      "noPools": "No pool is ready for shared folders yet. Create a pool in Storage first.",
+      "description": "Description (optional)",
+      "preview": "Show commands",
+      "dataset": "The shared folder becomes the dataset {dataset}.",
+      "run": "Create shared folder"
+    },
+    "editDialog": {
+      "title": "Edit {name}",
+      "details": "Name and description",
+      "name": "Name",
+      "description": "Description",
+      "datasetKept": "Renaming changes only the name users see; the dataset keeps its name.",
+      "save": "Save",
+      "saved": "Saved.",
+      "rights": "Rights",
+      "rightsIntro": "Changes apply right away. Administrators can always read and change everything.",
+      "loading": "Loading users…",
+      "access": "Access of {user}",
+      "administrator": "Administrator, full access",
+      "levels": {
+        "none": "No access",
+        "read": "Read",
+        "readWrite": "Read and write"
+      }
+    },
+    "deleteDialog": {
+      "title": "Delete {name}",
+      "choice": "What happens with the data?",
+      "keep": "Keep the data",
+      "keepDataset": "The shared folder goes away. The dataset {dataset} and its files stay and remain in Storage.",
+      "keepFolder": "The shared folder goes away. The files stay in the folder {path}.",
+      "destroy": "Delete the data for good",
+      "destroyHint": "The dataset, all its files and every snapshot are deleted. This cannot be undone.",
+      "folderOnly": "This is a plain folder, not a dataset, so its files can only be kept.",
+      "confirm": "Type {name} to confirm",
+      "preview": "Show what happens",
+      "nothingRuns": "No command runs. {location} and its files stay.",
+      "gone": "These are deleted for good:",
+      "run": "Delete shared folder"
+    }
   }
 }

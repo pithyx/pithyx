@@ -30,6 +30,10 @@ export type StorageScheduleList = components['schemas']['StorageScheduleList'];
 export type StorageSchedule = components['schemas']['StorageSchedule'];
 export type StorageScheduleUpdate = components['schemas']['StorageScheduleUpdate'];
 export type ScrubAction = 'start' | 'pause' | 'stop';
+export type ShareDetails = components['schemas']['ShareDetails'];
+export type ShareUserAccess = components['schemas']['ShareUserAccess'];
+export type ShareAccess = components['schemas']['ShareAccess'];
+export type SharePlanRequest = components['schemas']['SharePlanRequest'];
 
 /**
  * Administrative calls of the desktop's own core apps, outside the public SDK: not versioned, never served to a
@@ -67,6 +71,18 @@ export interface InternalMethods {
   };
   'internal.admin.storage.schedule': { params: StorageScheduleUpdate; result: StorageScheduleList };
   'internal.admin.openApp': { params: { app: AdminApp }; result: boolean };
+  'internal.admin.shares.list': { params: Record<string, never>; result: ShareDetails[] };
+  'internal.admin.shares.access': { params: { shareId: number }; result: ShareUserAccess[] };
+  'internal.admin.shares.setAccess': {
+    params: { shareId: number; userId: number; access: ShareAccess };
+    result: null;
+  };
+  'internal.admin.shares.update': {
+    params: { shareId: number; name?: string; description?: string };
+    result: ShareDetails;
+  };
+  /** Plans creating or deleting a shared folder; the plan runs with `internal.admin.storage.run`. */
+  'internal.admin.shares.plan': { params: SharePlanRequest; result: StoragePlanPreview };
 }
 
 /** Administrator apps another core app may open, for example Settings opening Storage. */
@@ -78,6 +94,9 @@ export const STORAGE_CHANGED = 'internal.admin.storage.changed';
 
 /** Sent to the app with every change of a job it started with `internal.admin.storage.run`. */
 export const STORAGE_JOB = 'internal.admin.storage.job';
+
+/** Sent to the app when the shares may have changed (the `shares/list` topic); the app reads them again. */
+export const SHARES_CHANGED = 'internal.admin.shares.changed';
 
 type InternalName = keyof InternalMethods;
 
@@ -156,6 +175,49 @@ function snapshotAction(
   };
 }
 
+function isShareId(value: unknown): value is Record<string, unknown> & { shareId: number } {
+  return isRecord(value) && Number.isSafeInteger(value.shareId);
+}
+
+const SHARE_ACCESS: readonly string[] = ['none', 'read', 'readWrite'];
+
+function isShareAccess(value: unknown): boolean {
+  return (
+    isShareId(value) &&
+    Number.isSafeInteger(value.userId) &&
+    typeof value.access === 'string' &&
+    SHARE_ACCESS.includes(value.access)
+  );
+}
+
+function isShareUpdate(value: unknown): boolean {
+  return (
+    isShareId(value) &&
+    (value.name === undefined || typeof value.name === 'string') &&
+    (value.description === undefined || typeof value.description === 'string')
+  );
+}
+
+function isSharePlan(value: unknown): boolean {
+  const optionalText = (field: unknown) =>
+    field === undefined || field === null || typeof field === 'string';
+  return (
+    isRecord(value) &&
+    (value.action === 'share.create' || value.action === 'share.delete') &&
+    optionalText(value.name) &&
+    optionalText(value.pool) &&
+    optionalText(value.description) &&
+    optionalText(value.confirmName) &&
+    (value.shareId === undefined ||
+      value.shareId === null ||
+      Number.isSafeInteger(value.shareId)) &&
+    (value.data === undefined ||
+      value.data === null ||
+      value.data === 'keep' ||
+      value.data === 'destroy')
+  );
+}
+
 function isMuteRequest(value: unknown): boolean {
   return isRecord(value) && typeof value.key === 'string' && typeof value.muted === 'boolean';
 }
@@ -215,10 +277,19 @@ export function adminStorageHost(emit: (event: string, data?: unknown) => void):
   const changed = () => {
     emit(STORAGE_CHANGED);
   };
+  // The first message is the snapshot the app has already read; later revisions are changes.
+  let sharesRevision: number | undefined;
   const stops = [
     realtime.listen('storage/pools', changed),
     realtime.listen('storage/disks', changed),
     realtime.listen('storage/alerts', changed),
+    realtime.listen('shares/list', (data) => {
+      const { revision } = data as components['schemas']['ShareListRevision'];
+      if (sharesRevision !== undefined && revision !== sharesRevision) {
+        emit(SHARES_CHANGED);
+      }
+      sharesRevision = revision;
+    }),
   ];
   const follow = (job: Job) => {
     stops.push(
@@ -348,6 +419,60 @@ export function adminStorageHost(emit: (event: string, data?: unknown) => void):
       validate: (params) => isRecord(params) && adminApps.some((known) => known === params.app),
       handle: (params) => Promise.resolve(openApp((params as { app: AdminApp }).app)),
     },
+    'internal.admin.shares.list': {
+      validate: isRecord,
+      handle: () => daemon(async () => unwrap(await api.GET('/api/shares/details'))),
+    },
+    'internal.admin.shares.access': {
+      validate: isShareId,
+      handle: (params) =>
+        daemon(async () =>
+          unwrap(
+            await api.GET('/api/shares/{shareId}/access', {
+              params: { path: { shareId: (params as { shareId: number }).shareId } },
+            }),
+          ),
+        ),
+    },
+    'internal.admin.shares.setAccess': {
+      validate: isShareAccess,
+      handle: (params) =>
+        daemon(async () => {
+          const { shareId, userId, access } =
+            params as InternalMethods['internal.admin.shares.setAccess']['params'];
+          unwrap(
+            await api.PUT('/api/shares/{shareId}/access/{userId}', {
+              params: { path: { shareId, userId } },
+              body: { access },
+            }),
+          );
+          return null;
+        }),
+    },
+    'internal.admin.shares.update': {
+      validate: isShareUpdate,
+      handle: (params) =>
+        daemon(async () => {
+          const { shareId, name, description } =
+            params as InternalMethods['internal.admin.shares.update']['params'];
+          return unwrap(
+            await api.PATCH('/api/shares/{shareId}', {
+              params: { path: { shareId } },
+              body: {
+                ...(name === undefined ? {} : { name }),
+                ...(description === undefined ? {} : { description }),
+              },
+            }),
+          );
+        }),
+    },
+    'internal.admin.shares.plan': {
+      validate: isSharePlan,
+      handle: (params) =>
+        daemon(async () =>
+          unwrap(await api.POST('/api/shares/plans', { body: params as SharePlanRequest })),
+        ),
+    },
     'internal.admin.storage.schedule': {
       validate: isScheduleUpdate,
       handle: (params) =>
@@ -384,7 +509,7 @@ export async function internalCall<M extends InternalName>(
 /** Listens for an internal event; returns the function that stops listening. */
 export function onInternal(
   app: PithyxApp,
-  event: typeof STORAGE_CHANGED | typeof STORAGE_JOB,
+  event: typeof STORAGE_CHANGED | typeof STORAGE_JOB | typeof SHARES_CHANGED,
   handler: (data: unknown) => void,
 ): () => void {
   return app.on(event as unknown as EventName, handler);

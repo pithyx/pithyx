@@ -5,7 +5,8 @@
     "users": "Benutzer und Gruppen",
     "network": "Netzwerk",
     "updates": "Updates",
-    "about": "Info"
+    "about": "Info",
+    "shares": "Freigegebene Ordner"
   },
   "personalization": {
     "theme": "Erscheinungsbild",
@@ -37,8 +38,79 @@
     }
   },
   "storagePointer": {
-    "title": "Pools und Platten findest du in Speicher",
-    "body": "Pools, Platten, Datasets und Volumes, Snapshots sowie Zustand und Wartung haben eine eigene App.",
     "open": "Speicher öffnen"
+  },
+  "shares": {
+    "title": "Freigegebene Ordner",
+    "intro": "Jeder freigegebene Ordner ist ein eigenes Dataset auf einem Pool, mit eigenem Platz und eigenen Snapshots. Lege fest, wer seine Dateien lesen oder ändern darf.",
+    "create": "Freigegebenen Ordner anlegen…",
+    "caption": "Freigegebene Ordner mit Pool, Platz, Beschreibung und Rechten",
+    "loading": "Freigegebene Ordner werden geladen…",
+    "empty": "Noch keine freigegebenen Ordner. Lege einen an, um Dateien gemeinsam abzulegen.",
+    "columns": {
+      "name": "Name",
+      "pool": "Pool",
+      "used": "Belegt",
+      "description": "Beschreibung",
+      "rights": "Rechte",
+      "actions": "Aktionen"
+    },
+    "folder": "Ordner",
+    "missing": "Dataset nicht gefunden",
+    "used": "{used} belegt, {free} frei",
+    "usedQuota": "{used} von {quota}",
+    "noDescription": "Keine Beschreibung",
+    "rights": "{count, plural, =0 {Nur Administratoren} one {# Benutzer} other {# Benutzer}}",
+    "rightsDetail": "{readWrite} lesen und schreiben, {read} nur lesen",
+    "edit": "Bearbeiten",
+    "editLabel": "{name} bearbeiten",
+    "delete": "Löschen…",
+    "deleteLabel": "{name} löschen",
+    "close": "Schließen",
+    "createDialog": {
+      "title": "Freigegebenen Ordner anlegen",
+      "name": "Name",
+      "nameHint": "Buchstaben, Ziffern, Leerzeichen, Punkte, Bindestriche und Unterstriche.",
+      "pool": "Pool",
+      "noPools": "Noch kein Pool ist für freigegebene Ordner bereit. Lege zuerst in Speicher einen Pool an.",
+      "description": "Beschreibung (optional)",
+      "preview": "Befehle anzeigen",
+      "dataset": "Der freigegebene Ordner wird zum Dataset {dataset}.",
+      "run": "Freigegebenen Ordner anlegen"
+    },
+    "editDialog": {
+      "title": "{name} bearbeiten",
+      "details": "Name und Beschreibung",
+      "name": "Name",
+      "description": "Beschreibung",
+      "datasetKept": "Umbenennen ändert nur den Namen, den Benutzer sehen; das Dataset behält seinen Namen.",
+      "save": "Speichern",
+      "saved": "Gespeichert.",
+      "rights": "Rechte",
+      "rightsIntro": "Änderungen gelten sofort. Administratoren können immer alles lesen und ändern.",
+      "loading": "Benutzer werden geladen…",
+      "access": "Zugriff von {user}",
+      "administrator": "Administrator, voller Zugriff",
+      "levels": {
+        "none": "Kein Zugriff",
+        "read": "Lesen",
+        "readWrite": "Lesen und schreiben"
+      }
+    },
+    "deleteDialog": {
+      "title": "{name} löschen",
+      "choice": "Was passiert mit den Daten?",
+      "keep": "Daten behalten",
+      "keepDataset": "Der freigegebene Ordner verschwindet. Das Dataset {dataset} und seine Dateien bleiben und sind weiter in Speicher zu sehen.",
+      "keepFolder": "Der freigegebene Ordner verschwindet. Die Dateien bleiben im Ordner {path}.",
+      "destroy": "Daten endgültig löschen",
+      "destroyHint": "Das Dataset, alle seine Dateien und jeder Snapshot werden gelöscht. Das lässt sich nicht rückgängig machen.",
+      "folderOnly": "Das ist ein einfacher Ordner, kein Dataset, deshalb können seine Dateien nur behalten werden.",
+      "confirm": "Gib {name} zur Bestätigung ein",
+      "preview": "Anzeigen, was passiert",
+      "nothingRuns": "Es läuft kein Befehl. {location} und seine Dateien bleiben.",
+      "gone": "Das wird endgültig gelöscht:",
+      "run": "Freigegebenen Ordner löschen"
+    }
   }
 }
