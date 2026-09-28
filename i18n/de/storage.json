@@ -17,7 +17,9 @@
     "layout": "Aufbau: {layout}",
     "devices": "Geräte von {pool}",
     "errors": "Fehler: {read} Lesen, {write} Schreiben, {checksum} Prüfsumme",
-    "degradedHint": "Ein Gerät fehlt oder ist ausgefallen. Eine zurückkehrende Platte wird von selbst wiederhergestellt (Resilver); du kannst sie auch durch eine neue Platte ersetzen."
+    "degradedHint": "Ein Gerät fehlt oder ist ausgefallen. Eine zurückkehrende Platte wird von selbst wiederhergestellt (Resilver); du kannst sie auch durch eine neue Platte ersetzen.",
+    "readOnly": "Schreibgeschützt (Vorschau)",
+    "readOnlyHint": "Schreibgeschützt zur Vorschau importiert: Nichts ist eingehängt und nichts daran ändert sich. Prüf seine Datasets, dann importiere ihn zur Nutzung oder exportiere ihn wieder."
   },
   "state": {
     "online": "Intakt",
@@ -76,7 +78,8 @@
     "has_data": "Enthält Daten ({contents}). Bestätige mit ihrer Seriennummer, um sie zu verwenden; alles darauf geht verloren.",
     "confirmed": "Mit ihrer Seriennummer bestätigt.",
     "empty": "Leer und bereit.",
-    "confirm_replacement": "Eine Ersatzplatte wird immer mit ihrer Seriennummer bestätigt."
+    "confirm_replacement": "Eine Ersatzplatte wird immer mit ihrer Seriennummer bestätigt.",
+    "importable": "Lässt sich importieren."
   },
   "create": {
     "button": "Pool anlegen …",
@@ -366,5 +369,98 @@
       "standby": "Im Ruhezustand"
     },
     "standbyHint": "Laufwerke im Ruhezustand werden für Statusabfragen nicht geweckt."
+  },
+  "import": {
+    "button": "Pool importieren…",
+    "title": "Pool importieren",
+    "explain": "Pools auf Platten aus einem anderen System oder einer früheren Installation lassen sich importieren. Ein Pool wird zuerst schreibgeschützt importiert: Nichts wird eingehängt und nichts daran geändert, so kannst du seine Datasets prüfen, bevor du ihn nutzt.",
+    "scanHint": "Die Suche liest die Kennungen aller Platten und kann eine schlafende Platte aufwecken. Sie läuft nur, wenn du sie startest.",
+    "scan": "Platten durchsuchen",
+    "rescan": "Noch einmal suchen",
+    "scanning": "Die Platten werden gelesen…",
+    "none": "Es wurde kein Pool gefunden, der sich importieren lässt.",
+    "found": "Pools auf den Platten",
+    "layout": "Aufbau von {pool}",
+    "disks": "Platten von {pool}",
+    "usedElsewhere": "Von einem anderen System benutzt",
+    "nameTakenBadge": "Name vergeben",
+    "unknown": "Pithyx kennt die Platte von {devices} nicht und kann sie deshalb nicht prüfen. Dieser Pool lässt sich nicht importieren.",
+    "cannot": "Dieser Pool lässt sich nicht importieren, meist weil Platten fehlen. Schließ sie an und such noch einmal.",
+    "zfsSays": "Was ZFS meldet",
+    "newName": "Neuer Name für den Pool",
+    "nameTaken": "Ein Pool namens {name} ist schon importiert. Der Pool wird unter dem neuen Namen importiert.",
+    "otherSystem": "{name} wurde zuletzt von einem anderen System benutzt und dort nicht exportiert. Importiere ihn nur, wenn dieses System ausgeschaltet ist oder diese Platten nicht mehr benutzt: Wenn zwei Systeme auf einen Pool schreiben, geht er kaputt.",
+    "force": "Trotzdem importieren (erzwingen)",
+    "run": "Schreibgeschützt importieren",
+    "done": "Der Pool ist schreibgeschützt importiert. Prüf seine Datasets auf seiner Karte, dann importiere ihn zur Nutzung oder exportiere ihn wieder."
+  },
+  "change": {
+    "import": {
+      "button": "Zur Nutzung importieren…",
+      "title": "{pool} zur Nutzung importieren",
+      "explain": "{pool} wird exportiert und zur Nutzung neu importiert. Dann werden die Datasets eingehängt, bei denen das sicher ist; Datasets, die Systemordner verdecken würden, bleiben ausgehängt.",
+      "run": "Zur Nutzung importieren",
+      "mounted": "Diese Datasets werden eingehängt:"
+    },
+    "discard": {
+      "button": "Exportieren",
+      "title": "{pool} wieder exportieren",
+      "explain": "Die schreibgeschützte Vorschau endet: {pool} wird exportiert, und nichts daran wurde geändert. Die Daten bleiben auf den Platten.",
+      "run": "Exportieren"
+    },
+    "export": {
+      "button": "Exportieren…",
+      "title": "{pool} exportieren",
+      "explain": "{pool} wird exportiert: Seine Datasets werden ausgehängt und sind nicht verfügbar, bis der Pool wieder importiert wird. Die Daten bleiben auf den Platten, die du dann in ein anderes System umziehen kannst.",
+      "run": "Exportieren",
+      "datasets": "Diese Datasets sind dann nicht mehr verfügbar:"
+    },
+    "add": {
+      "button": "Platten hinzufügen…",
+      "title": "Platten zu {pool} hinzufügen",
+      "explain": "Die gewählten Platten werden eine neue Gruppe in {pool}, und der Pool wächst um ihren Platz. Daten, die schon auf dem Pool liegen, bleiben, wo sie sind.",
+      "run": "Platten hinzufügen"
+    },
+    "expand": {
+      "button": "Um eine Platte erweitern…",
+      "title": "{vdev} von {pool} erweitern",
+      "explain": "Die Platte kommt zu {vdev} dazu, und ZFS verteilt die Daten auf eine Platte mehr. Das dauert eine Weile; der Pool bleibt nutzbar. Die Platte lässt sich nie wieder entfernen, und Daten, die schon auf dem Pool liegen, behalten ihr altes Verhältnis von Daten zu Parität, bis sie neu geschrieben werden.",
+      "run": "Erweitern"
+    },
+    "layouts": {
+      "single": "Einzelne Platte, kein Schutz",
+      "mirror": "Spiegel aus {count} Platten",
+      "raidz1": "RAID-Z1 aus {count} Platten",
+      "raidz2": "RAID-Z2 aus {count} Platten",
+      "raidz3": "RAID-Z3 aus {count} Platten"
+    }
+  },
+  "expansion": {
+    "running": "{vdev} wird erweitert",
+    "waiting": "Die Erweiterung von {vdev} wartet, bis ein Wiederaufbau fertig ist.",
+    "finished": "{vdev} wurde am {date} erweitert."
+  },
+  "warnings": {
+    "label": "Warnungen",
+    "lowers_redundancy": "Die neuen Platten schützen weniger als der Rest des Pools: Danach übersteht der ganze Pool weniger ausgefallene Platten, und fällt diese Gruppe aus, ist alles auf dem Pool verloren.",
+    "replication_mismatch": "Die neue Gruppe ist anders aufgebaut als der Rest des Pools (andere Breite oder anderer Schutz). ZFS erlaubt das nur mit deiner Bestätigung, und der Pool wird ungleichmäßig.",
+    "irreversible": "Das lässt sich nicht rückgängig machen: Diese Platten lassen sich nie wieder aus dem Pool entfernen.",
+    "no_redundancy": "Die neue Platte hat keinen Schutz: Fällt sie aus, ist alles auf dem Pool verloren.",
+    "other_system": "Der Pool wird importiert, obwohl ein anderes System ihn zuletzt benutzt hat. Stell sicher, dass dieses System die Platten nicht mehr benutzt.",
+    "degraded": "Geräte dieses Pools fehlen. Er wird ohne sie importiert und ist schlechter geschützt, bis sie zurück sind oder ersetzt wurden.",
+    "unmounted_datasets": "Einige Datasets bleiben ausgehängt; die Liste unten sagt, warum.",
+    "datasets_unavailable": "Freigaben und Apps, die diese Datasets nutzen, funktionieren erst wieder, wenn der Pool importiert ist."
+  },
+  "unmounted": {
+    "title": "Diese Datasets bleiben ausgehängt:",
+    "system_path": "es würde einen Systemordner verdecken",
+    "shadows_mount": "es würde etwas verdecken, das dort eingehängt ist",
+    "duplicate_mountpoint": "ein anderes Dataset des Pools nutzt denselben Ordner",
+    "key_unavailable": "es ist verschlüsselt und gesperrt",
+    "noauto": "Datasets, die Systemordner oder andere Einhängepunkte verdecken würden, bekommen canmount=noauto und bleiben so auch nach einem Neustart ausgehängt."
+  },
+  "confirmName": {
+    "label": "Gib zur Bestätigung {pool} ein",
+    "needed": "Das ändert den Pool dauerhaft. Gib seinen Namen ein, um die Befehle zu sehen."
   }
 }

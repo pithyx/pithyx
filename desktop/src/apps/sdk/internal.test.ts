@@ -38,6 +38,7 @@ describe('the internal administrator calls', () => {
       'internal.admin.storage.pools',
       'internal.admin.storage.plan',
       'internal.admin.storage.run',
+      'internal.admin.storage.importScan',
       'internal.admin.storage.snapshots.list',
       'internal.admin.storage.snapshots.create',
       'internal.admin.storage.snapshots.delete',

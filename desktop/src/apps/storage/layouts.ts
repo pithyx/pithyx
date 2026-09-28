@@ -1,3 +1,5 @@
+import type { Pool } from '../sdk/internal';
+
 /** Pool layouts the wizard compares; `mirrors` is striped mirror pairs (RAID 10). */
 export type Layout = 'single' | 'stripe' | 'mirror' | 'mirrors' | 'raidz1' | 'raidz2' | 'raidz3';
 
@@ -115,4 +117,40 @@ export function wastedBytes(sizes: readonly number[]): number {
   }
   const smallest = Math.min(...sizes);
   return sizes.reduce((sum, size) => sum + size - smallest, 0);
+}
+
+/** Layouts of a vdev that can be added, with the fewest disks each needs. */
+const ADD_LAYOUTS = [
+  ['single', 1],
+  ['mirror', 2],
+  ['raidz1', 3],
+  ['raidz2', 4],
+  ['raidz3', 5],
+] as const;
+export type AddLayout = (typeof ADD_LAYOUTS)[number][0];
+
+/** The layouts that work with this many disks: a single disk only alone, the others from their minimum. */
+export function addLayouts(count: number): AddLayout[] {
+  return ADD_LAYOUTS.filter(([layout, minimum]) =>
+    layout === 'single' ? count === 1 : count >= minimum,
+  ).map(([layout]) => layout);
+}
+
+/** The layout of the pool's data vdevs when they all share one, so the default adds a matching vdev. */
+export function poolLayout(pool: Pool): AddLayout | null {
+  const kinds = new Set(
+    pool.vdevs
+      .filter((vdev) => vdev.role === 'data')
+      .map((vdev) =>
+        vdev.type === 'mirror'
+          ? 'mirror'
+          : vdev.type === 'raidz'
+            ? `raidz${String(vdev.parityDisks ?? 1)}`
+            : 'single',
+      ),
+  );
+  const [only] = kinds;
+  return kinds.size === 1 && ADD_LAYOUTS.some(([layout]) => layout === only)
+    ? (only as AddLayout)
+    : null;
 }

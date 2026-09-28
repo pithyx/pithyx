@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ErrorNotice } from '../../errors/ErrorNotice';
 import { Button } from '../../ui/Button';
+import { TextField } from '../../ui/TextField';
 import {
   internalCall,
   onInternal,
@@ -13,17 +14,111 @@ import {
   type StoragePlanPreview,
 } from '../sdk/internal';
 import styles from './Storage.module.css';
-import { describeProblem, guardReason } from './shared';
+import { describeProblem, guardReason, type Translate } from './shared';
 
-/** The commands of a plan, or why the plan cannot be made. */
+/**
+ * The commands of a plan, or why the plan cannot be made, with the plan's warnings first. A plan that waits for the
+ * pool's typed name has no commands yet; the dialog shows its {@link ConfirmNameField}.
+ */
 export function PlanPreview({
   preview,
   disks,
+  datasetsLabel,
 }: {
   preview: StoragePlanPreview;
   disks: StorageDisk[];
+  /** What the listed datasets mean for this action; by default that they are lost. */
+  datasetsLabel?: string | undefined;
 }) {
   const { t } = useTranslation('storage');
+  return (
+    <>
+      <PlanWarnings t={t} warnings={preview.warnings} />
+      <PlanBody preview={preview} disks={disks} datasetsLabel={datasetsLabel} />
+    </>
+  );
+}
+
+const WARNINGS = new Set([
+  'lowers_redundancy',
+  'replication_mismatch',
+  'irreversible',
+  'no_redundancy',
+  'other_system',
+  'degraded',
+  'unmounted_datasets',
+  'datasets_unavailable',
+]);
+
+function PlanWarnings({ t, warnings }: { t: Translate; warnings: string[] }) {
+  const known = warnings.filter((warning) => WARNINGS.has(warning));
+  if (known.length === 0) {
+    return null;
+  }
+  const text = t as unknown as (key: string) => string;
+  return (
+    <div className={styles.warnings} role="note" aria-label={t('warnings.label')}>
+      {known.map((warning) => (
+        <p key={warning}>{text(`warnings.${warning}`)}</p>
+      ))}
+    </div>
+  );
+}
+
+const UNMOUNTED = new Set([
+  'system_path',
+  'shadows_mount',
+  'duplicate_mountpoint',
+  'key_unavailable',
+]);
+
+function UnmountedList({ preview }: { preview: StoragePlanPreview }) {
+  const { t } = useTranslation('storage');
+  const text = t as unknown as (key: string) => string;
+  if (preview.unmounted.length === 0) {
+    return null;
+  }
+  return (
+    <>
+      <p>{t('unmounted.title')}</p>
+      <ul>
+        {preview.unmounted.map((dataset) => (
+          <li key={dataset.name}>
+            <span className={styles.mono}>{dataset.name}</span> (
+            <span className={styles.mono}>{dataset.mountPoint}</span>):{' '}
+            {UNMOUNTED.has(dataset.reason) ? text(`unmounted.${dataset.reason}`) : dataset.reason}
+          </li>
+        ))}
+      </ul>
+      {preview.unmounted.some((dataset) => dataset.reason !== 'key_unavailable') && (
+        <p>{t('unmounted.noauto')}</p>
+      )}
+    </>
+  );
+}
+
+function PlanBody({
+  preview,
+  disks,
+  datasetsLabel,
+}: {
+  preview: StoragePlanPreview;
+  disks: StorageDisk[];
+  datasetsLabel: string | undefined;
+}) {
+  const { t } = useTranslation('storage');
+  if (
+    preview.commands === null &&
+    preview.requiresConfirmName &&
+    preview.disks.every((verdict) => verdict.decision === 'allowed')
+  ) {
+    return (
+      <div className={styles.preview} role="status">
+        <p>{t('confirmName.needed')}</p>
+        <UnmountedList preview={preview} />
+      </div>
+    );
+  }
   if (preview.commands === null) {
     return (
       <div className={styles.preview} role="status">
@@ -48,7 +143,7 @@ export function PlanPreview({
     <div className={styles.preview} role="status">
       {preview.datasets.length > 0 && (
         <>
-          <p>{t('actions.datasets')}</p>
+          <p>{datasetsLabel ?? t('actions.datasets')}</p>
           <ul className={styles.mono}>
             {preview.datasets.map((dataset) => (
               <li key={dataset}>{dataset}</li>
@@ -56,6 +151,7 @@ export function PlanPreview({
           </ul>
         </>
       )}
+      <UnmountedList preview={preview} />
       <p>{t('create.commands')}</p>
       <ol className={styles.commands}>
         {preview.commands.map((command, index) => (
@@ -65,6 +161,31 @@ export function PlanPreview({
         ))}
       </ol>
     </div>
+  );
+}
+
+/** The pool's name typed to confirm a plan whose preview says `requiresConfirmName`. */
+export function ConfirmNameField({
+  pool,
+  value,
+  onChange,
+  isReadOnly = false,
+}: {
+  pool: string;
+  value: string;
+  onChange: (value: string) => void;
+  isReadOnly?: boolean;
+}) {
+  const { t } = useTranslation('storage');
+  return (
+    <TextField
+      label={t('confirmName.label', { pool })}
+      value={value}
+      onChange={onChange}
+      autoCapitalize="none"
+      autoComplete="off"
+      isReadOnly={isReadOnly}
+    />
   );
 }
 

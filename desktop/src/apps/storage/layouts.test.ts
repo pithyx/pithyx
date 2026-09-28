@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { layoutOptions, recommendedLayout, wastedBytes } from './layouts';
+import type { Pool, Vdev } from '../sdk/internal';
+import { addLayouts, layoutOptions, poolLayout, recommendedLayout, wastedBytes } from './layouts';
 
 const TB = 1e12;
 
@@ -64,5 +65,32 @@ describe('pool layouts', () => {
       );
       expect(option?.tolerance, String(count)).toBeGreaterThanOrEqual(1);
     }
+  });
+});
+
+function vdev(type: string, parityDisks: number | null = null, role = 'data'): Vdev {
+  return { type, parityDisks, role, children: [] } as unknown as Vdev;
+}
+
+function pool(...vdevs: Vdev[]): Pool {
+  return { vdevs } as unknown as Pool;
+}
+
+describe('adding a vdev', () => {
+  it('offers a single disk only alone and every other layout from its minimum', () => {
+    expect(addLayouts(0)).toEqual([]);
+    expect(addLayouts(1)).toEqual(['single']);
+    expect(addLayouts(2)).toEqual(['mirror']);
+    expect(addLayouts(3)).toEqual(['mirror', 'raidz1']);
+    expect(addLayouts(5)).toEqual(['mirror', 'raidz1', 'raidz2', 'raidz3']);
+  });
+
+  it('matches the layout of the pool when all its data vdevs share one', () => {
+    expect(poolLayout(pool(vdev('mirror'), vdev('mirror'), vdev('disk', null, 'spare')))).toBe(
+      'mirror',
+    );
+    expect(poolLayout(pool(vdev('raidz', 2)))).toBe('raidz2');
+    expect(poolLayout(pool(vdev('disk')))).toBe('single');
+    expect(poolLayout(pool(vdev('mirror'), vdev('raidz', 1)))).toBeNull();
   });
 });
