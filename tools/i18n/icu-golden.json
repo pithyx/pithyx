@@ -315,17 +315,92 @@
       },
       "expected": "The storage command zpool failed (exit code 1). Nothing after it was run; the log has the details."
     },
+    "storage.dataset.compression_invalid": {
+      "params": {
+        "compression": "brotli"
+      },
+      "expected": "Pithyx does not set the compression brotli. Choose off, lz4, zle, zstd (levels 1 to 19) or gzip (levels 1 to 9)."
+    },
     "storage.dataset.exists": {
       "params": {
         "name": "media"
       },
       "expected": "A dataset named media exists already."
     },
+    "storage.dataset.in_use_by_share": {
+      "params": {
+        "dataset": "tank/pithyx/shares/media",
+        "share": "Media"
+      },
+      "expected": "The share Media has its folder in tank/pithyx/shares/media. Delete the share on the shared folders page first; there you choose what happens to its data."
+    },
+    "storage.dataset.limit_invalid": {
+      "params": {
+        "property": "quota"
+      },
+      "expected": "The quota cannot be negative. Use 0 for none."
+    },
+    "storage.dataset.managed": {
+      "params": {
+        "dataset": "tank/pithyx/homes/anna"
+      },
+      "expected": "Pithyx finds tank/pithyx/homes/anna by its name (a home folder, an app or system data), so it cannot be renamed or deleted here."
+    },
     "storage.dataset.name_invalid": {
       "params": {
         "name": "my media"
       },
       "expected": "Dataset names use letters, digits, ., - and _, start with a letter or digit and have up to 64 characters."
+    },
+    "storage.dataset.name_mismatch": {
+      "params": {
+        "name": "tank/pithyx/shares/media"
+      },
+      "expected": "Type the full dataset name tank/pithyx/shares/media exactly to confirm."
+    },
+    "storage.dataset.not_found": {
+      "params": {
+        "dataset": "tank/pithyx/shares/media"
+      },
+      "expected": "There is no dataset named tank/pithyx/shares/media. Reload the page."
+    },
+    "storage.dataset.property_unsupported": {
+      "params": {
+        "dataset": "tank/pithyx/volumes/vm1",
+        "property": "recordsize"
+      },
+      "expected": "tank/pithyx/volumes/vm1 does not take the setting recordsize. Volumes take only compression, record size is for file systems only, and the datasets of the Pithyx layout take only compression."
+    },
+    "storage.dataset.protected": {
+      "params": {
+        "dataset": "tank/pithyx/shares"
+      },
+      "expected": "tank/pithyx/shares is the pool root or part of the Pithyx layout. Pithyx does not rename, delete or limit it."
+    },
+    "storage.dataset.quota_below_used": {
+      "params": {
+        "usedBytes": 1073741824
+      },
+      "expected": "The quota must be at least the space the dataset uses now, snapshots and child datasets included."
+    },
+    "storage.dataset.record_size_invalid": {
+      "params": {
+        "minBytes": 4096,
+        "maxBytes": 1048576
+      },
+      "expected": "The record size must be a power of two from 4 KiB to 1 MiB."
+    },
+    "storage.dataset.reservation_too_large": {
+      "params": {
+        "maxBytes": 1073741824
+      },
+      "expected": "The pool cannot reserve that much for this dataset now. Choose a smaller reservation."
+    },
+    "storage.dataset.unchanged": {
+      "params": {
+        "dataset": "tank/pithyx/shares/media"
+      },
+      "expected": "Nothing to change: tank/pithyx/shares/media has these settings already."
     },
     "storage.disk.not_found": {
       "params": {},
@@ -405,6 +480,12 @@
       },
       "expected": "There is no pool named tank."
     },
+    "storage.pool.not_prepared": {
+      "params": {
+        "pool": "tank"
+      },
+      "expected": "Pithyx did not set up the pool tank (it has no pithyx dataset), so it creates nothing on it."
+    },
     "storage.schedule.invalid": {
       "params": {
         "kind": "scrub",
@@ -475,6 +556,19 @@
         "vdev": "123"
       },
       "expected": "The pool has no such device (any more). Reload and choose again."
+    },
+    "storage.volume.size_invalid": {
+      "params": {
+        "minBytes": 1048576,
+        "maxBytes": 1152921504606846976
+      },
+      "expected": "A volume needs a size of at least 1 MiB."
+    },
+    "storage.volume.too_large": {
+      "params": {
+        "availableBytes": 1073741824
+      },
+      "expected": "The volume does not fit the free space of the pool. Make it smaller or create it as a sparse volume."
     },
     "system.internal.unexpected": {
       "params": {},

@@ -173,8 +173,20 @@
       "failed": "The storage command {command} failed (exit code {exitCode}). Nothing after it was run; the log has the details."
     },
     "dataset": {
+      "compression_invalid": "Pithyx does not set the compression {compression}. Choose off, lz4, zle, zstd (levels 1 to 19) or gzip (levels 1 to 9).",
       "exists": "A dataset named {name} exists already.",
-      "name_invalid": "Dataset names use letters, digits, ., - and _, start with a letter or digit and have up to 64 characters."
+      "in_use_by_share": "The share {share} has its folder in {dataset}. Delete the share on the shared folders page first; there you choose what happens to its data.",
+      "limit_invalid": "{property, select, quota {The quota} other {The reservation}} cannot be negative. Use 0 for none.",
+      "managed": "Pithyx finds {dataset} by its name (a home folder, an app or system data), so it cannot be renamed or deleted here.",
+      "name_invalid": "Dataset names use letters, digits, ., - and _, start with a letter or digit and have up to 64 characters.",
+      "name_mismatch": "Type the full dataset name {name} exactly to confirm.",
+      "not_found": "There is no dataset named {dataset}. Reload the page.",
+      "property_unsupported": "{dataset} does not take the setting {property}. Volumes take only compression, record size is for file systems only, and the datasets of the Pithyx layout take only compression.",
+      "protected": "{dataset} is the pool root or part of the Pithyx layout. Pithyx does not rename, delete or limit it.",
+      "quota_below_used": "The quota must be at least the space the dataset uses now, snapshots and child datasets included.",
+      "record_size_invalid": "The record size must be a power of two from 4 KiB to 1 MiB.",
+      "reservation_too_large": "The pool cannot reserve that much for this dataset now. Choose a smaller reservation.",
+      "unchanged": "Nothing to change: {dataset} has these settings already."
     },
     "disk": {
       "not_found": "The disk is no longer there. Reload the list and choose again.",
@@ -196,7 +208,8 @@
       "name_invalid": "Pool names start with a lowercase letter and use up to 32 lowercase letters, digits, - and _. Names like mirror or raidz are reserved.",
       "name_mismatch": "Type the pool name {name} exactly to confirm.",
       "name_taken": "A pool named {name} exists already.",
-      "not_found": "There is no pool named {name}."
+      "not_found": "There is no pool named {name}.",
+      "not_prepared": "Pithyx did not set up the pool {pool} (it has no pithyx dataset), so it creates nothing on it."
     },
     "schedule": {
       "invalid": "This schedule cannot be set. Choose Off, Weekly or Monthly for an existing pool."
@@ -217,6 +230,10 @@
     },
     "vdev": {
       "not_found": "The pool has no such device (any more). Reload and choose again."
+    },
+    "volume": {
+      "size_invalid": "A volume needs a size of at least 1 MiB.",
+      "too_large": "The volume does not fit the free space of the pool. Make it smaller or create it as a sparse volume."
     }
   },
   "system": {

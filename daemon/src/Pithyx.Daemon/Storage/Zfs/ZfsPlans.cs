@@ -158,6 +158,9 @@ public static partial class ZfsPlans
         }
     }
 
+    /// <summary>One component of a dataset name that Pithyx creates or renames to.</summary>
+    public static bool IsDatasetName(string name) => name is not null && DatasetName().IsMatch(name);
+
     private static string StablePath(BlockDevice device) => device.IdLink is { } link ? $"/dev/disk/by-id/{link}" : device.Path;
 
     [GeneratedRegex("^[a-z][a-z0-9_-]{0,31}$")]

@@ -3353,8 +3353,20 @@
           "request.route.not_found",
           "storage.alert.not_found",
           "storage.command.failed",
+          "storage.dataset.compression_invalid",
           "storage.dataset.exists",
+          "storage.dataset.in_use_by_share",
+          "storage.dataset.limit_invalid",
+          "storage.dataset.managed",
           "storage.dataset.name_invalid",
+          "storage.dataset.name_mismatch",
+          "storage.dataset.not_found",
+          "storage.dataset.property_unsupported",
+          "storage.dataset.protected",
+          "storage.dataset.quota_below_used",
+          "storage.dataset.record_size_invalid",
+          "storage.dataset.reservation_too_large",
+          "storage.dataset.unchanged",
           "storage.disk.not_found",
           "storage.disk.refused",
           "storage.encryption.unavailable",
@@ -3369,6 +3381,7 @@
           "storage.pool.name_mismatch",
           "storage.pool.name_taken",
           "storage.pool.not_found",
+          "storage.pool.not_prepared",
           "storage.schedule.invalid",
           "storage.scrub.not_running",
           "storage.scrub.running",
@@ -3381,6 +3394,8 @@
           "storage.snapshot.not_pithyx",
           "storage.snapshot.schedule_invalid",
           "storage.vdev.not_found",
+          "storage.volume.size_invalid",
+          "storage.volume.too_large",
           "system.internal.unexpected",
           "system.origin.forbidden"
         ],
@@ -5042,7 +5057,7 @@
             "items": {
               "type": "string"
             },
-            "description": "For destroying a pool: every dataset that goes with it."
+            "description": "For destroying a pool: every dataset that goes with it. For destroying a dataset: the dataset, its children and\nevery snapshot of them (`dataset@snapshot`), each dataset followed by its snapshots. For renaming a dataset:\nthe dataset and its children, whose names change."
           },
           "expiresAt": {
             "type": "string",
@@ -5061,7 +5076,7 @@
         "properties": {
           "action": {
             "type": "string",
-            "description": "`pool.create`, `pool.destroy`, `pool.replace`, `pool.spare.add`, `pool.spare.remove`, `pool.offline`, `pool.online` or `dataset.create`."
+            "description": "`pool.create`, `pool.destroy`, `pool.replace`, `pool.spare.add`, `pool.spare.remove`, `pool.offline`, `pool.online`, `dataset.create`, `dataset.rename`, `dataset.set`, `dataset.destroy` or `volume.create`."
           },
           "pool": {
             "type": "string",
@@ -5089,7 +5104,7 @@
               "null",
               "string"
             ],
-            "description": "Name of a new share dataset."
+            "description": "Name of a new share dataset or volume (one path component)."
           },
           "vdev": {
             "type": [
@@ -5110,7 +5125,7 @@
               "null",
               "string"
             ],
-            "description": "The pool's name, typed by the user, to destroy it."
+            "description": "The pool's name, or the dataset's full name, typed by the user to destroy it."
           },
           "confirmations": {
             "type": [
@@ -5121,9 +5136,69 @@
               "type": "string"
             },
             "description": "Serial numbers the user typed, by disk id."
+          },
+          "dataset": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Full name of the dataset or volume to rename, change or destroy, on Pool."
+          },
+          "newName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The new last component of a renamed dataset; it stays below the same parent."
+          },
+          "quotaBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "New quota in bytes (dataset, children and snapshots), 0 for none; null leaves it.",
+            "format": "int64"
+          },
+          "reservationBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "New reservation in bytes (dataset, children and snapshots), 0 for none; null leaves it.",
+            "format": "int64"
+          },
+          "compression": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "New compression: `off`, `lz4`, `zle`, `zstd`, `zstd-1` to `zstd-19`, `gzip`, `gzip-1` to `gzip-9`; null leaves it."
+          },
+          "recordSizeBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "New record size of a file system, a power of two from 4 KiB to 1 MiB; null leaves it.",
+            "format": "int64"
+          },
+          "sizeBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Size of a new volume, at least 1 MiB; rounded up to whole 16 KiB blocks.",
+            "format": "int64"
+          },
+          "sparse": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "True for a volume that reserves no space up front."
           }
         },
-        "description": "A destructive storage action to plan. Which fields an action needs: `pool.create` Pool, Layout, DiskIds,\nEncryption (and Confirmations for disks that are not empty); `pool.destroy` Pool and ConfirmName;\n`pool.replace` Pool, Vdev and one disk in DiskIds with its serial in Confirmations; `pool.spare.add` Pool\nand one disk; `pool.spare.remove`, `pool.offline` and `pool.online` Pool and Vdev."
+        "description": "A destructive storage action to plan. Which fields an action needs: `pool.create` Pool, Layout, DiskIds,\nEncryption (and Confirmations for disks that are not empty); `pool.destroy` Pool and ConfirmName;\n`pool.replace` Pool, Vdev and one disk in DiskIds with its serial in Confirmations; `pool.spare.add` Pool\nand one disk; `pool.spare.remove`, `pool.offline` and `pool.online` Pool and Vdev;\n`dataset.rename` Pool, Dataset and NewName; `dataset.set` Pool, Dataset and at least one of QuotaBytes,\nReservationBytes, Compression and RecordSizeBytes; `dataset.destroy` Pool, Dataset and ConfirmName;\n`volume.create` Pool, Name, SizeBytes and Sparse."
       },
       "StorageSchedule": {
         "required": [

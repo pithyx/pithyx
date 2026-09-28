@@ -170,6 +170,39 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
             new { path = Canonical(path), now });
     }
 
+    /// <summary>Every share's name and folder, for the storage planner's checks. Not for callers with a user.</summary>
+    public async Task<IReadOnlyList<(string Name, string Path)>> ListPathsAsync(CancellationToken cancellationToken)
+    {
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        return [.. await connection.QueryAsync<(string Name, string Path)>("SELECT name, path FROM shares ORDER BY name")];
+    }
+
+    /// <summary>
+    /// After a dataset was renamed: every share whose folder is <paramref name="oldRoot"/> or below it moves to the same
+    /// place below <paramref name="newRoot"/>. Returns how many moved.
+    /// </summary>
+    public async Task<int> MovePathsAsync(string oldRoot, string newRoot, CancellationToken cancellationToken)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(oldRoot);
+        ArgumentException.ThrowIfNullOrEmpty(newRoot);
+        oldRoot = oldRoot.TrimEnd('/');
+        newRoot = newRoot.TrimEnd('/');
+        if (oldRoot.Length == 0 || newRoot.Length == 0 || oldRoot == newRoot)
+        {
+            return 0;
+        }
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        // substr instead of LIKE, so _ and % in folder names are not patterns.
+        var moved = await connection.ExecuteAsync(
+            """
+            UPDATE shares SET path = @newRoot || substr(path, length(@oldRoot) + 1), updated_at = @now
+            WHERE path = @oldRoot OR substr(path, 1, length(@oldRoot) + 1) = @oldRoot || '/'
+            """,
+            new { oldRoot, newRoot, now = SessionService.Format(time.GetUtcNow()) });
+        _readChecks.Clear();
+        return moved;
+    }
+
     /// <summary>Names users see: letters, digits, spaces, dots, dashes and underscores, not starting with a dot.</summary>
     public static string CheckName(string? name)
     {

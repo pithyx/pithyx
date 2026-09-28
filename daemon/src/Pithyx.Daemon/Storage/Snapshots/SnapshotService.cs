@@ -239,6 +239,39 @@ public sealed partial class SnapshotService : IDisposable
         return [.. rows.Select(row => (row.Dataset, row.Kind, (int)row.Keep))];
     }
 
+    /// <summary>After a rename: the schedules of the dataset and its children follow their new names.</summary>
+    public async Task MoveSchedulesAsync(string oldName, string newName, CancellationToken cancellationToken)
+    {
+        await using (var connection = await _connections.OpenAsync(cancellationToken))
+        {
+            await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+            // Rows left by a dataset of the new name that was destroyed outside Pithyx would collide.
+            await connection.ExecuteAsync(
+                "DELETE FROM snapshot_schedules WHERE dataset = @newName OR substr(dataset, 1, length(@newName) + 1) = @newName || '/'",
+                new { newName },
+                transaction);
+            await connection.ExecuteAsync(
+                """
+                UPDATE snapshot_schedules SET dataset = @newName || substr(dataset, length(@oldName) + 1)
+                WHERE dataset = @oldName OR substr(dataset, 1, length(@oldName) + 1) = @oldName || '/'
+                """,
+                new { oldName, newName },
+                transaction);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        SchedulesChanged?.Invoke();
+    }
+
+    /// <summary>After a destroy: a new dataset of the same name starts without the old schedules.</summary>
+    public async Task ForgetSchedulesAsync(IReadOnlyCollection<string> datasets, CancellationToken cancellationToken)
+    {
+        await using (var connection = await _connections.OpenAsync(cancellationToken))
+        {
+            await connection.ExecuteAsync("DELETE FROM snapshot_schedules WHERE dataset IN @datasets", new { datasets });
+        }
+        SchedulesChanged?.Invoke();
+    }
+
     public bool HasDataset(string dataset) => _pools.Current.Datasets.Any(candidate => candidate.Name == dataset);
 
     private void RequireDataset(string dataset)

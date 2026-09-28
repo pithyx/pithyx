@@ -59,6 +59,7 @@ builder.Services.AddSingleton(services => services.GetRequiredService<PoolInvent
 builder.Services.AddSingleton<IStorageBackend, ZfsBackend>();
 builder.Services.AddSingleton<DiskProbe>();
 builder.Services.AddSingleton<StorageFacts>();
+builder.Services.AddSingleton<DatasetPlanner>();
 builder.Services.AddSingleton<StoragePlanner>();
 builder.Services.AddSingleton<CommandPlanStore>();
 builder.Services.AddSingleton<CommandPlanRunner>();

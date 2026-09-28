@@ -1,0 +1,13 @@
+{
+  "command": "zfs",
+  "args": [
+    "list",
+    "-j",
+    "--json-int",
+    "-t",
+    "filesystem,volume",
+    "-o",
+    "name,type,used,available,referenced,mountpoint,mounted,encryption,keystatus,encryptionroot,quota,reservation,compression,recordsize,volsize,volblocksize,usedbysnapshots"
+  ],
+  "exitCode": 0
+}
