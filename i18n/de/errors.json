@@ -209,7 +209,9 @@
       "name_mismatch": "Gib zur Bestätigung genau den Pool-Namen {name} ein.",
       "name_taken": "Es gibt schon einen Pool namens {name}.",
       "not_found": "Es gibt keinen Pool namens {name}.",
-      "not_prepared": "Pithyx hat den Pool {pool} nicht eingerichtet (er hat kein pithyx-Dataset), deshalb legt es darauf nichts an."
+      "not_prepared": "Pithyx hat den Pool {pool} nicht eingerichtet (er hat kein pithyx-Dataset), deshalb legt es darauf nichts an.",
+      "expanding": "Der Pool {name} wird schon erweitert. Die nächste Platte kannst du hinzufügen, wenn das fertig ist.",
+      "read_only": "Der Pool {name} ist schreibgeschützt importiert und lässt sich nicht ändern. Importiere ihn zuerst zur Nutzung."
     },
     "schedule": {
       "invalid": "Dieser Zeitplan lässt sich nicht setzen. Wähle Aus, Wöchentlich oder Monatlich für einen vorhandenen Pool."
@@ -229,11 +231,19 @@
       "schedule_invalid": "Jeder Zeitplan ist stündlich, täglich, wöchentlich oder monatlich, jeweils einmal, und behält zwischen 1 und {max} Snapshots."
     },
     "vdev": {
-      "not_found": "Der Pool hat dieses Gerät nicht (mehr). Lade neu und wähle noch einmal."
+      "not_found": "Der Pool hat dieses Gerät nicht (mehr). Lade neu und wähle noch einmal.",
+      "not_raidz": "Nur eine RAID-Z-Gruppe lässt sich um eine Platte erweitern; {vdev} ist keine."
     },
     "volume": {
       "size_invalid": "Ein Volume braucht mindestens 1 MiB.",
       "too_large": "Das Volume passt nicht in den freien Platz des Pools. Mach es kleiner oder leg es als Sparse-Volume an."
+    },
+    "import": {
+      "device_unknown": "Das Gerät {device} dieses Pools liegt auf keiner Platte, die Pithyx kennt, deshalb kann Pithyx es nicht prüfen. Es wurde nichts importiert.",
+      "force_required": "Der Pool {name} wurde zuletzt von einem anderen System benutzt. Importiere ihn nur, wenn dieses System ihn nicht mehr benutzt: Wähle den erzwungenen Import und gib den Pool-Namen ein.",
+      "not_found": "Dieser Pool ist auf den Platten nicht mehr zu finden. Such noch einmal.",
+      "not_importable": "Der Pool {name} lässt sich nicht importieren ({state}). Schließ die fehlenden Platten an und such noch einmal.",
+      "preview_required": "Importiere den Pool {name} zuerst schreibgeschützt und prüf seine Datasets, dann importiere ihn zur Nutzung."
     }
   },
   "system": {

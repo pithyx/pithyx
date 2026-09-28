@@ -36,7 +36,8 @@ public sealed class ZfsBackend(ICommandRunner commands) : IStorageBackend
                 size?.ReadOnly ?? false,
                 pool.DataErrors,
                 pool.Scan,
-                pool.Vdevs);
+                pool.Vdevs,
+                pool.Expansion);
         });
         return new PoolList([.. pools], ZfsDatasetParser.ParseList(datasets));
     }

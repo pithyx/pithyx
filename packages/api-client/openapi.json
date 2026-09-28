@@ -1793,6 +1793,37 @@
         }
       }
     },
+    "/api/storage/import/scan": {
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Looks for pools on the disks that are not imported (zpool import, which reads every disk's labels and may wake a sleeping disk) and returns each with its layout and the disk guard's import verdict. Imports nothing; importing is the plan pool.import.readonly, then pool.import.",
+        "operationId": "ScanImportablePools",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportScan"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/storage/plans": {
       "post": {
         "tags": [
@@ -3370,18 +3401,25 @@
           "storage.disk.not_found",
           "storage.disk.refused",
           "storage.encryption.unavailable",
+          "storage.import.device_unknown",
+          "storage.import.force_required",
+          "storage.import.not_found",
+          "storage.import.not_importable",
+          "storage.import.preview_required",
           "storage.plan.action_invalid",
           "storage.plan.expired",
           "storage.plan.not_found",
           "storage.plan.stale",
           "storage.pool.disk_count",
           "storage.pool.encryption_required",
+          "storage.pool.expanding",
           "storage.pool.layout_invalid",
           "storage.pool.name_invalid",
           "storage.pool.name_mismatch",
           "storage.pool.name_taken",
           "storage.pool.not_found",
           "storage.pool.not_prepared",
+          "storage.pool.read_only",
           "storage.schedule.invalid",
           "storage.scrub.not_running",
           "storage.scrub.running",
@@ -3394,6 +3432,7 @@
           "storage.snapshot.not_pithyx",
           "storage.snapshot.schedule_invalid",
           "storage.vdev.not_found",
+          "storage.vdev.not_raidz",
           "storage.volume.size_invalid",
           "storage.volume.too_large",
           "system.internal.unexpected",
@@ -3830,7 +3869,7 @@
           },
           "reason": {
             "type": "string",
-            "description": "Why, as a stable code: `system_disk`, `read_only`, `mounted`, `pool_member`, `not_test_disk`,\n`duplicate_serial`, `no_serial`, `not_checked`, `has_data`, `confirmed` or `empty`."
+            "description": "Why, as a stable code: `system_disk`, `read_only`, `mounted`, `pool_member`, `not_test_disk`,\n`duplicate_serial`, `no_serial`, `not_checked`, `has_data`, `confirmed` or `empty`; when a\npool is imported, `importable` for an allowed disk."
           },
           "pool": {
             "type": [
@@ -3860,6 +3899,155 @@
           },
           "mode": {
             "$ref": "#/components/schemas/DaemonMode"
+          }
+        }
+      },
+      "ImportScan": {
+        "required": [
+          "pools"
+        ],
+        "type": "object",
+        "properties": {
+          "pools": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportablePool"
+            }
+          }
+        },
+        "description": "Response of `POST /api/storage/import/scan`: pools on the disks that are not imported. Nothing was imported."
+      },
+      "ImportVdev": {
+        "required": [
+          "name",
+          "state",
+          "detail",
+          "diskId",
+          "children"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Device or vdev name as `zpool import` prints it: `raidz1-0`, a by-id name, a path or, for a missing device, its GUID."
+          },
+          "state": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "ZFS state, for example `ONLINE` or `UNAVAIL`; null for the `logs`, `cache`, `spares`,\n`special` and `dedup` group headings, and for cache and spare devices, which an import lists without one."
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "What ZFS adds after the state, for example `cannot open` or `insufficient replicas`."
+          },
+          "diskId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The disk this device is on, if it is one the daemon knows."
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportVdev"
+            },
+            "description": "Child vdevs."
+          }
+        }
+      },
+      "ImportablePool": {
+        "required": [
+          "name",
+          "poolGuid",
+          "state",
+          "status",
+          "action",
+          "messageId",
+          "canImport",
+          "needsForce",
+          "nameTaken",
+          "vdevs",
+          "disks",
+          "unknownDevices",
+          "allowed"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The pool's name as stored on its disks."
+          },
+          "poolGuid": {
+            "type": "string",
+            "description": "The numeric identifier as decimal text; `pool.import.readonly` takes it as `poolGuid`."
+          },
+          "state": {
+            "type": "string",
+            "description": "ZFS state as it would be imported: `ONLINE`, `DEGRADED`, `UNAVAIL` or `FAULTED`."
+          },
+          "status": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "What ZFS says is wrong, in English, if anything."
+          },
+          "action": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "What ZFS says can be done, in English."
+          },
+          "messageId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "ZFS message id, for example `ZFS-8000-2Q` (devices missing) or `ZFS-8000-EY` (last used by another system)."
+          },
+          "canImport": {
+            "type": "boolean",
+            "description": "True when ZFS can import the pool."
+          },
+          "needsForce": {
+            "type": "boolean",
+            "description": "True when it was last used by another system: importing needs `force` and the typed name."
+          },
+          "nameTaken": {
+            "type": "boolean",
+            "description": "True when an imported pool has this name: the import needs `newName`."
+          },
+          "vdevs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportVdev"
+            },
+            "description": "The pool's layout with each device's state and disk."
+          },
+          "disks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GuardVerdict"
+            },
+            "description": "The guard's import verdict for each disk the pool is on."
+          },
+          "unknownDevices": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Present devices that are on no disk the daemon knows; such a pool is not offered."
+          },
+          "allowed": {
+            "type": "boolean",
+            "description": "True when the pool can be imported: ZFS can, and every device is on a disk the guard allows."
           }
         }
       },
@@ -4289,8 +4477,75 @@
               "$ref": "#/components/schemas/Vdev"
             },
             "description": "Top-level vdevs, including log, cache, special and spare devices."
+          },
+          "expansion": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "The last or running RAID-Z expansion, if the pool had one.",
+                "$ref": "#/components/schemas/PoolExpansion"
+              }
+            ]
           }
         }
+      },
+      "PoolExpansion": {
+        "required": [
+          "state",
+          "vdevGuid",
+          "startedAt",
+          "endedAt",
+          "toReflowBytes",
+          "reflowedBytes",
+          "waitingForResilver"
+        ],
+        "type": "object",
+        "properties": {
+          "state": {
+            "type": "string",
+            "description": "`scanning` while it runs, then `finished` or `canceled`."
+          },
+          "vdevGuid": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "GUID of the raidz vdev that grows, if it is still in the pool."
+          },
+          "startedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When it started (UTC).",
+            "format": "date-time"
+          },
+          "endedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When it ended (UTC), if it did.",
+            "format": "date-time"
+          },
+          "toReflowBytes": {
+            "type": "integer",
+            "description": "Bytes to move onto the new layout.",
+            "format": "int64"
+          },
+          "reflowedBytes": {
+            "type": "integer",
+            "description": "Bytes moved so far.",
+            "format": "int64"
+          },
+          "waitingForResilver": {
+            "type": "boolean",
+            "description": "True while it waits for a resilver to finish."
+          }
+        },
+        "description": "A RAID-Z expansion (OpenZFS 2.3): a disk attached to a raidz vdev, onto which ZFS spreads the existing data."
       },
       "PoolList": {
         "required": [
@@ -5024,7 +5279,10 @@
           "disks",
           "commands",
           "datasets",
-          "expiresAt"
+          "expiresAt",
+          "warnings",
+          "requiresConfirmName",
+          "unmounted"
         ],
         "type": "object",
         "properties": {
@@ -5033,7 +5291,7 @@
               "null",
               "string"
             ],
-            "description": "Runs the plan exactly as shown with `POST /api/storage/plans/{planId}/run`; null while a disk is not allowed."
+            "description": "Runs the plan exactly as shown with `POST /api/storage/plans/{planId}/run`; null while a disk is not allowed, and\nwhile RequiresConfirmName is true and the name was not typed yet."
           },
           "disks": {
             "type": "array",
@@ -5057,12 +5315,30 @@
             "items": {
               "type": "string"
             },
-            "description": "For destroying a pool: every dataset that goes with it. For destroying a dataset: the dataset, its children and\nevery snapshot of them (`dataset@snapshot`), each dataset followed by its snapshots. For renaming a dataset:\nthe dataset and its children, whose names change."
+            "description": "For destroying or exporting a pool: every dataset that goes or becomes unavailable; for `pool.import`: the\ndatasets it mounts. For destroying a dataset: the dataset, its children and every snapshot of them\n(`dataset@snapshot`), each dataset followed by its snapshots. For renaming a dataset: the dataset and its\nchildren, whose names change."
           },
           "expiresAt": {
             "type": "string",
             "description": "Until when the plan may run.",
             "format": "date-time"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Stable codes for what the user must know before running it: `lowers_redundancy`, `replication_mismatch`,\n`irreversible` and `no_redundancy` (adding a vdev: it tolerates fewer failed disks than the pool, it has a\nlayout ZFS calls a replication mismatch, it can never be removed, it has no redundancy), `irreversible` (RAID-Z\nexpansion), `other_system` (an import forced over another system's claim), `degraded` (the pool is imported\nwith devices missing), `unmounted_datasets` (Unmounted stay unmounted) and\n`datasets_unavailable` (exporting a pool with datasets in use)."
+          },
+          "requiresConfirmName": {
+            "type": "boolean",
+            "description": "True when the plan runs only with the pool's name typed in `confirmName`."
+          },
+          "unmounted": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnmountedDataset"
+            },
+            "description": "For `pool.import`: datasets that stay unmounted, and why; those that would hide part of the system also get `canmount=noauto`."
           }
         },
         "description": "Response of `POST /api/storage/plans`. Nothing was run."
@@ -5076,11 +5352,11 @@
         "properties": {
           "action": {
             "type": "string",
-            "description": "`pool.create`, `pool.destroy`, `pool.replace`, `pool.spare.add`, `pool.spare.remove`, `pool.offline`, `pool.online`, `dataset.create`, `dataset.rename`, `dataset.set`, `dataset.destroy` or `volume.create`."
+            "description": "`pool.create`, `pool.destroy`, `pool.replace`, `pool.spare.add`, `pool.spare.remove`, `pool.offline`, `pool.online`, `pool.import.readonly`, `pool.import`, `pool.export`, `pool.vdev.add`, `pool.raidz.expand`, `dataset.create`, `dataset.rename`, `dataset.set`, `dataset.destroy` or `volume.create`."
           },
           "pool": {
             "type": "string",
-            "description": "The pool, or the new pool's name."
+            "description": "The pool, or the new pool's name; for `pool.import.readonly` the scanned name (the GUID decides)."
           },
           "layout": {
             "type": [
@@ -5111,7 +5387,7 @@
               "null",
               "string"
             ],
-            "description": "GUID of the device to replace, take offline, bring online or remove."
+            "description": "GUID of the device to replace, take offline, bring online or remove, or of the raidz vdev to expand."
           },
           "encryption": {
             "type": [
@@ -5125,7 +5401,7 @@
               "null",
               "string"
             ],
-            "description": "The pool's name, or the dataset's full name, typed by the user to destroy it."
+            "description": "The pool's name, or the dataset's full name, typed by the user where the preview says `requiresConfirmName` and to destroy."
           },
           "confirmations": {
             "type": [
@@ -5149,7 +5425,7 @@
               "null",
               "string"
             ],
-            "description": "The new last component of a renamed dataset; it stays below the same parent."
+            "description": "The new last component of a renamed dataset (it stays below the same parent), or for `pool.import.readonly` the name to import the pool under when its own is taken."
           },
           "quotaBytes": {
             "type": [
@@ -5196,9 +5472,23 @@
               "boolean"
             ],
             "description": "True for a volume that reserves no space up front."
+          },
+          "poolGuid": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "For `pool.import.readonly`: the pool's numeric identifier from the import scan."
+          },
+          "force": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "For imports: import a pool that was last used by another system; needs ConfirmName."
           }
         },
-        "description": "A destructive storage action to plan. Which fields an action needs: `pool.create` Pool, Layout, DiskIds,\nEncryption (and Confirmations for disks that are not empty); `pool.destroy` Pool and ConfirmName;\n`pool.replace` Pool, Vdev and one disk in DiskIds with its serial in Confirmations; `pool.spare.add` Pool\nand one disk; `pool.spare.remove`, `pool.offline` and `pool.online` Pool and Vdev;\n`dataset.rename` Pool, Dataset and NewName; `dataset.set` Pool, Dataset and at least one of QuotaBytes,\nReservationBytes, Compression and RecordSizeBytes; `dataset.destroy` Pool, Dataset and ConfirmName;\n`volume.create` Pool, Name, SizeBytes and Sparse."
+        "description": "A destructive storage action to plan. Which fields an action needs: `pool.create` Pool, Layout, DiskIds,\nEncryption (and Confirmations for disks that are not empty); `pool.destroy` Pool and ConfirmName;\n`pool.replace` Pool, Vdev and one disk in DiskIds with its serial in Confirmations; `pool.spare.add` Pool\nand one disk; `pool.spare.remove`, `pool.offline` and `pool.online` Pool and Vdev;\n`pool.import.readonly` PoolGuid from the import scan, NewName when the name is taken, and Force with the pool\nname in ConfirmName when the scan says `needsForce`; `pool.import` Pool (imported read-only), and Force with\nConfirmName to force it; `pool.export` Pool; `pool.vdev.add` Pool, Layout (`single`, `mirror`,\n`raidz1` to `raidz3`), DiskIds, Confirmations, and ConfirmName when the preview says so;\n`pool.raidz.expand` Pool, Vdev (the raidz vdev), one disk and ConfirmName;\n`dataset.rename` Pool, Dataset and NewName; `dataset.set` Pool, Dataset and at least one of QuotaBytes,\nReservationBytes, Compression and RecordSizeBytes; `dataset.destroy` Pool, Dataset and ConfirmName;\n`volume.create` Pool, Name, SizeBytes and Sparse."
       },
       "StorageSchedule": {
         "required": [
@@ -5577,6 +5867,28 @@
             "type": "integer",
             "description": "0 to 3650; 0 keeps deleted items until the bin is emptied.",
             "format": "int32"
+          }
+        }
+      },
+      "UnmountedDataset": {
+        "required": [
+          "name",
+          "mountPoint",
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The dataset."
+          },
+          "mountPoint": {
+            "type": "string",
+            "description": "Its mount point."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why it stays unmounted: `system_path` (`/` or at or below a system directory), `shadows_mount` (it\nwould hide something mounted there or below), `duplicate_mountpoint` (another dataset of the pool mounts there\nfirst) or `key_unavailable` (encrypted and locked)."
           }
         }
       },

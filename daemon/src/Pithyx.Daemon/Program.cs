@@ -60,6 +60,7 @@ builder.Services.AddSingleton<IStorageBackend, ZfsBackend>();
 builder.Services.AddSingleton<DiskProbe>();
 builder.Services.AddSingleton<StorageFacts>();
 builder.Services.AddSingleton<DatasetPlanner>();
+builder.Services.AddSingleton<PoolImportScanner>();
 builder.Services.AddSingleton<StoragePlanner>();
 builder.Services.AddSingleton<CommandPlanStore>();
 builder.Services.AddSingleton<CommandPlanRunner>();

@@ -272,6 +272,26 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string StorageEncryptionUnavailable = "storage.encryption.unavailable";
 
+    /// <summary>A device of the pool is on no disk the daemon knows, so the disk guard cannot check it; <c>params.device</c> names it.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StorageImportDeviceUnknown = "storage.import.device_unknown";
+
+    /// <summary>The pool was last used by another system: importing it needs <c>force</c> and its name typed; <c>params.name</c> is the name.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StorageImportForceRequired = "storage.import.force_required";
+
+    /// <summary>A new scan does not find the pool (any more); <c>params.pool</c> is the id sent.</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string StorageImportNotFound = "storage.import.not_found";
+
+    /// <summary>ZFS cannot import the pool, usually because too many devices are missing; <c>params.name</c> and <c>params.state</c> say which and how.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StorageImportNotImportable = "storage.import.not_importable";
+
+    /// <summary>A pool is imported read-write only after it was imported read-only and looked at; <c>params.name</c> is the pool.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StorageImportPreviewRequired = "storage.import.preview_required";
+
     /// <summary>Unknown plan action; <c>params.action</c> is the value sent.</summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string StoragePlanActionInvalid = "storage.plan.action_invalid";
@@ -296,6 +316,10 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string StoragePoolEncryptionRequired = "storage.pool.encryption_required";
 
+    /// <summary>A RAID-Z expansion of the pool is running; the next one can start when it is done. <c>params.name</c> is the pool.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StoragePoolExpanding = "storage.pool.expanding";
+
     /// <summary>Unknown pool layout; <c>params.layout</c> is the value sent.</summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string StoragePoolLayoutInvalid = "storage.pool.layout_invalid";
@@ -319,6 +343,10 @@ public static class ErrorCodes
     /// <summary>The pool has no <c>&lt;pool&gt;/pithyx</c> dataset (Pithyx did not create it, for example an imported pool), so Pithyx creates nothing on it; <c>params.pool</c> is its name.</summary>
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string StoragePoolNotPrepared = "storage.pool.not_prepared";
+
+    /// <summary>The pool is imported read-only and cannot be changed; import it read-write first. <c>params.name</c> is the pool.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StoragePoolReadOnly = "storage.pool.read_only";
 
     /// <summary>Unknown schedule kind or frequency, or a scrub schedule for a pool that does not exist; <c>params.kind</c> and <c>params.frequency</c> are the values sent.</summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
@@ -375,6 +403,10 @@ public static class ErrorCodes
     /// <summary>A volume that is not sparse must fit the free space; <c>params.availableBytes</c> is what the pool has.</summary>
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string StorageVolumeTooLarge = "storage.volume.too_large";
+
+    /// <summary>Only a raidz vdev can be expanded by a disk; <c>params.vdev</c> is the vdev's name.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string StorageVdevNotRaidz = "storage.vdev.not_raidz";
 
     [ErrorStatus(HttpStatusCode.InternalServerError)]
     public const string SystemInternalUnexpected = "system.internal.unexpected";

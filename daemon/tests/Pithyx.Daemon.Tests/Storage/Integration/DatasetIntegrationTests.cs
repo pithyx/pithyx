@@ -46,7 +46,7 @@ public sealed class DatasetIntegrationTests
             _state = new SystemStateService(vdevs.Commands, disks, Pools, new ZfsBackend(vdevs.Commands), new DiskProbe(vdevs.Commands), facts, hub, TimeProvider.System, NullLogger<SystemStateService>.Instance);
             Snapshots = new SnapshotService(vdevs.Commands, SnapshotList, Pools, Connections, TimeProvider.System, NullLogger<SnapshotService>.Instance);
             var datasets = new DatasetPlanner(_state, Pools, SnapshotList, Snapshots, new ShareService(Connections, TimeProvider.System), TimeProvider.System, NullLogger<DatasetPlanner>.Instance);
-            _planner = new StoragePlanner(_state, facts, Pools, datasets, TimeProvider.System);
+            _planner = new StoragePlanner(_state, facts, Pools, new PoolImportScanner(vdevs.Commands, _state, facts, Pools), datasets, vdevs.Commands, TimeProvider.System);
             _runner = new CommandPlanRunner(vdevs.Commands, _state, facts, TimeProvider.System);
         }
 

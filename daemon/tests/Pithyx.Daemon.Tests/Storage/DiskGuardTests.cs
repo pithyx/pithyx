@@ -102,6 +102,41 @@ public sealed class DiskGuardTests
 
     private static (GuardDecision, string) Decision(GuardVerdict verdict) => (verdict.Decision, verdict.Reason);
 
+    [Fact]
+    public void AnImportExpectsLabelsButKeepsTheSystemDevAndPoolRules()
+    {
+        var system = Disk("sda", "drive-scsi0", _blank, Device("sda3", "8:3", fileSystem: "ext4", mountPoints: ["/"]));
+        var labelled = Disk("sdb", "VYXTEST01", new DiskSignatures(["gpt"]), Device("sdb1", "8:17", fileSystem: "zfs_member"), Device("sdb9", "8:25"));
+        var unprobed = Disk("sdc", "VYXTEST02", null, Device("sdc1", "8:33", fileSystem: "zfs_member"));
+        var member = Disk("sdd", "VYXTEST03", null, Device("sdd1", "8:49", fileSystem: "zfs_member"));
+        var foreign = Disk("sde", "VYXTEST06", new DiskSignatures(["gpt"]), Device("sde1", "8:65", fileSystem: "zfs_member"));
+        var facts = Facts(_dev, [system, labelled, unprobed, member, foreign], poolMembers: new() { ["/dev/disk/by-id/id-sdd1"] = "old" });
+
+        var verdicts = DiskGuard.EvaluateImport(facts, null).ToDictionary(verdict => verdict.DiskId, Decision);
+
+        Assert.Equal((GuardDecision.Refused, "system_disk"), verdicts["id-sda"]);
+        Assert.Equal((GuardDecision.Allowed, "importable"), verdicts["id-sdb"]);
+        Assert.Equal((GuardDecision.Allowed, "importable"), verdicts["id-sdc"]);
+        Assert.Equal((GuardDecision.Refused, "pool_member"), verdicts["id-sdd"]);
+        Assert.Equal((GuardDecision.Refused, "not_test_disk"), verdicts["id-sde"]);
+        // The pool's own disks, while it is imported read-only and exported and imported again.
+        Assert.Equal((GuardDecision.Allowed, "importable"), Decision(DiskGuard.EvaluateImport(facts, "old").Single(verdict => verdict.DiskId == "id-sdd")));
+        Assert.Equal((GuardDecision.Refused, "pool_member"), Decision(DiskGuard.EvaluateImport(facts, "other").Single(verdict => verdict.DiskId == "id-sdd")));
+    }
+
+    [Fact]
+    public void AnImportedPoolsDiskStaysRefusedOnDevUnlessItIsATestDiskAndItsSerialIsUnique()
+    {
+        var facts = Facts(
+            _dev,
+            [Disk("sdb", "OTHER", null, Device("sdb1", "8:17")), Disk("sdc", "VYXTEST02", null, Device("sdc1", "8:33")), Disk("sdd", "VYXTEST02", null, Device("sdd1", "8:49"))],
+            poolMembers: new() { ["/dev/disk/by-id/id-sdb1"] = "old", ["/dev/disk/by-id/id-sdc1"] = "old", ["/dev/disk/by-id/id-sdd1"] = "old" });
+
+        Assert.Equal(
+            [(GuardDecision.Refused, "not_test_disk"), (GuardDecision.Refused, "duplicate_serial"), (GuardDecision.Refused, "duplicate_serial")],
+            DiskGuard.EvaluateImport(facts, "old").Select(Decision));
+    }
+
     /// <summary>
     /// Generated disk trees: the system disk anywhere (partition, LVM, crypt, md, swap, root on ZFS), partitions and
     /// signatures of every kind, pool members, missing and duplicate serials, dev and prod, right and wrong confirmations.
@@ -171,6 +206,17 @@ public sealed class DiskGuardTests
                 .ToDictionary(disk => disk.Disk.Id, disk => random.Next(3) == 0 ? "wrong" : disk.Disk.Serial ?? "none");
             var facts = new GuardFacts(environment, disks, mounts, [], poolMembers);
 
+            var importing = random.Next(2) == 0 ? null : "tank";
+            foreach (var verdict in DiskGuard.EvaluateImport(facts, importing).Where(verdict => verdict.Decision == GuardDecision.Allowed))
+            {
+                var disk = disks.Single(candidate => candidate.Disk.Id == verdict.DiskId);
+                var devices = disk.Device.SelfAndDescendants().ToList();
+                var context = $"run {run}, import {verdict.DiskId}";
+                Assert.NotEqual(systemIndex, disks.IndexOf(disk));
+                Assert.True(environment.Kind != DeploymentKind.Dev || (disk.Disk.Serial is not null && environment.TestDiskSerials.Contains(disk.Disk.Serial)), context);
+                Assert.DoesNotContain(devices, device => device.MountPoints.Count > 0 || poolMembers.Any(entry => entry.Value != importing && device.IsNamed(entry.Key)));
+                Assert.True(disk.Disk.Serial is null || disks.Count(other => other.Disk.Serial == disk.Disk.Serial) == 1, context);
+            }
             foreach (var verdict in DiskGuard.Evaluate(facts, confirmations))
             {
                 var disk = disks.Single(candidate => candidate.Disk.Id == verdict.DiskId);

@@ -4,12 +4,13 @@ using Pithyx.Daemon.Tests.Support;
 namespace Pithyx.Daemon.Tests.Storage;
 
 /// <summary>
-/// Pools are never imported, never forced and never changed outside a command plan. The daemon's source may name
-/// destructive storage commands only in the plan builders.
+/// Pools are imported only by the import plans, never all at once, never destroyed ones, and changed only through a
+/// command plan. The daemon's source may name destructive storage commands only in the plan builders.
 /// </summary>
 public sealed partial class CommandSafetyTests
 {
-    private static readonly string[] _planBuilders = ["Storage/Zfs/ZfsPlans.cs", "Storage/Zfs/ZfsDatasetPlans.cs", "Storage/Zfs/SnapshotPlans.cs"];
+    private const string ImportPlans = "Storage/Zfs/ImportPlans.cs";
+    private static readonly string[] _planBuilders = ["Storage/Zfs/ZfsPlans.cs", "Storage/Zfs/ZfsDatasetPlans.cs", "Storage/Zfs/SnapshotPlans.cs", ImportPlans];
 
     private static IEnumerable<(string File, string Text)> DaemonSources()
     {
@@ -20,12 +21,24 @@ public sealed partial class CommandSafetyTests
     }
 
     [Fact]
-    public void NoSourceImportsAPool()
+    public void OnlyTheImportPlansImportAPool()
     {
-        foreach (var (file, text) in DaemonSources())
+        foreach (var (file, text) in DaemonSources().Where(source => source.File != ImportPlans))
         {
             Assert.False(ImportArgument().IsMatch(text), $"{file} names zpool import");
         }
+    }
+
+    [Fact]
+    public void ImportsNeverTakeEveryPoolOrDestroyedOnesAndForceOnlyWithATypedName()
+    {
+        var text = DaemonSources().Single(source => source.File == ImportPlans).Text;
+
+        Assert.DoesNotContain("\"-a\"", text, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"-D\"", text, StringComparison.Ordinal);
+        // -f appears once, in the helper that needs the TypedName proof.
+        Assert.Single(ForceFlag().Matches(text));
+        Assert.Contains("private static string[] Force(TypedName? force) => force is null ? [] : [\"-f\"];", text, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -49,8 +62,12 @@ public sealed partial class CommandSafetyTests
         }
     }
 
-    [GeneratedRegex("\"import\"|zpool import")]
+    // A string argument "import", or a command line that starts with zpool import.
+    [GeneratedRegex("\"import\"|\"zpool import")]
     private static partial Regex ImportArgument();
+
+    [GeneratedRegex("\"-f\"")]
+    private static partial Regex ForceFlag();
 
     // A zpool or zfs command that changes a pool, or one with -f (only zpool events -f, which follows, is allowed);
     // and programs that write disks. Both new CommandRequest(...) and a target-typed new(...) count.

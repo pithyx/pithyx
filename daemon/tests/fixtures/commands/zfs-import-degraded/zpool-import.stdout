@@ -1,0 +1,14 @@
+  pool: pithyxtesti
+    id: 4276968466703172073
+ state: DEGRADED
+status: One or more devices are missing from the system.
+action: The pool can be imported despite missing or damaged devices.  The
+	fault tolerance of the pool may be compromised if imported.
+   see: https://openzfs.github.io/openzfs-docs/msg/ZFS-8000-2Q
+config:
+
+	pithyxtesti                   DEGRADED
+	  raidz1-0                          DEGRADED
+	    /tmp/pithyxci-fixture/vdev0.img  ONLINE
+	    /tmp/pithyxci-fixture/vdev1.img  ONLINE
+	    /tmp/pithyxci-fixture/vdev2.img  UNAVAIL  cannot open

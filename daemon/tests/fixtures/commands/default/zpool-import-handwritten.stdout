@@ -1,0 +1,20 @@
+  pool: oldtank
+    id: 5249471309174385122
+ state: ONLINE
+action: The pool can be imported using its name or numeric identifier.
+config:
+
+	oldtank                                 ONLINE
+	  scsi-0QEMU_QEMU_HARDDISK_drive-scsi1  ONLINE
+
+  pool: archive
+    id: 7733120945871106301
+ state: UNAVAIL
+status: One or more devices are missing from the system.
+action: The pool cannot be imported. Attach the missing
+	devices and try again.
+   see: https://openzfs.github.io/openzfs-docs/msg/ZFS-8000-3C
+config:
+
+	archive                 UNAVAIL  insufficient replicas
+	  16172453893125405211  UNAVAIL  cannot open

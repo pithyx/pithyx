@@ -48,7 +48,7 @@ public sealed class CommandPlanRunnerTests : IDisposable
             new ShareService(connections, _time),
             _time,
             NullLogger<DatasetPlanner>.Instance);
-        _planner = new StoragePlanner(_state, _facts, _pools, datasets, _time);
+        _planner = new StoragePlanner(_state, _facts, _pools, new PoolImportScanner(_commands, _state, _facts, _pools), datasets, _commands, _time);
         _runner = new CommandPlanRunner(_commands, _state, _facts, _time);
         _commands.Results["lsblk"] = Ok(Read("default", "lsblk"));
         _commands.Results["wipefs"] = Ok("");
@@ -76,7 +76,8 @@ public sealed class CommandPlanRunnerTests : IDisposable
         return plan!;
     }
 
-    private List<string> ZpoolCalls() => [.. _commands.Calls.Where(call => call.FileName == "zpool").Select(call => call.Arguments[0])];
+    /// <summary>zpool calls that change something; the runner reads the pools again after every plan.</summary>
+    private List<string> ZpoolCalls() => [.. _commands.Calls.Where(call => call.FileName == "zpool" && call.Arguments[0] is not ("status" or "list")).Select(call => call.Arguments[0])];
 
     [Fact]
     public async Task RunsThePlanAsShown()
@@ -86,7 +87,7 @@ public sealed class CommandPlanRunnerTests : IDisposable
 
         await _runner.RunAsync(plan, (index, _) => progress.Add(index), Token);
 
-        Assert.Equal(["create", "status", "list"], ZpoolCalls());
+        Assert.Equal(["create"], ZpoolCalls());
         Assert.Equal(["create", "create", "create", "create", "create", "list"], _commands.Calls.Where(call => call.FileName == "zfs").Select(call => call.Arguments[0]));
         Assert.Equal([0, 1, 2, 3, 4, 5], progress);
         // After the last command the state is read again, so the page and the bookkeeping see the new pool.

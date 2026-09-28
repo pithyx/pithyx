@@ -652,6 +652,23 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/storage/import/scan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Looks for pools on the disks that are not imported (zpool import, which reads every disk's labels and may wake a sleeping disk) and returns each with its layout and the disk guard's import verdict. Imports nothing; importing is the plan pool.import.readonly, then pool.import. */
+        post: operations["ScanImportablePools"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/storage/plans": {
         parameters: {
             query?: never;
@@ -1193,7 +1210,7 @@ export type components = {
             }[];
         };
         /** @enum {string} */
-        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.exists" | "fs.share.invalid" | "fs.share.not_found" | "fs.share.read_only" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.encryption_required" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.volume.size_invalid" | "storage.volume.too_large" | "system.internal.unexpected" | "system.origin.forbidden";
+        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.exists" | "fs.share.invalid" | "fs.share.not_found" | "fs.share.read_only" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "system.internal.unexpected" | "system.origin.forbidden";
         /** @description A failed client message. `id` is empty when the message could not be parsed. */
         ErrorMessage: {
             code: components["schemas"]["ErrorCode"];
@@ -1371,13 +1388,61 @@ export type components = {
             pool: null | string;
             /**
              * @description Why, as a stable code: `system_disk`, `read_only`, `mounted`, `pool_member`, `not_test_disk`,
-             *     `duplicate_serial`, `no_serial`, `not_checked`, `has_data`, `confirmed` or `empty`.
+             *     `duplicate_serial`, `no_serial`, `not_checked`, `has_data`, `confirmed` or `empty`; when a
+             *     pool is imported, `importable` for an allowed disk.
              */
             reason: string;
         };
         HealthResponse: {
             mode: components["schemas"]["DaemonMode"];
             status: string;
+        };
+        ImportablePool: {
+            /** @description What ZFS says can be done, in English. */
+            action: null | string;
+            /** @description True when the pool can be imported: ZFS can, and every device is on a disk the guard allows. */
+            allowed: boolean;
+            /** @description True when ZFS can import the pool. */
+            canImport: boolean;
+            /** @description The guard's import verdict for each disk the pool is on. */
+            disks: components["schemas"]["GuardVerdict"][];
+            /** @description ZFS message id, for example `ZFS-8000-2Q` (devices missing) or `ZFS-8000-EY` (last used by another system). */
+            messageId: null | string;
+            /** @description The pool's name as stored on its disks. */
+            name: string;
+            /** @description True when an imported pool has this name: the import needs `newName`. */
+            nameTaken: boolean;
+            /** @description True when it was last used by another system: importing needs `force` and the typed name. */
+            needsForce: boolean;
+            /** @description The numeric identifier as decimal text; `pool.import.readonly` takes it as `poolGuid`. */
+            poolGuid: string;
+            /** @description ZFS state as it would be imported: `ONLINE`, `DEGRADED`, `UNAVAIL` or `FAULTED`. */
+            state: string;
+            /** @description What ZFS says is wrong, in English, if anything. */
+            status: null | string;
+            /** @description Present devices that are on no disk the daemon knows; such a pool is not offered. */
+            unknownDevices: string[];
+            /** @description The pool's layout with each device's state and disk. */
+            vdevs: components["schemas"]["ImportVdev"][];
+        };
+        /** @description Response of `POST /api/storage/import/scan`: pools on the disks that are not imported. Nothing was imported. */
+        ImportScan: {
+            pools: components["schemas"]["ImportablePool"][];
+        };
+        ImportVdev: {
+            /** @description Child vdevs. */
+            children: components["schemas"]["ImportVdev"][];
+            /** @description What ZFS adds after the state, for example `cannot open` or `insufficient replicas`. */
+            detail: null | string;
+            /** @description The disk this device is on, if it is one the daemon knows. */
+            diskId: null | string;
+            /** @description Device or vdev name as `zpool import` prints it: `raidz1-0`, a by-id name, a path or, for a missing device, its GUID. */
+            name: string;
+            /**
+             * @description ZFS state, for example `ONLINE` or `UNAVAIL`; null for the `logs`, `cache`, `spares`,
+             *     `special` and `dedup` group headings, and for cache and spare devices, which an import lists without one.
+             */
+            state: null | string;
         };
         /** @description A long operation of a user, such as copying files. Also the data of the `jobs/{id}` topics. */
         Job: {
@@ -1529,6 +1594,7 @@ export type components = {
              * @description Number of files with permanent errors.
              */
             dataErrors: number;
+            expansion?: null | components["schemas"]["PoolExpansion"];
             /**
              * Format: int32
              * @description Free space fragmentation, if known.
@@ -1555,6 +1621,35 @@ export type components = {
             state: string;
             /** @description Top-level vdevs, including log, cache, special and spare devices. */
             vdevs: components["schemas"]["Vdev"][];
+        };
+        /** @description A RAID-Z expansion (OpenZFS 2.3): a disk attached to a raidz vdev, onto which ZFS spreads the existing data. */
+        PoolExpansion: {
+            /**
+             * Format: date-time
+             * @description When it ended (UTC), if it did.
+             */
+            endedAt: null | string;
+            /**
+             * Format: int64
+             * @description Bytes moved so far.
+             */
+            reflowedBytes: number;
+            /**
+             * Format: date-time
+             * @description When it started (UTC).
+             */
+            startedAt: null | string;
+            /** @description `scanning` while it runs, then `finished` or `canceled`. */
+            state: string;
+            /**
+             * Format: int64
+             * @description Bytes to move onto the new layout.
+             */
+            toReflowBytes: number;
+            /** @description GUID of the raidz vdev that grows, if it is still in the pool. */
+            vdevGuid: null | string;
+            /** @description True while it waits for a resilver to finish. */
+            waitingForResilver: boolean;
         };
         /** @description Snapshot and event of `storage/pools`, and response of `GET /api/storage/pools`. */
         PoolList: {
@@ -1858,9 +1953,10 @@ export type components = {
             /** @description The exact commands, or null while a disk is not allowed. */
             commands: null | components["schemas"]["PlannedCommand"][];
             /**
-             * @description For destroying a pool: every dataset that goes with it. For destroying a dataset: the dataset, its children and
-             *     every snapshot of them (`dataset@snapshot`), each dataset followed by its snapshots. For renaming a dataset:
-             *     the dataset and its children, whose names change.
+             * @description For destroying or exporting a pool: every dataset that goes or becomes unavailable; for `pool.import`: the
+             *     datasets it mounts. For destroying a dataset: the dataset, its children and every snapshot of them
+             *     (`dataset@snapshot`), each dataset followed by its snapshots. For renaming a dataset: the dataset and its
+             *     children, whose names change.
              */
             datasets: string[];
             /** @description The guard's verdict for every chosen disk, after probing them again. */
@@ -1870,20 +1966,41 @@ export type components = {
              * @description Until when the plan may run.
              */
             expiresAt: string;
-            /** @description Runs the plan exactly as shown with `POST /api/storage/plans/{planId}/run`; null while a disk is not allowed. */
+            /**
+             * @description Runs the plan exactly as shown with `POST /api/storage/plans/{planId}/run`; null while a disk is not allowed, and
+             *     while RequiresConfirmName is true and the name was not typed yet.
+             */
             planId: null | string;
+            /** @description True when the plan runs only with the pool's name typed in `confirmName`. */
+            requiresConfirmName: boolean;
+            /** @description For `pool.import`: datasets that stay unmounted, and why; those that would hide part of the system also get `canmount=noauto`. */
+            unmounted: components["schemas"]["UnmountedDataset"][];
+            /**
+             * @description Stable codes for what the user must know before running it: `lowers_redundancy`, `replication_mismatch`,
+             *     `irreversible` and `no_redundancy` (adding a vdev: it tolerates fewer failed disks than the pool, it has a
+             *     layout ZFS calls a replication mismatch, it can never be removed, it has no redundancy), `irreversible` (RAID-Z
+             *     expansion), `other_system` (an import forced over another system's claim), `degraded` (the pool is imported
+             *     with devices missing), `unmounted_datasets` (Unmounted stay unmounted) and
+             *     `datasets_unavailable` (exporting a pool with datasets in use).
+             */
+            warnings: string[];
         };
         /**
          * @description A destructive storage action to plan. Which fields an action needs: `pool.create` Pool, Layout, DiskIds,
          *     Encryption (and Confirmations for disks that are not empty); `pool.destroy` Pool and ConfirmName;
          *     `pool.replace` Pool, Vdev and one disk in DiskIds with its serial in Confirmations; `pool.spare.add` Pool
          *     and one disk; `pool.spare.remove`, `pool.offline` and `pool.online` Pool and Vdev;
+         *     `pool.import.readonly` PoolGuid from the import scan, NewName when the name is taken, and Force with the pool
+         *     name in ConfirmName when the scan says `needsForce`; `pool.import` Pool (imported read-only), and Force with
+         *     ConfirmName to force it; `pool.export` Pool; `pool.vdev.add` Pool, Layout (`single`, `mirror`,
+         *     `raidz1` to `raidz3`), DiskIds, Confirmations, and ConfirmName when the preview says so;
+         *     `pool.raidz.expand` Pool, Vdev (the raidz vdev), one disk and ConfirmName;
          *     `dataset.rename` Pool, Dataset and NewName; `dataset.set` Pool, Dataset and at least one of QuotaBytes,
          *     ReservationBytes, Compression and RecordSizeBytes; `dataset.destroy` Pool, Dataset and ConfirmName;
          *     `volume.create` Pool, Name, SizeBytes and Sparse.
          */
         StoragePlanRequest: {
-            /** @description `pool.create`, `pool.destroy`, `pool.replace`, `pool.spare.add`, `pool.spare.remove`, `pool.offline`, `pool.online`, `dataset.create`, `dataset.rename`, `dataset.set`, `dataset.destroy` or `volume.create`. */
+            /** @description `pool.create`, `pool.destroy`, `pool.replace`, `pool.spare.add`, `pool.spare.remove`, `pool.offline`, `pool.online`, `pool.import.readonly`, `pool.import`, `pool.export`, `pool.vdev.add`, `pool.raidz.expand`, `dataset.create`, `dataset.rename`, `dataset.set`, `dataset.destroy` or `volume.create`. */
             action: string;
             /** @description New compression: `off`, `lz4`, `zle`, `zstd`, `zstd-1` to `zstd-19`, `gzip`, `gzip-1` to `gzip-9`; null leaves it. */
             compression?: null | string;
@@ -1891,7 +2008,7 @@ export type components = {
             confirmations?: null | {
                 [key: string]: string;
             };
-            /** @description The pool's name, or the dataset's full name, typed by the user to destroy it. */
+            /** @description The pool's name, or the dataset's full name, typed by the user where the preview says `requiresConfirmName` and to destroy. */
             confirmName?: null | string;
             /** @description Full name of the dataset or volume to rename, change or destroy, on Pool. */
             dataset?: null | string;
@@ -1899,14 +2016,18 @@ export type components = {
             diskIds?: null | string[];
             /** @description The answer to the encryption question of a new pool: `none`, or `key` once the key vault exists. */
             encryption?: null | string;
+            /** @description For imports: import a pool that was last used by another system; needs ConfirmName. */
+            force?: null | boolean;
             /** @description `single`, `stripe`, `mirror`, `mirrors` (pairs), `raidz1`, `raidz2` or `raidz3`. */
             layout?: null | string;
             /** @description Name of a new share dataset or volume (one path component). */
             name?: null | string;
-            /** @description The new last component of a renamed dataset; it stays below the same parent. */
+            /** @description The new last component of a renamed dataset (it stays below the same parent), or for `pool.import.readonly` the name to import the pool under when its own is taken. */
             newName?: null | string;
-            /** @description The pool, or the new pool's name. */
+            /** @description The pool, or the new pool's name; for `pool.import.readonly` the scanned name (the GUID decides). */
             pool: string;
+            /** @description For `pool.import.readonly`: the pool's numeric identifier from the import scan. */
+            poolGuid?: null | string;
             /**
              * Format: int64
              * @description New quota in bytes (dataset, children and snapshots), 0 for none; null leaves it.
@@ -1929,7 +2050,7 @@ export type components = {
             sizeBytes?: null | number;
             /** @description True for a volume that reserves no space up front. */
             sparse?: null | boolean;
-            /** @description GUID of the device to replace, take offline, bring online or remove. */
+            /** @description GUID of the device to replace, take offline, bring online or remove, or of the raidz vdev to expand. */
             vdev?: null | string;
         };
         StorageSchedule: {
@@ -2078,6 +2199,18 @@ export type components = {
              * @description 0 to 3650; 0 keeps deleted items until the bin is emptied.
              */
             retentionDays: number;
+        };
+        UnmountedDataset: {
+            /** @description Its mount point. */
+            mountPoint: string;
+            /** @description The dataset. */
+            name: string;
+            /**
+             * @description Why it stays unmounted: `system_path` (`/` or at or below a system directory), `shadows_mount` (it
+             *     would hide something mounted there or below), `duplicate_mountpoint` (another dataset of the pool mounts there
+             *     first) or `key_unavailable` (encrypted and locked).
+             */
+            reason: string;
         };
         UserInfo: {
             displayName: null | string;
@@ -3574,6 +3707,35 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StorageDiskList"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    ScanImportablePools: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportScan"];
                 };
             };
             /** @description Problem details with a stable error code. */

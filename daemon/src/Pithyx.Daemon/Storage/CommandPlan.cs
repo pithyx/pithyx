@@ -2,9 +2,21 @@ using Pithyx.Daemon.Commands;
 
 namespace Pithyx.Daemon.Storage;
 
+/// <summary>Which rule of <see cref="DiskGuard"/> checks the disks of a step.</summary>
+public enum GuardRule
+{
+    /// <summary><see cref="DiskGuard.Evaluate"/>: disks with data need their serial typed.</summary>
+    NewData,
+
+    /// <summary><see cref="DiskGuard.EvaluateImport"/>: the disks of a pool that is imported, with their labels.</summary>
+    Import,
+}
+
 /// <param name="Command">The exact command, run without a shell.</param>
 /// <param name="DiskIds">The disks it writes to; the guard checks them right before it runs.</param>
-public sealed record PlanStep(CommandRequest Command, IReadOnlyList<string> DiskIds);
+/// <param name="Rule">The guard's rule for those disks.</param>
+/// <param name="ImportingPool">For <see cref="GuardRule.Import"/>: the imported pool whose disks the step may touch, or null.</param>
+public sealed record PlanStep(CommandRequest Command, IReadOnlyList<string> DiskIds, GuardRule Rule = GuardRule.NewData, string? ImportingPool = null);
 
 /// <param name="DiskId">The disk's id.</param>
 /// <param name="Serial">Its serial when the plan was made.</param>

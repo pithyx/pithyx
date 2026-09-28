@@ -12,6 +12,7 @@ namespace Pithyx.Daemon.Storage;
 /// <param name="DataErrors">Number of files with permanent errors.</param>
 /// <param name="Scan">The last or running scrub or resilver, if any.</param>
 /// <param name="Vdevs">Top-level vdevs, including log, cache, special and spare devices.</param>
+/// <param name="Expansion">The last or running RAID-Z expansion, if the pool had one.</param>
 public sealed record Pool(
     string Name,
     string PoolGuid,
@@ -24,7 +25,8 @@ public sealed record Pool(
     bool ReadOnly,
     long DataErrors,
     PoolScan? Scan,
-    IReadOnlyList<Vdev> Vdevs);
+    IReadOnlyList<Vdev> Vdevs,
+    PoolExpansion? Expansion = null);
 
 /// <param name="Name">Vdev name as ZFS shows it: <c>raidz1-0</c>, <c>mirror-1</c> or the device's by-id name.</param>
 /// <param name="VdevGuid">Vdev GUID as decimal text; names a device in commands even when it is missing.</param>
@@ -70,6 +72,23 @@ public sealed record PoolScan(
     long ToExamineBytes,
     long ExaminedBytes,
     long Errors);
+
+/// <summary>A RAID-Z expansion (OpenZFS 2.3): a disk attached to a raidz vdev, onto which ZFS spreads the existing data.</summary>
+/// <param name="State"><c>scanning</c> while it runs, then <c>finished</c> or <c>canceled</c>.</param>
+/// <param name="VdevGuid">GUID of the raidz vdev that grows, if it is still in the pool.</param>
+/// <param name="StartedAt">When it started (UTC).</param>
+/// <param name="EndedAt">When it ended (UTC), if it did.</param>
+/// <param name="ToReflowBytes">Bytes to move onto the new layout.</param>
+/// <param name="ReflowedBytes">Bytes moved so far.</param>
+/// <param name="WaitingForResilver">True while it waits for a resilver to finish.</param>
+public sealed record PoolExpansion(
+    string State,
+    string? VdevGuid,
+    DateTimeOffset? StartedAt,
+    DateTimeOffset? EndedAt,
+    long ToReflowBytes,
+    long ReflowedBytes,
+    bool WaitingForResilver);
 
 /// <param name="Name">Full dataset name, for example <c>tank/pithyx/shares/media</c>.</param>
 /// <param name="Pool">The pool it belongs to.</param>
