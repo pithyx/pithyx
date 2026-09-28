@@ -12,13 +12,21 @@ import { SnapshotsSection } from './SnapshotsSection';
 import styles from './Storage.module.css';
 
 const sections = ['pools', 'disks', 'datasets', 'snapshots', 'maintenance'] as const;
-type Section = (typeof sections)[number];
+export type StorageSection = (typeof sections)[number];
+
+/** The section named by launch arguments such as `{ section: 'disks' }`, if any. */
+function sectionOf(args: unknown): StorageSection | undefined {
+  const section = (args as { section?: unknown } | null)?.section;
+  return sections.find((entry) => entry === section);
+}
 
 /** Storage: pools, disks, datasets and volumes, snapshots, health and maintenance. Administrators only. */
 export function StorageApp({ app }: SdkAppProps) {
   const { t } = useTranslation('storage');
   const queryClient = useQueryClient();
-  const [section, setSection] = useState<Section>('pools');
+  const [section, setSection] = useState<StorageSection>(
+    () => sectionOf(app.context.launch.args) ?? 'pools',
+  );
 
   // The desktop forwards changes of the storage topics; this syncs every cached answer with them.
   useEffect(
@@ -27,6 +35,17 @@ export function StorageApp({ app }: SdkAppProps) {
         void queryClient.invalidateQueries({ queryKey: storageKey });
       }),
     [app, queryClient],
+  );
+  // Opening Storage again, for example from an alert, may name the section to show.
+  useEffect(
+    () =>
+      app.on('launch', (launch) => {
+        const next = sectionOf(launch.args);
+        if (next !== undefined) {
+          setSection(next);
+        }
+      }),
+    [app],
   );
 
   return (

@@ -27,7 +27,7 @@ export function AlertBanner({ alert }: { alert: StorageAlert }) {
       <Button
         size="sm"
         onPress={() => {
-          openApp('settings');
+          openApp('storage', alertSection(alert));
         }}
       >
         {t('storageAlert.open')}
@@ -51,12 +51,12 @@ export function AlertPanel({
   panelRef: Ref<HTMLElement>;
 }) {
   const { t } = useTranslation();
-  const settings = findApp('settings');
+  const storage = findApp('storage');
   const items: NotificationItem[] = alerts.map((alert) => ({
     id: alert.key,
     app: {
-      icon: settings?.icon ?? IconDeviceDesktop,
-      tone: settings?.tone ?? 'graphite',
+      icon: storage?.icon ?? IconDeviceDesktop,
+      tone: storage?.tone ?? 'graphite',
       name: t('notifications.storage'),
     },
     message: alertMessage(alert),
@@ -65,7 +65,7 @@ export function AlertPanel({
     tone: alert.severity === 'critical' ? 'danger' : 'warning',
     persistent: true,
     onAction: () => {
-      openApp('settings');
+      openApp('storage', alertSection(alert));
     },
     extraActions: [
       {
@@ -80,4 +80,9 @@ export function AlertPanel({
   return (
     <NotificationPanel panelRef={panelRef} items={items} locale={locale} position={position} />
   );
+}
+
+/** Where Storage opens for an alert: SMART alerts at the disks, every other one at the pools. */
+function alertSection(alert: StorageAlert): { section: 'disks' | 'pools' } {
+  return { section: alert.key.startsWith('disk.') ? 'disks' : 'pools' };
 }
