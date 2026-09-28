@@ -1,3 +1,4 @@
+using System.Globalization;
 using Pithyx.Daemon.Commands;
 using Pithyx.Daemon.Storage;
 using Pithyx.Daemon.Storage.Zfs;
@@ -187,11 +188,22 @@ public sealed class PoolOperationsIntegrationTests
         var plain = ZfsPlans.AddVdev(vdevs.PoolName, addLayout, added, null).Single().Command;
         var dryRun = await vdevs.Commands.RunAsync(new CommandRequest("zpool", ["add", "-n", .. plain.Arguments.Skip(1)]), Token);
 
-        Assert.Equal(assessment.ReplicationMismatch, dryRun.ExitCode != 0);
-        if (assessment.ReplicationMismatch)
+        // OpenZFS 2.3 (Debian 13) refuses raidz vdevs of another width; 2.4 compares only the parity of raidz and
+        // draid vdevs. The planner keeps asking for the override then, which 2.4 accepts without needing it.
+        var widthOnly = poolLayout == addLayout && addLayout.StartsWith("raidz", StringComparison.Ordinal) && poolDisks != addDisks;
+        Assert.Equal(assessment.ReplicationMismatch, dryRun.ExitCode != 0 || (widthOnly && ZfsVersionAtLeast(2, 4)));
+        if (dryRun.ExitCode != 0)
         {
             Assert.Contains("mismatched replication level", dryRun.StandardError, StringComparison.Ordinal);
         }
+    }
+
+    /// <summary>The loaded kernel module's version, for example <c>2.3.9-0+deb13u1</c>.</summary>
+    private static bool ZfsVersionAtLeast(int major, int minor)
+    {
+        var parts = File.ReadAllText("/sys/module/zfs/version").Split('-')[0].Split('.');
+        var version = new Version(int.Parse(parts[0], CultureInfo.InvariantCulture), int.Parse(parts[1], CultureInfo.InvariantCulture));
+        return version >= new Version(major, minor);
     }
 
     [Fact]
