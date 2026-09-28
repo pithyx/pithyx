@@ -197,6 +197,8 @@ test('selecting everything in a large folder sends no list of names', async ({ p
 test('works with the keyboard alone', async ({ page }) => {
   prepare('e2e-keys/inner', { 'deep.txt': 'd' });
   await openFolder(page, 'e2e-keys');
+  // The keys act on the rows, so the listing must be there before the first one.
+  await expect(row(page, 'inner')).toBeVisible();
   await grid(page).focus();
   await page.keyboard.press('Home');
   await page.keyboard.press('Enter');
