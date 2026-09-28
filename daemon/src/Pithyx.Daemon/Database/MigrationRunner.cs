@@ -35,8 +35,8 @@ public sealed partial class MigrationRunner(SqliteConnectionFactory connections,
         var unknown = applied.Where(version => !known.Contains(version)).Order().ToList();
         if (unknown.Count > 0)
         {
-            throw new InvalidOperationException(
-                $"The database has schema versions this daemon does not know ({string.Join(", ", unknown)}). It was written by a newer version.");
+            LogNewerDatabase(connections.DatabasePath, unknown);
+            throw new DatabaseNewerThanDaemonException(connections.DatabasePath, unknown);
         }
 
         var pending = migrations.Where(m => !applied.Contains(m.Version)).OrderBy(m => m.Version).ToList();
@@ -73,6 +73,11 @@ public sealed partial class MigrationRunner(SqliteConnectionFactory connections,
             }
         }
     }
+
+    [LoggerMessage(
+        Level = LogLevel.Critical,
+        Message = "The database {DatabasePath} has schema versions {Versions} that this daemon does not know: a newer daemon wrote it. Start that daemon, or point PITHYX_DB at another database; the daemon does not start")]
+    private partial void LogNewerDatabase(string databasePath, IReadOnlyList<int> versions);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Database copied to {Backup} before migrating")]
     private partial void LogBackup(string backup);
