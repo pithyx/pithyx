@@ -46,7 +46,7 @@ public sealed class SnapshotSchedulerTests : IAsyncLifetime
         Directory.Delete(_directory, recursive: true);
     }
 
-    private static Dataset Dataset(string name) => new(name, name.Split('/')[0], "filesystem", 0, 0, 0, $"/{name}", true, "off", null, null);
+    private static Dataset Dataset(string name) => new(name, name.Split('/')[0], "filesystem", 0, 0, 0, $"/{name}", true, "off", null, null, null, null, "lz4", 131072, null, null, 0);
 
     private Task<SnapshotScheduleList> EnableAsync(string kind, int keep, string dataset = Data) =>
         _service.SetSchedulesAsync(new SnapshotScheduleList(dataset, [new SnapshotSchedule(kind, true, keep)]), Token);

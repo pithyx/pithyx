@@ -38,6 +38,12 @@ public sealed class CommandPlanRunner(ICommandRunner commands, SystemStateServic
             }
             touched.UnionWith(step.DiskIds);
         }
+        // The state is read again first, so bookkeeping sees what the commands changed.
+        await state.RefreshPoolsAsync(cancellationToken);
+        if (plan.AfterRun is { } afterRun)
+        {
+            await afterRun(cancellationToken);
+        }
     }
 
     /// <summary>

@@ -82,6 +82,13 @@ public sealed record PoolScan(
 /// <param name="Encryption">Encryption algorithm, or <c>off</c>.</param>
 /// <param name="KeyStatus"><c>available</c> or <c>unavailable</c> for encrypted datasets, otherwise null.</param>
 /// <param name="EncryptionRoot">The dataset whose key unlocks this one, if encrypted.</param>
+/// <param name="QuotaBytes">Limit for the dataset with its children and snapshots, or null for none.</param>
+/// <param name="ReservationBytes">Space guaranteed to the dataset with its children and snapshots, or null for none.</param>
+/// <param name="Compression">Compression algorithm, for example <c>lz4</c>, <c>zstd</c> or <c>off</c>.</param>
+/// <param name="RecordSizeBytes">Largest block of a file system; null for a volume.</param>
+/// <param name="VolumeSizeBytes">Size of a volume; null for a file system.</param>
+/// <param name="VolumeBlockSizeBytes">Block size of a volume; null for a file system.</param>
+/// <param name="SnapshotsUsedBytes">Space only its snapshots hold.</param>
 public sealed record Dataset(
     string Name,
     string Pool,
@@ -93,7 +100,14 @@ public sealed record Dataset(
     bool Mounted,
     string Encryption,
     string? KeyStatus,
-    string? EncryptionRoot);
+    string? EncryptionRoot,
+    long? QuotaBytes,
+    long? ReservationBytes,
+    string? Compression,
+    long? RecordSizeBytes,
+    long? VolumeSizeBytes,
+    long? VolumeBlockSizeBytes,
+    long SnapshotsUsedBytes);
 
 /// <summary>Snapshot and event of <c>storage/pools</c>, and response of <c>GET /api/storage/pools</c>.</summary>
 public sealed record PoolList(IReadOnlyList<Pool> Pools, IReadOnlyList<Dataset> Datasets);

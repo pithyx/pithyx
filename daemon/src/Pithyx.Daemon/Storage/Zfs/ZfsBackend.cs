@@ -10,7 +10,7 @@ public sealed class ZfsBackend(ICommandRunner commands) : IStorageBackend
     public static readonly CommandRequest List = new("zpool", ["list", "-j", "--json-int", "-o", "name,size,allocated,free,capacity,fragmentation,health,readonly"]);
     public static readonly CommandRequest Datasets = new(
         "zfs",
-        ["list", "-j", "--json-int", "-t", "filesystem,volume", "-o", "name,type,used,available,referenced,mountpoint,mounted,encryption,keystatus,encryptionroot"]);
+        ["list", "-j", "--json-int", "-t", "filesystem,volume", "-o", "name,type,used,available,referenced,mountpoint,mounted,encryption,keystatus,encryptionroot,quota,reservation,compression,recordsize,volsize,volblocksize,usedbysnapshots"]);
 
     /// <summary>Prints every past event, then follows new ones; one line per event.</summary>
     public static readonly CommandRequest Events = new("zpool", ["events", "-f", "-H"]);

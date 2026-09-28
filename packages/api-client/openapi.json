@@ -2612,7 +2612,14 @@
           "mounted",
           "encryption",
           "keyStatus",
-          "encryptionRoot"
+          "encryptionRoot",
+          "quotaBytes",
+          "reservationBytes",
+          "compression",
+          "recordSizeBytes",
+          "volumeSizeBytes",
+          "volumeBlockSizeBytes",
+          "snapshotsUsedBytes"
         ],
         "type": "object",
         "properties": {
@@ -2671,6 +2678,58 @@
               "string"
             ],
             "description": "The dataset whose key unlocks this one, if encrypted."
+          },
+          "quotaBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Limit for the dataset with its children and snapshots, or null for none.",
+            "format": "int64"
+          },
+          "reservationBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Space guaranteed to the dataset with its children and snapshots, or null for none.",
+            "format": "int64"
+          },
+          "compression": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Compression algorithm, for example `lz4`, `zstd` or `off`."
+          },
+          "recordSizeBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Largest block of a file system; null for a volume.",
+            "format": "int64"
+          },
+          "volumeSizeBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Size of a volume; null for a file system.",
+            "format": "int64"
+          },
+          "volumeBlockSizeBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Block size of a volume; null for a file system.",
+            "format": "int64"
+          },
+          "snapshotsUsedBytes": {
+            "type": "integer",
+            "description": "Space only its snapshots hold.",
+            "format": "int64"
           }
         }
       },

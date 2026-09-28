@@ -57,7 +57,7 @@ public sealed class PreviousVersionsTests : IAsyncLifetime
     }
 
     private static Dataset MountedAt(string name, string? mountPoint, bool mounted = true) =>
-        new(name, name.Split('/')[0], "filesystem", 0, 0, 0, mountPoint, mounted, "off", null, null);
+        new(name, name.Split('/')[0], "filesystem", 0, 0, 0, mountPoint, mounted, "off", null, null, null, null, "lz4", 131072, null, null, 0);
 
     /// <summary>Writes a file into a snapshot of the dataset, below the share's folder.</summary>
     private void InSnapshot(string snapshot, string path, string content, DateTimeOffset modified)

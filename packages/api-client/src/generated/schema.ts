@@ -928,6 +928,8 @@ export type components = {
              * @description Space available to it.
              */
             availableBytes: number;
+            /** @description Compression algorithm, for example `lz4`, `zstd` or `off`. */
+            compression: null | string;
             /** @description Encryption algorithm, or `off`. */
             encryption: string;
             /** @description The dataset whose key unlocks this one, if encrypted. */
@@ -944,9 +946,29 @@ export type components = {
             pool: string;
             /**
              * Format: int64
+             * @description Limit for the dataset with its children and snapshots, or null for none.
+             */
+            quotaBytes: null | number;
+            /**
+             * Format: int64
+             * @description Largest block of a file system; null for a volume.
+             */
+            recordSizeBytes: null | number;
+            /**
+             * Format: int64
              * @description Data the dataset references itself.
              */
             referencedBytes: number;
+            /**
+             * Format: int64
+             * @description Space guaranteed to the dataset with its children and snapshots, or null for none.
+             */
+            reservationBytes: null | number;
+            /**
+             * Format: int64
+             * @description Space only its snapshots hold.
+             */
+            snapshotsUsedBytes: number;
             /** @description `filesystem` or `volume`. */
             type: string;
             /**
@@ -954,6 +976,16 @@ export type components = {
              * @description Space used by the dataset and its children.
              */
             usedBytes: number;
+            /**
+             * Format: int64
+             * @description Block size of a volume; null for a file system.
+             */
+            volumeBlockSizeBytes: null | number;
+            /**
+             * Format: int64
+             * @description Size of a volume; null for a file system.
+             */
+            volumeSizeBytes: null | number;
         };
         /** @description An app shortcut or a sticky note on the desktop, shared across the user's devices. */
         DesktopItem: {

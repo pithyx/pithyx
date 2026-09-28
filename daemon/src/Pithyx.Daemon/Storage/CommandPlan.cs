@@ -21,12 +21,17 @@ public sealed record PlannedDisk(string DiskId, string? Serial, long SizeBytes, 
 /// <param name="Disks">The disks as the user saw them.</param>
 /// <param name="Confirmations">Serials the user typed, by disk id, for disks that were not empty.</param>
 /// <param name="ExpiresAt">After this the plan must be shown again.</param>
+/// <param name="AfterRun">
+/// Runs in the plan's job once every command succeeded, for the daemon's own bookkeeping (for example registering the
+/// share a new dataset belongs to). It never runs a command of its own.
+/// </param>
 public sealed record CommandPlan(
     string Kind,
     IReadOnlyList<PlanStep> Steps,
     IReadOnlyList<PlannedDisk> Disks,
     IReadOnlyDictionary<string, string> Confirmations,
-    DateTimeOffset ExpiresAt)
+    DateTimeOffset ExpiresAt,
+    Func<CancellationToken, Task>? AfterRun = null)
 {
     public static readonly TimeSpan Lifetime = TimeSpan.FromMinutes(10);
 }

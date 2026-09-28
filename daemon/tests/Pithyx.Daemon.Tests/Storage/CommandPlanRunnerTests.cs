@@ -72,10 +72,26 @@ public sealed class CommandPlanRunnerTests : IDisposable
 
         await _runner.RunAsync(plan, (index, _) => progress.Add(index), Token);
 
-        Assert.Equal(["create"], ZpoolCalls());
-        Assert.Equal(["create", "create", "create", "create", "create"], _commands.Calls.Where(call => call.FileName == "zfs").Select(call => call.Arguments[0]));
+        Assert.Equal(["create", "status", "list"], ZpoolCalls());
+        Assert.Equal(["create", "create", "create", "create", "create", "list"], _commands.Calls.Where(call => call.FileName == "zfs").Select(call => call.Arguments[0]));
         Assert.Equal([0, 1, 2, 3, 4, 5], progress);
-        Assert.Equal(plan.Steps[^1].Command, _commands.Calls.Last());
+        // After the last command the state is read again, so the page and the bookkeeping see the new pool.
+        Assert.Equal([plan.Steps[^1].Command, ZfsBackend.Status, ZfsBackend.List, ZfsBackend.Datasets], _commands.Calls.TakeLast(4));
+    }
+
+    [Fact]
+    public async Task BookkeepingRunsOnlyAfterEveryCommandSucceeded()
+    {
+        var plan = await MirrorPlanAsync();
+        var callsBefore = -1;
+        await _runner.RunAsync(plan with { AfterRun = _ => { callsBefore = _commands.Calls.Count; return Task.CompletedTask; } }, null, Token);
+        Assert.Equal(_commands.Calls.Count, callsBefore);
+
+        var failing = await MirrorPlanAsync();
+        var ran = false;
+        _commands.Results["zpool create"] = new CommandResult(1, "", "cannot create", TimeSpan.Zero);
+        await Assert.ThrowsAsync<PithyxException>(() => _runner.RunAsync(failing with { AfterRun = _ => { ran = true; return Task.CompletedTask; } }, null, Token));
+        Assert.False(ran);
     }
 
     [Fact]

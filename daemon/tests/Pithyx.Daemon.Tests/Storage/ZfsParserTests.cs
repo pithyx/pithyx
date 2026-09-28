@@ -79,6 +79,20 @@ public sealed class ZfsParserTests
         Assert.True(dataset.AvailableBytes > dataset.UsedBytes);
     }
 
+    // Recorded on dev01 from the owner's test pool, read-only.
+    [Fact]
+    public void DatasetsCarryLimitsCompressionAndBlockSizes()
+    {
+        var datasets = ZfsDatasetParser.ParseList(Read("zfs-datasets", "zfs-list"));
+        var share = datasets.Single(dataset => dataset.Name == "test/pithyx/shares/teet");
+
+        Assert.Equal(("/test/teet", true), (share.MountPoint, share.Mounted));
+        Assert.Equal(((long?)null, (long?)null), (share.QuotaBytes, share.ReservationBytes));
+        Assert.Equal(("lz4", (long?)131072), (share.Compression, share.RecordSizeBytes));
+        Assert.Equal(((long?)null, (long?)null, 0L), (share.VolumeSizeBytes, share.VolumeBlockSizeBytes, share.SnapshotsUsedBytes));
+        Assert.All(datasets, dataset => Assert.Equal("test", dataset.Pool));
+    }
+
     [Fact]
     public void ZfsGetShapeGivesPropertyValues()
     {
