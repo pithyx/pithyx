@@ -173,8 +173,20 @@
       "failed": "Der Speicherbefehl {command} ist fehlgeschlagen (Exit-Code {exitCode}). Danach wurde nichts mehr ausgeführt; Details stehen im Protokoll."
     },
     "dataset": {
+      "compression_invalid": "Die Kompression {compression} setzt Pithyx nicht. Wähle off, lz4, zle, zstd (Stufen 1 bis 19) oder gzip (Stufen 1 bis 9).",
       "exists": "Es gibt schon ein Dataset namens {name}.",
-      "name_invalid": "Dataset-Namen bestehen aus Buchstaben, Ziffern, ., - und _, beginnen mit einem Buchstaben oder einer Ziffer und haben bis zu 64 Zeichen."
+      "in_use_by_share": "Die Freigabe {share} hat ihren Ordner in {dataset}. Lösche zuerst die Freigabe auf der Seite der freigegebenen Ordner; dort entscheidest du, was mit ihren Daten passiert.",
+      "limit_invalid": "{property, select, quota {Das Kontingent} other {Die Reservierung}} kann nicht negativ sein. Nimm 0, wenn es keine Grenze geben soll.",
+      "managed": "Pithyx findet {dataset} über seinen Namen (ein Home-Ordner, eine App oder Systemdaten), deshalb lässt es sich hier weder umbenennen noch löschen.",
+      "name_invalid": "Dataset-Namen bestehen aus Buchstaben, Ziffern, ., - und _, beginnen mit einem Buchstaben oder einer Ziffer und haben bis zu 64 Zeichen.",
+      "name_mismatch": "Gib zur Bestätigung genau den vollständigen Dataset-Namen {name} ein.",
+      "not_found": "Es gibt kein Dataset namens {dataset}. Lade die Seite neu.",
+      "property_unsupported": "{dataset} nimmt die Einstellung {property} nicht an. Volumes nehmen nur eine Kompression, die Record-Größe gibt es nur für Dateisysteme, und die Datasets des Pithyx-Layouts nehmen nur eine Kompression.",
+      "protected": "{dataset} ist die Wurzel des Pools oder Teil des Pithyx-Layouts. Pithyx benennt es nicht um, löscht es nicht und begrenzt es nicht.",
+      "quota_below_used": "Das Kontingent muss mindestens so groß sein wie der Platz, den das Dataset jetzt belegt, mit Snapshots und Unter-Datasets.",
+      "record_size_invalid": "Die Record-Größe muss eine Zweierpotenz von 4 KiB bis 1 MiB sein.",
+      "reservation_too_large": "So viel kann der Pool für dieses Dataset gerade nicht reservieren. Wähle eine kleinere Reservierung.",
+      "unchanged": "Es gibt nichts zu ändern: {dataset} hat diese Einstellungen schon."
     },
     "disk": {
       "not_found": "Die Platte ist nicht mehr vorhanden. Lade die Liste neu und wähle noch einmal.",
@@ -196,7 +208,8 @@
       "name_invalid": "Pool-Namen beginnen mit einem Kleinbuchstaben und bestehen aus bis zu 32 Kleinbuchstaben, Ziffern, - und _. Namen wie mirror oder raidz sind reserviert.",
       "name_mismatch": "Gib zur Bestätigung genau den Pool-Namen {name} ein.",
       "name_taken": "Es gibt schon einen Pool namens {name}.",
-      "not_found": "Es gibt keinen Pool namens {name}."
+      "not_found": "Es gibt keinen Pool namens {name}.",
+      "not_prepared": "Pithyx hat den Pool {pool} nicht eingerichtet (er hat kein pithyx-Dataset), deshalb legt es darauf nichts an."
     },
     "schedule": {
       "invalid": "Dieser Zeitplan lässt sich nicht setzen. Wähle Aus, Wöchentlich oder Monatlich für einen vorhandenen Pool."
@@ -217,6 +230,10 @@
     },
     "vdev": {
       "not_found": "Der Pool hat dieses Gerät nicht (mehr). Lade neu und wähle noch einmal."
+    },
+    "volume": {
+      "size_invalid": "Ein Volume braucht mindestens 1 MiB.",
+      "too_large": "Das Volume passt nicht in den freien Platz des Pools. Mach es kleiner oder leg es als Sparse-Volume an."
     }
   },
   "system": {

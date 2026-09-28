@@ -1163,7 +1163,7 @@ export type components = {
             }[];
         };
         /** @enum {string} */
-        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.exists" | "fs.share.invalid" | "fs.share.not_found" | "fs.share.read_only" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.dataset.exists" | "storage.dataset.name_invalid" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.encryption_required" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "system.internal.unexpected" | "system.origin.forbidden";
+        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.exists" | "fs.share.invalid" | "fs.share.not_found" | "fs.share.read_only" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.encryption_required" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.volume.size_invalid" | "storage.volume.too_large" | "system.internal.unexpected" | "system.origin.forbidden";
         /** @description A failed client message. `id` is empty when the message could not be parsed. */
         ErrorMessage: {
             code: components["schemas"]["ErrorCode"];
@@ -1827,7 +1827,11 @@ export type components = {
         StoragePlanPreview: {
             /** @description The exact commands, or null while a disk is not allowed. */
             commands: null | components["schemas"]["PlannedCommand"][];
-            /** @description For destroying a pool: every dataset that goes with it. */
+            /**
+             * @description For destroying a pool: every dataset that goes with it. For destroying a dataset: the dataset, its children and
+             *     every snapshot of them (`dataset@snapshot`), each dataset followed by its snapshots. For renaming a dataset:
+             *     the dataset and its children, whose names change.
+             */
             datasets: string[];
             /** @description The guard's verdict for every chosen disk, after probing them again. */
             disks: components["schemas"]["GuardVerdict"][];
@@ -1843,27 +1847,58 @@ export type components = {
          * @description A destructive storage action to plan. Which fields an action needs: `pool.create` Pool, Layout, DiskIds,
          *     Encryption (and Confirmations for disks that are not empty); `pool.destroy` Pool and ConfirmName;
          *     `pool.replace` Pool, Vdev and one disk in DiskIds with its serial in Confirmations; `pool.spare.add` Pool
-         *     and one disk; `pool.spare.remove`, `pool.offline` and `pool.online` Pool and Vdev.
+         *     and one disk; `pool.spare.remove`, `pool.offline` and `pool.online` Pool and Vdev;
+         *     `dataset.rename` Pool, Dataset and NewName; `dataset.set` Pool, Dataset and at least one of QuotaBytes,
+         *     ReservationBytes, Compression and RecordSizeBytes; `dataset.destroy` Pool, Dataset and ConfirmName;
+         *     `volume.create` Pool, Name, SizeBytes and Sparse.
          */
         StoragePlanRequest: {
-            /** @description `pool.create`, `pool.destroy`, `pool.replace`, `pool.spare.add`, `pool.spare.remove`, `pool.offline`, `pool.online` or `dataset.create`. */
+            /** @description `pool.create`, `pool.destroy`, `pool.replace`, `pool.spare.add`, `pool.spare.remove`, `pool.offline`, `pool.online`, `dataset.create`, `dataset.rename`, `dataset.set`, `dataset.destroy` or `volume.create`. */
             action: string;
+            /** @description New compression: `off`, `lz4`, `zle`, `zstd`, `zstd-1` to `zstd-19`, `gzip`, `gzip-1` to `gzip-9`; null leaves it. */
+            compression?: null | string;
             /** @description Serial numbers the user typed, by disk id. */
             confirmations?: null | {
                 [key: string]: string;
             };
-            /** @description The pool's name, typed by the user, to destroy it. */
+            /** @description The pool's name, or the dataset's full name, typed by the user to destroy it. */
             confirmName?: null | string;
+            /** @description Full name of the dataset or volume to rename, change or destroy, on Pool. */
+            dataset?: null | string;
             /** @description The disks to use, by id. */
             diskIds?: null | string[];
             /** @description The answer to the encryption question of a new pool: `none`, or `key` once the key vault exists. */
             encryption?: null | string;
             /** @description `single`, `stripe`, `mirror`, `mirrors` (pairs), `raidz1`, `raidz2` or `raidz3`. */
             layout?: null | string;
-            /** @description Name of a new share dataset. */
+            /** @description Name of a new share dataset or volume (one path component). */
             name?: null | string;
+            /** @description The new last component of a renamed dataset; it stays below the same parent. */
+            newName?: null | string;
             /** @description The pool, or the new pool's name. */
             pool: string;
+            /**
+             * Format: int64
+             * @description New quota in bytes (dataset, children and snapshots), 0 for none; null leaves it.
+             */
+            quotaBytes?: null | number;
+            /**
+             * Format: int64
+             * @description New record size of a file system, a power of two from 4 KiB to 1 MiB; null leaves it.
+             */
+            recordSizeBytes?: null | number;
+            /**
+             * Format: int64
+             * @description New reservation in bytes (dataset, children and snapshots), 0 for none; null leaves it.
+             */
+            reservationBytes?: null | number;
+            /**
+             * Format: int64
+             * @description Size of a new volume, at least 1 MiB; rounded up to whole 16 KiB blocks.
+             */
+            sizeBytes?: null | number;
+            /** @description True for a volume that reserves no space up front. */
+            sparse?: null | boolean;
             /** @description GUID of the device to replace, take offline, bring online or remove. */
             vdev?: null | string;
         };

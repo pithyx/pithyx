@@ -494,9 +494,9 @@ Goal: pools are created, maintained and watched from the UI, with snapshots that
 
 ### 8.3 Datasets and volumes
 
-- [ ] Create, rename, set quota and reservation, compression and record size. Delete only when empty or after typing its name. (Creating share datasets is done; rename, quota, reservation, compression, record size and delete are open.)
-- [ ] Volumes (zvols) for VMs later (M5b); created with the same guard.
-- [ ] The dataset API has no share assumptions, so M4 uses it for app datasets (see "Interfaces for M4").
+- [x] Create, rename, set quota and reservation, compression and record size. Delete only when empty or after typing its name. (Creating datasets happens through shared folders. Rename, quota, reservation, compression, record size and delete are command plans (`dataset.rename`, `dataset.set`, `dataset.destroy`); delete always needs the full name typed and lists every child and snapshot that goes. The pool root, the layout datasets and what Pithyx finds by name (homes, apps, system) are never renamed or deleted; datasets holding a share or a held snapshot are not deleted.)
+- [x] Volumes (zvols) for VMs later (M5b); created with the same guard. (`volume.create` below `<pool>/pithyx/volumes`, sparse or thick, 16 KiB blocks; deleted with `dataset.destroy`.)
+- [x] The dataset API has no share assumptions, so M4 uses it for app datasets (see "Interfaces for M4"). (`dataset.set` takes app datasets; renaming and deleting them stays with M4's own lifecycle, since apps find them by name.)
 
 ### 8.4 Snapshots
 

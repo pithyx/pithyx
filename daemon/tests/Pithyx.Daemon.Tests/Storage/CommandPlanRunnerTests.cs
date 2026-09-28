@@ -3,10 +3,13 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 using Pithyx.Daemon.Commands;
+using Pithyx.Daemon.Database;
 using Pithyx.Daemon.Errors;
 using Pithyx.Daemon.Hosting;
 using Pithyx.Daemon.Realtime;
+using Pithyx.Daemon.Shares;
 using Pithyx.Daemon.Storage;
+using Pithyx.Daemon.Storage.Snapshots;
 using Pithyx.Daemon.Storage.Zfs;
 using Pithyx.Daemon.Tests.Support;
 using static Pithyx.Daemon.Tests.Storage.StorageFixtures;
@@ -34,7 +37,18 @@ public sealed class CommandPlanRunnerTests : IDisposable
         _facts = new StorageFacts(_disks, _pools, environment, new SystemFiles(Path.Combine(_proc, "mountinfo"), Path.Combine(_proc, "swaps")));
         var hub = new TopicHub(new TopicRegistry([_disks.Definition(), _pools.Definition()]), _time, Options.Create(new JsonOptions()), NullLogger<TopicHub>.Instance);
         _state = new SystemStateService(_commands, _disks, _pools, new ZfsBackend(_commands), new DiskProbe(_commands), _facts, hub, _time, NullLogger<SystemStateService>.Instance);
-        _planner = new StoragePlanner(_state, _facts, _pools, _time);
+        // Pool plans never reach the dataset planner's database.
+        var connections = new SqliteConnectionFactory(Path.Combine(_proc, "unused.db"));
+        var snapshots = new SnapshotInventory();
+        var datasets = new DatasetPlanner(
+            _state,
+            _pools,
+            snapshots,
+            new SnapshotService(_commands, snapshots, _pools, connections, _time, NullLogger<SnapshotService>.Instance),
+            new ShareService(connections, _time),
+            _time,
+            NullLogger<DatasetPlanner>.Instance);
+        _planner = new StoragePlanner(_state, _facts, _pools, datasets, _time);
         _runner = new CommandPlanRunner(_commands, _state, _facts, _time);
         _commands.Results["lsblk"] = Ok(Read("default", "lsblk"));
         _commands.Results["wipefs"] = Ok("");

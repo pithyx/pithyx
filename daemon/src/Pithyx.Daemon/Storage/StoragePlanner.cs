@@ -4,7 +4,7 @@ using Pithyx.Daemon.Storage.Zfs;
 namespace Pithyx.Daemon.Storage;
 
 /// <summary>Turns a request into a <see cref="CommandPlan"/> after probing the chosen disks and asking the guard.</summary>
-public sealed class StoragePlanner(SystemStateService state, StorageFacts facts, PoolInventory pools, TimeProvider time)
+public sealed class StoragePlanner(SystemStateService state, StorageFacts facts, PoolInventory pools, DatasetPlanner datasetPlanner, TimeProvider time)
 {
     public sealed record Result(IReadOnlyList<GuardVerdict> Verdicts, CommandPlan? Plan, IReadOnlyList<string> Datasets);
 
@@ -64,6 +64,8 @@ public sealed class StoragePlanner(SystemStateService state, StorageFacts facts,
                     var datasets = pools.Current.Datasets.Where(dataset => dataset.Pool == pool.Name).Select(dataset => dataset.Name).ToList();
                     return Plan(request, ZfsPlans.DestroyPool(pool.Name)) with { Datasets = datasets };
                 }
+            case var action when DatasetPlanner.Actions.Contains(action):
+                return await datasetPlanner.PlanAsync(request, cancellationToken);
             default:
                 throw new PithyxException(ErrorCodes.StoragePlanActionInvalid, new Dictionary<string, object?> { ["action"] = request.Action });
         }

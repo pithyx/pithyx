@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using Microsoft.Extensions.Logging.Abstractions;
 using Pithyx.Daemon.Commands;
+using Pithyx.Daemon.Storage.Zfs;
 
 namespace Pithyx.Daemon.Tests.Storage.Integration;
 
@@ -57,6 +58,23 @@ internal sealed class FileVdevs : IAsyncDisposable
     /// <summary>Creates the pool on the files without mounting it. <paramref name="vdevType"/> is empty for a stripe.</summary>
     public Task CreatePoolAsync(params string[] vdevType) =>
         RunAsync("zpool", ["create", "-m", "none", PoolName, .. vdevType, .. Files]);
+
+    /// <summary>
+    /// Creates a single-file pool whose datasets mount below a temporary altroot (<see cref="AltRoot"/>), never on the
+    /// host's own folders, with the Pithyx dataset layout of a new pool.
+    /// </summary>
+    public async Task CreateLayoutPoolAsync()
+    {
+        Directory.CreateDirectory(AltRoot);
+        await RunAsync("zpool", ["create", "-R", AltRoot, "-O", "canmount=off", PoolName, .. Files]);
+        foreach (var arguments in ZfsPlans.Datasets(PoolName))
+        {
+            await RunAsync("zfs", ["create", .. arguments]);
+        }
+    }
+
+    /// <summary>Where a pool made by <see cref="CreateLayoutPoolAsync"/> mounts its datasets.</summary>
+    public string AltRoot => Path.Combine(_directory, "root");
 
     public async Task<string> AttachLoopDeviceAsync(string file)
     {

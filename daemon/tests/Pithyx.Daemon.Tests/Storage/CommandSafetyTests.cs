@@ -9,7 +9,7 @@ namespace Pithyx.Daemon.Tests.Storage;
 /// </summary>
 public sealed partial class CommandSafetyTests
 {
-    private static readonly string[] _planBuilders = ["Storage/Zfs/ZfsPlans.cs", "Storage/Zfs/SnapshotPlans.cs"];
+    private static readonly string[] _planBuilders = ["Storage/Zfs/ZfsPlans.cs", "Storage/Zfs/ZfsDatasetPlans.cs", "Storage/Zfs/SnapshotPlans.cs"];
 
     private static IEnumerable<(string File, string Text)> DaemonSources()
     {

@@ -204,13 +204,61 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadGateway)]
     public const string StorageCommandFailed = "storage.command.failed";
 
+    /// <summary>Compression Pithyx does not set; <c>params.compression</c> is the value sent. Allowed: <c>off</c>, <c>lz4</c>, <c>zle</c>, <c>zstd</c>, <c>zstd-1</c> to <c>zstd-19</c>, <c>gzip</c>, <c>gzip-1</c> to <c>gzip-9</c>.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string StorageDatasetCompressionInvalid = "storage.dataset.compression_invalid";
+
     /// <summary>A dataset with this name exists already; <c>params.name</c> is the name.</summary>
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string StorageDatasetExists = "storage.dataset.exists";
 
+    /// <summary>A share has its folder in the dataset or one of its children, so it is not destroyed; <c>params.dataset</c> is the dataset, <c>params.share</c> the share's name.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StorageDatasetInUseByShare = "storage.dataset.in_use_by_share";
+
+    /// <summary>A quota or reservation below zero; <c>params.property</c> is <c>quota</c> or <c>reservation</c>.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string StorageDatasetLimitInvalid = "storage.dataset.limit_invalid";
+
+    /// <summary>Pithyx finds this dataset by its name (a home, an app or system data), so it is not renamed or destroyed here; <c>params.dataset</c> is its name.</summary>
+    [ErrorStatus(HttpStatusCode.Forbidden)]
+    public const string StorageDatasetManaged = "storage.dataset.managed";
+
     /// <summary>Dataset names use letters, digits, <c>.</c>, <c>-</c> and <c>_</c> and start with a letter or digit, up to 64 characters.</summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string StorageDatasetNameInvalid = "storage.dataset.name_invalid";
+
+    /// <summary>The typed name does not match the dataset's full name; <c>params.name</c> is the dataset's name.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string StorageDatasetNameMismatch = "storage.dataset.name_mismatch";
+
+    /// <summary>No dataset of this name on the pool (any more); <c>params.dataset</c> is the name sent.</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string StorageDatasetNotFound = "storage.dataset.not_found";
+
+    /// <summary>The dataset does not take this setting: volumes take only compression, record size is for file systems, and the Pithyx layout datasets take only compression; <c>params.dataset</c> and <c>params.property</c> say which.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string StorageDatasetPropertyUnsupported = "storage.dataset.property_unsupported";
+
+    /// <summary>The pool root or a dataset of the Pithyx layout (<c>pithyx</c>, <c>shares</c>, <c>homes</c>, <c>apps</c>, <c>system</c>, <c>volumes</c>) is never renamed or destroyed; <c>params.dataset</c> is its name.</summary>
+    [ErrorStatus(HttpStatusCode.Forbidden)]
+    public const string StorageDatasetProtected = "storage.dataset.protected";
+
+    /// <summary>A quota below the space the dataset uses now; <c>params.usedBytes</c> is that space.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StorageDatasetQuotaBelowUsed = "storage.dataset.quota_below_used";
+
+    /// <summary>Record sizes are powers of two from <c>params.minBytes</c> to <c>params.maxBytes</c>.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string StorageDatasetRecordSizeInvalid = "storage.dataset.record_size_invalid";
+
+    /// <summary>A reservation above what the pool can give the dataset now; <c>params.maxBytes</c> is the most it can get.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StorageDatasetReservationTooLarge = "storage.dataset.reservation_too_large";
+
+    /// <summary>The request changes nothing: every setting sent has its current value already; <c>params.dataset</c> is the dataset.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string StorageDatasetUnchanged = "storage.dataset.unchanged";
 
     /// <summary>A disk named in the request does not exist (any more); <c>params.disk</c> is its id.</summary>
     [ErrorStatus(HttpStatusCode.NotFound)]
@@ -268,6 +316,10 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.NotFound)]
     public const string StoragePoolNotFound = "storage.pool.not_found";
 
+    /// <summary>The pool has no <c>&lt;pool&gt;/pithyx</c> dataset (Pithyx did not create it, for example an imported pool), so Pithyx creates nothing on it; <c>params.pool</c> is its name.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StoragePoolNotPrepared = "storage.pool.not_prepared";
+
     /// <summary>Unknown schedule kind or frequency, or a scrub schedule for a pool that does not exist; <c>params.kind</c> and <c>params.frequency</c> are the values sent.</summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string StorageScheduleInvalid = "storage.schedule.invalid";
@@ -315,6 +367,14 @@ public static class ErrorCodes
     /// <summary>The pool has no device with this GUID; <c>params.vdev</c> is the GUID.</summary>
     [ErrorStatus(HttpStatusCode.NotFound)]
     public const string StorageVdevNotFound = "storage.vdev.not_found";
+
+    /// <summary>A volume size outside <c>params.minBytes</c> to <c>params.maxBytes</c>.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string StorageVolumeSizeInvalid = "storage.volume.size_invalid";
+
+    /// <summary>A volume that is not sparse must fit the free space; <c>params.availableBytes</c> is what the pool has.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StorageVolumeTooLarge = "storage.volume.too_large";
 
     [ErrorStatus(HttpStatusCode.InternalServerError)]
     public const string SystemInternalUnexpected = "system.internal.unexpected";
