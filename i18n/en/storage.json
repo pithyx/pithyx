@@ -1,15 +1,370 @@
 {
-  "layout": "{type}, {count, plural, one {# disk} other {# disks}}",
-  "health": {
-    "healthy": "Healthy"
+  "title": "Storage",
+  "sections": "Storage sections",
+  "nav": {
+    "pools": "Pools",
+    "disks": "Disks",
+    "datasets": "Datasets and volumes",
+    "snapshots": "Snapshots",
+    "maintenance": "Health and maintenance"
   },
-  "used": "{used} of {total} used",
-  "disks": "Disks",
-  "disk": "Disk {number}",
+  "intro": "Pools keep your data on one or more disks. Every disk shows whether a new pool may use it.",
+  "dev": "Development machine: only the declared test disks can be used.",
+  "pools": {
+    "title": "Pools",
+    "empty": "No pools yet.",
+    "used": "{used} of {size} used",
+    "layout": "Layout: {layout}",
+    "devices": "Devices of {pool}",
+    "errors": "Errors: {read} read, {write} write, {checksum} checksum",
+    "degradedHint": "A device is missing or failed. A disk that comes back is rebuilt on its own (resilver); you can also replace it with a new disk."
+  },
   "state": {
-    "active": "Active",
-    "warm": "Warm",
-    "standby": "Sleeping"
+    "online": "Healthy",
+    "degraded": "Degraded",
+    "faulted": "Faulted",
+    "offline": "Offline",
+    "unavail": "Unavailable",
+    "removed": "Removed",
+    "suspended": "Suspended",
+    "unknown": "Unknown"
   },
-  "standbyHint": "Sleeping disks are not woken for status queries."
+  "vdev": {
+    "mirror": "Mirror of {count, plural, one {# disk} other {# disks}}",
+    "raidz": "RAID-Z{parity} of {count, plural, one {# disk} other {# disks}}",
+    "single": "Single disk"
+  },
+  "role": {
+    "log": "Log",
+    "cache": "Cache",
+    "special": "Special",
+    "dedup": "Dedup",
+    "spare": "Spare"
+  },
+  "scan": {
+    "scrubRunning": "Scrub running, {percent} % checked",
+    "resilverRunning": "Rebuilding, {percent} % done",
+    "paused": "Scrub paused at {percent} %",
+    "scrubFinished": "Last scrub {date}: {errors, plural, =0 {no errors} one {# error} other {# errors}}",
+    "resilverFinished": "Last rebuild {date}: {errors, plural, =0 {no errors} one {# error} other {# errors}}",
+    "canceled": "The last check was canceled."
+  },
+  "disks": {
+    "title": "Disks",
+    "caption": "Disks and whether a new pool may use them",
+    "name": "Name",
+    "model": "Model",
+    "serial": "Serial number",
+    "size": "Size",
+    "status": "For a new pool",
+    "intro": "Every disk with its health and whether a new pool may use it."
+  },
+  "decision": {
+    "allowed": "Available",
+    "needsSerialConfirmation": "Needs confirmation",
+    "refused": "Not available"
+  },
+  "reason": {
+    "system_disk": "Holds the system. Never used for pools.",
+    "read_only": "The disk is read-only.",
+    "mounted": "A file system on it is in use.",
+    "pool_member": "Part of the pool {pool}.",
+    "not_test_disk": "Not a declared test disk of this development machine.",
+    "duplicate_serial": "Another disk reports the same serial number, so it cannot be told apart.",
+    "no_serial": "Holds data and has no serial number to confirm with.",
+    "not_checked": "Not checked yet. Confirm with its serial number to use it.",
+    "has_data": "Holds data ({contents}). Confirm with its serial number to use it; everything on it is lost.",
+    "confirmed": "Confirmed with its serial number.",
+    "empty": "Empty and ready.",
+    "confirm_replacement": "A replacement disk is always confirmed with its serial number."
+  },
+  "create": {
+    "button": "Create pool…",
+    "title": "Create a pool",
+    "name": "Pool name",
+    "nameHint": "Lowercase letters, digits, - and _; starts with a letter.",
+    "layout": "Layout",
+    "disks": "Disks",
+    "noDisks": "No disk can be used right now.",
+    "refused": "{count, plural, one {# disk is} other {# disks are}} not available",
+    "confirm": "Type the serial number of {disk} ({serial})",
+    "preview": "Show commands",
+    "commands": "These commands would run, exactly as shown:",
+    "notYet": "Creating pools from here comes with the next update. Nothing was run.",
+    "blocked": "Not every chosen disk can be used:",
+    "close": "Close"
+  },
+  "run": {
+    "running": "Running step {step} of {count}…",
+    "succeeded": "Done. Every command ran.",
+    "stopped": "Stopped."
+  },
+  "wizard": {
+    "back": "Back",
+    "next": "Next",
+    "create": "Create pool",
+    "recommended": "Recommended",
+    "progress": "Step {step} of {count}: {title}",
+    "steps": {
+      "disks": "Disks",
+      "layout": "Layout",
+      "encryption": "Encryption",
+      "review": "Name and check"
+    },
+    "recommend": {
+      "single": "With one disk there is no protection: when it fails, the data is gone. Keep a backup.",
+      "mirror": "For {count} disks we recommend a mirror: every disk holds everything, so all but one may fail.",
+      "raidz1": "For {count} disks we recommend RAID-Z1: one disk may fail, and all others hold data. It works like RAID 5.",
+      "raidz2": "For {count} disks we recommend RAID-Z2: two disks may fail, which matters because rebuilding large disks takes long. It works like RAID 6.",
+      "raidz3": "We recommend RAID-Z3.",
+      "mirrors": "We recommend mirror pairs.",
+      "stripe": "We recommend a stripe."
+    },
+    "mixedSizes": "The disks differ in size: every disk counts as large as the smallest, so {wasted} stay unused.",
+    "drawing": "{data, plural, one {# disk} other {# disks}} for data, {protection, plural, =0 {none for protection} one {# for protection} other {# for protection}}",
+    "usable": "About {size} usable",
+    "tolerance": {
+      "none": "No disk may fail: one failure loses everything.",
+      "any": "{count, plural, one {Any # disk may fail.} other {Any # disks may fail.}}",
+      "pairs": "One disk per pair may fail, up to {max} in total."
+    },
+    "read": "Reading: {speed}",
+    "write": "Writing: {speed}",
+    "speed": {
+      "low": "like one disk",
+      "medium": "faster",
+      "good": "fast",
+      "high": "very fast",
+      "veryHigh": "fastest"
+    },
+    "summary": "{layout} of {count, plural, one {# disk} other {# disks}}, about {usable} usable, not encrypted.",
+    "encryption": {
+      "question": "Should the pool be encrypted?",
+      "explain": "Encryption can only be chosen now, when the pool is created. It cannot be switched on later: the pool would have to be created again and its data copied back.",
+      "none": "No encryption",
+      "noneHint": "Anyone with the disks can read the data. Fine for media and backups of other encrypted data.",
+      "key": "Encrypt with a key",
+      "keyLater": "Comes with the key vault in the next update. To encrypt this pool, wait for it: a pool created now stays unencrypted."
+    },
+    "layouts": {
+      "single": {
+        "title": "Single disk",
+        "goodFor": "Good for: trying things out, data that also lives elsewhere.",
+        "fixed": "Can be turned into a mirror later by attaching a second disk."
+      },
+      "mirror": {
+        "title": "Mirror",
+        "goodFor": "Good for: two disks, the most important data, fast reading.",
+        "fixed": "More disks can be attached to the mirror later; the space stays that of one disk."
+      },
+      "mirrors": {
+        "title": "Mirror pairs",
+        "goodFor": "Good for: speed, virtual machines and databases; grows two disks at a time.",
+        "fixed": "Grows by adding another pair. A pair whose two disks fail loses everything."
+      },
+      "raidz1": {
+        "title": "RAID-Z1",
+        "goodFor": "Good for: most homes, the most space with one disk of protection.",
+        "fixed": "The protection level stays at one disk. Disks can be added one at a time later (RAID-Z expansion)."
+      },
+      "raidz2": {
+        "title": "RAID-Z2",
+        "goodFor": "Good for: six disks or more, large disks, data that must survive two failures.",
+        "fixed": "The protection level stays at two disks. Disks can be added one at a time later."
+      },
+      "raidz3": {
+        "title": "RAID-Z3",
+        "goodFor": "Good for: many large disks and archives where three failures must be survived.",
+        "fixed": "The protection level stays at three disks. Disks can be added one at a time later."
+      },
+      "stripe": {
+        "title": "Stripe",
+        "goodFor": "Only for: scratch space whose loss does not matter.",
+        "fixed": "Protection can never be added. One failed disk loses the whole pool."
+      }
+    }
+  },
+  "actions": {
+    "disk": "New disk",
+    "datasets": "Everything on the pool is lost, including these datasets:",
+    "replace": {
+      "button": "Replace…",
+      "title": "Replace {device}",
+      "explain": "The new disk takes the place of {device} in {pool}; ZFS copies the data onto it (resilver). A new disk is never used on its own.",
+      "serialHint": "Type the serial number printed on the disk to confirm it is the one you mean.",
+      "run": "Replace"
+    },
+    "spareAdd": {
+      "button": "Add hot spare…",
+      "title": "Add a hot spare to {pool}",
+      "explain": "A hot spare waits in {pool}; when a disk fails, ZFS rebuilds onto it right away.",
+      "run": "Add spare"
+    },
+    "spareRemove": {
+      "button": "Remove spare",
+      "title": "Remove the spare {device}",
+      "explain": "{device} stops being a hot spare of {pool}.",
+      "run": "Remove"
+    },
+    "offline": {
+      "button": "Take offline",
+      "title": "Take {device} offline",
+      "explain": "{pool} stops using {device}, for example to swap it. The pool stays usable if it has protection left.",
+      "run": "Take offline"
+    },
+    "online": {
+      "button": "Bring online",
+      "title": "Bring {device} online",
+      "explain": "{pool} uses {device} again and rebuilds what it missed.",
+      "run": "Bring online"
+    },
+    "destroy": {
+      "button": "Destroy pool…",
+      "title": "Destroy {pool}",
+      "explain": "The pool {pool} and all its data are deleted. This cannot be undone.",
+      "confirm": "Type {pool} to confirm",
+      "run": "Destroy pool"
+    }
+  },
+  "datasets": {
+    "title": "{count, plural, one {# dataset} other {# datasets}}",
+    "notMounted": "not mounted",
+    "intro": "Every pool keeps its data in datasets (file systems) and volumes (block devices for virtual machines).",
+    "caption": "Datasets and volumes of {pool}",
+    "name": "Name",
+    "used": "Used",
+    "available": "Free",
+    "quota": "Limit",
+    "compression": "Compression",
+    "location": "Folder or size",
+    "volume": "volume",
+    "noQuota": "none",
+    "volumeSize": "{size} volume"
+  },
+  "layouts": {
+    "single": "Single disk (no redundancy)",
+    "mirror": "Mirror",
+    "raidz1": "RAID-Z1 (one disk may fail)",
+    "raidz2": "RAID-Z2 (two disks may fail)",
+    "raidz3": "RAID-Z3 (three disks may fail)",
+    "stripe": "Stripe (one failed disk loses everything)"
+  },
+  "snapshots": {
+    "title": "Snapshots",
+    "intro": "A snapshot keeps the state of a dataset at one moment. Users restore files from them under Previous versions in Files. Schedules delete only the snapshots they took.",
+    "noDatasets": "No datasets yet.",
+    "dataset": "Dataset",
+    "take": "Take snapshot",
+    "empty": "This dataset has no snapshots yet.",
+    "name": "Name",
+    "created": "Taken",
+    "used": "Space",
+    "actions": "Actions",
+    "foreign": "Other",
+    "held": "Held",
+    "hold": "Hold",
+    "release": "Release",
+    "rollback": "Roll back",
+    "delete": "Delete",
+    "cancel": "Cancel",
+    "kinds": {
+      "hourly": "Hourly",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "manual": "Manual"
+    },
+    "schedules": "Schedules",
+    "keep": "Keep",
+    "save": "Save schedules",
+    "schedulesHint": "Schedules take one snapshot per hour, day, week (from Monday) or month in UTC and keep the given number of their own snapshots. Held snapshots and snapshots taken by hand or by other tools are never deleted.",
+    "deleteTitle": "Delete snapshot",
+    "deleteBody": "The snapshot {name} is deleted for good, with every earlier version it holds.",
+    "typeName": "Type the name of the snapshot to confirm",
+    "deleteConfirm": "Delete snapshot",
+    "rollbackTitle": "Roll back {dataset}",
+    "rollbackBody": "The whole dataset returns to the snapshot {name} of {date}. Every change since then is lost.",
+    "rollbackNewer": "{count, plural, one {This newer snapshot is deleted as well:} other {These # newer snapshots are deleted as well:}}",
+    "typeDataset": "Type {dataset} to confirm",
+    "rollbackConfirm": "Roll back"
+  },
+  "health": {
+    "title": "Health",
+    "alerts": "Storage alerts",
+    "noAlerts": "No problems found.",
+    "severity": {
+      "critical": "Critical",
+      "warning": "Warning"
+    },
+    "mute": "Mute",
+    "unmute": "Show again",
+    "muted": "Muted for you",
+    "never": "Not scheduled",
+    "next": "Next run: {date}",
+    "frequency": {
+      "off": "Off",
+      "weekly": "Weekly",
+      "monthly": "Monthly"
+    },
+    "smart": {
+      "title": "Disk health (SMART)",
+      "caption": "SMART state of every disk",
+      "state": "SMART",
+      "details": "Details",
+      "states": {
+        "passed": "Healthy",
+        "warning": "Warning",
+        "failed": "Failing",
+        "unsupported": "No SMART",
+        "unknown": "Unknown"
+      },
+      "reasons": {
+        "virtual": "No SMART data in a virtual machine: a virtual disk has no sensors to read.",
+        "not_available": "This disk or its adapter does not report SMART data.",
+        "asleep": "Asleep since the system started. It is not woken up just to be checked.",
+        "not_read": "Not checked yet.",
+        "read_failed": "SMART could not be read. The log has the details."
+      },
+      "temperature": "{value, number} °C",
+      "counters": "{reallocated, number} reallocated, {pending, number} pending sectors, {mediaErrors, number} media errors",
+      "selfTest": {
+        "passed": "last self-test passed",
+        "failed": "last self-test failed",
+        "aborted": "last self-test was aborted",
+        "running": "self-test running"
+      },
+      "asleep": "asleep, values from {date}"
+    },
+    "scrub": {
+      "title": "Scrubs",
+      "intro": "A scrub reads every block of a pool and repairs what it can from redundancy.",
+      "schedule": "Scrub {pool}",
+      "start": "Scrub now",
+      "resume": "Resume",
+      "pause": "Pause",
+      "stop": "Stop"
+    },
+    "selfTests": {
+      "title": "SMART self-tests",
+      "intro": "Self-tests run inside the disks. Disks that are asleep are skipped and tried again later, never woken up.",
+      "shortSelfTest": "Short self-test",
+      "longSelfTest": "Long self-test"
+    },
+    "intro": "Problems Pithyx found, and the scrubs and self-tests that look for them."
+  },
+  "sample": {
+    "layout": "{type}, {count, plural, one {# disk} other {# disks}}",
+    "health": {
+      "healthy": "Healthy"
+    },
+    "used": "{used} of {total} used",
+    "disks": "Disks",
+    "disk": "Disk {number}",
+    "state": {
+      "active": "Active",
+      "warm": "Warm",
+      "standby": "Sleeping"
+    },
+    "standbyHint": "Sleeping disks are not woken for status queries."
+  }
 }

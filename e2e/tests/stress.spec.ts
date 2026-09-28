@@ -96,7 +96,7 @@ test('25 windows restore, stack and close', async ({ page }) => {
   const errors = watchErrors(page);
   const windows = Array.from({ length: 25 }, (_, index) => ({
     id: `w${String(index + 1)}`,
-    app: index % 2 === 0 ? 'disks' : 'about',
+    app: index % 2 === 0 ? 'storage' : 'about',
     screen: 1,
     title: null,
     rect: { x: index * 20, y: index * 20, width: 520, height: 360 },
@@ -149,8 +149,8 @@ test('rapid opening, closing and shortcuts leave a consistent desktop', async ({
   await page.setViewportSize({ width: 1440, height: 900 });
   await signInAsAdmin(page);
   const errors = watchErrors(page);
-  const disks = appWindow(page, 'Disks');
-  const shortcut = page.getByRole('option', { name: 'Disks, shortcut' });
+  const disks = appWindow(page, 'Storage');
+  const shortcut = page.getByRole('option', { name: 'Storage, shortcut' });
 
   for (let round = 0; round < 15; round++) {
     await shortcut.dblclick();
@@ -188,7 +188,11 @@ test('rapid opening, closing and shortcuts leave a consistent desktop', async ({
 test('dragging a window causes no long tasks', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await signInAsAdmin(page);
-  await openFromDesktop(page, 'Disks');
+  await openFromDesktop(page, 'Storage');
+  // Storage loads its pools after it opens; the drag measures the window manager, not that first render.
+  await expect(
+    appWindow(page, 'Storage').getByRole('article', { name: 'pithyxtestm' }),
+  ).toBeVisible();
   await page.getByRole('button', { name: 'Pithyx menu' }).click();
   await page
     .getByRole('dialog', { name: 'Pithyx menu' })

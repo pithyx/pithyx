@@ -63,13 +63,13 @@ public sealed class DesktopItemApiTests : IDisposable
     }
 
     [Fact]
-    public async Task ANewAdministratorStartsWithTheDefaultShortcutsAndSettingsInTheFirstColumn()
+    public async Task ANewAdministratorStartsWithTheDefaultShortcutsStorageAndSettingsInTheFirstColumn()
     {
         await _client.SetupAdminAsync();
 
         var items = await ListAsync();
 
-        Assert.Equal(["files", "disks", "settings", "about"], items.Select(item => item.GetProperty("app").GetString()));
+        Assert.Equal(["files", "storage", "settings", "about"], items.Select(item => item.GetProperty("app").GetString()));
         Assert.All(items, item => Assert.Equal("shortcut", item.GetProperty("kind").GetString()));
         Assert.Equal([0, 1, 2, 3], items.Select(item => item.GetProperty("row").GetInt32()));
         Assert.All(items, item => Assert.Equal(0, item.GetProperty("column").GetInt32()));
@@ -288,7 +288,7 @@ public sealed class DesktopItemApiTests : IDisposable
     }
 
     [Fact]
-    public async Task TheMigrationGivesExistingUsersTheDefaultShortcuts()
+    public async Task TheMigrationsGiveExistingUsersTheDefaultShortcutsAndTurnDisksIntoStorageForAdministrators()
     {
         var directory = Directory.CreateTempSubdirectory("pithyx-db-").FullName;
         try
@@ -299,14 +299,23 @@ public sealed class DesktopItemApiTests : IDisposable
             await using (var connection = await connections.OpenAsync(Token))
             {
                 await connection.ExecuteAsync(
-                    "INSERT INTO users (username, password_hash, is_admin, created_at, updated_at) VALUES ('ada', 'x', 1, '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z')");
+                    "INSERT INTO users (username, password_hash, is_admin, created_at, updated_at) VALUES ('ada', 'x', 1, '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z'), ('bob', 'x', 0, '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z')");
+            }
+
+            await runner.RunAsync([.. Migration.Embedded().Where(migration => migration.Version < 10)], Token);
+            await using (var before = await connections.OpenAsync(Token))
+            {
+                Assert.Equal(2, await before.ExecuteScalarAsync<long>("SELECT COUNT(*) FROM desktop_items WHERE data = '{\"app\":\"disks\"}'"));
             }
 
             await runner.RunAsync(Migration.Embedded(), Token);
 
             await using var check = await connections.OpenAsync(Token);
-            var rows = await check.QueryAsync<(string Data, long Row)>("SELECT data, grid_row FROM desktop_items ORDER BY grid_row");
-            Assert.Equal([("{\"app\":\"disks\"}", 0L), ("{\"app\":\"about\"}", 1L)], rows);
+            var rows = await check.QueryAsync<(string User, string Data, long Row, long Version)>(
+                "SELECT users.username, data, grid_row, version FROM desktop_items JOIN users ON users.id = user_id ORDER BY users.username, grid_row");
+            Assert.Equal(
+                [("ada", "{\"app\":\"storage\"}", 0L, 2L), ("ada", "{\"app\":\"about\"}", 1L, 1L), ("bob", "{\"app\":\"about\"}", 1L, 1L)],
+                rows);
         }
         finally
         {

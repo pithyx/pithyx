@@ -9,14 +9,9 @@ import { Badge } from '../../ui/Controls';
 import { Dialog } from '../../ui/Dialog';
 import { IconCamera } from '../../ui/icons';
 import { TextField } from '../../ui/TextField';
-import {
-  internalCall,
-  type Dataset,
-  type Snapshot,
-  type SnapshotScheduleList,
-} from '../sdk/internal';
-import styles from './Settings.module.css';
-import { describeProblem } from './StoragePage';
+import { internalCall, type Snapshot, type SnapshotScheduleList } from '../sdk/internal';
+import styles from './Storage.module.css';
+import { describeProblem, storageKey, usePools } from './shared';
 
 type Kind = 'hourly' | 'daily' | 'weekly' | 'monthly';
 type Pending =
@@ -24,7 +19,7 @@ type Pending =
   | { kind: 'rollback'; snapshot: Snapshot; newer: Snapshot[] };
 
 function snapshotsKey(dataset: string) {
-  return ['settings', 'storage', 'snapshots', dataset] as const;
+  return [...storageKey, 'snapshots', dataset] as const;
 }
 
 /**
@@ -32,23 +27,30 @@ function snapshotsKey(dataset: string) {
  * snapshot Pithyx took after its name was typed, and rolling back after the dataset name was typed with every newer
  * snapshot listed.
  */
-export function SnapshotsSection({ app, datasets }: { app: PithyxApp; datasets: Dataset[] }) {
-  const { t } = useTranslation('settings');
-  const filesystems = datasets.filter((dataset) => dataset.type === 'filesystem');
+export function SnapshotsSection({ app }: { app: PithyxApp }) {
+  const { t } = useTranslation('storage');
+  const pools = usePools(app);
+  const filesystems = (pools.data?.datasets ?? []).filter(
+    (dataset) => dataset.type === 'filesystem',
+  );
   const [chosen, setChosen] = useState<string | null>(null);
   const dataset = filesystems.find((candidate) => candidate.name === chosen) ?? filesystems[0];
   return (
-    <section aria-labelledby="storage-snapshots" className={styles.section}>
-      <h3 id="storage-snapshots" className={styles.sectionTitle}>
-        {t('storage.snapshots.title')}
-      </h3>
-      <p className={styles.muted}>{t('storage.snapshots.intro')}</p>
-      {dataset === undefined ? (
-        <p className={styles.muted}>{t('storage.snapshots.noDatasets')}</p>
-      ) : (
-        <>
+    <div className={styles.storage}>
+      <header className={styles.pageHeader}>
+        <div>
+          <h2 className={styles.pageTitle}>{t('nav.snapshots')}</h2>
+          <p className={styles.muted}>{t('snapshots.intro')}</p>
+        </div>
+      </header>
+      {pools.isError && <ErrorNotice error={describeProblem(pools.error)} />}
+      {pools.data !== undefined && dataset === undefined && (
+        <p className={styles.muted}>{t('snapshots.noDatasets')}</p>
+      )}
+      {dataset !== undefined && (
+        <section aria-label={t('snapshots.title')} className={styles.section}>
           <label className={styles.selectField}>
-            <span className={styles.fieldLabel}>{t('storage.snapshots.dataset')}</span>
+            <span className={styles.fieldLabel}>{t('snapshots.dataset')}</span>
             <select
               className={styles.select}
               value={dataset.name}
@@ -64,14 +66,14 @@ export function SnapshotsSection({ app, datasets }: { app: PithyxApp; datasets: 
             </select>
           </label>
           <DatasetSnapshots key={dataset.name} app={app} dataset={dataset.name} />
-        </>
+        </section>
       )}
-    </section>
+    </div>
   );
 }
 
 function DatasetSnapshots({ app, dataset }: { app: PithyxApp; dataset: string }) {
-  const { t, i18n } = useTranslation('settings');
+  const { t, i18n } = useTranslation('storage');
   const client = useQueryClient();
   const [pending, setPending] = useState<Pending | null>(null);
   const [typed, setTyped] = useState('');
@@ -127,26 +129,24 @@ function DatasetSnapshots({ app, dataset }: { app: PithyxApp; dataset: string })
           }}
         >
           <IconCamera size={16} aria-hidden />
-          {t('storage.snapshots.take')}
+          {t('snapshots.take')}
         </Button>
       </div>
       {action.isError && <ErrorNotice error={describeProblem(action.error)} />}
       <Schedules app={app} dataset={dataset} />
       {list.isError && <ErrorNotice error={describeProblem(list.error)} />}
-      {list.data?.snapshots.length === 0 && (
-        <p className={styles.muted}>{t('storage.snapshots.empty')}</p>
-      )}
+      {list.data?.snapshots.length === 0 && <p className={styles.muted}>{t('snapshots.empty')}</p>}
       {snapshots.length > 0 && (
         <table className={styles.table}>
           <thead>
             <tr>
-              <th scope="col">{t('storage.snapshots.name')}</th>
-              <th scope="col">{t('storage.snapshots.created')}</th>
+              <th scope="col">{t('snapshots.name')}</th>
+              <th scope="col">{t('snapshots.created')}</th>
               <th scope="col" className={`${styles.number} ${styles.optional}`}>
-                {t('storage.snapshots.used')}
+                {t('snapshots.used')}
               </th>
               <th scope="col">
-                <span className={styles.visuallyHidden}>{t('storage.snapshots.actions')}</span>
+                <span className={styles.visuallyHidden}>{t('snapshots.actions')}</span>
               </th>
             </tr>
           </thead>
@@ -157,15 +157,13 @@ function DatasetSnapshots({ app, dataset }: { app: PithyxApp; dataset: string })
                   <span className={styles.snapshotName}>
                     <span className={styles.mono}>{snapshot.name}</span>
                     {snapshot.pithyxKind === null ? (
-                      <Badge tone="neutral">{t('storage.snapshots.foreign')}</Badge>
+                      <Badge tone="neutral">{t('snapshots.foreign')}</Badge>
                     ) : (
                       <Badge tone="accent">
-                        {t(`storage.snapshots.kinds.${snapshot.pithyxKind as Kind | 'manual'}`)}
+                        {t(`snapshots.kinds.${snapshot.pithyxKind as Kind | 'manual'}`)}
                       </Badge>
                     )}
-                    {snapshot.holds > 0 && (
-                      <Badge tone="highlight">{t('storage.snapshots.held')}</Badge>
-                    )}
+                    {snapshot.holds > 0 && <Badge tone="highlight">{t('snapshots.held')}</Badge>}
                   </span>
                 </td>
                 <td>{app.format.dateTime(snapshot.createdAt)}</td>
@@ -190,9 +188,7 @@ function DatasetSnapshots({ app, dataset }: { app: PithyxApp; dataset: string })
                         );
                       }}
                     >
-                      {snapshot.holds > 0
-                        ? t('storage.snapshots.release')
-                        : t('storage.snapshots.hold')}
+                      {snapshot.holds > 0 ? t('snapshots.release') : t('snapshots.hold')}
                     </Button>
                     <Button
                       size="sm"
@@ -208,7 +204,7 @@ function DatasetSnapshots({ app, dataset }: { app: PithyxApp; dataset: string })
                         });
                       }}
                     >
-                      {t('storage.snapshots.rollback')}
+                      {t('snapshots.rollback')}
                     </Button>
                     {snapshot.pithyxKind !== null && snapshot.holds === 0 && (
                       <Button
@@ -219,7 +215,7 @@ function DatasetSnapshots({ app, dataset }: { app: PithyxApp; dataset: string })
                           setPending({ kind: 'delete', snapshot });
                         }}
                       >
-                        {t('storage.snapshots.delete')}
+                        {t('snapshots.delete')}
                       </Button>
                     )}
                   </span>
@@ -240,16 +236,16 @@ function DatasetSnapshots({ app, dataset }: { app: PithyxApp; dataset: string })
         tone="danger"
         title={
           pending?.kind === 'rollback'
-            ? t('storage.snapshots.rollbackTitle', { dataset })
-            : t('storage.snapshots.deleteTitle')
+            ? t('snapshots.rollbackTitle', { dataset })
+            : t('snapshots.deleteTitle')
         }
         actions={
           <>
-            <Button onPress={close}>{t('storage.snapshots.cancel')}</Button>
+            <Button onPress={close}>{t('snapshots.cancel')}</Button>
             <Button variant="danger" isDisabled={typed !== expected} onPress={confirmPending}>
               {pending?.kind === 'rollback'
-                ? t('storage.snapshots.rollbackConfirm')
-                : t('storage.snapshots.deleteConfirm')}
+                ? t('snapshots.rollbackConfirm')
+                : t('snapshots.deleteConfirm')}
             </Button>
           </>
         }
@@ -258,14 +254,14 @@ function DatasetSnapshots({ app, dataset }: { app: PithyxApp; dataset: string })
           {pending?.kind === 'rollback' ? (
             <>
               <p>
-                {t('storage.snapshots.rollbackBody', {
+                {t('snapshots.rollbackBody', {
                   name: pending.snapshot.name,
                   date: app.format.dateTime(pending.snapshot.createdAt),
                 })}
               </p>
               {pending.newer.length > 0 && (
                 <>
-                  <p>{t('storage.snapshots.rollbackNewer', { count: pending.newer.length })}</p>
+                  <p>{t('snapshots.rollbackNewer', { count: pending.newer.length })}</p>
                   <ul className={styles.commands}>
                     {pending.newer.map((snapshot) => (
                       <li key={snapshot.name} className={styles.mono}>
@@ -277,13 +273,13 @@ function DatasetSnapshots({ app, dataset }: { app: PithyxApp; dataset: string })
               )}
             </>
           ) : (
-            <p>{t('storage.snapshots.deleteBody', { name: pending?.snapshot.name ?? '' })}</p>
+            <p>{t('snapshots.deleteBody', { name: pending?.snapshot.name ?? '' })}</p>
           )}
           <TextField
             label={
               pending?.kind === 'rollback'
-                ? t('storage.snapshots.typeDataset', { dataset })
-                : t('storage.snapshots.typeName')
+                ? t('snapshots.typeDataset', { dataset })
+                : t('snapshots.typeName')
             }
             value={typed}
             onChange={setTyped}
@@ -298,7 +294,7 @@ function DatasetSnapshots({ app, dataset }: { app: PithyxApp; dataset: string })
 
 /** The four schedules of a dataset; saved together. */
 function Schedules({ app, dataset }: { app: PithyxApp; dataset: string }) {
-  const { t } = useTranslation('settings');
+  const { t } = useTranslation('storage');
   const client = useQueryClient();
   const saved = useQuery({
     queryKey: [...snapshotsKey(dataset), 'schedules'],
@@ -333,7 +329,7 @@ function Schedules({ app, dataset }: { app: PithyxApp; dataset: string }) {
 
   return (
     <fieldset className={styles.schedules}>
-      <legend className={styles.fieldLabel}>{t('storage.snapshots.schedules')}</legend>
+      <legend className={styles.fieldLabel}>{t('snapshots.schedules')}</legend>
       {current.schedules.map((schedule) => (
         <div key={schedule.kind} className={styles.schedule}>
           <label className={styles.check}>
@@ -344,10 +340,10 @@ function Schedules({ app, dataset }: { app: PithyxApp; dataset: string }) {
                 change(schedule.kind, { enabled: event.currentTarget.checked });
               }}
             />
-            {t(`storage.snapshots.kinds.${schedule.kind as Kind}`)}
+            {t(`snapshots.kinds.${schedule.kind as Kind}`)}
           </label>
           <label className={styles.keep}>
-            <span>{t('storage.snapshots.keep')}</span>
+            <span>{t('snapshots.keep')}</span>
             <input
               type="number"
               min={1}
@@ -361,7 +357,7 @@ function Schedules({ app, dataset }: { app: PithyxApp; dataset: string }) {
           </label>
         </div>
       ))}
-      <p className={styles.muted}>{t('storage.snapshots.schedulesHint')}</p>
+      <p className={styles.muted}>{t('snapshots.schedulesHint')}</p>
       {save.isError && <ErrorNotice error={describeProblem(save.error)} />}
       <div>
         <Button
@@ -374,7 +370,7 @@ function Schedules({ app, dataset }: { app: PithyxApp; dataset: string }) {
             }
           }}
         >
-          {t('storage.snapshots.save')}
+          {t('snapshots.save')}
         </Button>
       </div>
     </fieldset>

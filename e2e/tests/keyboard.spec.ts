@@ -44,21 +44,21 @@ test('sign in, work with windows and sign out with the keyboard only', async ({ 
     await expect(page.getByRole('button', { name: 'Pithyx menu' })).toBeFocused();
     await page.keyboard.press('Enter');
     await expect(page.getByRole('searchbox')).toBeFocused();
-    await page.keyboard.type('disks');
+    await page.keyboard.type('storage');
     await page.keyboard.press('Enter');
-    await expect(page.getByRole('region', { name: 'Disks', exact: true })).toBeFocused();
+    await expect(page.getByRole('region', { name: 'Storage', exact: true })).toBeFocused();
   });
 
   await test.step('minimizing the last window moves focus to the start button', async () => {
     await page.keyboard.press('Alt+Shift+ArrowDown');
-    await expect(page.getByRole('region', { name: 'Disks', exact: true })).toBeHidden();
+    await expect(page.getByRole('region', { name: 'Storage', exact: true })).toBeHidden();
     await expect(page.getByRole('button', { name: 'Pithyx menu' })).toBeFocused();
     await page.keyboard.press('Alt+Shift+PageDown');
-    await expect(page.getByRole('region', { name: 'Disks', exact: true })).toBeFocused();
+    await expect(page.getByRole('region', { name: 'Storage', exact: true })).toBeFocused();
   });
 
   await test.step('escape puts the window back where it was before the keyboard move', async () => {
-    const disks = page.getByRole('region', { name: 'Disks', exact: true });
+    const disks = page.getByRole('region', { name: 'Storage', exact: true });
     const before = await settledBox(disks);
     await page.keyboard.press('Alt+Shift+Space');
     await page.getByRole('menuitem', { name: 'Move' }).press('Enter');
@@ -72,12 +72,12 @@ test('sign in, work with windows and sign out with the keyboard only', async ({ 
 
   await test.step('close the window from the window menu', async () => {
     await page.keyboard.press('Alt+Shift+Space');
-    const menu = page.getByRole('menu', { name: 'Window menu for Disks' });
+    const menu = page.getByRole('menu', { name: 'Window menu for Storage' });
     await expect(menu).toBeVisible();
     await page.keyboard.press('End');
     await expect(page.getByRole('menuitem', { name: 'Close' })).toBeFocused();
     await page.keyboard.press('Enter');
-    await expect(page.getByRole('region', { name: 'Disks', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('region', { name: 'Storage', exact: true })).toHaveCount(0);
     await expect(page.getByRole('button', { name: 'Pithyx menu' })).toBeFocused();
   });
 

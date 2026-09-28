@@ -156,9 +156,6 @@ api.MapFileEndpoints();
 api.MapStorageEndpoints();
 api.MapSnapshotEndpoints();
 api.MapStorageHealthEndpoints();
-api.MapGet("/disks", (DiskInventory disks) => TypedResults.Ok(disks.Current))
-    .WithName("GetDisks")
-    .WithTags("Storage");
 app.MapRealtime();
 app.MapDesktop(paths.DesktopDirectory);
 

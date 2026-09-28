@@ -50,19 +50,18 @@ export const coreApps: readonly CoreApp[] = [
     ),
   },
   {
-    id: 'disks',
+    id: 'storage',
     icon: IconDatabase,
     tone: 'ocean',
+    adminOnly: true,
     window: {
       instances: 'single',
-      defaultSize: { width: 880, height: 520 },
-      minSize: { width: 360, height: 240 },
+      defaultSize: { width: 1000, height: 660 },
+      minSize: { width: 340, height: 360 },
     },
     Component: lazy(() =>
-      Promise.all([import('./disks/DisksApp'), loadTranslations('disks')]).then(
-        ([{ DisksApp }]) => ({
-          default: DisksApp,
-        }),
+      Promise.all([import('./storage/StorageWindow'), loadTranslations('storage')]).then(
+        ([{ StorageWindow }]) => ({ default: StorageWindow }),
       ),
     ),
   },

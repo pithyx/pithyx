@@ -245,22 +245,6 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
-    "/api/disks": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["GetDisks"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/files/{shareId}/content": {
         parameters: {
             query?: never;
@@ -1109,7 +1093,53 @@ export type components = {
         };
         /** @description Snapshot of `storage/disks` and response of `GET /api/disks`. */
         DiskList: {
-            disks: components["schemas"]["Disk"][];
+            disks: {
+                /** @description Stable across reboots and device renames: `wwn-...`, else `serial-...`, else `path-...`. */
+                id: string;
+                /** @description Model name, if any. */
+                model: null | string;
+                /** @description Kernel name, for example `sda` or `nvme0n1`. Can change between boots. */
+                name: string;
+                /** @description Partitions in on-disk order. */
+                partitions: {
+                    /** @description File system or content type, for example `ext4` or `zfs_member`. */
+                    fileSystem: null | string;
+                    /** @description File system label, if any. */
+                    label: null | string;
+                    /** @description Where the partition is mounted; empty when it is not. */
+                    mountPoints: string[];
+                    /** @description Kernel name, for example `sda1`. */
+                    name: string;
+                    /** @description Device node. */
+                    path: string;
+                    /**
+                     * Format: int64
+                     * @description Size in bytes.
+                     */
+                    sizeBytes: number;
+                }[];
+                /** @description Device node, for example `/dev/sda`. */
+                path: string;
+                /** @description True when the kernel exposes the disk read-only. */
+                readOnly: boolean;
+                /** @description True for removable media. */
+                removable: boolean;
+                /** @description True for spinning disks. */
+                rotational: boolean;
+                /** @description Serial number as reported by the drive, if any. */
+                serial: null | string;
+                /**
+                 * Format: int64
+                 * @description Capacity in bytes.
+                 */
+                sizeBytes: number;
+                /** @description Bus, for example `sata`, `nvme` or `usb`; null for virtual disks. */
+                transport: null | string;
+                /** @description Vendor, if any. */
+                vendor: null | string;
+                /** @description World wide name, if any. */
+                wwn: null | string;
+            }[];
         };
         /** @description Event of `storage/disks`: disks that appeared or changed, and ids of disks that disappeared. */
         DisksChanged: {
@@ -2610,35 +2640,6 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
-            };
-            /** @description Problem details with a stable error code. */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ApiProblem"];
-                };
-            };
-        };
-    };
-    GetDisks: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DiskList"];
-                };
             };
             /** @description Problem details with a stable error code. */
             default: {

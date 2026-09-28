@@ -3,6 +3,7 @@ import type { EventName, MethodName, PithyxApp } from '@pithyx/sdk';
 import { PithyxError, type HostExtensions } from '@pithyx/sdk/host';
 import { api } from '../../api/client';
 import { realtime } from '../../realtime/connection';
+import { openApp } from '../../wm/store';
 
 export type StorageDiskList = components['schemas']['StorageDiskList'];
 export type StorageDisk = components['schemas']['StorageDisk'];
@@ -65,7 +66,12 @@ export interface InternalMethods {
     result: StorageScheduleList;
   };
   'internal.admin.storage.schedule': { params: StorageScheduleUpdate; result: StorageScheduleList };
+  'internal.admin.openApp': { params: { app: AdminApp }; result: boolean };
 }
+
+/** Administrator apps another core app may open, for example Settings opening Storage. */
+const adminApps = ['storage', 'settings'] as const;
+export type AdminApp = (typeof adminApps)[number];
 
 /** Sent to the app when pools or disks changed; the app reads them again. */
 export const STORAGE_CHANGED = 'internal.admin.storage.changed';
@@ -337,6 +343,10 @@ export function adminStorageHost(emit: (event: string, data?: unknown) => void):
     'internal.admin.storage.schedules': {
       validate: isRecord,
       handle: () => daemon(async () => unwrap(await api.GET('/api/storage/schedules'))),
+    },
+    'internal.admin.openApp': {
+      validate: (params) => isRecord(params) && adminApps.some((known) => known === params.app),
+      handle: (params) => Promise.resolve(openApp((params as { app: AdminApp }).app)),
     },
     'internal.admin.storage.schedule': {
       validate: isScheduleUpdate,

@@ -8,38 +8,56 @@ import { appWindow, openFromStart, signInAsAdmin } from './session';
 
 async function openStorage(page: Page) {
   await signInAsAdmin(page);
-  await openFromStart(page, 'Settings');
-  const settings = appWindow(page, 'Settings');
-  await expect(settings.getByRole('heading', { name: 'Storage', level: 2 })).toBeVisible();
-  return settings;
+  await openFromStart(page, 'Storage');
+  const storage = appWindow(page, 'Storage');
+  await expect(storage.getByRole('heading', { name: 'Pools', level: 2 })).toBeVisible();
+  return storage;
 }
 
-function diskRow(settings: ReturnType<typeof appWindow>, name: string) {
-  return settings
+async function openDisks(storage: ReturnType<typeof appWindow>) {
+  await storage.getByRole('button', { name: 'Disks', exact: true }).click();
+  await expect(storage.getByRole('heading', { name: 'Disks', level: 2 })).toBeVisible();
+}
+
+function diskRow(storage: ReturnType<typeof appWindow>, name: string) {
+  return storage
     .getByRole('table', { name: 'Disks and whether a new pool may use them' })
     .getByRole('row', { name: new RegExp(`^${name} `) });
 }
 
-test('the Storage page shows the pools and whether each disk may be used', async ({ page }) => {
-  const settings = await openStorage(page);
+test('Storage shows the pools and whether each disk may be used', async ({ page }) => {
+  const storage = await openStorage(page);
 
-  const mirror = settings.getByRole('article', { name: 'pithyxtestm' });
+  const mirror = storage.getByRole('article', { name: 'pithyxtestm' });
   await expect(mirror).toContainText('Healthy');
   await expect(mirror).toContainText('Mirror of 2 disks');
-  await expect(settings.getByRole('article', { name: 'pithyxtests' })).toContainText('Single disk');
+  await expect(storage.getByRole('article', { name: 'pithyxtests' })).toContainText('Single disk');
+  await expect(storage).toContainText('only the declared test disks can be used');
 
-  await expect(diskRow(settings, 'sda')).toContainText('Holds the system. Never used for pools.');
-  await expect(diskRow(settings, 'sdb')).toContainText('Needs confirmation');
-  await expect(diskRow(settings, 'sdc')).toContainText('Empty and ready.');
-  await expect(diskRow(settings, 'sde')).toContainText('Part of the pool pithyxtestm.');
-  await expect(settings).toContainText('only the declared test disks can be used');
+  await openDisks(storage);
+
+  await expect(diskRow(storage, 'sda')).toContainText('Holds the system. Never used for pools.');
+  await expect(diskRow(storage, 'sdb')).toContainText('Needs confirmation');
+  await expect(diskRow(storage, 'sdc')).toContainText('Empty and ready.');
+  await expect(diskRow(storage, 'sde')).toContainText('Part of the pool pithyxtestm.');
+  await expect(diskRow(storage, 'sdg')).toContainText('No SMART data in a virtual machine');
+});
+
+test('Settings has no storage page and opens Storage', async ({ page }) => {
+  await signInAsAdmin(page);
+  await openFromStart(page, 'Settings');
+  const settings = appWindow(page, 'Settings');
+  await settings.getByRole('button', { name: 'Open Storage' }).click();
+  await expect(
+    appWindow(page, 'Storage').getByRole('heading', { name: 'Pools', level: 2 }),
+  ).toBeVisible();
 });
 
 test('the pool wizard compares layouts, asks about encryption and lists the exact commands', async ({
   page,
 }) => {
-  const settings = await openStorage(page);
-  await settings.getByRole('button', { name: 'Create pool…' }).click();
+  const storage = await openStorage(page);
+  await storage.getByRole('button', { name: 'Create pool…' }).click();
   const dialog = page.getByRole('dialog', { name: 'Create a pool' });
 
   await dialog.getByRole('checkbox', { name: /^sdb / }).check();
@@ -81,8 +99,8 @@ test('the pool wizard compares layouts, asks about encryption and lists the exac
 });
 
 test('replacing a device always asks for the serial number of the new disk', async ({ page }) => {
-  const settings = await openStorage(page);
-  const mirror = settings.getByRole('article', { name: 'pithyxtestm' });
+  const storage = await openStorage(page);
+  const mirror = storage.getByRole('article', { name: 'pithyxtestm' });
   await mirror
     .getByRole('listitem')
     .filter({ hasText: 'drive-scsi5' })
@@ -107,8 +125,8 @@ test('replacing a device always asks for the serial number of the new disk', asy
 });
 
 test('destroying a pool needs its name typed and lists its datasets', async ({ page }) => {
-  const settings = await openStorage(page);
-  await settings
+  const storage = await openStorage(page);
+  await storage
     .getByRole('article', { name: 'pithyxtests' })
     .getByRole('button', { name: 'Destroy pool…' })
     .click();
@@ -136,11 +154,15 @@ async function violations(page: Page) {
   );
 }
 
-test('the Storage page and the preview have no accessibility violations', async ({ page }) => {
-  const settings = await openStorage(page);
-  await expect(diskRow(settings, 'sda')).toBeVisible();
-  expect(await violations(page)).toEqual([]);
-  await settings.getByRole('button', { name: 'Create pool…' }).click();
+test('Storage and the preview have no accessibility violations', async ({ page }) => {
+  const storage = await openStorage(page);
+  for (const section of ['Disks', 'Datasets and volumes', 'Snapshots', 'Health and maintenance']) {
+    await storage.getByRole('button', { name: section, exact: true }).click();
+    await expect(storage.getByRole('heading', { name: section, level: 2 })).toBeVisible();
+    expect(await violations(page)).toEqual([]);
+  }
+  await storage.getByRole('button', { name: 'Pools', exact: true }).click();
+  await storage.getByRole('button', { name: 'Create pool…' }).click();
   const dialog = page.getByRole('dialog', { name: 'Create a pool' });
   await dialog.getByRole('checkbox', { name: /^sdc / }).check();
   await dialog.getByRole('checkbox', { name: /^sdd / }).check();
@@ -152,9 +174,10 @@ test('the Storage page and the preview have no accessibility violations', async 
 test.describe('phone', () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
 
-  test('the Storage page fits and has no accessibility violations', async ({ page }) => {
-    const settings = await openStorage(page);
-    await expect(diskRow(settings, 'sda')).toBeVisible();
+  test('Storage fits and has no accessibility violations', async ({ page }) => {
+    const storage = await openStorage(page);
+    await openDisks(storage);
+    await expect(diskRow(storage, 'sda')).toBeVisible();
     expect(await violations(page)).toEqual([]);
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth - window.innerWidth,

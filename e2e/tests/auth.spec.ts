@@ -47,11 +47,12 @@ async function confirmStored(page: Page) {
 }
 
 function disks(page: Page) {
-  return page.getByRole('region', { name: 'Disks', exact: true });
+  return page.getByRole('region', { name: 'Storage', exact: true });
 }
 
 async function openDisks(page: Page) {
-  await openFromDesktop(page, 'Disks');
+  await openFromDesktop(page, 'Storage');
+  await disks(page).getByRole('button', { name: 'Disks', exact: true }).click();
   await expect(disks(page).getByRole('row', { name: /sdg/ })).toBeVisible();
 }
 
@@ -206,7 +207,7 @@ test('the language select switches the sign-in screen', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
 });
 
-test('phones sign in and see the disks full screen', async ({ browser }) => {
+test('phones sign in and see the storage app full screen', async ({ browser }) => {
   const context = await browser.newContext({
     viewport: { width: 390, height: 844 },
     hasTouch: true,
@@ -215,8 +216,9 @@ test('phones sign in and see the disks full screen', async ({ browser }) => {
   const page = await context.newPage();
   await page.goto('/');
   await signIn(page, newPassword);
-  await page.getByRole('option', { name: 'Disks, shortcut' }).tap();
+  await page.getByRole('option', { name: 'Storage, shortcut' }).tap();
   const region = disks(page);
+  await region.getByRole('button', { name: 'Disks', exact: true }).tap();
   await expect(region.getByRole('row', { name: /sdg/ })).toBeVisible();
   const box = await region.boundingBox();
   expect(box?.width).toBe(390);

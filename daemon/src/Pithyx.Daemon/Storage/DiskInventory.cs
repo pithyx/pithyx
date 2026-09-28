@@ -59,7 +59,8 @@ public sealed class DiskInventory
         typeof(DiskList),
         typeof(DisksChanged),
         (_, _) => ValueTask.FromResult<object>(Current),
-        TopicDefinition.AnyUser);
+        // Administrators only, like the Storage app that shows them: disks name serials and models.
+        PoolInventory.IsAllowed);
 
     // Records compare lists by reference, so content is compared through its JSON form.
     private static string Fingerprint(Disk disk) => JsonSerializer.Serialize(disk);

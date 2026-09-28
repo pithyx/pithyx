@@ -1,25 +1,29 @@
 import { useTranslation } from 'react-i18next';
+import { Button } from '../../ui/Button';
 import type { SdkAppProps } from '../sdk/CoreSdkApp';
+import { internalCall } from '../sdk/internal';
 import styles from './Settings.module.css';
-import { StoragePage } from './StoragePage';
 
-// Pages ship with the step that makes them work; Users, Shares, Network and Energy follow in M3.
-const pages = ['storage'] as const;
-
-/** Settings: a list of pages and the open one. */
+/**
+ * Settings: system settings only (users and groups, shared folders, network, energy, updates). Pages ship with the
+ * step that makes them work; storage has its own app.
+ */
 export function SettingsApp({ app }: SdkAppProps) {
   const { t } = useTranslation('settings');
   return (
     <div className={styles.app}>
-      <nav className={styles.nav} aria-label={t('sections')}>
-        {pages.map((page) => (
-          <span key={page} className={styles.navItem} aria-current="page">
-            {t(`nav.${page}`)}
-          </span>
-        ))}
-      </nav>
       <main className={styles.page}>
-        <StoragePage app={app} />
+        <div className={styles.pointer}>
+          <h2 className={styles.pageTitle}>{t('storagePointer.title')}</h2>
+          <p className={styles.muted}>{t('storagePointer.body')}</p>
+          <Button
+            onPress={() => {
+              void internalCall(app, 'internal.admin.openApp', { app: 'storage' });
+            }}
+          >
+            {t('storagePointer.open')}
+          </Button>
+        </div>
       </main>
     </div>
   );

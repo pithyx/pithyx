@@ -18,8 +18,8 @@ import {
   type LayoutOption,
 } from './layouts';
 import { isFinished, JobStatus, PlanPreview, RunButton, RunError, useRunPlan } from './PlanRun';
-import styles from './Settings.module.css';
-import { describeProblem, guardReason } from './StoragePage';
+import styles from './Storage.module.css';
+import { describeProblem, guardReason } from './shared';
 
 type Step = 'disks' | 'layout' | 'encryption' | 'review';
 const steps: Step[] = ['disks', 'layout', 'encryption', 'review'];
@@ -38,7 +38,7 @@ export function PoolWizard({
   disks: StorageDisk[];
   onClose: () => void;
 }) {
-  const { t, i18n } = useTranslation('settings');
+  const { t, i18n } = useTranslation('storage');
   const [step, setStep] = useState<Step>('disks');
   const [selected, setSelected] = useState<readonly string[]>([]);
   const [confirmations, setConfirmations] = useState<Record<string, string>>({});
@@ -95,11 +95,11 @@ export function PoolWizard({
           onClose();
         }
       }}
-      title={t('storage.create.title')}
+      title={t('create.title')}
       actions={
         job !== null ? (
           <Button variant="primary" isDisabled={!isFinished(job)} onPress={onClose}>
-            {t('storage.create.close')}
+            {t('create.close')}
           </Button>
         ) : (
           <>
@@ -110,19 +110,14 @@ export function PoolWizard({
                   plan.reset();
                 }}
               >
-                {t('storage.wizard.back')}
+                {t('wizard.back')}
               </Button>
             ) : (
-              <Button onPress={onClose}>{t('storage.create.close')}</Button>
+              <Button onPress={onClose}>{t('create.close')}</Button>
             )}
             {step === 'review' ? (
               plan.data?.planId ? (
-                <RunButton
-                  preview={plan.data}
-                  label={t('storage.wizard.create')}
-                  run={run}
-                  job={job}
-                />
+                <RunButton preview={plan.data} label={t('wizard.create')} run={run} job={job} />
               ) : (
                 <Button
                   variant="primary"
@@ -131,7 +126,7 @@ export function PoolWizard({
                     plan.mutate();
                   }}
                 >
-                  {t('storage.create.preview')}
+                  {t('create.preview')}
                 </Button>
               )
             ) : (
@@ -142,7 +137,7 @@ export function PoolWizard({
                   setStep(steps[index + 1] ?? 'review');
                 }}
               >
-                {t('storage.wizard.next')}
+                {t('wizard.next')}
               </Button>
             )}
           </>
@@ -151,17 +146,17 @@ export function PoolWizard({
     >
       <div className={styles.form}>
         <p className={styles.muted}>
-          {t('storage.wizard.progress', {
+          {t('wizard.progress', {
             step: index + 1,
             count: steps.length,
-            title: t(`storage.wizard.steps.${step}`),
+            title: t(`wizard.steps.${step}`),
           })}
         </p>
 
         {step === 'disks' && (
           <fieldset className={styles.diskChoice}>
-            <legend className={styles.fieldLabel}>{t('storage.create.disks')}</legend>
-            {usable.length === 0 && <p className={styles.muted}>{t('storage.create.noDisks')}</p>}
+            <legend className={styles.fieldLabel}>{t('create.disks')}</legend>
+            {usable.length === 0 && <p className={styles.muted}>{t('create.noDisks')}</p>}
             {usable.map(({ disk, guard }) => (
               <div key={disk.id} className={styles.diskOption}>
                 {/* A native checkbox: React Aria's would move into the chunk every app shares with the desktop. */}
@@ -180,7 +175,7 @@ export function PoolWizard({
                 </label>
                 {guard.decision === 'needsSerialConfirmation' && selected.includes(disk.id) && (
                   <TextField
-                    label={t('storage.create.confirm', {
+                    label={t('create.confirm', {
                       disk: disk.name,
                       serial: disk.serial ?? '',
                     })}
@@ -198,7 +193,7 @@ export function PoolWizard({
             ))}
             {refused.length > 0 && (
               <details className={styles.refused}>
-                <summary>{t('storage.create.refused', { count: refused.length })}</summary>
+                <summary>{t('create.refused', { count: refused.length })}</summary>
                 <ul>
                   {refused.map(({ disk, guard }) => (
                     <li key={disk.id}>
@@ -214,20 +209,16 @@ export function PoolWizard({
         {step === 'layout' && (
           <>
             <p className={styles.recommendation}>
-              {t(`storage.wizard.recommend.${recommended}`, { count: sizes.length })}
+              {t(`wizard.recommend.${recommended}`, { count: sizes.length })}
             </p>
             {wastedBytes(sizes) > 0 && (
               <p className={styles.notice}>
-                {t('storage.wizard.mixedSizes', {
+                {t('wizard.mixedSizes', {
                   wasted: formatBytes(wastedBytes(sizes), i18n.language),
                 })}
               </p>
             )}
-            <div
-              className={styles.layouts}
-              role="radiogroup"
-              aria-label={t('storage.create.layout')}
-            >
+            <div className={styles.layouts} role="radiogroup" aria-label={t('create.layout')}>
               {options.map((option) => (
                 <LayoutCard
                   key={option.layout}
@@ -245,8 +236,8 @@ export function PoolWizard({
 
         {step === 'encryption' && (
           <fieldset className={styles.diskChoice}>
-            <legend className={styles.fieldLabel}>{t('storage.wizard.encryption.question')}</legend>
-            <p className={styles.muted}>{t('storage.wizard.encryption.explain')}</p>
+            <legend className={styles.fieldLabel}>{t('wizard.encryption.question')}</legend>
+            <p className={styles.muted}>{t('wizard.encryption.explain')}</p>
             <label className={styles.check}>
               <input
                 type="radio"
@@ -256,26 +247,22 @@ export function PoolWizard({
                   setEncryption('none');
                 }}
               />
-              <span>{t('storage.wizard.encryption.none')}</span>
+              <span>{t('wizard.encryption.none')}</span>
             </label>
-            <p className={cx(styles.muted, styles.indent)}>
-              {t('storage.wizard.encryption.noneHint')}
-            </p>
+            <p className={cx(styles.muted, styles.indent)}>{t('wizard.encryption.noneHint')}</p>
             <label className={cx(styles.check, styles.disabled)}>
               <input type="radio" name="encryption" disabled />
-              <span>{t('storage.wizard.encryption.key')}</span>
+              <span>{t('wizard.encryption.key')}</span>
             </label>
-            <p className={cx(styles.muted, styles.indent)}>
-              {t('storage.wizard.encryption.keyLater')}
-            </p>
+            <p className={cx(styles.muted, styles.indent)}>{t('wizard.encryption.keyLater')}</p>
           </fieldset>
         )}
 
         {step === 'review' && (
           <>
             <TextField
-              label={t('storage.create.name')}
-              description={t('storage.create.nameHint')}
+              label={t('create.name')}
+              description={t('create.nameHint')}
               value={name}
               onChange={(value) => {
                 setName(value);
@@ -286,8 +273,8 @@ export function PoolWizard({
               isReadOnly={job !== null}
             />
             <p>
-              {t('storage.wizard.summary', {
-                layout: t(`storage.wizard.layouts.${effectiveLayout}.title`),
+              {t('wizard.summary', {
+                layout: t(`wizard.layouts.${effectiveLayout}.title`),
                 count: selected.length,
                 usable: formatBytes(
                   options.find((option) => option.layout === effectiveLayout)?.usableBytes ?? 0,
@@ -330,14 +317,14 @@ function LayoutCard({
   selected: boolean;
   onSelect: () => void;
 }) {
-  const { t, i18n } = useTranslation('settings');
-  const key = `storage.wizard.layouts.${option.layout}` as const;
+  const { t, i18n } = useTranslation('storage');
+  const key = `wizard.layouts.${option.layout}` as const;
   const tolerance =
     option.tolerance === 0
-      ? t('storage.wizard.tolerance.none')
+      ? t('wizard.tolerance.none')
       : option.toleranceMax > option.tolerance
-        ? t('storage.wizard.tolerance.pairs', { max: option.toleranceMax })
-        : t('storage.wizard.tolerance.any', { count: option.tolerance });
+        ? t('wizard.tolerance.pairs', { max: option.toleranceMax })
+        : t('wizard.tolerance.any', { count: option.tolerance });
   const speeds = ['low', 'low', 'medium', 'good', 'high', 'veryHigh'] as const;
   return (
     <button
@@ -353,7 +340,7 @@ function LayoutCard({
     >
       <span className={styles.layoutHead}>
         <span className={styles.layoutTitle}>{t(`${key}.title`)}</span>
-        {recommended && <Badge tone="accent">{t('storage.wizard.recommended')}</Badge>}
+        {recommended && <Badge tone="accent">{t('wizard.recommended')}</Badge>}
       </span>
       <span className={styles.drawing} aria-hidden>
         {option.groups.map((group, groupIndex) => (
@@ -365,24 +352,24 @@ function LayoutCard({
         ))}
       </span>
       <span className={styles.legend}>
-        {t('storage.wizard.drawing', {
+        {t('wizard.drawing', {
           data: option.groups.flat().filter((role) => role === 'data').length,
           protection: option.groups.flat().filter((role) => role !== 'data').length,
         })}
       </span>
       <span className={styles.usable}>
-        {t('storage.wizard.usable', { size: formatBytes(option.usableBytes, i18n.language) })}
+        {t('wizard.usable', { size: formatBytes(option.usableBytes, i18n.language) })}
       </span>
       <span className={option.tolerance === 0 ? styles.errors : undefined}>{tolerance}</span>
       <Meter
-        label={t('storage.wizard.read', {
-          speed: t(`storage.wizard.speed.${speeds[option.read] ?? 'low'}`),
+        label={t('wizard.read', {
+          speed: t(`wizard.speed.${speeds[option.read] ?? 'low'}`),
         })}
         value={option.read}
       />
       <Meter
-        label={t('storage.wizard.write', {
-          speed: t(`storage.wizard.speed.${speeds[option.write] ?? 'low'}`),
+        label={t('wizard.write', {
+          speed: t(`wizard.speed.${speeds[option.write] ?? 'low'}`),
         })}
         value={option.write}
       />

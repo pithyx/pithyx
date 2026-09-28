@@ -177,33 +177,33 @@ export function StorageContent() {
       <section className={styles.pool}>
         <div className={styles.poolHead}>
           <h3 className={styles.poolName}>{storageApp.pool}</h3>
-          <span className={styles.healthy}>{t('health.healthy')}</span>
+          <span className={styles.healthy}>{t('sample.health.healthy')}</span>
         </div>
         <p className={styles.muted}>
-          {t('layout', { type: storageApp.layout, count: storageApp.disks.length })}
+          {t('sample.layout', { type: storageApp.layout, count: storageApp.disks.length })}
         </p>
         <ProgressBar
-          label={t('used', {
+          label={t('sample.used', {
             used: formatBytes(storageApp.usedBytes, i18n.language),
             total: formatBytes(storageApp.totalBytes, i18n.language),
           })}
           value={(storageApp.usedBytes / storageApp.totalBytes) * 100}
         />
       </section>
-      <h3 className={styles.sideTitle}>{t('disks')}</h3>
+      <h3 className={styles.sideTitle}>{t('sample.disks')}</h3>
       <ul className={styles.disks}>
         {storageApp.disks.map((disk) => (
           <li key={disk.number} className={styles.disk} data-state={disk.state}>
-            <span className={styles.diskName}>{t('disk', { number: disk.number })}</span>
+            <span className={styles.diskName}>{t('sample.disk', { number: disk.number })}</span>
             <span className={cx(styles.muted, styles.mono, styles.optional)}>{disk.model}</span>
             <span className={cx(styles.mono, styles.temperature)}>
               {disk.temperature === undefined ? '' : celsius.format(disk.temperature)}
             </span>
-            <span className={styles.diskState}>{t(`state.${disk.state}`)}</span>
+            <span className={styles.diskState}>{t(`sample.state.${disk.state}`)}</span>
           </li>
         ))}
       </ul>
-      <p className={styles.muted}>{t('standbyHint')}</p>
+      <p className={styles.muted}>{t('sample.standbyHint')}</p>
     </div>
   );
 }
@@ -229,14 +229,7 @@ export function LogsContent() {
   );
 }
 
-const settingsSections = [
-  'personalization',
-  'users',
-  'network',
-  'storage',
-  'updates',
-  'about',
-] as const;
+const settingsSections = ['personalization', 'users', 'network', 'updates', 'about'] as const;
 
 export function SettingsContent({ accent }: { accent: string }) {
   const { t } = useTranslation('settings');

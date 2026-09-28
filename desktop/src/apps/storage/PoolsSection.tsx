@@ -1,0 +1,273 @@
+import type { PithyxApp } from '@pithyx/sdk';
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { formatBytes } from '../../desktop/format';
+import { ErrorNotice } from '../../errors/ErrorNotice';
+import { Button } from '../../ui/Button';
+import { Badge } from '../../ui/Controls';
+import { IconPlus } from '../../ui/icons';
+import type { Dataset, Pool, Vdev } from '../sdk/internal';
+import { PoolActionDialog, type PoolAction } from './PoolActionDialog';
+import { PoolWizard } from './PoolWizard';
+import { describeProblem, stateKey, stateTone, useDisks, usePools, type Translate } from './shared';
+import styles from './Storage.module.css';
+
+/** Pools with their layout, health and fill level, the pool wizard, and repair and maintenance through plans. */
+export function PoolsSection({ app }: { app: PithyxApp }) {
+  const { t } = useTranslation('storage');
+  const [creating, setCreating] = useState(false);
+  const [action, setAction] = useState<{ pool: Pool; vdev?: Vdev; action: PoolAction } | null>(
+    null,
+  );
+  const pools = usePools(app);
+  const disks = useDisks(app);
+
+  return (
+    <div className={styles.storage}>
+      <header className={styles.pageHeader}>
+        <div>
+          <h2 className={styles.pageTitle}>{t('nav.pools')}</h2>
+          <p className={styles.muted}>{t('intro')}</p>
+        </div>
+        <Button
+          variant="primary"
+          onPress={() => {
+            setCreating(true);
+          }}
+          isDisabled={disks.data === undefined}
+        >
+          <IconPlus size={16} aria-hidden />
+          {t('create.button')}
+        </Button>
+      </header>
+      {disks.data?.environment === 'dev' && <p className={styles.notice}>{t('dev')}</p>}
+      {pools.isError && <ErrorNotice error={describeProblem(pools.error)} />}
+      {pools.data?.pools.length === 0 && <p className={styles.muted}>{t('pools.empty')}</p>}
+      <div className={styles.pools}>
+        {pools.data?.pools.map((pool) => (
+          <PoolCard
+            key={pool.name}
+            pool={pool}
+            datasets={pools.data.datasets.filter((dataset) => dataset.pool === pool.name)}
+            onAction={(poolAction, vdev) => {
+              setAction({ pool, action: poolAction, ...(vdev === undefined ? {} : { vdev }) });
+            }}
+          />
+        ))}
+      </div>
+
+      {creating && disks.data !== undefined && (
+        <PoolWizard
+          app={app}
+          disks={disks.data.disks}
+          onClose={() => {
+            setCreating(false);
+          }}
+        />
+      )}
+      {action !== null && disks.data !== undefined && (
+        <PoolActionDialog
+          app={app}
+          pool={action.pool}
+          {...(action.vdev === undefined ? {} : { vdev: action.vdev })}
+          action={action.action}
+          disks={disks.data.disks}
+          onClose={() => {
+            setAction(null);
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+type OnAction = (action: PoolAction, vdev?: Vdev) => void;
+
+function PoolCard({
+  pool,
+  datasets,
+  onAction,
+}: {
+  pool: Pool;
+  datasets: Dataset[];
+  onAction: OnAction;
+}) {
+  const { t, i18n } = useTranslation('storage');
+  const data = pool.vdevs.filter((vdev) => vdev.role === 'data');
+  const others = pool.vdevs.filter((vdev) => vdev.role !== 'data');
+  return (
+    <article className={styles.pool} aria-labelledby={`pool-${pool.name}`}>
+      <div className={styles.poolHead}>
+        <h4 id={`pool-${pool.name}`} className={styles.poolName}>
+          {pool.name}
+        </h4>
+        <Badge tone={stateTone(pool.state)}>{t(`state.${stateKey(pool.state)}`)}</Badge>
+      </div>
+      <div className={styles.usage}>
+        <span>
+          {t('pools.used', {
+            used: formatBytes(pool.allocatedBytes, i18n.language),
+            size: formatBytes(pool.sizeBytes, i18n.language),
+          })}
+        </span>
+        <span className={styles.bar} aria-hidden>
+          <span className={styles.fill} style={{ width: `${String(pool.capacityPercent)}%` }} />
+        </span>
+      </div>
+      <p className={styles.muted}>
+        {t('pools.layout', { layout: data.map((vdev) => vdevLabel(t, vdev)).join(' + ') })}
+      </p>
+      {pool.scan !== null && <p className={styles.muted}>{scanText(t, pool, i18n.language)}</p>}
+      {pool.state !== 'ONLINE' && <p className={styles.notice}>{t('pools.degradedHint')}</p>}
+      <ul className={styles.vdevs} aria-label={t('pools.devices', { pool: pool.name })}>
+        {[...data, ...others].map((vdev) => (
+          <VdevItem key={vdev.name} vdev={vdev} onAction={onAction} />
+        ))}
+      </ul>
+      <details className={styles.datasets}>
+        <summary>{t('datasets.title', { count: datasets.length })}</summary>
+        <ul>
+          {datasets.map((dataset) => (
+            <li key={dataset.name}>
+              <span className={styles.mono}>{dataset.name}</span>
+              <span className={styles.muted}>
+                {' '}
+                {dataset.mountPoint ?? t('datasets.notMounted')} ·{' '}
+                {formatBytes(dataset.usedBytes, i18n.language)}
+              </span>
+            </li>
+          ))}
+        </ul>
+      </details>
+      <div className={styles.poolActions}>
+        <Button
+          size="sm"
+          onPress={() => {
+            onAction('pool.spare.add');
+          }}
+        >
+          {t('actions.spareAdd.button')}
+        </Button>
+        <Button
+          size="sm"
+          variant="danger"
+          onPress={() => {
+            onAction('pool.destroy');
+          }}
+        >
+          {t('actions.destroy.button')}
+        </Button>
+      </div>
+    </article>
+  );
+}
+
+function VdevItem({ vdev, onAction }: { vdev: Vdev; onAction: OnAction }) {
+  const { t } = useTranslation('storage');
+  const leaves = vdev.children.length === 0 ? [vdev] : vdev.children;
+  return (
+    <li className={styles.vdev}>
+      <span className={styles.vdevType}>
+        {vdev.role === 'data' ? vdevLabel(t, vdev) : t(`role.${roleKey(vdev.role)}`)}
+      </span>
+      <ul className={styles.leaves}>
+        {leaves.map((leaf) => (
+          <li key={leaf.name} className={styles.leaf} data-state={leaf.state}>
+            <span className={styles.mono}>{leaf.name}</span>
+            <Badge tone={stateTone(leaf.state)}>{t(`state.${stateKey(leaf.state)}`)}</Badge>
+            <span className={styles.leafActions}>
+              {vdev.role === 'spare' ? (
+                <Button
+                  size="sm"
+                  variant="quiet"
+                  onPress={() => {
+                    onAction('pool.spare.remove', leaf);
+                  }}
+                >
+                  {t('actions.spareRemove.button')}
+                </Button>
+              ) : (
+                <>
+                  <Button
+                    size="sm"
+                    variant="quiet"
+                    onPress={() => {
+                      onAction(leaf.state === 'OFFLINE' ? 'pool.online' : 'pool.offline', leaf);
+                    }}
+                  >
+                    {t(
+                      leaf.state === 'OFFLINE' ? 'actions.online.button' : 'actions.offline.button',
+                    )}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="quiet"
+                    onPress={() => {
+                      onAction('pool.replace', leaf);
+                    }}
+                  >
+                    {t('actions.replace.button')}
+                  </Button>
+                </>
+              )}
+            </span>
+            {leaf.readErrors + leaf.writeErrors + leaf.checksumErrors > 0 && (
+              <span className={styles.errors}>
+                {t('pools.errors', {
+                  read: leaf.readErrors,
+                  write: leaf.writeErrors,
+                  checksum: leaf.checksumErrors,
+                })}
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+    </li>
+  );
+}
+
+const ROLES = ['log', 'cache', 'special', 'dedup', 'spare'] as const;
+
+function roleKey(role: string): (typeof ROLES)[number] {
+  return ROLES.find((known) => known === role) ?? 'special';
+}
+
+function vdevLabel(t: Translate, vdev: Vdev): string {
+  switch (vdev.type) {
+    case 'mirror':
+      return t('vdev.mirror', { count: vdev.children.length });
+    case 'raidz':
+      return t('vdev.raidz', {
+        parity: vdev.parityDisks ?? 1,
+        count: vdev.children.length,
+      });
+    case 'disk':
+    case 'file':
+      return t('vdev.single');
+    default:
+      return vdev.type;
+  }
+}
+
+function scanText(t: Translate, pool: Pool, locale: string): string {
+  const scan = pool.scan;
+  if (scan === null) {
+    return '';
+  }
+  const date =
+    scan.endedAt === null
+      ? ''
+      : new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(
+          new Date(scan.endedAt),
+        );
+  const percent =
+    scan.toExamineBytes === 0 ? 0 : Math.floor((scan.examinedBytes / scan.toExamineBytes) * 100);
+  const kind = scan.kind === 'resilver' ? 'resilver' : 'scrub';
+  if (scan.state === 'scanning') {
+    return scan.paused ? t('scan.paused', { percent }) : t(`scan.${kind}Running`, { percent });
+  }
+  return scan.state === 'finished'
+    ? t(`scan.${kind}Finished`, { date, errors: scan.errors })
+    : t('scan.canceled');
+}

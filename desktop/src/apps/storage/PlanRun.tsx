@@ -12,8 +12,8 @@ import {
   type StorageDisk,
   type StoragePlanPreview,
 } from '../sdk/internal';
-import styles from './Settings.module.css';
-import { describeProblem, guardReason } from './StoragePage';
+import styles from './Storage.module.css';
+import { describeProblem, guardReason } from './shared';
 
 /** The commands of a plan, or why the plan cannot be made. */
 export function PlanPreview({
@@ -23,11 +23,11 @@ export function PlanPreview({
   preview: StoragePlanPreview;
   disks: StorageDisk[];
 }) {
-  const { t } = useTranslation('settings');
+  const { t } = useTranslation('storage');
   if (preview.commands === null) {
     return (
       <div className={styles.preview} role="status">
-        <p>{t('storage.create.blocked')}</p>
+        <p>{t('create.blocked')}</p>
         <ul>
           {preview.disks
             .filter((verdict) => verdict.decision !== 'allowed')
@@ -48,7 +48,7 @@ export function PlanPreview({
     <div className={styles.preview} role="status">
       {preview.datasets.length > 0 && (
         <>
-          <p>{t('storage.actions.datasets')}</p>
+          <p>{t('actions.datasets')}</p>
           <ul className={styles.mono}>
             {preview.datasets.map((dataset) => (
               <li key={dataset}>{dataset}</li>
@@ -56,7 +56,7 @@ export function PlanPreview({
           </ul>
         </>
       )}
-      <p>{t('storage.create.commands')}</p>
+      <p>{t('create.commands')}</p>
       <ol className={styles.commands}>
         {preview.commands.map((command, index) => (
           <li key={index}>
@@ -94,7 +94,7 @@ const FINISHED = new Set(['succeeded', 'failed', 'cancelled', 'interrupted']);
 
 /** Where a running plan is; the error of a failed one with its request id. */
 export function JobStatus({ job }: { job: Job }) {
-  const { t } = useTranslation('settings');
+  const { t } = useTranslation('storage');
   if (job.state === 'failed' && job.errorCode !== null) {
     return (
       <ErrorNotice
@@ -113,10 +113,10 @@ export function JobStatus({ job }: { job: Job }) {
   return (
     <p className={styles.preview} role="status" aria-busy={!FINISHED.has(job.state)}>
       {job.state === 'succeeded'
-        ? t('storage.run.succeeded')
+        ? t('run.succeeded')
         : FINISHED.has(job.state)
-          ? t('storage.run.stopped')
-          : t('storage.run.running', { step, count: job.progress.itemsTotal })}
+          ? t('run.stopped')
+          : t('run.running', { step, count: job.progress.itemsTotal })}
       {!FINISHED.has(job.state) && job.progress.currentItem !== null && (
         <code className={styles.current}>{job.progress.currentItem}</code>
       )}

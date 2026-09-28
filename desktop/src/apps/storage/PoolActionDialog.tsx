@@ -9,8 +9,8 @@ import { Dialog } from '../../ui/Dialog';
 import { TextField } from '../../ui/TextField';
 import { internalCall, type Pool, type StorageDisk, type Vdev } from '../sdk/internal';
 import { isFinished, JobStatus, PlanPreview, RunButton, RunError, useRunPlan } from './PlanRun';
-import styles from './Settings.module.css';
-import { describeProblem, guardReason } from './StoragePage';
+import styles from './Storage.module.css';
+import { describeProblem, guardReason } from './shared';
 
 export type PoolAction =
   | 'pool.replace'
@@ -18,8 +18,7 @@ export type PoolAction =
   | 'pool.spare.remove'
   | 'pool.offline'
   | 'pool.online'
-  | 'pool.destroy'
-  | 'dataset.create';
+  | 'pool.destroy';
 
 const actionKey = {
   'pool.replace': 'replace',
@@ -28,7 +27,6 @@ const actionKey = {
   'pool.offline': 'offline',
   'pool.online': 'online',
   'pool.destroy': 'destroy',
-  'dataset.create': 'datasetCreate',
 } as const;
 
 /**
@@ -51,13 +49,12 @@ export function PoolActionDialog({
   disks: StorageDisk[];
   onClose: () => void;
 }) {
-  const { t, i18n } = useTranslation('settings');
+  const { t, i18n } = useTranslation('storage');
   const key = actionKey[action];
   const needsDisk = action === 'pool.replace' || action === 'pool.spare.add';
   const [diskId, setDiskId] = useState<string | null>(null);
   const [serial, setSerial] = useState('');
   const [confirmName, setConfirmName] = useState('');
-  const [datasetName, setDatasetName] = useState('');
   const usable = disks.filter(({ guard }) => guard.decision !== 'refused');
   const chosen = usable.find(({ disk }) => disk.id === diskId);
   const plan = useMutation({
@@ -68,7 +65,6 @@ export function PoolActionDialog({
         ...(vdev === undefined ? {} : { vdev: vdev.vdevGuid }),
         ...(diskId === null ? {} : { diskIds: [diskId], confirmations: { [diskId]: serial } }),
         ...(action === 'pool.destroy' ? { confirmName } : {}),
-        ...(action === 'dataset.create' ? { name: datasetName.trim() } : {}),
       }),
   });
   const { run, job } = useRunPlan(app);
@@ -88,19 +84,19 @@ export function PoolActionDialog({
           onClose();
         }
       }}
-      title={t(`storage.actions.${key}.title`, { pool: pool.name, device: vdev?.name ?? '' })}
+      title={t(`actions.${key}.title`, { pool: pool.name, device: vdev?.name ?? '' })}
       actions={
         job !== null ? (
           <Button variant="primary" isDisabled={!isFinished(job)} onPress={onClose}>
-            {t('storage.create.close')}
+            {t('create.close')}
           </Button>
         ) : (
           <>
-            <Button onPress={onClose}>{t('storage.create.close')}</Button>
+            <Button onPress={onClose}>{t('create.close')}</Button>
             {plan.data?.planId ? (
               <RunButton
                 preview={plan.data}
-                label={t(`storage.actions.${key}.run`)}
+                label={t(`actions.${key}.run`)}
                 run={run}
                 job={job}
                 danger={action === 'pool.destroy'}
@@ -113,7 +109,7 @@ export function PoolActionDialog({
                   plan.mutate();
                 }}
               >
-                {t('storage.create.preview')}
+                {t('create.preview')}
               </Button>
             )}
           </>
@@ -121,11 +117,11 @@ export function PoolActionDialog({
       }
     >
       <div className={styles.form}>
-        <p>{t(`storage.actions.${key}.explain`, { pool: pool.name, device: vdev?.name ?? '' })}</p>
+        <p>{t(`actions.${key}.explain`, { pool: pool.name, device: vdev?.name ?? '' })}</p>
         {needsDisk && (
           <fieldset className={styles.diskChoice}>
-            <legend className={styles.fieldLabel}>{t('storage.actions.disk')}</legend>
-            {usable.length === 0 && <p className={styles.muted}>{t('storage.create.noDisks')}</p>}
+            <legend className={styles.fieldLabel}>{t('actions.disk')}</legend>
+            {usable.length === 0 && <p className={styles.muted}>{t('create.noDisks')}</p>}
             {usable.map(({ disk }) => (
               <label key={disk.id} className={styles.check}>
                 <input
@@ -148,13 +144,13 @@ export function PoolActionDialog({
         )}
         {askSerial && (
           <TextField
-            label={t('storage.create.confirm', {
+            label={t('create.confirm', {
               disk: chosen.disk.name,
               serial: chosen.disk.serial ?? '',
             })}
             description={
               action === 'pool.replace'
-                ? t('storage.actions.replace.serialHint')
+                ? t('actions.replace.serialHint')
                 : guardReason(t, chosen.guard)
             }
             value={serial}
@@ -166,22 +162,9 @@ export function PoolActionDialog({
             autoComplete="off"
           />
         )}
-        {action === 'dataset.create' && (
-          <TextField
-            label={t('storage.actions.datasetCreate.name')}
-            description={t('storage.actions.datasetCreate.nameHint', { pool: pool.name })}
-            value={datasetName}
-            onChange={(value) => {
-              setDatasetName(value);
-              plan.reset();
-            }}
-            autoCapitalize="none"
-            autoComplete="off"
-          />
-        )}
         {action === 'pool.destroy' && (
           <TextField
-            label={t('storage.actions.destroy.confirm', { pool: pool.name })}
+            label={t('actions.destroy.confirm', { pool: pool.name })}
             value={confirmName}
             onChange={(value) => {
               setConfirmName(value);

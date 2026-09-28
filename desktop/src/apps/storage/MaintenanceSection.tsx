@@ -10,73 +10,52 @@ import {
   internalCall,
   type Pool,
   type ScrubAction,
-  type SmartReport,
   type StorageAlert,
-  type StorageDisk,
   type StorageScheduleList,
   type StorageScheduleUpdate,
 } from '../sdk/internal';
-import styles from './Settings.module.css';
-import { describeProblem } from './StoragePage';
+import styles from './Storage.module.css';
+import { describeProblem, formatDate, healthKey, storageKey, useHealth, usePools } from './shared';
 
-const healthKey = ['settings', 'storage', 'health'] as const;
-const schedulesKey = ['settings', 'storage', 'schedules'] as const;
+const schedulesKey = [...storageKey, 'schedules'] as const;
 
 const FREQUENCIES = ['off', 'weekly', 'monthly'] as const;
-const SMART_STATES = ['passed', 'warning', 'failed', 'unsupported', 'unknown'] as const;
-const SMART_REASONS = ['virtual', 'not_available', 'asleep', 'not_read', 'read_failed'] as const;
-const SELF_TESTS = ['passed', 'failed', 'aborted', 'running'] as const;
 
-function known<T extends string>(values: readonly T[], value: string | null, fallback: T): T {
-  return values.find((entry) => entry === value) ?? fallback;
-}
-
-type Translate = ReturnType<typeof useTranslation<'settings'>>['t'];
-
-function formatDate(value: string, locale: string): string {
-  return new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(
-    new Date(value),
-  );
-}
-
-/** Alerts, SMART per disk, scrubs and self-test schedules. Everything live through the storage topics. */
-export function HealthSection({
-  app,
-  pools,
-  disks,
-}: {
-  app: PithyxApp;
-  pools: Pool[];
-  disks: StorageDisk[];
-}) {
-  const { t } = useTranslation('settings');
-  const health = useQuery({
-    queryKey: healthKey,
-    queryFn: () => internalCall(app, 'internal.admin.storage.health', {}),
-  });
+/** Alerts, scrubs and SMART self-test schedules. Everything live through the storage topics. */
+export function MaintenanceSection({ app }: { app: PithyxApp }) {
+  const { t } = useTranslation('storage');
+  const health = useHealth(app);
+  const pools = usePools(app);
   const schedules = useQuery({
     queryKey: schedulesKey,
     queryFn: () => internalCall(app, 'internal.admin.storage.schedules', {}),
   });
 
   return (
-    <section aria-labelledby="storage-health" className={styles.section}>
-      <h3 id="storage-health" className={styles.sectionTitle}>
-        {t('storage.health.title')}
-      </h3>
-      {health.isError && <ErrorNotice error={describeProblem(health.error)} />}
-      {health.data !== undefined && <AlertList app={app} alerts={health.data.alerts} />}
-      {health.data !== undefined && <SmartTable reports={health.data.smart} disks={disks} />}
+    <div className={styles.storage}>
+      <header className={styles.pageHeader}>
+        <div>
+          <h2 className={styles.pageTitle}>{t('nav.maintenance')}</h2>
+          <p className={styles.muted}>{t('health.intro')}</p>
+        </div>
+      </header>
+      <section aria-labelledby="storage-alerts" className={styles.section}>
+        <h3 id="storage-alerts" className={styles.sectionTitle}>
+          {t('health.alerts')}
+        </h3>
+        {health.isError && <ErrorNotice error={describeProblem(health.error)} />}
+        {health.data !== undefined && <AlertList app={app} alerts={health.data.alerts} />}
+      </section>
       {schedules.isError && <ErrorNotice error={describeProblem(schedules.error)} />}
       {schedules.data !== undefined && (
-        <Schedules app={app} pools={pools} schedules={schedules.data} />
+        <Schedules app={app} pools={pools.data?.pools ?? []} schedules={schedules.data} />
       )}
-    </section>
+    </div>
   );
 }
 
 function AlertList({ app, alerts }: { app: PithyxApp; alerts: StorageAlert[] }) {
-  const { t } = useTranslation('settings');
+  const { t } = useTranslation('storage');
   const text = useMessages('notifications');
   const queryClient = useQueryClient();
   const mute = useMutation({
@@ -87,12 +66,12 @@ function AlertList({ app, alerts }: { app: PithyxApp; alerts: StorageAlert[] }) 
     },
   });
   if (alerts.length === 0) {
-    return <p className={styles.muted}>{t('storage.health.noAlerts')}</p>;
+    return <p className={styles.muted}>{t('health.noAlerts')}</p>;
   }
   return (
     <>
       {mute.isError && <ErrorNotice error={describeProblem(mute.error)} />}
-      <ul className={styles.alerts} aria-label={t('storage.health.alerts')}>
+      <ul className={styles.alerts} aria-label={t('health.alerts')}>
         {alerts.map((alert) => {
           const message = alertMessage(alert);
           return (
@@ -100,12 +79,10 @@ function AlertList({ app, alerts }: { app: PithyxApp; alerts: StorageAlert[] }) 
               <div className={styles.alertText}>
                 <div className={styles.poolHead}>
                   <Badge tone={alert.severity === 'critical' ? 'danger' : 'highlight'}>
-                    {t(
-                      `storage.health.severity.${alert.severity === 'critical' ? 'critical' : 'warning'}`,
-                    )}
+                    {t(`health.severity.${alert.severity === 'critical' ? 'critical' : 'warning'}`)}
                   </Badge>
                   <strong>{text(message, 'title')}</strong>
-                  {alert.muted && <span className={styles.muted}>{t('storage.health.muted')}</span>}
+                  {alert.muted && <span className={styles.muted}>{t('health.muted')}</span>}
                 </div>
                 <p className={styles.muted}>{text(message, 'body')}</p>
               </div>
@@ -117,7 +94,7 @@ function AlertList({ app, alerts }: { app: PithyxApp; alerts: StorageAlert[] }) 
                   mute.mutate({ key: alert.key, muted: !alert.muted });
                 }}
               >
-                {alert.muted ? t('storage.health.unmute') : t('storage.health.mute')}
+                {alert.muted ? t('health.unmute') : t('health.mute')}
               </Button>
             </li>
           );
@@ -125,83 +102,6 @@ function AlertList({ app, alerts }: { app: PithyxApp; alerts: StorageAlert[] }) 
       </ul>
     </>
   );
-}
-
-function SmartTable({ reports, disks }: { reports: SmartReport[]; disks: StorageDisk[] }) {
-  const { t, i18n } = useTranslation('settings');
-  const byId = new Map(reports.map((report) => [report.diskId, report]));
-  return (
-    <>
-      <h4 className={styles.subTitle}>{t('storage.health.smart.title')}</h4>
-      <table className={styles.table}>
-        <caption className="visually-hidden">{t('storage.health.smart.caption')}</caption>
-        <thead>
-          <tr>
-            <th scope="col">{t('storage.disks.name')}</th>
-            <th scope="col">{t('storage.health.smart.state')}</th>
-            <th scope="col">{t('storage.health.smart.details')}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {disks.map(({ disk }) => {
-            const report = byId.get(disk.id);
-            const state = known(SMART_STATES, report?.state ?? null, 'unknown');
-            return (
-              <tr key={disk.id}>
-                <th scope="row" className={styles.mono}>
-                  {disk.name}
-                </th>
-                <td>
-                  <Badge
-                    tone={
-                      state === 'passed'
-                        ? 'accent'
-                        : state === 'failed'
-                          ? 'danger'
-                          : state === 'warning'
-                            ? 'highlight'
-                            : 'neutral'
-                    }
-                  >
-                    {t(`storage.health.smart.states.${state}`)}
-                  </Badge>
-                </td>
-                <td className={styles.reason}>{smartDetails(t, report, i18n.language)}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
-    </>
-  );
-}
-
-function smartDetails(t: Translate, report: SmartReport | undefined, locale: string): string {
-  if (report === undefined) {
-    return t('storage.health.smart.reasons.not_read');
-  }
-  if (report.readAt === null) {
-    return t(`storage.health.smart.reasons.${known(SMART_REASONS, report.reason, 'not_read')}`);
-  }
-  const parts = [
-    t('storage.health.smart.counters', {
-      reallocated: report.reallocatedSectors ?? 0,
-      pending: report.pendingSectors ?? 0,
-      mediaErrors: report.mediaErrors ?? 0,
-    }),
-  ];
-  if (report.temperatureCelsius !== null) {
-    parts.unshift(t('storage.health.smart.temperature', { value: report.temperatureCelsius }));
-  }
-  if (report.lastSelfTest !== null) {
-    parts.push(
-      t(`storage.health.smart.selfTest.${known(SELF_TESTS, report.lastSelfTest, 'aborted')}`),
-    );
-  }
-  if (report.asleep) {
-    parts.push(t('storage.health.smart.asleep', { date: formatDate(report.readAt, locale) }));
-  }
-  return parts.join(' · ');
 }
 
 function Schedules({
@@ -213,7 +113,7 @@ function Schedules({
   pools: Pool[];
   schedules: StorageScheduleList;
 }) {
-  const { t, i18n } = useTranslation('settings');
+  const { t, i18n } = useTranslation('storage');
   const queryClient = useQueryClient();
   const change = useMutation({
     mutationFn: (update: StorageScheduleUpdate) =>
@@ -245,8 +145,8 @@ function Schedules({
   });
   const next = (value: string | null) =>
     value === null
-      ? t('storage.health.never')
-      : t('storage.health.next', { date: formatDate(value, i18n.language) });
+      ? t('health.never')
+      : t('health.next', { date: formatDate(value, i18n.language) });
   const frequencySelect = (kind: string, target: string, frequency: string, label: string) => (
     <label className={styles.selectField}>
       <span className={styles.fieldLabel}>{label}</span>
@@ -259,7 +159,7 @@ function Schedules({
       >
         {FREQUENCIES.map((entry) => (
           <option key={entry} value={entry}>
-            {t(`storage.health.frequency.${entry}`)}
+            {t(`health.frequency.${entry}`)}
           </option>
         ))}
       </select>
@@ -270,8 +170,8 @@ function Schedules({
     <>
       {change.isError && <ErrorNotice error={describeProblem(change.error)} />}
       {scrub.isError && <ErrorNotice error={describeProblem(scrub.error)} />}
-      <h4 className={styles.subTitle}>{t('storage.health.scrub.title')}</h4>
-      <p className={styles.muted}>{t('storage.health.scrub.intro')}</p>
+      <h3 className={styles.sectionTitle}>{t('health.scrub.title')}</h3>
+      <p className={styles.muted}>{t('health.scrub.intro')}</p>
       {pools.map((pool) => {
         const schedule = schedules.schedules.find(
           (entry) => entry.kind === 'scrub' && entry.target === pool.name,
@@ -284,7 +184,7 @@ function Schedules({
               'scrub',
               pool.name,
               schedule?.frequency ?? 'monthly',
-              t('storage.health.scrub.schedule', { pool: pool.name }),
+              t('health.scrub.schedule', { pool: pool.name }),
             )}
             <span className={styles.muted}>{next(schedule?.nextRunAt ?? null)}</span>
             <div className={styles.buttons}>
@@ -296,7 +196,7 @@ function Schedules({
                     scrub.mutate({ pool: pool.name, action: 'start' });
                   }}
                 >
-                  {paused ? t('storage.health.scrub.resume') : t('storage.health.scrub.start')}
+                  {paused ? t('health.scrub.resume') : t('health.scrub.start')}
                 </Button>
               )}
               {scrubbing && !paused && (
@@ -307,7 +207,7 @@ function Schedules({
                     scrub.mutate({ pool: pool.name, action: 'pause' });
                   }}
                 >
-                  {t('storage.health.scrub.pause')}
+                  {t('health.scrub.pause')}
                 </Button>
               )}
               {scrubbing && (
@@ -319,15 +219,15 @@ function Schedules({
                     scrub.mutate({ pool: pool.name, action: 'stop' });
                   }}
                 >
-                  {t('storage.health.scrub.stop')}
+                  {t('health.scrub.stop')}
                 </Button>
               )}
             </div>
           </div>
         );
       })}
-      <h4 className={styles.subTitle}>{t('storage.health.selfTests.title')}</h4>
-      <p className={styles.muted}>{t('storage.health.selfTests.intro')}</p>
+      <h3 className={styles.sectionTitle}>{t('health.selfTests.title')}</h3>
+      <p className={styles.muted}>{t('health.selfTests.intro')}</p>
       {(['shortSelfTest', 'longSelfTest'] as const).map((kind) => {
         const schedule = schedules.schedules.find((entry) => entry.kind === kind);
         return (
@@ -336,7 +236,7 @@ function Schedules({
               kind,
               '',
               schedule?.frequency ?? (kind === 'shortSelfTest' ? 'weekly' : 'monthly'),
-              t(`storage.health.selfTests.${kind}`),
+              t(`health.selfTests.${kind}`),
             )}
             <span className={styles.muted}>{next(schedule?.nextRunAt ?? null)}</span>
           </div>

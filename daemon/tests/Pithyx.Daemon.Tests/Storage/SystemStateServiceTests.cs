@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
+using Pithyx.Daemon.Auth;
 using Pithyx.Daemon.Commands;
 using Pithyx.Daemon.Hosting;
 using Pithyx.Daemon.Realtime;
@@ -38,7 +39,8 @@ public sealed class SystemStateServiceTests : IAsyncDisposable
             _hub,
             _time,
             NullLogger<SystemStateService>.Instance);
-        _subscriber = _hub.Connect(new ClaimsPrincipal(new ClaimsIdentity([], "test")), "s");
+        // Disks and pools are for administrators only.
+        _subscriber = _hub.Connect(new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.Role, SessionAuthenticationHandler.AdminRole)], "test")), "s");
         SetDisks(_allDisks);
     }
 

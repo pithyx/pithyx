@@ -412,7 +412,7 @@ Rules for every M3 step:
 - Destructive storage actions touch only disks that `DiskGuard` (step 7) allows. On dev01 that means the VYXTEST disks listed in `/etc/pithyx/test-disks`; test pools are still cleaned up with `tools/dev-vm/testpool.sh destroy` and `wipe`.
 - Before a storage PR is merged, its destructive suite runs on dev01 and the result goes into the PR (`[REVIEW]` by the owner for steps 8, 9 and 12).
 - No real data goes on a Pithyx pool before step 9 is done (see "Release blockers").
-- Every settings page ships with its step, in the Settings app from step 7.
+- Every page ships with its step. Storage (pools, disks, datasets and volumes, snapshots, SSD cache, spindown, health and maintenance) lives in the Storage app; the Settings app holds only system settings (users and groups, shared folders and rights, network, energy profiles, updates, personalization, about).
 
 ---
 
@@ -506,10 +506,10 @@ Goal: pools are created, maintained and watched from the UI, with snapshots that
 - [x] Restore a file or folder from a snapshot in Files ("Previous versions", read from `.zfs/snapshot`); rollback of a whole dataset only after typing its name, and never silently discarding newer snapshots (ZFS refuses without `-r`; Pithyx never passes `-r` without listing what goes).
 - [x] Retention is a pure function tested with time series, including clock jumps (NTP corrections, a box that was off for months).
 
-### 8.5 Settings page Storage
+### 8.5 Storage app
 
-- [ ] Pools with layout, disks, health and fill level; datasets; snapshots with schedules; every destructive action through a command plan dialog. (Everything is on the page; pool and disk actions go through plans, snapshot deletion and rollback through a typed-name confirmation of their own API, not yet a plan dialog.)
-- [ ] The Disks app from step 3 is folded into this page or removed once the page shows everything it shows (step 7 kept it).
+- [ ] Pools with layout, disks, health and fill level; datasets; snapshots with schedules; every destructive action through a command plan dialog. (Everything is in the app; pool and disk actions go through plans, snapshot deletion and rollback through a typed-name confirmation of their own API, not yet a plan dialog.)
+- [x] The Disks app from step 3 became the Storage app (owner's decision on 2026-09-28): an administrator app with its own icon and chunk, in the Pithyx menu and on administrators' desktops, with sections for pools (wizard, repair and maintenance), disks (guard verdict and SMART), datasets and volumes, snapshots, and health and maintenance. The Settings page Storage is gone; Settings points to the app.
 
 ### Test on dev01
 
@@ -690,6 +690,7 @@ Goal: SSDs speed up pools where it helps, and the UI says when it does not.
 - [ ] L2ARC (read cache), SLOG (synchronous writes) and special vdevs (metadata and small blocks, which also keep listings off sleeping disks).
 - [ ] A recommendation as a pure function of the disks, the pool layout, ARC statistics and the share of synchronous writes, with the reason in plain language ("Your ARC hit rate is 97 percent; a read cache would not help").
 - [ ] Special vdevs and SLOGs only as mirrors; adding what cannot be removed (a special vdev on raidz) only after typing the pool name.
+- [ ] In the Storage app, on the pool (with the recommendation), not in Settings.
 
 ### Test on dev01
 
@@ -716,7 +717,7 @@ Goal: the box sleeps when it can, the user sees what keeps it awake, and network
 
 ### 14.1 Energy
 
-- [ ] Spindown per pool with hd-idle, off by default.
+- [ ] Spindown per pool with hd-idle, off by default; set in the Storage app on the pool.
 - [ ] Snapshot schedules and SMART self-tests follow spindown: a sleeping pool is not woken for a snapshot of unchanged data (a snapshot is taken when the pool is awake anyway or has changed), and idle-check (`tools/dev-vm/idle-check.sh`) verifies that no Pithyx schedule wakes a disk.
 - [ ] Power profiles (performance, balanced, efficient) set the CPU governor and EPP; SATA ALPM, PCIe ASPM and USB autosuspend stay opt-in.
 - [ ] A diagnostic that shows what keeps disks awake (process and file, through fanotify on the pool mounts and `/proc/<pid>/io`) and CPU package C-state residency.
@@ -730,7 +731,7 @@ Goal: the box sleeps when it can, the user sees what keeps it awake, and network
 
 ### 14.3 Settings pages Energy and Network
 
-- [ ] Both pages, with the diagnostic and the confirmation countdown.
+- [ ] Both pages in the Settings app (power profiles, the wake-up diagnostic and the network with the confirmation countdown); spindown per pool is in the Storage app.
 
 ### Test on dev01
 
@@ -773,7 +774,7 @@ Known requirements for later milestones:
 
 - Website, first task once `website/` exists: an error code reference generated from `i18n/en/errors.json` (and the translated files), plus a CI check that every code in `ErrorCodes` has a doc entry. Until then error codes are documented only through their i18n texts.
 - Website user docs for shares and files from step 6: the Files app (double click downloads files for now, Ctrl+A selects the whole folder, the keyboard shortcuts F2, Delete, Shift+Delete, Ctrl+C/X/V, Backspace and Alt+Up, dropping files from the system to upload, Ctrl or Alt while dropping to copy instead of move, the conflict question, progress and cancel in the status bar), the recycle bin per share (restore, empty, retention, that deleting for good is only explicit), the upload behavior (the file appears only when complete, existing names are never replaced without asking), conflict choices for copy and move (skip, overwrite merges folders, rename to "name (2)"), that symlinks are shown but never copied, and the share rules for administrators (existing folder, no system folders, no overlapping shares).
-- Website user docs for storage from step 7: the Settings page Storage (only administrators see Settings), what each disk verdict means (system disk, pool member, mounted, not a test disk on a development machine, has data and needs its serial, empty), that a pool preview probes the disks again and lists the exact commands, and why a disk with data needs its serial typed.
+- Website user docs for storage from steps 7 and 8: the Storage app (only administrators see it), what each disk verdict means (system disk, pool member, mounted, not a test disk on a development machine, has data and needs its serial, empty), that a pool preview probes the disks again and lists the exact commands, and why a disk with data needs its serial typed.
 - Website user docs for the desktop from step 5: desktop items (selecting with a frame, Ctrl and Shift, moving by dragging and with Move, F2, Delete, Shift+F10, the note grip and its arrow keys, long press on touch, the 200 item and 4000 character limits, and that note text changed on two devices is kept on a second note), window menu and the Alt+Shift shortcuts (and that they do not apply in text fields), snapping and thirds on ultrawide screens, taskbar position, layout memory per device with its 90-day expiry and "Get desktop from ..." (which shows each device's browser, system, screen size and last use), that only the tab in use saves the layout, the phone app switcher, swipe and back gesture, and the `pithyx_device` cookie (what it is, that it holds no personal data, and that it is `Secure` on HTTPS).
 
 - Self-hosted CI runner, parked (D109 in vyxis/vyxis#25: integration tests run on GitHub-hosted runners with file-backed pools, plus the destructive suite on dev01; this proposal is for later, if tests need the exact Debian kernel). A dedicated VM with at least 6 GB RAM, never on the NAS and never on pve02, with egress only to GitHub, npm, NuGet and the Debian mirrors and no access to shares, management interfaces or the LAN. On it: ephemeral runners in Docker containers for the daemon, frontend and E2E jobs (own image built from the pinned `actions/runner` release, one JIT runner config per job from a GitHub App key, `docker run --rm`, non-root, no `docker.sock`, no `--privileged`, no host network, CPU and memory limits, updates only by rebuilding the image in a PR), and a throwaway VM per job for the ZFS and mdadm integration tests (qcow2 overlay on a golden Debian 13 image with `zfs-dkms`, loop devices only inside it). GitHub side: a runner group for `vyxis/vyxis` only, label `pithyx-ci`, `runs-on: ${{ vars.CI_RUNNER || 'ubuntu-24.04' }}` so switching back is one repository variable (see "CI runners" under "Release blockers").
