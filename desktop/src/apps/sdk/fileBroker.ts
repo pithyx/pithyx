@@ -182,6 +182,17 @@ export function fileBrokerFor(target: FileBrokerTarget): {
   const watches = new Map<string, () => void>();
   const jobs = new Map<number, () => void>();
   let nextWatch = 1;
+  // The topic says only that the user's share list may have changed; its first message is the current revision.
+  let sharesRevision: number | undefined;
+  const stopShares = target.permissions.includes('files.shares')
+    ? realtime.listen('shares/list', (data) => {
+        const { revision } = data as components['schemas']['ShareListRevision'];
+        if (sharesRevision !== undefined && revision !== sharesRevision) {
+          target.emit('sharesChanged', {});
+        }
+        sharesRevision = revision;
+      })
+    : undefined;
 
   const require = (permission: string) => {
     if (!target.permissions.includes(permission)) {
@@ -432,6 +443,7 @@ export function fileBrokerFor(target: FileBrokerTarget): {
   return {
     methods,
     close: () => {
+      stopShares?.();
       for (const stop of [...watches.values(), ...jobs.values()]) {
         stop();
       }

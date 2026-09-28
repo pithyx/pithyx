@@ -620,7 +620,7 @@ Goal: the permission model from `CLAUDE.md`, checked on every request, and the s
 - [ ] Migration from `share_access` (per user, step 6) to grants.
 - [ ] Enforcement on disk (D102, decided): generated Linux groups per share (`vs-<id>-r`, `vs-<id>-rw`) and POSIX ACLs on the share dataset, so SMB, NFS, SFTP, the file service and later apps see the same rights. Pithyx is the only source of truth: ACLs are never edited over SMB (step 12), and the reconciler reports every difference between grants and the file system as a warning.
 - [ ] Optional user quotas from step 10 are part of the share settings.
-- [ ] Settings pages: grants on the Users page (per user and group) and on the Shares page (per share).
+- [ ] Settings pages: grants on the Users page (per user and group) and on the Shares page (per share). (Settings > Shared folders sets per-user access from `share_access` today; its rights editor becomes the grant editor.)
 
 ### Test on dev01
 
@@ -647,7 +647,7 @@ Effort: high.
 
 Goal: shares are datasets reachable over SMB, NFS and SFTP with exactly the rights the file service enforces, and one recycle bin for all of them.
 
-- [ ] A share is its own dataset (D101, decided) under `<pool>/pithyx/shares/<name>`, with its own snapshots, quota and recycle bin. The folder shares from step 6 exist only in development and are created again as datasets (no migration of real data).
+- [ ] A share is its own dataset (D101, decided) under `<pool>/pithyx/shares/<name>`, with its own snapshots, quota and recycle bin. The folder shares from step 6 exist only in development and are created again as datasets (no migration of real data). (The dataset part is done, pulled forward: Settings > Shared folders creates a share as its own dataset through a command plan, with a description and per-user rights, and deletes it after its name is typed with a choice for the data (keep, or destroy the dataset with every snapshot listed); registering a folder works only on dev and in simulation. SMB, NFS and SFTP are open.)
 - [ ] SMB: `smb.conf` generated from SQLite with the "Managed by pithyx" header; manual overrides in include files that are never touched; checked with `testparm` before every reload.
   - SMB3 only, signing required, encryption optional per share, `fruit` for macOS, `shadow_copy2` so snapshots appear as "Previous versions".
   - ACL editing over SMB is off (`nt acl support = no` and matching settings): permissions change only in Pithyx (D102).
@@ -656,7 +656,7 @@ Goal: shares are datasets reachable over SMB, NFS and SFTP with exactly the righ
   - The Users page shows which users have no SMB password yet (they never signed in on the web) and asks them to sign in once.
 - [ ] NFS (D107, decided): NFSv4.2 with `sec=sys`, a list of allowed clients per share, `root_squash`, off by default, and a warning that NFS trusts the client's user ids. Kerberos later.
 - [ ] SFTP (D108, decided): OpenSSH `internal-sftp` in a chroot with a bind-mount view of the shares the user may use, only with the SFTP right and independent of the SSH login right.
-- [ ] Settings page Shares: protocols, allowed clients, recycle bin retention, snapshot visibility, quotas.
+- [ ] Settings page Shares: protocols, allowed clients, recycle bin retention, snapshot visibility, quotas. (The base page exists as Settings > Shared folders: list with pool, space, description and rights, create, edit, delete. Step 12 extends it with protocols, allowed clients, recycle bin settings, snapshot visibility and quotas; step 11 replaces its per-user rights with grants to users and groups.)
 
 ### Test on dev01
 

@@ -100,9 +100,18 @@
       "not_satisfiable": "Den angefragten Teil der Datei gibt es nicht."
     },
     "share": {
+      "data_choice_required": "Wähle, was mit den Daten passiert: behalten oder endgültig löschen.",
+      "dataset_name_invalid": "Aus „{name}“ lässt sich kein Dataset-Name bilden. Nutze mindestens einen Buchstaben von a bis z oder eine Ziffer.",
+      "description_invalid": "Die Beschreibung darf höchstens {max} Zeichen und keine Zeilenumbrüche haben.",
       "exists": "Einen Share mit diesem Namen gibt es schon.",
+      "folder_dev_only": "Vorhandene Ordner lassen sich nur auf einem Entwicklungsrechner als Share eintragen. Lege stattdessen einen freigegebenen Ordner an; er bekommt ein eigenes Dataset.",
       "invalid": "Der Share konnte nicht angelegt werden. Er braucht einen Namen und einen vorhandenen Ordner außerhalb der Systemverzeichnisse.",
+      "name_mismatch": "Der eingegebene Name stimmt nicht. Gib genau {name} ein.",
+      "name_reserved": "Den Namen {name} nutzt Pithyx selbst. Wähle einen anderen Namen.",
+      "no_dataset": "Dieser freigegebene Ordner ist ein einfacher Ordner, kein Dataset. Seine Dateien können nur behalten werden.",
       "not_found": "Der Share wurde nicht gefunden, oder du hast keinen Zugriff darauf.",
+      "path_taken": "Unter {path} ist schon etwas anderes eingehängt. Wähle einen anderen Namen.",
+      "pool_not_prepared": "Der Pool {pool} hat keinen Platz für freigegebene Ordner (pithyx/shares), deshalb lässt sich dort keiner anlegen.",
       "read_only": "In diesem Share darfst du nur lesen."
     },
     "trash": {

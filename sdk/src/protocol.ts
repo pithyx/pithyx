@@ -184,7 +184,7 @@ export interface Methods {
    * on every call. Methods that change files need write access to the share.
    */
 
-  /** The shares the user can use, with the user's access to each. */
+  /** The shares the user can use, with the user's access to each; `sharesChanged` says when to ask again. */
   'files.shares': { params: Record<string, never>; result: ShareInfo[] };
   /**
    * Starts live changes of a folder: `folderChanged` events with the returned `watch` id arrive while the watch is
@@ -289,6 +289,12 @@ export interface Events {
    * it fail with `app.permission.denied` from now on. Revoking `backend` or access to the app ends its windows.
    */
   permissionRevoked: { permission: string };
+  /**
+   * The list of shares the user can use may have changed: a share was created, renamed, described or deleted, or the
+   * user's access changed. Call `files.shares` again. Sent only to apps that hold `files.shares`; it carries nothing,
+   * so it never tells an app about shares the user cannot use.
+   */
+  sharesChanged: Record<string, never>;
   /** Changes of a folder watched with `files.watch`. */
   folderChanged: FolderChange;
   /** Progress of an upload that has an `upload` id. */

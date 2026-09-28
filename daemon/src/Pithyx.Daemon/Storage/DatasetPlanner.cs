@@ -122,6 +122,7 @@ public sealed partial class DatasetPlanner(
             {
                 LogMountPointUnknown(newName);
             }
+            await shares.MoveDatasetsAsync(oldName, newName, cancellationToken);
             await snapshotService.MoveSchedulesAsync(oldName, newName, cancellationToken);
             LogRenamed(oldName, newName, moved);
         });
@@ -198,10 +199,32 @@ public sealed partial class DatasetPlanner(
         {
             throw new PithyxException(ErrorCodes.StorageDatasetNameMismatch, new Dictionary<string, object?> { ["name"] = dataset.Name });
         }
+        var scope = await DestroyScopeAsync(dataset, null, cancellationToken);
+        return Result(request, ZfsDatasetPlans.Destroy(dataset.Name, scope.Recursive), scope.Listed, async token =>
+        {
+            await snapshotService.ForgetSchedulesAsync(scope.Datasets, token);
+            LogDestroyed(dataset.Name, scope.Datasets.Count, scope.SnapshotCount);
+        });
+    }
+
+    /// <summary>What destroying a dataset takes with it.</summary>
+    /// <param name="Listed">The dataset, its children and their snapshots, each dataset followed by its snapshots.</param>
+    /// <param name="Datasets">The dataset and its children, parents first.</param>
+    /// <param name="SnapshotCount">How many snapshots go.</param>
+    /// <param name="Recursive">Whether <c>zfs destroy</c> needs <c>-r</c>.</param>
+    public sealed record DestroyScope(IReadOnlyList<string> Listed, IReadOnlyList<string> Datasets, int SnapshotCount, bool Recursive);
+
+    /// <summary>
+    /// Lists what destroying <paramref name="dataset"/> takes with it, after reading the snapshots again. Refuses while
+    /// a share other than <paramref name="ownShare"/> has its folder in it, or a snapshot in it is held.
+    /// </summary>
+    public async Task<DestroyScope> DestroyScopeAsync(Dataset dataset, long? ownShare, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(dataset);
         var gone = WithChildren(dataset.Name).ToList();
         foreach (var share in await shares.ListPathsAsync(cancellationToken))
         {
-            if (gone.Any(candidate => candidate.MountPoint is { } mountPoint && FsPath.IsSameOrInside(share.Path, mountPoint)))
+            if (share.Id != ownShare && gone.Any(candidate => candidate.MountPoint is { } mountPoint && FsPath.IsSameOrInside(share.Path, mountPoint)))
             {
                 throw new PithyxException(ErrorCodes.StorageDatasetInUseByShare, new Dictionary<string, object?> { ["dataset"] = dataset.Name, ["share"] = share.Name });
             }
@@ -223,13 +246,7 @@ public sealed partial class DatasetPlanner(
                 snapshotCount++;
             }
         }
-        var names = gone.Select(candidate => candidate.Name).ToList();
-        var recursive = gone.Count > 1 || snapshotCount > 0;
-        return Result(request, ZfsDatasetPlans.Destroy(dataset.Name, recursive), listed, async token =>
-        {
-            await snapshotService.ForgetSchedulesAsync(names, token);
-            LogDestroyed(dataset.Name, names.Count, snapshotCount);
-        });
+        return new DestroyScope(listed, [.. gone.Select(candidate => candidate.Name)], snapshotCount, gone.Count > 1 || snapshotCount > 0);
     }
 
     private StoragePlanner.Result CreateVolume(StoragePlanRequest request)

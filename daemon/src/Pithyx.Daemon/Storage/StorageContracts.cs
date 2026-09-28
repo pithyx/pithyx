@@ -22,11 +22,11 @@ public sealed record StorageDiskList(IReadOnlyList<StorageDisk> Disks, string En
 /// ReservationBytes, Compression and RecordSizeBytes; <c>dataset.destroy</c> Pool, Dataset and ConfirmName;
 /// <c>volume.create</c> Pool, Name, SizeBytes and Sparse.
 /// </summary>
-/// <param name="Action"><c>pool.create</c>, <c>pool.destroy</c>, <c>pool.replace</c>, <c>pool.spare.add</c>, <c>pool.spare.remove</c>, <c>pool.offline</c>, <c>pool.online</c>, <c>pool.import.readonly</c>, <c>pool.import</c>, <c>pool.export</c>, <c>pool.vdev.add</c>, <c>pool.raidz.expand</c>, <c>dataset.create</c>, <c>dataset.rename</c>, <c>dataset.set</c>, <c>dataset.destroy</c> or <c>volume.create</c>.</param>
+/// <param name="Action"><c>pool.create</c>, <c>pool.destroy</c>, <c>pool.replace</c>, <c>pool.spare.add</c>, <c>pool.spare.remove</c>, <c>pool.offline</c>, <c>pool.online</c>, <c>pool.import.readonly</c>, <c>pool.import</c>, <c>pool.export</c>, <c>pool.vdev.add</c>, <c>pool.raidz.expand</c>, <c>dataset.rename</c>, <c>dataset.set</c>, <c>dataset.destroy</c> or <c>volume.create</c>.</param>
 /// <param name="Pool">The pool, or the new pool's name; for <c>pool.import.readonly</c> the scanned name (the GUID decides).</param>
 /// <param name="Layout"><c>single</c>, <c>stripe</c>, <c>mirror</c>, <c>mirrors</c> (pairs), <c>raidz1</c>, <c>raidz2</c> or <c>raidz3</c>.</param>
 /// <param name="DiskIds">The disks to use, by id.</param>
-/// <param name="Name">Name of a new share dataset or volume (one path component).</param>
+/// <param name="Name">Name of a new volume (one path component). Shared folders are created with <c>POST /api/shares/plans</c>.</param>
 /// <param name="Vdev">GUID of the device to replace, take offline, bring online or remove, or of the raidz vdev to expand.</param>
 /// <param name="Encryption">The answer to the encryption question of a new pool: <c>none</c>, or <c>key</c> once the key vault exists.</param>
 /// <param name="ConfirmName">The pool's name, or the dataset's full name, typed by the user where the preview says <c>requiresConfirmName</c> and to destroy.</param>

@@ -44,6 +44,7 @@ export interface ServeOptions {
 }
 
 export interface AppConnection {
+  /** Sends an event; an event that needs a permission the app does not hold (`sharesChanged`) is dropped. */
   emit<E extends EventName>(event: E, data: Events[E]): void;
   /** Asks the app and waits; resolves undefined when it does not answer in time. */
   ask<Q extends QueryName>(
@@ -53,6 +54,11 @@ export interface AppConnection {
   ): Promise<Queries[Q]['answer'] | undefined>;
   close(): void;
 }
+
+/** Events an app gets only while it holds the permission; the host drops them otherwise. */
+const eventPermissions: Partial<Record<EventName, string>> = {
+  sharesChanged: 'files.shares',
+};
 
 const MAX_TITLE = 200;
 const MAX_KEY = 128;
@@ -242,6 +248,8 @@ export function serveApp(endpoint: Endpoint, options: ServeOptions): AppConnecti
   let nextQuery = 1;
   const waiting = new Map<number, (answer: unknown) => void>();
   const capabilities = Object.keys(options.methods).filter(isMethod);
+  // The app's permissions as it knows them: from the context, minus what `permissionRevoked` took away.
+  const permissions = new Set(options.context.permissions);
 
   async function answer(id: number, method: string, params: unknown) {
     try {
@@ -319,7 +327,11 @@ export function serveApp(endpoint: Endpoint, options: ServeOptions): AppConnecti
 
   const connection: AppConnection = {
     emit: (event, data) => {
-      if (ready && !closed) {
+      if (event === 'permissionRevoked') {
+        permissions.delete((data as Events['permissionRevoked']).permission);
+      }
+      const needed = eventPermissions[event];
+      if (ready && !closed && (needed === undefined || permissions.has(needed))) {
         endpoint.post({ type: 'event', event, data });
       }
     },

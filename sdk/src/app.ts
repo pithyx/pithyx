@@ -95,7 +95,10 @@ export interface PithyxApp {
     url(file: FileRef): Promise<{ url: string; expiresAt: string }>;
     /** A handle for a file in a named storage or a share, for `read`, `write` and `url`. */
     open(location: FileLocation, path: string): Promise<FileRef>;
-    /** The shares the user can use, with the user's access to each. Needs `files.shares`. */
+    /**
+     * The shares the user can use, with the user's access to each. Needs `files.shares`. The `sharesChanged` event says
+     * when the list may have changed.
+     */
     shares(): Promise<ShareInfo[]>;
     /**
      * One page of a folder (default 100 entries, at most 1000), in natural name order unless `sort` says otherwise.
@@ -180,7 +183,7 @@ export interface PithyxApp {
   };
   /** Whether the desktop supports a method; methods added after 1.0 may be missing on an older desktop. */
   supports(method: MethodName): boolean;
-  /** Listens to a lifecycle event. Returns a function that stops listening. */
+  /** Listens to an event of the desktop (see {@link Events}). Returns a function that stops listening. */
   on<E extends EventName>(event: E, handler: EventHandler<E>): () => void;
   /** Answers a question of the desktop (`beforeClose`, `beforeLogout`). One handler per question; the last one wins. */
   answer<Q extends QueryName>(query: Q, handler: QueryHandler<Q>): void;

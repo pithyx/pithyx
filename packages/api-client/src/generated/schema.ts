@@ -538,10 +538,10 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** @description The shares the user can use, with the user's access. Administrators get every share and its path on the host. */
+        /** @description The shares the user can use, with the user's access. Administrators get every share and its path on the host. The shares/list topic says when the list may have changed. */
         get: operations["ListShares"];
         put?: never;
-        /** @description Administrators only. Registers an existing folder on the host as a share; nobody but administrators has access until it is granted. */
+        /** @description Administrators only, and only on a development machine (fs.share.folder_dev_only elsewhere). Registers an existing folder on the host as a share; nobody but administrators has access until it is granted. Shared folders are otherwise created as datasets with POST /api/shares/plans. */
         post: operations["CreateShare"];
         delete?: never;
         options?: never;
@@ -559,8 +559,25 @@ export type paths = {
         get?: never;
         put?: never;
         post?: never;
-        /** @description Administrators only. Removes the share from Pithyx; its files stay on the host. */
-        delete: operations["DeleteShare"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description Administrators only. Changes the name shown and the description; the folder and the dataset stay where they are. */
+        patch: operations["UpdateShare"];
+        trace?: never;
+    };
+    "/api/shares/{shareId}/access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. Every user with their access to the share: none, read or readWrite. Administrators use every share anyway. */
+        get: operations["ListShareAccess"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -594,6 +611,40 @@ export type paths = {
         /** @description Administrators only. Days the recycle bin keeps deleted items (0 to 3650; 0 keeps them until emptied). Applies to items already in the bin. */
         put: operations["SetShareTrash"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/shares/details": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. Every share with its description, dataset, used and available space, quota and how many users may read or write. */
+        get: operations["ListShareDetails"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/shares/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Returns the exact commands of creating a shared folder as a dataset (share.create) or deleting one (share.delete: keep its data, or destroy its dataset with every snapshot listed), with a plan id to run them with POST /api/storage/plans/{planId}/run. Runs nothing. */
+        post: operations["PlanShareAction"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1210,7 +1261,7 @@ export type components = {
             }[];
         };
         /** @enum {string} */
-        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.exists" | "fs.share.invalid" | "fs.share.not_found" | "fs.share.read_only" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "system.internal.unexpected" | "system.origin.forbidden";
+        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "system.internal.unexpected" | "system.origin.forbidden";
         /** @description A failed client message. `id` is empty when the message could not be parsed. */
         ErrorMessage: {
             code: components["schemas"]["ErrorCode"];
@@ -1741,6 +1792,51 @@ export type components = {
             /** @description `none` removes the user's access. */
             access: components["schemas"]["ShareAccess"];
         };
+        /** @enum {unknown} */
+        ShareDataChoice: "keep" | "destroy" | null;
+        /** @description A share with what the Shared folders page shows. Administrators only. */
+        ShareDetails: {
+            /**
+             * Format: int64
+             * @description Space still available to the dataset; null like UsedBytes.
+             */
+            availableBytes: null | number;
+            /** @description Full name of the share's dataset, for example `tank/pithyx/shares/media`; null for a folder share (development only). */
+            dataset: null | string;
+            /** @description Free text for administrators and users, may be empty. */
+            description: string;
+            /**
+             * Format: int64
+             * @description Stable id.
+             */
+            id: number;
+            /** @description Name shown to users. */
+            name: string;
+            /** @description The share root on the host. */
+            path: string;
+            /** @description The pool of the share's dataset; null for a folder share. */
+            pool: null | string;
+            /**
+             * Format: int64
+             * @description The dataset's quota, or null for none.
+             */
+            quotaBytes: null | number;
+            /**
+             * Format: int32
+             * @description Users other than administrators who may read.
+             */
+            readUsers: number;
+            /**
+             * Format: int32
+             * @description Users other than administrators who may read and write.
+             */
+            readWriteUsers: number;
+            /**
+             * Format: int64
+             * @description Space the dataset uses with its snapshots; null for a folder share or while the dataset is not there (pool missing).
+             */
+            usedBytes: null | number;
+        };
         /** @description A share the user can use. */
         ShareInfo: {
             /** @description The user's access: read or read and write. */
@@ -1754,6 +1850,59 @@ export type components = {
             name: string;
             /** @description The share root on the host. Only administrators get it. */
             path: null | string;
+        };
+        /** @description Snapshot and event of `shares/list`. */
+        ShareListRevision: {
+            /**
+             * Format: int64
+             * @description Changes whenever a user's list of usable shares may have changed; compare it, do not count on it.
+             */
+            revision: number;
+        };
+        /**
+         * @description A shared folder action to plan. `share.create` needs Name and Pool (Description is optional);
+         *     `share.delete` needs ShareId, ConfirmName and Data.
+         */
+        SharePlanRequest: {
+            /** @description `share.create` or `share.delete`. */
+            action: string;
+            /** @description The shared folder's name, typed by the user to delete it. */
+            confirmName?: null | string;
+            data?: null | components["schemas"]["ShareDataChoice"];
+            /** @description Description of the new shared folder. */
+            description?: null | string;
+            /** @description Name of the new shared folder; its dataset name is derived from it and shown in the plan. */
+            name?: null | string;
+            /** @description Pool of the new shared folder; it needs the Pithyx layout (`&lt;pool&gt;/pithyx/shares`). */
+            pool?: null | string;
+            /**
+             * Format: int64
+             * @description The shared folder to delete.
+             */
+            shareId?: null | number;
+        };
+        /** @description Changes of a share; fields left out stay. The dataset is never renamed by this. */
+        ShareUpdate: {
+            /** @description New description, at most 200 characters, empty to remove it. */
+            description?: null | string;
+            /** @description New name shown to users, unique like every share name. */
+            name?: null | string;
+        };
+        /** @description One user's access to a share, for editing rights. */
+        ShareUserAccess: {
+            /** @description The access granted: `none`, `read` or `readWrite`. */
+            access: components["schemas"]["ShareAccess"];
+            /** @description Administrators use every share with read and write access, whatever Access says. */
+            administrator: boolean;
+            /** @description Name shown, if set. */
+            displayName: null | string;
+            /**
+             * Format: int64
+             * @description The user's id, for `PUT /api/shares/{shareId}/access/{userId}`.
+             */
+            userId: number;
+            /** @description Login name. */
+            username: string;
         };
         /** @description SMART health of one disk as last read. The API serves it from memory; reading it never runs a command. */
         SmartReport: {
@@ -2000,7 +2149,7 @@ export type components = {
          *     `volume.create` Pool, Name, SizeBytes and Sparse.
          */
         StoragePlanRequest: {
-            /** @description `pool.create`, `pool.destroy`, `pool.replace`, `pool.spare.add`, `pool.spare.remove`, `pool.offline`, `pool.online`, `pool.import.readonly`, `pool.import`, `pool.export`, `pool.vdev.add`, `pool.raidz.expand`, `dataset.create`, `dataset.rename`, `dataset.set`, `dataset.destroy` or `volume.create`. */
+            /** @description `pool.create`, `pool.destroy`, `pool.replace`, `pool.spare.add`, `pool.spare.remove`, `pool.offline`, `pool.online`, `pool.import.readonly`, `pool.import`, `pool.export`, `pool.vdev.add`, `pool.raidz.expand`, `dataset.rename`, `dataset.set`, `dataset.destroy` or `volume.create`. */
             action: string;
             /** @description New compression: `off`, `lz4`, `zle`, `zstd`, `zstd-1` to `zstd-19`, `gzip`, `gzip-1` to `gzip-9`; null leaves it. */
             compression?: null | string;
@@ -2020,7 +2169,7 @@ export type components = {
             force?: null | boolean;
             /** @description `single`, `stripe`, `mirror`, `mirrors` (pairs), `raidz1`, `raidz2` or `raidz3`. */
             layout?: null | string;
-            /** @description Name of a new share dataset or volume (one path component). */
+            /** @description Name of a new volume (one path component). Shared folders are created with `POST /api/shares/plans`. */
             name?: null | string;
             /** @description The new last component of a renamed dataset (it stays below the same parent), or for `pool.import.readonly` the name to import the pool under when its own is taken. */
             newName?: null | string;
@@ -2113,6 +2262,7 @@ export type components = {
         TopicEvents: {
             "files/+/+": components["schemas"]["FolderChanges"];
             "jobs/+": components["schemas"]["Job"];
+            "shares/list": components["schemas"]["ShareListRevision"];
             "storage/alerts": components["schemas"]["StorageHealth"];
             "storage/disks": components["schemas"]["DisksChanged"];
             "storage/pools": components["schemas"]["PoolList"];
@@ -2121,6 +2271,7 @@ export type components = {
         TopicSnapshots: {
             "files/+/+": components["schemas"]["FolderWatchState"];
             "jobs/+": components["schemas"]["Job"];
+            "shares/list": components["schemas"]["ShareListRevision"];
             "storage/alerts": components["schemas"]["StorageHealth"];
             "storage/disks": components["schemas"]["DiskList"];
             "storage/pools": components["schemas"]["PoolList"];
@@ -3504,7 +3655,42 @@ export interface operations {
             };
         };
     };
-    DeleteShare: {
+    UpdateShare: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shareId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShareUpdate"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShareDetails"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    ListShareAccess: {
         parameters: {
             query?: never;
             header?: never;
@@ -3515,12 +3701,14 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description No Content */
-            204: {
+            /** @description OK */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ShareUserAccess"][];
+                };
             };
             /** @description Problem details with a stable error code. */
             default: {
@@ -3588,6 +3776,68 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    ListShareDetails: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShareDetails"][];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    PlanShareAction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SharePlanRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoragePlanPreview"];
+                };
             };
             /** @description Problem details with a stable error code. */
             default: {

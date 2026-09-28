@@ -31,6 +31,8 @@ export const reducers: { [K in TopicName]: Reducer<K> } = {
   // Alerts and SMART reports are few too; every event is the whole state as this user sees it.
   'storage/alerts': (_, event) => event,
   'system/info': (_, event) => event,
+  // Only a revision: listeners read the share list again when it changes.
+  'shares/list': (_, event) => event,
 };
 
 /** The pattern a concrete topic belongs to: `files/3/0.2a.1f` belongs to `files/+/+`. */

@@ -72,16 +72,6 @@ public sealed class StoragePlanner(
                 return Plan(request, ZfsPlans.Offline(request.Pool, Leaf(Pool(request.Pool), request.Vdev).VdevGuid));
             case "pool.online":
                 return Plan(request, ZfsPlans.Online(request.Pool, Leaf(Pool(request.Pool), request.Vdev).VdevGuid));
-            case "dataset.create":
-                {
-                    var pool = Pool(request.Pool);
-                    var name = request.Name ?? "";
-                    if (pools.Current.Datasets.Any(dataset => dataset.Name == $"{pool.Name}/pithyx/shares/{name}"))
-                    {
-                        throw new PithyxException(ErrorCodes.StorageDatasetExists, new Dictionary<string, object?> { ["name"] = name });
-                    }
-                    return Plan(request, ZfsPlans.CreateShareDataset(pool.Name, name));
-                }
             case "pool.destroy":
                 {
                     var pool = Pool(request.Pool);
