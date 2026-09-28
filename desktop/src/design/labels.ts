@@ -20,6 +20,7 @@ export const labels = {
     auth: 'Setup and sign-in',
     desktop: 'Desktop',
     overlays: 'Menus and dialogs',
+    storage: 'Storage and shared folders',
   },
   tokens: {
     colors: 'Semantic colors',
