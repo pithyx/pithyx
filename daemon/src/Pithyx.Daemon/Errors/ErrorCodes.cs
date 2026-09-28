@@ -236,7 +236,7 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.NotFound)]
     public const string StorageDatasetNotFound = "storage.dataset.not_found";
 
-    /// <summary>The dataset does not take this setting: volumes take only compression, record size is for file systems, and the Pithyx layout datasets take only compression; <c>params.dataset</c> and <c>params.property</c> say which.</summary>
+    /// <summary>The dataset does not take this setting: volumes, the pool root and the Pithyx layout datasets take only compression, and record size is for file systems; <c>params.dataset</c> and <c>params.property</c> say which.</summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string StorageDatasetPropertyUnsupported = "storage.dataset.property_unsupported";
 

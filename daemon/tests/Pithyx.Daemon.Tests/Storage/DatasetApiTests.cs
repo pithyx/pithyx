@@ -36,7 +36,7 @@ public sealed class DatasetApiTests : IAsyncLifetime
             (HttpStatusCode.Forbidden, "storage.dataset.protected"),
             await RefusedAsync(new { action = "dataset.destroy", pool = "pithyxtestm", dataset = "pithyxtestm", confirmName = "pithyxtestm" }));
         Assert.Equal(
-            (HttpStatusCode.Forbidden, "storage.dataset.protected"),
+            (HttpStatusCode.BadRequest, "storage.dataset.property_unsupported"),
             await RefusedAsync(new { action = "dataset.set", pool = "pithyxtestm", dataset = "pithyxtestm", quotaBytes = 1_073_741_824L, compression = "zstd" }));
         Assert.Equal(
             (HttpStatusCode.NotFound, "storage.dataset.not_found"),

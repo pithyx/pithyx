@@ -270,7 +270,7 @@ public sealed class DatasetPlannerTests : IAsyncLifetime
         Assert.Equal(ErrorCodes.StorageDatasetRecordSizeInvalid, await RefusedAsync(Set("tank/data", recordSize: recordSize)));
 
     [Fact]
-    public async Task TheLayoutAndVolumesTakeOnlyCompressionAndThePoolRootNothing()
+    public async Task ThePoolRootTheLayoutAndVolumesTakeOnlyCompression()
     {
         Assert.Equal(["zfs", "set", "compression=zstd", "tank/pithyx"], Line(Assert.Single((await PlanAsync(Set("tank/pithyx", compression: "zstd"))).Plan!.Steps)));
         Assert.Equal(["zfs", "set", "compression=off", "tank/pithyx/volumes/vm1"], Line(Assert.Single((await PlanAsync(Set("tank/pithyx/volumes/vm1", compression: "off"))).Plan!.Steps)));
@@ -279,7 +279,8 @@ public sealed class DatasetPlannerTests : IAsyncLifetime
         Assert.Equal(ErrorCodes.StorageDatasetPropertyUnsupported, await RefusedAsync(Set("tank/pithyx/volumes/vm1", quota: GiB)));
         Assert.Equal(ErrorCodes.StorageDatasetPropertyUnsupported, await RefusedAsync(Set("tank/pithyx/homes", quota: GiB)));
         Assert.Equal(ErrorCodes.StorageDatasetPropertyUnsupported, await RefusedAsync(Set("tank/pithyx/shares", reservation: GiB)));
-        Assert.Equal(ErrorCodes.StorageDatasetProtected, await RefusedAsync(Set("tank", compression: "zstd")));
+        Assert.Equal(["zfs", "set", "compression=zstd", "tank"], Line(Assert.Single((await PlanAsync(Set("tank", compression: "zstd"))).Plan!.Steps)));
+        Assert.Equal(ErrorCodes.StorageDatasetPropertyUnsupported, await RefusedAsync(Set("tank", quota: GiB)));
         // Apps (M4) get quotas on their datasets through the same action.
         Assert.Equal(["zfs", "set", "quota=10737418240", "tank/pithyx/apps/immich"], Line(Assert.Single((await PlanAsync(Set("tank/pithyx/apps/immich", quota: 10 * GiB))).Plan!.Steps)));
     }
