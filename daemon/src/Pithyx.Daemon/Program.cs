@@ -66,6 +66,7 @@ builder.Services.AddPithyxMonitoring();
 builder.Services.AddSingleton<DiskInventory>();
 builder.Services.AddSingleton(services => services.GetRequiredService<DiskInventory>().Definition());
 builder.Services.AddSingleton<PoolInventory>();
+builder.Services.AddSingleton<StorageUsage>();
 builder.Services.AddSingleton(services => services.GetRequiredService<PoolInventory>().Definition());
 builder.Services.AddSingleton<IStorageBackend, ZfsBackend>();
 builder.Services.AddSingleton<DiskProbe>();

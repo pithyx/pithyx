@@ -244,6 +244,22 @@ public sealed class FileApiTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task AFinishedUploadTellsTheStorageStateToReadTheUsedSpaceAgain()
+    {
+        var usage = _factory.Services.GetRequiredService<Pithyx.Daemon.Storage.StorageUsage>();
+        var signals = 0;
+        usage.Changed += () => Interlocked.Increment(ref signals);
+
+        using (var created = await _admin.PutAsync(Api("content?path=note.txt"), new StringContent("x"), Token))
+        {
+            Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        }
+        Assert.Equal(1, signals);
+        using var failed = await _admin.PutAsync(Api("content?path=missing/a.txt"), new StringContent("x"), Token);
+        Assert.Equal(1, signals);
+    }
+
+    [Fact]
     public async Task AnInterruptedUploadLeavesNothingBehind()
     {
         using var content = new StreamContent(new ThrowingStream(1024 * 1024));

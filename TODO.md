@@ -26,7 +26,7 @@ Core bugs first, each in its own PR with a regression test:
 - [ ] After the disks were removed and brought back, Files shows shares without files and "share not found": the mount state and the Files cache recover once the disks are back.
 - [ ] Deleting a shared folder fails with a timeout (`internal.admin.shares.plan`).
 - [ ] Destroying a pool: the dialog hangs for a long time at `zpool destroy`. Long operations run as background jobs, the dialog can be closed, progress shows in the notification center. Find the cause of the long run (open handles, watches, ...).
-- [ ] Usage of pools, shared folders and disks does not update after uploads.
+- [x] Usage of pools, shared folders and disks does not update after uploads. Writes through the file service now trigger a pool read (D209); writes over SMB and SFTP need their own trigger when step 12 lands (see below).
 - [ ] A second right-click on the desktop while its menu is open shows the browser's menu instead of the Pithyx menu at the new position.
 
 Quick fixes, one PR:
@@ -65,6 +65,11 @@ Password rules (one PR; the same rules everywhere: setup, user management, chang
 Thumbnail cache (one PR, replaces D197 in vyxis/vyxis#33):
 
 - [x] Thumbnails live in a dataset of their own per pool (`<pool>/pithyx/cache`, never shown in the UI) instead of `/var/cache/pithyx/thumbnails`, capped at 2 GB per pool (least recently used dropped first). The cache leaves with its pool when the pool is destroyed or exported. Without a pool there are no files that need thumbnails. `daemon/CLAUDE.md` says so.
+Follow-ups found on the way:
+
+- [ ] Used space after writes over SMB and SFTP (step 12): they bypass the file service, so they need their own trigger for a pool read (for example Samba's `full_audit` or a slow timer while a share is connected), without waking sleeping disks.
+- [ ] Users (v0.1): deleting a user must also clear the daemon's in-memory notifications and jobs of that user, and user ids must never be reused (`users.id` has no `AUTOINCREMENT`), or a new user could see a deleted user's notifications until a restart (review of vyxis/vyxis#36).
+- [ ] Storage alert notifications: a pool whose fill level hovers around 80 or 90 percent notifies on every crossing; add a hysteresis, and do not call an exported or destroyed pool's alert "resolved".
 
 ### Scope of v0.1
 
