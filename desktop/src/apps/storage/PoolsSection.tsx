@@ -327,7 +327,9 @@ function VdevItem({
         {leaves.map((leaf) => (
           <li key={leaf.name} className={styles.leaf} data-state={leaf.state}>
             <span className={styles.mono}>{leaf.name}</span>
-            <Badge tone={stateTone(leaf.state)}>{t(`state.${stateKey(leaf.state)}`)}</Badge>
+            <Badge tone={stateTone(leaf.state)}>
+              {leaf.missing ? t('state.missing') : t(`state.${stateKey(leaf.state)}`)}
+            </Badge>
             <span className={styles.leafActions}>
               {readOnly ? null : vdev.role === 'spare' ? (
                 <Button
@@ -341,17 +343,21 @@ function VdevItem({
                 </Button>
               ) : (
                 <>
-                  <Button
-                    size="sm"
-                    variant="quiet"
-                    onPress={() => {
-                      onAction(leaf.state === 'OFFLINE' ? 'pool.online' : 'pool.offline', leaf);
-                    }}
-                  >
-                    {t(
-                      leaf.state === 'OFFLINE' ? 'actions.online.button' : 'actions.offline.button',
-                    )}
-                  </Button>
+                  {!leaf.missing && (
+                    <Button
+                      size="sm"
+                      variant="quiet"
+                      onPress={() => {
+                        onAction(leaf.state === 'OFFLINE' ? 'pool.online' : 'pool.offline', leaf);
+                      }}
+                    >
+                      {t(
+                        leaf.state === 'OFFLINE'
+                          ? 'actions.online.button'
+                          : 'actions.offline.button',
+                      )}
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     variant="quiet"

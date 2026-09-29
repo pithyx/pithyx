@@ -66,6 +66,8 @@ jobs:
     needs: changes
     if: needs.changes.outputs.storage == 'true'
     runs-on: ubuntu-26.04
+    # A pool command that waits in the kernel never returns; fail the job instead of holding the runner for hours.
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v6
@@ -75,6 +77,8 @@ jobs:
           cache-dependency-path: daemon/**/packages.lock.json
       - run: sudo apt-get update && sudo apt-get install -y zfsutils-linux
       - run: sudo modprobe zfs
+      # scsi_debug disks for the disk failure tests (pulled through sysfs and rescanned); in linux-modules-extra on some kernels.
+      - run: sudo modprobe -n scsi_debug || sudo apt-get install -y "linux-modules-extra-$(uname -r)"
       - run: zfs version
       - run: dotnet build daemon/tests/Pithyx.Daemon.Tests --configuration Release
       - name: Storage integration tests

@@ -3600,6 +3600,7 @@
           "storage.plan.not_found",
           "storage.plan.stale",
           "storage.pool.disk_count",
+          "storage.pool.disks_missing",
           "storage.pool.encryption_required",
           "storage.pool.expanding",
           "storage.pool.layout_invalid",
@@ -3609,6 +3610,7 @@
           "storage.pool.not_found",
           "storage.pool.not_prepared",
           "storage.pool.read_only",
+          "storage.pool.suspended",
           "storage.schedule.invalid",
           "storage.scrub.not_running",
           "storage.scrub.running",
@@ -4611,7 +4613,7 @@
           },
           "state": {
             "type": "string",
-            "description": "ZFS state: `ONLINE`, `DEGRADED`, `FAULTED`, `OFFLINE`, `UNAVAIL`, `REMOVED` or `SUSPENDED`."
+            "description": "ZFS state: `ONLINE`, `DEGRADED`, `FAULTED`, `OFFLINE`, `UNAVAIL`, `REMOVED` or `SUSPENDED`; degraded further when disks are gone that ZFS has not noticed yet."
           },
           "sizeBytes": {
             "type": "integer",
@@ -7251,6 +7253,18 @@
               "$ref": "#/components/schemas/Vdev"
             },
             "description": "Child vdevs."
+          },
+          "missing": {
+            "type": "boolean",
+            "description": "True for a leaf whose disk is not connected, also while ZFS has not noticed yet (see PoolHealth).",
+            "default": false
+          },
+          "serial": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Serial of the disk a leaf is on, as last seen connected, if known."
           }
         }
       },
