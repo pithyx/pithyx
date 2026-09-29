@@ -19,11 +19,11 @@ test.describe('phone', () => {
   test('apps run full screen with an app switcher, swipe and back gesture', async ({ page }) => {
     await signInAsAdmin(page);
     const taskbar = page.getByRole('navigation', { name: 'Taskbar' });
-    const disks = appWindow(page, 'Disks');
+    const disks = appWindow(page, 'Storage');
     const about = appWindow(page, 'About Pithyx');
 
     await test.step('a tap opens an app full screen', async () => {
-      await page.getByRole('option', { name: 'Disks, shortcut' }).tap();
+      await page.getByRole('option', { name: 'Storage, shortcut' }).tap();
       await expect(disks).toBeVisible();
       const workspace = await box(page.getByRole('main', { name: 'Desktop' }));
       expect((await box(disks)).width).toBe(workspace.width);
@@ -33,7 +33,7 @@ test.describe('phone', () => {
     await test.step('the back gesture returns to the home screen', async () => {
       await page.goBack();
       await expect(disks).toBeHidden();
-      await expect(page.getByRole('option', { name: 'Disks, shortcut' })).toBeVisible();
+      await expect(page.getByRole('option', { name: 'Storage, shortcut' })).toBeVisible();
     });
 
     await test.step('the app switcher shows open apps and switches between them', async () => {
@@ -42,7 +42,7 @@ test.describe('phone', () => {
       await taskbar.getByRole('button', { name: /Switch apps, 2 open/ }).tap();
       const switcher = page.getByRole('dialog', { name: 'Open apps' });
       await expect(switcher.getByRole('listitem')).toHaveCount(2);
-      await switcher.getByRole('button', { name: 'Switch to Disks' }).tap();
+      await switcher.getByRole('button', { name: 'Switch to Storage' }).tap();
       await expect(switcher).toBeHidden();
       await expect(disks).toBeVisible();
       await expect(about).toBeHidden();
@@ -63,8 +63,8 @@ test.describe('phone', () => {
       await page.goBack();
       await expect(about).toBeHidden();
       await expect(disks).toBeHidden();
-      await expect(page.getByRole('option', { name: 'Disks, shortcut' })).toBeVisible();
-      await page.getByRole('option', { name: 'Disks, shortcut' }).tap();
+      await expect(page.getByRole('option', { name: 'Storage, shortcut' })).toBeVisible();
+      await page.getByRole('option', { name: 'Storage, shortcut' }).tap();
       await expect(disks).toBeVisible();
       await page.goBack();
       await expect(disks).toBeHidden();
@@ -86,14 +86,14 @@ test.describe('tablet', () => {
 
   test('windows open maximized and split side by side', async ({ page }) => {
     await signInAsAdmin(page);
-    const disks = appWindow(page, 'Disks');
+    const disks = appWindow(page, 'Storage');
     const about = appWindow(page, 'About Pithyx');
     const workspace = await box(page.getByRole('main', { name: 'Desktop' }));
 
-    await page.getByRole('option', { name: 'Disks, shortcut' }).tap();
+    await page.getByRole('option', { name: 'Storage, shortcut' }).tap();
     await expect.poll(async () => (await box(disks)).width).toBe(workspace.width);
 
-    await disks.getByRole('button', { name: 'Window menu for Disks' }).tap();
+    await disks.getByRole('button', { name: 'Window menu for Storage' }).tap();
     await page.getByRole('menuitem', { name: 'Snap left' }).tap();
     await page.getByRole('button', { name: 'Pithyx menu' }).tap();
     await page

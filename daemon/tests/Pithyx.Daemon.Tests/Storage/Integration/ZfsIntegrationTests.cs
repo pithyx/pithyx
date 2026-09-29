@@ -115,7 +115,8 @@ public sealed class ZfsIntegrationTests
             new BlockDevice($"file{index}", file, null, $"0:{index}", "disk", null, [], []),
             new DiskSignatures([])));
 
-        var create = Assert.Single(ZfsPlans.CreatePool(vdevs.PoolName, layout, [.. disks])).Command;
+        // The first step creates the pool; the dataset steps after it need the pool to exist, so a dry run checks this one.
+        var create = ZfsPlans.CreatePool(vdevs.PoolName, layout, [.. disks])[0].Command;
 
         Assert.Equal("create", create.Arguments[0]);
         await vdevs.RunAsync(create.FileName, ["create", "-n", .. create.Arguments.Skip(1)]);

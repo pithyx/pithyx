@@ -15,8 +15,14 @@ public sealed class PoolInventory
 
     public PoolList Current => Volatile.Read(ref _current);
 
+    /// <summary>Raised after <see cref="Replace"/> changed the state, for in-process consumers such as the health monitor.</summary>
+    public event Action? Changed;
+
     /// <summary>False until the first successful read, for example when ZFS is not installed.</summary>
     public bool Available { get; private set; }
+
+    /// <summary>Raised after every read, changed or not: a pool event may concern snapshots, which this state leaves out.</summary>
+    public event Action? Refreshed;
 
     /// <summary>Replaces the state; true when anything changed.</summary>
     public bool Replace(PoolList pools)
@@ -25,13 +31,18 @@ public sealed class PoolInventory
         Available = true;
         // Records compare lists by reference, so content is compared through its JSON form.
         var fingerprint = JsonSerializer.Serialize(pools);
-        if (fingerprint == _fingerprint)
+        var changed = fingerprint != _fingerprint;
+        if (changed)
         {
-            return false;
+            _fingerprint = fingerprint;
+            Volatile.Write(ref _current, pools);
         }
-        _fingerprint = fingerprint;
-        Volatile.Write(ref _current, pools);
-        return true;
+        if (changed)
+        {
+            Changed?.Invoke();
+        }
+        Refreshed?.Invoke();
+        return changed;
     }
 
     /// <summary>Administrators only: pool layouts name every disk and dataset on the box.</summary>

@@ -14,6 +14,8 @@ using Pithyx.Daemon.Monitoring;
 using Pithyx.Daemon.Realtime;
 using Pithyx.Daemon.Shares;
 using Pithyx.Daemon.Storage;
+using Pithyx.Daemon.Storage.Health;
+using Pithyx.Daemon.Storage.Snapshots;
 using Pithyx.Daemon.Storage.Zfs;
 using Scalar.AspNetCore;
 using Serilog;
@@ -56,13 +58,19 @@ builder.Services.AddSingleton(services => services.GetRequiredService<PoolInvent
 builder.Services.AddSingleton<IStorageBackend, ZfsBackend>();
 builder.Services.AddSingleton<DiskProbe>();
 builder.Services.AddSingleton<StorageFacts>();
+builder.Services.AddSingleton<DatasetPlanner>();
+builder.Services.AddSingleton<PoolImportScanner>();
 builder.Services.AddSingleton<StoragePlanner>();
+builder.Services.AddSingleton<CommandPlanStore>();
 builder.Services.AddSingleton<CommandPlanRunner>();
 builder.Services.AddSingleton<SystemStateService>();
+builder.Services.AddPithyxSnapshots();
+builder.Services.AddPithyxStorageHealth();
 // The build-time OpenAPI run must not read, let alone probe, the build machine's disks.
 if (!BuildTimeDocument.IsGenerating)
 {
     builder.Services.AddHostedService(services => services.GetRequiredService<SystemStateService>());
+    builder.Services.AddPithyxStorageHealthMonitor();
 }
 builder.Services.AddPithyxOpenApi();
 builder.Services.AddDesktopHosting();
@@ -147,9 +155,8 @@ api.MapJobEndpoints();
 api.MapShareEndpoints();
 api.MapFileEndpoints();
 api.MapStorageEndpoints();
-api.MapGet("/disks", (DiskInventory disks) => TypedResults.Ok(disks.Current))
-    .WithName("GetDisks")
-    .WithTags("Storage");
+api.MapSnapshotEndpoints();
+api.MapStorageHealthEndpoints();
 app.MapRealtime();
 app.MapDesktop(paths.DesktopDirectory);
 

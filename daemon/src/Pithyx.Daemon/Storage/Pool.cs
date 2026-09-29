@@ -12,6 +12,7 @@ namespace Pithyx.Daemon.Storage;
 /// <param name="DataErrors">Number of files with permanent errors.</param>
 /// <param name="Scan">The last or running scrub or resilver, if any.</param>
 /// <param name="Vdevs">Top-level vdevs, including log, cache, special and spare devices.</param>
+/// <param name="Expansion">The last or running RAID-Z expansion, if the pool had one.</param>
 public sealed record Pool(
     string Name,
     string PoolGuid,
@@ -24,9 +25,11 @@ public sealed record Pool(
     bool ReadOnly,
     long DataErrors,
     PoolScan? Scan,
-    IReadOnlyList<Vdev> Vdevs);
+    IReadOnlyList<Vdev> Vdevs,
+    PoolExpansion? Expansion = null);
 
 /// <param name="Name">Vdev name as ZFS shows it: <c>raidz1-0</c>, <c>mirror-1</c> or the device's by-id name.</param>
+/// <param name="VdevGuid">Vdev GUID as decimal text; names a device in commands even when it is missing.</param>
 /// <param name="Type">ZFS vdev type: <c>disk</c>, <c>file</c>, <c>mirror</c>, <c>raidz</c>, <c>draid</c>, <c>spare</c>, <c>replacing</c> and so on.</param>
 /// <param name="Role">What the vdev is for: <c>data</c>, <c>log</c>, <c>cache</c>, <c>special</c>, <c>dedup</c> or <c>spare</c>.</param>
 /// <param name="State">ZFS state of the vdev.</param>
@@ -38,6 +41,7 @@ public sealed record Pool(
 /// <param name="Children">Child vdevs.</param>
 public sealed record Vdev(
     string Name,
+    string VdevGuid,
     string Type,
     string Role,
     string State,
@@ -69,6 +73,23 @@ public sealed record PoolScan(
     long ExaminedBytes,
     long Errors);
 
+/// <summary>A RAID-Z expansion (OpenZFS 2.3): a disk attached to a raidz vdev, onto which ZFS spreads the existing data.</summary>
+/// <param name="State"><c>scanning</c> while it runs, then <c>finished</c> or <c>canceled</c>.</param>
+/// <param name="VdevGuid">GUID of the raidz vdev that grows, if it is still in the pool.</param>
+/// <param name="StartedAt">When it started (UTC).</param>
+/// <param name="EndedAt">When it ended (UTC), if it did.</param>
+/// <param name="ToReflowBytes">Bytes to move onto the new layout.</param>
+/// <param name="ReflowedBytes">Bytes moved so far.</param>
+/// <param name="WaitingForResilver">True while it waits for a resilver to finish.</param>
+public sealed record PoolExpansion(
+    string State,
+    string? VdevGuid,
+    DateTimeOffset? StartedAt,
+    DateTimeOffset? EndedAt,
+    long ToReflowBytes,
+    long ReflowedBytes,
+    bool WaitingForResilver);
+
 /// <param name="Name">Full dataset name, for example <c>tank/pithyx/shares/media</c>.</param>
 /// <param name="Pool">The pool it belongs to.</param>
 /// <param name="Type"><c>filesystem</c> or <c>volume</c>.</param>
@@ -80,6 +101,13 @@ public sealed record PoolScan(
 /// <param name="Encryption">Encryption algorithm, or <c>off</c>.</param>
 /// <param name="KeyStatus"><c>available</c> or <c>unavailable</c> for encrypted datasets, otherwise null.</param>
 /// <param name="EncryptionRoot">The dataset whose key unlocks this one, if encrypted.</param>
+/// <param name="QuotaBytes">Limit for the dataset with its children and snapshots, or null for none.</param>
+/// <param name="ReservationBytes">Space guaranteed to the dataset with its children and snapshots, or null for none.</param>
+/// <param name="Compression">Compression algorithm, for example <c>lz4</c>, <c>zstd</c> or <c>off</c>.</param>
+/// <param name="RecordSizeBytes">Largest block of a file system; null for a volume.</param>
+/// <param name="VolumeSizeBytes">Size of a volume; null for a file system.</param>
+/// <param name="VolumeBlockSizeBytes">Block size of a volume; null for a file system.</param>
+/// <param name="SnapshotsUsedBytes">Space only its snapshots hold.</param>
 public sealed record Dataset(
     string Name,
     string Pool,
@@ -91,7 +119,14 @@ public sealed record Dataset(
     bool Mounted,
     string Encryption,
     string? KeyStatus,
-    string? EncryptionRoot);
+    string? EncryptionRoot,
+    long? QuotaBytes,
+    long? ReservationBytes,
+    string? Compression,
+    long? RecordSizeBytes,
+    long? VolumeSizeBytes,
+    long? VolumeBlockSizeBytes,
+    long SnapshotsUsedBytes);
 
 /// <summary>Snapshot and event of <c>storage/pools</c>, and response of <c>GET /api/storage/pools</c>.</summary>
 public sealed record PoolList(IReadOnlyList<Pool> Pools, IReadOnlyList<Dataset> Datasets);

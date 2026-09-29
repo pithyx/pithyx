@@ -1,15 +1,532 @@
 {
-  "layout": "{type}, {count, plural, one {# disk} other {# disks}}",
-  "health": {
-    "healthy": "Healthy"
+  "title": "Storage",
+  "sections": "Storage sections",
+  "nav": {
+    "pools": "Pools",
+    "disks": "Disks",
+    "datasets": "Datasets and volumes",
+    "snapshots": "Snapshots",
+    "maintenance": "Health and maintenance"
   },
-  "used": "{used} of {total} used",
-  "disks": "Disks",
-  "disk": "Disk {number}",
+  "intro": "Pools keep your data on one or more disks. Every disk shows whether a new pool may use it.",
+  "dev": "Development machine: only the declared test disks can be used.",
+  "pools": {
+    "title": "Pools",
+    "empty": "No pools yet.",
+    "used": "{used} of {size} used",
+    "layout": "Layout: {layout}",
+    "devices": "Devices of {pool}",
+    "errors": "Errors: {read} read, {write} write, {checksum} checksum",
+    "degradedHint": "A device is missing or failed. A disk that comes back is rebuilt on its own (resilver); you can also replace it with a new disk.",
+    "readOnly": "Read-only (preview)",
+    "readOnlyHint": "Imported read-only for a preview: nothing is mounted and nothing on it changes. Check its datasets, then import it for use or export it again."
+  },
   "state": {
-    "active": "Active",
-    "warm": "Warm",
-    "standby": "Sleeping"
+    "online": "Healthy",
+    "degraded": "Degraded",
+    "faulted": "Faulted",
+    "offline": "Offline",
+    "unavail": "Unavailable",
+    "removed": "Removed",
+    "suspended": "Suspended",
+    "unknown": "Unknown"
   },
-  "standbyHint": "Sleeping disks are not woken for status queries."
+  "vdev": {
+    "mirror": "Mirror of {count, plural, one {# disk} other {# disks}}",
+    "raidz": "RAID-Z{parity} of {count, plural, one {# disk} other {# disks}}",
+    "single": "Single disk"
+  },
+  "role": {
+    "log": "Log",
+    "cache": "Cache",
+    "special": "Special",
+    "dedup": "Dedup",
+    "spare": "Spare"
+  },
+  "scan": {
+    "scrubRunning": "Scrub running, {percent} % checked",
+    "resilverRunning": "Rebuilding, {percent} % done",
+    "paused": "Scrub paused at {percent} %",
+    "scrubFinished": "Last scrub {date}: {errors, plural, =0 {no errors} one {# error} other {# errors}}",
+    "resilverFinished": "Last rebuild {date}: {errors, plural, =0 {no errors} one {# error} other {# errors}}",
+    "canceled": "The last check was canceled."
+  },
+  "disks": {
+    "title": "Disks",
+    "caption": "Disks and whether a new pool may use them",
+    "name": "Name",
+    "model": "Model",
+    "serial": "Serial number",
+    "size": "Size",
+    "status": "For a new pool",
+    "intro": "Every disk with its health and whether a new pool may use it."
+  },
+  "decision": {
+    "allowed": "Available",
+    "needsSerialConfirmation": "Needs confirmation",
+    "refused": "Not available"
+  },
+  "reason": {
+    "system_disk": "Holds the system. Never used for pools.",
+    "read_only": "The disk is read-only.",
+    "mounted": "A file system on it is in use.",
+    "pool_member": "Part of the pool {pool}.",
+    "not_test_disk": "Not a declared test disk of this development machine.",
+    "duplicate_serial": "Another disk reports the same serial number, so it cannot be told apart.",
+    "no_serial": "Holds data and has no serial number to confirm with.",
+    "not_checked": "Not checked yet. Confirm with its serial number to use it.",
+    "has_data": "Holds data ({contents}). Confirm with its serial number to use it; everything on it is lost.",
+    "confirmed": "Confirmed with its serial number.",
+    "empty": "Empty and ready.",
+    "confirm_replacement": "A replacement disk is always confirmed with its serial number.",
+    "importable": "Can be imported."
+  },
+  "create": {
+    "button": "Create pool…",
+    "title": "Create a pool",
+    "name": "Pool name",
+    "nameHint": "Lowercase letters, digits, - and _; starts with a letter.",
+    "layout": "Layout",
+    "disks": "Disks",
+    "noDisks": "No disk can be used right now.",
+    "refused": "{count, plural, one {# disk is} other {# disks are}} not available",
+    "confirm": "Type the serial number of {disk} ({serial})",
+    "preview": "Show commands",
+    "commands": "These commands would run, exactly as shown:",
+    "notYet": "Creating pools from here comes with the next update. Nothing was run.",
+    "blocked": "Not every chosen disk can be used:",
+    "close": "Close"
+  },
+  "run": {
+    "running": "Running step {step} of {count}…",
+    "succeeded": "Done. Every command ran.",
+    "stopped": "Stopped."
+  },
+  "wizard": {
+    "back": "Back",
+    "next": "Next",
+    "create": "Create pool",
+    "recommended": "Recommended",
+    "progress": "Step {step} of {count}: {title}",
+    "steps": {
+      "disks": "Disks",
+      "layout": "Layout",
+      "encryption": "Encryption",
+      "review": "Name and check"
+    },
+    "recommend": {
+      "single": "With one disk there is no protection: when it fails, the data is gone. Keep a backup.",
+      "mirror": "For {count} disks we recommend a mirror: every disk holds everything, so all but one may fail.",
+      "raidz1": "For {count} disks we recommend RAID-Z1: one disk may fail, and all others hold data. It works like RAID 5.",
+      "raidz2": "For {count} disks we recommend RAID-Z2: two disks may fail, which matters because rebuilding large disks takes long. It works like RAID 6.",
+      "raidz3": "We recommend RAID-Z3.",
+      "mirrors": "We recommend mirror pairs.",
+      "stripe": "We recommend a stripe."
+    },
+    "mixedSizes": "The disks differ in size: every disk counts as large as the smallest, so {wasted} stay unused.",
+    "drawing": "{data, plural, one {# disk} other {# disks}} for data, {protection, plural, =0 {none for protection} one {# for protection} other {# for protection}}",
+    "usable": "About {size} usable",
+    "tolerance": {
+      "none": "No disk may fail: one failure loses everything.",
+      "any": "{count, plural, one {Any # disk may fail.} other {Any # disks may fail.}}",
+      "pairs": "One disk per pair may fail, up to {max} in total."
+    },
+    "read": "Reading: {speed}",
+    "write": "Writing: {speed}",
+    "speed": {
+      "low": "like one disk",
+      "medium": "faster",
+      "good": "fast",
+      "high": "very fast",
+      "veryHigh": "fastest"
+    },
+    "summary": "{layout} of {count, plural, one {# disk} other {# disks}}, about {usable} usable, not encrypted.",
+    "encryption": {
+      "question": "Should the pool be encrypted?",
+      "explain": "Encryption can only be chosen now, when the pool is created. It cannot be switched on later: the pool would have to be created again and its data copied back.",
+      "none": "No encryption",
+      "noneHint": "Anyone with the disks can read the data. Fine for media and backups of other encrypted data.",
+      "key": "Encrypt with a key",
+      "keyLater": "Comes with the key vault in the next update. To encrypt this pool, wait for it: a pool created now stays unencrypted."
+    },
+    "layouts": {
+      "single": {
+        "title": "Single disk",
+        "goodFor": "Good for: trying things out, data that also lives elsewhere.",
+        "fixed": "Can be turned into a mirror later by attaching a second disk."
+      },
+      "mirror": {
+        "title": "Mirror",
+        "goodFor": "Good for: two disks, the most important data, fast reading.",
+        "fixed": "More disks can be attached to the mirror later; the space stays that of one disk."
+      },
+      "mirrors": {
+        "title": "Mirror pairs",
+        "goodFor": "Good for: speed, virtual machines and databases; grows two disks at a time.",
+        "fixed": "Grows by adding another pair. A pair whose two disks fail loses everything."
+      },
+      "raidz1": {
+        "title": "RAID-Z1",
+        "goodFor": "Good for: most homes, the most space with one disk of protection.",
+        "fixed": "The protection level stays at one disk. Disks can be added one at a time later (RAID-Z expansion)."
+      },
+      "raidz2": {
+        "title": "RAID-Z2",
+        "goodFor": "Good for: six disks or more, large disks, data that must survive two failures.",
+        "fixed": "The protection level stays at two disks. Disks can be added one at a time later."
+      },
+      "raidz3": {
+        "title": "RAID-Z3",
+        "goodFor": "Good for: many large disks and archives where three failures must be survived.",
+        "fixed": "The protection level stays at three disks. Disks can be added one at a time later."
+      },
+      "stripe": {
+        "title": "Stripe",
+        "goodFor": "Only for: scratch space whose loss does not matter.",
+        "fixed": "Protection can never be added. One failed disk loses the whole pool."
+      }
+    }
+  },
+  "actions": {
+    "disk": "New disk",
+    "datasets": "Everything on the pool is lost, including these datasets:",
+    "replace": {
+      "button": "Replace…",
+      "title": "Replace {device}",
+      "explain": "The new disk takes the place of {device} in {pool}; ZFS copies the data onto it (resilver). A new disk is never used on its own.",
+      "serialHint": "Type the serial number printed on the disk to confirm it is the one you mean.",
+      "run": "Replace"
+    },
+    "spareAdd": {
+      "button": "Add hot spare…",
+      "title": "Add a hot spare to {pool}",
+      "explain": "A hot spare waits in {pool}; when a disk fails, ZFS rebuilds onto it right away.",
+      "run": "Add spare"
+    },
+    "spareRemove": {
+      "button": "Remove spare",
+      "title": "Remove the spare {device}",
+      "explain": "{device} stops being a hot spare of {pool}.",
+      "run": "Remove"
+    },
+    "offline": {
+      "button": "Take offline",
+      "title": "Take {device} offline",
+      "explain": "{pool} stops using {device}, for example to swap it. The pool stays usable if it has protection left.",
+      "run": "Take offline"
+    },
+    "online": {
+      "button": "Bring online",
+      "title": "Bring {device} online",
+      "explain": "{pool} uses {device} again and rebuilds what it missed.",
+      "run": "Bring online"
+    },
+    "destroy": {
+      "button": "Destroy pool…",
+      "title": "Destroy {pool}",
+      "explain": "The pool {pool} and all its data are deleted. This cannot be undone.",
+      "confirm": "Type {pool} to confirm",
+      "run": "Destroy pool"
+    }
+  },
+  "datasets": {
+    "title": "{count, plural, one {# dataset} other {# datasets}}",
+    "notMounted": "not mounted",
+    "intro": "Every pool keeps its data in datasets (file systems) and volumes (block devices for virtual machines).",
+    "caption": "Datasets and volumes of {pool}",
+    "name": "Name",
+    "used": "Used",
+    "available": "Free",
+    "quota": "Limit",
+    "compression": "Compression",
+    "location": "Folder or size",
+    "noQuota": "none",
+    "volumeSize": "{size} volume",
+    "actions": "Actions",
+    "units": {
+      "mb": "MB",
+      "gb": "GB",
+      "tb": "TB"
+    },
+    "volume": {
+      "label": "volume",
+      "button": "Create volume…",
+      "unprepared": "Pithyx did not set up this pool, so it creates no volumes on it.",
+      "title": "Create a volume on {pool}",
+      "explain": "A volume is a block device, for example the disk of a virtual machine. It is created in {parent}.",
+      "name": "Name",
+      "size": "Size",
+      "sizeHint": "Rounded up to whole 16 KiB blocks, at least 1 MiB.",
+      "sparse": "Sparse volume",
+      "sparseHint": "Reserves no space up front. It can run out of space when the pool fills up, and whatever uses it then sees write errors.",
+      "run": "Create volume"
+    },
+    "rename": {
+      "button": "Rename…",
+      "label": "Rename {dataset}",
+      "title": "Rename {dataset}",
+      "explain": "The dataset keeps its data and stays in {parent}. Its folder moves with the new name, and shared folders in it follow.",
+      "newName": "New name",
+      "hint": "Now: {name}. Letters, digits, ., - and _.",
+      "listed": "These datasets get a new name:",
+      "run": "Rename"
+    },
+    "limits": {
+      "button": "Limits…",
+      "label": "Limits for {dataset}",
+      "title": "Limits and compression of {dataset}",
+      "explain": "Leave a size empty for no limit. Only what you change is sent.",
+      "compressionOnly": "This dataset takes only a compression setting: it is a volume, the pool root or part of the Pithyx layout.",
+      "quota": "Quota",
+      "quotaHint": "The most the dataset may hold, with its child datasets and snapshots. It uses {used} now.",
+      "reservation": "Reservation",
+      "reservationHint": "Space kept for this dataset, with its child datasets and snapshots, that nothing else on the pool may use.",
+      "compression": "Compression",
+      "compressionHint": "Applies to data written from now on. Higher zstd levels save more space and cost more processor time.",
+      "compressionOff": "Off",
+      "compressionDefault": "{name} (default)",
+      "recordSize": "Record size",
+      "recordSizeHint": "The largest block of a file. 1 MiB suits large files such as videos, 16 KiB databases; 128 KiB is the default.",
+      "kib": "{value} KiB",
+      "mib": "{value} MiB",
+      "invalidNumber": "Enter a number, or leave the field empty.",
+      "unit": "Unit of {field}",
+      "run": "Apply"
+    },
+    "destroy": {
+      "button": "Delete…",
+      "label": "Delete {dataset}",
+      "title": "Delete {dataset}",
+      "explain": "{dataset} and every file in it are deleted, with its child datasets and all their snapshots. This cannot be undone.",
+      "explainVolume": "The volume {dataset} and all its data are deleted, with its snapshots. This cannot be undone.",
+      "confirm": "Type {dataset} to confirm",
+      "listed": "These datasets and snapshots are deleted:",
+      "run": "Delete"
+    },
+    "snapshotDestroy": {
+      "title": "Delete snapshot",
+      "explain": "The snapshot {name} of {dataset} is deleted for good. Files that only it still holds can no longer be restored.",
+      "listed": "This snapshot is deleted:",
+      "run": "Delete snapshot"
+    },
+    "rollback": {
+      "title": "Roll back {dataset}",
+      "explain": "The whole dataset returns to the snapshot {name} of {date}.",
+      "newer": "{count, plural, one {# newer snapshot is deleted as well; the preview lists it.} other {# newer snapshots are deleted as well; the preview lists them.}}",
+      "confirm": "Type {dataset} to confirm",
+      "listed": "These newer snapshots are deleted as well:",
+      "run": "Roll back"
+    }
+  },
+  "layouts": {
+    "single": "Single disk (no redundancy)",
+    "mirror": "Mirror",
+    "raidz1": "RAID-Z1 (one disk may fail)",
+    "raidz2": "RAID-Z2 (two disks may fail)",
+    "raidz3": "RAID-Z3 (three disks may fail)",
+    "stripe": "Stripe (one failed disk loses everything)"
+  },
+  "snapshots": {
+    "title": "Snapshots",
+    "intro": "A snapshot keeps the state of a dataset at one moment. Users restore files from them under Previous versions in Files. Schedules delete only the snapshots they took.",
+    "noDatasets": "No datasets yet.",
+    "dataset": "Dataset",
+    "take": "Take snapshot",
+    "empty": "This dataset has no snapshots yet.",
+    "name": "Name",
+    "created": "Taken",
+    "used": "Space",
+    "actions": "Actions",
+    "foreign": "Other",
+    "held": "Held",
+    "hold": "Hold",
+    "release": "Release",
+    "rollback": "Roll back",
+    "delete": "Delete",
+    "kinds": {
+      "hourly": "Hourly",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "manual": "Manual"
+    },
+    "schedules": "Schedules",
+    "keep": "Keep",
+    "save": "Save schedules",
+    "schedulesHint": "Schedules take one snapshot per hour, day, week (from Monday) or month in UTC and keep the given number of their own snapshots. Held snapshots and snapshots taken by hand or by other tools are never deleted."
+  },
+  "health": {
+    "title": "Health",
+    "alerts": "Storage alerts",
+    "noAlerts": "No problems found.",
+    "severity": {
+      "critical": "Critical",
+      "warning": "Warning"
+    },
+    "mute": "Mute",
+    "unmute": "Show again",
+    "muted": "Muted for you",
+    "never": "Not scheduled",
+    "next": "Next run: {date}",
+    "frequency": {
+      "off": "Off",
+      "weekly": "Weekly",
+      "monthly": "Monthly"
+    },
+    "smart": {
+      "title": "Disk health (SMART)",
+      "caption": "SMART state of every disk",
+      "state": "SMART",
+      "details": "Details",
+      "states": {
+        "passed": "Healthy",
+        "warning": "Warning",
+        "failed": "Failing",
+        "unsupported": "No SMART",
+        "unknown": "Unknown"
+      },
+      "reasons": {
+        "virtual": "No SMART data in a virtual machine: a virtual disk has no sensors to read.",
+        "not_available": "This disk or its adapter does not report SMART data.",
+        "asleep": "Asleep since the system started. It is not woken up just to be checked.",
+        "not_read": "Not checked yet.",
+        "read_failed": "SMART could not be read. The log has the details."
+      },
+      "temperature": "{value, number} °C",
+      "counters": "{reallocated, number} reallocated, {pending, number} pending sectors, {mediaErrors, number} media errors",
+      "selfTest": {
+        "passed": "last self-test passed",
+        "failed": "last self-test failed",
+        "aborted": "last self-test was aborted",
+        "running": "self-test running"
+      },
+      "asleep": "asleep, values from {date}"
+    },
+    "scrub": {
+      "title": "Scrubs",
+      "intro": "A scrub reads every block of a pool and repairs what it can from redundancy.",
+      "schedule": "Scrub {pool}",
+      "start": "Scrub now",
+      "resume": "Resume",
+      "pause": "Pause",
+      "stop": "Stop"
+    },
+    "selfTests": {
+      "title": "SMART self-tests",
+      "intro": "Self-tests run inside the disks. Disks that are asleep are skipped and tried again later, never woken up.",
+      "shortSelfTest": "Short self-test",
+      "longSelfTest": "Long self-test"
+    },
+    "intro": "Problems Pithyx found, and the scrubs and self-tests that look for them."
+  },
+  "sample": {
+    "layout": "{type}, {count, plural, one {# disk} other {# disks}}",
+    "health": {
+      "healthy": "Healthy"
+    },
+    "used": "{used} of {total} used",
+    "disks": "Disks",
+    "disk": "Disk {number}",
+    "state": {
+      "active": "Active",
+      "warm": "Warm",
+      "standby": "Sleeping"
+    },
+    "standbyHint": "Sleeping disks are not woken for status queries."
+  },
+  "import": {
+    "button": "Import a pool…",
+    "title": "Import a pool",
+    "explain": "Pools on disks from another system or an earlier installation can be imported. A pool is first imported read-only: nothing is mounted and nothing on it changes, so you can check its datasets before you use it.",
+    "scanHint": "The scan reads the labels of every disk and may wake a sleeping disk. It runs only when you start it.",
+    "scan": "Scan disks",
+    "rescan": "Scan again",
+    "scanning": "Reading the disks…",
+    "none": "No pool was found that could be imported.",
+    "found": "Pools found on the disks",
+    "layout": "Layout of {pool}",
+    "disks": "Disks of {pool}",
+    "usedElsewhere": "Used by another system",
+    "nameTakenBadge": "Name taken",
+    "unknown": "Pithyx does not know the disk of {devices}, so it cannot check it. This pool cannot be imported.",
+    "cannot": "This pool cannot be imported, usually because disks are missing. Connect them and scan again.",
+    "zfsSays": "What ZFS reports",
+    "newName": "New name for the pool",
+    "nameTaken": "A pool named {name} is imported already. The pool is imported under the new name.",
+    "otherSystem": "{name} was last used by another system and not exported there. Import it only if that system is switched off or no longer uses these disks: two systems writing to one pool destroy it.",
+    "force": "Import it anyway (force)",
+    "run": "Import read-only",
+    "done": "The pool is imported read-only. Check its datasets on its card, then import it for use or export it again."
+  },
+  "change": {
+    "import": {
+      "button": "Import for use…",
+      "title": "Import {pool} for use",
+      "explain": "{pool} is exported and imported again for use. Then the datasets that are safe to mount are mounted; datasets that would cover system folders stay unmounted.",
+      "run": "Import for use",
+      "mounted": "These datasets are mounted:"
+    },
+    "discard": {
+      "button": "Export",
+      "title": "Export {pool} again",
+      "explain": "The read-only preview ends: {pool} is exported and nothing on it was changed. The data stays on the disks.",
+      "run": "Export"
+    },
+    "export": {
+      "button": "Export…",
+      "title": "Export {pool}",
+      "explain": "{pool} is exported: its datasets are unmounted and unavailable until the pool is imported again. The data stays on the disks, which can then be moved to another system.",
+      "run": "Export",
+      "datasets": "These datasets become unavailable:"
+    },
+    "add": {
+      "button": "Add disks…",
+      "title": "Add disks to {pool}",
+      "explain": "The chosen disks become a new group in {pool}, and the pool grows by its space. Data already on the pool stays where it is.",
+      "run": "Add disks"
+    },
+    "expand": {
+      "button": "Expand with a disk…",
+      "title": "Expand {vdev} of {pool}",
+      "explain": "The disk joins {vdev}, and ZFS spreads the data over one more disk. This takes a while; the pool stays usable. The disk can never be removed again, and data already on the pool keeps its old ratio of data to parity until it is written again.",
+      "run": "Expand"
+    },
+    "layouts": {
+      "single": "Single disk, no protection",
+      "mirror": "Mirror of {count} disks",
+      "raidz1": "RAID-Z1 of {count} disks",
+      "raidz2": "RAID-Z2 of {count} disks",
+      "raidz3": "RAID-Z3 of {count} disks"
+    }
+  },
+  "expansion": {
+    "running": "Expanding {vdev}",
+    "waiting": "The expansion of {vdev} waits until a rebuild is done.",
+    "finished": "{vdev} was expanded on {date}."
+  },
+  "warnings": {
+    "label": "Warnings",
+    "lowers_redundancy": "The new disks protect less than the rest of the pool: afterwards the whole pool survives fewer failed disks, and losing this group loses everything on the pool.",
+    "replication_mismatch": "The new group is built differently from the rest of the pool (another width or protection). ZFS only allows it when you confirm, and the pool becomes uneven.",
+    "irreversible": "This cannot be undone: these disks can never be removed from the pool again.",
+    "no_redundancy": "The new disk has no protection: if it fails, everything on the pool is lost.",
+    "other_system": "The pool is imported although another system used it last. Make sure that system no longer uses these disks.",
+    "degraded": "Devices of this pool are missing. It is imported without them and has less protection until they are back or replaced.",
+    "unmounted_datasets": "Some datasets stay unmounted; the list below says why.",
+    "datasets_unavailable": "Shares and apps that use these datasets stop working until the pool is imported again.",
+    "changes_lost": "Every change made to the dataset since the snapshot is lost, for everyone who uses it. This cannot be undone.",
+    "newer_snapshots": "The newer snapshots listed below are deleted as well."
+  },
+  "unmounted": {
+    "title": "These datasets stay unmounted:",
+    "system_path": "it would cover a system folder",
+    "shadows_mount": "it would hide something that is mounted there",
+    "duplicate_mountpoint": "another dataset of the pool uses the same folder",
+    "key_unavailable": "it is encrypted and locked",
+    "noauto": "Datasets that would cover system folders or other mounts get canmount=noauto, so they stay unmounted after a restart too."
+  },
+  "confirmName": {
+    "label": "Type {pool} to confirm",
+    "needed": "This changes the pool for good. Type its name to see the commands."
+  }
 }

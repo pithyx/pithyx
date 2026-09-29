@@ -1,15 +1,532 @@
 {
-  "layout": "{type}, {count, plural, one {# Laufwerk} other {# Laufwerke}}",
-  "health": {
-    "healthy": "Intakt"
+  "title": "Speicher",
+  "sections": "Bereiche von Speicher",
+  "nav": {
+    "pools": "Pools",
+    "disks": "Platten",
+    "datasets": "Datasets und Volumes",
+    "snapshots": "Snapshots",
+    "maintenance": "Zustand und Wartung"
   },
-  "used": "{used} von {total} belegt",
-  "disks": "Laufwerke",
-  "disk": "Laufwerk {number}",
+  "intro": "Pools speichern deine Daten auf einer oder mehreren Platten. Bei jeder Platte steht, ob ein neuer Pool sie verwenden darf.",
+  "dev": "Entwicklungsrechner: Nur die eingetragenen Testplatten können verwendet werden.",
+  "pools": {
+    "title": "Pools",
+    "empty": "Noch keine Pools.",
+    "used": "{used} von {size} belegt",
+    "layout": "Aufbau: {layout}",
+    "devices": "Geräte von {pool}",
+    "errors": "Fehler: {read} Lesen, {write} Schreiben, {checksum} Prüfsumme",
+    "degradedHint": "Ein Gerät fehlt oder ist ausgefallen. Eine zurückkehrende Platte wird von selbst wiederhergestellt (Resilver); du kannst sie auch durch eine neue Platte ersetzen.",
+    "readOnly": "Schreibgeschützt (Vorschau)",
+    "readOnlyHint": "Schreibgeschützt zur Vorschau importiert: Nichts ist eingehängt und nichts daran ändert sich. Prüf seine Datasets, dann importiere ihn zur Nutzung oder exportiere ihn wieder."
+  },
   "state": {
-    "active": "Aktiv",
-    "warm": "Warm",
-    "standby": "Im Ruhezustand"
+    "online": "Intakt",
+    "degraded": "Beeinträchtigt",
+    "faulted": "Ausgefallen",
+    "offline": "Offline",
+    "unavail": "Nicht erreichbar",
+    "removed": "Entfernt",
+    "suspended": "Angehalten",
+    "unknown": "Unbekannt"
   },
-  "standbyHint": "Laufwerke im Ruhezustand werden für Statusabfragen nicht geweckt."
+  "vdev": {
+    "mirror": "Spiegel aus {count, plural, one {# Platte} other {# Platten}}",
+    "raidz": "RAID-Z{parity} aus {count, plural, one {# Platte} other {# Platten}}",
+    "single": "Einzelne Platte"
+  },
+  "role": {
+    "log": "Log",
+    "cache": "Cache",
+    "special": "Spezial",
+    "dedup": "Dedup",
+    "spare": "Ersatz"
+  },
+  "scan": {
+    "scrubRunning": "Prüfung läuft, {percent} % geprüft",
+    "resilverRunning": "Wiederherstellung läuft, {percent} % erledigt",
+    "paused": "Prüfung bei {percent} % pausiert",
+    "scrubFinished": "Letzte Prüfung {date}: {errors, plural, =0 {keine Fehler} one {# Fehler} other {# Fehler}}",
+    "resilverFinished": "Letzte Wiederherstellung {date}: {errors, plural, =0 {keine Fehler} one {# Fehler} other {# Fehler}}",
+    "canceled": "Die letzte Prüfung wurde abgebrochen."
+  },
+  "disks": {
+    "title": "Platten",
+    "caption": "Platten und ob ein neuer Pool sie verwenden darf",
+    "name": "Name",
+    "model": "Modell",
+    "serial": "Seriennummer",
+    "size": "Größe",
+    "status": "Für einen neuen Pool",
+    "intro": "Jede Platte mit ihrem Zustand und ob ein neuer Pool sie verwenden darf."
+  },
+  "decision": {
+    "allowed": "Verfügbar",
+    "needsSerialConfirmation": "Bestätigung nötig",
+    "refused": "Nicht verfügbar"
+  },
+  "reason": {
+    "system_disk": "Enthält das System. Wird nie für Pools verwendet.",
+    "read_only": "Die Platte ist schreibgeschützt.",
+    "mounted": "Ein Dateisystem darauf ist in Benutzung.",
+    "pool_member": "Gehört zum Pool {pool}.",
+    "not_test_disk": "Keine eingetragene Testplatte dieses Entwicklungsrechners.",
+    "duplicate_serial": "Eine andere Platte meldet dieselbe Seriennummer, deshalb lassen sie sich nicht unterscheiden.",
+    "no_serial": "Enthält Daten und hat keine Seriennummer zum Bestätigen.",
+    "not_checked": "Noch nicht geprüft. Bestätige mit ihrer Seriennummer, um sie zu verwenden.",
+    "has_data": "Enthält Daten ({contents}). Bestätige mit ihrer Seriennummer, um sie zu verwenden; alles darauf geht verloren.",
+    "confirmed": "Mit ihrer Seriennummer bestätigt.",
+    "empty": "Leer und bereit.",
+    "confirm_replacement": "Eine Ersatzplatte wird immer mit ihrer Seriennummer bestätigt.",
+    "importable": "Lässt sich importieren."
+  },
+  "create": {
+    "button": "Pool anlegen…",
+    "title": "Pool anlegen",
+    "name": "Name des Pools",
+    "nameHint": "Kleinbuchstaben, Ziffern, - und _; beginnt mit einem Buchstaben.",
+    "layout": "Aufbau",
+    "disks": "Platten",
+    "noDisks": "Gerade kann keine Platte verwendet werden.",
+    "refused": "{count, plural, one {# Platte ist} other {# Platten sind}} nicht verfügbar",
+    "confirm": "Gib die Seriennummer von {disk} ein ({serial})",
+    "preview": "Befehle anzeigen",
+    "commands": "Diese Befehle würden genau so ausgeführt:",
+    "notYet": "Pools von hier aus anlegen kommt mit dem nächsten Update. Es wurde nichts ausgeführt.",
+    "blocked": "Nicht jede gewählte Platte kann verwendet werden:",
+    "close": "Schließen"
+  },
+  "run": {
+    "running": "Schritt {step} von {count} läuft …",
+    "succeeded": "Fertig. Alle Befehle wurden ausgeführt.",
+    "stopped": "Angehalten."
+  },
+  "wizard": {
+    "back": "Zurück",
+    "next": "Weiter",
+    "create": "Pool anlegen",
+    "recommended": "Empfohlen",
+    "progress": "Schritt {step} von {count}: {title}",
+    "steps": {
+      "disks": "Platten",
+      "layout": "Aufbau",
+      "encryption": "Verschlüsselung",
+      "review": "Name und Prüfung"
+    },
+    "recommend": {
+      "single": "Mit einer Platte gibt es keinen Schutz: Fällt sie aus, sind die Daten weg. Halte eine Sicherung bereit.",
+      "mirror": "Für {count} Platten empfehlen wir einen Spiegel: Jede Platte enthält alles, deshalb dürfen alle bis auf eine ausfallen.",
+      "raidz1": "Für {count} Platten empfehlen wir RAID-Z1: Eine Platte darf ausfallen, alle anderen speichern Daten. Das funktioniert wie RAID 5.",
+      "raidz2": "Für {count} Platten empfehlen wir RAID-Z2: Zwei Platten dürfen ausfallen. Das zählt, weil die Wiederherstellung großer Platten lange dauert. Das funktioniert wie RAID 6.",
+      "raidz3": "Wir empfehlen RAID-Z3.",
+      "mirrors": "Wir empfehlen Spiegelpaare.",
+      "stripe": "Wir empfehlen einen Stripe."
+    },
+    "mixedSizes": "Die Platten sind unterschiedlich groß: Jede zählt so groß wie die kleinste, deshalb bleiben {wasted} ungenutzt.",
+    "drawing": "{data, plural, one {# Platte} other {# Platten}} für Daten, {protection, plural, =0 {keine für Schutz} one {# für Schutz} other {# für Schutz}}",
+    "usable": "Etwa {size} nutzbar",
+    "tolerance": {
+      "none": "Keine Platte darf ausfallen: Ein Ausfall kostet alles.",
+      "any": "{count, plural, one {Eine beliebige Platte darf ausfallen.} other {Beliebige # Platten dürfen ausfallen.}}",
+      "pairs": "Pro Paar darf eine Platte ausfallen, insgesamt bis zu {max}."
+    },
+    "read": "Lesen: {speed}",
+    "write": "Schreiben: {speed}",
+    "speed": {
+      "low": "wie eine Platte",
+      "medium": "schneller",
+      "good": "schnell",
+      "high": "sehr schnell",
+      "veryHigh": "am schnellsten"
+    },
+    "summary": "{layout} aus {count, plural, one {# Platte} other {# Platten}}, etwa {usable} nutzbar, unverschlüsselt.",
+    "encryption": {
+      "question": "Soll der Pool verschlüsselt werden?",
+      "explain": "Verschlüsselung lässt sich nur jetzt wählen, beim Anlegen des Pools. Später lässt sie sich nicht einschalten: Der Pool müsste neu angelegt und seine Daten zurückkopiert werden.",
+      "none": "Keine Verschlüsselung",
+      "noneHint": "Wer die Platten hat, kann die Daten lesen. In Ordnung für Medien und Sicherungen von bereits verschlüsselten Daten.",
+      "key": "Mit einem Schlüssel verschlüsseln",
+      "keyLater": "Kommt mit dem Schlüsseltresor im nächsten Update. Wenn dieser Pool verschlüsselt sein soll, warte darauf: Ein jetzt angelegter Pool bleibt unverschlüsselt."
+    },
+    "layouts": {
+      "single": {
+        "title": "Einzelne Platte",
+        "goodFor": "Gut für: Ausprobieren, Daten, die es auch anderswo gibt.",
+        "fixed": "Lässt sich später durch eine zweite Platte zu einem Spiegel machen."
+      },
+      "mirror": {
+        "title": "Spiegel",
+        "goodFor": "Gut für: zwei Platten, die wichtigsten Daten, schnelles Lesen.",
+        "fixed": "Später lassen sich weitere Platten an den Spiegel hängen; der Platz bleibt der einer Platte."
+      },
+      "mirrors": {
+        "title": "Spiegelpaare",
+        "goodFor": "Gut für: Tempo, virtuelle Maschinen und Datenbanken; wächst um je zwei Platten.",
+        "fixed": "Wächst durch ein weiteres Paar. Fallen beide Platten eines Paares aus, ist alles verloren."
+      },
+      "raidz1": {
+        "title": "RAID-Z1",
+        "goodFor": "Gut für: die meisten Haushalte, den meisten Platz mit einer Platte Schutz.",
+        "fixed": "Die Schutzstufe bleibt bei einer Platte. Später lassen sich Platten einzeln hinzufügen (RAID-Z-Erweiterung)."
+      },
+      "raidz2": {
+        "title": "RAID-Z2",
+        "goodFor": "Gut für: sechs Platten und mehr, große Platten, Daten, die zwei Ausfälle überstehen müssen.",
+        "fixed": "Die Schutzstufe bleibt bei zwei Platten. Später lassen sich Platten einzeln hinzufügen."
+      },
+      "raidz3": {
+        "title": "RAID-Z3",
+        "goodFor": "Gut für: viele große Platten und Archive, die drei Ausfälle überstehen müssen.",
+        "fixed": "Die Schutzstufe bleibt bei drei Platten. Später lassen sich Platten einzeln hinzufügen."
+      },
+      "stripe": {
+        "title": "Stripe",
+        "goodFor": "Nur für: Zwischenablagen, deren Verlust egal ist.",
+        "fixed": "Schutz lässt sich nie hinzufügen. Eine ausgefallene Platte kostet den ganzen Pool."
+      }
+    }
+  },
+  "actions": {
+    "disk": "Neue Platte",
+    "datasets": "Alles auf dem Pool geht verloren, auch diese Datasets:",
+    "replace": {
+      "button": "Ersetzen…",
+      "title": "{device} ersetzen",
+      "explain": "Die neue Platte nimmt den Platz von {device} in {pool} ein; ZFS kopiert die Daten darauf (Resilver). Eine neue Platte wird nie von selbst verwendet.",
+      "serialHint": "Gib die Seriennummer ein, die auf der Platte steht, um zu bestätigen, dass du diese meinst.",
+      "run": "Ersetzen"
+    },
+    "spareAdd": {
+      "button": "Hot Spare hinzufügen…",
+      "title": "Hot Spare zu {pool} hinzufügen",
+      "explain": "Ein Hot Spare wartet in {pool}; fällt eine Platte aus, stellt ZFS sofort darauf wieder her.",
+      "run": "Spare hinzufügen"
+    },
+    "spareRemove": {
+      "button": "Spare entfernen",
+      "title": "Spare {device} entfernen",
+      "explain": "{device} ist dann kein Hot Spare von {pool} mehr.",
+      "run": "Entfernen"
+    },
+    "offline": {
+      "button": "Offline nehmen",
+      "title": "{device} offline nehmen",
+      "explain": "{pool} verwendet {device} nicht mehr, zum Beispiel zum Tauschen. Der Pool bleibt nutzbar, solange Schutz übrig ist.",
+      "run": "Offline nehmen"
+    },
+    "online": {
+      "button": "Online bringen",
+      "title": "{device} online bringen",
+      "explain": "{pool} verwendet {device} wieder und stellt nach, was gefehlt hat.",
+      "run": "Online bringen"
+    },
+    "destroy": {
+      "button": "Pool löschen…",
+      "title": "{pool} löschen",
+      "explain": "Der Pool {pool} und alle seine Daten werden gelöscht. Das lässt sich nicht rückgängig machen.",
+      "confirm": "Gib {pool} zur Bestätigung ein",
+      "run": "Pool löschen"
+    }
+  },
+  "datasets": {
+    "title": "{count, plural, one {# Dataset} other {# Datasets}}",
+    "notMounted": "nicht eingehängt",
+    "intro": "Jeder Pool speichert seine Daten in Datasets (Dateisysteme) und Volumes (Blockgeräte für virtuelle Maschinen).",
+    "caption": "Datasets und Volumes von {pool}",
+    "name": "Name",
+    "used": "Belegt",
+    "available": "Frei",
+    "quota": "Limit",
+    "compression": "Kompression",
+    "location": "Ordner oder Größe",
+    "noQuota": "keins",
+    "volumeSize": "Volume, {size}",
+    "actions": "Aktionen",
+    "units": {
+      "mb": "MB",
+      "gb": "GB",
+      "tb": "TB"
+    },
+    "volume": {
+      "label": "Volume",
+      "button": "Volume anlegen…",
+      "unprepared": "Pithyx hat diesen Pool nicht eingerichtet, deshalb legt es darauf keine Volumes an.",
+      "title": "Volume auf {pool} anlegen",
+      "explain": "Ein Volume ist ein Blockgerät, zum Beispiel die Festplatte einer virtuellen Maschine. Es entsteht in {parent}.",
+      "name": "Name",
+      "size": "Größe",
+      "sizeHint": "Wird auf ganze Blöcke zu 16 KiB aufgerundet, mindestens 1 MiB.",
+      "sparse": "Sparse-Volume",
+      "sparseHint": "Reserviert vorab keinen Platz. Wird der Pool voll, kann ihm der Platz ausgehen, und was es nutzt, bekommt dann Schreibfehler.",
+      "run": "Volume anlegen"
+    },
+    "rename": {
+      "button": "Umbenennen…",
+      "label": "{dataset} umbenennen",
+      "title": "{dataset} umbenennen",
+      "explain": "Das Dataset behält seine Daten und bleibt in {parent}. Sein Ordner zieht mit dem neuen Namen um, freigegebene Ordner darin ziehen mit.",
+      "newName": "Neuer Name",
+      "hint": "Jetzt: {name}. Buchstaben, Ziffern, ., - und _.",
+      "listed": "Diese Datasets bekommen einen neuen Namen:",
+      "run": "Umbenennen"
+    },
+    "limits": {
+      "button": "Grenzen…",
+      "label": "Grenzen für {dataset}",
+      "title": "Grenzen und Kompression von {dataset}",
+      "explain": "Lass eine Größe leer, wenn es keine Grenze geben soll. Gesendet wird nur, was du änderst.",
+      "compressionOnly": "Dieses Dataset nimmt nur eine Kompression an: Es ist ein Volume, die Wurzel des Pools oder Teil des Pithyx-Layouts.",
+      "quota": "Kontingent",
+      "quotaHint": "Höchstens so viel darf das Dataset mit seinen Unter-Datasets und Snapshots belegen. Jetzt belegt es {used}.",
+      "reservation": "Reservierung",
+      "reservationHint": "Platz, der für dieses Dataset mit seinen Unter-Datasets und Snapshots freigehalten wird und den sonst nichts im Pool belegen darf.",
+      "compression": "Kompression",
+      "compressionHint": "Gilt für Daten, die ab jetzt geschrieben werden. Höhere zstd-Stufen sparen mehr Platz und kosten mehr Rechenzeit.",
+      "compressionOff": "Aus",
+      "compressionDefault": "{name} (Standard)",
+      "recordSize": "Record-Größe",
+      "recordSizeHint": "Der größte Block einer Datei. 1 MiB passt zu großen Dateien wie Videos, 16 KiB zu Datenbanken; 128 KiB ist der Standard.",
+      "kib": "{value} KiB",
+      "mib": "{value} MiB",
+      "invalidNumber": "Gib eine Zahl ein oder lass das Feld leer.",
+      "unit": "Einheit von {field}",
+      "run": "Übernehmen"
+    },
+    "destroy": {
+      "button": "Löschen…",
+      "label": "{dataset} löschen",
+      "title": "{dataset} löschen",
+      "explain": "{dataset} und alle Dateien darin werden gelöscht, mit seinen Unter-Datasets und allen ihren Snapshots. Das lässt sich nicht rückgängig machen.",
+      "explainVolume": "Das Volume {dataset} und alle seine Daten werden gelöscht, mit seinen Snapshots. Das lässt sich nicht rückgängig machen.",
+      "confirm": "Gib zur Bestätigung {dataset} ein",
+      "listed": "Diese Datasets und Snapshots werden gelöscht:",
+      "run": "Löschen"
+    },
+    "snapshotDestroy": {
+      "title": "Snapshot löschen",
+      "explain": "Der Snapshot {name} von {dataset} wird endgültig gelöscht. Dateien, die nur noch in ihm stecken, lassen sich danach nicht mehr wiederherstellen.",
+      "listed": "Dieser Snapshot wird gelöscht:",
+      "run": "Snapshot löschen"
+    },
+    "rollback": {
+      "title": "{dataset} zurücksetzen",
+      "explain": "Das ganze Dataset kehrt zum Snapshot {name} vom {date} zurück.",
+      "newer": "{count, plural, one {# neuerer Snapshot wird ebenfalls gelöscht; die Vorschau listet ihn auf.} other {# neuere Snapshots werden ebenfalls gelöscht; die Vorschau listet sie auf.}}",
+      "confirm": "Gib {dataset} ein, um zu bestätigen",
+      "listed": "Diese neueren Snapshots werden ebenfalls gelöscht:",
+      "run": "Zurücksetzen"
+    }
+  },
+  "layouts": {
+    "single": "Einzelne Platte (keine Redundanz)",
+    "mirror": "Spiegel",
+    "raidz1": "RAID-Z1 (eine Platte darf ausfallen)",
+    "raidz2": "RAID-Z2 (zwei Platten dürfen ausfallen)",
+    "raidz3": "RAID-Z3 (drei Platten dürfen ausfallen)",
+    "stripe": "Stripe (eine ausgefallene Platte kostet alles)"
+  },
+  "snapshots": {
+    "title": "Snapshots",
+    "intro": "Ein Snapshot hält den Stand eines Datasets zu einem Zeitpunkt fest. Benutzer stellen daraus in Dateien unter Frühere Versionen Dateien wieder her. Zeitpläne löschen nur die Snapshots, die sie selbst angelegt haben.",
+    "noDatasets": "Noch keine Datasets.",
+    "dataset": "Dataset",
+    "take": "Snapshot anlegen",
+    "empty": "Dieses Dataset hat noch keine Snapshots.",
+    "name": "Name",
+    "created": "Angelegt",
+    "used": "Platz",
+    "actions": "Aktionen",
+    "foreign": "Fremd",
+    "held": "Festgehalten",
+    "hold": "Festhalten",
+    "release": "Freigeben",
+    "rollback": "Zurücksetzen",
+    "delete": "Löschen",
+    "kinds": {
+      "hourly": "Stündlich",
+      "daily": "Täglich",
+      "weekly": "Wöchentlich",
+      "monthly": "Monatlich",
+      "manual": "Von Hand"
+    },
+    "schedules": "Zeitpläne",
+    "keep": "Behalten",
+    "save": "Zeitpläne speichern",
+    "schedulesHint": "Zeitpläne legen pro Stunde, Tag, Woche (ab Montag) oder Monat in UTC einen Snapshot an und behalten die angegebene Zahl ihrer eigenen Snapshots. Festgehaltene Snapshots und solche, die von Hand oder von anderen Programmen angelegt wurden, werden nie gelöscht."
+  },
+  "health": {
+    "title": "Zustand",
+    "alerts": "Speicherhinweise",
+    "noAlerts": "Keine Probleme gefunden.",
+    "severity": {
+      "critical": "Kritisch",
+      "warning": "Warnung"
+    },
+    "mute": "Stummschalten",
+    "unmute": "Wieder zeigen",
+    "muted": "Für dich stummgeschaltet",
+    "never": "Nicht geplant",
+    "next": "Nächster Lauf: {date}",
+    "frequency": {
+      "off": "Aus",
+      "weekly": "Wöchentlich",
+      "monthly": "Monatlich"
+    },
+    "smart": {
+      "title": "Plattenzustand (SMART)",
+      "caption": "SMART-Zustand jeder Platte",
+      "state": "SMART",
+      "details": "Details",
+      "states": {
+        "passed": "Gesund",
+        "warning": "Warnung",
+        "failed": "Fällt aus",
+        "unsupported": "Kein SMART",
+        "unknown": "Unbekannt"
+      },
+      "reasons": {
+        "virtual": "Keine SMART-Daten in einer virtuellen Maschine: Eine virtuelle Platte hat keine Sensoren, die man lesen kann.",
+        "not_available": "Diese Platte oder ihr Adapter liefert keine SMART-Daten.",
+        "asleep": "Schläft seit dem Systemstart. Sie wird nicht nur für eine Prüfung geweckt.",
+        "not_read": "Noch nicht geprüft.",
+        "read_failed": "SMART konnte nicht gelesen werden. Details stehen im Protokoll."
+      },
+      "temperature": "{value, number} °C",
+      "counters": "{reallocated, number} umgelagerte, {pending, number} ausstehende Sektoren, {mediaErrors, number} Medienfehler",
+      "selfTest": {
+        "passed": "letzter Selbsttest bestanden",
+        "failed": "letzter Selbsttest fehlgeschlagen",
+        "aborted": "letzter Selbsttest abgebrochen",
+        "running": "Selbsttest läuft"
+      },
+      "asleep": "schläft, Werte vom {date}"
+    },
+    "scrub": {
+      "title": "Prüfungen (Scrub)",
+      "intro": "Eine Prüfung liest jeden Block eines Pools und repariert, was sich aus der Redundanz reparieren lässt.",
+      "schedule": "{pool} prüfen",
+      "start": "Jetzt prüfen",
+      "resume": "Fortsetzen",
+      "pause": "Pausieren",
+      "stop": "Abbrechen"
+    },
+    "selfTests": {
+      "title": "SMART-Selbsttests",
+      "intro": "Selbsttests laufen in den Platten selbst. Schlafende Platten werden übersprungen und später noch einmal versucht, nie geweckt.",
+      "shortSelfTest": "Kurzer Selbsttest",
+      "longSelfTest": "Langer Selbsttest"
+    },
+    "intro": "Probleme, die Pithyx gefunden hat, und die Scrubs und Selbsttests, die danach suchen."
+  },
+  "sample": {
+    "layout": "{type}, {count, plural, one {# Laufwerk} other {# Laufwerke}}",
+    "health": {
+      "healthy": "Intakt"
+    },
+    "used": "{used} von {total} belegt",
+    "disks": "Laufwerke",
+    "disk": "Laufwerk {number}",
+    "state": {
+      "active": "Aktiv",
+      "warm": "Warm",
+      "standby": "Im Ruhezustand"
+    },
+    "standbyHint": "Laufwerke im Ruhezustand werden für Statusabfragen nicht geweckt."
+  },
+  "import": {
+    "button": "Pool importieren…",
+    "title": "Pool importieren",
+    "explain": "Pools auf Platten aus einem anderen System oder einer früheren Installation lassen sich importieren. Ein Pool wird zuerst schreibgeschützt importiert: Nichts wird eingehängt und nichts daran geändert, so kannst du seine Datasets prüfen, bevor du ihn nutzt.",
+    "scanHint": "Die Suche liest die Kennungen aller Platten und kann eine schlafende Platte aufwecken. Sie läuft nur, wenn du sie startest.",
+    "scan": "Platten durchsuchen",
+    "rescan": "Noch einmal suchen",
+    "scanning": "Die Platten werden gelesen…",
+    "none": "Es wurde kein Pool gefunden, der sich importieren lässt.",
+    "found": "Pools auf den Platten",
+    "layout": "Aufbau von {pool}",
+    "disks": "Platten von {pool}",
+    "usedElsewhere": "Von einem anderen System benutzt",
+    "nameTakenBadge": "Name vergeben",
+    "unknown": "Pithyx kennt die Platte von {devices} nicht und kann sie deshalb nicht prüfen. Dieser Pool lässt sich nicht importieren.",
+    "cannot": "Dieser Pool lässt sich nicht importieren, meist weil Platten fehlen. Schließ sie an und such noch einmal.",
+    "zfsSays": "Was ZFS meldet",
+    "newName": "Neuer Name für den Pool",
+    "nameTaken": "Ein Pool namens {name} ist schon importiert. Der Pool wird unter dem neuen Namen importiert.",
+    "otherSystem": "{name} wurde zuletzt von einem anderen System benutzt und dort nicht exportiert. Importiere ihn nur, wenn dieses System ausgeschaltet ist oder diese Platten nicht mehr benutzt: Wenn zwei Systeme auf einen Pool schreiben, geht er kaputt.",
+    "force": "Trotzdem importieren (erzwingen)",
+    "run": "Schreibgeschützt importieren",
+    "done": "Der Pool ist schreibgeschützt importiert. Prüf seine Datasets auf seiner Karte, dann importiere ihn zur Nutzung oder exportiere ihn wieder."
+  },
+  "change": {
+    "import": {
+      "button": "Zur Nutzung importieren…",
+      "title": "{pool} zur Nutzung importieren",
+      "explain": "{pool} wird exportiert und zur Nutzung neu importiert. Dann werden die Datasets eingehängt, bei denen das sicher ist; Datasets, die Systemordner verdecken würden, bleiben ausgehängt.",
+      "run": "Zur Nutzung importieren",
+      "mounted": "Diese Datasets werden eingehängt:"
+    },
+    "discard": {
+      "button": "Exportieren",
+      "title": "{pool} wieder exportieren",
+      "explain": "Die schreibgeschützte Vorschau endet: {pool} wird exportiert, und nichts daran wurde geändert. Die Daten bleiben auf den Platten.",
+      "run": "Exportieren"
+    },
+    "export": {
+      "button": "Exportieren…",
+      "title": "{pool} exportieren",
+      "explain": "{pool} wird exportiert: Seine Datasets werden ausgehängt und sind nicht verfügbar, bis der Pool wieder importiert wird. Die Daten bleiben auf den Platten, die du dann in ein anderes System umziehen kannst.",
+      "run": "Exportieren",
+      "datasets": "Diese Datasets sind dann nicht mehr verfügbar:"
+    },
+    "add": {
+      "button": "Platten hinzufügen…",
+      "title": "Platten zu {pool} hinzufügen",
+      "explain": "Die gewählten Platten werden eine neue Gruppe in {pool}, und der Pool wächst um ihren Platz. Daten, die schon auf dem Pool liegen, bleiben, wo sie sind.",
+      "run": "Platten hinzufügen"
+    },
+    "expand": {
+      "button": "Um eine Platte erweitern…",
+      "title": "{vdev} von {pool} erweitern",
+      "explain": "Die Platte kommt zu {vdev} dazu, und ZFS verteilt die Daten auf eine Platte mehr. Das dauert eine Weile; der Pool bleibt nutzbar. Die Platte lässt sich nie wieder entfernen, und Daten, die schon auf dem Pool liegen, behalten ihr altes Verhältnis von Daten zu Parität, bis sie neu geschrieben werden.",
+      "run": "Erweitern"
+    },
+    "layouts": {
+      "single": "Einzelne Platte, kein Schutz",
+      "mirror": "Spiegel aus {count} Platten",
+      "raidz1": "RAID-Z1 aus {count} Platten",
+      "raidz2": "RAID-Z2 aus {count} Platten",
+      "raidz3": "RAID-Z3 aus {count} Platten"
+    }
+  },
+  "expansion": {
+    "running": "{vdev} wird erweitert",
+    "waiting": "Die Erweiterung von {vdev} wartet, bis ein Wiederaufbau fertig ist.",
+    "finished": "{vdev} wurde am {date} erweitert."
+  },
+  "warnings": {
+    "label": "Warnungen",
+    "lowers_redundancy": "Die neuen Platten schützen weniger als der Rest des Pools: Danach übersteht der ganze Pool weniger ausgefallene Platten, und fällt diese Gruppe aus, ist alles auf dem Pool verloren.",
+    "replication_mismatch": "Die neue Gruppe ist anders aufgebaut als der Rest des Pools (andere Breite oder anderer Schutz). ZFS erlaubt das nur mit deiner Bestätigung, und der Pool wird ungleichmäßig.",
+    "irreversible": "Das lässt sich nicht rückgängig machen: Diese Platten lassen sich nie wieder aus dem Pool entfernen.",
+    "no_redundancy": "Die neue Platte hat keinen Schutz: Fällt sie aus, ist alles auf dem Pool verloren.",
+    "other_system": "Der Pool wird importiert, obwohl ein anderes System ihn zuletzt benutzt hat. Stell sicher, dass dieses System die Platten nicht mehr benutzt.",
+    "degraded": "Geräte dieses Pools fehlen. Er wird ohne sie importiert und ist schlechter geschützt, bis sie zurück sind oder ersetzt wurden.",
+    "unmounted_datasets": "Einige Datasets bleiben ausgehängt; die Liste unten sagt, warum.",
+    "datasets_unavailable": "Freigaben und Apps, die diese Datasets nutzen, funktionieren erst wieder, wenn der Pool importiert ist.",
+    "changes_lost": "Jede Änderung am Dataset seit dem Snapshot geht verloren, für alle, die es nutzen. Das lässt sich nicht rückgängig machen.",
+    "newer_snapshots": "Die unten aufgeführten neueren Snapshots werden ebenfalls gelöscht."
+  },
+  "unmounted": {
+    "title": "Diese Datasets bleiben ausgehängt:",
+    "system_path": "es würde einen Systemordner verdecken",
+    "shadows_mount": "es würde etwas verdecken, das dort eingehängt ist",
+    "duplicate_mountpoint": "ein anderes Dataset des Pools nutzt denselben Ordner",
+    "key_unavailable": "es ist verschlüsselt und gesperrt",
+    "noauto": "Datasets, die Systemordner oder andere Einhängepunkte verdecken würden, bekommen canmount=noauto und bleiben so auch nach einem Neustart ausgehängt."
+  },
+  "confirmName": {
+    "label": "Gib zur Bestätigung {pool} ein",
+    "needed": "Das ändert den Pool dauerhaft. Gib seinen Namen ein, um die Befehle zu sehen."
+  }
 }

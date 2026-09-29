@@ -13,6 +13,7 @@ namespace Pithyx.Daemon.Realtime;
 /// <param name="IsAllowed">Checked for every snapshot and every event, so permission changes apply immediately.</param>
 /// <param name="MinInterval">At most one event per interval; newer values replace older unsent ones.</param>
 /// <param name="CurrentTopics">Concrete topics of a family; defaults to the pattern itself for single topics.</param>
+/// <param name="ForUser">Turns the shared state into what one user sees (for example with the user's own flags); applied to snapshots and events.</param>
 public sealed record TopicDefinition(
     string Pattern,
     Type SnapshotType,
@@ -20,7 +21,8 @@ public sealed record TopicDefinition(
     Func<string, CancellationToken, ValueTask<object>> Snapshot,
     Func<ClaimsPrincipal, string, bool> IsAllowed,
     TimeSpan? MinInterval = null,
-    Func<IEnumerable<string>>? CurrentTopics = null)
+    Func<IEnumerable<string>>? CurrentTopics = null,
+    Func<ClaimsPrincipal, object, object>? ForUser = null)
 {
     public IEnumerable<string> ExistingTopics() => CurrentTopics?.Invoke() ?? [Pattern];
 

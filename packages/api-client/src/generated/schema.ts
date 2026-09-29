@@ -245,22 +245,6 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
-    "/api/disks": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get: operations["GetDisks"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
     "/api/files/{shareId}/content": {
         parameters: {
             query?: never;
@@ -447,6 +431,40 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/files/{shareId}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Earlier versions of a file or folder from the snapshots of the share's dataset, newest first; also for an entry deleted since. A file is listed once per distinct content and not while it equals the current file. Empty when the share is not on a ZFS dataset. Needs read access. */
+        get: operations["ListFileVersions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/files/{shareId}/versions/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Starts a job that copies a version back: next to the current entry as "name (version yyyy-MM-dd HH.mm UTC)", or over it with overwrite=true (files are replaced, folders merged). Needs read-write access. */
+        post: operations["RestoreFileVersion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/files/operations": {
         parameters: {
             query?: never;
@@ -554,10 +572,10 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** @description The shares the user can use, with the user's access. Administrators get every share and its path on the host. */
+        /** @description The shares the user can use, with the user's access. Administrators get every share and its path on the host. The shares/list topic says when the list may have changed. */
         get: operations["ListShares"];
         put?: never;
-        /** @description Administrators only. Registers an existing folder on the host as a share; nobody but administrators has access until it is granted. */
+        /** @description Administrators only, and only on a development machine (fs.share.folder_dev_only elsewhere). Registers an existing folder on the host as a share; nobody but administrators has access until it is granted. Shared folders are otherwise created as datasets with POST /api/shares/plans. */
         post: operations["CreateShare"];
         delete?: never;
         options?: never;
@@ -575,8 +593,25 @@ export type paths = {
         get?: never;
         put?: never;
         post?: never;
-        /** @description Administrators only. Removes the share from Pithyx; its files stay on the host. */
-        delete: operations["DeleteShare"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** @description Administrators only. Changes the name shown and the description; the folder and the dataset stay where they are. */
+        patch: operations["UpdateShare"];
+        trace?: never;
+    };
+    "/api/shares/{shareId}/access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. Every user with their access to the share: none, read or readWrite. Administrators use every share anyway. */
+        get: operations["ListShareAccess"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -616,6 +651,75 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/shares/details": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. Every share with its description, dataset, used and available space, quota and how many users may read or write. */
+        get: operations["ListShareDetails"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/shares/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Returns the exact commands of creating a shared folder as a dataset (share.create) or deleting one (share.delete: keep its data, or destroy its dataset with every snapshot listed), with a plan id to run them with POST /api/storage/plans/{planId}/run. Runs nothing. */
+        post: operations["PlanShareAction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/storage/alerts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. Current storage alerts with the caller's mute flags, and the SMART state of every disk; live through the storage/alerts topic. */
+        get: operations["GetStorageAlerts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/storage/alerts/{key}/mute": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Hides a current alert for the caller until it goes away or becomes more severe. Alerts cannot be deleted. */
+        post: operations["MuteStorageAlert"];
+        /** @description Administrators only. Shows a muted alert again. */
+        delete: operations["UnmuteStorageAlert"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/storage/disks": {
         parameters: {
             query?: never;
@@ -627,6 +731,57 @@ export type paths = {
         get: operations["GetStorageDisks"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/storage/import/scan": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Looks for pools on the disks that are not imported (zpool import, which reads every disk's labels and may wake a sleeping disk) and returns each with its layout and the disk guard's import verdict. Imports nothing; importing is the plan pool.import.readonly, then pool.import. */
+        post: operations["ScanImportablePools"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/storage/plans": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Probes the chosen disks, asks the disk guard and returns the exact commands of a destructive storage action, with a plan id to run them. Runs nothing. */
+        post: operations["PlanStorageAction"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/storage/plans/{planId}/run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Runs a plan exactly as it was shown, as a job; the disk guard checks every disk again right before each command. A plan runs once and expires after 10 minutes. */
+        post: operations["RunStoragePlan"];
         delete?: never;
         options?: never;
         head?: never;
@@ -650,7 +805,7 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
-    "/api/storage/pools/preview": {
+    "/api/storage/pools/{pool}/scrub": {
         parameters: {
             query?: never;
             header?: never;
@@ -659,8 +814,114 @@ export type paths = {
         };
         get?: never;
         put?: never;
-        /** @description Administrators only. Probes the chosen disks, asks the disk guard and returns the exact commands that would create the pool. Runs nothing. */
-        post: operations["PreviewPoolCreate"];
+        /** @description Administrators only. Starts a scrub of the pool, or resumes a paused one, and returns at once; progress arrives on storage/pools. */
+        post: operations["StartScrub"];
+        /** @description Administrators only. Stops the running scrub; the next one starts from the beginning. */
+        delete: operations["StopScrub"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/storage/pools/{pool}/scrub/pause": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Pauses the running scrub; starting it again resumes where it stopped. */
+        post: operations["PauseScrub"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/storage/schedules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. Scrub schedules per pool and the SMART self-test schedules, with their last and next runs. */
+        get: operations["GetStorageSchedules"];
+        /** @description Administrators only. Sets how often a pool is scrubbed or the disks run a self-test: off, weekly or monthly. */
+        put: operations["SetStorageSchedule"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/storage/snapshots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. The snapshots of a dataset as last read, oldest first. pithyxKind is set for snapshots Pithyx took. */
+        get: operations["ListSnapshots"];
+        put?: never;
+        /** @description Administrators only. Takes pithyx-manual-<utc> of the dataset now. Manual snapshots are never pruned by a schedule. */
+        post: operations["CreateSnapshot"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/storage/snapshots/hold": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Places the hold "pithyx" on the snapshot, so neither a schedule nor anyone else can destroy it. */
+        post: operations["HoldSnapshot"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/storage/snapshots/release": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Releases the hold "pithyx" of the snapshot. Holds of other tools stay. */
+        post: operations["ReleaseSnapshot"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/storage/snapshots/schedules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. The hourly, daily, weekly and monthly schedules of a dataset; off with the default counts (24, 7, 4, 6) until saved. */
+        get: operations["GetSnapshotSchedules"];
+        /** @description Administrators only. Saves the given schedules of a dataset. A schedule takes pithyx-<kind>-<utc> once per UTC hour, day, week (from Monday) or month and keeps its newest keep snapshots; it never deletes other snapshots, held ones or ones dated after the current time. */
+        put: operations["SetSnapshotSchedules"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -719,6 +980,8 @@ export type components = {
              * @description Space available to it.
              */
             availableBytes: number;
+            /** @description Compression algorithm, for example `lz4`, `zstd` or `off`. */
+            compression: null | string;
             /** @description Encryption algorithm, or `off`. */
             encryption: string;
             /** @description The dataset whose key unlocks this one, if encrypted. */
@@ -735,9 +998,29 @@ export type components = {
             pool: string;
             /**
              * Format: int64
+             * @description Limit for the dataset with its children and snapshots, or null for none.
+             */
+            quotaBytes: null | number;
+            /**
+             * Format: int64
+             * @description Largest block of a file system; null for a volume.
+             */
+            recordSizeBytes: null | number;
+            /**
+             * Format: int64
              * @description Data the dataset references itself.
              */
             referencedBytes: number;
+            /**
+             * Format: int64
+             * @description Space guaranteed to the dataset with its children and snapshots, or null for none.
+             */
+            reservationBytes: null | number;
+            /**
+             * Format: int64
+             * @description Space only its snapshots hold.
+             */
+            snapshotsUsedBytes: number;
             /** @description `filesystem` or `volume`. */
             type: string;
             /**
@@ -745,6 +1028,16 @@ export type components = {
              * @description Space used by the dataset and its children.
              */
             usedBytes: number;
+            /**
+             * Format: int64
+             * @description Block size of a volume; null for a file system.
+             */
+            volumeBlockSizeBytes: null | number;
+            /**
+             * Format: int64
+             * @description Size of a volume; null for a file system.
+             */
+            volumeSizeBytes: null | number;
         };
         /** @description An app shortcut or a sticky note on the desktop, shared across the user's devices. */
         DesktopItem: {
@@ -868,7 +1161,53 @@ export type components = {
         };
         /** @description Snapshot of `storage/disks` and response of `GET /api/disks`. */
         DiskList: {
-            disks: components["schemas"]["Disk"][];
+            disks: {
+                /** @description Stable across reboots and device renames: `wwn-...`, else `serial-...`, else `path-...`. */
+                id: string;
+                /** @description Model name, if any. */
+                model: null | string;
+                /** @description Kernel name, for example `sda` or `nvme0n1`. Can change between boots. */
+                name: string;
+                /** @description Partitions in on-disk order. */
+                partitions: {
+                    /** @description File system or content type, for example `ext4` or `zfs_member`. */
+                    fileSystem: null | string;
+                    /** @description File system label, if any. */
+                    label: null | string;
+                    /** @description Where the partition is mounted; empty when it is not. */
+                    mountPoints: string[];
+                    /** @description Kernel name, for example `sda1`. */
+                    name: string;
+                    /** @description Device node. */
+                    path: string;
+                    /**
+                     * Format: int64
+                     * @description Size in bytes.
+                     */
+                    sizeBytes: number;
+                }[];
+                /** @description Device node, for example `/dev/sda`. */
+                path: string;
+                /** @description True when the kernel exposes the disk read-only. */
+                readOnly: boolean;
+                /** @description True for removable media. */
+                removable: boolean;
+                /** @description True for spinning disks. */
+                rotational: boolean;
+                /** @description Serial number as reported by the drive, if any. */
+                serial: null | string;
+                /**
+                 * Format: int64
+                 * @description Capacity in bytes.
+                 */
+                sizeBytes: number;
+                /** @description Bus, for example `sata`, `nvme` or `usb`; null for virtual disks. */
+                transport: null | string;
+                /** @description Vendor, if any. */
+                vendor: null | string;
+                /** @description World wide name, if any. */
+                wwn: null | string;
+            }[];
         };
         /** @description Event of `storage/disks`: disks that appeared or changed, and ids of disks that disappeared. */
         DisksChanged: {
@@ -922,7 +1261,7 @@ export type components = {
             }[];
         };
         /** @enum {string} */
-        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.exists" | "fs.share.invalid" | "fs.share.not_found" | "fs.share.read_only" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.command.failed" | "storage.disk.not_found" | "storage.disk.refused" | "storage.plan.expired" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_taken" | "system.internal.unexpected" | "system.origin.forbidden";
+        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "system.internal.unexpected" | "system.origin.forbidden";
         /** @description A failed client message. `id` is empty when the message could not be parsed. */
         ErrorMessage: {
             code: components["schemas"]["ErrorCode"];
@@ -993,6 +1332,45 @@ export type components = {
             permanent: boolean;
             target?: null | components["schemas"]["FileLocation"];
         };
+        FileVersion: {
+            /**
+             * Format: date-time
+             * @description When the snapshot was taken (UTC).
+             */
+            createdAt: string;
+            /** @description File or folder. */
+            kind: components["schemas"]["FileKind"];
+            /**
+             * Format: date-time
+             * @description Last change of the content in that version, UTC.
+             */
+            modified: string;
+            /**
+             * Format: int64
+             * @description Bytes for files, 0 for folders.
+             */
+            size: number;
+            /** @description The snapshot the version is in; pass it to restore. */
+            snapshot: string;
+        };
+        /** @description Response of `GET /api/files/{shareId}/versions`. */
+        FileVersionList: {
+            /** @description The file or folder, relative to the share. */
+            path: string;
+            /** @description Newest first; empty when the share is not on a ZFS dataset. */
+            versions: components["schemas"]["FileVersion"][];
+        };
+        FileVersionRestoreRequest: {
+            /**
+             * @description Replace the current file (folders are merged) instead of restoring next to it.
+             * @default false
+             */
+            overwrite: boolean;
+            /** @description The file or folder, relative to the share; it may have been deleted since. */
+            path: string;
+            /** @description The snapshot to restore from, as listed. */
+            snapshot: string;
+        };
         /** @description What a folder topic sends: the names that changed since the last event, or a request to list again. */
         FolderChanges: {
             /** @description Entries that appeared or changed, with their current metadata. */
@@ -1062,13 +1440,61 @@ export type components = {
             pool: null | string;
             /**
              * @description Why, as a stable code: `system_disk`, `read_only`, `mounted`, `pool_member`, `not_test_disk`,
-             *     `duplicate_serial`, `no_serial`, `not_checked`, `has_data`, `confirmed` or `empty`.
+             *     `duplicate_serial`, `no_serial`, `not_checked`, `has_data`, `confirmed` or `empty`; when a
+             *     pool is imported, `importable` for an allowed disk.
              */
             reason: string;
         };
         HealthResponse: {
             mode: components["schemas"]["DaemonMode"];
             status: string;
+        };
+        ImportablePool: {
+            /** @description What ZFS says can be done, in English. */
+            action: null | string;
+            /** @description True when the pool can be imported: ZFS can, and every device is on a disk the guard allows. */
+            allowed: boolean;
+            /** @description True when ZFS can import the pool. */
+            canImport: boolean;
+            /** @description The guard's import verdict for each disk the pool is on. */
+            disks: components["schemas"]["GuardVerdict"][];
+            /** @description ZFS message id, for example `ZFS-8000-2Q` (devices missing) or `ZFS-8000-EY` (last used by another system). */
+            messageId: null | string;
+            /** @description The pool's name as stored on its disks. */
+            name: string;
+            /** @description True when an imported pool has this name: the import needs `newName`. */
+            nameTaken: boolean;
+            /** @description True when it was last used by another system: importing needs `force` and the typed name. */
+            needsForce: boolean;
+            /** @description The numeric identifier as decimal text; `pool.import.readonly` takes it as `poolGuid`. */
+            poolGuid: string;
+            /** @description ZFS state as it would be imported: `ONLINE`, `DEGRADED`, `UNAVAIL` or `FAULTED`. */
+            state: string;
+            /** @description What ZFS says is wrong, in English, if anything. */
+            status: null | string;
+            /** @description Present devices that are on no disk the daemon knows; such a pool is not offered. */
+            unknownDevices: string[];
+            /** @description The pool's layout with each device's state and disk. */
+            vdevs: components["schemas"]["ImportVdev"][];
+        };
+        /** @description Response of `POST /api/storage/import/scan`: pools on the disks that are not imported. Nothing was imported. */
+        ImportScan: {
+            pools: components["schemas"]["ImportablePool"][];
+        };
+        ImportVdev: {
+            /** @description Child vdevs. */
+            children: components["schemas"]["ImportVdev"][];
+            /** @description What ZFS adds after the state, for example `cannot open` or `insufficient replicas`. */
+            detail: null | string;
+            /** @description The disk this device is on, if it is one the daemon knows. */
+            diskId: null | string;
+            /** @description Device or vdev name as `zpool import` prints it: `raidz1-0`, a by-id name, a path or, for a missing device, its GUID. */
+            name: string;
+            /**
+             * @description ZFS state, for example `ONLINE` or `UNAVAIL`; null for the `logs`, `cache`, `spares`,
+             *     `special` and `dedup` group headings, and for cache and spare devices, which an import lists without one.
+             */
+            state: null | string;
         };
         /** @description A long operation of a user, such as copying files. Also the data of the `jobs/{id}` topics. */
         Job: {
@@ -1220,6 +1646,8 @@ export type components = {
              * @description Number of files with permanent errors.
              */
             dataErrors: number;
+            /** @description A RAID-Z expansion (OpenZFS 2.3): a disk attached to a raidz vdev, onto which ZFS spreads the existing data. */
+            expansion?: null | components["schemas"]["PoolExpansion"];
             /**
              * Format: int32
              * @description Free space fragmentation, if known.
@@ -1247,29 +1675,34 @@ export type components = {
             /** @description Top-level vdevs, including log, cache, special and spare devices. */
             vdevs: components["schemas"]["Vdev"][];
         };
-        /** @description Response of `POST /api/storage/pools/preview`. Nothing was run. */
-        PoolCreatePreview: {
-            /** @description The exact commands the plan would run, or null while a disk is not allowed. */
-            commands: null | components["schemas"]["PlannedCommand"][];
-            /** @description The guard's verdict for every chosen disk, after probing them again. */
-            disks: components["schemas"]["GuardVerdict"][];
+        /** @description A RAID-Z expansion (OpenZFS 2.3): a disk attached to a raidz vdev, onto which ZFS spreads the existing data. */
+        PoolExpansion: {
             /**
              * Format: date-time
-             * @description Until when the plan may run once creating pools is available.
+             * @description When it ended (UTC), if it did.
              */
-            expiresAt: string;
-        };
-        PoolCreatePreviewRequest: {
-            /** @description For disks that are not empty: the serial number the user typed, by disk id. */
-            confirmations?: null | {
-                [key: string]: string;
-            };
-            /** @description The disks to use, by id. */
-            diskIds: string[];
-            /** @description `single`, `stripe`, `mirror`, `raidz1`, `raidz2` or `raidz3`. */
-            layout: string;
-            /** @description Pool name. */
-            name: string;
+            endedAt: null | string;
+            /**
+             * Format: int64
+             * @description Bytes moved so far.
+             */
+            reflowedBytes: number;
+            /**
+             * Format: date-time
+             * @description When it started (UTC).
+             */
+            startedAt: null | string;
+            /** @description `scanning` while it runs, then `finished` or `canceled`. */
+            state: string;
+            /**
+             * Format: int64
+             * @description Bytes to move onto the new layout.
+             */
+            toReflowBytes: number;
+            /** @description GUID of the raidz vdev that grows, if it is still in the pool. */
+            vdevGuid: null | string;
+            /** @description True while it waits for a resilver to finish. */
+            waitingForResilver: boolean;
         };
         /** @description Snapshot and event of `storage/pools`, and response of `GET /api/storage/pools`. */
         PoolList: {
@@ -1705,6 +2138,51 @@ export type components = {
             /** @description `none` removes the user's access. */
             access: components["schemas"]["ShareAccess"];
         };
+        /** @enum {unknown} */
+        ShareDataChoice: "keep" | "destroy" | null;
+        /** @description A share with what the Shared folders page shows. Administrators only. */
+        ShareDetails: {
+            /**
+             * Format: int64
+             * @description Space still available to the dataset; null like UsedBytes.
+             */
+            availableBytes: null | number;
+            /** @description Full name of the share's dataset, for example `tank/pithyx/shares/media`; null for a folder share (development only). */
+            dataset: null | string;
+            /** @description Free text for administrators and users, may be empty. */
+            description: string;
+            /**
+             * Format: int64
+             * @description Stable id.
+             */
+            id: number;
+            /** @description Name shown to users. */
+            name: string;
+            /** @description The share root on the host. */
+            path: string;
+            /** @description The pool of the share's dataset; null for a folder share. */
+            pool: null | string;
+            /**
+             * Format: int64
+             * @description The dataset's quota, or null for none.
+             */
+            quotaBytes: null | number;
+            /**
+             * Format: int32
+             * @description Users other than administrators who may read.
+             */
+            readUsers: number;
+            /**
+             * Format: int32
+             * @description Users other than administrators who may read and write.
+             */
+            readWriteUsers: number;
+            /**
+             * Format: int64
+             * @description Space the dataset uses with its snapshots; null for a folder share or while the dataset is not there (pool missing).
+             */
+            usedBytes: null | number;
+        };
         /** @description A share the user can use. */
         ShareInfo: {
             /** @description The user's access: read or read and write. */
@@ -1719,6 +2197,169 @@ export type components = {
             /** @description The share root on the host. Only administrators get it. */
             path: null | string;
         };
+        /** @description Snapshot and event of `shares/list`. */
+        ShareListRevision: {
+            /**
+             * Format: int64
+             * @description Changes whenever a user's list of usable shares may have changed; compare it, do not count on it.
+             */
+            revision: number;
+        };
+        /**
+         * @description A shared folder action to plan. `share.create` needs Name and Pool (Description is optional);
+         *     `share.delete` needs ShareId, ConfirmName and Data.
+         */
+        SharePlanRequest: {
+            /** @description `share.create` or `share.delete`. */
+            action: string;
+            /** @description The shared folder's name, typed by the user to delete it. */
+            confirmName?: null | string;
+            data?: null | components["schemas"]["ShareDataChoice"];
+            /** @description Description of the new shared folder. */
+            description?: null | string;
+            /** @description Name of the new shared folder; its dataset name is derived from it and shown in the plan. */
+            name?: null | string;
+            /** @description Pool of the new shared folder; it needs the Pithyx layout (`&lt;pool&gt;/pithyx/shares`). */
+            pool?: null | string;
+            /**
+             * Format: int64
+             * @description The shared folder to delete.
+             */
+            shareId?: null | number;
+        };
+        /** @description Changes of a share; fields left out stay. The dataset is never renamed by this. */
+        ShareUpdate: {
+            /** @description New description, at most 200 characters, empty to remove it. */
+            description?: null | string;
+            /** @description New name shown to users, unique like every share name. */
+            name?: null | string;
+        };
+        /** @description One user's access to a share, for editing rights. */
+        ShareUserAccess: {
+            /** @description The access granted: `none`, `read` or `readWrite`. */
+            access: components["schemas"]["ShareAccess"];
+            /** @description Administrators use every share with read and write access, whatever Access says. */
+            administrator: boolean;
+            /** @description Name shown, if set. */
+            displayName: null | string;
+            /**
+             * Format: int64
+             * @description The user's id, for `PUT /api/shares/{shareId}/access/{userId}`.
+             */
+            userId: number;
+            /** @description Login name. */
+            username: string;
+        };
+        /** @description SMART health of one disk as last read. The API serves it from memory; reading it never runs a command. */
+        SmartReport: {
+            /** @description True when the last check found the disk asleep; the values are then from ReadAt. */
+            asleep: boolean;
+            /**
+             * Format: date-time
+             * @description When the disk was last checked (UTC), including checks that found it asleep.
+             */
+            checkedAt: string;
+            /**
+             * Format: int32
+             * @description NVMe critical warning bits; not 0 means the drive reports a critical condition.
+             */
+            criticalWarning: null | number;
+            /** @description The disk's id. */
+            diskId: string;
+            /** @description Result of the newest self-test: `passed`, `failed`, `aborted` or `running`; null without one. */
+            lastSelfTest: null | string;
+            /**
+             * Format: int64
+             * @description NVMe media and data integrity errors.
+             */
+            mediaErrors: null | number;
+            /**
+             * Format: int64
+             * @description ATA attribute 197, raw value.
+             */
+            pendingSectors: null | number;
+            /**
+             * Format: int64
+             * @description Power-on time, if reported.
+             */
+            powerOnHours: null | number;
+            /**
+             * Format: date-time
+             * @description When SMART data was last read (UTC); null if never.
+             */
+            readAt: null | string;
+            /**
+             * Format: int64
+             * @description ATA attribute 5, raw value.
+             */
+            reallocatedSectors: null | number;
+            /**
+             * @description For `unsupported`: `virtual` (a disk of a virtual machine) or `not_available`. For `unknown`:
+             *     `asleep`, `not_read` or `read_failed`. Otherwise null.
+             */
+            reason: null | string;
+            /**
+             * @description `passed`, `warning` (reallocated, pending or uncorrectable sectors, media errors or a failed self-test),
+             *     `failed` (the drive predicts its failure), `unsupported` (no SMART, see Reason) or
+             *     `unknown` (not read yet, asleep since the daemon started, or the read failed).
+             */
+            state: string;
+            /**
+             * Format: int32
+             * @description Current temperature, if reported.
+             */
+            temperatureCelsius: null | number;
+            /**
+             * Format: int64
+             * @description ATA attribute 198, raw value.
+             */
+            uncorrectableSectors: null | number;
+        };
+        Snapshot: {
+            /**
+             * Format: date-time
+             * @description When ZFS took it (UTC), by the clock the box had then.
+             */
+            createdAt: string;
+            /**
+             * Format: int64
+             * @description The transaction group it was taken in: the order of snapshots, whatever the clock said.
+             */
+            createTxg: number;
+            /** @description The dataset the snapshot belongs to, for example `tank/pithyx/shares/media`. */
+            dataset: string;
+            fullName: null | string;
+            /**
+             * Format: int32
+             * @description Number of holds (`userrefs`); a held snapshot cannot be destroyed.
+             */
+            holds: number;
+            /** @description The part after `@`, for example `pithyx-daily-20260927T000000Z`. */
+            name: string;
+            /** @description The schedule kind of a snapshot Pithyx created, or null for every other snapshot. */
+            pithyxKind: null | string;
+            /**
+             * Format: int64
+             * @description Data the snapshot references.
+             */
+            referencedBytes: number;
+            /**
+             * Format: int64
+             * @description Space only this snapshot holds.
+             */
+            usedBytes: number;
+        };
+        SnapshotCreateRequest: {
+            /** @description The dataset to snapshot. */
+            dataset: string;
+        };
+        /** @description Response of `GET /api/storage/snapshots`. */
+        SnapshotList: {
+            /** @description The dataset. */
+            dataset: string;
+            /** @description Its snapshots, oldest first. */
+            snapshots: components["schemas"]["Snapshot"][];
+        };
         /** @description The full current state of a topic, sent after `sub`. Only changes follow as events. */
         SnapshotMessage: {
             data: unknown;
@@ -1731,6 +2372,48 @@ export type components = {
              */
             type: "snap";
         };
+        SnapshotRequest: {
+            /** @description The dataset. */
+            dataset: string;
+            /** @description The exact snapshot name after `@`. */
+            name: string;
+        };
+        SnapshotSchedule: {
+            /** @description Whether the schedule takes snapshots. */
+            enabled: boolean;
+            /**
+             * Format: int32
+             * @description How many of its snapshots it keeps (1 to 1000).
+             */
+            keep: number;
+            /** @description `hourly`, `daily`, `weekly` or `monthly`. */
+            kind: string;
+        };
+        /** @description Schedules of a dataset: all four kinds, in the order hourly, daily, weekly, monthly. */
+        SnapshotScheduleList: {
+            /** @description The dataset. */
+            dataset: string;
+            /** @description One entry per kind; kinds left out of a PUT stay as they are. */
+            schedules: components["schemas"]["SnapshotSchedule"][];
+        };
+        /** @description A storage problem that exists now. Alerts are derived from the current state, never stored. */
+        StorageAlert: {
+            /** @description Message code in the `notifications` namespace (`&lt;code&gt;.title`, `.body`, `.action`). */
+            code: string;
+            /** @description Stable key of the cause, for example `pool.degraded:tank` or `disk.smart_failed:wwn-0x5000c500a1b2c3d4`. */
+            key: string;
+            /** @description True when the user muted this alert at this severity or higher. */
+            muted: boolean;
+            /** @description Message parameters: strings and numbers. */
+            params: Record<string, never>;
+            /** @description `warning` or `critical`. */
+            severity: string;
+            /**
+             * Format: date-time
+             * @description When the daemon first saw the cause (UTC); a restart starts it again.
+             */
+            since: string;
+        };
         /** @description A disk with the guard's verdict, for the Storage settings page. */
         StorageDisk: {
             disk: components["schemas"]["Disk"];
@@ -1742,6 +2425,152 @@ export type components = {
             disks: components["schemas"]["StorageDisk"][];
             /** @description `dev` or `prod`; on dev only the declared test disks can be used. */
             environment: string;
+        };
+        /** @description Snapshot and event of `storage/alerts`, and response of `GET /api/storage/alerts`. */
+        StorageHealth: {
+            /** @description Current alerts, critical first, with the user's mute flags. */
+            alerts: components["schemas"]["StorageAlert"][];
+            /** @description SMART state of every disk. */
+            smart: components["schemas"]["SmartReport"][];
+        };
+        /** @description Response of `POST /api/storage/plans`. Nothing was run. */
+        StoragePlanPreview: {
+            /** @description The exact commands, or null while a disk is not allowed. */
+            commands: null | components["schemas"]["PlannedCommand"][];
+            /**
+             * @description For destroying or exporting a pool: every dataset that goes or becomes unavailable; for `pool.import`: the
+             *     datasets it mounts. For destroying a dataset: the dataset, its children and every snapshot of them
+             *     (`dataset@snapshot`), each dataset followed by its snapshots. For renaming a dataset: the dataset and its
+             *     children, whose names change. For destroying a snapshot: the snapshot (`dataset@snapshot`); for rolling back:
+             *     every newer snapshot, which goes too.
+             */
+            datasets: string[];
+            /** @description The guard's verdict for every chosen disk, after probing them again. */
+            disks: components["schemas"]["GuardVerdict"][];
+            /**
+             * Format: date-time
+             * @description Until when the plan may run.
+             */
+            expiresAt: string;
+            /**
+             * @description Runs the plan exactly as shown with `POST /api/storage/plans/{planId}/run`; null while a disk is not allowed, and
+             *     while RequiresConfirmName is true and the name was not typed yet.
+             */
+            planId: null | string;
+            /** @description True when the plan runs only with the pool's name (for a rollback the dataset's full name) typed in `confirmName`. */
+            requiresConfirmName: boolean;
+            /** @description For `pool.import`: datasets that stay unmounted, and why; those that would hide part of the system also get `canmount=noauto`. */
+            unmounted: components["schemas"]["UnmountedDataset"][];
+            /**
+             * @description Stable codes for what the user must know before running it: `lowers_redundancy`, `replication_mismatch`,
+             *     `irreversible` and `no_redundancy` (adding a vdev: it tolerates fewer failed disks than the pool, it has a
+             *     layout ZFS calls a replication mismatch, it can never be removed, it has no redundancy), `irreversible` (RAID-Z
+             *     expansion), `other_system` (an import forced over another system's claim), `degraded` (the pool is imported
+             *     with devices missing), `unmounted_datasets` (Unmounted stay unmounted) and
+             *     `datasets_unavailable` (exporting a pool with datasets in use); for a rollback `changes_lost` (every change
+             *     since the snapshot is lost) and `newer_snapshots` (the listed newer snapshots are destroyed).
+             */
+            warnings: string[];
+        };
+        /**
+         * @description A destructive storage action to plan. Which fields an action needs: `pool.create` Pool, Layout, DiskIds,
+         *     Encryption (and Confirmations for disks that are not empty); `pool.destroy` Pool and ConfirmName;
+         *     `pool.replace` Pool, Vdev and one disk in DiskIds with its serial in Confirmations; `pool.spare.add` Pool
+         *     and one disk; `pool.spare.remove`, `pool.offline` and `pool.online` Pool and Vdev;
+         *     `pool.import.readonly` PoolGuid from the import scan, NewName when the name is taken, and Force with the pool
+         *     name in ConfirmName when the scan says `needsForce`; `pool.import` Pool (imported read-only), and Force with
+         *     ConfirmName to force it; `pool.export` Pool; `pool.vdev.add` Pool, Layout (`single`, `mirror`,
+         *     `raidz1` to `raidz3`), DiskIds, Confirmations, and ConfirmName when the preview says so;
+         *     `pool.raidz.expand` Pool, Vdev (the raidz vdev), one disk and ConfirmName;
+         *     `dataset.rename` Pool, Dataset and NewName; `dataset.set` Pool, Dataset and at least one of QuotaBytes,
+         *     ReservationBytes, Compression and RecordSizeBytes; `dataset.destroy` Pool, Dataset and ConfirmName;
+         *     `volume.create` Pool, Name, SizeBytes and Sparse; `snapshot.destroy` Pool, Dataset and the snapshot's
+         *     Name; `snapshot.rollback` Pool, Dataset, the snapshot's Name and the dataset's full name in ConfirmName.
+         */
+        StoragePlanRequest: {
+            /** @description `pool.create`, `pool.destroy`, `pool.replace`, `pool.spare.add`, `pool.spare.remove`, `pool.offline`, `pool.online`, `pool.import.readonly`, `pool.import`, `pool.export`, `pool.vdev.add`, `pool.raidz.expand`, `dataset.rename`, `dataset.set`, `dataset.destroy`, `volume.create`, `snapshot.destroy` or `snapshot.rollback`. */
+            action: string;
+            /** @description New compression: `off`, `lz4`, `zle`, `zstd`, `zstd-1` to `zstd-19`, `gzip`, `gzip-1` to `gzip-9`; null leaves it. */
+            compression?: null | string;
+            /** @description Serial numbers the user typed, by disk id. */
+            confirmations?: null | {
+                [key: string]: string;
+            };
+            /** @description The pool's name, or the dataset's full name, typed by the user where the preview says `requiresConfirmName` and to destroy. */
+            confirmName?: null | string;
+            /** @description Full name of the dataset or volume to rename, change or destroy, on Pool. */
+            dataset?: null | string;
+            /** @description The disks to use, by id. */
+            diskIds?: null | string[];
+            /** @description The answer to the encryption question of a new pool: `none`, or `key` once the key vault exists. */
+            encryption?: null | string;
+            /** @description For imports: import a pool that was last used by another system; needs ConfirmName. */
+            force?: null | boolean;
+            /** @description `single`, `stripe`, `mirror`, `mirrors` (pairs), `raidz1`, `raidz2` or `raidz3`. */
+            layout?: null | string;
+            /** @description Name of a new volume (one path component), or the snapshot after `@` for the snapshot actions. Shared folders are created with `POST /api/shares/plans`. */
+            name?: null | string;
+            /** @description The new last component of a renamed dataset (it stays below the same parent), or for `pool.import.readonly` the name to import the pool under when its own is taken. */
+            newName?: null | string;
+            /** @description The pool, or the new pool's name; for `pool.import.readonly` the scanned name (the GUID decides). */
+            pool: string;
+            /** @description For `pool.import.readonly`: the pool's numeric identifier from the import scan. */
+            poolGuid?: null | string;
+            /**
+             * Format: int64
+             * @description New quota in bytes (dataset, children and snapshots), 0 for none; null leaves it.
+             */
+            quotaBytes?: null | number;
+            /**
+             * Format: int64
+             * @description New record size of a file system, a power of two from 4 KiB to 1 MiB; null leaves it.
+             */
+            recordSizeBytes?: null | number;
+            /**
+             * Format: int64
+             * @description New reservation in bytes (dataset, children and snapshots), 0 for none; null leaves it.
+             */
+            reservationBytes?: null | number;
+            /**
+             * Format: int64
+             * @description Size of a new volume, at least 1 MiB; rounded up to whole 16 KiB blocks.
+             */
+            sizeBytes?: null | number;
+            /** @description True for a volume that reserves no space up front. */
+            sparse?: null | boolean;
+            /** @description GUID of the device to replace, take offline, bring online or remove, or of the raidz vdev to expand. */
+            vdev?: null | string;
+        };
+        StorageSchedule: {
+            /** @description `off`, `weekly` or `monthly`. */
+            frequency: string;
+            /** @description `scrub`, `shortSelfTest` or `longSelfTest`. */
+            kind: string;
+            /**
+             * Format: date-time
+             * @description When it last ran (UTC); for self-tests the oldest of all disks. Null if never.
+             */
+            lastRunAt: null | string;
+            /**
+             * Format: date-time
+             * @description When it runs next (UTC); null when it is off or has nothing to run on.
+             */
+            nextRunAt: null | string;
+            /** @description The pool name for scrubs; empty for self-tests, which cover every disk with SMART. */
+            target: string;
+        };
+        /** @description Response of `GET /api/storage/schedules`. */
+        StorageScheduleList: {
+            schedules: components["schemas"]["StorageSchedule"][];
+        };
+        /** @description Body of `PUT /api/storage/schedules`. */
+        StorageScheduleUpdate: {
+            /** @description `off`, `weekly` or `monthly`. */
+            frequency: string;
+            /** @description `scrub`, `shortSelfTest` or `longSelfTest`. */
+            kind: string;
+            /** @description The pool name for scrubs; empty for self-tests. */
+            target: string;
         };
         SystemInfo: {
             /**
@@ -1831,6 +2660,8 @@ export type components = {
         TopicEvents: {
             "files/+/+": components["schemas"]["FolderChanges"];
             "jobs/+": components["schemas"]["Job"];
+            "shares/list": components["schemas"]["ShareListRevision"];
+            "storage/alerts": components["schemas"]["StorageHealth"];
             "storage/disks": components["schemas"]["DisksChanged"];
             "storage/pools": components["schemas"]["PoolList"];
             "system/info": components["schemas"]["SystemInfo"];
@@ -1841,6 +2672,8 @@ export type components = {
         TopicSnapshots: {
             "files/+/+": components["schemas"]["FolderWatchState"];
             "jobs/+": components["schemas"]["Job"];
+            "shares/list": components["schemas"]["ShareListRevision"];
+            "storage/alerts": components["schemas"]["StorageHealth"];
             "storage/disks": components["schemas"]["DiskList"];
             "storage/pools": components["schemas"]["PoolList"];
             "system/info": components["schemas"]["SystemInfo"];
@@ -1922,6 +2755,18 @@ export type components = {
              */
             retentionDays: number;
         };
+        UnmountedDataset: {
+            /** @description Its mount point. */
+            mountPoint: string;
+            /** @description The dataset. */
+            name: string;
+            /**
+             * @description Why it stays unmounted: `system_path` (`/` or at or below a system directory), `shadows_mount` (it
+             *     would hide something mounted there or below), `duplicate_mountpoint` (another dataset of the pool mounts there
+             *     first) or `key_unavailable` (encrypted and locked).
+             */
+            reason: string;
+        };
         UserInfo: {
             displayName: null | string;
             /** Format: int64 */
@@ -1958,6 +2803,8 @@ export type components = {
             state: string;
             /** @description ZFS vdev type: `disk`, `file`, `mirror`, `raidz`, `draid`, `spare`, `replacing` and so on. */
             type: string;
+            /** @description Vdev GUID as decimal text; names a device in commands even when it is missing. */
+            vdevGuid: string;
             /**
              * Format: int64
              * @description Write errors since import or the last clear.
@@ -2528,35 +3375,6 @@ export interface operations {
             };
         };
     };
-    GetDisks: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        requestBody?: never;
-        responses: {
-            /** @description OK */
-            200: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["DiskList"];
-                };
-            };
-            /** @description Problem details with a stable error code. */
-            default: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/problem+json": components["schemas"]["ApiProblem"];
-                };
-            };
-        };
-    };
     DownloadFile: {
         parameters: {
             query: {
@@ -2966,6 +3784,74 @@ export interface operations {
             };
         };
     };
+    ListFileVersions: {
+        parameters: {
+            query: {
+                path: string;
+            };
+            header?: never;
+            path: {
+                shareId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FileVersionList"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    RestoreFileVersion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shareId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FileVersionRestoreRequest"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
     StartFileOperation: {
         parameters: {
             query?: never;
@@ -3241,7 +4127,42 @@ export interface operations {
             };
         };
     };
-    DeleteShare: {
+    UpdateShare: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shareId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ShareUpdate"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShareDetails"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    ListShareAccess: {
         parameters: {
             query?: never;
             header?: never;
@@ -3252,12 +4173,14 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description No Content */
-            204: {
+            /** @description OK */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ShareUserAccess"][];
+                };
             };
             /** @description Problem details with a stable error code. */
             default: {
@@ -3337,6 +4260,159 @@ export interface operations {
             };
         };
     };
+    ListShareDetails: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ShareDetails"][];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    PlanShareAction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SharePlanRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoragePlanPreview"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetStorageAlerts: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageHealth"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    MuteStorageAlert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageHealth"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    UnmuteStorageAlert: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageHealth"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
     GetStorageDisks: {
         parameters: {
             query?: never;
@@ -3353,6 +4429,99 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StorageDiskList"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    ScanImportablePools: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ImportScan"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    PlanStorageAction: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoragePlanRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoragePlanPreview"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    RunStoragePlan: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                planId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"];
                 };
             };
             /** @description Problem details with a stable error code. */
@@ -3395,7 +4564,123 @@ export interface operations {
             };
         };
     };
-    PreviewPoolCreate: {
+    StartScrub: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pool: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    StopScrub: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pool: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    PauseScrub: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pool: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetStorageSchedules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StorageScheduleList"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SetStorageSchedule: {
         parameters: {
             query?: never;
             header?: never;
@@ -3404,7 +4689,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["PoolCreatePreviewRequest"];
+                "application/json": components["schemas"]["StorageScheduleUpdate"];
             };
         };
         responses: {
@@ -3414,7 +4699,197 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["PoolCreatePreview"];
+                    "application/json": components["schemas"]["StorageScheduleList"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    ListSnapshots: {
+        parameters: {
+            query: {
+                dataset: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SnapshotList"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    CreateSnapshot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SnapshotCreateRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Snapshot"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    HoldSnapshot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SnapshotRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    ReleaseSnapshot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SnapshotRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetSnapshotSchedules: {
+        parameters: {
+            query: {
+                dataset: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SnapshotScheduleList"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SetSnapshotSchedules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SnapshotScheduleList"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SnapshotScheduleList"];
                 };
             };
             /** @description Problem details with a stable error code. */

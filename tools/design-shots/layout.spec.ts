@@ -29,8 +29,12 @@ for (const viewport of Object.keys(viewports) as Viewport[]) {
       test.setTimeout(180_000);
       const base = baseURL ?? '';
       const context = await browser.newContext(contextOptions(viewport, 'light'));
-      const page = await context.newPage();
+      let page = await context.newPage();
       for (const screen of await screenIds(page, base)) {
+        // A fresh page per screen: dozens of screens with the development server's module graph in one page ran out
+        // of browser resources.
+        await page.close();
+        page = await context.newPage();
         await openScreen(page, base, screen, 'light', lang);
         const overflow: Overflow = await page.evaluate(() => {
           const describe = (element: Element): string => {

@@ -1,0 +1,8 @@
+{
+  "command": "zpool",
+  "args": [
+    "scrub",
+    "pithyxtestm"
+  ],
+  "exitCode": 0
+}

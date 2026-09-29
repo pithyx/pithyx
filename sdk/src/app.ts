@@ -10,6 +10,7 @@ import type {
   SortKey,
   SortOrder,
   TrashPage,
+  FileVersion,
 } from './files';
 import { createFormatters, type Formatters } from './format';
 import {
@@ -94,7 +95,10 @@ export interface PithyxApp {
     url(file: FileRef): Promise<{ url: string; expiresAt: string }>;
     /** A handle for a file in a named storage or a share, for `read`, `write` and `url`. */
     open(location: FileLocation, path: string): Promise<FileRef>;
-    /** The shares the user can use, with the user's access to each. Needs `files.shares`. */
+    /**
+     * The shares the user can use, with the user's access to each. Needs `files.shares`. The `sharesChanged` event says
+     * when the list may have changed.
+     */
     shares(): Promise<ShareInfo[]>;
     /**
      * One page of a folder (default 100 entries, at most 1000), in natural name order unless `sort` says otherwise.
@@ -136,6 +140,21 @@ export interface PithyxApp {
      * to the share's recycle bin unless `permanent`, which only an explicit request of the user may set.
      */
     run(operation: FileOperation): Promise<JobInfo>;
+    /**
+     * Earlier versions of the entry at `path` from the snapshots of the share's dataset, newest first; also of an
+     * entry deleted since. Empty when the share has no snapshots. Needs read access to the share.
+     */
+    versions(location: FileLocation, path: string): Promise<FileVersion[]>;
+    /**
+     * Copies a version back as a job: next to the current entry as "name (version date)", or over it with
+     * `overwrite` (files are replaced, folders merged), which only an explicit request of the user may set.
+     */
+    restoreVersion(
+      location: FileLocation,
+      path: string,
+      snapshot: string,
+      options?: { overwrite?: boolean },
+    ): Promise<JobInfo>;
   };
   readonly jobs: {
     /** Cancels a job the app started; a job that already finished stays as it is. */
@@ -164,7 +183,7 @@ export interface PithyxApp {
   };
   /** Whether the desktop supports a method; methods added after 1.0 may be missing on an older desktop. */
   supports(method: MethodName): boolean;
-  /** Listens to a lifecycle event. Returns a function that stops listening. */
+  /** Listens to an event of the desktop (see {@link Events}). Returns a function that stops listening. */
   on<E extends EventName>(event: E, handler: EventHandler<E>): () => void;
   /** Answers a question of the desktop (`beforeClose`, `beforeLogout`). One handler per question; the last one wins. */
   answer<Q extends QueryName>(query: Q, handler: QueryHandler<Q>): void;
@@ -388,6 +407,9 @@ export function createApp(endpoint: Endpoint, options: CreateAppOptions = {}): P
         createFolder: async (location, path) => typed('files.createFolder', { location, path }),
         rename: async (location, path, name) => typed('files.rename', { location, path, name }),
         run: async (operation) => typed('files.run', operation),
+        versions: async (location, path) => typed('files.versions', { location, path }),
+        restoreVersion: async (location, path, snapshot, options = {}) =>
+          typed('files.restoreVersion', { location, path, snapshot, ...options }),
       },
       jobs: {
         cancel: async (job) => {

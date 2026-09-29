@@ -13,6 +13,7 @@ import {
 import { labels } from './labels';
 import { LogoScreen } from './LogoScreen';
 import styles from './screens.module.css';
+import { storageScreens } from './storageScreens';
 import { TokensScreen } from './TokensScreen';
 
 export type ScreenGroup = keyof typeof labels.groups;
@@ -216,4 +217,5 @@ export const screens: ScreenDefinition[] = [
       'Translated error text, request id with copy button. Becomes a bottom sheet on phones.',
     render: (context) => <ErrorDialogScene context={context} />,
   },
+  ...storageScreens,
 ];

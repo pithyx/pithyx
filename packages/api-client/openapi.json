@@ -121,36 +121,6 @@
         }
       }
     },
-    "/api/disks": {
-      "get": {
-        "tags": [
-          "Storage"
-        ],
-        "operationId": "GetDisks",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/DiskList"
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Problem details with a stable error code.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiProblem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/setup": {
       "get": {
         "tags": [
@@ -964,7 +934,7 @@
         "tags": [
           "Shares"
         ],
-        "description": "The shares the user can use, with the user's access. Administrators get every share and its path on the host.",
+        "description": "The shares the user can use, with the user's access. Administrators get every share and its path on the host. The shares/list topic says when the list may have changed.",
         "operationId": "ListShares",
         "responses": {
           "200": {
@@ -996,7 +966,7 @@
         "tags": [
           "Shares"
         ],
-        "description": "Administrators only. Registers an existing folder on the host as a share; nobody but administrators has access until it is granted.",
+        "description": "Administrators only, and only on a development machine (fs.share.folder_dev_only elsewhere). Registers an existing folder on the host as a share; nobody but administrators has access until it is granted. Shared folders are otherwise created as datasets with POST /api/shares/plans.",
         "operationId": "CreateShare",
         "requestBody": {
           "content": {
@@ -1032,13 +1002,99 @@
         }
       }
     },
-    "/api/shares/{shareId}": {
-      "delete": {
+    "/api/shares/details": {
+      "get": {
         "tags": [
           "Shares"
         ],
-        "description": "Administrators only. Removes the share from Pithyx; its files stay on the host.",
-        "operationId": "DeleteShare",
+        "description": "Administrators only. Every share with its description, dataset, used and available space, quota and how many users may read or write.",
+        "operationId": "ListShareDetails",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ShareDetails"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/shares/{shareId}": {
+      "patch": {
+        "tags": [
+          "Shares"
+        ],
+        "description": "Administrators only. Changes the name shown and the description; the folder and the dataset stay where they are.",
+        "operationId": "UpdateShare",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ShareUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/shares/{shareId}/access": {
+      "get": {
+        "tags": [
+          "Shares"
+        ],
+        "description": "Administrators only. Every user with their access to the share: none, read or readWrite. Administrators use every share anyway.",
+        "operationId": "ListShareAccess",
         "parameters": [
           {
             "name": "shareId",
@@ -1051,8 +1107,18 @@
           }
         ],
         "responses": {
-          "204": {
-            "description": "No Content"
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ShareUserAccess"
+                  }
+                }
+              }
+            }
           },
           "default": {
             "description": "Problem details with a stable error code.",
@@ -1107,6 +1173,47 @@
         "responses": {
           "204": {
             "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/shares/plans": {
+      "post": {
+        "tags": [
+          "Shares"
+        ],
+        "description": "Administrators only. Returns the exact commands of creating a shared folder as a dataset (share.create) or deleting one (share.delete: keep its data, or destroy its dataset with every snapshot listed), with a plan id to run them with POST /api/storage/plans/{planId}/run. Runs nothing.",
+        "operationId": "PlanShareAction",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SharePlanRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoragePlanPreview"
+                }
+              }
+            }
           },
           "default": {
             "description": "Problem details with a stable error code.",
@@ -1607,6 +1714,108 @@
         }
       }
     },
+    "/api/files/{shareId}/versions": {
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "description": "Earlier versions of a file or folder from the snapshots of the share's dataset, newest first; also for an entry deleted since. A file is listed once per distinct content and not while it equals the current file. Empty when the share is not on a ZFS dataset. Needs read access.",
+        "operationId": "ListFileVersions",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileVersionList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/files/{shareId}/versions/restore": {
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "description": "Starts a job that copies a version back: next to the current entry as \"name (version yyyy-MM-dd HH.mm UTC)\", or over it with overwrite=true (files are replaced, folders merged). Needs read-write access.",
+        "operationId": "RestoreFileVersion",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FileVersionRestoreRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/files/{shareId}/thumbnails": {
       "post": {
         "tags": [
@@ -1830,18 +2039,49 @@
         }
       }
     },
-    "/api/storage/pools/preview": {
+    "/api/storage/import/scan": {
       "post": {
         "tags": [
           "Storage"
         ],
-        "description": "Administrators only. Probes the chosen disks, asks the disk guard and returns the exact commands that would create the pool. Runs nothing.",
-        "operationId": "PreviewPoolCreate",
+        "description": "Administrators only. Looks for pools on the disks that are not imported (zpool import, which reads every disk's labels and may wake a sleeping disk) and returns each with its layout and the disk guard's import verdict. Imports nothing; importing is the plan pool.import.readonly, then pool.import.",
+        "operationId": "ScanImportablePools",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportScan"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/plans": {
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Probes the chosen disks, asks the disk guard and returns the exact commands of a destructive storage action, with a plan id to run them. Runs nothing.",
+        "operationId": "PlanStorageAction",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/PoolCreatePreviewRequest"
+                "$ref": "#/components/schemas/StoragePlanRequest"
               }
             }
           },
@@ -1853,7 +2093,557 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PoolCreatePreview"
+                  "$ref": "#/components/schemas/StoragePlanPreview"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/plans/{planId}/run": {
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Runs a plan exactly as it was shown, as a job; the disk guard checks every disk again right before each command. A plan runs once and expires after 10 minutes.",
+        "operationId": "RunStoragePlan",
+        "parameters": [
+          {
+            "name": "planId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/snapshots": {
+      "get": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. The snapshots of a dataset as last read, oldest first. pithyxKind is set for snapshots Pithyx took.",
+        "operationId": "ListSnapshots",
+        "parameters": [
+          {
+            "name": "dataset",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Takes pithyx-manual-<utc> of the dataset now. Manual snapshots are never pruned by a schedule.",
+        "operationId": "CreateSnapshot",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SnapshotCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Snapshot"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/snapshots/hold": {
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Places the hold \"pithyx\" on the snapshot, so neither a schedule nor anyone else can destroy it.",
+        "operationId": "HoldSnapshot",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SnapshotRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/snapshots/release": {
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Releases the hold \"pithyx\" of the snapshot. Holds of other tools stay.",
+        "operationId": "ReleaseSnapshot",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SnapshotRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/snapshots/schedules": {
+      "get": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. The hourly, daily, weekly and monthly schedules of a dataset; off with the default counts (24, 7, 4, 6) until saved.",
+        "operationId": "GetSnapshotSchedules",
+        "parameters": [
+          {
+            "name": "dataset",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotScheduleList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Saves the given schedules of a dataset. A schedule takes pithyx-<kind>-<utc> once per UTC hour, day, week (from Monday) or month and keeps its newest keep snapshots; it never deletes other snapshots, held ones or ones dated after the current time.",
+        "operationId": "SetSnapshotSchedules",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SnapshotScheduleList"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotScheduleList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/alerts": {
+      "get": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Current storage alerts with the caller's mute flags, and the SMART state of every disk; live through the storage/alerts topic.",
+        "operationId": "GetStorageAlerts",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageHealth"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/alerts/{key}/mute": {
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Hides a current alert for the caller until it goes away or becomes more severe. Alerts cannot be deleted.",
+        "operationId": "MuteStorageAlert",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageHealth"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Shows a muted alert again.",
+        "operationId": "UnmuteStorageAlert",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageHealth"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/pools/{pool}/scrub": {
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Starts a scrub of the pool, or resumes a paused one, and returns at once; progress arrives on storage/pools.",
+        "operationId": "StartScrub",
+        "parameters": [
+          {
+            "name": "pool",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Stops the running scrub; the next one starts from the beginning.",
+        "operationId": "StopScrub",
+        "parameters": [
+          {
+            "name": "pool",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/pools/{pool}/scrub/pause": {
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Pauses the running scrub; starting it again resumes where it stopped.",
+        "operationId": "PauseScrub",
+        "parameters": [
+          {
+            "name": "pool",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/schedules": {
+      "get": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Scrub schedules per pool and the SMART self-test schedules, with their last and next runs.",
+        "operationId": "GetStorageSchedules",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageScheduleList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Sets how often a pool is scrubbed or the disks run a self-test: off, weekly or monthly.",
+        "operationId": "SetStorageSchedule",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StorageScheduleUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StorageScheduleList"
                 }
               }
             }
@@ -2001,7 +2791,14 @@
           "mounted",
           "encryption",
           "keyStatus",
-          "encryptionRoot"
+          "encryptionRoot",
+          "quotaBytes",
+          "reservationBytes",
+          "compression",
+          "recordSizeBytes",
+          "volumeSizeBytes",
+          "volumeBlockSizeBytes",
+          "snapshotsUsedBytes"
         ],
         "type": "object",
         "properties": {
@@ -2060,6 +2857,58 @@
               "string"
             ],
             "description": "The dataset whose key unlocks this one, if encrypted."
+          },
+          "quotaBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Limit for the dataset with its children and snapshots, or null for none.",
+            "format": "int64"
+          },
+          "reservationBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Space guaranteed to the dataset with its children and snapshots, or null for none.",
+            "format": "int64"
+          },
+          "compression": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Compression algorithm, for example `lz4`, `zstd` or `off`."
+          },
+          "recordSizeBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Largest block of a file system; null for a volume.",
+            "format": "int64"
+          },
+          "volumeSizeBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Size of a volume; null for a file system.",
+            "format": "int64"
+          },
+          "volumeBlockSizeBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Block size of a volume; null for a file system.",
+            "format": "int64"
+          },
+          "snapshotsUsedBytes": {
+            "type": "integer",
+            "description": "Space only its snapshots hold.",
+            "format": "int64"
           }
         }
       },
@@ -2358,7 +3207,139 @@
           "disks": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Disk"
+              "required": [
+                "id",
+                "name",
+                "path",
+                "serial",
+                "wwn",
+                "model",
+                "vendor",
+                "sizeBytes",
+                "rotational",
+                "transport",
+                "removable",
+                "readOnly",
+                "partitions"
+              ],
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "Stable across reboots and device renames: `wwn-...`, else `serial-...`, else `path-...`."
+                },
+                "name": {
+                  "type": "string",
+                  "description": "Kernel name, for example `sda` or `nvme0n1`. Can change between boots."
+                },
+                "path": {
+                  "type": "string",
+                  "description": "Device node, for example `/dev/sda`."
+                },
+                "serial": {
+                  "type": [
+                    "null",
+                    "string"
+                  ],
+                  "description": "Serial number as reported by the drive, if any."
+                },
+                "wwn": {
+                  "type": [
+                    "null",
+                    "string"
+                  ],
+                  "description": "World wide name, if any."
+                },
+                "model": {
+                  "type": [
+                    "null",
+                    "string"
+                  ],
+                  "description": "Model name, if any."
+                },
+                "vendor": {
+                  "type": [
+                    "null",
+                    "string"
+                  ],
+                  "description": "Vendor, if any."
+                },
+                "sizeBytes": {
+                  "type": "integer",
+                  "description": "Capacity in bytes.",
+                  "format": "int64"
+                },
+                "rotational": {
+                  "type": "boolean",
+                  "description": "True for spinning disks."
+                },
+                "transport": {
+                  "type": [
+                    "null",
+                    "string"
+                  ],
+                  "description": "Bus, for example `sata`, `nvme` or `usb`; null for virtual disks."
+                },
+                "removable": {
+                  "type": "boolean",
+                  "description": "True for removable media."
+                },
+                "readOnly": {
+                  "type": "boolean",
+                  "description": "True when the kernel exposes the disk read-only."
+                },
+                "partitions": {
+                  "type": "array",
+                  "items": {
+                    "required": [
+                      "name",
+                      "path",
+                      "sizeBytes",
+                      "fileSystem",
+                      "label",
+                      "mountPoints"
+                    ],
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string",
+                        "description": "Kernel name, for example `sda1`."
+                      },
+                      "path": {
+                        "type": "string",
+                        "description": "Device node."
+                      },
+                      "sizeBytes": {
+                        "type": "integer",
+                        "description": "Size in bytes.",
+                        "format": "int64"
+                      },
+                      "fileSystem": {
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "description": "File system or content type, for example `ext4` or `zfs_member`."
+                      },
+                      "label": {
+                        "type": [
+                          "null",
+                          "string"
+                        ],
+                        "description": "File system label, if any."
+                      },
+                      "mountPoints": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "Where the partition is mounted; empty when it is not."
+                      }
+                    }
+                  },
+                  "description": "Partitions in on-disk order."
+                }
+              }
             }
           }
         },
@@ -2561,14 +3542,24 @@
           "fs.operation.invalid",
           "fs.path.invalid",
           "fs.range.not_satisfiable",
+          "fs.share.data_choice_required",
+          "fs.share.dataset_name_invalid",
+          "fs.share.description_invalid",
           "fs.share.exists",
+          "fs.share.folder_dev_only",
           "fs.share.invalid",
+          "fs.share.name_mismatch",
+          "fs.share.name_reserved",
+          "fs.share.no_dataset",
           "fs.share.not_found",
+          "fs.share.path_taken",
+          "fs.share.pool_not_prepared",
           "fs.share.read_only",
           "fs.thumbnail.not_found",
           "fs.thumbnail.too_many",
           "fs.trash.retention_invalid",
           "fs.upload.incomplete",
+          "fs.version.not_found",
           "fs.volume.full",
           "fs.volume.read_only",
           "jobs.job.not_found",
@@ -2580,15 +3571,59 @@
           "request.media_type.unsupported",
           "request.method.not_allowed",
           "request.route.not_found",
+          "storage.alert.not_found",
           "storage.command.failed",
+          "storage.dataset.compression_invalid",
+          "storage.dataset.exists",
+          "storage.dataset.in_use_by_share",
+          "storage.dataset.limit_invalid",
+          "storage.dataset.managed",
+          "storage.dataset.name_invalid",
+          "storage.dataset.name_mismatch",
+          "storage.dataset.not_found",
+          "storage.dataset.property_unsupported",
+          "storage.dataset.protected",
+          "storage.dataset.quota_below_used",
+          "storage.dataset.record_size_invalid",
+          "storage.dataset.reservation_too_large",
+          "storage.dataset.unchanged",
           "storage.disk.not_found",
           "storage.disk.refused",
+          "storage.encryption.unavailable",
+          "storage.import.device_unknown",
+          "storage.import.force_required",
+          "storage.import.not_found",
+          "storage.import.not_importable",
+          "storage.import.preview_required",
+          "storage.plan.action_invalid",
           "storage.plan.expired",
+          "storage.plan.not_found",
           "storage.plan.stale",
           "storage.pool.disk_count",
+          "storage.pool.encryption_required",
+          "storage.pool.expanding",
           "storage.pool.layout_invalid",
           "storage.pool.name_invalid",
+          "storage.pool.name_mismatch",
           "storage.pool.name_taken",
+          "storage.pool.not_found",
+          "storage.pool.not_prepared",
+          "storage.pool.read_only",
+          "storage.schedule.invalid",
+          "storage.scrub.not_running",
+          "storage.scrub.running",
+          "storage.snapshot.confirmation_mismatch",
+          "storage.snapshot.dataset_not_found",
+          "storage.snapshot.exists",
+          "storage.snapshot.held",
+          "storage.snapshot.newer_exist",
+          "storage.snapshot.not_found",
+          "storage.snapshot.not_pithyx",
+          "storage.snapshot.schedule_invalid",
+          "storage.vdev.not_found",
+          "storage.vdev.not_raidz",
+          "storage.volume.size_invalid",
+          "storage.volume.too_large",
           "system.internal.unexpected",
           "system.origin.forbidden"
         ],
@@ -2775,6 +3810,84 @@
           }
         }
       },
+      "FileVersion": {
+        "required": [
+          "snapshot",
+          "createdAt",
+          "kind",
+          "size",
+          "modified"
+        ],
+        "type": "object",
+        "properties": {
+          "snapshot": {
+            "type": "string",
+            "description": "The snapshot the version is in; pass it to restore."
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "When the snapshot was taken (UTC).",
+            "format": "date-time"
+          },
+          "kind": {
+            "description": "File or folder.",
+            "$ref": "#/components/schemas/FileKind"
+          },
+          "size": {
+            "type": "integer",
+            "description": "Bytes for files, 0 for folders.",
+            "format": "int64"
+          },
+          "modified": {
+            "type": "string",
+            "description": "Last change of the content in that version, UTC.",
+            "format": "date-time"
+          }
+        }
+      },
+      "FileVersionList": {
+        "required": [
+          "path",
+          "versions"
+        ],
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The file or folder, relative to the share."
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FileVersion"
+            },
+            "description": "Newest first; empty when the share is not on a ZFS dataset."
+          }
+        },
+        "description": "Response of `GET /api/files/{shareId}/versions`."
+      },
+      "FileVersionRestoreRequest": {
+        "required": [
+          "path",
+          "snapshot"
+        ],
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The file or folder, relative to the share; it may have been deleted since."
+          },
+          "snapshot": {
+            "type": "string",
+            "description": "The snapshot to restore from, as listed."
+          },
+          "overwrite": {
+            "type": "boolean",
+            "description": "Replace the current file (folders are merged) instead of restoring next to it.",
+            "default": false
+          }
+        }
+      },
       "FolderChanges": {
         "required": [
           "changed",
@@ -2946,7 +4059,7 @@
           },
           "reason": {
             "type": "string",
-            "description": "Why, as a stable code: `system_disk`, `read_only`, `mounted`, `pool_member`, `not_test_disk`,\n`duplicate_serial`, `no_serial`, `not_checked`, `has_data`, `confirmed` or `empty`."
+            "description": "Why, as a stable code: `system_disk`, `read_only`, `mounted`, `pool_member`, `not_test_disk`,\n`duplicate_serial`, `no_serial`, `not_checked`, `has_data`, `confirmed` or `empty`; when a\npool is imported, `importable` for an allowed disk."
           },
           "pool": {
             "type": [
@@ -2976,6 +4089,155 @@
           },
           "mode": {
             "$ref": "#/components/schemas/DaemonMode"
+          }
+        }
+      },
+      "ImportScan": {
+        "required": [
+          "pools"
+        ],
+        "type": "object",
+        "properties": {
+          "pools": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportablePool"
+            }
+          }
+        },
+        "description": "Response of `POST /api/storage/import/scan`: pools on the disks that are not imported. Nothing was imported."
+      },
+      "ImportVdev": {
+        "required": [
+          "name",
+          "state",
+          "detail",
+          "diskId",
+          "children"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Device or vdev name as `zpool import` prints it: `raidz1-0`, a by-id name, a path or, for a missing device, its GUID."
+          },
+          "state": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "ZFS state, for example `ONLINE` or `UNAVAIL`; null for the `logs`, `cache`, `spares`,\n`special` and `dedup` group headings, and for cache and spare devices, which an import lists without one."
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "What ZFS adds after the state, for example `cannot open` or `insufficient replicas`."
+          },
+          "diskId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The disk this device is on, if it is one the daemon knows."
+          },
+          "children": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportVdev"
+            },
+            "description": "Child vdevs."
+          }
+        }
+      },
+      "ImportablePool": {
+        "required": [
+          "name",
+          "poolGuid",
+          "state",
+          "status",
+          "action",
+          "messageId",
+          "canImport",
+          "needsForce",
+          "nameTaken",
+          "vdevs",
+          "disks",
+          "unknownDevices",
+          "allowed"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The pool's name as stored on its disks."
+          },
+          "poolGuid": {
+            "type": "string",
+            "description": "The numeric identifier as decimal text; `pool.import.readonly` takes it as `poolGuid`."
+          },
+          "state": {
+            "type": "string",
+            "description": "ZFS state as it would be imported: `ONLINE`, `DEGRADED`, `UNAVAIL` or `FAULTED`."
+          },
+          "status": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "What ZFS says is wrong, in English, if anything."
+          },
+          "action": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "What ZFS says can be done, in English."
+          },
+          "messageId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "ZFS message id, for example `ZFS-8000-2Q` (devices missing) or `ZFS-8000-EY` (last used by another system)."
+          },
+          "canImport": {
+            "type": "boolean",
+            "description": "True when ZFS can import the pool."
+          },
+          "needsForce": {
+            "type": "boolean",
+            "description": "True when it was last used by another system: importing needs `force` and the typed name."
+          },
+          "nameTaken": {
+            "type": "boolean",
+            "description": "True when an imported pool has this name: the import needs `newName`."
+          },
+          "vdevs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportVdev"
+            },
+            "description": "The pool's layout with each device's state and disk."
+          },
+          "disks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GuardVerdict"
+            },
+            "description": "The guard's import verdict for each disk the pool is on."
+          },
+          "unknownDevices": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Present devices that are on no disk the daemon knows; such a pool is not offered."
+          },
+          "allowed": {
+            "type": "boolean",
+            "description": "True when the pool can be imported: ZFS can, and every device is on a disk the guard allows."
           }
         }
       },
@@ -3405,76 +4667,76 @@
               "$ref": "#/components/schemas/Vdev"
             },
             "description": "Top-level vdevs, including log, cache, special and spare devices."
+          },
+          "expansion": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "The last or running RAID-Z expansion, if the pool had one.",
+                "$ref": "#/components/schemas/PoolExpansion"
+              }
+            ],
+            "description": "A RAID-Z expansion (OpenZFS 2.3): a disk attached to a raidz vdev, onto which ZFS spreads the existing data."
           }
         }
       },
-      "PoolCreatePreview": {
+      "PoolExpansion": {
         "required": [
-          "disks",
-          "commands",
-          "expiresAt"
+          "state",
+          "vdevGuid",
+          "startedAt",
+          "endedAt",
+          "toReflowBytes",
+          "reflowedBytes",
+          "waitingForResilver"
         ],
         "type": "object",
         "properties": {
-          "disks": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/GuardVerdict"
-            },
-            "description": "The guard's verdict for every chosen disk, after probing them again."
+          "state": {
+            "type": "string",
+            "description": "`scanning` while it runs, then `finished` or `canceled`."
           },
-          "commands": {
+          "vdevGuid": {
             "type": [
               "null",
-              "array"
+              "string"
             ],
-            "items": {
-              "$ref": "#/components/schemas/PlannedCommand"
-            },
-            "description": "The exact commands the plan would run, or null while a disk is not allowed."
+            "description": "GUID of the raidz vdev that grows, if it is still in the pool."
           },
-          "expiresAt": {
-            "type": "string",
-            "description": "Until when the plan may run once creating pools is available.",
+          "startedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When it started (UTC).",
             "format": "date-time"
+          },
+          "endedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When it ended (UTC), if it did.",
+            "format": "date-time"
+          },
+          "toReflowBytes": {
+            "type": "integer",
+            "description": "Bytes to move onto the new layout.",
+            "format": "int64"
+          },
+          "reflowedBytes": {
+            "type": "integer",
+            "description": "Bytes moved so far.",
+            "format": "int64"
+          },
+          "waitingForResilver": {
+            "type": "boolean",
+            "description": "True while it waits for a resilver to finish."
           }
         },
-        "description": "Response of `POST /api/storage/pools/preview`. Nothing was run."
-      },
-      "PoolCreatePreviewRequest": {
-        "required": [
-          "name",
-          "layout",
-          "diskIds"
-        ],
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "description": "Pool name."
-          },
-          "layout": {
-            "type": "string",
-            "description": "`single`, `stripe`, `mirror`, `raidz1`, `raidz2` or `raidz3`."
-          },
-          "diskIds": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "The disks to use, by id."
-          },
-          "confirmations": {
-            "type": [
-              "null",
-              "object"
-            ],
-            "additionalProperties": {
-              "type": "string"
-            },
-            "description": "For disks that are not empty: the serial number the user typed, by disk id."
-          }
-        }
+        "description": "A RAID-Z expansion (OpenZFS 2.3): a disk attached to a raidz vdev, onto which ZFS spreads the existing data."
       },
       "PoolList": {
         "required": [
@@ -4426,6 +5688,97 @@
           }
         }
       },
+      "ShareDataChoice": {
+        "enum": [
+          "keep",
+          "destroy",
+          null
+        ]
+      },
+      "ShareDetails": {
+        "required": [
+          "id",
+          "name",
+          "description",
+          "path",
+          "pool",
+          "dataset",
+          "usedBytes",
+          "availableBytes",
+          "quotaBytes",
+          "readUsers",
+          "readWriteUsers"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Stable id.",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "description": "Name shown to users."
+          },
+          "description": {
+            "type": "string",
+            "description": "Free text for administrators and users, may be empty."
+          },
+          "path": {
+            "type": "string",
+            "description": "The share root on the host."
+          },
+          "pool": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The pool of the share's dataset; null for a folder share."
+          },
+          "dataset": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Full name of the share's dataset, for example `tank/pithyx/shares/media`; null for a folder share (development only)."
+          },
+          "usedBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Space the dataset uses with its snapshots; null for a folder share or while the dataset is not there (pool missing).",
+            "format": "int64"
+          },
+          "availableBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Space still available to the dataset; null like UsedBytes.",
+            "format": "int64"
+          },
+          "quotaBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The dataset's quota, or null for none.",
+            "format": "int64"
+          },
+          "readUsers": {
+            "type": "integer",
+            "description": "Users other than administrators who may read.",
+            "format": "int32"
+          },
+          "readWriteUsers": {
+            "type": "integer",
+            "description": "Users other than administrators who may read and write.",
+            "format": "int32"
+          }
+        },
+        "description": "A share with what the Shared folders page shows. Administrators only."
+      },
       "ShareInfo": {
         "required": [
           "id",
@@ -4458,6 +5811,349 @@
         },
         "description": "A share the user can use."
       },
+      "ShareListRevision": {
+        "required": [
+          "revision"
+        ],
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "description": "Changes whenever a user's list of usable shares may have changed; compare it, do not count on it.",
+            "format": "int64"
+          }
+        },
+        "description": "Snapshot and event of `shares/list`."
+      },
+      "SharePlanRequest": {
+        "required": [
+          "action"
+        ],
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "description": "`share.create` or `share.delete`."
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Name of the new shared folder; its dataset name is derived from it and shown in the plan."
+          },
+          "pool": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Pool of the new shared folder; it needs the Pithyx layout (`&lt;pool&gt;/pithyx/shares`)."
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Description of the new shared folder."
+          },
+          "shareId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The shared folder to delete.",
+            "format": "int64"
+          },
+          "confirmName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The shared folder's name, typed by the user to delete it."
+          },
+          "data": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "`keep` leaves the dataset or folder with its files, `destroy` destroys the dataset and its snapshots (dataset shares only).",
+                "$ref": "#/components/schemas/ShareDataChoice"
+              }
+            ]
+          }
+        },
+        "description": "A shared folder action to plan. `share.create` needs Name and Pool (Description is optional);\n`share.delete` needs ShareId, ConfirmName and Data."
+      },
+      "ShareUpdate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "New name shown to users, unique like every share name."
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "New description, at most 200 characters, empty to remove it."
+          }
+        },
+        "description": "Changes of a share; fields left out stay. The dataset is never renamed by this."
+      },
+      "ShareUserAccess": {
+        "required": [
+          "userId",
+          "username",
+          "displayName",
+          "administrator",
+          "access"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "description": "The user's id, for `PUT /api/shares/{shareId}/access/{userId}`.",
+            "format": "int64"
+          },
+          "username": {
+            "type": "string",
+            "description": "Login name."
+          },
+          "displayName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Name shown, if set."
+          },
+          "administrator": {
+            "type": "boolean",
+            "description": "Administrators use every share with read and write access, whatever Access says."
+          },
+          "access": {
+            "description": "The access granted: `none`, `read` or `readWrite`.",
+            "$ref": "#/components/schemas/ShareAccess"
+          }
+        },
+        "description": "One user's access to a share, for editing rights."
+      },
+      "SmartReport": {
+        "required": [
+          "diskId",
+          "state",
+          "reason",
+          "asleep",
+          "temperatureCelsius",
+          "powerOnHours",
+          "reallocatedSectors",
+          "pendingSectors",
+          "uncorrectableSectors",
+          "mediaErrors",
+          "criticalWarning",
+          "lastSelfTest",
+          "readAt",
+          "checkedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "diskId": {
+            "type": "string",
+            "description": "The disk's id."
+          },
+          "state": {
+            "type": "string",
+            "description": "`passed`, `warning` (reallocated, pending or uncorrectable sectors, media errors or a failed self-test),\n`failed` (the drive predicts its failure), `unsupported` (no SMART, see Reason) or\n`unknown` (not read yet, asleep since the daemon started, or the read failed)."
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "For `unsupported`: `virtual` (a disk of a virtual machine) or `not_available`. For `unknown`:\n`asleep`, `not_read` or `read_failed`. Otherwise null."
+          },
+          "asleep": {
+            "type": "boolean",
+            "description": "True when the last check found the disk asleep; the values are then from ReadAt."
+          },
+          "temperatureCelsius": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Current temperature, if reported.",
+            "format": "int32"
+          },
+          "powerOnHours": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Power-on time, if reported.",
+            "format": "int64"
+          },
+          "reallocatedSectors": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "ATA attribute 5, raw value.",
+            "format": "int64"
+          },
+          "pendingSectors": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "ATA attribute 197, raw value.",
+            "format": "int64"
+          },
+          "uncorrectableSectors": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "ATA attribute 198, raw value.",
+            "format": "int64"
+          },
+          "mediaErrors": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "NVMe media and data integrity errors.",
+            "format": "int64"
+          },
+          "criticalWarning": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "NVMe critical warning bits; not 0 means the drive reports a critical condition.",
+            "format": "int32"
+          },
+          "lastSelfTest": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Result of the newest self-test: `passed`, `failed`, `aborted` or `running`; null without one."
+          },
+          "readAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When SMART data was last read (UTC); null if never.",
+            "format": "date-time"
+          },
+          "checkedAt": {
+            "type": "string",
+            "description": "When the disk was last checked (UTC), including checks that found it asleep.",
+            "format": "date-time"
+          }
+        },
+        "description": "SMART health of one disk as last read. The API serves it from memory; reading it never runs a command."
+      },
+      "Snapshot": {
+        "required": [
+          "dataset",
+          "name",
+          "createdAt",
+          "usedBytes",
+          "referencedBytes",
+          "holds",
+          "createTxg",
+          "fullName",
+          "pithyxKind"
+        ],
+        "type": "object",
+        "properties": {
+          "dataset": {
+            "type": "string",
+            "description": "The dataset the snapshot belongs to, for example `tank/pithyx/shares/media`."
+          },
+          "name": {
+            "type": "string",
+            "description": "The part after `@`, for example `pithyx-daily-20260927T000000Z`."
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "When ZFS took it (UTC), by the clock the box had then.",
+            "format": "date-time"
+          },
+          "usedBytes": {
+            "type": "integer",
+            "description": "Space only this snapshot holds.",
+            "format": "int64"
+          },
+          "referencedBytes": {
+            "type": "integer",
+            "description": "Data the snapshot references.",
+            "format": "int64"
+          },
+          "holds": {
+            "type": "integer",
+            "description": "Number of holds (`userrefs`); a held snapshot cannot be destroyed.",
+            "format": "int32"
+          },
+          "createTxg": {
+            "type": "integer",
+            "description": "The transaction group it was taken in: the order of snapshots, whatever the clock said.",
+            "format": "int64"
+          },
+          "fullName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "pithyxKind": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The schedule kind of a snapshot Pithyx created, or null for every other snapshot."
+          }
+        }
+      },
+      "SnapshotCreateRequest": {
+        "required": [
+          "dataset"
+        ],
+        "type": "object",
+        "properties": {
+          "dataset": {
+            "type": "string",
+            "description": "The dataset to snapshot."
+          }
+        }
+      },
+      "SnapshotList": {
+        "required": [
+          "dataset",
+          "snapshots"
+        ],
+        "type": "object",
+        "properties": {
+          "dataset": {
+            "type": "string",
+            "description": "The dataset."
+          },
+          "snapshots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Snapshot"
+            },
+            "description": "Its snapshots, oldest first."
+          }
+        },
+        "description": "Response of `GET /api/storage/snapshots`."
+      },
       "SnapshotMessage": {
         "required": [
           "id",
@@ -4486,6 +6182,106 @@
           }
         },
         "description": "The full current state of a topic, sent after `sub`. Only changes follow as events."
+      },
+      "SnapshotRequest": {
+        "required": [
+          "dataset",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "dataset": {
+            "type": "string",
+            "description": "The dataset."
+          },
+          "name": {
+            "type": "string",
+            "description": "The exact snapshot name after `@`."
+          }
+        }
+      },
+      "SnapshotSchedule": {
+        "required": [
+          "kind",
+          "enabled",
+          "keep"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "description": "`hourly`, `daily`, `weekly` or `monthly`."
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether the schedule takes snapshots."
+          },
+          "keep": {
+            "type": "integer",
+            "description": "How many of its snapshots it keeps (1 to 1000).",
+            "format": "int32"
+          }
+        }
+      },
+      "SnapshotScheduleList": {
+        "required": [
+          "dataset",
+          "schedules"
+        ],
+        "type": "object",
+        "properties": {
+          "dataset": {
+            "type": "string",
+            "description": "The dataset."
+          },
+          "schedules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SnapshotSchedule"
+            },
+            "description": "One entry per kind; kinds left out of a PUT stay as they are."
+          }
+        },
+        "description": "Schedules of a dataset: all four kinds, in the order hourly, daily, weekly, monthly."
+      },
+      "StorageAlert": {
+        "required": [
+          "key",
+          "severity",
+          "code",
+          "params",
+          "since",
+          "muted"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Stable key of the cause, for example `pool.degraded:tank` or `disk.smart_failed:wwn-0x5000c500a1b2c3d4`."
+          },
+          "severity": {
+            "type": "string",
+            "description": "`warning` or `critical`."
+          },
+          "code": {
+            "type": "string",
+            "description": "Message code in the `notifications` namespace (`&lt;code&gt;.title`, `.body`, `.action`)."
+          },
+          "params": {
+            "type": "object",
+            "description": "Message parameters: strings and numbers."
+          },
+          "since": {
+            "type": "string",
+            "description": "When the daemon first saw the cause (UTC); a restart starts it again.",
+            "format": "date-time"
+          },
+          "muted": {
+            "type": "boolean",
+            "description": "True when the user muted this alert at this severity or higher."
+          }
+        },
+        "description": "A storage problem that exists now. Alerts are derived from the current state, never stored."
       },
       "StorageDisk": {
         "required": [
@@ -4523,6 +6319,325 @@
           }
         },
         "description": "Response of `GET /api/storage/disks`."
+      },
+      "StorageHealth": {
+        "required": [
+          "alerts",
+          "smart"
+        ],
+        "type": "object",
+        "properties": {
+          "alerts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StorageAlert"
+            },
+            "description": "Current alerts, critical first, with the user's mute flags."
+          },
+          "smart": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SmartReport"
+            },
+            "description": "SMART state of every disk."
+          }
+        },
+        "description": "Snapshot and event of `storage/alerts`, and response of `GET /api/storage/alerts`."
+      },
+      "StoragePlanPreview": {
+        "required": [
+          "planId",
+          "disks",
+          "commands",
+          "datasets",
+          "expiresAt",
+          "warnings",
+          "requiresConfirmName",
+          "unmounted"
+        ],
+        "type": "object",
+        "properties": {
+          "planId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Runs the plan exactly as shown with `POST /api/storage/plans/{planId}/run`; null while a disk is not allowed, and\nwhile RequiresConfirmName is true and the name was not typed yet."
+          },
+          "disks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GuardVerdict"
+            },
+            "description": "The guard's verdict for every chosen disk, after probing them again."
+          },
+          "commands": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/PlannedCommand"
+            },
+            "description": "The exact commands, or null while a disk is not allowed."
+          },
+          "datasets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "For destroying or exporting a pool: every dataset that goes or becomes unavailable; for `pool.import`: the\ndatasets it mounts. For destroying a dataset: the dataset, its children and every snapshot of them\n(`dataset@snapshot`), each dataset followed by its snapshots. For renaming a dataset: the dataset and its\nchildren, whose names change. For destroying a snapshot: the snapshot (`dataset@snapshot`); for rolling back:\nevery newer snapshot, which goes too."
+          },
+          "expiresAt": {
+            "type": "string",
+            "description": "Until when the plan may run.",
+            "format": "date-time"
+          },
+          "warnings": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Stable codes for what the user must know before running it: `lowers_redundancy`, `replication_mismatch`,\n`irreversible` and `no_redundancy` (adding a vdev: it tolerates fewer failed disks than the pool, it has a\nlayout ZFS calls a replication mismatch, it can never be removed, it has no redundancy), `irreversible` (RAID-Z\nexpansion), `other_system` (an import forced over another system's claim), `degraded` (the pool is imported\nwith devices missing), `unmounted_datasets` (Unmounted stay unmounted) and\n`datasets_unavailable` (exporting a pool with datasets in use); for a rollback `changes_lost` (every change\nsince the snapshot is lost) and `newer_snapshots` (the listed newer snapshots are destroyed)."
+          },
+          "requiresConfirmName": {
+            "type": "boolean",
+            "description": "True when the plan runs only with the pool's name (for a rollback the dataset's full name) typed in `confirmName`."
+          },
+          "unmounted": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UnmountedDataset"
+            },
+            "description": "For `pool.import`: datasets that stay unmounted, and why; those that would hide part of the system also get `canmount=noauto`."
+          }
+        },
+        "description": "Response of `POST /api/storage/plans`. Nothing was run."
+      },
+      "StoragePlanRequest": {
+        "required": [
+          "action",
+          "pool"
+        ],
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "description": "`pool.create`, `pool.destroy`, `pool.replace`, `pool.spare.add`, `pool.spare.remove`, `pool.offline`, `pool.online`, `pool.import.readonly`, `pool.import`, `pool.export`, `pool.vdev.add`, `pool.raidz.expand`, `dataset.rename`, `dataset.set`, `dataset.destroy`, `volume.create`, `snapshot.destroy` or `snapshot.rollback`."
+          },
+          "pool": {
+            "type": "string",
+            "description": "The pool, or the new pool's name; for `pool.import.readonly` the scanned name (the GUID decides)."
+          },
+          "layout": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "`single`, `stripe`, `mirror`, `mirrors` (pairs), `raidz1`, `raidz2` or `raidz3`."
+          },
+          "diskIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "The disks to use, by id."
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Name of a new volume (one path component), or the snapshot after `@` for the snapshot actions. Shared folders are created with `POST /api/shares/plans`."
+          },
+          "vdev": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "GUID of the device to replace, take offline, bring online or remove, or of the raidz vdev to expand."
+          },
+          "encryption": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The answer to the encryption question of a new pool: `none`, or `key` once the key vault exists."
+          },
+          "confirmName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The pool's name, or the dataset's full name, typed by the user where the preview says `requiresConfirmName` and to destroy."
+          },
+          "confirmations": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Serial numbers the user typed, by disk id."
+          },
+          "dataset": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Full name of the dataset or volume to rename, change or destroy, on Pool."
+          },
+          "newName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The new last component of a renamed dataset (it stays below the same parent), or for `pool.import.readonly` the name to import the pool under when its own is taken."
+          },
+          "quotaBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "New quota in bytes (dataset, children and snapshots), 0 for none; null leaves it.",
+            "format": "int64"
+          },
+          "reservationBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "New reservation in bytes (dataset, children and snapshots), 0 for none; null leaves it.",
+            "format": "int64"
+          },
+          "compression": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "New compression: `off`, `lz4`, `zle`, `zstd`, `zstd-1` to `zstd-19`, `gzip`, `gzip-1` to `gzip-9`; null leaves it."
+          },
+          "recordSizeBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "New record size of a file system, a power of two from 4 KiB to 1 MiB; null leaves it.",
+            "format": "int64"
+          },
+          "sizeBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Size of a new volume, at least 1 MiB; rounded up to whole 16 KiB blocks.",
+            "format": "int64"
+          },
+          "sparse": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "True for a volume that reserves no space up front."
+          },
+          "poolGuid": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "For `pool.import.readonly`: the pool's numeric identifier from the import scan."
+          },
+          "force": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "For imports: import a pool that was last used by another system; needs ConfirmName."
+          }
+        },
+        "description": "A destructive storage action to plan. Which fields an action needs: `pool.create` Pool, Layout, DiskIds,\nEncryption (and Confirmations for disks that are not empty); `pool.destroy` Pool and ConfirmName;\n`pool.replace` Pool, Vdev and one disk in DiskIds with its serial in Confirmations; `pool.spare.add` Pool\nand one disk; `pool.spare.remove`, `pool.offline` and `pool.online` Pool and Vdev;\n`pool.import.readonly` PoolGuid from the import scan, NewName when the name is taken, and Force with the pool\nname in ConfirmName when the scan says `needsForce`; `pool.import` Pool (imported read-only), and Force with\nConfirmName to force it; `pool.export` Pool; `pool.vdev.add` Pool, Layout (`single`, `mirror`,\n`raidz1` to `raidz3`), DiskIds, Confirmations, and ConfirmName when the preview says so;\n`pool.raidz.expand` Pool, Vdev (the raidz vdev), one disk and ConfirmName;\n`dataset.rename` Pool, Dataset and NewName; `dataset.set` Pool, Dataset and at least one of QuotaBytes,\nReservationBytes, Compression and RecordSizeBytes; `dataset.destroy` Pool, Dataset and ConfirmName;\n`volume.create` Pool, Name, SizeBytes and Sparse; `snapshot.destroy` Pool, Dataset and the snapshot's\nName; `snapshot.rollback` Pool, Dataset, the snapshot's Name and the dataset's full name in ConfirmName."
+      },
+      "StorageSchedule": {
+        "required": [
+          "kind",
+          "target",
+          "frequency",
+          "lastRunAt",
+          "nextRunAt"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "description": "`scrub`, `shortSelfTest` or `longSelfTest`."
+          },
+          "target": {
+            "type": "string",
+            "description": "The pool name for scrubs; empty for self-tests, which cover every disk with SMART."
+          },
+          "frequency": {
+            "type": "string",
+            "description": "`off`, `weekly` or `monthly`."
+          },
+          "lastRunAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When it last ran (UTC); for self-tests the oldest of all disks. Null if never.",
+            "format": "date-time"
+          },
+          "nextRunAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When it runs next (UTC); null when it is off or has nothing to run on.",
+            "format": "date-time"
+          }
+        }
+      },
+      "StorageScheduleList": {
+        "required": [
+          "schedules"
+        ],
+        "type": "object",
+        "properties": {
+          "schedules": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StorageSchedule"
+            }
+          }
+        },
+        "description": "Response of `GET /api/storage/schedules`."
+      },
+      "StorageScheduleUpdate": {
+        "required": [
+          "kind",
+          "target",
+          "frequency"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "description": "`scrub`, `shortSelfTest` or `longSelfTest`."
+          },
+          "target": {
+            "type": "string",
+            "description": "The pool name for scrubs; empty for self-tests."
+          },
+          "frequency": {
+            "type": "string",
+            "description": "`off`, `weekly` or `monthly`."
+          }
+        },
+        "description": "Body of `PUT /api/storage/schedules`."
       },
       "SystemInfo": {
         "required": [
@@ -4729,6 +6844,8 @@
         "required": [
           "files/+/+",
           "jobs/+",
+          "shares/list",
+          "storage/alerts",
           "storage/disks",
           "storage/pools",
           "system/info",
@@ -4743,6 +6860,12 @@
           },
           "jobs/+": {
             "$ref": "#/components/schemas/Job"
+          },
+          "shares/list": {
+            "$ref": "#/components/schemas/ShareListRevision"
+          },
+          "storage/alerts": {
+            "$ref": "#/components/schemas/StorageHealth"
           },
           "storage/disks": {
             "$ref": "#/components/schemas/DisksChanged"
@@ -4768,6 +6891,8 @@
         "required": [
           "files/+/+",
           "jobs/+",
+          "shares/list",
+          "storage/alerts",
           "storage/disks",
           "storage/pools",
           "system/info",
@@ -4782,6 +6907,12 @@
           },
           "jobs/+": {
             "$ref": "#/components/schemas/Job"
+          },
+          "shares/list": {
+            "$ref": "#/components/schemas/ShareListRevision"
+          },
+          "storage/alerts": {
+            "$ref": "#/components/schemas/StorageHealth"
           },
           "storage/disks": {
             "$ref": "#/components/schemas/DiskList"
@@ -4995,6 +7126,28 @@
           }
         }
       },
+      "UnmountedDataset": {
+        "required": [
+          "name",
+          "mountPoint",
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The dataset."
+          },
+          "mountPoint": {
+            "type": "string",
+            "description": "Its mount point."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why it stays unmounted: `system_path` (`/` or at or below a system directory), `shadows_mount` (it\nwould hide something mounted there or below), `duplicate_mountpoint` (another dataset of the pool mounts there\nfirst) or `key_unavailable` (encrypted and locked)."
+          }
+        }
+      },
       "UserInfo": {
         "required": [
           "id",
@@ -5029,6 +7182,7 @@
       "Vdev": {
         "required": [
           "name",
+          "vdevGuid",
           "type",
           "role",
           "state",
@@ -5044,6 +7198,10 @@
           "name": {
             "type": "string",
             "description": "Vdev name as ZFS shows it: `raidz1-0`, `mirror-1` or the device's by-id name."
+          },
+          "vdevGuid": {
+            "type": "string",
+            "description": "Vdev GUID as decimal text; names a device in commands even when it is missing."
           },
           "type": {
             "type": "string",
@@ -5169,9 +7327,6 @@
       "name": "Shares"
     },
     {
-      "name": "Storage"
-    },
-    {
       "name": "Setup"
     },
     {
@@ -5182,6 +7337,9 @@
     },
     {
       "name": "Jobs"
+    },
+    {
+      "name": "Storage"
     }
   ]
 }

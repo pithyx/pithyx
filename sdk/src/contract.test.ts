@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { createApp } from './app';
 import { PithyxError } from './errors';
 import { serveApp, type MethodHandlers } from './host';
-import type { FileEntry, JobInfo } from './files';
+import type { FileEntry, FileVersion, JobInfo } from './files';
 import type { AppContext } from './protocol';
 import { themeTokenNames, type Theme } from './theme';
 import { inProcessPair, portEndpoint, type Endpoint } from './transport';
@@ -171,6 +171,66 @@ describe.each(transports)('over the %s transport', (_, pair) => {
     expect(run).toHaveBeenCalledTimes(1);
   });
 
+  it('lists and restores previous versions and refuses malformed requests', async () => {
+    const version: FileVersion = {
+      snapshot: 'pithyx-daily-20260927T000000Z',
+      createdAt: '2026-09-27T00:00:00Z',
+      kind: 'file',
+      size: 3,
+      modified: '2026-09-26T12:00:00Z',
+    };
+    const job: JobInfo = {
+      id: 7,
+      kind: 'files.restore_version',
+      state: 'queued',
+      progress: { itemsDone: 0, itemsTotal: 0, bytesDone: 0, bytesTotal: 0, current: null },
+      problem: null,
+      result: null,
+    };
+    const versions = vi.fn(() => [version]);
+    const restore = vi.fn(() => job);
+    const { app } = connectTo({ 'files.versions': versions, 'files.restoreVersion': restore });
+    const connected = await app;
+    const location = { share: '1' };
+
+    expect(await connected.files.versions(location, 'Docs/plan.txt')).toEqual([version]);
+    expect(versions).toHaveBeenCalledWith({ location, path: 'Docs/plan.txt' });
+    expect(
+      await connected.files.restoreVersion(location, 'Docs/plan.txt', version.snapshot),
+    ).toEqual(job);
+    await connected.files.restoreVersion(location, 'Docs/plan.txt', version.snapshot, {
+      overwrite: true,
+    });
+    expect(restore).toHaveBeenLastCalledWith({
+      location,
+      path: 'Docs/plan.txt',
+      snapshot: version.snapshot,
+      overwrite: true,
+    });
+
+    await expect(connected.call('files.versions', { location, path: '' })).rejects.toMatchObject({
+      code: 'sdk.request.invalid',
+    });
+    await expect(
+      connected.call('files.versions', { location, path: '../secret' }),
+    ).rejects.toMatchObject({ code: 'sdk.request.invalid' });
+    const invalid = [
+      { location, path: 'a', snapshot: 'x/y' },
+      { location, path: 'a', snapshot: '' },
+      { location, path: 'a', snapshot: 's', overwrite: 'yes' },
+      { location: { share: 1 }, path: 'a', snapshot: 's' },
+    ];
+    for (const params of invalid) {
+      await expect(
+        connected.call(
+          'files.restoreVersion',
+          params as Parameters<typeof connected.call<'files.restoreVersion'>>[1],
+        ),
+      ).rejects.toMatchObject({ code: 'sdk.request.invalid' });
+    }
+    expect(restore).toHaveBeenCalledTimes(2);
+  });
+
   it('lets an upload take as long as the transfer', async () => {
     const entry: FileEntry = {
       name: 'big.bin',
@@ -231,6 +291,47 @@ describe.each(transports)('over the %s transport', (_, pair) => {
     expect(connected.context.permissions).not.toContain('notifications');
     expect(connected.format.date('2026-09-27T23:30:00Z')).toBe('27.09.2026');
     expect(themes).toEqual(['dark']);
+  });
+
+  it('sends sharesChanged only to apps that hold files.shares', async () => {
+    const [appEnd, hostEnd] = pair();
+    const host = serveApp(hostEnd, {
+      context: { ...context, permissions: ['files.shares'] },
+      methods: {},
+    });
+    const connected = await createApp(appEnd, { themeRoot: null, timeout: 500 });
+    const changed = vi.fn();
+    connected.on('sharesChanged', changed);
+    host.emit('sharesChanged', {});
+    await vi.waitFor(() => {
+      expect(changed).toHaveBeenCalledOnce();
+    });
+    host.emit('permissionRevoked', { permission: 'files.shares' });
+    await vi.waitFor(() => {
+      expect(connected.context.permissions).not.toContain('files.shares');
+    });
+    const focus = vi.fn();
+    connected.on('focus', focus);
+    host.emit('sharesChanged', {});
+    // Events arrive in order, so once focus is there a sharesChanged sent before it would be too.
+    host.emit('focus', {});
+    await vi.waitFor(() => {
+      expect(focus).toHaveBeenCalledOnce();
+    });
+    expect(changed).toHaveBeenCalledOnce();
+
+    const { host: other, app } = connectTo({});
+    const without = await app;
+    const never = vi.fn();
+    without.on('sharesChanged', never);
+    const focused = vi.fn();
+    without.on('focus', focused);
+    other.emit('sharesChanged', {});
+    other.emit('focus', {});
+    await vi.waitFor(() => {
+      expect(focused).toHaveBeenCalledOnce();
+    });
+    expect(never).not.toHaveBeenCalled();
   });
 
   it('lets the app keep a window open and gives up on apps that do not answer', async () => {

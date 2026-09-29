@@ -1,0 +1,116 @@
+{
+ "json_format_version": [
+  1,
+  0
+ ],
+ "smartctl": {
+  "version": [
+   7,
+   4
+  ],
+  "pre_release": false,
+  "svn_revision": "5530",
+  "platform_info": "x86_64-linux-6.12.48+deb13-amd64",
+  "build_info": "(local build)",
+  "argv": [
+   "smartctl",
+   "-n",
+   "standby",
+   "-j",
+   "-a",
+   "/dev/nvme0n1"
+  ],
+  "drive_database_version": {
+   "string": "7.3/5528"
+  },
+  "exit_status": 8
+ },
+ "local_time": {
+  "time_t": 1790496000,
+  "asctime": "Sun Sep 27 08:00:00 2026 UTC"
+ },
+ "device": {
+  "name": "/dev/nvme0n1",
+  "info_name": "/dev/nvme0n1",
+  "type": "nvme",
+  "protocol": "NVMe"
+ },
+ "model_name": "Samsung SSD 980 PRO 1TB",
+ "serial_number": "S5GXNX0HANDWRITTEN",
+ "firmware_version": "5B2QGXA7",
+ "nvme_pci_vendor": {
+  "id": 5197,
+  "subsystem_id": 5197
+ },
+ "nvme_ieee_oui_identifier": 9528,
+ "nvme_total_capacity": 1000204886016,
+ "nvme_number_of_namespaces": 1,
+ "nvme_version": {
+  "string": "1.3",
+  "value": 66304
+ },
+ "user_capacity": {
+  "blocks": 1953525168,
+  "bytes": 1000204886016
+ },
+ "logical_block_size": 512,
+ "smart_support": {
+  "available": true,
+  "enabled": true
+ },
+ "smart_status": {
+  "passed": false,
+  "nvme": {
+   "value": 1
+  }
+ },
+ "nvme_smart_health_information_log": {
+  "critical_warning": 1,
+  "temperature": 41,
+  "available_spare": 4,
+  "available_spare_threshold": 10,
+  "percentage_used": 3,
+  "data_units_read": 27316473,
+  "data_units_written": 38172633,
+  "host_reads": 287136483,
+  "host_writes": 509927166,
+  "controller_busy_time": 1271,
+  "power_cycles": 312,
+  "power_on_hours": 6021,
+  "unsafe_shutdowns": 24,
+  "media_errors": 3,
+  "num_err_log_entries": 3,
+  "warning_temp_time": 0,
+  "critical_comp_time": 0,
+  "temperature_sensors": [
+   41,
+   46
+  ]
+ },
+ "temperature": {
+  "current": 41
+ },
+ "power_cycle_count": 312,
+ "power_on_time": {
+  "hours": 6021
+ },
+ "nvme_self_test_log": {
+  "current_self_test_operation": {
+   "value": 0,
+   "string": "No self-test in progress"
+  },
+  "table": [
+   {
+    "self_test_code": {
+     "value": 1,
+     "string": "Short"
+    },
+    "self_test_result": {
+     "value": 0,
+     "string": "Completed without error"
+    },
+    "power_on_hours": 6000
+   }
+  ]
+ }
+}

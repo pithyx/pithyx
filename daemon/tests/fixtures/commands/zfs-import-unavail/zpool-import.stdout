@@ -1,0 +1,14 @@
+  pool: pithyxtesti
+    id: 4276968466703172073
+ state: UNAVAIL
+status: One or more devices are missing from the system.
+action: The pool cannot be imported. Attach the missing
+	devices and try again.
+   see: https://openzfs.github.io/openzfs-docs/msg/ZFS-8000-3C
+config:
+
+	pithyxtesti                   UNAVAIL  insufficient replicas
+	  raidz1-0                          UNAVAIL  insufficient replicas
+	    /tmp/pithyxci-fixture/vdev0.img  ONLINE
+	    /tmp/pithyxci-fixture/vdev1.img  UNAVAIL  cannot open
+	    /tmp/pithyxci-fixture/vdev2.img  UNAVAIL  cannot open

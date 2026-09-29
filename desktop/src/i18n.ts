@@ -4,7 +4,6 @@ import { icuFormat } from './icuFormat';
 import { desktopNamespaces, signInNamespaces } from './i18nNamespaces';
 import type auth from '../../i18n/en/auth.json';
 import type desktop from '../../i18n/en/desktop.json';
-import type disks from '../../i18n/en/disks.json';
 import type errors from '../../i18n/en/errors.json';
 import type files from '../../i18n/en/files.json';
 import type jobs from '../../i18n/en/jobs.json';
@@ -19,7 +18,6 @@ import type viewer from '../../i18n/en/viewer.json';
 export interface Resources {
   desktop: typeof desktop;
   auth: typeof auth;
-  disks: typeof disks;
   errors: typeof errors;
   files: typeof files;
   storage: typeof storage;

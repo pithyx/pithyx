@@ -26,6 +26,7 @@ export interface TaskbarProps {
   onApp?: (id: string) => void;
   startRef?: Ref<HTMLButtonElement>;
   switcherRef?: Ref<HTMLButtonElement>;
+  notificationsRef?: Ref<HTMLButtonElement>;
   /** A horizontal swipe along the bar: 1 for the next app, -1 for the previous one. */
   onSwipe?: (direction: 1 | -1) => void;
 }
@@ -66,6 +67,7 @@ export function Taskbar({
   onApp,
   startRef,
   switcherRef,
+  notificationsRef,
   onSwipe,
 }: TaskbarProps) {
   const { t } = useTranslation();
@@ -181,6 +183,7 @@ export function Taskbar({
           </AriaButton>
         )}
         <AriaButton
+          ref={notificationsRef}
           className={styles.button}
           aria-label={t('taskbar.notifications', { count: unread })}
           aria-expanded={notificationsOpen}

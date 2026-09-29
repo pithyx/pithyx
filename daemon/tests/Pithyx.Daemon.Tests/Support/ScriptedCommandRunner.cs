@@ -15,6 +15,9 @@ public sealed class ScriptedCommandRunner : ICommandRunner
 
     public List<CommandRequest> Calls { get; } = [];
 
+    /// <summary>Answers a command before <see cref="Results"/> are looked at, for example per device; null passes it on.</summary>
+    public Func<CommandRequest, CommandResult?>? Handler { get; set; }
+
     /// <summary>Streams a line to the running <c>udevadm monitor</c>, or to another streaming program.</summary>
     public void Push(string line, string program = "udevadm") => Stream(program).Writer.TryWrite(line);
 
@@ -23,6 +26,10 @@ public sealed class ScriptedCommandRunner : ICommandRunner
         lock (Calls)
         {
             Calls.Add(request);
+        }
+        if (Handler?.Invoke(request) is { } handled)
+        {
+            return Task.FromResult(handled);
         }
         var specific = request.Arguments.Count > 0 ? $"{request.FileName} {request.Arguments[0]}" : request.FileName;
         return Task.FromResult(

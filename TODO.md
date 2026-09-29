@@ -412,7 +412,7 @@ Rules for every M3 step:
 - Destructive storage actions touch only disks that `DiskGuard` (step 7) allows. On dev01 that means the VYXTEST disks listed in `/etc/pithyx/test-disks`; test pools are still cleaned up with `tools/dev-vm/testpool.sh destroy` and `wipe`.
 - Before a storage PR is merged, its destructive suite runs on dev01 and the result goes into the PR (`[REVIEW]` by the owner for steps 8, 9 and 12).
 - No real data goes on a Pithyx pool before step 9 is done (see "Release blockers").
-- Every settings page ships with its step, in the Settings app from step 7.
+- Every page ships with its step. Storage (pools, disks, datasets and volumes, snapshots, SSD cache, spindown, health and maintenance) lives in the Storage app; the Settings app holds only system settings (users and groups, shared folders and rights, network, energy profiles, updates, personalization, about).
 
 ---
 
@@ -477,39 +477,39 @@ Goal: pools are created, maintained and watched from the UI, with snapshots that
 
 ### 8.1 Pools
 
-- [ ] Create a pool: single disk, mirror, raidz1, raidz2, raidz3; a stripe only with a warning that one failed disk loses everything. Defaults `ashift=12`, `compression=lz4`, `xattr=sa`, `acltype=posixacl`, `atime=off`, `normalization=formD`.
-- [ ] The create dialog always asks about encryption and explains that it can only be chosen when the pool is created (step 9 adds the key handling; until then encryption is offered only once step 9 is done, and the dialog says so).
-- [ ] Dataset layout (D100, decided): the pool root holds no data; Pithyx datasets live under `<pool>/pithyx/` (`shares/<name>`, `homes/<user>`, `apps/<id>`, `system`), mounted at `/<pool>/<share>`, `/<pool>/homes/<user>` and `/<pool>/.pithyx/...` (the paths in `daemon/CLAUDE.md`).
-- [ ] Import an existing pool only as an explicit action, first read-only with a preview of its datasets; export.
-- [ ] Scrub, on demand and on a schedule (default monthly).
-- [ ] Replace a disk, offline and online a disk, add a vdev (with a warning when it lowers redundancy; adding is irreversible), raidz expansion (OpenZFS 2.3).
-- [ ] Destroy a pool only after typing its name, with a list of what it holds.
-- [ ] Block cloning (D90): find out why `copy_file_range` cloned no blocks on dev01 (OpenZFS 2.3.9), whether `zfs_bclone_enabled` is off because of the known block cloning data corruption bug, and enable it only on an OpenZFS version with the fix, with a test on dev01.
+- [x] Create a pool: single disk, mirror, raidz1, raidz2, raidz3; a stripe only with a warning that one failed disk loses everything. Defaults `ashift=12`, `compression=lz4`, `xattr=sa`, `acltype=posixacl`, `atime=off`, `normalization=formD`.
+- [x] The create dialog always asks about encryption and explains that it can only be chosen when the pool is created (step 9 adds the key handling; until then encryption is offered only once step 9 is done, and the dialog says so).
+- [x] Dataset layout (D100, decided): the pool root holds no data; Pithyx datasets live under `<pool>/pithyx/` (`shares/<name>`, `homes/<user>`, `apps/<id>`, `system`), mounted at `/<pool>/<share>`, `/<pool>/homes/<user>` and `/<pool>/.pithyx/...` (the paths in `daemon/CLAUDE.md`).
+- [x] Import an existing pool only as an explicit action, first read-only with a preview of its datasets; export. ("Import a pool…" in the Storage app scans on request, imports read-only first, and the pool's card then imports it for use or exports it again; every pool card can export.)
+- [x] Scrub, on demand and on a schedule (default monthly).
+- [x] Replace a disk, offline and online a disk, add a vdev (with a warning when it lowers redundancy; adding is irreversible), raidz expansion (OpenZFS 2.3). (All in the Storage app: "Add disks…" on each pool card with the redundancy warnings and the typed name where needed, "Expand with a disk…" on raidz vdevs with the expansion's progress on the card.)
+- [x] Destroy a pool only after typing its name, with a list of what it holds.
+- [x] Block cloning (D90): find out why `copy_file_range` cloned no blocks on dev01 (OpenZFS 2.3.9), whether `zfs_bclone_enabled` is off because of the known block cloning data corruption bug, and enable it only on an OpenZFS version with the fix, with a test on dev01. (It is on by default in 2.3.9 and works: a Files copy on a pool share cloned 8 MB on dev01. The step 6 test ran on the ext4 system disk, which cannot clone.)
 
 ### 8.2 Health and warnings
 
-- [ ] SMART with `smartctl -n standby` (never wakes a disk), SMART self-tests on a schedule (short weekly, long monthly by default), skipped while a disk sleeps.
-- [ ] Persistent notifications plus a desktop banner for: pool DEGRADED or FAULTED, SMART failures and warnings (reallocated or pending sectors, failed self-test), scrub errors, and fill level (warning at 80 percent, critical at 90 percent). They stay until the cause is gone; the user can mute but not delete them.
-- [ ] Capabilities are detected: in a VM without SMART, the UI explains why there is no SMART data instead of showing an error.
+- [x] SMART with `smartctl -n standby` (never wakes a disk), SMART self-tests on a schedule (short weekly, long monthly by default), skipped while a disk sleeps.
+- [x] Persistent notifications plus a desktop banner for: pool DEGRADED or FAULTED, SMART failures and warnings (reallocated or pending sectors, failed self-test), scrub errors, and fill level (warning at 80 percent, critical at 90 percent). They stay until the cause is gone; the user can mute but not delete them.
+- [x] Capabilities are detected: in a VM without SMART, the UI explains why there is no SMART data instead of showing an error.
 
 ### 8.3 Datasets and volumes
 
-- [ ] Create, rename, set quota and reservation, compression and record size. Delete only when empty or after typing its name.
-- [ ] Volumes (zvols) for VMs later (M5b); created with the same guard.
-- [ ] The dataset API has no share assumptions, so M4 uses it for app datasets (see "Interfaces for M4").
+- [x] Create, rename, set quota and reservation, compression and record size. Delete only when empty or after typing its name. (Creating datasets happens through shared folders. In the Storage app's Datasets section; rename, quota, reservation, compression, record size and delete are command plans (`dataset.rename`, `dataset.set`, `dataset.destroy`); delete always needs the full name typed and lists every child and snapshot that goes. The pool root, the layout datasets and what Pithyx finds by name (homes, apps, system) are never renamed or deleted; datasets holding a share or a held snapshot are not deleted.)
+- [x] Volumes (zvols) for VMs later (M5b); created with the same guard. (`volume.create` below `<pool>/pithyx/volumes`, sparse or thick, 16 KiB blocks; deleted with `dataset.destroy`.)
+- [x] The dataset API has no share assumptions, so M4 uses it for app datasets (see "Interfaces for M4"). (`dataset.set` takes app datasets; renaming and deleting them stays with M4's own lifecycle, since apps find them by name.)
 
 ### 8.4 Snapshots
 
-- [ ] Manual snapshots and schedules with retention (hourly, daily, weekly, monthly), named `pithyx-<schedule>-<utc>`.
-- [ ] Pithyx deletes only snapshots it created (D104, decided); snapshots created by the user or another tool are never pruned.
-- [ ] Holds for snapshots that must stay (pre-update snapshots in M4, snapshots a backup still needs in M6).
-- [ ] Restore a file or folder from a snapshot in Files ("Previous versions", read from `.zfs/snapshot`); rollback of a whole dataset only after typing its name, and never silently discarding newer snapshots (ZFS refuses without `-r`; Pithyx never passes `-r` without listing what goes).
-- [ ] Retention is a pure function tested with time series, including clock jumps (NTP corrections, a box that was off for months).
+- [x] Manual snapshots and schedules with retention (hourly, daily, weekly, monthly), named `pithyx-<schedule>-<utc>`.
+- [x] Pithyx deletes only snapshots it created (D104, decided); snapshots created by the user or another tool are never pruned.
+- [x] Holds for snapshots that must stay (pre-update snapshots in M4, snapshots a backup still needs in M6).
+- [x] Restore a file or folder from a snapshot in Files ("Previous versions", read from `.zfs/snapshot`); rollback of a whole dataset only after typing its name, and never silently discarding newer snapshots (ZFS refuses without `-r`; Pithyx never passes `-r` without listing what goes).
+- [x] Retention is a pure function tested with time series, including clock jumps (NTP corrections, a box that was off for months).
 
-### 8.5 Settings page Storage
+### 8.5 Storage app
 
-- [ ] Pools with layout, disks, health and fill level; datasets; snapshots with schedules; every destructive action through a command plan dialog.
-- [ ] The Disks app from step 3 is folded into this page or removed once the page shows everything it shows (step 7 kept it).
+- [x] Pools with layout, disks, health and fill level; datasets; snapshots with schedules; every destructive action through a command plan dialog. (Pool, disk, dataset and volume actions go through plan dialogs; deleting a snapshot and rolling back are the plans `snapshot.destroy` and `snapshot.rollback` with the same preview, the rollback after typing the dataset name and with every newer snapshot listed, checked again under the snapshot lock when it runs.)
+- [x] The Disks app from step 3 became the Storage app (owner's decision on 2026-09-28): an administrator app with its own icon and chunk, in the Pithyx menu and on administrators' desktops, with sections for pools (wizard, repair and maintenance), disks (guard verdict and SMART), datasets and volumes, snapshots, and health and maintenance. The Settings page Storage is gone; Settings points to the app.
 
 ### Test on dev01
 
@@ -620,7 +620,7 @@ Goal: the permission model from `CLAUDE.md`, checked on every request, and the s
 - [ ] Migration from `share_access` (per user, step 6) to grants.
 - [ ] Enforcement on disk (D102, decided): generated Linux groups per share (`vs-<id>-r`, `vs-<id>-rw`) and POSIX ACLs on the share dataset, so SMB, NFS, SFTP, the file service and later apps see the same rights. Pithyx is the only source of truth: ACLs are never edited over SMB (step 12), and the reconciler reports every difference between grants and the file system as a warning.
 - [ ] Optional user quotas from step 10 are part of the share settings.
-- [ ] Settings pages: grants on the Users page (per user and group) and on the Shares page (per share).
+- [ ] Settings pages: grants on the Users page (per user and group) and on the Shares page (per share). (Settings > Shared folders sets per-user access from `share_access` today; its rights editor becomes the grant editor.)
 
 ### Test on dev01
 
@@ -647,7 +647,7 @@ Effort: high.
 
 Goal: shares are datasets reachable over SMB, NFS and SFTP with exactly the rights the file service enforces, and one recycle bin for all of them.
 
-- [ ] A share is its own dataset (D101, decided) under `<pool>/pithyx/shares/<name>`, with its own snapshots, quota and recycle bin. The folder shares from step 6 exist only in development and are created again as datasets (no migration of real data).
+- [ ] A share is its own dataset (D101, decided) under `<pool>/pithyx/shares/<name>`, with its own snapshots, quota and recycle bin. The folder shares from step 6 exist only in development and are created again as datasets (no migration of real data). (The dataset part is done, pulled forward: Settings > Shared folders creates a share as its own dataset through a command plan, with a description and per-user rights, and deletes it after its name is typed with a choice for the data (keep, or destroy the dataset with every snapshot listed); registering a folder works only on dev and in simulation. SMB, NFS and SFTP are open.)
 - [ ] SMB: `smb.conf` generated from SQLite with the "Managed by pithyx" header; manual overrides in include files that are never touched; checked with `testparm` before every reload.
   - SMB3 only, signing required, encryption optional per share, `fruit` for macOS, `shadow_copy2` so snapshots appear as "Previous versions".
   - ACL editing over SMB is off (`nt acl support = no` and matching settings): permissions change only in Pithyx (D102).
@@ -656,7 +656,7 @@ Goal: shares are datasets reachable over SMB, NFS and SFTP with exactly the righ
   - The Users page shows which users have no SMB password yet (they never signed in on the web) and asks them to sign in once.
 - [ ] NFS (D107, decided): NFSv4.2 with `sec=sys`, a list of allowed clients per share, `root_squash`, off by default, and a warning that NFS trusts the client's user ids. Kerberos later.
 - [ ] SFTP (D108, decided): OpenSSH `internal-sftp` in a chroot with a bind-mount view of the shares the user may use, only with the SFTP right and independent of the SSH login right.
-- [ ] Settings page Shares: protocols, allowed clients, recycle bin retention, snapshot visibility, quotas.
+- [ ] Settings page Shares: protocols, allowed clients, recycle bin retention, snapshot visibility, quotas. (The base page exists as Settings > Shared folders: list with pool, space, description and rights, create, edit, delete. Step 12 extends it with protocols, allowed clients, recycle bin settings, snapshot visibility and quotas; step 11 replaces its per-user rights with grants to users and groups.)
 
 ### Test on dev01
 
@@ -690,6 +690,7 @@ Goal: SSDs speed up pools where it helps, and the UI says when it does not.
 - [ ] L2ARC (read cache), SLOG (synchronous writes) and special vdevs (metadata and small blocks, which also keep listings off sleeping disks).
 - [ ] A recommendation as a pure function of the disks, the pool layout, ARC statistics and the share of synchronous writes, with the reason in plain language ("Your ARC hit rate is 97 percent; a read cache would not help").
 - [ ] Special vdevs and SLOGs only as mirrors; adding what cannot be removed (a special vdev on raidz) only after typing the pool name.
+- [ ] In the Storage app, on the pool (with the recommendation), not in Settings.
 
 ### Test on dev01
 
@@ -716,7 +717,7 @@ Goal: the box sleeps when it can, the user sees what keeps it awake, and network
 
 ### 14.1 Energy
 
-- [ ] Spindown per pool with hd-idle, off by default.
+- [ ] Spindown per pool with hd-idle, off by default; set in the Storage app on the pool.
 - [ ] Snapshot schedules and SMART self-tests follow spindown: a sleeping pool is not woken for a snapshot of unchanged data (a snapshot is taken when the pool is awake anyway or has changed), and idle-check (`tools/dev-vm/idle-check.sh`) verifies that no Pithyx schedule wakes a disk.
 - [ ] Power profiles (performance, balanced, efficient) set the CPU governor and EPP; SATA ALPM, PCIe ASPM and USB autosuspend stay opt-in.
 - [ ] A diagnostic that shows what keeps disks awake (process and file, through fanotify on the pool mounts and `/proc/<pid>/io`) and CPU package C-state residency.
@@ -730,7 +731,7 @@ Goal: the box sleeps when it can, the user sees what keeps it awake, and network
 
 ### 14.3 Settings pages Energy and Network
 
-- [ ] Both pages, with the diagnostic and the confirmation countdown.
+- [ ] Both pages in the Settings app (power profiles, the wake-up diagnostic and the network with the confirmation countdown); spindown per pool is in the Storage app.
 
 ### Test on dev01
 
@@ -773,7 +774,9 @@ Known requirements for later milestones:
 
 - Website, first task once `website/` exists: an error code reference generated from `i18n/en/errors.json` (and the translated files), plus a CI check that every code in `ErrorCodes` has a doc entry. Until then error codes are documented only through their i18n texts.
 - Website user docs for shares and files from step 6: the Files app (double click downloads files for now, Ctrl+A selects the whole folder, the keyboard shortcuts F2, Delete, Shift+Delete, Ctrl+C/X/V, Backspace and Alt+Up, dropping files from the system to upload, Ctrl or Alt while dropping to copy instead of move, the conflict question, progress and cancel in the status bar), the recycle bin per share (restore, empty, retention, that deleting for good is only explicit), the upload behavior (the file appears only when complete, existing names are never replaced without asking), conflict choices for copy and move (skip, overwrite merges folders, rename to "name (2)"), that symlinks are shown but never copied, and the share rules for administrators (existing folder, no system folders, no overlapping shares).
-- Website user docs for storage from step 7: the Settings page Storage (only administrators see Settings), what each disk verdict means (system disk, pool member, mounted, not a test disk on a development machine, has data and needs its serial, empty), that a pool preview probes the disks again and lists the exact commands, and why a disk with data needs its serial typed.
+- Website user docs for storage from steps 7 and 8: the Storage app (only administrators see it), what each disk verdict means (system disk, pool member, mounted, not a test disk on a development machine, has data and needs its serial, empty), that a pool preview probes the disks again and lists the exact commands, and why a disk with data needs its serial typed.
+- Step 8 follow-ups that did not block the review: a live topic for snapshots (the Snapshots section reloads its list after each action and on reopening, but a snapshot a schedule takes while the section is open appears only then); `storage.scrub.finished` as an info notification when a scrub ends without errors; re-record the hand-written fixtures (`zfs-list-snapshots`, `smartctl-handwritten-*`, `zpool-scrub-handwritten-*`) on real hardware with SMART (dev01 is a VM without it).
+- Website user docs for pool import, export and growing a pool from step 8: that a scan for importable pools reads every disk and may wake a sleeping one, that a pool is always imported read-only first (not mounted, not remembered after a restart) so its datasets can be checked, which datasets the read-write import leaves unmounted and why (system folders, hiding a mount, duplicate mount points, locked keys) and that those get `canmount=noauto`, when a forced import is needed (pool last used by another system) and why the name is typed, what exporting makes unavailable, and for adding a vdev and RAID-Z expansion what each warning means (lowers redundancy, replication mismatch, irreversible, no redundancy) and that existing data keeps its old parity ratio after an expansion.
 - Website user docs for the Resource Monitor: what each memory part means (programs, ZFS cache that gives memory back, page cache), that CPU in the process list is the share of all cores, that the history covers only the time a monitor was open (nothing is measured while nobody watches), why disk temperatures are not shown there (they would wake sleeping disks), and that virtual machines usually have no temperature sensors. Also a design gallery screen for it (the gallery's sample app sends no events yet).
 - Files thumbnails and viewer, follow-ups: video thumbnails (a frame, needs ffmpeg) and HEIC photos (needs a HEIF codec) show icons for now; optional light syntax highlighting for code in the viewer; pdf.js standard fonts and CMaps for PDFs that do not embed their fonts (they show with substitute fonts); design gallery screens for the tile view and the viewer. Website user docs: the tile view, where thumbnails are kept and that only images on screen are read, what the viewer shows and that HTML and SVG never run, "Open with", and the 1 MB limit for text.
 - Website user docs for the desktop from step 5: desktop items (selecting with a frame, Ctrl and Shift, moving by dragging and with Move, F2, Delete, Shift+F10, the note grip and its arrow keys, long press on touch, the 200 item and 4000 character limits, and that note text changed on two devices is kept on a second note), window menu and the Alt+Shift shortcuts (and that they do not apply in text fields), snapping and thirds on ultrawide screens, taskbar position, layout memory per device with its 90-day expiry and "Get desktop from ..." (which shows each device's browser, system, screen size and last use), that only the tab in use saves the layout, the phone app switcher, swipe and back gesture, and the `pithyx_device` cookie (what it is, that it holds no personal data, and that it is `Secure` on HTTPS).
@@ -781,6 +784,7 @@ Known requirements for later milestones:
 - Self-hosted CI runner, parked (D109 in vyxis/vyxis#25: integration tests run on GitHub-hosted runners with file-backed pools, plus the destructive suite on dev01; this proposal is for later, if tests need the exact Debian kernel). A dedicated VM with at least 6 GB RAM, never on the NAS and never on pve02, with egress only to GitHub, npm, NuGet and the Debian mirrors and no access to shares, management interfaces or the LAN. On it: ephemeral runners in Docker containers for the daemon, frontend and E2E jobs (own image built from the pinned `actions/runner` release, one JIT runner config per job from a GitHub App key, `docker run --rm`, non-root, no `docker.sock`, no `--privileged`, no host network, CPU and memory limits, updates only by rebuilding the image in a PR), and a throwaway VM per job for the ZFS and mdadm integration tests (qcow2 overlay on a golden Debian 13 image with `zfs-dkms`, loop devices only inside it). GitHub side: a runner group for `vyxis/vyxis` only, label `pithyx-ci`, `runs-on: ${{ vars.CI_RUNNER || 'ubuntu-24.04' }}` so switching back is one repository variable (see "CI runners" under "Release blockers").
 - Third-party notices: generate the list of bundled NuGet and npm packages with their licenses (for example libsodium ISC, NSec MIT, Otp.NET MIT) for the About page, and check it in CI. It starts from the hand-written `desktop/public/third-party-notices.json` (fonts, Tabler, React Aria), which does not list transitive packages yet.
 - `[DECISION]` Server-side rendered texts (email, SSH MOTD, push) in the recipient's language need culture data. Decide between keeping `InvariantGlobalization` (small, no libicu, but only invariant formatting and a hand-written plural rule for English and German in `IcuMessageFormatter`) and enabling ICU culture data (libicu in the image, about 30 MB, correct number, date and plural rules for every language). Today the daemon only renders the English `detail` fallback of problem details.
+- M5: the system on redundant disks (owner's question in vyxis/vyxis#29). Today the system lives on one disk, and the disk guard never lets a pool use it: a failed system disk stops the box until it is reinstalled and the config backup restored (the pools survive). Proposal: the installer offers root on ZFS as a mirror of two or more disks (`rpool` with a small boot partition on each, like the system partition other NAS systems spread over every disk), the rest of those disks usable as the data pool, and a second disk can be attached to the system mirror later. The guard then treats the system pool's disks as system disks as it does now, and only the plans for the system mirror may touch them. `[DECISION]` for M5: root on a ZFS mirror of the chosen disks (recommended), or a system partition on every data disk.
 - M5: web-based installer instead of a TUI. Boot from USB, open the setup page in a browser, choose the system disk, the system installs itself and continues setup in the same page. The console only shows the address. The installer announces itself as `pithyx-setup.local`; an installed box gets the default host name `pithyx` and answers as `pithyx.local`.
 - M5: TLS as decided in `CLAUDE.md`: self-signed by default, trust wizard (local CA download with per-OS instructions), optional own domain with Let's Encrypt DNS-01. Passkeys and the service worker switch on once trusted.
   - Chromium does not use its HTTP cache for responses with a certificate error (measured in the #13 review): on the untrusted default every reload downloads the whole desktop again (about 1.1 s instead of 0.4 s on Fast 4G with 4x CPU). After sign-in on an untrusted certificate the desktop shows a dismissible hint that leads to the trust wizard and names faster reloads next to passkeys; the reload budget holds only once trusted. Add an E2E check that a trusted certificate serves `/assets/*` from the disk cache.

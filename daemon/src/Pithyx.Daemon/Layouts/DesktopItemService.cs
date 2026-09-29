@@ -26,10 +26,10 @@ public sealed class DesktopItemService(SqliteConnectionFactory connections, Time
     private static readonly JsonSerializerOptions _dataOptions = new() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
 
     /// <summary>The shortcuts every new user starts with, one below the other in the first column.</summary>
-    public static readonly IReadOnlyList<string> DefaultShortcuts = ["files", "disks", "about"];
+    public static readonly IReadOnlyList<string> DefaultShortcuts = ["files", "about"];
 
-    /// <summary>New administrators also get Settings, which only administrators can open.</summary>
-    public static readonly IReadOnlyList<string> DefaultAdminShortcuts = ["files", "disks", "settings", "about"];
+    /// <summary>New administrators also get Storage and Settings, which only administrators can open.</summary>
+    public static readonly IReadOnlyList<string> DefaultAdminShortcuts = ["files", "storage", "settings", "about"];
 
     private const string SelectColumns =
         """

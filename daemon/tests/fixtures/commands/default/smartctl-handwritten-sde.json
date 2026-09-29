@@ -1,0 +1,11 @@
+{
+  "command": "smartctl",
+  "args": [
+    "-n",
+    "standby",
+    "-j",
+    "-a",
+    "/dev/sde"
+  ],
+  "exitCode": 4
+}

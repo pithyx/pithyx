@@ -3,10 +3,13 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 using Pithyx.Daemon.Commands;
+using Pithyx.Daemon.Database;
 using Pithyx.Daemon.Errors;
 using Pithyx.Daemon.Hosting;
 using Pithyx.Daemon.Realtime;
+using Pithyx.Daemon.Shares;
 using Pithyx.Daemon.Storage;
+using Pithyx.Daemon.Storage.Snapshots;
 using Pithyx.Daemon.Storage.Zfs;
 using Pithyx.Daemon.Tests.Support;
 using static Pithyx.Daemon.Tests.Storage.StorageFixtures;
@@ -34,12 +37,24 @@ public sealed class CommandPlanRunnerTests : IDisposable
         _facts = new StorageFacts(_disks, _pools, environment, new SystemFiles(Path.Combine(_proc, "mountinfo"), Path.Combine(_proc, "swaps")));
         var hub = new TopicHub(new TopicRegistry([_disks.Definition(), _pools.Definition()]), _time, Options.Create(new JsonOptions()), NullLogger<TopicHub>.Instance);
         _state = new SystemStateService(_commands, _disks, _pools, new ZfsBackend(_commands), new DiskProbe(_commands), _facts, hub, _time, NullLogger<SystemStateService>.Instance);
-        _planner = new StoragePlanner(_state, _facts, _pools, _time);
+        // Pool plans never reach the dataset planner's database.
+        var connections = new SqliteConnectionFactory(Path.Combine(_proc, "unused.db"));
+        var snapshots = new SnapshotInventory();
+        var datasets = new DatasetPlanner(
+            _state,
+            _pools,
+            snapshots,
+            new SnapshotService(_commands, snapshots, _pools, connections, _time, NullLogger<SnapshotService>.Instance),
+            new ShareService(connections, _time),
+            _time,
+            NullLogger<DatasetPlanner>.Instance);
+        _planner = new StoragePlanner(_state, _facts, _pools, new PoolImportScanner(_commands, _state, _facts, _pools), datasets, _commands, _time);
         _runner = new CommandPlanRunner(_commands, _state, _facts, _time);
         _commands.Results["lsblk"] = Ok(Read("default", "lsblk"));
         _commands.Results["wipefs"] = Ok("");
         _commands.Results["blkid"] = new CommandResult(2, "", "", TimeSpan.Zero);
         _commands.Results["zpool"] = Ok("");
+        _commands.Results["zfs"] = Ok("");
     }
 
     public void Dispose()
@@ -55,13 +70,14 @@ public sealed class CommandPlanRunnerTests : IDisposable
     private async Task<CommandPlan> MirrorPlanAsync()
     {
         await _state.RefreshDisksAsync([], Token);
-        var (verdicts, plan) = await _planner.PlanPoolCreateAsync(
-            new PoolCreatePreviewRequest("tank", "mirror", ["serial-VYXTEST02", "serial-VYXTEST03"], null), Token);
+        var (verdicts, plan, _) = await _planner.PlanAsync(
+            new StoragePlanRequest("pool.create", "tank", "mirror", ["serial-VYXTEST02", "serial-VYXTEST03"], Encryption: "none"), Token);
         Assert.All(verdicts, verdict => Assert.Equal(GuardDecision.Allowed, verdict.Decision));
         return plan!;
     }
 
-    private List<string> ZpoolCalls() => [.. _commands.Calls.Where(call => call.FileName == "zpool").Select(call => call.Arguments[0])];
+    /// <summary>zpool calls that change something; the runner reads the pools again after every plan.</summary>
+    private List<string> ZpoolCalls() => [.. _commands.Calls.Where(call => call.FileName == "zpool" && call.Arguments[0] is not ("status" or "list")).Select(call => call.Arguments[0])];
 
     [Fact]
     public async Task RunsThePlanAsShown()
@@ -72,8 +88,25 @@ public sealed class CommandPlanRunnerTests : IDisposable
         await _runner.RunAsync(plan, (index, _) => progress.Add(index), Token);
 
         Assert.Equal(["create"], ZpoolCalls());
-        Assert.Equal([0], progress);
-        Assert.Equal(plan.Steps[0].Command, _commands.Calls.Last());
+        Assert.Equal(["create", "create", "create", "create", "create", "list"], _commands.Calls.Where(call => call.FileName == "zfs").Select(call => call.Arguments[0]));
+        Assert.Equal([0, 1, 2, 3, 4, 5], progress);
+        // After the last command the state is read again, so the page and the bookkeeping see the new pool.
+        Assert.Equal([plan.Steps[^1].Command, ZfsBackend.Status, ZfsBackend.List, ZfsBackend.Datasets], _commands.Calls.TakeLast(4));
+    }
+
+    [Fact]
+    public async Task BookkeepingRunsOnlyAfterEveryCommandSucceeded()
+    {
+        var plan = await MirrorPlanAsync();
+        var callsBefore = -1;
+        await _runner.RunAsync(plan with { AfterRun = _ => { callsBefore = _commands.Calls.Count; return Task.CompletedTask; } }, null, Token);
+        Assert.Equal(_commands.Calls.Count, callsBefore);
+
+        var failing = await MirrorPlanAsync();
+        var ran = false;
+        _commands.Results["zpool create"] = new CommandResult(1, "", "cannot create", TimeSpan.Zero);
+        await Assert.ThrowsAsync<PithyxException>(() => _runner.RunAsync(failing with { AfterRun = _ => { ran = true; return Task.CompletedTask; } }, null, Token));
+        Assert.False(ran);
     }
 
     [Fact]
@@ -119,8 +152,8 @@ public sealed class CommandPlanRunnerTests : IDisposable
     public async Task TheSystemDiskAndANonTestDiskNeverGetAPlanEvenWithTheirSerials()
     {
         await _state.RefreshDisksAsync([], Token);
-        var (verdicts, plan) = await _planner.PlanPoolCreateAsync(
-            new PoolCreatePreviewRequest("tank", "mirror", ["serial-02609329D99", "serial-VYXTEST06"], new Dictionary<string, string> { ["serial-02609329D99"] = "02609329D99", ["serial-VYXTEST06"] = "VYXTEST06" }),
+        var (verdicts, plan, _) = await _planner.PlanAsync(
+            new StoragePlanRequest("pool.create", "tank", "mirror", ["serial-02609329D99", "serial-VYXTEST06"], Encryption: "none", Confirmations: new Dictionary<string, string> { ["serial-02609329D99"] = "02609329D99", ["serial-VYXTEST06"] = "VYXTEST06" }),
             Token);
 
         Assert.Null(plan);
@@ -131,7 +164,7 @@ public sealed class CommandPlanRunnerTests : IDisposable
     public async Task AFailedCommandStopsThePlan()
     {
         var plan = await MirrorPlanAsync();
-        _commands.Results["zpool"] = new CommandResult(1, "", "invalid vdev specification", TimeSpan.Zero);
+        _commands.Results["zpool create"] = new CommandResult(1, "", "invalid vdev specification", TimeSpan.Zero);
 
         var error = await Assert.ThrowsAsync<PithyxException>(() => _runner.RunAsync(plan, null, Token));
 

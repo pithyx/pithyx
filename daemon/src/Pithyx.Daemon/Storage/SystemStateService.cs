@@ -186,7 +186,8 @@ public sealed partial class SystemStateService(
         }
     }
 
-    private async Task RefreshPoolsAsync(CancellationToken cancellationToken)
+    /// <summary>Reads pools and datasets now, for example right after a plan imported a pool or changed a dataset.</summary>
+    public async Task RefreshPoolsAsync(CancellationToken cancellationToken)
     {
         var parent = Activity.Current;
         Activity.Current = null;

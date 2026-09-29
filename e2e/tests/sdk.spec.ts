@@ -57,8 +57,8 @@ test('lifecycle events reach the app: focus, blur, minimize, restore, theme and 
   const { app } = await openDemo(page);
   const events = app.getByRole('list', { name: 'Events' });
 
-  await openFromDesktop(page, 'Disks');
-  await expect(appWindow(page, 'Disks')).toBeVisible();
+  await openFromDesktop(page, 'Storage');
+  await expect(appWindow(page, 'Storage')).toBeVisible();
   await expect(events).toContainText('blur');
   await page
     .getByRole('navigation', { name: 'Taskbar' })

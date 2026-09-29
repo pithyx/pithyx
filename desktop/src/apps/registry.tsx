@@ -1,10 +1,10 @@
 import {
   IconActivity,
-  IconPhoto,
   IconApps,
   IconDatabase,
   IconFolders,
   IconInfoCircle,
+  IconSearch,
   IconSettings,
   type TablerIcon,
 } from '../ui/icons';
@@ -54,19 +54,18 @@ export const coreApps: readonly CoreApp[] = [
     ),
   },
   {
-    id: 'disks',
+    id: 'storage',
     icon: IconDatabase,
     tone: 'ocean',
+    adminOnly: true,
     window: {
       instances: 'single',
-      defaultSize: { width: 880, height: 520 },
-      minSize: { width: 360, height: 240 },
+      defaultSize: { width: 1000, height: 660 },
+      minSize: { width: 340, height: 360 },
     },
     Component: lazy(() =>
-      Promise.all([import('./disks/DisksApp'), loadTranslations('disks')]).then(
-        ([{ DisksApp }]) => ({
-          default: DisksApp,
-        }),
+      Promise.all([import('./storage/StorageWindow'), loadTranslations('storage')]).then(
+        ([{ StorageWindow }]) => ({ default: StorageWindow }),
       ),
     ),
   },
@@ -81,9 +80,11 @@ export const coreApps: readonly CoreApp[] = [
       minSize: { width: 340, height: 360 },
     },
     Component: lazy(() =>
-      Promise.all([import('./settings/SettingsWindow'), loadTranslations('settings')]).then(
-        ([{ SettingsWindow }]) => ({ default: SettingsWindow }),
-      ),
+      // Settings runs plans with the Storage app's plan dialogs, and their texts.
+      Promise.all([
+        import('./settings/SettingsWindow'),
+        loadTranslations('settings', 'storage'),
+      ]).then(([{ SettingsWindow }]) => ({ default: SettingsWindow })),
     ),
   },
   {
@@ -104,7 +105,7 @@ export const coreApps: readonly CoreApp[] = [
   },
   {
     id: 'viewer',
-    icon: IconPhoto,
+    icon: IconSearch,
     tone: 'plum',
     launchOnly: true,
     window: {

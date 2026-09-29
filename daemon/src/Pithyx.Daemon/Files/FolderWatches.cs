@@ -86,7 +86,7 @@ public sealed class FolderWatches : IDisposable
                     return false;
                 }
                 var descriptor = LinuxFs.InotifyWatch(_inotify, handle, Mask);
-                var watch = new Watch(topic, folder.ShareId, folder.Path, handle, descriptor);
+                var watch = new Watch(topic, folder.ShareId, folder.SharePath, folder.Path, handle, descriptor);
                 _byTopic[topic] = watch;
                 _byDescriptor[descriptor] = watch;
                 return true;
@@ -111,6 +111,30 @@ public sealed class FolderWatches : IDisposable
                 Remove(watch, unwatch: true);
             }
         }
+    }
+
+    /// <summary>
+    /// Stops watching every folder at or below the given paths and tells its subscribers it is gone, so a dataset can
+    /// be unmounted: the watch holds a handle on the folder. Returns how many watches ended.
+    /// </summary>
+    public int ReleaseBelow(IReadOnlyCollection<string> roots)
+    {
+        ArgumentNullException.ThrowIfNull(roots);
+        List<Watch> ended;
+        lock (_lock)
+        {
+            ended = [.. _byTopic.Values.Where(watch => roots.Any(root => FsPath.IsSameOrInside(watch.FullPath, root)))];
+            foreach (var watch in ended)
+            {
+                Remove(watch, unwatch: true);
+            }
+        }
+        foreach (var watch in ended)
+        {
+            _cache.Invalidate(watch.ShareId, watch.Path);
+            _events.Writer.TryWrite(new FolderEvent(watch.Topic, new FolderChanges([], [], false, true)));
+        }
+        return ended.Count;
     }
 
     private void Remove(Watch watch, bool unwatch)
@@ -253,11 +277,14 @@ public sealed class FolderWatches : IDisposable
         _events.Writer.TryComplete();
     }
 
-    private sealed class Watch(string topic, long shareId, string path, SafeFileHandle handle, int descriptor)
+    private sealed class Watch(string topic, long shareId, string sharePath, string path, SafeFileHandle handle, int descriptor)
     {
         public string Topic { get; } = topic;
         public long ShareId { get; } = shareId;
         public string Path { get; } = path;
+
+        /// <summary>The folder on the host: the share's root joined with the path inside it.</summary>
+        public string FullPath { get; } = path.Length == 0 ? sharePath : System.IO.Path.Join(sharePath, path);
         public SafeFileHandle Handle { get; } = handle;
         public int Descriptor { get; } = descriptor;
         public HashSet<string> Names { get; } = new(StringComparer.Ordinal);

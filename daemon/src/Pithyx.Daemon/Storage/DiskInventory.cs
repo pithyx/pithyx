@@ -32,6 +32,9 @@ public sealed class DiskInventory
         }
     }
 
+    /// <summary>Raised after <see cref="Replace"/> found disks that appeared, changed or disappeared.</summary>
+    public event Action<DisksChanged>? Changed;
+
     /// <summary>Replaces the list and returns what changed, compared by id and content.</summary>
     public DisksChanged Replace(IReadOnlyList<Disk> disks, IReadOnlyDictionary<string, BlockDevice>? devices = null)
     {
@@ -43,7 +46,12 @@ public sealed class DiskInventory
         var removals = previous.Keys.Where(id => !ids.Contains(id)).Order(StringComparer.Ordinal).ToList();
         removals.ForEach(id => _signatures.TryRemove(id, out _));
         Volatile.Write(ref _current, new DiskList(disks));
-        return new DisksChanged(upserts, removals);
+        var changes = new DisksChanged(upserts, removals);
+        if (upserts.Count > 0 || removals.Count > 0)
+        {
+            Changed?.Invoke(changes);
+        }
+        return changes;
     }
 
     public TopicDefinition Definition() => new(
@@ -51,7 +59,8 @@ public sealed class DiskInventory
         typeof(DiskList),
         typeof(DisksChanged),
         (_, _) => ValueTask.FromResult<object>(Current),
-        TopicDefinition.AnyUser);
+        // Administrators only, like the Storage app that shows them: disks name serials and models.
+        PoolInventory.IsAllowed);
 
     // Records compare lists by reference, so content is compared through its JSON form.
     private static string Fingerprint(Disk disk) => JsonSerializer.Serialize(disk);

@@ -65,7 +65,7 @@ export function appWindow(page: Page, name: string) {
 }
 
 /**
- * Puts the administrator's desktop items back to Disks and About; they are shared by every spec. The item specs measure
+ * Puts the administrator's desktop items back to Storage and About; they are shared by every spec. The item specs measure
  * this grid, so the Files shortcut new users also get is left out; specs open Files from the start menu.
  */
 export async function resetDesktopItems(page: Page) {
@@ -74,7 +74,7 @@ export async function resetDesktopItems(page: Page) {
   for (const item of items) {
     await page.request.delete(`/api/desktop/items/${String(item.id)}`, { headers });
   }
-  for (const [row, app] of ['disks', 'about'].entries()) {
+  for (const [row, app] of ['storage', 'about'].entries()) {
     await page.request.post('/api/desktop/items', {
       headers,
       data: { kind: 'shortcut', app, column: 0, row },

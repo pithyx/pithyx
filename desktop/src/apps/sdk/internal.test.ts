@@ -36,7 +36,19 @@ describe('the internal administrator calls', () => {
     const names: (keyof InternalMethods)[] = [
       'internal.admin.storage.disks',
       'internal.admin.storage.pools',
-      'internal.admin.storage.preview',
+      'internal.admin.storage.plan',
+      'internal.admin.storage.run',
+      'internal.admin.storage.importScan',
+      'internal.admin.storage.snapshots.list',
+      'internal.admin.storage.snapshots.create',
+      'internal.admin.storage.snapshots.hold',
+      'internal.admin.storage.snapshots.release',
+      'internal.admin.storage.snapshots.setSchedules',
+      'internal.admin.storage.health',
+      'internal.admin.storage.mute',
+      'internal.admin.storage.scrub',
+      'internal.admin.storage.schedules',
+      'internal.admin.storage.schedule',
     ];
     for (const name of names) {
       await expect(app.call(name as 'notify', {} as never)).rejects.toMatchObject({

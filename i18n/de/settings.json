@@ -4,9 +4,9 @@
     "personalization": "Personalisierung",
     "users": "Benutzer und Gruppen",
     "network": "Netzwerk",
-    "storage": "Speicher",
     "updates": "Updates",
-    "about": "Info"
+    "about": "Info",
+    "shares": "Freigegebene Ordner"
   },
   "personalization": {
     "theme": "Erscheinungsbild",
@@ -37,97 +37,80 @@
       "picture": "Bild auswählen"
     }
   },
-  "storage": {
-    "intro": "Pools speichern deine Daten auf einer oder mehreren Platten. Bei jeder Platte steht, ob ein neuer Pool sie verwenden darf.",
-    "dev": "Entwicklungsrechner: Nur die eingetragenen Testplatten können verwendet werden.",
-    "pools": {
-      "title": "Pools",
-      "empty": "Noch keine Pools.",
-      "used": "{used} von {size} belegt",
-      "layout": "Aufbau: {layout}",
-      "devices": "Geräte von {pool}",
-      "errors": "Fehler: {read} Lesen, {write} Schreiben, {checksum} Prüfsumme"
-    },
-    "state": {
-      "online": "Intakt",
-      "degraded": "Beeinträchtigt",
-      "faulted": "Ausgefallen",
-      "offline": "Offline",
-      "unavail": "Nicht erreichbar",
-      "removed": "Entfernt",
-      "suspended": "Angehalten",
-      "unknown": "Unbekannt"
-    },
-    "vdev": {
-      "mirror": "Spiegel aus {count, plural, one {# Platte} other {# Platten}}",
-      "raidz": "RAID-Z{parity} aus {count, plural, one {# Platte} other {# Platten}}",
-      "single": "Einzelne Platte"
-    },
-    "role": {
-      "log": "Log",
-      "cache": "Cache",
-      "special": "Spezial",
-      "dedup": "Dedup",
-      "spare": "Ersatz"
-    },
-    "scan": {
-      "scrubRunning": "Prüfung läuft, {percent} % geprüft",
-      "resilverRunning": "Wiederherstellung läuft, {percent} % erledigt",
-      "paused": "Prüfung bei {percent} % pausiert",
-      "scrubFinished": "Letzte Prüfung {date}: {errors, plural, =0 {keine Fehler} one {# Fehler} other {# Fehler}}",
-      "resilverFinished": "Letzte Wiederherstellung {date}: {errors, plural, =0 {keine Fehler} one {# Fehler} other {# Fehler}}",
-      "canceled": "Die letzte Prüfung wurde abgebrochen."
-    },
-    "disks": {
-      "title": "Platten",
-      "caption": "Platten und ob ein neuer Pool sie verwenden darf",
+  "storagePointer": {
+    "open": "Speicher öffnen"
+  },
+  "shares": {
+    "title": "Freigegebene Ordner",
+    "intro": "Jeder freigegebene Ordner ist ein eigenes Dataset auf einem Pool, mit eigenem Platz und eigenen Snapshots. Lege fest, wer seine Dateien lesen oder ändern darf.",
+    "create": "Freigegebenen Ordner anlegen…",
+    "caption": "Freigegebene Ordner mit Pool, Platz, Beschreibung und Rechten",
+    "loading": "Freigegebene Ordner werden geladen…",
+    "empty": "Noch keine freigegebenen Ordner. Lege einen an, um Dateien gemeinsam abzulegen.",
+    "columns": {
       "name": "Name",
-      "model": "Modell",
-      "serial": "Seriennummer",
-      "size": "Größe",
-      "status": "Für einen neuen Pool"
+      "pool": "Pool",
+      "used": "Belegt",
+      "description": "Beschreibung",
+      "rights": "Rechte",
+      "actions": "Aktionen"
     },
-    "decision": {
-      "allowed": "Verfügbar",
-      "needsSerialConfirmation": "Bestätigung nötig",
-      "refused": "Nicht verfügbar"
-    },
-    "reason": {
-      "system_disk": "Enthält das System. Wird nie für Pools verwendet.",
-      "read_only": "Die Platte ist schreibgeschützt.",
-      "mounted": "Ein Dateisystem darauf ist in Benutzung.",
-      "pool_member": "Gehört zum Pool {pool}.",
-      "not_test_disk": "Keine eingetragene Testplatte dieses Entwicklungsrechners.",
-      "duplicate_serial": "Eine andere Platte meldet dieselbe Seriennummer, deshalb lassen sie sich nicht unterscheiden.",
-      "no_serial": "Enthält Daten und hat keine Seriennummer zum Bestätigen.",
-      "not_checked": "Noch nicht geprüft. Bestätige mit ihrer Seriennummer, um sie zu verwenden.",
-      "has_data": "Enthält Daten ({contents}). Bestätige mit ihrer Seriennummer, um sie zu verwenden; alles darauf geht verloren.",
-      "confirmed": "Mit ihrer Seriennummer bestätigt.",
-      "empty": "Leer und bereit."
-    },
-    "layouts": {
-      "single": "Einzelne Platte (keine Redundanz)",
-      "mirror": "Spiegel",
-      "raidz1": "RAID-Z1 (eine Platte darf ausfallen)",
-      "raidz2": "RAID-Z2 (zwei Platten dürfen ausfallen)",
-      "raidz3": "RAID-Z3 (drei Platten dürfen ausfallen)",
-      "stripe": "Stripe (eine ausgefallene Platte kostet alles)"
-    },
-    "create": {
-      "button": "Pool anlegen …",
-      "title": "Pool anlegen",
-      "name": "Name des Pools",
-      "nameHint": "Kleinbuchstaben, Ziffern, - und _; beginnt mit einem Buchstaben.",
-      "layout": "Aufbau",
-      "disks": "Platten",
-      "noDisks": "Gerade kann keine Platte verwendet werden.",
-      "refused": "{count, plural, one {# Platte ist} other {# Platten sind}} nicht verfügbar",
-      "confirm": "Gib die Seriennummer von {disk} ein ({serial})",
+    "folder": "Ordner",
+    "missing": "Dataset nicht gefunden",
+    "used": "{used} belegt, {free} frei",
+    "usedQuota": "{used} von {quota}",
+    "noDescription": "Keine Beschreibung",
+    "rights": "{count, plural, =0 {Nur Administratoren} one {# Benutzer} other {# Benutzer}}",
+    "rightsDetail": "{readWrite} lesen und schreiben, {read} nur lesen",
+    "edit": "Bearbeiten",
+    "editLabel": "{name} bearbeiten",
+    "delete": "Löschen…",
+    "deleteLabel": "{name} löschen",
+    "close": "Schließen",
+    "createDialog": {
+      "title": "Freigegebenen Ordner anlegen",
+      "name": "Name",
+      "nameHint": "Buchstaben, Ziffern, Leerzeichen, Punkte, Bindestriche und Unterstriche.",
+      "pool": "Pool",
+      "noPools": "Noch kein Pool ist für freigegebene Ordner bereit. Lege zuerst in Speicher einen Pool an.",
+      "description": "Beschreibung (optional)",
       "preview": "Befehle anzeigen",
-      "commands": "Diese Befehle würden genau so ausgeführt:",
-      "notYet": "Pools von hier aus anlegen kommt mit dem nächsten Update. Es wurde nichts ausgeführt.",
-      "blocked": "Nicht jede gewählte Platte kann verwendet werden:",
-      "close": "Schließen"
+      "dataset": "Der freigegebene Ordner wird zum Dataset {dataset}.",
+      "run": "Freigegebenen Ordner anlegen"
+    },
+    "editDialog": {
+      "title": "{name} bearbeiten",
+      "details": "Name und Beschreibung",
+      "name": "Name",
+      "description": "Beschreibung",
+      "datasetKept": "Umbenennen ändert nur den Namen, den Benutzer sehen; das Dataset behält seinen Namen.",
+      "save": "Speichern",
+      "saved": "Gespeichert.",
+      "rights": "Rechte",
+      "rightsIntro": "Änderungen gelten sofort. Administratoren können immer alles lesen und ändern.",
+      "loading": "Benutzer werden geladen…",
+      "access": "Zugriff von {user}",
+      "administrator": "Administrator, voller Zugriff",
+      "levels": {
+        "none": "Kein Zugriff",
+        "read": "Lesen",
+        "readWrite": "Lesen und schreiben"
+      }
+    },
+    "deleteDialog": {
+      "title": "{name} löschen",
+      "choice": "Was passiert mit den Daten?",
+      "keep": "Daten behalten",
+      "keepDataset": "Der freigegebene Ordner verschwindet. Das Dataset {dataset} und seine Dateien bleiben und sind weiter in Speicher zu sehen.",
+      "keepFolder": "Der freigegebene Ordner verschwindet. Die Dateien bleiben im Ordner {path}.",
+      "destroy": "Daten endgültig löschen",
+      "destroyHint": "Das Dataset, alle seine Dateien und jeder Snapshot werden gelöscht. Das lässt sich nicht rückgängig machen.",
+      "folderOnly": "Das ist ein einfacher Ordner, kein Dataset, deshalb können seine Dateien nur behalten werden.",
+      "confirm": "Gib {name} zur Bestätigung ein",
+      "preview": "Anzeigen, was passiert",
+      "nothingRuns": "Es läuft kein Befehl. {location} und seine Dateien bleiben.",
+      "gone": "Das wird endgültig gelöscht:",
+      "run": "Freigegebenen Ordner löschen"
     }
   }
 }

@@ -51,6 +51,7 @@ import {
 } from './selection';
 import { createTransfers, type Transfers } from './transfers';
 import { TrashView, trashKey } from './TrashView';
+import { VersionsDialog } from './VersionsDialog';
 import { createThumbnails, thumbnailKey } from './thumbnails';
 import { changeFolder, folderKey, keepOnly, useFolder } from './useFolder';
 
@@ -133,6 +134,11 @@ export function FilesApp({ app }: { app: PithyxApp }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [menu, setMenu] = useState<{ x: number; y: number; entry: FileEntry | null } | null>(null);
   const [confirmPermanent, setConfirmPermanent] = useState<FileItems | null>(null);
+  const [versionsOf, setVersionsOf] = useState<{
+    share: string;
+    path: string;
+    name: string;
+  } | null>(null);
   const [conflict, setConflict] = useState<
     | { kind: 'job'; operation: FileOperation }
     | { kind: 'upload'; files: File[]; folder: string }
@@ -297,6 +303,14 @@ export function FilesApp({ app }: { app: PithyxApp }) {
 
   // Job progress arrives as SDK events for as long as the window is open.
   useEffect(() => app.on('jobChanged', onJobChanged), [app]);
+  // A share that appears or goes away shows at once; a gone share falls back to the first one left.
+  useEffect(
+    () =>
+      app.on('sharesChanged', () => {
+        void client.invalidateQueries({ queryKey: ['files', 'shares'] });
+      }),
+    [app, client],
+  );
 
   async function run(operation: FileOperation) {
     try {
@@ -521,6 +535,11 @@ export function FilesApp({ app }: { app: PithyxApp }) {
       case 'rename':
         if (entry !== undefined && writable) {
           setRenaming(entry.name);
+        }
+        break;
+      case 'versions':
+        if (entry !== undefined && shareId !== null) {
+          setVersionsOf({ share: shareId, path: joinPath(path, entry.name), name: entry.name });
         }
         break;
       case 'delete':
@@ -846,6 +865,21 @@ export function FilesApp({ app }: { app: PithyxApp }) {
           onAction={act}
           onClose={() => {
             setMenu(null);
+          }}
+        />
+      )}
+      {versionsOf !== null && (
+        <VersionsDialog
+          app={app}
+          share={versionsOf.share}
+          path={versionsOf.path}
+          name={versionsOf.name}
+          writable={writable}
+          onJob={(job) => {
+            track(job, null);
+          }}
+          onClose={() => {
+            setVersionsOf(null);
           }}
         />
       )}

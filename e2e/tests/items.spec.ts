@@ -14,6 +14,9 @@ function workspace(page: Page) {
 }
 
 async function box(locator: Locator) {
+  // boundingBox() does not wait, and expect.poll does not retry a callback that throws: a new icon that is still
+  // arriving from the daemon must be on screen first.
+  await locator.waitFor({ state: 'visible' });
   const rect = await locator.boundingBox();
   if (rect === null) {
     throw new Error('element has no box');
@@ -59,7 +62,7 @@ async function savedNotes(page: Page) {
 
 test.beforeEach(async ({ page }) => {
   await signInAsAdmin(page);
-  // New users also get a Files shortcut; these tests measure the grid of Disks and About alone.
+  // New users also get a Files shortcut; these tests measure the grid of Storage and About alone.
   await resetDesktopItems(page);
   await page.reload();
   await expect(page.getByRole('navigation', { name: 'Taskbar' })).toBeVisible();
@@ -70,7 +73,7 @@ test.afterEach(async ({ page }) => {
 });
 
 test('icons move on the grid by dragging and keep their place after a reload', async ({ page }) => {
-  const disks = icon(page, 'Disks');
+  const disks = icon(page, 'Storage');
   expect(await cellOf(page, disks)).toEqual({ column: 0, row: 0 });
   expect(await cellOf(page, icon(page, 'About Pithyx'))).toEqual({ column: 0, row: 1 });
 
@@ -97,7 +100,7 @@ test('icons move on the grid by dragging and keep their place after a reload', a
 test('a frame, Ctrl and Shift select several icons, which move and go together', async ({
   page,
 }) => {
-  const disks = icon(page, 'Disks');
+  const disks = icon(page, 'Storage');
   const about = icon(page, 'About Pithyx');
 
   await test.step('a frame drawn over empty desktop selects the icons it touches', async () => {
@@ -137,15 +140,15 @@ test('a frame, Ctrl and Shift select several icons, which move and go together',
     const target = await cellCenter(page, 4, 1);
     await page.mouse.click(target.x, target.y, { button: 'right' });
     await page.getByRole('menuitem', { name: 'New shortcut' }).click();
-    await page.getByRole('menuitem', { name: 'Disks' }).click();
+    await page.getByRole('menuitem', { name: 'Storage' }).click();
     await expect.poll(() => cellOf(page, disks)).toEqual({ column: 4, row: 1 });
     await disks.dblclick();
-    await expect(appWindow(page, 'Disks')).toBeVisible();
+    await expect(appWindow(page, 'Storage')).toBeVisible();
   });
 });
 
 test('the keyboard selects, renames, moves and opens icons', async ({ page }) => {
-  const disks = icon(page, 'Disks');
+  const disks = icon(page, 'Storage');
   await disks.click();
   await expect(disks).toBeFocused();
 
@@ -223,8 +226,8 @@ test('sticky notes keep their text on the daemon, move, stay under windows and a
   });
 
   await test.step('windows cover notes', async () => {
-    await icon(page, 'Disks').dblclick();
-    const window = appWindow(page, 'Disks');
+    await icon(page, 'Storage').dblclick();
+    const window = appWindow(page, 'Storage');
     await expect(window).toBeVisible();
     const noteBox = await box(note);
     const covered = await page.evaluate(
@@ -249,7 +252,7 @@ test('sticky notes keep their text on the daemon, move, stay under windows and a
     await expect(note).toHaveCount(0);
     await expect.poll(() => savedNotes(page)).toEqual([]);
     await page.reload();
-    await expect(page.getByRole('option', { name: 'Disks, shortcut' })).toBeVisible();
+    await expect(page.getByRole('option', { name: 'Storage, shortcut' })).toBeVisible();
     await expect(page.getByRole('region', { name: 'Sticky note' })).toHaveCount(0);
   });
 });
@@ -293,19 +296,19 @@ test('the desktop with items and their menus has no accessibility violations', a
   await page.mouse.click(empty.x, empty.y, { button: 'right' });
   await page.getByRole('menuitem', { name: 'New note' }).click();
   await page.getByRole('textbox', { name: 'Sticky note' }).fill('Order disks');
-  await icon(page, 'Disks').click();
+  await icon(page, 'Storage').click();
   const scan = () =>
     new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
       .analyze();
   expect((await scan()).violations).toEqual([]);
 
-  await icon(page, 'Disks').click({ button: 'right' });
+  await icon(page, 'Storage').click({ button: 'right' });
   await expect(page.getByRole('menuitem', { name: 'Rename' })).toBeVisible();
   expect((await scan()).violations).toEqual([]);
   await page.keyboard.press('Escape');
 
-  await icon(page, 'Disks').focus();
+  await icon(page, 'Storage').focus();
   await page.keyboard.press('F2');
   await expect(page.getByRole('dialog', { name: 'Rename shortcut' })).toBeVisible();
   expect((await scan()).violations).toEqual([]);
@@ -320,7 +323,7 @@ test.describe('phone', () => {
       data: { kind: 'note', text: 'Call Sam', column: 6, row: 0 },
     });
     await page.reload();
-    const disks = await box(icon(page, 'Disks'));
+    const disks = await box(icon(page, 'Storage'));
     const about = await box(icon(page, 'About Pithyx'));
     expect(Math.abs(disks.y - about.y)).toBeLessThan(2);
     expect(about.x).toBeGreaterThan(disks.x);
@@ -328,7 +331,7 @@ test.describe('phone', () => {
     expect(note.y).toBeGreaterThan(disks.y + disks.height);
     expect(note.width).toBeGreaterThan(300);
 
-    await icon(page, 'Disks').tap();
-    await expect(appWindow(page, 'Disks')).toBeVisible();
+    await icon(page, 'Storage').tap();
+    await expect(appWindow(page, 'Storage')).toBeVisible();
   });
 });

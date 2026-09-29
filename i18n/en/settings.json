@@ -4,9 +4,9 @@
     "personalization": "Personalization",
     "users": "Users and groups",
     "network": "Network",
-    "storage": "Storage",
     "updates": "Updates",
-    "about": "About"
+    "about": "About",
+    "shares": "Shared folders"
   },
   "personalization": {
     "theme": "Theme",
@@ -37,97 +37,80 @@
       "picture": "Choose a picture"
     }
   },
-  "storage": {
-    "intro": "Pools keep your data on one or more disks. Every disk shows whether a new pool may use it.",
-    "dev": "Development machine: only the declared test disks can be used.",
-    "pools": {
-      "title": "Pools",
-      "empty": "No pools yet.",
-      "used": "{used} of {size} used",
-      "layout": "Layout: {layout}",
-      "devices": "Devices of {pool}",
-      "errors": "Errors: {read} read, {write} write, {checksum} checksum"
-    },
-    "state": {
-      "online": "Healthy",
-      "degraded": "Degraded",
-      "faulted": "Faulted",
-      "offline": "Offline",
-      "unavail": "Unavailable",
-      "removed": "Removed",
-      "suspended": "Suspended",
-      "unknown": "Unknown"
-    },
-    "vdev": {
-      "mirror": "Mirror of {count, plural, one {# disk} other {# disks}}",
-      "raidz": "RAID-Z{parity} of {count, plural, one {# disk} other {# disks}}",
-      "single": "Single disk"
-    },
-    "role": {
-      "log": "Log",
-      "cache": "Cache",
-      "special": "Special",
-      "dedup": "Dedup",
-      "spare": "Spare"
-    },
-    "scan": {
-      "scrubRunning": "Scrub running, {percent} % checked",
-      "resilverRunning": "Rebuilding, {percent} % done",
-      "paused": "Scrub paused at {percent} %",
-      "scrubFinished": "Last scrub {date}: {errors, plural, =0 {no errors} one {# error} other {# errors}}",
-      "resilverFinished": "Last rebuild {date}: {errors, plural, =0 {no errors} one {# error} other {# errors}}",
-      "canceled": "The last check was canceled."
-    },
-    "disks": {
-      "title": "Disks",
-      "caption": "Disks and whether a new pool may use them",
+  "storagePointer": {
+    "open": "Open Storage"
+  },
+  "shares": {
+    "title": "Shared folders",
+    "intro": "Every shared folder is its own dataset on a pool, with its own space and snapshots. Choose who may read or change its files.",
+    "create": "Create shared folder…",
+    "caption": "Shared folders with their pool, space, description and rights",
+    "loading": "Loading shared folders…",
+    "empty": "No shared folders yet. Create one to store files together.",
+    "columns": {
       "name": "Name",
-      "model": "Model",
-      "serial": "Serial number",
-      "size": "Size",
-      "status": "For a new pool"
+      "pool": "Pool",
+      "used": "Used",
+      "description": "Description",
+      "rights": "Rights",
+      "actions": "Actions"
     },
-    "decision": {
-      "allowed": "Available",
-      "needsSerialConfirmation": "Needs confirmation",
-      "refused": "Not available"
-    },
-    "reason": {
-      "system_disk": "Holds the system. Never used for pools.",
-      "read_only": "The disk is read-only.",
-      "mounted": "A file system on it is in use.",
-      "pool_member": "Part of the pool {pool}.",
-      "not_test_disk": "Not a declared test disk of this development machine.",
-      "duplicate_serial": "Another disk reports the same serial number, so it cannot be told apart.",
-      "no_serial": "Holds data and has no serial number to confirm with.",
-      "not_checked": "Not checked yet. Confirm with its serial number to use it.",
-      "has_data": "Holds data ({contents}). Confirm with its serial number to use it; everything on it is lost.",
-      "confirmed": "Confirmed with its serial number.",
-      "empty": "Empty and ready."
-    },
-    "layouts": {
-      "single": "Single disk (no redundancy)",
-      "mirror": "Mirror",
-      "raidz1": "RAID-Z1 (one disk may fail)",
-      "raidz2": "RAID-Z2 (two disks may fail)",
-      "raidz3": "RAID-Z3 (three disks may fail)",
-      "stripe": "Stripe (one failed disk loses everything)"
-    },
-    "create": {
-      "button": "Create pool…",
-      "title": "Create a pool",
-      "name": "Pool name",
-      "nameHint": "Lowercase letters, digits, - and _; starts with a letter.",
-      "layout": "Layout",
-      "disks": "Disks",
-      "noDisks": "No disk can be used right now.",
-      "refused": "{count, plural, one {# disk is} other {# disks are}} not available",
-      "confirm": "Type the serial number of {disk} ({serial})",
+    "folder": "Folder",
+    "missing": "Dataset not found",
+    "used": "{used} used, {free} free",
+    "usedQuota": "{used} of {quota}",
+    "noDescription": "No description",
+    "rights": "{count, plural, =0 {Administrators only} one {# user} other {# users}}",
+    "rightsDetail": "{readWrite} read and write, {read} read only",
+    "edit": "Edit",
+    "editLabel": "Edit {name}",
+    "delete": "Delete…",
+    "deleteLabel": "Delete {name}",
+    "close": "Close",
+    "createDialog": {
+      "title": "Create a shared folder",
+      "name": "Name",
+      "nameHint": "Letters, digits, spaces, dots, dashes and underscores.",
+      "pool": "Pool",
+      "noPools": "No pool is ready for shared folders yet. Create a pool in Storage first.",
+      "description": "Description (optional)",
       "preview": "Show commands",
-      "commands": "These commands would run, exactly as shown:",
-      "notYet": "Creating pools from here comes with the next update. Nothing was run.",
-      "blocked": "Not every chosen disk can be used:",
-      "close": "Close"
+      "dataset": "The shared folder becomes the dataset {dataset}.",
+      "run": "Create shared folder"
+    },
+    "editDialog": {
+      "title": "Edit {name}",
+      "details": "Name and description",
+      "name": "Name",
+      "description": "Description",
+      "datasetKept": "Renaming changes only the name users see; the dataset keeps its name.",
+      "save": "Save",
+      "saved": "Saved.",
+      "rights": "Rights",
+      "rightsIntro": "Changes apply right away. Administrators can always read and change everything.",
+      "loading": "Loading users…",
+      "access": "Access of {user}",
+      "administrator": "Administrator, full access",
+      "levels": {
+        "none": "No access",
+        "read": "Read",
+        "readWrite": "Read and write"
+      }
+    },
+    "deleteDialog": {
+      "title": "Delete {name}",
+      "choice": "What happens with the data?",
+      "keep": "Keep the data",
+      "keepDataset": "The shared folder goes away. The dataset {dataset} and its files stay and remain in Storage.",
+      "keepFolder": "The shared folder goes away. The files stay in the folder {path}.",
+      "destroy": "Delete the data for good",
+      "destroyHint": "The dataset, all its files and every snapshot are deleted. This cannot be undone.",
+      "folderOnly": "This is a plain folder, not a dataset, so its files can only be kept.",
+      "confirm": "Type {name} to confirm",
+      "preview": "Show what happens",
+      "nothingRuns": "No command runs. {location} and its files stay.",
+      "gone": "These are deleted for good:",
+      "run": "Delete shared folder"
     }
   }
 }

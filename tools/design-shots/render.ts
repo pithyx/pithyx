@@ -107,6 +107,14 @@ async function render(
   const params = new URLSearchParams({ screen: job.screen, theme: job.theme, lang: job.lang });
   await page.goto(`${baseUrl}/design.html?${params.toString()}`);
   await page.evaluate(() => document.fonts.ready.then(() => undefined));
+  // Screens of real apps run a short script (open a dialog, fill it) and mark the page busy until it is done.
+  await page.waitForFunction(
+    () => document.querySelector('[data-design-busy]') === null,
+    undefined,
+    {
+      timeout: 10_000,
+    },
+  );
   // The loading hint on the welcome screen appears after 300 ms; the simulated loading ends after 1.4 s.
   await page.waitForTimeout(800);
   const name = `${job.screen}_${job.viewport}_${job.theme}_${job.lang}.png`;

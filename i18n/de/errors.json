@@ -100,9 +100,18 @@
       "not_satisfiable": "Den angefragten Teil der Datei gibt es nicht."
     },
     "share": {
+      "data_choice_required": "Wähle, was mit den Daten passiert: behalten oder endgültig löschen.",
+      "dataset_name_invalid": "Aus „{name}“ lässt sich kein Dataset-Name bilden. Nutze mindestens einen Buchstaben von a bis z oder eine Ziffer.",
+      "description_invalid": "Die Beschreibung darf höchstens {max} Zeichen und keine Zeilenumbrüche haben.",
       "exists": "Einen Share mit diesem Namen gibt es schon.",
+      "folder_dev_only": "Vorhandene Ordner lassen sich nur auf einem Entwicklungsrechner als Share eintragen. Lege stattdessen einen freigegebenen Ordner an; er bekommt ein eigenes Dataset.",
       "invalid": "Der Share konnte nicht angelegt werden. Er braucht einen Namen und einen vorhandenen Ordner außerhalb der Systemverzeichnisse.",
+      "name_mismatch": "Der eingegebene Name stimmt nicht. Gib genau {name} ein.",
+      "name_reserved": "Den Namen {name} nutzt Pithyx selbst. Wähle einen anderen Namen.",
+      "no_dataset": "Dieser freigegebene Ordner ist ein einfacher Ordner, kein Dataset. Seine Dateien können nur behalten werden.",
       "not_found": "Der Share wurde nicht gefunden, oder du hast keinen Zugriff darauf.",
+      "path_taken": "Unter {path} ist schon etwas anderes eingehängt. Wähle einen anderen Namen.",
+      "pool_not_prepared": "Der Pool {pool} hat keinen Platz für freigegebene Ordner (pithyx/shares), deshalb lässt sich dort keiner anlegen.",
       "read_only": "In diesem Share darfst du nur lesen."
     },
     "thumbnail": {
@@ -114,6 +123,9 @@
     },
     "upload": {
       "incomplete": "Der Upload wurde unterbrochen. Es wurde nichts gespeichert."
+    },
+    "version": {
+      "not_found": "Diese Version gibt es nicht mehr. Vielleicht wurde der Snapshot gelöscht; lade die Liste neu."
     },
     "volume": {
       "full": "Es ist nicht genug Platz frei.",
@@ -167,22 +179,84 @@
     }
   },
   "storage": {
+    "alert": {
+      "not_found": "Dieser Hinweis ist nicht mehr aktiv. Seine Ursache ist behoben."
+    },
     "command": {
       "failed": "Der Speicherbefehl {command} ist fehlgeschlagen (Exit-Code {exitCode}). Danach wurde nichts mehr ausgeführt; Details stehen im Protokoll."
+    },
+    "dataset": {
+      "compression_invalid": "Die Kompression {compression} setzt Pithyx nicht. Wähle off, lz4, zle, zstd (Stufen 1 bis 19) oder gzip (Stufen 1 bis 9).",
+      "exists": "Es gibt schon ein Dataset namens {name}.",
+      "in_use_by_share": "Die Freigabe {share} hat ihren Ordner in {dataset}. Lösche zuerst die Freigabe auf der Seite der freigegebenen Ordner; dort entscheidest du, was mit ihren Daten passiert.",
+      "limit_invalid": "{property, select, quota {Das Kontingent} other {Die Reservierung}} kann nicht negativ sein. Nimm 0, wenn es keine Grenze geben soll.",
+      "managed": "Pithyx findet {dataset} über seinen Namen (ein Home-Ordner, eine App oder Systemdaten), deshalb lässt es sich hier weder umbenennen noch löschen.",
+      "name_invalid": "Dataset-Namen bestehen aus Buchstaben, Ziffern, ., - und _, beginnen mit einem Buchstaben oder einer Ziffer und haben bis zu 64 Zeichen.",
+      "name_mismatch": "Gib zur Bestätigung genau den vollständigen Dataset-Namen {name} ein.",
+      "not_found": "Es gibt kein Dataset namens {dataset}. Lade die Seite neu.",
+      "property_unsupported": "{dataset} nimmt die Einstellung {property} nicht an. Volumes, die Wurzel des Pools und die Datasets des Pithyx-Layouts nehmen nur eine Kompression, und die Record-Größe gibt es nur für Dateisysteme.",
+      "protected": "{dataset} ist die Wurzel des Pools oder Teil des Pithyx-Layouts. Pithyx benennt es nicht um und löscht es nicht.",
+      "quota_below_used": "Das Kontingent muss mindestens so groß sein wie der Platz, den das Dataset jetzt belegt, mit Snapshots und Unter-Datasets.",
+      "record_size_invalid": "Die Record-Größe muss eine Zweierpotenz von 4 KiB bis 1 MiB sein.",
+      "reservation_too_large": "So viel kann der Pool für dieses Dataset gerade nicht reservieren. Wähle eine kleinere Reservierung.",
+      "unchanged": "Es gibt nichts zu ändern: {dataset} hat diese Einstellungen schon."
     },
     "disk": {
       "not_found": "Die Platte ist nicht mehr vorhanden. Lade die Liste neu und wähle noch einmal.",
       "refused": "Die Platte darf nicht verwendet werden: {reason, select, system_disk {sie enthält das System} mounted {ein Dateisystem darauf ist in Benutzung} pool_member {sie gehört zu einem Pool} not_test_disk {sie ist keine eingetragene Testplatte} other {sie ist nicht sicher verwendbar}}."
     },
+    "encryption": {
+      "unavailable": "Verschlüsselung kommt mit dem Schlüsseltresor im nächsten Update. Ein Pool lässt sich nur beim Anlegen verschlüsseln; leg ihn also nur dann unverschlüsselt an, wenn das für seine Daten in Ordnung ist."
+    },
     "plan": {
+      "action_invalid": "Unbekannte Speicheraktion.",
       "expired": "Dieser Plan ist älter als 10 Minuten. Zeig ihn noch einmal an, damit die Platten erneut geprüft werden.",
+      "not_found": "Diesen Plan gibt es nicht mehr (er lief schon, ist abgelaufen oder der Daemon wurde neu gestartet). Zeig ihn noch einmal an.",
       "stale": "Eine Platte hat sich geändert, nachdem der Plan angezeigt wurde. Es wurde nichts verändert; zeig den Plan noch einmal an."
     },
     "pool": {
       "disk_count": "{layout} braucht mindestens {min, plural, one {# Platte} other {# Platten}}; {count, plural, one {# ist} other {# sind}} ausgewählt.",
+      "encryption_required": "Beantworte zuerst die Frage zur Verschlüsselung: Sie lässt sich nur beim Anlegen des Pools entscheiden.",
       "layout_invalid": "Unbekanntes Pool-Layout.",
       "name_invalid": "Pool-Namen beginnen mit einem Kleinbuchstaben und bestehen aus bis zu 32 Kleinbuchstaben, Ziffern, - und _. Namen wie mirror oder raidz sind reserviert.",
-      "name_taken": "Es gibt schon einen Pool namens {name}."
+      "name_mismatch": "Gib zur Bestätigung genau den Pool-Namen {name} ein.",
+      "name_taken": "Es gibt schon einen Pool namens {name}.",
+      "not_found": "Es gibt keinen Pool namens {name}.",
+      "not_prepared": "Pithyx hat den Pool {pool} nicht eingerichtet (er hat kein pithyx-Dataset), deshalb legt es darauf nichts an.",
+      "expanding": "Der Pool {name} wird schon erweitert. Die nächste Platte kannst du hinzufügen, wenn das fertig ist.",
+      "read_only": "Der Pool {name} ist schreibgeschützt importiert und lässt sich nicht ändern. Importiere ihn zuerst zur Nutzung."
+    },
+    "schedule": {
+      "invalid": "Dieser Zeitplan lässt sich nicht setzen. Wähle Aus, Wöchentlich oder Monatlich für einen vorhandenen Pool."
+    },
+    "scrub": {
+      "not_running": "Pool {pool} wird gerade nicht geprüft.",
+      "running": "Pool {pool} wird schon geprüft."
+    },
+    "snapshot": {
+      "confirmation_mismatch": "Der eingegebene Name passt nicht zum Dataset. Es wurde nichts zurückgesetzt.",
+      "dataset_not_found": "Es gibt kein Dataset namens {dataset}. Lade die Seite neu.",
+      "exists": "Es gibt schon einen Snapshot namens {name}. Warte eine Sekunde und versuch es noch einmal.",
+      "held": "Der Snapshot {name} wird festgehalten und kann nicht gelöscht werden. Gib ihn zuerst frei.",
+      "newer_exist": "Die neueren Snapshots haben sich seit der Vorschau geändert: Das Dataset hat jetzt {count, plural, one {# neueren Snapshot} other {# neuere Snapshots}}. Es wurde nichts zurückgesetzt; zeig den Plan noch einmal an.",
+      "not_found": "Es gibt keinen Snapshot namens {name}. Lade die Liste neu.",
+      "not_pithyx": "Pithyx löscht nur Snapshots, die es selbst angelegt hat. {name} stammt von jemand anderem und bleibt.",
+      "schedule_invalid": "Jeder Zeitplan ist stündlich, täglich, wöchentlich oder monatlich, jeweils einmal, und behält zwischen 1 und {max} Snapshots."
+    },
+    "vdev": {
+      "not_found": "Der Pool hat dieses Gerät nicht (mehr). Lade neu und wähle noch einmal.",
+      "not_raidz": "Nur eine RAID-Z-Gruppe lässt sich um eine Platte erweitern; {vdev} ist keine."
+    },
+    "volume": {
+      "size_invalid": "Ein Volume braucht mindestens 1 MiB.",
+      "too_large": "Das Volume passt nicht in den freien Platz des Pools. Mach es kleiner oder leg es als Sparse-Volume an."
+    },
+    "import": {
+      "device_unknown": "Das Gerät {device} dieses Pools liegt auf keiner Platte, die Pithyx kennt, deshalb kann Pithyx es nicht prüfen. Es wurde nichts importiert.",
+      "force_required": "Der Pool {name} wurde zuletzt von einem anderen System benutzt. Importiere ihn nur, wenn dieses System ihn nicht mehr benutzt: Wähle den erzwungenen Import und gib den Pool-Namen ein.",
+      "not_found": "Dieser Pool ist auf den Platten nicht mehr zu finden. Such noch einmal.",
+      "not_importable": "Der Pool {name} lässt sich nicht importieren ({state}). Schließ die fehlenden Platten an und such noch einmal.",
+      "preview_required": "Importiere den Pool {name} zuerst schreibgeschützt und prüf seine Datasets, dann importiere ihn zur Nutzung."
     }
   },
   "system": {

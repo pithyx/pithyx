@@ -12,6 +12,48 @@
         "body": "Disk {disk} in {pool} reports {temperature, number} °C. Check the airflow.",
         "action": "Show disk"
       }
+    },
+    "alert": {
+      "poolDegraded": {
+        "title": "Pool {pool} is degraded",
+        "body": "A disk of {pool} failed or is missing. Your data is still there, but one more failure could lose it. Replace the disk soon.",
+        "action": "Open Storage"
+      },
+      "poolFaulted": {
+        "title": "Pool {pool} is not available",
+        "body": "{pool} reports {state}. Its data cannot be reached until the missing disks are back.",
+        "action": "Open Storage"
+      },
+      "dataErrors": {
+        "title": "Damaged files in {pool}",
+        "body": "{errors, plural, one {# file has} other {# files have}} errors that ZFS could not repair. Restore {errors, plural, one {it} other {them}} from a backup.",
+        "action": "Open Storage"
+      },
+      "scrubErrors": {
+        "title": "Scrub found errors in {pool}",
+        "body": "The last scrub of {pool} found {errors, plural, one {# error} other {# errors}}. Check the health of its disks.",
+        "action": "Open Storage"
+      },
+      "capacityWarning": {
+        "title": "Pool {pool} is filling up",
+        "body": "{pool} is {percent, number} % full. Above 80 % ZFS gets slower; free some space or add disks.",
+        "action": "Open Storage"
+      },
+      "capacityCritical": {
+        "title": "Pool {pool} is almost full",
+        "body": "{pool} is {percent, number} % full. Free some space soon, or writes will fail.",
+        "action": "Open Storage"
+      },
+      "smartFailed": {
+        "title": "Disk {disk} is failing",
+        "body": "Disk {disk} (serial {serial}) predicts its own failure. Make sure your data is backed up and replace the disk now.",
+        "action": "Open Storage"
+      },
+      "smartWarning": {
+        "title": "Disk {disk} shows wear",
+        "body": "Disk {disk} (serial {serial}) reports {reallocated, number} reallocated, {pending, number} pending and {uncorrectable, number} uncorrectable sectors and {mediaErrors, number} media errors{selfTest, select, failed {; its last self-test failed} other {}}. Plan to replace it.",
+        "action": "Open Storage"
+      }
     }
   },
   "apps": {

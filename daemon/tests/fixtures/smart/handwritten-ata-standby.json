@@ -1,0 +1,45 @@
+{
+ "json_format_version": [
+  1,
+  0
+ ],
+ "smartctl": {
+  "version": [
+   7,
+   4
+  ],
+  "pre_release": false,
+  "svn_revision": "5530",
+  "platform_info": "x86_64-linux-6.12.48+deb13-amd64",
+  "build_info": "(local build)",
+  "argv": [
+   "smartctl",
+   "-n",
+   "standby",
+   "-j",
+   "-a",
+   "/dev/sda"
+  ],
+  "drive_database_version": {
+   "string": "7.3/5528"
+  },
+  "exit_status": 2,
+  "messages": [
+   {
+    "string": "Device is in STANDBY mode, exit(2)",
+    "severity": "information"
+   }
+  ]
+ },
+ "local_time": {
+  "time_t": 1790496000,
+  "asctime": "Sun Sep 27 08:00:00 2026 UTC"
+ },
+ "device": {
+  "name": "/dev/sda",
+  "info_name": "/dev/sda [SAT]",
+  "type": "sat",
+  "protocol": "ATA"
+ },
+ "power_mode": "STANDBY"
+}

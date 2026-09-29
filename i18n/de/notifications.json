@@ -12,6 +12,48 @@
         "body": "Laufwerk {disk} in {pool} meldet {temperature, number} °C. Prüf die Belüftung.",
         "action": "Laufwerk anzeigen"
       }
+    },
+    "alert": {
+      "poolDegraded": {
+        "title": "Pool {pool} ist beeinträchtigt",
+        "body": "Eine Platte von {pool} ist ausgefallen oder fehlt. Deine Daten sind noch da, aber ein weiterer Ausfall könnte sie kosten. Ersetze die Platte bald.",
+        "action": "Speicher öffnen"
+      },
+      "poolFaulted": {
+        "title": "Pool {pool} ist nicht verfügbar",
+        "body": "{pool} meldet {state}. Seine Daten sind nicht erreichbar, bis die fehlenden Platten wieder da sind.",
+        "action": "Speicher öffnen"
+      },
+      "dataErrors": {
+        "title": "Beschädigte Dateien in {pool}",
+        "body": "{errors, plural, one {# Datei hat} other {# Dateien haben}} Fehler, die ZFS nicht reparieren konnte. Stell sie aus einem Backup wieder her.",
+        "action": "Speicher öffnen"
+      },
+      "scrubErrors": {
+        "title": "Die Prüfung hat Fehler in {pool} gefunden",
+        "body": "Die letzte Prüfung von {pool} hat {errors, plural, one {# Fehler} other {# Fehler}} gefunden. Prüf den Zustand seiner Platten.",
+        "action": "Speicher öffnen"
+      },
+      "capacityWarning": {
+        "title": "Pool {pool} wird voll",
+        "body": "{pool} ist zu {percent, number} % belegt. Über 80 % wird ZFS langsamer; gib Platz frei oder füge Platten hinzu.",
+        "action": "Speicher öffnen"
+      },
+      "capacityCritical": {
+        "title": "Pool {pool} ist fast voll",
+        "body": "{pool} ist zu {percent, number} % belegt. Gib bald Platz frei, sonst schlagen Schreibvorgänge fehl.",
+        "action": "Speicher öffnen"
+      },
+      "smartFailed": {
+        "title": "Platte {disk} fällt aus",
+        "body": "Platte {disk} (Seriennummer {serial}) sagt ihren eigenen Ausfall voraus. Stell sicher, dass deine Daten gesichert sind, und ersetze die Platte jetzt.",
+        "action": "Speicher öffnen"
+      },
+      "smartWarning": {
+        "title": "Platte {disk} zeigt Verschleiß",
+        "body": "Platte {disk} (Seriennummer {serial}) meldet {reallocated, number} umgelagerte, {pending, number} ausstehende und {uncorrectable, number} nicht korrigierbare Sektoren und {mediaErrors, number} Medienfehler{selfTest, select, failed {; ihr letzter Selbsttest ist fehlgeschlagen} other {}}. Plane ihren Austausch.",
+        "action": "Speicher öffnen"
+      }
     }
   },
   "apps": {

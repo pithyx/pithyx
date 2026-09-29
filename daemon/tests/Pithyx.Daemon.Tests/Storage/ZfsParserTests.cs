@@ -79,6 +79,20 @@ public sealed class ZfsParserTests
         Assert.True(dataset.AvailableBytes > dataset.UsedBytes);
     }
 
+    // Recorded on dev01 from the owner's test pool, read-only.
+    [Fact]
+    public void DatasetsCarryLimitsCompressionAndBlockSizes()
+    {
+        var datasets = ZfsDatasetParser.ParseList(Read("zfs-datasets", "zfs-list"));
+        var share = datasets.Single(dataset => dataset.Name == "test/pithyx/shares/teet");
+
+        Assert.Equal(("/test/teet", true), (share.MountPoint, share.Mounted));
+        Assert.Equal(((long?)null, (long?)null), (share.QuotaBytes, share.ReservationBytes));
+        Assert.Equal(("lz4", (long?)131072), (share.Compression, share.RecordSizeBytes));
+        Assert.Equal(((long?)null, (long?)null, 0L), (share.VolumeSizeBytes, share.VolumeBlockSizeBytes, share.SnapshotsUsedBytes));
+        Assert.All(datasets, dataset => Assert.Equal("test", dataset.Pool));
+    }
+
     [Fact]
     public void ZfsGetShapeGivesPropertyValues()
     {
@@ -86,5 +100,30 @@ public sealed class ZfsParserTests
 
         Assert.Equal("/pithyxtestr", properties["pithyxtestr"]["mountpoint"]);
         Assert.False(properties["pithyxtestr"].ContainsKey("keystatus"));
+    }
+
+    [Fact]
+    public void ARunningRaidzExpansionNamesItsVdevAndProgress()
+    {
+        var pool = Assert.Single(ZpoolStatusParser.Parse(Read("zfs-raidz-expanding", "zpool-status")));
+
+        var raidz = Assert.Single(pool.Vdevs);
+        var expansion = pool.Expansion!;
+        Assert.Equal(("scanning", raidz.VdevGuid, false), (expansion.State, expansion.VdevGuid, expansion.WaitingForResilver));
+        Assert.Equal((504100864L, 0L), (expansion.ToReflowBytes, expansion.ReflowedBytes));
+        Assert.Equal(DateTimeOffset.FromUnixTimeSeconds(1790622413), expansion.StartedAt);
+        Assert.Null(expansion.EndedAt);
+        Assert.Equal(4, raidz.Children.Count);
+    }
+
+    [Fact]
+    public void AFinishedExpansionStaysInTheStatusWithItsEnd()
+    {
+        var pool = Assert.Single(ZpoolStatusParser.Parse(Read("zfs-raidz-expanded", "zpool-status")));
+
+        Assert.Equal(("finished", pool.Vdevs[0].VdevGuid), (pool.Expansion!.State, pool.Expansion.VdevGuid));
+        Assert.Equal(DateTimeOffset.FromUnixTimeSeconds(1790622414), pool.Expansion.EndedAt);
+        Assert.True(pool.Expansion.ReflowedBytes > 0);
+        Assert.Null(Assert.Single(ZpoolStatusParser.Parse(Read("zfs-raidz1", "zpool-status"))).Expansion);
     }
 }

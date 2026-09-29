@@ -13,7 +13,8 @@ public enum GuardDecision
 /// <param name="Decision">Whether a destructive command may touch the disk.</param>
 /// <param name="Reason">
 /// Why, as a stable code: <c>system_disk</c>, <c>read_only</c>, <c>mounted</c>, <c>pool_member</c>, <c>not_test_disk</c>,
-/// <c>duplicate_serial</c>, <c>no_serial</c>, <c>not_checked</c>, <c>has_data</c>, <c>confirmed</c> or <c>empty</c>.
+/// <c>duplicate_serial</c>, <c>no_serial</c>, <c>not_checked</c>, <c>has_data</c>, <c>confirmed</c> or <c>empty</c>; when a
+/// pool is imported, <c>importable</c> for an allowed disk.
 /// </param>
 /// <param name="Pool">The imported pool the disk belongs to, for <c>pool_member</c>.</param>
 /// <param name="Contents">What was found on the disk: partitions and signature types.</param>
@@ -119,6 +120,45 @@ public static class DiskGuard
         return Verdict(GuardDecision.NeedsSerialConfirmation, disk.Signatures is null ? "not_checked" : "has_data");
     }
 
+    /// <summary>
+    /// The rule for importing a pool and for every command of an import plan. A pool's disks carry ZFS labels, so data on
+    /// them is expected and no serial is typed. Still refused: the system disk, read-only and mounted disks, disks of an
+    /// imported pool other than <paramref name="importingPool"/> (the pool this plan exports and imports again), on a dev
+    /// machine every disk that is not a declared test disk, and disks whose serial is not unique.
+    /// </summary>
+    /// <param name="facts">What the daemon knows.</param>
+    /// <param name="importingPool">The imported pool whose disks the plan may touch, or null when none may be imported.</param>
+    public static IReadOnlyList<GuardVerdict> EvaluateImport(GuardFacts facts, string? importingPool)
+    {
+        ArgumentNullException.ThrowIfNull(facts);
+        return [.. Evaluate(facts).Select(verdict =>
+        {
+            var disk = facts.Disks.First(candidate => candidate.Disk.Id == verdict.DiskId);
+            GuardVerdict Verdict(GuardDecision decision, string reason) => verdict with { Decision = decision, Reason = reason };
+            switch (verdict.Reason)
+            {
+                case "system_disk" or "read_only" or "mounted" or "not_test_disk" or "duplicate_serial":
+                    return verdict;
+                case "pool_member":
+                    // A disk that belongs to the importing pool and to no other one; the dev rule still applies to it.
+                    var pools = disk.Device.SelfAndDescendants().SelectMany(device => PoolOf(facts, device)).Distinct(StringComparer.Ordinal).ToList();
+                    if (importingPool is null || pools.Any(pool => pool != importingPool))
+                    {
+                        return verdict;
+                    }
+                    return facts.Environment.Kind == DeploymentKind.Dev && (disk.Disk.Serial is not { } serial || !facts.Environment.TestDiskSerials.Contains(serial))
+                        ? Verdict(GuardDecision.Refused, "not_test_disk")
+                        : IsDuplicate(facts, disk) ? Verdict(GuardDecision.Refused, "duplicate_serial") : Verdict(GuardDecision.Allowed, "importable");
+                default:
+                    // empty, has_data, not_checked, no_serial or confirmed: nothing that makes an import unsafe.
+                    return Verdict(GuardDecision.Allowed, "importable");
+            }
+        })];
+    }
+
+    private static bool IsDuplicate(GuardFacts facts, GuardDisk disk) =>
+        disk.Disk.Serial is { } serial && facts.Disks.Count(other => other.Disk.Serial == serial) > 1;
+
     /// <summary>Disks that hold a system path or swap, including the disks of a pool with a system dataset.</summary>
     private static HashSet<string> SystemDisks(GuardFacts facts)
     {
@@ -153,10 +193,17 @@ public static class DiskGuard
     /// What a plan compares right before each command: if serial, size, partitions or signatures changed since the plan
     /// was shown, the disk is not the one the user saw.
     /// </summary>
-    public static string Fingerprint(GuardDisk disk)
+    /// <param name="disk">The disk as it is now.</param>
+    /// <param name="rule">
+    /// For <see cref="GuardRule.Import"/> the probed signatures are left out: the disks of a pool are expected to carry
+    /// ZFS labels, and they are probed only while their pool is not imported, so the export step of an import changes
+    /// what a probe shows without the disk changing.
+    /// </param>
+    public static string Fingerprint(GuardDisk disk, GuardRule rule = GuardRule.NewData)
     {
         ArgumentNullException.ThrowIfNull(disk);
         var devices = disk.Device.SelfAndDescendants().Select(device => $"{device.Name}:{device.Type}:{device.FileSystem}");
-        return string.Join('|', [disk.Disk.Serial ?? "", disk.Disk.SizeBytes.ToString(System.Globalization.CultureInfo.InvariantCulture), .. devices, .. disk.Signatures?.Types ?? ["unprobed"]]);
+        var signatures = rule == GuardRule.Import ? [] : disk.Signatures?.Types ?? ["unprobed"];
+        return string.Join('|', [disk.Disk.Serial ?? "", disk.Disk.SizeBytes.ToString(System.Globalization.CultureInfo.InvariantCulture), .. devices, .. signatures]);
     }
 }
