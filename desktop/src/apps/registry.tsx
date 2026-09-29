@@ -1,4 +1,5 @@
 import {
+  IconActivity,
   IconApps,
   IconDatabase,
   IconFolders,
@@ -79,6 +80,22 @@ export const coreApps: readonly CoreApp[] = [
     Component: lazy(() =>
       Promise.all([import('./settings/SettingsWindow'), loadTranslations('settings')]).then(
         ([{ SettingsWindow }]) => ({ default: SettingsWindow }),
+      ),
+    ),
+  },
+  {
+    id: 'monitor',
+    icon: IconActivity,
+    tone: 'moss',
+    adminOnly: true,
+    window: {
+      instances: 'single',
+      defaultSize: { width: 980, height: 680 },
+      minSize: { width: 320, height: 320 },
+    },
+    Component: lazy(() =>
+      Promise.all([import('./monitor/MonitorWindow'), loadTranslations('monitor')]).then(
+        ([{ MonitorWindow }]) => ({ default: MonitorWindow }),
       ),
     ),
   },
