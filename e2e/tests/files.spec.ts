@@ -210,3 +210,48 @@ test('works with the keyboard alone', async ({ page }) => {
   await expect(page.getByRole('menu', { name: 'Actions for 1 item' })).toBeVisible();
   await page.keyboard.press('Escape');
 });
+
+test('a right-click while the menu is open moves the menu to the new row', async ({ page }) => {
+  prepare('e2e-menus', { 'a.txt': 'a', 'b.txt': 'b' });
+  await openFolder(page, 'e2e-menus');
+  await expect(row(page, 'b.txt')).toBeVisible();
+  await page.evaluate(() => {
+    const prevented: boolean[] = [];
+    Object.assign(window, { rightClicks: prevented });
+    window.addEventListener('contextmenu', (event) => {
+      if (event.isTrusted) {
+        prevented.push(event.defaultPrevented);
+      }
+    });
+  });
+  const menu = page.getByRole('menu', { name: 'Actions for 1 item' });
+  const at = async (name: string) => {
+    const rect = await row(page, name).boundingBox();
+    if (rect === null) {
+      throw new Error('row has no box');
+    }
+    return { x: rect.x + 40, y: rect.y + rect.height / 2 };
+  };
+  const openedAt = async (point: { x: number; y: number }) => {
+    const rect = await menu.boundingBox();
+    return (
+      rect !== null && Math.abs(rect.x - point.x) < 8 && rect.y >= point.y && rect.y - point.y < 12
+    );
+  };
+
+  // The menu opens below the pointer, so the second row is the one above it.
+  const first = await at('b.txt');
+  await page.mouse.click(first.x, first.y, { button: 'right' });
+  await expect.poll(() => openedAt(first)).toBe(true);
+  const second = await at('a.txt');
+  await page.mouse.click(second.x, second.y, { button: 'right' });
+  await expect.poll(() => openedAt(second)).toBe(true);
+  await expect(menu).toHaveCount(1);
+  await expect(row(page, 'a.txt')).toHaveAttribute('aria-selected', 'true');
+  await expect(row(page, 'b.txt')).not.toHaveAttribute('aria-selected', 'true');
+  // The second right-click landed on the open menu, which kept the browser's menu away.
+  expect(
+    await page.evaluate(() => (window as unknown as { rightClicks: boolean[] }).rightClicks),
+  ).toEqual([true, true]);
+  await page.keyboard.press('Escape');
+});

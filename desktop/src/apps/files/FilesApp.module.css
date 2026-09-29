@@ -392,12 +392,6 @@
   background: var(--pithyx-color-accent);
 }
 
-.anchor {
-  position: fixed;
-  width: 0;
-  height: 0;
-}
-
 .hiddenInput {
   display: none;
 }

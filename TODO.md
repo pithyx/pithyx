@@ -27,7 +27,7 @@ Core bugs first, each in its own PR with a regression test:
 - [ ] Deleting a shared folder fails with a timeout (`internal.admin.shares.plan`).
 - [ ] Destroying a pool: the dialog hangs for a long time at `zpool destroy`. Long operations run as background jobs, the dialog can be closed, progress shows in the notification center. Find the cause of the long run (open handles, watches, ...).
 - [ ] Usage of pools, shared folders and disks does not update after uploads.
-- [ ] A second right-click on the desktop while its menu is open shows the browser's menu instead of the Pithyx menu at the new position.
+- [x] A second right-click on the desktop while its menu is open shows the browser's menu instead of the Pithyx menu at the new position.
 
 Quick fixes, one PR:
 

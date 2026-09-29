@@ -136,6 +136,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- A right-click while a context menu is open (on the desktop or in Files) showed the browser's menu instead of opening Pithyx's menu at the new point: the menu's underlay took the click. It now moves the menu there, or to the menu of whatever lies at that point; on a sticky note's text it only closes the menu. Touch long presses and the keyboard work as before.
 - Importing a pool for use after its read-only preview failed with `storage.plan.stale` (found on dev01): the disks of a pool imported read-only are not probed, and after the plan's export step they are, so their signatures looked changed. Import steps now compare serial, size and partitions, not the ZFS labels they expect.
 - Destroying a shared folder's dataset (and renaming a dataset, exporting or destroying a pool) failed with "pool or dataset is busy" while a Files window showed a folder in it (found on dev01): the live folder view held a handle on the folder. Such plans now close the daemon's own handles below the mount points they unmount before the first command, and the open Files window is told the folder is gone.
 - A subscriber a topic refuses no longer counts as a subscriber, so it cannot make the daemon sample or watch for events it would never receive.
