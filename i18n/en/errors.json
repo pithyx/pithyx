@@ -21,7 +21,7 @@
       "invalid": "The display name can have at most {maxLength} characters and no control characters."
     },
     "password": {
-      "too_common": "This password is one of the most commonly used passwords. Choose one that is harder to guess.",
+      "too_common": "This password is too well known. Choose one that is harder to guess.",
       "too_long": "The password can have at most {maxLength} characters.",
       "too_short": "The password needs at least {minLength} characters."
     },

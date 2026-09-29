@@ -42,7 +42,25 @@ public sealed class CredentialRulesTests
         Assert.Equal(ErrorCodes.AuthPasswordTooCommon, Assert.Throws<PithyxException>(() => CredentialRules.ValidateNewPassword(password)).Code);
 
     [Theory]
+    [InlineData("password1")]
+    [InlineData("Iloveyou")]
+    public void RejectsCommonPasswordsFromEightCharacters(string password) =>
+        Assert.Equal(ErrorCodes.AuthPasswordTooCommon, Assert.Throws<PithyxException>(() => CredentialRules.ValidateNewPassword(password)).Code);
+
+    [Theory]
     [InlineData("correct horse battery")]
     [InlineData("no composition rules at all")]
-    public void AcceptsLongUncommonPasswordsWithoutCompositionRules(string password) => CredentialRules.ValidateNewPassword(password);
+    [InlineData("k7#mQz2p")]
+    [InlineData("tulip-oar")]
+    public void AcceptsUncommonPasswordsFromEightCharactersWithoutCompositionRules(string password) => CredentialRules.ValidateNewPassword(password);
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("k7#mQz2")]
+    public void RejectsPasswordsBelowEightCharacters(string password)
+    {
+        var error = Assert.Throws<PithyxException>(() => CredentialRules.ValidateNewPassword(password));
+        Assert.Equal(ErrorCodes.AuthPasswordTooShort, error.Code);
+        Assert.Equal(8, error.Parameters["minLength"]);
+    }
 }
