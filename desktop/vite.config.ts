@@ -266,14 +266,11 @@ export default defineConfig({
             { name: 'index', tags: ['$initial'], priority: 2 },
             // Code the desktop shares with apps goes into one chunk: split by which apps also use it, every new app
             // would add requests to the desktop and compress worse. The SDK and each app's own folder stay with the
-            // apps. Context menus only open in lazily loaded parts (desktop items, apps), so their popover stays with
-            // those as well.
+            // apps.
             {
               name: 'shared',
               test: (id) =>
-                !/[\\/](sdk[\\/]src[\\/]|desktop[\\/]src[\\/]apps[\\/][^\\/]+[\\/]|desktop[\\/]src[\\/]ui[\\/]ContextMenu\.)/.test(
-                  id,
-                ),
+                !/[\\/](sdk[\\/]src|desktop[\\/]src[\\/]apps[\\/][^\\/]+)[\\/]/.test(id),
               minShareCount: 2,
               priority: 1,
             },
