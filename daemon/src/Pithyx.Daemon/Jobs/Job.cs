@@ -59,3 +59,6 @@ public sealed record Job(
     DateTimeOffset CreatedAt,
     DateTimeOffset? StartedAt,
     DateTimeOffset? FinishedAt);
+
+/// <summary>Snapshot of the <c>jobs</c> topic: the signed-in user's queued and running jobs, oldest first.</summary>
+public sealed record JobList(IReadOnlyList<Job> Jobs);

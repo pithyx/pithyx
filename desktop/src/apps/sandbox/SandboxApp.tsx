@@ -64,7 +64,6 @@ export function SandboxApp({
       methods: brokerFor({
         windowId,
         app,
-        appName: appName(app),
         user: user?.id ?? 0,
         permissions,
       }),

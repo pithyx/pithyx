@@ -22,7 +22,7 @@ Set by the owner on 2026-09-29. This section is the roadmap from now on: work th
 Core bugs first, each in its own PR with a regression test:
 
 - [ ] Disk failure: a hard-removed disk only disappears from the list; there is no DEGRADED, no banner, no notification, and other pools look dead. Expected: DEGRADED at once, a banner and a persistent notification, other pools unaffected; after the disk is back, a resilver and the all-clear. Tested for real on dev01: remove with `echo 1 > /sys/block/<dev>/device/delete`, bring back with a SCSI rescan (`echo '- - -' > /sys/class/scsi_host/host*/scan`).
-- [ ] Notification center and toasts do not work (no entries, no toasts): find the cause and fix it.
+- [x] Notification center and toasts do not work (no entries, no toasts): find the cause and fix it. (The daemon had no notifications at all: the bell only showed storage alerts and toasts were the desktop's own. Now the daemon keeps a history per user (jobs that end, storage alerts that appear or go away, SDK `notify`), sends it on the per-user topic `notifications` and the user's running jobs on `jobs`; the panel shows running jobs, alerts and the history, and every new notification is a toast.)
 - [ ] After the disks were removed and brought back, Files shows shares without files and "share not found": the mount state and the Files cache recover once the disks are back.
 - [ ] Deleting a shared folder fails with a timeout (`internal.admin.shares.plan`).
 - [ ] Destroying a pool: the dialog hangs for a long time at `zpool destroy`. Long operations run as background jobs, the dialog can be closed, progress shows in the notification center. Find the cause of the long run (open handles, watches, ...).
@@ -363,7 +363,7 @@ Goal: the desktop works like a desktop, and apps can be built against the SDK.
 - [x] Size classes from `CLAUDE.md` (compact, medium, expanded): full-screen apps with app switcher on compact, maximized windows and split view on medium, free windows and snap zones (thirds on ultrawide) on expanded.
 - [ ] SDK reports the window size class; sample apps use container queries. Waits for the SDK (5.3); the core apps already use container queries.
 - [x] Touch: 44 px targets on coarse pointers, swipe to switch apps on compact, no hover-only actions. Plus the back gesture on compact.
-- [x] Taskbar with running apps, start menu with search, notification toasts. Toasts are client-side until the daemon sends notifications.
+- [x] Taskbar with running apps, start menu with search, notification toasts. (Toasts show the desktop's own messages and every new notification of the daemon, see "Release 0.1".)
 - [x] Taskbar positions left and right (step 4 designed bottom and top only).
 
 ### 5.2 Layout memory

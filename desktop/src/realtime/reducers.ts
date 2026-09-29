@@ -26,6 +26,36 @@ export const reducers: { [K in TopicName]: Reducer<K> } = {
   // Folder changes are deltas for the file manager's own listing; the snapshot only says whether the folder is watched.
   'files/+/+': (snapshot) => snapshot ?? { watching: true },
   'jobs/+': (_, event) => event,
+  // The user's own queued and running jobs: an event replaces its job, and a final one removes it.
+  jobs: (snapshot, event) => {
+    const others = (snapshot?.jobs ?? []).filter((job) => job.id !== event.id);
+    return {
+      jobs:
+        event.state === 'queued' || event.state === 'running'
+          ? [...others, event].sort((a, b) => a.id - b.id)
+          : others,
+    };
+  },
+  // The user's notification history, newest first.
+  notifications: (snapshot, event) => {
+    const items = snapshot?.items ?? [];
+    const ids = new Set(event.ids);
+    switch (event.change) {
+      case 'created': {
+        const created = event.notification;
+        const kept = items.filter((item) => !ids.has(item.id) && item.id !== created?.id);
+        return { items: created == null ? kept : [created, ...kept] };
+      }
+      case 'read':
+        return {
+          items: items.map((item) =>
+            ids.has(item.id) && item.readAt === null ? { ...item, readAt: event.readAt } : item,
+          ),
+        };
+      case 'deleted':
+        return { items: items.filter((item) => !ids.has(item.id)) };
+    }
+  },
   // Pools are few; every event is the whole state.
   'storage/pools': (_, event) => event,
   // Alerts and SMART reports are few too; every event is the whole state as this user sees it.

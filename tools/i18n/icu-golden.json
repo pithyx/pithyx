@@ -294,6 +294,17 @@
       "params": {},
       "expected": "This job does not exist or has already been removed."
     },
+    "notifications.message.invalid": {
+      "params": {
+        "field": "title",
+        "maxLength": 200
+      },
+      "expected": "The notification was not sent: its title is empty or longer than 200 characters."
+    },
+    "notifications.notification.not_found": {
+      "params": {},
+      "expected": "This notification no longer exists."
+    },
     "realtime.message.invalid": {
       "params": {},
       "expected": "The live connection received a message it does not understand."

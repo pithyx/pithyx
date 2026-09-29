@@ -214,6 +214,14 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.NotFound)]
     public const string JobsJobNotFound = "jobs.job.not_found";
 
+    /// <summary>An app notification is invalid; <c>params.field</c> names the field (app, title, body), <c>params.maxLength</c> its limit.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string NotificationsMessageInvalid = "notifications.message.invalid";
+
+    /// <summary>The signed-in user has no notification with this id (it was deleted, or belongs to someone else).</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string NotificationsNotificationNotFound = "notifications.notification.not_found";
+
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string RealtimeMessageInvalid = "realtime.message.invalid";
 

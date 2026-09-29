@@ -53,6 +53,11 @@
         "title": "Platte {disk} zeigt Verschleiß",
         "body": "Platte {disk} (Seriennummer {serial}) meldet {reallocated, number} umgelagerte, {pending, number} ausstehende und {uncorrectable, number} nicht korrigierbare Sektoren und {mediaErrors, number} Medienfehler{selfTest, select, failed {; ihr letzter Selbsttest ist fehlgeschlagen} other {}}. Plane ihren Austausch.",
         "action": "Speicher öffnen"
+      },
+      "resolved": {
+        "title": "Behoben: {problem}",
+        "body": "Das Speicherproblem besteht nicht mehr.",
+        "action": "Speicher öffnen"
       }
     }
   },
@@ -91,6 +96,26 @@
     "message": {
       "title": "{title}",
       "body": "{body}"
+    }
+  },
+  "jobs": {
+    "job": {
+      "succeeded": {
+        "title": "{kind}: fertig",
+        "body": "Die Aufgabe ist abgeschlossen."
+      },
+      "failed": {
+        "title": "{kind}: fehlgeschlagen",
+        "body": "{error}"
+      },
+      "cancelled": {
+        "title": "{kind}: abgebrochen",
+        "body": "Die Aufgabe wurde vor ihrem Ende gestoppt."
+      },
+      "interrupted": {
+        "title": "{kind}: unterbrochen",
+        "body": "Das System wurde neu gestartet, während die Aufgabe lief. Starte sie erneut, wenn du sie noch brauchst."
+      }
     }
   }
 }

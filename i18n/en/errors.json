@@ -137,6 +137,14 @@
       "not_found": "This job does not exist or has already been removed."
     }
   },
+  "notifications": {
+    "message": {
+      "invalid": "The notification was not sent: its {field, select, app {app id is not valid} title {title is empty or longer than {maxLength} characters} other {text is longer than {maxLength} characters}}."
+    },
+    "notification": {
+      "not_found": "This notification no longer exists."
+    }
+  },
   "realtime": {
     "message": {
       "invalid": "The live connection received a message it does not understand."

@@ -10,5 +10,54 @@
       "title": "Snapshot of {dataset}",
       "detail": "Preparing"
     }
+  },
+  "running": {
+    "queued": {
+      "title": "{kind}",
+      "detail": "Waiting to start"
+    },
+    "items": {
+      "title": "{kind}",
+      "detail": "{done, number} of {total, number}"
+    },
+    "bytes": {
+      "title": "{kind}",
+      "detail": "{done} of {total}"
+    },
+    "working": {
+      "title": "{kind}",
+      "detail": "Working"
+    }
+  },
+  "kinds": {
+    "files_copy": "Copying files",
+    "files_move": "Moving files",
+    "files_trash": "Moving to the recycle bin",
+    "files_delete": "Deleting files",
+    "files_restore": "Restoring from the recycle bin",
+    "files_purge": "Deleting for good",
+    "files_empty_trash": "Emptying the recycle bin",
+    "files_restore_version": "Restoring a version",
+    "storage_pool_create": "Creating a pool",
+    "storage_pool_destroy": "Deleting a pool",
+    "storage_pool_replace": "Replacing a disk",
+    "storage_pool_spare_add": "Adding a hot spare",
+    "storage_pool_spare_remove": "Removing a hot spare",
+    "storage_pool_offline": "Taking a disk offline",
+    "storage_pool_online": "Bringing a disk online",
+    "storage_pool_import": "Importing a pool",
+    "storage_pool_import_readonly": "Importing a pool read-only",
+    "storage_pool_export": "Exporting a pool",
+    "storage_pool_vdev_add": "Adding disks to a pool",
+    "storage_pool_raidz_expand": "Expanding a RAID-Z group",
+    "storage_dataset_rename": "Renaming a dataset",
+    "storage_dataset_set": "Changing a dataset",
+    "storage_dataset_destroy": "Deleting a dataset",
+    "storage_volume_create": "Creating a volume",
+    "storage_snapshot_destroy": "Deleting a snapshot",
+    "storage_snapshot_rollback": "Rolling back to a snapshot",
+    "storage_share_create": "Creating a shared folder",
+    "storage_share_delete": "Deleting a shared folder",
+    "unknown": "Task"
   }
 }

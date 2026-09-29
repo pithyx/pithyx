@@ -137,6 +137,14 @@
       "not_found": "Diese Aufgabe gibt es nicht oder sie wurde bereits entfernt."
     }
   },
+  "notifications": {
+    "message": {
+      "invalid": "Die Benachrichtigung wurde nicht gesendet: {field, select, app {die App-ID ist ungültig} title {der Titel ist leer oder länger als {maxLength} Zeichen} other {der Text ist länger als {maxLength} Zeichen}}."
+    },
+    "notification": {
+      "not_found": "Diese Benachrichtigung gibt es nicht mehr."
+    }
+  },
   "realtime": {
     "message": {
       "invalid": "Die Live-Verbindung hat eine unverständliche Nachricht erhalten."
