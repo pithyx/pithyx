@@ -29,6 +29,25 @@ export const reducers: { [K in TopicName]: Reducer<K> } = {
   // Pools are few; every event is the whole state.
   'storage/pools': (_, event) => event,
   'system/info': (_, event) => event,
+  // The Resource Monitor keeps its own history from the raw events; the store only holds the newest sample.
+  'system/resources': (snapshot, event) =>
+    snapshot === undefined
+      ? {
+          cpuCount: event.cpu.cores.length,
+          memoryTotalBytes: event.memory.totalBytes,
+          history: {
+            bucketSeconds: 5,
+            times: [],
+            cpuPercent: [],
+            memoryUsedBytes: [],
+            arcBytes: [],
+            network: [],
+            disks: [],
+          },
+          latest: event,
+        }
+      : { ...snapshot, latest: event },
+  'system/processes': (_, event) => event,
 };
 
 /** The pattern a concrete topic belongs to: `files/3/0.2a.1f` belongs to `files/+/+`. */

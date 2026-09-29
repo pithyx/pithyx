@@ -45,7 +45,10 @@ export function CoreSdkApp({
   version?: string;
   permissions: readonly string[];
   /** Internal methods for this core app (apps/sdk/internal.ts); `emit` sends an internal event to this window. */
-  internal?: (emit: (event: string) => void) => { extensions: HostExtensions; close: () => void };
+  internal?: (emit: (event: string, data?: unknown) => void) => {
+    extensions: HostExtensions;
+    close: () => void;
+  };
   Component: ComponentType<SdkAppProps>;
 }) {
   const root = useRef<HTMLDivElement>(null);
@@ -68,10 +71,10 @@ export function CoreSdkApp({
         connection.current?.emit(event, data);
       },
     });
-    const host = internal?.((event) => {
+    const host = internal?.((event, data) => {
       (connection.current?.emit as ((event: string, data: unknown) => void) | undefined)?.(
         event,
-        {},
+        data ?? {},
       );
     });
     connection.current = serveApp(hostEnd, {
