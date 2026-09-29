@@ -44,18 +44,31 @@ Settings and user menu:
 - [ ] Settings holds system settings only, as a tile overview with categories and search (no company names): Info Center (OS version, hardware, uptime, system data), Shared folders, Users, File services (SMB, SFTP; a page saying "coming in v0.1" until they are done), Network (DHCP or static; shown now, changes with the rollback timer of step 14), Regional settings (system language, formats, date and time, time zone, time servers). Only finished or clearly marked pages.
 - [ ] Personal settings live in the user menu, not in Settings: theme (system, light, dark), accent color, language, taskbar position, wallpaper. The personalization page moves there.
 - [ ] Storage app: the internal datasets (`pithyx`, `apps`, `system`, `homes`, `shares`) are never shown. The tab "Datasets and volumes" leaves the default view; volumes and export and import move under "Advanced" with a short explanation ("Export a pool to move its disks to another computer").
-- [ ] Snapshots become "restore points", explained simply: one switch per shared folder, "Daily restore points, kept 7 days", plus "Previous versions" in Files. The dialog explains with examples: restore points only take space for files that were changed or deleted after them; a deleted file frees its space only when the last restore point that holds it expires; they help against accidental deletes and ransomware, and they are no replacement for a backup on another device. Schedules, holds, rollback and manual management leave the UI; the code stays.
+- [ ] Snapshots become "restore points", explained simply: one switch per shared folder, "Daily restore points, kept 7 days", plus "Previous versions" in Files. The dialog explains with examples: restore points only take space for files that were changed or deleted after them; a deleted file frees its space only when the last restore point that holds it expires; they help against accidental deletes and ransomware, and they are no replacement for a backup on another device. Schedules, holds, rollback and manual management leave the UI; the code stays. New shared folders get restore points switched on by default (daily, kept 7 days; owner's decision on 2026-09-30).
 
 Log Center (new core app, own PR):
 
 - [ ] Shows the logs of the system (the daemon and the relevant services) and of apps, filtered by source, level (debug, info, warn, error) and time range, with search and export.
-- [ ] Retention (duration and maximum size) can be set; logs are stored on the system disk only, never on pool disks.
+- [ ] Storage (changed by the owner on 2026-09-30): the current logs of the system and of apps live on the system partition, capped together at 4 GB (oldest dropped first), so they are always available: without a pool, with a locked, exported or failed pool, and during boot. An optional archive with longer retention lives on a pool, chosen in the Log Center (default: the first pool). Both sources are shown together. Lines are written in batches, not one write per line.
+- [ ] Retention (duration and maximum size) can be set for the current logs and the archive.
 - [ ] SDK: a logging API for apps (debug, info, warn, error) as part of the public SDK (TSDoc, its own decision number), rate limited per app so no app can flood the logs.
 - [ ] Administrators only, its own chunk, en and de, light and dark, axe.
 
+### Additions on 2026-09-30
+
+Password rules (one PR; the same rules everywhere: setup, user management, changing the password, later the installer):
+
+- [ ] The hard minimum of 12 characters goes. New hard floor: 8 characters (NIST SP 800-63B). The blocklist of common passwords stays hard, with a friendly message ("This password is too well known").
+- [ ] A live strength meter (weak, medium, strong) with a short reason (too short, a well-known password, only dictionary words, repetitions). Weak passwords from 8 characters on are allowed with a warning only. No character class rules. The sentence about long passphrases becomes an optional tip.
+- [ ] The estimate needs no large library (sign-in budget); the server runs the same blocklist check. One central validator that every place uses.
+
+Thumbnail cache (one PR, replaces D197 in vyxis/vyxis#33):
+
+- [ ] Thumbnails live in a dataset of their own per pool (`<pool>/pithyx/cache`, never shown in the UI) instead of `/var/cache/pithyx/thumbnails`, capped at 2 GB per pool (least recently used dropped first). The cache leaves with its pool when the pool is destroyed or exported. Without a pool there are no files that need thumbnails. `daemon/CLAUDE.md` says so.
+
 ### Scope of v0.1
 
-- [ ] Web installer (from M5): boot from USB, open the setup page in a browser, choose the system disk, the system installs itself and continues setup in the same page.
+- [ ] Web installer (from M5): boot from USB, open the setup page in a browser, choose the system disk, the system installs itself and continues setup in the same page. Details under "Web installer v0.1" and "System layout v0.1" below.
 - [ ] Storage: create, extend, repair and destroy pools; failures are detected and reported reliably (step 8 plus the findings above).
 - [ ] Shared folders.
 - [ ] Users: create, edit, delete (groups later), as Linux and Samba accounts (the user part of step 10 and the share rights of step 11).
@@ -63,7 +76,30 @@ Log Center (new core app, own PR):
 - [ ] Core apps: Files, Storage, Settings, Resource Monitor, Viewer, Log Center.
 - [ ] Updater with rollback (from M5).
 - [ ] Configuration backup and restore (`pithyx.db`, Samba passdb, TLS certificates, SSH host keys; see `daemon/CLAUDE.md`).
-- [ ] Encryption only if it stays simple, otherwise v0.2. ZFS encrypts a dataset only when it is created: an existing pool cannot be encrypted in place, its data would have to be copied into a new encrypted dataset. Pools created with v0.1 without encryption therefore stay unencrypted; the pool wizard keeps saying that encryption can only be chosen at creation.
+- [x] Encryption comes after v0.2 (owner's decision on 2026-09-30; step 9 moves there). ZFS encrypts a dataset only when it is created: an existing pool cannot be encrypted in place, its data would have to be copied into a new encrypted dataset. Pools created with v0.1 and v0.2 therefore stay unencrypted, even after an update that brings encryption; only pools created later can be encrypted. The pool wizard keeps saying that encryption can only be chosen at creation, and the release notes of v0.1 say that its pools stay unencrypted.
+
+### Web installer v0.1
+
+Only planned here; it is built after the items above.
+
+- [ ] Boot from a USB stick or ISO (UEFI). The console shows only the logo, the address or addresses and a QR code.
+- [ ] The installer UI listens on port 7484; port 80 redirects to 7484. It announces itself over mDNS as `pithyx-setup.local`.
+- [ ] Same desktop wallpaper with the boxes, a welcome message in the spirit of "Let's begin the free journey", the logo with a welcome animation.
+- [ ] Steps with back navigation:
+  1. Name of the NAS, language, time zone, region and formats, time servers.
+  2. Network: the detected network cards with their link state, DHCP by default, static optional, a connection test.
+  3. Storage: choose the system disk (SSD or NVMe suggested, USB disks excluded), optionally create a data pool right away with the pool wizard.
+  4. Administrator with the password rules above, root locked, reserved names from the central list, show the recovery key and confirm it was stored.
+  5. Summary listing every disk that will be erased (model, size, serial) and a checkbox "All data on these disks will be erased".
+- [ ] Installation with progress, then "Remove the USB stick", reboot, and a redirect to the new address.
+- [ ] Test: a throwaway QEMU VM with several disks and network cards, driven by Playwright, including the reboot.
+
+### System layout v0.1
+
+- [ ] Single-disk installation that is always future-compatible: ESP 512 MB (boot loader plus the fallback `\EFI\BOOT\BOOTX64.EFI`), system partition 32 GB as an mdadm RAID1 with one member (btrfs, snapshots for update rollback), swap 4 GB as an mdadm RAID1 with one member, the rest of the disk unused for now. The one-member RAID1 lets v0.2+ add a second disk without reinstalling.
+- [ ] Never on the system partition: Docker images, VM disks, app data, thumbnails.
+- [ ] The system disk stays locked for pools (the disk guard of step 7).
+- [ ] `[DECISION]` v0.2+: multi-disk system installation. Only "single disk" or "mirror", never a stripe. Suggest at most 2 system disks (SSDs preferred), a hint from 4 on, a hard limit of 8, never all disks automatically. EFI partitions kept in sync, booting with a missing disk, automatic re-add when a disk is replaced, the remaining space usable as a pool or volume (a stripe there only with a warning), and a hint about speed and power saving when the system disks are HDDs. Open: mdadm plus btrfs, or root on ZFS with boot environments. Optional zram.
 
 ### After the scope
 
@@ -108,7 +144,7 @@ The first release, v1.0.0, carries the constellation codename Pyxis: the mariner
 - [ ] Error code docs: every error code needs its entry on the website with a CI completeness check (`CLAUDE.md`, Errors); today codes are documented only through their i18n texts.
 - [ ] Third-party notices: generate the list of bundled npm and NuGet packages with their licenses for the About page and check it in CI (Later milestones item); today only fonts, Tabler and React Aria are listed.
 - [ ] `TopicHub` keeps one throttle per published topic forever (one per job and folder); release them for topics without subscribers.
-- [ ] No real data on Pithyx pools before step 9 (encryption and key vault) is done: encryption can only be chosen when a pool is created, so a pool made earlier would have to be recreated.
+- [ ] No real data on Pithyx pools before step 9 (encryption and key vault) is done: encryption can only be chosen when a pool is created, so a pool made earlier would have to be recreated. Encryption comes after v0.2 (decided on 2026-09-30), so v0.1 and v0.2 ship without it: their release notes and the pool wizard say that pools created with them stay unencrypted. The blocker holds for the release that brings step 9.
 - [ ] UPS: check before the release whether NUT support (clean shutdown on power loss, pools exported and the key vault untouched) must ship with it (parked under "Later milestones").
 
 ---
@@ -607,7 +643,7 @@ Goal: pools are created, maintained and watched from the UI, with snapshots that
 
 ## Step 9: Encryption and key vault
 
-Effort: high.
+Effort: high. Moved after v0.2 (owner's decision on 2026-09-30, see "Release 0.1").
 
 Goal: pools can be encrypted, unlock after a power loss if the owner wants that, and nobody gets at the data without the key. Real data goes on Pithyx pools only after this step.
 
@@ -852,8 +888,8 @@ Known requirements for later milestones:
 - Self-hosted CI runner, parked (D109 in vyxis/vyxis#25: integration tests run on GitHub-hosted runners with file-backed pools, plus the destructive suite on dev01; this proposal is for later, if tests need the exact Debian kernel). A dedicated VM with at least 6 GB RAM, never on the NAS and never on pve02, with egress only to GitHub, npm, NuGet and the Debian mirrors and no access to shares, management interfaces or the LAN. On it: ephemeral runners in Docker containers for the daemon, frontend and E2E jobs (own image built from the pinned `actions/runner` release, one JIT runner config per job from a GitHub App key, `docker run --rm`, non-root, no `docker.sock`, no `--privileged`, no host network, CPU and memory limits, updates only by rebuilding the image in a PR), and a throwaway VM per job for the ZFS and mdadm integration tests (qcow2 overlay on a golden Debian 13 image with `zfs-dkms`, loop devices only inside it). GitHub side: a runner group for `vyxis/vyxis` only, label `pithyx-ci`, `runs-on: ${{ vars.CI_RUNNER || 'ubuntu-24.04' }}` so switching back is one repository variable (see "CI runners" under "Release blockers").
 - Third-party notices: generate the list of bundled NuGet and npm packages with their licenses (for example libsodium ISC, NSec MIT, Otp.NET MIT) for the About page, and check it in CI. It starts from the hand-written `desktop/public/third-party-notices.json` (fonts, Tabler, React Aria), which does not list transitive packages yet.
 - `[DECISION]` Server-side rendered texts (email, SSH MOTD, push) in the recipient's language need culture data. Decide between keeping `InvariantGlobalization` (small, no libicu, but only invariant formatting and a hand-written plural rule for English and German in `IcuMessageFormatter`) and enabling ICU culture data (libicu in the image, about 30 MB, correct number, date and plural rules for every language). Today the daemon only renders the English `detail` fallback of problem details.
-- M5: the system on redundant disks (owner's question in vyxis/vyxis#29). Today the system lives on one disk, and the disk guard never lets a pool use it: a failed system disk stops the box until it is reinstalled and the config backup restored (the pools survive). Proposal: the installer offers root on ZFS as a mirror of two or more disks (`rpool` with a small boot partition on each, like the system partition other NAS systems spread over every disk), the rest of those disks usable as the data pool, and a second disk can be attached to the system mirror later. The guard then treats the system pool's disks as system disks as it does now, and only the plans for the system mirror may touch them. `[DECISION]` for M5: root on a ZFS mirror of the chosen disks (recommended), or a system partition on every data disk.
-- M5: web-based installer instead of a TUI. Boot from USB, open the setup page in a browser, choose the system disk, the system installs itself and continues setup in the same page. The console only shows the address. The installer announces itself as `pithyx-setup.local`; an installed box gets the default host name `pithyx` and answers as `pithyx.local`.
+- M5: the system on redundant disks (owner's question in vyxis/vyxis#29). Today the system lives on one disk, and the disk guard never lets a pool use it: a failed system disk stops the box until it is reinstalled and the config backup restored (the pools survive). Proposal: the installer offers root on ZFS as a mirror of two or more disks (`rpool` with a small boot partition on each, like the system partition other NAS systems spread over every disk), the rest of those disks usable as the data pool, and a second disk can be attached to the system mirror later. The guard then treats the system pool's disks as system disks as it does now, and only the plans for the system mirror may touch them. `[DECISION]` for M5: root on a ZFS mirror of the chosen disks (recommended), or a system partition on every data disk. Superseded by "System layout v0.1" and its v0.2+ decision under "Release 0.1".
+- M5: web-based installer instead of a TUI. Boot from USB, open the setup page in a browser, choose the system disk, the system installs itself and continues setup in the same page. The console only shows the address. The installer announces itself as `pithyx-setup.local`; an installed box gets the default host name `pithyx` and answers as `pithyx.local`. Detailed under "Web installer v0.1".
 - M5: TLS as decided in `CLAUDE.md`: self-signed by default, trust wizard (local CA download with per-OS instructions), optional own domain with Let's Encrypt DNS-01. Passkeys and the service worker switch on once trusted.
   - Chromium does not use its HTTP cache for responses with a certificate error (measured in the #13 review): on the untrusted default every reload downloads the whole desktop again (about 1.1 s instead of 0.4 s on Fast 4G with 4x CPU). After sign-in on an untrusted certificate the desktop shows a dismissible hint that leads to the trust wizard and names faster reloads next to passkeys; the reload budget holds only once trusted. Add an E2E check that a trusted certificate serves `/assets/*` from the disk cache.
   - Kestrel negotiates HTTP/2 over TLS by default (ALPN); plain HTTP in development is HTTP/1.1 only, so the build keeps the sign-in path to few requests. Verify h2 on 443 and 7484 once TLS lands, and send `pithyx_device` with `Secure` there (it already does on HTTPS requests).
