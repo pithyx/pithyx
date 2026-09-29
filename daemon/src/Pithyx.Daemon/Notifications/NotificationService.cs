@@ -65,22 +65,27 @@ public sealed partial class NotificationService : IDisposable
             var now = _time.GetUtcNow();
             long id;
             List<long> dropped;
+            // One transaction: a failed trim must not leave a row that memory and the topic never saw.
             await using (var connection = await _connections.OpenAsync(cancellationToken))
             {
+                await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
                 id = await connection.ExecuteScalarAsync<long>(
                     """
                     INSERT INTO notifications (user_id, code, params, tone, app, created_at)
                     VALUES (@userId, @Code, @parameters, @tone, @App, @createdAt)
                     RETURNING id
                     """,
-                    new { userId, draft.Code, parameters, tone = NotificationStore.ToneText(draft.Tone), draft.App, createdAt = SessionService.Format(now) });
+                    new { userId, draft.Code, parameters, tone = NotificationStore.ToneText(draft.Tone), draft.App, createdAt = SessionService.Format(now) },
+                    transaction);
                 dropped = [.. await connection.QueryAsync<long>(
                     """
                     DELETE FROM notifications
                     WHERE user_id = @userId AND id NOT IN (SELECT id FROM notifications WHERE user_id = @userId ORDER BY id DESC LIMIT @limit)
                     RETURNING id
                     """,
-                    new { userId, limit = MaxPerUser })];
+                    new { userId, limit = MaxPerUser },
+                    transaction)];
+                await transaction.CommitAsync(cancellationToken);
             }
             var notification = NotificationStore.ToNotification(new NotificationStore.NotificationRow
             {
