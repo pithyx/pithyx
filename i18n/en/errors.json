@@ -257,6 +257,9 @@
       "not_found": "This pool is no longer found on the disks. Scan again.",
       "not_importable": "Pool {name} cannot be imported ({state}). Connect its missing disks and scan again.",
       "preview_required": "Import pool {name} read-only first and check its datasets, then import it for use."
+    },
+    "zfs": {
+      "unavailable": "ZFS did not answer in time or reported an error, so Pithyx cannot show what this would change. Try again in a moment. If it keeps happening, a pool may be waiting for disks that are gone: see Storage."
     }
   },
   "system": {

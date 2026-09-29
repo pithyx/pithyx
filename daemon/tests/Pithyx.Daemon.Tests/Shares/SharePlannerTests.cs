@@ -49,6 +49,7 @@ public sealed class SharePlannerTests : IAsyncLifetime
         var datasets = new DatasetPlanner(_state, _pools, _snapshots, _snapshotService, _shares, _time, NullLogger<DatasetPlanner>.Instance);
         _planner = new SharePlanner(_state, _pools, _shares, _changes, datasets, _snapshotService, _time, NullLogger<SharePlanner>.Instance);
         _storage = new StoragePlanner(_state, facts, _pools, new PoolImportScanner(_commands, _state, facts, _pools), datasets, _commands, _time);
+        _commands.Handler = SnapshotListing.Answer(_snapshots);
         _pools.Replace(new PoolList([Pool("tank"), Pool("fresh"), Pool("bare")], Layout()));
     }
 
@@ -333,5 +334,29 @@ public sealed class SharePlannerTests : IAsyncLifetime
         Assert.Equal((null, null, null), (details["Folder"].Pool, details["Folder"].Dataset, details["Folder"].UsedBytes));
         Assert.Equal(("tank", null), (details["Gone"].Pool, details["Gone"].UsedBytes));
         await Assert.ThrowsAsync<PithyxException>(() => _shares.ListDetailsAsync(Jobs.JobTestSupport.Principal(2), _pools.Current, Token));
+    }
+
+    [Fact]
+    public async Task APlanWaitsForZfsAtMostTenSecondsAndThenSaysSo()
+    {
+        _commands.Hanging.Add("zpool status");
+
+        var plan = _planner.PlanAsync(new SharePlanRequest("share.create", Name: "Family", Pool: "tank"), Token);
+        Assert.False(plan.IsCompleted);
+        _time.Advance(PlanReads.Limit);
+
+        var error = await Assert.ThrowsAsync<PithyxException>(() => plan);
+        Assert.Equal(ErrorCodes.StorageZfsUnavailable, error.Code);
+    }
+
+    [Fact]
+    public async Task DeleteWithDestroyNeedsAFreshSnapshotList()
+    {
+        var id = await AddShareAsync("Media", "/tank/media", "tank/pithyx/shares/media");
+        _commands.Handler = request => request.Arguments.SequenceEqual(SnapshotPlans.List.Arguments) ? new Pithyx.Daemon.Commands.CommandResult(1, "", "cannot open", TimeSpan.Zero) : null;
+
+        var error = await Assert.ThrowsAsync<PithyxException>(() => _planner.PlanAsync(new SharePlanRequest("share.delete", ShareId: id, ConfirmName: "Media", Data: ShareDataChoice.Destroy), Token));
+
+        Assert.Equal(ErrorCodes.StorageZfsUnavailable, error.Code);
     }
 }

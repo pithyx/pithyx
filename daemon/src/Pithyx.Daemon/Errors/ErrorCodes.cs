@@ -374,6 +374,13 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string StoragePoolNameMismatch = "storage.pool.name_mismatch";
 
+    /// <summary>
+    /// ZFS did not answer a read a plan needs within <see cref="Storage.PlanReads.Limit"/>, or reported an error, so the
+    /// plan cannot show what would change. A pool waiting for missing disks can block every <c>zpool</c> and <c>zfs</c> command.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.ServiceUnavailable)]
+    public const string StorageZfsUnavailable = "storage.zfs.unavailable";
+
     /// <summary>A pool with this name exists already; <c>params.name</c> is the name.</summary>
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string StoragePoolNameTaken = "storage.pool.name_taken";

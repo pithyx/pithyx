@@ -257,6 +257,9 @@
       "not_found": "Dieser Pool ist auf den Platten nicht mehr zu finden. Such noch einmal.",
       "not_importable": "Der Pool {name} lässt sich nicht importieren ({state}). Schließ die fehlenden Platten an und such noch einmal.",
       "preview_required": "Importiere den Pool {name} zuerst schreibgeschützt und prüf seine Datasets, dann importiere ihn zur Nutzung."
+    },
+    "zfs": {
+      "unavailable": "ZFS hat nicht rechtzeitig geantwortet oder einen Fehler gemeldet, deshalb kann Pithyx nicht zeigen, was sich ändern würde. Versuch es gleich noch einmal. Wenn es so bleibt, wartet vielleicht ein Pool auf Platten, die fehlen: sieh im Speicher nach."
     }
   },
   "system": {

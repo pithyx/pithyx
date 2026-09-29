@@ -124,6 +124,7 @@ export const errorCodes = [
   'storage.vdev.not_raidz',
   'storage.volume.size_invalid',
   'storage.volume.too_large',
+  'storage.zfs.unavailable',
   'system.internal.unexpected',
   'system.origin.forbidden',
 ] as const;
