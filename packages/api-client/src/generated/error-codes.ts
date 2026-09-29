@@ -55,6 +55,7 @@ export const errorCodes = [
   'fs.share.path_taken',
   'fs.share.pool_not_prepared',
   'fs.share.read_only',
+  'fs.share.unavailable',
   'fs.thumbnail.not_found',
   'fs.thumbnail.too_many',
   'fs.trash.retention_invalid',

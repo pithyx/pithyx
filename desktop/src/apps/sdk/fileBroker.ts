@@ -29,6 +29,13 @@ export interface FileBrokerTarget {
 const FINISHED: readonly JobInfo['state'][] = ['succeeded', 'failed', 'cancelled', 'interrupted'];
 
 /** Turns a failed daemon call into the problem the app sees, unchanged. */
+
+const UNAVAILABLE: Record<string, 'poolMissing' | 'poolUnavailable' | 'notMounted'> = {
+  pool_missing: 'poolMissing',
+  pool_unavailable: 'poolUnavailable',
+  not_mounted: 'notMounted',
+};
+
 function toPithyxError(error: unknown): PithyxError {
   if (error instanceof PithyxApiError) {
     return new PithyxError({
@@ -230,6 +237,9 @@ export function fileBrokerFor(target: FileBrokerTarget): {
         id: String(share.id),
         name: share.name,
         access: share.access === 'readWrite' ? 'readWrite' : 'read',
+        ...(share.unavailable == null
+          ? {}
+          : { unavailable: UNAVAILABLE[share.unavailable] ?? 'notMounted' }),
       }));
     },
     'files.list': async ({ location, path, cursor, limit, sort, order }) => {

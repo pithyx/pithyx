@@ -258,6 +258,13 @@
       "params": {},
       "expected": "You can only read in this share."
     },
+    "fs.share.unavailable": {
+      "params": {
+        "name": "Media",
+        "reason": "pool_unavailable"
+      },
+      "expected": "Media cannot be opened right now: its pool stopped because disks are missing. It comes back on its own once its disks are back."
+    },
     "fs.thumbnail.not_found": {
       "params": {},
       "expected": "There is no preview of this file yet."

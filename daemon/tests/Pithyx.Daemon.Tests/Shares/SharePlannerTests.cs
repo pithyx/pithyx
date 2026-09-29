@@ -334,4 +334,24 @@ public sealed class SharePlannerTests : IAsyncLifetime
         Assert.Equal(("tank", null), (details["Gone"].Pool, details["Gone"].UsedBytes));
         await Assert.ThrowsAsync<PithyxException>(() => _shares.ListDetailsAsync(Jobs.JobTestSupport.Principal(2), _pools.Current, Token));
     }
+
+    [Fact]
+    public async Task AShareWhosePoolStoppedIsRefusedAsUnavailableAndComesBackWithIt()
+    {
+        var id = await AddShareAsync("Media", "/tank/media", "tank/pithyx/shares/media");
+        var shares = new ShareService(_connections, _time, _pools);
+        var admin = new System.Security.Claims.ClaimsPrincipal(new System.Security.Claims.ClaimsIdentity(
+            [new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.NameIdentifier, "1"), new System.Security.Claims.Claim(System.Security.Claims.ClaimTypes.Role, Pithyx.Daemon.Auth.SessionAuthenticationHandler.AdminRole)],
+            "test"));
+        Assert.Equal("/tank/media", (await shares.ResolveAsync(admin, id, write: false, Token)).Path);
+
+        _pools.Replace(new PoolList([Pool("tank") with { State = "SUSPENDED" }, Pool("fresh"), Pool("bare")], Layout()));
+
+        var error = await Assert.ThrowsAsync<PithyxException>(() => shares.ResolveAsync(admin, id, write: false, Token));
+        Assert.Equal((ErrorCodes.FsShareUnavailable, "pool_unavailable"), (error.Code, error.Parameters["reason"]));
+        Assert.Equal("pool_unavailable", (await shares.ListAsync(admin, Token)).Single(share => share.Id == id).Unavailable);
+
+        _pools.Replace(new PoolList([Pool("tank"), Pool("fresh"), Pool("bare")], Layout()));
+        Assert.Null((await shares.ListAsync(admin, Token)).Single(share => share.Id == id).Unavailable);
+    }
 }

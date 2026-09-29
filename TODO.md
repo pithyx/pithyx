@@ -23,7 +23,7 @@ Core bugs first, each in its own PR with a regression test:
 
 - [ ] Disk failure: a hard-removed disk only disappears from the list; there is no DEGRADED, no banner, no notification, and other pools look dead. Expected: DEGRADED at once, a banner and a persistent notification, other pools unaffected; after the disk is back, a resilver and the all-clear. Tested for real on dev01: remove with `echo 1 > /sys/block/<dev>/device/delete`, bring back with a SCSI rescan (`echo '- - -' > /sys/class/scsi_host/host*/scan`).
 - [ ] Notification center and toasts do not work (no entries, no toasts): find the cause and fix it.
-- [ ] After the disks were removed and brought back, Files shows shares without files and "share not found": the mount state and the Files cache recover once the disks are back.
+- [x] After the disks were removed and brought back, Files shows shares without files and "share not found": the mount state and the Files cache recover once the disks are back. A share on an unreachable dataset is `fs.share.unavailable` and marked in the list; Files reads it again when it comes back (the disks themselves come back with vyxis/vyxis#35).
 - [ ] Deleting a shared folder fails with a timeout (`internal.admin.shares.plan`).
 - [ ] Destroying a pool: the dialog hangs for a long time at `zpool destroy`. Long operations run as background jobs, the dialog can be closed, progress shows in the notification center. Find the cause of the long run (open handles, watches, ...).
 - [ ] Usage of pools, shared folders and disks does not update after uploads.

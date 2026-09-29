@@ -1,4 +1,5 @@
 using Pithyx.Daemon.Realtime;
+using Pithyx.Daemon.Storage;
 
 namespace Pithyx.Daemon.Shares;
 
@@ -38,19 +39,37 @@ public sealed class ShareChanges
         TopicDefinition.AnyUser);
 }
 
-/// <summary>Publishes every <see cref="ShareChanges.Announce"/> on <c>shares/list</c>.</summary>
-public sealed class ShareChangePublisher(TopicHub hub, ShareChanges changes) : IHostedService
+/// <summary>
+/// Publishes every <see cref="ShareChanges.Announce"/> on <c>shares/list</c>.
+/// Also announces a new revision when a share dataset's availability changed (its pool went or came back, or it was
+/// mounted or unmounted), so Files shows the change and reads a share again once it is back.
+/// </summary>
+public sealed class ShareChangePublisher(TopicHub hub, ShareChanges changes, PoolInventory pools) : IHostedService
 {
+    private string _availability = "";
+
     public Task StartAsync(CancellationToken cancellationToken)
     {
+        _availability = ShareAvailability.Fingerprint(pools.Current);
         changes.Changed += Publish;
+        pools.Changed += OnPoolsChanged;
         return Task.CompletedTask;
     }
 
     public Task StopAsync(CancellationToken cancellationToken)
     {
         changes.Changed -= Publish;
+        pools.Changed -= OnPoolsChanged;
         return Task.CompletedTask;
+    }
+
+    private void OnPoolsChanged()
+    {
+        var availability = ShareAvailability.Fingerprint(pools.Current);
+        if (Interlocked.Exchange(ref _availability, availability) != availability)
+        {
+            changes.Announce();
+        }
     }
 
     private void Publish(long revision) => hub.Publish(ShareChanges.Topic, new ShareListRevision(revision));

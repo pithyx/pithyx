@@ -177,6 +177,14 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.NotFound)]
     public const string FsShareNotFound = "fs.share.not_found";
 
+    /// <summary>
+    /// The share exists and the user may use it, but its dataset cannot be reached now; <c>params.name</c> is the share
+    /// and <c>params.reason</c> one of <c>pool_missing</c>, <c>pool_unavailable</c> or <c>not_mounted</c>
+    /// (<see cref="Shares.ShareAvailability"/>). It comes back once its pool does.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.ServiceUnavailable)]
+    public const string FsShareUnavailable = "fs.share.unavailable";
+
     /// <summary>Another dataset already mounts where the new shared folder would; <c>params.path</c> is the place.</summary>
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string FsSharePathTaken = "fs.share.path_taken";
