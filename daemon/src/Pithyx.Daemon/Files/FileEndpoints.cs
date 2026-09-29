@@ -28,9 +28,13 @@ public static class FileEndpoints
             provider.GetRequiredService<FolderWatches>(),
             provider.GetRequiredService<Shares.ShareService>()));
         services.AddHostedService<FolderWatchPublisher>();
-        services.AddSingleton(provider => new ThumbnailCache(
-            Path.Combine(provider.GetRequiredService<DaemonPaths>().CacheDirectory, "thumbnails"),
-            provider.GetRequiredService<TimeProvider>()));
+        // Folder shares outside a pool exist only on development machines (and in simulation, whose fixtures say dev).
+        services.AddSingleton(provider => new ThumbnailCaches(
+            provider.GetRequiredService<Storage.PoolInventory>(),
+            provider.GetRequiredService<TimeProvider>(),
+            provider.GetRequiredService<DeploymentEnvironment>().Kind == DeploymentKind.Dev
+                ? Path.Combine(provider.GetRequiredService<DaemonPaths>().CacheDirectory, ThumbnailCaches.Folder)
+                : null));
         services.AddSingleton<ThumbnailService>();
         services.AddSingleton(provider => ThumbnailService.Definition(provider.GetRequiredService<Shares.ShareService>()));
         if (!BuildTimeDocument.IsGenerating)

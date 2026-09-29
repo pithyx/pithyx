@@ -4,7 +4,7 @@ namespace Pithyx.Daemon.Hosting;
 /// <param name="LogDirectory">Structured logs.</param>
 /// <param name="DatabasePath">The SQLite database.</param>
 /// <param name="DesktopDirectory">The built desktop.</param>
-/// <param name="CacheDirectory">Rebuildable data on the system disk (thumbnails); safe to delete.</param>
+/// <param name="CacheDirectory">Rebuildable data on the system disk; safe to delete. Thumbnails live on their pool, here only for folder shares on development machines.</param>
 public sealed record DaemonPaths(string LogDirectory, string DatabasePath, string DesktopDirectory, string CacheDirectory)
 {
     public static DaemonPaths Resolve(IConfiguration configuration, IHostEnvironment environment, DaemonMode mode)

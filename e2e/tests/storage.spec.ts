@@ -85,7 +85,7 @@ test('the pool wizard compares layouts, asks about encryption and lists the exac
   await dialog.getByLabel('Pool name').fill('tank');
   await dialog.getByRole('button', { name: 'Show commands' }).click();
   const commands = dialog.getByRole('status').getByRole('listitem');
-  await expect(commands).toHaveCount(8);
+  await expect(commands).toHaveCount(9);
   await expect(commands.nth(0)).toHaveText(
     /^zpool labelclear -f \/dev\/disk\/by-id\/scsi-0QEMU_QEMU_HARDDISK_drive-scsi1-part1$/,
   );

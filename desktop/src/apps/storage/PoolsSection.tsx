@@ -7,6 +7,7 @@ import { Button } from '../../ui/Button';
 import { Badge, ProgressBar } from '../../ui/Controls';
 import { IconPlus } from '../../ui/icons';
 import type { Dataset, Pool, Vdev } from '../sdk/internal';
+import { isHiddenDataset } from './datasets';
 import { ImportDialog } from './ImportDialog';
 import { PoolActionDialog, type PoolAction } from './PoolActionDialog';
 import { PoolChangeDialog, type PoolChange } from './PoolChangeDialog';
@@ -72,7 +73,9 @@ export function PoolsSection({ app }: { app: PithyxApp }) {
           <PoolCard
             key={pool.name}
             pool={pool}
-            datasets={pools.data.datasets.filter((dataset) => dataset.pool === pool.name)}
+            datasets={pools.data.datasets.filter(
+              (dataset) => dataset.pool === pool.name && !isHiddenDataset(pool.name, dataset.name),
+            )}
             onAction={(poolAction, vdev) => {
               setAction({ pool, action: poolAction, ...(vdev === undefined ? {} : { vdev }) });
             }}

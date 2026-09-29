@@ -71,6 +71,10 @@ if (!BuildTimeDocument.IsGenerating)
 {
     builder.Services.AddHostedService(services => services.GetRequiredService<SystemStateService>());
     builder.Services.AddPithyxStorageHealthMonitor();
+    if (mode == DaemonMode.Real)
+    {
+        builder.Services.AddHostedService<Pithyx.Daemon.Files.Thumbnails.ThumbnailCacheProvisioner>();
+    }
 }
 builder.Services.AddPithyxOpenApi();
 builder.Services.AddDesktopHosting();
