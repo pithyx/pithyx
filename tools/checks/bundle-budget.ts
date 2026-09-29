@@ -1,9 +1,10 @@
 // Bundle budgets, gzip compressed, run after `pnpm build`:
-// - sign-in: everything index.html loads before the first render. At most 200 KB (desktop/CLAUDE.md).
+// - sign-in: everything index.html loads before the first render. At most 200 KB (desktop/CLAUDE.md), and it fails more
+//   than 5 percent above its recorded baseline. The baseline only goes up with the owner's consent.
 // - desktop: what signing in adds on top, the desktop chunk with its imports and CSS. The sign-in screen prefetches it.
+//   A fixed limit of 150 KB (owner's decision of 2026-09-29): the timing budgets of e2e/tests/budgets.spec.ts decide.
 // Both count the texts of the largest language: only the active language's chunks (i18n-<lang> before the first
 // render, i18n-<lang>-desktop with the desktop) are loaded.
-// Each fails more than 5 percent above its recorded baseline. Baselines only go up with the owner's consent.
 //
 //   node tools/checks/bundle-budget.ts            check
 //   node tools/checks/bundle-budget.ts --update   record the current sizes as the new baselines
@@ -17,6 +18,7 @@ const dist = join(repoRoot, 'desktop', 'dist');
 const graphFile = join(repoRoot, 'desktop', 'node_modules', '.cache', 'bundle-graph.json');
 const baselineFile = join(repoRoot, 'tools', 'checks', 'bundle-budget.json');
 const SIGN_IN_LIMIT = 200 * 1024;
+const DESKTOP_LIMIT = 150 * 1024;
 const TOLERANCE = 0.05;
 const DESKTOP_MODULE = 'src/desktop/Desktop.tsx';
 
@@ -30,7 +32,6 @@ interface Chunk {
 
 interface Baseline {
   signInGzipBytes: number;
-  desktopGzipBytes: number;
 }
 
 function gzipBytes(path: string): number {
@@ -90,29 +91,29 @@ function total(label: string, files: Set<string>): number {
   console.log(`${kb(sum).padStart(10)}  ${label}\n`);
   return sum;
 }
-const measured: Baseline = {
-  signInGzipBytes: total('sign-in total', signIn),
-  desktopGzipBytes: total('desktop total, loaded after sign-in', desktop),
-};
+const signInBytes = total('sign-in total', signIn);
+const desktopBytes = total('desktop total, loaded after sign-in', desktop);
 
 if (process.argv.includes('--update')) {
-  writeFileSync(baselineFile, `${JSON.stringify(measured, null, 2)}\n`);
-  console.log(
-    `baselines recorded: sign-in ${kb(measured.signInGzipBytes)}, desktop ${kb(measured.desktopGzipBytes)}`,
+  writeFileSync(
+    baselineFile,
+    `${JSON.stringify({ signInGzipBytes: signInBytes } satisfies Baseline, null, 2)}\n`,
   );
+  console.log(`sign-in baseline recorded: ${kb(signInBytes)}`);
 } else {
   const baseline = JSON.parse(readFileSync(baselineFile, 'utf8')) as Baseline;
-  const budgets = [
-    ['sign-in', measured.signInGzipBytes, baseline.signInGzipBytes, SIGN_IN_LIMIT],
-    ['desktop', measured.desktopGzipBytes, baseline.desktopGzipBytes, Infinity],
-  ] as const;
-  for (const [name, size, recorded, limit] of budgets) {
-    const allowed = Math.min(limit, Math.round(recorded * (1 + TOLERANCE)));
-    if (size > allowed) {
-      console.error(
-        `${name} bundle ${kb(size)} exceeds ${kb(allowed)} (baseline ${kb(recorded)} + 5 percent${limit === Infinity ? '' : `, at most ${kb(limit)}`})`,
-      );
-      process.exitCode = 1;
-    }
+  const signInAllowed = Math.min(
+    SIGN_IN_LIMIT,
+    Math.round(baseline.signInGzipBytes * (1 + TOLERANCE)),
+  );
+  if (signInBytes > signInAllowed) {
+    console.error(
+      `sign-in bundle ${kb(signInBytes)} exceeds ${kb(signInAllowed)} (baseline ${kb(baseline.signInGzipBytes)} + 5 percent, at most ${kb(SIGN_IN_LIMIT)})`,
+    );
+    process.exitCode = 1;
+  }
+  if (desktopBytes > DESKTOP_LIMIT) {
+    console.error(`desktop bundle ${kb(desktopBytes)} exceeds ${kb(DESKTOP_LIMIT)}`);
+    process.exitCode = 1;
   }
 }
