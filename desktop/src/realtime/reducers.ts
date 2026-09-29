@@ -29,6 +29,8 @@ export const reducers: { [K in TopicName]: Reducer<K> } = {
   // Pools are few; every event is the whole state.
   'storage/pools': (_, event) => event,
   'system/info': (_, event) => event,
+  // Thumbnail events are handed to the Files app as they come; the store only says the topic is followed.
+  'thumbnails/+/+': (snapshot) => snapshot ?? { watching: true },
   // The Resource Monitor keeps its own history from the raw events; the store only holds the newest sample.
   'system/resources': (snapshot, event) =>
     snapshot === undefined

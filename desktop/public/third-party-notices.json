@@ -45,5 +45,23 @@
     "source": "https://github.com/adobe/react-spectrum",
     "licenseFile": "licenses/react-aria-components.txt",
     "modified": false
+  },
+  {
+    "name": "PDF.js",
+    "version": "6.3.289 (pdfjs-dist)",
+    "license": "Apache-2.0",
+    "source": "https://github.com/mozilla/pdf.js",
+    "licenseFile": "licenses/pdfjs-dist.txt",
+    "modified": false,
+    "note": "Loaded only when a PDF is opened in the viewer."
+  },
+  {
+    "name": "SkiaSharp",
+    "version": "4.153.0 (with Skia and its image codecs)",
+    "license": "MIT",
+    "source": "https://github.com/mono/SkiaSharp",
+    "licenseFile": "licenses/skiasharp.txt",
+    "modified": false,
+    "note": "Part of the daemon: decodes images for thumbnails. Skia is BSD-3-Clause; libjpeg-turbo, libpng, libwebp and giflib are under BSD-style, zlib and MIT licenses, listed in the file."
   }
 ]

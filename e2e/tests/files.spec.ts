@@ -52,7 +52,7 @@ async function openFolder(page: Page, folder: string) {
 test('lists a folder, creates, renames and uploads, and downloads with a double click', async ({
   page,
 }) => {
-  prepare('e2e-basics', { 'notes.txt': 'hello' });
+  prepare('e2e-basics', { 'notes.txt': 'hello', 'backup.zip': 'PK' });
   await openFolder(page, 'e2e-basics');
   await expect(row(page, 'notes.txt')).toBeVisible();
 
@@ -78,9 +78,10 @@ test('lists a folder, creates, renames and uploads, and downloads with a double 
   await expect(row(page, 'report.pdf')).toBeVisible();
   expect(readFileSync(join(shared, 'e2e-basics', 'report.pdf'), 'utf8')).toBe('%PDF-1.7');
 
+  // Files the viewer does not show are downloaded.
   const download = page.waitForEvent('download');
-  await row(page, 'diary.txt').dblclick();
-  expect((await download).suggestedFilename()).toBe('diary.txt');
+  await row(page, 'backup.zip').dblclick();
+  expect((await download).suggestedFilename()).toBe('backup.zip');
 });
 
 test('copies and moves with the clipboard and asks about a name that exists', async ({ page }) => {

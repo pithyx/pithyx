@@ -50,7 +50,8 @@
     "paste": "Paste",
     "delete": "Move to recycle bin",
     "deletePermanent": "Delete permanently",
-    "selectAll": "Select all"
+    "selectAll": "Select all",
+    "openWith": "Open with…"
   },
   "dialog": {
     "cancel": "Cancel",
@@ -115,5 +116,14 @@
     "delete": "Del",
     "deletePermanent": "Shift+Del",
     "selectAll": "Ctrl+A"
+  },
+  "layout": {
+    "grid": "Show as tiles",
+    "list": "Show as list"
+  },
+  "openWith": {
+    "title": "Open {name} with",
+    "viewer": "Viewer",
+    "download": "Download"
   }
 }

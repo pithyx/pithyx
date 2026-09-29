@@ -167,7 +167,8 @@
     "disks": "Laufwerke",
     "about": "Über Pithyx",
     "demo": "SDK-Demo",
-    "monitor": "Ressourcenmonitor"
+    "monitor": "Ressourcenmonitor",
+    "viewer": "Betrachter"
   },
   "roles": {
     "administrator": "Administrator",

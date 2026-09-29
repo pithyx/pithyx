@@ -58,6 +58,7 @@ export default defineConfig({
       ASPNETCORE_ENVIRONMENT: 'Development',
       PITHYX_SIMULATE: '1',
       PITHYX_DB: join(dataDirectory, 'pithyx.db'),
+      PITHYX_CACHE_DIR: join(dataDirectory, 'cache'),
       PITHYX_LOG_DIR: join(dataDirectory, 'logs'),
       PITHYX_DESKTOP_DIR: join(import.meta.dirname, '..', 'desktop', 'dist'),
     },

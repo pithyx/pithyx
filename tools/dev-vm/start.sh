@@ -50,6 +50,7 @@ export ASPNETCORE_ENVIRONMENT=Development
 export PITHYX_SIMULATE="$simulate"
 export PITHYX_DB="$data/pithyx.db"
 export PITHYX_LOG_DIR="$data/logs"
+export PITHYX_CACHE_DIR="$data/cache"
 export PITHYX_DESKTOP_DIR="$repo/desktop/dist"
 export PITHYX_FIXTURES="$repo/daemon/tests/fixtures"
 exec dotnet run --project "$repo/daemon/src/Pithyx.Daemon" --no-launch-profile

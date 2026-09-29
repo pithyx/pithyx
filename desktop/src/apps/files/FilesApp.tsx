@@ -13,6 +13,7 @@ import {
 } from '@pithyx/sdk';
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useStore } from 'zustand';
 import { Button, IconButton } from '../../ui/Button';
 import { cx } from '../../ui/cx';
 import { Dialog } from '../../ui/Dialog';
@@ -22,6 +23,8 @@ import {
   IconArrowUp,
   IconChevronRight,
   IconFolderPlus,
+  IconLayoutGrid,
+  IconListDetails,
   IconMenu2,
   IconServer2,
   IconTrash,
@@ -30,7 +33,8 @@ import {
 } from '../../ui/icons';
 import { randomId } from '../../platform/browser';
 import { setClipboard, useFilesClipboard } from './clipboard';
-import { defaultAction } from './defaultAction';
+import { filesCall, onThumbnails, thumbnailUrl } from '../sdk/filesInternal';
+import { defaultAction, openWithChoices, type OpenWith } from './defaultAction';
 import styles from './FilesApp.module.css';
 import { FilesMenu, type FilesAction } from './FilesMenu';
 import { FolderView } from './FolderView';
@@ -47,6 +51,7 @@ import {
 } from './selection';
 import { createTransfers, type Transfers } from './transfers';
 import { TrashView, trashKey } from './TrashView';
+import { createThumbnails, thumbnailKey } from './thumbnails';
 import { changeFolder, folderKey, keepOnly, useFolder } from './useFolder';
 
 /** Where a window is: a folder of a share, or the share's recycle bin. Saved with the layout. */
@@ -54,6 +59,16 @@ interface Place {
   share: string | null;
   path: string;
   view: 'folder' | 'trash';
+}
+
+type Layout = 'list' | 'grid';
+
+function restoreLayout(saved: unknown): Layout {
+  return typeof saved === 'object' &&
+    saved !== null &&
+    (saved as { layout?: unknown }).layout === 'grid'
+    ? 'grid'
+    : 'list';
 }
 
 /** What a drag of entries carries between Files windows. */
@@ -107,6 +122,14 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     order: 'asc',
   });
   const [transfers] = useState<Transfers>(createTransfers);
+  const [layout, setLayout] = useState<Layout>(() => restoreLayout(app.context.session));
+  const [thumbnails] = useState(() =>
+    createThumbnails((share, folder, names, size) =>
+      filesCall(app, 'internal.files.thumbnails', { share, folder, names, size }),
+    ),
+  );
+  const thumbnailStates = useStore(thumbnails.store, (state) => state.byKey);
+  const [openWith, setOpenWith] = useState<FileEntry | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [menu, setMenu] = useState<{ x: number; y: number; entry: FileEntry | null } | null>(null);
   const [confirmPermanent, setConfirmPermanent] = useState<FileItems | null>(null);
@@ -166,9 +189,22 @@ export function FilesApp({ app }: { app: PithyxApp }) {
   }, [app, t, title]);
   useEffect(() => {
     if (shareId !== null) {
-      void app.session.save({ share: shareId, path, view });
+      void app.session.save({ share: shareId, path, view, layout });
     }
-  }, [app, shareId, path, view]);
+  }, [app, shareId, path, view, layout]);
+  // Thumbnails rendered by the daemon arrive as events: syncing with the SDK.
+  useEffect(() => onThumbnails(app, thumbnails.receive), [app, thumbnails]);
+  const thumbnailSize = layout === 'grid' ? 'large' : 'small';
+
+  function thumbnailOf(entry: FileEntry): string | null {
+    if (shareId === null) {
+      return null;
+    }
+    const state = thumbnailStates[thumbnailKey(shareId, path, thumbnailSize, entry)];
+    return state?.status === 'ready' && state.version !== null
+      ? thumbnailUrl(shareId, path, entry.name, thumbnailSize, state.version)
+      : null;
+  }
 
   function go(next: Place, remember = true) {
     const key = folderKey(next.share ?? '', next.path);
@@ -414,11 +450,25 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     }
   }
 
+  async function openIn(entry: FileEntry, how: OpenWith) {
+    if (how === 'viewer' && shareId !== null) {
+      await filesCall(app, 'internal.files.openViewer', {
+        share: shareId,
+        folder: path,
+        name: entry.name,
+      }).catch(report);
+    } else {
+      await app.files.download(location, joinPath(path, entry.name)).catch(report);
+    }
+  }
+
   async function open(entry: FileEntry) {
     const target = joinPath(path, entry.name);
     const action = defaultAction(entry);
     if (action.kind === 'download') {
       await app.files.download(location, target).catch(report);
+    } else if (action.kind === 'view') {
+      await openIn(entry, 'viewer');
     } else if (action.kind === 'openFolder') {
       if (entry.kind === 'symlink') {
         // A link may point to a file; the daemon says which when it is listed.
@@ -447,9 +497,18 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     const entry = selectedEntry();
     switch (action) {
       case 'open':
-      case 'download':
         if (entry !== undefined) {
           void open(entry);
+        }
+        break;
+      case 'download':
+        if (entry !== undefined) {
+          void openIn(entry, 'download');
+        }
+        break;
+      case 'openWith':
+        if (entry !== undefined) {
+          setOpenWith(entry);
         }
         break;
       case 'copy':
@@ -623,6 +682,21 @@ export function FilesApp({ app }: { app: PithyxApp }) {
         {!writable && share !== undefined && (
           <span className={styles.readOnly}>{t('readOnly')}</span>
         )}
+        {view === 'folder' && (
+          <IconButton
+            label={layout === 'grid' ? t('layout.list') : t('layout.grid')}
+            size="sm"
+            onPress={() => {
+              setLayout((current) => (current === 'grid' ? 'list' : 'grid'));
+            }}
+          >
+            {layout === 'grid' ? (
+              <IconListDetails size={18} stroke={1.75} />
+            ) : (
+              <IconLayoutGrid size={18} stroke={1.75} />
+            )}
+          </IconButton>
+        )}
       </div>
       <div className={styles.split} data-sidebar-open={sidebarOpen ? '' : undefined}>
         <nav className={styles.sidebar} aria-label={t('sidebar')}>
@@ -700,6 +774,13 @@ export function FilesApp({ app }: { app: PithyxApp }) {
               renaming={renaming}
               onRenamed={(oldName, newName) => void rename(oldName, newName)}
               onOpen={(entry) => void open(entry)}
+              layout={layout}
+              thumbnail={thumbnailOf}
+              onVisible={(visible) => {
+                if (shareId !== null) {
+                  thumbnails.request(shareId, path, visible, thumbnailSize);
+                }
+              }}
               onUp={up}
               onKey={act}
               onMenu={(x, y, entry) => {
@@ -759,6 +840,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
           single={
             menuEntry === null || count !== 1 ? null : menuEntry.kind === 'file' ? 'file' : 'folder'
           }
+          viewable={menuEntry !== null && defaultAction(menuEntry).kind === 'view'}
           writable={writable}
           canPaste={clipboard !== null}
           onAction={act}
@@ -767,6 +849,40 @@ export function FilesApp({ app }: { app: PithyxApp }) {
           }}
         />
       )}
+      <Dialog
+        isOpen={openWith !== null}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) {
+            setOpenWith(null);
+          }
+        }}
+        title={t('openWith.title', { name: openWith?.name ?? '' })}
+        actions={
+          <Button
+            onPress={() => {
+              setOpenWith(null);
+            }}
+          >
+            {t('dialog.cancel')}
+          </Button>
+        }
+      >
+        <div className={styles.openWith}>
+          {openWith !== null &&
+            openWithChoices(openWith).map((choice) => (
+              <Button
+                key={choice}
+                onPress={() => {
+                  const entry = openWith;
+                  setOpenWith(null);
+                  void openIn(entry, choice);
+                }}
+              >
+                {t(`openWith.${choice}`)}
+              </Button>
+            ))}
+        </div>
+      </Dialog>
       <Dialog
         isOpen={confirmPermanent !== null}
         onOpenChange={(isOpen) => {

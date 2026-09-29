@@ -15,6 +15,7 @@ Environment=ASPNETCORE_ENVIRONMENT=Development
 Environment=PITHYX_SIMULATE=0
 Environment=PITHYX_DB=/var/lib/pithyx/pithyx.db
 Environment=PITHYX_LOG_DIR=/var/log/pithyx
+Environment=PITHYX_CACHE_DIR=/var/cache/pithyx
 Environment=PITHYX_DESKTOP_DIR=@REPO@/desktop/dist
 Environment=DOTNET_CLI_TELEMETRY_OPTOUT=1
 ExecStart=/usr/bin/dotnet @REPO@/daemon/src/Pithyx.Daemon/bin/Release/net10.0/pithyxd.dll

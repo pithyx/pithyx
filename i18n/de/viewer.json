@@ -1,0 +1,19 @@
+{
+  "toolbar": "Datei",
+  "previous": "Vorherige Datei",
+  "next": "Nächste Datei",
+  "position": "{index} von {count}",
+  "zoomIn": "Vergrößern",
+  "zoomOut": "Verkleinern",
+  "fitWindow": "An Fenster anpassen",
+  "fit": "Angepasst",
+  "percent": "{value} %",
+  "download": "Herunterladen",
+  "loading": "Wird geladen …",
+  "failed": "Diese Datei lässt sich nicht anzeigen. Lade sie herunter, um sie mit einem anderen Programm zu öffnen.",
+  "unsupported": "Der Betrachter kann diese Art von Datei nicht anzeigen. Lade sie herunter, um sie mit einem anderen Programm zu öffnen.",
+  "nothing": "Keine Datei zum Anzeigen.",
+  "truncated": "Nur das erste Megabyte wird angezeigt. Lade die Datei herunter, um alles zu sehen.",
+  "page": "Seite {page} von {count}",
+  "stage": "Dateiinhalt"
+}

@@ -75,3 +75,4 @@ export { default as IconTrashX } from '@tabler/icons-react/dist/esm/icons/IconTr
 export { default as IconUpload } from '@tabler/icons-react/dist/esm/icons/IconUpload.mjs';
 export { default as IconUsers } from '@tabler/icons-react/dist/esm/icons/IconUsers.mjs';
 export { default as IconX } from '@tabler/icons-react/dist/esm/icons/IconX.mjs';
+export { default as IconZoomReset } from '@tabler/icons-react/dist/esm/icons/IconZoomReset.mjs';

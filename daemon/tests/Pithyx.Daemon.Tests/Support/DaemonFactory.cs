@@ -38,6 +38,7 @@ public class DaemonFactory : WebApplicationFactory<Program>
         builder.UseSetting("PITHYX_SIMULATE", "1");
         builder.UseSetting("PITHYX_LOG_DIR", Path.Combine(DataDirectory, "logs"));
         builder.UseSetting("PITHYX_DB", Path.Combine(DataDirectory, "pithyx.db"));
+        builder.UseSetting("PITHYX_CACHE_DIR", Path.Combine(DataDirectory, "cache"));
         builder.ConfigureTestServices(services => services.AddSingleton<TimeProvider>(Time));
     }
 

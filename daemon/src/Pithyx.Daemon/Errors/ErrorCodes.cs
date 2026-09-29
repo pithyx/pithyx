@@ -155,6 +155,12 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.Forbidden)]
     public const string FsShareReadOnly = "fs.share.read_only";
 
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string FsThumbnailNotFound = "fs.thumbnail.not_found";
+
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string FsThumbnailTooMany = "fs.thumbnail.too_many";
+
     /// <summary><c>params.max</c> is the longest allowed retention in days.</summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string FsTrashRetentionInvalid = "fs.trash.retention_invalid";

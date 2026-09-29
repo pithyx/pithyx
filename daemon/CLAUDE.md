@@ -28,10 +28,10 @@ Rules for `daemon/`. The root `CLAUDE.md` applies as well.
 /usr/lib/pithyx/     binaries, read-only
 /etc/pithyx/         bootstrap only
 /var/lib/pithyx/     database and secrets
-/var/cache/pithyx/   rebuildable, safe to delete
+/var/cache/pithyx/   rebuildable, safe to delete (thumbnails)
 /var/log/pithyx/     logs
 /run/pithyx/         API socket
-/<pool>/.pithyx/     app data, volumes, thumbnails, config backups
+/<pool>/.pithyx/     app data, volumes, config backups
 ```
 
 ## Virtual machines

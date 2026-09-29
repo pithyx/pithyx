@@ -167,7 +167,8 @@
     "disks": "Disks",
     "about": "About Pithyx",
     "demo": "SDK demo",
-    "monitor": "Resource Monitor"
+    "monitor": "Resource Monitor",
+    "viewer": "Viewer"
   },
   "roles": {
     "administrator": "Administrator",
