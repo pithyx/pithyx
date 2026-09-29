@@ -2659,7 +2659,8 @@
                 "description": "Instead of `Items`: every entry of a folder except the listed names.",
                 "$ref": "#/components/schemas/FolderSelection"
               }
-            ]
+            ],
+            "description": "Every entry of a folder except some names: selecting a whole folder without sending its names."
           }
         }
       },
@@ -3953,237 +3954,245 @@
             "description": "The ring buffer of the last hour, averaged into buckets so the snapshot stays small. Every series has one entry per\ntime; a device that did not exist at a time has null there."
           },
           "latest": {
-            "required": [
-              "at",
-              "uptimeSeconds",
-              "loadAverage",
-              "cpu",
-              "memory",
-              "network",
-              "disks",
-              "temperatures"
-            ],
-            "type": "object",
-            "properties": {
-              "at": {
-                "type": "string",
-                "description": "When it was measured (UTC).",
-                "format": "date-time"
+            "oneOf": [
+              {
+                "type": "null"
               },
-              "uptimeSeconds": {
-                "type": "number",
-                "description": "Seconds since boot.",
-                "format": "double"
-              },
-              "loadAverage": {
-                "type": "array",
-                "items": {
-                  "type": "number",
-                  "format": "double"
-                },
-                "description": "Over 1, 5 and 15 minutes."
-              },
-              "cpu": {
+              {
                 "required": [
-                  "percent",
-                  "cores"
+                  "at",
+                  "uptimeSeconds",
+                  "loadAverage",
+                  "cpu",
+                  "memory",
+                  "network",
+                  "disks",
+                  "temperatures"
                 ],
                 "type": "object",
                 "properties": {
-                  "percent": {
+                  "at": {
+                    "type": "string",
+                    "description": "When it was measured (UTC).",
+                    "format": "date-time"
+                  },
+                  "uptimeSeconds": {
                     "type": "number",
-                    "description": "All cores together, 0 to 100.",
+                    "description": "Seconds since boot.",
                     "format": "double"
                   },
-                  "cores": {
+                  "loadAverage": {
                     "type": "array",
                     "items": {
                       "type": "number",
                       "format": "double"
                     },
-                    "description": "Each core, 0 to 100, in the kernel's order."
-                  }
-                }
-              },
-              "memory": {
-                "required": [
-                  "totalBytes",
-                  "usedBytes",
-                  "arcBytes",
-                  "arcMaxBytes",
-                  "cacheBytes",
-                  "freeBytes",
-                  "availableBytes",
-                  "swapTotalBytes",
-                  "swapUsedBytes"
-                ],
-                "type": "object",
-                "properties": {
-                  "totalBytes": {
-                    "type": "integer",
-                    "description": "Installed memory the kernel manages.",
-                    "format": "int64"
+                    "description": "Over 1, 5 and 15 minutes."
                   },
-                  "usedBytes": {
-                    "type": "integer",
-                    "description": "Used by programs and the kernel, without caches and without the ARC.",
-                    "format": "int64"
-                  },
-                  "arcBytes": {
-                    "type": [
-                      "null",
-                      "integer"
+                  "cpu": {
+                    "required": [
+                      "percent",
+                      "cores"
                     ],
-                    "description": "The ZFS ARC; null without ZFS. It shrinks when programs need the memory.",
-                    "format": "int64"
+                    "type": "object",
+                    "properties": {
+                      "percent": {
+                        "type": "number",
+                        "description": "All cores together, 0 to 100.",
+                        "format": "double"
+                      },
+                      "cores": {
+                        "type": "array",
+                        "items": {
+                          "type": "number",
+                          "format": "double"
+                        },
+                        "description": "Each core, 0 to 100, in the kernel's order."
+                      }
+                    }
                   },
-                  "arcMaxBytes": {
-                    "type": [
-                      "null",
-                      "integer"
+                  "memory": {
+                    "required": [
+                      "totalBytes",
+                      "usedBytes",
+                      "arcBytes",
+                      "arcMaxBytes",
+                      "cacheBytes",
+                      "freeBytes",
+                      "availableBytes",
+                      "swapTotalBytes",
+                      "swapUsedBytes"
                     ],
-                    "description": "The most the ARC may grow to; null without ZFS.",
-                    "format": "int64"
+                    "type": "object",
+                    "properties": {
+                      "totalBytes": {
+                        "type": "integer",
+                        "description": "Installed memory the kernel manages.",
+                        "format": "int64"
+                      },
+                      "usedBytes": {
+                        "type": "integer",
+                        "description": "Used by programs and the kernel, without caches and without the ARC.",
+                        "format": "int64"
+                      },
+                      "arcBytes": {
+                        "type": [
+                          "null",
+                          "integer"
+                        ],
+                        "description": "The ZFS ARC; null without ZFS. It shrinks when programs need the memory.",
+                        "format": "int64"
+                      },
+                      "arcMaxBytes": {
+                        "type": [
+                          "null",
+                          "integer"
+                        ],
+                        "description": "The most the ARC may grow to; null without ZFS.",
+                        "format": "int64"
+                      },
+                      "cacheBytes": {
+                        "type": "integer",
+                        "description": "Page cache, buffers and reclaimable kernel memory.",
+                        "format": "int64"
+                      },
+                      "freeBytes": {
+                        "type": "integer",
+                        "description": "Not used at all.",
+                        "format": "int64"
+                      },
+                      "availableBytes": {
+                        "type": "integer",
+                        "description": "What the kernel estimates new programs can get without swapping (the ARC not included).",
+                        "format": "int64"
+                      },
+                      "swapTotalBytes": {
+                        "type": "integer",
+                        "description": "Swap space.",
+                        "format": "int64"
+                      },
+                      "swapUsedBytes": {
+                        "type": "integer",
+                        "description": "Swap in use.",
+                        "format": "int64"
+                      }
+                    },
+                    "description": "Physical memory split the way the monitor draws it. On Linux the ZFS ARC is not part of the page cache, so the\nkernel counts it as used; UsedBytes leaves it out and ArcBytes shows it."
                   },
-                  "cacheBytes": {
-                    "type": "integer",
-                    "description": "Page cache, buffers and reclaimable kernel memory.",
-                    "format": "int64"
-                  },
-                  "freeBytes": {
-                    "type": "integer",
-                    "description": "Not used at all.",
-                    "format": "int64"
-                  },
-                  "availableBytes": {
-                    "type": "integer",
-                    "description": "What the kernel estimates new programs can get without swapping (the ARC not included).",
-                    "format": "int64"
-                  },
-                  "swapTotalBytes": {
-                    "type": "integer",
-                    "description": "Swap space.",
-                    "format": "int64"
-                  },
-                  "swapUsedBytes": {
-                    "type": "integer",
-                    "description": "Swap in use.",
-                    "format": "int64"
-                  }
-                },
-                "description": "Physical memory split the way the monitor draws it. On Linux the ZFS ARC is not part of the page cache, so the\nkernel counts it as used; UsedBytes leaves it out and ArcBytes shows it."
-              },
-              "network": {
-                "type": "array",
-                "items": {
-                  "required": [
-                    "name",
-                    "receiveBytesPerSecond",
-                    "sendBytesPerSecond"
-                  ],
-                  "type": "object",
-                  "properties": {
-                    "name": {
-                      "type": "string",
-                      "description": "Interface name, for example `enp1s0`."
-                    },
-                    "receiveBytesPerSecond": {
-                      "type": "integer",
-                      "description": "Received.",
-                      "format": "int64"
-                    },
-                    "sendBytesPerSecond": {
-                      "type": "integer",
-                      "description": "Sent.",
-                      "format": "int64"
-                    }
-                  }
-                },
-                "description": "Every interface except the loopback and container links."
-              },
-              "disks": {
-                "type": "array",
-                "items": {
-                  "required": [
-                    "name",
-                    "readBytesPerSecond",
-                    "writeBytesPerSecond",
-                    "busyPercent"
-                  ],
-                  "type": "object",
-                  "properties": {
-                    "name": {
-                      "type": "string",
-                      "description": "Kernel name, for example `sda` or `nvme0n1`."
-                    },
-                    "readBytesPerSecond": {
-                      "type": "integer",
-                      "description": "Read.",
-                      "format": "int64"
-                    },
-                    "writeBytesPerSecond": {
-                      "type": "integer",
-                      "description": "Written.",
-                      "format": "int64"
-                    },
-                    "busyPercent": {
-                      "type": "number",
-                      "description": "Share of the second with at least one request in flight, 0 to 100.",
-                      "format": "double"
-                    }
-                  }
-                },
-                "description": "Every whole disk (no partitions, zvols or loop devices)."
-              },
-              "temperatures": {
-                "type": "array",
-                "items": {
-                  "required": [
-                    "chip",
-                    "label",
-                    "celsius",
-                    "highCelsius",
-                    "criticalCelsius"
-                  ],
-                  "type": "object",
-                  "properties": {
-                    "chip": {
-                      "type": "string",
-                      "description": "The hwmon chip or thermal zone type, for example `coretemp`, `nvme` or `acpitz`."
-                    },
-                    "label": {
-                      "type": [
-                        "null",
-                        "string"
+                  "network": {
+                    "type": "array",
+                    "items": {
+                      "required": [
+                        "name",
+                        "receiveBytesPerSecond",
+                        "sendBytesPerSecond"
                       ],
-                      "description": "The sensor's label (`Package id 0`, `Composite`), or null when the driver gives none."
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "description": "Interface name, for example `enp1s0`."
+                        },
+                        "receiveBytesPerSecond": {
+                          "type": "integer",
+                          "description": "Received.",
+                          "format": "int64"
+                        },
+                        "sendBytesPerSecond": {
+                          "type": "integer",
+                          "description": "Sent.",
+                          "format": "int64"
+                        }
+                      }
                     },
-                    "celsius": {
-                      "type": "number",
-                      "description": "Current temperature.",
-                      "format": "double"
-                    },
-                    "highCelsius": {
-                      "type": [
-                        "null",
-                        "number"
+                    "description": "Every interface except the loopback and container links."
+                  },
+                  "disks": {
+                    "type": "array",
+                    "items": {
+                      "required": [
+                        "name",
+                        "readBytesPerSecond",
+                        "writeBytesPerSecond",
+                        "busyPercent"
                       ],
-                      "description": "The driver's high mark, if any.",
-                      "format": "double"
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "description": "Kernel name, for example `sda` or `nvme0n1`."
+                        },
+                        "readBytesPerSecond": {
+                          "type": "integer",
+                          "description": "Read.",
+                          "format": "int64"
+                        },
+                        "writeBytesPerSecond": {
+                          "type": "integer",
+                          "description": "Written.",
+                          "format": "int64"
+                        },
+                        "busyPercent": {
+                          "type": "number",
+                          "description": "Share of the second with at least one request in flight, 0 to 100.",
+                          "format": "double"
+                        }
+                      }
                     },
-                    "criticalCelsius": {
-                      "type": [
-                        "null",
-                        "number"
+                    "description": "Every whole disk (no partitions, zvols or loop devices)."
+                  },
+                  "temperatures": {
+                    "type": "array",
+                    "items": {
+                      "required": [
+                        "chip",
+                        "label",
+                        "celsius",
+                        "highCelsius",
+                        "criticalCelsius"
                       ],
-                      "description": "The driver's critical mark, if any.",
-                      "format": "double"
-                    }
+                      "type": "object",
+                      "properties": {
+                        "chip": {
+                          "type": "string",
+                          "description": "The hwmon chip or thermal zone type, for example `coretemp`, `nvme` or `acpitz`."
+                        },
+                        "label": {
+                          "type": [
+                            "null",
+                            "string"
+                          ],
+                          "description": "The sensor's label (`Package id 0`, `Composite`), or null when the driver gives none."
+                        },
+                        "celsius": {
+                          "type": "number",
+                          "description": "Current temperature.",
+                          "format": "double"
+                        },
+                        "highCelsius": {
+                          "type": [
+                            "null",
+                            "number"
+                          ],
+                          "description": "The driver's high mark, if any.",
+                          "format": "double"
+                        },
+                        "criticalCelsius": {
+                          "type": [
+                            "null",
+                            "number"
+                          ],
+                          "description": "The driver's critical mark, if any.",
+                          "format": "double"
+                        }
+                      }
+                    },
+                    "description": "Every sensor found; empty where the hardware or a virtual machine has none."
                   }
                 },
-                "description": "Every sensor found; empty where the hardware or a virtual machine has none."
+                "description": "One second of the box, the event of `system/resources`. Rates are per second since the previous sample."
               }
-            },
+            ],
             "description": "One second of the box, the event of `system/resources`. Rates are per second since the previous sample."
           }
         },

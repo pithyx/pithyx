@@ -1,0 +1,84 @@
+{
+  "views": {
+    "label": "View",
+    "performance": "Performance",
+    "processes": "Processes"
+  },
+  "summary": {
+    "uptime": "Up {days, plural, =0 {} one {# day, } other {# days, }}{hours} h {minutes} min",
+    "load": "Load {one} · {five} · {fifteen}"
+  },
+  "range": {
+    "label": "Time range",
+    "minute": "Minute",
+    "tenMinutes": "10 minutes",
+    "hour": "Hour"
+  },
+  "rangeText": {
+    "minute": "minute",
+    "tenMinutes": "10 minutes",
+    "hour": "hour"
+  },
+  "measuring": "Measuring…",
+  "history": "The history covers only the time this monitor was open somewhere: nothing is measured while nobody watches.",
+  "rate": "{value}/s",
+  "cpu": {
+    "title": "CPU",
+    "now": "{value} in use",
+    "cores": "Cores",
+    "core": "Core {index}",
+    "chart": "CPU usage over the last {range}, now {value}"
+  },
+  "memory": {
+    "title": "Memory",
+    "now": "{used} of {total} used by programs",
+    "used": "Programs",
+    "arc": "ZFS cache (ARC)",
+    "cache": "Page cache",
+    "free": "Free",
+    "parts": "Memory split",
+    "swap": "Swap: {used} of {total} used",
+    "noSwap": "No swap",
+    "arcHint": "The ZFS cache gives memory back as soon as programs need it.",
+    "chart": "Memory used by programs over the last {range}, now {value}"
+  },
+  "network": {
+    "title": "Network",
+    "none": "No network interfaces found.",
+    "receive": "Received {value}",
+    "send": "Sent {value}",
+    "chart": "Traffic of {name} over the last {range}, now {received} received and {sent} sent"
+  },
+  "disks": {
+    "title": "Disks",
+    "none": "No disks found.",
+    "read": "Read {value}",
+    "write": "Written {value}",
+    "busy": "Busy {value}",
+    "chart": "Throughput of {name} over the last {range}, now {read} read and {written} written",
+    "hint": "Read from the kernel's counters: a sleeping disk stays asleep."
+  },
+  "temperatures": {
+    "title": "Temperatures",
+    "none": "No temperature sensors found. Virtual machines and some boards have none. Disk temperatures are not read here, so sleeping disks stay asleep.",
+    "caption": "Temperature sensors",
+    "sensor": "Sensor",
+    "value": "Now",
+    "limits": "High / critical",
+    "high": "above its high mark",
+    "critical": "at its critical mark"
+  },
+  "processes": {
+    "filter": "Filter by name or user",
+    "caption": "Processes",
+    "name": "Name",
+    "pid": "PID",
+    "user": "User",
+    "cpu": "CPU",
+    "memory": "Memory",
+    "count": "{total, plural, one {# process} other {# processes}}, {shown} shown",
+    "empty": "No process matches the filter.",
+    "loading": "Reading the processes…",
+    "cpuHint": "CPU is the share of all cores together."
+  }
+}

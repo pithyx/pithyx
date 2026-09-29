@@ -166,7 +166,8 @@
     "terminal": "Terminal",
     "disks": "Disks",
     "about": "About Pithyx",
-    "demo": "SDK demo"
+    "demo": "SDK demo",
+    "monitor": "Resource Monitor"
   },
   "roles": {
     "administrator": "Administrator",

@@ -945,6 +945,7 @@ export type components = {
         /** @enum {unknown} */
         FileOperationKind: "copy" | "move" | "delete";
         FileOperationRequest: {
+            /** @description Every entry of a folder except some names: selecting a whole folder without sending its names. */
             allIn?: null | components["schemas"]["FolderSelection"];
             /** @description The files and folders to work on, at most 1000. Leave out when `AllIn` is given. */
             items?: null | components["schemas"]["FileLocation"][];
@@ -1500,7 +1501,7 @@ export type components = {
                 times: string[];
             };
             /** @description One second of the box, the event of `system/resources`. Rates are per second since the previous sample. */
-            latest: {
+            latest: null | {
                 /**
                  * Format: date-time
                  * @description When it was measured (UTC).
