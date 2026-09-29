@@ -13,6 +13,72 @@ Step-by-step plan for building the Pithyx foundation. Read `CLAUDE.md` before st
 - Start every step in plan mode: read the relevant sections of `CLAUDE.md`, write a short plan, then implement.
 - Each step and some sub-steps carry an effort level. `high` means extended thinking for design-defining work that is expensive to change later. `medium` is the default. `low` is mechanical work.
 
+## Release 0.1 (minimal)
+
+Set by the owner on 2026-09-29. This section is the roadmap from now on: work through it top to bottom. M4 and everything else below (including the parts of steps 9 to 14 that are not listed here) come after it. The release blockers apply to v0.1 as far as its scope reaches; a blocker about a feature v0.1 does not ship (third-party apps, NFS) is met by not shipping it and moves to the release that does.
+
+### Findings from the owner's test on 2026-09-29
+
+Core bugs first, each in its own PR with a regression test:
+
+- [ ] Disk failure: a hard-removed disk only disappears from the list; there is no DEGRADED, no banner, no notification, and other pools look dead. Expected: DEGRADED at once, a banner and a persistent notification, other pools unaffected; after the disk is back, a resilver and the all-clear. Tested for real on dev01: remove with `echo 1 > /sys/block/<dev>/device/delete`, bring back with a SCSI rescan (`echo '- - -' > /sys/class/scsi_host/host*/scan`).
+- [ ] Notification center and toasts do not work (no entries, no toasts): find the cause and fix it.
+- [ ] After the disks were removed and brought back, Files shows shares without files and "share not found": the mount state and the Files cache recover once the disks are back.
+- [ ] Deleting a shared folder fails with a timeout (`internal.admin.shares.plan`).
+- [ ] Destroying a pool: the dialog hangs for a long time at `zpool destroy`. Long operations run as background jobs, the dialog can be closed, progress shows in the notification center. Find the cause of the long run (open handles, watches, ...).
+- [ ] Usage of pools, shared folders and disks does not update after uploads.
+- [ ] A second right-click on the desktop while its menu is open shows the browser's menu instead of the Pithyx menu at the new position.
+
+Quick fixes, one PR:
+
+- [ ] The request id is no longer shown anywhere in the UI, only in the browser console and the logs; `CLAUDE.md` says so.
+- [ ] Upload and download indicator in the taskbar: progress bar, size, speed, time left, cancel.
+- [ ] Desktop wallpaper with the new box proportions (lid height 16 as in the logo).
+- [ ] Larger logo in the menu button at the bottom left.
+- [ ] Pithyx menu: the tab "Pinned" is called "Apps"; pinning is removed completely.
+- [ ] Sign-in language picker: a styled list of our own instead of the native select (light and dark, keyboard, axe).
+- [ ] Remove "Open Storage" from Settings.
+
+Settings and user menu:
+
+- [ ] Settings holds system settings only, as a tile overview with categories and search (no company names): Info Center (OS version, hardware, uptime, system data), Shared folders, Users, File services (SMB, SFTP; a page saying "coming in v0.1" until they are done), Network (DHCP or static; shown now, changes with the rollback timer of step 14), Regional settings (system language, formats, date and time, time zone, time servers). Only finished or clearly marked pages.
+- [ ] Personal settings live in the user menu, not in Settings: theme (system, light, dark), accent color, language, taskbar position, wallpaper. The personalization page moves there.
+- [ ] Storage app: the internal datasets (`pithyx`, `apps`, `system`, `homes`, `shares`) are never shown. The tab "Datasets and volumes" leaves the default view; volumes and export and import move under "Advanced" with a short explanation ("Export a pool to move its disks to another computer").
+- [ ] Snapshots become "restore points", explained simply: one switch per shared folder, "Daily restore points, kept 7 days", plus "Previous versions" in Files. The dialog explains with examples: restore points only take space for files that were changed or deleted after them; a deleted file frees its space only when the last restore point that holds it expires; they help against accidental deletes and ransomware, and they are no replacement for a backup on another device. Schedules, holds, rollback and manual management leave the UI; the code stays.
+
+Log Center (new core app, own PR):
+
+- [ ] Shows the logs of the system (the daemon and the relevant services) and of apps, filtered by source, level (debug, info, warn, error) and time range, with search and export.
+- [ ] Retention (duration and maximum size) can be set; logs are stored on the system disk only, never on pool disks.
+- [ ] SDK: a logging API for apps (debug, info, warn, error) as part of the public SDK (TSDoc, its own decision number), rate limited per app so no app can flood the logs.
+- [ ] Administrators only, its own chunk, en and de, light and dark, axe.
+
+### Scope of v0.1
+
+- [ ] Web installer (from M5): boot from USB, open the setup page in a browser, choose the system disk, the system installs itself and continues setup in the same page.
+- [ ] Storage: create, extend, repair and destroy pools; failures are detected and reported reliably (step 8 plus the findings above).
+- [ ] Shared folders.
+- [ ] Users: create, edit, delete (groups later), as Linux and Samba accounts (the user part of step 10 and the share rights of step 11).
+- [ ] SMB and SFTP (step 12 without NFS; no FTP).
+- [ ] Core apps: Files, Storage, Settings, Resource Monitor, Viewer, Log Center.
+- [ ] Updater with rollback (from M5).
+- [ ] Configuration backup and restore (`pithyx.db`, Samba passdb, TLS certificates, SSH host keys; see `daemon/CLAUDE.md`).
+- [ ] Encryption only if it stays simple, otherwise v0.2. ZFS encrypts a dataset only when it is created: an existing pool cannot be encrypted in place, its data would have to be copied into a new encrypted dataset. Pools created with v0.1 without encryption therefore stay unencrypted; the pool wizard keeps saying that encryption can only be chosen at creation.
+
+### After the scope
+
+- [ ] Audit: security, licenses, secrets.
+- [ ] Code and UI review by the owner. `[REVIEW]`
+- [ ] Cleanup.
+- [ ] Release v0.1.0 (tag on `master`, codename chosen by the owner). `[DECISION]`
+- [ ] Make the repository public (branch protection, GitHub-hosted runners; see "Release blockers").
+
+### Not in v0.1
+
+App store and M4, NFS, SSD cache (step 13), energy (step 14.1), resource history, the Files rework (layout of shares and the recycle bin), video thumbnails.
+
+---
+
 ## Milestones
 
 | Milestone               | Content                                             | Steps          |
@@ -470,6 +536,8 @@ Goal: the daemon sees real pools on dev01 and cannot write to a disk it must not
 ---
 
 ## Step 8: Pools, datasets and snapshots
+
+Status: done (vyxis/vyxis#29, merged 2026-09-29 after the owner tried it on dev01). The findings of that test are listed under "Release 0.1".
 
 Effort: high.
 
