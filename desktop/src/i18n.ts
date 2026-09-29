@@ -13,6 +13,7 @@ import type monitor from '../../i18n/en/monitor.json';
 import type notifications from '../../i18n/en/notifications.json';
 import type settings from '../../i18n/en/settings.json';
 import type storage from '../../i18n/en/storage.json';
+import type viewer from '../../i18n/en/viewer.json';
 
 /** The English texts define the keys; every other language has the same (checked by i18n.test.ts). */
 export interface Resources {
@@ -27,6 +28,7 @@ export interface Resources {
   jobs: typeof jobs;
   logs: typeof logs;
   monitor: typeof monitor;
+  viewer: typeof viewer;
 }
 type Namespace = keyof Resources;
 

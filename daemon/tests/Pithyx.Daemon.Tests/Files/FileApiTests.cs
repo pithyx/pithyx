@@ -192,7 +192,8 @@ public sealed class FileApiTests : IAsyncLifetime
         Assert.NotNull(full.Headers.ETag);
 
         using var inline = await _admin.GetAsync(Api("content?path=page.html&inline=true"), Token);
-        Assert.Equal("text/html", inline.Content.Headers.ContentType!.MediaType);
+        // A page in a share is shown as its source, never rendered.
+        Assert.Equal("text/plain", inline.Content.Headers.ContentType!.MediaType);
         Assert.StartsWith("sandbox", inline.Headers.GetValues("Content-Security-Policy").Single(), StringComparison.Ordinal);
 
         using var request = new HttpRequestMessage(HttpMethod.Get, Api("content?path=page.html"));
