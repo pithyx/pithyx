@@ -116,6 +116,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- The desktop bundle budget is a fixed 150 KB gzip instead of its baseline plus 5 percent (owner's decision); the sign-in budget is unchanged, and the timing budgets of the E2E suite stay the deciding performance gate.
 - Registering an existing folder as a share (`POST /api/shares` with a path) works only on a development machine and in simulation; elsewhere it answers `fs.share.folder_dev_only`, since shared folders are datasets. `DELETE /api/shares/{shareId}` is gone: deleting a share needs its name typed and a choice for the data (`share.delete`). The storage plan action `dataset.create` is gone; shared folders create their datasets.
 - `GET /api/disks` is gone and the topic `storage/disks` is for administrators only, like the Storage app that shows them; `GET /api/storage/disks` lists the disks with the guard's verdict.
 - Files served inline (`inline=true`) keep their type only for images, PDF, audio and video; every text type, HTML and XML included, is sent as `text/plain`, anything else as a download.
