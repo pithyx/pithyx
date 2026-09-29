@@ -50,7 +50,8 @@
     "paste": "Einfügen",
     "delete": "In den Papierkorb",
     "deletePermanent": "Endgültig löschen",
-    "selectAll": "Alles auswählen"
+    "selectAll": "Alles auswählen",
+    "openWith": "Öffnen mit …"
   },
   "dialog": {
     "cancel": "Abbrechen",
@@ -115,5 +116,14 @@
     "delete": "Entf",
     "deletePermanent": "Umschalt+Entf",
     "selectAll": "Strg+A"
+  },
+  "layout": {
+    "grid": "Als Kacheln zeigen",
+    "list": "Als Liste zeigen"
+  },
+  "openWith": {
+    "title": "{name} öffnen mit",
+    "viewer": "Betrachter",
+    "download": "Herunterladen"
   }
 }

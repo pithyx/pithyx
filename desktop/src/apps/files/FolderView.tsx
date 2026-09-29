@@ -55,11 +55,19 @@ export interface FolderViewProps {
   folderKey: string;
   /** The SDK's formatters, in the user's language and time zone. */
   format: Formatters;
+  /** Rows with details, or tiles with large thumbnails. */
+  layout: 'list' | 'grid';
+  /** The URL of an entry's thumbnail once it is ready; null shows the icon. */
+  thumbnail: (entry: FileEntry) => string | null;
+  /** The entries on screen changed; thumbnails are asked for these only. */
+  onVisible: (entries: FileEntry[]) => void;
 }
 
 const ROW_HEIGHT = 36;
 const COARSE_ROW_HEIGHT = 52;
 const PAGE_ROWS = 10;
+const TILE_WIDTH = 136;
+const TILE_HEIGHT = 156;
 
 function rowHeight(): number {
   return matchMedia('(pointer: coarse)').matches ? COARSE_ROW_HEIGHT : ROW_HEIGHT;
@@ -67,8 +75,9 @@ function rowHeight(): number {
 
 /**
  * A folder as a virtualized grid: only the rows on screen exist, the scrollbar covers the whole folder, and pages
- * are fetched as the view nears the end of what is loaded. Focus stays on the grid; the active row is its
- * `aria-activedescendant` and is scrolled into view before it is announced.
+ * are fetched as the view nears the end of what is loaded. As a list each row is an entry; as tiles each row holds
+ * as many entries as fit the width, and the arrow keys move across and down. Focus stays on the grid; the active
+ * entry is its `aria-activedescendant` and is scrolled into view before it is announced.
  */
 export function FolderView(props: FolderViewProps) {
   const { entries, total, selection, onSelect } = props;
@@ -79,18 +88,38 @@ export function FolderView(props: FolderViewProps) {
   const [focused, setFocused] = useState(false);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
   const count = Math.max(total, entries.length);
+  const [width, setWidth] = useState(0);
+  const tiles = props.layout === 'grid';
+  const columns = tiles ? Math.max(1, Math.floor((width - 16) / TILE_WIDTH)) : 1;
   // Read once per render: the virtualizer asks for every row's estimate whenever the count changes.
-  const height = rowHeight();
+  const height = tiles ? TILE_HEIGHT : rowHeight();
+
+  // The number of tiles per row follows the width of the view: syncing with the DOM.
+  useLayoutEffect(() => {
+    const element = scroll.current;
+    if (element === null) {
+      return;
+    }
+    setWidth(element.clientWidth);
+    const observer = new ResizeObserver(() => {
+      setWidth(element.clientWidth);
+    });
+    observer.observe(element);
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
   // The compiler skips this component; the virtualizer's functions are only used here, never passed to memoized children.
   // eslint-disable-next-line react-hooks/incompatible-library
   const virtualizer = useVirtualizer({
-    count,
+    count: Math.ceil(count / columns),
     getScrollElement: () => scroll.current,
     estimateSize: () => height,
     overscan: 12,
   });
   const items = virtualizer.getVirtualItems();
-  const lastVisible = items.at(-1)?.index ?? 0;
+  const lastVisible = ((items.at(-1)?.index ?? 0) + 1) * columns - 1;
+  const firstVisible = (items[0]?.index ?? 0) * columns;
   const names = entries.map((entry) => entry.name);
   const activeIndex = Math.min(active, Math.max(0, count - 1));
   const { format } = props;
@@ -102,6 +131,16 @@ export function FolderView(props: FolderViewProps) {
       loadMore();
     }
   }, [hasMore, loading, loadMore, lastVisible, entries.length]);
+
+  // Thumbnails follow what is on screen: syncing with the virtualizer, not deriving state.
+  const { onVisible } = props;
+  const visibleFrom = Math.max(0, firstVisible);
+  const visibleTo = Math.min(entries.length, lastVisible + 1);
+  useEffect(() => {
+    if (visibleTo > visibleFrom) {
+      onVisible(entries.slice(visibleFrom, visibleTo));
+    }
+  }, [entries, onVisible, visibleFrom, visibleTo]);
 
   const { onShown, folderKey } = props;
   const shownKey = useRef<string | null>(null);
@@ -117,7 +156,7 @@ export function FolderView(props: FolderViewProps) {
   function moveTo(index: number, event: { shiftKey: boolean; ctrlKey: boolean; metaKey: boolean }) {
     const next = Math.max(0, Math.min(count - 1, index));
     setActive(next);
-    virtualizer.scrollToIndex(next, { align: 'auto' });
+    virtualizer.scrollToIndex(Math.floor(next / columns), { align: 'auto' });
     const name = names[next];
     if (name === undefined) {
       return;
@@ -136,18 +175,31 @@ export function FolderView(props: FolderViewProps) {
     const entry = entries[activeIndex];
     const control = event.ctrlKey || event.metaKey;
     const pageRows =
-      Math.max(1, Math.floor((scroll.current?.clientHeight ?? 0) / height) - 1) || PAGE_ROWS;
+      (Math.max(1, Math.floor((scroll.current?.clientHeight ?? 0) / height) - 1) || PAGE_ROWS) *
+      columns;
     const handled = (() => {
       switch (event.key) {
         case 'ArrowDown':
-          moveTo(activeIndex + 1, event);
+          moveTo(activeIndex + columns, event);
           return true;
         case 'ArrowUp':
           if (event.altKey) {
             props.onUp();
           } else {
-            moveTo(activeIndex - 1, event);
+            moveTo(activeIndex - columns, event);
           }
+          return true;
+        case 'ArrowRight':
+          if (!tiles) {
+            return false;
+          }
+          moveTo(activeIndex + 1, event);
+          return true;
+        case 'ArrowLeft':
+          if (!tiles) {
+            return false;
+          }
+          moveTo(activeIndex - 1, event);
           return true;
         case 'PageDown':
           moveTo(activeIndex + pageRows, event);
@@ -298,6 +350,91 @@ export function FolderView(props: FolderViewProps) {
   );
 
   const activeId = `${id}-row-${String(activeIndex)}`;
+
+  /** What a row of the list and a tile of the grid share: selection, drag and drop, opening and the menu. */
+  function entryProps(entry: FileEntry, index: number) {
+    const selected = isSelected(selection, entry.name);
+    const isFolder = entry.kind === 'folder';
+    return {
+      id: `${id}-row-${String(index)}`,
+      'aria-selected': selected,
+      'data-index': index,
+      'data-active': index === activeIndex ? '' : undefined,
+      'data-focused': focused ? '' : undefined,
+      'data-cut': props.cut.has(entry.name) ? '' : undefined,
+      'data-drop-target': dropTarget === entry.name ? '' : undefined,
+      draggable: props.renaming !== entry.name,
+      onDragStart: (event: DragEvent) => {
+        const dragged = selected ? selection : selectOnly(entry.name);
+        if (!selected) {
+          onSelect(dragged);
+        }
+        event.dataTransfer.setData(ENTRIES_TYPE, props.dragData(toItems(dragged)));
+        event.dataTransfer.effectAllowed = 'copyMove';
+      },
+      onDragOver: isFolder
+        ? (event: DragEvent) => {
+            onDragOver(event, entry.name);
+          }
+        : undefined,
+      onDragLeave: isFolder
+        ? () => {
+            setDropTarget(null);
+          }
+        : undefined,
+      onDrop: isFolder
+        ? (event: DragEvent) => {
+            onDrop(event, entry.name);
+          }
+        : undefined,
+      onClick: (event: MouseEvent) => {
+        onRowClick(event, index, entry);
+      },
+      onDoubleClick: () => {
+        props.onOpen(entry);
+      },
+      onContextMenu: (event: MouseEvent) => {
+        event.preventDefault();
+        setActive(index);
+        if (!selected) {
+          onSelect(selectOnly(entry.name));
+        }
+        props.onMenu(event.clientX, event.clientY, entry);
+      },
+    };
+  }
+
+  function label(entry: FileEntry) {
+    return props.renaming === entry.name ? (
+      <RenameInput
+        name={entry.name}
+        label={t('dialog.rename', { name: entry.name })}
+        onDone={(value) => {
+          props.onRenamed(entry.name, value);
+        }}
+      />
+    ) : (
+      <span>{entry.name}</span>
+    );
+  }
+
+  function glyph(entry: FileEntry, size: number, className: string) {
+    const url = entry.kind === 'file' ? props.thumbnail(entry) : null;
+    if (url !== null) {
+      return <img src={url} alt="" className={className} decoding="async" draggable={false} />;
+    }
+    const Glyph =
+      entry.kind === 'folder' ? IconFolder : entry.kind === 'symlink' ? IconLink : IconFile;
+    return (
+      <Glyph
+        size={size}
+        stroke={1.5}
+        className={entry.kind === 'folder' ? styles.folderIcon : styles.fileIcon}
+        aria-hidden
+      />
+    );
+  }
+
   return (
     <div
       ref={scroll}
@@ -326,10 +463,12 @@ export function FolderView(props: FolderViewProps) {
         tabIndex={0}
         aria-label={t('list')}
         aria-multiselectable
-        aria-rowcount={count + 1}
+        aria-rowcount={Math.ceil(count / columns) + 1}
+        aria-colcount={tiles ? columns : 3}
         aria-busy={props.loading && entries.length === 0}
         aria-activedescendant={entries[activeIndex] === undefined ? undefined : activeId}
         className={styles.grid}
+        data-layout={props.layout}
         onKeyDown={onKeyDown}
         onFocus={() => {
           setFocused(true);
@@ -346,8 +485,50 @@ export function FolderView(props: FolderViewProps) {
         </div>
         <div role="rowgroup" style={{ position: 'relative', height: virtualizer.getTotalSize() }}>
           {items.map((item) => {
-            const entry = entries[item.index];
             const style = { transform: `translateY(${String(item.start)}px)` };
+            if (tiles) {
+              const first = item.index * columns;
+              return (
+                <div
+                  key={item.key}
+                  role="row"
+                  aria-rowindex={item.index + 2}
+                  className={styles.tileRow}
+                  style={{
+                    ...style,
+                    gridTemplateColumns: `repeat(${String(columns)}, ${String(TILE_WIDTH)}px)`,
+                  }}
+                >
+                  {Array.from({ length: Math.min(columns, count - first) }, (_, column) => {
+                    const index = first + column;
+                    const entry = entries[index];
+                    if (entry === undefined) {
+                      return (
+                        <div key={index} role="gridcell" className={styles.tile} data-index={index}>
+                          <div className={styles.placeholder} aria-label={t('loading')} />
+                        </div>
+                      );
+                    }
+                    return (
+                      <div
+                        key={entry.name}
+                        role="gridcell"
+                        aria-colindex={column + 1}
+                        className={styles.tile}
+                        title={entry.name}
+                        {...entryProps(entry, index)}
+                      >
+                        <span className={styles.tileImage}>
+                          {glyph(entry, 48, styles.tileThumb)}
+                        </span>
+                        <span className={styles.tileName}>{label(entry)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            }
+            const entry = entries[item.index];
             if (entry === undefined) {
               return (
                 <div
@@ -364,88 +545,20 @@ export function FolderView(props: FolderViewProps) {
                 </div>
               );
             }
-            const Glyph =
-              entry.kind === 'folder' ? IconFolder : entry.kind === 'symlink' ? IconLink : IconFile;
-            const selected = isSelected(selection, entry.name);
             const isFolder = entry.kind === 'folder';
             return (
               <div
                 key={entry.name}
-                id={`${id}-row-${String(item.index)}`}
                 role="row"
                 aria-rowindex={item.index + 2}
-                aria-selected={selected}
                 className={styles.row}
                 style={style}
-                data-index={item.index}
-                data-active={item.index === activeIndex ? '' : undefined}
-                data-focused={focused ? '' : undefined}
-                data-cut={props.cut.has(entry.name) ? '' : undefined}
-                data-drop-target={dropTarget === entry.name ? '' : undefined}
-                draggable={props.renaming !== entry.name}
-                onDragStart={(event) => {
-                  const dragged = selected ? selection : selectOnly(entry.name);
-                  if (!selected) {
-                    onSelect(dragged);
-                  }
-                  event.dataTransfer.setData(ENTRIES_TYPE, props.dragData(toItems(dragged)));
-                  event.dataTransfer.effectAllowed = 'copyMove';
-                }}
-                onDragOver={
-                  isFolder
-                    ? (event) => {
-                        onDragOver(event, entry.name);
-                      }
-                    : undefined
-                }
-                onDragLeave={
-                  isFolder
-                    ? () => {
-                        setDropTarget(null);
-                      }
-                    : undefined
-                }
-                onDrop={
-                  isFolder
-                    ? (event) => {
-                        onDrop(event, entry.name);
-                      }
-                    : undefined
-                }
-                onClick={(event) => {
-                  onRowClick(event, item.index, entry);
-                }}
-                onDoubleClick={() => {
-                  props.onOpen(entry);
-                }}
-                onContextMenu={(event) => {
-                  event.preventDefault();
-                  setActive(item.index);
-                  if (!selected) {
-                    onSelect(selectOnly(entry.name));
-                  }
-                  props.onMenu(event.clientX, event.clientY, entry);
-                }}
+                {...entryProps(entry, item.index)}
               >
                 <div role="gridcell" className={styles.cell}>
                   <span className={styles.name}>
-                    <Glyph
-                      size={18}
-                      stroke={1.75}
-                      className={isFolder ? styles.folderIcon : styles.fileIcon}
-                      aria-hidden
-                    />
-                    {props.renaming === entry.name ? (
-                      <RenameInput
-                        name={entry.name}
-                        label={t('dialog.rename', { name: entry.name })}
-                        onDone={(value) => {
-                          props.onRenamed(entry.name, value);
-                        }}
-                      />
-                    ) : (
-                      <span>{entry.name}</span>
-                    )}
+                    {glyph(entry, 18, styles.rowThumb)}
+                    {label(entry)}
                   </span>
                 </div>
                 <div role="gridcell" className={cx(styles.cell, styles.size)}>
