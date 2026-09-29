@@ -171,7 +171,9 @@
     "terminal": "Terminal",
     "disks": "Laufwerke",
     "about": "Über Pithyx",
-    "demo": "SDK-Demo"
+    "demo": "SDK-Demo",
+    "monitor": "Ressourcenmonitor",
+    "viewer": "Betrachter"
   },
   "roles": {
     "administrator": "Administrator",

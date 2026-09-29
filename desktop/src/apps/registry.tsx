@@ -1,8 +1,10 @@
 import {
+  IconActivity,
   IconApps,
   IconDatabase,
   IconFolders,
   IconInfoCircle,
+  IconSearch,
   IconSettings,
   type TablerIcon,
 } from '../ui/icons';
@@ -25,6 +27,8 @@ export interface CoreApp {
   Component: LazyExoticComponent<ComponentType<AppProps>>;
   /** Listed only for administrators; the daemon refuses everyone else anyway. */
   adminOnly?: true;
+  /** Opened by other apps with a file, never listed in the menu or on the desktop. */
+  launchOnly?: true;
 }
 
 /**
@@ -84,6 +88,38 @@ export const coreApps: readonly CoreApp[] = [
     ),
   },
   {
+    id: 'monitor',
+    icon: IconActivity,
+    tone: 'moss',
+    adminOnly: true,
+    window: {
+      instances: 'single',
+      defaultSize: { width: 980, height: 680 },
+      minSize: { width: 320, height: 320 },
+    },
+    Component: lazy(() =>
+      Promise.all([import('./monitor/MonitorWindow'), loadTranslations('monitor')]).then(
+        ([{ MonitorWindow }]) => ({ default: MonitorWindow }),
+      ),
+    ),
+  },
+  {
+    id: 'viewer',
+    icon: IconSearch,
+    tone: 'plum',
+    launchOnly: true,
+    window: {
+      instances: 'multi',
+      defaultSize: { width: 900, height: 640 },
+      minSize: { width: 320, height: 280 },
+    },
+    Component: lazy(() =>
+      Promise.all([import('./viewer/ViewerWindow'), loadTranslations('viewer')]).then(
+        ([{ ViewerWindow }]) => ({ default: ViewerWindow }),
+      ),
+    ),
+  },
+  {
     id: 'about',
     icon: IconInfoCircle,
     tone: 'graphite',
@@ -123,7 +159,7 @@ export const coreApps: readonly CoreApp[] = [
 
 /** The apps a user sees in the start menu and can put on the desktop. */
 export function appsFor(isAdmin: boolean): readonly CoreApp[] {
-  return coreApps.filter((app) => app.adminOnly !== true || isAdmin);
+  return coreApps.filter((app) => app.launchOnly !== true && (app.adminOnly !== true || isAdmin));
 }
 
 export function findApp(id: string): CoreApp | undefined {

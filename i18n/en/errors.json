@@ -114,6 +114,10 @@
       "pool_not_prepared": "The pool {pool} has no place for shared folders (pithyx/shares), so none can be created on it.",
       "read_only": "You can only read in this share."
     },
+    "thumbnail": {
+      "not_found": "There is no preview of this file yet.",
+      "too_many": "Ask for at most {max} previews at once."
+    },
     "trash": {
       "retention_invalid": "The recycle bin keeps items between 0 and {max} days (0 keeps them until it is emptied)."
     },

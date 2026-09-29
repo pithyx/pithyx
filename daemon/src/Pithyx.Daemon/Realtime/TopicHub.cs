@@ -116,9 +116,17 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
         }
     }
 
-    public bool HasSubscribers(string topic) => _connections.Values.Any(c => c.IsSubscribed(topic));
+    /// <summary>
+    /// Whether a connection that may see the topic is subscribed to it. Subscribers the topic refuses do not count,
+    /// so nobody can make the daemon work for events it would never send them.
+    /// </summary>
+    public bool HasSubscribers(string topic)
+    {
+        var definition = _registry.Find(topic);
+        return _connections.Values.Any(c => c.IsSubscribed(topic) && (definition is null || definition.IsAllowed(c.User, topic)));
+    }
 
-    /// <summary>Completes when at least one connection subscribes to a pattern matching the topic.</summary>
+    /// <summary>Completes when at least one connection that may see the topic subscribes to a pattern matching it.</summary>
     public Task WaitForSubscribersAsync(string topic, CancellationToken cancellationToken)
     {
         lock (_waitersLock)
@@ -140,7 +148,7 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
         connection.AddPattern(pattern);
         lock (_waitersLock)
         {
-            foreach (var waiter in _waiters.Where(w => TopicPattern.Matches(pattern, w.Topic)).ToList())
+            foreach (var waiter in _waiters.Where(w => TopicPattern.Matches(pattern, w.Topic) && Allowed(connection.User, w.Topic)).ToList())
             {
                 waiter.Signal.TrySetResult();
                 _waiters.Remove(waiter);
@@ -167,6 +175,8 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
             throw;
         }
     }
+
+    private bool Allowed(ClaimsPrincipal user, string topic) => _registry.Find(topic)?.IsAllowed(user, topic) ?? true;
 
     public void Unsubscribe(Connection connection, string id, string pattern)
     {

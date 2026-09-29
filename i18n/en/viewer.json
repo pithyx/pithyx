@@ -1,0 +1,19 @@
+{
+  "toolbar": "File",
+  "previous": "Previous file",
+  "next": "Next file",
+  "position": "{index} of {count}",
+  "zoomIn": "Zoom in",
+  "zoomOut": "Zoom out",
+  "fitWindow": "Fit to window",
+  "fit": "Fit",
+  "percent": "{value} %",
+  "download": "Download",
+  "loading": "Loading…",
+  "failed": "This file cannot be shown. Download it to open it with another program.",
+  "unsupported": "The viewer cannot show this kind of file. Download it to open it with another program.",
+  "nothing": "No file to show.",
+  "truncated": "Only the first megabyte is shown. Download the file to see all of it.",
+  "page": "Page {page} of {count}",
+  "stage": "File content"
+}

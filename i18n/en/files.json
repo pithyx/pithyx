@@ -51,7 +51,8 @@
     "delete": "Move to recycle bin",
     "deletePermanent": "Delete permanently",
     "selectAll": "Select all",
-    "versions": "Previous versions"
+    "versions": "Previous versions",
+    "openWith": "Open with…"
   },
   "dialog": {
     "cancel": "Cancel",
@@ -132,5 +133,14 @@
     "overwriteHint": "The current file is replaced. A folder keeps the files that are not in the version.",
     "readOnly": "You can only read this share, so versions cannot be restored here.",
     "close": "Close"
+  },
+  "layout": {
+    "grid": "Show as tiles",
+    "list": "Show as list"
+  },
+  "openWith": {
+    "title": "Open {name} with",
+    "viewer": "Viewer",
+    "download": "Download"
   }
 }

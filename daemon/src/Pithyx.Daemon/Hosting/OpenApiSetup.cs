@@ -34,6 +34,19 @@ public static class OpenApiSetup
                     .Where(property => property.AssociatedParameter is not { HasDefaultValue: true })
                     .Select(property => property.Name),
                 StringComparer.Ordinal);
+            // Nested objects lose their nullability; a nullable one becomes null or the object. The object's own
+            // schema may be shared with other properties, so it is wrapped rather than changed.
+            foreach (var property in context.JsonTypeInfo.Properties.Where(property => property.IsGetNullable))
+            {
+                if (schema.Properties.TryGetValue(property.Name, out var nested) && nested is OpenApiSchema { Type: JsonSchemaType.Object } inline)
+                {
+                    schema.Properties[property.Name] = new OpenApiSchema
+                    {
+                        OneOf = [new OpenApiSchema { Type = JsonSchemaType.Null }, inline],
+                        Description = inline.Description,
+                    };
+                }
+            }
         }
         return Task.CompletedTask;
     }

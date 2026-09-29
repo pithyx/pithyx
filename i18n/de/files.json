@@ -51,7 +51,8 @@
     "delete": "In den Papierkorb",
     "deletePermanent": "Endgültig löschen",
     "selectAll": "Alles auswählen",
-    "versions": "Frühere Versionen"
+    "versions": "Frühere Versionen",
+    "openWith": "Öffnen mit …"
   },
   "dialog": {
     "cancel": "Abbrechen",
@@ -132,5 +133,14 @@
     "overwriteHint": "Die aktuelle Datei wird ersetzt. Ein Ordner behält die Dateien, die nicht in der Version sind.",
     "readOnly": "Du kannst diese Freigabe nur lesen, deshalb kannst du hier keine Versionen wiederherstellen.",
     "close": "Schließen"
+  },
+  "layout": {
+    "grid": "Als Kacheln zeigen",
+    "list": "Als Liste zeigen"
+  },
+  "openWith": {
+    "title": "{name} öffnen mit",
+    "viewer": "Betrachter",
+    "download": "Herunterladen"
   }
 }

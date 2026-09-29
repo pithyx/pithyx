@@ -40,6 +40,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 });
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton(new SqliteConnectionFactory(paths.DatabasePath));
+builder.Services.AddSingleton(paths);
 builder.Services.AddSingleton<MigrationRunner>();
 builder.Services.AddPithyxErrors();
 builder.Services.AddPithyxAuth();
@@ -49,9 +50,7 @@ builder.Services.AddPithyxShares();
 builder.Services.AddPithyxFiles();
 builder.Services.AddSingleton<TopicRegistry>();
 builder.Services.AddSingleton<TopicHub>();
-builder.Services.AddSingleton<SystemInfoSampler>();
-builder.Services.AddSingleton(services => SystemInfoPublisher.Definition(services.GetRequiredService<SystemInfoSampler>()));
-builder.Services.AddHostedService<SystemInfoPublisher>();
+builder.Services.AddPithyxMonitoring();
 builder.Services.AddSingleton<DiskInventory>();
 builder.Services.AddSingleton(services => services.GetRequiredService<DiskInventory>().Definition());
 builder.Services.AddSingleton<PoolInventory>();

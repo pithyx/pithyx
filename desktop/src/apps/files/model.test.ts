@@ -1,6 +1,6 @@
 import type { FileEntry, FolderPage } from '@pithyx/sdk';
 import { describe, expect, it } from 'vitest';
-import { defaultAction } from './defaultAction';
+import { defaultAction, openWithChoices } from './defaultAction';
 import { compareEntries, naturalKey } from './order';
 import { applyChange, loadedEntries, type FolderPages } from './pages';
 import { crumbsOf, freeName, joinPath, parentOf } from './paths';
@@ -141,7 +141,12 @@ describe('live changes on loaded pages', () => {
 describe('default action', () => {
   it('opens folders and downloads files for now', () => {
     expect(defaultAction(entry('dir', 0, 'folder'))).toEqual({ kind: 'openFolder' });
-    expect(defaultAction(entry('a.pdf'))).toEqual({ kind: 'download' });
+    expect(defaultAction(entry('a.pdf'))).toEqual({ kind: 'view' });
+    expect(defaultAction(entry('page.html'))).toEqual({ kind: 'view' });
+    expect(defaultAction(entry('a.zip'))).toEqual({ kind: 'download' });
+    expect(openWithChoices(entry('a.zip'))).toEqual(['download']);
+    expect(openWithChoices(entry('a.png'))).toEqual(['viewer', 'download']);
+    expect(openWithChoices(entry('dir', 0, 'folder'))).toEqual([]);
     expect(defaultAction(entry('dev', 0, 'other'))).toEqual({ kind: 'none' });
   });
 });

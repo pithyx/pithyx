@@ -19,6 +19,7 @@
     "@tanstack/react-virtual": "^3.14.13",
     "i18next": "^26.4.2",
     "intl-messageformat": "^11.2.15",
+    "pdfjs-dist": "^6.3.289",
     "qrcode-generator": "^2.0.4",
     "react": "^19.3.0",
     "react-aria-components": "^1.21.1",

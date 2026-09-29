@@ -114,6 +114,10 @@
       "pool_not_prepared": "Der Pool {pool} hat keinen Platz für freigegebene Ordner (pithyx/shares), deshalb lässt sich dort keiner anlegen.",
       "read_only": "In diesem Share darfst du nur lesen."
     },
+    "thumbnail": {
+      "not_found": "Für diese Datei gibt es noch keine Vorschau.",
+      "too_many": "Frag höchstens {max} Vorschauen auf einmal an."
+    },
     "trash": {
       "retention_invalid": "Der Papierkorb behält Elemente zwischen 0 und {max} Tagen (0 behält sie, bis er geleert wird)."
     },

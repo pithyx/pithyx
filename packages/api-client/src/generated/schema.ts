@@ -329,6 +329,40 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/files/{shareId}/thumbnail": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description A cached WebP thumbnail of the file as it is now, with the same access check as its download; fs.thumbnail.not_found when there is none (yet). v is the version from the thumbnail state and only makes the URL change with the file. */
+        get: operations["GetThumbnail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/files/{shareId}/thumbnails": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Which of the named entries of a folder have a thumbnail (JPEG, PNG, WebP and GIF by content). Answers at once and renders nothing itself: missing thumbnails are queued and announced on the returned topic. Only ask for entries on screen. */
+        post: operations["RequestThumbnails"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/files/{shareId}/trash": {
         parameters: {
             query?: never;
@@ -1227,7 +1261,7 @@ export type components = {
             }[];
         };
         /** @enum {string} */
-        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "system.internal.unexpected" | "system.origin.forbidden";
+        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "system.internal.unexpected" | "system.origin.forbidden";
         /** @description A failed client message. `id` is empty when the message could not be parsed. */
         ErrorMessage: {
             code: components["schemas"]["ErrorCode"];
@@ -1284,6 +1318,7 @@ export type components = {
         /** @enum {unknown} */
         FileOperationKind: "copy" | "move" | "delete";
         FileOperationRequest: {
+            /** @description Every entry of a folder except some names: selecting a whole folder without sending its names. */
             allIn?: null | components["schemas"]["FolderSelection"];
             /** @description The files and folders to work on, at most 1000. Leave out when `AllIn` is given. */
             items?: null | components["schemas"]["FileLocation"][];
@@ -1611,6 +1646,7 @@ export type components = {
              * @description Number of files with permanent errors.
              */
             dataErrors: number;
+            /** @description A RAID-Z expansion (OpenZFS 2.3): a disk attached to a raidz vdev, onto which ZFS spreads the existing data. */
             expansion?: null | components["schemas"]["PoolExpansion"];
             /**
              * Format: int32
@@ -1706,6 +1742,36 @@ export type components = {
              */
             toExamineBytes: number;
         };
+        /** @description Snapshot and event of `system/processes`. */
+        ProcessList: {
+            /**
+             * Format: date-time
+             * @description When the list was read (UTC).
+             */
+            at: string;
+            /** @description Every process except kernel threads. */
+            processes: {
+                /**
+                 * Format: double
+                 * @description Share of all cores since the previous list, 0 to 100; null in the first list.
+                 */
+                cpuPercent: null | number;
+                /**
+                 * Format: int64
+                 * @description Resident memory.
+                 */
+                memoryBytes: number;
+                /** @description Command name as the kernel keeps it (at most 15 characters). */
+                name: string;
+                /**
+                 * Format: int32
+                 * @description Process id.
+                 */
+                pid: number;
+                /** @description Owner's user name, or the numeric id when `/etc/passwd` does not know it. */
+                user: string;
+            }[];
+        };
         RecoverRequest: {
             newPassword: string;
             recoveryKey: string;
@@ -1724,6 +1790,320 @@ export type components = {
             name: string;
             /** @description The file or folder to rename. */
             path: string;
+        };
+        /** @description One second of the box, the event of `system/resources`. Rates are per second since the previous sample. */
+        ResourceSample: {
+            /**
+             * Format: date-time
+             * @description When it was measured (UTC).
+             */
+            at: string;
+            cpu: {
+                /** @description Each core, 0 to 100, in the kernel's order. */
+                cores: number[];
+                /**
+                 * Format: double
+                 * @description All cores together, 0 to 100.
+                 */
+                percent: number;
+            };
+            /** @description Every whole disk (no partitions, zvols or loop devices). */
+            disks: {
+                /**
+                 * Format: double
+                 * @description Share of the second with at least one request in flight, 0 to 100.
+                 */
+                busyPercent: number;
+                /** @description Kernel name, for example `sda` or `nvme0n1`. */
+                name: string;
+                /**
+                 * Format: int64
+                 * @description Read.
+                 */
+                readBytesPerSecond: number;
+                /**
+                 * Format: int64
+                 * @description Written.
+                 */
+                writeBytesPerSecond: number;
+            }[];
+            /** @description Over 1, 5 and 15 minutes. */
+            loadAverage: number[];
+            /**
+             * @description Physical memory split the way the monitor draws it. On Linux the ZFS ARC is not part of the page cache, so the
+             *     kernel counts it as used; UsedBytes leaves it out and ArcBytes shows it.
+             */
+            memory: {
+                /**
+                 * Format: int64
+                 * @description The ZFS ARC; null without ZFS. It shrinks when programs need the memory.
+                 */
+                arcBytes: null | number;
+                /**
+                 * Format: int64
+                 * @description The most the ARC may grow to; null without ZFS.
+                 */
+                arcMaxBytes: null | number;
+                /**
+                 * Format: int64
+                 * @description What the kernel estimates new programs can get without swapping (the ARC not included).
+                 */
+                availableBytes: number;
+                /**
+                 * Format: int64
+                 * @description Page cache, buffers and reclaimable kernel memory.
+                 */
+                cacheBytes: number;
+                /**
+                 * Format: int64
+                 * @description Not used at all.
+                 */
+                freeBytes: number;
+                /**
+                 * Format: int64
+                 * @description Swap space.
+                 */
+                swapTotalBytes: number;
+                /**
+                 * Format: int64
+                 * @description Swap in use.
+                 */
+                swapUsedBytes: number;
+                /**
+                 * Format: int64
+                 * @description Installed memory the kernel manages.
+                 */
+                totalBytes: number;
+                /**
+                 * Format: int64
+                 * @description Used by programs and the kernel, without caches and without the ARC.
+                 */
+                usedBytes: number;
+            };
+            /** @description Every interface except the loopback and container links. */
+            network: {
+                /** @description Interface name, for example `enp1s0`. */
+                name: string;
+                /**
+                 * Format: int64
+                 * @description Received.
+                 */
+                receiveBytesPerSecond: number;
+                /**
+                 * Format: int64
+                 * @description Sent.
+                 */
+                sendBytesPerSecond: number;
+            }[];
+            /** @description Every sensor found; empty where the hardware or a virtual machine has none. */
+            temperatures: {
+                /**
+                 * Format: double
+                 * @description Current temperature.
+                 */
+                celsius: number;
+                /** @description The hwmon chip or thermal zone type, for example `coretemp`, `nvme` or `acpitz`. */
+                chip: string;
+                /**
+                 * Format: double
+                 * @description The driver's critical mark, if any.
+                 */
+                criticalCelsius: null | number;
+                /**
+                 * Format: double
+                 * @description The driver's high mark, if any.
+                 */
+                highCelsius: null | number;
+                /** @description The sensor's label (`Package id 0`, `Composite`), or null when the driver gives none. */
+                label: null | string;
+            }[];
+            /**
+             * Format: double
+             * @description Seconds since boot.
+             */
+            uptimeSeconds: number;
+        };
+        /** @description Snapshot of `system/resources`: what the box is and the last hour, as far as someone watched it. */
+        ResourceSnapshot: {
+            /**
+             * Format: int32
+             * @description Cores the kernel lists.
+             */
+            cpuCount: number;
+            /**
+             * @description The ring buffer of the last hour, averaged into buckets so the snapshot stays small. Every series has one entry per
+             *     time; a device that did not exist at a time has null there.
+             */
+            history: {
+                /** @description ZFS ARC; null without ZFS. */
+                arcBytes: (null | number)[];
+                /**
+                 * Format: int32
+                 * @description Seconds per bucket.
+                 */
+                bucketSeconds: number;
+                /** @description All cores together. */
+                cpuPercent: number[];
+                /** @description Read and written bytes per second by disk. */
+                disks: {
+                    /** @description Received or read, per second. */
+                    in: (null | number)[];
+                    /** @description Interface or disk. */
+                    name: string;
+                    /** @description Sent or written, per second. */
+                    out: (null | number)[];
+                }[];
+                /** @description Used without caches and ARC. */
+                memoryUsedBytes: number[];
+                /** @description Received and sent bytes per second by interface. */
+                network: {
+                    /** @description Received or read, per second. */
+                    in: (null | number)[];
+                    /** @description Interface or disk. */
+                    name: string;
+                    /** @description Sent or written, per second. */
+                    out: (null | number)[];
+                }[];
+                /** @description End of each bucket (UTC). */
+                times: string[];
+            };
+            /** @description One second of the box, the event of `system/resources`. Rates are per second since the previous sample. */
+            latest: null | {
+                /**
+                 * Format: date-time
+                 * @description When it was measured (UTC).
+                 */
+                at: string;
+                cpu: {
+                    /** @description Each core, 0 to 100, in the kernel's order. */
+                    cores: number[];
+                    /**
+                     * Format: double
+                     * @description All cores together, 0 to 100.
+                     */
+                    percent: number;
+                };
+                /** @description Every whole disk (no partitions, zvols or loop devices). */
+                disks: {
+                    /**
+                     * Format: double
+                     * @description Share of the second with at least one request in flight, 0 to 100.
+                     */
+                    busyPercent: number;
+                    /** @description Kernel name, for example `sda` or `nvme0n1`. */
+                    name: string;
+                    /**
+                     * Format: int64
+                     * @description Read.
+                     */
+                    readBytesPerSecond: number;
+                    /**
+                     * Format: int64
+                     * @description Written.
+                     */
+                    writeBytesPerSecond: number;
+                }[];
+                /** @description Over 1, 5 and 15 minutes. */
+                loadAverage: number[];
+                /**
+                 * @description Physical memory split the way the monitor draws it. On Linux the ZFS ARC is not part of the page cache, so the
+                 *     kernel counts it as used; UsedBytes leaves it out and ArcBytes shows it.
+                 */
+                memory: {
+                    /**
+                     * Format: int64
+                     * @description The ZFS ARC; null without ZFS. It shrinks when programs need the memory.
+                     */
+                    arcBytes: null | number;
+                    /**
+                     * Format: int64
+                     * @description The most the ARC may grow to; null without ZFS.
+                     */
+                    arcMaxBytes: null | number;
+                    /**
+                     * Format: int64
+                     * @description What the kernel estimates new programs can get without swapping (the ARC not included).
+                     */
+                    availableBytes: number;
+                    /**
+                     * Format: int64
+                     * @description Page cache, buffers and reclaimable kernel memory.
+                     */
+                    cacheBytes: number;
+                    /**
+                     * Format: int64
+                     * @description Not used at all.
+                     */
+                    freeBytes: number;
+                    /**
+                     * Format: int64
+                     * @description Swap space.
+                     */
+                    swapTotalBytes: number;
+                    /**
+                     * Format: int64
+                     * @description Swap in use.
+                     */
+                    swapUsedBytes: number;
+                    /**
+                     * Format: int64
+                     * @description Installed memory the kernel manages.
+                     */
+                    totalBytes: number;
+                    /**
+                     * Format: int64
+                     * @description Used by programs and the kernel, without caches and without the ARC.
+                     */
+                    usedBytes: number;
+                };
+                /** @description Every interface except the loopback and container links. */
+                network: {
+                    /** @description Interface name, for example `enp1s0`. */
+                    name: string;
+                    /**
+                     * Format: int64
+                     * @description Received.
+                     */
+                    receiveBytesPerSecond: number;
+                    /**
+                     * Format: int64
+                     * @description Sent.
+                     */
+                    sendBytesPerSecond: number;
+                }[];
+                /** @description Every sensor found; empty where the hardware or a virtual machine has none. */
+                temperatures: {
+                    /**
+                     * Format: double
+                     * @description Current temperature.
+                     */
+                    celsius: number;
+                    /** @description The hwmon chip or thermal zone type, for example `coretemp`, `nvme` or `acpitz`. */
+                    chip: string;
+                    /**
+                     * Format: double
+                     * @description The driver's critical mark, if any.
+                     */
+                    criticalCelsius: null | number;
+                    /**
+                     * Format: double
+                     * @description The driver's high mark, if any.
+                     */
+                    highCelsius: null | number;
+                    /** @description The sensor's label (`Package id 0`, `Composite`), or null when the driver gives none. */
+                    label: null | string;
+                }[];
+                /**
+                 * Format: double
+                 * @description Seconds since boot.
+                 */
+                uptimeSeconds: number;
+            };
+            /**
+             * Format: int64
+             * @description Installed memory the kernel manages.
+             */
+            memoryTotalBytes: number;
         };
         SavedLayout: {
             /** @description The layout now saved for this device. */
@@ -2218,6 +2598,65 @@ export type components = {
              */
             uptimeSeconds: number;
         };
+        /** @description Body of `POST /api/files/{shareId}/thumbnails`. */
+        ThumbnailRequest: {
+            /** @description The folder shown, relative to the share. */
+            folder: null | string;
+            /** @description Entries of that folder on screen, at most 200. */
+            names: string[];
+            /** @description `small` (64 px, list rows) or `large` (256 px, grid tiles). */
+            size: components["schemas"]["ThumbnailSize"];
+        };
+        /**
+         * @description The two thumbnail sizes: rows of the list, tiles of the grid (both twice their CSS size for sharp screens).
+         * @enum {unknown}
+         */
+        ThumbnailSize: "small" | "large";
+        /** @description Event of `thumbnails/&lt;share&gt;/&lt;folder&gt;`: thumbnails that were rendered or refused. */
+        ThumbnailsReady: {
+            /** @description Each with `ready` and its version, or `none`. */
+            items: {
+                /** @description The entry. */
+                name: string;
+                /**
+                 * @description Whether a thumbnail can be shown now.
+                 * @enum {unknown}
+                 */
+                status: "ready" | "pending" | "none";
+                /** @description For `ready`: changes whenever the file changes; pass it as `v` so a new version is loaded. */
+                version: null | string;
+            }[];
+            /**
+             * @description The two thumbnail sizes: rows of the list, tiles of the grid (both twice their CSS size for sharp screens).
+             * @enum {unknown}
+             */
+            size: "small" | "large";
+        };
+        ThumbnailState: {
+            /** @description The entry. */
+            name: string;
+            /** @description Whether it has a thumbnail. */
+            status: components["schemas"]["ThumbnailStatus"];
+            /** @description For `ready`: changes whenever the file changes; pass it as `v` so a new version is loaded. */
+            version: null | string;
+        };
+        /** @description Response of `POST /api/files/{shareId}/thumbnails`. Nothing was rendered while answering. */
+        ThumbnailStates: {
+            /** @description One state per distinct name asked for. */
+            items: components["schemas"]["ThumbnailState"][];
+            /** @description Subscribe to it for the thumbnails that are still pending. */
+            topic: string;
+        };
+        /**
+         * @description Whether a thumbnail can be shown now.
+         * @enum {unknown}
+         */
+        ThumbnailStatus: "ready" | "pending" | "none";
+        /** @description Snapshot of a thumbnail topic; the events carry everything. */
+        ThumbnailWatch: {
+            /** @description Always true. */
+            watching: boolean;
+        };
         TopicEvents: {
             "files/+/+": components["schemas"]["FolderChanges"];
             "jobs/+": components["schemas"]["Job"];
@@ -2226,6 +2665,9 @@ export type components = {
             "storage/disks": components["schemas"]["DisksChanged"];
             "storage/pools": components["schemas"]["PoolList"];
             "system/info": components["schemas"]["SystemInfo"];
+            "system/processes": components["schemas"]["ProcessList"];
+            "system/resources": components["schemas"]["ResourceSample"];
+            "thumbnails/+/+": components["schemas"]["ThumbnailsReady"];
         };
         TopicSnapshots: {
             "files/+/+": components["schemas"]["FolderWatchState"];
@@ -2235,6 +2677,9 @@ export type components = {
             "storage/disks": components["schemas"]["DiskList"];
             "storage/pools": components["schemas"]["PoolList"];
             "system/info": components["schemas"]["SystemInfo"];
+            "system/processes": components["schemas"]["ProcessList"];
+            "system/resources": components["schemas"]["ResourceSnapshot"];
+            "thumbnails/+/+": components["schemas"]["ThumbnailWatch"];
         };
         TotpConfirmRequest: {
             code: string;
@@ -3123,6 +3568,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FileEntry"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetThumbnail: {
+        parameters: {
+            query: {
+                path: string;
+                size?: string;
+                v?: string;
+            };
+            header?: never;
+            path: {
+                shareId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    RequestThumbnails: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shareId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ThumbnailRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThumbnailStates"];
                 };
             };
             /** @description Problem details with a stable error code. */

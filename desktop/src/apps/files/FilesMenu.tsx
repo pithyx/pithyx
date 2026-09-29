@@ -6,6 +6,7 @@ import {
   IconCopy,
   IconDownload,
   IconExternalLink,
+  IconEye,
   IconFolderPlus,
   IconHistory,
   IconPencil,
@@ -22,6 +23,7 @@ import styles from './FilesApp.module.css';
 export type FilesAction =
   | 'open'
   | 'download'
+  | 'openWith'
   | 'cut'
   | 'copy'
   | 'paste'
@@ -40,6 +42,7 @@ export function FilesMenu({
   kind,
   count,
   single,
+  viewable,
   writable,
   canPaste,
   onAction,
@@ -51,6 +54,8 @@ export function FilesMenu({
   count: number;
   /** What exactly one selected entry is; null for several. */
   single: 'file' | 'folder' | null;
+  /** Whether the one selected file opens in the viewer. */
+  viewable: boolean;
   writable: boolean;
   canPaste: boolean;
   onAction: (action: FilesAction) => void;
@@ -89,9 +94,19 @@ export function FilesMenu({
                   {t('actions.open')}
                 </MenuItem>
               )}
+              {single === 'file' && viewable && (
+                <MenuItem id="open" icon={<IconEye {...icon} />}>
+                  {t('actions.open')}
+                </MenuItem>
+              )}
               {single === 'file' && (
                 <MenuItem id="download" icon={<IconDownload {...icon} />}>
                   {t('actions.download')}
+                </MenuItem>
+              )}
+              {single === 'file' && (
+                <MenuItem id="openWith" icon={<IconExternalLink {...icon} />}>
+                  {t('actions.openWith')}
                 </MenuItem>
               )}
               <MenuItem id="copy" icon={<IconCopy {...icon} />} shortcut={t('keys.copy')}>
