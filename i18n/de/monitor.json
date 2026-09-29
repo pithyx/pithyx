@@ -1,0 +1,84 @@
+{
+  "views": {
+    "label": "Ansicht",
+    "performance": "Leistung",
+    "processes": "Prozesse"
+  },
+  "summary": {
+    "uptime": "Läuft seit {days, plural, =0 {} one {# Tag, } other {# Tagen, }}{hours} h {minutes} min",
+    "load": "Last {one} · {five} · {fifteen}"
+  },
+  "range": {
+    "label": "Zeitraum",
+    "minute": "Minute",
+    "tenMinutes": "10 Minuten",
+    "hour": "Stunde"
+  },
+  "rangeText": {
+    "minute": "Minute",
+    "tenMinutes": "10 Minuten",
+    "hour": "Stunde"
+  },
+  "measuring": "Wird gemessen …",
+  "history": "Der Verlauf umfasst nur die Zeit, in der dieser Monitor irgendwo offen war: Solange niemand zuschaut, wird nichts gemessen.",
+  "rate": "{value}/s",
+  "cpu": {
+    "title": "CPU",
+    "now": "{value} in Benutzung",
+    "cores": "Kerne",
+    "core": "Kern {index}",
+    "chart": "CPU-Auslastung der letzten {range}, jetzt {value}"
+  },
+  "memory": {
+    "title": "Arbeitsspeicher",
+    "now": "{used} von {total} von Programmen belegt",
+    "used": "Programme",
+    "arc": "ZFS-Cache (ARC)",
+    "cache": "Seiten-Cache",
+    "free": "Frei",
+    "parts": "Aufteilung des Arbeitsspeichers",
+    "swap": "Auslagerung: {used} von {total} belegt",
+    "noSwap": "Keine Auslagerung",
+    "arcHint": "Der ZFS-Cache gibt Speicher frei, sobald Programme ihn brauchen.",
+    "chart": "Von Programmen belegter Arbeitsspeicher der letzten {range}, jetzt {value}"
+  },
+  "network": {
+    "title": "Netzwerk",
+    "none": "Keine Netzwerkschnittstellen gefunden.",
+    "receive": "Empfangen {value}",
+    "send": "Gesendet {value}",
+    "chart": "Datenverkehr von {name} der letzten {range}, jetzt {received} empfangen und {sent} gesendet"
+  },
+  "disks": {
+    "title": "Festplatten",
+    "none": "Keine Festplatten gefunden.",
+    "read": "Gelesen {value}",
+    "write": "Geschrieben {value}",
+    "busy": "Ausgelastet {value}",
+    "chart": "Durchsatz von {name} der letzten {range}, jetzt {read} gelesen und {written} geschrieben",
+    "hint": "Aus den Zählern des Kernels gelesen: Eine schlafende Platte schläft weiter."
+  },
+  "temperatures": {
+    "title": "Temperaturen",
+    "none": "Keine Temperatursensoren gefunden. Virtuelle Maschinen und manche Boards haben keine. Plattentemperaturen werden hier nicht gelesen, damit schlafende Platten weiterschlafen.",
+    "caption": "Temperatursensoren",
+    "sensor": "Sensor",
+    "value": "Jetzt",
+    "limits": "Hoch / kritisch",
+    "high": "über der Hoch-Marke",
+    "critical": "an der kritischen Marke"
+  },
+  "processes": {
+    "filter": "Nach Name oder Benutzer filtern",
+    "caption": "Prozesse",
+    "name": "Name",
+    "pid": "PID",
+    "user": "Benutzer",
+    "cpu": "CPU",
+    "memory": "Speicher",
+    "count": "{total, plural, one {# Prozess} other {# Prozesse}}, {shown} angezeigt",
+    "empty": "Kein Prozess passt zum Filter.",
+    "loading": "Prozesse werden gelesen …",
+    "cpuHint": "CPU ist der Anteil an allen Kernen zusammen."
+  }
+}

@@ -945,6 +945,7 @@ export type components = {
         /** @enum {unknown} */
         FileOperationKind: "copy" | "move" | "delete";
         FileOperationRequest: {
+            /** @description Every entry of a folder except some names: selecting a whole folder without sending its names. */
             allIn?: null | components["schemas"]["FolderSelection"];
             /** @description The files and folders to work on, at most 1000. Leave out when `AllIn` is given. */
             items?: null | components["schemas"]["FileLocation"][];
@@ -1274,6 +1275,36 @@ export type components = {
              */
             toExamineBytes: number;
         };
+        /** @description Snapshot and event of `system/processes`. */
+        ProcessList: {
+            /**
+             * Format: date-time
+             * @description When the list was read (UTC).
+             */
+            at: string;
+            /** @description Every process except kernel threads. */
+            processes: {
+                /**
+                 * Format: double
+                 * @description Share of all cores since the previous list, 0 to 100; null in the first list.
+                 */
+                cpuPercent: null | number;
+                /**
+                 * Format: int64
+                 * @description Resident memory.
+                 */
+                memoryBytes: number;
+                /** @description Command name as the kernel keeps it (at most 15 characters). */
+                name: string;
+                /**
+                 * Format: int32
+                 * @description Process id.
+                 */
+                pid: number;
+                /** @description Owner's user name, or the numeric id when `/etc/passwd` does not know it. */
+                user: string;
+            }[];
+        };
         RecoverRequest: {
             newPassword: string;
             recoveryKey: string;
@@ -1292,6 +1323,320 @@ export type components = {
             name: string;
             /** @description The file or folder to rename. */
             path: string;
+        };
+        /** @description One second of the box, the event of `system/resources`. Rates are per second since the previous sample. */
+        ResourceSample: {
+            /**
+             * Format: date-time
+             * @description When it was measured (UTC).
+             */
+            at: string;
+            cpu: {
+                /** @description Each core, 0 to 100, in the kernel's order. */
+                cores: number[];
+                /**
+                 * Format: double
+                 * @description All cores together, 0 to 100.
+                 */
+                percent: number;
+            };
+            /** @description Every whole disk (no partitions, zvols or loop devices). */
+            disks: {
+                /**
+                 * Format: double
+                 * @description Share of the second with at least one request in flight, 0 to 100.
+                 */
+                busyPercent: number;
+                /** @description Kernel name, for example `sda` or `nvme0n1`. */
+                name: string;
+                /**
+                 * Format: int64
+                 * @description Read.
+                 */
+                readBytesPerSecond: number;
+                /**
+                 * Format: int64
+                 * @description Written.
+                 */
+                writeBytesPerSecond: number;
+            }[];
+            /** @description Over 1, 5 and 15 minutes. */
+            loadAverage: number[];
+            /**
+             * @description Physical memory split the way the monitor draws it. On Linux the ZFS ARC is not part of the page cache, so the
+             *     kernel counts it as used; UsedBytes leaves it out and ArcBytes shows it.
+             */
+            memory: {
+                /**
+                 * Format: int64
+                 * @description The ZFS ARC; null without ZFS. It shrinks when programs need the memory.
+                 */
+                arcBytes: null | number;
+                /**
+                 * Format: int64
+                 * @description The most the ARC may grow to; null without ZFS.
+                 */
+                arcMaxBytes: null | number;
+                /**
+                 * Format: int64
+                 * @description What the kernel estimates new programs can get without swapping (the ARC not included).
+                 */
+                availableBytes: number;
+                /**
+                 * Format: int64
+                 * @description Page cache, buffers and reclaimable kernel memory.
+                 */
+                cacheBytes: number;
+                /**
+                 * Format: int64
+                 * @description Not used at all.
+                 */
+                freeBytes: number;
+                /**
+                 * Format: int64
+                 * @description Swap space.
+                 */
+                swapTotalBytes: number;
+                /**
+                 * Format: int64
+                 * @description Swap in use.
+                 */
+                swapUsedBytes: number;
+                /**
+                 * Format: int64
+                 * @description Installed memory the kernel manages.
+                 */
+                totalBytes: number;
+                /**
+                 * Format: int64
+                 * @description Used by programs and the kernel, without caches and without the ARC.
+                 */
+                usedBytes: number;
+            };
+            /** @description Every interface except the loopback and container links. */
+            network: {
+                /** @description Interface name, for example `enp1s0`. */
+                name: string;
+                /**
+                 * Format: int64
+                 * @description Received.
+                 */
+                receiveBytesPerSecond: number;
+                /**
+                 * Format: int64
+                 * @description Sent.
+                 */
+                sendBytesPerSecond: number;
+            }[];
+            /** @description Every sensor found; empty where the hardware or a virtual machine has none. */
+            temperatures: {
+                /**
+                 * Format: double
+                 * @description Current temperature.
+                 */
+                celsius: number;
+                /** @description The hwmon chip or thermal zone type, for example `coretemp`, `nvme` or `acpitz`. */
+                chip: string;
+                /**
+                 * Format: double
+                 * @description The driver's critical mark, if any.
+                 */
+                criticalCelsius: null | number;
+                /**
+                 * Format: double
+                 * @description The driver's high mark, if any.
+                 */
+                highCelsius: null | number;
+                /** @description The sensor's label (`Package id 0`, `Composite`), or null when the driver gives none. */
+                label: null | string;
+            }[];
+            /**
+             * Format: double
+             * @description Seconds since boot.
+             */
+            uptimeSeconds: number;
+        };
+        /** @description Snapshot of `system/resources`: what the box is and the last hour, as far as someone watched it. */
+        ResourceSnapshot: {
+            /**
+             * Format: int32
+             * @description Cores the kernel lists.
+             */
+            cpuCount: number;
+            /**
+             * @description The ring buffer of the last hour, averaged into buckets so the snapshot stays small. Every series has one entry per
+             *     time; a device that did not exist at a time has null there.
+             */
+            history: {
+                /** @description ZFS ARC; null without ZFS. */
+                arcBytes: (null | number)[];
+                /**
+                 * Format: int32
+                 * @description Seconds per bucket.
+                 */
+                bucketSeconds: number;
+                /** @description All cores together. */
+                cpuPercent: number[];
+                /** @description Read and written bytes per second by disk. */
+                disks: {
+                    /** @description Received or read, per second. */
+                    in: (null | number)[];
+                    /** @description Interface or disk. */
+                    name: string;
+                    /** @description Sent or written, per second. */
+                    out: (null | number)[];
+                }[];
+                /** @description Used without caches and ARC. */
+                memoryUsedBytes: number[];
+                /** @description Received and sent bytes per second by interface. */
+                network: {
+                    /** @description Received or read, per second. */
+                    in: (null | number)[];
+                    /** @description Interface or disk. */
+                    name: string;
+                    /** @description Sent or written, per second. */
+                    out: (null | number)[];
+                }[];
+                /** @description End of each bucket (UTC). */
+                times: string[];
+            };
+            /** @description One second of the box, the event of `system/resources`. Rates are per second since the previous sample. */
+            latest: null | {
+                /**
+                 * Format: date-time
+                 * @description When it was measured (UTC).
+                 */
+                at: string;
+                cpu: {
+                    /** @description Each core, 0 to 100, in the kernel's order. */
+                    cores: number[];
+                    /**
+                     * Format: double
+                     * @description All cores together, 0 to 100.
+                     */
+                    percent: number;
+                };
+                /** @description Every whole disk (no partitions, zvols or loop devices). */
+                disks: {
+                    /**
+                     * Format: double
+                     * @description Share of the second with at least one request in flight, 0 to 100.
+                     */
+                    busyPercent: number;
+                    /** @description Kernel name, for example `sda` or `nvme0n1`. */
+                    name: string;
+                    /**
+                     * Format: int64
+                     * @description Read.
+                     */
+                    readBytesPerSecond: number;
+                    /**
+                     * Format: int64
+                     * @description Written.
+                     */
+                    writeBytesPerSecond: number;
+                }[];
+                /** @description Over 1, 5 and 15 minutes. */
+                loadAverage: number[];
+                /**
+                 * @description Physical memory split the way the monitor draws it. On Linux the ZFS ARC is not part of the page cache, so the
+                 *     kernel counts it as used; UsedBytes leaves it out and ArcBytes shows it.
+                 */
+                memory: {
+                    /**
+                     * Format: int64
+                     * @description The ZFS ARC; null without ZFS. It shrinks when programs need the memory.
+                     */
+                    arcBytes: null | number;
+                    /**
+                     * Format: int64
+                     * @description The most the ARC may grow to; null without ZFS.
+                     */
+                    arcMaxBytes: null | number;
+                    /**
+                     * Format: int64
+                     * @description What the kernel estimates new programs can get without swapping (the ARC not included).
+                     */
+                    availableBytes: number;
+                    /**
+                     * Format: int64
+                     * @description Page cache, buffers and reclaimable kernel memory.
+                     */
+                    cacheBytes: number;
+                    /**
+                     * Format: int64
+                     * @description Not used at all.
+                     */
+                    freeBytes: number;
+                    /**
+                     * Format: int64
+                     * @description Swap space.
+                     */
+                    swapTotalBytes: number;
+                    /**
+                     * Format: int64
+                     * @description Swap in use.
+                     */
+                    swapUsedBytes: number;
+                    /**
+                     * Format: int64
+                     * @description Installed memory the kernel manages.
+                     */
+                    totalBytes: number;
+                    /**
+                     * Format: int64
+                     * @description Used by programs and the kernel, without caches and without the ARC.
+                     */
+                    usedBytes: number;
+                };
+                /** @description Every interface except the loopback and container links. */
+                network: {
+                    /** @description Interface name, for example `enp1s0`. */
+                    name: string;
+                    /**
+                     * Format: int64
+                     * @description Received.
+                     */
+                    receiveBytesPerSecond: number;
+                    /**
+                     * Format: int64
+                     * @description Sent.
+                     */
+                    sendBytesPerSecond: number;
+                }[];
+                /** @description Every sensor found; empty where the hardware or a virtual machine has none. */
+                temperatures: {
+                    /**
+                     * Format: double
+                     * @description Current temperature.
+                     */
+                    celsius: number;
+                    /** @description The hwmon chip or thermal zone type, for example `coretemp`, `nvme` or `acpitz`. */
+                    chip: string;
+                    /**
+                     * Format: double
+                     * @description The driver's critical mark, if any.
+                     */
+                    criticalCelsius: null | number;
+                    /**
+                     * Format: double
+                     * @description The driver's high mark, if any.
+                     */
+                    highCelsius: null | number;
+                    /** @description The sensor's label (`Package id 0`, `Composite`), or null when the driver gives none. */
+                    label: null | string;
+                }[];
+                /**
+                 * Format: double
+                 * @description Seconds since boot.
+                 */
+                uptimeSeconds: number;
+            };
+            /**
+             * Format: int64
+             * @description Installed memory the kernel manages.
+             */
+            memoryTotalBytes: number;
         };
         SavedLayout: {
             /** @description The layout now saved for this device. */
@@ -1396,6 +1741,8 @@ export type components = {
             "storage/disks": components["schemas"]["DisksChanged"];
             "storage/pools": components["schemas"]["PoolList"];
             "system/info": components["schemas"]["SystemInfo"];
+            "system/processes": components["schemas"]["ProcessList"];
+            "system/resources": components["schemas"]["ResourceSample"];
         };
         TopicSnapshots: {
             "files/+/+": components["schemas"]["FolderWatchState"];
@@ -1403,6 +1750,8 @@ export type components = {
             "storage/disks": components["schemas"]["DiskList"];
             "storage/pools": components["schemas"]["PoolList"];
             "system/info": components["schemas"]["SystemInfo"];
+            "system/processes": components["schemas"]["ProcessList"];
+            "system/resources": components["schemas"]["ResourceSnapshot"];
         };
         TotpConfirmRequest: {
             code: string;

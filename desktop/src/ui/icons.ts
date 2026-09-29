@@ -1,6 +1,7 @@
 // Every Tabler icon the desktop uses, imported one by one. The package index re-exports all of its icons; in the
 // Vite dev server that is 16 MB of modules on every cold start. ESLint forbids importing the index anywhere else.
 export type { TablerIcon } from '@tabler/icons-react';
+export { default as IconActivity } from '@tabler/icons-react/dist/esm/icons/IconActivity.mjs';
 export { default as IconAlertCircle } from '@tabler/icons-react/dist/esm/icons/IconAlertCircle.mjs';
 export { default as IconAlertTriangle } from '@tabler/icons-react/dist/esm/icons/IconAlertTriangle.mjs';
 export { default as IconApps } from '@tabler/icons-react/dist/esm/icons/IconApps.mjs';
