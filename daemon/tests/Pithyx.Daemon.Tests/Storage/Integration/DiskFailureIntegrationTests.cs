@@ -192,7 +192,7 @@ public sealed class DiskFailureIntegrationTests
         /// </summary>
         public async Task ReleaseAsync(string pool)
         {
-            foreach (var host in _disks.Select(disk => disk.Host).Distinct())
+            foreach (var host in _disks.Select(disk => disk.Host).Distinct().ToList())
             {
                 if (!Directory.EnumerateDirectories("/sys/block", "sd*").Any(block => HostOf(block) == host))
                 {
