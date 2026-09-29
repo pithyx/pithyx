@@ -15,7 +15,8 @@ export function usePasswordLists(): PasswordLists | undefined {
 
 /**
  * Live feedback below a new password: three bars, the strength with its most important reason, and a tip. It always
- * takes the same space, so nothing moves while typing. Only the strength is announced, and only when it changes.
+ * takes the same space, so nothing moves while typing. The status is announced when the strength or its reason
+ * changes, not on every key.
  */
 export function PasswordStrengthMeter({ password }: { password: string }) {
   const { t } = useTranslation('auth');
@@ -43,7 +44,7 @@ export function PasswordStrengthMeter({ password }: { password: string }) {
         <span className={styles.bar} />
         <span className={styles.bar} />
       </span>
-      <span className={styles.status}>
+      <span className={styles.status} aria-live="polite">
         {empty ? (
           t('password.hint', { minLength: MIN_PASSWORD_LENGTH })
         ) : (
@@ -54,9 +55,6 @@ export function PasswordStrengthMeter({ password }: { password: string }) {
         )}
       </span>
       <span className={styles.tip}>{t('password.tip')}</span>
-      <span className="visually-hidden" aria-live="polite">
-        {empty ? '' : t('password.level', { level })}
-      </span>
     </span>
   );
 }
