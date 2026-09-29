@@ -105,6 +105,10 @@
       "not_found": "Der Share wurde nicht gefunden, oder du hast keinen Zugriff darauf.",
       "read_only": "In diesem Share darfst du nur lesen."
     },
+    "thumbnail": {
+      "not_found": "Für diese Datei gibt es noch keine Vorschau.",
+      "too_many": "Frag höchstens {max} Vorschauen auf einmal an."
+    },
     "trash": {
       "retention_invalid": "Der Papierkorb behält Elemente zwischen 0 und {max} Tagen (0 behält sie, bis er geleert wird)."
     },

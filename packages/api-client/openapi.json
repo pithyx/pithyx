@@ -1607,6 +1607,115 @@
         }
       }
     },
+    "/api/files/{shareId}/thumbnails": {
+      "post": {
+        "tags": [
+          "Files"
+        ],
+        "description": "Which of the named entries of a folder have a thumbnail (JPEG, PNG, WebP and GIF by content). Answers at once and renders nothing itself: missing thumbnails are queued and announced on the returned topic. Only ask for entries on screen.",
+        "operationId": "RequestThumbnails",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ThumbnailRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThumbnailStates"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/files/{shareId}/thumbnail": {
+      "get": {
+        "tags": [
+          "Files"
+        ],
+        "description": "A cached WebP thumbnail of the file as it is now, with the same access check as its download; fs.thumbnail.not_found when there is none (yet). v is the version from the thumbnail state and only makes the URL change with the file.",
+        "operationId": "GetThumbnail",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "v",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/files/{shareId}/rename": {
       "post": {
         "tags": [
@@ -2456,6 +2565,8 @@
           "fs.share.invalid",
           "fs.share.not_found",
           "fs.share.read_only",
+          "fs.thumbnail.not_found",
+          "fs.thumbnail.too_many",
           "fs.trash.retention_invalid",
           "fs.upload.incomplete",
           "fs.volume.full",
@@ -3770,13 +3881,167 @@
           }
         }
       },
+      "ThumbnailRequest": {
+        "required": [
+          "folder",
+          "names",
+          "size"
+        ],
+        "type": "object",
+        "properties": {
+          "folder": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The folder shown, relative to the share."
+          },
+          "names": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Entries of that folder on screen, at most 200."
+          },
+          "size": {
+            "description": "`small` (64 px, list rows) or `large` (256 px, grid tiles).",
+            "$ref": "#/components/schemas/ThumbnailSize"
+          }
+        },
+        "description": "Body of `POST /api/files/{shareId}/thumbnails`."
+      },
+      "ThumbnailSize": {
+        "enum": [
+          "small",
+          "large"
+        ],
+        "description": "The two thumbnail sizes: rows of the list, tiles of the grid (both twice their CSS size for sharp screens)."
+      },
+      "ThumbnailState": {
+        "required": [
+          "name",
+          "status",
+          "version"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The entry."
+          },
+          "status": {
+            "description": "Whether it has a thumbnail.",
+            "$ref": "#/components/schemas/ThumbnailStatus"
+          },
+          "version": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "For `ready`: changes whenever the file changes; pass it as `v` so a new version is loaded."
+          }
+        }
+      },
+      "ThumbnailStates": {
+        "required": [
+          "topic",
+          "items"
+        ],
+        "type": "object",
+        "properties": {
+          "topic": {
+            "type": "string",
+            "description": "Subscribe to it for the thumbnails that are still pending."
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ThumbnailState"
+            },
+            "description": "One state per distinct name asked for."
+          }
+        },
+        "description": "Response of `POST /api/files/{shareId}/thumbnails`. Nothing was rendered while answering."
+      },
+      "ThumbnailStatus": {
+        "enum": [
+          "ready",
+          "pending",
+          "none"
+        ],
+        "description": "Whether a thumbnail can be shown now."
+      },
+      "ThumbnailWatch": {
+        "required": [
+          "watching"
+        ],
+        "type": "object",
+        "properties": {
+          "watching": {
+            "type": "boolean",
+            "description": "Always true."
+          }
+        },
+        "description": "Snapshot of a thumbnail topic; the events carry everything."
+      },
+      "ThumbnailsReady": {
+        "required": [
+          "items",
+          "size"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "required": [
+                "name",
+                "status",
+                "version"
+              ],
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "The entry."
+                },
+                "status": {
+                  "enum": [
+                    "ready",
+                    "pending",
+                    "none"
+                  ],
+                  "description": "Whether a thumbnail can be shown now."
+                },
+                "version": {
+                  "type": [
+                    "null",
+                    "string"
+                  ],
+                  "description": "For `ready`: changes whenever the file changes; pass it as `v` so a new version is loaded."
+                }
+              }
+            },
+            "description": "Each with `ready` and its version, or `none`."
+          },
+          "size": {
+            "enum": [
+              "small",
+              "large"
+            ],
+            "description": "The two thumbnail sizes: rows of the list, tiles of the grid (both twice their CSS size for sharp screens)."
+          }
+        },
+        "description": "Event of `thumbnails/&lt;share&gt;/&lt;folder&gt;`: thumbnails that were rendered or refused."
+      },
       "TopicEvents": {
         "required": [
           "files/+/+",
           "jobs/+",
           "storage/disks",
           "storage/pools",
-          "system/info"
+          "system/info",
+          "thumbnails/+/+"
         ],
         "type": "object",
         "properties": {
@@ -3794,6 +4059,9 @@
           },
           "system/info": {
             "$ref": "#/components/schemas/SystemInfo"
+          },
+          "thumbnails/+/+": {
+            "$ref": "#/components/schemas/ThumbnailsReady"
           }
         }
       },
@@ -3803,7 +4071,8 @@
           "jobs/+",
           "storage/disks",
           "storage/pools",
-          "system/info"
+          "system/info",
+          "thumbnails/+/+"
         ],
         "type": "object",
         "properties": {
@@ -3821,6 +4090,9 @@
           },
           "system/info": {
             "$ref": "#/components/schemas/SystemInfo"
+          },
+          "thumbnails/+/+": {
+            "$ref": "#/components/schemas/ThumbnailWatch"
           }
         }
       },

@@ -345,6 +345,40 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/files/{shareId}/thumbnail": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description A cached WebP thumbnail of the file as it is now, with the same access check as its download; fs.thumbnail.not_found when there is none (yet). v is the version from the thumbnail state and only makes the URL change with the file. */
+        get: operations["GetThumbnail"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/files/{shareId}/thumbnails": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Which of the named entries of a folder have a thumbnail (JPEG, PNG, WebP and GIF by content). Answers at once and renders nothing itself: missing thumbnails are queued and announced on the returned topic. Only ask for entries on screen. */
+        post: operations["RequestThumbnails"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/files/{shareId}/trash": {
         parameters: {
             query?: never;
@@ -888,7 +922,7 @@ export type components = {
             }[];
         };
         /** @enum {string} */
-        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.exists" | "fs.share.invalid" | "fs.share.not_found" | "fs.share.read_only" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.command.failed" | "storage.disk.not_found" | "storage.disk.refused" | "storage.plan.expired" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_taken" | "system.internal.unexpected" | "system.origin.forbidden";
+        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.exists" | "fs.share.invalid" | "fs.share.not_found" | "fs.share.read_only" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.command.failed" | "storage.disk.not_found" | "storage.disk.refused" | "storage.plan.expired" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_taken" | "system.internal.unexpected" | "system.origin.forbidden";
         /** @description A failed client message. `id` is empty when the message could not be parsed. */
         ErrorMessage: {
             code: components["schemas"]["ErrorCode"];
@@ -1390,12 +1424,72 @@ export type components = {
              */
             uptimeSeconds: number;
         };
+        /** @description Body of `POST /api/files/{shareId}/thumbnails`. */
+        ThumbnailRequest: {
+            /** @description The folder shown, relative to the share. */
+            folder: null | string;
+            /** @description Entries of that folder on screen, at most 200. */
+            names: string[];
+            /** @description `small` (64 px, list rows) or `large` (256 px, grid tiles). */
+            size: components["schemas"]["ThumbnailSize"];
+        };
+        /**
+         * @description The two thumbnail sizes: rows of the list, tiles of the grid (both twice their CSS size for sharp screens).
+         * @enum {unknown}
+         */
+        ThumbnailSize: "small" | "large";
+        /** @description Event of `thumbnails/&lt;share&gt;/&lt;folder&gt;`: thumbnails that were rendered or refused. */
+        ThumbnailsReady: {
+            /** @description Each with `ready` and its version, or `none`. */
+            items: {
+                /** @description The entry. */
+                name: string;
+                /**
+                 * @description Whether a thumbnail can be shown now.
+                 * @enum {unknown}
+                 */
+                status: "ready" | "pending" | "none";
+                /** @description For `ready`: changes whenever the file changes; pass it as `v` so a new version is loaded. */
+                version: null | string;
+            }[];
+            /**
+             * @description The two thumbnail sizes: rows of the list, tiles of the grid (both twice their CSS size for sharp screens).
+             * @enum {unknown}
+             */
+            size: "small" | "large";
+        };
+        ThumbnailState: {
+            /** @description The entry. */
+            name: string;
+            /** @description Whether it has a thumbnail. */
+            status: components["schemas"]["ThumbnailStatus"];
+            /** @description For `ready`: changes whenever the file changes; pass it as `v` so a new version is loaded. */
+            version: null | string;
+        };
+        /** @description Response of `POST /api/files/{shareId}/thumbnails`. Nothing was rendered while answering. */
+        ThumbnailStates: {
+            /** @description One state per distinct name asked for. */
+            items: components["schemas"]["ThumbnailState"][];
+            /** @description Subscribe to it for the thumbnails that are still pending. */
+            topic: string;
+        };
+        /**
+         * @description Whether a thumbnail can be shown now.
+         * @enum {unknown}
+         */
+        ThumbnailStatus: "ready" | "pending" | "none";
+        /** @description Snapshot of a thumbnail topic; the events carry everything. */
+        ThumbnailWatch: {
+            /** @description Always true. */
+            watching: boolean;
+        };
         TopicEvents: {
             "files/+/+": components["schemas"]["FolderChanges"];
             "jobs/+": components["schemas"]["Job"];
             "storage/disks": components["schemas"]["DisksChanged"];
             "storage/pools": components["schemas"]["PoolList"];
             "system/info": components["schemas"]["SystemInfo"];
+            "thumbnails/+/+": components["schemas"]["ThumbnailsReady"];
         };
         TopicSnapshots: {
             "files/+/+": components["schemas"]["FolderWatchState"];
@@ -1403,6 +1497,7 @@ export type components = {
             "storage/disks": components["schemas"]["DiskList"];
             "storage/pools": components["schemas"]["PoolList"];
             "system/info": components["schemas"]["SystemInfo"];
+            "thumbnails/+/+": components["schemas"]["ThumbnailWatch"];
         };
         TotpConfirmRequest: {
             code: string;
@@ -2306,6 +2401,74 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["FileEntry"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetThumbnail: {
+        parameters: {
+            query: {
+                path: string;
+                size?: string;
+                v?: string;
+            };
+            header?: never;
+            path: {
+                shareId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    RequestThumbnails: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shareId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ThumbnailRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThumbnailStates"];
                 };
             };
             /** @description Problem details with a stable error code. */

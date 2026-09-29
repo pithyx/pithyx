@@ -210,6 +210,16 @@
       "params": {},
       "expected": "You can only read in this share."
     },
+    "fs.thumbnail.not_found": {
+      "params": {},
+      "expected": "There is no preview of this file yet."
+    },
+    "fs.thumbnail.too_many": {
+      "params": {
+        "max": 200
+      },
+      "expected": "Ask for at most 200 previews at once."
+    },
     "fs.trash.retention_invalid": {
       "params": {
         "max": 999

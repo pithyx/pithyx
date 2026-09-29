@@ -21,6 +21,12 @@
     <PackageReference Include="Serilog.AspNetCore" />
     <PackageReference Include="Serilog.Formatting.Compact" />
     <PackageReference Include="Serilog.Sinks.File" />
+    <!-- Image decoding for thumbnails (MIT). Linux x64 and arm64 native builds without system libraries; the Windows
+         and macOS builds SkiaSharp pulls in are never used. -->
+    <PackageReference Include="SkiaSharp" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" />
+    <PackageReference Include="SkiaSharp.NativeAssets.macOS" ExcludeAssets="all" />
+    <PackageReference Include="SkiaSharp.NativeAssets.Win32" ExcludeAssets="all" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Pithyx.Daemon.Tests" />

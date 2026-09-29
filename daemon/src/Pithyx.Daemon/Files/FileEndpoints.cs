@@ -5,6 +5,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Net.Http.Headers;
 using Pithyx.Daemon.Errors;
+using Pithyx.Daemon.Files.Thumbnails;
+using Pithyx.Daemon.Hosting;
 
 namespace Pithyx.Daemon.Files;
 
@@ -25,6 +27,15 @@ public static class FileEndpoints
             provider.GetRequiredService<FolderWatches>(),
             provider.GetRequiredService<Shares.ShareService>()));
         services.AddHostedService<FolderWatchPublisher>();
+        services.AddSingleton(provider => new ThumbnailCache(
+            Path.Combine(provider.GetRequiredService<DaemonPaths>().CacheDirectory, "thumbnails"),
+            provider.GetRequiredService<TimeProvider>()));
+        services.AddSingleton<ThumbnailService>();
+        services.AddSingleton(provider => ThumbnailService.Definition(provider.GetRequiredService<Shares.ShareService>()));
+        if (!BuildTimeDocument.IsGenerating)
+        {
+            services.AddHostedService(provider => provider.GetRequiredService<ThumbnailService>());
+        }
         return services;
     }
 
@@ -74,6 +85,16 @@ public static class FileEndpoints
             .WithTags("Shares")
             .WithName("SetShareTrash")
             .WithDescription("Administrators only. Days the recycle bin keeps deleted items (0 to 3650; 0 keeps them until emptied). Applies to items already in the bin.");
+        files.MapPost("/thumbnails", ThumbnailsAsync)
+            .WithName("RequestThumbnails")
+            .WithDescription(
+                "Which of the named entries of a folder have a thumbnail (JPEG, PNG, WebP and GIF by content). Answers at once and "
+                + "renders nothing itself: missing thumbnails are queued and announced on the returned topic. Only ask for entries on screen.");
+        files.MapGet("/thumbnail", ThumbnailAsync)
+            .WithName("GetThumbnail")
+            .WithDescription(
+                "A cached WebP thumbnail of the file as it is now, with the same access check as its download; fs.thumbnail.not_found "
+                + "when there is none (yet). v is the version from the thumbnail state and only makes the URL change with the file.");
         files.MapPost("/rename", RenameAsync)
             .WithName("RenameFileEntry")
             .WithDescription("Renames a file or folder within its folder. An existing name is never replaced (fs.entry.exists).");
@@ -144,9 +165,53 @@ public static class FileEndpoints
         var disposition = new ContentDispositionHeaderValue(inline == true ? "inline" : "attachment");
         disposition.SetHttpFileName(name);
         headers[HeaderNames.ContentDisposition] = disposition.ToString();
-        var type = inline == true && _types.TryGetContentType(name, out var known) ? known : "application/octet-stream";
+        var type = inline == true ? InlineType(name) : "application/octet-stream";
         var tag = new EntityTagHeaderValue(string.Create(CultureInfo.InvariantCulture, $"\"{stat.Id}-{stat.Modified.UtcTicks:x}-{stat.Size:x}\""));
         return TypedResults.Stream(stream, type, fileDownloadName: null, lastModified: stat.Modified, entityTag: tag, enableRangeProcessing: true);
+    }
+
+    private static async Task<Ok<ThumbnailStates>> ThumbnailsAsync(long shareId, ThumbnailRequest request, ThumbnailService thumbnails, HttpContext context, CancellationToken cancellationToken) =>
+        TypedResults.Ok(await thumbnails.RequestAsync(context.User, shareId, request, cancellationToken));
+
+    private static async Task<PhysicalFileHttpResult> ThumbnailAsync(
+        long shareId,
+        string path,
+        string? size,
+        string? v,
+        ThumbnailService thumbnails,
+        HttpContext context,
+        CancellationToken cancellationToken)
+    {
+        var found = await thumbnails.FindAsync(context.User, shareId, path, Parse(size, ThumbnailSize.Large), cancellationToken)
+            ?? throw new PithyxException(ErrorCodes.FsThumbnailNotFound);
+        var headers = context.Response.Headers;
+        headers[HeaderNames.ContentSecurityPolicy] = "sandbox; default-src 'none'";
+        headers[HeaderNames.XContentTypeOptions] = "nosniff";
+        // Checked again on every use: after access is taken away, a cached copy must not be shown.
+        headers[HeaderNames.CacheControl] = "private, no-cache";
+        return TypedResults.PhysicalFile(found.File, "image/webp", entityTag: new EntityTagHeaderValue($"\"{found.Version}\""));
+    }
+
+    /// <summary>
+    /// The type a file is shown inline as. Images, PDF, audio and video keep theirs (SVG only ever renders inside the
+    /// sandbox policy, which blocks its scripts); every text type, HTML and XML included, is plain text, so a page
+    /// in a share is shown as its source and never rendered; anything else stays a download.
+    /// </summary>
+    public static string InlineType(string name)
+    {
+        if (!_types.TryGetContentType(name, out var type))
+        {
+            return "application/octet-stream";
+        }
+        if (type.StartsWith("image/", StringComparison.Ordinal) || type.StartsWith("audio/", StringComparison.Ordinal)
+            || type.StartsWith("video/", StringComparison.Ordinal) || type == "application/pdf")
+        {
+            return type;
+        }
+        return type.StartsWith("text/", StringComparison.Ordinal) || type is "application/json" or "application/xml" or "application/javascript"
+            || type.EndsWith("+xml", StringComparison.Ordinal)
+            ? "text/plain; charset=utf-8"
+            : "application/octet-stream";
     }
 
     private static async Task<Created<FileEntry>> UploadAsync(

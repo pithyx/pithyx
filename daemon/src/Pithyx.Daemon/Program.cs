@@ -38,6 +38,7 @@ builder.Services.ConfigureHttpJsonOptions(options =>
 });
 builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton(new SqliteConnectionFactory(paths.DatabasePath));
+builder.Services.AddSingleton(paths);
 builder.Services.AddSingleton<MigrationRunner>();
 builder.Services.AddPithyxErrors();
 builder.Services.AddPithyxAuth();
