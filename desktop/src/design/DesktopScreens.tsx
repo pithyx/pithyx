@@ -33,7 +33,7 @@ import {
   noteText,
   notifications,
   now,
-  pinned,
+  startApps,
   recent,
   searchFiles,
   searchQuery,
@@ -285,7 +285,7 @@ export function StartMenuScene({
         <StartMenu
           position={context.taskbar}
           query={query}
-          pinned={pinned.map((id) => apps[id])}
+          apps={startApps.map((id) => apps[id])}
           recent={recent}
           results={results}
           user={currentUser}

@@ -118,6 +118,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- The Pithyx menu calls its app list "Apps" instead of "Pinned"; there is no pinning.
 - The UI no longer shows request ids (error dialogs, inline errors, notifications). They are written to the browser console and stay in the daemon's logs.
 - CI runs on the runner named by the repository variable `CI_RUNNER` and on GitHub-hosted runners when it is unset. The integration tests that need root, ZFS or block devices run on the dev VM with `tools/dev-vm/integration.sh`, and `tools/ci-local.sh` runs every CI step locally when Actions does not start.
 - New passwords need at least 8 characters instead of 12 (NIST SP 800-63B); the list of common passwords the daemon refuses now covers every entry from 8 characters on (46,526 instead of 1,257), and `auth.password.too_common` says "This password is too well known". The desktop refuses too short and well-known passwords before sending them, with the same texts as the meter.

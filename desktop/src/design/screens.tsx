@@ -177,7 +177,7 @@ export const screens: ScreenDefinition[] = [
     id: 'start-menu',
     group: 'overlays',
     title: 'Start menu',
-    description: 'Search first, pinned apps, recent files, user and power options.',
+    description: 'Search first, apps, recent files, user and power options.',
     render: (context) => <StartMenuScene context={context} search={false} />,
   },
   {

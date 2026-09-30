@@ -66,7 +66,7 @@ export const desktopItems = [
 
 export const desktopShortcuts: AppId[] = ['files', 'storage'];
 
-export const pinned: AppId[] = [
+export const startApps: AppId[] = [
   'files',
   'storage',
   'settings',

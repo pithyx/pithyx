@@ -505,7 +505,7 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
                 position={taskbarPosition}
                 query={query}
                 onQueryChange={setQuery}
-                pinned={apps}
+                apps={apps}
                 recent={[]}
                 results={{ apps: matches, settings: [], files: [] }}
                 user={{
