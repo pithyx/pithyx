@@ -25,7 +25,9 @@ public sealed class PoolInventory
     public event Action? Refreshed;
 
     /// <summary>Replaces the state; true when anything changed.</summary>
-    public bool Replace(PoolList pools)
+    /// <param name="pools">The new state.</param>
+    /// <param name="read">False when only the health derived from the disks changed, not what ZFS reported; <see cref="Refreshed"/> is then not raised.</param>
+    public bool Replace(PoolList pools, bool read = true)
     {
         ArgumentNullException.ThrowIfNull(pools);
         Available = true;
@@ -41,7 +43,10 @@ public sealed class PoolInventory
         {
             Changed?.Invoke();
         }
-        Refreshed?.Invoke();
+        if (read)
+        {
+            Refreshed?.Invoke();
+        }
         return changed;
     }
 

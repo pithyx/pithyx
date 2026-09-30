@@ -19,12 +19,12 @@ Rules for `desktop/`. The root `CLAUDE.md` applies as well.
 - Thumbnails and other derived data load asynchronously and never delay a listing.
 - User actions are optimistic and roll back on error.
 - No spinner before 300 ms.
-- Apps are loaded with dynamic `import()` when opened, never at login. Initial desktop bundle stays below 200 KB gzip.
+- Apps are loaded with dynamic `import()` when opened, never at login. The sign-in bundle stays below 200 KB gzip and within 5 percent of its recorded baseline; the desktop bundle loaded after sign-in stays below 150 KB gzip.
 - High-frequency state (live stats, job progress) goes through Zustand with narrow selectors. No React context for data that changes often.
 - Use the React Compiler instead of hand-written `useMemo` and `useCallback`.
 - No `useEffect` for derived state or data fetching. REST data goes through TanStack Query, live data through the WebSocket store. `useEffect` is only for syncing with things outside React.
 - Core apps run in the desktop context. Only third-party apps use iframes.
-- Performance budgets are CI tests. A regression of more than 5 percent on any tracked metric fails the build.
+- Performance budgets are CI tests. The timing budgets (`e2e/tests/budgets.spec.ts`) are the deciding gate; a regression of more than 5 percent on any tracked timing fails the build. They run with the E2E suite, so a change on the loading path, the sign-in or the bundle gets the label `e2e` (D278); the bundle size check runs in every frontend job. Do not trade code clarity for a few bytes of bundle size while the desktop stays within its limit.
 
 ## Desktop layout
 
