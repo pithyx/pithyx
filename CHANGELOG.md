@@ -118,6 +118,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- Settings no longer links to Storage in its navigation; the create dialog of a shared folder still offers to create a pool in Storage when none is ready.
 - The Pithyx menu calls its app list "Apps" instead of "Pinned"; there is no pinning.
 - The UI no longer shows request ids (error dialogs, inline errors, notifications). They are written to the browser console and stay in the daemon's logs.
 - CI runs on the runner named by the repository variable `CI_RUNNER` and on GitHub-hosted runners when it is unset. The integration tests that need root, ZFS or block devices run on the dev VM with `tools/dev-vm/integration.sh`, and `tools/ci-local.sh` runs every CI step locally when Actions does not start.

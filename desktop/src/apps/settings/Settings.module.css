@@ -14,8 +14,7 @@
   background: var(--color-surface-2);
 }
 
-.navItem,
-.navLink {
+.navItem {
   display: flex;
   align-items: center;
   gap: var(--space-1);
@@ -32,20 +31,12 @@
   cursor: pointer;
 }
 
-.navItem:hover,
-.navLink:hover {
+.navItem:hover {
   background: var(--color-surface-hover);
 }
 
 .navItem[aria-current='page'] {
   background: var(--color-selection);
-}
-
-.navLink {
-  margin-top: auto;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-regular);
 }
 
 .page {
@@ -296,11 +287,6 @@
     border-bottom: 1px solid var(--color-border);
   }
 
-  .navLink {
-    margin-top: 0;
-    margin-inline-start: auto;
-  }
-
   .page {
     padding: var(--space-3);
   }
@@ -345,7 +331,6 @@
 
 @media (pointer: coarse) {
   .navItem,
-  .navLink,
   .select,
   .option {
     min-height: 44px;

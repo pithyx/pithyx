@@ -1,9 +1,8 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { IconArrowUpRight } from '../../ui/icons';
 import type { SdkAppProps } from '../sdk/CoreSdkApp';
-import { internalCall, onInternal, SHARES_CHANGED, STORAGE_CHANGED } from '../sdk/internal';
+import { onInternal, SHARES_CHANGED, STORAGE_CHANGED } from '../sdk/internal';
 import styles from './Settings.module.css';
 import { sharesKey } from './shares';
 import { SharesPage } from './SharesPage';
@@ -13,7 +12,7 @@ const pages = [{ id: 'shares', Component: SharesPage }] as const;
 
 /**
  * Settings: system settings only (users and groups, shared folders, network, energy, updates). Pages ship with the
- * step that makes them work; storage has its own app, which the navigation links to.
+ * step that makes them work; storage has its own app.
  */
 export function SettingsApp({ app }: SdkAppProps) {
   const { t } = useTranslation('settings');
@@ -53,16 +52,6 @@ export function SettingsApp({ app }: SdkAppProps) {
             {t(`nav.${entry.id}`)}
           </button>
         ))}
-        <button
-          type="button"
-          className={styles.navLink}
-          onClick={() => {
-            void internalCall(app, 'internal.admin.openApp', { app: 'storage' });
-          }}
-        >
-          {t('storagePointer.open')}
-          <IconArrowUpRight size={14} aria-hidden />
-        </button>
       </nav>
       {/* Focusable, so keyboard users can scroll a page without controls. */}
       <main className={styles.page} tabIndex={0}>
