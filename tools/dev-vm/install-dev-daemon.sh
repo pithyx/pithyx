@@ -1,14 +1,16 @@
 #!/usr/bin/env bash
-# Runs the daemon on the dev VM in real mode, as root, as the systemd unit pithyx-dev.service on port 7484.
+# Deploys dev to the dev VM: runs the daemon in real mode, as root, as the systemd unit pithyx-dev.service on port 7484.
 #
-#   tools/dev-vm/install-dev-daemon.sh [--from <checkout>] [--no-build] [--yes]
+#   tools/dev-vm/install-dev-daemon.sh [--no-build] [--yes]
 #   tools/dev-vm/install-dev-daemon.sh --uninstall
 #
-#   --from <checkout>  run the unit from this checkout or worktree: a path, or the name of a worktree under
-#                      .worktrees/ (for example --from pools); default: the checkout this script is in
-#   --no-build         reuse the checkout's Release build and desktop/dist
-#   --yes              stop a running unit or another daemon on port 7484 without asking
-#   --uninstall        stop and remove the unit; /var/lib/pithyx and /var/log/pithyx are kept
+#   --no-build   reuse the checkout's Release build and desktop/dist
+#   --yes        stop a running unit or another daemon on port 7484 without asking
+#   --uninstall  stop and remove the unit; /var/lib/pithyx and /var/log/pithyx are kept
+#
+# The unit is the one dev instance with one database. It always runs from the main checkout on the branch dev, which
+# the script fast-forwards to origin/dev first; branches are tried on a second instance (tools/dev-vm/start.sh, port
+# 7485). After the start, seed-dev-accounts.sh makes sure the owner can sign in.
 #
 # Works when started by the owner (it asks sudo for the root steps) and under sudo. Either way the build runs as
 # the calling user (SUDO_USER), never as root, so the checkout gets no root-owned files; only installing the unit
@@ -28,7 +30,7 @@ readonly EXIT_DATABASE_NEWER=65
 script_repo="$(cd "$(dirname "$0")/../.." && pwd)"
 # The main checkout, which holds .worktrees/, also when the script runs from a worktree.
 main_repo="$(dirname "$(git -C "$script_repo" rev-parse --path-format=absolute --git-common-dir)")"
-checkout="$script_repo"
+checkout="$main_repo"
 build=1
 assume_yes=0
 
@@ -50,15 +52,6 @@ as_root() {
 uninstall=0
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --from)
-      [[ $# -ge 2 ]] || die "--from needs a checkout path or a worktree name"
-      if [[ "$2" != */* && -d "$main_repo/.worktrees/$2" ]]; then
-        checkout="$main_repo/.worktrees/$2"
-      else
-        checkout="$2"
-      fi
-      shift 2
-      ;;
     --no-build)
       build=0
       shift
@@ -83,10 +76,8 @@ if [[ "$uninstall" == 1 ]]; then
   exit 0
 fi
 
-[[ -d "$checkout" ]] || die "no such checkout: $checkout"
-checkout="$(cd "$checkout" && pwd)"
-[[ -f "$checkout/daemon/src/Pithyx.Daemon/Pithyx.Daemon.csproj" ]] || die "$checkout is not a Pithyx checkout"
-branch="$(git -C "$checkout" rev-parse --abbrev-ref HEAD 2>/dev/null || echo unknown)"
+branch="$(git -C "$checkout" rev-parse --abbrev-ref HEAD)"
+[[ "$branch" == dev ]] || die "$checkout is on $branch; the dev unit only runs dev (try branches with tools/dev-vm/start.sh)"
 
 # The build user: whoever called sudo, else the checkout's owner. Never root.
 if [[ "$EUID" -eq 0 ]]; then
@@ -104,6 +95,10 @@ as_builder() {
     sudo -u "$builder" -H -- "$@"
   fi
 }
+
+as_builder git -C "$checkout" fetch --quiet origin dev
+as_builder git -C "$checkout" merge --ff-only --quiet origin/dev || die "$checkout cannot fast-forward to origin/dev"
+commit="$(git -C "$checkout" log -1 --format='%h %s')"
 
 root_file="$(find "$checkout" -xdev -path "$checkout/.worktrees" -prune -o -user 0 -print -quit 2>/dev/null || true)"
 [[ -z "$root_file" ]] || die "root owns files in $checkout (for example $root_file), probably from an earlier run as root; fix them with: sudo chown -R $builder: $checkout"
@@ -124,25 +119,12 @@ print(",".join(str(v) for v in sorted(applied - known)))
 PY
 )"
   if [[ -n "$unknown" ]]; then
-    {
-      echo "install-dev-daemon: $DATABASE has schema versions $unknown, which $checkout ($branch) does not know:"
-      echo "a newer daemon wrote it, so this checkout's daemon would refuse to start."
-      for candidate in "$main_repo" "$main_repo"/.worktrees/*; do
-        [[ -d "$candidate/daemon/src/Pithyx.Daemon/Database/Migrations" && "$candidate" != "$checkout" ]] || continue
-        missing=0
-        for version in ${unknown//,/ }; do
-          compgen -G "$candidate/daemon/src/Pithyx.Daemon/Database/Migrations/$(printf '%04d' "$version")_*.sql" >/dev/null || missing=1
-        done
-        [[ "$missing" == 1 ]] || echo "  this checkout knows them: --from $candidate"
-      done
-      echo "Nothing was stopped or changed."
-    } >&2
-    exit 1
+    die "$DATABASE has schema versions $unknown, which dev does not know (a branch's daemon wrote it); nothing was stopped. Run tools/dev-vm/reset-dev-db.sh, then this script again"
   fi
 fi
 
 if [[ "$build" == 1 ]]; then
-  echo "building $checkout ($branch) as $builder"
+  echo "building $checkout ($commit) as $builder"
   if [[ ! -d "$checkout/node_modules" ]]; then
     as_builder pnpm --dir "$checkout" install --frozen-lockfile
   fi
@@ -167,7 +149,7 @@ else
   pid=""
 fi
 if [[ ${#stops[@]} -gt 0 ]]; then
-  echo "To run $UNIT from $checkout ($branch), this stops:"
+  echo "To run $UNIT from $checkout ($commit), this stops:"
   printf '  - %s\n' "${stops[@]}"
   if [[ "$assume_yes" != 1 ]]; then
     [[ -t 0 ]] || die "not stopping anything without a terminal; pass --yes to agree"
@@ -197,12 +179,13 @@ as_root systemctl enable --now "$UNIT"
 
 for _ in $(seq 150); do
   if curl -fsS "http://127.0.0.1:$PORT/api/health" >/dev/null 2>&1; then
-    echo "$UNIT runs from $checkout ($branch) on http://$(hostname -I | awk '{ print $1 }'):$PORT (real mode)"
+    echo "$UNIT runs $commit on http://$(hostname -I | awk '{ print $1 }'):$PORT (real mode)"
+    as_builder "$script_repo/tools/dev-vm/seed-dev-accounts.sh"
     exit 0
   fi
   if [[ "$(systemctl show -p ExecMainStatus --value "$UNIT")" == "$EXIT_DATABASE_NEWER" ]]; then
     as_root journalctl -u "$UNIT" -n 5 --no-pager
-    die "$DATABASE was written by a newer daemon than $checkout; run the unit from a checkout that has its migrations (--from)"
+    die "$DATABASE was written by a newer daemon than dev; run tools/dev-vm/reset-dev-db.sh"
   fi
   sleep 0.2
 done
