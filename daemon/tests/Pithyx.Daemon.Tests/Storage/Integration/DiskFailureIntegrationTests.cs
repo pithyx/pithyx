@@ -13,8 +13,8 @@ namespace Pithyx.Daemon.Tests.Storage.Integration;
 /// <summary>
 /// A disk pulled out of a running box, the way the owner tests it on dev01: the kernel deletes the SCSI device
 /// (<c>/sys/block/&lt;dev&gt;/device/delete</c>) and a rescan of its host brings it back. The disks are <c>scsi_debug</c>
-/// devices in memory, one host each with its own store, so nothing but this runner's RAM is touched. There is no ZED on
-/// the runner, like on dev01: ZFS notices nothing until its next write, and the daemon must see the disk go on its own.
+/// devices in memory, one host each with its own store, so nothing but RAM is touched. There is no ZED on
+/// dev01: ZFS notices nothing until its next write, and the daemon must see the disk go on its own.
 /// </summary>
 [Trait("Category", FileVdevs.Category)]
 public sealed class DiskFailureIntegrationTests
@@ -139,7 +139,7 @@ public sealed class DiskFailureIntegrationTests
             var load = await commands.RunAsync(
                 new CommandRequest("modprobe", ["scsi_debug", $"add_host={count}", "per_host_store=1", "num_tgts=1", "dev_size_mb=256"]),
                 Token);
-            Assert.True(load.ExitCode == 0, $"modprobe scsi_debug failed ({load.StandardError}); the storage job installs linux-modules-extra for it");
+            Assert.True(load.ExitCode == 0, $"modprobe scsi_debug failed ({load.StandardError}); it is in linux-modules-extra on some kernels");
             await commands.RunAsync(new CommandRequest("udevadm", ["settle"]), Token);
             var disks = new List<(string Host, string Device)>();
             foreach (var block in Directory.EnumerateDirectories("/sys/block", "sd*"))

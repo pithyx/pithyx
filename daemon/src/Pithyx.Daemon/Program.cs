@@ -30,7 +30,12 @@ var mode = builder.Configuration["PITHYX_SIMULATE"] == "1" ? DaemonMode.Simulate
 var paths = DaemonPaths.Resolve(builder.Configuration, builder.Environment, mode);
 
 builder.AddPithyxLogging(paths.LogDirectory);
-builder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(HttpPort));
+// The port is fixed (CLAUDE.md, Network). Only a development build takes PITHYX_DEV_PORT, so a second daemon (tests,
+// another worktree) can run next to the dev unit on the same machine.
+var httpPort = builder.Environment.IsDevelopment() && int.TryParse(builder.Configuration["PITHYX_DEV_PORT"], out var devPort)
+    ? devPort
+    : HttpPort;
+builder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(httpPort));
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.RespectNullableAnnotations = true;
@@ -71,6 +76,10 @@ if (!BuildTimeDocument.IsGenerating)
 {
     builder.Services.AddHostedService(services => services.GetRequiredService<SystemStateService>());
     builder.Services.AddPithyxStorageHealthMonitor();
+    if (mode == DaemonMode.Real)
+    {
+        builder.Services.AddHostedService<Pithyx.Daemon.Files.Thumbnails.ThumbnailCacheProvisioner>();
+    }
 }
 builder.Services.AddPithyxOpenApi();
 builder.Services.AddDesktopHosting();

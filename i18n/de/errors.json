@@ -21,7 +21,7 @@
       "invalid": "Dein Anzeigename darf höchstens {maxLength} Zeichen und keine Steuerzeichen enthalten."
     },
     "password": {
-      "too_common": "Dieses Passwort gehört zu den am häufigsten verwendeten Passwörtern. Wähle eins, das schwerer zu erraten ist.",
+      "too_common": "Dieses Passwort ist zu bekannt. Wähle eines, das schwerer zu erraten ist.",
       "too_long": "Dein Passwort darf höchstens {maxLength} Zeichen lang sein.",
       "too_short": "Dein Passwort muss mindestens {minLength} Zeichen lang sein."
     },

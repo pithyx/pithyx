@@ -15,7 +15,7 @@ namespace Pithyx.Daemon.Files.Thumbnails;
 /// the folder it shows, are ever read. Access is checked like a download, on every request and every served image,
 /// so a thumbnail never shows more than the file would.
 /// </summary>
-public sealed partial class ThumbnailService(ShareService shares, ThumbnailCache cache, TopicHub hub, ILogger<ThumbnailService> logger) : BackgroundService
+public sealed partial class ThumbnailService(ShareService shares, ThumbnailCaches caches, TopicHub hub, ILogger<ThumbnailService> logger) : BackgroundService
 {
     public const string Pattern = "thumbnails/+/+";
 
@@ -34,7 +34,7 @@ public sealed partial class ThumbnailService(ShareService shares, ThumbnailCache
     private readonly ConcurrentDictionary<string, ThumbnailRefusal> _refused = new(StringComparer.Ordinal);
 
     /// <summary>One render: the file as it was when it was requested.</summary>
-    private sealed record Work(ResolvedShare Share, string Folder, string Name, string Topic, string Key, ThumbnailSize Size);
+    private sealed record Work(ResolvedShare Share, ThumbnailCache Cache, string Folder, string Name, string Topic, string Key, ThumbnailSize Size);
 
     public static TopicDefinition Definition(ShareService shares)
     {
@@ -65,10 +65,11 @@ public sealed partial class ThumbnailService(ShareService shares, ThumbnailCache
         using var root = FileService.OpenRoot(share);
         using var handle = FileService.Open(root, folder, LinuxFs.ReadOnly | LinuxFs.Directory);
         var topic = TopicOf(share.Id, FileService.Stat(handle, "").Id);
+        var cache = caches.For(share.Path);
         var items = new List<ThumbnailState>(request.Names.Count);
         foreach (var name in request.Names.Distinct(StringComparer.Ordinal))
         {
-            if (!FsPath.IsName(name) || !IsImageName(name) || FileService.TryStat(handle, name) is not { Kind: FsKind.File } stat)
+            if (cache is null || !FsPath.IsName(name) || !IsImageName(name) || FileService.TryStat(handle, name) is not { Kind: FsKind.File } stat)
             {
                 items.Add(new ThumbnailState(name, ThumbnailStatus.None, null));
                 continue;
@@ -89,7 +90,7 @@ public sealed partial class ThumbnailService(ShareService shares, ThumbnailCache
             }
             else
             {
-                if (_queued.TryAdd(key, true) && !_queue.Writer.TryWrite(new Work(share, folder, name, topic, key, request.Size)))
+                if (_queued.TryAdd(key, true) && !_queue.Writer.TryWrite(new Work(share, cache, folder, name, topic, key, request.Size)))
                 {
                     _queued.TryRemove(key, out _);
                 }
@@ -113,7 +114,7 @@ public sealed partial class ThumbnailService(ShareService shares, ThumbnailCache
             return null;
         }
         var key = ThumbnailCache.KeyOf(share.Path, normalized, stat, size);
-        return cache.Find(key) is { } file ? (file, Version(key)) : null;
+        return caches.For(share.Path)?.Find(key) is { } file ? (file, Version(key)) : null;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -154,7 +155,7 @@ public sealed partial class ThumbnailService(ShareService shares, ThumbnailCache
                 return;
             }
             using var stream = new FileStream(handle, FileAccess.Read, bufferSize: 0, isAsync: false);
-            cache.Store(work.Key, ThumbnailRenderer.Render(stream, stat.Size, ThumbnailCache.EdgeOf(work.Size)));
+            work.Cache.Store(work.Key, ThumbnailRenderer.Render(stream, stat.Size, ThumbnailCache.EdgeOf(work.Size)));
         }
         catch (ThumbnailRefusedException exception)
         {

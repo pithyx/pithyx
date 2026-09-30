@@ -28,11 +28,14 @@ Rules for `daemon/`. The root `CLAUDE.md` applies as well.
 /usr/lib/pithyx/     binaries, read-only
 /etc/pithyx/         bootstrap only
 /var/lib/pithyx/     database and secrets
-/var/cache/pithyx/   rebuildable, safe to delete (thumbnails)
+/var/cache/pithyx/   rebuildable, safe to delete
 /var/log/pithyx/     logs
 /run/pithyx/         API socket
 /<pool>/.pithyx/     app data, volumes, config backups
+/<pool>/.pithyx/cache/  the pool's thumbnails and other derived data (<pool>/pithyx/cache, hidden)
 ```
+
+- Derived data of files on a pool (thumbnails) lives in that pool's cache dataset `<pool>/pithyx/cache`, capped at 2 GB, never on the system disk. It goes with the pool when the pool is destroyed or exported; shares outside a pool (development only) use the development cache folder.
 
 ## Virtual machines
 

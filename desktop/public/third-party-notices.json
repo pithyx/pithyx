@@ -63,5 +63,14 @@
     "licenseFile": "licenses/skiasharp.txt",
     "modified": false,
     "note": "Part of the daemon: decodes images for thumbnails. Skia is BSD-3-Clause; libjpeg-turbo, libpng, libwebp and giflib are under BSD-style, zlib and MIT licenses, listed in the file."
+  },
+  {
+    "name": "SecLists (100k most used passwords, NCSC)",
+    "version": "danielmiessler/SecLists master (2026-09-30)",
+    "license": "MIT",
+    "source": "https://github.com/danielmiessler/SecLists",
+    "licenseFile": "licenses/seclists.txt",
+    "modified": true,
+    "note": "Reduced to lower-case entries: the daemon checks every one from 8 characters on, the desktop ships the 5,000 most used and 3,000 letters-only words for the strength meter (tools/passwords/update-common-passwords.sh)."
   }
 ]

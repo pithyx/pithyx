@@ -87,7 +87,7 @@ public static partial class ZfsPlans
     /// <summary>
     /// The dataset layout of D100 below a new pool's root, which holds no data: everything Pithyx stores lives in
     /// <c>&lt;pool&gt;/pithyx</c>, the encryption root of step 9 (D106). Shares mount at <c>/&lt;pool&gt;/&lt;share&gt;</c>,
-    /// homes at <c>/&lt;pool&gt;/homes/&lt;user&gt;</c>, apps and system data below <c>/&lt;pool&gt;/.pithyx</c>.
+    /// homes at <c>/&lt;pool&gt;/homes/&lt;user&gt;</c>, apps, system data and the cache below <c>/&lt;pool&gt;/.pithyx</c>.
     /// </summary>
     public static IReadOnlyList<string[]> Datasets(string pool) =>
     [
@@ -96,7 +96,21 @@ public static partial class ZfsPlans
         ["-o", $"mountpoint=/{pool}/homes", $"{pool}/pithyx/homes"],
         ["-o", "canmount=off", "-o", $"mountpoint=/{pool}/.pithyx/apps", $"{pool}/pithyx/apps"],
         ["-o", $"mountpoint=/{pool}/.pithyx/system", $"{pool}/pithyx/system"],
+        CacheDataset(pool),
     ];
+
+    /// <summary>
+    /// The pool's cache for derived data such as thumbnails (D255): never shown, never snapshotted, no compression for
+    /// data that is compressed already, and a quota above the cache's own 2 GB limit as a backstop.
+    /// </summary>
+    public static string[] CacheDataset(string pool) =>
+    [
+        "-o", $"mountpoint=/{pool}/.pithyx/cache", "-o", "compression=off", "-o", "atime=off", "-o", "quota=2560M",
+        "-o", "com.sun:auto-snapshot=false", $"{pool}/pithyx/cache",
+    ];
+
+    /// <summary>The cache dataset for a pool set up before it existed (<see cref="Files.Thumbnails.ThumbnailCacheProvisioner"/>).</summary>
+    public static CommandRequest CreateCacheDataset(string pool) => new("zfs", ["create", .. CacheDataset(pool)]);
 
     /// <summary>Replaces a device (named by its GUID, so a missing one works too) with a new disk; ZFS resilvers onto it.</summary>
     public static IReadOnlyList<PlanStep> Replace(string pool, string vdevGuid, GuardDisk disk)
