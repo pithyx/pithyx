@@ -212,12 +212,11 @@ Disk pull tests (a scsi_debug disk pulled from a live pool) can wedge ZFS until 
 - The self-hosted runner has no Docker and no root. No job uses `services:` or `container:`, and nothing that needs ZFS, real disks or root runs there (see Tests).
 - Workflows set `permissions: contents: read` at the top and widen it per job only where needed. No `pull_request_target`, no secrets in logs. A self-hosted runner never executes code from forks without approval.
 - The self-hosted runner (`dedi-01`, label `pithyx-ci`) is the CI; a merge into `dev` needs its green run. The owner maintains the runner: never change it, and never add workarounds to the workflows for something missing on it.
-- dev01 has too few resources for the performance gate and E2E. On dev01 run only build, lint, typecheck and unit tests before a push, and the ZFS integration tests (`tools/dev-vm/integration.sh`).
-- `tools/ci-local.sh` is an emergency fallback only, for when the runner cannot run a job at all. It never replaces a red job on the runner. On dev01 its E2E and performance results do not count; the PR says which steps the fallback proved.
+- dev01 is too weak for CI work. Builds, lint, typecheck, unit tests, E2E and the performance gate run only on the runner: push the branch and read its result. On dev01 run only the ZFS integration tests (`tools/dev-vm/integration.sh`) and the deploy of `dev`. There is no local CI fallback; when the runner cannot run a job, tell the owner.
 
 ## Before you commit
 
-- Build, lint and tests pass locally.
+- Build, lint and tests pass on the runner.
 - Generated clients are up to date.
 - New visible text has i18n keys in `en` and `de`.
 - New error codes have translations.

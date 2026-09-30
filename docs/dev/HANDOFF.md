@@ -37,7 +37,7 @@ Status: merged, open (PR exists), branch (pushed, no PR), WIP (pushed, unfinishe
 
 Local worktrees on dev01 (`/home/gabriel/code/pithyx/.worktrees/<name>`): `context-menu`, `disk-failure`, `log-center`, `notifications`, `quick-fixes`, `settings` (now on `wip/settings-c1-c4`), `share-plan`, `share-recovery`, `usage`, `users` (now on `wip/users-acl-disable`). None has uncommitted changes. Remove a worktree and its local branch once its PR is merged.
 
-Decision numbers in use: D269, D273 and D274 on `dev`, D270 on `fix/disk-failure`, D271 and D272 on `fix/quick-fixes`. The next free number is D275. The decision log at the end of `TODO.md` conflicts on every merge of these branches; keep all entries in number order.
+Decision numbers in use: D269, D273 and D274 on `dev`, D270 on `fix/disk-failure`, D271 and D272 on `fix/quick-fixes`. D275 is on `chore/no-ci-local`. The next free number is D276. The decision log at the end of `TODO.md` conflicts on every merge of these branches; keep all entries in number order.
 
 ## B. Rules for every session
 
@@ -64,8 +64,7 @@ Decision numbers in use: D269, D273 and D274 on `dev`, D270 on `fix/disk-failure
 ### CI (D269)
 
 - The self-hosted runner is the CI; a merge into `dev` needs its green run. Never change the runner, never work around something missing on it in the workflows.
-- dev01 (4 cores) is too small for the performance gate and E2E. On dev01 run only build, lint, typecheck and unit tests before a push, and the ZFS integration tests (`tools/dev-vm/integration.sh`). Integration results go into storage, account and command runner PRs.
-- `tools/ci-local.sh` is an emergency fallback for a runner that cannot run a job at all; it never replaces a red job. On dev01 its E2E and performance results do not count.
+- dev01 (4 cores) is too weak for CI work (D275). Builds, lint, typecheck, unit tests, E2E and the performance gate run only on the runner: push and read the result. On dev01 run only the ZFS integration tests (`tools/dev-vm/integration.sh`) and the deploy. Integration results go into storage, account and command runner PRs. There is no local CI fallback; `tools/ci-local.sh` is gone. When the runner cannot run a job, tell the owner.
 
 ### Work
 
