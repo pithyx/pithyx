@@ -21,11 +21,14 @@ public sealed partial class StorageAlertService(
     DiskInventory disks,
     SmartInventory smart,
     TimeProvider time,
-    ILogger<StorageAlertService> logger)
+    ILogger<StorageAlertService> logger) : IDisposable
 {
     public const string Topic = "storage/alerts";
 
     private readonly Lock _lock = new();
+    // One refresh at a time: the monitor and a request can refresh together, and a caller returns only once the mutes it
+    // ended are gone from the database too.
+    private readonly SemaphoreSlim _refresh = new(1, 1);
     private readonly Dictionary<(long User, string Key), string> _mutes = [];
     private StorageHealth _current = new([], []);
     private string _fingerprint = "";
@@ -54,6 +57,21 @@ public sealed partial class StorageAlertService(
 
     /// <summary>Evaluates the alerts again and ends mutes of alerts that went away; true when the topic must be published.</summary>
     public async Task<bool> RefreshAsync(CancellationToken cancellationToken)
+    {
+        await _refresh.WaitAsync(cancellationToken);
+        try
+        {
+            return await RefreshOnceAsync(cancellationToken);
+        }
+        finally
+        {
+            _refresh.Release();
+        }
+    }
+
+    public void Dispose() => _refresh.Dispose();
+
+    private async Task<bool> RefreshOnceAsync(CancellationToken cancellationToken)
     {
         var now = time.GetUtcNow();
         var evaluated = StorageAlerts.Evaluate(pools.Current, smart.Current, disks.Current.Disks, now);

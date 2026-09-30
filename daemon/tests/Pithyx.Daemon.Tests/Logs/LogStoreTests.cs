@@ -6,7 +6,7 @@ namespace Pithyx.Daemon.Tests.Logs;
 
 public sealed class LogStoreTests : IDisposable
 {
-    private static readonly DateTimeOffset Start = new(2026, 9, 30, 12, 0, 0, TimeSpan.Zero);
+    private static readonly DateTimeOffset _start = new(2026, 9, 30, 12, 0, 0, TimeSpan.Zero);
     private readonly string _directory = Directory.CreateTempSubdirectory("pithyx-logs-").FullName;
     private readonly LogStore _store;
 
@@ -24,7 +24,7 @@ public sealed class LogStoreTests : IDisposable
     private static LogQuery Query(int limit = 100) => new(null, null, null, null, null, null, limit);
 
     private static PendingLogEntry Entry(int second, string message, LogLevelName level = LogLevelName.Info, string source = "daemon", string? request = null) =>
-        new(Start.AddSeconds(second), level, source, message, request);
+        new(_start.AddSeconds(second), level, source, message, request);
 
     private async Task<IReadOnlyList<LogEntry>> QueryAsync(LogQuery query)
     {
@@ -46,7 +46,7 @@ public sealed class LogStoreTests : IDisposable
 
         Assert.Equal(["disk sdb removed", "pool tank is degraded"], (await QueryAsync(Query() with { Levels = new HashSet<LogLevelName> { LogLevelName.Warn, LogLevelName.Error } })).Select(entry => entry.Message));
         Assert.Equal(["share media created"], (await QueryAsync(Query() with { Sources = new HashSet<string> { "app/files" } })).Select(entry => entry.Message));
-        Assert.Equal(["100% done_now", "share media created"], (await QueryAsync(Query() with { From = Start.AddSeconds(2), To = Start.AddSeconds(3) })).Select(entry => entry.Message));
+        Assert.Equal(["100% done_now", "share media created"], (await QueryAsync(Query() with { From = _start.AddSeconds(2), To = _start.AddSeconds(3) })).Select(entry => entry.Message));
         Assert.Equal(["pool tank is degraded"], (await QueryAsync(Query() with { Search = "TANK" })).Select(entry => entry.Message));
         Assert.Equal(["100% done_now"], (await QueryAsync(Query() with { Search = "0% d" })).Select(entry => entry.Message));
         Assert.Empty(await QueryAsync(Query() with { Search = "%" + "x" }));
@@ -86,15 +86,15 @@ public sealed class LogStoreTests : IDisposable
         await using var connection = await _store.OpenAsync(Token);
         Assert.True(await LogDatabase.UsedBytesAsync(connection) > 2_000_000);
 
-        var removed = await LogDatabase.PruneAsync(connection, Start.AddSeconds(100), 1_000_000);
+        var removed = await LogDatabase.PruneAsync(connection, _start.AddSeconds(100), 1_000_000);
 
         Assert.True(await LogDatabase.UsedBytesAsync(connection) <= 1_000_000);
         var (bytes, oldest) = await LogDatabase.StatusAsync(connection);
         Assert.True(bytes <= 1_000_000);
-        Assert.True(oldest > Start.AddSeconds(100));
+        Assert.True(oldest > _start.AddSeconds(100));
         Assert.True(removed > 100);
         var newest = await QueryAsync(Query(1));
-        Assert.Equal(Start.AddSeconds(999), newest[0].Time);
+        Assert.Equal(_start.AddSeconds(999), newest[0].Time);
     }
 
     [Fact]
@@ -110,7 +110,7 @@ public sealed class LogStoreTests : IDisposable
     [Fact]
     public async Task TheArchiveHoldsWhatTheCurrentLogsDroppedAndNothingTwice()
     {
-        var time = new FakeTimeProvider(Start);
+        var time = new FakeTimeProvider(_start);
         var mount = Path.Combine(_directory, "tank-system");
         var pools = new PoolInventory();
         pools.Replace(new PoolList(
@@ -123,7 +123,7 @@ public sealed class LogStoreTests : IDisposable
         Assert.True(await archive.SyncAsync(settings, force: false, Token));
         await using (var connection = await _store.OpenAsync(Token))
         {
-            await LogDatabase.PruneAsync(connection, Start.AddSeconds(6), LogSettings.MaxMaxBytes);
+            await LogDatabase.PruneAsync(connection, _start.AddSeconds(6), LogSettings.MaxMaxBytes);
         }
         await _store.WriteAsync([Entry(10, "line 10")], Token);
         Assert.True(await archive.SyncAsync(settings, force: true, Token));
