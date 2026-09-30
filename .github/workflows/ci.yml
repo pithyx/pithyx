@@ -2,8 +2,10 @@ name: CI
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
   push:
     branches: [dev, master]
+  workflow_dispatch:
 
 # Read-only token for every job; a job that needs more asks for it itself. No pull_request_target, no secrets.
 permissions:
@@ -26,8 +28,10 @@ env:
   LC_ALL: C.UTF-8
 
 jobs:
-  # Pull requests that change only docs skip the builds and E2E; the daemon job needs a daemon-side change.
+  # Pull requests that change only docs skip the builds; the daemon job needs a daemon-side change. Adding a label runs
+  # the checks again only for the label e2e, which also runs the E2E suite (D278).
   changes:
+    if: github.event.action != 'labeled' || github.event.label.name == 'e2e'
     runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     outputs:
       code: ${{ steps.areas.outputs.code }}
@@ -85,6 +89,7 @@ jobs:
       - run: pnpm check:bundle
 
   repo:
+    needs: changes
     runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v7
@@ -98,7 +103,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: node tools/checks/repo-check.ts
       - run: pnpm format:check
-      - run: shellcheck tools/*.sh tools/*/*.sh
+      - run: git ls-files -z '*.sh' | xargs -0 shellcheck
       - name: Commit messages
         run: node tools/checks/commit-msg.ts --range "$(tools/checks/ci-range.sh)"
         env:
@@ -107,6 +112,7 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
   dco:
+    needs: changes
     runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v7
@@ -121,9 +127,13 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
+  # The E2E suite, the performance gate and the design checks take minutes, so they run only when asked (D278): the
+  # label e2e on a pull request, a manual run, and every pull request or push to master.
   e2e:
     needs: changes
-    if: needs.changes.outputs.code == 'true'
+    if: >-
+      needs.changes.outputs.code == 'true' && (github.event_name == 'workflow_dispatch' || github.ref_name == 'master'
+      || github.base_ref == 'master' || contains(github.event.pull_request.labels.*.name, 'e2e'))
     runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     env:
       # The performance gate guards pull requests; after the merge, dev runs the other E2E tests only.

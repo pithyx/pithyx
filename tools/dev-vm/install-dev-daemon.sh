@@ -8,9 +8,9 @@
 #   --yes        stop a running unit or another daemon on port 7484 without asking
 #   --uninstall  stop and remove the unit; /var/lib/pithyx and /var/log/pithyx are kept
 #
-# The unit is the one dev instance with one database. It always runs from the main checkout on the branch dev, which
-# the script fast-forwards to origin/dev first; branches are tried on a second instance (tools/dev-vm/start.sh, port
-# 7485). After the start, seed-dev-accounts.sh makes sure the owner can sign in.
+# The unit is the one installation on the dev VM, with one database. It always runs from the main checkout on the
+# branch dev, which the script fast-forwards to origin/dev first; branches are checked by CI before the merge and here
+# after it (D277). After the start, seed-dev-accounts.sh makes sure the owner can sign in.
 #
 # Works when started by the owner (it asks sudo for the root steps) and under sudo. Either way the build runs as
 # the calling user (SUDO_USER), never as root, so the checkout gets no root-owned files; only installing the unit
@@ -77,7 +77,7 @@ if [[ "$uninstall" == 1 ]]; then
 fi
 
 branch="$(git -C "$checkout" rev-parse --abbrev-ref HEAD)"
-[[ "$branch" == dev ]] || die "$checkout is on $branch; the dev unit only runs dev (try branches with tools/dev-vm/start.sh)"
+[[ "$branch" == dev ]] || die "$checkout is on $branch; the dev unit only runs dev (branches are checked by CI and here after the merge)"
 
 # The build user: whoever called sudo, else the checkout's owner. Never root.
 if [[ "$EUID" -eq 0 ]]; then
