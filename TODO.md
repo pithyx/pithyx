@@ -31,13 +31,13 @@ Core bugs first, each in its own PR with a regression test:
 
 Quick fixes, one PR:
 
-- [ ] The request id is no longer shown anywhere in the UI, only in the browser console and the logs; `CLAUDE.md` says so.
-- [ ] Upload and download indicator in the taskbar: progress bar, size, speed, time left, cancel.
-- [ ] Desktop wallpaper with the new box proportions (lid height 16 as in the logo).
-- [ ] Larger logo in the menu button at the bottom left.
-- [ ] Pithyx menu: the tab "Pinned" is called "Apps"; pinning is removed completely.
-- [ ] Sign-in language picker: a styled list of our own instead of the native select (light and dark, keyboard, axe).
-- [ ] Remove "Open Storage" from Settings.
+- [x] The request id is no longer shown anywhere in the UI, only in the browser console and the logs; `CLAUDE.md` says so.
+- [x] Upload and download indicator in the taskbar: progress bar, size, speed, time left, cancel.
+- [x] Desktop wallpaper with the new box proportions (lid height 16 as in the logo).
+- [x] Larger logo in the menu button at the bottom left.
+- [x] Pithyx menu: the tab "Pinned" is called "Apps"; pinning is removed completely.
+- [x] Sign-in language picker: a styled list of our own instead of the native select (light and dark, keyboard, axe).
+- [x] Remove "Open Storage" from Settings.
 
 Settings and user menu:
 
@@ -906,3 +906,5 @@ Known requirements for later milestones:
 Decisions up to D268 are recorded in the pull requests that made them. From D269 on they are listed here as well: the choice, the alternatives and why.
 
 - **D269** (low, 2026-09-30) CI runs on the runner named by the repository variable `CI_RUNNER` (`runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}`), the owner's self-hosted runner without Docker and root. The `storage` job (real ZFS, `modprobe`, `sudo`) left GitHub CI; its tests run on dev01 through `tools/dev-vm/integration.sh`, with the sparse files in `/dev/shm` so the host's worn SSD sees no writes. When Actions does not start, `tools/ci-local.sh` runs the same steps, and its green summary on the PR approves the merge. Alternatives: keep the storage job on GitHub-hosted runners (blocked by the billing lock and gone for good with a private runner) or give the runner root (rejected: a CI job must never be able to touch the host's disks).
+- **D271** (low, 2026-09-30) Downloads run through `fetch` into a Blob so the taskbar can show their progress and cancel them; the file is saved from the Blob under its name. Above 4 GB (by `Content-Length`) the browser's own download takes over, because browsers keep large Blobs on disk only up to a limit. Alternatives: a service worker that streams to disk (needs a secure context, which the untrusted default is not) or the File System Access API (secure context and Chromium only).
+- **D272** (low, 2026-09-30) After loading and reloading, nothing has focus; the start button takes the focus only when the last window closes or minimizes. Keyboard users reach it with Tab. Alternative: keep focusing it on load (rejected by the owner: a focused button after every reload looks like a stuck state).
