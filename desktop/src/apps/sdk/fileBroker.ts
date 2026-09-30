@@ -10,6 +10,7 @@ import type {
 } from '@pithyx/sdk';
 import { PithyxError, type MethodHandlers } from '@pithyx/sdk/host';
 import { api } from '../../api/client';
+import { toPithyxError } from './daemonError';
 import { showError } from '../../errors/errorStore';
 import { realtime } from '../../realtime/connection';
 
@@ -28,28 +29,13 @@ export interface FileBrokerTarget {
 
 const FINISHED: readonly JobInfo['state'][] = ['succeeded', 'failed', 'cancelled', 'interrupted'];
 
-/** Turns a failed daemon call into the problem the app sees, unchanged. */
-
 const UNAVAILABLE: Record<string, 'poolMissing' | 'poolUnavailable' | 'notMounted'> = {
   pool_missing: 'poolMissing',
   pool_unavailable: 'poolUnavailable',
   not_mounted: 'notMounted',
 };
 
-function toPithyxError(error: unknown): PithyxError {
-  if (error instanceof PithyxApiError) {
-    return new PithyxError({
-      code: error.code,
-      params: error.params,
-      detail: error.message,
-      requestId: error.requestId,
-    });
-  }
-  return error instanceof PithyxError
-    ? error
-    : new PithyxError({ code: 'system.internal.unexpected', params: {} });
-}
-
+/** Turns a failed daemon call into the problem the app sees, unchanged. */
 async function daemon<T>(call: () => Promise<T>): Promise<T> {
   try {
     return await call();

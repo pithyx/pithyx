@@ -64,6 +64,8 @@ export const errorCodes = [
   'fs.volume.full',
   'fs.volume.read_only',
   'jobs.job.not_found',
+  'notifications.message.invalid',
+  'notifications.notification.not_found',
   'realtime.message.invalid',
   'realtime.topic.invalid',
   'realtime.topic.unknown',

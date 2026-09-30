@@ -9,7 +9,7 @@ export function SettingsWindow({ windowId }: AppProps) {
     <CoreSdkApp
       windowId={windowId}
       app="settings"
-      permissions={[]}
+      permissions={['notifications']}
       internal={adminStorageHost}
       Component={SettingsApp}
     />

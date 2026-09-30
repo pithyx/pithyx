@@ -11,7 +11,8 @@ namespace Pithyx.Daemon.Storage.Health;
 /// <summary>
 /// Keeps SMART and the alerts current and runs scheduled scrubs and self-tests. SMART is read at startup, for disks
 /// that udev reports as added or changed, and after a self-test; alerts are evaluated after every such read and every
-/// pool change. Between events the service sleeps until the next task is due; it never polls.
+/// pool change, and administrators are notified of alerts that appeared or went away (<see cref="StorageAlertNotifier"/>).
+/// Between events the service sleeps until the next task is due; it never polls.
 /// </summary>
 public sealed partial class StorageHealthMonitor : BackgroundService
 {
@@ -32,6 +33,7 @@ public sealed partial class StorageHealthMonitor : BackgroundService
     private readonly PoolInventory _pools;
     private readonly SmartInventory _smart;
     private readonly StorageAlertService _alerts;
+    private readonly StorageAlertNotifier _notifier;
     private readonly StorageSchedules _schedules;
     private readonly ICommandRunner _commands;
     private readonly TopicHub _hub;
@@ -49,6 +51,7 @@ public sealed partial class StorageHealthMonitor : BackgroundService
         PoolInventory pools,
         SmartInventory smart,
         StorageAlertService alerts,
+        StorageAlertNotifier notifier,
         StorageSchedules schedules,
         ICommandRunner commands,
         TopicHub hub,
@@ -61,6 +64,7 @@ public sealed partial class StorageHealthMonitor : BackgroundService
         _pools = pools;
         _smart = smart;
         _alerts = alerts;
+        _notifier = notifier;
         _schedules = schedules;
         _commands = commands;
         _hub = hub;
@@ -147,6 +151,7 @@ public sealed partial class StorageHealthMonitor : BackgroundService
         {
             _hub.Publish(StorageAlertService.Topic, _alerts.Current);
         }
+        await _notifier.SyncAsync(_alerts.Current.Alerts, _alerts.Settled, cancellationToken);
     }
 
     private void OnDisksChanged(DisksChanged changes)
@@ -175,7 +180,9 @@ public sealed partial class StorageHealthMonitor : BackgroundService
         }
         if (_smartRead && _pools.Available && !_alerts.Settled)
         {
+            // Evaluated again, so mutes and notices of alerts that went away while unsettled end now.
             _alerts.Settled = true;
+            changed = true;
         }
         if (changed)
         {

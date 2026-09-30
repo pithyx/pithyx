@@ -17,6 +17,7 @@ public static class StorageHealthEndpoints
         services.AddSingleton<StorageSchedules>();
         services.AddSingleton<StorageAlertService>();
         services.AddSingleton(provider => provider.GetRequiredService<StorageAlertService>().Definition());
+        services.AddSingleton<StorageAlertNotifier>();
         services.AddSingleton<StorageHealthMonitor>();
         return services;
     }
