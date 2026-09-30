@@ -24,6 +24,14 @@ public sealed class LinuxAccountIntegrationTests
     private static async Task<string> RunAsync(string command, params string[] arguments) =>
         (await _commands.RunAsync(new CommandRequest(command, arguments), Token)).StandardOutput;
 
+    /// <summary>
+    /// The passwd entries the test may plan against: everything outside the managed range and its own account. The dev
+    /// VM has a real installation whose users are in the managed range too; a plan must never see them, or it would
+    /// remove them.
+    /// </summary>
+    private static async Task<IReadOnlyList<PasswdEntry>> PasswdAsync(string name) =>
+        [.. PasswdParser.Parse(await File.ReadAllTextAsync("/etc/passwd", Token)).Where(entry => !AccountReconciler.IsManaged(entry.Uid) || entry.Name == name)];
+
     [Fact]
     public async Task AnAccountIsCreatedChangedAndRemovedOnlyInTheManagedRange()
     {
@@ -32,8 +40,8 @@ public sealed class LinuxAccountIntegrationTests
         const long Uid = AccountReconciler.MaxUid;
         try
         {
-            var before = PasswdParser.Parse(await File.ReadAllTextAsync("/etc/passwd", Token));
-            Assert.DoesNotContain(before, entry => entry.Uid == Uid);
+            Assert.DoesNotContain(PasswdParser.Parse(await File.ReadAllTextAsync("/etc/passwd", Token)), entry => entry.Uid == Uid);
+            var before = await PasswdAsync(name);
             var wanted = new WantedAccount(name, Uid, "CI user", AccountReconciler.NoHome, AccountReconciler.NoLogin);
 
             foreach (var action in AccountReconciler.Plan([wanted], before))
@@ -45,15 +53,14 @@ public sealed class LinuxAccountIntegrationTests
             Assert.Equal($"{name}:x:{Uid}:100:CI user:{AccountReconciler.NoHome}:{AccountReconciler.NoLogin}", (await RunAsync("getent", "passwd", name)).Trim());
 
             var changed = wanted with { Comment = "CI user renamed" };
-            var update = Assert.IsType<UpdateAccount>(Assert.Single(AccountReconciler.Plan([changed], PasswdParser.Parse(await File.ReadAllTextAsync("/etc/passwd", Token)))));
+            var update = Assert.IsType<UpdateAccount>(Assert.Single(AccountReconciler.Plan([changed], await PasswdAsync(name))));
             Assert.Equal(0, (await _commands.RunAsync(AccountReconciler.Command(update)!, Token)).ExitCode);
             Assert.Contains("CI user renamed", await RunAsync("getent", "passwd", name), StringComparison.Ordinal);
 
-            var after = PasswdParser.Parse(await File.ReadAllTextAsync("/etc/passwd", Token));
-            var removals = AccountReconciler.Plan([], after);
-            // Only this account is in the managed range on a CI runner; nothing outside it is ever planned.
-            Assert.All(removals, action => Assert.True(AccountReconciler.IsManaged(Assert.IsType<RemoveAccount>(action).Entry.Uid)));
-            var own = removals.OfType<RemoveAccount>().Single(action => action.Name == name);
+            var removals = AccountReconciler.Plan([], await PasswdAsync(name));
+            // Nothing outside the managed range is ever planned, and the only managed account the plan sees is this one.
+            var own = Assert.IsType<RemoveAccount>(Assert.Single(removals));
+            Assert.Equal(name, own.Name);
             Assert.Equal(0, (await _commands.RunAsync(AccountReconciler.Command(own)!, Token)).ExitCode);
             Assert.Equal("", (await RunAsync("getent", "passwd", name)).Trim());
         }
