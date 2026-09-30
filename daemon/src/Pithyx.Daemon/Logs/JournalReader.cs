@@ -9,12 +9,12 @@ namespace Pithyx.Daemon.Logs;
 /// </summary>
 public sealed partial class JournalReader(ICommandRunner commands, LogStore store, TimeProvider time, ILogger<JournalReader> logger) : BackgroundService
 {
-    private static readonly TimeSpan MinDelay = TimeSpan.FromSeconds(5);
-    private static readonly TimeSpan MaxDelay = TimeSpan.FromMinutes(5);
+    private static readonly TimeSpan _minDelay = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan _maxDelay = TimeSpan.FromMinutes(5);
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var delay = MinDelay;
+        var delay = _minDelay;
         string? cursor = null;
         try
         {
@@ -32,7 +32,7 @@ public sealed partial class JournalReader(ICommandRunner commands, LogStore stor
                     }
                 }
                 // journalctl ended (rotated journal, missing binary): try again, slower each time it ends quickly.
-                delay = time.GetUtcNow() - started > MaxDelay ? MinDelay : TimeSpan.FromTicks(Math.Min(delay.Ticks * 2, MaxDelay.Ticks));
+                delay = time.GetUtcNow() - started > _maxDelay ? _minDelay : TimeSpan.FromTicks(Math.Min(delay.Ticks * 2, _maxDelay.Ticks));
                 LogJournalEnded(delay.TotalSeconds);
                 await Task.Delay(delay, time, stoppingToken);
             }

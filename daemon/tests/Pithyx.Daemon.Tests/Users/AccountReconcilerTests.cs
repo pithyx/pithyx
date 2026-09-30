@@ -1,5 +1,5 @@
-using Pithyx.Daemon.Users;
 using Pithyx.Daemon.Tests.Support;
+using Pithyx.Daemon.Users;
 
 namespace Pithyx.Daemon.Tests.Users;
 
