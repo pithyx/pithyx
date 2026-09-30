@@ -11,8 +11,9 @@ on:
 permissions:
   contents: read
 
-# Every job runs on the runner named by the repository variable CI_RUNNER (the owner's self-hosted runner, label
-# pithyx-ci) and on GitHub-hosted runners when it is unset. The self-hosted runner has no Docker and no root: no job
+# Every job runs on the runners named by the repository variable CI_RUNNER (the owner's self-hosted runners, label
+# pithyx-ci; the E2E job on CI_RUNNER_E2E, label pithyx-e2e, when that is set) and on GitHub-hosted runners when it is
+# unset. The self-hosted runner has no Docker and no root: no job
 # uses services or containers, and nothing here needs ZFS, real disks or root. Those tests run on dev01
 # (tools/dev-vm/integration.sh).
 
@@ -134,7 +135,8 @@ jobs:
     if: >-
       needs.changes.outputs.code == 'true' && (github.event_name == 'workflow_dispatch' || github.ref_name == 'master'
       || github.base_ref == 'master' || contains(github.event.pull_request.labels.*.name, 'e2e'))
-    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    # Its own runner with pinned cores (label pithyx-e2e), so no other job's build skews the timing budgets (D280).
+    runs-on: ${{ vars.CI_RUNNER_E2E || vars.CI_RUNNER || 'ubuntu-latest' }}
     env:
       # The performance gate guards pull requests; after the merge, dev runs the other E2E tests only.
       PITHYX_SKIP_BUDGETS: ${{ github.event_name == 'push' && github.ref_name == 'dev' && '1' || '' }}
