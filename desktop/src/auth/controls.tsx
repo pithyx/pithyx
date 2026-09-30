@@ -20,7 +20,7 @@ import styles from './Auth.module.css';
 
 export interface FieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'className'> {
   label: string;
-  description?: string | undefined;
+  description?: ReactNode;
   /** Shown below the field and linked to it; the field is marked invalid while it is set. */
   error?: string | undefined;
   inputClassName?: string;
@@ -63,9 +63,9 @@ export function Field({
         {trailing}
       </div>
       {description !== undefined && (
-        <p id={`${inputId}-description`} className={fieldStyles.description}>
+        <div id={`${inputId}-description`} className={fieldStyles.description}>
           {description}
-        </p>
+        </div>
       )}
       {error !== undefined && (
         <p id={`${inputId}-error`} className={fieldStyles.error}>
