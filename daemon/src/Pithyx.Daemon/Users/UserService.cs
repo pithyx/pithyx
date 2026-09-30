@@ -1,0 +1,167 @@
+using System.Globalization;
+using System.Security.Claims;
+using Dapper;
+using Pithyx.Daemon.Auth;
+using Pithyx.Daemon.Database;
+using Pithyx.Daemon.Errors;
+
+namespace Pithyx.Daemon.Users;
+
+/// <summary>
+/// User management for administrators: create, change, reset the password, delete. Every user gets a uid from the
+/// Pithyx range that is never given out again, and a Linux account (<see cref="LinuxAccounts"/>). The last
+/// administrator can neither be deleted nor lose the right, and nobody deletes themselves.
+/// </summary>
+public sealed class UserService(SqliteConnectionFactory connections, PasswordHasher hasher, LinuxAccounts accounts, TimeProvider time)
+{
+    public async Task<IReadOnlyList<UserSummary>> ListAsync(ClaimsPrincipal caller, CancellationToken cancellationToken)
+    {
+        RequireAdmin(caller);
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        var rows = await connection.QueryAsync<Row>(Select + " ORDER BY username");
+        return [.. rows.Select(ToSummary)];
+    }
+
+    public async Task<UserSummary> CreateAsync(ClaimsPrincipal caller, NewUser request, CancellationToken cancellationToken)
+    {
+        RequireAdmin(caller);
+        ArgumentNullException.ThrowIfNull(request);
+        var username = CredentialRules.NormalizeUsername(request.Username);
+        var displayName = CredentialRules.NormalizeDisplayName(request.DisplayName);
+        CredentialRules.ValidateNewPassword(request.Password);
+        // An account outside the Pithyx range with this name belongs to the system or to someone else.
+        if (accounts.Actual().FirstOrDefault(entry => entry.Name == username) is { } foreign && !AccountReconciler.IsManaged(foreign.Uid))
+        {
+            throw new PithyxException(ErrorCodes.UsersAccountRefused, new Dictionary<string, object?> { ["username"] = username, ["reason"] = "name_taken" });
+        }
+        var hash = await hasher.HashAsync(request.Password, cancellationToken);
+        var now = time.GetUtcNow().ToString("O", CultureInfo.InvariantCulture);
+        long id;
+        long uid;
+        await using (var connection = await connections.OpenAsync(cancellationToken))
+        await using (var transaction = await connection.BeginTransactionAsync(cancellationToken))
+        {
+            if (await connection.ExecuteScalarAsync<long>("SELECT count(*) FROM users WHERE username = @username", new { username }, transaction) > 0)
+            {
+                throw new PithyxException(ErrorCodes.UsersUserExists, new Dictionary<string, object?> { ["username"] = username });
+            }
+            uid = await UidAllocator.AllocateUserAsync(connection, transaction, username, now);
+            id = await connection.ExecuteScalarAsync<long>(
+                "INSERT INTO users (username, display_name, password_hash, is_admin, uid, created_at, updated_at) VALUES (@username, @displayName, @hash, @admin, @uid, @now, @now) RETURNING id",
+                new { username, displayName, hash, admin = request.IsAdmin ? 1 : 0, uid, now },
+                transaction);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        var home = await accounts.CreateHomeAsync(username, uid, cancellationToken);
+        var problems = await accounts.ReconcileAsync(cancellationToken);
+        if (problems.TryGetValue(username, out var reason))
+        {
+            // The uid stays allocated: numbers are never reused.
+            await using var connection = await connections.OpenAsync(cancellationToken);
+            await connection.ExecuteAsync("DELETE FROM users WHERE id = @id", new { id });
+            throw new PithyxException(ErrorCodes.UsersAccountRefused, new Dictionary<string, object?> { ["username"] = username, ["reason"] = reason });
+        }
+        return (await FindAsync(id, cancellationToken))! with { Home = home ?? HomeOrNull(username) };
+    }
+
+    public async Task<UserSummary> UpdateAsync(ClaimsPrincipal caller, long id, UserUpdate request, CancellationToken cancellationToken)
+    {
+        RequireAdmin(caller);
+        ArgumentNullException.ThrowIfNull(request);
+        var user = await FindAsync(id, cancellationToken) ?? throw NotFound();
+        await using (var connection = await connections.OpenAsync(cancellationToken))
+        await using (var transaction = await connection.BeginTransactionAsync(cancellationToken))
+        {
+            if (request.IsAdmin == false && user.IsAdmin && await AdminCountAsync(connection, transaction) <= 1)
+            {
+                throw new PithyxException(ErrorCodes.UsersUserLastAdmin);
+            }
+            var displayName = request.DisplayName is null ? user.DisplayName : CredentialRules.NormalizeDisplayName(request.DisplayName);
+            var admin = request.IsAdmin ?? user.IsAdmin;
+            await connection.ExecuteAsync(
+                "UPDATE users SET display_name = @displayName, is_admin = @admin, updated_at = @now WHERE id = @id",
+                new { id, displayName, admin = admin ? 1 : 0, now = time.GetUtcNow().ToString("O", CultureInfo.InvariantCulture) },
+                transaction);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        await accounts.ReconcileAsync(cancellationToken);
+        return (await FindAsync(id, cancellationToken))!;
+    }
+
+    /// <summary>Sets a new password and ends every session of the user; returns the user's id for closing its connections.</summary>
+    public async Task ResetPasswordAsync(ClaimsPrincipal caller, long id, PasswordReset request, CancellationToken cancellationToken)
+    {
+        RequireAdmin(caller);
+        ArgumentNullException.ThrowIfNull(request);
+        CredentialRules.ValidateNewPassword(request.Password);
+        _ = await FindAsync(id, cancellationToken) ?? throw NotFound();
+        var hash = await hasher.HashAsync(request.Password, cancellationToken);
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+        await connection.ExecuteAsync(
+            "UPDATE users SET password_hash = @hash, updated_at = @now WHERE id = @id",
+            new { id, hash, now = time.GetUtcNow().ToString("O", CultureInfo.InvariantCulture) },
+            transaction);
+        await connection.ExecuteAsync("DELETE FROM sessions WHERE user_id = @id", new { id }, transaction);
+        await transaction.CommitAsync(cancellationToken);
+    }
+
+    /// <summary>Deletes the user and its Linux account. Its files and home stay; its uid is never given out again.</summary>
+    public async Task DeleteAsync(ClaimsPrincipal caller, long id, CancellationToken cancellationToken)
+    {
+        RequireAdmin(caller);
+        if (id == CurrentUser.Id(caller))
+        {
+            throw new PithyxException(ErrorCodes.UsersUserSelf);
+        }
+        var user = await FindAsync(id, cancellationToken) ?? throw NotFound();
+        await using (var connection = await connections.OpenAsync(cancellationToken))
+        await using (var transaction = await connection.BeginTransactionAsync(cancellationToken))
+        {
+            if (user.IsAdmin && await AdminCountAsync(connection, transaction) <= 1)
+            {
+                throw new PithyxException(ErrorCodes.UsersUserLastAdmin);
+            }
+            await connection.ExecuteAsync("DELETE FROM share_access WHERE user_id = @id", new { id }, transaction);
+            await connection.ExecuteAsync("DELETE FROM users WHERE id = @id", new { id }, transaction);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        await accounts.ReconcileAsync(cancellationToken);
+    }
+
+    private static Task<long> AdminCountAsync(System.Data.Common.DbConnection connection, System.Data.Common.DbTransaction transaction) =>
+        connection.ExecuteScalarAsync<long>("SELECT count(*) FROM users WHERE is_admin = 1", transaction: transaction);
+
+    private async Task<UserSummary?> FindAsync(long id, CancellationToken cancellationToken)
+    {
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        var row = await connection.QuerySingleOrDefaultAsync<Row>(Select + " WHERE id = @id", new { id });
+        return row is null ? null : ToSummary(row);
+    }
+
+    private string? HomeOrNull(string username) => accounts.HomeOf(username) is var home && home != AccountReconciler.NoHome ? home : null;
+
+    private UserSummary ToSummary(Row row) => new(
+        row.Id,
+        row.Username,
+        row.DisplayName,
+        row.IsAdmin == 1,
+        row.Uid,
+        row.TotpEnabledAt is not null,
+        DateTimeOffset.Parse(row.CreatedAt, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal),
+        HomeOrNull(row.Username));
+
+    private static PithyxException NotFound() => new(ErrorCodes.UsersUserNotFound);
+
+    private static void RequireAdmin(ClaimsPrincipal user)
+    {
+        if (!user.IsInRole(SessionAuthenticationHandler.AdminRole))
+        {
+            throw new PithyxException(ErrorCodes.AuthPermissionDenied);
+        }
+    }
+
+    private const string Select = "SELECT id, username, display_name AS displayName, is_admin AS isAdmin, uid, totp_enabled_at AS totpEnabledAt, created_at AS createdAt FROM users";
+
+    private sealed record Row(long Id, string Username, string? DisplayName, long IsAdmin, long? Uid, string? TotpEnabledAt, string CreatedAt);
+}

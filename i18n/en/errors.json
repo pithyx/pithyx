@@ -266,5 +266,19 @@
     "origin": {
       "forbidden": "The request came from another website and was rejected."
     }
+  },
+  "users": {
+    "account": {
+      "refused": "The Linux account {username} cannot be created ({reason}). A system account may already use this name."
+    },
+    "uid": {
+      "exhausted": "No user ids are left. Every id from 20000 to 29999 has been given out once."
+    },
+    "user": {
+      "exists": "A user named {username} already exists.",
+      "last_admin": "The last administrator cannot be deleted or lose the administrator right.",
+      "not_found": "The user was not found. Someone may have deleted it.",
+      "self": "You cannot delete your own account."
+    }
   }
 }

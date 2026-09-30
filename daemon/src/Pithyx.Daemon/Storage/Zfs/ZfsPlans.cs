@@ -109,6 +109,9 @@ public static partial class ZfsPlans
         "-o", "com.sun:auto-snapshot=false", $"{pool}/pithyx/cache",
     ];
 
+    /// <summary>A user's home below the pool's <c>homes</c> (D105), mounted at <c>/&lt;pool&gt;/homes/&lt;user&gt;</c> through it.</summary>
+    public static CommandRequest CreateHomeDataset(string pool, string username) => new("zfs", ["create", $"{pool}/pithyx/homes/{username}"]);
+
     /// <summary>The cache dataset for a pool set up before it existed (<see cref="Files.Thumbnails.ThumbnailCacheProvisioner"/>).</summary>
     public static CommandRequest CreateCacheDataset(string pool) => new("zfs", ["create", .. CacheDataset(pool)]);
 

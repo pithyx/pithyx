@@ -684,6 +684,35 @@
         "vdev": "mirror-0"
       },
       "expected": "Only a RAID-Z group can be expanded by a disk; mirror-0 is not one."
+    },
+    "users.account.refused": {
+      "params": {
+        "username": "backup",
+        "reason": "name_taken"
+      },
+      "expected": "The Linux account backup cannot be created (name_taken). A system account may already use this name."
+    },
+    "users.uid.exhausted": {
+      "params": {},
+      "expected": "No user ids are left. Every id from 20000 to 29999 has been given out once."
+    },
+    "users.user.exists": {
+      "params": {
+        "username": "rita"
+      },
+      "expected": "A user named rita already exists."
+    },
+    "users.user.last_admin": {
+      "params": {},
+      "expected": "The last administrator cannot be deleted or lose the administrator right."
+    },
+    "users.user.not_found": {
+      "params": {},
+      "expected": "The user was not found. Someone may have deleted it."
+    },
+    "users.user.self": {
+      "params": {},
+      "expected": "You cannot delete your own account."
     }
   },
   "cases": [

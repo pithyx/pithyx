@@ -1,0 +1,48 @@
+{
+  "title": "Benutzer",
+  "intro": "Jeder Benutzer ist ein eigenes Linux-Konto, damit Dateien, die er anlegt, ihm gehören. Benutzer-IDs werden nie erneut vergeben.",
+  "column": {
+    "name": "Name",
+    "uid": "Benutzer-ID",
+    "home": "Home",
+    "actions": "Aktionen"
+  },
+  "badge": {
+    "admin": "Administrator",
+    "totp": "Zwei-Faktor"
+  },
+  "noHome": "Noch kein Pool",
+  "field": {
+    "username": "Benutzername",
+    "usernameHint": "Kleinbuchstaben, Ziffern, Bindestriche und Unterstriche, beginnend mit einem Buchstaben oder Unterstrich.",
+    "displayName": "Anzeigename (optional)",
+    "password": "Passwort",
+    "newPassword": "Neues Passwort",
+    "admin": "Administrator (darf alles ändern)"
+  },
+  "create": {
+    "button": "Benutzer anlegen",
+    "title": "Benutzer anlegen",
+    "intro": "Der Benutzer bekommt einen Home-Ordner auf dem ersten Pool, sobald es einen gibt.",
+    "submit": "Anlegen"
+  },
+  "edit": {
+    "button": "Bearbeiten",
+    "title": "{name} bearbeiten",
+    "submit": "Speichern"
+  },
+  "password": {
+    "button": "Neues Passwort",
+    "title": "Neues Passwort für {name}",
+    "intro": "Der Benutzer wird überall abgemeldet und meldet sich mit dem neuen Passwort an.",
+    "submit": "Passwort setzen"
+  },
+  "delete": {
+    "button": "Löschen",
+    "title": "{name} löschen?",
+    "intro": "Das Konto wird entfernt. Dateien und Home-Ordner des Benutzers bleiben, und seine Benutzer-ID bekommt nie jemand anderes.",
+    "confirm": "Gib {name} ein, um zu bestätigen",
+    "submit": "Benutzer löschen"
+  },
+  "cancel": "Abbrechen"
+}

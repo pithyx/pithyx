@@ -3,7 +3,7 @@
 #   code      anything besides Markdown and website/ changed (E2E runs)
 #   daemon    the daemon, its translations, the OpenAPI document or the CI setup changed
 #   frontend  anything besides docs and daemon/ changed
-#   storage   storage or command runner code, its tests and fixtures, the dev VM tools or the CI setup changed
+#   storage   storage, account or command runner code, its tests and fixtures, the dev VM tools or the CI setup changed
 #             (the ZFS integration tests run)
 # Pushes to dev and master run everything; so does a range git cannot resolve.
 set -euo pipefail
@@ -34,6 +34,7 @@ while IFS= read -r file; do
   esac
   case "$file" in
     daemon/src/Pithyx.Daemon/Storage/* | daemon/src/Pithyx.Daemon/Commands/* | daemon/tests/Pithyx.Daemon.Tests/Storage/* | \
+      daemon/src/Pithyx.Daemon/Users/* | daemon/tests/Pithyx.Daemon.Tests/Users/* | \
       daemon/tests/fixtures/commands/* | tools/dev-vm/* | tools/fixtures/* | .github/*) storage=true ;;
   esac
 done <<<"$files"

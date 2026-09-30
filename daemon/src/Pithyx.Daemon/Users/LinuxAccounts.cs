@@ -1,0 +1,122 @@
+using Dapper;
+using Pithyx.Daemon.Commands;
+using Pithyx.Daemon.Database;
+using Pithyx.Daemon.Storage;
+using Pithyx.Daemon.Storage.Zfs;
+
+namespace Pithyx.Daemon.Users;
+
+/// <param name="PasswdPath">Where the accounts are read: <c>/etc/passwd</c>, a fixture in simulation.</param>
+/// <param name="Apply">Whether commands run; false in simulation, where only the plan is made.</param>
+public sealed record AccountOptions(string PasswdPath, bool Apply);
+
+/// <summary>
+/// Keeps the Linux accounts in line with the users in SQLite (step 10): at start and after every change, the
+/// difference (<see cref="AccountReconciler"/>) runs as <c>useradd</c>, <c>usermod</c> and <c>userdel</c>, only for
+/// accounts in the Pithyx range. A user's home is a dataset below the first pool's <c>homes</c> (D105), created with the
+/// user and never deleted with it.
+/// </summary>
+public sealed partial class LinuxAccounts(
+    SqliteConnectionFactory connections,
+    ICommandRunner commands,
+    PoolInventory pools,
+    AccountOptions options,
+    ILogger<LinuxAccounts> logger) : IDisposable
+{
+    private readonly SemaphoreSlim _running = new(1, 1);
+
+    public void Dispose() => _running.Dispose();
+
+    public IReadOnlyList<PasswdEntry> Actual() =>
+        File.Exists(options.PasswdPath) ? PasswdParser.Parse(File.ReadAllText(options.PasswdPath)) : [];
+
+    /// <summary>The first writable pool whose <c>homes</c> dataset is mounted, with its mount point.</summary>
+    public static (string Pool, string Mount)? HomesOf(PoolList current)
+    {
+        ArgumentNullException.ThrowIfNull(current);
+        var writable = current.Pools.Where(pool => !pool.ReadOnly && pool.State is "ONLINE" or "DEGRADED").Select(pool => pool.Name).ToHashSet(StringComparer.Ordinal);
+        return current.Datasets
+            .Where(dataset => writable.Contains(dataset.Pool) && dataset.Name == $"{dataset.Pool}/pithyx/homes" && dataset is { Mounted: true, MountPoint: not null })
+            .OrderBy(dataset => dataset.Pool, StringComparer.Ordinal)
+            .Select(dataset => ((string Pool, string Mount)?)(dataset.Pool, dataset.MountPoint!))
+            .FirstOrDefault();
+    }
+
+    /// <summary>The home folder of a user: below the first pool's homes when it is there, otherwise none.</summary>
+    public string HomeOf(string username) => HomesOf(pools.Current) is { } homes ? Path.Combine(homes.Mount, username) : AccountReconciler.NoHome;
+
+    public async Task<IReadOnlyList<WantedAccount>> WantedAsync(CancellationToken cancellationToken)
+    {
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        var users = await connection.QueryAsync<(string Username, string? DisplayName, long? Uid)>("SELECT username, display_name, uid FROM users WHERE uid IS NOT NULL ORDER BY uid");
+        return [.. users.Select(user => new WantedAccount(user.Username, user.Uid!.Value, AccountReconciler.Comment(user.DisplayName), HomeOf(user.Username), AccountReconciler.NoLogin))];
+    }
+
+    /// <summary>Plans and, in real mode, runs the difference; returns the refusals and failures by name.</summary>
+    public async Task<IReadOnlyDictionary<string, string>> ReconcileAsync(CancellationToken cancellationToken)
+    {
+        await _running.WaitAsync(cancellationToken);
+        try
+        {
+            var problems = new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (var action in AccountReconciler.Plan(await WantedAsync(cancellationToken), Actual()))
+            {
+                if (action is RefuseAccount refusal)
+                {
+                    LogRefused(refusal.Name, refusal.Reason);
+                    problems[refusal.Name] = refusal.Reason;
+                    continue;
+                }
+                if (!options.Apply || AccountReconciler.Command(action) is not { } command)
+                {
+                    continue;
+                }
+                var result = await commands.RunAsync(command, cancellationToken);
+                if (result.ExitCode != 0)
+                {
+                    problems[action.Name] = "command_failed";
+                }
+            }
+            return problems;
+        }
+        finally
+        {
+            _running.Release();
+        }
+    }
+
+    /// <summary>Creates the user's home dataset on the first pool and gives it to the user, when there is such a pool.</summary>
+    public async Task<string?> CreateHomeAsync(string username, long uid, CancellationToken cancellationToken)
+    {
+        if (!options.Apply || HomesOf(pools.Current) is not { } homes)
+        {
+            return null;
+        }
+        var path = Path.Combine(homes.Mount, username);
+        if (!Directory.Exists(path))
+        {
+            var result = await commands.RunAsync(ZfsPlans.CreateHomeDataset(homes.Pool, username), cancellationToken);
+            if (result.ExitCode != 0 || !Directory.Exists(path))
+            {
+                LogHomeFailed(username, homes.Pool);
+                return null;
+            }
+        }
+        using (var parent = Files.LinuxFs.OpenRoot(homes.Mount))
+        {
+            Files.LinuxFs.ChangeOwnerAt(parent, username, (uint)uid, Files.FileOwner.UsersGroup);
+        }
+        // The daemon runs on Linux only; the analyzer cannot know that.
+        if (OperatingSystem.IsLinux())
+        {
+            File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
+        }
+        return path;
+    }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "The Linux account {Name} was not provisioned: {Reason}")]
+    private partial void LogRefused(string name, string reason);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Could not create the home dataset of {Name} on pool {Pool}")]
+    private partial void LogHomeFailed(string name, string pool);
+}

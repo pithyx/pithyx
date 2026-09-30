@@ -44,14 +44,19 @@ public sealed class AuthService(SqliteConnectionFactory connections, PasswordHas
 
         await using var connection = await connections.OpenAsync(cancellationToken);
         await using var transaction = await connection.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken);
+        if (await connection.ExecuteScalarAsync<long>("SELECT count(*) FROM users", transaction: transaction) > 0)
+        {
+            throw new PithyxException(ErrorCodes.AuthSetupAlreadyDone);
+        }
+        var uid = await Users.UidAllocator.AllocateUserAsync(connection, transaction, username, now);
         var id = await connection.ExecuteScalarAsync<long?>(
             """
-            INSERT INTO users (username, display_name, password_hash, is_admin, created_at, updated_at)
-            SELECT @username, @displayName, @passwordHash, 1, @now, @now
+            INSERT INTO users (username, display_name, password_hash, is_admin, uid, created_at, updated_at)
+            SELECT @username, @displayName, @passwordHash, 1, @uid, @now, @now
             WHERE NOT EXISTS (SELECT 1 FROM users)
             RETURNING id
             """,
-            new { username, displayName, passwordHash, now },
+            new { username, displayName, passwordHash, uid, now },
             transaction);
         if (id is null)
         {

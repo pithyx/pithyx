@@ -126,6 +126,12 @@ export const errorCodes = [
   'storage.volume.too_large',
   'system.internal.unexpected',
   'system.origin.forbidden',
+  'users.account.refused',
+  'users.uid.exhausted',
+  'users.user.exists',
+  'users.user.last_admin',
+  'users.user.not_found',
+  'users.user.self',
 ] as const;
 
 export type ErrorCode = (typeof errorCodes)[number];

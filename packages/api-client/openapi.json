@@ -1228,6 +1228,209 @@
         }
       }
     },
+    "/api/users": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "description": "Administrators only. Every user with its Linux uid and home folder.",
+        "operationId": "GetUsers",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserSummary"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "description": "Administrators only. Creates a user with a Linux account (a uid from 20000 to 29999 that is never given out again, the group users, no login shell) and a home dataset below the first pool's homes when there is a pool.",
+        "operationId": "CreateUser",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewUser"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSummary"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/{userId}": {
+      "patch": {
+        "tags": [
+          "Users"
+        ],
+        "description": "Administrators only. Changes the display name or the administrator right; the last administrator keeps the right.",
+        "operationId": "UpdateUser",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserSummary"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Users"
+        ],
+        "description": "Administrators only. Deletes the user and its Linux account; its files and home stay, and its uid is never given out again. Nobody deletes themselves, and the last administrator stays.",
+        "operationId": "DeleteUser",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/{userId}/password": {
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "description": "Administrators only. Sets a new password and ends every session of the user.",
+        "operationId": "ResetUserPassword",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasswordReset"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/files/{shareId}/list": {
       "get": {
         "tags": [
@@ -3625,7 +3828,13 @@
           "storage.volume.size_invalid",
           "storage.volume.too_large",
           "system.internal.unexpected",
-          "system.origin.forbidden"
+          "system.origin.forbidden",
+          "users.account.refused",
+          "users.uid.exhausted",
+          "users.user.exists",
+          "users.user.last_admin",
+          "users.user.not_found",
+          "users.user.self"
         ],
         "type": "string"
       },
@@ -4517,6 +4726,35 @@
           }
         }
       },
+      "NewUser": {
+        "required": [
+          "username",
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "Lowercase letters, digits, underscores and hyphens, starting with a letter or underscore, at most 32 characters; not a system name."
+          },
+          "password": {
+            "type": "string",
+            "description": "At least 8 characters and not one of the most common passwords."
+          },
+          "displayName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional, at most 64 characters."
+          },
+          "isAdmin": {
+            "type": "boolean",
+            "description": "Whether the user is an administrator.",
+            "default": false
+          }
+        }
+      },
       "Partition": {
         "required": [
           "name",
@@ -4561,6 +4799,18 @@
               "type": "string"
             },
             "description": "Where the partition is mounted; empty when it is not."
+          }
+        }
+      },
+      "PasswordReset": {
+        "required": [
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "string",
+            "description": "The new password, with the same rules as everywhere."
           }
         }
       },
@@ -7179,6 +7429,86 @@
           }
         }
       },
+      "UserSummary": {
+        "required": [
+          "id",
+          "username",
+          "displayName",
+          "isAdmin",
+          "uid",
+          "totpEnabled",
+          "createdAt",
+          "home"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Stable id.",
+            "format": "int64"
+          },
+          "username": {
+            "type": "string",
+            "description": "The Linux user name, lower case."
+          },
+          "displayName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Shown instead of the user name, if set."
+          },
+          "isAdmin": {
+            "type": "boolean",
+            "description": "Administrators have every right."
+          },
+          "uid": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The Linux uid from the Pithyx range (20000 to 29999), never reused.",
+            "format": "int64"
+          },
+          "totpEnabled": {
+            "type": "boolean",
+            "description": "Whether the user signs in with a second factor."
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "When the user was created, UTC.",
+            "format": "date-time"
+          },
+          "home": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The user's home folder on a pool, or null when there is no pool yet."
+          }
+        },
+        "description": "A user as the Users page shows it. Administrators only."
+      },
+      "UserUpdate": {
+        "type": "object",
+        "properties": {
+          "displayName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "An empty text removes the display name."
+          },
+          "isAdmin": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "The last administrator cannot lose the right."
+          }
+        },
+        "description": "Fields left out stay as they are."
+      },
       "Vdev": {
         "required": [
           "name",
@@ -7337,6 +7667,9 @@
     },
     {
       "name": "Jobs"
+    },
+    {
+      "name": "Users"
     },
     {
       "name": "Storage"

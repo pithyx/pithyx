@@ -61,7 +61,7 @@ public sealed record FileOperationResult(long Done, IReadOnlyList<string> Skippe
 /// renames it into place when complete, so a cancelled or failed copy never leaves half a file under the real name.
 /// Moves within one file system are renames; across file systems they copy, then delete the source.
 /// </summary>
-public sealed class FileOperations(ShareService shares, JobService jobs, TrashService trash)
+public sealed class FileOperations(ShareService shares, JobService jobs, TrashService trash, FileOwners owners)
 {
     public const int MaxItems = 1000;
     private const long CopyChunk = 16L * 1024 * 1024;
@@ -109,7 +109,8 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
         var toTrash = request.Kind == FileOperationKind.Delete && !request.Permanent;
         var kind = toTrash ? "trash" : request.Kind.ToString().ToLowerInvariant();
         var userId = CurrentUserId(user);
-        return await jobs.StartAsync(userId, $"files.{kind}", request, context => Task.Run(() => Run(request.Kind, toTrash, userId, sources, target, policy, context), context.Cancellation), cancellationToken);
+        var owner = await owners.ForAsync(user, cancellationToken);
+        return await jobs.StartAsync(userId, $"files.{kind}", request, context => Task.Run(() => Run(request.Kind, toTrash, userId, sources, target, policy, new Progress(context, owner)), context.Cancellation), cancellationToken);
     }
 
     /// <summary>Puts recycle bin items back where they were, recreating missing parent folders.</summary>
@@ -118,7 +119,8 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
         ArgumentNullException.ThrowIfNull(request);
         var (share, items) = await ResolveTrashAsync(user, shareId, request.Ids, cancellationToken);
         var policy = request.OnConflict ?? ConflictPolicy.Rename;
-        return await jobs.StartAsync(CurrentUserId(user), "files.restore", request, context => Task.Run(() => Restore(share, items, policy, context), context.Cancellation), cancellationToken);
+        var owner = await owners.ForAsync(user, cancellationToken);
+        return await jobs.StartAsync(CurrentUserId(user), "files.restore", request, context => Task.Run(() => Restore(share, items, policy, new Progress(context, owner)), context.Cancellation), cancellationToken);
     }
 
     /// <summary>Deletes recycle bin items for good; all of them when <paramref name="ids"/> is null (emptying the bin).</summary>
@@ -133,7 +135,7 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
     /// when the job runs and paths resolve below it. Without <paramref name="overwrite"/> a taken name gets a free one.
     /// Access to the target must have been checked.
     /// </summary>
-    internal Task<Job> StartCopyInAsync(
+    internal async Task<Job> StartCopyInAsync(
         ClaimsPrincipal user,
         string kind,
         object parameters,
@@ -143,17 +145,20 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
         string targetFolder,
         string targetName,
         bool overwrite,
-        CancellationToken cancellationToken) =>
-        jobs.StartAsync(
+        CancellationToken cancellationToken)
+    {
+        var owner = await owners.ForAsync(user, cancellationToken);
+        return await jobs.StartAsync(
             CurrentUserId(user),
             kind,
             parameters,
-            context => Task.Run(() => CopyIn(openSource, sourcePath, target, targetFolder, targetName, overwrite, context), context.Cancellation),
+            context => Task.Run(() => CopyIn(openSource, sourcePath, target, targetFolder, targetName, overwrite, new Progress(context, owner)), context.Cancellation),
             cancellationToken);
+    }
 
-    private static void CopyIn(Func<SafeFileHandle> openSource, string sourcePath, ResolvedShare target, string targetFolder, string targetName, bool overwrite, JobContext context)
+    private static void CopyIn(Func<SafeFileHandle> openSource, string sourcePath, ResolvedShare target, string targetFolder, string targetName, bool overwrite, Progress run)
     {
-        var run = new Progress(context);
+        var context = run.Context;
         using var source = openSource();
         var (parent, name) = FsPath.Split(sourcePath);
         using var sourceFolder = FileService.Open(source, parent, LinuxFs.ReadOnly | LinuxFs.Directory);
@@ -177,9 +182,9 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
         return (share, await trash.GetAsync(share.Id, ids, cancellationToken));
     }
 
-    private void Restore(ResolvedShare share, IReadOnlyList<TrashItem> items, ConflictPolicy policy, JobContext context)
+    private void Restore(ResolvedShare share, IReadOnlyList<TrashItem> items, ConflictPolicy policy, Progress run)
     {
-        var run = new Progress(context);
+        var context = run.Context;
         using var root = FileService.OpenRoot(share);
         using var bin = TrashService.OpenFolder(root);
         foreach (var item in items)
@@ -198,7 +203,7 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
                 continue;
             }
             var (parent, name) = FsPath.Split(item.OriginalPath);
-            using var folder = MakeParents(root, parent);
+            using var folder = MakeParents(root, parent, run.Owner);
             var targetName = name;
             if (FileService.TryStat(folder, name) is not null)
             {
@@ -237,7 +242,7 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
 
     private void Purge(ResolvedShare share, IReadOnlyList<TrashItem> items, JobContext context)
     {
-        var run = new Progress(context);
+        var run = new Progress(context, null);
         using var root = FileService.OpenRoot(share);
         using var bin = TrashService.OpenFolder(root);
         foreach (var item in items)
@@ -260,7 +265,7 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
     private static string Stored(TrashItem item) => item.Id.ToString(CultureInfo.InvariantCulture);
 
     /// <summary>Opens a folder below the root, creating every missing folder on the way.</summary>
-    private static SafeFileHandle MakeParents(SafeFileHandle root, string path)
+    private static SafeFileHandle MakeParents(SafeFileHandle root, string path, FileOwner? owner)
     {
         var folder = FileService.Open(root, "", LinuxFs.Path | LinuxFs.Directory);
         foreach (var segment in path.Split('/', StringSplitOptions.RemoveEmptyEntries))
@@ -268,6 +273,7 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
             try
             {
                 LinuxFs.MakeDirectory(folder, segment);
+                owner?.ApplyAt(folder, segment);
             }
             catch (FsError error) when (error.Errno == LinuxFs.EEXIST)
             {
@@ -360,9 +366,9 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
 
     private static long CurrentUserId(ClaimsPrincipal user) => Auth.CurrentUser.Id(user);
 
-    private void Run(FileOperationKind kind, bool toTrash, long userId, List<(ResolvedShare Share, string Path)> sources, (ResolvedShare Share, string Path)? target, ConflictPolicy policy, JobContext context)
+    private void Run(FileOperationKind kind, bool toTrash, long userId, List<(ResolvedShare Share, string Path)> sources, (ResolvedShare Share, string Path)? target, ConflictPolicy policy, Progress run)
     {
-        var run = new Progress(context);
+        var context = run.Context;
         foreach (var (share, path) in sources)
         {
             using var root = FileService.OpenRoot(share);
@@ -481,6 +487,7 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
             if (existing is null)
             {
                 Make(toFolder, targetName);
+                run.Owner?.ApplyAt(toFolder, targetName);
             }
             else if (existing.Kind != FsKind.Folder)
             {
@@ -502,6 +509,7 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
             using (var input = Child(fromFolder, name, LinuxFs.ReadOnly))
             using (var output = Child(toFolder, temporary, LinuxFs.WriteOnly | LinuxFs.Create | LinuxFs.Exclusive, 0x1a4))
             {
+                run.Owner?.Apply(output);
                 CopyContent(input, output, run);
             }
             try
@@ -661,8 +669,13 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
     }
 
     /// <summary>Totals, progress and the skipped paths of one job.</summary>
-    private sealed class Progress(JobContext context)
+    private sealed class Progress(JobContext context, FileOwner? owner)
     {
+        public JobContext Context => context;
+
+        /// <summary>Who gets what the operation creates; null keeps the daemon's ownership.</summary>
+        public FileOwner? Owner => owner;
+
         private readonly Dictionary<string, long> _counts = new(StringComparer.Ordinal);
         private readonly Dictionary<string, long> _sizes = new(StringComparer.Ordinal);
         private long _items;
