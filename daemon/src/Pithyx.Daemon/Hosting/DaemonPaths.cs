@@ -19,4 +19,14 @@ public sealed record DaemonPaths(string LogDirectory, string DatabasePath, strin
                 : "/usr/lib/pithyx/desktop"),
             configuration["PITHYX_CACHE_DIR"] ?? (development ? Path.Combine(devRoot, "cache") : "/var/cache/pithyx"));
     }
+
+    /// <summary>
+    /// True when the database would fall back to <c>.pithyx-dev/</c> on a Pithyx machine (one with
+    /// <c>environment</c> in <paramref name="etcDirectory"/>). Such a machine has exactly one installation (D277); a daemon
+    /// started from a checkout without <c>PITHYX_DB</c> would be a second one. Tests pass their own database.
+    /// </summary>
+    public static bool IsSecondInstallation(IConfiguration configuration, IHostEnvironment environment, DaemonMode mode, string etcDirectory) =>
+        configuration["PITHYX_DB"] is null
+        && (environment.IsDevelopment() || mode == DaemonMode.Simulated)
+        && File.Exists(Path.Combine(etcDirectory, "environment"));
 }

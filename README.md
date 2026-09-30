@@ -108,9 +108,7 @@ tools/dev-vm/testpool.sh create pithyxtest --layout mirror VYXTEST01 VYXTEST02
 tools/dev-vm/testpool.sh destroy pithyxtest
 ```
 
-To develop on the VM from your machine, connect with VS Code Remote-SSH (or any SSH client with port forwarding), run `dotnet watch --project daemon/src/Pithyx.Daemon` without `PITHYX_SIMULATE`, run `pnpm dev`, and forward port 5173.
-
-The dev VM has one dev instance: the unit `pithyx-dev.service` runs dev as root in real mode on port 7484, with the one database `/var/lib/pithyx/pithyx.db`. To deploy the latest `origin/dev` to it:
+The dev VM has exactly one installation: the unit `pithyx-dev.service` runs dev as root in real mode on port 7484, with the one database `/var/lib/pithyx/pithyx.db` on the system disk and its pools on the test disks, like a box. A daemon started from a checkout without `PITHYX_DB` refuses to start there (exit code 78), so no second installation appears in `.pithyx-dev/`. Branches are checked by CI before the merge and on 7484 after it. To deploy the latest `origin/dev`:
 
 ```bash
 tools/dev-vm/install-dev-daemon.sh
@@ -122,11 +120,9 @@ It fast-forwards the main checkout, builds as your user (also under `sudo`), che
 tools/dev-vm/reset-dev-db.sh
 ```
 
-To try a branch or a fresh first run without touching the dev unit, run `tools/dev-vm/start.sh` from the branch's worktree: it builds the desktop and starts a daemon on port 7485 with a temporary database that is deleted when it stops (`--real` reads the real disks, `--no-build` reuses `desktop/dist`).
-
 ### Checks
 
-`pnpm install` installs the git hooks. Before you push, run `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, `pnpm check:repo` and `dotnet test` in `daemon/`.
+`pnpm install` installs the git hooks. CI runs `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, `pnpm check:repo`, `dotnet test` in `daemon/` and the E2E suite on every push; on your own machine you can run the same commands.
 
 The end-to-end tests start their own daemon in simulation mode with a fresh database and drive the built desktop in Chromium:
 

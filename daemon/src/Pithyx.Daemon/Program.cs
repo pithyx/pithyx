@@ -28,6 +28,13 @@ var builder = WebApplication.CreateSlimBuilder(args);
 
 var mode = builder.Configuration["PITHYX_SIMULATE"] == "1" ? DaemonMode.Simulated : DaemonMode.Real;
 var paths = DaemonPaths.Resolve(builder.Configuration, builder.Environment, mode);
+if (!BuildTimeDocument.IsGenerating
+    && DaemonPaths.IsSecondInstallation(builder.Configuration, builder.Environment, mode, DeploymentEnvironment.DefaultDirectory))
+{
+    await Console.Error.WriteLineAsync(
+        $"This machine has its Pithyx installation already ({DeploymentEnvironment.DefaultDirectory} exists). Refusing to start a second one in {Path.GetDirectoryName(paths.DatabasePath)}.");
+    return DaemonExitCode.SecondInstallation;
+}
 
 builder.AddPithyxLogging(paths.LogDirectory);
 // The port is fixed (CLAUDE.md, Network). Only a development build takes PITHYX_DEV_PORT, so a second daemon (tests,
