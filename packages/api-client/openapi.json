@@ -980,6 +980,169 @@
         }
       }
     },
+    "/api/notifications": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "The signed-in user's notifications, newest first: at most 200, none older than 30 days. Live through the notifications topic, whose snapshot is the same list.",
+        "operationId": "ListNotifications",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Deletes every notification of the signed-in user. Storage alerts are not notifications and stay.",
+        "operationId": "ClearNotifications",
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/read": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Marks the given notifications of the signed-in user as read, or all of them without ids. Unknown ids are ignored.",
+        "operationId": "MarkNotificationsRead",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MarkNotificationsReadRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/{id}": {
+      "delete": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Deletes one notification of the signed-in user. Someone else's answers 404 notifications.notification.not_found.",
+        "operationId": "DeleteNotification",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/app": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "What an app's SDK notify call becomes: a notification for the signed-in user with the app's plain text, stored as app.message. The desktop sends it for the app after checking the app's notifications permission. Invalid fields answer 400 notifications.message.invalid.",
+        "operationId": "CreateAppNotification",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppNotificationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notification"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/shares": {
       "get": {
         "tags": [
@@ -1265,209 +1428,6 @@
                 }
               }
             }
-          },
-          "default": {
-            "description": "Problem details with a stable error code.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiProblem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/users": {
-      "get": {
-        "tags": [
-          "Users"
-        ],
-        "description": "Administrators only. Every user with its Linux uid and home folder.",
-        "operationId": "GetUsers",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/UserSummary"
-                  }
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Problem details with a stable error code.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiProblem"
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "Users"
-        ],
-        "description": "Administrators only. Creates a user with a Linux account (a uid from 20000 to 29999 that is never given out again, the group users, no login shell) and a home dataset below the first pool's homes when there is a pool.",
-        "operationId": "CreateUser",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/NewUser"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserSummary"
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Problem details with a stable error code.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiProblem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/users/{userId}": {
-      "patch": {
-        "tags": [
-          "Users"
-        ],
-        "description": "Administrators only. Changes the display name or the administrator right; the last administrator keeps the right.",
-        "operationId": "UpdateUser",
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UserUpdate"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/UserSummary"
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Problem details with a stable error code.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiProblem"
-                }
-              }
-            }
-          }
-        }
-      },
-      "delete": {
-        "tags": [
-          "Users"
-        ],
-        "description": "Administrators only. Deletes the user and its Linux account; its files and home stay, and its uid is never given out again. Nobody deletes themselves, and the last administrator stays.",
-        "operationId": "DeleteUser",
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "No Content"
-          },
-          "default": {
-            "description": "Problem details with a stable error code.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiProblem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/users/{userId}/password": {
-      "put": {
-        "tags": [
-          "Users"
-        ],
-        "description": "Administrators only. Sets a new password and ends every session of the user.",
-        "operationId": "ResetUserPassword",
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/PasswordReset"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "204": {
-            "description": "No Content"
           },
           "default": {
             "description": "Problem details with a stable error code.",
@@ -3311,6 +3271,42 @@
           }
         }
       },
+      "AppNotificationRequest": {
+        "required": [
+          "app",
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "app": {
+            "type": "string",
+            "description": "Id of the app: lowercase letters, digits and dashes, starting with a letter, at most 64 characters."
+          },
+          "title": {
+            "type": "string",
+            "description": "Plain text from the app, at most 200 characters."
+          },
+          "body": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Plain text from the app, at most 1000 characters."
+          },
+          "tone": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Defaults to `info`.",
+                "$ref": "#/components/schemas/NotificationTone"
+              }
+            ]
+          }
+        },
+        "description": "Body of `POST /api/notifications/app`: a notification an app sends through the SDK."
+      },
       "ClientMessage": {
         "required": [
           "type",
@@ -4141,6 +4137,7 @@
           "fs.share.path_taken",
           "fs.share.pool_not_prepared",
           "fs.share.read_only",
+          "fs.share.unavailable",
           "fs.thumbnail.not_found",
           "fs.thumbnail.too_many",
           "fs.trash.retention_invalid",
@@ -4154,6 +4151,8 @@
           "logs.batch.too_large",
           "logs.query.invalid",
           "logs.settings.invalid",
+          "notifications.message.invalid",
+          "notifications.notification.not_found",
           "realtime.message.invalid",
           "realtime.topic.invalid",
           "realtime.topic.unknown",
@@ -4191,6 +4190,7 @@
           "storage.plan.not_found",
           "storage.plan.stale",
           "storage.pool.disk_count",
+          "storage.pool.disks_missing",
           "storage.pool.encryption_required",
           "storage.pool.expanding",
           "storage.pool.layout_invalid",
@@ -4200,6 +4200,7 @@
           "storage.pool.not_found",
           "storage.pool.not_prepared",
           "storage.pool.read_only",
+          "storage.pool.suspended",
           "storage.schedule.invalid",
           "storage.scrub.not_running",
           "storage.scrub.running",
@@ -4215,14 +4216,9 @@
           "storage.vdev.not_raidz",
           "storage.volume.size_invalid",
           "storage.volume.too_large",
+          "storage.zfs.unavailable",
           "system.internal.unexpected",
-          "system.origin.forbidden",
-          "users.account.refused",
-          "users.uid.exhausted",
-          "users.user.exists",
-          "users.user.last_admin",
-          "users.user.not_found",
-          "users.user.self"
+          "system.origin.forbidden"
         ],
         "type": "string"
       },
@@ -4941,6 +4937,21 @@
         },
         "description": "A long operation of a user, such as copying files. Also the data of the `jobs/{id}` topics."
       },
+      "JobList": {
+        "required": [
+          "jobs"
+        ],
+        "type": "object",
+        "properties": {
+          "jobs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Job"
+            }
+          }
+        },
+        "description": "Snapshot of the `jobs` topic: the signed-in user's queued and running jobs, oldest first."
+      },
       "JobProgress": {
         "required": [
           "itemsDone",
@@ -5267,6 +5278,23 @@
           }
         }
       },
+      "MarkNotificationsReadRequest": {
+        "type": "object",
+        "properties": {
+          "ids": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "The notifications to mark as read; null or missing marks every unread one."
+          }
+        },
+        "description": "Body of `POST /api/notifications/read`."
+      },
       "NewDesktopItem": {
         "required": [
           "kind",
@@ -5341,34 +5369,183 @@
           }
         }
       },
-      "NewUser": {
+      "Notification": {
         "required": [
-          "username",
-          "password"
+          "id",
+          "code",
+          "params",
+          "tone",
+          "app",
+          "createdAt",
+          "readAt"
         ],
         "type": "object",
         "properties": {
-          "username": {
-            "type": "string",
-            "description": "Lowercase letters, digits, underscores and hyphens, starting with a letter or underscore, at most 32 characters; not a system name."
+          "id": {
+            "type": "integer",
+            "description": "Stable id; never reused.",
+            "format": "int64"
           },
-          "password": {
+          "code": {
             "type": "string",
-            "description": "At least 8 characters and not one of the most common passwords."
+            "description": "Message code, for example `jobs.job.failed`, `storage.alert.poolDegraded`,\n`storage.alert.resolved` or `app.message` (an app's own plain text in `params.title` and `params.body`)."
           },
-          "displayName": {
+          "params": {
+            "type": "object",
+            "description": "Message parameters: strings and numbers, plus nested objects where a code says so."
+          },
+          "tone": {
+            "description": "How the desktop shows it.",
+            "$ref": "#/components/schemas/NotificationTone"
+          },
+          "app": {
             "type": [
               "null",
               "string"
             ],
-            "description": "Optional, at most 64 characters."
+            "description": "Id of the app that sent it; null for the system."
           },
-          "isAdmin": {
-            "type": "boolean",
-            "description": "Whether the user is an administrator.",
-            "default": false
+          "createdAt": {
+            "type": "string",
+            "description": "When it was created (UTC).",
+            "format": "date-time"
+          },
+          "readAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the user read it (UTC); null while unread.",
+            "format": "date-time"
           }
-        }
+        },
+        "description": "An entry of a user's notification history. The text is not part of it: the desktop translates `code` with\n`params` from the `notifications` namespace (`&lt;code&gt;.title`, `.body`)."
+      },
+      "NotificationEvent": {
+        "required": [
+          "change",
+          "notification",
+          "ids",
+          "readAt"
+        ],
+        "type": "object",
+        "properties": {
+          "change": {
+            "enum": [
+              "created",
+              "read",
+              "deleted"
+            ],
+            "description": "What changed in a user's notifications."
+          },
+          "notification": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "required": [
+                  "id",
+                  "code",
+                  "params",
+                  "tone",
+                  "app",
+                  "createdAt",
+                  "readAt"
+                ],
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "integer",
+                    "description": "Stable id; never reused.",
+                    "format": "int64"
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "Message code, for example `jobs.job.failed`, `storage.alert.poolDegraded`,\n`storage.alert.resolved` or `app.message` (an app's own plain text in `params.title` and `params.body`)."
+                  },
+                  "params": {
+                    "type": "object",
+                    "description": "Message parameters: strings and numbers, plus nested objects where a code says so."
+                  },
+                  "tone": {
+                    "enum": [
+                      "info",
+                      "success",
+                      "warning",
+                      "critical"
+                    ],
+                    "description": "How a notification looks: the color of its card and toast."
+                  },
+                  "app": {
+                    "type": [
+                      "null",
+                      "string"
+                    ],
+                    "description": "Id of the app that sent it; null for the system."
+                  },
+                  "createdAt": {
+                    "type": "string",
+                    "description": "When it was created (UTC).",
+                    "format": "date-time"
+                  },
+                  "readAt": {
+                    "type": [
+                      "null",
+                      "string"
+                    ],
+                    "description": "When the user read it (UTC); null while unread.",
+                    "format": "date-time"
+                  }
+                },
+                "description": "An entry of a user's notification history. The text is not part of it: the desktop translates `code` with\n`params` from the `notifications` namespace (`&lt;code&gt;.title`, `.body`)."
+              }
+            ],
+            "description": "An entry of a user's notification history. The text is not part of it: the desktop translates `code` with\n`params` from the `notifications` namespace (`&lt;code&gt;.title`, `.body`)."
+          },
+          "ids": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "The notifications read or deleted; for `created` the ones dropped."
+          },
+          "readAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the notifications of a `read` event were read (UTC).",
+            "format": "date-time"
+          }
+        },
+        "description": "Event of the `notifications` topic. Only the user whose notifications changed receives it."
+      },
+      "NotificationList": {
+        "required": [
+          "items"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Notification"
+            },
+            "description": "The signed-in user's notifications, newest first; at most 200, none older than 30 days."
+          }
+        },
+        "description": "Snapshot of the `notifications` topic and answer of `GET /api/notifications`."
+      },
+      "NotificationTone": {
+        "enum": [
+          "info",
+          "success",
+          "warning",
+          "critical"
+        ],
+        "description": "How a notification looks: the color of its card and toast."
       },
       "Partition": {
         "required": [
@@ -5414,18 +5591,6 @@
               "type": "string"
             },
             "description": "Where the partition is mounted; empty when it is not."
-          }
-        }
-      },
-      "PasswordReset": {
-        "required": [
-          "password"
-        ],
-        "type": "object",
-        "properties": {
-          "password": {
-            "type": "string",
-            "description": "The new password, with the same rules as everywhere."
           }
         }
       },
@@ -5476,7 +5641,7 @@
           },
           "state": {
             "type": "string",
-            "description": "ZFS state: `ONLINE`, `DEGRADED`, `FAULTED`, `OFFLINE`, `UNAVAIL`, `REMOVED` or `SUSPENDED`."
+            "description": "ZFS state: `ONLINE`, `DEGRADED`, `FAULTED`, `OFFLINE`, `UNAVAIL`, `REMOVED` or `SUSPENDED`; degraded further when disks are gone that ZFS has not noticed yet."
           },
           "sizeBytes": {
             "type": "integer",
@@ -6672,6 +6837,13 @@
               "string"
             ],
             "description": "The share root on the host. Only administrators get it."
+          },
+          "unavailable": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Why its files cannot be reached now (ShareAvailability), or null when they can."
           }
         },
         "description": "A share the user can use."
@@ -7708,7 +7880,9 @@
       "TopicEvents": {
         "required": [
           "files/+/+",
+          "jobs",
           "jobs/+",
+          "notifications",
           "shares/list",
           "storage/alerts",
           "storage/disks",
@@ -7723,8 +7897,14 @@
           "files/+/+": {
             "$ref": "#/components/schemas/FolderChanges"
           },
+          "jobs": {
+            "$ref": "#/components/schemas/Job"
+          },
           "jobs/+": {
             "$ref": "#/components/schemas/Job"
+          },
+          "notifications": {
+            "$ref": "#/components/schemas/NotificationEvent"
           },
           "shares/list": {
             "$ref": "#/components/schemas/ShareListRevision"
@@ -7755,7 +7935,9 @@
       "TopicSnapshots": {
         "required": [
           "files/+/+",
+          "jobs",
           "jobs/+",
+          "notifications",
           "shares/list",
           "storage/alerts",
           "storage/disks",
@@ -7770,8 +7952,14 @@
           "files/+/+": {
             "$ref": "#/components/schemas/FolderWatchState"
           },
+          "jobs": {
+            "$ref": "#/components/schemas/JobList"
+          },
           "jobs/+": {
             "$ref": "#/components/schemas/Job"
+          },
+          "notifications": {
+            "$ref": "#/components/schemas/NotificationList"
           },
           "shares/list": {
             "$ref": "#/components/schemas/ShareListRevision"
@@ -8044,86 +8232,6 @@
           }
         }
       },
-      "UserSummary": {
-        "required": [
-          "id",
-          "username",
-          "displayName",
-          "isAdmin",
-          "uid",
-          "totpEnabled",
-          "createdAt",
-          "home"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "integer",
-            "description": "Stable id.",
-            "format": "int64"
-          },
-          "username": {
-            "type": "string",
-            "description": "The Linux user name, lower case."
-          },
-          "displayName": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Shown instead of the user name, if set."
-          },
-          "isAdmin": {
-            "type": "boolean",
-            "description": "Administrators have every right."
-          },
-          "uid": {
-            "type": [
-              "null",
-              "integer"
-            ],
-            "description": "The Linux uid from the Pithyx range (20000 to 29999), never reused.",
-            "format": "int64"
-          },
-          "totpEnabled": {
-            "type": "boolean",
-            "description": "Whether the user signs in with a second factor."
-          },
-          "createdAt": {
-            "type": "string",
-            "description": "When the user was created, UTC.",
-            "format": "date-time"
-          },
-          "home": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "The user's home folder on a pool, or null when there is no pool yet."
-          }
-        },
-        "description": "A user as the Users page shows it. Administrators only."
-      },
-      "UserUpdate": {
-        "type": "object",
-        "properties": {
-          "displayName": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "An empty text removes the display name."
-          },
-          "isAdmin": {
-            "type": [
-              "null",
-              "boolean"
-            ],
-            "description": "The last administrator cannot lose the right."
-          }
-        },
-        "description": "Fields left out stay as they are."
-      },
       "Vdev": {
         "required": [
           "name",
@@ -8196,6 +8304,18 @@
               "$ref": "#/components/schemas/Vdev"
             },
             "description": "Child vdevs."
+          },
+          "missing": {
+            "type": "boolean",
+            "description": "True for a leaf whose disk is not connected, also while ZFS has not noticed yet (see PoolHealth).",
+            "default": false
+          },
+          "serial": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Serial of the disk a leaf is on, as last seen connected, if known."
           }
         }
       },
@@ -8287,7 +8407,7 @@
       "name": "Jobs"
     },
     {
-      "name": "Users"
+      "name": "Notifications"
     },
     {
       "name": "Storage"
