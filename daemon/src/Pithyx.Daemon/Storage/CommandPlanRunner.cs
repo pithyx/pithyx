@@ -7,7 +7,8 @@ namespace Pithyx.Daemon.Storage;
 /// <summary>
 /// Runs a <see cref="CommandPlan"/> exactly as it was shown. Before every command it reads the disks again, probes the
 /// ones the plan touches and asks <see cref="DiskGuard"/> once more: a disk that changed or is no longer allowed stops
-/// the plan before anything is written to it. Steps of an import are checked with the import rule, after the pools were
+/// the plan before anything is written to it. A destroy or export stops before it runs when its pool is suspended or lost a
+/// vdev in the meantime. Steps of an import are checked with the import rule, after the pools were
 /// read again. When the plan ends, the pools are read again, so an imported or exported pool shows at once.
 /// </summary>
 public sealed class CommandPlanRunner(ICommandRunner commands, SystemStateService state, StorageFacts facts, TimeProvider time, FolderWatches? watches = null)
@@ -60,6 +61,10 @@ public sealed class CommandPlanRunner(ICommandRunner commands, SystemStateServic
             }
             await state.RefreshDisksAsync(step.DiskIds, cancellationToken);
             CheckDisks(plan, step, touched);
+            if (step.ReachablePool is { } pool)
+            {
+                state.RequireReachable(pool);
+            }
 
             var result = await commands.RunAsync(step.Command, cancellationToken);
             if (result.ExitCode != 0 && Zfs.ImportPlans.AsksForForce(step.Command, result))

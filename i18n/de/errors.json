@@ -216,15 +216,17 @@
     },
     "pool": {
       "disk_count": "{layout} braucht mindestens {min, plural, one {# Platte} other {# Platten}}; {count, plural, one {# ist} other {# sind}} ausgewählt.",
+      "disks_missing": "Platten von {name} sind nicht angeschlossen, deshalb lässt er sich gerade weder löschen noch abmelden: Der Befehl würde den Pool anhalten und hängen bleiben, bis die Box neu startet. Schließ die Platten erst wieder an, oder starte die Box neu, damit sie den Pool vergisst.",
       "encryption_required": "Beantworte zuerst die Frage zur Verschlüsselung: Sie lässt sich nur beim Anlegen des Pools entscheiden.",
+      "expanding": "Der Pool {name} wird schon erweitert. Die nächste Platte kannst du hinzufügen, wenn das fertig ist.",
       "layout_invalid": "Unbekanntes Pool-Layout.",
       "name_invalid": "Pool-Namen beginnen mit einem Kleinbuchstaben und bestehen aus bis zu 32 Kleinbuchstaben, Ziffern, - und _. Namen wie mirror oder raidz sind reserviert.",
       "name_mismatch": "Gib zur Bestätigung genau den Pool-Namen {name} ein.",
       "name_taken": "Es gibt schon einen Pool namens {name}.",
       "not_found": "Es gibt keinen Pool namens {name}.",
       "not_prepared": "Pithyx hat den Pool {pool} nicht eingerichtet (er hat kein pithyx-Dataset), deshalb legt es darauf nichts an.",
-      "expanding": "Der Pool {name} wird schon erweitert. Die nächste Platte kannst du hinzufügen, wenn das fertig ist.",
-      "read_only": "Der Pool {name} ist schreibgeschützt importiert und lässt sich nicht ändern. Importiere ihn zuerst zur Nutzung."
+      "read_only": "Der Pool {name} ist schreibgeschützt importiert und lässt sich nicht ändern. Importiere ihn zuerst zur Nutzung.",
+      "suspended": "{name} hat alle Lese- und Schreibzugriffe angehalten, weil zu viele seiner Platten fehlen. Löschen oder Abmelden würde jetzt hängen bleiben, bis die Box neu startet. Schließ die Platten wieder an; Pithyx setzt den Pool dann von selbst fort."
     },
     "schedule": {
       "invalid": "Dieser Zeitplan lässt sich nicht setzen. Wähle Aus, Wöchentlich oder Monatlich für einen vorhandenen Pool."

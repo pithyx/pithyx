@@ -99,7 +99,7 @@ if (mode == DaemonMode.Simulated)
         ?? Path.Combine(builder.Environment.ContentRootPath, "..", "..", "tests", "fixtures");
     var scenario = builder.Configuration["PITHYX_SIMULATE_SCENARIO"] ?? "default";
     builder.Services.AddSingleton<ICommandRunner>(FixtureCommandRunner.Load(Path.Combine(fixtures, "commands", scenario)));
-    builder.Services.AddSingleton(new SystemFiles(Path.Combine(fixtures, "proc", "mountinfo"), Path.Combine(fixtures, "proc", "swaps")));
+    builder.Services.AddSingleton(new SystemFiles(Path.Combine(fixtures, "proc", "mountinfo"), Path.Combine(fixtures, "proc", "swaps"), Path.Combine(fixtures, "proc", "spl", "kstat", "zfs")));
     etcDirectory = builder.Configuration["PITHYX_ETC_DIR"] ?? Path.Combine(fixtures, "etc");
 }
 else

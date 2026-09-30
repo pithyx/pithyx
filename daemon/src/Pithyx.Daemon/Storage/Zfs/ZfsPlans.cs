@@ -134,6 +134,19 @@ public static partial class ZfsPlans
     public static IReadOnlyList<PlanStep> Offline(string pool, string vdevGuid) =>
         [new PlanStep(new CommandRequest("zpool", ["offline", pool, vdevGuid]), [])];
 
+    /// <summary>
+    /// The only pool commands the daemon runs without a plan the user saw (D204): they bring back a pool's own disk after
+    /// it was unplugged and connected again (<see cref="PoolHealth.Reconnects"/>). <c>zpool online</c> reopens the leaf's
+    /// own device path, and ZFS refuses a disk whose label is not that leaf's; ZFS resilvers what it missed.
+    /// </summary>
+    public static CommandRequest Reconnect(string pool, string vdevGuid) => new("zpool", ["online", pool, vdevGuid], Timeout: ReconnectTimeout);
+
+    /// <summary>Resumes a suspended pool once its disks are back (<c>zpool clear</c> retries the waiting I/O); see <see cref="Reconnect"/>.</summary>
+    public static CommandRequest Resume(string pool) => new("zpool", ["clear", pool], Timeout: ReconnectTimeout);
+
+    /// <summary>A reconnect that waits longer waits in the kernel; the daemon gives up on it and reads the pools on.</summary>
+    public static readonly TimeSpan ReconnectTimeout = TimeSpan.FromSeconds(30);
+
     /// <summary>Brings a device back; ZFS resilvers what it missed on its own.</summary>
     public static IReadOnlyList<PlanStep> Online(string pool, string vdevGuid) =>
         [new PlanStep(new CommandRequest("zpool", ["online", pool, vdevGuid]), [])];
@@ -182,9 +195,9 @@ public static partial class ZfsPlans
         return [.. Clear(disk), new PlanStep(new CommandRequest("zpool", ["attach", pool, vdevGuid, StablePath(disk.Device)], TimeSpan.FromMinutes(5)), [disk.Disk.Id])];
     }
 
-    /// <summary>Destroys a pool; never forced, so ZFS refuses while a dataset is busy.</summary>
+    /// <summary>Destroys a pool; never forced, so ZFS refuses while a dataset is busy. Only while all its vdevs are reachable.</summary>
     public static IReadOnlyList<PlanStep> DestroyPool(string pool) =>
-        [new PlanStep(new CommandRequest("zpool", ["destroy", pool], TimeSpan.FromMinutes(5)), [])];
+        [new PlanStep(new CommandRequest("zpool", ["destroy", pool], TimeSpan.FromMinutes(5)), [], ReachablePool: pool)];
 
     /// <summary>
     /// Clears a disk that is not empty (the user confirmed it by serial), the way <c>tools/dev-vm/testpool.sh wipe</c>
