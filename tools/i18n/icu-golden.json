@@ -630,7 +630,7 @@
     },
     "system.internal.unexpected": {
       "params": {},
-      "expected": "Something went wrong on the server. The request id helps to find the details in the logs."
+      "expected": "Something went wrong on the server. The details are in the logs."
     },
     "system.origin.forbidden": {
       "params": {},
