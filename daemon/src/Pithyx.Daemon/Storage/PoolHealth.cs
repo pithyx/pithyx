@@ -49,10 +49,10 @@ public static class PoolHealth
     }
 
     /// <summary>
-    /// What brings back disks that returned (D204): <c>zpool clear</c> resumes a suspended pool once none of its disks
-    /// is missing, and <c>zpool online</c> reopens a returned leaf that ZFS marked <c>REMOVED</c> or that went missing
+    /// What brings back disks that returned (D204): <c>zpool online</c> reopens a returned leaf that ZFS marked <c>REMOVED</c> or that went missing
     /// while ZFS still held its old device. Only the leaf's own device path is opened, and ZFS checks its label, so
-    /// nothing but the same disk can come back this way. Faulted and offline leaves are left to the user.
+    /// nothing but the same disk can come back this way. Then <c>zpool clear</c> resumes a suspended pool once none of
+    /// its disks is missing. Faulted and offline leaves are left to the user.
     /// </summary>
     /// <param name="read">The pools as ZFS reported them, without <see cref="Apply"/>.</param>
     /// <param name="present">True when a leaf's device path names a connected device.</param>
@@ -69,10 +69,8 @@ public static class PoolHealth
             {
                 continue;
             }
-            if (suspended.Contains(pool.Name))
-            {
-                commands.Add(Zfs.ZfsPlans.Resume(pool.Name));
-            }
+            // Leaves first: while ZFS still holds the old device of a returned disk, zpool clear waits in the kernel for
+            // I/O that can never finish; zpool online opens the device again, then the waiting I/O can be retried.
             foreach (var leaf in leaves)
             {
                 var stale = reconnecting.Contains(leaf.VdevGuid) && _working.Contains(leaf.State);
@@ -80,6 +78,10 @@ public static class PoolHealth
                 {
                     commands.Add(Zfs.ZfsPlans.Reconnect(pool.Name, leaf.VdevGuid));
                 }
+            }
+            if (suspended.Contains(pool.Name))
+            {
+                commands.Add(Zfs.ZfsPlans.Resume(pool.Name));
             }
         }
         return commands;

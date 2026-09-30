@@ -284,7 +284,17 @@ public sealed partial class SystemStateService(
         }
         foreach (var command in reconnects)
         {
-            var result = await commands.RunAsync(command, cancellationToken);
+            CommandResult result;
+            try
+            {
+                result = await commands.RunAsync(command, cancellationToken);
+            }
+            catch (TimeoutException)
+            {
+                // Stuck in the kernel; the pool reads must go on, and the pool shows what ZFS reports.
+                LogReconnectFailed(string.Join(' ', command.Arguments), -1, "timed out");
+                continue;
+            }
             var pool = command.Arguments[1];
             if (result.ExitCode != 0)
             {

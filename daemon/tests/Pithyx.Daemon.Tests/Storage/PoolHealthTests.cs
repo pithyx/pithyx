@@ -134,7 +134,7 @@ public sealed class PoolHealthTests
         var commands = PoolHealth.Reconnects(read, Without("g"), suspended, new HashSet<string> { "d" });
 
         Assert.Equal(
-            [["online", "tank", "b"], ["online", "stale", "d"], ["clear", "stopped"], ["online", "stopped", "e"]],
+            [["online", "tank", "b"], ["online", "stale", "d"], ["online", "stopped", "e"], ["clear", "stopped"]],
             commands.Select(command => command.Arguments.ToArray()));
         Assert.All(commands, command => Assert.Equal("zpool", command.FileName));
     }
