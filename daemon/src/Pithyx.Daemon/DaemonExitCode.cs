@@ -11,4 +11,7 @@ public static class DaemonExitCode
 
     /// <summary>A newer daemon wrote the database (EX_DATAERR). Only another daemon build or database fixes it.</summary>
     public const int DatabaseNewerThanDaemon = 65;
+
+    /// <summary>A daemon from a checkout would start a second installation on a Pithyx machine (EX_CONFIG).</summary>
+    public const int SecondInstallation = 78;
 }
