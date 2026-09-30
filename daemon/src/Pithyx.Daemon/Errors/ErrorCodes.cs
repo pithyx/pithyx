@@ -382,6 +382,27 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string StoragePoolNameMismatch = "storage.pool.name_mismatch";
 
+    /// <summary>
+    /// ZFS did not answer a read a plan needs within <see cref="Storage.PlanReads.Limit"/>, or reported an error, so the
+    /// plan cannot show what would change. A pool waiting for missing disks can block every <c>zpool</c> and <c>zfs</c> command.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.ServiceUnavailable)]
+    public const string StorageZfsUnavailable = "storage.zfs.unavailable";
+
+    /// <summary>
+    /// The pool's I/O is suspended because too many of its disks are gone; destroying or exporting it now would wait in
+    /// the kernel forever and block every other pool. <c>params.name</c> is the pool.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StoragePoolSuspended = "storage.pool.suspended";
+
+    /// <summary>
+    /// Disks of the pool are gone, so a command that writes to all of them (destroy, export) would suspend it and block
+    /// every other pool. <c>params.name</c> is the pool.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StoragePoolDisksMissing = "storage.pool.disks_missing";
+
     /// <summary>A pool with this name exists already; <c>params.name</c> is the name.</summary>
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string StoragePoolNameTaken = "storage.pool.name_taken";

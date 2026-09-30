@@ -22,6 +22,11 @@ export function datasetRole(pool: string, name: string): DatasetRole {
   return parts[0] === 'shares' ? 'share' : parts[0] === 'volumes' ? 'volume' : 'managed';
 }
 
+/** The pool's cache for thumbnails and other derived data: the daemon manages it, the Storage app never shows it. */
+export function isHiddenDataset(pool: string, name: string): boolean {
+  return name === `${pool}/pithyx/cache`;
+}
+
 /** Renaming and deleting: shares, volumes and datasets outside the layout. */
 export function canRenameOrDelete(role: DatasetRole): boolean {
   return role === 'share' || role === 'volume' || role === 'other';

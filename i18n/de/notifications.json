@@ -53,6 +53,16 @@
         "title": "Platte {disk} zeigt Verschleiß",
         "body": "Platte {disk} (Seriennummer {serial}) meldet {reallocated, number} umgelagerte, {pending, number} ausstehende und {uncorrectable, number} nicht korrigierbare Sektoren und {mediaErrors, number} Medienfehler{selfTest, select, failed {; ihr letzter Selbsttest ist fehlgeschlagen} other {}}. Plane ihren Austausch.",
         "action": "Speicher öffnen"
+      },
+      "poolSuspended": {
+        "title": "Pool {pool} ist angehalten",
+        "body": "Von {pool} fehlen zu viele Platten, deshalb hat ZFS alle Lese- und Schreibzugriffe angehalten, um die Daten zu schützen. Schließ die Platten wieder an: Pithyx setzt den Pool von selbst fort. Andere Pools laufen weiter; lösche oder melde diesen bis dahin nicht ab.",
+        "action": "Speicher öffnen"
+      },
+      "diskMissing": {
+        "title": "Platte {disk} von {pool} ist nicht angeschlossen",
+        "body": "Platte {disk} ist aus {pool} verschwunden. Wenn sie versehentlich abgezogen wurde, schließ sie wieder an: Pithyx nimmt sie zurück in den Pool, und ZFS kopiert, was sie verpasst hat. Sonst ersetze sie.",
+        "action": "Speicher öffnen"
       }
     }
   },

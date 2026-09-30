@@ -33,7 +33,7 @@
     },
     "auth.password.too_common": {
       "params": {},
-      "expected": "This password is one of the most commonly used passwords. Choose one that is harder to guess."
+      "expected": "This password is too well known. Choose one that is harder to guess."
     },
     "auth.password.too_long": {
       "params": {
@@ -510,6 +510,12 @@
       },
       "expected": "raidz2 needs at least 4 disks; 3 are selected."
     },
+    "storage.pool.disks_missing": {
+      "params": {
+        "name": "tank"
+      },
+      "expected": "Disks of tank are not connected, so it cannot be destroyed or exported now: the command would stop the pool and hang until the box restarts. Connect the disks again first, or restart the box to forget the pool."
+    },
     "storage.pool.encryption_required": {
       "params": {},
       "expected": "Answer the encryption question first: it can only be decided when the pool is created."
@@ -550,6 +556,12 @@
         "pool": "tank"
       },
       "expected": "Pithyx did not set up the pool tank (it has no pithyx dataset), so it creates nothing on it."
+    },
+    "storage.pool.suspended": {
+      "params": {
+        "name": "tank"
+      },
+      "expected": "tank has stopped all reads and writes because too many of its disks are gone. Destroying or exporting it now would hang until the box restarts. Connect the disks again; Pithyx then resumes the pool on its own."
     },
     "storage.schedule.invalid": {
       "params": {
@@ -634,6 +646,10 @@
         "availableBytes": 1073741824
       },
       "expected": "The volume does not fit the free space of the pool. Make it smaller or create it as a sparse volume."
+    },
+    "storage.zfs.unavailable": {
+      "params": {},
+      "expected": "ZFS did not answer in time or reported an error, so Pithyx cannot show what this would change. Try again in a moment. If it keeps happening, a pool may be waiting for disks that are gone: see Storage."
     },
     "system.internal.unexpected": {
       "params": {},

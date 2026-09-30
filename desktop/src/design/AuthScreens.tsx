@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import styles from '../auth/Auth.module.css';
 import { LanguageSelect } from '../auth/controls';
 import { RecoveryKeyValue, WelcomeCard } from '../auth/parts';
+import { PasswordStrengthMeter } from '../auth/password/PasswordStrengthMeter';
 import { AuthHeader, AuthLayout } from '../shell/AuthLayout';
 import { Button } from '../ui/Button';
 import { Checkbox } from '../ui/Controls';
@@ -12,7 +13,8 @@ import { cx } from '../ui/cx';
 import { OtpField, PasswordField, TextField } from '../ui/TextField';
 import { hostname, recoveryKey, user } from './sampleData';
 
-const MIN_PASSWORD_LENGTH = 12;
+// A medium password, so the gallery shows the meter with a reason.
+const SAMPLE_PASSWORD = 'tulip-oar';
 
 function preventSubmit(next: () => void) {
   return (event: SyntheticEvent<HTMLFormElement>) => {
@@ -54,10 +56,10 @@ export function SetupAccount() {
         />
         <PasswordField
           label={t('setup.password')}
-          description={t('setup.passwordHint', { minLength: MIN_PASSWORD_LENGTH })}
+          description={<PasswordStrengthMeter password={SAMPLE_PASSWORD} />}
           name="password"
           autoComplete="new-password"
-          minLength={MIN_PASSWORD_LENGTH}
+          defaultValue={SAMPLE_PASSWORD}
           isRequired
         />
         <PasswordField

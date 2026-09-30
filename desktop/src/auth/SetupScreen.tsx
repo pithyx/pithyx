@@ -10,11 +10,12 @@ import { AuthHeader, AuthLayout } from '../shell/AuthLayout';
 import styles from './Auth.module.css';
 import { Button, Field, LanguageSelect, PasswordField } from './controls';
 import { useFormErrors } from './formErrors';
+import { NewPasswordField } from './password/NewPasswordField';
+import { useNewPasswordCheck } from './password/PasswordStrengthMeter';
 import { RecoveryKeyCard } from './RecoveryKeyCard';
 
 type User = components['schemas']['UserInfo'];
 
-export const MIN_PASSWORD_LENGTH = 12;
 const STEPS = 2;
 
 type SetupField = 'username' | 'displayName' | 'password' | 'confirm';
@@ -34,8 +35,9 @@ function fieldOf(code: string): SetupField | undefined {
 /**
  * First run: create the administrator, then store the recovery key. The setup signs the administrator in.
  *
- * The form checks only what the daemon cannot (both passwords match, nothing left empty) and leaves every rule to
- * the daemon. Errors are only shown after submitting, so nothing moves under the pointer while clicking.
+ * The form checks that both passwords match and nothing is left empty, and the password rules shared with the daemon
+ * (auth/password); the daemon checks every rule again. Errors are only shown after submitting, so nothing moves
+ * under the pointer while clicking.
  */
 export function SetupScreen({
   hostname,
@@ -46,6 +48,7 @@ export function SetupScreen({
 }) {
   const { t } = useTranslation('auth');
   const form = useFormErrors<SetupField>(FIELD_ORDER);
+  const checkPassword = useNewPasswordCheck();
   const setup = useMutation({
     mutationFn: async (body: { username: string; password: string; displayName: string | null }) =>
       unwrap(await api.POST('/api/setup', { body })),
@@ -72,8 +75,11 @@ export function SetupScreen({
     if (username === '') {
       errors.username = t('validation.usernameRequired');
     }
+    const passwordError = checkPassword(password);
     if (password === '') {
       errors.password = t('validation.passwordRequired');
+    } else if (passwordError !== undefined) {
+      errors.password = passwordError;
     } else if (password !== field(data, 'confirm')) {
       errors.confirm = t('setup.passwordMismatch');
     }
@@ -112,12 +118,10 @@ export function SetupScreen({
             name="displayName"
             autoComplete="name"
           />
-          <PasswordField
+          <NewPasswordField
             {...form.register('password')}
             label={t('setup.password')}
-            description={t('setup.passwordHint', { minLength: MIN_PASSWORD_LENGTH })}
             name="password"
-            autoComplete="new-password"
             required
           />
           <PasswordField

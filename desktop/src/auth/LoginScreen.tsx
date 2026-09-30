@@ -14,8 +14,9 @@ import styles from './Auth.module.css';
 import { Button, Field, LanguageSelect, PasswordField } from './controls';
 import { useFormErrors } from './formErrors';
 import { initialsOf } from './parts';
+import { NewPasswordField } from './password/NewPasswordField';
+import { useNewPasswordCheck } from './password/PasswordStrengthMeter';
 import { RecoveryKeyCard } from './RecoveryKeyCard';
-import { MIN_PASSWORD_LENGTH } from './SetupScreen';
 
 type User = components['schemas']['UserInfo'];
 
@@ -310,6 +311,7 @@ function ForgotStep({
 }) {
   const { t } = useTranslation('auth');
   const form = useFormErrors<ForgotFieldName>(['username', 'recoveryKey', 'newPassword']);
+  const checkPassword = useNewPasswordCheck();
   const recover = useMutation({
     mutationFn: async (body: { username: string; recoveryKey: string; newPassword: string }) =>
       unwrap(await api.POST('/api/auth/recover', { body })),
@@ -345,8 +347,11 @@ function ForgotStep({
     if (recoveryKey === '') {
       errors.recoveryKey = t('validation.recoveryKeyRequired');
     }
+    const passwordError = checkPassword(newPassword);
     if (newPassword === '') {
       errors.newPassword = t('validation.passwordRequired');
+    } else if (passwordError !== undefined) {
+      errors.newPassword = passwordError;
     }
     if (form.check(errors)) {
       recover.mutate({ username: username.trim(), recoveryKey, newPassword });
@@ -399,12 +404,10 @@ function ForgotStep({
           inputClassName={styles.mono}
           required
         />
-        <PasswordField
+        <NewPasswordField
           {...form.register('newPassword')}
           label={t('forgot.newPassword')}
-          description={t('setup.passwordHint', { minLength: MIN_PASSWORD_LENGTH })}
           name="newPassword"
-          autoComplete="new-password"
           required
         />
         {noticeError !== undefined && <ErrorNotice error={noticeError} />}

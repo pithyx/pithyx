@@ -73,7 +73,7 @@ public sealed partial class SharePlanner(
     {
         ArgumentNullException.ThrowIfNull(request);
         // New datasets and used space raise no zpool event, so the checks below read what ZFS has now.
-        await state.RefreshPoolsAsync(cancellationToken);
+        await PlanReads.WithinLimitAsync(state.RefreshPoolsAsync, time, cancellationToken);
         return request.Action switch
         {
             "share.create" => await CreateAsync(request, cancellationToken),

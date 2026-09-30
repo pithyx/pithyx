@@ -412,6 +412,40 @@ public sealed class PoolOperationPlannerTests : IDisposable
     }
 
     // Pool plans never reach the dataset planner's database.
+    [Fact]
+    public async Task APoolWhoseDisksAreGoneIsNeitherDestroyedNorExportedSinceZfsWouldHangOnIt()
+    {
+        Pools("default");
+        await _state.RefreshDisksAsync([], Token);
+        var lsblk = System.Text.Json.Nodes.JsonNode.Parse(Read("default", "lsblk"))!;
+        var devices = lsblk["blockdevices"]!.AsArray();
+        devices.Remove(devices.Single(device => device!["name"]!.GetValue<string>() == "sdg"));
+        _commands.Results["lsblk"] = Ok(lsblk.ToJsonString());
+        await _state.RefreshDisksAsync([], Token);
+
+        Assert.Equal(ErrorCodes.StoragePoolDisksMissing, await ErrorAsync(new StoragePlanRequest("pool.destroy", "pithyxtests", ConfirmName: "pithyxtests")));
+        Assert.Equal(ErrorCodes.StoragePoolDisksMissing, await ErrorAsync(new StoragePlanRequest("pool.export", "pithyxtests")));
+        // The mirror on the other disks is not affected.
+        Assert.NotNull((await PlanAsync(new StoragePlanRequest("pool.destroy", "pithyxtestm", ConfirmName: "pithyxtestm"))).Plan);
+    }
+
+    [Fact]
+    public async Task ADestroyShownBeforeTheDisksWentAwayStopsBeforeItRuns()
+    {
+        Pools("default");
+        await _state.RefreshDisksAsync([], Token);
+        var plan = (await PlanAsync(new StoragePlanRequest("pool.destroy", "pithyxtests", ConfirmName: "pithyxtests"))).Plan!;
+        var lsblk = System.Text.Json.Nodes.JsonNode.Parse(Read("default", "lsblk"))!;
+        var devices = lsblk["blockdevices"]!.AsArray();
+        devices.Remove(devices.Single(device => device!["name"]!.GetValue<string>() == "sdg"));
+        _commands.Results["lsblk"] = Ok(lsblk.ToJsonString());
+
+        var error = await Assert.ThrowsAsync<PithyxException>(() => _runner.RunAsync(plan, null, Token));
+
+        Assert.Equal(ErrorCodes.StoragePoolDisksMissing, error.Code);
+        Assert.DoesNotContain(_commands.Calls, call => call.FileName == "zpool" && call.Arguments[0] == "destroy");
+    }
+
     private DatasetPlanner Datasets()
     {
         var connections = new SqliteConnectionFactory(Path.Combine(_proc, "unused.db"));

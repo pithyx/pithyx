@@ -51,13 +51,25 @@ public static class StorageAlerts
         foreach (var pool in pools.Pools)
         {
             var name = new Dictionary<string, object> { ["pool"] = pool.Name };
-            if (pool.State == "DEGRADED")
+            if (pool.State == PoolHealth.Suspended)
+            {
+                Add($"pool.suspended:{pool.Name}", Critical, "storage.alert.poolSuspended", name);
+            }
+            else if (pool.State == "DEGRADED")
             {
                 Add($"pool.degraded:{pool.Name}", Critical, "storage.alert.poolDegraded", name);
             }
             else if (_faultedStates.Contains(pool.State))
             {
                 Add($"pool.faulted:{pool.Name}", Critical, "storage.alert.poolFaulted", new() { ["pool"] = pool.Name, ["state"] = pool.State });
+            }
+            foreach (var leaf in pool.Vdevs.SelectMany(vdev => vdev.Leaves()).Where(leaf => leaf.Missing))
+            {
+                Add(
+                    $"disk.missing:{pool.Name}:{leaf.VdevGuid}",
+                    Warning,
+                    "storage.alert.diskMissing",
+                    new() { ["pool"] = pool.Name, ["disk"] = leaf.Serial ?? leaf.Name });
             }
             if (pool.DataErrors > 0)
             {

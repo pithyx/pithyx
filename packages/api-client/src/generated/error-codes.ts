@@ -101,6 +101,7 @@ export const errorCodes = [
   'storage.plan.not_found',
   'storage.plan.stale',
   'storage.pool.disk_count',
+  'storage.pool.disks_missing',
   'storage.pool.encryption_required',
   'storage.pool.expanding',
   'storage.pool.layout_invalid',
@@ -110,6 +111,7 @@ export const errorCodes = [
   'storage.pool.not_found',
   'storage.pool.not_prepared',
   'storage.pool.read_only',
+  'storage.pool.suspended',
   'storage.schedule.invalid',
   'storage.scrub.not_running',
   'storage.scrub.running',
@@ -125,6 +127,7 @@ export const errorCodes = [
   'storage.vdev.not_raidz',
   'storage.volume.size_invalid',
   'storage.volume.too_large',
+  'storage.zfs.unavailable',
   'system.internal.unexpected',
   'system.origin.forbidden',
 ] as const;
