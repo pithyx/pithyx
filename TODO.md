@@ -27,7 +27,7 @@ Core bugs first, each in its own PR with a regression test:
 - [x] Deleting a shared folder fails with a timeout (`internal.admin.shares.plan`). Cause: every `zfs` call waited behind a `zpool destroy` stuck in the kernel (see the disk failure item); plans now wait at most 10 seconds and answer `storage.zfs.unavailable`.
 - [ ] Destroying a pool: the dialog hangs for a long time at `zpool destroy`. Long operations run as background jobs, the dialog can be closed, progress shows in the notification center. Find the cause of the long run (open handles, watches, ...).
 - [x] Usage of pools, shared folders and disks does not update after uploads. Writes through the file service now trigger a pool read (D209); writes over SMB and SFTP need their own trigger when step 12 lands (see below).
-- [ ] A second right-click on the desktop while its menu is open shows the browser's menu instead of the Pithyx menu at the new position.
+- [x] A second right-click on the desktop while its menu is open shows the browser's menu instead of the Pithyx menu at the new position.
 
 Quick fixes, one PR:
 
