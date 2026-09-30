@@ -35,7 +35,7 @@ Know where you are before you act. Every machine declares its environment in `/e
 Update this section in the same PR whenever the state changes (a merge, a new branch, a finished item). Last updated: 2026-09-30.
 
 - 7484 runs `dev` from the main checkout `/home/gabriel/code/pithyx` in real mode. Check with `systemctl status pithyx-dev` and `git -C /home/gabriel/code/pithyx log -1`; the deployed commit must equal `origin/dev`.
-- The dev database was reset on 2026-09-30 and holds only the owner (`gabriel`, 2FA off). `e2e-admin` and `e2e-user` are created once the users API (#46) is on `dev`; until then `seed-dev-accounts.sh` skips them.
+- On 2026-09-30 every database on dev01 was deleted (7484's, its backups, leftovers of old second instances) so the owner can run the setup again. `owner.env` is stale until the owner updates it with the new credentials; `seed-dev-accounts.sh` needs it for `e2e-admin` and `e2e-user` (and the users API from #46).
 - The runner has `libatomic1`, `shellcheck` and the Playwright libraries (owner, 2026-09-30). dev01 has `acl` (`setfacl`).
 - Merge in this order. For each: merge `dev` into the branch, push, green runner run, for storage, account and command runner changes also `integration.sh` on dev01 with the result in the PR, squash-merge (the commit ends with `Signed-off-by: Schecher_1 <74829802+Schecher1@users.noreply.github.com>`), deploy with `install-dev-daemon.sh --yes`. A branch with a migration proves its upgrade path on 7484 after the merge; the daemon keeps a `pithyx.db.pre-<version>-<time>.bak` next to the database before it migrates.
   1. #50 `chore/no-ci-local` (D275, D277, this section).
