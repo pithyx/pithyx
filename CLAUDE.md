@@ -191,9 +191,16 @@ Everything else is internal and may change at any time.
 ## Tests
 
 Test parsers, decision logic, permission checks, manifest validation and the update state machine.
-Integration tests use file-backed vdevs and loop devices with real zfs (and later mdadm) on GitHub-hosted runners, a fresh VM per run; the `storage` job runs only when storage code changes. Before a storage PR is merged, its destructive suite runs on the dev VM against the declared test disks. A self-hosted runner, if one is ever added, never executes code from forks without approval.
+Integration tests that need root, real zfs (and later mdadm), loop devices, scsi_debug disks or Linux accounts (`Category=StorageIntegration`) never run in GitHub CI. They run on the dev VM with `tools/dev-vm/integration.sh` (sparse files in `/dev/shm`, throwaway pools), and a PR that changes storage, account or command runner code attaches the result. Before a storage PR is merged, its destructive suite runs on the dev VM against the declared test disks.
 Do not test getters, DTOs, pass-through controllers or individual React components.
 Daemon tests run in simulation mode by default (`DaemonFactory`), with a fake clock where time matters. End-to-end tests live in `e2e/` (Playwright, run with `pnpm build && pnpm e2e`) and start their own daemon with a fresh database.
+
+## CI
+
+- Every job in `.github/workflows/ci.yml` runs on `runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}`: the owner's self-hosted runner (label `pithyx-ci`) while the repository variable is set, GitHub-hosted runners once it is unset (for the public repository).
+- The self-hosted runner has no Docker and no root. No job uses `services:` or `container:`, and nothing that needs ZFS, real disks or root runs there (see Tests).
+- Workflows set `permissions: contents: read` at the top and widen it per job only where needed. No `pull_request_target`, no secrets in logs. A self-hosted runner never executes code from forks without approval.
+- When Actions does not start (a billing lock, a runner that is down), do not wait: `tools/ci-local.sh` runs the same steps locally. A green local run approves a merge into `dev`; its summary goes into the pull request.
 
 ## Before you commit
 
