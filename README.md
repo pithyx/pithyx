@@ -35,7 +35,7 @@ On a dev VM, `tools/dev-vm/provision.sh` installs all of this (see below).
 ### Simulation workflow
 
 ```bash
-git clone git@github.com:vyxis/vyxis.git
+git clone git@github.com:pithyx/pithyx.git
 ```
 
 ```bash

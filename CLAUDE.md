@@ -42,11 +42,14 @@ Update this section in the same PR whenever the state changes (a merge, a new br
 - Open:
   1. #56 `feature/theme-switch`: appearance in the account menu, the clock as plain text.
   2. `wip/users-acl-disable` (never built, ACLs as raw xattrs, adds `auth.account.disabled`), on top of the old `feature/users`: rebase onto `dev`, choose `setfacl` or a library for ACLs (D entry, also in the image), D264 (primary group `users` gid 100, homes 0700, umask 077, share access only through ACLs), register the UsersPage in Settings.
-  3. `wip/settings-c1-c4` (never built): migrations become `0014_appearance.sql` and `0015_restore_points.sql`; the network page stays read-only until the 60 s rollback of step 14. Its per-user appearance replaces the per-device choice of #56.
-- Not started: pool delete as a background job (the dialog closes at once, progress in notifications and jobs, a hanging `zpool destroy` ends with a new, translated and documented error code). Then the rename from the old project name (patterns in `OLD_NAME` in `tools/checks/repo-check.ts`): code, packages, headers, environment variables, paths, datasets, units, docs and links; exceptions are the `VYXTEST` serials, the git history and existing D entries (plus a new D entry); no shims; migrate dev01 (state directories, database, `zfs rename`, units, the old `/etc` directory) until `systemctl list-units`, `/etc`, `/var/lib`, `/var/log` and `zfs list` show nothing under the old name.
+  3. #57 `fix/alert-mute-race`: the storage alert race and the `dotnet format` and Prettier findings of the merge round; the full run on `dev` needs it to go green.
+  4. `chore/rename-leftovers` (this change).
+  5. `wip/settings-c1-c4` (never built): migrations become `0014_appearance.sql` and `0015_restore_points.sql`; the network page stays read-only until the 60 s rollback of step 14. Its per-user appearance replaces the per-device choice of #56.
+- Not started: pool delete as a background job (the dialog closes at once, progress in notifications and jobs, a hanging `zpool destroy` ends with a new, translated and documented error code).
+- The rename from the old project name is done (D279): the repository check allows only the `VYXTEST` serials, and dev01 has nothing under the old name (`/etc`, `/var`, units, datasets, backups, build leftovers).
 - Then verify every item of "Release 0.1" in `TODO.md` on 7484 in the browser (Playwright and screenshots, as `e2e-admin` or `e2e-user`), fix what fails, and report: deployed commit and `dev` HEAD, runner status per job, a table item, status, proof, the merged PRs with their migration numbers, the rename grep, open problems with cause and proposal.
-- Decision numbers: D269 to D278 are on `dev`. The next free number is D279. The decision log at the end of `TODO.md` conflicts on every merge; keep all entries in number order.
-- Worktrees under `.worktrees/`: `appearance` (#56), `settings` (`wip/settings-c1-c4`), `users` (`wip/users-acl-disable`), `state` (this update). Remove each with its local branch once merged.
+- Decision numbers: D269 to D278 are on `dev`. D279 is the rename. The next free number is D280. The decision log at the end of `TODO.md` conflicts on every merge; keep all entries in number order.
+- Worktrees under `.worktrees/`: `appearance` (#56), `settings` (`wip/settings-c1-c4`), `users` (`wip/users-acl-disable`), `mute-race` (#57), `rename` (this change). Remove each with its local branch once merged.
 
 ## Known pitfalls
 

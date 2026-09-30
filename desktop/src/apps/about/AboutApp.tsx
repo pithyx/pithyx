@@ -12,7 +12,7 @@ interface Notice {
   licenseFile?: string;
 }
 
-const SOURCE = 'https://github.com/vyxis/vyxis';
+const SOURCE = 'https://github.com/pithyx/pithyx';
 
 async function fetchNotices(signal: AbortSignal): Promise<Notice[]> {
   const response = await fetch('/third-party-notices.json', { signal });
