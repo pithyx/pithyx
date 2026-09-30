@@ -145,6 +145,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- The language switch on the sign-in and setup screens is a list of our own in the theme's colors instead of the native select, whose list was white on white in dark mode; it works with arrows, Home, End, Enter, Space, Escape and Tab (ARIA listbox).
 - After loading or reloading the desktop, no element has focus; the Pithyx menu button takes it only when the last window closes or minimizes, and Tab reaches it as before.
 - The desktop wallpaper draws its boxes with the logo's geometry (lid 16 units above the box) instead of a lid lifted too high, and the logo in the Pithyx menu button is larger (38 instead of 26 px).
 - Importing a pool for use after its read-only preview failed with `storage.plan.stale` (found on dev01): the disks of a pool imported read-only are not probed, and after the plan's export step they are, so their signatures looked changed. Import steps now compare serial, size and partitions, not the ZFS labels they expect.

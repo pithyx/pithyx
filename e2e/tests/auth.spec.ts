@@ -208,12 +208,32 @@ test('German browsers get the German interface', async ({ browser }) => {
   await context.close();
 });
 
-test('the language select switches the sign-in screen', async ({ page }) => {
+test('the language list switches the sign-in screen with the mouse and the keyboard', async ({
+  page,
+}) => {
   await page.goto('/');
-  await page.getByRole('combobox', { name: 'Language' }).selectOption({ label: 'Deutsch' });
+  await page.getByRole('button', { name: 'Language: Automatic' }).click();
+  const list = page.getByRole('listbox', { name: 'Language' });
+  await expect(list).toBeFocused();
+  await list.getByRole('option', { name: 'Deutsch' }).click();
+  await expect(list).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'Willkommen zurück' })).toBeVisible();
-  await page.getByRole('combobox', { name: 'Sprache' }).selectOption({ label: 'Automatisch' });
+
+  const button = page.getByRole('button', { name: 'Sprache: Deutsch' });
+  await expect(button).toBeFocused();
+  await page.keyboard.press('ArrowDown');
+  await expect(page.getByRole('option', { name: 'Deutsch' })).toHaveAttribute(
+    'aria-selected',
+    'true',
+  );
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('listbox')).toHaveCount(0);
+  await expect(button).toBeFocused();
+  await page.keyboard.press('Enter');
+  await page.keyboard.press('Home');
+  await page.keyboard.press('Enter');
   await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Language: Automatic' })).toBeFocused();
 });
 
 test('phones sign in and see the storage app full screen', async ({ browser }) => {
