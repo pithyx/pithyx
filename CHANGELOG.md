@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- CI: the E2E suite, the performance gate and the design checks run only with the label `e2e` on a pull request, a manual workflow run, or for `master`; every pull request still runs the repository, DCO, daemon and frontend checks it needs.
 - The daemon refuses to start with exit code 78 when it would create a second installation in `.pithyx-dev/` on a Pithyx machine (a machine with `/etc/pithyx/environment`, such as the dev VM).
 - Dev VM: `tools/dev-vm/reset-dev-db.sh` resets the database of `pithyx-dev.service`, and `tools/dev-vm/seed-dev-accounts.sh` sets up the owner account from `~/.config/pithyx-dev/owner.env` and the test accounts `e2e-admin` and `e2e-user` after every reset and deploy.
 

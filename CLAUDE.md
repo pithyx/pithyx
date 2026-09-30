@@ -38,7 +38,7 @@ Update this section in the same PR whenever the state changes (a merge, a new br
 - On 2026-09-30 every database on dev01 was deleted (7484's, its backups, leftovers of old second instances) so the owner can run the setup again. `owner.env` is stale until the owner updates it with the new credentials; `seed-dev-accounts.sh` needs it for `e2e-admin` and `e2e-user` (and the users API from #46).
 - The runner has `libatomic1`, `shellcheck` and the Playwright libraries (owner, 2026-09-30). dev01 has `acl` (`setfacl`).
 - Merge in this order. For each: merge `dev` into the branch, push, green runner run, for storage, account and command runner changes also `integration.sh` on dev01 with the result in the PR, squash-merge (the commit ends with `Signed-off-by: Schecher_1 <74829802+Schecher1@users.noreply.github.com>`), deploy with `install-dev-daemon.sh --yes`. A branch with a migration proves its upgrade path on 7484 after the merge; the daemon keeps a `pithyx.db.pre-<version>-<time>.bak` next to the database before it migrates.
-  1. #50 `chore/no-ci-local` (D275, D277, this section).
+  1. #50 `chore/no-ci-local` (D275, D277, D278, this section).
   2. #51 `fix/cache-dataset-race` (D276): `zfs create -p` for the cache dataset, `integration.sh` pauses 7484.
   3. #35 `fix/disk-failure` (D270).
   4. `fix/usage-refresh`: a new PR with only `b1499a4` cherry-picked onto `dev`.
@@ -52,7 +52,7 @@ Update this section in the same PR whenever the state changes (a merge, a new br
   12. `wip/settings-c1-c4` (never built): after #46, migrations `0014_appearance.sql` and `0015_restore_points.sql`; the network page stays read-only until the 60 s rollback of step 14.
 - Not started: pool delete as a background job (the dialog closes at once, progress in notifications and jobs, a hanging `zpool destroy` ends with a new, translated and documented error code). Then the rename from the old project name (patterns in `OLD_NAME` in `tools/checks/repo-check.ts`): code, packages, headers, environment variables, paths, datasets, units, docs and links; exceptions are the `VYXTEST` serials, the git history and existing D entries (plus a new D entry); no shims; migrate dev01 (state directories, database, `zfs rename`, units, the old `/etc` directory) until `systemctl list-units`, `/etc`, `/var/lib`, `/var/log` and `zfs list` show nothing under the old name.
 - Then verify every item of "Release 0.1" in `TODO.md` on 7484 in the browser (Playwright and screenshots, as `e2e-admin` or `e2e-user`), fix what fails, and report: deployed commit and `dev` HEAD, runner status per job, a table item, status, proof, the merged PRs with their migration numbers, the rename grep, open problems with cause and proposal.
-- Decision numbers: D269, D273, D274 on `dev`; D270 on `fix/disk-failure`; D271, D272 on `fix/quick-fixes`; D275 and D277 on `chore/no-ci-local`; D276 on `fix/cache-dataset-race`. The next free number is D278. The decision log at the end of `TODO.md` conflicts on every merge; keep all entries in number order.
+- Decision numbers: D269, D273, D274 on `dev`; D270 on `fix/disk-failure`; D271, D272 on `fix/quick-fixes`; D275, D277 and D278 on `chore/no-ci-local`; D276 on `fix/cache-dataset-race`. The next free number is D279. The decision log at the end of `TODO.md` conflicts on every merge; keep all entries in number order.
 - Worktrees under `.worktrees/`: `cache-race`, `context-menu`, `disk-failure`, `log-center`, `notifications`, `no-ci-local`, `quick-fixes`, `settings` (`wip/settings-c1-c4`), `share-plan`, `share-recovery`, `usage`, `users` (`wip/users-acl-disable`). Remove each with its local branch once merged.
 
 ## Known pitfalls
@@ -238,7 +238,7 @@ Everything else is internal and may change at any time.
 Test parsers, decision logic, permission checks, manifest validation and the update state machine.
 Integration tests that need root, real zfs (and later mdadm), loop devices, scsi_debug disks or Linux accounts (`Category=StorageIntegration`) never run in GitHub CI. They run on the dev VM with `tools/dev-vm/integration.sh` (sparse files in `/dev/shm`, throwaway pools), and a PR that changes storage, account or command runner code attaches the result. Before a storage PR is merged, its destructive suite runs on the dev VM against the declared test disks.
 Do not test getters, DTOs, pass-through controllers or individual React components.
-Daemon tests run in simulation mode by default (`DaemonFactory`), with a fake clock where time matters. End-to-end tests live in `e2e/` (Playwright, run with `pnpm build && pnpm e2e`) and start their own daemon with a fresh database. The E2E suite and the performance gate run on the CI runner, not on dev01.
+Daemon tests run in simulation mode by default (`DaemonFactory`), with a fake clock where time matters. End-to-end tests live in `e2e/` (Playwright, run with `pnpm build && pnpm e2e`) and start their own daemon with a fresh database. The E2E suite and the performance gate run on the CI runner, not on dev01, and only when asked (see CI).
 Disk pull tests (a scsi_debug disk pulled from a live pool) can wedge ZFS until a reboot. They run only with `integration.sh --disk-pulls` on a freshly booted dev01.
 
 ## CI
@@ -248,6 +248,8 @@ Disk pull tests (a scsi_debug disk pulled from a live pool) can wedge ZFS until 
 - Workflows set `permissions: contents: read` at the top and widen it per job only where needed. No `pull_request_target`, no secrets in logs. A self-hosted runner never executes code from forks without approval.
 - The self-hosted runner (`dedi-01`, label `pithyx-ci`) is the CI; a merge into `dev` needs its green run. The owner maintains the runner: never change it, and never add workarounds to the workflows for something missing on it.
 - The runner does everything that only needs building and can run in the background while the agent goes on: build, lint, typecheck, unit tests, E2E and the performance gate. Push the branch, keep working, read the result. dev01 is too weak for that.
+- Every pull request runs `changes`, `repo` and `dco`, plus `daemon` and `frontend` when their files changed. That green run is enough to merge a small change into `dev`.
+- The E2E suite with the performance gate and the design checks takes minutes and runs only when asked (D278): add the label `e2e` to the pull request (`gh pr edit <n> --add-label e2e`), start the workflow by hand (`gh workflow run CI --ref <branch>`), or open a pull request to `master` (always). Add the label before merging a larger change: new or changed user flows, the desktop shell, window manager, sign-in, setup, the SDK transport, the API contract, anything on the loading path or the bundle, or several PRs merged in a row. Run it by hand on `dev` as the final check before the owner verifies a round on 7484.
 - What needs ZFS, root or real disks is tested on dev01 (`tools/dev-vm/integration.sh`, which builds the daemon for it), as is the deploy of `dev`. There is no local CI fallback; when the runner cannot run a job, tell the owner.
 
 ## Before you commit
