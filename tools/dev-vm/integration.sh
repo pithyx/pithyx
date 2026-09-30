@@ -39,10 +39,26 @@ sudo modprobe zfs
 sudo modprobe -n scsi_debug || die "the scsi_debug module is missing (linux-modules-extra on some kernels)"
 
 scratch="$(mktemp -d /dev/shm/pithyx-integration-XXXXXX)"
-trap 'sudo rm -rf --one-file-system "$scratch"' EXIT
+# The dev daemon on 7484 manages every pool it sees, the throwaway test pools included (cache datasets, mounts,
+# reconnects). It pauses for the run and always comes back (D276).
+dev_unit=pithyx-dev.service
+dev_was_active=0
+if systemctl is-active --quiet "$dev_unit"; then
+  dev_was_active=1
+  echo "integration: stopping $dev_unit for the run"
+  sudo systemctl stop "$dev_unit"
+fi
+cleanup() {
+  sudo rm -rf --one-file-system "$scratch"
+  if [[ "$dev_was_active" -eq 1 ]]; then
+    echo "integration: starting $dev_unit again"
+    sudo systemctl start "$dev_unit"
+  fi
+}
+trap cleanup EXIT
 
 # A pool command stuck in the kernel never returns; stop the run instead of waiting for hours.
-sudo -E env "PATH=$PATH" "TMPDIR=$scratch" PITHYX_STORAGE_INTEGRATION=1 \
+sudo -E env "PATH=$PATH:/usr/sbin:/sbin" "TMPDIR=$scratch" PITHYX_STORAGE_INTEGRATION=1 \
   timeout --kill-after=30s 20m \
   "$repo/daemon/tests/Pithyx.Daemon.Tests/bin/Release/net10.0/Pithyx.Daemon.Tests" \
   -trait "Category=StorageIntegration" "${filter[@]}"

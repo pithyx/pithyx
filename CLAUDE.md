@@ -22,7 +22,7 @@ Know where you are before you act. Every machine declares its environment in `/e
 
 ## Dev VM
 
-- `pithyx-dev.service` on port 7484 is the one dev instance, with one database at `/var/lib/pithyx/pithyx.db`. It always runs, so the owner can sign in and watch. Never point it at another database or data directory.
+- `pithyx-dev.service` on port 7484 is the one dev instance, with one database at `/var/lib/pithyx/pithyx.db`. It always runs, so the owner can sign in and watch, except while `tools/dev-vm/integration.sh` runs its tests: the script stops the unit for the test run and starts it again afterwards, because the daemon manages every pool it sees, the throwaway test pools included (D276). Never point it at another database or data directory.
 - It runs dev only: `tools/dev-vm/install-dev-daemon.sh` fast-forwards the main checkout to `origin/dev`, builds and restarts the unit. Deploy after every merge into `dev`.
 - Reset the database only with `tools/dev-vm/reset-dev-db.sh`: it stops the unit, deletes the database, starts the unit (migrations run on start) and sets up the owner account again.
 - The owner account's credentials live in `~gabriel/.config/pithyx-dev/owner.env` (mode 600, never in the repo, never in the chat). Never change the owner account: no password change, no 2FA reset, no deactivation. A reset turns the owner's 2FA off; report that.
