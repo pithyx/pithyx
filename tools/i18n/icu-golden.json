@@ -640,6 +640,10 @@
       },
       "expected": "The volume does not fit the free space of the pool. Make it smaller or create it as a sparse volume."
     },
+    "storage.zfs.unavailable": {
+      "params": {},
+      "expected": "ZFS did not answer in time or reported an error, so Pithyx cannot show what this would change. Try again in a moment. If it keeps happening, a pool may be waiting for disks that are gone: see Storage."
+    },
     "system.internal.unexpected": {
       "params": {},
       "expected": "Something went wrong on the server. The request id helps to find the details in the logs."

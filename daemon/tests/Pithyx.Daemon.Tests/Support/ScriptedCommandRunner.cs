@@ -15,6 +15,9 @@ public sealed class ScriptedCommandRunner : ICommandRunner
 
     public List<CommandRequest> Calls { get; } = [];
 
+    /// <summary>Commands (program and first argument) that never finish, like a zpool call stuck behind a suspended pool.</summary>
+    public HashSet<string> Hanging { get; } = [];
+
     /// <summary>Answers a command before <see cref="Results"/> are looked at, for example per device; null passes it on.</summary>
     public Func<CommandRequest, CommandResult?>? Handler { get; set; }
 
@@ -32,10 +35,20 @@ public sealed class ScriptedCommandRunner : ICommandRunner
             return Task.FromResult(handled);
         }
         var specific = request.Arguments.Count > 0 ? $"{request.FileName} {request.Arguments[0]}" : request.FileName;
+        if (Hanging.Contains(specific))
+        {
+            return HangAsync(cancellationToken);
+        }
         return Task.FromResult(
             Results.TryGetValue(specific, out var exact) ? exact
             : Results.TryGetValue(request.FileName, out var result) ? result
             : new CommandResult(127, "", "not scripted", TimeSpan.Zero));
+    }
+
+    private static async Task<CommandResult> HangAsync(CancellationToken cancellationToken)
+    {
+        await Task.Delay(Timeout.Infinite, cancellationToken);
+        throw new OperationCanceledException(cancellationToken);
     }
 
     public async IAsyncEnumerable<string> StreamLinesAsync(CommandRequest request, [EnumeratorCancellation] CancellationToken cancellationToken)
