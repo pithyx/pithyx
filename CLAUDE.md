@@ -14,8 +14,8 @@ These rules are binding. If a rule blocks you, stop and ask. Do not work around 
 
 Know where you are before you act. Every machine declares its environment in `/etc/pithyx/environment` (`dev` or `prod`); the owner may also state it ("this is dev", "this is prod"). If neither says anything, treat it as prod.
 
-- **dev** (dev01, other dev VMs, simulation mode, CI): the machine belongs to the agent. Nothing needs permission: install and remove packages (apt), change services and configuration, load kernel modules, reboot, create and destroy pools and arrays, reset databases, edit any file in the repo including every `CLAUDE.md`. Do it, then document it (commit message, D entry or `docs/dev/HANDOFF.md`).
-- The only hard limits in dev: never push or merge to `master` (merging into `master` always needs the owner), and never delete, force-push or rewrite `origin/master` or `origin/dev`. On dev01 also: never touch `sda` (the system disk); real test disks are `VYXTEST01` to `VYXTEST06` (listed in `/etc/pithyx/test-disks`, historical VYXTEST prefix from Proxmox), scsi_debug disks are free to use. No long write tests or benchmarks (the host's SSD is worn). No access to pve02, the home network or the CI runner's server. No secrets in commits or chat. Before a reboot, commit and push all work (WIP branches are fine) and say so in the chat.
+- **dev** (dev01, other dev VMs, simulation mode, CI): the machine belongs to the agent. Nothing needs permission: install and remove packages (apt), change services and configuration, load kernel modules, reboot, create and destroy pools and arrays, reset databases, edit any file in the repo including every `CLAUDE.md`. Do it, then document it (commit message, D entry or the current state section below).
+- The only hard limits in dev: never push or merge to `master` (merging into `master` always needs the owner), and never delete, force-push or rewrite `origin/master` or `origin/dev`. On dev01 also: never touch `sda` (the system disk); real test disks are `VYXTEST01` to `VYXTEST06` (listed in `/etc/pithyx/test-disks`, historical VYXTEST prefix from Proxmox), scsi_debug disks are free to use. No long write tests or benchmarks (the host's SSD is worn). No access to pve02, the home network or the CI runner's server. No secrets in commits or chat; never read password hashes or session tokens from the database, use the API. Before a reboot, commit and push all work (WIP branches with `🚧 wip:` are fine), say so in the chat and wait for the owner's "weiter": the session runs on dev01 itself, so a reboot ends it.
 - `tools/dev-vm/testpool.sh` (`create`, `destroy`, `wipe`) is the convenient way to handle test pools; it refuses any disk that is not a test disk. `zpool destroy` leaves labels and partitions behind; run `testpool.sh wipe` afterwards.
 - **prod** (anything with real data, including the owner's own NAS): read-only by default. Before any write, show the exact command and wait for explicit confirmation. Take a snapshot or backup first. Never run `zpool destroy`, `zpool create`, `mkfs`, `wipefs`, `dd`, `rm -rf` on data paths, `docker volume rm` or database migrations without a confirmed backup.
 - The product follows the same idea: destructive storage actions in the daemon refuse to touch disks that contain partitions or data unless the user confirms with the disk serial.
@@ -28,6 +28,39 @@ Know where you are before you act. Every machine declares its environment in `/e
 - The owner account's credentials live in `~gabriel/.config/pithyx-dev/owner.env` (mode 600, never in the repo, never in the chat). Never change the owner account: no password change, no 2FA reset, no deactivation. A reset turns the owner's 2FA off; report that.
 - Tests use their own accounts `e2e-admin` and `e2e-user` from `~gabriel/.config/pithyx-dev/e2e.env`, created by `tools/dev-vm/seed-dev-accounts.sh`.
 - A fresh state or an unmerged branch runs on a short-lived second instance: `tools/dev-vm/start.sh` from the branch's worktree (port 7485, `mktemp -d`, deleted on exit). 7484 stays untouched.
+
+## Current state
+
+Update this section in the same PR whenever the state changes (a merge, a new branch, a finished item). Last updated: 2026-09-30.
+
+- 7484 runs `dev` from the main checkout `/home/gabriel/code/pithyx` in real mode. Check with `systemctl status pithyx-dev` and `git -C /home/gabriel/code/pithyx log -1`; the deployed commit must equal `origin/dev`.
+- The dev database was reset on 2026-09-30 and holds only the owner (`gabriel`, 2FA off). `e2e-admin` and `e2e-user` are created once the users API (#46) is on `dev`; until then `seed-dev-accounts.sh` skips them.
+- The runner has `libatomic1`, `shellcheck` and the Playwright libraries (owner, 2026-09-30). dev01 has `acl` (`setfacl`).
+- Merge in this order. For each: merge `dev` into the branch, push, green runner run, for storage, account and command runner changes also `integration.sh` on dev01 with the result in the PR, squash-merge (the commit ends with `Signed-off-by: Schecher_1 <74829802+Schecher1@users.noreply.github.com>`), deploy with `install-dev-daemon.sh --yes`. A branch with a migration is first started on 7485 against a copy of `/var/lib/pithyx/pithyx.db` (`PITHYX_DEV_PORT=7485 PITHYX_DB=<copy>`) to test the upgrade path.
+  1. #50 `chore/no-ci-local` (D275, this section).
+  2. #35 `fix/disk-failure` (D270).
+  3. `fix/usage-refresh`: a new PR with only `b1499a4` cherry-picked onto `dev`.
+  4. #37 `fix/share-plan-timeout`.
+  5. #40 `fix/share-recovery`.
+  6. #36 `fix/notifications` (migration `0012_notifications.sql`).
+  7. #38 `fix/context-menu`.
+  8. #45 `feature/log-center`.
+  9. #46 `feature/users` (draft) together with `wip/users-acl-disable` (never built, ACLs as raw xattrs, adds `auth.account.disabled`): renumber its migration to `0013`, choose `setfacl` or a library for ACLs (D entry, also in the image), D264 (primary group `users` gid 100, homes 0700, umask 077, share access only through ACLs), register the UsersPage in Settings, leave draft.
+  10. `fix/quick-fixes` (B1 to B8, D271, D272): open the PR.
+  11. `wip/settings-c1-c4` (never built): after #46, migrations `0014_appearance.sql` and `0015_restore_points.sql`; the network page stays read-only until the 60 s rollback of step 14.
+- Not started: pool delete as a background job (the dialog closes at once, progress in notifications and jobs, a hanging `zpool destroy` ends with a new, translated and documented error code). Then the rename from the old project name (patterns in `OLD_NAME` in `tools/checks/repo-check.ts`): code, packages, headers, environment variables, paths, datasets, units, docs and links; exceptions are the `VYXTEST` serials, the git history and existing D entries (plus a new D entry); no shims; migrate dev01 (state directories, database, `zfs rename`, units, the old `/etc` directory) until `systemctl list-units`, `/etc`, `/var/lib`, `/var/log` and `zfs list` show nothing under the old name.
+- Then verify every item of "Release 0.1" in `TODO.md` on 7484 in the browser (Playwright and screenshots, as `e2e-admin` or `e2e-user`), fix what fails, and report: deployed commit and `dev` HEAD, runner status per job, a table item, status, proof, the merged PRs with their migration numbers, the rename grep, open problems with cause and proposal.
+- Decision numbers: D269, D273, D274 on `dev`; D270 on `fix/disk-failure`; D271, D272 on `fix/quick-fixes`; D275 on `chore/no-ci-local`. The next free number is D276. The decision log at the end of `TODO.md` conflicts on every merge; keep all entries in number order.
+- Worktrees under `.worktrees/`: `context-menu`, `disk-failure`, `log-center`, `notifications`, `no-ci-local`, `quick-fixes`, `settings` (`wip/settings-c1-c4`), `share-plan`, `share-recovery`, `usage`, `users` (`wip/users-acl-disable`). Remove each with its local branch once merged.
+
+## Known pitfalls
+
+- Pulling a scsi_debug disk from a pool under write can wedge ZFS until a reboot (OpenZFS 2.3.9): `txg_sync` waits in `zio_wait`, `zpool clear`, `destroy` and `list` hang in D state, load goes to about 17. Only a reboot helps. Hence `--disk-pulls` only on a fresh boot.
+- D270: for a returning disk, `zpool online` runs before `zpool clear`, both with a 30 s timeout. `clear` first hangs in the kernel.
+- Load spoils timings: check `uptime` before trusting a budget; budget failures under load are not code failures.
+- A daemon refuses a database with schema versions it does not know (exit code 65); `install-dev-daemon.sh` stops before touching anything then. If a branch's daemon wrote the dev database, run `reset-dev-db.sh`.
+- WIP commits were made with `--no-verify`; the lefthook checks never ran on them.
+- A fresh worktree needs `pnpm install --frozen-lockfile` before the first commit, or the repo-check hook fails.
 
 ## Nested rules
 
@@ -79,7 +112,7 @@ i18n/     translation files (en is the reference language)
 website/  landing page and user docs (Starlight, Markdown)
 ```
 
-- No developer docs in markdown. The code is the developer documentation. Allowed markdown outside `website/`: README.md, CLAUDE.md (root and per top-level folder), CONTRIBUTING.md, TODO.md, CHANGELOG.md, SECURITY.md, and `docs/dev/HANDOFF.md`, the entry point for every new agent session (current state, open work).
+- No developer docs in markdown. The code is the developer documentation. Allowed markdown outside `website/`: README.md, CLAUDE.md (root and per top-level folder), CONTRIBUTING.md, TODO.md, CHANGELOG.md, SECURITY.md. No other markdown for agents: the current state and open work live in this file.
 - User docs live in `website/`. After every change, check whether an existing doc page describes the changed behavior and update it in the same commit.
 - Then decide whether the change deserves a new doc entry. It does if a user or admin would otherwise have to guess: a new feature or setting, changed behavior, a new error code, a limitation or a required manual step. It does not for internal refactors, performance work without visible effect, or developer-only details (those belong in code and commit messages).
 - If a doc update is needed but out of scope for the current task, add an item to `TODO.md` instead of skipping it silently.
@@ -212,7 +245,8 @@ Disk pull tests (a scsi_debug disk pulled from a live pool) can wedge ZFS until 
 - The self-hosted runner has no Docker and no root. No job uses `services:` or `container:`, and nothing that needs ZFS, real disks or root runs there (see Tests).
 - Workflows set `permissions: contents: read` at the top and widen it per job only where needed. No `pull_request_target`, no secrets in logs. A self-hosted runner never executes code from forks without approval.
 - The self-hosted runner (`dedi-01`, label `pithyx-ci`) is the CI; a merge into `dev` needs its green run. The owner maintains the runner: never change it, and never add workarounds to the workflows for something missing on it.
-- dev01 is too weak for CI work. Builds, lint, typecheck, unit tests, E2E and the performance gate run only on the runner: push the branch and read its result. On dev01 run only the ZFS integration tests (`tools/dev-vm/integration.sh`) and the deploy of `dev`. There is no local CI fallback; when the runner cannot run a job, tell the owner.
+- The runner does everything that only needs building and can run in the background while the agent goes on: build, lint, typecheck, unit tests, E2E and the performance gate. Push the branch, keep working, read the result. dev01 is too weak for that.
+- What needs ZFS, root or real disks is tested on dev01 (`tools/dev-vm/integration.sh`, which builds the daemon for it), as is the deploy of `dev`. There is no local CI fallback; when the runner cannot run a job, tell the owner.
 
 ## Before you commit
 

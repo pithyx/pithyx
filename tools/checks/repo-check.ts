@@ -195,8 +195,8 @@ const OLD_NAME_ALLOWED = new RegExp(
 );
 
 function checkOldName(file: string, text: string): Problem[] {
-  // This file spells out the exceptions; the handoff describes the rename itself.
-  if (file === 'tools/checks/repo-check.ts' || file === 'docs/dev/HANDOFF.md') {
+  // This file spells out the exceptions.
+  if (file === 'tools/checks/repo-check.ts') {
     return [];
   }
   return text
