@@ -85,7 +85,8 @@ for (const viewport of Object.keys(viewports) as Viewport[]) {
           for (const frame of document.querySelectorAll('section[data-medium]')) {
             const titlebar = frame.querySelector(':scope > header');
             const workspace = frame.closest('main');
-            if (titlebar === null || workspace === null) {
+            // A window the size class hides (data-medium="hidden" on a tablet) has no title bar to cover.
+            if (titlebar === null || workspace === null || titlebar.getClientRects().length === 0) {
               continue;
             }
             const rect = titlebar.getBoundingClientRect();
