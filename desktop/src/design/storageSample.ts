@@ -418,6 +418,7 @@ export function samplePlan(request: StoragePlanRequest): StoragePlanPreview {
         `zfs create -o mountpoint=/${pool}/homes ${pool}/pithyx/homes`,
         `zfs create -o canmount=off -o mountpoint=/${pool}/.pithyx/apps ${pool}/pithyx/apps`,
         `zfs create -o mountpoint=/${pool}/.pithyx/system ${pool}/pithyx/system`,
+        `zfs create -o mountpoint=/${pool}/.pithyx/cache -o compression=off -o atime=off -o quota=2560M -o com.sun:auto-snapshot=false ${pool}/pithyx/cache`,
       ]);
     }
     case 'pool.replace':

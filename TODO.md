@@ -64,7 +64,7 @@ Password rules (one PR; the same rules everywhere: setup, user management, chang
 
 Thumbnail cache (one PR, replaces D197 in vyxis/vyxis#33):
 
-- [ ] Thumbnails live in a dataset of their own per pool (`<pool>/pithyx/cache`, never shown in the UI) instead of `/var/cache/pithyx/thumbnails`, capped at 2 GB per pool (least recently used dropped first). The cache leaves with its pool when the pool is destroyed or exported. Without a pool there are no files that need thumbnails. `daemon/CLAUDE.md` says so.
+- [x] Thumbnails live in a dataset of their own per pool (`<pool>/pithyx/cache`, never shown in the UI) instead of `/var/cache/pithyx/thumbnails`, capped at 2 GB per pool (least recently used dropped first). The cache leaves with its pool when the pool is destroyed or exported. Without a pool there are no files that need thumbnails. `daemon/CLAUDE.md` says so.
 
 ### Scope of v0.1
 

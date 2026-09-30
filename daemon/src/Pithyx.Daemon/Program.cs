@@ -81,6 +81,7 @@ if (!BuildTimeDocument.IsGenerating)
     if (mode == DaemonMode.Real)
     {
         builder.Services.AddHostedService<JournalReader>();
+        builder.Services.AddHostedService<Pithyx.Daemon.Files.Thumbnails.ThumbnailCacheProvisioner>();
     }
 }
 builder.Services.AddPithyxOpenApi();

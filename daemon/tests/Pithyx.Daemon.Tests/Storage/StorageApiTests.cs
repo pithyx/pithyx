@@ -110,7 +110,7 @@ public sealed class StorageApiTests : IAsyncLifetime
 
         var confirmed = await PreviewAsync(new { action = "pool.create", encryption = "none", pool = "tank", layout = "mirror", diskIds = _disks1, confirmations = new Dictionary<string, string> { ["serial-VYXTEST01"] = "VYXTEST01" } });
         var programs = confirmed.GetProperty("commands").EnumerateArray().Select(command => $"{command.GetProperty("program").GetString()} {command.GetProperty("arguments")[0].GetString()}");
-        Assert.Equal(["zpool labelclear", "wipefs --all", "zpool create", .. Enumerable.Repeat("zfs create", 5)], programs);
+        Assert.Equal(["zpool labelclear", "wipefs --all", "zpool create", .. Enumerable.Repeat("zfs create", 6)], programs);
 
         var system = await PreviewAsync(new { action = "pool.create", encryption = "none", pool = "tank", layout = "single", diskIds = _disks2, confirmations = new Dictionary<string, string> { ["serial-02609329D99"] = "02609329D99" } });
         Assert.Equal(JsonValueKind.Null, system.GetProperty("commands").ValueKind);
