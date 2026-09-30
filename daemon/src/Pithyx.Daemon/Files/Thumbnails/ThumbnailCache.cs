@@ -12,11 +12,11 @@ public enum ThumbnailSize
 }
 
 /// <summary>
-/// Thumbnails on the system disk (<c>/var/cache/pithyx/thumbnails</c>), one WebP file per key, never on a pool: a
-/// cache hit never wakes a data disk. The key hashes the share's folder, the file's path, inode, size and change
+/// The thumbnails of one pool, in its cache dataset (<see cref="ThumbnailCaches"/>), one WebP file per key, at most
+/// 2 GB. The key hashes the share's folder, the file's path, inode, size and change
 /// time and the thumbnail size, so a changed file simply has another key; the old entry is never served again and
 /// goes when the cache is over its limit, least recently used first. Access times live in memory only, to spare the
-/// system disk writes; after a restart the files' write times stand in for them.
+/// pool writes; after a restart the files' write times stand in for them.
 /// </summary>
 public sealed class ThumbnailCache
 {
