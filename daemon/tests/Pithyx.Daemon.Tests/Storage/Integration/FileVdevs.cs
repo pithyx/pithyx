@@ -8,9 +8,9 @@ namespace Pithyx.Daemon.Tests.Storage.Integration;
 
 /// <summary>
 /// Sparse files in a temporary folder for a throwaway ZFS pool, driven through the real <see cref="ProcessCommandRunner"/>.
-/// Tests that use it run only as root on a disposable CI runner with <c>PITHYX_STORAGE_INTEGRATION=1</c>; they never name
-/// a block device except the loop devices they attach themselves. Disposing destroys the pool, detaches the loop devices
-/// and deletes the files.
+/// Tests that use it run only as root on the dev VM (<c>tools/dev-vm/integration.sh</c>) with
+/// <c>PITHYX_STORAGE_INTEGRATION=1</c>; they never name a block device except the loop devices they attach themselves.
+/// Disposing destroys the pool, detaches the loop devices and deletes the files.
 /// </summary>
 internal sealed class FileVdevs : IAsyncDisposable
 {
@@ -50,7 +50,7 @@ internal sealed class FileVdevs : IAsyncDisposable
     public static void RequireEnabled() =>
         Assert.SkipUnless(
             Environment.GetEnvironmentVariable("PITHYX_STORAGE_INTEGRATION") == "1",
-            "Real ZFS tests run only in the CI storage job (PITHYX_STORAGE_INTEGRATION=1, as root).");
+            "Real ZFS tests run only on the dev VM through tools/dev-vm/integration.sh (PITHYX_STORAGE_INTEGRATION=1, as root).");
 
     public static FileVdevs Create(int count)
     {
