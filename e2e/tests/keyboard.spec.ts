@@ -40,8 +40,16 @@ test('sign in, work with windows and sign out with the keyboard only', async ({ 
     await expect(page.getByRole('navigation', { name: 'Taskbar' })).toBeVisible();
   });
 
+  await test.step('nothing has focus after the desktop loads, also after a reload', async () => {
+    await expect(page.getByRole('button', { name: 'Pithyx menu' })).toBeVisible();
+    expect(await page.evaluate(() => document.activeElement === document.body)).toBe(true);
+    await page.reload();
+    await expect(page.getByRole('button', { name: 'Pithyx menu' })).toBeVisible();
+    expect(await page.evaluate(() => document.activeElement === document.body)).toBe(true);
+  });
+
   await test.step('open an app from the start menu', async () => {
-    await expect(page.getByRole('button', { name: 'Pithyx menu' })).toBeFocused();
+    await tabTo(page, 'Pithyx menu');
     await page.keyboard.press('Enter');
     await expect(page.getByRole('searchbox')).toBeFocused();
     await page.keyboard.type('storage');

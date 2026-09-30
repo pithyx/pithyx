@@ -169,7 +169,7 @@ website/  landing page and user docs (Starlight, Markdown)
 - Structured JSON logs only (Serilog). No string-concatenated log messages.
 - Secrets are always masked: passwords, tokens, cookies, credentials. User data in logs is acceptable.
 - Support bundles contain logs, config and system info with secrets removed. Never include memory dumps by default; a full dump requires an explicit opt-in with a warning.
-- Error dialogs show the request id with a copy button.
+- The UI never shows the request id: error dialogs, toasts and error pages show the translated message only. The request id goes to the browser console and the logs, where support finds it (Log Center, support bundle).
 
 ## Users and permissions
 

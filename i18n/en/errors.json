@@ -200,6 +200,9 @@
       "invalid": "The app sent a request the desktop cannot process ({method}).",
       "timeout": "The desktop did not answer the app in time ({method})."
     },
+    "transfer": {
+      "cancelled": "The transfer was cancelled."
+    },
     "transport": {
       "closed": "The connection between the app and the desktop is closed. Open the app again."
     }
@@ -292,7 +295,7 @@
   },
   "system": {
     "internal": {
-      "unexpected": "Something went wrong on the server. The request id helps to find the details in the logs."
+      "unexpected": "Something went wrong on the server. The details are in the logs."
     },
     "origin": {
       "forbidden": "The request came from another website and was rejected."

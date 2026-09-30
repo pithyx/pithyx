@@ -37,6 +37,15 @@ test('the sign-in screen has no accessibility violations', async ({ browser }) =
   await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
   expect(await violations(page)).toEqual([]);
 
+  // The language list, open, in both themes.
+  for (const colorScheme of ['light', 'dark'] as const) {
+    await page.emulateMedia({ colorScheme });
+    await page.getByRole('button', { name: /^Language/ }).click();
+    await expect(page.getByRole('listbox', { name: 'Language' })).toBeVisible();
+    expect(await violations(page)).toEqual([]);
+    await page.keyboard.press('Escape');
+  }
+
   await page.getByRole('button', { name: 'Forgot password?' }).click();
   await expect(page.getByRole('heading', { name: 'Reset your password' })).toBeVisible();
   expect(await violations(page)).toEqual([]);

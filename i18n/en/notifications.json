@@ -91,7 +91,7 @@
     },
     "saveFailed": {
       "title": "Window arrangement not saved",
-      "body": "The daemon did not save the layout of this desktop. Your windows stay open. Request ID {requestId}."
+      "body": "The daemon did not save the layout of this desktop. Your windows stay open."
     },
     "restoreFailed": {
       "title": "Saved windows not loaded",

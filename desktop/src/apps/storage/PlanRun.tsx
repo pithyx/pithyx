@@ -215,7 +215,7 @@ export function useRunPlan(app: PithyxApp) {
 
 const FINISHED = new Set(['succeeded', 'failed', 'cancelled', 'interrupted']);
 
-/** Where a running plan is; the error of a failed one with its request id. */
+/** Where a running plan is; the error of a failed one. */
 export function JobStatus({ job }: { job: Job }) {
   const { t } = useTranslation('storage');
   if (job.state === 'failed' && job.errorCode !== null) {

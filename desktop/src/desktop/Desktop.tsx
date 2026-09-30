@@ -380,12 +380,16 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   const name = user.displayName ?? user.username;
 
   // When the last window closes or minimizes, keyboard focus would fall to the page body; the start button takes it.
+  // Only then: after loading, nothing has focus until the user acts (Tab reaches the start button first).
+  const hadFocusedWindow = useRef(false);
   useEffect(() => {
+    const closedLastWindow = hadFocusedWindow.current && focused === null;
+    hadFocusedWindow.current = focused !== null;
     const active = document.activeElement;
     // A minimized window stays in the page, hidden; focus inside it is lost just the same.
     const lost =
       active === null || active === document.body || active.closest('[data-minimized]') !== null;
-    if (focused === null && lost) {
+    if (closedLastWindow && lost) {
       // After the frame: focusing recalculates styles, which would delay the first paint of the desktop.
       const frame = requestAnimationFrame(() => {
         startButton.current?.focus();
@@ -525,7 +529,7 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
                 position={taskbarPosition}
                 query={query}
                 onQueryChange={setQuery}
-                pinned={apps}
+                apps={apps}
                 recent={[]}
                 results={{ apps: matches, settings: [], files: [] }}
                 user={{

@@ -404,7 +404,8 @@ export function FilesApp({ app }: { app: PithyxApp }) {
           }
         }
       } catch (error) {
-        if (codeOf(error) !== 'fs.entry.exists') {
+        // A conflict was asked about above; a cancel in the taskbar needs no message.
+        if (codeOf(error) !== 'fs.entry.exists' && codeOf(error) !== 'sdk.transfer.cancelled') {
           await report(error);
         }
       } finally {

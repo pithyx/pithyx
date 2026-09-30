@@ -37,9 +37,6 @@
       "picture": "Bild auswählen"
     }
   },
-  "storagePointer": {
-    "open": "Speicher öffnen"
-  },
   "shares": {
     "title": "Freigegebene Ordner",
     "intro": "Jeder freigegebene Ordner ist ein eigenes Dataset auf einem Pool, mit eigenem Platz und eigenen Snapshots. Lege fest, wer seine Dateien lesen oder ändern darf.",
@@ -76,7 +73,8 @@
       "description": "Beschreibung (optional)",
       "preview": "Befehle anzeigen",
       "dataset": "Der freigegebene Ordner wird zum Dataset {dataset}.",
-      "run": "Freigegebenen Ordner anlegen"
+      "run": "Freigegebenen Ordner anlegen",
+      "openStorage": "Pool in Speicher anlegen…"
     },
     "editDialog": {
       "title": "{name} bearbeiten",

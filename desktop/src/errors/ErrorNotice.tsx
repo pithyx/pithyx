@@ -1,11 +1,9 @@
 import type { TFunction } from 'i18next';
-import { useRef, useState } from 'react';
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import buttonStyles from '../ui/Button.module.css';
 import { cx } from '../ui/cx';
-import { IconAlertCircle, IconCopy } from '../ui/icons';
-import { copyText } from '../platform/browser';
-import { isFault, type DescribedError } from './describe';
+import { IconAlertCircle } from '../ui/icons';
+import type { DescribedError } from './describe';
 import styles from './ErrorNotice.module.css';
 
 /** The translated message of an error code; network failures have no code from the daemon. */
@@ -24,56 +22,30 @@ export function useErrorMessage(error: DescribedError): string {
   return translateError(t, error);
 }
 
-/** The request id with a copy button, so support can find the request in the logs. Plain elements only. */
-export function RequestId({ requestId }: { requestId: string }) {
-  const { t } = useTranslation();
-  const value = useRef<HTMLElement>(null);
-  const [manually, setManually] = useState(false);
-  return (
-    <div className={styles.request}>
-      <span className={styles.requestLabel}>{t('error.requestId')}</span>
-      <code ref={value} className={styles.requestValue}>
-        {requestId}
-      </code>
-      <button
-        type="button"
-        data-native
-        className={cx(
-          buttonStyles.button,
-          buttonStyles.quiet,
-          buttonStyles.icon,
-          buttonStyles.small,
-        )}
-        aria-label={t('error.copy')}
-        title={t('error.copy')}
-        onClick={() => {
-          void copyText(requestId, value.current).then((done) => {
-            setManually(!done);
-          });
-        }}
-      >
-        <IconCopy size={16} stroke={1.75} />
-      </button>
-      <span className={styles.requestHint} role="status">
-        {manually ? t('error.copyManually') : ''}
-      </span>
-    </div>
-  );
+/**
+ * Writes the request id of an error to the browser console once it is shown. The UI never shows it (CLAUDE.md, Tracing
+ * and logging); the console and the daemon's logs keep it for support.
+ */
+export function useLogRequestId(error: DescribedError | null): void {
+  const requestId = error?.requestId ?? '';
+  const code = error?.code ?? '';
+  useEffect(() => {
+    if (requestId !== '') {
+      console.error(`Pithyx error ${code}, request id ${requestId}`);
+    }
+  }, [code, requestId]);
 }
 
-/**
- * An error message, used inline in forms. The request id appears only when the daemon failed; an expected refusal
- * such as a wrong password needs no support reference (the error dialog always shows it).
- */
+/** An error message, used inline in forms. Its request id goes to the console only. */
 export function ErrorNotice({ error, className }: { error: DescribedError; className?: string }) {
   const message = useErrorMessage(error);
+  useLogRequestId(error);
   return (
     <div className={cx(styles.notice, className)} role="alert">
       <p className={styles.message}>
         <IconAlertCircle size={18} stroke={1.75} aria-hidden className={styles.icon} />
         {message}
       </p>
-      {error.requestId !== '' && isFault(error) && <RequestId requestId={error.requestId} />}
     </div>
   );
 }

@@ -200,6 +200,9 @@
       "invalid": "Die App hat eine Anfrage geschickt, die der Desktop nicht verarbeiten kann ({method}).",
       "timeout": "Der Desktop hat der App nicht rechtzeitig geantwortet ({method})."
     },
+    "transfer": {
+      "cancelled": "Die Übertragung wurde abgebrochen."
+    },
     "transport": {
       "closed": "Die Verbindung zwischen App und Desktop ist getrennt. Öffne die App noch einmal."
     }
@@ -292,7 +295,7 @@
   },
   "system": {
     "internal": {
-      "unexpected": "Auf dem Server ist ein Fehler aufgetreten. Mit der Request-ID findest du die Details in den Logs."
+      "unexpected": "Auf dem Server ist ein Fehler aufgetreten. Die Details stehen in den Logs."
     },
     "origin": {
       "forbidden": "Die Anfrage kam von einer anderen Website und wurde abgelehnt."

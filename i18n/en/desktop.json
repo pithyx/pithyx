@@ -25,11 +25,8 @@
   },
   "error": {
     "title": "Something went wrong",
-    "requestId": "Request ID",
-    "copy": "Copy request ID",
     "close": "Close",
-    "network": "The daemon is not reachable. Check the connection and try again.",
-    "copyManually": "Selected: press Ctrl+C to copy."
+    "network": "The daemon is not reachable. Check the connection and try again."
   },
   "realtime": {
     "reconnecting": "Connection lost. Reconnecting…",
@@ -65,7 +62,7 @@
     "label": "Pithyx menu",
     "searchLabel": "Search apps, settings and files",
     "search": "Search",
-    "pinned": "Pinned",
+    "apps": "Apps",
     "recent": "Recent files",
     "resultsLabel": "Search results",
     "results": {
@@ -195,5 +192,19 @@
   "storageAlert": {
     "open": "Open Storage",
     "more": "{count, plural, one {and # more alert} other {and # more alerts}}"
+  },
+  "transfers": {
+    "button": "{count, plural, one {# transfer} other {# transfers}}, {percent} percent",
+    "title": "Transfers",
+    "upload": "Upload of {name}",
+    "download": "Download of {name}",
+    "size": "{loaded} of {total}",
+    "speed": "{speed}/s",
+    "secondsLeft": "{count, plural, one {# second left} other {# seconds left}}",
+    "minutesLeft": "{count, plural, one {about # minute left} other {about # minutes left}}",
+    "hoursLeft": "about {hours} h {minutes} min left",
+    "failed": "Failed. The connection was lost or the daemon refused the file.",
+    "cancel": "Cancel the transfer of {name}",
+    "dismiss": "Remove {name} from the list"
   }
 }

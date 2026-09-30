@@ -7,6 +7,7 @@ import { cx } from '../ui/cx';
 import { BrandText, LogoMark } from '../ui/Logo';
 import tooltipStyles from '../ui/Tooltip.module.css';
 import { AppIcon } from './AppIcon';
+import { TransfersButton } from './TransfersButton';
 import styles from './Taskbar.module.css';
 import type { RunningApp, TaskbarPosition } from './types';
 
@@ -127,7 +128,7 @@ export function Taskbar({
           data-active={startOpen || undefined}
           onPress={() => onStart?.()}
         >
-          <LogoMark size={26} motion="hover" />
+          <LogoMark size={38} motion="hover" />
         </AriaButton>
         <Tooltip className={cx(tooltipStyles.tooltip, styles.brandTooltip)} offset={6}>
           <span role="img" aria-label={t('brand')}>
@@ -170,6 +171,7 @@ export function Taskbar({
       </AriaButton>
 
       <div className={styles.status}>
+        <TransfersButton position={position} />
         {jobs > 0 && (
           <AriaButton
             className={cx(styles.button, styles.jobs)}

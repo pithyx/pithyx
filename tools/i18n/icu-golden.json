@@ -386,6 +386,10 @@
       },
       "expected": "The desktop did not answer the app in time (notify)."
     },
+    "sdk.transfer.cancelled": {
+      "params": {},
+      "expected": "The transfer was cancelled."
+    },
     "sdk.transport.closed": {
       "params": {},
       "expected": "The connection between the app and the desktop is closed. Open the app again."

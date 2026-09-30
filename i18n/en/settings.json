@@ -37,9 +37,6 @@
       "picture": "Choose a picture"
     }
   },
-  "storagePointer": {
-    "open": "Open Storage"
-  },
   "shares": {
     "title": "Shared folders",
     "intro": "Every shared folder is its own dataset on a pool, with its own space and snapshots. Choose who may read or change its files.",
@@ -76,7 +73,8 @@
       "description": "Description (optional)",
       "preview": "Show commands",
       "dataset": "The shared folder becomes the dataset {dataset}.",
-      "run": "Create shared folder"
+      "run": "Create shared folder",
+      "openStorage": "Create a pool in Storage…"
     },
     "editDialog": {
       "title": "Edit {name}",
