@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Hosting.Internal;
 using Pithyx.Daemon.Hosting;
 
@@ -46,5 +45,5 @@ public sealed class DaemonPathsTests : IDisposable
     private static IConfiguration Configuration(params (string Key, string Value)[] values) =>
         new ConfigurationBuilder().AddInMemoryCollection(values.Select(value => KeyValuePair.Create(value.Key, (string?)value.Value))).Build();
 
-    private static IHostEnvironment Environment(string name) => new HostingEnvironment { EnvironmentName = name };
+    private static HostingEnvironment Environment(string name) => new HostingEnvironment { EnvironmentName = name };
 }
