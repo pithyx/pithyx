@@ -1,5 +1,6 @@
 import { unwrap } from '@pithyx/api-client';
 import { sdkError, PithyxError, type MethodHandlers } from '@pithyx/sdk/host';
+import { writeAppLog } from './appLogs';
 import { api } from '../../api/client';
 import { toPithyxError } from '../sdk/daemonError';
 import { dispatch, useDesktop } from '../../wm/store';
@@ -77,6 +78,9 @@ export function brokerFor(target: BrokerTarget): MethodHandlers {
       });
       const rect = useDesktop.getState().windows[target.windowId]?.rect ?? window.rect;
       return { width: rect.width, height: rect.height };
+    },
+    'log.write': ({ entries }) => {
+      writeAppLog(target.app, entries);
     },
     // The daemon keeps it in the user's history and sends it back on the notifications topic, which shows the toast.
     notify: async ({ title, body, level }) => {

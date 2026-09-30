@@ -222,6 +222,26 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.NotFound)]
     public const string JobsJobNotFound = "jobs.job.not_found";
 
+    /// <summary>The app id of a log request is not a valid app id.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string LogsAppInvalid = "logs.app.invalid";
+
+    /// <summary>The archive's pool cannot hold it (missing, locked, read-only or without the Pithyx layout); <c>params.pool</c> names it.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string LogsArchivePoolUnavailable = "logs.archive.pool_unavailable";
+
+    /// <summary>An app sent more log entries in one request than allowed; <c>params.max</c> is the limit.</summary>
+    [ErrorStatus(HttpStatusCode.RequestEntityTooLarge)]
+    public const string LogsBatchTooLarge = "logs.batch.too_large";
+
+    /// <summary>A log query has an invalid cursor, time range or limit.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string LogsQueryInvalid = "logs.query.invalid";
+
+    /// <summary>A retention setting is out of range; <c>params.field</c>, <c>params.min</c> and <c>params.max</c> say which and what is allowed.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string LogsSettingsInvalid = "logs.settings.invalid";
+
     /// <summary>An app notification is invalid; <c>params.field</c> names the field (app, title, body), <c>params.maxLength</c> its limit.</summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string NotificationsMessageInvalid = "notifications.message.invalid";

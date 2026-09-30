@@ -104,6 +104,21 @@ export interface NotificationRequest {
   level?: 'info' | 'success' | 'warning' | 'error';
 }
 
+/** How serious a log entry is. The Log Center filters by it; `debug` is for details only needed while looking for a fault. */
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+
+/** Fields that describe a log entry beyond its message, for example `{ file: 'a.jpg', attempt: 2 }`. */
+export type LogData = Record<string, string | number | boolean | null>;
+
+/** One entry of the app's log, as the SDK sends it (see `app.log`). */
+export interface LogRecord {
+  level: LogLevel;
+  /** At most 4000 characters; the SDK cuts longer ones. */
+  message: string;
+  /** At most 20 fields with texts of at most 1000 characters; the SDK cuts the rest. */
+  data?: Record<string, string>;
+}
+
 /**
  * Every method an app can call: parameters and result. A method name is part of the stable API; a new method is a
  * minor change and appears in {@link AppContext.capabilities}.
@@ -118,6 +133,12 @@ export interface Methods {
     params: { width: number; height: number };
     result: { width: number; height: number };
   };
+  /**
+   * Writes entries to the app's log in the Log Center (source `app/<id>`, with the signed-in user). The SDK batches
+   * `app.log` calls into this method; apps do not call it directly. At most 100 entries per call; the
+   * daemon keeps each app within a rate limit and drops the rest. No permission needed (D257).
+   */
+  'log.write': { params: { entries: LogRecord[] }; result: undefined };
   /** Shows a notification. Needs the `notifications` permission. */
   notify: { params: NotificationRequest; result: undefined };
   /**

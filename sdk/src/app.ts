@@ -24,6 +24,9 @@ import {
   type MethodName,
   type Methods,
   type FileRef,
+  type LogData,
+  type LogLevel,
+  type LogRecord,
   type NotificationRequest,
   type Queries,
   type QueryName,
@@ -31,6 +34,29 @@ import {
 import { applyTheme } from './theme';
 import type { Endpoint } from './transport';
 import { PROTOCOL_VERSION, SDK_VERSION } from './version';
+
+const LOG_DELAY = 250;
+const LOG_BATCH = 100;
+const LOG_BUFFER = 500;
+const LOG_MESSAGE = 4000;
+const LOG_FIELDS = 20;
+const LOG_FIELD = 1000;
+
+/** Cuts a log entry to the limits the desktop and the daemon accept; values become text. */
+export function logRecord(level: LogLevel, message: string, data?: LogData): LogRecord {
+  // Plain JavaScript callers may pass anything; logging never throws.
+  const text: unknown = message;
+  const record: LogRecord = { level, message: String(text).slice(0, LOG_MESSAGE) };
+  if (data !== undefined) {
+    const fields = Object.entries(data)
+      .slice(0, LOG_FIELDS)
+      .map(([key, value]) => [key.slice(0, 100), String(value).slice(0, LOG_FIELD)] as const);
+    if (fields.length > 0) {
+      record.data = Object.fromEntries(fields);
+    }
+  }
+  return record;
+}
 
 type EventHandler<E extends EventName> = (data: Events[E]) => void;
 type QueryHandler<Q extends QueryName> = (
@@ -55,6 +81,23 @@ export interface PithyxApp {
     setSize(size: { width: number; height: number }): Promise<{ width: number; height: number }>;
   };
   notify(notification: NotificationRequest): Promise<void>;
+  /**
+   * The app's log in the Log Center, where administrators see it next to the system's logs (source `app/<id>`, with
+   * the signed-in user). Calls return at once and never throw: the SDK collects entries for a moment and sends them
+   * together, and drops entries when the app logs faster than its limit (bursts of 200, then 20 a second). Never log
+   * secrets such as passwords or tokens. Messages are cut at 4000 characters, `data` at 20 fields of 1000 characters.
+   *
+   * @example
+   * ```ts
+   * app.log.warn('Upload retried', { file: name, attempt: 2 });
+   * ```
+   */
+  readonly log: {
+    debug(message: string, data?: LogData): void;
+    info(message: string, data?: LogData): void;
+    warn(message: string, data?: LogData): void;
+    error(message: string, data?: LogData): void;
+  };
   readonly session: {
     save(state: unknown): Promise<void>;
     /** The state saved before the last reload or on another device, or null. */
@@ -339,6 +382,27 @@ export function createApp(endpoint: Endpoint, options: CreateAppOptions = {}): P
       }
     }
 
+    // Log entries wait a moment and go together; a full buffer drops the newest, like the daemon's rate limit.
+    const logBuffer: LogRecord[] = [];
+    let logTimer: ReturnType<typeof setTimeout> | undefined;
+    function flushLog() {
+      logTimer = undefined;
+      const entries = logBuffer.splice(0, LOG_BATCH);
+      if (entries.length > 0 && context?.capabilities.includes('log.write') === true) {
+        call('log.write', { entries }).catch(() => undefined);
+      }
+      if (logBuffer.length > 0) {
+        logTimer = setTimeout(flushLog, LOG_DELAY);
+      }
+    }
+    function log(level: LogLevel, message: string, data?: LogData) {
+      if (logBuffer.length >= LOG_BUFFER) {
+        return;
+      }
+      logBuffer.push(logRecord(level, message, data));
+      logTimer ??= setTimeout(flushLog, LOG_DELAY);
+    }
+
     function typed<M extends MethodName>(
       method: M,
       params: Methods[M]['params'],
@@ -366,6 +430,20 @@ export function createApp(endpoint: Endpoint, options: CreateAppOptions = {}): P
       },
       notify: async (notification) => {
         await call('notify', notification);
+      },
+      log: {
+        debug: (message, data) => {
+          log('debug', message, data);
+        },
+        info: (message, data) => {
+          log('info', message, data);
+        },
+        warn: (message, data) => {
+          log('warn', message, data);
+        },
+        error: (message, data) => {
+          log('error', message, data);
+        },
       },
       session: {
         save: async (state) => {

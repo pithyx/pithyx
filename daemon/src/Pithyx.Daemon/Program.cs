@@ -10,6 +10,7 @@ using Pithyx.Daemon.Health;
 using Pithyx.Daemon.Hosting;
 using Pithyx.Daemon.Jobs;
 using Pithyx.Daemon.Layouts;
+using Pithyx.Daemon.Logs;
 using Pithyx.Daemon.Monitoring;
 using Pithyx.Daemon.Notifications;
 using Pithyx.Daemon.Realtime;
@@ -37,6 +38,7 @@ if (!BuildTimeDocument.IsGenerating
     return DaemonExitCode.SecondInstallation;
 }
 
+builder.Services.AddPithyxLogs(paths.LogDirectory);
 builder.AddPithyxLogging(paths.LogDirectory);
 // The port is fixed (CLAUDE.md, Network). Only a development build takes PITHYX_DEV_PORT, so a second daemon (tests,
 // another worktree) can run next to the dev unit on the same machine.
@@ -88,6 +90,7 @@ if (!BuildTimeDocument.IsGenerating)
     builder.Services.AddPithyxStorageHealthMonitor();
     if (mode == DaemonMode.Real)
     {
+        builder.Services.AddHostedService<JournalReader>();
         builder.Services.AddHostedService<Pithyx.Daemon.Files.Thumbnails.ThumbnailCacheProvisioner>();
     }
 }
@@ -140,7 +143,7 @@ if (!BuildTimeDocument.IsGenerating)
     }
 
     // Plain HTTP is the development transport. HTTPS on 443 arrives with the TLS work in M5.
-    HostLog.PlainHttp(app.Logger, HttpPort, mode);
+    HostLog.PlainHttp(app.Logger, httpPort, mode);
 }
 
 app.UseMiddleware<RequestIdMiddleware>();
@@ -177,6 +180,7 @@ api.MapFileEndpoints();
 api.MapStorageEndpoints();
 api.MapSnapshotEndpoints();
 api.MapStorageHealthEndpoints();
+api.MapLogEndpoints();
 app.MapRealtime();
 app.MapDesktop(paths.DesktopDirectory);
 
