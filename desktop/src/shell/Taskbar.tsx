@@ -127,7 +127,7 @@ export function Taskbar({
           data-active={startOpen || undefined}
           onPress={() => onStart?.()}
         >
-          <LogoMark size={26} motion="hover" />
+          <LogoMark size={38} motion="hover" />
         </AriaButton>
         <Tooltip className={cx(tooltipStyles.tooltip, styles.brandTooltip)} offset={6}>
           <span role="img" aria-label={t('brand')}>
