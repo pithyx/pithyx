@@ -6,6 +6,9 @@ import { App } from './App';
 import { isSessionExpired } from './errors/describe';
 import { initI18n } from './i18n';
 import './theme/index.css';
+import { applyStoredTheme } from './theme/preference';
+
+applyStoredTheme();
 
 const root = document.getElementById('root');
 if (!root) {

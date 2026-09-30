@@ -199,10 +199,16 @@ export function Taskbar({
             </span>
           )}
         </AriaButton>
-        <AriaButton className={cx(styles.button, styles.clock)} aria-label={longDate}>
+        {/* Not a button: the clock opens nothing, so it neither reacts to the pointer nor takes the focus. */}
+        <time
+          className={styles.clock}
+          dateTime={now.toISOString()}
+          title={longDate}
+          aria-label={longDate}
+        >
           <span className={styles.time}>{time}</span>
           <span className={styles.date}>{date}</span>
-        </AriaButton>
+        </time>
       </div>
     </nav>
   );

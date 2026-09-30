@@ -3,6 +3,7 @@ import {
   IconDevices,
   IconLanguage,
   IconLayoutBottombar,
+  IconPalette,
   IconShieldLock,
 } from '../ui/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -28,6 +29,7 @@ import { appsFor, findApp } from '../apps/registry';
 import { initialsOf } from '../auth/parts';
 import { clearSessionHint } from '../auth/sessionHint';
 import { LanguageOptions } from './LanguageOptions';
+import { ThemeOptions } from './ThemeOptions';
 import { useDaemonStatus } from '../daemonStatus';
 import { showError } from '../errors/errorStore';
 import { useRealtime } from '../realtime/connection';
@@ -201,6 +203,14 @@ function UserMenu({
               </MenuItem>
               <MenuPopover>
                 <LanguageOptions />
+              </MenuPopover>
+            </SubmenuTrigger>
+            <SubmenuTrigger>
+              <MenuItem id="theme" icon={<IconPalette size={18} stroke={1.75} />}>
+                {t('menu.theme')}
+              </MenuItem>
+              <MenuPopover>
+                <ThemeOptions />
               </MenuPopover>
             </SubmenuTrigger>
             <SubmenuTrigger>
