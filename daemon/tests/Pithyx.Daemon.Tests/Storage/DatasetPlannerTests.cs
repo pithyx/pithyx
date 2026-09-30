@@ -44,6 +44,7 @@ public sealed class DatasetPlannerTests : IAsyncLifetime
         _snapshotService = new SnapshotService(_commands, _snapshots, _pools, _connections, _time, NullLogger<SnapshotService>.Instance);
         var datasets = new DatasetPlanner(_state, _pools, _snapshots, _snapshotService, new ShareService(_connections, _time), _time, NullLogger<DatasetPlanner>.Instance);
         _planner = new StoragePlanner(_state, facts, _pools, new PoolImportScanner(_commands, _state, facts, _pools), datasets, _commands, _time);
+        _commands.Handler = SnapshotListing.Answer(_snapshots);
         _pools.Replace(new PoolList([Pool("tank"), Pool("fresh"), Pool("bare")], Layout()));
     }
 

@@ -9,6 +9,7 @@ public static class JobEndpoints
     {
         services.AddSingleton<JobBoard>();
         services.AddSingleton(provider => provider.GetRequiredService<JobBoard>().Definition());
+        services.AddSingleton(provider => provider.GetRequiredService<JobBoard>().ActiveDefinition());
         services.AddSingleton<JobService>();
         services.AddHostedService<JobRunner>();
         services.AddHostedService<JobCleanupService>();

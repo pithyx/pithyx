@@ -85,6 +85,16 @@ public static class OpenApiSetup
                 AdditionalProperties = new OpenApiSchema(),
                 Description = job["errorParams"].Description,
             };
+            // The jobs topic's list would otherwise carry its own copy of the job without these types.
+            if (document.Components.Schemas.TryGetValue("JobList", out var listSchema) && listSchema.Properties is { } list)
+            {
+                list["jobs"] = new OpenApiSchema
+                {
+                    Type = JsonSchemaType.Array,
+                    Items = new OpenApiSchemaReference("Job", document),
+                    Description = list["jobs"].Description,
+                };
+            }
         }
 
         foreach (var path in document.Paths.Values)

@@ -13,6 +13,8 @@ export function NotificationPanel({
   position,
   footer,
   panelRef,
+  onDismiss,
+  onClearAll,
 }: {
   jobs?: ReactNode;
   items: NotificationItem[];
@@ -20,6 +22,9 @@ export function NotificationPanel({
   position: TaskbarPosition;
   footer?: ReactNode;
   panelRef?: Ref<HTMLElement>;
+  onDismiss?: (id: string) => void;
+  /** Deletes every notification that is not persistent. */
+  onClearAll?: () => void;
 }) {
   const { t } = useTranslation();
   return (
@@ -33,7 +38,11 @@ export function NotificationPanel({
       <header className={styles.panelHeader}>
         <h2 className={styles.panelTitle}>{t('notifications.title')}</h2>
         {items.some((item) => item.persistent !== true) && (
-          <Button variant="quiet" size="sm">
+          <Button
+            variant="quiet"
+            size="sm"
+            {...(onClearAll === undefined ? {} : { onPress: onClearAll })}
+          >
             {t('notifications.clearAll')}
           </Button>
         )}
@@ -46,7 +55,12 @@ export function NotificationPanel({
           </h3>
           {items.length === 0 && <p className={styles.text}>{t('notifications.empty')}</p>}
           {items.map((item) => (
-            <NotificationCard key={item.id} item={item} locale={locale} />
+            <NotificationCard
+              key={item.id}
+              item={item}
+              locale={locale}
+              {...(onDismiss === undefined ? {} : { onDismiss })}
+            />
           ))}
         </section>
       </div>

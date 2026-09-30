@@ -36,6 +36,12 @@ export interface ShareInfo {
   name: string;
   /** The user's access: `read`, or `readWrite` to change files. */
   access: 'read' | 'readWrite';
+  /**
+   * Set while the share's files cannot be reached: `poolMissing` (its disks are not connected), `poolUnavailable` (its
+   * pool stopped because disks are missing) or `notMounted`. Calls on it fail with `fs.share.unavailable` until the
+   * share is back, which `sharesChanged` announces.
+   */
+  unavailable?: 'poolMissing' | 'poolUnavailable' | 'notMounted';
 }
 
 /** Order of a folder listing. Name order is natural ("file2" before "file10") and ignores case. */

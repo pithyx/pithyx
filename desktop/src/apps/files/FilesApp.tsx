@@ -303,11 +303,12 @@ export function FilesApp({ app }: { app: PithyxApp }) {
 
   // Job progress arrives as SDK events for as long as the window is open.
   useEffect(() => app.on('jobChanged', onJobChanged), [app]);
-  // A share that appears or goes away shows at once; a gone share falls back to the first one left.
+  // A share that appears or goes away shows at once; a gone share falls back to the first one left. A share whose pool
+  // comes back is read again, folder included, so a listing that failed while it was away recovers.
   useEffect(
     () =>
       app.on('sharesChanged', () => {
-        void client.invalidateQueries({ queryKey: ['files', 'shares'] });
+        void client.invalidateQueries({ queryKey: ['files'] });
       }),
     [app, client],
   );
@@ -733,6 +734,9 @@ export function FilesApp({ app }: { app: PithyxApp }) {
             >
               <IconServer2 size={16} stroke={1.75} aria-hidden />
               {candidate.name}
+              {candidate.unavailable !== undefined && (
+                <span className={styles.sideNote}>{t('shares.unavailable')}</span>
+              )}
             </button>
           ))}
           {shareList.length > 0 && <h3 className={styles.sideTitle}>{t('trash')}</h3>}

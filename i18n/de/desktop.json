@@ -118,7 +118,8 @@
     "unmute": "Wieder zeigen",
     "muted": "Stummgeschaltet",
     "storage": "Speicherzustand",
-    "empty": "Keine Benachrichtigungen."
+    "empty": "Keine Benachrichtigungen.",
+    "cancelJob": "{job} abbrechen"
   },
   "switcher": {
     "title": "Geöffnete Apps",
@@ -160,7 +161,7 @@
   "apps": {
     "files": "Dateien",
     "storage": "Speicher",
-    "logs": "Protokolle",
+    "logs": "Protokoll-Center",
     "settings": "Einstellungen",
     "photos": "Fotos",
     "users": "Benutzer",

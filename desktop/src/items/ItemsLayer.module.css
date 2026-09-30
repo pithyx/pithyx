@@ -73,13 +73,6 @@
   opacity: 1;
 }
 
-/* An empty anchor at the pointer for the context menu. */
-.anchor {
-  position: fixed;
-  width: 0;
-  height: 0;
-}
-
 /* Compact: a home screen with icons in rows of four and the notes below them. */
 .home {
   position: static;

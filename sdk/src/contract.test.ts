@@ -51,6 +51,40 @@ describe.each(transports)('over the %s transport', (_, pair) => {
     return { host, app: createApp(appEnd, { themeRoot: null, timeout: 500 }) };
   }
 
+  it('batches log calls into log.write, cut to the limits, and never throws', async () => {
+    const received: unknown[][] = [];
+    const { app } = connectTo({
+      'log.write': ({ entries }) => {
+        received.push(entries);
+      },
+    });
+    const connected = await app;
+    connected.log.info('started', { attempt: 2, ok: true });
+    connected.log.error('x'.repeat(5000));
+    connected.log.debug(
+      'with many fields',
+      Object.fromEntries(Array.from({ length: 30 }, (_, i) => [`k${String(i)}`, i])),
+    );
+    await vi.waitFor(() => {
+      expect(received).toHaveLength(1);
+    });
+    const [entries] = received as [
+      { level: string; message: string; data?: Record<string, string> }[],
+    ];
+    expect(entries.map((entry) => entry.level)).toEqual(['info', 'error', 'debug']);
+    expect(entries[0]?.data).toEqual({ attempt: '2', ok: 'true' });
+    expect(entries[1]?.message).toHaveLength(4000);
+    expect(Object.keys(entries[2]?.data ?? {})).toHaveLength(20);
+  });
+
+  it('drops log entries silently when the desktop does not serve log.write', async () => {
+    const { app } = connectTo({ notify: () => undefined });
+    const connected = await app;
+    expect(() => {
+      connected.log.warn('nobody listens');
+    }).not.toThrow();
+  });
+
   it('hands the app its context with the capabilities the desktop serves', async () => {
     const { app } = connectTo({ 'window.setTitle': () => undefined, notify: () => undefined });
     const connected = await app;

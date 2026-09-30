@@ -89,7 +89,7 @@ public sealed partial class DatasetPlanner(
     {
         ArgumentNullException.ThrowIfNull(request);
         // Used space and new datasets raise no zpool event, so the checks below read what ZFS has now.
-        await state.RefreshPoolsAsync(cancellationToken);
+        await PlanReads.WithinLimitAsync(state.RefreshPoolsAsync, time, cancellationToken);
         return request.Action switch
         {
             "dataset.rename" => Rename(request),
@@ -234,8 +234,14 @@ public sealed partial class DatasetPlanner(
                 throw new PithyxException(ErrorCodes.StorageDatasetInUseByShare, new Dictionary<string, object?> { ["dataset"] = dataset.Name, ["share"] = share.Name });
             }
         }
-        // The snapshot list may be minutes old; a hold placed since would make ZFS refuse halfway.
-        await snapshotService.RefreshAsync(cancellationToken);
+        // The snapshot list may be minutes old; a hold placed since would make ZFS refuse halfway, and a snapshot taken
+        // since would go with the dataset unlisted. Without a fresh list there is no plan.
+        var read = false;
+        await PlanReads.WithinLimitAsync(async token => read = await snapshotService.RefreshAsync(token), time, cancellationToken);
+        if (!read)
+        {
+            throw new PithyxException(ErrorCodes.StorageZfsUnavailable);
+        }
         var listed = new List<string>();
         var snapshotCount = 0;
         foreach (var candidate in gone)

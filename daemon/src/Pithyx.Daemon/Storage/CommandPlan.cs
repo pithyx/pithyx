@@ -16,7 +16,11 @@ public enum GuardRule
 /// <param name="DiskIds">The disks it writes to; the guard checks them right before it runs.</param>
 /// <param name="Rule">The guard's rule for those disks.</param>
 /// <param name="ImportingPool">For <see cref="GuardRule.Import"/>: the imported pool whose disks the step may touch, or null.</param>
-public sealed record PlanStep(CommandRequest Command, IReadOnlyList<string> DiskIds, GuardRule Rule = GuardRule.NewData, string? ImportingPool = null);
+/// <param name="ReachablePool">
+/// A pool the command writes to on all its disks (destroy, export): right before it runs, the pool must not be suspended
+/// or have lost a vdev (<see cref="PoolHealth.Unreachable"/>), since ZFS would then wait in the kernel forever.
+/// </param>
+public sealed record PlanStep(CommandRequest Command, IReadOnlyList<string> DiskIds, GuardRule Rule = GuardRule.NewData, string? ImportingPool = null, string? ReachablePool = null);
 
 /// <param name="DiskId">The disk's id.</param>
 /// <param name="Serial">Its serial when the plan was made.</param>

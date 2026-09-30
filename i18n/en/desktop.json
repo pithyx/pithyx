@@ -118,7 +118,8 @@
     "unmute": "Show again",
     "muted": "Muted",
     "storage": "Storage health",
-    "empty": "No notifications."
+    "empty": "No notifications.",
+    "cancelJob": "Cancel {job}"
   },
   "switcher": {
     "title": "Open apps",
@@ -160,7 +161,7 @@
   "apps": {
     "files": "Files",
     "storage": "Storage",
-    "logs": "Logs",
+    "logs": "Log Center",
     "settings": "Settings",
     "photos": "Photos",
     "users": "Users",

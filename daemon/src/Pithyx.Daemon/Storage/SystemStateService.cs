@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Text.RegularExpressions;
 using System.Threading.Channels;
 using Pithyx.Daemon.Commands;
+using Pithyx.Daemon.Errors;
 using Pithyx.Daemon.Hosting;
 using Pithyx.Daemon.Realtime;
 
@@ -10,8 +11,11 @@ namespace Pithyx.Daemon.Storage;
 /// <summary>
 /// Keeps <see cref="DiskInventory"/> and <see cref="PoolInventory"/> current. Reads disks and pools once at startup,
 /// the disks again after udev reports a block device event and the pools after the storage backend reports one
-/// (<c>zpool events</c>); there is no polling. A monitor that stops is restarted with backoff, and its state is read
-/// again so no change is missed. Disks that appear or change are probed for signatures, except pool members.
+/// (<c>zpool events</c>) or a disk came or went; there is no polling. A monitor that stops is restarted with backoff, and
+/// its state is read again so no change is missed. Disks that appear or change are probed for signatures, except pool
+/// members. The pools' health is derived with <see cref="PoolHealth"/> from what ZFS reports and which disks are
+/// connected, so a pulled disk degrades its pool at once, and a disk that comes back is brought back into its pool.
+/// Pool reads run one at a time: a <c>zpool</c> command that hangs never piles up behind itself.
 /// </summary>
 public sealed partial class SystemStateService(
     ICommandRunner commands,
@@ -22,7 +26,8 @@ public sealed partial class SystemStateService(
     StorageFacts facts,
     TopicHub hub,
     TimeProvider time,
-    ILogger<SystemStateService> logger) : BackgroundService
+    ILogger<SystemStateService> logger,
+    StorageUsage? usage = null) : BackgroundService
 {
     public static readonly CommandRequest Lsblk = new("lsblk", ["-J", "-b", "-O"]);
     public static readonly CommandRequest UdevMonitor = new("udevadm", ["monitor", "--udev", "--subsystem-match=block"]);
@@ -30,9 +35,27 @@ public sealed partial class SystemStateService(
     /// <summary>Events arrive in bursts (a disk and its partitions); one read covers the whole burst.</summary>
     public static readonly TimeSpan Debounce = TimeSpan.FromMilliseconds(250);
 
+    /// <summary>
+    /// How long a read of the used space waits after the last write: ZFS updates it when it syncs a transaction group,
+    /// every 5 seconds by default. A long run of writes is read at the latest <see cref="UsageMaxWait"/> after its first.
+    /// </summary>
+    public static readonly TimeSpan UsageDelay = TimeSpan.FromSeconds(6);
+
+    public static readonly TimeSpan UsageMaxWait = TimeSpan.FromSeconds(30);
+
     private static readonly TimeSpan _maxBackoff = TimeSpan.FromMinutes(1);
+    private readonly Channel<bool> _usageChanges = Channel.CreateBounded<bool>(new BoundedChannelOptions(1) { FullMode = BoundedChannelFullMode.DropWrite });
     private readonly Channel<bool> _changes = Channel.CreateBounded<bool>(new BoundedChannelOptions(1) { FullMode = BoundedChannelFullMode.DropWrite });
     private readonly Channel<bool> _poolChanges = Channel.CreateBounded<bool>(new BoundedChannelOptions(1) { FullMode = BoundedChannelFullMode.DropWrite });
+    private readonly SemaphoreSlim _poolRead = new(1, 1);
+    private readonly Lock _health = new();
+    private PoolList? _lastRead;
+
+    // Leaf GUIDs that went missing and were not brought back yet, the serials of the disks leaves were last seen on,
+    // and the reconnects tried since the disks last changed (each is tried once per change, never in a loop).
+    private readonly HashSet<string> _reconnecting = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, string> _serials = new(StringComparer.Ordinal);
+    private readonly HashSet<string> _attempted = new(StringComparer.Ordinal);
 
     public override async Task StartAsync(CancellationToken cancellationToken)
     {
@@ -40,6 +63,10 @@ public sealed partial class SystemStateService(
         // Pools come first: their members are never probed.
         await RefreshPoolsAsync(cancellationToken);
         await RefreshAsync(cancellationToken);
+        if (usage is not null)
+        {
+            usage.Changed += OnWritten;
+        }
         await base.StartAsync(cancellationToken);
     }
 
@@ -48,7 +75,8 @@ public sealed partial class SystemStateService(
         var monitors = Task.WhenAll(
             MonitorAsync("udevadm monitor", token => UdevLinesAsync(token), _changes, stoppingToken),
             MonitorAsync("zpool events", storage.WatchAsync, _poolChanges, stoppingToken),
-            ConsumeAsync(_poolChanges, RefreshPoolsAsync, stoppingToken));
+            ConsumeAsync(_poolChanges, RefreshPoolsAsync, stoppingToken),
+            ConsumeUsageAsync(stoppingToken));
         await ConsumeAsync(_changes, RefreshAsync, stoppingToken);
         await monitors;
     }
@@ -62,6 +90,55 @@ public sealed partial class SystemStateService(
                 await Task.Delay(Debounce, time, stoppingToken);
                 changes.Reader.TryRead(out var _);
                 await refresh(stoppingToken);
+            }
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            // Shutting down.
+        }
+    }
+
+    public override Task StopAsync(CancellationToken cancellationToken)
+    {
+        if (usage is not null)
+        {
+            usage.Changed -= OnWritten;
+        }
+        return base.StopAsync(cancellationToken);
+    }
+
+    private void OnWritten() => _usageChanges.Writer.TryWrite(true);
+
+    /// <summary>Reads the pools again after writes, once per burst (<see cref="UsageDelay"/>), so used space and fill alerts follow.</summary>
+    private async Task ConsumeUsageAsync(CancellationToken stoppingToken)
+    {
+        try
+        {
+            await foreach (var written in _usageChanges.Reader.ReadAllAsync(stoppingToken))
+            {
+                var first = time.GetUtcNow();
+                do
+                {
+                    await Task.Delay(UsageDelay, time, stoppingToken);
+                }
+                while (_usageChanges.Reader.TryRead(out _) && time.GetUtcNow() - first < UsageMaxWait);
+                var parent = Activity.Current;
+                Activity.Current = null;
+                using (Tracing.Source.StartActivity("storage.usage.refresh"))
+                {
+                    await _poolRead.WaitAsync(stoppingToken);
+                    try
+                    {
+                        await ReadPoolsAsync(stoppingToken);
+                        // Only sizes changed: the snapshot list is not read again for it.
+                        PublishPools(read: false);
+                    }
+                    finally
+                    {
+                        _poolRead.Release();
+                        Activity.Current = parent;
+                    }
+                }
             }
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
@@ -141,6 +218,13 @@ public sealed partial class SystemStateService(
             {
                 LogDisksChanged(changes.Upserts.Count, changes.Removals.Count);
                 hub.Publish(DiskInventory.Topic, changes);
+                lock (_health)
+                {
+                    _attempted.Clear();
+                }
+                // The pools' health follows at once; ZFS may not notice a pulled disk before its next write.
+                PublishPools(read: false);
+                _poolChanges.Writer.TryWrite(true);
             }
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
@@ -186,7 +270,10 @@ public sealed partial class SystemStateService(
         }
     }
 
-    /// <summary>Reads pools and datasets now, for example right after a plan imported a pool or changed a dataset.</summary>
+    /// <summary>
+    /// Reads pools and datasets now, for example right after a plan imported a pool or changed a dataset. Waits for a
+    /// read that is running already. Brings back disks that returned (<see cref="PoolHealth.Reconnects"/>).
+    /// </summary>
     public async Task RefreshPoolsAsync(CancellationToken cancellationToken)
     {
         var parent = Activity.Current;
@@ -194,19 +281,141 @@ public sealed partial class SystemStateService(
         using var activity = Tracing.Source.StartActivity("storage.pools.refresh");
         try
         {
-            if (pools.Replace(await storage.ReadAsync(cancellationToken)))
+            await _poolRead.WaitAsync(cancellationToken);
+            try
             {
-                LogPoolsChanged(pools.Current.Pools.Count);
-                hub.Publish(PoolInventory.Topic, pools.Current);
+                if (await ReadPoolsAsync(cancellationToken) && await ReconnectAsync(cancellationToken))
+                {
+                    await ReadPoolsAsync(cancellationToken);
+                }
+                // Also after a failed read: a suspended pool or a pulled disk shows even while zpool hangs.
+                PublishPools(read: true);
             }
-        }
-        catch (Exception exception) when (exception is not OperationCanceledException)
-        {
-            LogPoolRefreshFailed(exception);
+            finally
+            {
+                _poolRead.Release();
+            }
         }
         finally
         {
             Activity.Current = parent;
+        }
+    }
+
+    /// <summary>
+    /// Applies the connected disks and the kernel's pool states to the last read again and refuses a pool that a command on
+    /// all its disks would hang on (<see cref="PoolHealth.Unreachable"/>), right before such a command runs.
+    /// </summary>
+    public void RequireReachable(string poolName)
+    {
+        PublishPools(read: false);
+        if (pools.Current.Pools.FirstOrDefault(pool => pool.Name == poolName) is { } pool && PoolHealth.Unreachable(pool) is { } code)
+        {
+            throw new PithyxException(code, new Dictionary<string, object?> { ["name"] = poolName });
+        }
+    }
+
+    private async Task<bool> ReadPoolsAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var read = await storage.ReadAsync(cancellationToken);
+            lock (_health)
+            {
+                _lastRead = read;
+            }
+            return true;
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            LogPoolRefreshFailed(exception);
+            return false;
+        }
+    }
+
+    /// <summary>Runs the reconnects for disks that came back, each once per disk change; true when one ran.</summary>
+    private async Task<bool> ReconnectAsync(CancellationToken cancellationToken)
+    {
+        IReadOnlyList<CommandRequest> reconnects;
+        lock (_health)
+        {
+            if (_lastRead is not { } read || !inventory.Loaded)
+            {
+                return false;
+            }
+            reconnects = [.. PoolHealth.Reconnects(read, facts.DevicePresence(), facts.SuspendedPools(read.Pools.Select(pool => pool.Name)), _reconnecting)
+                .Where(command => _attempted.Add(string.Join(' ', command.Arguments)))];
+        }
+        foreach (var command in reconnects)
+        {
+            CommandResult result;
+            try
+            {
+                result = await commands.RunAsync(command, cancellationToken);
+            }
+            catch (TimeoutException)
+            {
+                // Stuck in the kernel; the pool reads must go on, and the pool shows what ZFS reports.
+                LogReconnectFailed(string.Join(' ', command.Arguments), -1, "timed out");
+                continue;
+            }
+            var pool = command.Arguments[1];
+            if (result.ExitCode != 0)
+            {
+                LogReconnectFailed(string.Join(' ', command.Arguments), result.ExitCode, result.StandardError);
+                continue;
+            }
+            LogReconnected(string.Join(' ', command.Arguments), pool);
+            if (command.Arguments[0] == "online")
+            {
+                lock (_health)
+                {
+                    _reconnecting.Remove(command.Arguments[2]);
+                }
+            }
+        }
+        return reconnects.Count > 0;
+    }
+
+    private void PublishPools(bool read)
+    {
+        PoolList derived;
+        lock (_health)
+        {
+            if (_lastRead is not { } last)
+            {
+                return;
+            }
+            var connected = inventory.Loaded ? facts.DevicePresence() : _ => true;
+            var guids = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var leaf in last.Pools.SelectMany(pool => pool.Vdevs.SelectMany(vdev => vdev.Leaves())))
+            {
+                guids.Add(leaf.VdevGuid);
+                if (leaf.Type != "disk" || leaf.Path is not { } path)
+                {
+                    continue;
+                }
+                if (!connected(path))
+                {
+                    _reconnecting.Add(leaf.VdevGuid);
+                }
+                else if (facts.SerialOf(path) is { } serial)
+                {
+                    _serials[leaf.VdevGuid] = serial;
+                }
+            }
+            // A leaf replaced or removed from its pool is forgotten.
+            _reconnecting.IntersectWith(guids);
+            foreach (var gone in _serials.Keys.Where(guid => !guids.Contains(guid)).ToList())
+            {
+                _serials.Remove(gone);
+            }
+            derived = PoolHealth.Apply(last, connected, facts.SuspendedPools(last.Pools.Select(pool => pool.Name)), _reconnecting, _serials);
+        }
+        if (pools.Replace(derived, read))
+        {
+            LogPoolsChanged(pools.Current.Pools.Count);
+            hub.Publish(PoolInventory.Topic, pools.Current);
         }
     }
 
@@ -234,6 +443,12 @@ public sealed partial class SystemStateService(
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Reading the pools failed")]
     private partial void LogPoolRefreshFailed(Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "A disk of pool {Pool} came back: ran zpool {Arguments}")]
+    private partial void LogReconnected(string arguments, string pool);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Bringing back a disk failed: zpool {Arguments} exited with {ExitCode}: {StandardError}")]
+    private partial void LogReconnectFailed(string arguments, int exitCode, string standardError);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Probing {Path} for signatures failed")]
     private partial void LogProbeFailed(string path, Exception exception);

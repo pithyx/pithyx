@@ -10,6 +10,7 @@ using Pithyx.Daemon.Auth;
 using Pithyx.Daemon.Database;
 using Pithyx.Daemon.Errors;
 using Pithyx.Daemon.Hosting;
+using Pithyx.Daemon.Notifications;
 using Pithyx.Daemon.Realtime;
 
 namespace Pithyx.Daemon.Jobs;
@@ -17,7 +18,8 @@ namespace Pithyx.Daemon.Jobs;
 /// <summary>
 /// Long operations of users (copy, move, delete, ...) as persisted jobs with progress. A module starts a job with its
 /// work; <see cref="JobRunner"/> runs queued jobs in order, at most <see cref="JobRunner.MaxConcurrentJobs"/> at once.
-/// Every change is published on the job's topic <c>jobs/{id}</c> (see <see cref="JobBoard"/>).
+/// Every change is published on the job's topic <c>jobs/{id}</c> and to its owner on <c>jobs</c> (see
+/// <see cref="JobBoard"/>). A job that ends creates a notification for its owner.
 /// </summary>
 public sealed partial class JobService
 {
@@ -29,6 +31,17 @@ public sealed partial class JobService
 
     /// <summary>Jobs returned by <see cref="ListAsync"/>.</summary>
     public const int ListLimit = 100;
+
+    /// <summary>Notification codes of a job that ended; <c>params.kind</c> is the job's kind, <c>params.jobId</c> its id.</summary>
+    public const string JobSucceededCode = "jobs.job.succeeded";
+
+    /// <summary>Also carries <c>params.errorCode</c> and <c>params.errorParams</c> (an object) of the error.</summary>
+    public const string JobFailedCode = "jobs.job.failed";
+
+    public const string JobCancelledCode = "jobs.job.cancelled";
+
+    /// <summary>The daemon stopped while the job was queued or running.</summary>
+    public const string JobInterruptedCode = "jobs.job.interrupted";
 
     private const string SelectColumns =
         """
@@ -43,16 +56,25 @@ public sealed partial class JobService
     private readonly SqliteConnectionFactory _connections;
     private readonly JobBoard _board;
     private readonly TopicHub _hub;
+    private readonly NotificationService _notifications;
     private readonly TimeProvider _time;
     private readonly ILogger<JobService> _logger;
     private readonly JsonSerializerOptions _storage;
 
-    public JobService(SqliteConnectionFactory connections, JobBoard board, TopicHub hub, TimeProvider time, IOptions<JsonOptions> json, ILogger<JobService> logger)
+    public JobService(
+        SqliteConnectionFactory connections,
+        JobBoard board,
+        TopicHub hub,
+        NotificationService notifications,
+        TimeProvider time,
+        IOptions<JsonOptions> json,
+        ILogger<JobService> logger)
     {
         ArgumentNullException.ThrowIfNull(json);
         _connections = connections;
         _board = board;
         _hub = hub;
+        _notifications = notifications;
         _time = time;
         _logger = logger;
         // The API's conventions (camelCase, enums as strings), stored as written: the default escaping would turn
@@ -92,7 +114,7 @@ public sealed partial class JobService
         _board.Add(entry);
         var job = entry.Snapshot();
         LogQueued(id, kind, userId);
-        _hub.Publish(JobBoard.TopicOf(id), job);
+        Publish(entry, job);
         // Unbounded: writing only fails once the daemon stops, and then the next start marks the job as interrupted.
         _queue.Writer.TryWrite(entry);
         return job;
@@ -174,13 +196,20 @@ public sealed partial class JobService
     /// <summary>Marks jobs left queued or running by an earlier daemon process as interrupted. Runs before the runner starts.</summary>
     internal async Task InterruptUnfinishedAsync(CancellationToken cancellationToken)
     {
-        await using var connection = await _connections.OpenAsync(cancellationToken);
-        var count = await connection.ExecuteAsync(
-            "UPDATE jobs SET state = 'interrupted', finished_at = @now WHERE state IN ('queued', 'running')",
-            new { now = SessionService.Format(_time.GetUtcNow()) });
-        if (count > 0)
+        List<(long Id, long UserId, string Kind)> interrupted;
+        await using (var connection = await _connections.OpenAsync(cancellationToken))
         {
-            LogInterrupted(count);
+            interrupted = [.. await connection.QueryAsync<(long Id, long UserId, string Kind)>(
+                "UPDATE jobs SET state = 'interrupted', finished_at = @now WHERE state IN ('queued', 'running') RETURNING id, user_id, kind",
+                new { now = SessionService.Format(_time.GetUtcNow()) })];
+        }
+        if (interrupted.Count > 0)
+        {
+            LogInterrupted(interrupted.Count);
+        }
+        foreach (var job in interrupted.OrderBy(job => job.Id))
+        {
+            await NotifyFinishedAsync(job.UserId, job.Id, job.Kind, JobState.Interrupted, null, null);
         }
     }
 
@@ -222,7 +251,7 @@ public sealed partial class JobService
                 entry.PersistThrottle = new TrailingThrottle(PersistInterval, _time, () => _ = Task.Run(() => PersistProgressAsync(entry), CancellationToken.None), startedAt);
             }
             await WriteStateAsync(entry);
-            _hub.Publish(JobBoard.TopicOf(entry.Id), entry.Snapshot());
+            Publish(entry, entry.Snapshot());
             LogStarted(entry.Id, entry.Kind);
 
             try
@@ -357,7 +386,7 @@ public sealed partial class JobService
         }
         try
         {
-            _hub.Publish(JobBoard.TopicOf(entry.Id), entry.Snapshot());
+            Publish(entry, entry.Snapshot());
         }
         finally
         {
@@ -418,7 +447,43 @@ public sealed partial class JobService
                 entry.ErrorCode = final.ErrorCode;
                 entry.ErrorParams = final.ErrorParams;
             }
-            _hub.Publish(JobBoard.TopicOf(entry.Id), entry.Snapshot());
+            Publish(entry, entry.Snapshot());
+        }
+        await NotifyFinishedAsync(entry.UserId, entry.Id, entry.Kind, final.State, final.ErrorCode, final.ErrorParams);
+    }
+
+    private void Publish(JobEntry entry, Job job)
+    {
+        _hub.Publish(JobBoard.TopicOf(entry.Id), job);
+        _hub.Publish(JobBoard.ActiveTopic, new OwnedJob(entry.UserId, job));
+    }
+
+    /// <summary>
+    /// Tells the owner how a job ended. Never throws: a failed notification is logged, the job's own state is what
+    /// counts.
+    /// </summary>
+    private async Task NotifyFinishedAsync(long userId, long jobId, string kind, JobState state, string? errorCode, IReadOnlyDictionary<string, object?>? errorParams)
+    {
+        var (code, tone) = state switch
+        {
+            JobState.Succeeded => (JobSucceededCode, NotificationTone.Success),
+            JobState.Failed => (JobFailedCode, NotificationTone.Warning),
+            JobState.Cancelled => (JobCancelledCode, NotificationTone.Info),
+            _ => (JobInterruptedCode, NotificationTone.Warning),
+        };
+        var parameters = new Dictionary<string, object?>(StringComparer.Ordinal) { ["kind"] = kind, ["jobId"] = jobId };
+        if (errorCode is not null)
+        {
+            parameters["errorCode"] = errorCode;
+            parameters["errorParams"] = errorParams ?? new Dictionary<string, object?>();
+        }
+        try
+        {
+            await _notifications.CreateAsync(userId, new NotificationDraft(code, parameters, tone), CancellationToken.None);
+        }
+        catch (Exception exception)
+        {
+            LogNotifyFailed(exception, jobId, kind);
         }
     }
 
@@ -534,6 +599,9 @@ public sealed partial class JobService
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Saving the progress of job {JobId} failed")]
     private partial void LogProgressFailed(Exception exception, long jobId);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Notifying the owner of job {JobId} {JobKind} failed")]
+    private partial void LogNotifyFailed(Exception exception, long jobId, string jobKind);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Marked {Count} jobs of an earlier daemon run as interrupted")]
     private partial void LogInterrupted(int count);
