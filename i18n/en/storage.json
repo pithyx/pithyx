@@ -29,7 +29,8 @@
     "unavail": "Unavailable",
     "removed": "Removed",
     "suspended": "Suspended",
-    "unknown": "Unknown"
+    "unknown": "Unknown",
+    "missing": "Not connected"
   },
   "vdev": {
     "mirror": "Mirror of {count, plural, one {# disk} other {# disks}}",

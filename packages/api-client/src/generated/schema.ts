@@ -549,6 +549,75 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description The signed-in user's notifications, newest first: at most 200, none older than 30 days. Live through the notifications topic, whose snapshot is the same list. */
+        get: operations["ListNotifications"];
+        put?: never;
+        post?: never;
+        /** @description Deletes every notification of the signed-in user. Storage alerts are not notifications and stay. */
+        delete: operations["ClearNotifications"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description Deletes one notification of the signed-in user. Someone else's answers 404 notifications.notification.not_found. */
+        delete: operations["DeleteNotification"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications/app": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description What an app's SDK notify call becomes: a notification for the signed-in user with the app's plain text, stored as app.message. The desktop sends it for the app after checking the app's notifications permission. Invalid fields answer 400 notifications.message.invalid. */
+        post: operations["CreateAppNotification"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications/read": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Marks the given notifications of the signed-in user as read, or all of them without ids. Unknown ids are ignored. */
+        post: operations["MarkNotificationsRead"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/setup": {
         parameters: {
             query?: never;
@@ -958,6 +1027,16 @@ export type components = {
             title: string;
             type: string;
         };
+        /** @description Body of `POST /api/notifications/app`: a notification an app sends through the SDK. */
+        AppNotificationRequest: {
+            /** @description Id of the app: lowercase letters, digits and dashes, starting with a letter, at most 64 characters. */
+            app: string;
+            /** @description Plain text from the app, at most 1000 characters. */
+            body?: null | string;
+            /** @description Plain text from the app, at most 200 characters. */
+            title: string;
+            tone?: null | components["schemas"]["NotificationTone"];
+        };
         /** @description A message from the client: `sub` or `unsub` for a topic or pattern. */
         ClientMessage: {
             /** @description Chosen by the client; echoed in the ack, snapshots and errors that answer this message. */
@@ -1261,7 +1340,7 @@ export type components = {
             }[];
         };
         /** @enum {string} */
-        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "system.internal.unexpected" | "system.origin.forbidden";
+        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.share.unavailable" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "notifications.message.invalid" | "notifications.notification.not_found" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.disks_missing" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.pool.suspended" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "storage.zfs.unavailable" | "system.internal.unexpected" | "system.origin.forbidden";
         /** @description A failed client message. `id` is empty when the message could not be parsed. */
         ErrorMessage: {
             code: components["schemas"]["ErrorCode"];
@@ -1535,6 +1614,10 @@ export type components = {
             /** @description Where the job is in its life. */
             state: components["schemas"]["JobState"];
         };
+        /** @description Snapshot of the `jobs` topic: the signed-in user's queued and running jobs, oldest first. */
+        JobList: {
+            jobs: components["schemas"]["Job"][];
+        };
         /** @description How far a job is. Totals are 0 while unknown. */
         JobProgress: {
             /**
@@ -1577,6 +1660,11 @@ export type components = {
             totpRequired: boolean;
             user: null | components["schemas"]["UserInfo"];
         };
+        /** @description Body of `POST /api/notifications/read`. */
+        MarkNotificationsReadRequest: {
+            /** @description The notifications to mark as read; null or missing marks every unread one. */
+            ids?: null | number[];
+        };
         NewDesktopItem: {
             /** @description Shortcuts: the id of the app to open. Required for shortcuts, not allowed for notes. */
             app?: null | string;
@@ -1607,6 +1695,98 @@ export type components = {
             /** @description An existing folder on the host: absolute, without symlinks, outside the system directories and not overlapping another share. */
             path: string;
         };
+        /**
+         * @description An entry of a user's notification history. The text is not part of it: the desktop translates `code` with
+         *     `params` from the `notifications` namespace (`&lt;code&gt;.title`, `.body`).
+         */
+        Notification: {
+            /** @description Id of the app that sent it; null for the system. */
+            app: null | string;
+            /**
+             * @description Message code, for example `jobs.job.failed`, `storage.alert.poolDegraded`,
+             *     `storage.alert.resolved` or `app.message` (an app's own plain text in `params.title` and `params.body`).
+             */
+            code: string;
+            /**
+             * Format: date-time
+             * @description When it was created (UTC).
+             */
+            createdAt: string;
+            /**
+             * Format: int64
+             * @description Stable id; never reused.
+             */
+            id: number;
+            /** @description Message parameters: strings and numbers, plus nested objects where a code says so. */
+            params: Record<string, never>;
+            /**
+             * Format: date-time
+             * @description When the user read it (UTC); null while unread.
+             */
+            readAt: null | string;
+            /** @description How the desktop shows it. */
+            tone: components["schemas"]["NotificationTone"];
+        };
+        /** @description Event of the `notifications` topic. Only the user whose notifications changed receives it. */
+        NotificationEvent: {
+            /**
+             * @description What changed in a user's notifications.
+             * @enum {unknown}
+             */
+            change: "created" | "read" | "deleted";
+            /** @description The notifications read or deleted; for `created` the ones dropped. */
+            ids: number[];
+            /**
+             * @description An entry of a user's notification history. The text is not part of it: the desktop translates `code` with
+             *     `params` from the `notifications` namespace (`&lt;code&gt;.title`, `.body`).
+             */
+            notification: null | {
+                /** @description Id of the app that sent it; null for the system. */
+                app: null | string;
+                /**
+                 * @description Message code, for example `jobs.job.failed`, `storage.alert.poolDegraded`,
+                 *     `storage.alert.resolved` or `app.message` (an app's own plain text in `params.title` and `params.body`).
+                 */
+                code: string;
+                /**
+                 * Format: date-time
+                 * @description When it was created (UTC).
+                 */
+                createdAt: string;
+                /**
+                 * Format: int64
+                 * @description Stable id; never reused.
+                 */
+                id: number;
+                /** @description Message parameters: strings and numbers, plus nested objects where a code says so. */
+                params: Record<string, never>;
+                /**
+                 * Format: date-time
+                 * @description When the user read it (UTC); null while unread.
+                 */
+                readAt: null | string;
+                /**
+                 * @description How a notification looks: the color of its card and toast.
+                 * @enum {unknown}
+                 */
+                tone: "info" | "success" | "warning" | "critical";
+            };
+            /**
+             * Format: date-time
+             * @description When the notifications of a `read` event were read (UTC).
+             */
+            readAt: null | string;
+        };
+        /** @description Snapshot of the `notifications` topic and answer of `GET /api/notifications`. */
+        NotificationList: {
+            /** @description The signed-in user's notifications, newest first; at most 200, none older than 30 days. */
+            items: components["schemas"]["Notification"][];
+        };
+        /**
+         * @description How a notification looks: the color of its card and toast.
+         * @enum {unknown}
+         */
+        NotificationTone: "info" | "success" | "warning" | "critical";
         Partition: {
             /** @description File system or content type, for example `ext4` or `zfs_member`. */
             fileSystem: null | string;
@@ -1670,7 +1850,7 @@ export type components = {
              * @description Raw size of all vdevs, parity included.
              */
             sizeBytes: number;
-            /** @description ZFS state: `ONLINE`, `DEGRADED`, `FAULTED`, `OFFLINE`, `UNAVAIL`, `REMOVED` or `SUSPENDED`. */
+            /** @description ZFS state: `ONLINE`, `DEGRADED`, `FAULTED`, `OFFLINE`, `UNAVAIL`, `REMOVED` or `SUSPENDED`; degraded further when disks are gone that ZFS has not noticed yet. */
             state: string;
             /** @description Top-level vdevs, including log, cache, special and spare devices. */
             vdevs: components["schemas"]["Vdev"][];
@@ -2196,6 +2376,8 @@ export type components = {
             name: string;
             /** @description The share root on the host. Only administrators get it. */
             path: null | string;
+            /** @description Why its files cannot be reached now (ShareAvailability), or null when they can. */
+            unavailable?: null | string;
         };
         /** @description Snapshot and event of `shares/list`. */
         ShareListRevision: {
@@ -2659,7 +2841,9 @@ export type components = {
         };
         TopicEvents: {
             "files/+/+": components["schemas"]["FolderChanges"];
+            jobs: components["schemas"]["Job"];
             "jobs/+": components["schemas"]["Job"];
+            notifications: components["schemas"]["NotificationEvent"];
             "shares/list": components["schemas"]["ShareListRevision"];
             "storage/alerts": components["schemas"]["StorageHealth"];
             "storage/disks": components["schemas"]["DisksChanged"];
@@ -2671,7 +2855,9 @@ export type components = {
         };
         TopicSnapshots: {
             "files/+/+": components["schemas"]["FolderWatchState"];
+            jobs: components["schemas"]["JobList"];
             "jobs/+": components["schemas"]["Job"];
+            notifications: components["schemas"]["NotificationList"];
             "shares/list": components["schemas"]["ShareListRevision"];
             "storage/alerts": components["schemas"]["StorageHealth"];
             "storage/disks": components["schemas"]["DiskList"];
@@ -2783,6 +2969,11 @@ export type components = {
             checksumErrors: number;
             /** @description Child vdevs. */
             children: components["schemas"]["Vdev"][];
+            /**
+             * @description True for a leaf whose disk is not connected, also while ZFS has not noticed yet (see PoolHealth).
+             * @default false
+             */
+            missing: boolean;
             /** @description Vdev name as ZFS shows it: `raidz1-0`, `mirror-1` or the device's by-id name. */
             name: string;
             /**
@@ -2799,6 +2990,8 @@ export type components = {
             readErrors: number;
             /** @description What the vdev is for: `data`, `log`, `cache`, `special`, `dedup` or `spare`. */
             role: string;
+            /** @description Serial of the disk a leaf is on, as last seen connected, if known. */
+            serial?: null | string;
             /** @description ZFS state of the vdev. */
             state: string;
             /** @description ZFS vdev type: `disk`, `file`, `mirror`, `raidz`, `draid`, `spare`, `replacing` and so on. */
@@ -3984,6 +4177,155 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    ListNotifications: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationList"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    ClearNotifications: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    DeleteNotification: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    CreateAppNotification: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppNotificationRequest"];
+            };
+        };
+        responses: {
+            /** @description Created */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Notification"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    MarkNotificationsRead: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["MarkNotificationsReadRequest"];
+            };
+        };
         responses: {
             /** @description No Content */
             204: {

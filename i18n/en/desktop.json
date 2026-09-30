@@ -121,7 +121,8 @@
     "unmute": "Show again",
     "muted": "Muted",
     "storage": "Storage health",
-    "empty": "No notifications."
+    "empty": "No notifications.",
+    "cancelJob": "Cancel {job}"
   },
   "switcher": {
     "title": "Open apps",

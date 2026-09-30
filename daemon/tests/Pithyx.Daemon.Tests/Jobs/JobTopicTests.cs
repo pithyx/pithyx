@@ -54,15 +54,37 @@ public sealed class JobTopicTests : IAsyncLifetime
         return JsonDocument.Parse(buffer.AsMemory(0, result.Count)).RootElement.Clone();
     }
 
+    /// <summary>
+    /// Subscribes and returns everything the subscription sent. The ack comes before the snapshots, and a job started
+    /// right after the ack could still show up as a snapshot. The server handles a connection's messages in order, so
+    /// the ack of a no-op unsub sent next marks the end.
+    /// </summary>
+    private static async Task<List<JsonElement>> SubscribeAsync(WebSocket socket, string id, string pattern)
+    {
+        var end = id + "-end";
+        await SendAsync(socket, "sub", id, pattern);
+        await SendAsync(socket, "unsub", end, JobBoard.TopicOf(0));
+        var messages = new List<JsonElement>();
+        while (true)
+        {
+            var message = await ReceiveAsync(socket);
+            if (message.TryGetProperty("id", out var messageId) && messageId.GetString() == end)
+            {
+                return messages;
+            }
+            messages.Add(message);
+        }
+    }
+
     [Fact]
     public async Task JobEventsReachTheOwnerButNotAnotherUser()
     {
         using var bob = await ConnectAsync(_bobCookie);
         using var carol = await ConnectAsync(_carolCookie);
-        await SendAsync(bob, "sub", "b1", JobBoard.Pattern);
-        await SendAsync(carol, "sub", "c1", JobBoard.Pattern);
-        Assert.Equal("ack", (await ReceiveAsync(bob)).GetProperty("type").GetString());
-        Assert.Equal("ack", (await ReceiveAsync(carol)).GetProperty("type").GetString());
+        var bobSubscription = await SubscribeAsync(bob, "b1", JobBoard.Pattern);
+        var carolSubscription = await SubscribeAsync(carol, "c1", JobBoard.Pattern);
+        Assert.Equal(["ack"], bobSubscription.Select(message => message.GetProperty("type").GetString()));
+        Assert.Equal(["ack"], carolSubscription.Select(message => message.GetProperty("type").GetString()));
 
         var job = await _jobs.StartAsync(_bobId, "test.work", null, Gated(new TaskCompletionSource()), Token);
         var bobEvent = await ReceiveAsync(bob);

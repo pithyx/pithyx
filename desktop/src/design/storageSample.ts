@@ -95,6 +95,7 @@ function leaf(name: string, guid: string, state = 'ONLINE', errors = 0): Vdev {
   return {
     name: `ata-NAS_HDD_${name}`,
     vdevGuid: guid,
+    missing: false,
     type: 'disk',
     role: 'data',
     state,
@@ -134,6 +135,7 @@ export const samplePools: Pool[] = [
       {
         name: 'raidz1-0',
         vdevGuid: '9206321434375767675',
+        missing: false,
         type: 'raidz',
         role: 'data',
         state: 'ONLINE',
@@ -167,6 +169,7 @@ export const samplePools: Pool[] = [
       {
         name: 'mirror-0',
         vdevGuid: '4147527772288846010',
+        missing: false,
         type: 'mirror',
         role: 'data',
         state: 'DEGRADED',
@@ -418,6 +421,7 @@ export function samplePlan(request: StoragePlanRequest): StoragePlanPreview {
         `zfs create -o mountpoint=/${pool}/homes ${pool}/pithyx/homes`,
         `zfs create -o canmount=off -o mountpoint=/${pool}/.pithyx/apps ${pool}/pithyx/apps`,
         `zfs create -o mountpoint=/${pool}/.pithyx/system ${pool}/pithyx/system`,
+        `zfs create -o mountpoint=/${pool}/.pithyx/cache -o compression=off -o atime=off -o quota=2560M -o com.sun:auto-snapshot=false ${pool}/pithyx/cache`,
       ]);
     }
     case 'pool.replace':
@@ -689,6 +693,7 @@ export const samplePoolsExpanding = {
       expansion: {
         state: 'scanning',
         vdevGuid: '9206321434375767675',
+        missing: false,
         startedAt: '2026-09-26T09:12:00Z',
         endedAt: null,
         toReflowBytes: 10.1 * TB,

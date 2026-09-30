@@ -59,13 +59,35 @@ public sealed class StorageAlertsTests
     [Theory]
     [InlineData("FAULTED")]
     [InlineData("UNAVAIL")]
-    [InlineData("SUSPENDED")]
     public void AFaultedPoolIsCriticalWithItsState(string state)
     {
         var alert = Assert.Single(Evaluate(Pool(state: state)));
 
         Assert.Equal(("pool.faulted:tank", "critical"), (alert.Key, alert.Severity));
         Assert.Equal(state, alert.Params["state"].GetString());
+    }
+
+    [Fact]
+    public void ASuspendedPoolHasItsOwnCriticalAlert()
+    {
+        var alert = Assert.Single(Evaluate(Pool(state: "SUSPENDED")));
+
+        Assert.Equal(("pool.suspended:tank", "critical", "storage.alert.poolSuspended"), (alert.Key, alert.Severity, alert.Code));
+    }
+
+    [Fact]
+    public void EveryMissingDiskWarnsWithItsSerialNextToTheDegradedPool()
+    {
+        Vdev Leaf(string guid, bool missing, string? serial) =>
+            new($"scsi-{guid}", guid, "disk", "data", missing ? "REMOVED" : "ONLINE", $"/dev/disk/by-id/scsi-{guid}-part1", null, 0, 0, 0, [], missing, serial);
+        var mirror = new Vdev("mirror-0", "m", "mirror", "data", "DEGRADED", null, null, 0, 0, 0, [Leaf("a", false, "VYXTEST01"), Leaf("b", true, "VYXTEST02"), Leaf("c", true, null)]);
+
+        var alerts = Evaluate(Pool(state: "DEGRADED") with { Vdevs = [mirror] });
+
+        Assert.Equal(
+            [("pool.degraded:tank", "critical"), ("disk.missing:tank:b", "warning"), ("disk.missing:tank:c", "warning")],
+            alerts.Select(alert => (alert.Key, alert.Severity)));
+        Assert.Equal(["VYXTEST02", "scsi-c"], alerts.Skip(1).Select(alert => alert.Params["disk"].GetString()));
     }
 
     [Fact]

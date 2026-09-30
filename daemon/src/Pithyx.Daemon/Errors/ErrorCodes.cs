@@ -177,6 +177,14 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.NotFound)]
     public const string FsShareNotFound = "fs.share.not_found";
 
+    /// <summary>
+    /// The share exists and the user may use it, but its dataset cannot be reached now; <c>params.name</c> is the share
+    /// and <c>params.reason</c> one of <c>pool_missing</c>, <c>pool_unavailable</c> or <c>not_mounted</c>
+    /// (<see cref="Shares.ShareAvailability"/>). It comes back once its pool does.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.ServiceUnavailable)]
+    public const string FsShareUnavailable = "fs.share.unavailable";
+
     /// <summary>Another dataset already mounts where the new shared folder would; <c>params.path</c> is the place.</summary>
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string FsSharePathTaken = "fs.share.path_taken";
@@ -213,6 +221,14 @@ public static class ErrorCodes
 
     [ErrorStatus(HttpStatusCode.NotFound)]
     public const string JobsJobNotFound = "jobs.job.not_found";
+
+    /// <summary>An app notification is invalid; <c>params.field</c> names the field (app, title, body), <c>params.maxLength</c> its limit.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string NotificationsMessageInvalid = "notifications.message.invalid";
+
+    /// <summary>The signed-in user has no notification with this id (it was deleted, or belongs to someone else).</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string NotificationsNotificationNotFound = "notifications.notification.not_found";
 
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string RealtimeMessageInvalid = "realtime.message.invalid";
@@ -373,6 +389,27 @@ public static class ErrorCodes
     /// <summary>The typed name does not match the pool's name; <c>params.name</c> is the pool's name.</summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string StoragePoolNameMismatch = "storage.pool.name_mismatch";
+
+    /// <summary>
+    /// ZFS did not answer a read a plan needs within <see cref="Storage.PlanReads.Limit"/>, or reported an error, so the
+    /// plan cannot show what would change. A pool waiting for missing disks can block every <c>zpool</c> and <c>zfs</c> command.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.ServiceUnavailable)]
+    public const string StorageZfsUnavailable = "storage.zfs.unavailable";
+
+    /// <summary>
+    /// The pool's I/O is suspended because too many of its disks are gone; destroying or exporting it now would wait in
+    /// the kernel forever and block every other pool. <c>params.name</c> is the pool.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StoragePoolSuspended = "storage.pool.suspended";
+
+    /// <summary>
+    /// Disks of the pool are gone, so a command that writes to all of them (destroy, export) would suspend it and block
+    /// every other pool. <c>params.name</c> is the pool.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StoragePoolDisksMissing = "storage.pool.disks_missing";
 
     /// <summary>A pool with this name exists already; <c>params.name</c> is the name.</summary>
     [ErrorStatus(HttpStatusCode.Conflict)]

@@ -3,6 +3,37 @@ import { describe, expect, it } from 'vitest';
 import { applyEvent, patternOf, reconnectDelay } from './reducers';
 
 type Disk = components['schemas']['Disk'];
+type Job = components['schemas']['Job'];
+type Notification = components['schemas']['Notification'];
+
+function notification(id: number, readAt: string | null = null): Notification {
+  return {
+    id,
+    code: 'jobs.job.succeeded',
+    params: {},
+    tone: 'success',
+    app: null,
+    createdAt: '2026-09-29T10:00:00Z',
+    readAt,
+  };
+}
+
+function job(id: number, state: Job['state']): Job {
+  return {
+    id,
+    kind: 'files.copy',
+    state,
+    progress: { itemsDone: 0, itemsTotal: 0, bytesDone: 0, bytesTotal: 0, currentItem: null },
+    parameters: null,
+    result: null,
+    errorCode: null,
+    errorParams: null,
+    requestId: 'r',
+    createdAt: '2026-09-29T10:00:00Z',
+    startedAt: null,
+    finishedAt: null,
+  };
+}
 
 function disk(name: string, sizeBytes = 1000): Disk {
   return {
@@ -42,6 +73,78 @@ describe('storage/disks events', () => {
     });
 
     expect(next.disks.map((d) => d.name)).toEqual(['nvme2n1', 'nvme10n1']);
+  });
+});
+
+describe('notifications events', () => {
+  const snapshot = {
+    items: [notification(3), notification(2), notification(1, '2026-09-29T09:00:00Z')],
+  };
+
+  it('puts a new notification first and drops the ones the daemon dropped', () => {
+    const next = applyEvent('notifications', snapshot, {
+      change: 'created',
+      notification: notification(4),
+      ids: [1],
+      readAt: null,
+    });
+
+    expect(next.items.map((item) => item.id)).toEqual([4, 3, 2]);
+  });
+
+  it('does not add a notification twice', () => {
+    const once = applyEvent('notifications', undefined, {
+      change: 'created',
+      notification: notification(5),
+      ids: [],
+      readAt: null,
+    });
+    const twice = applyEvent('notifications', once, {
+      change: 'created',
+      notification: notification(5),
+      ids: [],
+      readAt: null,
+    });
+
+    expect(twice.items.map((item) => item.id)).toEqual([5]);
+  });
+
+  it('marks the read ones and keeps an earlier read time', () => {
+    const next = applyEvent('notifications', snapshot, {
+      change: 'read',
+      notification: null,
+      ids: [3, 1],
+      readAt: '2026-09-29T11:00:00Z',
+    });
+
+    expect(next.items.map((item) => item.readAt)).toEqual([
+      '2026-09-29T11:00:00Z',
+      null,
+      '2026-09-29T09:00:00Z',
+    ]);
+  });
+
+  it('removes deleted ones', () => {
+    const next = applyEvent('notifications', snapshot, {
+      change: 'deleted',
+      notification: null,
+      ids: [3, 2],
+      readAt: null,
+    });
+
+    expect(next.items.map((item) => item.id)).toEqual([1]);
+  });
+});
+
+describe('jobs events', () => {
+  it('adds and updates running jobs in id order and removes finished ones', () => {
+    const started = applyEvent('jobs', { jobs: [job(7, 'running')] }, job(5, 'queued'));
+    const running = applyEvent('jobs', started, job(5, 'running'));
+    const finished = applyEvent('jobs', running, job(7, 'cancelled'));
+
+    expect(started.jobs.map((entry) => entry.id)).toEqual([5, 7]);
+    expect(running.jobs.map((entry) => entry.state)).toEqual(['running', 'running']);
+    expect(finished.jobs.map((entry) => entry.id)).toEqual([5]);
   });
 });
 

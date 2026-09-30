@@ -12,7 +12,8 @@
     "documents": "Dokumente"
   },
   "shares": {
-    "title": "Freigaben"
+    "title": "Freigaben",
+    "unavailable": "Nicht verfügbar"
   },
   "columns": {
     "name": "Name",

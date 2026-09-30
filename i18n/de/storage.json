@@ -29,7 +29,8 @@
     "unavail": "Nicht erreichbar",
     "removed": "Entfernt",
     "suspended": "Angehalten",
-    "unknown": "Unbekannt"
+    "unknown": "Unbekannt",
+    "missing": "Nicht angeschlossen"
   },
   "vdev": {
     "mirror": "Spiegel aus {count, plural, one {# Platte} other {# Platten}}",

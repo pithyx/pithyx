@@ -74,7 +74,7 @@ public sealed class StoragePlanner(
                 return Plan(request, ZfsPlans.Online(request.Pool, Leaf(Pool(request.Pool), request.Vdev).VdevGuid));
             case "pool.destroy":
                 {
-                    var pool = Pool(request.Pool);
+                    var pool = Reachable(Pool(request.Pool));
                     if (!string.Equals(request.ConfirmName, pool.Name, StringComparison.Ordinal))
                     {
                         throw new PithyxException(ErrorCodes.StoragePoolNameMismatch, new Dictionary<string, object?> { ["name"] = pool.Name });
@@ -84,7 +84,7 @@ public sealed class StoragePlanner(
                 }
             case "pool.export":
                 {
-                    var pool = Pool(request.Pool);
+                    var pool = Reachable(Pool(request.Pool));
                     var datasets = pools.Current.Datasets.Where(dataset => dataset.Pool == pool.Name).ToList();
                     return Releasing(Plan(request, ImportPlans.Export(pool.Name)) with
                     {
@@ -318,6 +318,12 @@ public sealed class StoragePlanner(
     private Pool Pool(string name) =>
         pools.Current.Pools.FirstOrDefault(pool => pool.Name == name)
         ?? throw new PithyxException(ErrorCodes.StoragePoolNotFound, new Dictionary<string, object?> { ["name"] = name });
+
+    /// <summary>Refuses a pool that a command on all its disks would hang on (suspended, or a vdev lost).</summary>
+    private static Pool Reachable(Pool pool) =>
+        PoolHealth.Unreachable(pool) is { } code
+            ? throw new PithyxException(code, new Dictionary<string, object?> { ["name"] = pool.Name })
+            : pool;
 
     private static Vdev Leaf(Pool pool, string? guid) =>
         pool.Vdevs.SelectMany(vdev => vdev.Leaves()).FirstOrDefault(leaf => leaf.VdevGuid == guid)

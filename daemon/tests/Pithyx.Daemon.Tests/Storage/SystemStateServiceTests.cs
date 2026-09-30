@@ -22,9 +22,11 @@ public sealed class SystemStateServiceTests : IAsyncDisposable
     private readonly ScriptedCommandRunner _commands = new();
     private readonly DiskInventory _inventory = new();
     private readonly PoolInventory _pools = new();
+    private readonly StorageUsage _usage = new();
     private readonly TopicHub _hub;
     private readonly SystemStateService _service;
     private readonly TopicHub.Connection _subscriber;
+    private readonly string _kstat = Directory.CreateTempSubdirectory("pithyx-kstat-").FullName;
 
     public SystemStateServiceTests()
     {
@@ -35,10 +37,11 @@ public sealed class SystemStateServiceTests : IAsyncDisposable
             _pools,
             new ZfsBackend(_commands),
             new DiskProbe(_commands),
-            new StorageFacts(_inventory, _pools, DeploymentEnvironment.Prod, SystemFiles.Host),
+            new StorageFacts(_inventory, _pools, DeploymentEnvironment.Prod, SystemFiles.Host with { ZfsKstat = _kstat }),
             _hub,
             _time,
-            NullLogger<SystemStateService>.Instance);
+            NullLogger<SystemStateService>.Instance,
+            _usage);
         // Disks and pools are for administrators only.
         _subscriber = _hub.Connect(new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.Role, SessionAuthenticationHandler.AdminRole)], "test")), "s");
         SetDisks(_allDisks);
@@ -48,7 +51,36 @@ public sealed class SystemStateServiceTests : IAsyncDisposable
     {
         await _service.StopAsync(CancellationToken.None);
         _service.Dispose();
+        Directory.Delete(_kstat, recursive: true);
     }
+
+    /// <summary>The default fixture's pools: the mirror pithyxtestm on VYXTEST04 and 05 (sde, sdf), pithyxtests on VYXTEST06 (sdg).</summary>
+    private void SetPools()
+    {
+        foreach (var (key, id) in new[] { ("zpool status", "zpool-status"), ("zpool list", "zpool-list"), ("zfs list", "zfs-list") })
+        {
+            _commands.Results[key] = new CommandResult(0, StorageFixtures.Read("default", id), "", TimeSpan.Zero);
+        }
+        _commands.Results["zpool online"] = new CommandResult(0, "", "", TimeSpan.Zero);
+        _commands.Results["zpool clear"] = new CommandResult(0, "", "", TimeSpan.Zero);
+    }
+
+    private async Task<PoolList> NextPoolsAsync()
+    {
+        while (true)
+        {
+            var next = NextEventAsync();
+            await AdvanceUntilAsync(next);
+            var message = await next;
+            if (message.GetProperty("topic").GetString() == PoolInventory.Topic)
+            {
+                return _pools.Current;
+            }
+        }
+    }
+
+    private static Vdev LeafOn(PoolList pools, string pool, string drive) =>
+        pools.Pools.Single(candidate => candidate.Name == pool).Vdevs.SelectMany(vdev => vdev.Leaves()).Single(leaf => leaf.Path!.Contains(drive, StringComparison.Ordinal));
 
     private void SetDisks(string lsblkJson) => _commands.Results["lsblk"] = new CommandResult(0, lsblkJson, "", TimeSpan.Zero);
 
@@ -143,5 +175,120 @@ public sealed class SystemStateServiceTests : IAsyncDisposable
         await Task.Delay(200, TestContext.Current.CancellationToken);
 
         Assert.False(_subscriber.Outbox.Reader.TryRead(out _));
+    }
+
+    [Fact]
+    public async Task APulledMirrorDiskDegradesItsPoolAtOnceAndLeavesTheOtherPoolAlone()
+    {
+        SetPools();
+        await _service.StartAsync(TestContext.Current.CancellationToken);
+        Assert.Equal([("pithyxtestm", "ONLINE"), ("pithyxtests", "ONLINE")], _pools.Current.Pools.Select(pool => (pool.Name, pool.State)));
+        Assert.Equal("VYXTEST05", LeafOn(_pools.Current, "pithyxtestm", "scsi5").Serial);
+        await _hub.SubscribeAsync(_subscriber, "c1", PoolInventory.Topic, TestContext.Current.CancellationToken);
+        while (_subscriber.Outbox.Reader.TryRead(out _))
+        {
+        }
+
+        // ZFS still reports every disk ONLINE: without ZED it notices a pulled disk only on its next write.
+        SetDisks(Without(_allDisks, "sdf"));
+        _commands.Push("UDEV  [2.0] remove   /devices/.../block/sdf (block)");
+        var pools = await NextPoolsAsync();
+
+        Assert.Equal([("pithyxtestm", "DEGRADED"), ("pithyxtests", "ONLINE")], pools.Pools.Select(pool => (pool.Name, pool.State)));
+        var leaf = LeafOn(pools, "pithyxtestm", "scsi5");
+        Assert.Equal(("REMOVED", true, "VYXTEST05"), (leaf.State, leaf.Missing, leaf.Serial));
+        Assert.False(LeafOn(pools, "pithyxtestm", "scsi4").Missing);
+    }
+
+    [Fact]
+    public async Task ADiskThatComesBackIsBroughtOnlineOnce()
+    {
+        SetPools();
+        await _service.StartAsync(TestContext.Current.CancellationToken);
+        await _hub.SubscribeAsync(_subscriber, "c1", PoolInventory.Topic, TestContext.Current.CancellationToken);
+        SetDisks(Without(_allDisks, "sdf"));
+        _commands.Push("UDEV  [2.0] remove   /devices/.../block/sdf (block)");
+        await NextPoolsAsync();
+        Assert.DoesNotContain(_commands.Calls, call => call.FileName == "zpool" && call.Arguments[0] == "online");
+
+        SetDisks(_allDisks);
+        _commands.Push("UDEV  [3.0] add      /devices/.../block/sdh (block)");
+        for (var i = 0; i < 100 && !_commands.Calls.Any(call => call.FileName == "zpool" && call.Arguments[0] == "online"); i++)
+        {
+            _time.Advance(SystemStateService.Debounce);
+            await Task.Delay(10, TestContext.Current.CancellationToken);
+        }
+
+        var online = Assert.Single(_commands.Calls, call => call.FileName == "zpool" && call.Arguments[0] == "online");
+        Assert.Equal(["online", "pithyxtestm", LeafOn(_pools.Current, "pithyxtestm", "scsi5").VdevGuid], online.Arguments);
+        for (var i = 0; i < 20 && _pools.Current.Pools[0].State != "ONLINE"; i++)
+        {
+            _time.Advance(SystemStateService.Debounce);
+            await Task.Delay(10, TestContext.Current.CancellationToken);
+        }
+        Assert.Equal("ONLINE", _pools.Current.Pools.Single(pool => pool.Name == "pithyxtestm").State);
+
+        // Another udev event or pool read does not run it again.
+        _commands.Push("UDEV  [4.0] change   /devices/.../block/sdf (block)");
+        await Task.Delay(50, TestContext.Current.CancellationToken);
+        _time.Advance(SystemStateService.Debounce);
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        await _service.RefreshPoolsAsync(TestContext.Current.CancellationToken);
+        Assert.Single(_commands.Calls, call => call.FileName == "zpool" && call.Arguments[0] == "online");
+    }
+
+    [Fact]
+    public async Task ASuspendedPoolShowsEvenWhileZpoolHangsAndIsResumedWhenItsDiskIsBack()
+    {
+        SetPools();
+        await _service.StartAsync(TestContext.Current.CancellationToken);
+        Directory.CreateDirectory(Path.Combine(_kstat, "pithyxtests"));
+        await File.WriteAllTextAsync(Path.Combine(_kstat, "pithyxtests", "state"), "SUSPENDED\n", TestContext.Current.CancellationToken);
+        _commands.Results["zpool status"] = new CommandResult(-1, "", "", TimeSpan.Zero);
+        _commands.Handler = request => request.FileName == "zpool" && request.Arguments[0] == "status" ? throw new TimeoutException("zpool did not finish within 00:01:00.") : null;
+
+        await _service.RefreshPoolsAsync(TestContext.Current.CancellationToken);
+
+        Assert.Equal([("pithyxtestm", "ONLINE"), ("pithyxtests", "SUSPENDED")], _pools.Current.Pools.Select(pool => (pool.Name, pool.State)));
+        Assert.Throws<Pithyx.Daemon.Errors.PithyxException>(() => _service.RequireReachable("pithyxtests"));
+        _service.RequireReachable("pithyxtestm");
+
+        _commands.Handler = null;
+        SetPools();
+        await _service.RefreshPoolsAsync(TestContext.Current.CancellationToken);
+
+        Assert.Contains(_commands.Calls, call => call.FileName == "zpool" && call.Arguments.SequenceEqual(["clear", "pithyxtests"]));
+    }
+
+    [Fact]
+    public async Task WritesReadTheUsedSpaceAgainOncePerBurstAfterZfsSynced()
+    {
+        SetPools();
+        await _service.StartAsync(TestContext.Current.CancellationToken);
+        var reads = () => _commands.Calls.Count(call => call.FileName == "zpool" && call.Arguments[0] == "list");
+        // The first disk read counts as a disk change and reads the pools once more.
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        _time.Advance(SystemStateService.Debounce);
+        await Task.Delay(200, TestContext.Current.CancellationToken);
+        var before = reads();
+        var fuller = StorageFixtures.Read("default", "zpool-list").Replace("\"capacity\":{\"value\":0", "\"capacity\":{\"value\":85", StringComparison.Ordinal);
+
+        _commands.Results["zpool list"] = new CommandResult(0, fuller, "", TimeSpan.Zero);
+        _usage.Written();
+        _usage.Written();
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        _time.Advance(SystemStateService.UsageDelay - TimeSpan.FromSeconds(1));
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        _usage.Written();
+        Assert.Equal(before, reads());
+
+        for (var i = 0; i < 10 && reads() == before; i++)
+        {
+            _time.Advance(TimeSpan.FromSeconds(3));
+            await Task.Delay(100, TestContext.Current.CancellationToken);
+        }
+
+        Assert.Equal(before + 1, reads());
+        Assert.Contains(_pools.Current.Pools, pool => pool.CapacityPercent == 85);
     }
 }

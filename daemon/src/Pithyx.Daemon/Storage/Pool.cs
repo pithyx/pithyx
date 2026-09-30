@@ -2,7 +2,7 @@ namespace Pithyx.Daemon.Storage;
 
 /// <param name="Name">Pool name.</param>
 /// <param name="PoolGuid">Pool GUID as decimal text (it does not fit a JSON number).</param>
-/// <param name="State">ZFS state: <c>ONLINE</c>, <c>DEGRADED</c>, <c>FAULTED</c>, <c>OFFLINE</c>, <c>UNAVAIL</c>, <c>REMOVED</c> or <c>SUSPENDED</c>.</param>
+/// <param name="State">ZFS state: <c>ONLINE</c>, <c>DEGRADED</c>, <c>FAULTED</c>, <c>OFFLINE</c>, <c>UNAVAIL</c>, <c>REMOVED</c> or <c>SUSPENDED</c>; degraded further when disks are gone that ZFS has not noticed yet.</param>
 /// <param name="SizeBytes">Raw size of all vdevs, parity included.</param>
 /// <param name="AllocatedBytes">Raw space in use.</param>
 /// <param name="FreeBytes">Raw space free.</param>
@@ -39,6 +39,8 @@ public sealed record Pool(
 /// <param name="WriteErrors">Write errors since import or the last clear.</param>
 /// <param name="ChecksumErrors">Checksum errors since import or the last clear.</param>
 /// <param name="Children">Child vdevs.</param>
+/// <param name="Missing">True for a leaf whose disk is not connected, also while ZFS has not noticed yet (see <see cref="PoolHealth"/>).</param>
+/// <param name="Serial">Serial of the disk a leaf is on, as last seen connected, if known.</param>
 public sealed record Vdev(
     string Name,
     string VdevGuid,
@@ -50,7 +52,9 @@ public sealed record Vdev(
     long ReadErrors,
     long WriteErrors,
     long ChecksumErrors,
-    IReadOnlyList<Vdev> Children)
+    IReadOnlyList<Vdev> Children,
+    bool Missing = false,
+    string? Serial = null)
 {
     public IEnumerable<Vdev> Leaves() => Children.Count == 0 ? [this] : Children.SelectMany(child => child.Leaves());
 }

@@ -73,7 +73,16 @@ test('setup, recovery key, TOTP sign-in and password reset with the recovery key
     await expect(page.getByText('Step 1 of 2')).toBeVisible();
     await page.getByLabel('User name').fill('Admin');
     await page.getByLabel('Display name (optional)').fill('Ada Admin');
-    await page.getByLabel('Password', { exact: true }).fill(password);
+    // A well-known password is refused with the meter's text; any other one is allowed.
+    const passwordField = page.getByLabel('Password', { exact: true });
+    await passwordField.fill('password1');
+    await expect(page.getByText('Strength: Weak.')).toBeVisible();
+    await page.getByLabel('Repeat password').fill('password1');
+    await page.getByRole('button', { name: 'Create administrator' }).click();
+    await expect(passwordField).toBeFocused();
+    await expect(passwordField).toHaveAccessibleDescription(/^This password is too well known\./);
+    await passwordField.fill(password);
+    await expect(page.getByText('Strength: Strong.')).toBeVisible();
     await page.getByLabel('Repeat password').fill(`${password}!`);
     await page.getByRole('button', { name: 'Create administrator' }).click();
     // A failed submit moves focus to the first invalid field, which describes the error.

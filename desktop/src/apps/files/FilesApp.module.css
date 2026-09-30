@@ -107,6 +107,12 @@
   cursor: pointer;
 }
 
+.sideNote {
+  margin-inline-start: auto;
+  color: var(--pithyx-color-text-muted);
+  font-size: 0.85em;
+}
+
 .sideItem:hover {
   background: var(--pithyx-color-hover);
 }
