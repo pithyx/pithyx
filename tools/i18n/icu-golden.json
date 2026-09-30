@@ -33,7 +33,7 @@
     },
     "auth.password.too_common": {
       "params": {},
-      "expected": "This password is one of the most commonly used passwords. Choose one that is harder to guess."
+      "expected": "This password is too well known. Choose one that is harder to guess."
     },
     "auth.password.too_long": {
       "params": {

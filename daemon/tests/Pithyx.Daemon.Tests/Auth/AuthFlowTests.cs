@@ -73,8 +73,8 @@ public sealed class AuthFlowTests : IDisposable
         var body = await response.JsonAsync();
 
         Assert.Equal("auth.password.too_short", body.GetProperty("code").GetString());
-        Assert.Equal(12, body.GetProperty("params").GetProperty("minLength").GetInt32());
-        Assert.Equal("The password needs at least 12 characters.", body.GetProperty("detail").GetString());
+        Assert.Equal(8, body.GetProperty("params").GetProperty("minLength").GetInt32());
+        Assert.Equal("The password needs at least 8 characters.", body.GetProperty("detail").GetString());
     }
 
     [Fact]
