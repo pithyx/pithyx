@@ -513,6 +513,30 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.Forbidden)]
     public const string SystemOriginForbidden = "system.origin.forbidden";
 
+
+    /// <summary>The Linux account of a user cannot be created; <c>params.reason</c> is <c>name_taken</c> (a system account has the name), <c>uid_taken</c> or <c>command_failed</c>.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string UsersAccountRefused = "users.account.refused";
+
+    /// <summary>Every uid of the user range (20000 to 29999) has been given out once.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string UsersUidExhausted = "users.uid.exhausted";
+
+    /// <summary>A user with this name exists; <c>params.username</c> names it.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string UsersUserExists = "users.user.exists";
+
+    /// <summary>The last administrator can neither be deleted nor lose the right.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string UsersUserLastAdmin = "users.user.last_admin";
+
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string UsersUserNotFound = "users.user.not_found";
+
+    /// <summary>An administrator tried to delete their own account.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string UsersUserSelf = "users.user.self";
+
     /// <summary>All codes with their HTTP status, ordered by code.</summary>
     public static FrozenDictionary<string, HttpStatusCode> All { get; } = typeof(ErrorCodes)
         .GetFields(BindingFlags.Public | BindingFlags.Static)

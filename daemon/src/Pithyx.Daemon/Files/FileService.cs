@@ -9,7 +9,7 @@ namespace Pithyx.Daemon.Files;
 /// Files in shares. Every call resolves the share and the caller's access first, and every path is opened below the
 /// share root by the kernel (<see cref="LinuxFs.OpenBeneath"/>), so no path, symlink or rename race leads outside it.
 /// </summary>
-public sealed class FileService(ShareService shares, FolderCache cache, TimeProvider time, Storage.StorageUsage? usage = null)
+public sealed class FileService(ShareService shares, FolderCache cache, TimeProvider time, FileOwners owners, Storage.StorageUsage? usage = null)
 {
     public const int DefaultPageSize = 100;
     public const int MaxPageSize = 1000;
@@ -114,6 +114,7 @@ public sealed class FileService(ShareService shares, FolderCache cache, TimeProv
     {
         ArgumentNullException.ThrowIfNull(body);
         var share = await shares.ResolveAsync(user, shareId, write: true, cancellationToken);
+        var owner = await owners.ForAsync(user, cancellationToken);
         var normalized = NonRoot(path);
         var (parent, name) = FsPath.Split(normalized);
         FsPath.CheckName(name);
@@ -126,6 +127,7 @@ public sealed class FileService(ShareService shares, FolderCache cache, TimeProv
             using (var handle = Open(root, FsPath.Join(parent, temporary), LinuxFs.WriteOnly | LinuxFs.Create | LinuxFs.Exclusive, 0x1a4))
             await using (var file = new FileStream(handle, FileAccess.Write, bufferSize: 0, isAsync: false))
             {
+                owner?.Apply(handle);
                 var buffer = new byte[256 * 1024];
                 int read;
                 while ((read = await body.ReadAsync(buffer, cancellationToken)) > 0)
@@ -158,6 +160,7 @@ public sealed class FileService(ShareService shares, FolderCache cache, TimeProv
     public async Task<FileEntry> CreateFolderAsync(ClaimsPrincipal user, long shareId, string? path, CancellationToken cancellationToken)
     {
         var share = await shares.ResolveAsync(user, shareId, write: true, cancellationToken);
+        var owner = await owners.ForAsync(user, cancellationToken);
         var normalized = NonRoot(path);
         var (parent, name) = FsPath.Split(normalized);
         FsPath.CheckName(name);
@@ -166,6 +169,7 @@ public sealed class FileService(ShareService shares, FolderCache cache, TimeProv
         try
         {
             LinuxFs.MakeDirectory(folder, name);
+            owner?.ApplyAt(folder, name);
         }
         catch (FsError error)
         {

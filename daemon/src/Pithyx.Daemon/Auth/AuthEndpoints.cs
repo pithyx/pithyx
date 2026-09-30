@@ -42,9 +42,11 @@ public static class AuthEndpoints
         TypedResults.Ok(new SetupStatus(await auth.SetupRequiredAsync(cancellationToken), Environment.MachineName));
 
     private static async Task<Ok<SetupResponse>> SetupAsync(
-        SetupRequest request, AuthService auth, SessionService sessions, HttpContext context, IHostEnvironment environment, CancellationToken cancellationToken)
+        SetupRequest request, AuthService auth, SessionService sessions, Users.LinuxAccounts accounts, HttpContext context, IHostEnvironment environment, CancellationToken cancellationToken)
     {
         var (user, recoveryKey) = await auth.SetupAsync(request, cancellationToken);
+        // The administrator's Linux account; a refusal (a system account with the name) is logged, setup goes on.
+        await accounts.ReconcileAsync(cancellationToken);
         await StartSessionAsync(context, sessions, environment, user.Id, cancellationToken);
         return TypedResults.Ok(new SetupResponse(user, recoveryKey));
     }

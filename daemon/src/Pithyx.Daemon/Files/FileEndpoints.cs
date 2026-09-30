@@ -18,6 +18,7 @@ public static class FileEndpoints
     public static IServiceCollection AddPithyxFiles(this IServiceCollection services)
     {
         services.AddSingleton<FolderCache>();
+        services.AddSingleton<FileOwners>();
         services.AddSingleton<FileService>();
         services.AddSingleton<FileOperations>();
         services.AddSingleton<TrashService>();

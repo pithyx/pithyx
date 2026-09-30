@@ -1,0 +1,48 @@
+{
+  "title": "Users",
+  "intro": "Every user is a Linux account of its own, so files they create belong to them. Their uids are never given out again.",
+  "column": {
+    "name": "Name",
+    "uid": "User id",
+    "home": "Home",
+    "actions": "Actions"
+  },
+  "badge": {
+    "admin": "Administrator",
+    "totp": "Two-factor"
+  },
+  "noHome": "No pool yet",
+  "field": {
+    "username": "User name",
+    "usernameHint": "Lowercase letters, digits, hyphens and underscores, starting with a letter or underscore.",
+    "displayName": "Display name (optional)",
+    "password": "Password",
+    "newPassword": "New password",
+    "admin": "Administrator (may change everything)"
+  },
+  "create": {
+    "button": "Create user",
+    "title": "Create user",
+    "intro": "The user gets a home folder on the first pool when there is one.",
+    "submit": "Create"
+  },
+  "edit": {
+    "button": "Edit",
+    "title": "Edit {name}",
+    "submit": "Save"
+  },
+  "password": {
+    "button": "New password",
+    "title": "New password for {name}",
+    "intro": "The user is signed out everywhere and signs in with the new password.",
+    "submit": "Set password"
+  },
+  "delete": {
+    "button": "Delete",
+    "title": "Delete {name}?",
+    "intro": "The account goes. The user's files and home folder stay, and the user id is never given to anyone else.",
+    "confirm": "Type {name} to confirm",
+    "submit": "Delete user"
+  },
+  "cancel": "Cancel"
+}

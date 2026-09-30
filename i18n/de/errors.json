@@ -300,5 +300,19 @@
     "origin": {
       "forbidden": "Die Anfrage kam von einer anderen Website und wurde abgelehnt."
     }
+  },
+  "users": {
+    "account": {
+      "refused": "Das Linux-Konto {username} kann nicht angelegt werden ({reason}). Vielleicht nutzt ein Systemkonto diesen Namen schon."
+    },
+    "uid": {
+      "exhausted": "Es sind keine Benutzer-IDs mehr frei. Jede ID von 20000 bis 29999 wurde schon einmal vergeben."
+    },
+    "user": {
+      "exists": "Es gibt schon einen Benutzer namens {username}.",
+      "last_admin": "Der letzte Administrator kann weder gelöscht werden noch das Administratorrecht verlieren.",
+      "not_found": "Der Benutzer wurde nicht gefunden. Vielleicht hat ihn jemand gelöscht.",
+      "self": "Du kannst dein eigenes Konto nicht löschen."
+    }
   }
 }

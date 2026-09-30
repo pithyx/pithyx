@@ -19,6 +19,7 @@ using Pithyx.Daemon.Storage;
 using Pithyx.Daemon.Storage.Health;
 using Pithyx.Daemon.Storage.Snapshots;
 using Pithyx.Daemon.Storage.Zfs;
+using Pithyx.Daemon.Users;
 using Scalar.AspNetCore;
 using Serilog;
 
@@ -63,6 +64,9 @@ builder.Services.AddPithyxLayouts();
 builder.Services.AddPithyxNotifications();
 builder.Services.AddPithyxJobs();
 builder.Services.AddPithyxShares();
+builder.Services.AddPithyxUsers(mode == DaemonMode.Real
+    ? new AccountOptions("/etc/passwd", Apply: true)
+    : new AccountOptions(Path.Combine(builder.Configuration["PITHYX_FIXTURES"] ?? Path.Combine(builder.Environment.ContentRootPath, "..", "..", "tests", "fixtures"), "etc", "passwd"), Apply: false));
 builder.Services.AddPithyxFiles();
 builder.Services.AddSingleton<TopicRegistry>();
 builder.Services.AddSingleton<TopicHub>();
@@ -92,6 +96,7 @@ if (!BuildTimeDocument.IsGenerating)
     {
         builder.Services.AddHostedService<JournalReader>();
         builder.Services.AddHostedService<Pithyx.Daemon.Files.Thumbnails.ThumbnailCacheProvisioner>();
+        builder.Services.AddHostedService<LinuxAccountSync>();
     }
 }
 builder.Services.AddPithyxOpenApi();
@@ -176,6 +181,7 @@ api.MapLayoutEndpoints();
 api.MapJobEndpoints();
 api.MapNotificationEndpoints();
 api.MapShareEndpoints();
+api.MapUserEndpoints();
 api.MapFileEndpoints();
 api.MapStorageEndpoints();
 api.MapSnapshotEndpoints();

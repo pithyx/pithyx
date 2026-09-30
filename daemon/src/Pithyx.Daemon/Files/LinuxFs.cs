@@ -124,6 +124,15 @@ internal static unsafe partial class LinuxFs
     [LibraryImport("libc", EntryPoint = "mkdirat", SetLastError = true)]
     private static partial int MkdirAt(int directory, byte* name, uint mode);
 
+    [LibraryImport("libc", EntryPoint = "fchown", SetLastError = true)]
+    private static partial int FChown(int descriptor, uint owner, uint group);
+
+    [LibraryImport("libc", EntryPoint = "fchownat", SetLastError = true)]
+    private static partial int FChownAt(int directory, byte* name, uint owner, uint group, int flags);
+
+    [LibraryImport("libc", EntryPoint = "geteuid")]
+    private static partial uint GetEffectiveUserId();
+
     [LibraryImport("libc", EntryPoint = "copy_file_range", SetLastError = true)]
     private static partial nint CopyFileRange(int input, long* inputOffset, int output, long* outputOffset, nuint length, uint flags);
 
@@ -321,6 +330,35 @@ internal static unsafe partial class LinuxFs
             fixed (byte* pointer = bytes)
             {
                 return UnlinkAt(fd, pointer, folder ? AtRemoveDir : 0);
+            }
+        });
+        if (result != 0)
+        {
+            throw Failure(name);
+        }
+    }
+
+    /// <summary>Whether the daemon runs as root and may therefore give files to other users.</summary>
+    public static bool IsRoot => GetEffectiveUserId() == 0;
+
+    /// <summary>Gives an open file to a user and group (fchown).</summary>
+    public static void ChangeOwner(SafeFileHandle file, uint owner, uint group)
+    {
+        if (WithHandle(file, fd => FChown(fd, owner, group)) != 0)
+        {
+            throw Failure("");
+        }
+    }
+
+    /// <summary>Gives an entry of a folder to a user and group without following a symlink (fchownat).</summary>
+    public static void ChangeOwnerAt(SafeFileHandle directory, string name, uint owner, uint group)
+    {
+        var bytes = Utf8(name);
+        var result = WithHandle(directory, fd =>
+        {
+            fixed (byte* pointer = bytes)
+            {
+                return FChownAt(fd, pointer, owner, group, AtSymlinkNoFollow);
             }
         });
         if (result != 0)

@@ -294,36 +294,6 @@
       "params": {},
       "expected": "This job does not exist or has already been removed."
     },
-    "logs.app.invalid": {
-      "params": {
-        "app": "Files!"
-      },
-      "expected": "The app id Files! is not valid."
-    },
-    "logs.archive.pool_unavailable": {
-      "params": {
-        "pool": "tank"
-      },
-      "expected": "The pool tank cannot hold the log archive now. It may be missing, locked or read-only."
-    },
-    "logs.batch.too_large": {
-      "params": {
-        "max": 100
-      },
-      "expected": "An app can send at most 100 log entries at once."
-    },
-    "logs.query.invalid": {
-      "params": {},
-      "expected": "The log filter is not valid. Check the time range."
-    },
-    "logs.settings.invalid": {
-      "params": {
-        "field": "maxBytes",
-        "min": 67108864,
-        "max": 4294967296
-      },
-      "expected": "maxBytes must be between 67108864 and 4294967296."
-    },
     "realtime.message.invalid": {
       "params": {},
       "expected": "The live connection received a message it does not understand."
@@ -385,10 +355,6 @@
         "method": "notify"
       },
       "expected": "The desktop did not answer the app in time (notify)."
-    },
-    "sdk.transfer.cancelled": {
-      "params": {},
-      "expected": "The transfer was cancelled."
     },
     "sdk.transport.closed": {
       "params": {},
@@ -718,6 +684,69 @@
         "vdev": "mirror-0"
       },
       "expected": "Only a RAID-Z group can be expanded by a disk; mirror-0 is not one."
+    },
+    "users.account.refused": {
+      "params": {
+        "username": "backup",
+        "reason": "name_taken"
+      },
+      "expected": "The Linux account backup cannot be created (name_taken). A system account may already use this name."
+    },
+    "users.uid.exhausted": {
+      "params": {},
+      "expected": "No user ids are left. Every id from 20000 to 29999 has been given out once."
+    },
+    "users.user.exists": {
+      "params": {
+        "username": "rita"
+      },
+      "expected": "A user named rita already exists."
+    },
+    "users.user.last_admin": {
+      "params": {},
+      "expected": "The last administrator cannot be deleted or lose the administrator right."
+    },
+    "users.user.not_found": {
+      "params": {},
+      "expected": "The user was not found. Someone may have deleted it."
+    },
+    "users.user.self": {
+      "params": {},
+      "expected": "You cannot delete your own account."
+    },
+    "logs.app.invalid": {
+      "params": {
+        "app": "Files!"
+      },
+      "expected": "The app id Files! is not valid."
+    },
+    "logs.archive.pool_unavailable": {
+      "params": {
+        "pool": "tank"
+      },
+      "expected": "The pool tank cannot hold the log archive now. It may be missing, locked or read-only."
+    },
+    "logs.batch.too_large": {
+      "params": {
+        "max": 100
+      },
+      "expected": "An app can send at most 100 log entries at once."
+    },
+    "logs.query.invalid": {
+      "params": {},
+      "expected": "The log filter is not valid. Check the time range."
+    },
+    "logs.settings.invalid": {
+      "params": {
+        "field": "maxBytes",
+        "min": 67108864,
+        "max": 4294967296
+      },
+      "expected": "maxBytes must be between 67108864 and 4294967296."
+    },
+    "sdk.transfer.cancelled": {
+      "params": {},
+      "expected": "The transfer was cancelled."
     },
     "fs.share.unavailable": {
       "params": {

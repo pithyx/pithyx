@@ -1,0 +1,10 @@
+root:x:0:0:root:/root:/bin/bash
+daemon:x:1:1:daemon:/usr/sbin:/usr/sbin/nologin
+owner:x:1000:1000:Owner,,,:/home/owner:/bin/bash
+# a comment line
+broken line without fields
+admin:x:20000:100:Ada Admin:/tank/homes/admin:/usr/sbin/nologin
+rita:x:20001:100:Rita:/nonexistent:/usr/sbin/nologin
+gone:x:20002:100::/nonexistent:/usr/sbin/nologin
+backup:x:34:34:backup:/var/backups:/usr/sbin/nologin
+appuser:x:40000:40000::/nonexistent:/usr/sbin/nologin
