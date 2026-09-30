@@ -37,15 +37,15 @@ Status: merged, open (PR exists), branch (pushed, no PR), WIP (pushed, unfinishe
 
 Local worktrees on dev01 (`/home/gabriel/code/pithyx/.worktrees/<name>`): `context-menu`, `disk-failure`, `log-center`, `notifications`, `quick-fixes`, `settings` (now on `wip/settings-c1-c4`), `share-plan`, `share-recovery`, `usage`, `users` (now on `wip/users-acl-disable`). None has uncommitted changes. Remove a worktree and its local branch once its PR is merged.
 
-Decision numbers in use: D269 and D273 on `dev`, D270 on `fix/disk-failure`, D271 and D272 on `fix/quick-fixes`. The next free number is D274. The decision log at the end of `TODO.md` conflicts on every merge of these branches; keep all entries in number order.
+Decision numbers in use: D269, D273 and D274 on `dev`, D270 on `fix/disk-failure`, D271 and D272 on `fix/quick-fixes`. The next free number is D275. The decision log at the end of `TODO.md` conflicts on every merge of these branches; keep all entries in number order.
 
 ## B. Rules for every session
 
-`CLAUDE.md` is binding. The owner's rules of 2026-09-30 below apply in addition. The owner also stated a broader rule about what an agent may do on dev01 without asking; it is not in `CLAUDE.md` yet, and until the owner adds it there, `CLAUDE.md` decides.
+`CLAUDE.md` is binding. In dev (dev01 and every other dev environment) the agent may do anything without asking: install and remove packages, change services and configuration, load kernel modules, reboot, create and destroy pools and arrays, reset databases, edit any file including `CLAUDE.md`. The owner says when a machine is prod. The limits below are the only ones.
 
 ### Hard limits
 
-- Never delete, force-push or rewrite `origin/master` or `origin/dev`. Never push or merge to `master`.
+- Never push or merge to `master` (that is the owner's). Never delete, force-push or rewrite `origin/master` or `origin/dev`.
 - Never touch `sda`. Real test disks are only `VYXTEST01` to `VYXTEST06` (through `tools/dev-vm/testpool.sh`); scsi_debug disks are free to use.
 - No long write tests or benchmarks: the host's SSD is worn.
 - No access to pve02, the home network or the CI runner's server.
@@ -153,7 +153,7 @@ In this order. Each item says how to see in the running system that it is done. 
 - **setfacl is missing on dev01** (package `acl` not installed); `wip/users-acl-disable` therefore writes raw `system.posix_acl_access` xattrs. Decide in C5.
 - **The runner lacks `libatomic1`**, so the pnpm jobs fail there until the owner installs it.
 - **Old paths.** Before this run, `pithyx-dev.service` pointed to `/home/gabriel/code/vyxis/.worktrees/pools` and failed with `200/CHDIR`; it now runs from the main checkout. `/etc/vyxis` still exists (C6). An untracked `tools/run/start.sh` (old Vyxis script on port 8994) was removed from the main checkout.
-- **Tool guard.** Claude Code's auto-mode classifier refused an agent edit of `CLAUDE.md` (treated as self-modification) and the reading of the `users` table. Changes to `CLAUDE.md` go to the owner, or through a PR the owner approves; `fix/quick-fixes` already contains one (B1).
+- **Tool guard.** Claude Code's auto-mode classifier once refused an agent edit of `CLAUDE.md` (self-modification) and the reading of the `users` table. Since then `~gabriel/.claude/settings.json` (`autoMode`) and `.claude/settings.local.json` on dev01 tell it what the owner allows; `.claude/settings.json` only denies pushes to `master` and force-pushes or deletes of `dev`. Never read password hashes or session tokens; use the API.
 - **WIP commits** were made with `--no-verify`: the lefthook checks did not run on them.
 - **E2E suite.** `pnpm e2e` starts its own daemon with a fresh database; on dev01 it needs `PITHYX_E2E_PORT=7485`, since 7484 is always taken. It belongs on the runner.
 

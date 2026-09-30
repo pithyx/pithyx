@@ -14,10 +14,20 @@ These rules are binding. If a rule blocks you, stop and ask. Do not work around 
 
 Know where you are before you act. Every machine declares its environment in `/etc/pithyx/environment` (`dev` or `prod`); the owner may also state it ("this is dev", "this is prod"). If neither says anything, treat it as prod.
 
-- **dev** (dev VM, simulation mode, CI): you may create and destroy pools on the VM's test disks, reset the database and restart services freely. Hard limit: never touch disks that are not the VM's declared test disks.
-- On the dev VM, test pools and disks are handled only through `tools/dev-vm/testpool.sh` (`create`, `destroy`, `wipe`), which refuses any disk whose serial is not a test disk (`VYXTEST01` to `VYXTEST06`, listed in `/etc/pithyx/test-disks`). Serials keep their historical VYXTEST prefix (virtual hardware in Proxmox). `.claude/settings.json` denies raw `zpool create`/`destroy`, `wipefs`, `mkfs` and `dd` to devices. `zpool destroy` leaves labels and partitions behind; run `testpool.sh wipe` afterwards.
+- **dev** (dev01, other dev VMs, simulation mode, CI): the machine belongs to the agent. Nothing needs permission: install and remove packages (apt), change services and configuration, load kernel modules, reboot, create and destroy pools and arrays, reset databases, edit any file in the repo including every `CLAUDE.md`. Do it, then document it (commit message, D entry or `docs/dev/HANDOFF.md`).
+- The only hard limits in dev: never push or merge to `master` (merging into `master` always needs the owner), and never delete, force-push or rewrite `origin/master` or `origin/dev`. On dev01 also: never touch `sda` (the system disk); real test disks are `VYXTEST01` to `VYXTEST06` (listed in `/etc/pithyx/test-disks`, historical VYXTEST prefix from Proxmox), scsi_debug disks are free to use. No long write tests or benchmarks (the host's SSD is worn). No access to pve02, the home network or the CI runner's server. No secrets in commits or chat. Before a reboot, commit and push all work (WIP branches are fine) and say so in the chat.
+- `tools/dev-vm/testpool.sh` (`create`, `destroy`, `wipe`) is the convenient way to handle test pools; it refuses any disk that is not a test disk. `zpool destroy` leaves labels and partitions behind; run `testpool.sh wipe` afterwards.
 - **prod** (anything with real data, including the owner's own NAS): read-only by default. Before any write, show the exact command and wait for explicit confirmation. Take a snapshot or backup first. Never run `zpool destroy`, `zpool create`, `mkfs`, `wipefs`, `dd`, `rm -rf` on data paths, `docker volume rm` or database migrations without a confirmed backup.
 - The product follows the same idea: destructive storage actions in the daemon refuse to touch disks that contain partitions or data unless the user confirms with the disk serial.
+
+## Dev VM
+
+- `pithyx-dev.service` on port 7484 is the one dev instance, with one database at `/var/lib/pithyx/pithyx.db`. It always runs, so the owner can sign in and watch. Never point it at another database or data directory.
+- It runs dev only: `tools/dev-vm/install-dev-daemon.sh` fast-forwards the main checkout to `origin/dev`, builds and restarts the unit. Deploy after every merge into `dev`.
+- Reset the database only with `tools/dev-vm/reset-dev-db.sh`: it stops the unit, deletes the database, starts the unit (migrations run on start) and sets up the owner account again.
+- The owner account's credentials live in `~gabriel/.config/pithyx-dev/owner.env` (mode 600, never in the repo, never in the chat). Never change the owner account: no password change, no 2FA reset, no deactivation. A reset turns the owner's 2FA off; report that.
+- Tests use their own accounts `e2e-admin` and `e2e-user` from `~gabriel/.config/pithyx-dev/e2e.env`, created by `tools/dev-vm/seed-dev-accounts.sh`.
+- A fresh state or an unmerged branch runs on a short-lived second instance: `tools/dev-vm/start.sh` from the branch's worktree (port 7485, `mktemp -d`, deleted on exit). 7484 stays untouched.
 
 ## Nested rules
 
@@ -69,7 +79,7 @@ i18n/     translation files (en is the reference language)
 website/  landing page and user docs (Starlight, Markdown)
 ```
 
-- No developer docs in markdown. The code is the developer documentation. Allowed markdown outside `website/`: README.md, CLAUDE.md (root and per top-level folder), CONTRIBUTING.md, TODO.md, CHANGELOG.md, SECURITY.md.
+- No developer docs in markdown. The code is the developer documentation. Allowed markdown outside `website/`: README.md, CLAUDE.md (root and per top-level folder), CONTRIBUTING.md, TODO.md, CHANGELOG.md, SECURITY.md, and `docs/dev/HANDOFF.md`, the entry point for every new agent session (current state, open work).
 - User docs live in `website/`. After every change, check whether an existing doc page describes the changed behavior and update it in the same commit.
 - Then decide whether the change deserves a new doc entry. It does if a user or admin would otherwise have to guess: a new feature or setting, changed behavior, a new error code, a limitation or a required manual step. It does not for internal refactors, performance work without visible effect, or developer-only details (those belong in code and commit messages).
 - If a doc update is needed but out of scope for the current task, add an item to `TODO.md` instead of skipping it silently.
@@ -193,14 +203,17 @@ Everything else is internal and may change at any time.
 Test parsers, decision logic, permission checks, manifest validation and the update state machine.
 Integration tests that need root, real zfs (and later mdadm), loop devices, scsi_debug disks or Linux accounts (`Category=StorageIntegration`) never run in GitHub CI. They run on the dev VM with `tools/dev-vm/integration.sh` (sparse files in `/dev/shm`, throwaway pools), and a PR that changes storage, account or command runner code attaches the result. Before a storage PR is merged, its destructive suite runs on the dev VM against the declared test disks.
 Do not test getters, DTOs, pass-through controllers or individual React components.
-Daemon tests run in simulation mode by default (`DaemonFactory`), with a fake clock where time matters. End-to-end tests live in `e2e/` (Playwright, run with `pnpm build && pnpm e2e`) and start their own daemon with a fresh database.
+Daemon tests run in simulation mode by default (`DaemonFactory`), with a fake clock where time matters. End-to-end tests live in `e2e/` (Playwright, run with `pnpm build && pnpm e2e`) and start their own daemon with a fresh database. The E2E suite and the performance gate run on the CI runner, not on dev01.
+Disk pull tests (a scsi_debug disk pulled from a live pool) can wedge ZFS until a reboot. They run only with `integration.sh --disk-pulls` on a freshly booted dev01.
 
 ## CI
 
 - Every job in `.github/workflows/ci.yml` runs on `runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}`: the owner's self-hosted runner (label `pithyx-ci`) while the repository variable is set, GitHub-hosted runners once it is unset (for the public repository).
 - The self-hosted runner has no Docker and no root. No job uses `services:` or `container:`, and nothing that needs ZFS, real disks or root runs there (see Tests).
 - Workflows set `permissions: contents: read` at the top and widen it per job only where needed. No `pull_request_target`, no secrets in logs. A self-hosted runner never executes code from forks without approval.
-- When Actions does not start (a billing lock, a runner that is down), do not wait: `tools/ci-local.sh` runs the same steps locally. A green local run approves a merge into `dev`; its summary goes into the pull request.
+- The self-hosted runner (`dedi-01`, label `pithyx-ci`) is the CI; a merge into `dev` needs its green run. The owner maintains the runner: never change it, and never add workarounds to the workflows for something missing on it.
+- dev01 has too few resources for the performance gate and E2E. On dev01 run only build, lint, typecheck and unit tests before a push, and the ZFS integration tests (`tools/dev-vm/integration.sh`).
+- `tools/ci-local.sh` is an emergency fallback only, for when the runner cannot run a job at all. It never replaces a red job on the runner. On dev01 its E2E and performance results do not count; the PR says which steps the fallback proved.
 
 ## Before you commit
 
