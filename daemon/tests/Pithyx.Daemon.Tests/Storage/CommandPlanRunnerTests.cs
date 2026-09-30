@@ -88,8 +88,8 @@ public sealed class CommandPlanRunnerTests : IDisposable
         await _runner.RunAsync(plan, (index, _) => progress.Add(index), Token);
 
         Assert.Equal(["create"], ZpoolCalls());
-        Assert.Equal(["create", "create", "create", "create", "create", "list"], _commands.Calls.Where(call => call.FileName == "zfs").Select(call => call.Arguments[0]));
-        Assert.Equal([0, 1, 2, 3, 4, 5], progress);
+        Assert.Equal(["create", "create", "create", "create", "create", "create", "list"], _commands.Calls.Where(call => call.FileName == "zfs").Select(call => call.Arguments[0]));
+        Assert.Equal([0, 1, 2, 3, 4, 5, 6], progress);
         // After the last command the state is read again, so the page and the bookkeeping see the new pool.
         Assert.Equal([plan.Steps[^1].Command, ZfsBackend.Status, ZfsBackend.List, ZfsBackend.Datasets], _commands.Calls.TakeLast(4));
     }

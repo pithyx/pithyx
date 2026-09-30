@@ -4,7 +4,7 @@ namespace Pithyx.Daemon.Hosting;
 /// <param name="LogDirectory">Structured logs.</param>
 /// <param name="DatabasePath">The SQLite database.</param>
 /// <param name="DesktopDirectory">The built desktop.</param>
-/// <param name="CacheDirectory">Rebuildable data on the system disk (thumbnails); safe to delete.</param>
+/// <param name="CacheDirectory">Rebuildable data on the system disk; safe to delete. Thumbnails live on their pool, here only for folder shares on development machines.</param>
 public sealed record DaemonPaths(string LogDirectory, string DatabasePath, string DesktopDirectory, string CacheDirectory)
 {
     public static DaemonPaths Resolve(IConfiguration configuration, IHostEnvironment environment, DaemonMode mode)
@@ -19,4 +19,14 @@ public sealed record DaemonPaths(string LogDirectory, string DatabasePath, strin
                 : "/usr/lib/pithyx/desktop"),
             configuration["PITHYX_CACHE_DIR"] ?? (development ? Path.Combine(devRoot, "cache") : "/var/cache/pithyx"));
     }
+
+    /// <summary>
+    /// True when the database would fall back to <c>.pithyx-dev/</c> on a Pithyx machine (one with
+    /// <c>environment</c> in <paramref name="etcDirectory"/>). Such a machine has exactly one installation (D277); a daemon
+    /// started from a checkout without <c>PITHYX_DB</c> would be a second one. Tests pass their own database.
+    /// </summary>
+    public static bool IsSecondInstallation(IConfiguration configuration, IHostEnvironment environment, DaemonMode mode, string etcDirectory) =>
+        configuration["PITHYX_DB"] is null
+        && (environment.IsDevelopment() || mode == DaemonMode.Simulated)
+        && File.Exists(Path.Combine(etcDirectory, "environment"));
 }

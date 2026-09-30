@@ -7,7 +7,7 @@ import { Button } from '../../ui/Button';
 import { cx } from '../../ui/cx';
 import type { Dataset } from '../sdk/internal';
 import { DatasetDialog, type DatasetAction } from './DatasetDialog';
-import { canRenameOrDelete, datasetRole } from './datasets';
+import { canRenameOrDelete, datasetRole, isHiddenDataset } from './datasets';
 import { breakable, describeProblem, usePools } from './shared';
 import styles from './Storage.module.css';
 
@@ -28,7 +28,9 @@ export function DatasetsSection({ app }: { app: PithyxApp }) {
       {pools.isError && <ErrorNotice error={describeProblem(pools.error)} />}
       {pools.data?.pools.length === 0 && <p className={styles.muted}>{t('pools.empty')}</p>}
       {pools.data?.pools.map((pool) => {
-        const own = datasets.filter((dataset) => dataset.pool === pool.name);
+        const own = datasets.filter(
+          (dataset) => dataset.pool === pool.name && !isHiddenDataset(pool.name, dataset.name),
+        );
         // Volumes go below <pool>/pithyx, which only pools Pithyx created have.
         const prepared = own.some((dataset) => dataset.name === `${pool.name}/pithyx`);
         return (

@@ -29,6 +29,12 @@ export interface FileBrokerTarget {
 
 const FINISHED: readonly JobInfo['state'][] = ['succeeded', 'failed', 'cancelled', 'interrupted'];
 
+const UNAVAILABLE: Record<string, 'poolMissing' | 'poolUnavailable' | 'notMounted'> = {
+  pool_missing: 'poolMissing',
+  pool_unavailable: 'poolUnavailable',
+  not_mounted: 'notMounted',
+};
+
 /** Turns a failed daemon call into the problem the app sees, unchanged. */
 async function daemon<T>(call: () => Promise<T>): Promise<T> {
   try {
@@ -217,6 +223,9 @@ export function fileBrokerFor(target: FileBrokerTarget): {
         id: String(share.id),
         name: share.name,
         access: share.access === 'readWrite' ? 'readWrite' : 'read',
+        ...(share.unavailable == null
+          ? {}
+          : { unavailable: UNAVAILABLE[share.unavailable] ?? 'notMounted' }),
       }));
     },
     'files.list': async ({ location, path, cursor, limit, sort, order }) => {

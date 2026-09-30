@@ -21,7 +21,7 @@
       "invalid": "The display name can have at most {maxLength} characters and no control characters."
     },
     "password": {
-      "too_common": "This password is one of the most commonly used passwords. Choose one that is harder to guess.",
+      "too_common": "This password is too well known. Choose one that is harder to guess.",
       "too_long": "The password can have at most {maxLength} characters.",
       "too_short": "The password needs at least {minLength} characters."
     },
@@ -112,7 +112,8 @@
       "not_found": "The share was not found, or you have no access to it.",
       "path_taken": "Something else is already mounted at {path}. Choose another name.",
       "pool_not_prepared": "The pool {pool} has no place for shared folders (pithyx/shares), so none can be created on it.",
-      "read_only": "You can only read in this share."
+      "read_only": "You can only read in this share.",
+      "unavailable": "{name} cannot be opened right now: {reason, select, pool_missing {its pool is not connected} pool_unavailable {its pool stopped because disks are missing} other {its folder is not mounted}}. It comes back on its own once its disks are back."
     },
     "thumbnail": {
       "not_found": "There is no preview of this file yet.",
@@ -224,15 +225,17 @@
     },
     "pool": {
       "disk_count": "{layout} needs at least {min, plural, one {# disk} other {# disks}}; {count, plural, one {# is} other {# are}} selected.",
+      "disks_missing": "Disks of {name} are not connected, so it cannot be destroyed or exported now: the command would stop the pool and hang until the box restarts. Connect the disks again first, or restart the box to forget the pool.",
       "encryption_required": "Answer the encryption question first: it can only be decided when the pool is created.",
+      "expanding": "Pool {name} is being expanded already. The next disk can be added when that is done.",
       "layout_invalid": "Unknown pool layout.",
       "name_invalid": "Pool names start with a lowercase letter and use up to 32 lowercase letters, digits, - and _. Names like mirror or raidz are reserved.",
       "name_mismatch": "Type the pool name {name} exactly to confirm.",
       "name_taken": "A pool named {name} exists already.",
       "not_found": "There is no pool named {name}.",
       "not_prepared": "Pithyx did not set up the pool {pool} (it has no pithyx dataset), so it creates nothing on it.",
-      "expanding": "Pool {name} is being expanded already. The next disk can be added when that is done.",
-      "read_only": "Pool {name} is imported read-only and cannot be changed. Import it for use first."
+      "read_only": "Pool {name} is imported read-only and cannot be changed. Import it for use first.",
+      "suspended": "{name} has stopped all reads and writes because too many of its disks are gone. Destroying or exporting it now would hang until the box restarts. Connect the disks again; Pithyx then resumes the pool on its own."
     },
     "schedule": {
       "invalid": "This schedule cannot be set. Choose Off, Weekly or Monthly for an existing pool."
@@ -265,6 +268,9 @@
       "not_found": "This pool is no longer found on the disks. Scan again.",
       "not_importable": "Pool {name} cannot be imported ({state}). Connect its missing disks and scan again.",
       "preview_required": "Import pool {name} read-only first and check its datasets, then import it for use."
+    },
+    "zfs": {
+      "unavailable": "ZFS did not answer in time or reported an error, so Pithyx cannot show what this would change. Try again in a moment. If it keeps happening, a pool may be waiting for disks that are gone: see Storage."
     }
   },
   "system": {

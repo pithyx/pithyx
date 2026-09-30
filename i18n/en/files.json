@@ -12,7 +12,8 @@
     "documents": "Documents"
   },
   "shares": {
-    "title": "Shares"
+    "title": "Shares",
+    "unavailable": "Not available"
   },
   "columns": {
     "name": "Name",

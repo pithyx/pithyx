@@ -10,7 +10,9 @@ namespace Pithyx.Daemon.Auth;
 /// </summary>
 public static partial class CredentialRules
 {
-    public const int MinPasswordLength = 12;
+    // The hard floor (NIST SP 800-63B). Anything longer is allowed; the desktop shows a strength estimate and warns
+    // about weak passwords but never refuses them.
+    public const int MinPasswordLength = 8;
     public const int MaxPasswordLength = 1024;
     public const int MaxDisplayNameLength = 64;
 
@@ -53,6 +55,10 @@ public static partial class CredentialRules
         return displayName;
     }
 
+    /// <summary>
+    /// The hard rules for every new password (setup, recovery, user management, password change): the length limits
+    /// and the list of common passwords. The desktop checks the same list for its live feedback.
+    /// </summary>
     public static void ValidateNewPassword(string password)
     {
         ArgumentNullException.ThrowIfNull(password);
@@ -71,7 +77,7 @@ public static partial class CredentialRules
     }
 
     // The most used passwords from breach data (see Auth/common-passwords.LICENSE.txt), reduced to the ones long
-    // enough to pass the length check. There are no composition rules; length plus this list is the policy.
+    // enough to pass the length check. There are no composition rules; length plus this list is the hard policy.
     private static readonly Lazy<FrozenSet<string>> _commonPasswords = new(() =>
     {
         using var stream = typeof(CredentialRules).Assembly.GetManifestResourceStream("auth/common-passwords.txt")

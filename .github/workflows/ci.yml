@@ -2,11 +2,19 @@ name: CI
 
 on:
   pull_request:
+    types: [opened, synchronize, reopened, labeled]
   push:
     branches: [dev, master]
+  workflow_dispatch:
 
+# Read-only token for every job; a job that needs more asks for it itself. No pull_request_target, no secrets.
 permissions:
   contents: read
+
+# Every job runs on the runner named by the repository variable CI_RUNNER (the owner's self-hosted runner, label
+# pithyx-ci) and on GitHub-hosted runners when it is unset. The self-hosted runner has no Docker and no root: no job
+# uses services or containers, and nothing here needs ZFS, real disks or root. Those tests run on dev01
+# (tools/dev-vm/integration.sh).
 
 # One run per branch: a new push to a pull request cancels the run it replaces. Runs on dev and master always finish,
 # so every merge is checked.
@@ -20,15 +28,15 @@ env:
   LC_ALL: C.UTF-8
 
 jobs:
-  # Pull requests that change only docs skip the builds and E2E; the daemon job needs a daemon-side change, the storage
-  # job a change to storage code, its tests or the CI setup.
+  # Pull requests that change only docs skip the builds; the daemon job needs a daemon-side change. Adding a label runs
+  # the checks again only for the label e2e, which also runs the E2E suite (D278).
   changes:
-    runs-on: ubuntu-24.04
+    if: github.event.action != 'labeled' || github.event.label.name == 'e2e'
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     outputs:
       code: ${{ steps.areas.outputs.code }}
       daemon: ${{ steps.areas.outputs.daemon }}
       frontend: ${{ steps.areas.outputs.frontend }}
-      storage: ${{ steps.areas.outputs.storage }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -43,12 +51,14 @@ jobs:
   daemon:
     needs: changes
     if: needs.changes.outputs.daemon == 'true'
-    runs-on: ubuntu-24.04
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     env:
       PITHYX_SKIP_BUDGETS: ${{ github.event_name == 'push' && github.ref_name == 'dev' && '1' || '' }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v6
+        env:
+          DOTNET_INSTALL_DIR: ${{ runner.tool_cache }}/dotnet
         with:
           global-json-file: global.json
           cache: true
@@ -60,30 +70,10 @@ jobs:
       - run: dotnet test --solution daemon/Pithyx.slnx --configuration Release --no-build
       - run: dotnet format daemon/Pithyx.slnx --verify-no-changes --no-restore
 
-  # Real OpenZFS on sparse files and loop devices of this throwaway runner, as root. zpool status -j needs OpenZFS 2.3
-  # or newer, which Ubuntu 26.04 ships; the daemon job skips these tests.
-  storage:
-    needs: changes
-    if: needs.changes.outputs.storage == 'true'
-    runs-on: ubuntu-26.04
-    steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-dotnet@v6
-        with:
-          global-json-file: global.json
-          cache: true
-          cache-dependency-path: daemon/**/packages.lock.json
-      - run: sudo apt-get update && sudo apt-get install -y zfsutils-linux
-      - run: sudo modprobe zfs
-      - run: zfs version
-      - run: dotnet build daemon/tests/Pithyx.Daemon.Tests --configuration Release
-      - name: Storage integration tests
-        run: sudo -E env "PATH=$PATH" PITHYX_STORAGE_INTEGRATION=1 daemon/tests/Pithyx.Daemon.Tests/bin/Release/net10.0/Pithyx.Daemon.Tests -trait "Category=StorageIntegration"
-
   frontend:
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
-    runs-on: ubuntu-24.04
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -99,7 +89,8 @@ jobs:
       - run: pnpm check:bundle
 
   repo:
-    runs-on: ubuntu-24.04
+    needs: changes
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -112,7 +103,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: node tools/checks/repo-check.ts
       - run: pnpm format:check
-      - run: shellcheck tools/*/*.sh
+      - run: git ls-files -z '*.sh' | xargs -0 shellcheck
       - name: Commit messages
         run: node tools/checks/commit-msg.ts --range "$(tools/checks/ci-range.sh)"
         env:
@@ -121,7 +112,8 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
   dco:
-    runs-on: ubuntu-24.04
+    needs: changes
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -135,16 +127,22 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
+  # The E2E suite, the performance gate and the design checks take minutes, so they run only when asked (D278): the
+  # label e2e on a pull request, a manual run, and every pull request or push to master.
   e2e:
     needs: changes
-    if: needs.changes.outputs.code == 'true'
-    runs-on: ubuntu-24.04
+    if: >-
+      needs.changes.outputs.code == 'true' && (github.event_name == 'workflow_dispatch' || github.ref_name == 'master'
+      || github.base_ref == 'master' || contains(github.event.pull_request.labels.*.name, 'e2e'))
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
     env:
       # The performance gate guards pull requests; after the merge, dev runs the other E2E tests only.
       PITHYX_SKIP_BUDGETS: ${{ github.event_name == 'push' && github.ref_name == 'dev' && '1' || '' }}
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v6
+        env:
+          DOTNET_INSTALL_DIR: ${{ runner.tool_cache }}/dotnet
         with:
           global-json-file: global.json
           cache: true
@@ -157,7 +155,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: dotnet build daemon/Pithyx.slnx
       - run: pnpm --filter "@pithyx/desktop..." build
-      - run: pnpm --filter @pithyx/e2e exec playwright install --with-deps chromium
+      # Only a GitHub-hosted runner may install system packages; the self-hosted runner has the libraries already.
+      - run: pnpm --filter @pithyx/e2e exec playwright install ${{ runner.environment == 'github-hosted' && '--with-deps' || '' }} chromium
       - run: pnpm e2e
       - run: pnpm design:test
       - if: failure()
