@@ -208,7 +208,7 @@ test('deleting a dataset needs its full name typed', async ({ page }) => {
   await dialog.getByLabel('Type pithyxtestm/data to confirm').fill('pithyxtestm/data');
   await expect(show).toBeEnabled();
 
-  // The daemon has no such dataset and says so, with the request id.
+  // The daemon has no such dataset and says so.
   await show.click();
   await expect(dialog).toContainText('There is no dataset named pithyxtestm/data.');
   await expect(dialog.getByRole('button', { name: 'Delete', exact: true })).toHaveCount(0);

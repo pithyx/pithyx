@@ -50,7 +50,6 @@ export function useApps(): Apps {
 export const user = { name: 'Alex Morgan', firstName: 'Alex', initials: 'AM', username: 'alex' };
 export const hostname = 'nas-living-room';
 export const now = new Date('2026-09-26T14:32:00');
-export const requestId = '4bf92f3577b34da6a3ce929d0e0e4736';
 export const recoveryKey = 'PTHX-7KQ2-MZ9P-3HT8-WB6N-R2DC-5FJX-Q8';
 export const currentFolder = 'Photos 2026';
 

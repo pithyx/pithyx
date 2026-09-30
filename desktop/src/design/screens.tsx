@@ -214,7 +214,7 @@ export const screens: ScreenDefinition[] = [
     group: 'overlays',
     title: 'Error dialog',
     description:
-      'Translated error text, request id with copy button. Becomes a bottom sheet on phones.',
+      'Translated error text; the request id goes to the console only. Becomes a bottom sheet on phones.',
     render: (context) => <ErrorDialogScene context={context} />,
   },
   ...storageScreens,

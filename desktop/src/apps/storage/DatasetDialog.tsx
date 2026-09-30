@@ -49,7 +49,7 @@ function initialRequest(action: DatasetAction): StoragePlanRequest | null {
 
 /**
  * One dataset, volume or snapshot action through a command plan: fill in the fields, see the exact commands (and for
- * a delete or rollback everything that goes), run them. The daemon decides what is allowed; its refusals show with their request id.
+ * a delete or rollback everything that goes), run them. The daemon decides what is allowed and says why it refuses.
  */
 export function DatasetDialog({
   app,

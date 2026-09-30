@@ -4,20 +4,16 @@ import { Button } from '../ui/Button';
 import { AriaLocale } from '../ui/AriaLocale';
 import { Dialog } from '../ui/Dialog';
 import type { DescribedError } from './describe';
-import { RequestId, useErrorMessage } from './ErrorNotice';
+import { useErrorMessage, useLogRequestId } from './ErrorNotice';
 import { closeError, useErrorStore } from './errorStore';
 
 function ErrorContent({ error }: { error: DescribedError }) {
   const message = useErrorMessage(error);
-  return (
-    <>
-      <p>{message}</p>
-      {error.requestId !== '' && <RequestId requestId={error.requestId} />}
-    </>
-  );
+  useLogRequestId(error);
+  return <p>{message}</p>;
 }
 
-/** Errors that do not belong to a form: the translated message and the request id. */
+/** Errors that do not belong to a form: the translated message. */
 export function ErrorDialog() {
   const { t } = useTranslation();
   const error = useErrorStore((state) => state.current);

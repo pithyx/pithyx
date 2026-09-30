@@ -25,11 +25,8 @@
   },
   "error": {
     "title": "Something went wrong",
-    "requestId": "Request ID",
-    "copy": "Copy request ID",
     "close": "Close",
-    "network": "The daemon is not reachable. Check the connection and try again.",
-    "copyManually": "Selected: press Ctrl+C to copy."
+    "network": "The daemon is not reachable. Check the connection and try again."
   },
   "realtime": {
     "reconnecting": "Connection lost. Reconnecting…",

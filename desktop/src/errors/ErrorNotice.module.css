@@ -19,38 +19,3 @@
   margin-top: 1px;
   color: var(--color-danger);
 }
-
-.request {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  min-width: 0;
-  padding: var(--space-1) var(--space-1) var(--space-1) var(--space-3);
-  border-radius: var(--radius-sm);
-  background: var(--color-surface-3);
-}
-
-.requestLabel {
-  flex: none;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-xs);
-  font-weight: var(--font-weight-semibold);
-}
-
-.requestValue {
-  flex: 1;
-  min-width: 0;
-  font-size: var(--font-size-xs);
-  word-break: break-all;
-}
-
-.requestHint {
-  flex-basis: 100%;
-  color: var(--color-text-muted);
-  font-size: var(--font-size-xs);
-}
-
-.requestHint:empty {
-  display: none;
-}

@@ -1,6 +1,5 @@
 import {
   IconAlertTriangle,
-  IconCopy,
   IconLanguage,
   IconLogout,
   IconPalette,
@@ -20,7 +19,7 @@ import { StickyNote } from '../shell/StickyNote';
 import { Taskbar } from '../shell/Taskbar';
 import type { RunningApp, TaskbarPosition } from '../shell/types';
 import { Window, type WindowProps } from '../shell/Window';
-import { Button, IconButton } from '../ui/Button';
+import { Button } from '../ui/Button';
 import { Dialog } from '../ui/Dialog';
 import { cx } from '../ui/cx';
 import { Menu, MenuItem, MenuPopover, MenuSeparator, MenuTrigger } from '../ui/Menu';
@@ -36,7 +35,6 @@ import {
   now,
   pinned,
   recent,
-  requestId,
   searchFiles,
   searchQuery,
   useApps,
@@ -339,13 +337,6 @@ export function ErrorDialogScene({ context }: { context: SceneContext }) {
         actions={<Button variant="primary">{t('error.close')}</Button>}
       >
         <p>{t('system.internal.unexpected', { ns: 'errors' })}</p>
-        <div className={styles.requestId}>
-          <span className={styles.requestLabel}>{t('error.requestId')}</span>
-          <code className={styles.requestValue}>{requestId}</code>
-          <IconButton label={t('error.copy')} size="sm">
-            <IconCopy size={16} stroke={1.75} />
-          </IconButton>
-        </div>
       </Dialog>
     </>
   );

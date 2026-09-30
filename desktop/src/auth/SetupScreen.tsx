@@ -21,7 +21,7 @@ const STEPS = 2;
 type SetupField = 'username' | 'displayName' | 'password' | 'confirm';
 const FIELD_ORDER: readonly SetupField[] = ['username', 'displayName', 'password', 'confirm'];
 
-/** Which field a daemon error belongs to; the rest is shown below the form with its request id. */
+/** Which field a daemon error belongs to; the rest is shown below the form. */
 function fieldOf(code: string): SetupField | undefined {
   if (code.startsWith('auth.username.')) {
     return 'username';
