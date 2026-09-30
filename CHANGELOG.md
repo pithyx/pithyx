@@ -146,6 +146,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- Dev VM: `tools/dev-vm/integration.sh` pauses the dev daemon on 7484 while the tests run, so it no longer changes their throwaway pools, and finds `losetup` under `sudo`.
+- Creating a pool could fail with "dataset already exists" when the daemon's thumbnail cache setup created the pool's cache dataset between the steps of its layout. Creating the cache dataset now succeeds when it exists already.
 - Importing a pool for use after its read-only preview failed with `storage.plan.stale` (found on dev01): the disks of a pool imported read-only are not probed, and after the plan's export step they are, so their signatures looked changed. Import steps now compare serial, size and partitions, not the ZFS labels they expect.
 - Destroying a shared folder's dataset (and renaming a dataset, exporting or destroying a pool) failed with "pool or dataset is busy" while a Files window showed a folder in it (found on dev01): the live folder view held a handle on the folder. Such plans now close the daemon's own handles below the mount points they unmount before the first command, and the open Files window is told the folder is gone.
 - A subscriber a topic refuses no longer counts as a subscriber, so it cannot make the daemon sample or watch for events it would never receive.

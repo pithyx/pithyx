@@ -34,7 +34,7 @@ public sealed class ZfsPlansTests
                 ["zfs", "create", "-o", "mountpoint=/tank/homes", "tank/pithyx/homes"],
                 ["zfs", "create", "-o", "canmount=off", "-o", "mountpoint=/tank/.pithyx/apps", "tank/pithyx/apps"],
                 ["zfs", "create", "-o", "mountpoint=/tank/.pithyx/system", "tank/pithyx/system"],
-                ["zfs", "create", "-o", "mountpoint=/tank/.pithyx/cache", "-o", "compression=off", "-o", "atime=off", "-o", "quota=2560M", "-o", "com.sun:auto-snapshot=false", "tank/pithyx/cache"],
+                ["zfs", "create", "-p", "-o", "mountpoint=/tank/.pithyx/cache", "-o", "compression=off", "-o", "atime=off", "-o", "quota=2560M", "-o", "com.sun:auto-snapshot=false", "tank/pithyx/cache"],
             ],
             steps.Skip(1).Select(Line));
         Assert.All(steps.Skip(1), step => Assert.Empty(step.DiskIds));

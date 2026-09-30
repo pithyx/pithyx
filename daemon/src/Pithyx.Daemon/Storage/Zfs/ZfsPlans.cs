@@ -101,11 +101,13 @@ public static partial class ZfsPlans
 
     /// <summary>
     /// The pool's cache for derived data such as thumbnails (D255): never shown, never snapshotted, no compression for
-    /// data that is compressed already, and a quota above the cache's own 2 GB limit as a backstop.
+    /// data that is compressed already, and a quota above the cache's own 2 GB limit as a backstop. <c>-p</c> succeeds
+    /// when the dataset exists already: a running daemon's <see cref="Files.Thumbnails.ThumbnailCacheProvisioner"/> may
+    /// create it between the steps of a new pool's layout.
     /// </summary>
     public static string[] CacheDataset(string pool) =>
     [
-        "-o", $"mountpoint=/{pool}/.pithyx/cache", "-o", "compression=off", "-o", "atime=off", "-o", "quota=2560M",
+        "-p", "-o", $"mountpoint=/{pool}/.pithyx/cache", "-o", "compression=off", "-o", "atime=off", "-o", "quota=2560M",
         "-o", "com.sun:auto-snapshot=false", $"{pool}/pithyx/cache",
     ];
 
