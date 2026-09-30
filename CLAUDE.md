@@ -12,7 +12,7 @@ These rules are binding. If a rule blocks you, stop and ask. Do not work around 
 
 ## Environments
 
-Know where you are before you act. Every machine declares its environment in `/etc/pithyx/environment` (`dev` or `prod`); the owner may also state it ("this is dev", "this is prod"). If neither says anything, treat it as prod.
+Know where you are before you act. Every machine declares its environment in `/etc/pithyx/environment` (`dev` or `prod`); the owner may also state it ("this is dev", "this is prod"). If neither says anything, treat it as prod. `dev` and `prod` say whether a machine may be broken or holds real data; they are not two installations. Every machine has exactly one Pithyx installation (D277).
 
 - **dev** (dev01, other dev VMs, simulation mode, CI): the machine belongs to the agent. Nothing needs permission: install and remove packages (apt), change services and configuration, load kernel modules, reboot, create and destroy pools and arrays, reset databases, edit any file in the repo including every `CLAUDE.md`. Do it, then document it (commit message, D entry or the current state section below).
 - The only hard limits in dev: never push or merge to `master` (merging into `master` always needs the owner), and never delete, force-push or rewrite `origin/master` or `origin/dev`. On dev01 also: never touch `sda` (the system disk); real test disks are `VYXTEST01` to `VYXTEST06` (listed in `/etc/pithyx/test-disks`, historical VYXTEST prefix from Proxmox), scsi_debug disks are free to use. No long write tests or benchmarks (the host's SSD is worn). No access to pve02, the home network or the CI runner's server. No secrets in commits or chat; never read password hashes or session tokens from the database, use the API. Before a reboot, commit and push all work (WIP branches with `🚧 wip:` are fine), say so in the chat and wait for the owner's "weiter": the session runs on dev01 itself, so a reboot ends it.
@@ -27,7 +27,8 @@ Know where you are before you act. Every machine declares its environment in `/e
 - Reset the database only with `tools/dev-vm/reset-dev-db.sh`: it stops the unit, deletes the database, starts the unit (migrations run on start) and sets up the owner account again.
 - The owner account's credentials live in `~gabriel/.config/pithyx-dev/owner.env` (mode 600, never in the repo, never in the chat). Never change the owner account: no password change, no 2FA reset, no deactivation. A reset turns the owner's 2FA off; report that.
 - Tests use their own accounts `e2e-admin` and `e2e-user` from `~gabriel/.config/pithyx-dev/e2e.env`, created by `tools/dev-vm/seed-dev-accounts.sh`.
-- A fresh state or an unmerged branch runs on a short-lived second instance: `tools/dev-vm/start.sh` from the branch's worktree (port 7485, `mktemp -d`, deleted on exit). 7484 stays untouched.
+- 7484 is the only installation on dev01: real mode, the database on the system disk like on a box, the pools on the test disks. There is no second instance, no `.pithyx-dev/` and no simulation on dev01; a daemon from a checkout without `PITHYX_DB` refuses to start (exit code 78). Simulation exists only for the automated tests and E2E on the runner, each with a throwaway database. A fresh state means `reset-dev-db.sh`.
+- Branches are checked before the merge by the runner (and `integration.sh` for ZFS) and on 7484 after the merge and deploy; what fails there is fixed right away.
 
 ## Current state
 
@@ -36,22 +37,23 @@ Update this section in the same PR whenever the state changes (a merge, a new br
 - 7484 runs `dev` from the main checkout `/home/gabriel/code/pithyx` in real mode. Check with `systemctl status pithyx-dev` and `git -C /home/gabriel/code/pithyx log -1`; the deployed commit must equal `origin/dev`.
 - The dev database was reset on 2026-09-30 and holds only the owner (`gabriel`, 2FA off). `e2e-admin` and `e2e-user` are created once the users API (#46) is on `dev`; until then `seed-dev-accounts.sh` skips them.
 - The runner has `libatomic1`, `shellcheck` and the Playwright libraries (owner, 2026-09-30). dev01 has `acl` (`setfacl`).
-- Merge in this order. For each: merge `dev` into the branch, push, green runner run, for storage, account and command runner changes also `integration.sh` on dev01 with the result in the PR, squash-merge (the commit ends with `Signed-off-by: Schecher_1 <74829802+Schecher1@users.noreply.github.com>`), deploy with `install-dev-daemon.sh --yes`. A branch with a migration is first started on 7485 against a copy of `/var/lib/pithyx/pithyx.db` (`PITHYX_DEV_PORT=7485 PITHYX_DB=<copy>`) to test the upgrade path.
-  1. #50 `chore/no-ci-local` (D275, this section).
-  2. #35 `fix/disk-failure` (D270).
-  3. `fix/usage-refresh`: a new PR with only `b1499a4` cherry-picked onto `dev`.
-  4. #37 `fix/share-plan-timeout`.
-  5. #40 `fix/share-recovery`.
-  6. #36 `fix/notifications` (migration `0012_notifications.sql`).
-  7. #38 `fix/context-menu`.
-  8. #45 `feature/log-center`.
-  9. #46 `feature/users` (draft) together with `wip/users-acl-disable` (never built, ACLs as raw xattrs, adds `auth.account.disabled`): renumber its migration to `0013`, choose `setfacl` or a library for ACLs (D entry, also in the image), D264 (primary group `users` gid 100, homes 0700, umask 077, share access only through ACLs), register the UsersPage in Settings, leave draft.
-  10. `fix/quick-fixes` (B1 to B8, D271, D272): open the PR.
-  11. `wip/settings-c1-c4` (never built): after #46, migrations `0014_appearance.sql` and `0015_restore_points.sql`; the network page stays read-only until the 60 s rollback of step 14.
+- Merge in this order. For each: merge `dev` into the branch, push, green runner run, for storage, account and command runner changes also `integration.sh` on dev01 with the result in the PR, squash-merge (the commit ends with `Signed-off-by: Schecher_1 <74829802+Schecher1@users.noreply.github.com>`), deploy with `install-dev-daemon.sh --yes`. A branch with a migration proves its upgrade path on 7484 after the merge; the daemon keeps a `pithyx.db.pre-<version>-<time>.bak` next to the database before it migrates.
+  1. #50 `chore/no-ci-local` (D275, D277, this section).
+  2. #51 `fix/cache-dataset-race` (D276): `zfs create -p` for the cache dataset, `integration.sh` pauses 7484.
+  3. #35 `fix/disk-failure` (D270).
+  4. `fix/usage-refresh`: a new PR with only `b1499a4` cherry-picked onto `dev`.
+  5. #37 `fix/share-plan-timeout`.
+  6. #40 `fix/share-recovery`.
+  7. #36 `fix/notifications` (migration `0012_notifications.sql`).
+  8. #38 `fix/context-menu`.
+  9. #45 `feature/log-center`.
+  10. #46 `feature/users` (draft) together with `wip/users-acl-disable` (never built, ACLs as raw xattrs, adds `auth.account.disabled`): renumber its migration to `0013`, choose `setfacl` or a library for ACLs (D entry, also in the image), D264 (primary group `users` gid 100, homes 0700, umask 077, share access only through ACLs), register the UsersPage in Settings, leave draft.
+  11. `fix/quick-fixes` (B1 to B8, D271, D272): open the PR.
+  12. `wip/settings-c1-c4` (never built): after #46, migrations `0014_appearance.sql` and `0015_restore_points.sql`; the network page stays read-only until the 60 s rollback of step 14.
 - Not started: pool delete as a background job (the dialog closes at once, progress in notifications and jobs, a hanging `zpool destroy` ends with a new, translated and documented error code). Then the rename from the old project name (patterns in `OLD_NAME` in `tools/checks/repo-check.ts`): code, packages, headers, environment variables, paths, datasets, units, docs and links; exceptions are the `VYXTEST` serials, the git history and existing D entries (plus a new D entry); no shims; migrate dev01 (state directories, database, `zfs rename`, units, the old `/etc` directory) until `systemctl list-units`, `/etc`, `/var/lib`, `/var/log` and `zfs list` show nothing under the old name.
 - Then verify every item of "Release 0.1" in `TODO.md` on 7484 in the browser (Playwright and screenshots, as `e2e-admin` or `e2e-user`), fix what fails, and report: deployed commit and `dev` HEAD, runner status per job, a table item, status, proof, the merged PRs with their migration numbers, the rename grep, open problems with cause and proposal.
-- Decision numbers: D269, D273, D274 on `dev`; D270 on `fix/disk-failure`; D271, D272 on `fix/quick-fixes`; D275 on `chore/no-ci-local`. The next free number is D276. The decision log at the end of `TODO.md` conflicts on every merge; keep all entries in number order.
-- Worktrees under `.worktrees/`: `context-menu`, `disk-failure`, `log-center`, `notifications`, `no-ci-local`, `quick-fixes`, `settings` (`wip/settings-c1-c4`), `share-plan`, `share-recovery`, `usage`, `users` (`wip/users-acl-disable`). Remove each with its local branch once merged.
+- Decision numbers: D269, D273, D274 on `dev`; D270 on `fix/disk-failure`; D271, D272 on `fix/quick-fixes`; D275 and D277 on `chore/no-ci-local`; D276 on `fix/cache-dataset-race`. The next free number is D278. The decision log at the end of `TODO.md` conflicts on every merge; keep all entries in number order.
+- Worktrees under `.worktrees/`: `cache-race`, `context-menu`, `disk-failure`, `log-center`, `notifications`, `no-ci-local`, `quick-fixes`, `settings` (`wip/settings-c1-c4`), `share-plan`, `share-recovery`, `usage`, `users` (`wip/users-acl-disable`). Remove each with its local branch once merged.
 
 ## Known pitfalls
 
