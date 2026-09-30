@@ -158,6 +158,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- The wallpaper draws its boxes like the logo in the menu button, with the lid closed and a narrow gap, instead of the lid floating far above the box.
 - Toasts of notifications disappear when the notification panel opens, and none appear while it is open; toasts stay 5 seconds instead of 8.
 - The taskbar clock no longer looks like a button: it had a hover effect and took the keyboard focus, but opens nothing.
 - The language switch on the sign-in and setup screens is a list of our own in the theme's colors instead of the native select, whose list was white on white in dark mode; it works with arrows, Home, End, Enter, Space, Escape and Tab (ARIA listbox).
