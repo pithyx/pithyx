@@ -680,7 +680,7 @@ Effort: high.
 
 Goal: every Pithyx user is a real Linux and Samba account, and files belong to the user who created them (resolves D89).
 
-- [ ] Migration: `groups`, `group_members`, and uid/gid allocation from fixed ranges (D103, decided): users 20000 to 29999, groups 30000 to 39999, apps 40000 to 49999 (reserved for M4). Numbers are never reused, not even after a user is deleted. Done for users (migration 0013, `id_allocations`, `UidAllocator`); groups follow.
+- [ ] Migration: `groups`, `group_members`, and uid/gid allocation from fixed ranges (D103, decided): users 20000 to 29999, groups 30000 to 39999, apps 40000 to 49999 (reserved for M4). Numbers are never reused, not even after a user is deleted. Done for users (migration 0012, `id_allocations`, `UidAllocator`); groups follow.
 - [ ] `/etc/login.defs` (`UID_MIN`, `UID_MAX`, `GID_MIN`, `GID_MAX` and the `SYS_*` values) is set so `adduser` and `useradd` outside Pithyx never allocate in 20000 to 49999; the reconciler checks this at startup and warns when it changed. The check and warning are done (`LoginDefs`); setting the values is the image's job (M5), dev01 still has Debian's `UID_MAX 60000`.
 - [x] Reconciler (users; groups follow with groups): SQLite is the source of truth; the daemon runs `useradd`, `usermod`, `userdel`, `groupadd` and friends only for accounts in its ranges. A name that already exists in `/etc/passwd` or `/etc/group` but is not managed by Pithyx is refused (the static reserved list in `CredentialRules` only covers known system accounts).
 - [ ] Shell `nologin` unless the user has the SSH login right (step 11). Every account gets `nologin` for now.

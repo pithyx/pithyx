@@ -21,6 +21,6 @@ dhcpcd:x:100:65534:DHCP Client Daemon:/usr/lib/dhcpcd:/bin/false
 systemd-timesync:x:991:991:systemd Time Synchronization:/:/usr/sbin/nologin
 messagebus:x:990:990:System Message Bus:/nonexistent:/usr/sbin/nologin
 sshd:x:989:65534:sshd user:/run/sshd:/usr/sbin/nologin
-gabriel:x:1000:1000:Gabriel,,,:/home/gabriel:/bin/bash
+owner:x:1000:1000:Owner,,,:/home/owner:/bin/bash
 _rpc:x:101:65534::/run/rpcbind:/usr/sbin/nologin
 statd:x:102:65534::/var/lib/nfs:/usr/sbin/nologin

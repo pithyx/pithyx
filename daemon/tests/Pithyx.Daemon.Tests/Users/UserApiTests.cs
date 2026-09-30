@@ -73,8 +73,8 @@ public sealed class UserApiTests : IDisposable
     {
         await _admin.SetupAdminAsync();
 
-        // The simulation's passwd (a copy of dev01's) has gabriel outside the Pithyx range.
-        using var foreign = await _admin.PostAsync("/api/users", new { username = "gabriel", password = "river-candle-orbit-7" });
+        // The simulation's passwd has the machine owner's account outside the Pithyx range.
+        using var foreign = await _admin.PostAsync("/api/users", new { username = "owner", password = "river-candle-orbit-7" });
         Assert.Equal("users.account.refused", await foreign.ErrorCodeAsync());
         using var reserved = await _admin.PostAsync("/api/users", new { username = "root", password = "river-candle-orbit-7" });
         Assert.Equal("auth.username.reserved", await reserved.ErrorCodeAsync());

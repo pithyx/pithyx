@@ -20,7 +20,7 @@ public sealed class AccountReconcilerTests
         Assert.DoesNotContain(dev01, entry => AccountReconciler.IsManaged(entry.Uid));
 
         var managed = Passwd("handwritten-managed");
-        Assert.Equal(["root", "daemon", "gabriel", "admin", "rita", "gone", "backup", "appuser"], managed.Select(entry => entry.Name));
+        Assert.Equal(["root", "daemon", "owner", "admin", "rita", "gone", "backup", "appuser"], managed.Select(entry => entry.Name));
         Assert.Equal(new PasswdEntry("admin", 20000, 100, "Ada Admin", "/tank/homes/admin", "/usr/sbin/nologin"), managed[3]);
     }
 
@@ -44,12 +44,12 @@ public sealed class AccountReconcilerTests
         var update = Assert.Single(actions.OfType<UpdateAccount>());
         Assert.Equal("rita", update.Name);
         Assert.Equal(["comment"], update.Changed);
-        Assert.DoesNotContain(actions, action => action.Name is "root" or "daemon" or "gabriel" or "backup" or "appuser");
+        Assert.DoesNotContain(actions, action => action.Name is "root" or "daemon" or "owner" or "backup" or "appuser");
     }
 
     [Theory]
     [InlineData("backup", 20005, "name_taken")]
-    [InlineData("gabriel", 20005, "name_taken")]
+    [InlineData("owner", 20005, "name_taken")]
     [InlineData("admin", 20009, "uid_changed")]
     [InlineData("someone", 20000, "uid_taken")]
     [InlineData("someone", 1001, "uid_outside_range")]
