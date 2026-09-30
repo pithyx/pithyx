@@ -68,7 +68,8 @@ jobs:
       - run: dotnet build daemon/Pithyx.slnx --configuration Release --no-restore
       - name: OpenAPI document is up to date
         run: git diff --exit-code packages/api-client/openapi.json
-      - run: dotnet test --solution daemon/Pithyx.slnx --configuration Release --no-build
+      # The ZFS and Linux account tests need root and real ZFS; they run on the dev VM (tools/dev-vm/integration.sh).
+      - run: dotnet test --solution daemon/Pithyx.slnx --configuration Release --no-build --filter-not-trait "Category=StorageIntegration"
       - run: dotnet format daemon/Pithyx.slnx --verify-no-changes --no-restore
 
   frontend:
@@ -111,18 +112,9 @@ jobs:
           EVENT_NAME: ${{ github.event_name }}
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-
-  dco:
-    needs: changes
-    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
-    steps:
-      - uses: actions/checkout@v7
-        with:
-          fetch-depth: 0
-      - uses: actions/setup-node@v7
-        with:
-          node-version-file: .nvmrc
-      - run: node tools/checks/dco.ts "$(tools/checks/ci-range.sh)"
+      # Sign-off (DCO) of every commit in the range; part of this job so it needs no runner of its own.
+      - name: Sign-off
+        run: node tools/checks/dco.ts "$(tools/checks/ci-range.sh)"
         env:
           EVENT_NAME: ${{ github.event_name }}
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
@@ -155,7 +147,8 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: dotnet build daemon/Pithyx.slnx
+      # The suite runs the daemon only; its tests are the daemon job's.
+      - run: dotnet build daemon/src/Pithyx.Daemon
       - run: pnpm --filter "@pithyx/desktop..." build
       # Only a GitHub-hosted runner may install system packages; the self-hosted runner has the libraries already.
       - run: pnpm --filter @pithyx/e2e exec playwright install ${{ runner.environment == 'github-hosted' && '--with-deps' || '' }} chromium
