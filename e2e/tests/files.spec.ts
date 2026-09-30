@@ -84,6 +84,59 @@ test('lists a folder, creates, renames and uploads, and downloads with a double 
   expect((await download).suggestedFilename()).toBe('backup.zip');
 });
 
+test('uploads and downloads show their progress in the taskbar and can be cancelled', async ({
+  page,
+}) => {
+  prepare('e2e-transfers', { 'large.bin': 'x'.repeat(3_000_000) });
+  await openFolder(page, 'e2e-transfers');
+  // Slow links, so the transfers are still running when the test looks at them.
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('Network.emulateNetworkConditions', {
+    offline: false,
+    latency: 0,
+    downloadThroughput: 500_000,
+    uploadThroughput: 500_000,
+  });
+
+  const chooser = page.waitForEvent('filechooser');
+  await filesWindow(page).getByRole('button', { name: 'Upload' }).click();
+  await (
+    await chooser
+  ).setFiles({
+    name: 'big-upload.bin',
+    mimeType: 'application/octet-stream',
+    buffer: Buffer.alloc(4_000_000),
+  });
+  const button = page.getByRole('button', { name: /^1 transfer, \d+ percent$/ });
+  await expect(button).toBeVisible();
+  await button.click();
+  const panel = page.getByRole('dialog', { name: 'Transfers' });
+  const upload = panel.getByRole('progressbar', { name: 'Upload of big-upload.bin' });
+  await expect(upload).toHaveAttribute('aria-valuetext', /of 4 MB · .*\/s/);
+  await panel.getByRole('button', { name: 'Cancel the transfer of big-upload.bin' }).click();
+  await expect(upload).toHaveCount(0);
+  await expect(page.getByRole('alertdialog')).toHaveCount(0);
+  await expect(row(page, 'big-upload.bin')).toHaveCount(0);
+  await page.keyboard.press('Escape');
+
+  const download = page.waitForEvent('download');
+  await row(page, 'large.bin').dblclick();
+  await page.getByRole('button', { name: /^1 transfer/ }).click();
+  await expect(
+    page
+      .getByRole('dialog', { name: 'Transfers' })
+      .getByRole('progressbar', { name: 'Download of large.bin' }),
+  ).toHaveAttribute('aria-valuetext', /of 3 MB/);
+  await cdp.send('Network.emulateNetworkConditions', {
+    offline: false,
+    latency: 0,
+    downloadThroughput: -1,
+    uploadThroughput: -1,
+  });
+  expect((await download).suggestedFilename()).toBe('large.bin');
+  await expect(page.getByRole('button', { name: /^1 transfer/ })).toHaveCount(0);
+});
+
 test('copies and moves with the clipboard and asks about a name that exists', async ({ page }) => {
   prepare('e2e-clipboard/target', { 'b.txt': 'old' });
   prepare('e2e-clipboard', { 'a.txt': 'a', 'b.txt': 'new' });

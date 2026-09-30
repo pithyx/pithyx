@@ -191,5 +191,19 @@
   "storageAlert": {
     "open": "Speicher öffnen",
     "more": "{count, plural, one {und # weiterer Hinweis} other {und # weitere Hinweise}}"
+  },
+  "transfers": {
+    "button": "{count, plural, one {# Übertragung} other {# Übertragungen}}, {percent} Prozent",
+    "title": "Übertragungen",
+    "upload": "Upload von {name}",
+    "download": "Download von {name}",
+    "size": "{loaded} von {total}",
+    "speed": "{speed}/s",
+    "secondsLeft": "{count, plural, one {noch # Sekunde} other {noch # Sekunden}}",
+    "minutesLeft": "{count, plural, one {noch etwa # Minute} other {noch etwa # Minuten}}",
+    "hoursLeft": "noch etwa {hours} h {minutes} min",
+    "failed": "Fehlgeschlagen. Die Verbindung ist abgebrochen oder der Daemon hat die Datei abgelehnt.",
+    "cancel": "Übertragung von {name} abbrechen",
+    "dismiss": "{name} aus der Liste entfernen"
   }
 }
