@@ -24,7 +24,7 @@ public sealed class DiskFailureIntegrationTests
     [Fact]
     public async Task APulledDiskDegradesItsPoolAtOnceLeavesOtherPoolsAloneAndIsBroughtBackAfterARescan()
     {
-        FileVdevs.RequireEnabled();
+        RequireDiskPulls();
         await using var disks = await ScsiDebugDisks.CreateAsync(2);
         await using var other = FileVdevs.Create(1);
         await other.CreatePoolAsync();
@@ -43,7 +43,10 @@ public sealed class DiskFailureIntegrationTests
                 Assert.Equal("ONLINE", StateOf(pools, pool));
 
                 var pulled = await disks.PullAsync(1);
-                await WaitForAsync(() => StateOf(pools, pool) == "DEGRADED", "the pool to show DEGRADED after the disk was pulled");
+                // ZFS may report the lost leaf before the disk inventory drops the device; the daemon shows both.
+                await WaitForAsync(
+                    () => StateOf(pools, pool) == "DEGRADED" && pools.Current.Pools.Single(candidate => candidate.Name == pool).Vdevs.SelectMany(vdev => vdev.Leaves()).Any(candidate => candidate.Missing),
+                    "the pool to show DEGRADED with the pulled disk missing");
 
                 var leaf = pools.Current.Pools.Single(candidate => candidate.Name == pool).Vdevs.SelectMany(vdev => vdev.Leaves()).Single(candidate => candidate.Missing);
                 Assert.Equal(disks.ByIdPaths[1] + "-part1", leaf.Path);
@@ -72,7 +75,7 @@ public sealed class DiskFailureIntegrationTests
     [Fact]
     public async Task APoolWithoutAnyOfItsDisksIsNotDestroyedSinceZfsWouldHangOnIt()
     {
-        FileVdevs.RequireEnabled();
+        RequireDiskPulls();
         await using var disks = await ScsiDebugDisks.CreateAsync(1);
         var pool = $"pithyxci-gone-{Environment.ProcessId}";
         await disks.RunAsync("zpool", ["create", "-m", "none", pool, disks.ByIdPaths[0]]);
@@ -85,12 +88,13 @@ public sealed class DiskFailureIntegrationTests
         try
         {
             var pulled = await disks.PullAsync(0);
-            await WaitForAsync(() => StateOf(pools, pool) == "UNAVAIL", "the pool to show UNAVAIL after its only disk was pulled");
+            // UNAVAIL while nothing was written; a write that happened to go out meanwhile suspends the pool instead.
+            await WaitForAsync(() => StateOf(pools, pool) is "UNAVAIL" or "SUSPENDED", "the pool to show UNAVAIL or SUSPENDED after its only disk was pulled");
 
             var refused = Assert.Throws<PithyxException>(() => state.RequireReachable(pool));
-            Assert.Equal(ErrorCodes.StoragePoolDisksMissing, refused.Code);
+            Assert.Contains(refused.Code, new[] { ErrorCodes.StoragePoolDisksMissing, ErrorCodes.StoragePoolSuspended });
 
-            // Back again, the pool works and can go; nothing was written while the disk was away, so it never suspended.
+            // Back again, the daemon reopens the disk (and resumes the pool if it suspended); then the pool can go.
             await disks.RescanAsync(pulled);
             await WaitForAsync(() => StateOf(pools, pool) == "ONLINE", "the pool to be back after the rescan");
             state.RequireReachable(pool);
@@ -100,6 +104,19 @@ public sealed class DiskFailureIntegrationTests
             await state.StopAsync(CancellationToken.None);
             await disks.ReleaseAsync(pool);
         }
+    }
+
+    /// <summary>
+    /// Pulling a disk that ZFS still writes to can leave a transaction group waiting in the kernel for I/O that never
+    /// returns (seen on dev01 with OpenZFS 2.3.9); every later zpool command then waits until a reboot. These tests run
+    /// only on a freshly booted dev VM with <c>PITHYX_DISK_PULL_TESTS=1</c> (<c>integration.sh --disk-pulls</c>).
+    /// </summary>
+    private static void RequireDiskPulls()
+    {
+        FileVdevs.RequireEnabled();
+        Assert.SkipUnless(
+            Environment.GetEnvironmentVariable("PITHYX_DISK_PULL_TESTS") == "1",
+            "Disk pull tests can hang ZFS until a reboot; run them with integration.sh --disk-pulls on a fresh boot.");
     }
 
     private static string? StateOf(PoolInventory pools, string name) => pools.Current.Pools.FirstOrDefault(pool => pool.Name == name)?.State;
@@ -174,13 +191,23 @@ public sealed class DiskFailureIntegrationTests
         /// <summary>Scans the host again, like plugging the disk back in; it may come back under another name.</summary>
         public async Task RescanAsync(string host)
         {
-            await File.WriteAllTextAsync($"/sys/class/scsi_host/{host}/scan", "- - -", Token);
-            await Commands.RunAsync(new CommandRequest("udevadm", ["settle"]), Token);
+            await File.WriteAllTextAsync($"/sys/class/scsi_host/{host}/scan", "- - -", CancellationToken.None);
+            // The kernel attaches the disk after the scan returns; udevadm settle only waits for events already queued.
+            string? block = null;
+            for (var attempt = 0; attempt < 100 && block is null; attempt++)
+            {
+                await Commands.RunAsync(new CommandRequest("udevadm", ["settle"]), CancellationToken.None);
+                block = Directory.EnumerateDirectories("/sys/block", "sd*").FirstOrDefault(candidate => HostOf(candidate) == host);
+                if (block is null)
+                {
+                    await Task.Delay(100, CancellationToken.None);
+                }
+            }
+            Assert.True(block is not null, $"no disk came back on {host} after the rescan");
             for (var i = 0; i < _disks.Count; i++)
             {
                 if (_disks[i].Host == host)
                 {
-                    var block = Directory.EnumerateDirectories("/sys/block", "sd*").Single(candidate => HostOf(candidate) == host);
                     _disks[i] = (host, Path.GetFileName(block));
                 }
             }
@@ -192,6 +219,8 @@ public sealed class DiskFailureIntegrationTests
         /// </summary>
         public async Task ReleaseAsync(string pool)
         {
+            // Until the pool is gone, disposing must not unload the module under it.
+            _leftOver = true;
             foreach (var host in _disks.Select(disk => disk.Host).Distinct().ToList())
             {
                 if (!Directory.EnumerateDirectories("/sys/block", "sd*").Any(block => HostOf(block) == host))
@@ -199,8 +228,25 @@ public sealed class DiskFailureIntegrationTests
                     await RescanAsync(host);
                 }
             }
-            await Commands.RunAsync(new CommandRequest("zpool", ["clear", pool], TimeSpan.FromSeconds(30)), CancellationToken.None);
-            await Commands.RunAsync(new CommandRequest("zpool", ["destroy", "-f", pool], TimeSpan.FromSeconds(60)), CancellationToken.None);
+            // zpool clear reopens a disk ZFS still holds under its old device and resumes a suspended pool. A pool that
+            // stays suspended is never destroyed: that would wait in the kernel.
+            var steps = new List<string> { await TryAsync("zpool", ["clear", pool]) };
+            var state = "";
+            for (var attempt = 0; attempt < 50; attempt++)
+            {
+                state = (await File.ReadAllTextAsync($"/proc/spl/kstat/zfs/{pool}/state", CancellationToken.None)).Trim();
+                if (state != "SUSPENDED")
+                {
+                    break;
+                }
+                await Task.Delay(200, CancellationToken.None);
+            }
+            if (state != "SUSPENDED")
+            {
+                steps.Add(await TryAsync("zpool", ["destroy", "-f", pool]));
+            }
+            _leftOver = Directory.Exists($"/proc/spl/kstat/zfs/{pool}");
+            Assert.False(_leftOver, $"the test pool {pool} could not be removed (state {state}): {string.Join("; ", steps)}");
         }
 
         private static string HostOf(string block) =>
@@ -213,8 +259,28 @@ public sealed class DiskFailureIntegrationTests
                 .Order(StringComparer.Ordinal)
                 .First();
 
+        private bool _leftOver;
+
+        private async Task<string> TryAsync(string command, IReadOnlyList<string> arguments)
+        {
+            try
+            {
+                var result = await Commands.RunAsync(new CommandRequest(command, arguments, TimeSpan.FromSeconds(30)), CancellationToken.None);
+                return $"{command} {string.Join(' ', arguments)}: exit {result.ExitCode} {result.StandardError.Trim()}";
+            }
+            catch (TimeoutException)
+            {
+                return $"{command} {string.Join(' ', arguments)}: timed out";
+            }
+        }
+
         public async ValueTask DisposeAsync()
         {
+            // Unloading the module under a pool that is still there would leave it without disks until a reboot.
+            if (_leftOver)
+            {
+                return;
+            }
             await Commands.RunAsync(new CommandRequest("udevadm", ["settle"]), CancellationToken.None);
             await Commands.RunAsync(new CommandRequest("modprobe", ["-r", "scsi_debug"]), CancellationToken.None);
         }

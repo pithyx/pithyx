@@ -2,7 +2,10 @@
 # Runs the integration tests that need root, real OpenZFS or block devices (Category=StorageIntegration) on the dev VM.
 # GitHub CI never runs them: its runners have no root and no ZFS.
 #
-#   tools/dev-vm/integration.sh [--filter <xunit class filter>]
+#   tools/dev-vm/integration.sh [--filter <xunit class filter>] [--disk-pulls]
+#
+#   --disk-pulls  also run the tests that pull scsi_debug disks out of a running pool. They can leave ZFS waiting in
+#                 the kernel until a reboot (OpenZFS 2.3.9), so run them on a freshly booted dev VM only.
 #
 # The tests build their own throwaway pools on sparse files (and scsi_debug RAM disks for the disk failure tests);
 # they never name the system disk or the declared test disks. The sparse files live in /dev/shm, so the host's SSD
@@ -12,6 +15,7 @@ export LC_ALL=C.UTF-8
 
 repo="$(cd "$(dirname "$0")/../.." && pwd)"
 filter=()
+disk_pulls=0
 
 die() {
   echo "integration: $*" >&2
@@ -24,6 +28,10 @@ while [[ $# -gt 0 ]]; do
       [[ $# -ge 2 ]] || die "--filter needs a class name"
       filter=(-class "$2")
       shift 2
+      ;;
+    --disk-pulls)
+      disk_pulls=1
+      shift
       ;;
     *) die "unknown option: $1" ;;
   esac
@@ -42,7 +50,8 @@ scratch="$(mktemp -d /dev/shm/pithyx-integration-XXXXXX)"
 trap 'sudo rm -rf --one-file-system "$scratch"' EXIT
 
 # A pool command stuck in the kernel never returns; stop the run instead of waiting for hours.
-sudo -E env "PATH=$PATH" "TMPDIR=$scratch" PITHYX_STORAGE_INTEGRATION=1 \
+# The tests call losetup, modprobe and useradd, which a user's PATH may lack.
+sudo -E env "PATH=$PATH:/usr/sbin:/sbin" "TMPDIR=$scratch" PITHYX_STORAGE_INTEGRATION=1 "PITHYX_DISK_PULL_TESTS=$disk_pulls" \
   timeout --kill-after=30s 20m \
   "$repo/daemon/tests/Pithyx.Daemon.Tests/bin/Release/net10.0/Pithyx.Daemon.Tests" \
   -trait "Category=StorageIntegration" "${filter[@]}"
