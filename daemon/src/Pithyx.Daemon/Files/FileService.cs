@@ -9,7 +9,7 @@ namespace Pithyx.Daemon.Files;
 /// Files in shares. Every call resolves the share and the caller's access first, and every path is opened below the
 /// share root by the kernel (<see cref="LinuxFs.OpenBeneath"/>), so no path, symlink or rename race leads outside it.
 /// </summary>
-public sealed class FileService(ShareService shares, FolderCache cache, TimeProvider time)
+public sealed class FileService(ShareService shares, FolderCache cache, TimeProvider time, Storage.StorageUsage? usage = null)
 {
     public const int DefaultPageSize = 100;
     public const int MaxPageSize = 1000;
@@ -140,6 +140,7 @@ public sealed class FileService(ShareService shares, FolderCache cache, TimeProv
                 file.Flush(flushToDisk: true);
             }
             Rename(folder, temporary, folder, name, replace: overwrite);
+            usage?.Written();
         }
         catch (Exception exception) when (exception is IOException or OperationCanceledException or BadHttpRequestException or PithyxException)
         {

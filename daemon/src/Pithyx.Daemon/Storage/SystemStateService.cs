@@ -26,7 +26,8 @@ public sealed partial class SystemStateService(
     StorageFacts facts,
     TopicHub hub,
     TimeProvider time,
-    ILogger<SystemStateService> logger) : BackgroundService
+    ILogger<SystemStateService> logger,
+    StorageUsage? usage = null) : BackgroundService
 {
     public static readonly CommandRequest Lsblk = new("lsblk", ["-J", "-b", "-O"]);
     public static readonly CommandRequest UdevMonitor = new("udevadm", ["monitor", "--udev", "--subsystem-match=block"]);
@@ -34,7 +35,16 @@ public sealed partial class SystemStateService(
     /// <summary>Events arrive in bursts (a disk and its partitions); one read covers the whole burst.</summary>
     public static readonly TimeSpan Debounce = TimeSpan.FromMilliseconds(250);
 
+    /// <summary>
+    /// How long a read of the used space waits after the last write: ZFS updates it when it syncs a transaction group,
+    /// every 5 seconds by default. A long run of writes is read at the latest <see cref="UsageMaxWait"/> after its first.
+    /// </summary>
+    public static readonly TimeSpan UsageDelay = TimeSpan.FromSeconds(6);
+
+    public static readonly TimeSpan UsageMaxWait = TimeSpan.FromSeconds(30);
+
     private static readonly TimeSpan _maxBackoff = TimeSpan.FromMinutes(1);
+    private readonly Channel<bool> _usageChanges = Channel.CreateBounded<bool>(new BoundedChannelOptions(1) { FullMode = BoundedChannelFullMode.DropWrite });
     private readonly Channel<bool> _changes = Channel.CreateBounded<bool>(new BoundedChannelOptions(1) { FullMode = BoundedChannelFullMode.DropWrite });
     private readonly Channel<bool> _poolChanges = Channel.CreateBounded<bool>(new BoundedChannelOptions(1) { FullMode = BoundedChannelFullMode.DropWrite });
     private readonly SemaphoreSlim _poolRead = new(1, 1);
@@ -53,6 +63,10 @@ public sealed partial class SystemStateService(
         // Pools come first: their members are never probed.
         await RefreshPoolsAsync(cancellationToken);
         await RefreshAsync(cancellationToken);
+        if (usage is not null)
+        {
+            usage.Changed += OnWritten;
+        }
         await base.StartAsync(cancellationToken);
     }
 
@@ -61,7 +75,8 @@ public sealed partial class SystemStateService(
         var monitors = Task.WhenAll(
             MonitorAsync("udevadm monitor", token => UdevLinesAsync(token), _changes, stoppingToken),
             MonitorAsync("zpool events", storage.WatchAsync, _poolChanges, stoppingToken),
-            ConsumeAsync(_poolChanges, RefreshPoolsAsync, stoppingToken));
+            ConsumeAsync(_poolChanges, RefreshPoolsAsync, stoppingToken),
+            ConsumeUsageAsync(stoppingToken));
         await ConsumeAsync(_changes, RefreshAsync, stoppingToken);
         await monitors;
     }
@@ -75,6 +90,55 @@ public sealed partial class SystemStateService(
                 await Task.Delay(Debounce, time, stoppingToken);
                 changes.Reader.TryRead(out var _);
                 await refresh(stoppingToken);
+            }
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            // Shutting down.
+        }
+    }
+
+    public override Task StopAsync(CancellationToken cancellationToken)
+    {
+        if (usage is not null)
+        {
+            usage.Changed -= OnWritten;
+        }
+        return base.StopAsync(cancellationToken);
+    }
+
+    private void OnWritten() => _usageChanges.Writer.TryWrite(true);
+
+    /// <summary>Reads the pools again after writes, once per burst (<see cref="UsageDelay"/>), so used space and fill alerts follow.</summary>
+    private async Task ConsumeUsageAsync(CancellationToken stoppingToken)
+    {
+        try
+        {
+            await foreach (var written in _usageChanges.Reader.ReadAllAsync(stoppingToken))
+            {
+                var first = time.GetUtcNow();
+                do
+                {
+                    await Task.Delay(UsageDelay, time, stoppingToken);
+                }
+                while (_usageChanges.Reader.TryRead(out _) && time.GetUtcNow() - first < UsageMaxWait);
+                var parent = Activity.Current;
+                Activity.Current = null;
+                using (Tracing.Source.StartActivity("storage.usage.refresh"))
+                {
+                    await _poolRead.WaitAsync(stoppingToken);
+                    try
+                    {
+                        await ReadPoolsAsync(stoppingToken);
+                        // Only sizes changed: the snapshot list is not read again for it.
+                        PublishPools(read: false);
+                    }
+                    finally
+                    {
+                        _poolRead.Release();
+                        Activity.Current = parent;
+                    }
+                }
             }
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)

@@ -22,6 +22,7 @@ public sealed class SystemStateServiceTests : IAsyncDisposable
     private readonly ScriptedCommandRunner _commands = new();
     private readonly DiskInventory _inventory = new();
     private readonly PoolInventory _pools = new();
+    private readonly StorageUsage _usage = new();
     private readonly TopicHub _hub;
     private readonly SystemStateService _service;
     private readonly TopicHub.Connection _subscriber;
@@ -39,7 +40,8 @@ public sealed class SystemStateServiceTests : IAsyncDisposable
             new StorageFacts(_inventory, _pools, DeploymentEnvironment.Prod, SystemFiles.Host with { ZfsKstat = _kstat }),
             _hub,
             _time,
-            NullLogger<SystemStateService>.Instance);
+            NullLogger<SystemStateService>.Instance,
+            _usage);
         // Disks and pools are for administrators only.
         _subscriber = _hub.Connect(new ClaimsPrincipal(new ClaimsIdentity([new Claim(ClaimTypes.Role, SessionAuthenticationHandler.AdminRole)], "test")), "s");
         SetDisks(_allDisks);
@@ -256,5 +258,37 @@ public sealed class SystemStateServiceTests : IAsyncDisposable
         await _service.RefreshPoolsAsync(TestContext.Current.CancellationToken);
 
         Assert.Contains(_commands.Calls, call => call.FileName == "zpool" && call.Arguments.SequenceEqual(["clear", "pithyxtests"]));
+    }
+
+    [Fact]
+    public async Task WritesReadTheUsedSpaceAgainOncePerBurstAfterZfsSynced()
+    {
+        SetPools();
+        await _service.StartAsync(TestContext.Current.CancellationToken);
+        var reads = () => _commands.Calls.Count(call => call.FileName == "zpool" && call.Arguments[0] == "list");
+        // The first disk read counts as a disk change and reads the pools once more.
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        _time.Advance(SystemStateService.Debounce);
+        await Task.Delay(200, TestContext.Current.CancellationToken);
+        var before = reads();
+        var fuller = StorageFixtures.Read("default", "zpool-list").Replace("\"capacity\":{\"value\":0", "\"capacity\":{\"value\":85", StringComparison.Ordinal);
+
+        _commands.Results["zpool list"] = new CommandResult(0, fuller, "", TimeSpan.Zero);
+        _usage.Written();
+        _usage.Written();
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        _time.Advance(SystemStateService.UsageDelay - TimeSpan.FromSeconds(1));
+        await Task.Delay(100, TestContext.Current.CancellationToken);
+        _usage.Written();
+        Assert.Equal(before, reads());
+
+        for (var i = 0; i < 10 && reads() == before; i++)
+        {
+            _time.Advance(TimeSpan.FromSeconds(3));
+            await Task.Delay(100, TestContext.Current.CancellationToken);
+        }
+
+        Assert.Equal(before + 1, reads());
+        Assert.Contains(_pools.Current.Pools, pool => pool.CapacityPercent == 85);
     }
 }
