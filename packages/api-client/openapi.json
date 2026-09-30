@@ -3555,6 +3555,7 @@
           "fs.share.path_taken",
           "fs.share.pool_not_prepared",
           "fs.share.read_only",
+          "fs.share.unavailable",
           "fs.thumbnail.not_found",
           "fs.thumbnail.too_many",
           "fs.trash.retention_invalid",
@@ -5810,6 +5811,13 @@
               "string"
             ],
             "description": "The share root on the host. Only administrators get it."
+          },
+          "unavailable": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Why its files cannot be reached now (ShareAvailability), or null when they can."
           }
         },
         "description": "A share the user can use."

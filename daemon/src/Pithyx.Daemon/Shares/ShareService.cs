@@ -13,7 +13,7 @@ namespace Pithyx.Daemon.Shares;
 /// Shares and who may use them. Every file request resolves its share here, so a changed or revoked access applies to
 /// the next request. A share the caller cannot use is reported as not found, so share names do not leak.
 /// </summary>
-public sealed class ShareService(SqliteConnectionFactory connections, TimeProvider time)
+public sealed class ShareService(SqliteConnectionFactory connections, TimeProvider time, PoolInventory? pools = null)
 {
     public const int MaxNameLength = 64;
 
@@ -62,13 +62,13 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
         await using var connection = await connections.OpenAsync(cancellationToken);
         if (IsAdmin(user))
         {
-            var all = await connection.QueryAsync<(long Id, string Name, string Path)>("SELECT id, name, path FROM shares ORDER BY name");
-            return [.. all.Select(share => new ShareInfo(share.Id, share.Name, ShareAccess.ReadWrite, share.Path))];
+            var all = await connection.QueryAsync<(long Id, string Name, string Path, string? Dataset)>("SELECT id, name, path, dataset FROM shares ORDER BY name");
+            return [.. all.Select(share => new ShareInfo(share.Id, share.Name, ShareAccess.ReadWrite, share.Path, UnavailableReason(share.Dataset)))];
         }
-        var rows = await connection.QueryAsync<(long Id, string Name, string Level)>(
-            "SELECT shares.id, shares.name, share_access.level FROM shares JOIN share_access ON share_access.share_id = shares.id WHERE share_access.user_id = @userId ORDER BY shares.name",
+        var rows = await connection.QueryAsync<(long Id, string Name, string Level, string? Dataset)>(
+            "SELECT shares.id, shares.name, share_access.level, shares.dataset FROM shares JOIN share_access ON share_access.share_id = shares.id WHERE share_access.user_id = @userId ORDER BY shares.name",
             new { userId = CurrentUser.Id(user) });
-        return [.. rows.Select(share => new ShareInfo(share.Id, share.Name, Parse(share.Level), null))];
+        return [.. rows.Select(share => new ShareInfo(share.Id, share.Name, Parse(share.Level), null, UnavailableReason(share.Dataset)))];
     }
 
     /// <summary>
@@ -78,9 +78,9 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
     public async Task<ResolvedShare> ResolveAsync(ClaimsPrincipal user, long shareId, bool write, CancellationToken cancellationToken)
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
-        var row = await connection.QuerySingleOrDefaultAsync<(long Id, string Name, string Path, string? Level)?>(
+        var row = await connection.QuerySingleOrDefaultAsync<(long Id, string Name, string Path, string? Level, string? Dataset)?>(
             """
-            SELECT shares.id, shares.name, shares.path, share_access.level
+            SELECT shares.id, shares.name, shares.path, share_access.level, shares.dataset
             FROM shares LEFT JOIN share_access ON share_access.share_id = shares.id AND share_access.user_id = @userId
             WHERE shares.id = @shareId
             """,
@@ -94,8 +94,15 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
         {
             throw new PithyxException(ErrorCodes.FsShareReadOnly);
         }
+        if (UnavailableReason(row.Value.Dataset) is { } reason)
+        {
+            throw new PithyxException(ErrorCodes.FsShareUnavailable, new Dictionary<string, object?> { ["name"] = row.Value.Name, ["reason"] = reason });
+        }
         return new ResolvedShare(row.Value.Id, row.Value.Name, row.Value.Path, access);
     }
+
+    private string? UnavailableReason(string? dataset) =>
+        pools is null ? null : ShareAvailability.Reason(dataset, pools.Current, pools.Available);
 
     public async Task<ShareInfo> CreateAsync(ClaimsPrincipal user, NewShare share, CancellationToken cancellationToken)
     {

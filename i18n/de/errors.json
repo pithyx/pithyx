@@ -112,7 +112,8 @@
       "not_found": "Der Share wurde nicht gefunden, oder du hast keinen Zugriff darauf.",
       "path_taken": "Unter {path} ist schon etwas anderes eingehängt. Wähle einen anderen Namen.",
       "pool_not_prepared": "Der Pool {pool} hat keinen Platz für freigegebene Ordner (pithyx/shares), deshalb lässt sich dort keiner anlegen.",
-      "read_only": "In diesem Share darfst du nur lesen."
+      "read_only": "In diesem Share darfst du nur lesen.",
+      "unavailable": "{name} lässt sich gerade nicht öffnen: {reason, select, pool_missing {sein Pool ist nicht angeschlossen} pool_unavailable {sein Pool ist angehalten, weil Platten fehlen} other {sein Ordner ist nicht eingehängt}}. Er kommt von selbst zurück, sobald seine Platten wieder da sind."
     },
     "thumbnail": {
       "not_found": "Für diese Datei gibt es noch keine Vorschau.",

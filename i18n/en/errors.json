@@ -112,7 +112,8 @@
       "not_found": "The share was not found, or you have no access to it.",
       "path_taken": "Something else is already mounted at {path}. Choose another name.",
       "pool_not_prepared": "The pool {pool} has no place for shared folders (pithyx/shares), so none can be created on it.",
-      "read_only": "You can only read in this share."
+      "read_only": "You can only read in this share.",
+      "unavailable": "{name} cannot be opened right now: {reason, select, pool_missing {its pool is not connected} pool_unavailable {its pool stopped because disks are missing} other {its folder is not mounted}}. It comes back on its own once its disks are back."
     },
     "thumbnail": {
       "not_found": "There is no preview of this file yet.",
