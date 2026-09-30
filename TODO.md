@@ -65,11 +65,15 @@ Password rules (one PR; the same rules everywhere: setup, user management, chang
 Thumbnail cache (one PR, replaces D197 in vyxis/vyxis#33):
 
 - [x] Thumbnails live in a dataset of their own per pool (`<pool>/pithyx/cache`, never shown in the UI) instead of `/var/cache/pithyx/thumbnails`, capped at 2 GB per pool (least recently used dropped first). The cache leaves with its pool when the pool is destroyed or exported. Without a pool there are no files that need thumbnails. `daemon/CLAUDE.md` says so.
-Follow-ups found on the way:
+      Follow-ups found on the way:
 
 - [ ] Used space after writes over SMB and SFTP (step 12): they bypass the file service, so they need their own trigger for a pool read (for example Samba's `full_audit` or a slow timer while a share is connected), without waking sleeping disks.
 - [ ] Users (v0.1): deleting a user must also clear the daemon's in-memory notifications and jobs of that user, and user ids must never be reused (`users.id` has no `AUTOINCREMENT`), or a new user could see a deleted user's notifications until a restart (review of vyxis/vyxis#36).
 - [ ] Storage alert notifications: a pool whose fill level hovers around 80 or 90 percent notifies on every crossing; add a hysteresis, and do not call an exported or destroyed pool's alert "resolved".
+
+Owner feedback on 2026-09-30 (the rest is in #56):
+
+- [ ] SDK: a context menu API for apps. The desktop draws the menu (same look, keyboard and touch handling as its own menus) from items the app passes with the point of the right-click, and returns the chosen item; an app can also ask for the browser's menu in an area. Until then the SDK and the window frame only suppress the browser's menu outside text fields. Needs its own decision number and TSDoc.
 
 ### Scope of v0.1
 

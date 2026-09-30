@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- A right-click in an app window no longer opens the browser's menu (Back, Reload, Inspect); text fields keep it for paste and spelling. Sandboxed apps get this from `connect()` in `@pithyx/sdk` and show their own menu by listening for `contextmenu`.
 - Appearance in the account menu (start menu, your name): like the system, light or dark. The choice is kept on this device and reaches open apps at once. The name in the start menu shows a chevron, so the account menu with language and appearance is easy to find.
 - Users as Linux accounts (the user part of step 10): `GET`/`POST /api/users`, `PATCH /api/users/{userId}`, `PUT /api/users/{userId}/password` (ends the user's sessions) and `DELETE /api/users/{userId}`, administrators only. Every user gets a uid from 20000 to 29999 that is never given out again (migration 0013, `id_allocations`; the administrator from the setup gets 20000), the group `users` and no login shell. At start, after every change and when the pools change, the daemon brings `/etc/passwd` in line with the database with `useradd`, `usermod` and `userdel`, only for accounts in the Pithyx range; a name that a system account already has is refused, a deleted user's files and home stay. Each user gets a home dataset `<pool>/pithyx/homes/<user>` on the first pool (owner the user, mode 0700). The last administrator can neither be deleted nor lose the right, and nobody deletes themselves. The daemon warns at start when `/etc/login.defs` lets other tools allocate ids in 20000 to 49999. New error codes `users.account.refused`, `users.uid.exhausted`, `users.user.exists`, `users.user.last_admin`, `users.user.not_found` and `users.user.self`. A standalone Users page (create, edit, new password with the strength meter, delete after typing the name) waits for the new Settings shell.
 - Files, folders, copies and restored items the daemon creates belong to the requesting user's Linux account (`fchown`/`fchownat`, group `users`) when the daemon runs as root, so SMB, NFS and SFTP see the right owner (release blocker D89).
@@ -157,6 +158,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- Toasts of notifications disappear when the notification panel opens, and none appear while it is open; toasts stay 5 seconds instead of 8.
 - The taskbar clock no longer looks like a button: it had a hover effect and took the keyboard focus, but opens nothing.
 - The language switch on the sign-in and setup screens is a list of our own in the theme's colors instead of the native select, whose list was white on white in dark mode; it works with arrows, Home, End, Enter, Space, Escape and Tab (ARIA listbox).
 - After loading or reloading the desktop, no element has focus; the Pithyx menu button takes it only when the last window closes or minimizes, and Tab reaches it as before.

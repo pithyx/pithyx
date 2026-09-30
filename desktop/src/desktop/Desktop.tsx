@@ -42,7 +42,7 @@ import { bannerAlert, useStorageAlerts } from '../shell/storageAlerts';
 import { StartMenu } from '../shell/StartMenu';
 import { Taskbar } from '../shell/Taskbar';
 import type { RunningApp, TaskbarPosition } from '../shell/types';
-import { notify } from '../shell/toasts';
+import { notify, setNotificationPanelOpen } from '../shell/toasts';
 import {
   followNotifications,
   markAllRead,
@@ -363,6 +363,13 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   const [query, setQuery] = useState('');
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  // The toast store lives outside React; it hides notification toasts while the panel shows them.
+  useEffect(() => {
+    setNotificationPanelOpen(notificationsOpen);
+    return () => {
+      setNotificationPanelOpen(false);
+    };
+  }, [notificationsOpen]);
   const notificationsButton = useRef<HTMLButtonElement>(null);
   const notificationsPanel = useRef<HTMLElement>(null);
   const alerts = useStorageAlerts(user.isAdmin);
