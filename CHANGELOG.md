@@ -157,6 +157,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- A storage alert's mute could stay in the database for a moment after the alert went away, when the background check and a request refreshed the alerts at the same time; refreshes now run one at a time.
 - The language switch on the sign-in and setup screens is a list of our own in the theme's colors instead of the native select, whose list was white on white in dark mode; it works with arrows, Home, End, Enter, Space, Escape and Tab (ARIA listbox).
 - After loading or reloading the desktop, no element has focus; the Pithyx menu button takes it only when the last window closes or minimizes, and Tab reaches it as before.
 - The desktop wallpaper draws its boxes with the logo's geometry (lid 16 units above the box) instead of a lid lifted too high, and the logo in the Pithyx menu button is larger (38 instead of 26 px).

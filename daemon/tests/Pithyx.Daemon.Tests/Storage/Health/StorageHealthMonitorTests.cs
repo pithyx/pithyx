@@ -67,6 +67,7 @@ public sealed class StorageHealthMonitorTests : IAsyncDisposable
     {
         await _monitor.StopAsync(CancellationToken.None);
         _monitor.Dispose();
+        _alerts.Dispose();
         _notifier.Dispose();
         _notifications.Dispose();
         _store.Dispose();
