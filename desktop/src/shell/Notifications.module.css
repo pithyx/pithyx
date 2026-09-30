@@ -186,6 +186,17 @@
   background: var(--color-surface-1);
 }
 
+.jobRow {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.jobBar {
+  flex: 1;
+  min-width: 0;
+}
+
 .jobDetail {
   font-size: var(--font-size-xs);
   color: var(--color-text-muted);

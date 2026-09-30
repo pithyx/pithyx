@@ -714,6 +714,40 @@
         "vdev": "mirror-0"
       },
       "expected": "Only a RAID-Z group can be expanded by a disk; mirror-0 is not one."
+    },
+    "fs.share.unavailable": {
+      "params": {
+        "name": "Media",
+        "reason": "pool_unavailable"
+      },
+      "expected": "Media cannot be opened right now: its pool stopped because disks are missing. It comes back on its own once its disks are back."
+    },
+    "notifications.message.invalid": {
+      "params": {
+        "field": "title",
+        "maxLength": 200
+      },
+      "expected": "The notification was not sent: its title is empty or longer than 200 characters."
+    },
+    "notifications.notification.not_found": {
+      "params": {},
+      "expected": "This notification no longer exists."
+    },
+    "storage.pool.disks_missing": {
+      "params": {
+        "name": "tank"
+      },
+      "expected": "Disks of tank are not connected, so it cannot be destroyed or exported now: the command would stop the pool and hang until the box restarts. Connect the disks again first, or restart the box to forget the pool."
+    },
+    "storage.pool.suspended": {
+      "params": {
+        "name": "tank"
+      },
+      "expected": "tank has stopped all reads and writes because too many of its disks are gone. Destroying or exporting it now would hang until the box restarts. Connect the disks again; Pithyx then resumes the pool on its own."
+    },
+    "storage.zfs.unavailable": {
+      "params": {},
+      "expected": "ZFS did not answer in time or reported an error, so Pithyx cannot show what this would change. Try again in a moment. If it keeps happening, a pool may be waiting for disks that are gone: see Storage."
     }
   },
   "cases": [

@@ -49,7 +49,7 @@ public sealed partial class SnapshotService : IDisposable
     internal ChannelReader<bool> Refreshes => _refreshes.Reader;
 
     /// <summary>Reads every snapshot. Never throws: without ZFS the list stays as it was.</summary>
-    public async Task RefreshAsync(CancellationToken cancellationToken)
+    public async Task<bool> RefreshAsync(CancellationToken cancellationToken)
     {
         var parent = Activity.Current;
         Activity.Current = null;
@@ -57,10 +57,12 @@ public sealed partial class SnapshotService : IDisposable
         try
         {
             await ReadAsync(cancellationToken);
+            return true;
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
             LogRefreshFailed(exception);
+            return false;
         }
         finally
         {

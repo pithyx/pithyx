@@ -108,21 +108,21 @@ tools/dev-vm/testpool.sh create pithyxtest --layout mirror VYXTEST01 VYXTEST02
 tools/dev-vm/testpool.sh destroy pithyxtest
 ```
 
-To develop on the VM from your machine, connect with VS Code Remote-SSH (or any SSH client with port forwarding), run `dotnet watch --project daemon/src/Pithyx.Daemon` without `PITHYX_SIMULATE`, run `pnpm dev`, and forward port 5173.
-
-To run the daemon as root in real mode as the unit `pithyx-dev.service` on port 7484, from this checkout or a worktree (for example a pull request branch in `.worktrees/pools`):
+The dev VM has exactly one installation: the unit `pithyx-dev.service` runs dev as root in real mode on port 7484, with the one database `/var/lib/pithyx/pithyx.db` on the system disk and its pools on the test disks, like a box. A daemon started from a checkout without `PITHYX_DB` refuses to start there (exit code 78), so no second installation appears in `.pithyx-dev/`. Branches are checked by CI before the merge and on 7484 after it. To deploy the latest `origin/dev`:
 
 ```bash
-tools/dev-vm/install-dev-daemon.sh --from pools
+tools/dev-vm/install-dev-daemon.sh
 ```
 
-It builds as your user (also under `sudo`), checks first that the checkout knows every schema version in `/var/lib/pithyx/pithyx.db`, says what it would stop on port 7484 and asks before stopping it. `--no-build` reuses the build, `--yes` skips the question, `--uninstall` removes the unit.
+It fast-forwards the main checkout, builds as your user (also under `sudo`), checks first that dev knows every schema version in the database, says what it would stop on port 7484 and asks (`--yes` skips the question, `--no-build` reuses the build, `--uninstall` removes the unit). Afterwards it makes sure the owner account from `~/.config/pithyx-dev/owner.env` can sign in. To start over with an empty database and the owner and test accounts set up again:
 
-Without the Vite dev server, the daemon serves the built desktop itself: run `pnpm build`, start the daemon, and open http://localhost:7484 (or the VM's address on port 7484). `tools/dev-vm/start.sh` does both for a test session with its own database in `~/.cache/pithyx-run` (`--reset` starts the setup wizard fresh, `--real` reads the real disks, `--no-build` reuses `desktop/dist`).
+```bash
+tools/dev-vm/reset-dev-db.sh
+```
 
 ### Checks
 
-`pnpm install` installs the git hooks. Before you push, run `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, `pnpm check:repo` and `dotnet test` in `daemon/`.
+`pnpm install` installs the git hooks. CI runs `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, `pnpm check:repo`, `dotnet test` in `daemon/` and the E2E suite on every push; on your own machine you can run the same commands.
 
 The end-to-end tests start their own daemon in simulation mode with a fresh database and drive the built desktop in Chromium:
 

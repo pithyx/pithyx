@@ -12,6 +12,7 @@ using Pithyx.Daemon.Jobs;
 using Pithyx.Daemon.Layouts;
 using Pithyx.Daemon.Logs;
 using Pithyx.Daemon.Monitoring;
+using Pithyx.Daemon.Notifications;
 using Pithyx.Daemon.Realtime;
 using Pithyx.Daemon.Shares;
 using Pithyx.Daemon.Storage;
@@ -29,6 +30,13 @@ var builder = WebApplication.CreateSlimBuilder(args);
 
 var mode = builder.Configuration["PITHYX_SIMULATE"] == "1" ? DaemonMode.Simulated : DaemonMode.Real;
 var paths = DaemonPaths.Resolve(builder.Configuration, builder.Environment, mode);
+if (!BuildTimeDocument.IsGenerating
+    && DaemonPaths.IsSecondInstallation(builder.Configuration, builder.Environment, mode, DeploymentEnvironment.DefaultDirectory))
+{
+    await Console.Error.WriteLineAsync(
+        $"This machine has its Pithyx installation already ({DeploymentEnvironment.DefaultDirectory} exists). Refusing to start a second one in {Path.GetDirectoryName(paths.DatabasePath)}.");
+    return DaemonExitCode.SecondInstallation;
+}
 
 builder.Services.AddPithyxLogs(paths.LogDirectory);
 builder.AddPithyxLogging(paths.LogDirectory);
@@ -52,6 +60,7 @@ builder.Services.AddSingleton<MigrationRunner>();
 builder.Services.AddPithyxErrors();
 builder.Services.AddPithyxAuth();
 builder.Services.AddPithyxLayouts();
+builder.Services.AddPithyxNotifications();
 builder.Services.AddPithyxJobs();
 builder.Services.AddPithyxShares();
 builder.Services.AddPithyxFiles();
@@ -61,6 +70,7 @@ builder.Services.AddPithyxMonitoring();
 builder.Services.AddSingleton<DiskInventory>();
 builder.Services.AddSingleton(services => services.GetRequiredService<DiskInventory>().Definition());
 builder.Services.AddSingleton<PoolInventory>();
+builder.Services.AddSingleton<StorageUsage>();
 builder.Services.AddSingleton(services => services.GetRequiredService<PoolInventory>().Definition());
 builder.Services.AddSingleton<IStorageBackend, ZfsBackend>();
 builder.Services.AddSingleton<DiskProbe>();
@@ -95,7 +105,7 @@ if (mode == DaemonMode.Simulated)
         ?? Path.Combine(builder.Environment.ContentRootPath, "..", "..", "tests", "fixtures");
     var scenario = builder.Configuration["PITHYX_SIMULATE_SCENARIO"] ?? "default";
     builder.Services.AddSingleton<ICommandRunner>(FixtureCommandRunner.Load(Path.Combine(fixtures, "commands", scenario)));
-    builder.Services.AddSingleton(new SystemFiles(Path.Combine(fixtures, "proc", "mountinfo"), Path.Combine(fixtures, "proc", "swaps")));
+    builder.Services.AddSingleton(new SystemFiles(Path.Combine(fixtures, "proc", "mountinfo"), Path.Combine(fixtures, "proc", "swaps"), Path.Combine(fixtures, "proc", "spl", "kstat", "zfs")));
     etcDirectory = builder.Configuration["PITHYX_ETC_DIR"] ?? Path.Combine(fixtures, "etc");
 }
 else
@@ -164,6 +174,7 @@ api.MapGet("/health", () => TypedResults.Ok(new HealthResponse("ok", mode)))
 api.MapAuthEndpoints();
 api.MapLayoutEndpoints();
 api.MapJobEndpoints();
+api.MapNotificationEndpoints();
 api.MapShareEndpoints();
 api.MapFileEndpoints();
 api.MapStorageEndpoints();

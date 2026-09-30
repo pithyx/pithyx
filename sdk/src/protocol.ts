@@ -92,9 +92,14 @@ export interface AppContext {
   host: { version: string; protocol: number };
 }
 
-/** A notification the app shows. The app translates the texts; it knows the locale from the context. */
+/**
+ * A notification the app shows. The app translates the texts; it knows the locale from the context. It appears as a
+ * toast with the app's icon and stays in the user's notification history (at most 200 entries, 30 days).
+ */
 export interface NotificationRequest {
+  /** Plain text, 1 to 200 characters. */
   title: string;
+  /** Plain text, at most 1000 characters. */
   body?: string;
   level?: 'info' | 'success' | 'warning' | 'error';
 }

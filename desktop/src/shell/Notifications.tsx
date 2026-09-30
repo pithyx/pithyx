@@ -28,7 +28,10 @@ export interface NotificationItem {
 export interface JobItem {
   id: string;
   message: Message;
-  progress: number;
+  /** Percent done; null while the total is unknown. */
+  progress: number | null;
+  /** Asks the daemon to stop the job. */
+  onCancel?: () => void;
 }
 
 function useRelativeTime(locale: string) {
@@ -36,7 +39,9 @@ function useRelativeTime(locale: string) {
   return (minutes: number) =>
     minutes < 60
       ? format.format(-minutes, 'minute')
-      : format.format(-Math.round(minutes / 60), 'hour');
+      : minutes < 48 * 60
+        ? format.format(-Math.round(minutes / 60), 'hour')
+        : format.format(-Math.round(minutes / (24 * 60)), 'day');
 }
 
 export function NotificationCard({

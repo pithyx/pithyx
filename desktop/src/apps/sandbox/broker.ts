@@ -1,6 +1,8 @@
+import { unwrap } from '@pithyx/api-client';
 import { sdkError, PithyxError, type MethodHandlers } from '@pithyx/sdk/host';
-import { notify } from '../../shell/toasts';
 import { writeAppLog } from './appLogs';
+import { api } from '../../api/client';
+import { toPithyxError } from '../sdk/daemonError';
 import { dispatch, useDesktop } from '../../wm/store';
 
 /** A stored value may be this large as JSON, and an app keeps at most this much per user. */
@@ -34,7 +36,6 @@ function storeOf(user: number, app: string): Map<string, string> {
 export interface BrokerTarget {
   windowId: string;
   app: string;
-  appName: string;
   user: number;
   permissions: readonly string[];
 }
@@ -81,9 +82,23 @@ export function brokerFor(target: BrokerTarget): MethodHandlers {
     'log.write': ({ entries }) => {
       writeAppLog(target.app, entries);
     },
-    notify: ({ title, body }) => {
+    // The daemon keeps it in the user's history and sends it back on the notifications topic, which shows the toast.
+    notify: async ({ title, body, level }) => {
       require('notifications');
-      notify({ code: 'app.message', params: { app: target.appName, title, body: body ?? '' } });
+      try {
+        unwrap(
+          await api.POST('/api/notifications/app', {
+            body: {
+              app: target.app,
+              title,
+              body: body ?? null,
+              tone: level === 'error' ? 'critical' : (level ?? 'info'),
+            },
+          }),
+        );
+      } catch (error) {
+        throw toPithyxError(error);
+      }
     },
     'session.save': ({ state }) => {
       if (sizeOf(state) > MAX_SESSION) {

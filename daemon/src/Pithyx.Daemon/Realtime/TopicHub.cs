@@ -163,7 +163,14 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
                 foreach (var topic in definition.ExistingTopics().Where(t => TopicPattern.Matches(pattern, t) && definition.IsAllowed(connection.User, t)))
                 {
                     var data = await definition.Snapshot(topic, cancellationToken);
-                    data = definition.ForUser?.Invoke(connection.User, data) ?? data;
+                    if (definition.ForUser is { } forUser)
+                    {
+                        if (forUser(connection.User, data) is not { } shaped)
+                        {
+                            continue;
+                        }
+                        data = shaped;
+                    }
                     Send(connection, new SnapshotMessage(id, topic, data, Tracing.CurrentRequestId));
                 }
             }
@@ -221,7 +228,10 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
             {
                 if (definition.ForUser is { } forUser)
                 {
-                    Enqueue(connection, JsonSerializer.SerializeToUtf8Bytes<object>(new EventMessage(topic, forUser(connection.User, data), requestId), _serializer));
+                    if (forUser(connection.User, data) is { } shaped)
+                    {
+                        Enqueue(connection, JsonSerializer.SerializeToUtf8Bytes<object>(new EventMessage(topic, shaped, requestId), _serializer));
+                    }
                     continue;
                 }
                 payload ??= JsonSerializer.SerializeToUtf8Bytes<object>(new EventMessage(topic, data, requestId), _serializer);

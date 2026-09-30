@@ -9,7 +9,7 @@ export function StorageWindow({ windowId }: AppProps) {
     <CoreSdkApp
       windowId={windowId}
       app="storage"
-      permissions={[]}
+      permissions={['notifications']}
       internal={adminStorageHost}
       Component={StorageApp}
     />

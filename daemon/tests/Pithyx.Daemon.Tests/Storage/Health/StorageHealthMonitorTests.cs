@@ -6,6 +6,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Time.Testing;
 using Pithyx.Daemon.Commands;
 using Pithyx.Daemon.Database;
+using Pithyx.Daemon.Notifications;
 using Pithyx.Daemon.Realtime;
 using Pithyx.Daemon.Storage;
 using Pithyx.Daemon.Storage.Health;
@@ -28,6 +29,9 @@ public sealed class StorageHealthMonitorTests : IAsyncDisposable
     private readonly StorageAlertService _alerts;
     private readonly SmartInventory _smart;
     private readonly StorageHealthMonitor _monitor;
+    private readonly NotificationStore _store;
+    private readonly NotificationService _notifications;
+    private readonly StorageAlertNotifier _notifier;
     private readonly DateTimeOffset _start;
 
     /// <summary>What <c>smartctl -a</c> prints, and whether the disk sleeps (then smartctl -n standby does nothing).</summary>
@@ -44,8 +48,11 @@ public sealed class StorageHealthMonitorTests : IAsyncDisposable
         _smart = new SmartInventory(_commands, _time, NullLogger<SmartInventory>.Instance);
         _schedules = new StorageSchedules(_connections, _time);
         _alerts = new StorageAlertService(_connections, _pools, _disks, _smart, _time, NullLogger<StorageAlertService>.Instance);
-        var hub = new TopicHub(new TopicRegistry([_alerts.Definition()]), _time, Options.Create(new JsonOptions()), NullLogger<TopicHub>.Instance);
-        _monitor = new StorageHealthMonitor(_disks, _pools, _smart, _alerts, _schedules, _commands, hub, _time, NullLogger<StorageHealthMonitor>.Instance);
+        _store = new NotificationStore(_connections);
+        var hub = new TopicHub(new TopicRegistry([_alerts.Definition(), _store.Definition()]), _time, Options.Create(new JsonOptions()), NullLogger<TopicHub>.Instance);
+        _notifications = new NotificationService(_store, _connections, hub, _time, Options.Create(new JsonOptions()), NullLogger<NotificationService>.Instance);
+        _notifier = new StorageAlertNotifier(_connections, _notifications, _time, NullLogger<StorageAlertNotifier>.Instance);
+        _monitor = new StorageHealthMonitor(_disks, _pools, _smart, _alerts, _notifier, _schedules, _commands, hub, _time, NullLogger<StorageHealthMonitor>.Instance);
         _commands.Handler = request => request.FileName switch
         {
             "smartctl" when _asleep => new CommandResult(2, Fixture("ata-standby"), "", TimeSpan.Zero),
@@ -60,6 +67,9 @@ public sealed class StorageHealthMonitorTests : IAsyncDisposable
     {
         await _monitor.StopAsync(CancellationToken.None);
         _monitor.Dispose();
+        _notifier.Dispose();
+        _notifications.Dispose();
+        _store.Dispose();
         Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
         Directory.Delete(_directory, recursive: true);
     }
@@ -119,6 +129,31 @@ public sealed class StorageHealthMonitorTests : IAsyncDisposable
         Assert.Equal("failed", _smart.Of(Sdb.Id)?.State);
         Assert.Equal([$"disk.smart_failed:{Sdb.Id}"], _alerts.Current.Alerts.Select(alert => alert.Key));
         Assert.True(_alerts.Settled);
+    }
+
+    [Fact]
+    public async Task AFailingDiskNotifiesEveryAdministratorOnceAndARestartDoesNotNotifyAgain()
+    {
+        long admin, user;
+        await using (var connection = await _connections.OpenAsync(TestContext.Current.CancellationToken))
+        {
+            admin = await connection.ExecuteScalarAsync<long>("INSERT INTO users (username, password_hash, is_admin, created_at, updated_at) VALUES ('ada', 'x', 1, '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z') RETURNING id");
+            user = await connection.ExecuteScalarAsync<long>("INSERT INTO users (username, password_hash, is_admin, created_at, updated_at) VALUES ('bob', 'x', 0, '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z') RETURNING id");
+        }
+        _smartOutput = Fixture("ata-failing");
+
+        await StartAsync();
+        await UntilAsync(() => _store.Of(admin).Count > 0);
+        // A restart evaluates the same alert from scratch; the notice in the database keeps it from notifying again.
+        await _notifier.SyncAsync([], settled: false, TestContext.Current.CancellationToken);
+        await _notifier.SyncAsync(_alerts.Current.Alerts, _alerts.Settled, TestContext.Current.CancellationToken);
+
+        var notification = Assert.Single(_store.Of(admin));
+        Assert.Equal("storage.alert.smartFailed", notification.Code);
+        Assert.Equal(NotificationTone.Critical, notification.Tone);
+        Assert.Equal($"disk.smart_failed:{Sdb.Id}", notification.Params["alertKey"].GetString());
+        Assert.Equal("sdb", notification.Params["disk"].GetString());
+        Assert.Empty(_store.Of(user));
     }
 
     [Fact]

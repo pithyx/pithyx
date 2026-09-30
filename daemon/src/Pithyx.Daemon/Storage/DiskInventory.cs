@@ -14,6 +14,9 @@ public sealed class DiskInventory
 
     public DiskList Current => Volatile.Read(ref _current);
 
+    /// <summary>False until the disks were read once; before that a missing disk means nothing.</summary>
+    public bool Loaded { get; private set; }
+
     /// <summary>Device trees by disk id, for the disk guard.</summary>
     public IReadOnlyDictionary<string, BlockDevice> Devices => Volatile.Read(ref _devices);
 
@@ -39,6 +42,7 @@ public sealed class DiskInventory
     public DisksChanged Replace(IReadOnlyList<Disk> disks, IReadOnlyDictionary<string, BlockDevice>? devices = null)
     {
         ArgumentNullException.ThrowIfNull(disks);
+        Loaded = true;
         Volatile.Write(ref _devices, devices ?? new Dictionary<string, BlockDevice>());
         var previous = Current.Disks.ToDictionary(d => d.Id, Fingerprint, StringComparer.Ordinal);
         var upserts = disks.Where(d => !previous.TryGetValue(d.Id, out var before) || before != Fingerprint(d)).ToList();
