@@ -61,10 +61,29 @@ public sealed record FileOperationResult(long Done, IReadOnlyList<string> Skippe
 /// renames it into place when complete, so a cancelled or failed copy never leaves half a file under the real name.
 /// Moves within one file system are renames; across file systems they copy, then delete the source.
 /// </summary>
-public sealed class FileOperations(ShareService shares, JobService jobs, TrashService trash, FileOwners owners)
+public sealed class FileOperations(ShareService shares, JobService jobs, TrashService trash, FileOwners owners, Storage.StorageUsage? usage = null)
 {
     public const int MaxItems = 1000;
     private const long CopyChunk = 16L * 1024 * 1024;
+
+    /// <summary>Starts a file job; when it ends, done or not, the pools' used space is read again.</summary>
+    private Task<Job> StartJobAsync(long userId, string kind, object? parameters, Func<JobContext, Task> work, CancellationToken cancellationToken) =>
+        jobs.StartAsync(
+            userId,
+            kind,
+            parameters,
+            async context =>
+            {
+                try
+                {
+                    await work(context);
+                }
+                finally
+                {
+                    usage?.Written();
+                }
+            },
+            cancellationToken);
 
     public async Task<Job> StartAsync(ClaimsPrincipal user, FileOperationRequest request, CancellationToken cancellationToken)
     {
@@ -110,7 +129,7 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
         var kind = toTrash ? "trash" : request.Kind.ToString().ToLowerInvariant();
         var userId = CurrentUserId(user);
         var owner = await owners.ForAsync(user, cancellationToken);
-        return await jobs.StartAsync(userId, $"files.{kind}", request, context => Task.Run(() => Run(request.Kind, toTrash, userId, sources, target, policy, new Progress(context, owner)), context.Cancellation), cancellationToken);
+        return await StartJobAsync(userId, $"files.{kind}", request, context => Task.Run(() => Run(request.Kind, toTrash, userId, sources, target, policy, new Progress(context, owner)), context.Cancellation), cancellationToken);
     }
 
     /// <summary>Puts recycle bin items back where they were, recreating missing parent folders.</summary>
@@ -120,14 +139,14 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
         var (share, items) = await ResolveTrashAsync(user, shareId, request.Ids, cancellationToken);
         var policy = request.OnConflict ?? ConflictPolicy.Rename;
         var owner = await owners.ForAsync(user, cancellationToken);
-        return await jobs.StartAsync(CurrentUserId(user), "files.restore", request, context => Task.Run(() => Restore(share, items, policy, new Progress(context, owner)), context.Cancellation), cancellationToken);
+        return await StartJobAsync(CurrentUserId(user), "files.restore", request, context => Task.Run(() => Restore(share, items, policy, new Progress(context, owner)), context.Cancellation), cancellationToken);
     }
 
     /// <summary>Deletes recycle bin items for good; all of them when <paramref name="ids"/> is null (emptying the bin).</summary>
     public async Task<Job> StartPurgeAsync(ClaimsPrincipal user, long shareId, IReadOnlyList<long>? ids, CancellationToken cancellationToken)
     {
         var (share, items) = await ResolveTrashAsync(user, shareId, ids, cancellationToken);
-        return await jobs.StartAsync(CurrentUserId(user), ids is null ? "files.empty_trash" : "files.purge", new { shareId, ids }, context => Task.Run(() => Purge(share, items, context), context.Cancellation), cancellationToken);
+        return await StartJobAsync(CurrentUserId(user), ids is null ? "files.empty_trash" : "files.purge", new { shareId, ids }, context => Task.Run(() => Purge(share, items, context), context.Cancellation), cancellationToken);
     }
 
     /// <summary>
@@ -148,7 +167,7 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
         CancellationToken cancellationToken)
     {
         var owner = await owners.ForAsync(user, cancellationToken);
-        return await jobs.StartAsync(
+        return await StartJobAsync(
             CurrentUserId(user),
             kind,
             parameters,

@@ -67,7 +67,8 @@ async function send(layout: Layout, keepalive: boolean): Promise<void> {
     // An ended session leads to the sign-in screen; a lost save there is expected.
     if (!failureShown && !isSessionExpired(error)) {
       failureShown = true;
-      notify({ code: 'desktop.saveFailed', params: { requestId: describeError(error).requestId } });
+      console.error(`Pithyx layout save failed, request id ${describeError(error).requestId}`);
+      notify({ code: 'desktop.saveFailed', params: {} });
     }
   }
 }

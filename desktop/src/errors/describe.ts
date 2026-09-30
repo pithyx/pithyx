@@ -1,6 +1,6 @@
 import { PithyxApiError, type ErrorCode } from '@pithyx/api-client';
 
-/** What the UI needs to show an error: a translatable code, its parameters and the request id for support. */
+/** What the UI needs to show an error: a translatable code and its parameters; the request id is for the console. */
 export interface DescribedError {
   code: ErrorCode | 'network';
   params: Record<string, unknown>;
@@ -20,16 +20,6 @@ export function describeError(error: unknown): DescribedError {
   }
   // fetch rejects with a TypeError when the daemon cannot be reached at all.
   return { code: 'network', params: {}, requestId: '' };
-}
-
-/**
- * Whether support needs the request id: the daemon failed (5xx), rather than the user doing something it refuses (a
- * wrong password, an invalid name). Errors without a status count as faults only for system codes.
- */
-export function isFault(error: DescribedError): boolean {
-  return error.status === undefined
-    ? error.code.startsWith('system.') || error.code === 'storage.command.failed'
-    : error.status >= 500;
 }
 
 export function isSessionExpired(error: unknown): boolean {

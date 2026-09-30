@@ -43,14 +43,12 @@ test('Storage shows the pools and whether each disk may be used', async ({ page 
   await expect(diskRow(storage, 'sdg')).toContainText('No SMART data in a virtual machine');
 });
 
-test('Settings has no storage page and opens Storage', async ({ page }) => {
+test('Settings has no storage page and no link to Storage', async ({ page }) => {
   await signInAsAdmin(page);
   await openFromStart(page, 'Settings');
   const settings = appWindow(page, 'Settings');
-  await settings.getByRole('button', { name: 'Open Storage' }).click();
-  await expect(
-    appWindow(page, 'Storage').getByRole('heading', { name: 'Pools', level: 2 }),
-  ).toBeVisible();
+  await expect(settings.getByRole('heading', { name: 'Shared folders' })).toBeVisible();
+  await expect(settings.getByRole('button', { name: 'Open Storage' })).toHaveCount(0);
 });
 
 test('the pool wizard compares layouts, asks about encryption and lists the exact commands', async ({
@@ -208,7 +206,7 @@ test('deleting a dataset needs its full name typed', async ({ page }) => {
   await dialog.getByLabel('Type pithyxtestm/data to confirm').fill('pithyxtestm/data');
   await expect(show).toBeEnabled();
 
-  // The daemon has no such dataset and says so, with the request id.
+  // The daemon has no such dataset and says so.
   await show.click();
   await expect(dialog).toContainText('There is no dataset named pithyxtestm/data.');
   await expect(dialog.getByRole('button', { name: 'Delete', exact: true })).toHaveCount(0);

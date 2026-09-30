@@ -14,6 +14,7 @@ namespace Pithyx.Daemon.Jobs;
 public sealed class JobBoard(TimeProvider time)
 {
     public const string Pattern = "jobs/+";
+    public const string ActiveTopic = "jobs";
     public static readonly TimeSpan Retention = TimeSpan.FromMinutes(10);
     public static readonly TimeSpan PublishInterval = TimeSpan.FromMilliseconds(250);
 
@@ -34,6 +35,27 @@ public sealed class JobBoard(TimeProvider time)
         return user.IsInRole(SessionAuthenticationHandler.AdminRole)
             || (long.TryParse(user.FindFirstValue(ClaimTypes.NameIdentifier), NumberStyles.None, CultureInfo.InvariantCulture, out var id) && id == ownerId);
     }
+
+    /// <summary>
+    /// The per-user topic of the jobs a user has queued or running: its snapshot lists them, and every change of one
+    /// of them reaches its owner alone, the final one included. Administrators get only their own jobs here.
+    /// </summary>
+    public TopicDefinition ActiveDefinition() => new(
+        ActiveTopic,
+        typeof(JobList),
+        typeof(Job),
+        (_, _) => ValueTask.FromResult<object>(new OwnedJobs([.. _jobs.Values.Select(entry => new OwnedJob(entry.UserId, entry.Snapshot()))])),
+        TopicDefinition.AnyUser,
+        ForUser: (user, data) =>
+        {
+            var userId = long.TryParse(user.FindFirstValue(ClaimTypes.NameIdentifier), NumberStyles.None, CultureInfo.InvariantCulture, out var id) ? id : -1;
+            return data switch
+            {
+                OwnedJobs all => new JobList([.. all.Jobs.Where(job => job.UserId == userId && !JobEntry.IsFinal(job.Job.State)).Select(job => job.Job).OrderBy(job => job.Id)]),
+                OwnedJob change when change.UserId == userId => change.Job,
+                _ => null,
+            };
+        });
 
     public TopicDefinition Definition() => new(
         Pattern,
@@ -88,3 +110,8 @@ public sealed class JobBoard(TimeProvider time)
             ? id
             : null;
 }
+
+/// <summary>A job change as published on <see cref="JobBoard.ActiveTopic"/>; only its owner receives it.</summary>
+internal sealed record OwnedJob(long UserId, Job Job);
+
+internal sealed record OwnedJobs(IReadOnlyList<OwnedJob> Jobs);

@@ -86,9 +86,9 @@ public static class ImportPlans
         return steps;
     }
 
-    /// <summary>Exports a pool; never forced, so ZFS refuses while a dataset is busy.</summary>
+    /// <summary>Exports a pool; never forced, so ZFS refuses while a dataset is busy. Only while all its vdevs are reachable.</summary>
     public static IReadOnlyList<PlanStep> Export(string pool) =>
-        [new PlanStep(new CommandRequest("zpool", ["export", pool], TimeSpan.FromMinutes(5)), [])];
+        [new PlanStep(new CommandRequest("zpool", ["export", pool], TimeSpan.FromMinutes(5)), [], ReachablePool: pool)];
 
     /// <summary>True when an import failed because ZFS wants <c>-f</c>: the pool is in use by, or was last used on, another system.</summary>
     public static bool AsksForForce(CommandRequest command, CommandResult result)

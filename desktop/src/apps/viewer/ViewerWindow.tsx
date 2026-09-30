@@ -9,7 +9,7 @@ export function ViewerWindow({ windowId }: AppProps) {
     <CoreSdkApp
       windowId={windowId}
       app="viewer"
-      permissions={['files.shares']}
+      permissions={['files.shares', 'notifications']}
       internal={viewerHost}
       Component={ViewerApp}
     />

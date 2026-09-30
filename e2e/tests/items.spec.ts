@@ -60,6 +60,28 @@ async function savedNotes(page: Page) {
   return items.filter((item) => item.kind === 'note').map((item) => item.text);
 }
 
+/** Whether a menu opened at a point: its top left corner sits just below it. */
+function openedAt(menu: { x: number; y: number }, point: { x: number; y: number }) {
+  return Math.abs(menu.x - point.x) < 8 && menu.y >= point.y && menu.y - point.y < 12;
+}
+
+/** Records, for every right-click of the user, whether the browser's own menu was prevented. */
+async function recordRightClicks(page: Page) {
+  await page.evaluate(() => {
+    const prevented: boolean[] = [];
+    Object.assign(window, { rightClicks: prevented });
+    window.addEventListener('contextmenu', (event) => {
+      if (event.isTrusted) {
+        prevented.push(event.defaultPrevented);
+      }
+    });
+  });
+}
+
+function rightClicks(page: Page) {
+  return page.evaluate(() => (window as unknown as { rightClicks: boolean[] }).rightClicks);
+}
+
 test.beforeEach(async ({ page }) => {
   await signInAsAdmin(page);
   // New users also get a Files shortcut; these tests measure the grid of Storage and About alone.
@@ -145,6 +167,47 @@ test('a frame, Ctrl and Shift select several icons, which move and go together',
     await disks.dblclick();
     await expect(appWindow(page, 'Storage')).toBeVisible();
   });
+});
+
+test('a right-click while the desktop menu is open moves the menu there', async ({ page }) => {
+  await recordRightClicks(page);
+  const desktopMenu = page.getByRole('menu', { name: 'Desktop' });
+  const first = await cellCenter(page, 3, 0);
+  await page.mouse.click(first.x, first.y, { button: 'right' });
+  expect(openedAt(await box(desktopMenu), first)).toBe(true);
+
+  await test.step('on the empty desktop, the menu opens at the new point', async () => {
+    const second = await cellCenter(page, 5, 2);
+    await page.mouse.click(second.x, second.y, { button: 'right' });
+    await expect.poll(async () => openedAt(await box(desktopMenu), second)).toBe(true);
+    await expect(desktopMenu).toHaveCount(1);
+    await expect(desktopMenu.getByRole('menuitem', { name: 'New note' })).toBeFocused();
+  });
+
+  await test.step('on an icon, its own menu replaces the desktop menu', async () => {
+    const storage = await box(icon(page, 'Storage'));
+    const point = { x: storage.x + storage.width / 2, y: storage.y + storage.height / 2 };
+    await page.mouse.click(point.x, point.y, { button: 'right' });
+    const itemMenu = page.getByRole('menu', { name: '1 selected item' });
+    await expect.poll(async () => openedAt(await box(itemMenu), point)).toBe(true);
+    await expect(desktopMenu).toHaveCount(0);
+    await expect(icon(page, 'Storage')).toHaveAttribute('aria-selected', 'true');
+  });
+
+  await test.step('on a sticky note, the menu only closes', async () => {
+    await page.keyboard.press('Escape');
+    await page.mouse.click(first.x, first.y, { button: 'right' });
+    await page.getByRole('menuitem', { name: 'New note' }).click();
+    const note = await box(page.getByRole('textbox', { name: 'Sticky note' }));
+    const empty = await cellCenter(page, 5, 2);
+    await page.mouse.click(empty.x, empty.y, { button: 'right' });
+    await expect(desktopMenu).toBeVisible();
+    await page.mouse.click(note.x + note.width / 2, note.y + note.height / 2, { button: 'right' });
+    await expect(page.getByRole('menu')).toHaveCount(0);
+  });
+
+  // Every right-click made while a menu was open kept the browser's menu away.
+  expect(await rightClicks(page)).toEqual([true, true, true, true, true, true]);
 });
 
 test('the keyboard selects, renames, moves and opens icons', async ({ page }) => {

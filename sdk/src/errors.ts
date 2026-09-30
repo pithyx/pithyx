@@ -19,6 +19,8 @@ export const sdkErrorCodes = [
   'sdk.transport.closed',
   /** The desktop does not speak the app's protocol version. */
   'sdk.protocol.unsupported',
+  /** The user cancelled the upload in the taskbar. */
+  'sdk.transfer.cancelled',
 ] as const;
 
 export type SdkErrorCode = (typeof sdkErrorCodes)[number];

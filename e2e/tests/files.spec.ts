@@ -84,6 +84,59 @@ test('lists a folder, creates, renames and uploads, and downloads with a double 
   expect((await download).suggestedFilename()).toBe('backup.zip');
 });
 
+test('uploads and downloads show their progress in the taskbar and can be cancelled', async ({
+  page,
+}) => {
+  prepare('e2e-transfers', { 'large.bin': 'x'.repeat(3_000_000) });
+  await openFolder(page, 'e2e-transfers');
+  // Slow links, so the transfers are still running when the test looks at them.
+  const cdp = await page.context().newCDPSession(page);
+  await cdp.send('Network.emulateNetworkConditions', {
+    offline: false,
+    latency: 0,
+    downloadThroughput: 500_000,
+    uploadThroughput: 500_000,
+  });
+
+  const chooser = page.waitForEvent('filechooser');
+  await filesWindow(page).getByRole('button', { name: 'Upload' }).click();
+  await (
+    await chooser
+  ).setFiles({
+    name: 'big-upload.bin',
+    mimeType: 'application/octet-stream',
+    buffer: Buffer.alloc(4_000_000),
+  });
+  const button = page.getByRole('button', { name: /^1 transfer, \d+ percent$/ });
+  await expect(button).toBeVisible();
+  await button.click();
+  const panel = page.getByRole('dialog', { name: 'Transfers' });
+  const upload = panel.getByRole('progressbar', { name: 'Upload of big-upload.bin' });
+  await expect(upload).toHaveAttribute('aria-valuetext', /of 4 MB · .*\/s/);
+  await panel.getByRole('button', { name: 'Cancel the transfer of big-upload.bin' }).click();
+  await expect(upload).toHaveCount(0);
+  await expect(page.getByRole('alertdialog')).toHaveCount(0);
+  await expect(row(page, 'big-upload.bin')).toHaveCount(0);
+  await page.keyboard.press('Escape');
+
+  const download = page.waitForEvent('download');
+  await row(page, 'large.bin').dblclick();
+  await page.getByRole('button', { name: /^1 transfer/ }).click();
+  await expect(
+    page
+      .getByRole('dialog', { name: 'Transfers' })
+      .getByRole('progressbar', { name: 'Download of large.bin' }),
+  ).toHaveAttribute('aria-valuetext', /of 3 MB/);
+  await cdp.send('Network.emulateNetworkConditions', {
+    offline: false,
+    latency: 0,
+    downloadThroughput: -1,
+    uploadThroughput: -1,
+  });
+  expect((await download).suggestedFilename()).toBe('large.bin');
+  await expect(page.getByRole('button', { name: /^1 transfer/ })).toHaveCount(0);
+});
+
 test('copies and moves with the clipboard and asks about a name that exists', async ({ page }) => {
   prepare('e2e-clipboard/target', { 'b.txt': 'old' });
   prepare('e2e-clipboard', { 'a.txt': 'a', 'b.txt': 'new' });
@@ -208,5 +261,50 @@ test('works with the keyboard alone', async ({ page }) => {
   await expect(row(page, 'inner')).toBeVisible();
   await page.keyboard.press('Shift+F10');
   await expect(page.getByRole('menu', { name: 'Actions for 1 item' })).toBeVisible();
+  await page.keyboard.press('Escape');
+});
+
+test('a right-click while the menu is open moves the menu to the new row', async ({ page }) => {
+  prepare('e2e-menus', { 'a.txt': 'a', 'b.txt': 'b' });
+  await openFolder(page, 'e2e-menus');
+  await expect(row(page, 'b.txt')).toBeVisible();
+  await page.evaluate(() => {
+    const prevented: boolean[] = [];
+    Object.assign(window, { rightClicks: prevented });
+    window.addEventListener('contextmenu', (event) => {
+      if (event.isTrusted) {
+        prevented.push(event.defaultPrevented);
+      }
+    });
+  });
+  const menu = page.getByRole('menu', { name: 'Actions for 1 item' });
+  const at = async (name: string) => {
+    const rect = await row(page, name).boundingBox();
+    if (rect === null) {
+      throw new Error('row has no box');
+    }
+    return { x: rect.x + 40, y: rect.y + rect.height / 2 };
+  };
+  const openedAt = async (point: { x: number; y: number }) => {
+    const rect = await menu.boundingBox();
+    return (
+      rect !== null && Math.abs(rect.x - point.x) < 8 && rect.y >= point.y && rect.y - point.y < 12
+    );
+  };
+
+  // The menu opens below the pointer, so the second row is the one above it.
+  const first = await at('b.txt');
+  await page.mouse.click(first.x, first.y, { button: 'right' });
+  await expect.poll(() => openedAt(first)).toBe(true);
+  const second = await at('a.txt');
+  await page.mouse.click(second.x, second.y, { button: 'right' });
+  await expect.poll(() => openedAt(second)).toBe(true);
+  await expect(menu).toHaveCount(1);
+  await expect(row(page, 'a.txt')).toHaveAttribute('aria-selected', 'true');
+  await expect(row(page, 'b.txt')).not.toHaveAttribute('aria-selected', 'true');
+  // The second right-click landed on the open menu, which kept the browser's menu away.
+  expect(
+    await page.evaluate(() => (window as unknown as { rightClicks: boolean[] }).rightClicks),
+  ).toEqual([true, true]);
   await page.keyboard.press('Escape');
 });

@@ -18,6 +18,7 @@ export { default as IconBell } from '@tabler/icons-react/dist/esm/icons/IconBell
 export { default as IconBox } from '@tabler/icons-react/dist/esm/icons/IconBox.mjs';
 export { default as IconCamera } from '@tabler/icons-react/dist/esm/icons/IconCamera.mjs';
 export { default as IconCheck } from '@tabler/icons-react/dist/esm/icons/IconCheck.mjs';
+export { default as IconChevronDown } from '@tabler/icons-react/dist/esm/icons/IconChevronDown.mjs';
 export { default as IconChevronRight } from '@tabler/icons-react/dist/esm/icons/IconChevronRight.mjs';
 export { default as IconClipboard } from '@tabler/icons-react/dist/esm/icons/IconClipboard.mjs';
 export { default as IconCopy } from '@tabler/icons-react/dist/esm/icons/IconCopy.mjs';
@@ -30,6 +31,7 @@ export { default as IconDownload } from '@tabler/icons-react/dist/esm/icons/Icon
 export { default as IconExternalLink } from '@tabler/icons-react/dist/esm/icons/IconExternalLink.mjs';
 export { default as IconEye } from '@tabler/icons-react/dist/esm/icons/IconEye.mjs';
 export { default as IconEyeOff } from '@tabler/icons-react/dist/esm/icons/IconEyeOff.mjs';
+export { default as IconFilter } from '@tabler/icons-react/dist/esm/icons/IconFilter.mjs';
 export { default as IconFile } from '@tabler/icons-react/dist/esm/icons/IconFile.mjs';
 export { default as IconFileText } from '@tabler/icons-react/dist/esm/icons/IconFileText.mjs';
 export { default as IconFileTypePdf } from '@tabler/icons-react/dist/esm/icons/IconFileTypePdf.mjs';

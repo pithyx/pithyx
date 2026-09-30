@@ -1,0 +1,139 @@
+.button {
+  position: relative;
+  width: 40px;
+  padding: 0;
+}
+
+.ring {
+  position: absolute;
+  inset: 4px;
+  width: 32px;
+  height: 32px;
+  rotate: -90deg;
+}
+
+.track,
+.value {
+  fill: none;
+  stroke-width: 3;
+}
+
+.track {
+  stroke: var(--color-border);
+}
+
+.value {
+  stroke: var(--color-accent);
+  stroke-linecap: round;
+  transition: stroke-dasharray var(--duration-fast) var(--ease-standard);
+}
+
+.button[data-failed] .value {
+  stroke: var(--color-danger);
+}
+
+.icon {
+  position: relative;
+}
+
+.popover {
+  width: min(360px, calc(100vw - 16px));
+}
+
+.dialog {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-2);
+  outline: none;
+}
+
+.title {
+  margin: 0;
+  font-size: var(--font-size-sm);
+  font-weight: var(--font-weight-semibold);
+}
+
+.list {
+  display: grid;
+  gap: var(--space-3);
+  max-height: 50vh;
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+}
+
+.kind {
+  display: inline-flex;
+  color: var(--color-text-muted);
+}
+
+.name {
+  overflow: hidden;
+  font-size: var(--font-size-sm);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cancel {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text);
+  cursor: pointer;
+}
+
+.cancel[data-hovered] {
+  background: var(--color-surface-hover);
+}
+
+.cancel[data-focus-visible] {
+  outline: 2px solid var(--color-focus);
+  outline-offset: -2px;
+}
+
+.bar {
+  grid-column: 1 / -1;
+  height: 6px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--color-surface-3);
+}
+
+.bar > span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-accent);
+  transition: width var(--duration-fast) var(--ease-standard);
+}
+
+.row[data-failed] .bar > span {
+  background: var(--color-danger);
+}
+
+.details {
+  grid-column: 1 / -1;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (pointer: coarse) {
+  .cancel {
+    width: var(--touch-target);
+    height: var(--touch-target);
+  }
+}

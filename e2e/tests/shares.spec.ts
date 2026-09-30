@@ -30,7 +30,7 @@ test('Shared folders lists the seeded share with its rights', async ({ page }) =
   await expect(shared).toContainText('Folder');
   await expect(shared).toContainText('No description');
   await expect(shared).toContainText('Administrators only');
-  await expect(settings.getByRole('button', { name: 'Open Storage' })).toBeVisible();
+  await expect(settings.getByRole('button', { name: 'Open Storage' })).toHaveCount(0);
 });
 
 test('the create dialog says when no pool is ready for shared folders', async ({ page }) => {

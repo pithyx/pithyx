@@ -1,5 +1,7 @@
 import {
+  useEffect,
   useId,
+  useRef,
   useState,
   type ButtonHTMLAttributes,
   type InputHTMLAttributes,
@@ -11,7 +13,14 @@ import { languageName, languages, setLanguage, storedLanguage, type Language } f
 import buttonStyles from '../ui/Button.module.css';
 import controlStyles from '../ui/Controls.module.css';
 import { cx } from '../ui/cx';
-import { IconCheck, IconEye, IconEyeOff, IconLanguage, IconLoader2 } from '../ui/icons';
+import {
+  IconCheck,
+  IconChevronDown,
+  IconEye,
+  IconEyeOff,
+  IconLanguage,
+  IconLoader2,
+} from '../ui/icons';
 import fieldStyles from '../ui/TextField.module.css';
 import styles from './Auth.module.css';
 
@@ -176,30 +185,146 @@ export function Checkbox({
   );
 }
 
-/** Language switch below the sign-in card: a native select, kept on this device. */
+/**
+ * Language switch below the sign-in card, kept on this device: a button that opens a listbox of our own (the native
+ * select drew its list in the browser's colors, white on white in dark mode). Keyboard: arrows, Home and End move,
+ * Enter or Space chooses, Escape and Tab close. Without React Aria, like the rest of the sign-in chunk.
+ */
 export function LanguageSelect() {
   const { t } = useTranslation();
   const [choice, setChoice] = useState<Language | 'auto'>(storedLanguage() ?? 'auto');
+  const [open, setOpen] = useState(false);
+  const [active, setActive] = useState(0);
+  const id = useId();
+  const root = useRef<HTMLDivElement>(null);
+  const button = useRef<HTMLButtonElement>(null);
+  const options: { value: Language | 'auto'; label: string; lang?: string }[] = [
+    { value: 'auto', label: t('menu.languageAuto') },
+    ...languages.map((code) => ({ value: code, label: languageName(code), lang: code })),
+  ];
+  const current = options.find((option) => option.value === choice) ?? options[0];
+
+  // Closes when the pointer goes down anywhere else; syncing with the document, not derived state.
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    const close = (event: PointerEvent) => {
+      if (!root.current?.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('pointerdown', close);
+    return () => {
+      document.removeEventListener('pointerdown', close);
+    };
+  }, [open]);
+
+  function show() {
+    setActive(
+      Math.max(
+        0,
+        options.findIndex((option) => option.value === choice),
+      ),
+    );
+    setOpen(true);
+  }
+
+  function choose(value: Language | 'auto') {
+    setChoice(value);
+    setOpen(false);
+    button.current?.focus();
+    void setLanguage(value === 'auto' ? null : value);
+  }
+
   return (
-    <label className={styles.language}>
-      <IconLanguage size={16} stroke={1.75} aria-hidden />
-      <span className="visually-hidden">{t('menu.language')}</span>
-      <select
-        className={styles.languageSelect}
-        value={choice}
-        onChange={(event) => {
-          const language = languages.find((code) => code === event.target.value) ?? null;
-          setChoice(language ?? 'auto');
-          void setLanguage(language);
+    <div ref={root} className={styles.language}>
+      <button
+        ref={button}
+        type="button"
+        className={styles.languageButton}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls={open ? `${id}-list` : undefined}
+        aria-label={`${t('menu.language')}: ${current?.label ?? ''}`}
+        onClick={() => {
+          if (open) {
+            setOpen(false);
+          } else {
+            show();
+          }
+        }}
+        onKeyDown={(event) => {
+          if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+            event.preventDefault();
+            show();
+          }
         }}
       >
-        <option value="auto">{t('menu.languageAuto')}</option>
-        {languages.map((code) => (
-          <option key={code} value={code} lang={code}>
-            {languageName(code)}
-          </option>
-        ))}
-      </select>
-    </label>
+        <IconLanguage size={16} stroke={1.75} aria-hidden />
+        <span lang={current?.lang}>{current?.label}</span>
+        <IconChevronDown size={14} stroke={2} aria-hidden />
+      </button>
+      {open && (
+        <ul
+          id={`${id}-list`}
+          role="listbox"
+          tabIndex={-1}
+          className={styles.languageList}
+          aria-label={t('menu.language')}
+          aria-activedescendant={`${id}-${String(active)}`}
+          ref={(list) => {
+            list?.focus();
+          }}
+          onKeyDown={(event) => {
+            const last = options.length - 1;
+            const moves: Record<string, number> = {
+              ArrowDown: Math.min(active + 1, last),
+              ArrowUp: Math.max(active - 1, 0),
+              Home: 0,
+              End: last,
+            };
+            const target = moves[event.key];
+            if (target !== undefined) {
+              event.preventDefault();
+              setActive(target);
+            } else if (event.key === 'Enter' || event.key === ' ') {
+              event.preventDefault();
+              const option = options[active];
+              if (option !== undefined) {
+                choose(option.value);
+              }
+            } else if (event.key === 'Escape') {
+              event.preventDefault();
+              setOpen(false);
+              button.current?.focus();
+            } else if (event.key === 'Tab') {
+              setOpen(false);
+            }
+          }}
+        >
+          {options.map((option, index) => (
+            <li
+              key={option.value}
+              id={`${id}-${String(index)}`}
+              role="option"
+              lang={option.lang}
+              aria-selected={option.value === choice}
+              data-active={index === active || undefined}
+              className={styles.languageOption}
+              onPointerEnter={() => {
+                setActive(index);
+              }}
+              onClick={() => {
+                choose(option.value);
+              }}
+            >
+              <span>{option.label}</span>
+              {option.value === choice && <IconCheck size={14} stroke={2.25} aria-hidden />}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }

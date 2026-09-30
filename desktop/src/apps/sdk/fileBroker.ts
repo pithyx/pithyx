@@ -10,8 +10,10 @@ import type {
 } from '@pithyx/sdk';
 import { PithyxError, type MethodHandlers } from '@pithyx/sdk/host';
 import { api } from '../../api/client';
+import { toPithyxError } from './daemonError';
 import { showError } from '../../errors/errorStore';
 import { realtime } from '../../realtime/connection';
+import { download, endTransfer, reportProgress, startTransfer } from '../../shell/transfers';
 
 type ApiEntry = components['schemas']['FileEntry'];
 type ApiJob = components['schemas']['Job'];
@@ -28,21 +30,13 @@ export interface FileBrokerTarget {
 
 const FINISHED: readonly JobInfo['state'][] = ['succeeded', 'failed', 'cancelled', 'interrupted'];
 
-/** Turns a failed daemon call into the problem the app sees, unchanged. */
-function toPithyxError(error: unknown): PithyxError {
-  if (error instanceof PithyxApiError) {
-    return new PithyxError({
-      code: error.code,
-      params: error.params,
-      detail: error.message,
-      requestId: error.requestId,
-    });
-  }
-  return error instanceof PithyxError
-    ? error
-    : new PithyxError({ code: 'system.internal.unexpected', params: {} });
-}
+const UNAVAILABLE: Record<string, 'poolMissing' | 'poolUnavailable' | 'notMounted'> = {
+  pool_missing: 'poolMissing',
+  pool_unavailable: 'poolUnavailable',
+  not_mounted: 'notMounted',
+};
 
+/** Turns a failed daemon call into the problem the app sees, unchanged. */
 async function daemon<T>(call: () => Promise<T>): Promise<T> {
   try {
     return await call();
@@ -129,24 +123,43 @@ function problemOf(status: number, body: string): PithyxError {
   return new PithyxError({ code: 'system.internal.unexpected', params: { status } });
 }
 
-/** Streams a file to the daemon with progress; fetch cannot report upload progress. */
-function put(url: string, data: Blob, onProgress: (loaded: number) => void): Promise<ApiEntry> {
+/**
+ * Streams a file to the daemon with progress, shown in the taskbar with a cancel button; fetch cannot report upload
+ * progress. A cancelled upload rejects with `sdk.transfer.cancelled`.
+ */
+function put(
+  url: string,
+  name: string,
+  data: Blob,
+  onProgress: (loaded: number) => void,
+): Promise<ApiEntry> {
   return new Promise((resolve, reject) => {
     const request = new XMLHttpRequest();
+    const transfer = startTransfer('upload', name, data.size, () => {
+      request.abort();
+    });
     request.open('PUT', url);
     request.setRequestHeader('X-Pithyx-Request', '1');
     request.setRequestHeader('Content-Type', 'application/octet-stream');
     request.upload.onprogress = (event) => {
+      reportProgress(transfer, event.loaded);
       onProgress(event.loaded);
     };
     request.onload = () => {
-      if (request.status >= 200 && request.status < 300) {
+      const ok = request.status >= 200 && request.status < 300;
+      endTransfer(transfer, !ok);
+      if (ok) {
         resolve(JSON.parse(request.responseText) as ApiEntry);
       } else {
         reject(problemOf(request.status, request.responseText));
       }
     };
+    request.onabort = () => {
+      endTransfer(transfer);
+      reject(new PithyxError({ code: 'sdk.transfer.cancelled', params: {} }));
+    };
     request.onerror = () => {
+      endTransfer(transfer, true);
       reject(new PithyxError({ code: 'fs.upload.incomplete', params: {} }));
     };
     request.send(data);
@@ -230,6 +243,9 @@ export function fileBrokerFor(target: FileBrokerTarget): {
         id: String(share.id),
         name: share.name,
         access: share.access === 'readWrite' ? 'readWrite' : 'read',
+        ...(share.unavailable == null
+          ? {}
+          : { unavailable: UNAVAILABLE[share.unavailable] ?? 'notMounted' }),
       }));
     },
     'files.list': async ({ location, path, cursor, limit, sort, order }) => {
@@ -290,7 +306,7 @@ export function fileBrokerFor(target: FileBrokerTarget): {
       const shareId = shareOf(location);
       const path = folder === '' ? name : `${folder}/${name}`;
       const url = `/api/files/${String(shareId)}/content?${query({ path, overwrite: overwrite === true ? 'true' : undefined })}`;
-      const entry = await put(url, data, (loaded) => {
+      const entry = await put(url, name, data, (loaded) => {
         if (upload !== undefined) {
           target.emit('uploadProgress', { upload, loaded, total: data.size });
         }
@@ -299,13 +315,11 @@ export function fileBrokerFor(target: FileBrokerTarget): {
     },
     'files.download': ({ location, path }) => {
       require('files.shares');
-      const link = document.createElement('a');
-      link.href = `/api/files/${String(shareOf(location))}/content?${query({ path })}`;
-      link.download = '';
-      link.rel = 'noopener';
-      document.body.append(link);
-      link.click();
-      link.remove();
+      // Returns once the download started; its progress and a cancel button are in the taskbar.
+      download(
+        `/api/files/${String(shareOf(location))}/content?${query({ path })}`,
+        path.slice(path.lastIndexOf('/') + 1),
+      );
     },
     'files.createFolder': async ({ location, path }) => {
       require('files.shares');

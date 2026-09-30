@@ -10,7 +10,9 @@ using Pithyx.Daemon.Health;
 using Pithyx.Daemon.Hosting;
 using Pithyx.Daemon.Jobs;
 using Pithyx.Daemon.Layouts;
+using Pithyx.Daemon.Logs;
 using Pithyx.Daemon.Monitoring;
+using Pithyx.Daemon.Notifications;
 using Pithyx.Daemon.Realtime;
 using Pithyx.Daemon.Shares;
 using Pithyx.Daemon.Storage;
@@ -29,7 +31,15 @@ var builder = WebApplication.CreateSlimBuilder(args);
 
 var mode = builder.Configuration["PITHYX_SIMULATE"] == "1" ? DaemonMode.Simulated : DaemonMode.Real;
 var paths = DaemonPaths.Resolve(builder.Configuration, builder.Environment, mode);
+if (!BuildTimeDocument.IsGenerating
+    && DaemonPaths.IsSecondInstallation(builder.Configuration, builder.Environment, mode, DeploymentEnvironment.DefaultDirectory))
+{
+    await Console.Error.WriteLineAsync(
+        $"This machine has its Pithyx installation already ({DeploymentEnvironment.DefaultDirectory} exists). Refusing to start a second one in {Path.GetDirectoryName(paths.DatabasePath)}.");
+    return DaemonExitCode.SecondInstallation;
+}
 
+builder.Services.AddPithyxLogs(paths.LogDirectory);
 builder.AddPithyxLogging(paths.LogDirectory);
 // The port is fixed (CLAUDE.md, Network). Only a development build takes PITHYX_DEV_PORT, so a second daemon (tests,
 // another worktree) can run next to the dev unit on the same machine.
@@ -51,6 +61,7 @@ builder.Services.AddSingleton<MigrationRunner>();
 builder.Services.AddPithyxErrors();
 builder.Services.AddPithyxAuth();
 builder.Services.AddPithyxLayouts();
+builder.Services.AddPithyxNotifications();
 builder.Services.AddPithyxJobs();
 builder.Services.AddPithyxShares();
 builder.Services.AddPithyxUsers(mode == DaemonMode.Real
@@ -63,6 +74,7 @@ builder.Services.AddPithyxMonitoring();
 builder.Services.AddSingleton<DiskInventory>();
 builder.Services.AddSingleton(services => services.GetRequiredService<DiskInventory>().Definition());
 builder.Services.AddSingleton<PoolInventory>();
+builder.Services.AddSingleton<StorageUsage>();
 builder.Services.AddSingleton(services => services.GetRequiredService<PoolInventory>().Definition());
 builder.Services.AddSingleton<IStorageBackend, ZfsBackend>();
 builder.Services.AddSingleton<DiskProbe>();
@@ -82,6 +94,7 @@ if (!BuildTimeDocument.IsGenerating)
     builder.Services.AddPithyxStorageHealthMonitor();
     if (mode == DaemonMode.Real)
     {
+        builder.Services.AddHostedService<JournalReader>();
         builder.Services.AddHostedService<Pithyx.Daemon.Files.Thumbnails.ThumbnailCacheProvisioner>();
         builder.Services.AddHostedService<LinuxAccountSync>();
     }
@@ -97,7 +110,7 @@ if (mode == DaemonMode.Simulated)
         ?? Path.Combine(builder.Environment.ContentRootPath, "..", "..", "tests", "fixtures");
     var scenario = builder.Configuration["PITHYX_SIMULATE_SCENARIO"] ?? "default";
     builder.Services.AddSingleton<ICommandRunner>(FixtureCommandRunner.Load(Path.Combine(fixtures, "commands", scenario)));
-    builder.Services.AddSingleton(new SystemFiles(Path.Combine(fixtures, "proc", "mountinfo"), Path.Combine(fixtures, "proc", "swaps")));
+    builder.Services.AddSingleton(new SystemFiles(Path.Combine(fixtures, "proc", "mountinfo"), Path.Combine(fixtures, "proc", "swaps"), Path.Combine(fixtures, "proc", "spl", "kstat", "zfs")));
     etcDirectory = builder.Configuration["PITHYX_ETC_DIR"] ?? Path.Combine(fixtures, "etc");
 }
 else
@@ -135,7 +148,7 @@ if (!BuildTimeDocument.IsGenerating)
     }
 
     // Plain HTTP is the development transport. HTTPS on 443 arrives with the TLS work in M5.
-    HostLog.PlainHttp(app.Logger, HttpPort, mode);
+    HostLog.PlainHttp(app.Logger, httpPort, mode);
 }
 
 app.UseMiddleware<RequestIdMiddleware>();
@@ -166,12 +179,14 @@ api.MapGet("/health", () => TypedResults.Ok(new HealthResponse("ok", mode)))
 api.MapAuthEndpoints();
 api.MapLayoutEndpoints();
 api.MapJobEndpoints();
+api.MapNotificationEndpoints();
 api.MapShareEndpoints();
 api.MapUserEndpoints();
 api.MapFileEndpoints();
 api.MapStorageEndpoints();
 api.MapSnapshotEndpoints();
 api.MapStorageHealthEndpoints();
+api.MapLogEndpoints();
 app.MapRealtime();
 app.MapDesktop(paths.DesktopDirectory);
 

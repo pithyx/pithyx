@@ -9,7 +9,7 @@ export function FilesWindow({ windowId }: AppProps) {
     <CoreSdkApp
       windowId={windowId}
       app="files"
-      permissions={['files.shares']}
+      permissions={['files.shares', 'notifications']}
       internal={filesHost}
       Component={FilesApp}
     />

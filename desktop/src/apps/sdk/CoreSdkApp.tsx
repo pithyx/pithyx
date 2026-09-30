@@ -13,7 +13,6 @@ import { useEffect, useEffectEvent, useRef, useState, type ComponentType } from 
 import { queryKeys } from '../../api/queries';
 import { useSizeClass } from '../../wm/sizeClass';
 import { useDesktop } from '../../wm/store';
-import { useAppName } from '../names';
 import type { AppProps } from '../registry';
 import { brokerFor } from '../sandbox/broker';
 import { currentTheme } from '../sandbox/theme';
@@ -55,7 +54,6 @@ export function CoreSdkApp({
   const connection = useRef<AppConnection | null>(null);
   const [app, setApp] = useState<PithyxApp | null>(null);
   const client = useQueryClient();
-  const appName = useAppName();
   const sizeClass = useSizeClass();
 
   useAppLifecycle(windowId, connection);
@@ -99,7 +97,6 @@ export function CoreSdkApp({
         ...brokerFor({
           windowId,
           app: appId,
-          appName: appName(appId),
           user: user?.id ?? 0,
           permissions,
         }),

@@ -9,7 +9,7 @@ export function MonitorWindow({ windowId }: AppProps) {
     <CoreSdkApp
       windowId={windowId}
       app="monitor"
-      permissions={[]}
+      permissions={['notifications']}
       internal={monitorHost}
       Component={MonitorApp}
     />

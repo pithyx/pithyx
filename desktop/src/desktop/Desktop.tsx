@@ -35,13 +35,18 @@ import { AppSwitcher } from '../shell/AppSwitcher';
 import { DesktopShell } from '../shell/DesktopShell';
 import { itemsQuery, settleItemWrites } from '../items/query';
 import { AriaLocale } from '../ui/AriaLocale';
-import { ToastStack } from '../shell/Notifications';
 import { listenForMetaTap } from '../shell/metaTap';
 import { bannerAlert, useStorageAlerts } from '../shell/storageAlerts';
 import { StartMenu } from '../shell/StartMenu';
 import { Taskbar } from '../shell/Taskbar';
 import type { RunningApp, TaskbarPosition } from '../shell/types';
-import { dismissToast, notify, useToasts } from '../shell/toasts';
+import { notify } from '../shell/toasts';
+import {
+  followNotifications,
+  markAllRead,
+  useRunningJobs,
+  useUnreadNotifications,
+} from '../shell/notificationFeed';
 import { useDismiss } from '../shell/useDismiss';
 import { cx } from '../ui/cx';
 import { Menu, MenuItem, MenuPopover, MenuTrigger } from '../ui/Menu';
@@ -248,12 +253,21 @@ function UserMenu({
 // The desktop items (icons, notes, their menus and gestures) are a chunk of their own that starts loading together with
 // this one and shows once it and the items query are there; the taskbar and windows never wait for it.
 // Setting up two-factor sign-in is rare; its dialog loads when it is opened, not with the desktop.
-// Storage alerts (banner and notification panel) load when an administrator has one or opens the bell.
+// The storage alert banner loads when an administrator has a critical alert. The toasts and the notification panel
+// are a chunk of their own that starts loading with the first render, so the toasts' live region is in the page
+// before the first toast; the taskbar and windows never wait for it.
 const AlertBanner = lazy(() =>
   import('../shell/StorageAlertViews').then(({ AlertBanner }) => ({ default: AlertBanner })),
 );
-const AlertPanel = lazy(() =>
-  import('../shell/StorageAlertViews').then(({ AlertPanel }) => ({ default: AlertPanel })),
+const NotificationCenter = lazy(() =>
+  import('../shell/NotificationCenter').then(({ NotificationCenter }) => ({
+    default: NotificationCenter,
+  })),
+);
+const NotificationToasts = lazy(() =>
+  import('../shell/NotificationCenter').then(({ NotificationToasts }) => ({
+    default: NotificationToasts,
+  })),
 );
 const TotpSetup = lazy(() =>
   import('../auth/TotpSetup').then(({ TotpSetup }) => ({ default: TotpSetup })),
@@ -351,7 +365,8 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   useLayoutPersistence();
   useQuery(itemsQuery);
   const items = useItemsModule();
-  const toasts = useToasts((state) => state.items);
+  const unreadNotifications = useUnreadNotifications();
+  const runningJobs = useRunningJobs();
   const running = useRunningApps();
   const focused = useDesktop((state) => state.focused);
   const sizeClass = useSizeClass();
@@ -365,12 +380,16 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   const name = user.displayName ?? user.username;
 
   // When the last window closes or minimizes, keyboard focus would fall to the page body; the start button takes it.
+  // Only then: after loading, nothing has focus until the user acts (Tab reaches the start button first).
+  const hadFocusedWindow = useRef(false);
   useEffect(() => {
+    const closedLastWindow = hadFocusedWindow.current && focused === null;
+    hadFocusedWindow.current = focused !== null;
     const active = document.activeElement;
     // A minimized window stays in the page, hidden; focus inside it is lost just the same.
     const lost =
       active === null || active === document.body || active.closest('[data-minimized]') !== null;
-    if (focused === null && lost) {
+    if (closedLastWindow && lost) {
       // After the frame: focusing recalculates styles, which would delay the first paint of the desktop.
       const frame = requestAnimationFrame(() => {
         startButton.current?.focus();
@@ -396,6 +415,8 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
     },
     onError: showError,
   });
+
+  useEffect(() => followNotifications(), []);
 
   // Like the Windows key opens Start, a tap on the Meta key opens and closes the Pithyx menu.
   const toggleStart = useEffectEvent(() => {
@@ -486,11 +507,14 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
             onApp={(id) => {
               dispatch(id === focused ? { type: 'minimize', id } : { type: 'focus', id });
             }}
-            jobs={0}
-            unread={alerts.filter((alert) => !alert.muted).length}
+            jobs={runningJobs}
+            unread={alerts.filter((alert) => !alert.muted).length + unreadNotifications}
             notificationsOpen={notificationsOpen}
             notificationsRef={notificationsButton}
             onNotifications={() => {
+              if (!notificationsOpen && unreadNotifications > 0) {
+                void markAllRead();
+              }
               setNotificationsOpen(!notificationsOpen);
             }}
             now={now}
@@ -505,7 +529,7 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
                 position={taskbarPosition}
                 query={query}
                 onQueryChange={setQuery}
-                pinned={apps}
+                apps={apps}
                 recent={[]}
                 results={{ apps: matches, settings: [], files: [] }}
                 user={{
@@ -536,17 +560,9 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
                 }}
               />
             )}
-            <ToastStack
-              position={taskbarPosition}
-              locale={i18n.language}
-              items={toasts.map((toast) => ({
-                id: toast.id,
-                app: { icon: IconDeviceDesktop, tone: 'petrol', name: t('brand') },
-                message: toast.message,
-                minutesAgo: 0,
-              }))}
-              onDismiss={dismissToast}
-            />
+            <Suspense>
+              <NotificationToasts position={taskbarPosition} locale={i18n.language} />
+            </Suspense>
             {switcherOpen && (
               <AppSwitcher
                 switcherRef={switcher}
@@ -567,7 +583,7 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
             )}
             {notificationsOpen && (
               <Suspense>
-                <AlertPanel
+                <NotificationCenter
                   panelRef={notificationsPanel}
                   alerts={alerts}
                   now={now}

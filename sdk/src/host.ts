@@ -168,6 +168,21 @@ function isOperation(p: unknown): boolean {
   );
 }
 
+function isLogRecord(entry: unknown): boolean {
+  return (
+    isRecord(entry) &&
+    isOneOf(entry.level, ['debug', 'info', 'warn', 'error'], false) &&
+    typeof entry.message === 'string' &&
+    entry.message.length <= 4000 &&
+    (entry.data === undefined ||
+      (isRecord(entry.data) &&
+        Object.keys(entry.data).length <= 20 &&
+        Object.values(entry.data).every(
+          (value) => typeof value === 'string' && value.length <= 1000,
+        )))
+  );
+}
+
 const isPage = (p: Record<string, unknown>) =>
   (p.cursor === undefined || typeof p.cursor === 'string') &&
   (p.limit === undefined || Number.isSafeInteger(p.limit));
@@ -181,6 +196,11 @@ const validators: Record<MethodName, (params: unknown) => boolean> = {
     isRecord(p) && typeof p.title === 'string' && p.title.length <= MAX_TITLE,
   'window.close': isRecord,
   'window.setSize': isSize,
+  'log.write': (p) =>
+    isRecord(p) &&
+    Array.isArray(p.entries) &&
+    p.entries.length <= 100 &&
+    p.entries.every(isLogRecord),
   notify: (p) =>
     isRecord(p) &&
     typeof p.title === 'string' &&

@@ -53,6 +53,21 @@
         "title": "Disk {disk} shows wear",
         "body": "Disk {disk} (serial {serial}) reports {reallocated, number} reallocated, {pending, number} pending and {uncorrectable, number} uncorrectable sectors and {mediaErrors, number} media errors{selfTest, select, failed {; its last self-test failed} other {}}. Plan to replace it.",
         "action": "Open Storage"
+      },
+      "resolved": {
+        "title": "Resolved: {problem}",
+        "body": "The storage problem is gone.",
+        "action": "Open Storage"
+      },
+      "poolSuspended": {
+        "title": "Pool {pool} has stopped",
+        "body": "Too many disks of {pool} are gone, so ZFS stopped all reads and writes to protect the data. Connect the disks again: Pithyx resumes the pool on its own. Other pools keep working; do not destroy or export this one until then.",
+        "action": "Open Storage"
+      },
+      "diskMissing": {
+        "title": "Disk {disk} of {pool} is not connected",
+        "body": "Disk {disk} disappeared from {pool}. If it was unplugged by mistake, connect it again: Pithyx adds it back and ZFS copies what it missed. Otherwise replace it.",
+        "action": "Open Storage"
       }
     }
   },
@@ -76,7 +91,7 @@
     },
     "saveFailed": {
       "title": "Window arrangement not saved",
-      "body": "The daemon did not save the layout of this desktop. Your windows stay open. Request ID {requestId}."
+      "body": "The daemon did not save the layout of this desktop. Your windows stay open."
     },
     "restoreFailed": {
       "title": "Saved windows not loaded",
@@ -91,6 +106,26 @@
     "message": {
       "title": "{title}",
       "body": "{body}"
+    }
+  },
+  "jobs": {
+    "job": {
+      "succeeded": {
+        "title": "{kind}: done",
+        "body": "The task finished."
+      },
+      "failed": {
+        "title": "{kind}: failed",
+        "body": "{error}"
+      },
+      "cancelled": {
+        "title": "{kind}: cancelled",
+        "body": "The task was stopped before it finished."
+      },
+      "interrupted": {
+        "title": "{kind}: interrupted",
+        "body": "The system restarted while the task ran. Start it again if it is still needed."
+      }
     }
   }
 }

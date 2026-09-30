@@ -63,14 +63,14 @@ export interface StartMenuProps {
   position: TaskbarPosition;
   query: string;
   onQueryChange?: (query: string) => void;
-  pinned: AppInfo[];
+  apps: AppInfo[];
   recent: StartEntry[];
   results: StartResults;
   user: { name: string; initials: string; role: string };
   /** Wraps the profile button in the account menu (two-factor, language, desktop, taskbar). */
   userMenu?: (trigger: ReactNode) => ReactNode;
   menuRef?: Ref<HTMLDivElement>;
-  /** Opens a pinned app or a search result by its id. */
+  /** Opens an app or a search result by its id. */
   onOpen?: (id: string) => void;
   onSignOut?: () => void;
   /** Restart and shut down, for users with that right once the daemon offers them; sign-out has its own button. */
@@ -82,7 +82,7 @@ export function StartMenu({
   position,
   query,
   onQueryChange,
-  pinned,
+  apps,
   recent,
   results,
   user,
@@ -136,15 +136,15 @@ export function StartMenu({
 
       {query === '' ? (
         <div className={styles.body}>
-          <section className={styles.section} aria-labelledby="start-pinned">
-            <h3 id="start-pinned" className={styles.sectionTitle}>
-              {t('start.pinned')}
+          <section className={styles.section} aria-labelledby="start-apps">
+            <h3 id="start-apps" className={styles.sectionTitle}>
+              {t('start.apps')}
             </h3>
             <GridList
-              aria-labelledby="start-pinned"
+              aria-labelledby="start-apps"
               layout="grid"
-              className={styles.pinned}
-              items={pinned}
+              className={styles.apps}
+              items={apps}
               onAction={(key) => onOpen?.(String(key))}
             >
               {(app) => (

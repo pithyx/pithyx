@@ -238,41 +238,83 @@
   }
 }
 
-/* The language switch below the card looks like a quiet small button around a native select. */
+/* The language switch below the card: a quiet small button and a list of our own that opens above it. */
 .language {
   position: relative;
+  display: inline-flex;
+}
+
+.languageButton {
   display: inline-flex;
   align-items: center;
   gap: var(--space-2);
   min-height: 28px;
   padding: 0 var(--space-3);
+  border: 0;
   border-radius: var(--radius-sm);
+  background: transparent;
   color: var(--color-text);
+  font: inherit;
   font-size: var(--font-size-sm);
   font-weight: var(--font-weight-medium);
+  cursor: pointer;
 }
 
-.language:hover {
+.languageButton:hover,
+.languageButton[aria-expanded='true'] {
   background: var(--color-surface-hover);
 }
 
-.language:has(select:focus-visible) {
+.languageButton:focus-visible {
   outline: 2px solid var(--color-focus);
   outline-offset: 2px;
 }
 
-.languageSelect {
-  appearance: none;
-  border: 0;
-  background: transparent;
-  color: inherit;
-  font: inherit;
+.languageList {
+  position: absolute;
+  bottom: calc(100% + var(--space-1));
+  left: 50%;
+  z-index: var(--z-menu);
+  min-width: 12rem;
+  margin: 0;
+  padding: var(--space-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-menu-solid);
+  box-shadow: var(--shadow-3);
+  color: var(--color-text);
+  list-style: none;
+  translate: -50% 0;
+}
+
+.languageList:focus-visible {
+  outline: 2px solid var(--color-focus);
+  outline-offset: 2px;
+}
+
+.languageOption {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-height: 2rem;
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-sm);
+  font-size: var(--font-size-sm);
   cursor: pointer;
-  outline: none;
+}
+
+.languageOption[data-active] {
+  background: var(--color-surface-hover);
+}
+
+.languageOption[aria-selected='true'] {
+  font-weight: var(--font-weight-semibold);
 }
 
 @media (pointer: coarse) {
-  .language {
+  .languageButton,
+  .languageOption {
     min-height: var(--touch-target);
   }
 }

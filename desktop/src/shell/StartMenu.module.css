@@ -85,7 +85,7 @@
   color: var(--color-text-muted);
 }
 
-.pinned {
+.apps {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
   gap: var(--space-1);
@@ -278,7 +278,7 @@
     padding-top: env(safe-area-inset-top);
   }
 
-  .pinned {
+  .apps {
     grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }

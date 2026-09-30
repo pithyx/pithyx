@@ -92,11 +92,31 @@ export interface AppContext {
   host: { version: string; protocol: number };
 }
 
-/** A notification the app shows. The app translates the texts; it knows the locale from the context. */
+/**
+ * A notification the app shows. The app translates the texts; it knows the locale from the context. It appears as a
+ * toast with the app's icon and stays in the user's notification history (at most 200 entries, 30 days).
+ */
 export interface NotificationRequest {
+  /** Plain text, 1 to 200 characters. */
   title: string;
+  /** Plain text, at most 1000 characters. */
   body?: string;
   level?: 'info' | 'success' | 'warning' | 'error';
+}
+
+/** How serious a log entry is. The Log Center filters by it; `debug` is for details only needed while looking for a fault. */
+export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+
+/** Fields that describe a log entry beyond its message, for example `{ file: 'a.jpg', attempt: 2 }`. */
+export type LogData = Record<string, string | number | boolean | null>;
+
+/** One entry of the app's log, as the SDK sends it (see `app.log`). */
+export interface LogRecord {
+  level: LogLevel;
+  /** At most 4000 characters; the SDK cuts longer ones. */
+  message: string;
+  /** At most 20 fields with texts of at most 1000 characters; the SDK cuts the rest. */
+  data?: Record<string, string>;
 }
 
 /**
@@ -113,6 +133,12 @@ export interface Methods {
     params: { width: number; height: number };
     result: { width: number; height: number };
   };
+  /**
+   * Writes entries to the app's log in the Log Center (source `app/<id>`, with the signed-in user). The SDK batches
+   * `app.log` calls into this method; apps do not call it directly. At most 100 entries per call; the
+   * daemon keeps each app within a rate limit and drops the rest. No permission needed (D257).
+   */
+  'log.write': { params: { entries: LogRecord[] }; result: undefined };
   /** Shows a notification. Needs the `notifications` permission. */
   notify: { params: NotificationRequest; result: undefined };
   /**

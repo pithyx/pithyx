@@ -6,6 +6,7 @@ using Pithyx.Daemon.Auth;
 using Pithyx.Daemon.Database;
 using Pithyx.Daemon.Errors;
 using Pithyx.Daemon.Shares;
+using Pithyx.Daemon.Storage;
 
 namespace Pithyx.Daemon.Files;
 
@@ -249,7 +250,7 @@ public sealed class TrashService(SqliteConnectionFactory connections, ShareServi
 }
 
 /// <summary>Deletes recycle bin items past their share's retention once an hour.</summary>
-public sealed partial class TrashCleanupService(TrashService trash, TimeProvider time, ILogger<TrashCleanupService> logger) : BackgroundService
+public sealed partial class TrashCleanupService(TrashService trash, TimeProvider time, ILogger<TrashCleanupService> logger, StorageUsage? usage = null) : BackgroundService
 {
     public static readonly TimeSpan Interval = TimeSpan.FromHours(1);
 
@@ -266,6 +267,7 @@ public sealed partial class TrashCleanupService(TrashService trash, TimeProvider
                     if (deleted > 0)
                     {
                         LogDeleted(logger, deleted);
+                        usage?.Written();
                     }
                 }
                 catch (Exception exception) when (exception is not OperationCanceledException)

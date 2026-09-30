@@ -4,6 +4,7 @@ import {
   IconDatabase,
   IconFolders,
   IconInfoCircle,
+  IconListDetails,
   IconSearch,
   IconSettings,
   type TablerIcon,
@@ -100,6 +101,22 @@ export const coreApps: readonly CoreApp[] = [
     Component: lazy(() =>
       Promise.all([import('./monitor/MonitorWindow'), loadTranslations('monitor')]).then(
         ([{ MonitorWindow }]) => ({ default: MonitorWindow }),
+      ),
+    ),
+  },
+  {
+    id: 'logs',
+    icon: IconListDetails,
+    tone: 'graphite',
+    adminOnly: true,
+    window: {
+      instances: 'single',
+      defaultSize: { width: 1040, height: 640 },
+      minSize: { width: 320, height: 320 },
+    },
+    Component: lazy(() =>
+      Promise.all([import('./logs/LogsWindow'), loadTranslations('logs')]).then(
+        ([{ LogsWindow }]) => ({ default: LogsWindow }),
       ),
     ),
   },
