@@ -30,6 +30,7 @@ export { default as IconDownload } from '@tabler/icons-react/dist/esm/icons/Icon
 export { default as IconExternalLink } from '@tabler/icons-react/dist/esm/icons/IconExternalLink.mjs';
 export { default as IconEye } from '@tabler/icons-react/dist/esm/icons/IconEye.mjs';
 export { default as IconEyeOff } from '@tabler/icons-react/dist/esm/icons/IconEyeOff.mjs';
+export { default as IconFilter } from '@tabler/icons-react/dist/esm/icons/IconFilter.mjs';
 export { default as IconFile } from '@tabler/icons-react/dist/esm/icons/IconFile.mjs';
 export { default as IconFileText } from '@tabler/icons-react/dist/esm/icons/IconFileText.mjs';
 export { default as IconFileTypePdf } from '@tabler/icons-react/dist/esm/icons/IconFileTypePdf.mjs';

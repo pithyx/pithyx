@@ -1,4 +1,78 @@
 {
   "filter": "Filter logs",
-  "list": "Log entries"
+  "list": "Log entries",
+  "search": {
+    "label": "Search logs",
+    "placeholder": "Search messages or a request id"
+  },
+  "levels": {
+    "label": "Levels",
+    "debug": "Debug",
+    "info": "Info",
+    "warn": "Warning",
+    "error": "Error"
+  },
+  "range": {
+    "label": "Time range",
+    "hour": "Last hour",
+    "day": "Last 24 hours",
+    "week": "Last 7 days",
+    "month": "Last 30 days",
+    "all": "All time"
+  },
+  "sources": {
+    "label": "Sources",
+    "all": "All sources",
+    "some": "{count, plural, one {# source} other {# sources}}",
+    "none": "No sources yet",
+    "daemon": "Pithyx daemon",
+    "system": "System · {name}",
+    "app": "App · {name}"
+  },
+  "refresh": "Refresh",
+  "export": {
+    "label": "Export",
+    "text": "Export as text",
+    "jsonl": "Export as JSON lines"
+  },
+  "loading": "Loading logs…",
+  "empty": "No entries match these filters.",
+  "details": {
+    "label": "Entry details",
+    "none": "Choose an entry to see its details.",
+    "time": "Time",
+    "level": "Level",
+    "source": "Source",
+    "user": "User",
+    "requestId": "Request id",
+    "stored": "Stored",
+    "archive": "In the archive"
+  },
+  "settings": {
+    "open": "Retention",
+    "title": "Log retention",
+    "intro": "Current logs are kept on the system disk, so they are there even without a pool. An optional archive on a pool keeps them longer.",
+    "current": "Current logs",
+    "currentStatus": "They take {size} now; the oldest entry is from {oldest}.",
+    "retentionDays": "Keep for days",
+    "retentionHint": "1 to 365 days.",
+    "maxGb": "Largest size in GB",
+    "maxHint": "The system and all apps together, at most 4 GB. The oldest entries go first.",
+    "archive": "Archive on a pool",
+    "archiveIntro": "Entries are copied to the pool once a day, and before the current logs drop any. This wakes the pool's disks about once a day.",
+    "archiveEnabled": "Keep an archive on a pool",
+    "noPool": "There is no pool that can hold the archive.",
+    "pool": "Pool",
+    "firstPool": "The first pool",
+    "archiveDays": "Keep archived entries for days",
+    "archiveDaysHint": "1 to 3650 days.",
+    "archiveGb": "Largest archive size in GB",
+    "archiveGbHint": "0.25 to 1024 GB.",
+    "archiveStatus": "The archive on {pool} takes {size}; last copied {copied}.",
+    "archiveUnavailable": "The pool {pool} cannot hold the archive now; entries wait on the system disk until it is back.",
+    "archiveOnSave": "The archive starts when you save.",
+    "never": "never",
+    "cancel": "Cancel",
+    "save": "Save"
+  }
 }

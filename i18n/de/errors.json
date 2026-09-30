@@ -137,6 +137,23 @@
       "not_found": "Diese Aufgabe gibt es nicht oder sie wurde bereits entfernt."
     }
   },
+  "logs": {
+    "app": {
+      "invalid": "Die App-Kennung {app} ist ungültig."
+    },
+    "archive": {
+      "pool_unavailable": "Der Pool {pool} kann das Protokollarchiv gerade nicht aufnehmen. Vielleicht fehlt er, ist gesperrt oder schreibgeschützt."
+    },
+    "batch": {
+      "too_large": "Eine App kann höchstens {max} Protokolleinträge auf einmal senden."
+    },
+    "query": {
+      "invalid": "Der Protokollfilter ist ungültig. Prüfe den Zeitraum."
+    },
+    "settings": {
+      "invalid": "{field} muss zwischen {min} und {max} liegen."
+    }
+  },
   "realtime": {
     "message": {
       "invalid": "Die Live-Verbindung hat eine unverständliche Nachricht erhalten."

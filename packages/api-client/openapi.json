@@ -121,6 +121,57 @@
         }
       }
     },
+    "/api/apps/{app}/logs": {
+      "post": {
+        "tags": [
+          "Logs"
+        ],
+        "description": "Stores log entries an app wrote through the SDK for the signed-in user, as source app/<app>. At most 100 entries per request; each app may write bursts of 200 and then 20 entries a second, the rest is dropped and counted.",
+        "operationId": "WriteAppLogs",
+        "parameters": [
+          {
+            "name": "app",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppLogBatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppLogResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/setup": {
       "get": {
         "tags": [
@@ -2660,6 +2711,277 @@
           }
         }
       }
+    },
+    "/api/logs": {
+      "get": {
+        "tags": [
+          "Logs"
+        ],
+        "description": "Administrators only. Log entries of the daemon, the system services and the apps, newest first, from the current logs and the archive together. Filters: time range (from, to), level (repeat for several: debug, info, warn, error), source (repeat for several), search (text in the message or its fields, or an exact request id). Pass nextCursor as cursor for older entries; limit is 1 to 1000 (default 200).",
+        "operationId": "GetLogs",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "level",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogPage"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/logs/sources": {
+      "get": {
+        "tags": [
+          "Logs"
+        ],
+        "description": "Administrators only. Every source with entries in the current logs or the archive: daemon, system/<service>, app/<id>.",
+        "operationId": "GetLogSources",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/logs/export": {
+      "get": {
+        "tags": [
+          "Logs"
+        ],
+        "description": "Administrators only. Every entry matching the same filters as GET /api/logs, newest first, as a download: JSON lines, or text lines with format=text. At most 1,000,000 entries.",
+        "operationId": "ExportLogs",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "level",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/logs/settings": {
+      "get": {
+        "tags": [
+          "Logs"
+        ],
+        "description": "Administrators only. The retention of the current logs and of the archive, with the space they take, their oldest entries and the pools that can hold the archive.",
+        "operationId": "GetLogSettings",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Logs"
+        ],
+        "description": "Administrators only. Sets the retention. The current logs (system and apps together) stay below maxBytes, at most 4 GB; entries older than retentionDays go. The archive on a pool is optional; archivePool null means the first pool.",
+        "operationId": "SetLogSettings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LogSettings"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LogStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2724,6 +3046,67 @@
           }
         },
         "description": "RFC 9457 problem details as returned by every failing API call. The detail text is an English fallback;\nclients show the translation of the error code instead."
+      },
+      "AppLogBatch": {
+        "required": [
+          "entries"
+        ],
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppLogEntry"
+            },
+            "description": "At most 100 entries per request."
+          }
+        }
+      },
+      "AppLogEntry": {
+        "required": [
+          "level",
+          "message"
+        ],
+        "type": "object",
+        "properties": {
+          "level": {
+            "description": "debug, info, warn or error.",
+            "$ref": "#/components/schemas/LogLevelName"
+          },
+          "message": {
+            "type": "string",
+            "description": "At most 4000 characters; longer ones are cut."
+          },
+          "data": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "At most 20 fields of at most 1000 characters each."
+          }
+        }
+      },
+      "AppLogResult": {
+        "required": [
+          "accepted",
+          "dropped"
+        ],
+        "type": "object",
+        "properties": {
+          "accepted": {
+            "type": "integer",
+            "description": "Entries stored.",
+            "format": "int32"
+          },
+          "dropped": {
+            "type": "integer",
+            "description": "Entries over the app's rate limit, not stored.",
+            "format": "int32"
+          }
+        }
       },
       "ClientMessage": {
         "required": [
@@ -3563,6 +3946,11 @@
           "fs.volume.full",
           "fs.volume.read_only",
           "jobs.job.not_found",
+          "logs.app.invalid",
+          "logs.archive.pool_unavailable",
+          "logs.batch.too_large",
+          "logs.query.invalid",
+          "logs.settings.invalid",
           "realtime.message.invalid",
           "realtime.topic.invalid",
           "realtime.topic.unknown",
@@ -4396,6 +4784,233 @@
         "description": "Where a job is in its life. The last four are final and never change again."
       },
       "JsonElement": { },
+      "LogArchiveState": {
+        "enum": [
+          "off",
+          "ready",
+          "unavailable"
+        ]
+      },
+      "LogEntry": {
+        "required": [
+          "id",
+          "time",
+          "level",
+          "source",
+          "message",
+          "requestId",
+          "user",
+          "data",
+          "archived"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Stable within the current logs or the archive it comes from.",
+            "format": "int64"
+          },
+          "time": {
+            "type": "string",
+            "description": "When it happened, UTC.",
+            "format": "date-time"
+          },
+          "level": {
+            "description": "debug, info, warn or error.",
+            "$ref": "#/components/schemas/LogLevelName"
+          },
+          "source": {
+            "type": "string",
+            "description": "`daemon`, `system/&lt;service&gt;` (for example `system/kernel`, `system/smbd`) or `app/&lt;id&gt;`."
+          },
+          "message": {
+            "type": "string",
+            "description": "The rendered message; secrets are masked before it is stored."
+          },
+          "requestId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The request id (W3C trace id) of the request that caused it, if any."
+          },
+          "user": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The user an app entry was written for, if any."
+          },
+          "data": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Further fields (event name, error code, path, the app's own data), as text."
+          },
+          "archived": {
+            "type": "boolean",
+            "description": "True when the entry comes from the archive on a pool."
+          }
+        },
+        "description": "One log entry of the daemon, a system service or an app."
+      },
+      "LogLevelName": {
+        "enum": [
+          "debug",
+          "info",
+          "warn",
+          "error"
+        ]
+      },
+      "LogPage": {
+        "required": [
+          "entries",
+          "nextCursor"
+        ],
+        "type": "object",
+        "properties": {
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LogEntry"
+            },
+            "description": "At most the requested limit."
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Pass as `cursor` for the next, older page; null when there is none."
+          }
+        },
+        "description": "A page of entries, newest first."
+      },
+      "LogSettings": {
+        "required": [
+          "retentionDays",
+          "maxBytes",
+          "archiveEnabled",
+          "archivePool",
+          "archiveRetentionDays",
+          "archiveMaxBytes"
+        ],
+        "type": "object",
+        "properties": {
+          "retentionDays": {
+            "type": "integer",
+            "description": "Current logs older than this are dropped (1 to 365).",
+            "format": "int32"
+          },
+          "maxBytes": {
+            "type": "integer",
+            "description": "The current logs of the system and all apps together stay below this (64 MB to 4 GB); the oldest go first.",
+            "format": "int64"
+          },
+          "archiveEnabled": {
+            "type": "boolean",
+            "description": "Whether entries are also kept in an archive on a pool."
+          },
+          "archivePool": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The pool of the archive; null for the first pool."
+          },
+          "archiveRetentionDays": {
+            "type": "integer",
+            "description": "Archived entries older than this are dropped (1 to 3650).",
+            "format": "int32"
+          },
+          "archiveMaxBytes": {
+            "type": "integer",
+            "description": "The archive stays below this (256 MB to 1 TB).",
+            "format": "int64"
+          }
+        },
+        "description": "Retention of the current logs on the system disk and of the optional archive on a pool."
+      },
+      "LogStatus": {
+        "required": [
+          "settings",
+          "currentBytes",
+          "currentOldest",
+          "archiveState",
+          "archivePool",
+          "archiveBytes",
+          "archiveOldest",
+          "archivedAt",
+          "pools"
+        ],
+        "type": "object",
+        "properties": {
+          "settings": {
+            "description": "The retention as set.",
+            "$ref": "#/components/schemas/LogSettings"
+          },
+          "currentBytes": {
+            "type": "integer",
+            "description": "Space the current logs take on the system disk.",
+            "format": "int64"
+          },
+          "currentOldest": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The oldest current entry, or null when there is none.",
+            "format": "date-time"
+          },
+          "archiveState": {
+            "description": "Whether the archive is off, written, or waiting for its pool.",
+            "$ref": "#/components/schemas/LogArchiveState"
+          },
+          "archivePool": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The pool the archive is on or would be on, or null when there is no pool."
+          },
+          "archiveBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Space the archive takes, or null without one.",
+            "format": "int64"
+          },
+          "archiveOldest": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The oldest archived entry, or null.",
+            "format": "date-time"
+          },
+          "archivedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When entries were last copied to the archive, or null.",
+            "format": "date-time"
+          },
+          "pools": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Pools that can hold the archive."
+          }
+        },
+        "description": "The settings with what they hold now."
+      },
       "LoginRequest": {
         "required": [
           "username",
@@ -7325,6 +7940,9 @@
     },
     {
       "name": "Shares"
+    },
+    {
+      "name": "Logs"
     },
     {
       "name": "Setup"

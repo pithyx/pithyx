@@ -137,6 +137,23 @@
       "not_found": "This job does not exist or has already been removed."
     }
   },
+  "logs": {
+    "app": {
+      "invalid": "The app id {app} is not valid."
+    },
+    "archive": {
+      "pool_unavailable": "The pool {pool} cannot hold the log archive now. It may be missing, locked or read-only."
+    },
+    "batch": {
+      "too_large": "An app can send at most {max} log entries at once."
+    },
+    "query": {
+      "invalid": "The log filter is not valid. Check the time range."
+    },
+    "settings": {
+      "invalid": "{field} must be between {min} and {max}."
+    }
+  },
   "realtime": {
     "message": {
       "invalid": "The live connection received a message it does not understand."

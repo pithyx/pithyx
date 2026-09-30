@@ -1,5 +1,6 @@
 import { sdkError, PithyxError, type MethodHandlers } from '@pithyx/sdk/host';
 import { notify } from '../../shell/toasts';
+import { writeAppLog } from './appLogs';
 import { dispatch, useDesktop } from '../../wm/store';
 
 /** A stored value may be this large as JSON, and an app keeps at most this much per user. */
@@ -76,6 +77,9 @@ export function brokerFor(target: BrokerTarget): MethodHandlers {
       });
       const rect = useDesktop.getState().windows[target.windowId]?.rect ?? window.rect;
       return { width: rect.width, height: rect.height };
+    },
+    'log.write': ({ entries }) => {
+      writeAppLog(target.app, entries);
     },
     notify: ({ title, body }) => {
       require('notifications');

@@ -21,6 +21,7 @@ Rules for `daemon/`. The root `CLAUDE.md` applies as well.
 - System config files (`smb.conf`, `/etc/exports`, users) are generated from SQLite and reconciled on start and change. Generated files carry a "Managed by pithyx" header. Manual overrides go into include files that are never touched.
 - The system disk is disposable. Everything needed to rebuild it is in the config backup: `pithyx.db`, Samba passdb, TLS certs, SSH host keys.
 - App data and Docker volumes live on a pool under `/<pool>/.pithyx/`, never on the system disk.
+- Logs of the daemon, the system services (one `journalctl --follow`, never a process per request) and the apps go into `logs.db` on the system disk in batches, never one write per line. The archive on a pool is optional and copied about once a day.
 
 ### Paths
 
@@ -29,9 +30,10 @@ Rules for `daemon/`. The root `CLAUDE.md` applies as well.
 /etc/pithyx/         bootstrap only
 /var/lib/pithyx/     database and secrets
 /var/cache/pithyx/   rebuildable, safe to delete (thumbnails)
-/var/log/pithyx/     logs
+/var/log/pithyx/     logs: daemon.json files and logs.db (the Log Center, capped at 4 GB)
 /run/pithyx/         API socket
 /<pool>/.pithyx/     app data, volumes, config backups
+/<pool>/.pithyx/system/logs/  the optional log archive (archive.db)
 ```
 
 ## Virtual machines

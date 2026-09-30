@@ -1,4 +1,78 @@
 {
   "filter": "Protokolle filtern",
-  "list": "Protokolleinträge"
+  "list": "Protokolleinträge",
+  "search": {
+    "label": "Protokolle durchsuchen",
+    "placeholder": "Meldungen oder eine Anfrage-ID suchen"
+  },
+  "levels": {
+    "label": "Stufen",
+    "debug": "Debug",
+    "info": "Info",
+    "warn": "Warnung",
+    "error": "Fehler"
+  },
+  "range": {
+    "label": "Zeitraum",
+    "hour": "Letzte Stunde",
+    "day": "Letzte 24 Stunden",
+    "week": "Letzte 7 Tage",
+    "month": "Letzte 30 Tage",
+    "all": "Gesamter Zeitraum"
+  },
+  "sources": {
+    "label": "Quellen",
+    "all": "Alle Quellen",
+    "some": "{count, plural, one {# Quelle} other {# Quellen}}",
+    "none": "Noch keine Quellen",
+    "daemon": "Pithyx-Daemon",
+    "system": "System · {name}",
+    "app": "App · {name}"
+  },
+  "refresh": "Aktualisieren",
+  "export": {
+    "label": "Exportieren",
+    "text": "Als Text exportieren",
+    "jsonl": "Als JSON-Zeilen exportieren"
+  },
+  "loading": "Protokolle werden geladen…",
+  "empty": "Keine Einträge passen zu diesen Filtern.",
+  "details": {
+    "label": "Details zum Eintrag",
+    "none": "Wähle einen Eintrag, um seine Details zu sehen.",
+    "time": "Zeit",
+    "level": "Stufe",
+    "source": "Quelle",
+    "user": "Benutzer",
+    "requestId": "Anfrage-ID",
+    "stored": "Gespeichert",
+    "archive": "Im Archiv"
+  },
+  "settings": {
+    "open": "Aufbewahrung",
+    "title": "Aufbewahrung der Protokolle",
+    "intro": "Aktuelle Protokolle liegen auf der Systemplatte, damit sie auch ohne Pool da sind. Ein optionales Archiv auf einem Pool bewahrt sie länger auf.",
+    "current": "Aktuelle Protokolle",
+    "currentStatus": "Sie belegen gerade {size}; der älteste Eintrag ist vom {oldest}.",
+    "retentionDays": "Aufbewahren für Tage",
+    "retentionHint": "1 bis 365 Tage.",
+    "maxGb": "Größte Größe in GB",
+    "maxHint": "System und alle Apps zusammen, höchstens 4 GB. Die ältesten Einträge gehen zuerst.",
+    "archive": "Archiv auf einem Pool",
+    "archiveIntro": "Einträge werden einmal am Tag auf den Pool kopiert und bevor die aktuellen Protokolle welche verwerfen. Das weckt die Platten des Pools etwa einmal am Tag.",
+    "archiveEnabled": "Archiv auf einem Pool führen",
+    "noPool": "Es gibt keinen Pool, der das Archiv aufnehmen kann.",
+    "pool": "Pool",
+    "firstPool": "Der erste Pool",
+    "archiveDays": "Archivierte Einträge aufbewahren für Tage",
+    "archiveDaysHint": "1 bis 3650 Tage.",
+    "archiveGb": "Größte Archivgröße in GB",
+    "archiveGbHint": "0,25 bis 1024 GB.",
+    "archiveStatus": "Das Archiv auf {pool} belegt {size}; zuletzt kopiert {copied}.",
+    "archiveUnavailable": "Der Pool {pool} kann das Archiv gerade nicht aufnehmen; Einträge warten auf der Systemplatte, bis er zurück ist.",
+    "archiveOnSave": "Das Archiv beginnt, wenn du speicherst.",
+    "never": "nie",
+    "cancel": "Abbrechen",
+    "save": "Speichern"
+  }
 }
