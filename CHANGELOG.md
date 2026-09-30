@@ -145,6 +145,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- After loading or reloading the desktop, no element has focus; the Pithyx menu button takes it only when the last window closes or minimizes, and Tab reaches it as before.
 - The desktop wallpaper draws its boxes with the logo's geometry (lid 16 units above the box) instead of a lid lifted too high, and the logo in the Pithyx menu button is larger (38 instead of 26 px).
 - Importing a pool for use after its read-only preview failed with `storage.plan.stale` (found on dev01): the disks of a pool imported read-only are not probed, and after the plan's export step they are, so their signatures looked changed. Import steps now compare serial, size and partitions, not the ZFS labels they expect.
 - Destroying a shared folder's dataset (and renaming a dataset, exporting or destroying a pool) failed with "pool or dataset is busy" while a Files window showed a folder in it (found on dev01): the live folder view held a handle on the folder. Such plans now close the daemon's own handles below the mount points they unmount before the first command, and the open Files window is told the folder is gone.
