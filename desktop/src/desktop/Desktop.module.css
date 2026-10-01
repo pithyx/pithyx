@@ -49,3 +49,13 @@
   color: var(--color-text-muted);
   font-size: var(--font-size-xs);
 }
+
+/* An accent preset in the account menu: the element's own data-accent sets --color-accent. */
+.swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  background: var(--color-accent);
+}

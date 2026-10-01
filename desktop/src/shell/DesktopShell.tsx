@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import styles from './DesktopShell.module.css';
 import type { TaskbarPosition } from './types';
 import { Wallpaper } from './Wallpaper';
+import { useAppearance } from '../theme/appearance';
 
 /**
  * The frame of the desktop: wallpaper, the workspace that holds icons, notes and windows, the taskbar and
@@ -26,6 +27,7 @@ export function DesktopShell({
   workspaceRef?: Ref<HTMLElement>;
 }) {
   const { t } = useTranslation();
+  const { wallpaper } = useAppearance();
   // The entrance plays once. Without this, moving the taskbar later would change its animation and play it again.
   const [entered, setEntered] = useState(false);
   return (
@@ -44,7 +46,7 @@ export function DesktopShell({
         }
       }}
     >
-      <Wallpaper />
+      <Wallpaper plain={wallpaper === 'plain'} />
       <main ref={workspaceRef} className={styles.workspace} aria-label={t('items.desktop')}>
         {children}
       </main>

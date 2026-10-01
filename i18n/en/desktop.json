@@ -9,12 +9,32 @@
   "menu": {
     "language": "Language",
     "languageAuto": "Automatic",
+    "theme": "Appearance",
+    "themeChoice": {
+      "system": "Like the system",
+      "light": "Light",
+      "dark": "Dark"
+    },
     "twoFactor": "Two-factor authentication",
     "signOut": "Sign out",
     "signedInAs": "Signed in as {name}",
     "personalization": "Personalization",
     "languageCurrent": "Language: {language}",
     "taskbar": "Taskbar position",
+    "accent": "Accent color",
+    "accents": {
+      "petrol": "Petrol",
+      "ocean": "Ocean",
+      "indigo": "Indigo",
+      "plum": "Plum",
+      "moss": "Moss",
+      "graphite": "Graphite"
+    },
+    "wallpaper": "Wallpaper",
+    "wallpapers": {
+      "boxes": "Pithyx boxes",
+      "plain": "Plain"
+    },
     "getDesktop": "Get desktop from",
     "noDevices": "No other devices",
     "device": "{browser} on {os}",

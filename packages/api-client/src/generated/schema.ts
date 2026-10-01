@@ -162,6 +162,23 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/desktop/appearance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description Saves the accent color and the wallpaper of the signed-in user, for every device. GET /api/desktop returns them. */
+        put: operations["SetDesktopAppearance"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/desktop/devices": {
         parameters: {
             query?: never;
@@ -789,6 +806,23 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/shares/{shareId}/restore-points": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description Administrators only. Switches the shared folder's daily restore points (snapshots of its dataset kept 7 days) on or off. A folder share without a dataset answers fs.share.no_dataset. */
+        put: operations["SetShareRestorePoints"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/shares/{shareId}/trash": {
         parameters: {
             query?: never;
@@ -1083,6 +1117,76 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/system/network": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. The network interfaces with their addresses, gateways, name servers and whether they use DHCP. Read only until host network changes come with their confirmation timer. */
+        get: operations["GetSystemNetwork"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. Version and commit, operating system, kernel, machine, processor, memory, host name and uptime. */
+        get: operations["GetSystemOverview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/region": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. The system language and the region whose formats every user sees. GET /api/setup carries both for the sign-in page. */
+        get: operations["GetSystemRegion"];
+        /** @description Administrators only. Sets the system language (en, de) and the region (an ISO 3166 country code, or null to follow each user's language). */
+        put: operations["SetSystemRegion"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/time": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. Time zone, synchronization state, the configured time servers and every time zone the system knows. */
+        get: operations["GetSystemTime"];
+        /** @description Administrators only. Sets the time zone and the time servers (an empty list means the distribution's defaults). */
+        put: operations["SetSystemTime"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/users": {
         parameters: {
             query?: never;
@@ -1165,6 +1269,13 @@ export type components = {
             status: number;
             title: string;
             type: string;
+        };
+        /** @description How the desktop looks for the user on every device. The theme (light, dark) is a choice of each device. */
+        Appearance: {
+            /** @description One of the accent presets: `petrol`, `ocean`, `indigo`, `plum`, `moss`, `graphite`. */
+            accent: string;
+            /** @description `boxes` (the Pithyx boxes) or `plain`. */
+            wallpaper: string;
         };
         AppLogBatch: {
             /** @description At most 100 entries per request. */
@@ -1334,6 +1445,8 @@ export type components = {
         /** @enum {unknown} */
         DesktopItemKind: "shortcut" | "note";
         DesktopState: {
+            /** @description Accent color and wallpaper of the user, the same on every device. */
+            appearance: components["schemas"]["Appearance"];
             layout: null | components["schemas"]["JsonElement"];
             /**
              * Format: int64
@@ -1505,7 +1618,7 @@ export type components = {
             }[];
         };
         /** @enum {string} */
-        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.share.unavailable" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "logs.app.invalid" | "logs.archive.pool_unavailable" | "logs.batch.too_large" | "logs.query.invalid" | "logs.settings.invalid" | "notifications.message.invalid" | "notifications.notification.not_found" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.disks_missing" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.pool.suspended" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "storage.zfs.unavailable" | "system.internal.unexpected" | "system.origin.forbidden" | "users.account.refused" | "users.uid.exhausted" | "users.user.exists" | "users.user.last_admin" | "users.user.not_found" | "users.user.self";
+        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.share.unavailable" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "logs.app.invalid" | "logs.archive.pool_unavailable" | "logs.batch.too_large" | "logs.query.invalid" | "logs.settings.invalid" | "notifications.message.invalid" | "notifications.notification.not_found" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.disks_missing" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.pool.suspended" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "storage.zfs.unavailable" | "system.internal.unexpected" | "system.origin.forbidden" | "system.time.apply_failed" | "system.time.server_invalid" | "system.time.servers_too_many" | "system.time.zone_invalid" | "users.account.refused" | "users.uid.exhausted" | "users.user.exists" | "users.user.last_admin" | "users.user.not_found" | "users.user.self";
         /** @description A failed client message. `id` is empty when the message could not be parsed. */
         ErrorMessage: {
             code: components["schemas"]["ErrorCode"];
@@ -1932,6 +2045,22 @@ export type components = {
         MarkNotificationsReadRequest: {
             /** @description The notifications to mark as read; null or missing marks every unread one. */
             ids?: null | number[];
+        };
+        NetworkInterfaceInfo: {
+            /** @description IPv4 and IPv6 addresses with prefix length, for example `192.168.1.20/24`. */
+            addresses: string[];
+            /** @description Name servers the interface uses. */
+            dnsServers: string[];
+            /** @description Default gateways of the interface. */
+            gateways: string[];
+            /** @description Its hardware address, if it has one. */
+            macAddress: null | string;
+            /** @description `dhcp`, `static` or `unknown` when the configuration is not one Pithyx reads. */
+            method: string;
+            /** @description The interface, for example `ens18`. */
+            name: string;
+            /** @description Whether the link is up. */
+            up: boolean;
         };
         NewDesktopItem: {
             /** @description Shortcuts: the id of the app to open. Required for shortcuts, not allowed for notes. */
@@ -2570,6 +2699,10 @@ export type components = {
              */
             memoryTotalBytes: number;
         };
+        RestorePointsRequest: {
+            /** @description Daily restore points, kept 7 days, on or off. */
+            enabled: boolean;
+        };
         SavedLayout: {
             /** @description The layout now saved for this device. */
             layout: components["schemas"]["JsonElement"];
@@ -2594,6 +2727,10 @@ export type components = {
         SetupStatus: {
             /** @description Shown on the setup and sign-in screens, so users with several servers know where they sign in. */
             hostname: string;
+            /** @description The system language, for the sign-in page and everyone whose browser asks for a language Pithyx does not have. */
+            language: string;
+            /** @description The ISO 3166 country code whose formats every user sees, or null to follow each user's language. */
+            region: null | string;
             /** @description True until the first administrator exists. */
             required: boolean;
         };
@@ -2642,6 +2779,8 @@ export type components = {
              * @description Users other than administrators who may read and write.
              */
             readWriteUsers: number;
+            /** @description Whether daily restore points (snapshots kept 7 days) are on; null for a folder share. */
+            restorePoints: null | boolean;
             /**
              * Format: int64
              * @description Space the dataset uses with its snapshots; null for a folder share or while the dataset is not there (pool missing).
@@ -3065,6 +3204,50 @@ export type components = {
              */
             uptimeSeconds: number;
         };
+        SystemOverview: {
+            /** @description The git commit it was built from, if known. */
+            commit: null | string;
+            /**
+             * Format: int32
+             * @description Logical processors.
+             */
+            cpuCores: number;
+            /** @description The processor, if known. */
+            cpuModel: null | string;
+            /** @description The host name. */
+            hostname: string;
+            /** @description The running Linux kernel. */
+            kernel: string;
+            /** @description Vendor and product of the board or virtual machine, if the firmware reports them. */
+            machine: null | string;
+            /**
+             * Format: int64
+             * @description Physical memory.
+             */
+            memoryTotalBytes: number;
+            /** @description The distribution, for example "Debian GNU/Linux 13 (trixie)". */
+            operatingSystem: string;
+            /**
+             * Format: double
+             * @description Seconds since boot.
+             */
+            uptimeSeconds: number;
+            /** @description The Pithyx version. */
+            version: string;
+        };
+        /** @description The regional settings of the box (D282). */
+        SystemRegion: {
+            /**
+             * @description The system language: the sign-in page and every user on "Automatic" whose browser asks for a language Pithyx does
+             *     not have get it, and so do messages the box sends on its own. One of IReadOnlyList&lt;string&gt; SystemRegion.Languages.
+             */
+            language: string;
+            /**
+             * @description ISO 3166 country code such as `DE` or `US` whose date, time and number formats every user sees, or null to
+             *     follow each user's language.
+             */
+            region: null | string;
+        };
         /** @description Body of `POST /api/files/{shareId}/thumbnails`. */
         ThumbnailRequest: {
             /** @description The folder shown, relative to the share. */
@@ -3123,6 +3306,22 @@ export type components = {
         ThumbnailWatch: {
             /** @description Always true. */
             watching: boolean;
+        };
+        TimeSettings: {
+            /** @description Time servers Pithyx configured; empty means the distribution's defaults. */
+            ntpServers: string[];
+            /** @description Whether the clock is synchronized with a time server. */
+            synchronized: boolean;
+            /** @description IANA name of the system time zone. */
+            timeZone: string;
+            /** @description Every time zone the system knows. */
+            timeZones: string[];
+        };
+        TimeSettingsRequest: {
+            /** @description At most eight host names or addresses; empty for the distribution's defaults. */
+            ntpServers: string[];
+            /** @description IANA name of the new time zone. */
+            timeZone: string;
         };
         TopicEvents: {
             "files/+/+": components["schemas"]["FolderChanges"];
@@ -3655,6 +3854,37 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["DesktopState"];
                 };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SetDesktopAppearance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["Appearance"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Problem details with a stable error code. */
             default: {
@@ -5086,6 +5316,39 @@ export interface operations {
             };
         };
     };
+    SetShareRestorePoints: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shareId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RestorePointsRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
     SetShareTrash: {
         parameters: {
             query?: never;
@@ -5749,6 +6012,188 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SnapshotScheduleList"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetSystemNetwork: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkInterfaceInfo"][];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetSystemOverview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SystemOverview"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetSystemRegion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SystemRegion"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SetSystemRegion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SystemRegion"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SystemRegion"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetSystemTime: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimeSettings"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SetSystemTime: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TimeSettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimeSettings"];
                 };
             };
             /** @description Problem details with a stable error code. */

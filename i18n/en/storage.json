@@ -6,7 +6,8 @@
     "disks": "Disks",
     "datasets": "Datasets and volumes",
     "snapshots": "Snapshots",
-    "maintenance": "Health and maintenance"
+    "maintenance": "Health and maintenance",
+    "advanced": "Advanced"
   },
   "intro": "Pools keep your data on one or more disks. Every disk shows whether a new pool may use it.",
   "dev": "Development machine: only the declared test disks can be used.",
@@ -529,5 +530,28 @@
   "confirmName": {
     "label": "Type {pool} to confirm",
     "needed": "This changes the pool for good. Type its name to see the commands."
+  },
+  "advanced": {
+    "intro": "Tasks most boxes never need. Each says what it does and when you need it.",
+    "volumes": {
+      "title": "Volumes",
+      "explain": "A volume is a block device on a pool, for example the disk of a virtual machine. Shared folders do not need one.",
+      "create": "Create a volume on {pool}…",
+      "unprepared": "Volumes need a pool that Pithyx created."
+    },
+    "export": {
+      "title": "Export a pool",
+      "explain": "Export a pool to move its disks to another computer. Its shared folders are unavailable until the pool is imported again.",
+      "button": "Export {pool}…"
+    },
+    "import": {
+      "title": "Import a pool",
+      "explain": "Import a pool to use disks that come from another computer, or a pool that was exported before."
+    },
+    "datasets": {
+      "title": "Datasets",
+      "explain": "Limits, compression and names of the datasets behind your shared folders and volumes, and of datasets that Pithyx did not create.",
+      "button": "Show datasets"
+    }
   }
 }

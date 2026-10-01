@@ -20,6 +20,7 @@ import {
   type Transfer,
 } from './transfers';
 import styles from './TransfersButton.module.css';
+import { useFormatLocale } from '../i18n';
 
 /**
  * Uploads and downloads of every app while they run: a button with the overall progress as a ring, and a list with a
@@ -81,8 +82,8 @@ export function TransfersButton({ position }: { position: 'bottom' | 'top' | 'le
 }
 
 function TransferRow({ transfer }: { transfer: Transfer }) {
-  const { t, i18n } = useTranslation();
-  const locale = i18n.language;
+  const { t } = useTranslation();
+  const locale = useFormatLocale();
   const percent =
     transfer.total === 0 ? null : Math.round((transfer.loaded / transfer.total) * 100);
   const left = secondsLeft(transfer);

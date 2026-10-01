@@ -636,6 +636,31 @@
       "params": {},
       "expected": "The request came from another website and was rejected."
     },
+    "system.time.apply_failed": {
+      "params": {
+        "command": "timedatectl",
+        "exitCode": 1
+      },
+      "expected": "The time setting could not be applied (timedatectl ended with exit code 1). The log has the details."
+    },
+    "system.time.server_invalid": {
+      "params": {
+        "server": "bad host"
+      },
+      "expected": "“bad host” is neither a host name nor an address."
+    },
+    "system.time.servers_too_many": {
+      "params": {
+        "max": 8
+      },
+      "expected": "Enter at most 8 time servers."
+    },
+    "system.time.zone_invalid": {
+      "params": {
+        "zone": "Mars/Olympus"
+      },
+      "expected": "The system does not know the time zone “Mars/Olympus”."
+    },
     "storage.import.device_unknown": {
       "params": {
         "device": "/dev/disk/by-id/wwn-0x5000"

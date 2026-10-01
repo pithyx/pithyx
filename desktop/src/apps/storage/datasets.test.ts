@@ -4,6 +4,7 @@ import {
   COMPRESSIONS,
   compressionOnly,
   datasetRole,
+  isHiddenDataset,
   parseSize,
   RECORD_SIZES,
   sizeText,
@@ -76,5 +77,31 @@ describe('size fields', () => {
     expect(sizeText(67108864, 'en')).toEqual({ text: '67.109', unit: 'mb' });
     const { text, unit } = sizeText(21474836480, 'de');
     expect(parseSize(text, unit)).toBe(21475000000);
+  });
+});
+
+describe('hidden datasets', () => {
+  it('hide the Pithyx layout and what the daemon manages, and show the root, shares and volumes', () => {
+    for (const name of [
+      'tank/pithyx',
+      'tank/pithyx/apps',
+      'tank/pithyx/apps/immich',
+      'tank/pithyx/system',
+      'tank/pithyx/homes',
+      'tank/pithyx/homes/alex',
+      'tank/pithyx/shares',
+      'tank/pithyx/cache',
+      'tank/pithyx/volumes',
+    ]) {
+      expect(isHiddenDataset('tank', name)).toBe(true);
+    }
+    for (const name of [
+      'tank',
+      'tank/pithyx/shares/photos',
+      'tank/pithyx/volumes/vm1',
+      'tank/old',
+    ]) {
+      expect(isHiddenDataset('tank', name)).toBe(false);
+    }
   });
 });

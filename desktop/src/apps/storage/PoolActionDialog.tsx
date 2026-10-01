@@ -11,6 +11,7 @@ import { internalCall, type Pool, type StorageDisk, type Vdev } from '../sdk/int
 import { isFinished, JobStatus, PlanPreview, RunButton, RunError, useRunPlan } from './PlanRun';
 import styles from './Storage.module.css';
 import { describeProblem, guardReason } from './shared';
+import { useFormatLocale } from '../../i18n';
 
 export type PoolAction =
   | 'pool.replace'
@@ -49,7 +50,8 @@ export function PoolActionDialog({
   disks: StorageDisk[];
   onClose: () => void;
 }) {
-  const { t, i18n } = useTranslation('storage');
+  const { t } = useTranslation('storage');
+  const locale = useFormatLocale();
   const key = actionKey[action];
   const needsDisk = action === 'pool.replace' || action === 'pool.spare.add';
   const [diskId, setDiskId] = useState<string | null>(null);
@@ -136,7 +138,7 @@ export function PoolActionDialog({
                 />
                 <span className={styles.mono}>{disk.name}</span>
                 <span className={styles.muted}>
-                  {disk.serial ?? ''} · {formatBytes(disk.sizeBytes, i18n.language)}
+                  {disk.serial ?? ''} · {formatBytes(disk.sizeBytes, locale)}
                 </span>
               </label>
             ))}

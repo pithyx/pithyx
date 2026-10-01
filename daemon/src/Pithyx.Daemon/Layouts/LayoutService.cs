@@ -76,10 +76,31 @@ public sealed class LayoutService(SqliteConnectionFactory connections, TimeProvi
         var preferences = await connection.QueryAsync<PreferenceRow>(
             "SELECT app_id AS AppId, width AS Width, height AS Height FROM window_preferences WHERE user_id = @userId ORDER BY app_id",
             new { userId });
+        var appearance = await connection.QuerySingleOrDefaultAsync<AppearanceRow>(
+            "SELECT accent AS Accent, wallpaper AS Wallpaper FROM user_appearance WHERE user_id = @userId",
+            new { userId });
         return new DesktopState(
             layout is null ? null : Parse(layout.Json),
             layout?.Version ?? 0,
-            [.. preferences.Select(row => new WindowPreference(row.AppId, (int)row.Width, (int)row.Height))]);
+            [.. preferences.Select(row => new WindowPreference(row.AppId, (int)row.Width, (int)row.Height))],
+            appearance is null ? Appearance.Default : new Appearance(appearance.Accent, appearance.Wallpaper));
+    }
+
+    /// <summary>Saves the accent color and wallpaper of the user; the same on every device.</summary>
+    public async Task SetAppearanceAsync(long userId, Appearance appearance, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(appearance);
+        if (!appearance.IsValid())
+        {
+            throw new PithyxException(ErrorCodes.RequestBodyInvalid);
+        }
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        await connection.ExecuteAsync(
+            """
+            INSERT INTO user_appearance (user_id, accent, wallpaper, updated_at) VALUES (@userId, @Accent, @Wallpaper, @now)
+            ON CONFLICT (user_id) DO UPDATE SET accent = excluded.accent, wallpaper = excluded.wallpaper, updated_at = excluded.updated_at
+            """,
+            new { userId, appearance.Accent, appearance.Wallpaper, now = SessionService.Format(time.GetUtcNow()) });
     }
 
     /// <summary>The user's other devices with a saved layout, most recently used first.</summary>
@@ -152,6 +173,8 @@ public sealed class LayoutService(SqliteConnectionFactory connections, TimeProvi
     private sealed record LayoutRow(string Json, long Version);
 
     private sealed record PreferenceRow(string AppId, long Width, long Height);
+
+    private sealed record AppearanceRow(string Accent, string Wallpaper);
 
     // Properties instead of a constructor: SQLite reports no column type for the screen size expressions when no row
     // matches, which Dapper cannot map to a constructor.

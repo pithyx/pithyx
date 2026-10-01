@@ -91,12 +91,13 @@ function points(coordinates: Shape, cube: Cube): string {
     .join(' ');
 }
 
-/** The default wallpaper, drawn in the brand palette. Follows the theme. */
-export function Wallpaper() {
+/** The wallpaper in the brand palette, with the Pithyx boxes or plain. Follows the theme. */
+export function Wallpaper({ plain = false }: { plain?: boolean }) {
   const glow = `wallpaper-glow-${useId()}`;
   return (
     <svg
       className={styles.wallpaper}
+      data-plain={plain || undefined}
       viewBox="0 0 1600 1000"
       preserveAspectRatio="xMidYMid slice"
       aria-hidden

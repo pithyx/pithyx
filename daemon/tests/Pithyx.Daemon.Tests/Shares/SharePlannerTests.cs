@@ -174,6 +174,12 @@ public sealed class SharePlannerTests : IAsyncLifetime
         Assert.Equal(("My Photos", "/tank/my-photos", "Holidays and family", "tank/pithyx/shares/my-photos"), (row.Name, row.Path, row.Description, row.Dataset));
         Assert.Equal(0L, await connection.ExecuteScalarAsync<long>("SELECT COUNT(*) FROM share_access"));
         Assert.Equal(revision + 1, _changes.Revision);
+        // Restore points are on from the start: daily, kept 7 days.
+        var schedules = await _snapshotService.GetSchedulesAsync("tank/pithyx/shares/my-photos", Token);
+        Assert.Equal(
+            [("hourly", false), ("daily", true), ("weekly", false), ("monthly", false)],
+            schedules.Schedules.Select(schedule => (schedule.Kind, schedule.Enabled)));
+        Assert.Equal(7, schedules.Schedules.Single(schedule => schedule.Kind == "daily").Keep);
     }
 
     [Fact]
@@ -333,6 +339,10 @@ public sealed class SharePlannerTests : IAsyncLifetime
         Assert.Equal(("tank", 5 * GiB, 100 * GiB, 20 * GiB, 1, 0), (details["Media"].Pool, details["Media"].UsedBytes, details["Media"].AvailableBytes, details["Media"].QuotaBytes, details["Media"].ReadUsers, details["Media"].ReadWriteUsers));
         Assert.Equal((null, null, null), (details["Folder"].Pool, details["Folder"].Dataset, details["Folder"].UsedBytes));
         Assert.Equal(("tank", null), (details["Gone"].Pool, details["Gone"].UsedBytes));
+        // Restore points: off until switched on, and none for a folder share.
+        Assert.Equal((false, (bool?)null), (details["Media"].RestorePoints, details["Folder"].RestorePoints));
+        await _snapshotService.SetSchedulesAsync(SharePlanner.RestorePoints("tank/pithyx/shares/media", enabled: true), Token);
+        Assert.True((await _shares.ListDetailsAsync(admin, _pools.Current, Token)).Single(share => share.Name == "Media").RestorePoints);
         await Assert.ThrowsAsync<PithyxException>(() => _shares.ListDetailsAsync(Jobs.JobTestSupport.Principal(2), _pools.Current, Token));
     }
 

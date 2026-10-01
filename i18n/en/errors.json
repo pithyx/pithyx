@@ -299,6 +299,12 @@
     },
     "origin": {
       "forbidden": "The request came from another website and was rejected."
+    },
+    "time": {
+      "apply_failed": "The time setting could not be applied ({command} ended with exit code {exitCode}). The log has the details.",
+      "server_invalid": "“{server}” is neither a host name nor an address.",
+      "servers_too_many": "Enter at most {max} time servers.",
+      "zone_invalid": "The system does not know the time zone “{zone}”."
     }
   },
   "users": {

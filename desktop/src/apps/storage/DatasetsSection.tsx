@@ -10,6 +10,7 @@ import { DatasetDialog, type DatasetAction } from './DatasetDialog';
 import { canRenameOrDelete, datasetRole, isHiddenDataset } from './datasets';
 import { breakable, describeProblem, usePools } from './shared';
 import styles from './Storage.module.css';
+import { useFormatLocale } from '../../i18n';
 
 /** Datasets and volumes of every pool with their space, limits and compression, and the actions on them. */
 export function DatasetsSection({ app }: { app: PithyxApp }) {
@@ -82,8 +83,9 @@ function DatasetTable({
   datasets: Dataset[];
   onAction: (action: DatasetAction) => void;
 }) {
-  const { t, i18n } = useTranslation('storage');
-  const bytes = (value: number) => formatBytes(value, i18n.language);
+  const { t } = useTranslation('storage');
+  const locale = useFormatLocale();
+  const bytes = (value: number) => formatBytes(value, locale);
   return (
     <table className={styles.table}>
       <caption className="visually-hidden">{t('datasets.caption', { pool })}</caption>

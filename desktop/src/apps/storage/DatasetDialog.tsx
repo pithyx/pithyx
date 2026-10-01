@@ -26,6 +26,7 @@ import {
 import { isFinished, JobStatus, PlanPreview, RunButton, RunError, useRunPlan } from './PlanRun';
 import { describeProblem } from './shared';
 import styles from './Storage.module.css';
+import { useFormatLocale } from '../../i18n';
 
 export type DatasetAction =
   | { kind: 'rename'; dataset: Dataset }
@@ -208,12 +209,13 @@ interface Limits {
 }
 
 function LimitFields({ dataset, onChange }: { dataset: Dataset; onChange: OnChange }) {
-  const { t, i18n } = useTranslation('storage');
+  const { t } = useTranslation('storage');
+  const locale = useFormatLocale();
   const role = datasetRole(dataset.pool, dataset.name);
   const onlyCompression = compressionOnly(role, dataset.type);
   const [initial] = useState<Limits>(() => ({
-    quota: sizeText(dataset.quotaBytes, i18n.language),
-    reservation: sizeText(dataset.reservationBytes, i18n.language),
+    quota: sizeText(dataset.quotaBytes, locale),
+    reservation: sizeText(dataset.reservationBytes, locale),
     compression: dataset.compression ?? 'lz4',
     recordSize: dataset.recordSizeBytes,
   }));
@@ -256,7 +258,7 @@ function LimitFields({ dataset, onChange }: { dataset: Dataset; onChange: OnChan
           <SizeField
             label={t('datasets.limits.quota')}
             description={t('datasets.limits.quotaHint', {
-              used: formatBytes(dataset.usedBytes, i18n.language),
+              used: formatBytes(dataset.usedBytes, locale),
             })}
             value={limits.quota}
             invalid={quota === undefined}

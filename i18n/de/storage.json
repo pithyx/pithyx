@@ -6,7 +6,8 @@
     "disks": "Platten",
     "datasets": "Datasets und Volumes",
     "snapshots": "Snapshots",
-    "maintenance": "Zustand und Wartung"
+    "maintenance": "Zustand und Wartung",
+    "advanced": "Erweitert"
   },
   "intro": "Pools speichern deine Daten auf einer oder mehreren Platten. Bei jeder Platte steht, ob ein neuer Pool sie verwenden darf.",
   "dev": "Entwicklungsrechner: Nur die eingetragenen Testplatten können verwendet werden.",
@@ -529,5 +530,28 @@
   "confirmName": {
     "label": "Gib zur Bestätigung {pool} ein",
     "needed": "Das ändert den Pool dauerhaft. Gib seinen Namen ein, um die Befehle zu sehen."
+  },
+  "advanced": {
+    "intro": "Aufgaben, die die meisten Boxen nie brauchen. Bei jeder steht, was sie tut und wann du sie brauchst.",
+    "volumes": {
+      "title": "Volumes",
+      "explain": "Ein Volume ist ein Blockgerät auf einem Pool, zum Beispiel die Festplatte einer virtuellen Maschine. Freigegebene Ordner brauchen keins.",
+      "create": "Volume auf {pool} anlegen…",
+      "unprepared": "Volumes brauchen einen Pool, den Pithyx angelegt hat."
+    },
+    "export": {
+      "title": "Pool exportieren",
+      "explain": "Exportiere einen Pool, um seine Platten in einen anderen Computer umzuziehen. Seine freigegebenen Ordner sind dann nicht verfügbar, bis der Pool wieder importiert ist.",
+      "button": "{pool} exportieren…"
+    },
+    "import": {
+      "title": "Pool importieren",
+      "explain": "Importiere einen Pool, um Platten aus einem anderen Computer zu nutzen, oder einen Pool, der vorher exportiert wurde."
+    },
+    "datasets": {
+      "title": "Datasets",
+      "explain": "Grenzen, Komprimierung und Namen der Datasets hinter deinen freigegebenen Ordnern und Volumes, und von Datasets, die Pithyx nicht angelegt hat.",
+      "button": "Datasets anzeigen"
+    }
   }
 }

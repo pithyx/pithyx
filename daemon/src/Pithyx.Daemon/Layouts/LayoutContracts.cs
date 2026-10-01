@@ -7,7 +7,22 @@ namespace Pithyx.Daemon.Layouts;
 /// Increments with every save of this device's layout, 0 without one. Send it as <c>If-Match: "n"</c> with the next save.
 /// </param>
 /// <param name="Preferences">Window preferences of the user for every app, shared across devices.</param>
-public sealed record DesktopState(JsonElement? Layout, long LayoutVersion, IReadOnlyList<WindowPreference> Preferences);
+/// <param name="Appearance">Accent color and wallpaper of the user, the same on every device.</param>
+public sealed record DesktopState(JsonElement? Layout, long LayoutVersion, IReadOnlyList<WindowPreference> Preferences, Appearance Appearance);
+
+/// <summary>How the desktop looks for the user on every device. The theme (light, dark) is a choice of each device.</summary>
+/// <param name="Accent">One of the accent presets: <c>petrol</c>, <c>ocean</c>, <c>indigo</c>, <c>plum</c>, <c>moss</c>, <c>graphite</c>.</param>
+/// <param name="Wallpaper"><c>boxes</c> (the Pithyx boxes) or <c>plain</c>.</param>
+public sealed record Appearance(string Accent, string Wallpaper)
+{
+    public static readonly Appearance Default = new("petrol", "boxes");
+
+    public static readonly IReadOnlyList<string> Accents = ["petrol", "ocean", "indigo", "plum", "moss", "graphite"];
+
+    public static readonly IReadOnlyList<string> Wallpapers = ["boxes", "plain"];
+
+    public bool IsValid() => Accents.Contains(Accent) && Wallpapers.Contains(Wallpaper);
+}
 
 /// <param name="Layout">The layout now saved for this device.</param>
 /// <param name="Version">Its version, for <c>If-Match</c> on the next save.</param>

@@ -39,6 +39,9 @@ public static class LayoutEndpoints
         desktop.MapGet("/devices", ListDevicesAsync).WithName("ListDesktopDevices");
         desktop.MapPost("/layout/copy", CopyAsync).WithName("CopyDesktopLayout");
         desktop.MapPut("/preferences/{appId}", SetPreferenceAsync).WithName("SetWindowPreference");
+        desktop.MapPut("/appearance", SetAppearanceAsync)
+            .WithName("SetDesktopAppearance")
+            .WithDescription("Saves the accent color and the wallpaper of the signed-in user, for every device. GET /api/desktop returns them.");
 
         desktop.MapGet("/items", ListItemsAsync).WithName("ListDesktopItems");
         desktop.MapPost("/items", CreateItemAsync)
@@ -132,6 +135,12 @@ public static class LayoutEndpoints
             Device(context),
             context.Request.Headers.UserAgent.ToString(),
             cancellationToken));
+
+    private static async Task<NoContent> SetAppearanceAsync(Appearance appearance, LayoutService layouts, HttpContext context, CancellationToken cancellationToken)
+    {
+        await layouts.SetAppearanceAsync(CurrentUser.Id(context.User), appearance, cancellationToken);
+        return TypedResults.NoContent();
+    }
 
     private static async Task<NoContent> SetPreferenceAsync(string appId, WindowPreferenceRequest request, LayoutService layouts, HttpContext context, CancellationToken cancellationToken)
     {
