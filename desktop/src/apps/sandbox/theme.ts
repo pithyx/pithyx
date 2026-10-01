@@ -1,4 +1,5 @@
 import type { Theme, ThemeTokenName } from '@pithyx/sdk';
+import { onThemeChoice } from '../../theme/preference';
 
 // The public tokens apps get, from the desktop's own. Internal names may change; these may not.
 const SOURCES: Record<ThemeTokenName, string> = {
@@ -47,11 +48,13 @@ export function currentTheme(): Theme {
   return { scheme: scheme(), density: 'comfortable', tokens };
 }
 
-/** Calls back when the color scheme changes. */
+/** Calls back when the color scheme changes: the system's, or the user's own choice. */
 export function onThemeChange(callback: () => void): () => void {
   const query = matchMedia(dark);
   query.addEventListener('change', callback);
+  const stopChoice = onThemeChoice(callback);
   return () => {
     query.removeEventListener('change', callback);
+    stopChoice();
   };
 }

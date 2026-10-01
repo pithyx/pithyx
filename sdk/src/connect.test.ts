@@ -23,6 +23,7 @@ function fakeWindow() {
       listeners.delete(listener),
   };
   vi.stubGlobal('window', frame);
+  vi.stubGlobal('document', { addEventListener: () => undefined });
   const post = (source: unknown, data: unknown, ports: MessagePort[]) => {
     for (const listener of [...listeners]) {
       listener({ source, data, ports } as unknown as MessageEvent);

@@ -14,8 +14,10 @@ export interface Toast {
 /** Short-lived toasts. Dismissing one hides it only; a daemon notification stays in the panel. */
 export const useToasts = create<{ items: Toast[] }>(() => ({ items: [] }));
 
-const LIFETIME = 8000;
+const LIFETIME = 5000;
 let next = 0;
+// While the notification panel is open, daemon notifications show there and not as toasts.
+let panelOpen = false;
 
 export function dismissToast(id: string): void {
   useToasts.setState((state) => ({ items: state.items.filter((item) => item.id !== id) }));
@@ -34,9 +36,21 @@ export function notify(message: Message): void {
   show({ message });
 }
 
-/** Shows a new notification of the daemon as a toast. */
+/** Shows a new notification of the daemon as a toast, unless the panel that lists it is open. */
 export function toastNotification(notification: DaemonNotification): void {
-  show({ message: { code: notification.code, params: {} }, notification });
+  if (!panelOpen) {
+    show({ message: { code: notification.code, params: {} }, notification });
+  }
+}
+
+/** Opening the notification panel hides the toasts of the notifications it lists. */
+export function setNotificationPanelOpen(open: boolean): void {
+  panelOpen = open;
+  if (open) {
+    useToasts.setState((state) => ({
+      items: state.items.filter((item) => item.notification === undefined),
+    }));
+  }
 }
 
 export function clearToasts(): void {

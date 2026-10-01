@@ -3,6 +3,7 @@ import {
   IconDevices,
   IconLanguage,
   IconLayoutBottombar,
+  IconPalette,
   IconShieldLock,
 } from '../ui/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -28,6 +29,7 @@ import { appsFor, findApp } from '../apps/registry';
 import { initialsOf } from '../auth/parts';
 import { clearSessionHint } from '../auth/sessionHint';
 import { LanguageOptions } from './LanguageOptions';
+import { ThemeOptions } from './ThemeOptions';
 import { useDaemonStatus } from '../daemonStatus';
 import { showError } from '../errors/errorStore';
 import { useRealtime } from '../realtime/connection';
@@ -40,7 +42,7 @@ import { bannerAlert, useStorageAlerts } from '../shell/storageAlerts';
 import { StartMenu } from '../shell/StartMenu';
 import { Taskbar } from '../shell/Taskbar';
 import type { RunningApp, TaskbarPosition } from '../shell/types';
-import { notify } from '../shell/toasts';
+import { notify, setNotificationPanelOpen } from '../shell/toasts';
 import {
   followNotifications,
   markAllRead,
@@ -204,6 +206,14 @@ function UserMenu({
               </MenuPopover>
             </SubmenuTrigger>
             <SubmenuTrigger>
+              <MenuItem id="theme" icon={<IconPalette size={18} stroke={1.75} />}>
+                {t('menu.theme')}
+              </MenuItem>
+              <MenuPopover>
+                <ThemeOptions />
+              </MenuPopover>
+            </SubmenuTrigger>
+            <SubmenuTrigger>
               <MenuItem id="devices" icon={<IconDevices size={18} stroke={1.75} />}>
                 {t('menu.getDesktop')}
               </MenuItem>
@@ -353,6 +363,13 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   const [query, setQuery] = useState('');
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  // The toast store lives outside React; it hides notification toasts while the panel shows them.
+  useEffect(() => {
+    setNotificationPanelOpen(notificationsOpen);
+    return () => {
+      setNotificationPanelOpen(false);
+    };
+  }, [notificationsOpen]);
   const notificationsButton = useRef<HTMLButtonElement>(null);
   const notificationsPanel = useRef<HTMLElement>(null);
   const alerts = useStorageAlerts(user.isAdmin);

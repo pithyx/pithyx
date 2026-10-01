@@ -71,6 +71,10 @@ Thumbnail cache (one PR, replaces D197 in pithyx/pithyx#33):
 - [ ] Users (v0.1): deleting a user must also clear the daemon's in-memory notifications and jobs of that user, and user ids must never be reused (`users.id` has no `AUTOINCREMENT`), or a new user could see a deleted user's notifications until a restart (review of pithyx/pithyx#36).
 - [ ] Storage alert notifications: a pool whose fill level hovers around 80 or 90 percent notifies on every crossing; add a hysteresis, and do not call an exported or destroyed pool's alert "resolved".
 
+Owner feedback on 2026-09-30 (the rest is in #56):
+
+- [ ] SDK: a context menu API for apps. The desktop draws the menu (same look, keyboard and touch handling as its own menus) from items the app passes with the point of the right-click, and returns the chosen item; an app can also ask for the browser's menu in an area. Until then the SDK and the window frame only suppress the browser's menu outside text fields. Needs its own decision number and TSDoc.
+
 ### Scope of v0.1
 
 - [ ] Web installer (from M5): boot from USB, open the setup page in a browser, choose the system disk, the system installs itself and continues setup in the same page. Details under "Web installer v0.1" and "System layout v0.1" below.

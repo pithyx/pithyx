@@ -9,6 +9,12 @@
   "menu": {
     "language": "Language",
     "languageAuto": "Automatic",
+    "theme": "Appearance",
+    "themeChoice": {
+      "system": "Like the system",
+      "light": "Light",
+      "dark": "Dark"
+    },
     "twoFactor": "Two-factor authentication",
     "signOut": "Sign out",
     "signedInAs": "Signed in as {name}",

@@ -1,4 +1,10 @@
-import { IconCornerDownLeft, IconLogout, IconPower, IconRotateClockwise } from '../ui/icons';
+import {
+  IconCornerDownLeft,
+  IconLogout,
+  IconPower,
+  IconRotateClockwise,
+  IconSelector,
+} from '../ui/icons';
 import type { TablerIcon } from '../ui/icons';
 import type { ReactNode, Ref } from 'react';
 import {
@@ -108,6 +114,9 @@ export function StartMenu({
         <span className={styles.entryName}>{user.name}</span>
         <span className={styles.entryDetail}>{user.role}</span>
       </span>
+      {userMenu !== undefined && (
+        <IconSelector className={styles.userChevron} size={16} stroke={1.75} aria-hidden />
+      )}
     </AriaButton>
   );
 

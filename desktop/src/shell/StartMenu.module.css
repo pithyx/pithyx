@@ -239,6 +239,12 @@
   cursor: pointer;
 }
 
+.userChevron {
+  flex: none;
+  margin-inline-start: auto;
+  color: var(--color-text-muted);
+}
+
 .user[data-hovered],
 .user[data-pressed] {
   background: var(--color-surface-hover);
