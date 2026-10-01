@@ -26,7 +26,8 @@ for (const viewport of Object.keys(viewports) as Viewport[]) {
       browser,
       baseURL,
     }) => {
-      test.setTimeout(180_000);
+      // One test walks every screen of the gallery, which grows with each app.
+      test.setTimeout(360_000);
       const base = baseURL ?? '';
       const context = await browser.newContext(contextOptions(viewport, 'light'));
       let page = await context.newPage();
