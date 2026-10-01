@@ -96,10 +96,12 @@ for (const viewport of Object.keys(viewports) as Viewport[]) {
                 rect.left + (rect.width * step) / 20,
                 rect.top + rect.height / 2,
               );
+              // Toasts (a live region) sit above windows on purpose and go away on their own.
               if (
                 hit !== null &&
                 workspace.contains(hit) &&
-                hit.closest('section[data-medium]') === null
+                hit.closest('section[data-medium]') === null &&
+                hit.closest('[aria-live]') === null
               ) {
                 found.push(`${titlebar.textContent.trim()} under ${hit.tagName.toLowerCase()}`);
                 break;
