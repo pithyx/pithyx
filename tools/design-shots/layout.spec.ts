@@ -26,7 +26,8 @@ for (const viewport of Object.keys(viewports) as Viewport[]) {
       browser,
       baseURL,
     }) => {
-      test.setTimeout(180_000);
+      // One test walks every screen of the gallery, which grows with each app.
+      test.setTimeout(360_000);
       const base = baseURL ?? '';
       const context = await browser.newContext(contextOptions(viewport, 'light'));
       let page = await context.newPage();
@@ -85,7 +86,8 @@ for (const viewport of Object.keys(viewports) as Viewport[]) {
           for (const frame of document.querySelectorAll('section[data-medium]')) {
             const titlebar = frame.querySelector(':scope > header');
             const workspace = frame.closest('main');
-            if (titlebar === null || workspace === null) {
+            // A window the size class hides (data-medium="hidden" on a tablet) has no title bar to cover.
+            if (titlebar === null || workspace === null || titlebar.getClientRects().length === 0) {
               continue;
             }
             const rect = titlebar.getBoundingClientRect();
@@ -94,10 +96,12 @@ for (const viewport of Object.keys(viewports) as Viewport[]) {
                 rect.left + (rect.width * step) / 20,
                 rect.top + rect.height / 2,
               );
+              // Toasts (a live region) sit above windows on purpose and go away on their own.
               if (
                 hit !== null &&
                 workspace.contains(hit) &&
-                hit.closest('section[data-medium]') === null
+                hit.closest('section[data-medium]') === null &&
+                hit.closest('[aria-live]') === null
               ) {
                 found.push(`${titlebar.textContent.trim()} under ${hit.tagName.toLowerCase()}`);
                 break;

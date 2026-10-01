@@ -1,6 +1,6 @@
 Pithyx
 Copyright (C) 2026 Pithyx contributors
-https://github.com/vyxis/vyxis
+https://github.com/pithyx/pithyx
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU Affero General Public License version 3 as published by
@@ -14,7 +14,7 @@ Any interactive user interface of this program or of a modified version must
 preserve the following attribution in the "About" page (or an equivalent,
 reasonably visible location if no About page exists):
 
-    Based on Pithyx (https://github.com/vyxis/vyxis), created by the Pithyx
+    Based on Pithyx (https://github.com/pithyx/pithyx), created by the Pithyx
     contributors and licensed under the GNU AGPL-3.0.
 
 Modified versions must not remove this attribution, but may add their own
