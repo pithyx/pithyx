@@ -156,6 +156,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- Destroying a pool runs in the background: the dialog closes as soon as the job started, the pool's card says "Being deleted" until it is gone, and the notifications say when it is done or why it failed. The other pool actions can be closed while they run, too. A storage command of a plan that does not finish in time (for example a `zpool destroy` waiting in the kernel for a disk that stopped answering) now ends the job with the new error code `storage.command.timed_out` instead of an unexpected error. On a healthy pool `zpool destroy` takes well under a second on dev01; the long wait in the owner's test came from a pool whose disks had been pulled, which the daemon refuses to destroy since the disk failure fix (`storage.pool.disks_missing`).
 - A storage alert's mute could stay in the database for a moment after the alert went away, when the background check and a request refreshed the alerts at the same time; refreshes now run one at a time.
 - The language switch on the sign-in and setup screens is a list of our own in the theme's colors instead of the native select, whose list was white on white in dark mode; it works with arrows, Home, End, Enter, Space, Escape and Tab (ARIA listbox).
 - After loading or reloading the desktop, no element has focus; the Pithyx menu button takes it only when the last window closes or minimizes, and Tab reaches it as before.

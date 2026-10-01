@@ -19,7 +19,9 @@
     "errors": "Errors: {read} read, {write} write, {checksum} checksum",
     "degradedHint": "A device is missing or failed. A disk that comes back is rebuilt on its own (resilver); you can also replace it with a new disk.",
     "readOnly": "Read-only (preview)",
-    "readOnlyHint": "Imported read-only for a preview: nothing is mounted and nothing on it changes. Check its datasets, then import it for use or export it again."
+    "readOnlyHint": "Imported read-only for a preview: nothing is mounted and nothing on it changes. Check its datasets, then import it for use or export it again.",
+    "deleting": "Being deleted",
+    "deletingHint": "The pool is being deleted. The notifications say when it is done."
   },
   "state": {
     "online": "Healthy",
@@ -101,7 +103,8 @@
   "run": {
     "running": "Running step {step} of {count}…",
     "succeeded": "Done. Every command ran.",
-    "stopped": "Stopped."
+    "stopped": "Stopped.",
+    "background": "You can close this window; it goes on in the background, and the notifications say when it is done."
   },
   "wizard": {
     "back": "Back",

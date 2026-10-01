@@ -19,7 +19,9 @@
     "errors": "Fehler: {read} Lesen, {write} Schreiben, {checksum} Prüfsumme",
     "degradedHint": "Ein Gerät fehlt oder ist ausgefallen. Eine zurückkehrende Platte wird von selbst wiederhergestellt (Resilver); du kannst sie auch durch eine neue Platte ersetzen.",
     "readOnly": "Schreibgeschützt (Vorschau)",
-    "readOnlyHint": "Schreibgeschützt zur Vorschau importiert: Nichts ist eingehängt und nichts daran ändert sich. Prüf seine Datasets, dann importiere ihn zur Nutzung oder exportiere ihn wieder."
+    "readOnlyHint": "Schreibgeschützt zur Vorschau importiert: Nichts ist eingehängt und nichts daran ändert sich. Prüf seine Datasets, dann importiere ihn zur Nutzung oder exportiere ihn wieder.",
+    "deleting": "Wird gelöscht",
+    "deletingHint": "Der Pool wird gelöscht. Die Benachrichtigungen sagen dir, wenn es fertig ist."
   },
   "state": {
     "online": "Intakt",
@@ -101,7 +103,8 @@
   "run": {
     "running": "Schritt {step} von {count} läuft …",
     "succeeded": "Fertig. Alle Befehle wurden ausgeführt.",
-    "stopped": "Angehalten."
+    "stopped": "Angehalten.",
+    "background": "Du kannst dieses Fenster schließen; es läuft im Hintergrund weiter, und die Benachrichtigungen sagen dir, wenn es fertig ist."
   },
   "wizard": {
     "back": "Zurück",
