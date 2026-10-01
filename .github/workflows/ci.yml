@@ -69,7 +69,10 @@ jobs:
       - name: OpenAPI document is up to date
         run: git diff --exit-code packages/api-client/openapi.json
       # The ZFS and Linux account tests need root and real ZFS; they run on the dev VM (tools/dev-vm/integration.sh).
-      - run: dotnet test --solution daemon/Pithyx.slnx --configuration Release --no-build --filter-not-trait "Category=StorageIntegration"
+      # The timing budgets run in the E2E job, where no parallel build skews them (D280).
+      - run: >-
+          dotnet test --solution daemon/Pithyx.slnx --configuration Release --no-build
+          --filter-not-trait "Category=StorageIntegration" --filter-not-trait "Category=TimingBudget"
       - run: dotnet format daemon/Pithyx.slnx --verify-no-changes --no-restore
 
   frontend:
@@ -154,6 +157,10 @@ jobs:
       - run: pnpm --filter @pithyx/e2e exec playwright install ${{ runner.environment == 'github-hosted' && '--with-deps' || '' }} chromium
       - run: pnpm e2e
       - run: pnpm design:test
+      # The daemon's timing budgets, measured in a Release build like the daemon job's tests.
+      - run: >-
+          dotnet test --project daemon/tests/Pithyx.Daemon.Tests --configuration Release
+          --filter-trait "Category=TimingBudget"
       - if: failure()
         uses: actions/upload-artifact@v7
         with:
