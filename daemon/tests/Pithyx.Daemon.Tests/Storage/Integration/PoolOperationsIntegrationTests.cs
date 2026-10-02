@@ -72,6 +72,27 @@ public sealed class PoolOperationsIntegrationTests
         }
     }
 
+    [Fact]
+    public async Task ADestroyedPoolLeavesNoFoldersSoItsNameCanBeUsedAgain()
+    {
+        FileVdevs.RequireEnabled();
+        await using var vdevs = FileVdevs.Create(1);
+        await vdevs.CreateLayoutPoolAsync();
+        var read = await ReadAsync(vdevs);
+        var mountPoints = PlanReleases.MountPointsOf(read, read.Datasets.Where(dataset => dataset.Pool == vdevs.PoolName).Select(dataset => dataset.Name));
+        var root = Path.Combine(vdevs.AltRoot, vdevs.PoolName);
+        Assert.True(System.IO.Directory.Exists(Path.Combine(root, "homes")));
+
+        await RunAsync(vdevs, ZfsPlans.DestroyPool(vdevs.PoolName));
+        // The root is not mounted, so ZFS made the mount points below it as folders, and they stay.
+        Assert.True(System.IO.Directory.Exists(Path.Combine(root, "homes")));
+        LeftoverMountPoints.Remove(LeftoverMountPoints.Of(mountPoints));
+
+        Assert.False(System.IO.Directory.Exists(root));
+        await vdevs.CreateLayoutPoolAsync();
+        Assert.NotNull(Find(await ReadAsync(vdevs), vdevs));
+    }
+
     private static async Task ImportReadOnlyThenReadWriteAsync(string safe)
     {
         await using var vdevs = FileVdevs.Create(3);
