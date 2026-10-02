@@ -4,15 +4,25 @@ using Dapper;
 using Pithyx.Daemon.Auth;
 using Pithyx.Daemon.Database;
 using Pithyx.Daemon.Errors;
+using Pithyx.Daemon.Jobs;
+using Pithyx.Daemon.Notifications;
 
 namespace Pithyx.Daemon.Users;
 
 /// <summary>
 /// User management for administrators: create, change, reset the password, delete. Every user gets a uid from the
 /// Pithyx range that is never given out again, and a Linux account (<see cref="LinuxAccounts"/>). The last
-/// administrator can neither be deleted nor lose the right, and nobody deletes themselves.
+/// administrator can neither be deleted nor lose the right, and nobody deletes themselves. A user created here takes
+/// its uid as its id, so an id is never given out again either: notifications, jobs and grants that still name a
+/// deleted user's id can never reach a new user.
 /// </summary>
-public sealed class UserService(SqliteConnectionFactory connections, PasswordHasher hasher, LinuxAccounts accounts, TimeProvider time)
+public sealed class UserService(
+    SqliteConnectionFactory connections,
+    PasswordHasher hasher,
+    LinuxAccounts accounts,
+    NotificationStore notifications,
+    JobService jobs,
+    TimeProvider time)
 {
     public async Task<IReadOnlyList<UserSummary>> ListAsync(ClaimsPrincipal caller, CancellationToken cancellationToken)
     {
@@ -47,7 +57,7 @@ public sealed class UserService(SqliteConnectionFactory connections, PasswordHas
             }
             uid = await UidAllocator.AllocateUserAsync(connection, transaction, username, now);
             id = await connection.ExecuteScalarAsync<long>(
-                "INSERT INTO users (username, display_name, password_hash, is_admin, uid, created_at, updated_at) VALUES (@username, @displayName, @hash, @admin, @uid, @now, @now) RETURNING id",
+                "INSERT INTO users (id, username, display_name, password_hash, is_admin, uid, created_at, updated_at) VALUES (@uid, @username, @displayName, @hash, @admin, @uid, @now, @now) RETURNING id",
                 new { username, displayName, hash, admin = request.IsAdmin ? 1 : 0, uid, now },
                 transaction);
             await transaction.CommitAsync(cancellationToken);
@@ -106,7 +116,10 @@ public sealed class UserService(SqliteConnectionFactory connections, PasswordHas
         await transaction.CommitAsync(cancellationToken);
     }
 
-    /// <summary>Deletes the user and its Linux account. Its files and home stay; its uid is never given out again.</summary>
+    /// <summary>
+    /// Deletes the user and its Linux account. Its files and home stay; its uid is never given out again. Its queued
+    /// and running jobs are cancelled, and its jobs and notifications leave memory.
+    /// </summary>
     public async Task DeleteAsync(ClaimsPrincipal caller, long id, CancellationToken cancellationToken)
     {
         RequireAdmin(caller);
@@ -126,6 +139,8 @@ public sealed class UserService(SqliteConnectionFactory connections, PasswordHas
             await connection.ExecuteAsync("DELETE FROM users WHERE id = @id", new { id }, transaction);
             await transaction.CommitAsync(cancellationToken);
         }
+        await jobs.ForgetUserAsync(id);
+        notifications.Forget(id);
         await accounts.ReconcileAsync(cancellationToken);
     }
 

@@ -4,6 +4,8 @@ using System.Text.Json;
 using Dapper;
 using Microsoft.Extensions.DependencyInjection;
 using Pithyx.Daemon.Database;
+using Pithyx.Daemon.Jobs;
+using Pithyx.Daemon.Notifications;
 using Pithyx.Daemon.Tests.Auth;
 using Pithyx.Daemon.Tests.Jobs;
 using Pithyx.Daemon.Tests.Support;
@@ -46,8 +48,41 @@ public sealed class UserApiTests : IDisposable
         var again = await CreateAsync("rita");
 
         Assert.Equal(20002, again.GetProperty("uid").GetInt64());
+        Assert.Equal(20002, again.GetProperty("id").GetInt64());
         var list = await _admin.GetFromJsonAsync<JsonElement>("/api/users", Token);
         Assert.Equal([("admin", 20000L), ("rita", 20002L)], list.EnumerateArray().Select(user => (user.GetProperty("username").GetString()!, user.GetProperty("uid").GetInt64())));
+    }
+
+    [Fact]
+    public async Task DeletingAUserCancelsItsJobsAndForgetsItsNotifications()
+    {
+        await _admin.SetupAdminAsync();
+        var ritaId = (await CreateAsync("rita")).GetProperty("id").GetInt64();
+        var notifications = _factory.Services.GetRequiredService<NotificationService>();
+        var store = _factory.Services.GetRequiredService<NotificationStore>();
+        await notifications.CreateAsync(ritaId, new NotificationDraft("test.hello", new Dictionary<string, object?>(), NotificationTone.Info), Token);
+        var cancelled = new TaskCompletionSource();
+        var job = await _factory.Services.GetRequiredService<JobService>().StartAsync(
+            ritaId,
+            "test.work",
+            null,
+            async context =>
+            {
+                using var registration = context.Cancellation.Register(() => cancelled.TrySetResult());
+                await Task.Delay(Timeout.Infinite, context.Cancellation);
+            },
+            Token);
+        Assert.Single(store.Of(ritaId));
+
+        using (var deleted = await _admin.DeleteAsync($"/api/users/{ritaId}", Token))
+        {
+            Assert.Equal(HttpStatusCode.NoContent, deleted.StatusCode);
+        }
+
+        await cancelled.Task.WaitAsync(TimeSpan.FromSeconds(10), Token);
+        Assert.Empty(store.Of(ritaId));
+        using var lookup = await _admin.GetAsync($"/api/jobs/{job.Id}", Token);
+        Assert.Equal(HttpStatusCode.NotFound, lookup.StatusCode);
     }
 
     [Fact]

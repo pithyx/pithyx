@@ -93,6 +93,15 @@ public sealed class NotificationStore(SqliteConnectionFactory connections) : IDi
         }
     }
 
+    /// <summary>Forgets a deleted user's notifications; the database drops their rows with the user.</summary>
+    public void Forget(long userId)
+    {
+        lock (_lock)
+        {
+            _byUser?.Remove(userId);
+        }
+    }
+
     internal void MarkRead(long userId, IReadOnlyCollection<long> ids, DateTimeOffset readAt)
     {
         lock (_lock)

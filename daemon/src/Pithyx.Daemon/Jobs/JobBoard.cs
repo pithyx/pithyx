@@ -73,6 +73,20 @@ public sealed class JobBoard(TimeProvider time)
         _jobs[entry.Id] = entry;
     }
 
+    /// <summary>Takes every job of a user out of memory and returns them.</summary>
+    internal IReadOnlyList<JobEntry> RemoveUser(long userId)
+    {
+        var removed = new List<JobEntry>();
+        foreach (var (id, entry) in _jobs)
+        {
+            if (entry.UserId == userId && _jobs.TryRemove(id, out _))
+            {
+                removed.Add(entry);
+            }
+        }
+        return removed;
+    }
+
     internal JobEntry? Find(long jobId) => _jobs.TryGetValue(jobId, out var entry) ? entry : null;
 
     private IEnumerable<string> CurrentTopics()

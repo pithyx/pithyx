@@ -159,6 +159,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- Deleting a user cancels the user's queued and running jobs and drops its jobs and notifications from the daemon's memory. Users created in user management take their uid as their id, so a user id is never given out again and a new user can never see what belonged to a deleted one.
 - The wallpaper draws its boxes like the logo in the menu button, with the lid closed and a narrow gap, instead of the lid floating far above the box.
 - Toasts of notifications disappear when the notification panel opens, and none appear while it is open; toasts stay 5 seconds instead of 8.
 - The taskbar clock no longer looks like a button: it had a hover effect and took the keyboard focus, but opens nothing.
