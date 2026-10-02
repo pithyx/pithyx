@@ -82,9 +82,11 @@ Owner feedback on 2026-09-30 (the rest is in #56):
 - [ ] Web installer (from M5): boot from USB, open the setup page in a browser, choose the system disk, the system installs itself and continues setup in the same page. Details under "Web installer v0.1" and "System layout v0.1" below.
 - [ ] Storage: create, extend, repair and destroy pools; failures are detected and reported reliably (step 8 plus the findings above).
 - [ ] Shared folders.
-- [ ] Users: create, edit, delete (groups later), as Linux and Samba accounts (the user part of step 10 and the share rights of step 11).
-- [ ] SMB and SFTP (step 12 without NFS; no FTP). (Built, D287 and D288: Settings > File services, rights per user and per shared folder, the SMB recycle bin; `integration.sh` passes with a real Samba and sshd. Open: the owner's test on dev01, step 12 is `[REVIEW]`.)
+- [ ] Users and groups: create, edit, delete, as Linux and Samba accounts; users belong to groups (step 10, extended by the owner on 2026-10-03: groups are part of v0.1).
+- [ ] Permission model (step 11, extended on 2026-10-03): rights go to users and groups, the effective right is the union, there are no deny rules and administrators have everything. Resources: shared folders (none, read, readWrite), protocols (SMB, SFTP, WebDAV, FTP, SSH login), apps (allowed or not), special rights (administrator, desktop login, SSH login, reboot and shutdown).
+- [ ] SMB, SFTP, WebDAV and FTP (step 12 without NFS; WebDAV and FTP added by the owner on 2026-10-03, FTP as a fallback for software without SFTP): Settings > File services, rights per user and group and per shared folder. (Built, D287 and D288: Settings > File services, rights per user and per shared folder, the SMB recycle bin; `integration.sh` passes with a real Samba and sshd. Open: the owner's test on dev01, step 12 is `[REVIEW]`.)
 - [ ] Core apps: Files, Storage, Settings, Resource Monitor, Viewer, Log Center.
+- [ ] Network (step 14.2, added by the owner on 2026-10-03): Settings > Network changes the settings (DHCP or static, IPv4 and IPv6, DNS, host name), not only shows them, each change with the 60 second confirmation timer and automatic rollback (D110).
 - [ ] Updater with rollback (from M5).
 - [ ] Configuration backup and restore (`pithyx.db`, Samba passdb, TLS certificates, SSH host keys; see `daemon/CLAUDE.md`).
 - [x] Encryption comes after v0.2 (owner's decision on 2026-09-30; step 9 moves there). ZFS encrypts a dataset only when it is created: an existing pool cannot be encrypted in place, its data would have to be copied into a new encrypted dataset. Pools created with v0.1 and v0.2 therefore stay unencrypted, even after an update that brings encryption; only pools created later can be encrypted. The pool wizard keeps saying that encryption can only be chosen at creation, and the release notes of v0.1 say that its pools stay unencrypted.
@@ -691,6 +693,8 @@ Effort: high.
 
 Goal: every Pithyx user is a real Linux and Samba account, and files belong to the user who created them (resolves D89).
 
+Part of v0.1 since 2026-10-03 including groups (see "Scope of v0.1"); quotas and the `Desktop` folder stay later.
+
 - [ ] Migration: `groups`, `group_members`, and uid/gid allocation from fixed ranges (D103, decided): users 20000 to 29999, groups 30000 to 39999, apps 40000 to 49999 (reserved for M4). Numbers are never reused, not even after a user is deleted. Done for users (migration 0013, `id_allocations`, `UidAllocator`); groups follow.
 - [ ] `/etc/login.defs` (`UID_MIN`, `UID_MAX`, `GID_MIN`, `GID_MAX` and the `SYS_*` values) is set so `adduser` and `useradd` outside Pithyx never allocate in 20000 to 49999; the reconciler checks this at startup and warns when it changed. The check and warning are done (`LoginDefs`); setting the values is the image's job (M5), dev01 still has Debian's `UID_MAX 60000`.
 - [x] Reconciler (users; groups follow with groups): SQLite is the source of truth; the daemon runs `useradd`, `usermod`, `userdel`, `groupadd` and friends only for accounts in its ranges. A name that already exists in `/etc/passwd` or `/etc/group` but is not managed by Pithyx is refused (the static reserved list in `CredentialRules` only covers known system accounts).
@@ -728,8 +732,10 @@ Effort: high.
 
 Goal: the permission model from `CLAUDE.md`, checked on every request, and the same on disk for every protocol.
 
+Part of v0.1 since 2026-10-03 (see "Scope of v0.1"); NFS stays later.
+
 - [ ] Grants to users and groups; effective permissions are the union of all grants; administrators have everything; there are no deny rules.
-- [ ] Resources: shares (none, read, readWrite), protocols (SMB, NFS, SFTP; WebDAV later), apps (allowed or not), special rights (administrator, desktop login, SSH login, reboot and shutdown).
+- [ ] Resources: shares (none, read, readWrite), protocols (SMB, SFTP, WebDAV, FTP, SSH login; NFS later), apps (allowed or not), special rights (administrator, desktop login, SSH login, reboot and shutdown).
 - [ ] The grant subject is general (`user`, `group`, and `app` in M4), and the resolver takes a principal, so M4 needs no rework (see "Interfaces for M4").
 - [ ] The resolver is a pure function with exhaustive and property tests. It is used on every request and every topic; revoking a right is pushed over the WebSocket, and sessions without the desktop login right end.
 - [ ] Migration from `share_access` (per user, step 6) to grants.
@@ -762,6 +768,8 @@ Effort: high.
 
 Goal: shares are datasets reachable over SMB, NFS and SFTP with exactly the rights the file service enforces, and one recycle bin for all of them.
 
+v0.1 (extended on 2026-10-03): SMB, SFTP, WebDAV and FTP; NFS later.
+
 - [ ] A share is its own dataset (D101, decided) under `<pool>/pithyx/shares/<name>`, with its own snapshots, quota and recycle bin. The folder shares from step 6 exist only in development and are created again as datasets (no migration of real data). (The dataset part is done, pulled forward: Settings > Shared folders creates a share as its own dataset through a command plan, with a description and per-user rights, and deletes it after its name is typed with a choice for the data (keep, or destroy the dataset with every snapshot listed); registering a folder works only on dev and in simulation. SMB, NFS and SFTP are open.)
 - [x] SMB: `smb.conf` generated from SQLite with the "Managed by pithyx" header; manual overrides in include files that are never touched; checked with `testparm` before every reload.
   - SMB3 only, signing required, encryption optional per share, `fruit` for macOS, `shadow_copy2` so snapshots appear as "Previous versions".
@@ -771,6 +779,7 @@ Goal: shares are datasets reachable over SMB, NFS and SFTP with exactly the righ
   - The Users page shows which users have no SMB password yet (they never signed in on the web) and asks them to sign in once.
   - (D287. The passdb stays Samba's own `/var/lib/samba/private/passdb.tdb`, root and 0600 as Debian installs it; there is no support bundle yet. Windows network browsing (WS-Discovery) and Bonjour for macOS are not set up: clients connect by address.)
 - [ ] NFS (D107, decided): NFSv4.2 with `sec=sys`, a list of allowed clients per share, `root_squash`, off by default, and a warning that NFS trusts the client's user ids. Kerberos later.
+- [ ] WebDAV and FTP (added to v0.1 on 2026-10-03; FTP is the fallback for software without SFTP): off by default, a right per user and group and per shared folder like SMB and SFTP, the same rights, owners (`fchownat`) and recycle bin as the file service. The architecture is a `[DECISION]` first.
 - [x] SFTP (D108, decided): OpenSSH `internal-sftp` in a chroot with a bind-mount view of the shares the user may use, only with the SFTP right and independent of the SSH login right. (D288: `/run/pithyx/sftp/<user>`, groups `pithyx-sftp` and `pithyx-users`, sshd drop-in `50-pithyx.conf`. The SSH login right and the SSH setting are not built: switching SFTP off never stops sshd.)
 - [ ] Settings page Shares: protocols, allowed clients, recycle bin retention, snapshot visibility, quotas. (The base page exists as Settings > Shared folders: list with pool, space, description and rights, create, edit, delete. Step 12 extends it with protocols, allowed clients, recycle bin settings, snapshot visibility and quotas; step 11 replaces its per-user rights with grants to users and groups.) Protocols are done (SMB, SFTP and SMB encryption in the edit dialog, D287).
 
@@ -841,9 +850,11 @@ Goal: the box sleeps when it can, the user sees what keeps it awake, and network
 
 ### 14.2 Network (D110, decided)
 
+Part of v0.1 since 2026-10-03 (see "Scope of v0.1"); 14.1 and the Energy page stay later.
+
 - [ ] systemd-networkd configuration generated from SQLite: DHCP or static, IPv4 and IPv6, DNS, host name.
 - [ ] Every change applies with a 60 second confirmation timer and rolls back automatically when it is not confirmed.
-- [ ] On dev01 only a dedicated test NIC listed in `/etc/pithyx/test-nics` is ever changed, never the management NIC. Blocked until the owner has added the second NIC to dev01.
+- [ ] On dev01 only a dedicated test NIC listed in `/etc/pithyx/test-nics` is ever changed, never the management NIC. Blocked until the owner has added the second NIC to dev01. `[DECISION]` the test method: a second NIC in `/etc/pithyx/test-nics`, or a veth pair in its own network namespace with dnsmasq. Until it is decided, the generator, the timer and the rollback are built as pure logic with tests in simulation, and nothing on the host changes.
 
 ### 14.3 Settings pages Energy and Network
 

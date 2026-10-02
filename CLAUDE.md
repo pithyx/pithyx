@@ -1,102 +1,75 @@
 # Pithyx
 
-Free, self-hosted NAS and server OS with a web desktop. Debian 13 base, C# daemon, React desktop, apps as containers. License: AGPL-3.0, SDK under MIT. Hosted on GitHub (org `pithyx`).
+Free, self-hosted NAS and server OS with a web desktop. Debian 13, C# daemon, React desktop, apps as containers. AGPL-3.0, SDK MIT. GitHub org `pithyx`.
 
-These rules are binding. If a rule blocks you, stop and ask. Do not work around it.
+These rules are binding. If a rule blocks you, stop and ask; never work around it.
 
 ## Principles
 
-- 100 percent local. No telemetry, no phone-home, no cloud accounts, no project-run services the box depends on.
-- Crash reports stay on the box. The user can create a support bundle and share it manually.
-- Fresh installs only. There is no import from Synology, XPEnology or other systems.
+- 100 percent local: no telemetry, phone-home, cloud accounts or project-run services the box depends on. Crash reports stay on the box; the user shares a support bundle manually.
+- Fresh installs only, no import from other NAS systems.
 
 ## Environments
 
-Know where you are before you act. Every machine declares its environment in `/etc/pithyx/environment` (`dev` or `prod`); the owner may also state it ("this is dev", "this is prod"). If neither says anything, treat it as prod. `dev` and `prod` say whether a machine may be broken or holds real data; they are not two installations. Every machine has exactly one Pithyx installation (D277).
+`/etc/pithyx/environment` says `dev` or `prod`, or the owner states it; if neither, assume prod. Every machine has exactly one Pithyx installation (D277).
 
-- **dev** (dev01, other dev VMs, simulation mode, CI): the machine belongs to the agent. Nothing needs permission: install and remove packages (apt), change services and configuration, load kernel modules, reboot, create and destroy pools and arrays, reset databases, edit any file in the repo including every `CLAUDE.md`. Do it, then document it (commit message, D entry or the current state section below).
-- The only hard limits in dev: never push or merge to `master` (merging into `master` always needs the owner), and never delete, force-push or rewrite `origin/master` or `origin/dev`. On dev01 also: never touch `sda` (the system disk); real test disks are `VYXTEST01` to `VYXTEST06` (listed in `/etc/pithyx/test-disks`, historical VYXTEST prefix from Proxmox), scsi_debug disks are free to use. No long write tests or benchmarks (the host's SSD is worn). No access to pve02, the home network or the CI runner's server. No secrets in commits or chat; never read password hashes or session tokens from the database, use the API. Before a reboot, commit and push all work (WIP branches with `🚧 wip:` are fine), say so in the chat and wait for the owner's "weiter": the session runs on dev01 itself, so a reboot ends it.
-- `tools/dev-vm/testpool.sh` (`create`, `destroy`, `wipe`) is the convenient way to handle test pools; it refuses any disk that is not a test disk. `zpool destroy` leaves labels and partitions behind; run `testpool.sh wipe` afterwards.
-- **prod** (anything with real data, including the owner's own NAS): read-only by default. Before any write, show the exact command and wait for explicit confirmation. Take a snapshot or backup first. Never run `zpool destroy`, `zpool create`, `mkfs`, `wipefs`, `dd`, `rm -rf` on data paths, `docker volume rm` or database migrations without a confirmed backup.
-- The product follows the same idea: destructive storage actions in the daemon refuse to touch disks that contain partitions or data unless the user confirms with the disk serial.
+- **dev** (dev01, dev VMs, simulation, CI): the machine is yours. Install packages, change services and config, load modules, reboot, create and destroy pools, reset databases, edit any file including every `CLAUDE.md`, without asking. Document afterwards (commit, D entry or Current state).
+- Hard limits in dev: never push or merge to `master`; never delete, force-push or rewrite `origin/master` or `origin/dev`. On dev01: never touch `sda` (system disk); test disks are `VYXTEST01` to `VYXTEST06` (`/etc/pithyx/test-disks`), scsi_debug disks are free. No long write tests or benchmarks (worn SSD). No access to pve02, the home network or the CI runner's server. No secrets in commits or chat; never read password hashes or session tokens from the database, use the API. Before a reboot: commit and push everything (`🚧 wip:` branches are fine), say so and wait for the owner's "weiter" (the session runs on dev01).
+- Test pools: `tools/dev-vm/testpool.sh create|destroy|wipe` (refuses non-test disks). After `zpool destroy` run `testpool.sh wipe`.
+- **prod** (real data, including the owner's NAS): read-only. Before any write show the exact command and wait for confirmation; snapshot or backup first. Never `zpool destroy/create`, `mkfs`, `wipefs`, `dd`, `rm -rf` on data, `docker volume rm` or migrations without a confirmed backup.
+- The product does the same: destructive storage actions refuse disks with partitions or data unless the user confirms with the disk serial.
 
-## Dev VM
+## Dev VM (dev01)
 
-- `pithyx-dev.service` on port 7484 is the one dev instance, with one database at `/var/lib/pithyx/pithyx.db`. It always runs, so the owner can sign in and watch, except while `tools/dev-vm/integration.sh` runs its tests: the script stops the unit for the test run and starts it again afterwards, because the daemon manages every pool it sees, the throwaway test pools included (D276). Never point it at another database or data directory.
-- It runs dev only: `tools/dev-vm/install-dev-daemon.sh` fast-forwards the main checkout to `origin/dev`, builds and restarts the unit. Deploy after every merge into `dev`.
-- Reset the database only with `tools/dev-vm/reset-dev-db.sh`: it stops the unit, deletes the database, starts the unit (migrations run on start) and sets up the owner account again.
-- The owner account's credentials live in `~gabriel/.config/pithyx-dev/owner.env` (mode 600, never in the repo, never in the chat). Never change the owner account: no password change, no 2FA reset, no deactivation. A reset turns the owner's 2FA off; report that.
-- Tests use their own accounts `e2e-admin` and `e2e-user` from `~gabriel/.config/pithyx-dev/e2e.env`, created by `tools/dev-vm/seed-dev-accounts.sh`.
-- 7484 is the only installation on dev01: real mode, the database on the system disk like on a box, the pools on the test disks. There is no second instance, no `.pithyx-dev/` and no simulation on dev01; a daemon from a checkout without `PITHYX_DB` refuses to start (exit code 78). Simulation exists only for the automated tests and E2E on the runner, each with a throwaway database. A fresh state means `reset-dev-db.sh`.
-- Branches are checked before the merge by the runner (and `integration.sh` for ZFS) and on 7484 after the merge and deploy; what fails there is fixed right away.
+- The only installation is `pithyx-dev.service` on 7484: real mode, database `/var/lib/pithyx/pithyx.db` on the system disk, pools on the test disks. It always runs so the owner can watch, except while `tools/dev-vm/integration.sh` runs (it stops and restarts the unit, because the daemon manages every pool it sees, D276). Never point it at another database or data directory. No second instance, no `.pithyx-dev/`, no simulation on dev01; a checkout daemon without `PITHYX_DB` exits 78. Simulation exists only for tests and E2E on the runner.
+- Deploy: `tools/dev-vm/install-dev-daemon.sh --yes` fast-forwards the main checkout to `origin/dev`, builds and restarts. Deploy after every merge into `dev`.
+- Fresh state only via `tools/dev-vm/reset-dev-db.sh` (stops the unit, deletes the DB, starts, recreates the owner account). A reset turns the owner's 2FA off; report that.
+- Owner credentials: `~gabriel/.config/pithyx-dev/owner.env` (mode 600, never in repo or chat). Never change the owner account (password, 2FA, deactivation). Tests use `e2e-admin` and `e2e-user` from `~gabriel/.config/pithyx-dev/e2e.env`, created by `tools/dev-vm/seed-dev-accounts.sh`.
 
 ## Current state
 
-Update this section in the same PR whenever the state changes (a merge, a new branch, a finished item). Last updated: 2026-10-02.
+Update in the same PR whenever the state changes. Last updated: 2026-10-03.
 
-- 7484 runs `dev` from the main checkout `/home/gabriel/code/pithyx` in real mode. Check with `systemctl status pithyx-dev` and `git -C /home/gabriel/code/pithyx log -1`; the deployed commit must equal `origin/dev`.
-- On 2026-09-30 every database on dev01 was deleted (7484's, its backups, leftovers of old second instances) so the owner can run the setup again. The owner set it up again. `owner.env` is stale until the owner updates it with the new credentials; `seed-dev-accounts.sh` needs it to create `e2e-admin` and `e2e-user` (the users API from #46 is on `dev` now).
-- The runner has `libatomic1`, `shellcheck` and the Playwright libraries (owner, 2026-09-30). dev01 has `acl` (`setfacl`).
-- Merged into `dev` on 2026-09-30 by the owner's decision without waiting for the runner, then one full run on `dev`: #50, #51, #35, #52 (usage refresh), #37, #40, #36 (migration `0012_notifications.sql`), #38, #45, #53 (quick fixes B1 to B8), #54 (regenerated API client), #46 (users, migration `0013_linux_accounts.sql`), #55 (CI fixes). Migrations on `dev`: 1 to 13 without gaps.
-- The usual way again: merge `dev` into the branch, push, green runner run (E2E with the label `e2e` for larger changes), for storage, account and command runner changes also `integration.sh` on dev01 with the result in the PR, squash-merge (the commit ends with `Signed-off-by: Schecher_1 <74829802+Schecher1@users.noreply.github.com>`), deploy with `install-dev-daemon.sh --yes`. A branch with a migration proves its upgrade path on 7484 after the merge; the daemon keeps a `pithyx.db.pre-<version>-<time>.bak` next to the database before it migrates. Generated files (`openapi.json`, `schema.ts`, `error-codes.ts`) are never merged by hand: take one side, build the daemon, run `pnpm --filter @pithyx/api-client generate`.
-- Merged since: #57 (alert race, the round's format findings), #59 (E2E on its own runner, D280), #58 (rename leftovers, D279), #56 (appearance in the account menu; its squash subject is over 100 characters, so the `repo` job of that one push to `dev` is red), #60 (pool delete as a background job, `storage.command.timed_out`, D285; the disk failure item verified on 7484 on 2026-10-01), #61 (Settings as tiles, personal look in the account menu, Storage cleanup, restore points; migrations `0014_appearance_region.sql` and `0015_restore_points.sql`, D281 to D284), #62 (empty mount points of a destroyed pool), #63 (capacity alert hysteresis), #64 (a deleted user's jobs and notifications, user ids never reused), #65 (share ACLs with `setfacl`, deactivating users, D286, migration `0016_user_disabled_share_acls.sql`), #66 (SMB and SFTP, D287 and D288, migration `0017_file_services.sql`; dev01 got `smbclient` and `sshpass`, 7484 now writes `/etc/samba/smb.conf` (the old one is `smb.conf.pre-pithyx`), runs `smbd` and has `/etc/ssh/sshd_config.d/50-pithyx.conf`), #67 (files from SMB no longer executable).
-- Open, merged one at a time so no two runs share the runner host (parallel runs break the timing budgets):
-  1. `fix/sftp-view-modes` (this change): the SFTP views set the mode of their mount points on every run after the first, which turned the root of every shared folder offered over SFTP into 0755 (no writes through the ACL mask, others could read). Migration `0018_reapply_share_acls.sql` makes the daemon set every share's ACL again. 7484 has a test pool `pithyxtestfs` (VYXTEST01) with the shared folder "FS Test" for `e2e-user` (read and write, SFTP) from the verification of #66.
-- The rename from the old project name is done (D279): the repository check allows only the `VYXTEST` serials, and dev01 has nothing under the old name (`/etc`, `/var`, units, datasets, backups, build leftovers).
-- Then verify every item of "Release 0.1" in `TODO.md` on 7484 in the browser (Playwright and screenshots, as `e2e-admin` or `e2e-user`), fix what fails, and report: deployed commit and `dev` HEAD, runner status per job, a table item, status, proof, the merged PRs with their migration numbers, the rename grep, open problems with cause and proposal.
-- Decision numbers: D269 to D286 are on `dev` (D279 is the rename). D287 and D288 (SMB and SFTP) are on `dev` too. The next free number is D289. The decision log at the end of `TODO.md` conflicts on every merge; keep all entries in number order.
-- Worktrees under `.worktrees/`: `sftp-modes` (the open branch above). Remove it with its local branch once merged.
+- 7484 runs `dev` from `/home/gabriel/code/pithyx`. Check with `systemctl status pithyx-dev` and `git -C /home/gabriel/code/pithyx log -1`; the deployed commit must equal `origin/dev`.
+- `owner.env` is stale since the owner reran setup on 2026-09-30; `seed-dev-accounts.sh` needs it updated before it can create the e2e accounts.
+- The runner has `libatomic1`, `shellcheck`, Playwright libs. dev01 has `acl`, `smbclient`, `sshpass`. 7484 writes `/etc/samba/smb.conf` (original kept as `smb.conf.pre-pithyx`), runs `smbd` and owns `/etc/ssh/sshd_config.d/50-pithyx.conf`.
+- Migrations on `dev`: 0001 to 0018 (#68 with `0018_reapply_share_acls.sql` is merged, its worktree is gone). Merged history: `git log origin/dev`. 7484 has test pool `pithyxtestfs` (VYXTEST01) with shared folder "FS Test" for `e2e-user` (read-write, SFTP).
+- The owner widened v0.1 on 2026-10-03 (`TODO.md`, "Scope of v0.1"): groups, the permission model, WebDAV and FTP, changing the network. Open, one PR at a time in this order: A groups (step 10), B permission model (step 11, label `e2e`), C WebDAV and FTP (step 12, its architecture is a `[DECISION]` first), D network (step 14.2, label `e2e`; nothing on the host changes until the owner decides the test method, D110).
+- Next after D: verify every "Release 0.1" item in `TODO.md` on 7484 in the browser (Playwright and screenshots as `e2e-admin`/`e2e-user`), fix failures, then report: deployed commit and `dev` HEAD, runner status per job, a table (item, status, proof), merged PRs with migration numbers, the rename grep (D279, only `VYXTEST` allowed), open problems with cause and proposal.
+- Decisions D269 to D288 are on `dev`; next free number D289. The decision log at the end of `TODO.md` conflicts on every merge; keep all entries in number order.
 
 ## Known pitfalls
 
-- Pulling a scsi_debug disk from a pool under write can wedge ZFS until a reboot (OpenZFS 2.3.9): `txg_sync` waits in `zio_wait`, `zpool clear`, `destroy` and `list` hang in D state, load goes to about 17. Only a reboot helps. Hence `--disk-pulls` only on a fresh boot.
-- D270: for a returning disk, `zpool online` runs before `zpool clear`, both with a 30 s timeout. `clear` first hangs in the kernel.
-- Load spoils timings: check `uptime` before trusting a budget; budget failures under load are not code failures.
-- A daemon refuses a database with schema versions it does not know (exit code 65); `install-dev-daemon.sh` stops before touching anything then. If a branch's daemon wrote the dev database, run `reset-dev-db.sh`.
-- `pithyx-dev.service` allows 5 starts in 120 s. Several `integration.sh` runs in a row (each stops and starts it) hit that limit and leave the unit failed with `start-limit-hit`: `sudo systemctl reset-failed pithyx-dev && sudo systemctl start pithyx-dev`.
-- A test that starts its own `smbd` must give it a session of its own (`setsid`) and a stdin pipe that stays open: a socket on stdin (a shell over SSH or the agent's) is served as an inetd connection, a closed stdin ends a foreground smbd, and an ending smbd signals its whole process group.
-- WIP commits were made with `--no-verify`; the lefthook checks never ran on them.
+- Pulling a scsi_debug disk from a pool under write can wedge ZFS until reboot (OpenZFS 2.3.9: `txg_sync` stuck in `zio_wait`, `zpool clear/destroy/list` hang in D state, load ~17). So `integration.sh --disk-pulls` only on a fresh boot.
+- D270: for a returning disk run `zpool online` before `zpool clear`, both with 30 s timeout; `clear` first hangs in the kernel.
+- Load spoils timings: check `uptime` before trusting a budget failure.
+- A daemon refuses a DB with unknown schema versions (exit 65); `install-dev-daemon.sh` then stops before touching anything. If a branch's daemon wrote the dev DB, run `reset-dev-db.sh`.
+- `pithyx-dev.service` allows 5 starts in 120 s; several `integration.sh` runs in a row leave it `start-limit-hit`: `sudo systemctl reset-failed pithyx-dev && sudo systemctl start pithyx-dev`.
+- A test that starts its own `smbd` needs `setsid` and a stdin pipe that stays open: a socket on stdin is served as an inetd connection, a closed stdin ends smbd, and an ending smbd signals its whole process group.
+- Old WIP commits were made with `--no-verify`; lefthook never checked them.
 - A fresh worktree needs `pnpm install --frozen-lockfile` before the first commit, or the repo-check hook fails.
-
-## Nested rules
-
-- `daemon/CLAUDE.md`: daemon architecture, paths, virtual machines.
-- `desktop/CLAUDE.md`: responsive layout, accessibility, frontend performance, desktop layout memory.
-
-Claude Code loads them when working in those folders. They are as binding as this file.
-
-## Language
-
-- Everything that gets committed is English: code, identifiers, comments, commit messages, PR descriptions, markdown files, user docs, generated reference docs.
-- The only non-English content allowed in the repo is translation files (`i18n/`, translated doc pages under `website/`).
-- Conversations with the owner may be in German. Output that ends up in a file is always English.
 
 ## Workflow
 
-- Work through `TODO.md` from top to bottom, one step at a time. Do not start the next step before the current one meets its "Done when" criteria.
-- Steps marked `[DECISION]` or `[REVIEW]` require the owner. Stop there and ask.
-- Check off finished items in `TODO.md` in the same commit that finishes them.
-- Commit messages: gitmoji plus Conventional Commits, English, imperative, no em dashes: `<gitmoji> <type>(<scope>): <subject>`. Use the Unicode emoji, not the `:shortcode:`. Examples: `✨ feat(desktop): add window snapping`, `🐛 fix(daemon): handle missing lsblk serial`, `📝 docs(website): explain spindown`, `♻️ refactor(storage): extract zpool parser`, `✅ test(auth): cover rate limit`, `🔧 chore: update lefthook`, `👷 ci: add DCO check`.
-- The same format applies to PR titles.
-- Every commit is signed off (`git commit -s`, DCO).
-- Branches: `master` is stable, `dev` is beta and the integration branch. Work in `feature/<name>`, `fix/<name>`, `hotfix/<name>`. PRs target `dev`. Never commit directly to `master` or `dev`.
-- GitHub branch protection is not available on the current plan; the lefthook `pre-push` hook refuses direct pushes to `master` and `dev` instead. New branches are pushed without an upstream on `dev` (`git branch --unset-upstream`), so a bare `git push` can never target `dev`.
-- Parallel work uses git worktrees only under `.worktrees/<name>` in the repository (gitignored), for example `git worktree add .worktrees/<name> -b feature/<name> origin/dev`. Remove a worktree and its local branch as soon as its PR is merged (`git worktree remove .worktrees/<name>`).
-- Claude may squash-merge a PR into `dev` once CI is green; merging into `master` always needs the owner. The squash commit uses the commit format above and ends with `Signed-off-by` for the merging GitHub account exactly as GitHub records the author (profile name and noreply address); otherwise the DCO check on `dev` fails.
-- Every user-visible or developer-relevant change adds a line under `Unreleased` in `CHANGELOG.md` (Keep a Changelog format).
-- Versioning: SemVer for the whole monorepo, releases tagged on `master` as `vX.Y.Z` with a constellation codename.
+- Work through `TODO.md` top to bottom, one step at a time; finish its "Done when" before the next. `[DECISION]` and `[REVIEW]` steps need the owner: stop and ask. Check items off in the commit that finishes them.
+- Branches: `master` stable, `dev` beta and integration. Work in `feature/`, `fix/`, `hotfix/<name>`; PRs target `dev`. Never commit directly to `master` or `dev` (lefthook `pre-push` refuses it). New branches: `git branch --unset-upstream` so a bare `git push` never targets `dev`.
+- Parallel work only in worktrees under `.worktrees/<name>` (`git worktree add .worktrees/<name> -b feature/<name> origin/dev`). Remove worktree and local branch once merged.
+- Commits and PR titles: `<gitmoji> <type>(<scope>): <subject>`, Unicode emoji, English, imperative, no em dashes. E.g. `✨ feat(desktop): add window snapping`, `🐛 fix(daemon): handle missing lsblk serial`, `♻️ refactor(storage): extract zpool parser`, `👷 ci: add DCO check`. Always `git commit -s` (DCO).
+- PR flow: merge `dev` into the branch, push, wait for a green runner run (label `e2e` for larger changes, see CI). Storage, account and command runner changes also attach an `integration.sh` result from dev01. Then squash-merge into `dev` (you may once CI is green; `master` always needs the owner). The squash subject including ` (#n)` stays at or under 100 characters, and the message ends with `Signed-off-by: Schecher_1 <74829802+Schecher1@users.noreply.github.com>`. Then deploy with `install-dev-daemon.sh --yes` and check the change on 7484; a branch with a migration proves its upgrade there (the daemon keeps `pithyx.db.pre-<version>-<time>.bak`).
+- One PR run on the runner host at a time, and only after the previous merge's `dev` run finished; parallel runs break timing budgets.
+- Generated files (`openapi.json`, `schema.ts`, `error-codes.ts`) are never merged by hand: take one side, build the daemon, run `pnpm --filter @pithyx/api-client generate`.
+- Every user-visible or developer-relevant change adds a line under `Unreleased` in `CHANGELOG.md` (Keep a Changelog).
+- SemVer for the whole monorepo; releases tagged on `master` as `vX.Y.Z` with a constellation codename.
 
-## Target platforms
+## Before you commit
 
-- Supported: x86-64-v2 or newer, UEFI, 64-bit only. Code must not rely on anything below that.
-- Community: arm64 (UEFI SystemReady, Raspberry Pi 5 image). Keep code architecture-neutral; no x86-only dependencies.
-- Not supported: any 32-bit platform.
-- Pithyx is not a lightweight NAS OS. The reference class is an Intel N100/N305 or better with 8 GB RAM or more. Single-board computers are not a goal.
-- It must still be frugal: the daemon stays below 200 MB RSS and below 1 percent CPU when idle, and nothing polls when an event source exists. These are CI budgets like the frontend ones.
+- Build, lint, tests green on the runner; generated clients current.
+- New visible text has `en` and `de` keys; new error codes have translations and a doc entry.
+- `TODO.md` checked off, `CHANGELOG.md` updated.
+- `website/` docs checked: update pages describing changed behavior in the same commit. Add a page when a user or admin would otherwise guess (new feature or setting, changed behavior, new error code, limitation, manual step), not for refactors or developer-only details. If out of scope, add a `TODO.md` item.
+- No em dashes, no non-English text outside translation files.
 
 ## Repository
-
-Single monorepo. Everything that shares an API lives here and ships with one version number.
 
 ```
 daemon/   C# / ASP.NET Core (.NET 10), the only privileged process
@@ -104,154 +77,83 @@ desktop/  Vite + React + TypeScript web desktop
 sdk/      npm package for app developers (@pithyx/sdk)
 apps/     bundled apps (files, settings, store)
 image/    mmdebstrap, live-build, mkosi
-i18n/     translation files (en is the reference language)
-website/  landing page and user docs (Starlight, Markdown)
+i18n/     translation files (en is the reference)
+website/  landing page and user docs (Starlight)
 ```
 
-- No developer docs in markdown. The code is the developer documentation. Allowed markdown outside `website/`: README.md, CLAUDE.md (root and per top-level folder), CONTRIBUTING.md, TODO.md, CHANGELOG.md, SECURITY.md. No other markdown for agents: the current state and open work live in this file.
-- User docs live in `website/`. After every change, check whether an existing doc page describes the changed behavior and update it in the same commit.
-- Then decide whether the change deserves a new doc entry. It does if a user or admin would otherwise have to guess: a new feature or setting, changed behavior, a new error code, a limitation or a required manual step. It does not for internal refactors, performance work without visible effect, or developer-only details (those belong in code and commit messages).
-- If a doc update is needed but out of scope for the current task, add an item to `TODO.md` instead of skipping it silently.
-- Every error code has a doc entry. CI checks completeness.
-- The site publishes `/llms.txt` and `/llms-full.txt` for LLMs.
-- API and SDK references are generated from OpenAPI and TSDoc. Never hand-write them.
-- An API change updates daemon, generated client, SDK and desktop in the same commit.
-- The TypeScript API client is generated from the OpenAPI spec. Never edit generated files.
+- One monorepo, one version. Nested rules: `daemon/CLAUDE.md` (architecture, paths, operations, VMs), `desktop/CLAUDE.md` (responsive, accessibility, performance, layout memory); equally binding.
+- No developer docs in markdown; the code documents itself. Allowed markdown outside `website/`: README, CLAUDE (root and per top-level folder), CONTRIBUTING, TODO, CHANGELOG, SECURITY. No other markdown for agents; state lives in this file.
+- `website/` publishes `/llms.txt` and `/llms-full.txt`. API and SDK references are generated from OpenAPI and TSDoc.
+- An API change updates daemon, generated client, SDK and desktop in the same commit. Never edit generated files.
+- Committed content is English. Only `i18n/` and translated `website/` pages may be otherwise. Chat with the owner may be German.
 
 ## Code style
 
-- Comments in English only. Short, factual, only where the logic is not obvious.
-- No em dashes, no ASCII banners, no decorative or divider comments.
-- No commented-out code. Git has the history.
-- Prefer clear names over comments.
+- Short English comments only where logic is not obvious; prefer clear names. No em dashes, banners, divider comments or commented-out code.
 - Warnings are errors in C# and TypeScript.
-- No abstraction without a second real implementation or an enforced boundary. `ICommandRunner` and `IStorageBackend` are the known exceptions.
-- No repository layer over Dapper, no mediator, no interface for a class with one implementation.
+- No abstraction without a second real implementation or an enforced boundary (`ICommandRunner`, `IStorageBackend` are the exceptions). No repository layer over Dapper, no mediator, no single-implementation interfaces.
+
+## Platforms and budgets
+
+- Supported: x86-64-v2+, UEFI, 64-bit. Community: arm64 (UEFI SystemReady, Raspberry Pi 5); keep code architecture-neutral. No 32-bit.
+- Reference hardware: Intel N100/N305, 8 GB RAM. Still frugal: daemon below 200 MB RSS and 1 percent CPU idle; nothing polls when an event source exists. These are CI budgets.
 
 ## Network
 
-- HTTPS on 443, port 80 redirects to it.
-- Fixed alternative port 7484 (P-I-T-H on a phone keypad; IANA leaves 7479 to 7490 unassigned). Never change it.
-- HTTPS with a self-signed certificate generated at install by default. A settings wizard makes it trusted: download the box's local CA with per-OS instructions, or use the owner's own domain with a Let's Encrypt wildcard certificate via DNS-01.
-- Everything must work on the untrusted default. Passkeys and the service worker are enabled only once the certificate is trusted.
-- The UI never assumes a secure context: it must work fully over plain HTTP by IP address and with the untrusted self-signed certificate. APIs that need one (`crypto.randomUUID`, `crypto.subtle`, the Clipboard API, service workers, WebAuthn, notifications) are reached only through `desktop/src/platform/browser.ts`, which falls back or reports that they are missing; ESLint refuses them elsewhere. Features that cannot work without one (passkeys, the service worker) are optional and switch on only after the trust step.
-- No subdomains are required for the core system. Existing web apps installed as containers keep their own ports and open in desktop windows.
-- IPv6 is supported everywhere IPv4 is.
+- HTTPS on 443, 80 redirects. Fixed alternative port 7484; never change it.
+- Self-signed certificate by default; a settings wizard makes it trusted (local CA download, or own domain with Let's Encrypt DNS-01 wildcard). Everything works on the untrusted default; passkeys and the service worker switch on only after the trust step.
+- The UI never assumes a secure context (plain HTTP by IP must work). `crypto.randomUUID`, `crypto.subtle`, Clipboard, service workers, WebAuthn, notifications only through `desktop/src/platform/browser.ts` (fallback or "missing"); ESLint refuses them elsewhere.
+- No subdomains for the core system. IPv6 everywhere IPv4 works.
 
-## Errors
+## Errors and i18n
 
-- Every error has a stable code: `area.object.reason`, lowercase, dots for hierarchy, underscores inside a word. Example: `fs.file.not_found`.
-- Error codes are defined once as C# constants. The TypeScript union is generated from them. The only exception are the SDK's transport codes (`sdkErrorCodes` in `sdk/src/errors.ts`), which never cross the API; they have texts under `errors.sdk.*`, checked by a test.
-- Responses use RFC 9457 problem details with `code`, `params`, `detail` (English fallback) and `requestId`.
-- The server never returns translated text through the API. Exception: out-of-band channels (email, push, SSH MOTD) are rendered server-side from the same i18n files in the recipient's language.
-- A new error code without an `en` translation fails CI.
-
-## Internationalization
-
-- No user-visible string literals in code. Every visible text is an i18n key.
-- Keys: `area.screen.element`, errors under `errors.<code>`.
-- English is the reference language. German must exist from day one.
-- Plurals and parameters use ICU syntax.
-- German texts use informal "du", consistently.
-- Texts never name companies or their products (no other NAS vendors); compare with neutral terms such as RAID 5. Open-source projects (Jellyfin, Immich) may be named.
+- Stable codes `area.object.reason` (lowercase, dots, underscores inside words), e.g. `fs.file.not_found`. Defined once as C# constants; the TS union is generated. Exception: SDK transport codes (`sdkErrorCodes` in `sdk/src/errors.ts`), texts under `errors.sdk.*`.
+- RFC 9457 problem details with `code`, `params`, `detail` (English fallback), `requestId`. The API never returns translated text, except out-of-band channels (email, push, SSH MOTD) rendered server-side in the recipient's language.
+- No user-visible string literals; keys `area.screen.element`, errors under `errors.<code>`. English reference, German required, ICU plurals and params, German uses informal "du". Never name companies or their products (no other NAS vendors); open-source projects may be named.
 
 ## Tracing and logging
 
-- Every HTTP request and WebSocket message carries a request id (W3C traceparent, `Activity` in .NET).
-- The request id propagates to jobs, every `ICommandRunner` call and proxied app backends.
-- Every external command logs: command, arguments, exit code, duration, truncated stdout and stderr.
-- Structured JSON logs only (Serilog). No string-concatenated log messages.
-- Secrets are always masked: passwords, tokens, cookies, credentials. User data in logs is acceptable.
-- Support bundles contain logs, config and system info with secrets removed. Never include memory dumps by default; a full dump requires an explicit opt-in with a warning.
-- The UI never shows the request id: error dialogs, toasts and error pages show the translated message only. The request id goes to the browser console and the logs, where support finds it (Log Center, support bundle).
+- Every HTTP request and WebSocket message has a request id (W3C traceparent, `Activity`), propagated to jobs, every `ICommandRunner` call and proxied app backends.
+- Every external command logs command, args, exit code, duration, truncated stdout/stderr. Structured JSON logs only (Serilog), no string concatenation.
+- Secrets always masked. Support bundles: logs, config, system info without secrets; memory dumps only by explicit opt-in with a warning.
+- The UI never shows the request id; it goes to the console and logs.
 
-## Users and permissions
+## Users and security
 
-- Permissions are granted to groups and to users. Effective permissions are the union of all grants. Administrators have everything.
-- Share access per share: none, read, read-write.
-- Protocol access per user: SMB, NFS, SFTP, WebDAV (more later).
-- App access per app: allowed or not.
-- Special rights: administrator, desktop login, SSH login, reboot and shutdown.
-- 2FA (TOTP) is chosen by each user. Login forms use correct `autocomplete` attributes so password managers (Bitwarden and others) autofill reliably.
-- No password reset without proof. Recovery works only with the recovery key created during setup; without it the admin must reinstall.
-
-## Security
-
-- Secure Boot is not supported. The installer detects it and asks the user to disable it.
-- SSH is off by default and enabled in settings. Its MOTD shows the logo as ASCII art and a short warning that the system is fully open and can be broken. This is the only place ASCII art is allowed.
-- Pool encryption uses ZFS native encryption. Keys are unlocked manually, from a key vault on the system disk for automatic unlock after power loss, or from a USB key. The UI explains that the key vault only protects against stolen disks, not a stolen box.
+- Permissions to groups and users; effective = union; admins have everything. Share access: none, read, read-write. Protocol access per user (SMB, NFS, SFTP, WebDAV). App access per app. Special rights: admin, desktop login, SSH login, reboot/shutdown.
+- TOTP 2FA per user. Login forms have correct `autocomplete` attributes.
+- No password reset without proof: only the recovery key from setup, otherwise reinstall.
+- No Secure Boot (installer detects it and asks to disable). SSH off by default; its MOTD shows the ASCII logo and a warning (the only allowed ASCII art).
+- Pool encryption: ZFS native. Unlock manually, from a key vault on the system disk (UI explains it only protects against stolen disks) or a USB key.
 
 ## Apps
 
-- Every third-party SDK app runs in an iframe with `sandbox="allow-scripts allow-forms"` and without `allow-same-origin`, served from the same host. The opaque origin means it never sees desktop cookies, storage or DOM.
-- Apps store data through the SDK (backed by the daemon), not through `localStorage` or IndexedDB.
-- App backends are reached through the daemon proxy with a short-lived token issued by the SDK.
-- SDK app backends never publish host ports. They sit on an internal Docker network and are reachable only through YARP at `/apps/<id>/api/`.
-- YARP validates the app token, removes the desktop session cookie from every proxied request, and adds `X-Pithyx-User`, `X-Pithyx-Groups` and the request id. Cookies are scoped to the host, not the port, so stripping the cookie is mandatory for every proxied app, including external web apps on their own ports.
-- One backend instance per app, shared by all users. The backend separates users through `X-Pithyx-User`. No per-user containers.
-- Backend lifecycle is declared in the manifest: `always` or `onDemand`. `onDemand` backends run while at least one window of the app is open for any user, plus an idle timeout (default 10 minutes).
-- Open windows are counted through the WebSocket. A lost connection keeps the count for a grace period (2 minutes) so a reload does not stop the backend.
-- Backends that do work without an open window (conversions, sync, schedules) hold a keep-alive lease through the daemon API or declare schedules in the manifest. Without a lease or schedule, idle `onDemand` backends are stopped with SIGTERM and a timeout.
-- Window instances are declared in the manifest: `single` focuses the existing window of this user on this device and passes launch arguments to it; `multi` opens a new window.
-- Apps with mounts on a locked or missing pool do not start; the UI shows why.
-- App tokens live 5 minutes. Revoking a permission takes effect on the next refresh and is pushed over the WebSocket to close affected windows.
-- External web apps (Immich, Jellyfin) run behind a YARP listener on their port, which may rewrite `X-Frame-Options` and `frame-ancestors` so they open in desktop windows. Linked apps on other hosts open in a window if they allow framing, otherwise in a new tab.
-- Desktop and app talk through one MessageChannel per app instance. App identity comes from the port, never from message data.
-- App backends run as non-root containers with userns-remap. No `docker.sock`, `privileged` or host network unless the manifest requests it and the install dialog shows it.
-- Apps open in windows. Redirecting to another page is not allowed. "Open in tab" is optional.
-- Every app, core or third-party, is built on `@pithyx/sdk`. Core apps use an in-process transport, third-party apps a MessageChannel transport. The API is identical.
+- Every app, core or third-party, uses `@pithyx/sdk` with an identical API: core apps in-process transport, third-party a MessageChannel (one per app instance; identity from the port, never from message data).
+- Third-party apps run in an iframe `sandbox="allow-scripts allow-forms"` without `allow-same-origin`, same host. They store data through the SDK, not `localStorage`/IndexedDB.
+- Backends: one instance per app shared by all users (separated by `X-Pithyx-User`), non-root with userns-remap, on an internal Docker network, no host ports, reached only via YARP at `/apps/<id>/api/` with a 5-minute SDK token. YARP validates the token, strips the desktop session cookie (mandatory for every proxied app, including external ones), adds `X-Pithyx-User`, `X-Pithyx-Groups` and the request id. No `docker.sock`, `privileged` or host network unless the manifest requests it and the install dialog shows it.
+- Lifecycle in the manifest: `always` or `onDemand` (runs while any window is open, plus 10 min idle). Windows are counted via WebSocket with a 2-minute grace on disconnect. Background work needs a keep-alive lease or manifest schedules; otherwise idle backends get SIGTERM with a timeout.
+- Window instances in the manifest: `single` (focus the user's window on this device, pass launch args) or `multi`.
+- Apps with mounts on a locked or missing pool do not start; the UI says why. Revoked permissions apply on the next token refresh and close affected windows over the WebSocket.
+- External web apps (Immich, Jellyfin) keep their own ports behind a YARP listener that may rewrite `X-Frame-Options`/`frame-ancestors`. Linked apps on other hosts open in a window if framable, else a new tab.
+- Apps open in windows, never redirect the page; "Open in tab" is optional.
 
-## Dates and times
+## Misc
 
-- Store and transmit UTC (ISO 8601). Each user has a time zone and locale; format with `Intl` in the UI.
-
-## Fonts and third-party assets
-
-- Fonts: IBM Plex Sans (UI), Sora (word mark, large headings), JetBrains Mono (terminal, logs, paths). All SIL OFL 1.1.
-- Ship official font files unmodified. IBM Plex reserves the name "Plex": a subset or converted file would need a new name.
-- Every bundled third-party asset keeps its license file and appears in the third-party notices shown on the About page.
-
-## Operations
-
-- The daemon runs under systemd with `Restart=on-failure` and a watchdog. It must send `sd_notify` heartbeats.
-- Detect capabilities, never assume them. In VMs or on hardware without sensors, hide or explain missing data (temperatures, SMART) instead of showing errors.
-- Recovery never modifies pools automatically.
-- Pithyx itself never wakes sleeping disks: SMART queries use `smartctl -n standby`, logs and system state live on the system disk, listings are served from ARC or a special vdev. Disk spindown is an option per pool, off by default.
-- Power profiles (performance, balanced, efficient) set the CPU governor/EPP and optional link power management (SATA ALPM, PCIe ASPM, USB autosuspend). Options that are known to cause instability on some hardware stay opt-in.
-- Host network changes apply with a 60 second confirmation timer and roll back automatically if not confirmed.
-
-## Stable contracts (SemVer)
-
-Breaking any of these requires a major version bump:
-REST/WS API, SDK API, app manifest schema, extension points, error codes.
-
-Everything else is internal and may change at any time.
+- Dates: store and transmit UTC ISO 8601; format with `Intl` per user time zone and locale.
+- Fonts: IBM Plex Sans (UI), Sora (word mark, large headings), JetBrains Mono (terminal, logs, paths), all OFL 1.1, shipped unmodified (a subset of Plex would need a new name). Every bundled third-party asset keeps its license and appears in the About page notices.
+- Stable contracts (breaking = major bump): REST/WS API, SDK API, manifest schema, extension points, error codes.
 
 ## Tests
 
-Test parsers, decision logic, permission checks, manifest validation and the update state machine.
-Integration tests that need root, real zfs (and later mdadm), loop devices, scsi_debug disks or Linux accounts (`Category=StorageIntegration`) never run in GitHub CI. They run on the dev VM with `tools/dev-vm/integration.sh` (sparse files in `/dev/shm`, throwaway pools), and a PR that changes storage, account or command runner code attaches the result. Before a storage PR is merged, its destructive suite runs on the dev VM against the declared test disks.
-Do not test getters, DTOs, pass-through controllers or individual React components.
-Daemon tests run in simulation mode by default (`DaemonFactory`), with a fake clock where time matters. End-to-end tests live in `e2e/` (Playwright, run with `pnpm build && pnpm e2e`) and start their own daemon with a fresh database. The E2E suite and the performance gate run on the CI runner, not on dev01, and only when asked (see CI).
-Disk pull tests (a scsi_debug disk pulled from a live pool) can wedge ZFS until a reboot. They run only with `integration.sh --disk-pulls` on a freshly booted dev01.
+- Test parsers, decision logic, permission checks, manifest validation, the update state machine. Not getters, DTOs, pass-through controllers or individual React components.
+- Daemon tests run in simulation (`DaemonFactory`) with a fake clock where time matters. E2E in `e2e/` (Playwright, `pnpm build && pnpm e2e`) with its own daemon and fresh DB.
+- Tests needing root, real ZFS, loop devices, scsi_debug or Linux accounts (`Category=StorageIntegration`) never run in GitHub CI, only on dev01 via `tools/dev-vm/integration.sh`. Storage PRs run their destructive suite there against the test disks before merge.
 
 ## CI
 
-- Every job in `.github/workflows/ci.yml` runs on `runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}`: the owner's self-hosted runners (label `pithyx-ci`) while the repository variable is set, GitHub-hosted runners once it is unset (for the public repository). The E2E job uses `${{ vars.CI_RUNNER_E2E || vars.CI_RUNNER || 'ubuntu-latest' }}`: a runner of its own with pinned cores (label `pithyx-e2e`), so no other job skews the timing budgets (D280).
-- The self-hosted runner has no Docker and no root. No job uses `services:` or `container:`, and nothing that needs ZFS, real disks or root runs there (see Tests).
-- Workflows set `permissions: contents: read` at the top and widen it per job only where needed. No `pull_request_target`, no secrets in logs. A self-hosted runner never executes code from forks without approval.
-- The self-hosted runners on `dedi-01` (label `pithyx-ci`, several jobs in parallel, plus one `pithyx-e2e` runner) are the CI; a merge into `dev` needs their green run. The owner maintains the runner: never change it, and never add workarounds to the workflows for something missing on it.
-- The runner does everything that only needs building and can run in the background while the agent goes on: build, lint, typecheck, unit tests, E2E and the performance gate. Push the branch, keep working, read the result. dev01 is too weak for that.
-- Every pull request runs `changes` and `repo` (format, repository rules, shellcheck, commit messages, sign-off), plus `daemon` (without the `StorageIntegration` tests, which belong to dev01, and without the `TimingBudget` tests, which run in the E2E job) and `frontend` when their files changed. That green run is enough to merge a small change into `dev`.
-- The E2E suite with the performance gate and the design checks takes minutes and runs only when asked (D278): add the label `e2e` to the pull request (`gh pr edit <n> --add-label e2e`), start the workflow by hand (`gh workflow run CI --ref <branch>`), or open a pull request to `master` (always). Add the label before merging a larger change: new or changed user flows, the desktop shell, window manager, sign-in, setup, the SDK transport, the API contract, anything on the loading path or the bundle, or several PRs merged in a row. Run it by hand on `dev` as the final check before the owner verifies a round on 7484.
-- What needs ZFS, root or real disks is tested on dev01 (`tools/dev-vm/integration.sh`, which builds the daemon for it), as is the deploy of `dev`. There is no local CI fallback; when the runner cannot run a job, tell the owner.
-
-## Before you commit
-
-- Build, lint and tests pass on the runner.
-- Generated clients are up to date.
-- New visible text has i18n keys in `en` and `de`.
-- New error codes have translations.
-- `TODO.md` is checked off and `CHANGELOG.md` is updated.
-- Docs in `website/` were checked and updated, or the change was judged not doc-worthy.
-- No em dashes and no non-English text outside translation files.
+- Jobs in `.github/workflows/ci.yml` use `${{ vars.CI_RUNNER || 'ubuntu-latest' }}` (self-hosted `pithyx-ci` on dedi-01); E2E uses `${{ vars.CI_RUNNER_E2E || vars.CI_RUNNER || 'ubuntu-latest' }}` (`pithyx-e2e`, pinned cores, D280).
+- The runner has no Docker and no root: no `services:` or `container:`, nothing needing ZFS, disks or root. The owner maintains it: never change it or add workflow workarounds for something missing; tell the owner.
+- Workflows: top-level `permissions: contents: read`, widened per job only when needed. No `pull_request_target`, no secrets in logs, no fork code without approval.
+- The runner does all build-only work (build, lint, typecheck, unit tests, E2E, perf gate): push, keep working, read the result. dev01 is too weak; use it only for ZFS/root tests and deploys. There is no local CI fallback.
+- Every PR runs `changes` and `repo` (format, repo rules, shellcheck, commit messages, sign-off), plus `daemon` (without `StorageIntegration` and `TimingBudget`) and `frontend` when their files changed. That suffices for a small change.
+- E2E with perf gate and design checks only on request (D278): label `e2e` (`gh pr edit <n> --add-label e2e`), `gh workflow run CI --ref <branch>`, or any PR to `master`. Add the label for user flows, desktop shell, window manager, sign-in, setup, SDK transport, API contract, loading path or bundle, or several PRs merged in a row. Run it on `dev` before the owner verifies a round on 7484.
