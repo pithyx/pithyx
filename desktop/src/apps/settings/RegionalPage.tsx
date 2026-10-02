@@ -1,6 +1,6 @@
 import type { PithyxApp } from '@pithyx/sdk';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ErrorNotice } from '../../errors/ErrorNotice';
 import { languageName, languages, useFormatLocale } from '../../i18n';
@@ -87,6 +87,8 @@ export function RegionalPage({ app }: { app: PithyxApp }) {
 
 function RegionForm({ app, saved }: { app: PithyxApp; saved: SystemRegion }) {
   const { t, i18n } = useTranslation('settings');
+  // The selects name themselves by their label only; a wrapping label would add the selected option and the hint.
+  const ids = useId();
   const queryClient = useQueryClient();
   const [language, setLanguage] = useState(saved.language);
   const [region, setRegion] = useState(saved.region ?? '');
@@ -127,8 +129,12 @@ function RegionForm({ app, saved }: { app: PithyxApp; saved: SystemRegion }) {
         {t('regional.languageTitle')}
       </h3>
       <label className={styles.selectField}>
-        <span className={styles.fieldLabel}>{t('regional.language')}</span>
+        <span id={`${ids}-language`} className={styles.fieldLabel}>
+          {t('regional.language')}
+        </span>
         <select
+          aria-labelledby={`${ids}-language`}
+          aria-describedby={`${ids}-language-hint`}
           className={styles.select}
           value={language}
           onChange={(event) => {
@@ -142,11 +148,17 @@ function RegionForm({ app, saved }: { app: PithyxApp; saved: SystemRegion }) {
             </option>
           ))}
         </select>
-        <span className={styles.optionHint}>{t('regional.languageHint')}</span>
+        <span id={`${ids}-language-hint`} className={styles.optionHint}>
+          {t('regional.languageHint')}
+        </span>
       </label>
       <label className={styles.selectField}>
-        <span className={styles.fieldLabel}>{t('regional.formats')}</span>
+        <span id={`${ids}-formats`} className={styles.fieldLabel}>
+          {t('regional.formats')}
+        </span>
         <select
+          aria-labelledby={`${ids}-formats`}
+          aria-describedby={`${ids}-formats-hint`}
           className={styles.select}
           value={region}
           onChange={(event) => {
@@ -161,7 +173,9 @@ function RegionForm({ app, saved }: { app: PithyxApp; saved: SystemRegion }) {
             </option>
           ))}
         </select>
-        <span className={styles.optionHint}>{t('regional.formatsHint')}</span>
+        <span id={`${ids}-formats-hint`} className={styles.optionHint}>
+          {t('regional.formatsHint')}
+        </span>
       </label>
       <p className={styles.muted}>{t('regional.preview', { preview })}</p>
       {save.isError && <ErrorNotice error={describeProblem(save.error)} />}
@@ -181,6 +195,7 @@ function RegionForm({ app, saved }: { app: PithyxApp; saved: SystemRegion }) {
 
 function TimeForm({ app, settings }: { app: PithyxApp; settings: TimeSettings }) {
   const { t } = useTranslation('settings');
+  const zoneLabel = useId();
   const locale = useFormatLocale();
   const queryClient = useQueryClient();
   const [zone, setZone] = useState(settings.timeZone);
@@ -227,8 +242,11 @@ function TimeForm({ app, settings }: { app: PithyxApp; settings: TimeSettings })
         </div>
       </dl>
       <label className={styles.selectField}>
-        <span className={styles.fieldLabel}>{t('regional.zone')}</span>
+        <span id={zoneLabel} className={styles.fieldLabel}>
+          {t('regional.zone')}
+        </span>
         <select
+          aria-labelledby={zoneLabel}
           className={styles.select}
           value={zone}
           onChange={(event) => {
