@@ -56,7 +56,8 @@ test('Settings opens as an overview of categories with a search', async ({ page 
     settings.getByRole('heading', { name: 'Regional settings', level: 2 }),
   ).toBeVisible();
   await settings.getByRole('button', { name: 'All settings' }).click();
-  await expect(settings.getByRole('heading', { name: 'Settings', level: 2 })).toBeVisible();
+  // The window title is a level 2 heading named Settings too, so the overview shows by its categories.
+  await expect(settings.getByRole('heading', { name: 'System', level: 3 })).toBeVisible();
 
   await settings.getByRole('searchbox', { name: 'Search settings' }).fill('no such setting');
   await expect(settings).toContainText('No settings match your search.');
@@ -107,7 +108,7 @@ test('the system region sets the formats everyone sees', async ({ page }) => {
   const settings = await openSettings(page);
   try {
     await settings.getByRole('button', { name: /^Regional settings/ }).click();
-    const formats = settings.getByLabel('Formats');
+    const formats = settings.getByLabel('Formats', { exact: true });
     await formats.selectOption('DE');
     await expect(settings).toContainText('1.234.567,89');
     await settings.getByRole('button', { name: 'Save language and formats' }).click();
