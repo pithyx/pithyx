@@ -168,6 +168,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- Files created over SMB were executable (Samba created them with mode 0777 under the default ACL); they get 0660 now, and the named users of the shared folder keep their rights.
 - A failure while bringing the Linux accounts in line (for example a missing `userdel`, or a daemon that is not root and cannot read `/etc/shadow`) is logged and retried with the next change instead of stopping the daemon.
 - Deleting a user cancels the user's queued and running jobs and drops its jobs and notifications from the daemon's memory. Users created in user management take their uid as their id, so a user id is never given out again and a new user can never see what belonged to a deleted one.
 - A pool whose fill level hovers around 80 or 90 percent notifies once: a capacity alert counts as gone, or as calmed down, only once the pool is 5 points below the threshold. An alert of a pool that was exported or destroyed is dropped without a "resolved" notification.

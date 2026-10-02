@@ -105,9 +105,10 @@ public static class SmbConfig
             Line(text, "read only", "yes");
             Line(text, "write list", Users(share.Writers));
             Line(text, "server smb encrypt", share.Encrypt ? "required" : "if_required");
-            // The default ACL of D286 decides the rights of new files; the group bits stay open so its mask allows them.
-            Line(text, "inherit acls", "yes");
-            Line(text, "create mask", "0770");
+            // The default ACL of D286 gives new files their rights; the group bits stay open so its mask allows the named
+            // users. Files are never executable: "inherit acls" would create them with 0777.
+            Line(text, "inherit acls", "no");
+            Line(text, "create mask", "0660");
             Line(text, "directory mask", "0770");
             Line(text, "veto files", $"/{Files.FsPath.TrashFolder}/");
             Line(text, "delete veto files", "no");
