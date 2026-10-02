@@ -151,7 +151,7 @@ public sealed partial class StorageHealthMonitor : BackgroundService
         {
             _hub.Publish(StorageAlertService.Topic, _alerts.Current);
         }
-        await _notifier.SyncAsync(_alerts.Current.Alerts, _alerts.Settled, cancellationToken);
+        await _notifier.SyncAsync(_alerts.Current.Alerts, _pools.Current, _alerts.Settled, cancellationToken);
     }
 
     private void OnDisksChanged(DisksChanged changes)
