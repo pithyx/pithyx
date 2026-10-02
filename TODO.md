@@ -69,7 +69,7 @@ Thumbnail cache (one PR, replaces D197 in pithyx/pithyx#33):
 
 - [ ] Used space after writes over SMB and SFTP (step 12): they bypass the file service, so they need their own trigger for a pool read (for example Samba's `full_audit` or a slow timer while a share is connected), without waking sleeping disks.
 - [ ] Users (v0.1): deleting a user must also clear the daemon's in-memory notifications and jobs of that user, and user ids must never be reused (`users.id` has no `AUTOINCREMENT`), or a new user could see a deleted user's notifications until a restart (review of pithyx/pithyx#36).
-- [ ] Storage alert notifications: a pool whose fill level hovers around 80 or 90 percent notifies on every crossing; add a hysteresis, and do not call an exported or destroyed pool's alert "resolved".
+- [x] Storage alert notifications: a pool whose fill level hovers around 80 or 90 percent notifies on every crossing; add a hysteresis, and do not call an exported or destroyed pool's alert "resolved". (5 points below the threshold; an alert of a pool that is gone is dropped silently.)
 
 Owner feedback on 2026-09-30 (the rest is in #56):
 

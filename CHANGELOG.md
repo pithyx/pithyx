@@ -159,6 +159,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- A pool whose fill level hovers around 80 or 90 percent notifies once: a capacity alert counts as gone, or as calmed down, only once the pool is 5 points below the threshold. An alert of a pool that was exported or destroyed is dropped without a "resolved" notification.
 - The wallpaper draws its boxes like the logo in the menu button, with the lid closed and a narrow gap, instead of the lid floating far above the box.
 - Toasts of notifications disappear when the notification panel opens, and none appear while it is open; toasts stay 5 seconds instead of 8.
 - The taskbar clock no longer looks like a button: it had a hover effect and took the keyboard focus, but opens nothing.
