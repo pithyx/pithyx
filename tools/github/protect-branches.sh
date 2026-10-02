@@ -3,7 +3,7 @@
 # Not usable yet: rulesets on private repositories need a paid plan or a public repository.
 set -euo pipefail
 
-repo=${1:-vyxis/vyxis}
+repo=${1:-pithyx/pithyx}
 
 gh api --method POST "repos/$repo/rulesets" --input - <<'JSON'
 {

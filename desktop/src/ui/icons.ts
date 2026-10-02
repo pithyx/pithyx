@@ -72,6 +72,7 @@ export { default as IconRestore } from '@tabler/icons-react/dist/esm/icons/IconR
 export { default as IconRotateClockwise } from '@tabler/icons-react/dist/esm/icons/IconRotateClockwise.mjs';
 export { default as IconScissors } from '@tabler/icons-react/dist/esm/icons/IconScissors.mjs';
 export { default as IconSearch } from '@tabler/icons-react/dist/esm/icons/IconSearch.mjs';
+export { default as IconSelector } from '@tabler/icons-react/dist/esm/icons/IconSelector.mjs';
 export { default as IconServer2 } from '@tabler/icons-react/dist/esm/icons/IconServer2.mjs';
 export { default as IconSettings } from '@tabler/icons-react/dist/esm/icons/IconSettings.mjs';
 export { default as IconShieldLock } from '@tabler/icons-react/dist/esm/icons/IconShieldLock.mjs';

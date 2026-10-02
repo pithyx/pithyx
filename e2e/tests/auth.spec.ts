@@ -230,6 +230,7 @@ test('the language list switches the sign-in screen with the mouse and the keybo
   await expect(page.getByRole('listbox')).toHaveCount(0);
   await expect(button).toBeFocused();
   await page.keyboard.press('Enter');
+  await expect(page.getByRole('listbox')).toBeFocused();
   await page.keyboard.press('Home');
   await page.keyboard.press('Enter');
   await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();

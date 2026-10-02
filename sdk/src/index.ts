@@ -19,6 +19,7 @@
  * @packageDocumentation
  */
 import { createApp, type CreateAppOptions, type PithyxApp } from './app';
+import { preventBrowserMenu } from './contextMenu';
 import { sdkError } from './errors';
 import type { ConnectMessage } from './protocol';
 import { portEndpoint } from './transport';
@@ -70,11 +71,13 @@ function isConnectMessage(value: unknown): value is ConnectMessage {
  * Connects a sandboxed app to the desktop. It accepts exactly one `pithyx:connect` message, only from the parent
  * window (the desktop that framed the app) and only with exactly one transferred port; every other window message is
  * ignored, before and after. Rejects with `sdk.transport.closed` when no desktop connects in time, for example when
- * the page was opened outside the desktop.
+ * the page was opened outside the desktop. From then on a right-click in the app never opens the browser's own menu,
+ * except in text fields; an app shows its own menu by listening for `contextmenu`.
  */
 export function connect(
   options: CreateAppOptions & { connectTimeout?: number } = {},
 ): Promise<PithyxApp> {
+  preventBrowserMenu(document);
   return new Promise((resolve, reject) => {
     const timer = setTimeout(() => {
       window.removeEventListener('message', onMessage);

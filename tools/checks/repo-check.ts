@@ -179,20 +179,10 @@ function checkCommentLanguage(file: string, text: string): Problem[] {
   );
 }
 
-// The project's first working title may only remain where it is outside the repository's control: the GitHub
-// organization and repository, the checkout path on the dev VM and the serials of the dev VM's virtual test disks.
+// The project's first working title may only remain where it is outside the repository's control: the serials of the
+// dev VM's virtual test disks, set in the hypervisor (D279).
 const OLD_NAME = /vyx(?:is|test)/i;
-const OLD_NAME_ALLOWED = new RegExp(
-  [
-    String.raw`github\.com[/:]vyxis/vyxis`,
-    String.raw`vyxis/vyxis#\d+`,
-    String.raw`:-vyxis/vyxis\}`,
-    '`vyxis/vyxis`',
-    String.raw`code/vyxis\b`,
-    'VYXTEST',
-  ].join('|'),
-  'g',
-);
+const OLD_NAME_ALLOWED = /VYXTEST/g;
 
 function checkOldName(file: string, text: string): Problem[] {
   // This file spells out the exceptions.

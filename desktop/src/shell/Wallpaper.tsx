@@ -8,9 +8,9 @@ interface Cube {
   depth: number;
 }
 
-// Open boxes with a floating lid, drawn exactly like the logo (desktop/public/logo.svg: the lid floats 16 units above
-// the box) in its 100x100 units. Positions are in the 1600x1000 viewBox; depth fades the smaller boxes into the
-// background.
+// Boxes drawn like the logo in the menu button: the geometry of desktop/public/logo.svg in its 100x100 units, with the
+// lid in its closed position, 13 units lower (as in ui/Logo.module.css), so only a narrow gap shows. Positions are in
+// the 1600x1000 viewBox; depth fades the smaller boxes into the background.
 const CUBES: Cube[] = [
   { x: 1180, y: 430, scale: 7.2, depth: 1 },
   { x: 300, y: 760, scale: 3.4, depth: 0.6 },
@@ -20,11 +20,14 @@ const CUBES: Cube[] = [
   { x: 880, y: 860, scale: 1.3, depth: 0.3 },
 ];
 
+const LID_DROP = 13;
+
 type Shape = [number, number][];
 
 const SHAPES: {
   className: 'inside' | 'left' | 'right' | 'lidLeft' | 'lidRight' | 'lid';
   points: Shape;
+  lid?: true;
 }[] = [
   {
     className: 'inside',
@@ -61,6 +64,7 @@ const SHAPES: {
       [50, 49.48],
       [18, 31],
     ],
+    lid: true,
   },
   {
     className: 'lidRight',
@@ -70,6 +74,7 @@ const SHAPES: {
       [82, 31],
       [50, 49.48],
     ],
+    lid: true,
   },
   {
     className: 'lid',
@@ -79,14 +84,15 @@ const SHAPES: {
       [50, 46.48],
       [18, 28],
     ],
+    lid: true,
   },
 ];
 
-function points(coordinates: Shape, cube: Cube): string {
+function points(coordinates: Shape, cube: Cube, drop: number): string {
   return coordinates
     .map(
       ([x, y]) =>
-        `${String(cube.x + (x - 50) * cube.scale)},${String(cube.y + (y - 50) * cube.scale)}`,
+        `${String(cube.x + (x - 50) * cube.scale)},${String(cube.y + (y + drop - 50) * cube.scale)}`,
     )
     .join(' ');
 }
@@ -116,7 +122,7 @@ export function Wallpaper({ plain = false }: { plain?: boolean }) {
             <polygon
               key={shape.className}
               className={styles[shape.className]}
-              points={points(shape.points, cube)}
+              points={points(shape.points, cube, shape.lid === true ? LID_DROP : 0)}
             />
           ))}
         </g>

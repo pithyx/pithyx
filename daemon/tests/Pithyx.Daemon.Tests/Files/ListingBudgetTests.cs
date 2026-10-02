@@ -10,6 +10,7 @@ namespace Pithyx.Daemon.Tests.Files;
 /// the API on a folder the daemon has not listed before (the kernel's caches are warm, as after any recent access).
 /// </summary>
 [Collection(TimingBudgets.Name)]
+[Trait("Category", TimingBudgets.Category)]
 public sealed class ListingBudgetTests(ITestOutputHelper output) : IDisposable
 {
     private const int Entries = 100_000;
@@ -83,9 +84,13 @@ public sealed class ListingBudgetTests(ITestOutputHelper output) : IDisposable
     }
 }
 
-/// <summary>Timing budgets run alone, never next to other test classes that share the CPU.</summary>
+/// <summary>
+/// Timing budgets run alone, never next to other test classes that share the CPU. CI runs them in the E2E job, on the
+/// runner with cores of its own (D280).
+/// </summary>
 [CollectionDefinition(Name, DisableParallelization = true)]
 public sealed class TimingBudgets
 {
     public const string Name = "Budgets";
+    public const string Category = "TimingBudget";
 }
