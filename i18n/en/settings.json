@@ -94,7 +94,13 @@
         "none": "No access",
         "read": "Read",
         "readWrite": "Read and write"
-      }
+      },
+      "protocols": "Network access",
+      "protocolsIntro": "Users reach this folder over the protocols allowed for them on the Users page.",
+      "smb": "Offer over SMB",
+      "sftp": "Show over SFTP",
+      "smbEncrypt": "Require encryption over SMB",
+      "smbEncryptHint": "Older clients without SMB encryption cannot connect then."
     },
     "deleteDialog": {
       "title": "Delete {name}",
@@ -117,8 +123,7 @@
     "search": "Search settings",
     "noMatch": "No settings match your search.",
     "all": "All settings",
-    "navigation": "Settings navigation",
-    "coming": "Coming in v0.1"
+    "navigation": "Settings navigation"
   },
   "categories": {
     "system": "System",
@@ -172,11 +177,33 @@
     "uptimeValue": "{days, plural, =0 {} one {# day, } other {# days, }}{hours, plural, one {# hour} other {# hours}}, {minutes, plural, one {# minute} other {# minutes}}"
   },
   "fileServices": {
-    "intro": "File services let other computers open your shared folders over the network.",
-    "coming": "Coming in v0.1",
-    "explain": "SMB and SFTP are not available yet. They will be switched on here once they are finished.",
-    "smb": "SMB: network drives for Windows, macOS and Linux.",
-    "sftp": "SFTP: encrypted file transfer over SSH."
+    "intro": "File services let other computers open your shared folders over the network. Users sign in with their Pithyx user name and password.",
+    "save": "Save",
+    "rights": "Who may use SMB and SFTP is set per user on the Users page. Which shared folders they offer is set per folder on the Shared folders page. A user who has not signed in on the web since file services arrived must sign in once, so SMB and SFTP learn the password.",
+    "state": {
+      "off": "Off",
+      "running": "Running",
+      "failed": "Not running",
+      "unavailable": "Not installed"
+    },
+    "smb": {
+      "title": "SMB",
+      "explain": "Network drives for Windows, macOS and Linux. Only encrypted, signed connections of current systems (SMB 3) are accepted.",
+      "switch": "Offer shared folders over SMB",
+      "workgroup": "Workgroup",
+      "workgroupHint": "Up to 15 letters, digits, dots, dashes and underscores. Most networks use WORKGROUP.",
+      "windows": "Windows: in File Explorer, enter",
+      "mac": "macOS and Linux: connect to the server",
+      "trash": "Files deleted over SMB go to the shared folder's recycle bin, where Files can restore them.",
+      "versions": "Restore points show as \"Previous versions\" in Windows."
+    },
+    "sftp": {
+      "title": "SFTP",
+      "explain": "Encrypted file transfer over SSH, for example with FileZilla, WinSCP or the sftp command. Users see only their shared folders and get no shell.",
+      "switch": "Offer shared folders over SFTP",
+      "connect": "Connect to",
+      "view": "Switching SFTP off only stops letting Pithyx users in; it does not stop SSH for other accounts."
+    }
   },
   "network": {
     "intro": "How this box is connected to your network.",

@@ -27,11 +27,14 @@ public static class JournalParser
         return arguments;
     }
 
-    public static PendingLogEntry? Parse(string line)
+    public static PendingLogEntry? Parse(string line) => ParseWithIdentifier(line).Entry;
+
+    /// <summary>The entry with its <c>SYSLOG_IDENTIFIER</c>, which tells SMB's audit lines apart (<see cref="FileServices.FileServiceActivity"/>).</summary>
+    public static (PendingLogEntry? Entry, string? Identifier) ParseWithIdentifier(string line)
     {
         if (string.IsNullOrWhiteSpace(line))
         {
-            return null;
+            return (null, null);
         }
         JsonDocument document;
         try
@@ -40,7 +43,7 @@ public static class JournalParser
         }
         catch (JsonException)
         {
-            return null;
+            return (null, null);
         }
         using (document)
         {
@@ -50,7 +53,7 @@ public static class JournalParser
                 || !long.TryParse(realtime, NumberStyles.None, CultureInfo.InvariantCulture, out var micros)
                 || Message(root) is not { } message)
             {
-                return null;
+                return (null, null);
             }
             var data = new Dictionary<string, string>(StringComparer.Ordinal);
             if (Text(root, "_PID") is { } pid)
@@ -61,13 +64,13 @@ public static class JournalParser
             {
                 data["unit"] = unit;
             }
-            return new PendingLogEntry(
+            return (new PendingLogEntry(
                 DateTimeOffset.UnixEpoch.AddTicks(micros * 10),
                 LevelOf(Text(root, "PRIORITY")),
                 SourceOf(root),
                 message.TrimEnd(),
                 Data: data.Count == 0 ? null : data,
-                JournalCursor: Text(root, "__CURSOR"));
+                JournalCursor: Text(root, "__CURSOR")), Text(root, "SYSLOG_IDENTIFIER"));
         }
     }
 

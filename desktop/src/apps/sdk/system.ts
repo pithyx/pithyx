@@ -11,6 +11,8 @@ export type NetworkInterfaceInfo = components['schemas']['NetworkInterfaceInfo']
 export type TimeSettings = components['schemas']['TimeSettings'];
 export type TimeSettingsRequest = components['schemas']['TimeSettingsRequest'];
 export type SystemRegion = components['schemas']['SystemRegion'];
+export type FileServiceSettings = components['schemas']['FileServiceSettings'];
+export type FileServiceSettingsRequest = components['schemas']['FileServiceSettingsRequest'];
 
 /** System settings for administrators, outside the public SDK; the daemon checks the right on every request. */
 interface SystemMethods {
@@ -23,6 +25,14 @@ interface SystemMethods {
   'internal.admin.system.setTime': { params: TimeSettingsRequest; result: TimeSettings };
   'internal.admin.system.region': { params: Record<string, never>; result: SystemRegion };
   'internal.admin.system.setRegion': { params: SystemRegion; result: SystemRegion };
+  'internal.admin.system.fileServices': {
+    params: Record<string, never>;
+    result: FileServiceSettings;
+  };
+  'internal.admin.system.setFileServices': {
+    params: FileServiceSettingsRequest;
+    result: FileServiceSettings;
+  };
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -92,6 +102,26 @@ export function systemHost(queryClient: QueryClient): HostExtensions {
           await applySystemRegion(saved);
           return saved;
         }),
+    },
+    'internal.admin.system.fileServices': {
+      validate: isRecord,
+      handle: () => daemon(async () => unwrap(await api.GET('/api/file-services'))),
+    },
+    'internal.admin.system.setFileServices': {
+      validate: (value) =>
+        isRecord(value) &&
+        [value.smbEnabled, value.sftpEnabled].every(
+          (flag) => flag === undefined || flag === null || typeof flag === 'boolean',
+        ) &&
+        (value.workgroup === undefined ||
+          value.workgroup === null ||
+          typeof value.workgroup === 'string'),
+      handle: (params) =>
+        daemon(async () =>
+          unwrap(
+            await api.PUT('/api/file-services', { body: params as FileServiceSettingsRequest }),
+          ),
+        ),
     },
   };
 }

@@ -102,6 +102,14 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string DesktopNoteTooLong = "desktop.note.too_long";
 
+    /// <summary>A file service cannot be switched on because its program is not installed; <c>params.service</c> is <c>smb</c> or <c>sftp</c>.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string FileServicesServiceUnavailable = "fileservices.service.unavailable";
+
+    /// <summary>The SMB workgroup is empty, too long or has other characters than letters, digits, dots, dashes and underscores; <c>params.max</c> is the longest allowed.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string FileServicesWorkgroupInvalid = "fileservices.workgroup.invalid";
+
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string FsCursorInvalid = "fs.cursor.invalid";
 
@@ -170,7 +178,7 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string FsShareNameMismatch = "fs.share.name_mismatch";
 
-    /// <summary>The dataset name would take a place Pithyx uses itself (<c>homes</c>); <c>params.name</c> is the dataset name.</summary>
+    /// <summary>The name would take a place Pithyx uses itself (the dataset <c>homes</c>, or a section name of Samba such as <c>global</c> or <c>printers</c>); <c>params.name</c> is the dataset name.</summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string FsShareNameReserved = "fs.share.name_reserved";
 

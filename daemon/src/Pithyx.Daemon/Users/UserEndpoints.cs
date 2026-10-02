@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Threading.Channels;
 using Dapper;
 using Pithyx.Daemon.Database;
+using Pithyx.Daemon.FileServices;
 using Pithyx.Daemon.Realtime;
 using Pithyx.Daemon.Shares;
 using Pithyx.Daemon.Storage;
@@ -30,7 +31,7 @@ public static class UserEndpoints
         users.MapPost("", async (NewUser request, UserService service, HttpContext context, CancellationToken cancellationToken) =>
                 TypedResults.Created((string?)null, await service.CreateAsync(context.User, request, cancellationToken)))
             .WithName("CreateUser")
-            .WithDescription("Administrators only. Creates a user with a Linux account (a uid from 20000 to 29999 that is never given out again, the group users, no login shell) and a home dataset below the first pool's homes when there is a pool.");
+            .WithDescription("Administrators only. Creates a user with a Linux and a Samba account with the password (a uid from 20000 to 29999 that is never given out again, the group users, no login shell) and a home dataset below the first pool's homes when there is a pool.");
         users.MapPatch("/{userId:long}", async (long userId, UserUpdate request, UserService service, TopicHub hub, HttpContext context, CancellationToken cancellationToken) =>
             {
                 var user = await service.UpdateAsync(context.User, userId, request, cancellationToken);
@@ -41,7 +42,7 @@ public static class UserEndpoints
                 return TypedResults.Ok(user);
             })
             .WithName("UpdateUser")
-            .WithDescription("Administrators only. Changes the display name, the administrator right or whether the user is deactivated. Deactivating ends the user's sessions and expires the Linux account. The last active administrator keeps the right and stays active, and nobody deactivates themselves.");
+            .WithDescription("Administrators only. Changes the display name, the administrator right, the SMB and SFTP rights or whether the user is deactivated. Deactivating ends the user's sessions and expires the Linux account. The last active administrator keeps the right and stays active, and nobody deactivates themselves.");
         users.MapPut("/{userId:long}/password", async (long userId, PasswordReset request, UserService service, TopicHub hub, HttpContext context, CancellationToken cancellationToken) =>
             {
                 await service.ResetPasswordAsync(context.User, userId, request, cancellationToken);
@@ -49,7 +50,7 @@ public static class UserEndpoints
                 return TypedResults.NoContent();
             })
             .WithName("ResetUserPassword")
-            .WithDescription("Administrators only. Sets a new password and ends every session of the user.");
+            .WithDescription("Administrators only. Sets a new password, for SMB and SFTP as well, and ends every session of the user.");
         users.MapDelete("/{userId:long}", async (long userId, UserService service, TopicHub hub, HttpContext context, CancellationToken cancellationToken) =>
             {
                 await service.DeleteAsync(context.User, userId, cancellationToken);
@@ -64,13 +65,16 @@ public static class UserEndpoints
 /// <summary>
 /// Brings the Linux accounts in line at start and whenever the pools change, and gives every user a home dataset once
 /// the first pool with the Pithyx layout is there. The ACLs of the shared folders follow at start, when the pools
-/// change and whenever the shares, their rights or the users change (<see cref="ShareAcls"/>). Real mode only.
+/// change and whenever the shares, their rights or the users change (<see cref="ShareAcls"/>), and SMB and SFTP after
+/// them (<see cref="FileServiceSync"/>), also when their settings change. Real mode only.
 /// </summary>
 public sealed partial class LinuxAccountSync(
     LinuxAccounts accounts,
     ShareAcls shareAcls,
+    FileServiceSync fileServices,
     PoolInventory pools,
     ShareChanges shareChanges,
+    FileServiceChanges fileServiceChanges,
     SqliteConnectionFactory connections,
     ILogger<LinuxAccountSync> logger) : BackgroundService
 {
@@ -88,6 +92,8 @@ public sealed partial class LinuxAccountSync(
         void SharesChanged(long revision) => Signal();
         pools.Changed += Signal;
         shareChanges.Changed += SharesChanged;
+        fileServiceChanges.Changed += Signal;
+        var first = true;
         try
         {
             Signal();
@@ -104,6 +110,9 @@ public sealed partial class LinuxAccountSync(
                     }
                     await accounts.ReconcileAsync(stoppingToken);
                     await shareAcls.ReconcileAsync(stoppingToken);
+                    // The first run checks every file and service, whatever changed while the daemon was not running.
+                    await fileServices.ReconcileAsync(force: first, stoppingToken);
+                    first = false;
                 }
                 catch (Exception exception) when (exception is not OperationCanceledException)
                 {
@@ -120,6 +129,7 @@ public sealed partial class LinuxAccountSync(
         {
             pools.Changed -= Signal;
             shareChanges.Changed -= SharesChanged;
+            fileServiceChanges.Changed -= Signal;
         }
     }
 

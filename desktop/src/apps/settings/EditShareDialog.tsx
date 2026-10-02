@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ErrorNotice } from '../../errors/ErrorNotice';
 import { Button } from '../../ui/Button';
+import { Switch } from '../../ui/Controls';
 import { Dialog } from '../../ui/Dialog';
 import { TextField } from '../../ui/TextField';
 import {
@@ -14,7 +15,7 @@ import {
 } from '../sdk/internal';
 import { describeProblem } from '../storage/shared';
 import styles from './Settings.module.css';
-import { shareAccessKey, shareListKey, useShareAccess, withAccess } from './shares';
+import { shareAccessKey, shareListKey, useShareAccess, useShares, withAccess } from './shares';
 
 const LEVELS: readonly ShareAccess[] = ['none', 'read', 'readWrite'];
 
@@ -102,6 +103,7 @@ export function EditShareDialog({
           </div>
           {save.isError && <ErrorNotice error={describeProblem(save.error)} />}
         </form>
+        {share.dataset !== null && <ShareProtocols app={app} share={share} />}
         <ShareRights app={app} shareId={share.id} />
       </div>
     </Dialog>
@@ -186,6 +188,53 @@ function ShareRights({ app, shareId }: { app: PithyxApp; shareId: number }) {
           })}
         </ul>
       )}
+    </section>
+  );
+}
+
+type ProtocolFlag = 'smb' | 'sftp' | 'smbEncrypt';
+
+/** Whether SMB and SFTP offer the shared folder, and whether SMB must encrypt; applied at once, optimistically. */
+function ShareProtocols({ app, share }: { app: PithyxApp; share: ShareDetails }) {
+  const { t } = useTranslation('settings');
+  const queryClient = useQueryClient();
+  const change = useMutation({
+    mutationFn: ({ flag, value }: { flag: ProtocolFlag; value: boolean }) =>
+      internalCall(app, 'internal.admin.shares.update', { shareId: share.id, [flag]: value }),
+    onMutate: ({ flag, value }) => {
+      queryClient.setQueryData<ShareDetails[]>(shareListKey, (list) =>
+        list?.map((entry) => (entry.id === share.id ? { ...entry, [flag]: value } : entry)),
+      );
+    },
+    onSettled: () => {
+      void queryClient.invalidateQueries({ queryKey: shareListKey });
+    },
+  });
+  // The list query, so the switches follow the optimistic change.
+  const current = useShares(app).data?.find((entry) => entry.id === share.id) ?? share;
+  const flag = (name: ProtocolFlag, label: string) => (
+    <Switch
+      isSelected={current[name]}
+      isDisabled={name === 'smbEncrypt' && !current.smb}
+      onChange={(value) => {
+        change.mutate({ flag: name, value });
+      }}
+    >
+      {label}
+    </Switch>
+  );
+
+  return (
+    <section className={styles.group} aria-labelledby={`protocols-${String(share.id)}`}>
+      <h3 id={`protocols-${String(share.id)}`} className={styles.sectionTitle}>
+        {t('shares.editDialog.protocols')}
+      </h3>
+      <p className={styles.muted}>{t('shares.editDialog.protocolsIntro')}</p>
+      {flag('smb', t('shares.editDialog.smb'))}
+      {flag('smbEncrypt', t('shares.editDialog.smbEncrypt'))}
+      <p className={styles.muted}>{t('shares.editDialog.smbEncryptHint')}</p>
+      {flag('sftp', t('shares.editDialog.sftp'))}
+      {change.isError && <ErrorNotice error={describeProblem(change.error)} />}
     </section>
   );
 }

@@ -31,10 +31,10 @@ public static class ShareEndpoints
             .WithDescription("Administrators only, and only on a development machine (fs.share.folder_dev_only elsewhere). Registers an existing folder on the host as a share; nobody but administrators has access until it is granted. Shared folders are otherwise created as datasets with POST /api/shares/plans.");
         shares.MapGet("/details", DetailsAsync)
             .WithName("ListShareDetails")
-            .WithDescription("Administrators only. Every share with its description, dataset, used and available space, quota and how many users may read or write.");
+            .WithDescription("Administrators only. Every share with its description, dataset, used and available space, quota, how many users may read or write and its SMB and SFTP settings.");
         shares.MapPatch("/{shareId:long}", UpdateAsync)
             .WithName("UpdateShare")
-            .WithDescription("Administrators only. Changes the name shown and the description; the folder and the dataset stay where they are.");
+            .WithDescription("Administrators only. Changes the name shown, the description and whether SMB and SFTP offer the share (and whether SMB clients must encrypt); the folder and the dataset stay where they are.");
         shares.MapGet("/{shareId:long}/access", AccessAsync)
             .WithName("ListShareAccess")
             .WithDescription("Administrators only. Every user with their access to the share: none, read or readWrite. Administrators use every share anyway.");

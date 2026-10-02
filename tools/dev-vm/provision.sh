@@ -171,10 +171,10 @@ install_packages() {
     *) die "unsupported architecture $arch" ;;
   esac
   echo 'zfs-dkms zfs-dkms/note-incompatible-licenses note true' | debconf-set-selections
-  # The font and libraries after git are for headless Chromium (Playwright); without any font, text renders invisible.
+  # smbclient and sshpass are for the SMB and SFTP integration test. The font and libraries after git are for headless Chromium (Playwright); without any font, text renders invisible.
   apt_install "linux-headers-$(uname -r)" "linux-headers-$arch" dkms zfs-dkms zfsutils-linux \
-    mdadm btrfs-progs smartmontools samba nfs-kernel-server docker.io acl "${qemu[@]}" \
-    shellcheck git \
+    mdadm btrfs-progs smartmontools samba nfs-kernel-server docker.io acl openssh-server "${qemu[@]}" \
+    smbclient sshpass shellcheck git \
     fonts-dejavu-core libgbm1 libxkbcommon0 libatk1.0-0t64 libatk-bridge2.0-0t64 libatspi2.0-0t64 \
     libxcomposite1 libxdamage1 libxfixes3 libxrandr2
   apt_install "$DOTNET_SDK_PACKAGE" "$NODEJS_PACKAGE"

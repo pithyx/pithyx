@@ -46,20 +46,39 @@ public static class AuthEndpoints
     }
 
     private static async Task<Ok<SetupResponse>> SetupAsync(
-        SetupRequest request, AuthService auth, SessionService sessions, Users.LinuxAccounts accounts, HttpContext context, IHostEnvironment environment, CancellationToken cancellationToken)
+        SetupRequest request,
+        AuthService auth,
+        SessionService sessions,
+        Users.LinuxAccounts accounts,
+        FileServices.FileServicePasswords passwords,
+        FileServices.FileServiceChanges fileServices,
+        HttpContext context,
+        IHostEnvironment environment,
+        CancellationToken cancellationToken)
     {
         var (user, recoveryKey) = await auth.SetupAsync(request, cancellationToken);
         // The administrator's Linux account; a refusal (a system account with the name) is logged, setup goes on.
         await accounts.ReconcileAsync(cancellationToken);
+        await passwords.SetAsync(user.Username, request.Password, cancellationToken);
+        fileServices.Announce();
         await StartSessionAsync(context, sessions, environment, user.Id, cancellationToken);
         return TypedResults.Ok(new SetupResponse(user, recoveryKey));
     }
 
     private static async Task<Ok<LoginResponse>> LoginAsync(
-        LoginRequest request, AuthService auth, SessionService sessions, LoginRateLimiter limiter, HttpContext context, IHostEnvironment environment, CancellationToken cancellationToken)
+        LoginRequest request,
+        AuthService auth,
+        SessionService sessions,
+        LoginRateLimiter limiter,
+        FileServices.FileServicePasswords passwords,
+        HttpContext context,
+        IHostEnvironment environment,
+        CancellationToken cancellationToken)
     {
         limiter.EnsureAllowed(context, request.Username);
         var outcome = await CountFailuresAsync(limiter, context, request.Username, () => auth.LoginAsync(request, Address(context), cancellationToken));
+        // The password is right: SMB and SFTP learn it if they do not know it yet (users from before them, a lost passdb).
+        passwords.SetIfMissing(CredentialRules.NormalizeUsername(request.Username), request.Password);
         if (outcome.User is null)
         {
             return TypedResults.Ok(new LoginResponse(null, TotpRequired: true, outcome.Challenge));
@@ -79,10 +98,17 @@ public static class AuthEndpoints
     }
 
     private static async Task<Ok<RecoverResponse>> RecoverAsync(
-        RecoverRequest request, AuthService auth, LoginRateLimiter limiter, TopicHub hub, HttpContext context, CancellationToken cancellationToken)
+        RecoverRequest request,
+        AuthService auth,
+        LoginRateLimiter limiter,
+        TopicHub hub,
+        FileServices.FileServicePasswords passwords,
+        HttpContext context,
+        CancellationToken cancellationToken)
     {
         limiter.EnsureAllowed(context, request.Username);
         var (userId, recoveryKey) = await CountFailuresAsync(limiter, context, request.Username, () => auth.RecoverAsync(request, cancellationToken));
+        await passwords.SetAsync(CredentialRules.NormalizeUsername(request.Username), request.NewPassword, cancellationToken);
         hub.CloseUser(userId.ToString(System.Globalization.CultureInfo.InvariantCulture));
         return TypedResults.Ok(new RecoverResponse(recoveryKey));
     }

@@ -14,7 +14,12 @@ namespace Pithyx.Daemon.Users;
 /// <c>shares.acl</c>, so a share whose rights did not change is not walked again, not even after a restart. Real mode
 /// only.
 /// </summary>
-public sealed partial class ShareAcls(SqliteConnectionFactory connections, ICommandRunner commands, AccountOptions options, ILogger<ShareAcls> logger) : IDisposable
+public sealed partial class ShareAcls(
+    SqliteConnectionFactory connections,
+    ICommandRunner commands,
+    AccountOptions options,
+    ILogger<ShareAcls> logger,
+    FileServices.SmbRecycle? recycle = null) : IDisposable
 {
     /// <summary>A large share takes a while; the walk is never cut short by the default command timeout.</summary>
     public static readonly TimeSpan WalkTimeout = TimeSpan.FromHours(2);
@@ -79,6 +84,8 @@ public sealed partial class ShareAcls(SqliteConnectionFactory connections, IComm
                 }
                 if (await ApplyAsync(path, entries, cancellationToken))
                 {
+                    // The walk gave the recycle bin the share's ACL; it gets its own modes back (SmbRecycle).
+                    PrepareBin(path);
                     await using var connection = await connections.OpenAsync(cancellationToken);
                     await connection.ExecuteAsync("UPDATE shares SET acl = @entries WHERE id = @shareId", new { entries, shareId });
                     LogApplied(shareId, path);
@@ -100,6 +107,18 @@ public sealed partial class ShareAcls(SqliteConnectionFactory connections, IComm
         }
     }
 
+    private void PrepareBin(string path)
+    {
+        try
+        {
+            recycle?.Prepare(path);
+        }
+        catch (Exception exception) when (exception is Files.FsError or IOException or UnauthorizedAccessException)
+        {
+            LogBinFailed(exception, path);
+        }
+    }
+
     private async Task<bool> ApplyAsync(string path, string entries, CancellationToken cancellationToken)
     {
         foreach (var command in Commands(path, entries))
@@ -117,6 +136,9 @@ public sealed partial class ShareAcls(SqliteConnectionFactory connections, IComm
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Share {ShareId} at {Path}: setting the ACL failed")]
     private partial void LogFailed(long shareId, string path);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Giving the recycle bin of {Path} its modes back failed")]
+    private partial void LogBinFailed(Exception exception, string path);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Setting the ACLs of the shared folders failed")]
     private partial void LogError(Exception exception);

@@ -30,6 +30,8 @@ export const errorCodes = [
   'desktop.layout.invalid',
   'desktop.layout.too_large',
   'desktop.note.too_long',
+  'fileservices.service.unavailable',
+  'fileservices.workgroup.invalid',
   'fs.cursor.invalid',
   'fs.entry.access_denied',
   'fs.entry.exists',

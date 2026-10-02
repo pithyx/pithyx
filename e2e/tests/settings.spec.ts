@@ -40,9 +40,6 @@ test('Settings opens as an overview of categories with a search', async ({ page 
   ]) {
     await expect(settings.getByRole('button', { name: new RegExp(`^${tile}`) })).toBeVisible();
   }
-  await expect(settings.getByRole('button', { name: /^File services/ })).toContainText(
-    'Coming in v0.1',
-  );
   // Personal settings live in the account menu.
   await expect(settings.getByRole('button', { name: /Personalization|Appearance/ })).toHaveCount(0);
   expect(await violations(page)).toEqual([]);
@@ -81,7 +78,18 @@ test('the Info Center, Network, File services and Users pages open from their ti
   await settings.getByRole('button', { name: 'All settings' }).click();
 
   await settings.getByRole('button', { name: /^File services/ }).click();
-  await expect(settings).toContainText('SMB and SFTP are not available yet.');
+  await expect(settings.getByRole('heading', { name: 'File services', level: 2 })).toBeVisible();
+  await expect(
+    settings.getByRole('switch', { name: 'Offer shared folders over SMB' }),
+  ).toBeChecked();
+  const sftp = settings.getByRole('switch', { name: 'Offer shared folders over SFTP' });
+  await expect(sftp).not.toBeChecked();
+  await settings.getByText('Offer shared folders over SFTP').click();
+  await expect(sftp).toBeChecked();
+  await settings.getByLabel('Workgroup').fill('home-lab');
+  await settings.getByRole('button', { name: 'Save' }).click();
+  await expect(settings.getByLabel('Workgroup')).toHaveValue('HOME-LAB');
+  expect(await violations(page)).toEqual([]);
   await settings.getByRole('button', { name: 'All settings' }).click();
 
   await settings.getByRole('button', { name: /^Users/ }).click();

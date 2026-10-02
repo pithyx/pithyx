@@ -72,6 +72,14 @@
       "too_long": "The note is too long. A note holds at most {maxLength} characters."
     }
   },
+  "fileservices": {
+    "service": {
+      "unavailable": "{service, select, smb {SMB} sftp {SFTP} other {This service}} cannot be switched on: its program is not installed on this system."
+    },
+    "workgroup": {
+      "invalid": "Enter a workgroup of 1 to {max} letters, digits, dots, dashes or underscores, starting with a letter or digit."
+    }
+  },
   "fs": {
     "cursor": {
       "invalid": "The list position is no longer valid. Load the folder again."

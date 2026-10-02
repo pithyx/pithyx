@@ -94,7 +94,13 @@
         "none": "Kein Zugriff",
         "read": "Lesen",
         "readWrite": "Lesen und schreiben"
-      }
+      },
+      "protocols": "Netzwerkzugriff",
+      "protocolsIntro": "Benutzer erreichen diesen Ordner über die Protokolle, die ihnen auf der Seite Benutzer erlaubt sind.",
+      "smb": "Über SMB anbieten",
+      "sftp": "Über SFTP zeigen",
+      "smbEncrypt": "Verschlüsselung über SMB verlangen",
+      "smbEncryptHint": "Ältere Clients ohne SMB-Verschlüsselung können sich dann nicht verbinden."
     },
     "deleteDialog": {
       "title": "{name} löschen",
@@ -117,8 +123,7 @@
     "search": "Einstellungen durchsuchen",
     "noMatch": "Keine Einstellung passt zu deiner Suche.",
     "all": "Alle Einstellungen",
-    "navigation": "Navigation der Einstellungen",
-    "coming": "Kommt mit v0.1"
+    "navigation": "Navigation der Einstellungen"
   },
   "categories": {
     "system": "System",
@@ -172,11 +177,33 @@
     "uptimeValue": "{days, plural, =0 {} one {# Tag, } other {# Tagen, }}{hours, plural, one {# Stunde} other {# Stunden}}, {minutes, plural, one {# Minute} other {# Minuten}}"
   },
   "fileServices": {
-    "intro": "Mit Dateidiensten öffnen andere Computer deine freigegebenen Ordner über das Netzwerk.",
-    "coming": "Kommt mit v0.1",
-    "explain": "SMB und SFTP gibt es noch nicht. Sobald sie fertig sind, schaltest du sie hier ein.",
-    "smb": "SMB: Netzlaufwerke für Windows, macOS und Linux.",
-    "sftp": "SFTP: verschlüsselte Dateiübertragung über SSH."
+    "intro": "Mit Dateidiensten öffnen andere Computer deine freigegebenen Ordner über das Netzwerk. Benutzer melden sich mit ihrem Pithyx-Benutzernamen und Passwort an.",
+    "save": "Speichern",
+    "rights": "Wer SMB und SFTP nutzen darf, legst du pro Benutzer auf der Seite Benutzer fest. Welche freigegebenen Ordner sie anbieten, legst du pro Ordner auf der Seite Freigegebene Ordner fest. Wer sich seit der Einführung der Dateidienste nicht im Web angemeldet hat, muss das einmal tun, damit SMB und SFTP das Passwort kennen.",
+    "state": {
+      "off": "Aus",
+      "running": "Läuft",
+      "failed": "Läuft nicht",
+      "unavailable": "Nicht installiert"
+    },
+    "smb": {
+      "title": "SMB",
+      "explain": "Netzlaufwerke für Windows, macOS und Linux. Angenommen werden nur verschlüsselte, signierte Verbindungen aktueller Systeme (SMB 3).",
+      "switch": "Freigegebene Ordner über SMB anbieten",
+      "workgroup": "Arbeitsgruppe",
+      "workgroupHint": "Bis zu 15 Buchstaben, Ziffern, Punkte, Bindestriche und Unterstriche. Die meisten Netzwerke nutzen WORKGROUP.",
+      "windows": "Windows: gib im Datei-Explorer ein",
+      "mac": "macOS und Linux: verbinde dich mit dem Server",
+      "trash": "Über SMB gelöschte Dateien landen im Papierkorb des freigegebenen Ordners, wo Dateien sie wiederherstellt.",
+      "versions": "Wiederherstellungspunkte erscheinen in Windows als „Vorgängerversionen“."
+    },
+    "sftp": {
+      "title": "SFTP",
+      "explain": "Verschlüsselte Dateiübertragung über SSH, zum Beispiel mit FileZilla, WinSCP oder dem Befehl sftp. Benutzer sehen nur ihre freigegebenen Ordner und bekommen keine Shell.",
+      "switch": "Freigegebene Ordner über SFTP anbieten",
+      "connect": "Verbinde dich mit",
+      "view": "SFTP ausschalten lässt nur keine Pithyx-Benutzer mehr herein; SSH für andere Konten läuft weiter."
+    }
   },
   "network": {
     "intro": "Wie diese Box mit deinem Netzwerk verbunden ist.",

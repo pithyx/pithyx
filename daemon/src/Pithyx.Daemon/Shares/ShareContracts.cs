@@ -38,6 +38,9 @@ public sealed record ResolvedShare(long Id, string Name, string Path, ShareAcces
 /// <param name="ReadUsers">Users other than administrators who may read.</param>
 /// <param name="ReadWriteUsers">Users other than administrators who may read and write.</param>
 /// <param name="RestorePoints">Whether daily restore points (snapshots kept 7 days) are on; null for a folder share.</param>
+/// <param name="Smb">Whether SMB offers the shared folder (dataset shares only).</param>
+/// <param name="Sftp">Whether SFTP shows the shared folder (dataset shares only).</param>
+/// <param name="SmbEncrypt">Whether SMB clients must encrypt.</param>
 public sealed record ShareDetails(
     long Id,
     string Name,
@@ -50,7 +53,10 @@ public sealed record ShareDetails(
     long? QuotaBytes,
     int ReadUsers,
     int ReadWriteUsers,
-    bool? RestorePoints);
+    bool? RestorePoints,
+    bool Smb,
+    bool Sftp,
+    bool SmbEncrypt);
 
 /// <param name="Enabled">Daily restore points, kept 7 days, on or off.</param>
 public sealed record RestorePointsRequest(bool Enabled);
@@ -66,7 +72,10 @@ public sealed record ShareUserAccess(long UserId, string Username, string? Displ
 /// <summary>Changes of a share; fields left out stay. The dataset is never renamed by this.</summary>
 /// <param name="Name">New name shown to users, unique like every share name.</param>
 /// <param name="Description">New description, at most 200 characters, empty to remove it.</param>
-public sealed record ShareUpdate(string? Name = null, string? Description = null);
+/// <param name="Smb">Offers the shared folder over SMB or stops it.</param>
+/// <param name="Sftp">Shows the shared folder over SFTP or hides it.</param>
+/// <param name="SmbEncrypt">Requires SMB clients to encrypt, or lets them choose.</param>
+public sealed record ShareUpdate(string? Name = null, string? Description = null, bool? Smb = null, bool? Sftp = null, bool? SmbEncrypt = null);
 
 public enum ShareDataChoice
 {

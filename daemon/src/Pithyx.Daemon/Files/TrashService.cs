@@ -101,7 +101,7 @@ public sealed class TrashService(SqliteConnectionFactory connections, ShareServi
     }
 
     /// <summary>Records an item that is about to move into the bin and returns the name it gets there.</summary>
-    internal long Reserve(long shareId, string originalPath, FsKind kind, long size, long userId)
+    internal long Reserve(long shareId, string originalPath, FsKind kind, long size, long? userId)
     {
         using var connection = connections.Open();
         return connection.ExecuteScalar<long>(

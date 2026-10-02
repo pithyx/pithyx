@@ -4,6 +4,7 @@ using Dapper;
 using Pithyx.Daemon.Auth;
 using Pithyx.Daemon.Database;
 using Pithyx.Daemon.Errors;
+using Pithyx.Daemon.FileServices;
 using Pithyx.Daemon.Jobs;
 using Pithyx.Daemon.Notifications;
 using Pithyx.Daemon.Shares;
@@ -25,6 +26,8 @@ public sealed class UserService(
     NotificationStore notifications,
     JobService jobs,
     ShareChanges shareChanges,
+    FileServicePasswords passwords,
+    FileServiceChanges fileServiceChanges,
     TimeProvider time)
 {
     public async Task<IReadOnlyList<UserSummary>> ListAsync(ClaimsPrincipal caller, CancellationToken cancellationToken)
@@ -32,7 +35,8 @@ public sealed class UserService(
         RequireAdmin(caller);
         await using var connection = await connections.OpenAsync(cancellationToken);
         var rows = await connection.QueryAsync<Row>(Select + " ORDER BY username");
-        return [.. rows.Select(ToSummary)];
+        var linux = passwords.LinuxWithPassword();
+        return [.. rows.Select(row => ToSummary(row, linux))];
     }
 
     public async Task<UserSummary> CreateAsync(ClaimsPrincipal caller, NewUser request, CancellationToken cancellationToken)
@@ -60,8 +64,11 @@ public sealed class UserService(
             }
             uid = await UidAllocator.AllocateUserAsync(connection, transaction, username, now);
             id = await connection.ExecuteScalarAsync<long>(
-                "INSERT INTO users (id, username, display_name, password_hash, is_admin, uid, created_at, updated_at) VALUES (@uid, @username, @displayName, @hash, @admin, @uid, @now, @now) RETURNING id",
-                new { username, displayName, hash, admin = request.IsAdmin ? 1 : 0, uid, now },
+                """
+                INSERT INTO users (id, username, display_name, password_hash, is_admin, uid, smb, sftp, created_at, updated_at)
+                VALUES (@uid, @username, @displayName, @hash, @admin, @uid, @smb, @sftp, @now, @now) RETURNING id
+                """,
+                new { username, displayName, hash, admin = request.IsAdmin ? 1 : 0, uid, smb = request.Smb ? 1 : 0, sftp = request.Sftp ? 1 : 0, now },
                 transaction);
             await transaction.CommitAsync(cancellationToken);
         }
@@ -74,11 +81,14 @@ public sealed class UserService(
             await connection.ExecuteAsync("DELETE FROM users WHERE id = @id", new { id });
             throw new PithyxException(ErrorCodes.UsersAccountRefused, new Dictionary<string, object?> { ["username"] = username, ["reason"] = reason });
         }
+        // SMB and SFTP check the Linux and Samba accounts, which get the password now that the account exists.
+        await passwords.SetAsync(username, request.Password, cancellationToken);
         if (request.IsAdmin)
         {
             // Administrators reach every shared folder: their ACLs follow.
             shareChanges.Announce();
         }
+        fileServiceChanges.Announce();
         return (await FindAsync(id, cancellationToken))! with { Home = home ?? HomeOrNull(username) };
     }
 
@@ -103,13 +113,15 @@ public sealed class UserService(
             var displayName = request.DisplayName is null ? user.DisplayName : CredentialRules.NormalizeDisplayName(request.DisplayName);
             var admin = request.IsAdmin ?? user.IsAdmin;
             var disabled = request.Disabled ?? user.Disabled;
+            var smb = request.Smb ?? user.Smb;
+            var sftp = request.Sftp ?? user.Sftp;
             await connection.ExecuteAsync(
                 """
-                UPDATE users SET display_name = @displayName, is_admin = @admin,
+                UPDATE users SET display_name = @displayName, is_admin = @admin, smb = @smb, sftp = @sftp,
                     disabled_at = CASE WHEN @disabled THEN coalesce(disabled_at, @now) END, updated_at = @now
                 WHERE id = @id
                 """,
-                new { id, displayName, admin = admin ? 1 : 0, disabled, now = time.GetUtcNow().ToString("O", CultureInfo.InvariantCulture) },
+                new { id, displayName, admin = admin ? 1 : 0, smb = smb ? 1 : 0, sftp = sftp ? 1 : 0, disabled, now = time.GetUtcNow().ToString("O", CultureInfo.InvariantCulture) },
                 transaction);
             if (disabling)
             {
@@ -122,6 +134,7 @@ public sealed class UserService(
         {
             shareChanges.Announce();
         }
+        fileServiceChanges.Announce();
         return (await FindAsync(id, cancellationToken))!;
     }
 
@@ -131,7 +144,7 @@ public sealed class UserService(
         RequireAdmin(caller);
         ArgumentNullException.ThrowIfNull(request);
         CredentialRules.ValidateNewPassword(request.Password);
-        _ = await FindAsync(id, cancellationToken) ?? throw NotFound();
+        var user = await FindAsync(id, cancellationToken) ?? throw NotFound();
         var hash = await hasher.HashAsync(request.Password, cancellationToken);
         await using var connection = await connections.OpenAsync(cancellationToken);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
@@ -141,6 +154,7 @@ public sealed class UserService(
             transaction);
         await connection.ExecuteAsync("DELETE FROM sessions WHERE user_id = @id", new { id }, transaction);
         await transaction.CommitAsync(cancellationToken);
+        await passwords.SetAsync(user.Username, request.Password, cancellationToken);
     }
 
     /// <summary>
@@ -170,6 +184,7 @@ public sealed class UserService(
         notifications.Forget(id);
         await accounts.ReconcileAsync(cancellationToken);
         shareChanges.Announce();
+        fileServiceChanges.Announce();
     }
 
     /// <summary>Administrators who can still sign in.</summary>
@@ -180,12 +195,12 @@ public sealed class UserService(
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
         var row = await connection.QuerySingleOrDefaultAsync<Row>(Select + " WHERE id = @id", new { id });
-        return row is null ? null : ToSummary(row);
+        return row is null ? null : ToSummary(row, passwords.LinuxWithPassword());
     }
 
     private string? HomeOrNull(string username) => accounts.HomeOf(username) is var home && home != AccountReconciler.NoHome ? home : null;
 
-    private UserSummary ToSummary(Row row) => new(
+    private UserSummary ToSummary(Row row, IReadOnlySet<string> linuxWithPassword) => new(
         row.Id,
         row.Username,
         row.DisplayName,
@@ -194,7 +209,10 @@ public sealed class UserService(
         row.TotpEnabledAt is not null,
         DateTimeOffset.Parse(row.CreatedAt, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal),
         HomeOrNull(row.Username),
-        row.DisabledAt is not null);
+        row.DisabledAt is not null,
+        row.IsAdmin == 1 || row.Smb == 1,
+        row.IsAdmin == 1 || row.Sftp == 1,
+        passwords.HasPassword(row.Username, linuxWithPassword));
 
     private static PithyxException NotFound() => new(ErrorCodes.UsersUserNotFound);
 
@@ -206,7 +224,7 @@ public sealed class UserService(
         }
     }
 
-    private const string Select = "SELECT id, username, display_name AS displayName, is_admin AS isAdmin, uid, totp_enabled_at AS totpEnabledAt, created_at AS createdAt, disabled_at AS disabledAt FROM users";
+    private const string Select = "SELECT id, username, display_name AS displayName, is_admin AS isAdmin, uid, totp_enabled_at AS totpEnabledAt, created_at AS createdAt, disabled_at AS disabledAt, smb, sftp FROM users";
 
-    private sealed record Row(long Id, string Username, string? DisplayName, long IsAdmin, long? Uid, string? TotpEnabledAt, string CreatedAt, string? DisabledAt);
+    private sealed record Row(long Id, string Username, string? DisplayName, long IsAdmin, long? Uid, string? TotpEnabledAt, string CreatedAt, string? DisabledAt, long Smb, long Sftp);
 }
