@@ -151,7 +151,24 @@ public sealed partial class JobService
             // Only finished jobs leave memory.
             return;
         }
+        await CancelEntryAsync(entry);
+    }
 
+    /// <summary>
+    /// Cancels every queued or running job of a deleted user and forgets its jobs, so nothing of it stays in memory.
+    /// The database drops the user's job rows with the user.
+    /// </summary>
+    public async Task ForgetUserAsync(long userId)
+    {
+        foreach (var entry in _board.RemoveUser(userId))
+        {
+            await CancelEntryAsync(entry);
+        }
+    }
+
+    private async Task CancelEntryAsync(JobEntry entry)
+    {
+        var jobId = entry.Id;
         bool wasQueued;
         lock (entry.Lock)
         {
