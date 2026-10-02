@@ -8,6 +8,7 @@ using Microsoft.Extensions.Time.Testing;
 using Pithyx.Daemon.Database;
 using Pithyx.Daemon.Notifications;
 using Pithyx.Daemon.Realtime;
+using Pithyx.Daemon.Storage;
 using Pithyx.Daemon.Storage.Health;
 
 namespace Pithyx.Daemon.Tests.Storage.Health;
@@ -70,13 +71,17 @@ public sealed class StorageAlertNotifierTests : IAsyncLifetime
 
     private StorageAlert Critical() => Alert("pool.capacity:tank", StorageAlerts.Critical, "storage.alert.capacityCritical", 95);
 
+    private static PoolList Tank(int percent) => new([new Pool("tank", "1", "ONLINE", 100, percent, 100 - percent, percent, 0, false, 0, null, [])], []);
+
+    private static PoolList NoPools => new([], []);
+
     private IEnumerable<(string Code, NotificationTone Tone)> Codes(long userId) => _store.Of(userId).Reverse().Select(entry => (entry.Code, entry.Tone));
 
     [Fact]
     public async Task ANewAlertNotifiesEveryAdministratorOnceAndNobodyElse()
     {
-        await _notifier.SyncAsync([Warning()], settled: false, Token);
-        await _notifier.SyncAsync([Warning(86)], settled: true, Token);
+        await _notifier.SyncAsync([Warning()], Tank(85), settled: false, Token);
+        await _notifier.SyncAsync([Warning(86)], Tank(86), settled: true, Token);
 
         Assert.Equal([("storage.alert.capacityWarning", NotificationTone.Warning)], Codes(_adminId));
         Assert.Equal([("storage.alert.capacityWarning", NotificationTone.Warning)], Codes(_otherAdminId));
@@ -90,10 +95,10 @@ public sealed class StorageAlertNotifierTests : IAsyncLifetime
     [Fact]
     public async Task AnAlertThatBecomesMoreSevereNotifiesAgainButOneThatCalmsDownDoesNot()
     {
-        await _notifier.SyncAsync([Warning()], settled: true, Token);
-        await _notifier.SyncAsync([Critical()], settled: true, Token);
-        await _notifier.SyncAsync([Warning()], settled: true, Token);
-        await _notifier.SyncAsync([Critical()], settled: true, Token);
+        await _notifier.SyncAsync([Warning()], Tank(85), settled: true, Token);
+        await _notifier.SyncAsync([Critical()], Tank(95), settled: true, Token);
+        await _notifier.SyncAsync([Warning(82)], Tank(82), settled: true, Token);
+        await _notifier.SyncAsync([Critical()], Tank(95), settled: true, Token);
 
         Assert.Equal(
             [
@@ -107,12 +112,12 @@ public sealed class StorageAlertNotifierTests : IAsyncLifetime
     [Fact]
     public async Task AnAlertThatGoesAwayIsResolvedOnlyOnceTheStateIsSettled()
     {
-        await _notifier.SyncAsync([Critical()], settled: true, Token);
+        await _notifier.SyncAsync([Critical()], Tank(95), settled: true, Token);
 
-        await _notifier.SyncAsync([], settled: false, Token);
+        await _notifier.SyncAsync([], Tank(50), settled: false, Token);
         var whileUnsettled = _store.Of(_adminId).Count;
-        await _notifier.SyncAsync([], settled: true, Token);
-        await _notifier.SyncAsync([], settled: true, Token);
+        await _notifier.SyncAsync([], Tank(50), settled: true, Token);
+        await _notifier.SyncAsync([], Tank(50), settled: true, Token);
 
         Assert.Equal(1, whileUnsettled);
         Assert.Equal(
@@ -129,9 +134,9 @@ public sealed class StorageAlertNotifierTests : IAsyncLifetime
     [Fact]
     public async Task AnAlertThatComesBackAfterItWasResolvedNotifiesAgain()
     {
-        await _notifier.SyncAsync([Warning()], settled: true, Token);
-        await _notifier.SyncAsync([], settled: true, Token);
-        await _notifier.SyncAsync([Warning()], settled: true, Token);
+        await _notifier.SyncAsync([Warning()], Tank(85), settled: true, Token);
+        await _notifier.SyncAsync([], Tank(50), settled: true, Token);
+        await _notifier.SyncAsync([Warning()], Tank(85), settled: true, Token);
 
         Assert.Equal(
             ["storage.alert.capacityWarning", StorageAlertNotifier.ResolvedCode, "storage.alert.capacityWarning"],
@@ -145,13 +150,13 @@ public sealed class StorageAlertNotifierTests : IAsyncLifetime
         {
             await connection.ExecuteAsync("UPDATE users SET is_admin = 0");
         }
-        await _notifier.SyncAsync([Warning()], settled: true, Token);
+        await _notifier.SyncAsync([Warning()], Tank(85), settled: true, Token);
         await using (var connection = await _connections.OpenAsync(Token))
         {
             await connection.ExecuteAsync("UPDATE users SET is_admin = 1 WHERE id = @_adminId", new { _adminId });
         }
 
-        await _notifier.SyncAsync([Warning()], settled: true, Token);
+        await _notifier.SyncAsync([Warning()], Tank(85), settled: true, Token);
 
         Assert.Equal([("storage.alert.capacityWarning", NotificationTone.Warning)], Codes(_adminId));
     }
@@ -159,17 +164,53 @@ public sealed class StorageAlertNotifierTests : IAsyncLifetime
     [Fact]
     public async Task AnAlertStillPresentAfterARestartIsNotNotifiedAgain()
     {
-        await _notifier.SyncAsync([Warning()], settled: true, Token);
+        await _notifier.SyncAsync([Warning()], Tank(85), settled: true, Token);
         using var restartedStore = new NotificationStore(_connections);
         var hub = new TopicHub(new TopicRegistry([restartedStore.Definition()]), _time, Options.Create(new JsonOptions()), NullLogger<TopicHub>.Instance);
         using var restartedService = new NotificationService(restartedStore, _connections, hub, _time, Options.Create(new JsonOptions()), NullLogger<NotificationService>.Instance);
         using var restarted = new StorageAlertNotifier(_connections, restartedService, _time, NullLogger<StorageAlertNotifier>.Instance);
 
         // After a restart, pool alerts come before SMART is read, then the settled state.
-        await restarted.SyncAsync([], settled: false, Token);
-        await restarted.SyncAsync([Warning()], settled: true, Token);
+        await restarted.SyncAsync([], Tank(50), settled: false, Token);
+        await restarted.SyncAsync([Warning()], Tank(85), settled: true, Token);
         await restartedStore.LoadAsync(Token);
 
         Assert.Single(restartedStore.Of(_adminId));
+    }
+
+    [Fact]
+    public async Task APoolHoveringAroundTheWarningThresholdNotifiesOnce()
+    {
+        await _notifier.SyncAsync([Warning(80)], Tank(80), settled: true, Token);
+        await _notifier.SyncAsync([], Tank(79), settled: true, Token);
+        await _notifier.SyncAsync([Warning(80)], Tank(80), settled: true, Token);
+        await _notifier.SyncAsync([], Tank(76), settled: true, Token);
+        await _notifier.SyncAsync([Warning(81)], Tank(81), settled: true, Token);
+        await _notifier.SyncAsync([], Tank(74), settled: true, Token);
+
+        Assert.Equal(["storage.alert.capacityWarning", StorageAlertNotifier.ResolvedCode], Codes(_adminId).Select(entry => entry.Code));
+    }
+
+    [Fact]
+    public async Task APoolHoveringAroundTheCriticalThresholdNotifiesOnce()
+    {
+        await _notifier.SyncAsync([Critical()], Tank(95), settled: true, Token);
+        await _notifier.SyncAsync([Warning(88)], Tank(88), settled: true, Token);
+        await _notifier.SyncAsync([Critical()], Tank(95), settled: true, Token);
+        await _notifier.SyncAsync([Warning(84)], Tank(84), settled: true, Token);
+        await _notifier.SyncAsync([Critical()], Tank(95), settled: true, Token);
+
+        Assert.Equal(["storage.alert.capacityCritical", "storage.alert.capacityCritical"], Codes(_adminId).Select(entry => entry.Code));
+    }
+
+    [Fact]
+    public async Task AnAlertOfAPoolThatIsGoneIsDroppedWithoutBeingResolved()
+    {
+        await _notifier.SyncAsync([Critical()], Tank(95), settled: true, Token);
+        await _notifier.SyncAsync([], NoPools, settled: true, Token);
+
+        Assert.Equal(["storage.alert.capacityCritical"], Codes(_adminId).Select(entry => entry.Code));
+        await using var connection = await _connections.OpenAsync(Token);
+        Assert.Equal(0, await connection.ExecuteScalarAsync<long>("SELECT count(*) FROM storage_alert_notices"));
     }
 }

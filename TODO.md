@@ -71,7 +71,7 @@ Thumbnail cache (one PR, replaces D197 in pithyx/pithyx#33):
 - [ ] Users (v0.1): deleting a user must also clear the daemon's in-memory notifications and jobs of that user, and user ids must never be reused (`users.id` has no `AUTOINCREMENT`), or a new user could see a deleted user's notifications until a restart (review of pithyx/pithyx#36).
 - [ ] Design gallery: the Settings sample app (`desktop/src/design/SampleApps.tsx`) still shows a personalization page with a navigation list; show the tile overview instead, and drop the then unused `nav`, `sections` and `personalization` keys of `settings.json`.
 - [ ] Regional settings follow-ups: formats and the time zone per user (a profile next to the language), the system language for messages rendered on the box (SSH MOTD, later email), and the region also inside ICU messages (numbers in translated texts still follow the language).
-- [ ] Storage alert notifications: a pool whose fill level hovers around 80 or 90 percent notifies on every crossing; add a hysteresis, and do not call an exported or destroyed pool's alert "resolved".
+- [x] Storage alert notifications: a pool whose fill level hovers around 80 or 90 percent notifies on every crossing; add a hysteresis, and do not call an exported or destroyed pool's alert "resolved". (5 points below the threshold; an alert of a pool that is gone is dropped silently.)
 
 Owner feedback on 2026-09-30 (the rest is in #56):
 
