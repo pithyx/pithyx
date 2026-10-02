@@ -2,7 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import type { components } from '@pithyx/api-client';
 import { PROTOCOL_VERSION, SDK_VERSION, portEndpoint, type Permission } from '@pithyx/sdk';
 import { serveApp, type AppConnection } from '@pithyx/sdk/host';
-import i18next from 'i18next';
+import { formatLocale } from '../../i18n';
 import { useRef } from 'react';
 import { queryKeys } from '../../api/queries';
 import { useSizeClass } from '../../wm/sizeClass';
@@ -52,7 +52,7 @@ export function SandboxApp({
           name: user?.username ?? '',
           displayName: user?.displayName ?? null,
         },
-        locale: i18next.language,
+        locale: formatLocale(),
         timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         theme: currentTheme(),
         sizeClass,

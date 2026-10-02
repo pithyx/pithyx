@@ -191,14 +191,17 @@ export function ConfirmNameField({
   );
 }
 
-/** Runs a shown plan as a job and follows it until it ends. */
-export function useRunPlan(app: PithyxApp) {
+/** Runs a shown plan as a job and follows it until it ends; `onStarted` gets the job once it was started. */
+export function useRunPlan(app: PithyxApp, onStarted?: (job: Job) => void) {
   const [started, setStarted] = useState<Job | null>(null);
   // Updates by job id: a short job can report its end before the run call returns its id.
   const [updates, setUpdates] = useState<Readonly<Record<number, Job>>>({});
   const run = useMutation({
     mutationFn: (planId: string) => internalCall(app, 'internal.admin.storage.run', { planId }),
-    onSuccess: setStarted,
+    onSuccess: (job) => {
+      setStarted(job);
+      onStarted?.(job);
+    },
   });
   // The desktop forwards the job's topic; this follows the jobs this dialog started.
   useEffect(

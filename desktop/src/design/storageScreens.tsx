@@ -22,9 +22,15 @@ function storage(
   );
 }
 
-function settings(script: ScriptStep[] = []): ScreenDefinition['render'] {
+function settings(page: string | null, script: ScriptStep[] = []): ScreenDefinition['render'] {
   return (context) => (
-    <CoreAppScene context={context} app="settings" Component={SettingsApp} script={script} />
+    <CoreAppScene
+      context={context}
+      app="settings"
+      Component={SettingsApp}
+      launch={page === null ? null : { page }}
+      script={script}
+    />
   );
 }
 
@@ -79,39 +85,12 @@ export const storageScreens: ScreenDefinition[] = [
     render: storage('datasets'),
   },
   {
-    id: 'storage-snapshots',
+    id: 'storage-advanced',
     group: 'storage',
-    title: 'Storage: snapshots',
+    title: 'Storage: advanced',
     description:
-      'Snapshots of a shared folder with schedules and retention, a held snapshot and one Pithyx did not take.',
-    render: storage('snapshots'),
-  },
-  {
-    id: 'storage-snapshot-delete',
-    group: 'storage',
-    title: 'Delete a snapshot',
-    description:
-      'A snapshot Pithyx took is deleted through a plan that shows the exact zfs destroy.',
-    render: storage('snapshots', [
-      { press: 'storage:snapshots.delete', inside: 'pithyx-daily-20260925T000000Z' },
-      { press: 'storage:create.preview' },
-    ]),
-  },
-  {
-    id: 'storage-snapshot-rollback',
-    group: 'storage',
-    title: 'Roll back to a snapshot',
-    description:
-      'Rolling back needs the dataset name typed, warns that changes are lost and lists every newer snapshot that goes.',
-    render: storage('snapshots', [
-      { press: 'storage:snapshots.rollback', inside: 'pithyx-daily-20260925T000000Z' },
-      {
-        fill: 'storage:datasets.rollback.confirm',
-        params: { dataset: 'tank/pithyx/shares/family' },
-        value: 'tank/pithyx/shares/family',
-      },
-      { press: 'storage:create.preview' },
-    ]),
+      'Volumes, exporting and importing a pool and the datasets table, each with a sentence on what it does and when.',
+    render: storage('advanced'),
   },
   {
     id: 'storage-maintenance',
@@ -227,7 +206,7 @@ export const storageScreens: ScreenDefinition[] = [
     title: 'Import a pool: scan',
     description:
       'The scan runs only when asked; an importable mirror with its disks, and a pool that cannot be imported with what ZFS reports.',
-    render: storage('pools', [
+    render: storage('advanced', [
       { press: 'storage:import.button' },
       { press: 'storage:import.scan' },
       { press: 'photos' },
@@ -239,7 +218,7 @@ export const storageScreens: ScreenDefinition[] = [
     title: 'Import a pool: read-only first',
     description:
       'The read-only import with its exact command: nothing is mounted and nothing changes.',
-    render: storage('pools', [
+    render: storage('advanced', [
       { press: 'storage:import.button' },
       { press: 'storage:import.scan' },
       { press: 'photos' },
@@ -274,8 +253,8 @@ export const storageScreens: ScreenDefinition[] = [
     group: 'storage',
     title: 'Export a pool',
     description: 'Exporting lists every dataset that becomes unavailable.',
-    render: storage('pools', [
-      { press: 'storage:change.export.button', inside: 'backup' },
+    render: storage('advanced', [
+      { press: 'storage:advanced.export.button', params: { pool: 'backup' } },
       { press: 'storage:create.preview' },
     ]),
   },
@@ -316,19 +295,58 @@ export const storageScreens: ScreenDefinition[] = [
     }),
   },
   {
+    id: 'settings-overview',
+    group: 'storage',
+    title: 'Settings: overview',
+    description:
+      'System settings as tiles in three categories with a search; personal settings are in the account menu.',
+    render: settings(null),
+  },
+  {
+    id: 'settings-info',
+    group: 'storage',
+    title: 'Settings: Info Center',
+    description: 'Version and commit, operating system, machine, processor, memory and uptime.',
+    render: settings('info'),
+  },
+  {
+    id: 'settings-network',
+    group: 'storage',
+    title: 'Settings: network',
+    description:
+      'Every interface with its addresses, DHCP or static, gateway and name servers; read only until the confirmation timer.',
+    render: settings('network'),
+  },
+  {
+    id: 'settings-regional',
+    group: 'storage',
+    title: 'Settings: regional settings',
+    description:
+      'System language and formats with an example, then the time zone and the time servers.',
+    render: settings('regional'),
+  },
+  {
     id: 'settings-shares',
     group: 'storage',
     title: 'Settings: shared folders',
     description:
-      'Every shared folder with its pool, space or quota, description and rights; Settings points to Storage for everything else.',
-    render: settings(),
+      'Every shared folder with its pool, space or quota, description, rights and the restore point switch.',
+    render: settings('shares'),
+  },
+  {
+    id: 'settings-restore-points',
+    group: 'storage',
+    title: 'What are restore points?',
+    description:
+      'Restore points in plain words: what they cost, when a deleted file frees its space, what they protect against.',
+    render: settings('shares', [{ press: 'settings:restorePoints.explain' }]),
   },
   {
     id: 'settings-share-create',
     group: 'storage',
     title: 'Create a shared folder',
     description: 'Name, pool and description, then the dataset it becomes and the exact command.',
-    render: settings([
+    render: settings('shares', [
       { press: 'settings:shares.create' },
       { fill: 'settings:shares.createDialog.name', value: 'Holiday photos' },
       { fill: 'settings:shares.createDialog.description', value: 'Pictures from every trip' },
@@ -341,7 +359,7 @@ export const storageScreens: ScreenDefinition[] = [
     title: 'Edit a shared folder',
     description:
       'Name and description, and the rights of every user: none, read, or read and write.',
-    render: settings([{ press: 'settings:shares.edit', inside: 'Family' }]),
+    render: settings('shares', [{ press: 'settings:shares.edit', inside: 'Family' }]),
   },
   {
     id: 'settings-share-delete',
@@ -349,7 +367,7 @@ export const storageScreens: ScreenDefinition[] = [
     title: 'Delete a shared folder',
     description:
       'Deleting asks what happens with the data; deleting it for good lists the dataset and every snapshot.',
-    render: settings([
+    render: settings('shares', [
       { press: 'settings:shares.delete', inside: 'Family' },
       { press: 'settings:shares.deleteDialog.destroy' },
       { fill: 'settings:shares.deleteDialog.confirm', params: { name: 'Family' }, value: 'Family' },

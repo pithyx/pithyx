@@ -11,6 +11,7 @@ import { internalCall, type Dataset, type SnapshotScheduleList } from '../sdk/in
 import { DatasetDialog, type DatasetAction } from './DatasetDialog';
 import styles from './Storage.module.css';
 import { describeProblem, storageKey, usePools } from './shared';
+import { useFormatLocale } from '../../i18n';
 
 type Kind = 'hourly' | 'daily' | 'weekly' | 'monthly';
 
@@ -69,7 +70,8 @@ export function SnapshotsSection({ app }: { app: PithyxApp }) {
 }
 
 function DatasetSnapshots({ app, dataset: target }: { app: PithyxApp; dataset: Dataset }) {
-  const { t, i18n } = useTranslation('storage');
+  const { t } = useTranslation('storage');
+  const locale = useFormatLocale();
   const client = useQueryClient();
   const dataset = target.name;
   const [pending, setPending] = useState<DatasetAction | null>(null);
@@ -136,7 +138,7 @@ function DatasetSnapshots({ app, dataset: target }: { app: PithyxApp; dataset: D
                 </td>
                 <td>{app.format.dateTime(snapshot.createdAt)}</td>
                 <td className={`${styles.number} ${styles.optional}`}>
-                  {formatBytes(snapshot.usedBytes, i18n.language)}
+                  {formatBytes(snapshot.usedBytes, locale)}
                 </td>
                 <td>
                   <span className={styles.snapshotActions}>

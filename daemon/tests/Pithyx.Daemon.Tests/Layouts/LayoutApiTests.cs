@@ -328,6 +328,38 @@ public sealed class LayoutApiTests : IDisposable
     }
 
     [Fact]
+    public async Task AccentAndWallpaperFollowTheUserToEveryDevice()
+    {
+        var laptop = await SetupAsync();
+        using (var initial = await SendAsync(HttpMethod.Get, "/api/desktop", laptop))
+        {
+            var appearance = (await initial.JsonAsync()).GetProperty("appearance");
+            Assert.Equal(("petrol", "boxes"), (appearance.GetProperty("accent").GetString(), appearance.GetProperty("wallpaper").GetString()));
+        }
+
+        using var put = await SendAsync(HttpMethod.Put, "/api/desktop/appearance", laptop, new { accent = "moss", wallpaper = "plain" });
+        var phone = await SecondDeviceAsync();
+        using var state = await SendAsync(HttpMethod.Get, "/api/desktop", phone);
+        var saved = (await state.JsonAsync()).GetProperty("appearance");
+
+        Assert.Equal(HttpStatusCode.NoContent, put.StatusCode);
+        Assert.Equal(("moss", "plain"), (saved.GetProperty("accent").GetString(), saved.GetProperty("wallpaper").GetString()));
+    }
+
+    [Theory]
+    [InlineData("red", "boxes")]
+    [InlineData("petrol", "photo")]
+    public async Task UnknownAccentsAndWallpapersAreRejected(string accent, string wallpaper)
+    {
+        var cookies = await SetupAsync();
+
+        using var put = await SendAsync(HttpMethod.Put, "/api/desktop/appearance", cookies, new { accent, wallpaper });
+
+        Assert.Equal(HttpStatusCode.BadRequest, put.StatusCode);
+        Assert.Equal("request.body.invalid", await put.ErrorCodeAsync());
+    }
+
+    [Fact]
     public async Task TheHourlyCleanupDeletesLayoutsOnlyAfterTheyExpire()
     {
         var cookies = await SetupAsync();

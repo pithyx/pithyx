@@ -6,14 +6,15 @@ namespace Pithyx.Daemon.Commands;
 public sealed partial class ProcessCommandRunner(ILogger<ProcessCommandRunner> logger) : ICommandRunner
 {
     private const int MaxLoggedOutputLength = 4096;
-    private static readonly TimeSpan _defaultTimeout = TimeSpan.FromMinutes(1);
+    /// <summary>The timeout of a <see cref="CommandRequest"/> that sets none.</summary>
+    public static readonly TimeSpan DefaultTimeout = TimeSpan.FromMinutes(1);
 
     public async Task<CommandResult> RunAsync(CommandRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
         var startInfo = CreateStartInfo(request);
 
-        var timeout = request.Timeout ?? _defaultTimeout;
+        var timeout = request.Timeout ?? DefaultTimeout;
         using var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         timeoutSource.CancelAfter(timeout);
 

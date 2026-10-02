@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { errorCodes } from '@pithyx/api-client';
 import { sdkErrorCodes } from '@pithyx/sdk';
 import { coreApps } from './apps/registry';
-import { detectLanguage, languages } from './i18n';
+import { applySystemRegion, detectLanguage, formatLocale, languages } from './i18n';
 import { desktopNamespaces, signInNamespaces } from './i18nNamespaces';
 
 const files = import.meta.glob<object>('../../i18n/*/*.json', { eager: true, import: 'default' });
@@ -89,5 +89,21 @@ describe('detectLanguage', () => {
 
   it('falls back to English', () => {
     expect(detectLanguage(['fr-FR'])).toBe('en');
+  });
+
+  it('falls back to the system language when there is one', () => {
+    expect(detectLanguage(['fr-FR'], 'de')).toBe('de');
+  });
+});
+
+describe('formatLocale', () => {
+  it('adds the system region to the language, and follows the language without one', async () => {
+    await applySystemRegion({ language: 'en', region: 'DE' });
+    expect(formatLocale('en')).toBe('en-DE');
+    expect(
+      new Intl.DateTimeFormat(formatLocale('en'), { timeZone: 'UTC' }).format(new Date(0)),
+    ).toBe('01/01/1970');
+    await applySystemRegion({ language: 'en', region: null });
+    expect(formatLocale('de')).toBe('de');
   });
 });

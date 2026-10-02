@@ -47,8 +47,8 @@ test('Settings has no storage page and no link to Storage', async ({ page }) => 
   await signInAsAdmin(page);
   await openFromStart(page, 'Settings');
   const settings = appWindow(page, 'Settings');
-  await expect(settings.getByRole('heading', { name: 'Shared folders' })).toBeVisible();
-  await expect(settings.getByRole('button', { name: 'Open Storage' })).toHaveCount(0);
+  await expect(settings.getByRole('heading', { name: 'Settings', level: 2 })).toBeVisible();
+  await expect(settings.getByRole('button', { name: /Storage/ })).toHaveCount(0);
 });
 
 test('the pool wizard compares layouts, asks about encryption and lists the exact commands', async ({
@@ -137,10 +137,23 @@ test('destroying a pool needs its name typed and lists its datasets', async ({ p
   await expect(dialog.getByRole('status').getByRole('listitem').last()).toHaveText(
     'zpool destroy pithyxtests',
   );
+
+  // The destroy runs in the background: the dialog closes at once and the notifications say when it is done.
+  await dialog.getByRole('button', { name: 'Destroy pool', exact: true }).click();
+  await expect(dialog).toBeHidden();
+  await expect(page.getByRole('region', { name: 'New notifications' })).toContainText(
+    'Deleting a pool: done',
+  );
 });
 
+async function openAdvanced(storage: ReturnType<typeof appWindow>) {
+  await storage.getByRole('button', { name: 'Advanced', exact: true }).click();
+  await expect(storage.getByRole('heading', { name: 'Advanced', level: 2 })).toBeVisible();
+}
+
 async function openDatasets(storage: ReturnType<typeof appWindow>) {
-  await storage.getByRole('button', { name: 'Datasets and volumes', exact: true }).click();
+  await openAdvanced(storage);
+  await storage.getByRole('button', { name: 'Show datasets' }).click();
   await expect(
     storage.getByRole('heading', { name: 'Datasets and volumes', level: 2 }),
   ).toBeVisible();
@@ -212,71 +225,30 @@ test('deleting a dataset needs its full name typed', async ({ page }) => {
   await expect(dialog.getByRole('button', { name: 'Delete', exact: true })).toHaveCount(0);
 });
 
-async function openSnapshots(storage: ReturnType<typeof appWindow>) {
-  await storage.getByRole('button', { name: 'Snapshots', exact: true }).click();
-  await expect(storage.getByRole('heading', { name: 'Snapshots', level: 2 })).toBeVisible();
-  await storage.getByLabel('Dataset').selectOption('pithyxtestm');
-}
-
-function snapshotRow(storage: ReturnType<typeof appWindow>, name: string) {
-  return storage.getByRole('row', { name: new RegExp(name) });
-}
-
-test('deleting a snapshot shows the exact zfs destroy command before it runs', async ({ page }) => {
-  const storage = await openStorage(page);
-  await openSnapshots(storage);
-  // Snapshots of other tools have no delete button (D104).
-  await expect(
-    snapshotRow(storage, 'before-upgrade').getByRole('button', { name: 'Delete' }),
-  ).toHaveCount(0);
-  await snapshotRow(storage, 'pithyx-manual-20260920T101500Z')
-    .getByRole('button', { name: 'Delete' })
-    .click();
-  const dialog = page.getByRole('dialog', { name: 'Delete snapshot' });
-
-  await expect(dialog.getByRole('button', { name: 'Delete snapshot' })).toHaveCount(0);
-  await dialog.getByRole('button', { name: 'Show commands' }).click();
-
-  await expect(dialog.getByRole('status')).toContainText(
-    'pithyxtestm@pithyx-manual-20260920T101500Z',
-  );
-  await expect(dialog.getByRole('status').getByRole('code')).toHaveText([
-    'zfs destroy pithyxtestm@pithyx-manual-20260920T101500Z',
-  ]);
-  await expect(dialog.getByRole('button', { name: 'Delete snapshot' })).toBeEnabled();
-  expect(await violations(page)).toEqual([]);
-});
-
-test('rolling back needs the dataset name and lists the newer snapshots it deletes', async ({
+test('Advanced explains volumes, export and import, and Storage has no snapshot section', async ({
   page,
 }) => {
   const storage = await openStorage(page);
-  await openSnapshots(storage);
-  await snapshotRow(storage, 'pithyx-daily-20260926T000000Z')
-    .getByRole('button', { name: 'Roll back' })
-    .click();
-  const dialog = page.getByRole('dialog', { name: 'Roll back pithyxtestm' });
-  const show = dialog.getByRole('button', { name: 'Show commands' });
+  await expect(storage.getByRole('button', { name: 'Snapshots', exact: true })).toHaveCount(0);
+  await expect(
+    storage.getByRole('button', { name: 'Datasets and volumes', exact: true }),
+  ).toHaveCount(0);
+  // Export and import left the pool cards and the Pools header.
+  await expect(storage.getByRole('button', { name: 'Export…' })).toHaveCount(0);
+  await expect(storage.getByRole('button', { name: 'Import a pool…' })).toHaveCount(0);
 
-  await expect(dialog).toContainText('1 newer snapshot is deleted as well');
-  await expect(show).toBeDisabled();
-  await dialog.getByLabel('Type pithyxtestm to confirm').fill('pithyxtestm');
-  await show.click();
-
-  await expect(dialog.getByRole('note', { name: 'Warnings' })).toContainText(
-    'Every change made to the dataset',
-  );
-  await expect(dialog.getByRole('status')).toContainText(
-    'pithyxtestm@pithyx-daily-20260927T000000Z',
-  );
-  await expect(dialog.getByRole('status').getByRole('code')).toHaveText([
-    'zfs rollback -r pithyxtestm@pithyx-daily-20260926T000000Z',
-  ]);
-  await expect(dialog.getByRole('button', { name: 'Roll back' })).toBeEnabled();
+  await openAdvanced(storage);
+  await expect(storage).toContainText('Export a pool to move its disks to another computer.');
+  await expect(storage).toContainText('Volumes need a pool that Pithyx created.');
+  await storage.getByRole('button', { name: 'Export pithyxtests…' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Export pithyxtests' });
+  await expect(dialog).toBeVisible();
+  expect(await violations(page)).toEqual([]);
 });
 
 test('importing a pool scans only when asked and imports it read-only first', async ({ page }) => {
   const storage = await openStorage(page);
+  await openAdvanced(storage);
   await storage.getByRole('button', { name: 'Import a pool…' }).click();
   const dialog = page.getByRole('dialog', { name: 'Import a pool' });
 
@@ -343,7 +315,7 @@ async function violations(page: Page) {
 
 test('Storage and the preview have no accessibility violations', async ({ page }) => {
   const storage = await openStorage(page);
-  for (const section of ['Disks', 'Datasets and volumes', 'Snapshots', 'Health and maintenance']) {
+  for (const section of ['Disks', 'Health and maintenance', 'Advanced']) {
     await storage.getByRole('button', { name: section, exact: true }).click();
     await expect(storage.getByRole('heading', { name: section, level: 2 })).toBeVisible();
     expect(await violations(page)).toEqual([]);

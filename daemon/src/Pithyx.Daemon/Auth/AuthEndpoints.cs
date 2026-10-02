@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Pithyx.Daemon.Errors;
 using Pithyx.Daemon.Layouts;
 using Pithyx.Daemon.Realtime;
+using Pithyx.Daemon.SystemSettings;
 
 namespace Pithyx.Daemon.Auth;
 
@@ -38,8 +39,11 @@ public static class AuthEndpoints
         auth.MapPost("/totp/disable", DisableTotpAsync).WithName("DisableTotp");
     }
 
-    private static async Task<Ok<SetupStatus>> GetSetupStatusAsync(AuthService auth, CancellationToken cancellationToken) =>
-        TypedResults.Ok(new SetupStatus(await auth.SetupRequiredAsync(cancellationToken), Environment.MachineName));
+    private static async Task<Ok<SetupStatus>> GetSetupStatusAsync(AuthService auth, SystemSettingsService system, CancellationToken cancellationToken)
+    {
+        var region = await system.RegionAsync(cancellationToken);
+        return TypedResults.Ok(new SetupStatus(await auth.SetupRequiredAsync(cancellationToken), Environment.MachineName, region.Language, region.Region));
+    }
 
     private static async Task<Ok<SetupResponse>> SetupAsync(
         SetupRequest request, AuthService auth, SessionService sessions, Users.LinuxAccounts accounts, HttpContext context, IHostEnvironment environment, CancellationToken cancellationToken)

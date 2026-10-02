@@ -20,6 +20,7 @@ import {
 } from './PlanRun';
 import styles from './Storage.module.css';
 import { describeProblem, guardReason } from './shared';
+import { useFormatLocale } from '../../i18n';
 
 export type PoolChange = 'pool.import' | 'pool.export' | 'pool.vdev.add' | 'pool.raidz.expand';
 
@@ -234,7 +235,8 @@ function DiskChoice({
   onSelect: (ids: readonly string[]) => void;
   onConfirm: (id: string, serial: string) => void;
 }) {
-  const { t, i18n } = useTranslation('storage');
+  const { t } = useTranslation('storage');
+  const locale = useFormatLocale();
   const usable = disks.filter(({ guard }) => guard.decision !== 'refused');
   return (
     <fieldset className={styles.diskChoice}>
@@ -259,7 +261,7 @@ function DiskChoice({
             />
             <span className={styles.mono}>{disk.name}</span>
             <span className={styles.muted}>
-              {disk.serial ?? ''} · {formatBytes(disk.sizeBytes, i18n.language)}
+              {disk.serial ?? ''} · {formatBytes(disk.sizeBytes, locale)}
             </span>
           </label>
           {guard.decision === 'needsSerialConfirmation' && selected.includes(disk.id) && (

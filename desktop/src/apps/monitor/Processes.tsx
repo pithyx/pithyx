@@ -11,6 +11,7 @@ import {
   type SortKey,
 } from './processes';
 import type { MonitorStore } from './store';
+import { useFormatLocale } from '../../i18n';
 
 const COLUMNS: readonly SortKey[] = ['name', 'pid', 'user', 'cpu', 'memory'];
 const NUMERIC = new Set<SortKey>(['pid', 'cpu', 'memory']);
@@ -20,7 +21,7 @@ const NUMERIC = new Set<SortKey>(['pid', 'cpu', 'memory']);
  * only the rows in view are rendered each second.
  */
 export function Processes({ monitor }: { monitor: MonitorStore }) {
-  const { t, i18n } = useTranslation('monitor');
+  const { t } = useTranslation('monitor');
   const list = useStore(monitor.store, (state) => state.processes);
   const [filter, setFilter] = useState('');
   const [sort, setSort] = useState<{ key: SortKey; direction: Direction }>({
@@ -30,7 +31,7 @@ export function Processes({ monitor }: { monitor: MonitorStore }) {
   const scroll = useRef<HTMLDivElement>(null);
   const filterId = useId();
   const hintId = useId();
-  const locale = i18n.language;
+  const locale = useFormatLocale();
   const rows =
     list === null ? [] : sortProcesses(list.processes, sort.key, sort.direction, filter, locale);
   const rowHeight = matchMedia('(pointer: coarse)').matches ? 44 : 32;

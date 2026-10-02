@@ -6,6 +6,7 @@ import { Chart } from './Chart';
 import styles from './Monitor.module.css';
 import { deviceNames, peak, seriesOf, type Point, type Range } from './series';
 import type { MonitorStore } from './store';
+import { useFormatLocale } from '../../i18n';
 
 const RANGE_TEXT = { 60: 'minute', 600: 'tenMinutes', 3600: 'hour' } as const;
 
@@ -26,11 +27,11 @@ function celsius(value: number, locale: string): string {
 
 /** CPU, memory, network, disks and temperatures: the newest sample as text, the range as charts. */
 export function Performance({ monitor, range }: { monitor: MonitorStore; range: Range }) {
-  const { t, i18n } = useTranslation('monitor');
+  const { t } = useTranslation('monitor');
   const points = useStore(monitor.store, (state) => state.points);
   const latest = useStore(monitor.store, (state) => state.latest);
   const memoryTotal = useStore(monitor.store, (state) => state.memoryTotalBytes);
-  const locale = i18n.language;
+  const locale = useFormatLocale();
   if (latest === null || memoryTotal === null) {
     return (
       <p className={styles.muted} role="status">

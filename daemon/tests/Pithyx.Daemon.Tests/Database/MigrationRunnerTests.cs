@@ -74,6 +74,33 @@ public sealed class MigrationRunnerTests : IDisposable
         Assert.Empty(BackupFiles());
     }
 
+    [Fact]
+    public async Task RestorePointsAreSwitchedOnForExistingSharedFoldersButKeepAnExistingDailySchedule()
+    {
+        var token = TestContext.Current.CancellationToken;
+        var before = Migration.Embedded().Where(migration => migration.Version < 15).ToList();
+        await _runner.RunAsync(before, token);
+        await using (var connection = await _connections.OpenAsync(token))
+        {
+            await connection.ExecuteAsync(
+                """
+                INSERT INTO shares (name, path, dataset, created_at, updated_at) VALUES
+                    ('Photos', '/tank/photos', 'tank/pithyx/shares/photos', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z'),
+                    ('Media', '/tank/media', 'tank/pithyx/shares/media', '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z'),
+                    ('Folder', '/srv/folder', NULL, '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z');
+                INSERT INTO snapshot_schedules (dataset, kind, enabled, keep, updated_at)
+                    VALUES ('tank/pithyx/shares/media', 'daily', 0, 30, '2026-01-01T00:00:00Z');
+                """);
+        }
+
+        await _runner.RunAsync(Migration.Embedded(), token);
+
+        await using var migrated = await _connections.OpenAsync(token);
+        Assert.Equal(
+            [("tank/pithyx/shares/media", 0L, 30L), ("tank/pithyx/shares/photos", 1L, 7L)],
+            await migrated.QueryAsync<(string, long, long)>("SELECT dataset, enabled, keep FROM snapshot_schedules WHERE kind = 'daily' ORDER BY dataset"));
+    }
+
     // Parallel branches reserve their numbers ahead, so a gap can exist until the branch that owns it is merged.
     [Fact]
     public void EmbeddedMigrationsAreNumberedWithoutGaps() =>

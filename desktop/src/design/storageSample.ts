@@ -728,6 +728,7 @@ export const sampleShares = [
     quotaBytes: 2 * TB,
     readUsers: 1,
     readWriteUsers: 2,
+    restorePoints: true,
   },
   {
     id: 2,
@@ -741,6 +742,7 @@ export const sampleShares = [
     quotaBytes: null,
     readUsers: 3,
     readWriteUsers: 1,
+    restorePoints: true,
   },
   {
     id: 3,
@@ -754,8 +756,50 @@ export const sampleShares = [
     quotaBytes: null,
     readUsers: 0,
     readWriteUsers: 0,
+    restorePoints: false,
   },
 ];
+
+export const sampleSystemOverview = {
+  version: '0.1.0-dev',
+  commit: '51962e2c0ffee5d1b4f0a1d6e2c9b7a8f3e4d5c6',
+  operatingSystem: 'Debian GNU/Linux 13 (trixie)',
+  kernel: '6.12.107+deb13-amd64',
+  machine: 'Example Systems N305 Mini',
+  cpuModel: 'Intel(R) Core(TM) i3-N305',
+  cpuCores: 8,
+  memoryTotalBytes: 32 * 1024 ** 3,
+  hostname: 'nas',
+  uptimeSeconds: 3 * 86_400 + 5 * 3600 + 17 * 60,
+};
+
+export const sampleNetwork = [
+  {
+    name: 'enp1s0',
+    macAddress: '02:00:00:12:34:56',
+    up: true,
+    method: 'dhcp',
+    addresses: ['192.168.1.20/24', 'fd00::20/64'],
+    gateways: ['192.168.1.1'],
+    dnsServers: ['192.168.1.1'],
+  },
+  {
+    name: 'enp2s0',
+    macAddress: '02:00:00:12:34:57',
+    up: false,
+    method: 'static',
+    addresses: [],
+    gateways: [],
+    dnsServers: [],
+  },
+];
+
+export const sampleTime = {
+  timeZone: 'Europe/Berlin',
+  synchronized: true,
+  ntpServers: ['0.debian.pool.ntp.org', '1.debian.pool.ntp.org'],
+  timeZones: ['America/New_York', 'Asia/Tokyo', 'Europe/Berlin', 'Europe/Vienna', 'UTC'],
+};
 
 export const sampleShareAccess = [
   {
@@ -878,6 +922,14 @@ function answer(method: string, params: unknown, extra: ExtraAnswers): unknown {
       return sampleShareAccess;
     case 'internal.admin.shares.plan':
       return sampleSharePlan(params as SharePlanRequest);
+    case 'internal.admin.system.overview':
+      return sampleSystemOverview;
+    case 'internal.admin.system.network':
+      return sampleNetwork;
+    case 'internal.admin.system.time':
+      return sampleTime;
+    case 'internal.admin.system.region':
+      return { language: 'en', region: null };
     case 'internal.admin.storage.snapshots.schedules':
       return { ...sampleSnapshotSchedules, dataset: (params as { dataset: string }).dataset };
     default:

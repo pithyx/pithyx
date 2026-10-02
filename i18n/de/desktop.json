@@ -21,6 +21,20 @@
     "personalization": "Personalisierung",
     "languageCurrent": "Sprache: {language}",
     "taskbar": "Position der Taskleiste",
+    "accent": "Akzentfarbe",
+    "accents": {
+      "petrol": "Petrol",
+      "ocean": "Ozean",
+      "indigo": "Indigo",
+      "plum": "Pflaume",
+      "moss": "Moos",
+      "graphite": "Graphit"
+    },
+    "wallpaper": "Hintergrundbild",
+    "wallpapers": {
+      "boxes": "Pithyx-Boxen",
+      "plain": "Schlicht"
+    },
     "getDesktop": "Desktop holen von",
     "noDevices": "Keine anderen Geräte",
     "device": "{browser} auf {os}",

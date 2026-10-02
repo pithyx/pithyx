@@ -1,10 +1,12 @@
 import {
+  IconColorSwatch,
   IconDeviceDesktop,
   IconDevices,
   IconLanguage,
   IconLayoutBottombar,
   IconPalette,
   IconShieldLock,
+  IconWallpaper,
 } from '../ui/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { unwrap, type components } from '@pithyx/api-client';
@@ -30,6 +32,7 @@ import { initialsOf } from '../auth/parts';
 import { clearSessionHint } from '../auth/sessionHint';
 import { LanguageOptions } from './LanguageOptions';
 import { ThemeOptions } from './ThemeOptions';
+import { AccentOptions, WallpaperOptions } from './AppearanceOptions';
 import { useDaemonStatus } from '../daemonStatus';
 import { showError } from '../errors/errorStore';
 import { useRealtime } from '../realtime/connection';
@@ -60,6 +63,7 @@ import { requestClose } from '../wm/commands';
 import { WindowLayer } from '../wm/WindowLayer';
 import { useMinuteClock } from './clock';
 import styles from './Desktop.module.css';
+import { useFormatLocale } from '../i18n';
 
 type User = components['schemas']['UserInfo'];
 
@@ -99,7 +103,8 @@ function ago(iso: string, locale: string): string {
 
 /** "Get desktop from ...": the user's other devices with a saved layout, loaded when the submenu opens. */
 function DevicesMenu({ onPick }: { onPick: (device: DeviceLayout) => void }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const locale = useFormatLocale();
   const label = useDeviceLabel();
   const devices = useQuery({
     queryKey: ['desktop', 'devices'],
@@ -133,14 +138,14 @@ function DevicesMenu({ onPick }: { onPick: (device: DeviceLayout) => void }) {
             {device.screenWidth === null || device.screenHeight === null
               ? t('menu.deviceDetail', {
                   count: device.windowCount,
-                  time: ago(device.updatedAt, i18n.language),
+                  time: ago(device.updatedAt, locale),
                 })
               : t('menu.deviceDetailScreen', {
                   // Strings, so the size is not formatted with thousands separators.
                   width: String(device.screenWidth),
                   height: String(device.screenHeight),
                   count: device.windowCount,
-                  time: ago(device.updatedAt, i18n.language),
+                  time: ago(device.updatedAt, locale),
                 })}
           </span>
         </MenuItem>
@@ -211,6 +216,22 @@ function UserMenu({
               </MenuItem>
               <MenuPopover>
                 <ThemeOptions />
+              </MenuPopover>
+            </SubmenuTrigger>
+            <SubmenuTrigger>
+              <MenuItem id="accent" icon={<IconColorSwatch size={18} stroke={1.75} />}>
+                {t('menu.accent')}
+              </MenuItem>
+              <MenuPopover>
+                <AccentOptions />
+              </MenuPopover>
+            </SubmenuTrigger>
+            <SubmenuTrigger>
+              <MenuItem id="wallpaper" icon={<IconWallpaper size={18} stroke={1.75} />}>
+                {t('menu.wallpaper')}
+              </MenuItem>
+              <MenuPopover>
+                <WallpaperOptions />
               </MenuPopover>
             </SubmenuTrigger>
             <SubmenuTrigger>
@@ -354,6 +375,7 @@ function useRunningApps(): RunningApp[] {
 /** The desktop after sign-in: wallpaper, app shortcuts, windows and the taskbar with start menu and status area. */
 export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   const { t, i18n } = useTranslation();
+  const locale = useFormatLocale();
   const queryClient = useQueryClient();
   const status = useRealtime((state) => state.status);
   const now = useMinuteClock();
@@ -535,7 +557,7 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
               setNotificationsOpen(!notificationsOpen);
             }}
             now={now}
-            locale={i18n.language}
+            locale={locale}
           />
         }
         overlays={
@@ -578,7 +600,7 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
               />
             )}
             <Suspense>
-              <NotificationToasts position={taskbarPosition} locale={i18n.language} />
+              <NotificationToasts position={taskbarPosition} locale={locale} />
             </Suspense>
             {switcherOpen && (
               <AppSwitcher
@@ -604,7 +626,7 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
                   panelRef={notificationsPanel}
                   alerts={alerts}
                   now={now}
-                  locale={i18n.language}
+                  locale={locale}
                   position={taskbarPosition}
                 />
               </Suspense>

@@ -123,9 +123,9 @@
   "versions": {
     "title": "Frühere Versionen von {name}",
     "list": "Versionen",
-    "empty": "Es gibt keine früheren Versionen. Sie stammen aus Snapshots des Pools, auf dem die Freigabe liegt; ein Administrator richtet sie in den Einstellungen unter Speicher ein.",
+    "empty": "Es gibt noch keine früheren Versionen. Sie stammen aus den Wiederherstellungspunkten des freigegebenen Ordners, die einmal am Tag entstehen, solange ein Administrator sie in den Einstellungen unter Freigegebene Ordner eingeschaltet hat.",
     "failed": "Die Versionen konnten nicht geladen werden.",
-    "takenOn": "Snapshot vom {date}",
+    "takenOn": "Wiederherstellungspunkt vom {date}",
     "modifiedOn": "Geändert am {date}",
     "restore": "Wiederherstellen",
     "restoreOne": "Version vom {date} wiederherstellen",
@@ -133,6 +133,7 @@
     "nextToHint": "Die Version wird neben der aktuellen wiederhergestellt, mit ihrem Datum im Namen.",
     "overwriteHint": "Die aktuelle Datei wird ersetzt. Ein Ordner behält die Dateien, die nicht in der Version sind.",
     "readOnly": "Du kannst diese Freigabe nur lesen, deshalb kannst du hier keine Versionen wiederherstellen.",
+    "note": "Wiederherstellungspunkte entstehen einmal am Tag und bleiben 7 Tage. Sie liegen auf denselben Platten wie die Dateien und ersetzen kein Backup auf einem anderen Gerät.",
     "close": "Schließen"
   },
   "layout": {

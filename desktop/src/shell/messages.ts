@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { formatBytes } from '../desktop/format';
+import { useFormatLocale } from '../i18n';
 
 /** A parameter value. Byte counts are formatted for the user's locale before they reach the message. */
 export type MessageParam = string | number | { bytes: number };
@@ -28,12 +29,13 @@ export function formatParams(
  */
 export function useMessages(ns: 'notifications' | 'jobs') {
   const { t, i18n } = useTranslation(ns);
+  const locale = useFormatLocale();
   // Codes are dynamic; i18n.test.ts checks that en and de define the same keys.
   const translate = t as unknown as (key: string, options: object) => string;
   return (message: Message, part: string): string | undefined => {
     const key = `${message.code}.${part}`;
     return i18n.exists(key, { ns })
-      ? translate(key, formatParams(message.params, i18n.language))
+      ? translate(key, formatParams(message.params, locale))
       : undefined;
   };
 }

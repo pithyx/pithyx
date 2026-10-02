@@ -39,7 +39,7 @@
   },
   "shares": {
     "title": "Shared folders",
-    "intro": "Every shared folder is its own dataset on a pool, with its own space and snapshots. Choose who may read or change its files.",
+    "intro": "Every shared folder is its own dataset on a pool, with its own space and restore points. Choose who may read or change its files.",
     "create": "Create shared folder…",
     "caption": "Shared folders with their pool, space, description and rights",
     "loading": "Loading shared folders…",
@@ -50,6 +50,7 @@
       "used": "Used",
       "description": "Description",
       "rights": "Rights",
+      "restorePoints": "Restore points",
       "actions": "Actions"
     },
     "folder": "Folder",
@@ -110,5 +111,125 @@
       "gone": "These are deleted for good:",
       "run": "Delete shared folder"
     }
+  },
+  "overview": {
+    "title": "Settings",
+    "search": "Search settings",
+    "noMatch": "No settings match your search.",
+    "all": "All settings",
+    "navigation": "Settings navigation",
+    "coming": "Coming in v0.1"
+  },
+  "categories": {
+    "system": "System",
+    "sharing": "Files and sharing",
+    "accounts": "Users"
+  },
+  "pages": {
+    "info": {
+      "title": "Info Center",
+      "description": "Version, hardware, system and uptime",
+      "keywords": "about version commit hardware cpu processor memory ram kernel uptime hostname system"
+    },
+    "network": {
+      "title": "Network",
+      "description": "Addresses, DHCP or static, gateway and name servers",
+      "keywords": "ip address dhcp static gateway dns lan ethernet interface"
+    },
+    "regional": {
+      "title": "Regional settings",
+      "description": "System language, formats, date and time, time zone and time servers",
+      "keywords": "language formats region country date time clock zone ntp time server"
+    },
+    "shares": {
+      "title": "Shared folders",
+      "description": "Folders on your pools, their space, who may use them and their restore points",
+      "keywords": "share folder dataset access rights permissions restore points snapshots previous versions"
+    },
+    "fileServices": {
+      "title": "File services",
+      "description": "SMB and SFTP for access from other computers",
+      "keywords": "smb samba sftp ssh network drive protocol"
+    },
+    "users": {
+      "title": "Users",
+      "description": "Accounts, passwords and administrators",
+      "keywords": "user account password administrator login people"
+    }
+  },
+  "info": {
+    "intro": "What runs on this box.",
+    "version": "Pithyx version",
+    "hostname": "Host name",
+    "os": "Operating system",
+    "kernel": "Kernel",
+    "machine": "Machine",
+    "cpu": "Processor",
+    "cores": "Logical processors",
+    "memory": "Memory",
+    "uptime": "Running for",
+    "unknown": "Not reported",
+    "uptimeValue": "{days, plural, =0 {} one {# day, } other {# days, }}{hours, plural, one {# hour} other {# hours}}, {minutes, plural, one {# minute} other {# minutes}}"
+  },
+  "fileServices": {
+    "intro": "File services let other computers open your shared folders over the network.",
+    "coming": "Coming in v0.1",
+    "explain": "SMB and SFTP are not available yet. They will be switched on here once they are finished.",
+    "smb": "SMB: network drives for Windows, macOS and Linux.",
+    "sftp": "SFTP: encrypted file transfer over SSH."
+  },
+  "network": {
+    "intro": "How this box is connected to your network.",
+    "changesLater": "Changes follow",
+    "changesExplain": "Changing the address comes with a safety timer: a new address must be confirmed within 60 seconds, or the box goes back to the old one, so a wrong address cannot lock you out. Until then this page only shows the settings.",
+    "up": "connected",
+    "down": "not connected",
+    "method": "Address",
+    "methods": {
+      "dhcp": "Automatic (DHCP)",
+      "static": "Static",
+      "unknown": "Set outside Pithyx"
+    },
+    "addresses": "IP addresses",
+    "gateway": "Gateway",
+    "dns": "Name servers",
+    "mac": "Hardware address",
+    "none": "None"
+  },
+  "regional": {
+    "intro": "Language, formats and time of the box. Everyone can still choose their own language in the user menu.",
+    "languageTitle": "Language and formats",
+    "language": "System language",
+    "languageHint": "The sign-in page uses it, and so does everyone whose browser asks for a language Pithyx does not have.",
+    "formats": "Formats",
+    "formatsLanguage": "Like the language",
+    "formatsHint": "How dates, times and numbers look for everyone, for example 31.12.2026 or 12/31/2026.",
+    "preview": "Example: {preview}",
+    "saveLanguage": "Save language and formats",
+    "timeTitle": "Date and time",
+    "now": "Time on the box",
+    "sync": "Clock",
+    "synchronized": "Synchronized with a time server",
+    "notSynchronized": "Not synchronized",
+    "zone": "Time zone",
+    "servers": "Time servers",
+    "serversHint": "Host names or addresses, separated by spaces. Leave empty for the default servers.",
+    "saveTime": "Save time settings",
+    "saved": "Saved."
+  },
+  "restorePoints": {
+    "explain": "What are restore points?",
+    "title": "What are restore points?",
+    "what": "Once a day, Pithyx keeps the state of a shared folder as a restore point and keeps each one for 7 days. New shared folders have them switched on.",
+    "restore": "Deleted or overwritten a file by mistake? Right-click it in Files and choose “Previous versions” to get an earlier state back.",
+    "space": "A restore point takes space only for files that were changed or deleted after it. Example: in a folder with 100 GB of photos you edit 1 GB of them; the restore points then need about 1 GB more, not another 100 GB.",
+    "deleted": "A deleted file frees its space only when the last restore point that still holds it expires. Example: you delete a 4 GB video; it is gone from the folder at once, but its 4 GB come free after 7 days.",
+    "protects": "They help against accidental deletes and against ransomware: a folder that malware encrypted can be brought back to the state before.",
+    "notBackup": "Restore points live on the same disks as your files. They are no replacement for a backup on another device.",
+    "close": "Got it",
+    "on": "Daily, kept 7 days",
+    "off": "Off",
+    "folder": "Not for folder shares",
+    "switchLabel": "Restore points for {name}"
   }
 }

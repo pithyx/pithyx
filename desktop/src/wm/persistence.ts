@@ -6,6 +6,7 @@ import { findApp } from '../apps/registry';
 import { describeError, isSessionExpired } from '../errors/describe';
 import { clearToasts, notify } from '../shell/toasts';
 import { fromLayout, toLayout, type Layout } from './layout';
+import { applyAppearance, checkedAppearance } from '../theme/appearance';
 import { clearPreferredSizes, setPreferredSize } from './preferences';
 import { initialState } from './state';
 import { dispatch, useDesktop } from './store';
@@ -204,6 +205,7 @@ export function useLayoutPersistence() {
       return;
     }
     layoutVersion = desktop.data.layoutVersion;
+    applyAppearance(checkedAppearance(desktop.data.appearance));
     for (const preference of desktop.data.preferences) {
       setPreferredSize(preference.appId, { width: preference.width, height: preference.height });
     }
