@@ -8,7 +8,7 @@ public sealed class AccountReconcilerTests
     private static IReadOnlyList<PasswdEntry> Passwd(string name) =>
         PasswdParser.Parse(File.ReadAllText(Path.Combine(RepositoryFiles.Root, "daemon", "tests", "fixtures", "etc-passwd", name)));
 
-    private static readonly IReadOnlySet<string> NoExpiry = new HashSet<string>();
+    private static readonly IReadOnlySet<string> _noExpiry = new HashSet<string>();
 
     private static WantedAccount Wanted(string name, long uid, string comment = "", string home = AccountReconciler.NoHome) =>
         new(name, uid, comment, home, AccountReconciler.NoLogin);
@@ -36,7 +36,7 @@ public sealed class AccountReconcilerTests
                 Wanted("new", 20003),
             ],
             Passwd("handwritten-managed"),
-            NoExpiry);
+            _noExpiry);
 
         Assert.Equal(
             [
@@ -59,7 +59,7 @@ public sealed class AccountReconcilerTests
     [InlineData("someone", 40001, "uid_outside_range")]
     public void RefusesWhatWouldTouchAnotherAccount(string name, long uid, string reason)
     {
-        var actions = AccountReconciler.Plan([Wanted("admin", 20000, "Ada Admin", "/tank/homes/admin"), Wanted("rita", 20001, "Rita"), Wanted(name, uid)], Passwd("handwritten-managed"), NoExpiry);
+        var actions = AccountReconciler.Plan([Wanted("admin", 20000, "Ada Admin", "/tank/homes/admin"), Wanted("rita", 20001, "Rita"), Wanted(name, uid)], Passwd("handwritten-managed"), _noExpiry);
 
         Assert.Contains(new RefuseAccount(name, reason), actions);
     }
@@ -67,7 +67,7 @@ public sealed class AccountReconcilerTests
     [Fact]
     public void AUidAStaleAccountHoldsIsFreedFirst()
     {
-        var actions = AccountReconciler.Plan([Wanted("admin", 20000, "Ada Admin", "/tank/homes/admin"), Wanted("rita", 20001, "Rita"), Wanted("newcomer", 20002)], Passwd("handwritten-managed"), NoExpiry);
+        var actions = AccountReconciler.Plan([Wanted("admin", 20000, "Ada Admin", "/tank/homes/admin"), Wanted("rita", 20001, "Rita"), Wanted("newcomer", 20002)], Passwd("handwritten-managed"), _noExpiry);
 
         Assert.Equal(["gone", "newcomer"], actions.Select(action => action.Name));
         Assert.IsType<RemoveAccount>(actions[0]);
@@ -91,7 +91,7 @@ public sealed class AccountReconcilerTests
     public void ADeactivatedUserExpiresItsAccountAndAnActivatedOneClearsTheExpiry()
     {
         var wanted = new[] { Wanted("admin", 20000, "Ada Admin", "/tank/homes/admin"), Wanted("rita", 20001, "Rita") with { Expired = true } };
-        var deactivate = Assert.Single(AccountReconciler.Plan(wanted, Passwd("handwritten-managed"), NoExpiry).OfType<UpdateAccount>());
+        var deactivate = Assert.Single(AccountReconciler.Plan(wanted, Passwd("handwritten-managed"), _noExpiry).OfType<UpdateAccount>());
         Assert.Equal(["--expiredate", "1", "rita"], AccountReconciler.Command(deactivate)!.Arguments);
 
         var rita = new HashSet<string> { "rita" };
