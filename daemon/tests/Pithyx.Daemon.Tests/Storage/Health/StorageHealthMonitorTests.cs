@@ -146,8 +146,8 @@ public sealed class StorageHealthMonitorTests : IAsyncDisposable
         await StartAsync();
         await UntilAsync(() => _store.Of(admin).Count > 0);
         // A restart evaluates the same alert from scratch; the notice in the database keeps it from notifying again.
-        await _notifier.SyncAsync([], settled: false, TestContext.Current.CancellationToken);
-        await _notifier.SyncAsync(_alerts.Current.Alerts, _alerts.Settled, TestContext.Current.CancellationToken);
+        await _notifier.SyncAsync([], _pools.Current, settled: false, TestContext.Current.CancellationToken);
+        await _notifier.SyncAsync(_alerts.Current.Alerts, _pools.Current, _alerts.Settled, TestContext.Current.CancellationToken);
 
         var notification = Assert.Single(_store.Of(admin));
         Assert.Equal("storage.alert.smartFailed", notification.Code);
