@@ -373,6 +373,13 @@
       },
       "expected": "The storage command zpool failed (exit code 1). Nothing after it was run; the log has the details."
     },
+    "storage.command.timed_out": {
+      "params": {
+        "command": "zpool destroy",
+        "minutes": 5
+      },
+      "expected": "zpool destroy did not finish within 5 minutes. A disk of the pool probably stopped answering and ZFS is waiting for it. Check the disks in Storage. If other pools stop responding too, restart the box."
+    },
     "storage.dataset.compression_invalid": {
       "params": {
         "compression": "brotli"

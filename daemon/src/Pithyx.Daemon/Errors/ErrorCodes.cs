@@ -282,6 +282,14 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadGateway)]
     public const string StorageCommandFailed = "storage.command.failed";
 
+    /// <summary>
+    /// A storage command of a plan did not finish in time, usually because a disk stopped answering and ZFS waits for it in
+    /// the kernel. The command may still finish later or wait until a restart. <c>params.command</c> is the program and its
+    /// subcommand (<c>zpool destroy</c>), <c>params.minutes</c> how long the plan waited.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.GatewayTimeout)]
+    public const string StorageCommandTimedOut = "storage.command.timed_out";
+
     /// <summary>Compression Pithyx does not set; <c>params.compression</c> is the value sent. Allowed: <c>off</c>, <c>lz4</c>, <c>zle</c>, <c>zstd</c>, <c>zstd-1</c> to <c>zstd-19</c>, <c>gzip</c>, <c>gzip-1</c> to <c>gzip-9</c>.</summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string StorageDatasetCompressionInvalid = "storage.dataset.compression_invalid";

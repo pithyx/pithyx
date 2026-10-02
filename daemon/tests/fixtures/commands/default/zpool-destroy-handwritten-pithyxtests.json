@@ -1,0 +1,8 @@
+{
+  "command": "zpool",
+  "args": [
+    "destroy",
+    "pithyxtests"
+  ],
+  "exitCode": 0
+}

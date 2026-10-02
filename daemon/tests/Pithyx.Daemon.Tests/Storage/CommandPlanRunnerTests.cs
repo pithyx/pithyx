@@ -170,4 +170,20 @@ public sealed class CommandPlanRunnerTests : IDisposable
 
         Assert.Equal((ErrorCodes.StorageCommandFailed, "zpool", 1), (error.Code, error.Parameters["command"], error.Parameters["exitCode"]));
     }
+
+    [Fact]
+    public async Task ACommandStuckInTheKernelEndsThePlanWithATimeoutCode()
+    {
+        var plan = await MirrorPlanAsync();
+        var create = plan.Steps.First(step => step.Command.FileName == "zpool" && step.Command.Arguments[0] == "create").Command;
+        _commands.Handler = request => request.FileName == "zpool" && request.Arguments[0] == "create"
+            ? throw new TimeoutException("zpool did not finish")
+            : null;
+
+        var error = await Assert.ThrowsAsync<PithyxException>(() => _runner.RunAsync(plan, null, Token));
+
+        Assert.Equal(ErrorCodes.StorageCommandTimedOut, error.Code);
+        Assert.Equal("zpool create", error.Parameters["command"]);
+        Assert.Equal((int)Math.Ceiling((create.Timeout ?? ProcessCommandRunner.DefaultTimeout).TotalMinutes), error.Parameters["minutes"]);
+    }
 }

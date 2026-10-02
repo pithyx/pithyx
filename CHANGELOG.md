@@ -159,6 +159,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- Destroying a pool runs in the background: the dialog closes as soon as the job started, the pool's card says "Being deleted" until it is gone, and the notifications say when it is done or why it failed. The other pool actions can be closed while they run, too. A storage command of a plan that does not finish in time (for example a `zpool destroy` waiting in the kernel for a disk that stopped answering) now ends the job with the new error code `storage.command.timed_out` instead of an unexpected error. On a healthy pool `zpool destroy` takes well under a second on dev01; the long wait in the owner's test came from a pool whose disks had been pulled, which the daemon refuses to destroy since the disk failure fix (`storage.pool.disks_missing`).
 - The wallpaper draws its boxes like the logo in the menu button, with the lid closed and a narrow gap, instead of the lid floating far above the box.
 - Toasts of notifications disappear when the notification panel opens, and none appear while it is open; toasts stay 5 seconds instead of 8.
 - The taskbar clock no longer looks like a button: it had a hover effect and took the keyboard focus, but opens nothing.
