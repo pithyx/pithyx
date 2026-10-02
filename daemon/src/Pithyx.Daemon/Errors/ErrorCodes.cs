@@ -18,6 +18,10 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.RequestEntityTooLarge)]
     public const string AppStorageTooLarge = "app.storage.too_large";
 
+    /// <summary>An administrator deactivated the account; the password was right.</summary>
+    [ErrorStatus(HttpStatusCode.Forbidden)]
+    public const string AuthAccountDisabled = "auth.account.disabled";
+
     [ErrorStatus(HttpStatusCode.Unauthorized)]
     public const string AuthChallengeExpired = "auth.challenge.expired";
 

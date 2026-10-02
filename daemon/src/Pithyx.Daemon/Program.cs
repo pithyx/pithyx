@@ -67,7 +67,10 @@ builder.Services.AddPithyxJobs();
 builder.Services.AddPithyxShares();
 builder.Services.AddPithyxUsers(mode == DaemonMode.Real
     ? new AccountOptions("/etc/passwd", Apply: true)
-    : new AccountOptions(Path.Combine(builder.Configuration["PITHYX_FIXTURES"] ?? Path.Combine(builder.Environment.ContentRootPath, "..", "..", "tests", "fixtures"), "etc", "passwd"), Apply: false));
+    : new AccountOptions(
+        Path.Combine(builder.Configuration["PITHYX_FIXTURES"] ?? Path.Combine(builder.Environment.ContentRootPath, "..", "..", "tests", "fixtures"), "etc", "passwd"),
+        Apply: false,
+        ShadowPath: Path.Combine(builder.Configuration["PITHYX_FIXTURES"] ?? Path.Combine(builder.Environment.ContentRootPath, "..", "..", "tests", "fixtures"), "etc", "shadow")));
 builder.Services.AddPithyxFiles();
 builder.Services.AddSingleton<TopicRegistry>();
 builder.Services.AddSingleton<TopicHub>();

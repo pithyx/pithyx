@@ -13,6 +13,10 @@
       },
       "expected": "The app tried to store more than it may keep. The limit is 64 KB."
     },
+    "auth.account.disabled": {
+      "params": {},
+      "expected": "This account is deactivated. Ask an administrator to activate it again."
+    },
     "auth.challenge.expired": {
       "params": {},
       "expected": "The sign-in step has expired. Please sign in again."

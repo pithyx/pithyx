@@ -84,6 +84,11 @@ public sealed class AuthService(SqliteConnectionFactory connections, PasswordHas
         {
             throw new PithyxException(ErrorCodes.AuthCredentialsInvalid);
         }
+        // Only after the password: a stranger never tells a deactivated account from a wrong password.
+        if (user.DisabledAt is not null)
+        {
+            throw new PithyxException(ErrorCodes.AuthAccountDisabled);
+        }
         if (needsRehash)
         {
             await SetPasswordAsync(user.Id, request.Password, cancellationToken);
@@ -103,6 +108,10 @@ public sealed class AuthService(SqliteConnectionFactory connections, PasswordHas
         ArgumentNullException.ThrowIfNull(request);
         var pending = challenges.Find(request.Challenge, address) ?? throw new PithyxException(ErrorCodes.AuthChallengeExpired);
         var user = await FindByIdAsync(pending.UserId, cancellationToken) ?? throw new PithyxException(ErrorCodes.AuthChallengeExpired);
+        if (user.DisabledAt is not null)
+        {
+            throw new PithyxException(ErrorCodes.AuthAccountDisabled);
+        }
 
         var accepted = request.Code is { Length: > 0 } code
             ? await TryUseTotpCodeAsync(user, code, cancellationToken)
@@ -307,10 +316,11 @@ public sealed class AuthService(SqliteConnectionFactory connections, PasswordHas
         string PasswordHash,
         long IsAdmin,
         string? TotpSecret,
-        string? TotpEnabledAt)
+        string? TotpEnabledAt,
+        string? DisabledAt)
     {
         public const string Select =
-            "SELECT id AS Id, username AS Username, display_name AS DisplayName, password_hash AS PasswordHash, is_admin AS IsAdmin, totp_secret AS TotpSecret, totp_enabled_at AS TotpEnabledAt FROM users";
+            "SELECT id AS Id, username AS Username, display_name AS DisplayName, password_hash AS PasswordHash, is_admin AS IsAdmin, totp_secret AS TotpSecret, totp_enabled_at AS TotpEnabledAt, disabled_at AS DisabledAt FROM users";
 
         public UserInfo ToInfo() => new(Id, Username, DisplayName, IsAdmin == 1, TotpEnabledAt is not null);
     }

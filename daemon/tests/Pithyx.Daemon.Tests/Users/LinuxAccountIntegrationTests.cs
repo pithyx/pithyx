@@ -32,6 +32,8 @@ public sealed class LinuxAccountIntegrationTests
     private static async Task<IReadOnlyList<PasswdEntry>> PasswdAsync(string name) =>
         [.. PasswdParser.Parse(await File.ReadAllTextAsync("/etc/passwd", Token)).Where(entry => !AccountReconciler.IsManaged(entry.Uid) || entry.Name == name)];
 
+    private static async Task<IReadOnlySet<string>> ExpiringAsync() => ShadowParser.Expiring(await File.ReadAllTextAsync("/etc/shadow", Token));
+
     [Fact]
     public async Task AnAccountIsCreatedChangedAndRemovedOnlyInTheManagedRange()
     {
@@ -44,7 +46,7 @@ public sealed class LinuxAccountIntegrationTests
             var before = await PasswdAsync(name);
             var wanted = new WantedAccount(name, Uid, "CI user", AccountReconciler.NoHome, AccountReconciler.NoLogin);
 
-            foreach (var action in AccountReconciler.Plan([wanted], before))
+            foreach (var action in AccountReconciler.Plan([wanted], before, await ExpiringAsync()))
             {
                 Assert.IsType<CreateAccount>(action);
                 var result = await _commands.RunAsync(AccountReconciler.Command(action)!, Token);
@@ -53,11 +55,20 @@ public sealed class LinuxAccountIntegrationTests
             Assert.Equal($"{name}:x:{Uid}:100:CI user:{AccountReconciler.NoHome}:{AccountReconciler.NoLogin}", (await RunAsync("getent", "passwd", name)).Trim());
 
             var changed = wanted with { Comment = "CI user renamed" };
-            var update = Assert.IsType<UpdateAccount>(Assert.Single(AccountReconciler.Plan([changed], await PasswdAsync(name))));
+            var update = Assert.IsType<UpdateAccount>(Assert.Single(AccountReconciler.Plan([changed], await PasswdAsync(name), await ExpiringAsync())));
             Assert.Equal(0, (await _commands.RunAsync(AccountReconciler.Command(update)!, Token)).ExitCode);
             Assert.Contains("CI user renamed", await RunAsync("getent", "passwd", name), StringComparison.Ordinal);
 
-            var removals = AccountReconciler.Plan([], await PasswdAsync(name));
+            // Deactivated: the account expires; activated again: the expiry goes.
+            var expire = Assert.IsType<UpdateAccount>(Assert.Single(AccountReconciler.Plan([changed with { Expired = true }], await PasswdAsync(name), await ExpiringAsync())));
+            Assert.Equal(0, (await _commands.RunAsync(AccountReconciler.Command(expire)!, Token)).ExitCode);
+            Assert.Contains(name, await ExpiringAsync());
+            Assert.Empty(AccountReconciler.Plan([changed with { Expired = true }], await PasswdAsync(name), await ExpiringAsync()));
+            var revive = Assert.IsType<UpdateAccount>(Assert.Single(AccountReconciler.Plan([changed], await PasswdAsync(name), await ExpiringAsync())));
+            Assert.Equal(0, (await _commands.RunAsync(AccountReconciler.Command(revive)!, Token)).ExitCode);
+            Assert.DoesNotContain(name, await ExpiringAsync());
+
+            var removals = AccountReconciler.Plan([], await PasswdAsync(name), await ExpiringAsync());
             // Nothing outside the managed range is ever planned, and the only managed account the plan sees is this one.
             var own = Assert.IsType<RemoveAccount>(Assert.Single(removals));
             Assert.Equal(name, own.Name);

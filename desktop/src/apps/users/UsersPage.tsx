@@ -22,8 +22,8 @@ type Action =
   | { kind: 'delete'; user: UserSummary };
 
 /**
- * The Users page: every user with its Linux uid and home, create, edit, reset the password, delete. A standalone
- * component; the Settings app registers it once its new shell is in dev (with `usersHost` as internal methods).
+ * The Users page of Settings: every user with its Linux uid and home, create, edit, reset the password, deactivate,
+ * delete.
  */
 export function UsersPage({ app }: { app: PithyxApp }) {
   const { t } = useTranslation('users');
@@ -83,6 +83,7 @@ export function UsersPage({ app }: { app: PithyxApp }) {
                   <span className={styles.badges}>
                     {user.isAdmin && <Badge tone="accent">{t('badge.admin')}</Badge>}
                     {user.totpEnabled && <Badge tone="neutral">{t('badge.totp')}</Badge>}
+                    {user.disabled && <Badge tone="neutral">{t('badge.disabled')}</Badge>}
                   </span>
                 </th>
                 <td className={styles.optional}>{user.uid ?? ''}</td>
@@ -105,6 +106,7 @@ export function UsersPage({ app }: { app: PithyxApp }) {
                     >
                       {t('password.button')}
                     </Button>
+                    <DisableButton app={app} user={user} />
                     <Button
                       size="sm"
                       variant="danger"
@@ -128,6 +130,36 @@ export function UsersPage({ app }: { app: PithyxApp }) {
       )}
       {action?.kind === 'delete' && <DeleteDialog app={app} user={action.user} onClose={close} />}
     </section>
+  );
+}
+
+/** Deactivates or activates a user at once; the daemon refuses it for oneself and the last active administrator. */
+function DisableButton({ app, user }: { app: PithyxApp; user: UserSummary }) {
+  const { t } = useTranslation('users');
+  const client = useQueryClient();
+  const toggle = useMutation({
+    mutationFn: () =>
+      usersCall(app, 'internal.admin.users.update', { userId: user.id, disabled: !user.disabled }),
+    onSuccess: async () => {
+      await client.invalidateQueries({ queryKey: usersKey });
+    },
+  });
+  return (
+    <>
+      <Button
+        size="sm"
+        isDisabled={toggle.isPending}
+        aria-label={t(user.disabled ? 'disable.enableLabel' : 'disable.disableLabel', {
+          name: user.username,
+        })}
+        onPress={() => {
+          toggle.mutate();
+        }}
+      >
+        {user.disabled ? t('disable.enable') : t('disable.disable')}
+      </Button>
+      {toggle.isError && <ErrorNotice error={describeProblem(toggle.error)} />}
+    </>
   );
 }
 
