@@ -129,13 +129,19 @@ public sealed class FileServiceIntegrationTests
             var configPath = Path.Combine(work, "smb.conf");
             await File.WriteAllTextAsync(configPath, config, Token);
             Assert.Equal(0, (await RunAsync("testparm", "--suppress-prompt", "-s", configPath)).ExitCode);
-            smbd = Process.Start("/usr/sbin/smbd", ["--foreground", "--no-process-group", "-s", configPath]);
+            // A session of its own: Samba signals its whole process group when it ends, which must not reach the test run.
+            smbd = Process.Start("setsid", ["/usr/sbin/smbd", "--foreground", "--no-process-group", "-s", configPath]);
             await WaitForPortAsync(SmbPort);
 
             // rita writes, and a delete lands in the recycle bin with a row in her name.
             var put = await SmbAsync("pxit-rita", "Media", $"mkdir docs; put {configPath} docs/note.txt; ls docs/*");
             Assert.True(put.ExitCode == 0, put.StandardOutput + put.StandardError);
             Assert.Contains("note.txt", put.StandardOutput, StringComparison.Ordinal);
+            // Files from SMB are not executable, and the named users keep their rights through the ACL mask.
+            Assert.Equal("660", (await RunAsync("stat", "-c", "%a", Path.Combine(share, "docs", "note.txt"))).StandardOutput.Trim());
+            var noteAcl = (await RunAsync("getfacl", "--numeric", Path.Combine(share, "docs", "note.txt"))).StandardOutput;
+            Assert.Matches(@"user:20950:rw[x-]\s+#effective:rw-", noteAcl);
+            Assert.Matches(@"user:20951:r-[x-]\s+#effective:r--", noteAcl);
             var delete = await SmbAsync("pxit-rita", "Media", "del docs/note.txt");
             Assert.Equal(0, delete.ExitCode);
             Assert.False(File.Exists(Path.Combine(share, "docs", "note.txt")));

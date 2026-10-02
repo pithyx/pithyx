@@ -45,8 +45,8 @@
    read only = yes
    write list = "ada" "rita"
    server smb encrypt = if_required
-   inherit acls = yes
-   create mask = 0770
+   inherit acls = no
+   create mask = 0660
    directory mask = 0770
    veto files = /.pithyx-trash/
    delete veto files = no
@@ -75,8 +75,8 @@
    read only = yes
    write list = "pithyx-nobody"
    server smb encrypt = required
-   inherit acls = yes
-   create mask = 0770
+   inherit acls = no
+   create mask = 0660
    directory mask = 0770
    veto files = /.pithyx-trash/
    delete veto files = no
