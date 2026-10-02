@@ -15,7 +15,6 @@ import {
   type Vdev,
 } from '../sdk/internal';
 import { isHiddenDataset } from './datasets';
-import { ImportDialog } from './ImportDialog';
 import { PoolActionDialog, type PoolAction } from './PoolActionDialog';
 import { PoolChangeDialog, type PoolChange } from './PoolChangeDialog';
 import { isFinished } from './PlanRun';
@@ -30,12 +29,12 @@ import {
   type Translate,
 } from './shared';
 import styles from './Storage.module.css';
+import { useFormatLocale } from '../../i18n';
 
 /** Pools with their layout, health and fill level, the pool wizard, and repair and maintenance through plans. */
 export function PoolsSection({ app }: { app: PithyxApp }) {
   const { t } = useTranslation('storage');
   const [creating, setCreating] = useState(false);
-  const [importing, setImporting] = useState(false);
   const [action, setAction] = useState<{ pool: Pool; vdev?: Vdev; action: PoolAction } | null>(
     null,
   );
@@ -67,14 +66,6 @@ export function PoolsSection({ app }: { app: PithyxApp }) {
           <p className={styles.muted}>{t('intro')}</p>
         </div>
         <div className={styles.buttons}>
-          <Button
-            onPress={() => {
-              setImporting(true);
-            }}
-            isDisabled={disks.data === undefined}
-          >
-            {t('import.button')}
-          </Button>
           <Button
             variant="primary"
             onPress={() => {
@@ -115,15 +106,6 @@ export function PoolsSection({ app }: { app: PithyxApp }) {
           disks={disks.data.disks}
           onClose={() => {
             setCreating(false);
-          }}
-        />
-      )}
-      {importing && disks.data !== undefined && (
-        <ImportDialog
-          app={app}
-          disks={disks.data.disks}
-          onClose={() => {
-            setImporting(false);
           }}
         />
       )}
@@ -176,7 +158,8 @@ function PoolCard({
   onAction: OnAction;
   onChange: OnChange;
 }) {
-  const { t, i18n } = useTranslation('storage');
+  const { t } = useTranslation('storage');
+  const locale = useFormatLocale();
   const data = pool.vdevs.filter((vdev) => vdev.role === 'data');
   const others = pool.vdevs.filter((vdev) => vdev.role !== 'data');
   return (
@@ -198,8 +181,8 @@ function PoolCard({
       <div className={styles.usage}>
         <span>
           {t('pools.used', {
-            used: formatBytes(pool.allocatedBytes, i18n.language),
-            size: formatBytes(pool.sizeBytes, i18n.language),
+            used: formatBytes(pool.allocatedBytes, locale),
+            size: formatBytes(pool.sizeBytes, locale),
           })}
         </span>
         <span className={styles.bar} aria-hidden>
@@ -209,7 +192,7 @@ function PoolCard({
       <p className={styles.muted}>
         {t('pools.layout', { layout: data.map((vdev) => vdevLabel(t, vdev)).join(' + ') })}
       </p>
-      {pool.scan !== null && <p className={styles.muted}>{scanText(t, pool, i18n.language)}</p>}
+      {pool.scan !== null && <p className={styles.muted}>{scanText(t, pool, locale)}</p>}
       <Expansion pool={pool} />
       {pool.state !== 'ONLINE' && <p className={styles.notice}>{t('pools.degradedHint')}</p>}
       <ul className={styles.vdevs} aria-label={t('pools.devices', { pool: pool.name })}>
@@ -232,7 +215,7 @@ function PoolCard({
               <span className={styles.muted}>
                 {' '}
                 {dataset.mountPoint ?? t('datasets.notMounted')} ·{' '}
-                {formatBytes(dataset.usedBytes, i18n.language)}
+                {formatBytes(dataset.usedBytes, locale)}
               </span>
             </li>
           ))}
@@ -283,14 +266,6 @@ function PoolCard({
             </Button>
             <Button
               size="sm"
-              onPress={() => {
-                onChange('pool.export');
-              }}
-            >
-              {t('change.export.button')}
-            </Button>
-            <Button
-              size="sm"
               variant="danger"
               onPress={() => {
                 onAction('pool.destroy');
@@ -307,7 +282,8 @@ function PoolCard({
 
 /** A running RAID-Z expansion with its progress, or when the last one ended. */
 function Expansion({ pool }: { pool: Pool }) {
-  const { t, i18n } = useTranslation('storage');
+  const { t } = useTranslation('storage');
+  const locale = useFormatLocale();
   const expansion = pool.expansion;
   if (expansion === null || expansion === undefined) {
     return null;
@@ -317,7 +293,7 @@ function Expansion({ pool }: { pool: Pool }) {
   if (expansion.state !== 'scanning') {
     return expansion.state === 'finished' && expansion.endedAt !== null ? (
       <p className={styles.muted}>
-        {t('expansion.finished', { vdev, date: formatDate(expansion.endedAt, i18n.language) })}
+        {t('expansion.finished', { vdev, date: formatDate(expansion.endedAt, locale) })}
       </p>
     ) : null;
   }

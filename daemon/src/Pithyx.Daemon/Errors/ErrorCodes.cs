@@ -521,6 +521,22 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.Forbidden)]
     public const string SystemOriginForbidden = "system.origin.forbidden";
 
+    /// <summary>Applying a time setting failed; <c>params.command</c> and <c>params.exitCode</c> say which command.</summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string SystemTimeApplyFailed = "system.time.apply_failed";
+
+    /// <summary>A time server is neither a host name nor an address; <c>params.server</c> is the first such entry.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string SystemTimeServerInvalid = "system.time.server_invalid";
+
+    /// <summary>More time servers than the daemon configures; <c>params.max</c> is the limit.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string SystemTimeServersTooMany = "system.time.servers_too_many";
+
+    /// <summary>The system does not know the time zone; <c>params.zone</c> is the name that was sent.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string SystemTimeZoneInvalid = "system.time.zone_invalid";
+
 
     /// <summary>The Linux account of a user cannot be created; <c>params.reason</c> is <c>name_taken</c> (a system account has the name), <c>uid_taken</c> or <c>command_failed</c>.</summary>
     [ErrorStatus(HttpStatusCode.Conflict)]

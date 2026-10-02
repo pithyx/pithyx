@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Settings is an overview of tiles in three categories (System, Files and sharing, Users) with a search; a tile opens its page and "All settings" goes back. New pages: Info Center (Pithyx version and commit, operating system, kernel, machine, processor, memory, host name, uptime; `GET /api/system/overview`), Network (every interface with its addresses, DHCP or static, gateway and name servers, read only until changes come with the 60 second confirmation timer; `GET /api/system/network`), Regional settings (system language, formats, time zone and time servers; `GET`/`PUT /api/system/region`, `GET`/`PUT /api/system/time`), File services (marked "Coming in v0.1") and Users (the page from the Linux accounts work). New error codes `system.time.apply_failed`, `system.time.server_invalid`, `system.time.servers_too_many` and `system.time.zone_invalid`.
+- System language and formats (D282, migration 0014): users on "Automatic" whose browser asks for a language Pithyx does not have get the system language instead of English, and dates, times and numbers follow the chosen country for everyone (also in apps through the SDK `locale`). `GET /api/setup` carries `language` and `region` for the sign-in page.
+- Restore points (D283, migration 0015): one switch per shared folder in Settings, "Daily restore points, kept 7 days", on for new shared folders and switched on for existing ones; a dialog explains what they cost and what they protect against, and "Previous versions" in Files lists them. `PUT /api/shares/{shareId}/restore-points` and `restorePoints` in `GET /api/shares/details`.
+- Account menu: theme (like the system, light, dark, per device), accent color and wallpaper (the Pithyx boxes or plain), the last two saved per user for every device (D281, migration 0014, `PUT /api/desktop/appearance`, `appearance` in `GET /api/desktop`).
 - A right-click in an app window no longer opens the browser's menu (Back, Reload, Inspect); text fields keep it for paste and spelling. Sandboxed apps get this from `connect()` in `@pithyx/sdk` and show their own menu by listening for `contextmenu`.
 - Appearance in the account menu (start menu, your name): like the system, light or dark. The choice is kept on this device and reaches open apps at once. The name in the start menu shows a chevron, so the account menu with language and appearance is easy to find.
 - CI: the E2E job runs on the runner named by the repository variable `CI_RUNNER_E2E` (a runner of its own, label `pithyx-e2e`) and falls back to `CI_RUNNER`. The daemon job leaves out the ZFS and account integration tests, the sign-off check is part of the repo job, and the E2E job builds only the daemon. The daemon's timing budget (the first page of a huge folder) runs in the E2E job instead of the daemon job.
@@ -130,6 +134,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- Storage never shows the internal datasets of the Pithyx layout (D284). Its sections are Pools, Disks, Health and maintenance and the new Advanced, which explains and holds volumes, exporting and importing a pool and the datasets table; the Snapshots section and the export and import buttons on the Pools page are gone (the API stays).
+- The daemon reports the version `0.1.0-dev` with the commit it was built from.
 - Settings no longer links to Storage in its navigation; the create dialog of a shared folder still offers to create a pool in Storage when none is ready.
 - The Pithyx menu calls its app list "Apps" instead of "Pinned"; there is no pinning.
 - The UI no longer shows request ids (error dialogs, inline errors, notifications). They are written to the browser console and stay in the daemon's logs.

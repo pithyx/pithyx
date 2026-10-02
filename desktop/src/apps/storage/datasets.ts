@@ -22,9 +22,14 @@ export function datasetRole(pool: string, name: string): DatasetRole {
   return parts[0] === 'shares' ? 'share' : parts[0] === 'volumes' ? 'volume' : 'managed';
 }
 
-/** The pool's cache for thumbnails and other derived data: the daemon manages it, the Storage app never shows it. */
+/**
+ * Datasets the Storage app never shows: the Pithyx layout (`pithyx` and its `apps`, `system`, `homes`, `shares`,
+ * `volumes` and `cache`) and what the daemon manages below it (homes, app data, the thumbnail cache). The pool root,
+ * shared folders, volumes and datasets outside the layout stay visible.
+ */
 export function isHiddenDataset(pool: string, name: string): boolean {
-  return name === `${pool}/pithyx/cache`;
+  const role = datasetRole(pool, name);
+  return role === 'structure' || role === 'managed';
 }
 
 /** Renaming and deleting: shares, volumes and datasets outside the layout. */

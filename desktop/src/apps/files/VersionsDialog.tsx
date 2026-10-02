@@ -8,7 +8,8 @@ import { IconFile, IconFolder, IconRestore } from '../../ui/icons';
 import styles from './FilesApp.module.css';
 
 /**
- * "Previous versions" of one file or folder: the versions in the snapshots of the share's dataset, newest first.
+ * "Previous versions" of one file or folder: the versions in the restore points (snapshots) of the share's dataset,
+ * newest first.
  * Restoring copies one back as a job, next to the current entry unless the user chose to replace it.
  */
 export function VersionsDialog({
@@ -118,6 +119,7 @@ export function VersionsDialog({
           <p className={styles.binNote}>
             {overwrite ? t('versions.overwriteHint') : t('versions.nextToHint')}
           </p>
+          <p className={styles.binNote}>{t('versions.note')}</p>
         </>
       )}
     </Dialog>

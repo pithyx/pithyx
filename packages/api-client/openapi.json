@@ -705,6 +705,40 @@
         }
       }
     },
+    "/api/desktop/appearance": {
+      "put": {
+        "tags": [
+          "Desktop"
+        ],
+        "description": "Saves the accent color and the wallpaper of the signed-in user, for every device. GET /api/desktop returns them.",
+        "operationId": "SetDesktopAppearance",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Appearance"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/desktop/items": {
       "get": {
         "tags": [
@@ -1379,6 +1413,51 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/ShareAccessRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/shares/{shareId}/restore-points": {
+      "put": {
+        "tags": [
+          "Shares"
+        ],
+        "description": "Administrators only. Switches the shared folder's daily restore points (snapshots of its dataset kept 7 days) on or off. A folder share without a dataset answers fs.share.no_dataset.",
+        "operationId": "SetShareRestorePoints",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RestorePointsRequest"
               }
             }
           },
@@ -3348,6 +3427,211 @@
           }
         }
       }
+    },
+    "/api/system/overview": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Version and commit, operating system, kernel, machine, processor, memory, host name and uptime.",
+        "operationId": "GetSystemOverview",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemOverview"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/network": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. The network interfaces with their addresses, gateways, name servers and whether they use DHCP. Read only until host network changes come with their confirmation timer.",
+        "operationId": "GetSystemNetwork",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NetworkInterfaceInfo"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/time": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Time zone, synchronization state, the configured time servers and every time zone the system knows.",
+        "operationId": "GetSystemTime",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimeSettings"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Sets the time zone and the time servers (an empty list means the distribution's defaults).",
+        "operationId": "SetSystemTime",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TimeSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TimeSettings"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/region": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. The system language and the region whose formats every user sees. GET /api/setup carries both for the sign-in page.",
+        "operationId": "GetSystemRegion",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemRegion"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Sets the system language (en, de) and the region (an ISO 3166 country code, or null to follow each user's language).",
+        "operationId": "SetSystemRegion",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SystemRegion"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemRegion"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3509,6 +3793,24 @@
           }
         },
         "description": "Body of `POST /api/notifications/app`: a notification an app sends through the SDK."
+      },
+      "Appearance": {
+        "required": [
+          "accent",
+          "wallpaper"
+        ],
+        "type": "object",
+        "properties": {
+          "accent": {
+            "type": "string",
+            "description": "One of the accent presets: `petrol`, `ocean`, `indigo`, `plum`, `moss`, `graphite`."
+          },
+          "wallpaper": {
+            "type": "string",
+            "description": "`boxes` (the Pithyx boxes) or `plain`."
+          }
+        },
+        "description": "How the desktop looks for the user on every device. The theme (light, dark) is a choice of each device."
       },
       "ClientMessage": {
         "required": [
@@ -3804,7 +4106,8 @@
         "required": [
           "layout",
           "layoutVersion",
-          "preferences"
+          "preferences",
+          "appearance"
         ],
         "type": "object",
         "properties": {
@@ -3830,6 +4133,10 @@
               "$ref": "#/components/schemas/WindowPreference"
             },
             "description": "Window preferences of the user for every app, shared across devices."
+          },
+          "appearance": {
+            "description": "Accent color and wallpaper of the user, the same on every device.",
+            "$ref": "#/components/schemas/Appearance"
           }
         }
       },
@@ -4423,6 +4730,10 @@
           "storage.zfs.unavailable",
           "system.internal.unexpected",
           "system.origin.forbidden",
+          "system.time.apply_failed",
+          "system.time.server_invalid",
+          "system.time.servers_too_many",
+          "system.time.zone_invalid",
           "users.account.refused",
           "users.uid.exhausted",
           "users.user.exists",
@@ -5504,6 +5815,60 @@
           }
         },
         "description": "Body of `POST /api/notifications/read`."
+      },
+      "NetworkInterfaceInfo": {
+        "required": [
+          "name",
+          "macAddress",
+          "up",
+          "method",
+          "addresses",
+          "gateways",
+          "dnsServers"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The interface, for example `ens18`."
+          },
+          "macAddress": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Its hardware address, if it has one."
+          },
+          "up": {
+            "type": "boolean",
+            "description": "Whether the link is up."
+          },
+          "method": {
+            "type": "string",
+            "description": "`dhcp`, `static` or `unknown` when the configuration is not one Pithyx reads."
+          },
+          "addresses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "IPv4 and IPv6 addresses with prefix length, for example `192.168.1.20/24`."
+          },
+          "gateways": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Default gateways of the interface."
+          },
+          "dnsServers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Name servers the interface uses."
+          }
+        }
       },
       "NewDesktopItem": {
         "required": [
@@ -6852,6 +7217,18 @@
         },
         "description": "Snapshot of `system/resources`: what the box is and the last hour, as far as someone watched it."
       },
+      "RestorePointsRequest": {
+        "required": [
+          "enabled"
+        ],
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "Daily restore points, kept 7 days, on or off."
+          }
+        }
+      },
       "SavedLayout": {
         "required": [
           "layout",
@@ -6936,7 +7313,9 @@
       "SetupStatus": {
         "required": [
           "required",
-          "hostname"
+          "hostname",
+          "language",
+          "region"
         ],
         "type": "object",
         "properties": {
@@ -6947,6 +7326,17 @@
           "hostname": {
             "type": "string",
             "description": "Shown on the setup and sign-in screens, so users with several servers know where they sign in."
+          },
+          "language": {
+            "type": "string",
+            "description": "The system language, for the sign-in page and everyone whose browser asks for a language Pithyx does not have."
+          },
+          "region": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The ISO 3166 country code whose formats every user sees, or null to follow each user's language."
           }
         }
       },
@@ -6988,7 +7378,8 @@
           "availableBytes",
           "quotaBytes",
           "readUsers",
-          "readWriteUsers"
+          "readWriteUsers",
+          "restorePoints"
         ],
         "type": "object",
         "properties": {
@@ -7056,6 +7447,13 @@
             "type": "integer",
             "description": "Users other than administrators who may read and write.",
             "format": "int32"
+          },
+          "restorePoints": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Whether daily restore points (snapshots kept 7 days) are on; null for a folder share."
           }
         },
         "description": "A share with what the Shared folders page shows. Administrators only."
@@ -7975,6 +8373,96 @@
           }
         }
       },
+      "SystemOverview": {
+        "required": [
+          "version",
+          "commit",
+          "operatingSystem",
+          "kernel",
+          "machine",
+          "cpuModel",
+          "cpuCores",
+          "memoryTotalBytes",
+          "hostname",
+          "uptimeSeconds"
+        ],
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "description": "The Pithyx version."
+          },
+          "commit": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The git commit it was built from, if known."
+          },
+          "operatingSystem": {
+            "type": "string",
+            "description": "The distribution, for example \"Debian GNU/Linux 13 (trixie)\"."
+          },
+          "kernel": {
+            "type": "string",
+            "description": "The running Linux kernel."
+          },
+          "machine": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Vendor and product of the board or virtual machine, if the firmware reports them."
+          },
+          "cpuModel": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The processor, if known."
+          },
+          "cpuCores": {
+            "type": "integer",
+            "description": "Logical processors.",
+            "format": "int32"
+          },
+          "memoryTotalBytes": {
+            "type": "integer",
+            "description": "Physical memory.",
+            "format": "int64"
+          },
+          "hostname": {
+            "type": "string",
+            "description": "The host name."
+          },
+          "uptimeSeconds": {
+            "type": "number",
+            "description": "Seconds since boot.",
+            "format": "double"
+          }
+        }
+      },
+      "SystemRegion": {
+        "required": [
+          "language",
+          "region"
+        ],
+        "type": "object",
+        "properties": {
+          "language": {
+            "type": "string",
+            "description": "The system language: the sign-in page and every user on \"Automatic\" whose browser asks for a language Pithyx does\nnot have get it, and so do messages the box sends on its own. One of IReadOnlyList&lt;string&gt; SystemRegion.Languages."
+          },
+          "region": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "ISO 3166 country code such as `DE` or `US` whose date, time and number formats every user sees, or null to\nfollow each user's language."
+          }
+        },
+        "description": "The regional settings of the box (D282)."
+      },
       "ThumbnailRequest": {
         "required": [
           "folder",
@@ -8127,6 +8615,59 @@
           }
         },
         "description": "Event of `thumbnails/&lt;share&gt;/&lt;folder&gt;`: thumbnails that were rendered or refused."
+      },
+      "TimeSettings": {
+        "required": [
+          "timeZone",
+          "synchronized",
+          "ntpServers",
+          "timeZones"
+        ],
+        "type": "object",
+        "properties": {
+          "timeZone": {
+            "type": "string",
+            "description": "IANA name of the system time zone."
+          },
+          "synchronized": {
+            "type": "boolean",
+            "description": "Whether the clock is synchronized with a time server."
+          },
+          "ntpServers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Time servers Pithyx configured; empty means the distribution's defaults."
+          },
+          "timeZones": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Every time zone the system knows."
+          }
+        }
+      },
+      "TimeSettingsRequest": {
+        "required": [
+          "timeZone",
+          "ntpServers"
+        ],
+        "type": "object",
+        "properties": {
+          "timeZone": {
+            "type": "string",
+            "description": "IANA name of the new time zone."
+          },
+          "ntpServers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "At most eight host names or addresses; empty for the distribution's defaults."
+          }
+        }
       },
       "TopicEvents": {
         "required": [

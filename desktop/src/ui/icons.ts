@@ -21,6 +21,7 @@ export { default as IconCheck } from '@tabler/icons-react/dist/esm/icons/IconChe
 export { default as IconChevronDown } from '@tabler/icons-react/dist/esm/icons/IconChevronDown.mjs';
 export { default as IconChevronRight } from '@tabler/icons-react/dist/esm/icons/IconChevronRight.mjs';
 export { default as IconClipboard } from '@tabler/icons-react/dist/esm/icons/IconClipboard.mjs';
+export { default as IconColorSwatch } from '@tabler/icons-react/dist/esm/icons/IconColorSwatch.mjs';
 export { default as IconCopy } from '@tabler/icons-react/dist/esm/icons/IconCopy.mjs';
 export { default as IconCornerDownLeft } from '@tabler/icons-react/dist/esm/icons/IconCornerDownLeft.mjs';
 export { default as IconDatabase } from '@tabler/icons-react/dist/esm/icons/IconDatabase.mjs';
@@ -41,6 +42,7 @@ export { default as IconFolderFilled } from '@tabler/icons-react/dist/esm/icons/
 export { default as IconFolderPlus } from '@tabler/icons-react/dist/esm/icons/IconFolderPlus.mjs';
 export { default as IconFolders } from '@tabler/icons-react/dist/esm/icons/IconFolders.mjs';
 export { default as IconGripHorizontal } from '@tabler/icons-react/dist/esm/icons/IconGripHorizontal.mjs';
+export { default as IconHelpCircle } from '@tabler/icons-react/dist/esm/icons/IconHelpCircle.mjs';
 export { default as IconHistory } from '@tabler/icons-react/dist/esm/icons/IconHistory.mjs';
 export { default as IconHome } from '@tabler/icons-react/dist/esm/icons/IconHome.mjs';
 export { default as IconInfoCircle } from '@tabler/icons-react/dist/esm/icons/IconInfoCircle.mjs';
@@ -55,6 +57,7 @@ export { default as IconLogout } from '@tabler/icons-react/dist/esm/icons/IconLo
 export { default as IconMenu2 } from '@tabler/icons-react/dist/esm/icons/IconMenu2.mjs';
 export { default as IconMinus } from '@tabler/icons-react/dist/esm/icons/IconMinus.mjs';
 export { default as IconMovie } from '@tabler/icons-react/dist/esm/icons/IconMovie.mjs';
+export { default as IconNetwork } from '@tabler/icons-react/dist/esm/icons/IconNetwork.mjs';
 export { default as IconNote } from '@tabler/icons-react/dist/esm/icons/IconNote.mjs';
 export { default as IconPalette } from '@tabler/icons-react/dist/esm/icons/IconPalette.mjs';
 export { default as IconPencil } from '@tabler/icons-react/dist/esm/icons/IconPencil.mjs';
@@ -79,5 +82,7 @@ export { default as IconTrash } from '@tabler/icons-react/dist/esm/icons/IconTra
 export { default as IconTrashX } from '@tabler/icons-react/dist/esm/icons/IconTrashX.mjs';
 export { default as IconUpload } from '@tabler/icons-react/dist/esm/icons/IconUpload.mjs';
 export { default as IconUsers } from '@tabler/icons-react/dist/esm/icons/IconUsers.mjs';
+export { default as IconWallpaper } from '@tabler/icons-react/dist/esm/icons/IconWallpaper.mjs';
+export { default as IconWorld } from '@tabler/icons-react/dist/esm/icons/IconWorld.mjs';
 export { default as IconX } from '@tabler/icons-react/dist/esm/icons/IconX.mjs';
 export { default as IconZoomReset } from '@tabler/icons-react/dist/esm/icons/IconZoomReset.mjs';

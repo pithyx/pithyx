@@ -9,6 +9,7 @@ import { Switch } from '../../ui/Controls';
 import { Dialog } from '../../ui/Dialog';
 import { describeProblem, logsCall, type LogSettings, type LogStatus } from '../sdk/logs';
 import styles from './Logs.module.css';
+import { useFormatLocale } from '../../i18n';
 
 const GB = 1024 ** 3;
 const FIRST_POOL = '';
@@ -72,7 +73,8 @@ function SettingsForm({
   status: LogStatus;
   onSaved: () => void;
 }) {
-  const { t, i18n } = useTranslation('logs');
+  const { t } = useTranslation('logs');
+  const locale = useFormatLocale();
   const client = useQueryClient();
   const { settings } = status;
   const [retentionDays, setRetentionDays] = useState(String(settings.retentionDays));
@@ -88,11 +90,11 @@ function SettingsForm({
       onSaved();
     },
   });
-  const size = (bytes: number | null | undefined) => formatBytes(bytes ?? 0, i18n.language);
+  const size = (bytes: number | null | undefined) => formatBytes(bytes ?? 0, locale);
   const date = (value: string | null | undefined) =>
     value === null || value === undefined
       ? t('settings.never')
-      : new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }).format(
+      : new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' }).format(
           new Date(value),
         );
 
