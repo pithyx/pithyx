@@ -53,12 +53,13 @@ export async function openScreen(
 ) {
   await page.goto(`${baseUrl}${screenUrl(screen, theme, lang)}`);
   await page.evaluate(() => document.fonts.ready.then(() => undefined));
-  // Screens of real apps run a short script (open a dialog, fill it) and mark the page busy until it is done.
+  // Screens of real apps run a short script (open a dialog, fill it) and mark the page busy until it is done. The
+  // script gives up on its own (3 s per step), so this only has to outlast it while the dev server loads the app.
   await page.waitForFunction(
     () => document.querySelector('[data-design-busy]') === null,
     undefined,
     {
-      timeout: 10_000,
+      timeout: 30_000,
     },
   );
   await page.waitForTimeout(800);

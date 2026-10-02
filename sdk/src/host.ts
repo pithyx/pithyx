@@ -394,3 +394,5 @@ export function serveApp(endpoint: Endpoint, options: ServeOptions): AppConnecti
 }
 
 export { sdkError, PithyxError };
+
+export { keepsBrowserMenu } from './contextMenu';
