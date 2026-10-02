@@ -82,7 +82,8 @@ public sealed partial class SftpViews(ICommandRunner commands, SystemFiles files
         }
         foreach (var entry in wanted)
         {
-            MakeRootFolder(Target(root, entry));
+            // Never a mode here: once the folder is mounted, it is the shared folder itself.
+            Directory.CreateDirectory(Target(root, entry));
         }
         var mounts = MountTable.ParseMountInfo(await File.ReadAllTextAsync(files.MountInfo, cancellationToken));
         foreach (var action in Plan(root, wanted, mounts))
