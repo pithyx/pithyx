@@ -3,6 +3,7 @@ using System.Threading.Channels;
 using Dapper;
 using Pithyx.Daemon.Database;
 using Pithyx.Daemon.Realtime;
+using Pithyx.Daemon.Shares;
 using Pithyx.Daemon.Storage;
 
 namespace Pithyx.Daemon.Users;
@@ -14,6 +15,7 @@ public static class UserEndpoints
     {
         services.AddSingleton(options);
         services.AddSingleton<LinuxAccounts>();
+        services.AddSingleton<ShareAcls>();
         services.AddSingleton<UserService>();
         return services;
     }
@@ -29,10 +31,17 @@ public static class UserEndpoints
                 TypedResults.Created((string?)null, await service.CreateAsync(context.User, request, cancellationToken)))
             .WithName("CreateUser")
             .WithDescription("Administrators only. Creates a user with a Linux account (a uid from 20000 to 29999 that is never given out again, the group users, no login shell) and a home dataset below the first pool's homes when there is a pool.");
-        users.MapPatch("/{userId:long}", async (long userId, UserUpdate request, UserService service, HttpContext context, CancellationToken cancellationToken) =>
-                TypedResults.Ok(await service.UpdateAsync(context.User, userId, request, cancellationToken)))
+        users.MapPatch("/{userId:long}", async (long userId, UserUpdate request, UserService service, TopicHub hub, HttpContext context, CancellationToken cancellationToken) =>
+            {
+                var user = await service.UpdateAsync(context.User, userId, request, cancellationToken);
+                if (user.Disabled)
+                {
+                    hub.CloseUser(userId.ToString(CultureInfo.InvariantCulture));
+                }
+                return TypedResults.Ok(user);
+            })
             .WithName("UpdateUser")
-            .WithDescription("Administrators only. Changes the display name or the administrator right; the last administrator keeps the right.");
+            .WithDescription("Administrators only. Changes the display name, the administrator right or whether the user is deactivated. Deactivating ends the user's sessions and expires the Linux account. The last active administrator keeps the right and stays active, and nobody deactivates themselves.");
         users.MapPut("/{userId:long}/password", async (long userId, PasswordReset request, UserService service, TopicHub hub, HttpContext context, CancellationToken cancellationToken) =>
             {
                 await service.ResetPasswordAsync(context.User, userId, request, cancellationToken);
@@ -54,9 +63,16 @@ public static class UserEndpoints
 
 /// <summary>
 /// Brings the Linux accounts in line at start and whenever the pools change, and gives every user a home dataset once
-/// the first pool with the Pithyx layout is there. Real mode only.
+/// the first pool with the Pithyx layout is there. The ACLs of the shared folders follow at start, when the pools
+/// change and whenever the shares, their rights or the users change (<see cref="ShareAcls"/>). Real mode only.
 /// </summary>
-public sealed partial class LinuxAccountSync(LinuxAccounts accounts, PoolInventory pools, SqliteConnectionFactory connections, ILogger<LinuxAccountSync> logger) : BackgroundService
+public sealed partial class LinuxAccountSync(
+    LinuxAccounts accounts,
+    ShareAcls shareAcls,
+    PoolInventory pools,
+    ShareChanges shareChanges,
+    SqliteConnectionFactory connections,
+    ILogger<LinuxAccountSync> logger) : BackgroundService
 {
     public const string LoginDefsPath = "/etc/login.defs";
 
@@ -69,7 +85,9 @@ public sealed partial class LinuxAccountSync(LinuxAccounts accounts, PoolInvento
             LogLoginDefsOverlap(string.Join(", ", overlaps));
         }
         void Signal() => _changes.Writer.TryWrite(true);
+        void SharesChanged(long revision) => Signal();
         pools.Changed += Signal;
+        shareChanges.Changed += SharesChanged;
         try
         {
             Signal();
@@ -83,6 +101,7 @@ public sealed partial class LinuxAccountSync(LinuxAccounts accounts, PoolInvento
                     }
                 }
                 await accounts.ReconcileAsync(stoppingToken);
+                await shareAcls.ReconcileAsync(stoppingToken);
             }
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
@@ -92,6 +111,7 @@ public sealed partial class LinuxAccountSync(LinuxAccounts accounts, PoolInvento
         finally
         {
             pools.Changed -= Signal;
+            shareChanges.Changed -= SharesChanged;
         }
     }
 

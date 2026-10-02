@@ -8,6 +8,9 @@
     }
   },
   "auth": {
+    "account": {
+      "disabled": "Dieses Konto ist deaktiviert. Bitte eine Administratorin oder einen Administrator, es wieder zu aktivieren."
+    },
     "challenge": {
       "expired": "Der Anmeldeschritt ist abgelaufen. Melde dich bitte erneut an."
     },

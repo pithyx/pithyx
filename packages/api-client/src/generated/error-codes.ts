@@ -3,6 +3,7 @@
 export const errorCodes = [
   'app.permission.denied',
   'app.storage.too_large',
+  'auth.account.disabled',
   'auth.challenge.expired',
   'auth.credentials.invalid',
   'auth.csrf.header_missing',

@@ -8,7 +8,8 @@ namespace Pithyx.Daemon.Users;
 
 /// <param name="PasswdPath">Where the accounts are read: <c>/etc/passwd</c>, a fixture in simulation.</param>
 /// <param name="Apply">Whether commands run; false in simulation, where only the plan is made.</param>
-public sealed record AccountOptions(string PasswdPath, bool Apply);
+/// <param name="ShadowPath">Where the account expiry is read: <c>/etc/shadow</c>; a missing file means no account expires.</param>
+public sealed record AccountOptions(string PasswdPath, bool Apply, string ShadowPath = "/etc/shadow");
 
 /// <summary>
 /// Keeps the Linux accounts in line with the users in SQLite (step 10): at start and after every change, the
@@ -30,6 +31,9 @@ public sealed partial class LinuxAccounts(
     public IReadOnlyList<PasswdEntry> Actual() =>
         File.Exists(options.PasswdPath) ? PasswdParser.Parse(File.ReadAllText(options.PasswdPath)) : [];
 
+    private IReadOnlySet<string> Expiring() =>
+        File.Exists(options.ShadowPath) ? ShadowParser.Expiring(File.ReadAllText(options.ShadowPath)) : new HashSet<string>();
+
     /// <summary>The first writable pool whose <c>homes</c> dataset is mounted, with its mount point.</summary>
     public static (string Pool, string Mount)? HomesOf(PoolList current)
     {
@@ -48,8 +52,15 @@ public sealed partial class LinuxAccounts(
     public async Task<IReadOnlyList<WantedAccount>> WantedAsync(CancellationToken cancellationToken)
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
-        var users = await connection.QueryAsync<(string Username, string? DisplayName, long? Uid)>("SELECT username, display_name, uid FROM users WHERE uid IS NOT NULL ORDER BY uid");
-        return [.. users.Select(user => new WantedAccount(user.Username, user.Uid!.Value, AccountReconciler.Comment(user.DisplayName), HomeOf(user.Username), AccountReconciler.NoLogin))];
+        var users = await connection.QueryAsync<(string Username, string? DisplayName, long? Uid, string? DisabledAt)>(
+            "SELECT username, display_name, uid, disabled_at FROM users WHERE uid IS NOT NULL ORDER BY uid");
+        return [.. users.Select(user => new WantedAccount(
+            user.Username,
+            user.Uid!.Value,
+            AccountReconciler.Comment(user.DisplayName),
+            HomeOf(user.Username),
+            AccountReconciler.NoLogin,
+            user.DisabledAt is not null))];
     }
 
     /// <summary>Plans and, in real mode, runs the difference; returns the refusals and failures by name.</summary>
@@ -59,7 +70,7 @@ public sealed partial class LinuxAccounts(
         try
         {
             var problems = new Dictionary<string, string>(StringComparer.Ordinal);
-            foreach (var action in AccountReconciler.Plan(await WantedAsync(cancellationToken), Actual()))
+            foreach (var action in AccountReconciler.Plan(await WantedAsync(cancellationToken), Actual(), Expiring()))
             {
                 if (action is RefuseAccount refusal)
                 {

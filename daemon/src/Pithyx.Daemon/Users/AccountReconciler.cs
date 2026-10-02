@@ -4,7 +4,13 @@ using Pithyx.Daemon.Commands;
 namespace Pithyx.Daemon.Users;
 
 /// <summary>A Pithyx user as its Linux account should be.</summary>
-public sealed record WantedAccount(string Name, long Uid, string Comment, string Home, string Shell);
+/// <param name="Name">The user name.</param>
+/// <param name="Uid">The uid from the Pithyx range.</param>
+/// <param name="Comment">The display name as a passwd comment.</param>
+/// <param name="Home">The home folder.</param>
+/// <param name="Shell">The login shell.</param>
+/// <param name="Expired">True for a deactivated user: the account expired on 1970-01-02, so PAM refuses every login.</param>
+public sealed record WantedAccount(string Name, long Uid, string Comment, string Home, string Shell, bool Expired = false);
 
 /// <summary>One step that brings <c>/etc/passwd</c> in line with the database.</summary>
 public abstract record AccountAction(string Name);
@@ -12,7 +18,7 @@ public abstract record AccountAction(string Name);
 public sealed record CreateAccount(WantedAccount Account) : AccountAction(Account.Name);
 
 /// <param name="Account">The account as it should be.</param>
-/// <param name="Changed">The fields that differ: comment, home, shell.</param>
+/// <param name="Changed">The fields that differ: comment, home, shell, expired.</param>
 public sealed record UpdateAccount(WantedAccount Account, IReadOnlyList<string> Changed) : AccountAction(Account.Name);
 
 /// <summary>Removes an account of the managed range that no Pithyx user has any more; its files and home stay.</summary>
@@ -38,12 +44,19 @@ public static class AccountReconciler
     public const string NoLogin = "/usr/sbin/nologin";
     public const string NoHome = "/nonexistent";
 
+    /// <summary>The expiry date of a deactivated account, in days since 1970-01-01: long past.</summary>
+    public const string ExpiredDate = "1";
+
     public static bool IsManaged(long uid) => uid is >= MinUid and <= MaxUid;
 
-    public static IReadOnlyList<AccountAction> Plan(IReadOnlyList<WantedAccount> wanted, IReadOnlyList<PasswdEntry> actual)
+    /// <param name="wanted">The accounts the users in the database need.</param>
+    /// <param name="actual">The accounts in <c>/etc/passwd</c>.</param>
+    /// <param name="expiring">The accounts with an expiry date in <c>/etc/shadow</c>.</param>
+    public static IReadOnlyList<AccountAction> Plan(IReadOnlyList<WantedAccount> wanted, IReadOnlyList<PasswdEntry> actual, IReadOnlySet<string> expiring)
     {
         ArgumentNullException.ThrowIfNull(wanted);
         ArgumentNullException.ThrowIfNull(actual);
+        ArgumentNullException.ThrowIfNull(expiring);
         var byName = actual.GroupBy(entry => entry.Name, StringComparer.Ordinal).ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal);
         var byUid = actual.GroupBy(entry => entry.Uid).ToDictionary(group => group.Key, group => group.First());
         var wantedNames = wanted.Select(account => account.Name).ToHashSet(StringComparer.Ordinal);
@@ -67,7 +80,7 @@ public static class AccountReconciler
                 {
                     actions.Add(new RefuseAccount(account.Name, "uid_changed"));
                 }
-                else if (Changes(account, existing) is { Count: > 0 } changed)
+                else if (Changes(account, existing, expiring.Contains(account.Name)) is { Count: > 0 } changed)
                 {
                     actions.Add(new UpdateAccount(account, changed));
                 }
@@ -84,7 +97,7 @@ public static class AccountReconciler
         return actions;
     }
 
-    private static List<string> Changes(WantedAccount account, PasswdEntry entry)
+    private static List<string> Changes(WantedAccount account, PasswdEntry entry, bool expired)
     {
         var changed = new List<string>();
         if (account.Comment != entry.Comment)
@@ -99,6 +112,10 @@ public static class AccountReconciler
         {
             changed.Add("shell");
         }
+        if (account.Expired != expired)
+        {
+            changed.Add("expired");
+        }
         return changed;
     }
 
@@ -112,13 +129,17 @@ public static class AccountReconciler
         CreateAccount { Account: var account } => new CommandRequest("useradd",
         [
             "--uid", account.Uid.ToString(CultureInfo.InvariantCulture), "--gid", "users", "--no-user-group", "--no-create-home",
-            "--home-dir", account.Home, "--shell", account.Shell, "--comment", account.Comment, account.Name,
+            "--home-dir", account.Home, "--shell", account.Shell, "--comment", account.Comment,
+            .. account.Expired ? ["--expiredate", ExpiredDate] : Array.Empty<string>(),
+            account.Name,
         ]),
         UpdateAccount { Account: var account, Changed: var changed } => new CommandRequest("usermod",
         [
             .. changed.Contains("comment") ? ["--comment", account.Comment] : Array.Empty<string>(),
             .. changed.Contains("home") ? ["--home", account.Home] : Array.Empty<string>(),
             .. changed.Contains("shell") ? ["--shell", account.Shell] : Array.Empty<string>(),
+            // An empty date removes the expiry.
+            .. changed.Contains("expired") ? ["--expiredate", account.Expired ? ExpiredDate : ""] : Array.Empty<string>(),
             account.Name,
         ]),
         // Never --remove: home data is deleted only after an explicit choice.

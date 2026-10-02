@@ -6,13 +6,15 @@ using Pithyx.Daemon.Database;
 using Pithyx.Daemon.Errors;
 using Pithyx.Daemon.Jobs;
 using Pithyx.Daemon.Notifications;
+using Pithyx.Daemon.Shares;
 
 namespace Pithyx.Daemon.Users;
 
 /// <summary>
 /// User management for administrators: create, change, reset the password, delete. Every user gets a uid from the
 /// Pithyx range that is never given out again, and a Linux account (<see cref="LinuxAccounts"/>). The last
-/// administrator can neither be deleted nor lose the right, and nobody deletes themselves. A user created here takes
+/// active administrator can neither be deleted, deactivated nor lose the right, and nobody deletes or deactivates
+/// themselves. A user created here takes
 /// its uid as its id, so an id is never given out again either: notifications, jobs and grants that still name a
 /// deleted user's id can never reach a new user.
 /// </summary>
@@ -22,6 +24,7 @@ public sealed class UserService(
     LinuxAccounts accounts,
     NotificationStore notifications,
     JobService jobs,
+    ShareChanges shareChanges,
     TimeProvider time)
 {
     public async Task<IReadOnlyList<UserSummary>> ListAsync(ClaimsPrincipal caller, CancellationToken cancellationToken)
@@ -71,6 +74,11 @@ public sealed class UserService(
             await connection.ExecuteAsync("DELETE FROM users WHERE id = @id", new { id });
             throw new PithyxException(ErrorCodes.UsersAccountRefused, new Dictionary<string, object?> { ["username"] = username, ["reason"] = reason });
         }
+        if (request.IsAdmin)
+        {
+            // Administrators reach every shared folder: their ACLs follow.
+            shareChanges.Announce();
+        }
         return (await FindAsync(id, cancellationToken))! with { Home = home ?? HomeOrNull(username) };
     }
 
@@ -79,22 +87,41 @@ public sealed class UserService(
         RequireAdmin(caller);
         ArgumentNullException.ThrowIfNull(request);
         var user = await FindAsync(id, cancellationToken) ?? throw NotFound();
+        var disabling = request.Disabled == true && !user.Disabled;
+        if (disabling && id == CurrentUser.Id(caller))
+        {
+            throw new PithyxException(ErrorCodes.UsersUserSelf);
+        }
         await using (var connection = await connections.OpenAsync(cancellationToken))
         await using (var transaction = await connection.BeginTransactionAsync(cancellationToken))
         {
-            if (request.IsAdmin == false && user.IsAdmin && await AdminCountAsync(connection, transaction) <= 1)
+            var losesAdmin = user.IsAdmin && !user.Disabled && (request.IsAdmin == false || disabling);
+            if (losesAdmin && await AdminCountAsync(connection, transaction) <= 1)
             {
                 throw new PithyxException(ErrorCodes.UsersUserLastAdmin);
             }
             var displayName = request.DisplayName is null ? user.DisplayName : CredentialRules.NormalizeDisplayName(request.DisplayName);
             var admin = request.IsAdmin ?? user.IsAdmin;
+            var disabled = request.Disabled ?? user.Disabled;
             await connection.ExecuteAsync(
-                "UPDATE users SET display_name = @displayName, is_admin = @admin, updated_at = @now WHERE id = @id",
-                new { id, displayName, admin = admin ? 1 : 0, now = time.GetUtcNow().ToString("O", CultureInfo.InvariantCulture) },
+                """
+                UPDATE users SET display_name = @displayName, is_admin = @admin,
+                    disabled_at = CASE WHEN @disabled THEN coalesce(disabled_at, @now) END, updated_at = @now
+                WHERE id = @id
+                """,
+                new { id, displayName, admin = admin ? 1 : 0, disabled, now = time.GetUtcNow().ToString("O", CultureInfo.InvariantCulture) },
                 transaction);
+            if (disabling)
+            {
+                await connection.ExecuteAsync("DELETE FROM sessions WHERE user_id = @id", new { id }, transaction);
+            }
             await transaction.CommitAsync(cancellationToken);
         }
         await accounts.ReconcileAsync(cancellationToken);
+        if ((request.IsAdmin is { } isAdmin && isAdmin != user.IsAdmin) || (request.Disabled is { } off && off != user.Disabled))
+        {
+            shareChanges.Announce();
+        }
         return (await FindAsync(id, cancellationToken))!;
     }
 
@@ -131,7 +158,7 @@ public sealed class UserService(
         await using (var connection = await connections.OpenAsync(cancellationToken))
         await using (var transaction = await connection.BeginTransactionAsync(cancellationToken))
         {
-            if (user.IsAdmin && await AdminCountAsync(connection, transaction) <= 1)
+            if (user.IsAdmin && !user.Disabled && await AdminCountAsync(connection, transaction) <= 1)
             {
                 throw new PithyxException(ErrorCodes.UsersUserLastAdmin);
             }
@@ -142,10 +169,12 @@ public sealed class UserService(
         await jobs.ForgetUserAsync(id);
         notifications.Forget(id);
         await accounts.ReconcileAsync(cancellationToken);
+        shareChanges.Announce();
     }
 
+    /// <summary>Administrators who can still sign in.</summary>
     private static Task<long> AdminCountAsync(System.Data.Common.DbConnection connection, System.Data.Common.DbTransaction transaction) =>
-        connection.ExecuteScalarAsync<long>("SELECT count(*) FROM users WHERE is_admin = 1", transaction: transaction);
+        connection.ExecuteScalarAsync<long>("SELECT count(*) FROM users WHERE is_admin = 1 AND disabled_at IS NULL", transaction: transaction);
 
     private async Task<UserSummary?> FindAsync(long id, CancellationToken cancellationToken)
     {
@@ -164,7 +193,8 @@ public sealed class UserService(
         row.Uid,
         row.TotpEnabledAt is not null,
         DateTimeOffset.Parse(row.CreatedAt, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal),
-        HomeOrNull(row.Username));
+        HomeOrNull(row.Username),
+        row.DisabledAt is not null);
 
     private static PithyxException NotFound() => new(ErrorCodes.UsersUserNotFound);
 
@@ -176,7 +206,7 @@ public sealed class UserService(
         }
     }
 
-    private const string Select = "SELECT id, username, display_name AS displayName, is_admin AS isAdmin, uid, totp_enabled_at AS totpEnabledAt, created_at AS createdAt FROM users";
+    private const string Select = "SELECT id, username, display_name AS displayName, is_admin AS isAdmin, uid, totp_enabled_at AS totpEnabledAt, created_at AS createdAt, disabled_at AS disabledAt FROM users";
 
-    private sealed record Row(long Id, string Username, string? DisplayName, long IsAdmin, long? Uid, string? TotpEnabledAt, string CreatedAt);
+    private sealed record Row(long Id, string Username, string? DisplayName, long IsAdmin, long? Uid, string? TotpEnabledAt, string CreatedAt, string? DisabledAt);
 }

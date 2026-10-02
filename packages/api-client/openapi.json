@@ -1520,7 +1520,7 @@
         "tags": [
           "Users"
         ],
-        "description": "Administrators only. Changes the display name or the administrator right; the last administrator keeps the right.",
+        "description": "Administrators only. Changes the display name, the administrator right or whether the user is deactivated. Deactivating ends the user's sessions and expires the Linux account. The last active administrator keeps the right and stays active, and nobody deactivates themselves.",
         "operationId": "UpdateUser",
         "parameters": [
           {
@@ -4288,6 +4288,7 @@
         "enum": [
           "app.permission.denied",
           "app.storage.too_large",
+          "auth.account.disabled",
           "auth.challenge.expired",
           "auth.credentials.invalid",
           "auth.csrf.header_missing",
@@ -8491,7 +8492,8 @@
           "uid",
           "totpEnabled",
           "createdAt",
-          "home"
+          "home",
+          "disabled"
         ],
         "type": "object",
         "properties": {
@@ -8538,6 +8540,10 @@
               "string"
             ],
             "description": "The user's home folder on a pool, or null when there is no pool yet."
+          },
+          "disabled": {
+            "type": "boolean",
+            "description": "Deactivated: cannot sign in, and the Linux account is expired."
           }
         },
         "description": "A user as the Users page shows it. Administrators only."
@@ -8558,6 +8564,13 @@
               "boolean"
             ],
             "description": "The last administrator cannot lose the right."
+          },
+          "disabled": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Deactivates or activates the user; deactivating ends the user's sessions. Nobody deactivates themselves or the last active administrator."
           }
         },
         "description": "Fields left out stay as they are."

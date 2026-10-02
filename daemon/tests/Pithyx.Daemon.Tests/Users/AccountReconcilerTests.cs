@@ -8,6 +8,8 @@ public sealed class AccountReconcilerTests
     private static IReadOnlyList<PasswdEntry> Passwd(string name) =>
         PasswdParser.Parse(File.ReadAllText(Path.Combine(RepositoryFiles.Root, "daemon", "tests", "fixtures", "etc-passwd", name)));
 
+    private static readonly IReadOnlySet<string> NoExpiry = new HashSet<string>();
+
     private static WantedAccount Wanted(string name, long uid, string comment = "", string home = AccountReconciler.NoHome) =>
         new(name, uid, comment, home, AccountReconciler.NoLogin);
 
@@ -33,7 +35,8 @@ public sealed class AccountReconcilerTests
                 Wanted("rita", 20001, "Rita Meyer"),
                 Wanted("new", 20003),
             ],
-            Passwd("handwritten-managed"));
+            Passwd("handwritten-managed"),
+            NoExpiry);
 
         Assert.Equal(
             [
@@ -56,7 +59,7 @@ public sealed class AccountReconcilerTests
     [InlineData("someone", 40001, "uid_outside_range")]
     public void RefusesWhatWouldTouchAnotherAccount(string name, long uid, string reason)
     {
-        var actions = AccountReconciler.Plan([Wanted("admin", 20000, "Ada Admin", "/tank/homes/admin"), Wanted("rita", 20001, "Rita"), Wanted(name, uid)], Passwd("handwritten-managed"));
+        var actions = AccountReconciler.Plan([Wanted("admin", 20000, "Ada Admin", "/tank/homes/admin"), Wanted("rita", 20001, "Rita"), Wanted(name, uid)], Passwd("handwritten-managed"), NoExpiry);
 
         Assert.Contains(new RefuseAccount(name, reason), actions);
     }
@@ -64,7 +67,7 @@ public sealed class AccountReconcilerTests
     [Fact]
     public void AUidAStaleAccountHoldsIsFreedFirst()
     {
-        var actions = AccountReconciler.Plan([Wanted("admin", 20000, "Ada Admin", "/tank/homes/admin"), Wanted("rita", 20001, "Rita"), Wanted("newcomer", 20002)], Passwd("handwritten-managed"));
+        var actions = AccountReconciler.Plan([Wanted("admin", 20000, "Ada Admin", "/tank/homes/admin"), Wanted("rita", 20001, "Rita"), Wanted("newcomer", 20002)], Passwd("handwritten-managed"), NoExpiry);
 
         Assert.Equal(["gone", "newcomer"], actions.Select(action => action.Name));
         Assert.IsType<RemoveAccount>(actions[0]);
@@ -82,6 +85,30 @@ public sealed class AccountReconcilerTests
         Assert.Equal(["gone"], remove.Arguments);
         Assert.Equal(["--home", "/tank/homes/rita", "rita"], AccountReconciler.Command(new UpdateAccount(Wanted("rita", 20001, home: "/tank/homes/rita"), ["home"]))!.Arguments);
         Assert.Null(AccountReconciler.Command(new RefuseAccount("x", "name_taken")));
+    }
+
+    [Fact]
+    public void ADeactivatedUserExpiresItsAccountAndAnActivatedOneClearsTheExpiry()
+    {
+        var wanted = new[] { Wanted("admin", 20000, "Ada Admin", "/tank/homes/admin"), Wanted("rita", 20001, "Rita") with { Expired = true } };
+        var deactivate = Assert.Single(AccountReconciler.Plan(wanted, Passwd("handwritten-managed"), NoExpiry).OfType<UpdateAccount>());
+        Assert.Equal(["--expiredate", "1", "rita"], AccountReconciler.Command(deactivate)!.Arguments);
+
+        var rita = new HashSet<string> { "rita" };
+        Assert.DoesNotContain(AccountReconciler.Plan(wanted, Passwd("handwritten-managed"), rita), action => action is UpdateAccount { Name: "rita" } update && update.Changed.Contains("expired"));
+        var activate = Assert.Single(AccountReconciler.Plan([wanted[0], wanted[1] with { Expired = false }], Passwd("handwritten-managed"), rita).OfType<UpdateAccount>());
+        Assert.Equal(["--expiredate", "", "rita"], AccountReconciler.Command(activate)!.Arguments);
+
+        var create = AccountReconciler.Command(new CreateAccount(Wanted("new", 20003) with { Expired = true }))!;
+        Assert.Equal(["--expiredate", "1", "new"], create.Arguments.TakeLast(3));
+    }
+
+    [Fact]
+    public void ShadowGivesOnlyTheNamesOfExpiringAccounts()
+    {
+        Assert.Equal(
+            ["rita"],
+            ShadowParser.Expiring("# comment\nroot:*:19000:0:99999:7:::\nrita:!:19000:0:99999:7::1:\nadmin:!:19000:0:99999:7:::\nbroken:1\n").Order());
     }
 
     [Theory]

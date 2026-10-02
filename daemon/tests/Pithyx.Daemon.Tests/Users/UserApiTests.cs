@@ -9,6 +9,7 @@ using Pithyx.Daemon.Notifications;
 using Pithyx.Daemon.Tests.Auth;
 using Pithyx.Daemon.Tests.Jobs;
 using Pithyx.Daemon.Tests.Support;
+using Pithyx.Daemon.Users;
 
 namespace Pithyx.Daemon.Tests.Users;
 
@@ -101,6 +102,76 @@ public sealed class UserApiTests : IDisposable
         Assert.Equal(HttpStatusCode.OK, demoted.StatusCode);
         Assert.False((await demoted.JsonAsync()).GetProperty("isAdmin").GetBoolean());
         _ = second;
+    }
+
+    [Fact]
+    public async Task ADeactivatedUserCannotSignInUntilActivatedAgain()
+    {
+        await _admin.SetupAdminAsync();
+        var ritaId = (await CreateAsync("rita")).GetProperty("id").GetInt64();
+        using var browser = _factory.CreateApiClient();
+        using (var signedIn = await browser.LoginAsync("rita", "river-candle-orbit-7"))
+        {
+            Assert.Equal(HttpStatusCode.OK, signedIn.StatusCode);
+        }
+
+        using (var off = await _admin.PatchAsJsonAsync($"/api/users/{ritaId}", new { disabled = true }, Token))
+        {
+            Assert.True((await off.JsonAsync()).GetProperty("disabled").GetBoolean());
+        }
+
+        // The session ended, and a wrong password still says only that.
+        using (var session = await browser.GetAsync("/api/auth/session", Token))
+        {
+            Assert.Equal(HttpStatusCode.Unauthorized, session.StatusCode);
+        }
+        using (var wrong = await browser.LoginAsync("rita", "wrong-candle-orbit-7"))
+        {
+            Assert.Equal("auth.credentials.invalid", await wrong.ErrorCodeAsync());
+        }
+        using (var refused = await browser.LoginAsync("rita", "river-candle-orbit-7"))
+        {
+            Assert.Equal("auth.account.disabled", await refused.ErrorCodeAsync());
+        }
+
+        using (var on = await _admin.PatchAsJsonAsync($"/api/users/{ritaId}", new { disabled = false }, Token))
+        {
+            Assert.False((await on.JsonAsync()).GetProperty("disabled").GetBoolean());
+        }
+        using var again = await browser.LoginAsync("rita", "river-candle-orbit-7");
+        Assert.Equal(HttpStatusCode.OK, again.StatusCode);
+    }
+
+    [Fact]
+    public async Task NobodyDeactivatesThemselvesOrTheLastActiveAdministrator()
+    {
+        await _admin.SetupAdminAsync();
+        var adminId = (await _admin.GetFromJsonAsync<JsonElement>("/api/users", Token))[0].GetProperty("id").GetInt64();
+        using (var self = await _admin.PatchAsJsonAsync($"/api/users/{adminId}", new { disabled = true }, Token))
+        {
+            Assert.Equal("users.user.self", await self.ErrorCodeAsync());
+        }
+
+        // A deactivated administrator does not count: the active one stays the last.
+        var beaId = (await CreateAsync("bea", isAdmin: true)).GetProperty("id").GetInt64();
+        using (var off = await _admin.PatchAsJsonAsync($"/api/users/{beaId}", new { disabled = true }, Token))
+        {
+            Assert.Equal(HttpStatusCode.OK, off.StatusCode);
+        }
+        using var demote = await _admin.PatchAsJsonAsync($"/api/users/{adminId}", new { isAdmin = false }, Token);
+        Assert.Equal("users.user.last_admin", await demote.ErrorCodeAsync());
+    }
+
+    [Fact]
+    public void ShareAclsGiveAdministratorsAndGrantedUsersTheirAccessAndNobodyElse()
+    {
+        Assert.Equal("u::rwX,g::---,o::---,m::rwX", ShareAcls.Entries([]));
+        Assert.Equal(
+            "u::rwX,g::---,o::---,m::rwX,u:20000:rwX,u:20001:r-X,u:20002:rwX",
+            ShareAcls.Entries([(20002, false), (20000, true), (20001, false), (20002, true)]));
+        var commands = ShareAcls.Commands("/tank/media", "u::rwX");
+        Assert.Equal(["-R", "-P", "--set", "u::rwX", "--", "/tank/media"], commands[0].Arguments);
+        Assert.Equal(["-R", "-P", "-d", "--set", "u::rwX", "--", "/tank/media"], commands[1].Arguments);
     }
 
     [Fact]

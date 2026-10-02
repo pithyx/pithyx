@@ -9,7 +9,8 @@
   },
   "badge": {
     "admin": "Administrator",
-    "totp": "Zwei-Faktor"
+    "totp": "Zwei-Faktor",
+    "disabled": "Deaktiviert"
   },
   "noHome": "Noch kein Pool",
   "field": {
@@ -44,5 +45,11 @@
     "confirm": "Gib {name} ein, um zu bestätigen",
     "submit": "Benutzer löschen"
   },
-  "cancel": "Abbrechen"
+  "cancel": "Abbrechen",
+  "disable": {
+    "disable": "Deaktivieren",
+    "enable": "Aktivieren",
+    "disableLabel": "{name} deaktivieren",
+    "enableLabel": "{name} aktivieren"
+  }
 }
