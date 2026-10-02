@@ -66,7 +66,7 @@ public sealed class CommandPlanRunner(ICommandRunner commands, SystemStateServic
                 state.RequireReachable(pool);
             }
 
-            var result = await commands.RunAsync(step.Command, cancellationToken);
+            var result = await RunStepAsync(step.Command, cancellationToken);
             if (result.ExitCode != 0 && Zfs.ImportPlans.AsksForForce(step.Command, result))
             {
                 // ZFS found the pool in use by another system after all; only a new plan with the typed name may force it.
@@ -85,6 +85,28 @@ public sealed class CommandPlanRunner(ICommandRunner commands, SystemStateServic
         if (plan.AfterRun is { } afterRun)
         {
             await afterRun(cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// A command that waits in the kernel, like a <c>zpool destroy</c> on a pool whose disks stopped answering, cannot be
+    /// killed; the plan ends with a code that says what to do instead of an unexpected error.
+    /// </summary>
+    private async Task<CommandResult> RunStepAsync(CommandRequest command, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await commands.RunAsync(command, cancellationToken);
+        }
+        catch (TimeoutException)
+        {
+            throw new PithyxException(
+                ErrorCodes.StorageCommandTimedOut,
+                new Dictionary<string, object?>
+                {
+                    ["command"] = string.Join(' ', command.Arguments.Take(1).Prepend(command.FileName)),
+                    ["minutes"] = (int)Math.Ceiling((command.Timeout ?? ProcessCommandRunner.DefaultTimeout).TotalMinutes),
+                });
         }
     }
 

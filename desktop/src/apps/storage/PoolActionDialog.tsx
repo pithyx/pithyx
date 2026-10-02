@@ -7,7 +7,7 @@ import { ErrorNotice } from '../../errors/ErrorNotice';
 import { Button } from '../../ui/Button';
 import { Dialog } from '../../ui/Dialog';
 import { TextField } from '../../ui/TextField';
-import { internalCall, type Pool, type StorageDisk, type Vdev } from '../sdk/internal';
+import { internalCall, type Job, type Pool, type StorageDisk, type Vdev } from '../sdk/internal';
 import { isFinished, JobStatus, PlanPreview, RunButton, RunError, useRunPlan } from './PlanRun';
 import styles from './Storage.module.css';
 import { describeProblem, guardReason } from './shared';
@@ -33,7 +33,8 @@ const actionKey = {
 /**
  * One repair or maintenance action on a pool through a command plan: pick a disk where the action needs one (a new
  * disk is never used as a replacement without its serial typed), type the pool's name to destroy it, see the exact
- * commands, run them.
+ * commands, run them. A destroy runs in the background: the dialog closes as soon as its job started, and the
+ * notifications say when it is done or why it failed. Other actions can be closed while they run, too.
  */
 export function PoolActionDialog({
   app,
@@ -42,6 +43,7 @@ export function PoolActionDialog({
   action,
   disks,
   onClose,
+  onStarted,
 }: {
   app: PithyxApp;
   pool: Pool;
@@ -49,6 +51,8 @@ export function PoolActionDialog({
   action: PoolAction;
   disks: StorageDisk[];
   onClose: () => void;
+  /** Called once the plan's job started, before a destroy closes the dialog. */
+  onStarted?: (job: Job) => void;
 }) {
   const { t } = useTranslation('storage');
   const locale = useFormatLocale();
@@ -69,7 +73,12 @@ export function PoolActionDialog({
         ...(action === 'pool.destroy' ? { confirmName } : {}),
       }),
   });
-  const { run, job } = useRunPlan(app);
+  const { run, job } = useRunPlan(app, (started) => {
+    onStarted?.(started);
+    if (action === 'pool.destroy') {
+      onClose();
+    }
+  });
   const askSerial =
     chosen !== undefined &&
     (action === 'pool.replace' || chosen.guard.decision === 'needsSerialConfirmation');
@@ -79,7 +88,7 @@ export function PoolActionDialog({
   return (
     <Dialog
       isOpen
-      isDismissable={job === null || isFinished(job)}
+      isDismissable
       tone={action === 'pool.destroy' ? 'danger' : 'default'}
       onOpenChange={(open) => {
         if (!open) {
@@ -89,7 +98,7 @@ export function PoolActionDialog({
       title={t(`actions.${key}.title`, { pool: pool.name, device: vdev?.name ?? '' })}
       actions={
         job !== null ? (
-          <Button variant="primary" isDisabled={!isFinished(job)} onPress={onClose}>
+          <Button variant="primary" onPress={onClose}>
             {t('create.close')}
           </Button>
         ) : (
@@ -180,6 +189,7 @@ export function PoolActionDialog({
         {plan.data !== undefined && <PlanPreview preview={plan.data} disks={disks} />}
         <RunError run={run} />
         {job !== null && <JobStatus job={job} />}
+        {job !== null && !isFinished(job) && <p className={styles.muted}>{t('run.background')}</p>}
       </div>
     </Dialog>
   );

@@ -137,6 +137,13 @@ test('destroying a pool needs its name typed and lists its datasets', async ({ p
   await expect(dialog.getByRole('status').getByRole('listitem').last()).toHaveText(
     'zpool destroy pithyxtests',
   );
+
+  // The destroy runs in the background: the dialog closes at once and the notifications say when it is done.
+  await dialog.getByRole('button', { name: 'Destroy pool', exact: true }).click();
+  await expect(dialog).toBeHidden();
+  await expect(page.getByRole('region', { name: 'New notifications' })).toContainText(
+    'Deleting a pool: done',
+  );
 });
 
 async function openAdvanced(storage: ReturnType<typeof appWindow>) {

@@ -81,6 +81,7 @@ export const errorCodes = [
   'request.route.not_found',
   'storage.alert.not_found',
   'storage.command.failed',
+  'storage.command.timed_out',
   'storage.dataset.compression_invalid',
   'storage.dataset.exists',
   'storage.dataset.in_use_by_share',
