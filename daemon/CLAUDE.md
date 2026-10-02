@@ -1,6 +1,6 @@
 # Daemon
 
-Rules for `daemon/`. The root `CLAUDE.md` applies as well.
+Rules for `daemon/`; the root `CLAUDE.md` applies as well.
 
 ## Daemon
 
@@ -39,6 +39,15 @@ Rules for `daemon/`. The root `CLAUDE.md` applies as well.
 ```
 
 - Derived data of files on a pool (thumbnails) lives in that pool's cache dataset `<pool>/pithyx/cache`, capped at 2 GB, never on the system disk. It goes with the pool when the pool is destroyed or exported; shares outside a pool (development only) use the development cache folder.
+
+## Operations
+
+- Runs under systemd with `Restart=on-failure` and a watchdog; sends `sd_notify` heartbeats.
+- Detect capabilities, never assume them. In VMs or without sensors, hide or explain missing data (temperatures, SMART) instead of showing errors.
+- Recovery never modifies pools automatically.
+- Never wake sleeping disks: SMART via `smartctl -n standby`, logs and state on the system disk, listings from ARC or a special vdev. Spindown is a per-pool option, off by default.
+- Power profiles (performance, balanced, efficient) set CPU governor/EPP and optional link power management (SATA ALPM, PCIe ASPM, USB autosuspend); options known to cause instability stay opt-in.
+- Host network changes apply with a 60 second confirmation timer and roll back unless confirmed.
 
 ## Virtual machines
 
