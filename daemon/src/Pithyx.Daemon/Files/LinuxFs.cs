@@ -57,6 +57,7 @@ internal static unsafe partial class LinuxFs
     public const int EROFS = 30;
     public const int ENAMETOOLONG = 36;
     public const int ENOSYS = 38;
+    public const int ENODATA = 61;
     public const int ENOTEMPTY = 39;
     public const int ELOOP = 40;
     public const int EOPNOTSUPP = 95;
@@ -129,6 +130,12 @@ internal static unsafe partial class LinuxFs
 
     [LibraryImport("libc", EntryPoint = "fchownat", SetLastError = true)]
     private static partial int FChownAt(int directory, byte* name, uint owner, uint group, int flags);
+
+    [LibraryImport("libc", EntryPoint = "fchmod", SetLastError = true)]
+    private static partial int FChmod(int descriptor, uint mode);
+
+    [LibraryImport("libc", EntryPoint = "fremovexattr", SetLastError = true)]
+    private static partial int FRemoveXattr(int descriptor, byte* name);
 
     [LibraryImport("libc", EntryPoint = "geteuid")]
     private static partial uint GetEffectiveUserId();
@@ -364,6 +371,35 @@ internal static unsafe partial class LinuxFs
         if (result != 0)
         {
             throw Failure(name);
+        }
+    }
+
+    /// <summary>Sets the mode of an open file or folder (fchmod; not on an <c>O_PATH</c> handle).</summary>
+    public static void ChangeMode(SafeFileHandle file, uint mode)
+    {
+        if (WithHandle(file, fd => FChmod(fd, mode)) != 0)
+        {
+            throw Failure("");
+        }
+    }
+
+    /// <summary>Removes the POSIX ACL and the default ACL of an open file or folder; one that has none is fine.</summary>
+    public static void RemoveAcls(SafeFileHandle file)
+    {
+        foreach (var name in (string[])["system.posix_acl_access", "system.posix_acl_default"])
+        {
+            var bytes = Utf8(name);
+            var result = WithHandle(file, fd =>
+            {
+                fixed (byte* pointer = bytes)
+                {
+                    return FRemoveXattr(fd, pointer);
+                }
+            });
+            if (result != 0 && Marshal.GetLastPInvokeError() is not (ENODATA or EOPNOTSUPP))
+            {
+                throw Failure("");
+            }
         }
     }
 

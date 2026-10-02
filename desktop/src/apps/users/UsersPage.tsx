@@ -22,8 +22,8 @@ type Action =
   | { kind: 'delete'; user: UserSummary };
 
 /**
- * The Users page of Settings: every user with its Linux uid and home, create, edit, reset the password, deactivate,
- * delete.
+ * The Users page of Settings: every user with its Linux uid and home, its SMB and SFTP rights and whether those know
+ * the password yet, create, edit, reset the password, deactivate, delete.
  */
 export function UsersPage({ app }: { app: PithyxApp }) {
   const { t } = useTranslation('users');
@@ -84,7 +84,12 @@ export function UsersPage({ app }: { app: PithyxApp }) {
                     {user.isAdmin && <Badge tone="accent">{t('badge.admin')}</Badge>}
                     {user.totpEnabled && <Badge tone="neutral">{t('badge.totp')}</Badge>}
                     {user.disabled && <Badge tone="neutral">{t('badge.disabled')}</Badge>}
+                    {user.smb && <Badge tone="neutral">{t('badge.smb')}</Badge>}
+                    {user.sftp && <Badge tone="neutral">{t('badge.sftp')}</Badge>}
                   </span>
+                  {!user.disabled && (user.smb || user.sftp) && !user.fileServicePassword && (
+                    <span className={styles.hint}>{t('fileServices.signInOnce')}</span>
+                  )}
                 </th>
                 <td className={styles.optional}>{user.uid ?? ''}</td>
                 <td className={styles.optional}>{user.home ?? t('noHome')}</td>
@@ -181,6 +186,7 @@ function CreateDialog({ app, onClose }: { app: PithyxApp; onClose: () => void })
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
+  const [protocols, setProtocols] = useState({ smb: true, sftp: false });
   const [passwordError, setPasswordError] = useState<string | undefined>();
   const create = useChange(
     () =>
@@ -189,6 +195,7 @@ function CreateDialog({ app, onClose }: { app: PithyxApp; onClose: () => void })
         password,
         displayName: displayName.trim() === '' ? null : displayName,
         isAdmin,
+        ...protocols,
       }),
     onClose,
   );
@@ -236,6 +243,7 @@ function CreateDialog({ app, onClose }: { app: PithyxApp; onClose: () => void })
       <Checkbox isSelected={isAdmin} onChange={setIsAdmin}>
         {t('field.admin')}
       </Checkbox>
+      <Protocols isAdmin={isAdmin} value={protocols} onChange={setProtocols} />
       {create.isError && <ErrorNotice error={describeProblem(create.error)} />}
     </FormDialog>
   );
@@ -253,8 +261,15 @@ function EditDialog({
   const { t } = useTranslation('users');
   const [displayName, setDisplayName] = useState(user.displayName ?? '');
   const [isAdmin, setIsAdmin] = useState(user.isAdmin);
+  const [protocols, setProtocols] = useState({ smb: user.smb, sftp: user.sftp });
   const edit = useChange(
-    () => usersCall(app, 'internal.admin.users.update', { userId: user.id, displayName, isAdmin }),
+    () =>
+      usersCall(app, 'internal.admin.users.update', {
+        userId: user.id,
+        displayName,
+        isAdmin,
+        ...protocols,
+      }),
     onClose,
   );
   return (
@@ -276,8 +291,52 @@ function EditDialog({
       <Checkbox isSelected={isAdmin} onChange={setIsAdmin}>
         {t('field.admin')}
       </Checkbox>
+      <Protocols isAdmin={isAdmin} value={protocols} onChange={setProtocols} />
+      {!user.fileServicePassword && <p className={styles.muted}>{t('fileServices.signInOnce')}</p>}
       {edit.isError && <ErrorNotice error={describeProblem(edit.error)} />}
     </FormDialog>
+  );
+}
+
+interface ProtocolRights {
+  smb: boolean;
+  sftp: boolean;
+}
+
+/** The SMB and SFTP rights of a user; administrators have both, whatever is stored. */
+function Protocols({
+  isAdmin,
+  value,
+  onChange,
+}: {
+  isAdmin: boolean;
+  value: ProtocolRights;
+  onChange: (value: ProtocolRights) => void;
+}) {
+  const { t } = useTranslation('users');
+  return (
+    <fieldset className={styles.fieldset}>
+      <legend className={styles.legend}>{t('fileServices.title')}</legend>
+      <Checkbox
+        isSelected={isAdmin || value.smb}
+        isDisabled={isAdmin}
+        onChange={(smb) => {
+          onChange({ ...value, smb });
+        }}
+      >
+        {t('fileServices.smb')}
+      </Checkbox>
+      <Checkbox
+        isSelected={isAdmin || value.sftp}
+        isDisabled={isAdmin}
+        onChange={(sftp) => {
+          onChange({ ...value, sftp });
+        }}
+      >
+        {t('fileServices.sftp')}
+      </Checkbox>
+      {isAdmin && <p className={styles.muted}>{t('fileServices.admin')}</p>}
+    </fieldset>
   );
 }
 
@@ -313,6 +372,7 @@ function PasswordDialog({
       }}
     >
       <p className={styles.muted}>{t('password.intro')}</p>
+      <p className={styles.muted}>{t('password.fileServices')}</p>
       <NewPasswordField
         label={t('field.newPassword')}
         name="password"

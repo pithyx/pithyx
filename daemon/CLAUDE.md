@@ -32,6 +32,7 @@ Rules for `daemon/`. The root `CLAUDE.md` applies as well.
 /var/cache/pithyx/   rebuildable, safe to delete
 /var/log/pithyx/     logs: daemon.json files and logs.db (the Log Center, capped at 4 GB)
 /run/pithyx/         API socket
+/run/pithyx/sftp/    SFTP views: one chroot per user with bind mounts of its shared folders, rebuilt at start
 /<pool>/.pithyx/     app data, volumes, config backups
 /<pool>/.pithyx/cache/  the pool's thumbnails and other derived data (<pool>/pithyx/cache, hidden)
 /<pool>/.pithyx/system/logs/  the optional log archive (archive.db)

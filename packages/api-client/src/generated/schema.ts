@@ -279,6 +279,24 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/file-services": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. Whether SMB and SFTP are switched on, the SMB workgroup and how each service is doing. */
+        get: operations["GetFileServices"];
+        /** @description Administrators only. Switches SMB or SFTP on or off and sets the SMB workgroup; the configuration is checked and applied before the answer. Switching SFTP off never stops sshd: it only stops letting Pithyx users in. */
+        put: operations["UpdateFileServices"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/files/{shareId}/content": {
         parameters: {
             query?: never;
@@ -768,7 +786,7 @@ export type paths = {
         delete?: never;
         options?: never;
         head?: never;
-        /** @description Administrators only. Changes the name shown and the description; the folder and the dataset stay where they are. */
+        /** @description Administrators only. Changes the name shown, the description and whether SMB and SFTP offer the share (and whether SMB clients must encrypt); the folder and the dataset stay where they are. */
         patch: operations["UpdateShare"];
         trace?: never;
     };
@@ -847,7 +865,7 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** @description Administrators only. Every share with its description, dataset, used and available space, quota and how many users may read or write. */
+        /** @description Administrators only. Every share with its description, dataset, used and available space, quota, how many users may read or write and its SMB and SFTP settings. */
         get: operations["ListShareDetails"];
         put?: never;
         post?: never;
@@ -1197,7 +1215,7 @@ export type paths = {
         /** @description Administrators only. Every user with its Linux uid and home folder. */
         get: operations["GetUsers"];
         put?: never;
-        /** @description Administrators only. Creates a user with a Linux account (a uid from 20000 to 29999 that is never given out again, the group users, no login shell) and a home dataset below the first pool's homes when there is a pool. */
+        /** @description Administrators only. Creates a user with a Linux and a Samba account with the password (a uid from 20000 to 29999 that is never given out again, the group users, no login shell) and a home dataset below the first pool's homes when there is a pool. */
         post: operations["CreateUser"];
         delete?: never;
         options?: never;
@@ -1219,7 +1237,7 @@ export type paths = {
         delete: operations["DeleteUser"];
         options?: never;
         head?: never;
-        /** @description Administrators only. Changes the display name, the administrator right or whether the user is deactivated. Deactivating ends the user's sessions and expires the Linux account. The last active administrator keeps the right and stays active, and nobody deactivates themselves. */
+        /** @description Administrators only. Changes the display name, the administrator right, the SMB and SFTP rights or whether the user is deactivated. Deactivating ends the user's sessions and expires the Linux account. The last active administrator keeps the right and stays active, and nobody deactivates themselves. */
         patch: operations["UpdateUser"];
         trace?: never;
     };
@@ -1231,7 +1249,7 @@ export type paths = {
             cookie?: never;
         };
         get?: never;
-        /** @description Administrators only. Sets a new password and ends every session of the user. */
+        /** @description Administrators only. Sets a new password, for SMB and SFTP as well, and ends every session of the user. */
         put: operations["ResetUserPassword"];
         post?: never;
         delete?: never;
@@ -1618,7 +1636,7 @@ export type components = {
             }[];
         };
         /** @enum {string} */
-        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.account.disabled" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.share.unavailable" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "logs.app.invalid" | "logs.archive.pool_unavailable" | "logs.batch.too_large" | "logs.query.invalid" | "logs.settings.invalid" | "notifications.message.invalid" | "notifications.notification.not_found" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.command.timed_out" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.disks_missing" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.pool.suspended" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "storage.zfs.unavailable" | "system.internal.unexpected" | "system.origin.forbidden" | "system.time.apply_failed" | "system.time.server_invalid" | "system.time.servers_too_many" | "system.time.zone_invalid" | "users.account.refused" | "users.uid.exhausted" | "users.user.exists" | "users.user.last_admin" | "users.user.not_found" | "users.user.self";
+        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.account.disabled" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fileservices.service.unavailable" | "fileservices.workgroup.invalid" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.share.unavailable" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "logs.app.invalid" | "logs.archive.pool_unavailable" | "logs.batch.too_large" | "logs.query.invalid" | "logs.settings.invalid" | "notifications.message.invalid" | "notifications.notification.not_found" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.command.timed_out" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.disks_missing" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.pool.suspended" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "storage.zfs.unavailable" | "system.internal.unexpected" | "system.origin.forbidden" | "system.time.apply_failed" | "system.time.server_invalid" | "system.time.servers_too_many" | "system.time.zone_invalid" | "users.account.refused" | "users.uid.exhausted" | "users.user.exists" | "users.user.last_admin" | "users.user.not_found" | "users.user.self";
         /** @description A failed client message. `id` is empty when the message could not be parsed. */
         ErrorMessage: {
             code: components["schemas"]["ErrorCode"];
@@ -1689,6 +1707,33 @@ export type components = {
             permanent: boolean;
             target?: null | components["schemas"]["FileLocation"];
         };
+        /** @description The file services of the box. Administrators only. */
+        FileServiceSettings: {
+            /** @description How SFTP is doing. */
+            sftp: components["schemas"]["FileServiceState"];
+            /** @description Whether SFTP is switched on. */
+            sftpEnabled: boolean;
+            /** @description How SMB is doing. */
+            smb: components["schemas"]["FileServiceState"];
+            /** @description Whether SMB is switched on. */
+            smbEnabled: boolean;
+            /** @description The SMB workgroup, 1 to 15 letters, digits, dots, dashes and underscores. */
+            workgroup: string;
+        };
+        /** @description Changes of the file services; fields left out stay. */
+        FileServiceSettingsRequest: {
+            /** @description Switches SFTP on or off. */
+            sftpEnabled?: null | boolean;
+            /** @description Switches SMB on or off. */
+            smbEnabled?: null | boolean;
+            /** @description A new SMB workgroup. */
+            workgroup?: null | string;
+        };
+        /**
+         * @description How a file service is doing.
+         * @enum {unknown}
+         */
+        FileServiceState: "off" | "running" | "failed" | "unavailable";
         FileVersion: {
             /**
              * Format: date-time
@@ -2102,6 +2147,16 @@ export type components = {
             isAdmin: boolean;
             /** @description At least 8 characters and not one of the most common passwords. */
             password: string;
+            /**
+             * @description Whether the user may use SFTP; off when left out.
+             * @default false
+             */
+            sftp: boolean;
+            /**
+             * @description Whether the user may use SMB; on when left out.
+             * @default true
+             */
+            smb: boolean;
             /** @description Lowercase letters, digits, underscores and hyphens, starting with a letter or underscore, at most 32 characters; not a system name. */
             username: string;
         };
@@ -2781,6 +2836,12 @@ export type components = {
             readWriteUsers: number;
             /** @description Whether daily restore points (snapshots kept 7 days) are on; null for a folder share. */
             restorePoints: null | boolean;
+            /** @description Whether SFTP shows the shared folder (dataset shares only). */
+            sftp: boolean;
+            /** @description Whether SMB offers the shared folder (dataset shares only). */
+            smb: boolean;
+            /** @description Whether SMB clients must encrypt. */
+            smbEncrypt: boolean;
             /**
              * Format: int64
              * @description Space the dataset uses with its snapshots; null for a folder share or while the dataset is not there (pool missing).
@@ -2839,6 +2900,12 @@ export type components = {
             description?: null | string;
             /** @description New name shown to users, unique like every share name. */
             name?: null | string;
+            /** @description Shows the shared folder over SFTP or hides it. */
+            sftp?: null | boolean;
+            /** @description Offers the shared folder over SMB or stops it. */
+            smb?: null | boolean;
+            /** @description Requires SMB clients to encrypt, or lets them choose. */
+            smbEncrypt?: null | boolean;
         };
         /** @description One user's access to a share, for editing rights. */
         ShareUserAccess: {
@@ -3456,6 +3523,8 @@ export type components = {
             disabled: boolean;
             /** @description Shown instead of the user name, if set. */
             displayName: null | string;
+            /** @description Whether SMB and SFTP know the user's password. They learn it when the user signs in on the web or an administrator sets it; until then the user cannot use them. */
+            fileServicePassword: boolean;
             /** @description The user's home folder on a pool, or null when there is no pool yet. */
             home: null | string;
             /**
@@ -3465,6 +3534,10 @@ export type components = {
             id: number;
             /** @description Administrators have every right. */
             isAdmin: boolean;
+            /** @description Whether the user may use SFTP; administrators always may. */
+            sftp: boolean;
+            /** @description Whether the user may use SMB; administrators always may. */
+            smb: boolean;
             /** @description Whether the user signs in with a second factor. */
             totpEnabled: boolean;
             /**
@@ -3483,6 +3556,10 @@ export type components = {
             displayName?: null | string;
             /** @description The last administrator cannot lose the right. */
             isAdmin?: null | boolean;
+            /** @description Allows or forbids SFTP. */
+            sftp?: null | boolean;
+            /** @description Allows or forbids SMB. */
+            smb?: null | boolean;
         };
         Vdev: {
             /**
@@ -4145,6 +4222,68 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetFileServices: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FileServiceSettings"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    UpdateFileServices: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FileServiceSettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FileServiceSettings"];
+                };
             };
             /** @description Problem details with a stable error code. */
             default: {

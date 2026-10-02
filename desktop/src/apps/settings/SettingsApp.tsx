@@ -31,8 +31,6 @@ interface SettingsPage {
   category: 'system' | 'sharing' | 'accounts';
   icon: TablerIcon;
   Component: ComponentType<{ app: PithyxApp }>;
-  /** Shown on the tile until the page does what its title says. */
-  coming?: true;
 }
 
 // In the order of the overview. Only finished or clearly marked pages; personal settings are in the user menu.
@@ -41,13 +39,7 @@ const PAGES: readonly SettingsPage[] = [
   { id: 'network', category: 'system', icon: IconNetwork, Component: NetworkPage },
   { id: 'regional', category: 'system', icon: IconWorld, Component: RegionalPage },
   { id: 'shares', category: 'sharing', icon: IconFolders, Component: SharesPage },
-  {
-    id: 'fileServices',
-    category: 'sharing',
-    icon: IconServer2,
-    Component: FileServicesPage,
-    coming: true,
-  },
+  { id: 'fileServices', category: 'sharing', icon: IconServer2, Component: FileServicesPage },
   { id: 'users', category: 'accounts', icon: IconUsers, Component: UsersPage },
 ];
 const CATEGORIES = ['system', 'sharing', 'accounts'] as const;
@@ -185,12 +177,7 @@ export function SettingsApp({ app }: SdkAppProps) {
                           <Icon size={24} stroke={1.75} />
                         </span>
                         <span className={styles.tileText}>
-                          <span className={styles.tileTitle}>
-                            {t(`pages.${entry.id}.title`)}
-                            {entry.coming === true && (
-                              <span className={styles.badge}>{t('overview.coming')}</span>
-                            )}
-                          </span>
+                          <span className={styles.tileTitle}>{t(`pages.${entry.id}.title`)}</span>
                           <span className={styles.tileDescription}>
                             {t(`pages.${entry.id}.description`)}
                           </span>

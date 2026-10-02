@@ -72,6 +72,14 @@
       "too_long": "Die Notiz ist zu lang. Eine Notiz fasst höchstens {maxLength} Zeichen."
     }
   },
+  "fileservices": {
+    "service": {
+      "unavailable": "{service, select, smb {SMB} sftp {SFTP} other {Dieser Dienst}} lässt sich nicht einschalten: Sein Programm ist auf diesem System nicht installiert."
+    },
+    "workgroup": {
+      "invalid": "Gib eine Arbeitsgruppe aus 1 bis {max} Buchstaben, Ziffern, Punkten, Bindestrichen oder Unterstrichen ein, die mit einem Buchstaben oder einer Ziffer beginnt."
+    }
+  },
   "fs": {
     "cursor": {
       "invalid": "Die Listenposition ist nicht mehr gültig. Lade den Ordner neu."

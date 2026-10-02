@@ -21,6 +21,10 @@ public sealed partial class ProcessCommandRunner(ILogger<ProcessCommandRunner> l
         using var process = new Process { StartInfo = startInfo };
         var stopwatch = Stopwatch.StartNew();
         process.Start();
+        if (request.StandardInput is { } input)
+        {
+            await process.StandardInput.WriteAsync(input.AsMemory(), timeoutSource.Token);
+        }
         process.StandardInput.Close();
         var standardOutput = process.StandardOutput.ReadToEndAsync(CancellationToken.None);
         var standardError = process.StandardError.ReadToEndAsync(CancellationToken.None);

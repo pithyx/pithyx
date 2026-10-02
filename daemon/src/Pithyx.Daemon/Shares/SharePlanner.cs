@@ -100,7 +100,7 @@ public sealed partial class SharePlanner(
             ?? throw new PithyxException(ErrorCodes.FsSharePoolNotPrepared, new Dictionary<string, object?> { ["pool"] = pool.Name });
         var datasetName = DatasetNameFor(name)
             ?? throw new PithyxException(ErrorCodes.FsShareDatasetNameInvalid, new Dictionary<string, object?> { ["name"] = name });
-        if (ReservedDatasetNames.Contains(datasetName))
+        if (ReservedDatasetNames.Contains(datasetName) || FileServices.SmbConfig.ReservedNames.Contains(name))
         {
             throw new PithyxException(ErrorCodes.FsShareNameReserved, new Dictionary<string, object?> { ["name"] = datasetName });
         }

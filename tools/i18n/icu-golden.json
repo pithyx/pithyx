@@ -140,6 +140,18 @@
       },
       "expected": "The note is too long. A note holds at most 4000 characters."
     },
+    "fileservices.service.unavailable": {
+      "params": {
+        "service": "smb"
+      },
+      "expected": "SMB cannot be switched on: its program is not installed on this system."
+    },
+    "fileservices.workgroup.invalid": {
+      "params": {
+        "max": 15
+      },
+      "expected": "Enter a workgroup of 1 to 15 letters, digits, dots, dashes or underscores, starting with a letter or digit."
+    },
     "fs.cursor.invalid": {
       "params": {},
       "expected": "The list position is no longer valid. Load the folder again."

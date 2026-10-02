@@ -1,0 +1,6 @@
+root:x:0:
+users:x:100:gabriel
+# a comment
+pithyx-users:x:990:ada,rita,tom
+pithyx-sftp:x:989:
+broken:x:abc:

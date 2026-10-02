@@ -76,7 +76,14 @@ export interface InternalMethods {
     result: null;
   };
   'internal.admin.shares.update': {
-    params: { shareId: number; name?: string; description?: string };
+    params: {
+      shareId: number;
+      name?: string;
+      description?: string;
+      smb?: boolean;
+      sftp?: boolean;
+      smbEncrypt?: boolean;
+    };
     result: ShareDetails;
   };
   /** Plans creating or deleting a shared folder; the plan runs with `internal.admin.storage.run`. */
@@ -186,7 +193,10 @@ function isShareUpdate(value: unknown): boolean {
   return (
     isShareId(value) &&
     (value.name === undefined || typeof value.name === 'string') &&
-    (value.description === undefined || typeof value.description === 'string')
+    (value.description === undefined || typeof value.description === 'string') &&
+    [value.smb, value.sftp, value.smbEncrypt].every(
+      (flag) => flag === undefined || typeof flag === 'boolean',
+    )
   );
 }
 
@@ -455,7 +465,7 @@ export function adminStorageHost(emit: (event: string, data?: unknown) => void):
       validate: isShareUpdate,
       handle: (params) =>
         daemon(async () => {
-          const { shareId, name, description } =
+          const { shareId, name, description, smb, sftp, smbEncrypt } =
             params as InternalMethods['internal.admin.shares.update']['params'];
           return unwrap(
             await api.PATCH('/api/shares/{shareId}', {
@@ -463,6 +473,9 @@ export function adminStorageHost(emit: (event: string, data?: unknown) => void):
               body: {
                 ...(name === undefined ? {} : { name }),
                 ...(description === undefined ? {} : { description }),
+                ...(smb === undefined ? {} : { smb }),
+                ...(sftp === undefined ? {} : { sftp }),
+                ...(smbEncrypt === undefined ? {} : { smbEncrypt }),
               },
             }),
           );

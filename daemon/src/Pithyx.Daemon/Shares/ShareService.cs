@@ -137,14 +137,15 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
         ArgumentNullException.ThrowIfNull(pools);
         await using var connection = await connections.OpenAsync(cancellationToken);
         // Administrators use every share anyway, so the summary counts the others.
-        var rows = await connection.QueryAsync<(long Id, string Name, string Description, string Path, string? Dataset, long ReadUsers, long ReadWriteUsers, long? RestorePoints)>(
+        var rows = await connection.QueryAsync<(long Id, string Name, string Description, string Path, string? Dataset, long ReadUsers, long ReadWriteUsers, long? RestorePoints, long Smb, long Sftp, long SmbEncrypt)>(
             """
             SELECT shares.id, shares.name, shares.description, shares.path, shares.dataset,
                 (SELECT COUNT(*) FROM share_access JOIN users ON users.id = share_access.user_id
                     WHERE share_access.share_id = shares.id AND users.is_admin = 0 AND share_access.level = 'read'),
                 (SELECT COUNT(*) FROM share_access JOIN users ON users.id = share_access.user_id
                     WHERE share_access.share_id = shares.id AND users.is_admin = 0 AND share_access.level = 'readWrite'),
-                (SELECT enabled FROM snapshot_schedules WHERE snapshot_schedules.dataset = shares.dataset AND kind = 'daily')
+                (SELECT enabled FROM snapshot_schedules WHERE snapshot_schedules.dataset = shares.dataset AND kind = 'daily'),
+                shares.smb, shares.sftp, shares.smb_encrypt
             FROM shares ORDER BY shares.name
             """);
         var datasets = pools.Datasets.ToDictionary(dataset => dataset.Name, StringComparer.Ordinal);
@@ -163,7 +164,10 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
                 dataset?.QuotaBytes,
                 (int)row.ReadUsers,
                 (int)row.ReadWriteUsers,
-                row.Dataset is null ? null : row.RestorePoints == 1);
+                row.Dataset is null ? null : row.RestorePoints == 1,
+                row.Smb == 1,
+                row.Sftp == 1,
+                row.SmbEncrypt == 1);
         })];
     }
 
@@ -186,7 +190,7 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
         return [.. rows.Select(row => new ShareUserAccess(row.Id, row.Username, row.DisplayName, row.IsAdmin == 1, row.Level is { } level ? Parse(level) : ShareAccess.None))];
     }
 
-    /// <summary>Changes the name shown and the description. The folder and the dataset stay where they are.</summary>
+    /// <summary>Changes the name shown, the description and the protocols. The folder and the dataset stay where they are.</summary>
     public async Task UpdateAsync(ClaimsPrincipal user, long shareId, ShareUpdate update, CancellationToken cancellationToken)
     {
         RequireAdmin(user);
@@ -198,13 +202,21 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
         {
             throw new PithyxException(ErrorCodes.FsShareNotFound);
         }
+        if (name is not null && FileServices.SmbConfig.ReservedNames.Contains(name))
+        {
+            throw new PithyxException(ErrorCodes.FsShareNameReserved, new Dictionary<string, object?> { ["name"] = name });
+        }
         if (name is not null && await NameTakenAsync(connection, name, shareId))
         {
             throw new PithyxException(ErrorCodes.FsShareExists);
         }
         await connection.ExecuteAsync(
-            "UPDATE shares SET name = COALESCE(@name, name), description = COALESCE(@description, description), updated_at = @now WHERE id = @shareId",
-            new { shareId, name, description, now = SessionService.Format(time.GetUtcNow()) });
+            """
+            UPDATE shares SET name = COALESCE(@name, name), description = COALESCE(@description, description),
+                smb = COALESCE(@smb, smb), sftp = COALESCE(@sftp, sftp), smb_encrypt = COALESCE(@smbEncrypt, smb_encrypt), updated_at = @now
+            WHERE id = @shareId
+            """,
+            new { shareId, name, description, smb = update.Smb, sftp = update.Sftp, smbEncrypt = update.SmbEncrypt, now = SessionService.Format(time.GetUtcNow()) });
     }
 
     /// <summary>The share as stored, or null. Not for callers with a user: it checks no access.</summary>

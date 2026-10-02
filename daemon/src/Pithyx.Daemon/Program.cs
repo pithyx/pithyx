@@ -6,6 +6,7 @@ using Pithyx.Daemon.Commands;
 using Pithyx.Daemon.Database;
 using Pithyx.Daemon.Errors;
 using Pithyx.Daemon.Files;
+using Pithyx.Daemon.FileServices;
 using Pithyx.Daemon.Health;
 using Pithyx.Daemon.Hosting;
 using Pithyx.Daemon.Jobs;
@@ -71,6 +72,7 @@ builder.Services.AddPithyxUsers(mode == DaemonMode.Real
         Path.Combine(builder.Configuration["PITHYX_FIXTURES"] ?? Path.Combine(builder.Environment.ContentRootPath, "..", "..", "tests", "fixtures"), "etc", "passwd"),
         Apply: false,
         ShadowPath: Path.Combine(builder.Configuration["PITHYX_FIXTURES"] ?? Path.Combine(builder.Environment.ContentRootPath, "..", "..", "tests", "fixtures"), "etc", "shadow")));
+builder.Services.AddPithyxFileServices(new FileServiceOptions(Apply: mode == DaemonMode.Real));
 builder.Services.AddPithyxFiles();
 builder.Services.AddSingleton<TopicRegistry>();
 builder.Services.AddSingleton<TopicHub>();
@@ -102,6 +104,7 @@ if (!BuildTimeDocument.IsGenerating)
         builder.Services.AddHostedService<JournalReader>();
         builder.Services.AddHostedService<Pithyx.Daemon.Files.Thumbnails.ThumbnailCacheProvisioner>();
         builder.Services.AddHostedService<LinuxAccountSync>();
+        builder.Services.AddHostedService(services => services.GetRequiredService<FileServiceSync>());
     }
 }
 builder.Services.AddPithyxOpenApi();
@@ -187,6 +190,7 @@ api.MapJobEndpoints();
 api.MapNotificationEndpoints();
 api.MapShareEndpoints();
 api.MapUserEndpoints();
+api.MapFileServiceEndpoints();
 api.MapFileEndpoints();
 api.MapStorageEndpoints();
 api.MapSnapshotEndpoints();

@@ -10,7 +10,9 @@
   "badge": {
     "admin": "Administrator",
     "totp": "Two-factor",
-    "disabled": "Deactivated"
+    "disabled": "Deactivated",
+    "smb": "SMB",
+    "sftp": "SFTP"
   },
   "noHome": "No pool yet",
   "field": {
@@ -36,7 +38,8 @@
     "button": "New password",
     "title": "New password for {name}",
     "intro": "The user is signed out everywhere and signs in with the new password.",
-    "submit": "Set password"
+    "submit": "Set password",
+    "fileServices": "SMB and SFTP use the new password as well."
   },
   "delete": {
     "button": "Delete",
@@ -51,5 +54,12 @@
     "enable": "Activate",
     "disableLabel": "Deactivate {name}",
     "enableLabel": "Activate {name}"
+  },
+  "fileServices": {
+    "title": "File services",
+    "smb": "May use SMB (network drives)",
+    "sftp": "May use SFTP",
+    "admin": "Administrators may use every file service.",
+    "signInOnce": "Not ready for SMB and SFTP yet: the user signs in once on the web, or you set a new password."
   }
 }

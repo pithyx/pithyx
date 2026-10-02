@@ -10,7 +10,9 @@
   "badge": {
     "admin": "Administrator",
     "totp": "Zwei-Faktor",
-    "disabled": "Deaktiviert"
+    "disabled": "Deaktiviert",
+    "smb": "SMB",
+    "sftp": "SFTP"
   },
   "noHome": "Noch kein Pool",
   "field": {
@@ -36,7 +38,8 @@
     "button": "Neues Passwort",
     "title": "Neues Passwort für {name}",
     "intro": "Der Benutzer wird überall abgemeldet und meldet sich mit dem neuen Passwort an.",
-    "submit": "Passwort setzen"
+    "submit": "Passwort setzen",
+    "fileServices": "Auch SMB und SFTP nutzen das neue Passwort."
   },
   "delete": {
     "button": "Löschen",
@@ -51,5 +54,12 @@
     "enable": "Aktivieren",
     "disableLabel": "{name} deaktivieren",
     "enableLabel": "{name} aktivieren"
+  },
+  "fileServices": {
+    "title": "Dateidienste",
+    "smb": "Darf SMB nutzen (Netzlaufwerke)",
+    "sftp": "Darf SFTP nutzen",
+    "admin": "Administratoren dürfen jeden Dateidienst nutzen.",
+    "signInOnce": "Noch nicht bereit für SMB und SFTP: Der Benutzer meldet sich einmal im Web an, oder du setzt ein neues Passwort."
   }
 }

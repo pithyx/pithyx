@@ -1,0 +1,26 @@
+# Managed by pithyx. Pithyx writes this file again on every change; put your own settings into another file in this folder.
+
+Match Group pithyx-sftp
+    ChrootDirectory /run/pithyx/sftp/%u
+    ForceCommand internal-sftp -u 0007
+    PasswordAuthentication yes
+    PubkeyAuthentication no
+    AllowTcpForwarding no
+    AllowAgentForwarding no
+    AllowStreamLocalForwarding no
+    X11Forwarding no
+    PermitTunnel no
+    PermitTTY no
+
+Match Group pithyx-users,!pithyx-sftp
+    PasswordAuthentication no
+    PubkeyAuthentication no
+    KbdInteractiveAuthentication no
+    HostbasedAuthentication no
+    GSSAPIAuthentication no
+    AllowTcpForwarding no
+    AllowAgentForwarding no
+    AllowStreamLocalForwarding no
+    X11Forwarding no
+    PermitTunnel no
+    PermitTTY no

@@ -1255,7 +1255,7 @@
         "tags": [
           "Shares"
         ],
-        "description": "Administrators only. Every share with its description, dataset, used and available space, quota and how many users may read or write.",
+        "description": "Administrators only. Every share with its description, dataset, used and available space, quota, how many users may read or write and its SMB and SFTP settings.",
         "operationId": "ListShareDetails",
         "responses": {
           "200": {
@@ -1289,7 +1289,7 @@
         "tags": [
           "Shares"
         ],
-        "description": "Administrators only. Changes the name shown and the description; the folder and the dataset stay where they are.",
+        "description": "Administrators only. Changes the name shown, the description and whether SMB and SFTP offer the share (and whether SMB clients must encrypt); the folder and the dataset stay where they are.",
         "operationId": "UpdateShare",
         "parameters": [
           {
@@ -1558,7 +1558,7 @@
         "tags": [
           "Users"
         ],
-        "description": "Administrators only. Creates a user with a Linux account (a uid from 20000 to 29999 that is never given out again, the group users, no login shell) and a home dataset below the first pool's homes when there is a pool.",
+        "description": "Administrators only. Creates a user with a Linux and a Samba account with the password (a uid from 20000 to 29999 that is never given out again, the group users, no login shell) and a home dataset below the first pool's homes when there is a pool.",
         "operationId": "CreateUser",
         "requestBody": {
           "content": {
@@ -1599,7 +1599,7 @@
         "tags": [
           "Users"
         ],
-        "description": "Administrators only. Changes the display name, the administrator right or whether the user is deactivated. Deactivating ends the user's sessions and expires the Linux account. The last active administrator keeps the right and stays active, and nobody deactivates themselves.",
+        "description": "Administrators only. Changes the display name, the administrator right, the SMB and SFTP rights or whether the user is deactivated. Deactivating ends the user's sessions and expires the Linux account. The last active administrator keeps the right and stays active, and nobody deactivates themselves.",
         "operationId": "UpdateUser",
         "parameters": [
           {
@@ -1684,7 +1684,7 @@
         "tags": [
           "Users"
         ],
-        "description": "Administrators only. Sets a new password and ends every session of the user.",
+        "description": "Administrators only. Sets a new password, for SMB and SFTP as well, and ends every session of the user.",
         "operationId": "ResetUserPassword",
         "parameters": [
           {
@@ -1710,6 +1710,76 @@
         "responses": {
           "204": {
             "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/file-services": {
+      "get": {
+        "tags": [
+          "FileServices"
+        ],
+        "description": "Administrators only. Whether SMB and SFTP are switched on, the SMB workgroup and how each service is doing.",
+        "operationId": "GetFileServices",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileServiceSettings"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "FileServices"
+        ],
+        "description": "Administrators only. Switches SMB or SFTP on or off and sets the SMB workgroup; the configuration is checked and applied before the answer. Switching SFTP off never stops sshd: it only stops letting Pithyx users in.",
+        "operationId": "UpdateFileServices",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FileServiceSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileServiceSettings"
+                }
+              }
+            }
           },
           "default": {
             "description": "Problem details with a stable error code.",
@@ -4622,6 +4692,8 @@
           "desktop.layout.invalid",
           "desktop.layout.too_large",
           "desktop.note.too_long",
+          "fileservices.service.unavailable",
+          "fileservices.workgroup.invalid",
           "fs.cursor.invalid",
           "fs.entry.access_denied",
           "fs.entry.exists",
@@ -4924,6 +4996,75 @@
             "description": "Every entry of a folder except some names: selecting a whole folder without sending its names."
           }
         }
+      },
+      "FileServiceSettings": {
+        "required": [
+          "smbEnabled",
+          "workgroup",
+          "sftpEnabled",
+          "smb",
+          "sftp"
+        ],
+        "type": "object",
+        "properties": {
+          "smbEnabled": {
+            "type": "boolean",
+            "description": "Whether SMB is switched on."
+          },
+          "workgroup": {
+            "type": "string",
+            "description": "The SMB workgroup, 1 to 15 letters, digits, dots, dashes and underscores."
+          },
+          "sftpEnabled": {
+            "type": "boolean",
+            "description": "Whether SFTP is switched on."
+          },
+          "smb": {
+            "description": "How SMB is doing.",
+            "$ref": "#/components/schemas/FileServiceState"
+          },
+          "sftp": {
+            "description": "How SFTP is doing.",
+            "$ref": "#/components/schemas/FileServiceState"
+          }
+        },
+        "description": "The file services of the box. Administrators only."
+      },
+      "FileServiceSettingsRequest": {
+        "type": "object",
+        "properties": {
+          "smbEnabled": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Switches SMB on or off."
+          },
+          "workgroup": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "A new SMB workgroup."
+          },
+          "sftpEnabled": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Switches SFTP on or off."
+          }
+        },
+        "description": "Changes of the file services; fields left out stay."
+      },
+      "FileServiceState": {
+        "enum": [
+          "off",
+          "running",
+          "failed",
+          "unavailable"
+        ],
+        "description": "How a file service is doing."
       },
       "FileVersion": {
         "required": [
@@ -5970,6 +6111,16 @@
           "isAdmin": {
             "type": "boolean",
             "description": "Whether the user is an administrator.",
+            "default": false
+          },
+          "smb": {
+            "type": "boolean",
+            "description": "Whether the user may use SMB; on when left out.",
+            "default": true
+          },
+          "sftp": {
+            "type": "boolean",
+            "description": "Whether the user may use SFTP; off when left out.",
             "default": false
           }
         }
@@ -7380,7 +7531,10 @@
           "quotaBytes",
           "readUsers",
           "readWriteUsers",
-          "restorePoints"
+          "restorePoints",
+          "smb",
+          "sftp",
+          "smbEncrypt"
         ],
         "type": "object",
         "properties": {
@@ -7455,6 +7609,18 @@
               "boolean"
             ],
             "description": "Whether daily restore points (snapshots kept 7 days) are on; null for a folder share."
+          },
+          "smb": {
+            "type": "boolean",
+            "description": "Whether SMB offers the shared folder (dataset shares only)."
+          },
+          "sftp": {
+            "type": "boolean",
+            "description": "Whether SFTP shows the shared folder (dataset shares only)."
+          },
+          "smbEncrypt": {
+            "type": "boolean",
+            "description": "Whether SMB clients must encrypt."
           }
         },
         "description": "A share with what the Shared folders page shows. Administrators only."
@@ -7588,6 +7754,27 @@
               "string"
             ],
             "description": "New description, at most 200 characters, empty to remove it."
+          },
+          "smb": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Offers the shared folder over SMB or stops it."
+          },
+          "sftp": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Shows the shared folder over SFTP or hides it."
+          },
+          "smbEncrypt": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Requires SMB clients to encrypt, or lets them choose."
           }
         },
         "description": "Changes of a share; fields left out stay. The dataset is never renamed by this."
@@ -9035,7 +9222,10 @@
           "totpEnabled",
           "createdAt",
           "home",
-          "disabled"
+          "disabled",
+          "smb",
+          "sftp",
+          "fileServicePassword"
         ],
         "type": "object",
         "properties": {
@@ -9086,6 +9276,18 @@
           "disabled": {
             "type": "boolean",
             "description": "Deactivated: cannot sign in, and the Linux account is expired."
+          },
+          "smb": {
+            "type": "boolean",
+            "description": "Whether the user may use SMB; administrators always may."
+          },
+          "sftp": {
+            "type": "boolean",
+            "description": "Whether the user may use SFTP; administrators always may."
+          },
+          "fileServicePassword": {
+            "type": "boolean",
+            "description": "Whether SMB and SFTP know the user's password. They learn it when the user signs in on the web or an administrator sets it; until then the user cannot use them."
           }
         },
         "description": "A user as the Users page shows it. Administrators only."
@@ -9113,6 +9315,20 @@
               "boolean"
             ],
             "description": "Deactivates or activates the user; deactivating ends the user's sessions. Nobody deactivates themselves or the last active administrator."
+          },
+          "smb": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Allows or forbids SMB."
+          },
+          "sftp": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Allows or forbids SFTP."
           }
         },
         "description": "Fields left out stay as they are."
@@ -9296,6 +9512,9 @@
     },
     {
       "name": "Users"
+    },
+    {
+      "name": "FileServices"
     },
     {
       "name": "Storage"

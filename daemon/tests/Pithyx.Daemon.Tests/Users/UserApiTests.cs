@@ -62,6 +62,7 @@ public sealed class UserApiTests : IDisposable
         var notifications = _factory.Services.GetRequiredService<NotificationService>();
         var store = _factory.Services.GetRequiredService<NotificationStore>();
         await notifications.CreateAsync(ritaId, new NotificationDraft("test.hello", new Dictionary<string, object?>(), NotificationTone.Info), Token);
+        var running = new TaskCompletionSource();
         var cancelled = new TaskCompletionSource();
         var job = await _factory.Services.GetRequiredService<JobService>().StartAsync(
             ritaId,
@@ -70,9 +71,12 @@ public sealed class UserApiTests : IDisposable
             async context =>
             {
                 using var registration = context.Cancellation.Register(() => cancelled.TrySetResult());
+                running.TrySetResult();
                 await Task.Delay(Timeout.Infinite, context.Cancellation);
             },
             Token);
+        // A job cancelled before its body ran never registers the callback; delete only once it runs.
+        await running.Task.WaitAsync(TimeSpan.FromSeconds(10), Token);
         Assert.Single(store.Of(ritaId));
 
         using (var deleted = await _admin.DeleteAsync($"/api/users/{ritaId}", Token))
