@@ -14,6 +14,7 @@ import {
   type Translate,
 } from './shared';
 import styles from './Storage.module.css';
+import { useFormatLocale } from '../../i18n';
 
 const SMART_STATES = ['passed', 'warning', 'failed', 'unsupported', 'unknown'] as const;
 const SMART_REASONS = ['virtual', 'not_available', 'asleep', 'not_read', 'read_failed'] as const;
@@ -47,7 +48,8 @@ export function DisksSection({ app }: { app: PithyxApp }) {
 }
 
 function DiskTable({ disks, reports }: { disks: StorageDisk[]; reports: SmartReport[] }) {
-  const { t, i18n } = useTranslation('storage');
+  const { t } = useTranslation('storage');
+  const locale = useFormatLocale();
   const byId = new Map(reports.map((report) => [report.diskId, report]));
   return (
     <table className={cx(styles.table, styles.stack)}>
@@ -82,7 +84,7 @@ function DiskTable({ disks, reports }: { disks: StorageDisk[]; reports: SmartRep
                 {disk.serial ?? ''}
               </td>
               <td className={styles.number} data-label={t('disks.size')}>
-                {formatBytes(disk.sizeBytes, i18n.language)}
+                {formatBytes(disk.sizeBytes, locale)}
               </td>
               <td data-label={t('disks.status')}>
                 <div className={styles.verdict}>
@@ -115,7 +117,7 @@ function DiskTable({ disks, reports }: { disks: StorageDisk[]; reports: SmartRep
                   >
                     {t(`health.smart.states.${state}`)}
                   </Badge>
-                  <span className={styles.reason}>{smartDetails(t, report, i18n.language)}</span>
+                  <span className={styles.reason}>{smartDetails(t, report, locale)}</span>
                 </div>
               </td>
             </tr>

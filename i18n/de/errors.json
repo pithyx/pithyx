@@ -212,7 +212,8 @@
       "not_found": "Dieser Hinweis ist nicht mehr aktiv. Seine Ursache ist behoben."
     },
     "command": {
-      "failed": "Der Speicherbefehl {command} ist fehlgeschlagen (Exit-Code {exitCode}). Danach wurde nichts mehr ausgeführt; Details stehen im Protokoll."
+      "failed": "Der Speicherbefehl {command} ist fehlgeschlagen (Exit-Code {exitCode}). Danach wurde nichts mehr ausgeführt; Details stehen im Protokoll.",
+      "timed_out": "{command} ist nicht innerhalb von {minutes, plural, one {# Minute} other {# Minuten}} fertig geworden. Wahrscheinlich antwortet eine Platte des Pools nicht mehr und ZFS wartet auf sie. Prüfe die Platten unter Speicher. Reagieren auch andere Pools nicht mehr, starte die Box neu."
     },
     "dataset": {
       "compression_invalid": "Die Kompression {compression} setzt Pithyx nicht. Wähle off, lz4, zle, zstd (Stufen 1 bis 19) oder gzip (Stufen 1 bis 9).",
@@ -299,6 +300,12 @@
     },
     "origin": {
       "forbidden": "Die Anfrage kam von einer anderen Website und wurde abgelehnt."
+    },
+    "time": {
+      "apply_failed": "Die Zeiteinstellung konnte nicht übernommen werden ({command} endete mit Exit-Code {exitCode}). Die Details stehen im Log.",
+      "server_invalid": "„{server}“ ist weder ein Hostname noch eine Adresse.",
+      "servers_too_many": "Gib höchstens {max} Zeitserver an.",
+      "zone_invalid": "Das System kennt die Zeitzone „{zone}“ nicht."
     }
   },
   "users": {

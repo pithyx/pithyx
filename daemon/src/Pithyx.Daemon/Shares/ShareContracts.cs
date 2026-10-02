@@ -37,6 +37,7 @@ public sealed record ResolvedShare(long Id, string Name, string Path, ShareAcces
 /// <param name="QuotaBytes">The dataset's quota, or null for none.</param>
 /// <param name="ReadUsers">Users other than administrators who may read.</param>
 /// <param name="ReadWriteUsers">Users other than administrators who may read and write.</param>
+/// <param name="RestorePoints">Whether daily restore points (snapshots kept 7 days) are on; null for a folder share.</param>
 public sealed record ShareDetails(
     long Id,
     string Name,
@@ -48,7 +49,11 @@ public sealed record ShareDetails(
     long? AvailableBytes,
     long? QuotaBytes,
     int ReadUsers,
-    int ReadWriteUsers);
+    int ReadWriteUsers,
+    bool? RestorePoints);
+
+/// <param name="Enabled">Daily restore points, kept 7 days, on or off.</param>
+public sealed record RestorePointsRequest(bool Enabled);
 
 /// <summary>One user's access to a share, for editing rights.</summary>
 /// <param name="UserId">The user's id, for <c>PUT /api/shares/{shareId}/access/{userId}</c>.</param>

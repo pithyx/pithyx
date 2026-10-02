@@ -282,6 +282,14 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadGateway)]
     public const string StorageCommandFailed = "storage.command.failed";
 
+    /// <summary>
+    /// A storage command of a plan did not finish in time, usually because a disk stopped answering and ZFS waits for it in
+    /// the kernel. The command may still finish later or wait until a restart. <c>params.command</c> is the program and its
+    /// subcommand (<c>zpool destroy</c>), <c>params.minutes</c> how long the plan waited.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.GatewayTimeout)]
+    public const string StorageCommandTimedOut = "storage.command.timed_out";
+
     /// <summary>Compression Pithyx does not set; <c>params.compression</c> is the value sent. Allowed: <c>off</c>, <c>lz4</c>, <c>zle</c>, <c>zstd</c>, <c>zstd-1</c> to <c>zstd-19</c>, <c>gzip</c>, <c>gzip-1</c> to <c>gzip-9</c>.</summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string StorageDatasetCompressionInvalid = "storage.dataset.compression_invalid";
@@ -512,6 +520,22 @@ public static class ErrorCodes
 
     [ErrorStatus(HttpStatusCode.Forbidden)]
     public const string SystemOriginForbidden = "system.origin.forbidden";
+
+    /// <summary>Applying a time setting failed; <c>params.command</c> and <c>params.exitCode</c> say which command.</summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string SystemTimeApplyFailed = "system.time.apply_failed";
+
+    /// <summary>A time server is neither a host name nor an address; <c>params.server</c> is the first such entry.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string SystemTimeServerInvalid = "system.time.server_invalid";
+
+    /// <summary>More time servers than the daemon configures; <c>params.max</c> is the limit.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string SystemTimeServersTooMany = "system.time.servers_too_many";
+
+    /// <summary>The system does not know the time zone; <c>params.zone</c> is the name that was sent.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string SystemTimeZoneInvalid = "system.time.zone_invalid";
 
 
     /// <summary>The Linux account of a user cannot be created; <c>params.reason</c> is <c>name_taken</c> (a system account has the name), <c>uid_taken</c> or <c>command_failed</c>.</summary>

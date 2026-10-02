@@ -3,6 +3,7 @@ using Pithyx.Daemon.Auth;
 using Pithyx.Daemon.Errors;
 using Pithyx.Daemon.Hosting;
 using Pithyx.Daemon.Storage;
+using Pithyx.Daemon.Storage.Snapshots;
 
 namespace Pithyx.Daemon.Shares;
 
@@ -40,6 +41,9 @@ public static class ShareEndpoints
         shares.MapPut("/{shareId:long}/access/{userId:long}", SetAccessAsync)
             .WithName("SetShareAccess")
             .WithDescription("Administrators only. Sets a user's access to a share: none, read or readWrite. Applies to the user's next request.");
+        shares.MapPut("/{shareId:long}/restore-points", SetRestorePointsAsync)
+            .WithName("SetShareRestorePoints")
+            .WithDescription("Administrators only. Switches the shared folder's daily restore points (snapshots of its dataset kept 7 days) on or off. A folder share without a dataset answers fs.share.no_dataset.");
         shares.MapPost("/plans", PlanAsync)
             .WithName("PlanShareAction")
             .WithDescription("Administrators only. Returns the exact commands of creating a shared folder as a dataset (share.create) or deleting one (share.delete: keep its data, or destroy its dataset with every snapshot listed), with a plan id to run them with POST /api/storage/plans/{planId}/run. Runs nothing.");
@@ -90,6 +94,26 @@ public static class ShareEndpoints
 
     private static async Task<Ok<IReadOnlyList<ShareUserAccess>>> AccessAsync(long shareId, ShareService shares, HttpContext context, CancellationToken cancellationToken) =>
         TypedResults.Ok(await shares.ListUserAccessAsync(context.User, shareId, cancellationToken));
+
+    private static async Task<NoContent> SetRestorePointsAsync(
+        long shareId,
+        RestorePointsRequest request,
+        ShareService shares,
+        ShareChanges changes,
+        SnapshotService snapshots,
+        HttpContext context,
+        CancellationToken cancellationToken)
+    {
+        if (!ShareService.IsAdmin(context.User))
+        {
+            throw new PithyxException(ErrorCodes.AuthPermissionDenied);
+        }
+        var share = await shares.FindAsync(shareId, cancellationToken) ?? throw new PithyxException(ErrorCodes.FsShareNotFound);
+        var dataset = share.Dataset ?? throw new PithyxException(ErrorCodes.FsShareNoDataset);
+        await snapshots.SetSchedulesAsync(SharePlanner.RestorePoints(dataset, request.Enabled), cancellationToken);
+        changes.Announce();
+        return TypedResults.NoContent();
+    }
 
     private static async Task<NoContent> SetAccessAsync(
         long shareId,

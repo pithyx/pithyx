@@ -123,9 +123,9 @@
   "versions": {
     "title": "Previous versions of {name}",
     "list": "Versions",
-    "empty": "There are no earlier versions. They come from snapshots of the pool the share is on, which an administrator sets up in Settings under Storage.",
+    "empty": "There are no earlier versions yet. They come from the restore points of the shared folder, which are taken once a day while an administrator has them switched on in Settings under Shared folders.",
     "failed": "The versions could not be loaded.",
-    "takenOn": "Snapshot of {date}",
+    "takenOn": "Restore point of {date}",
     "modifiedOn": "Changed {date}",
     "restore": "Restore",
     "restoreOne": "Restore the version of {date}",
@@ -133,6 +133,7 @@
     "nextToHint": "The version is restored next to the current one, with its date in the name.",
     "overwriteHint": "The current file is replaced. A folder keeps the files that are not in the version.",
     "readOnly": "You can only read this share, so versions cannot be restored here.",
+    "note": "Restore points are taken once a day and kept 7 days. They live on the same disks as the files and are no replacement for a backup on another device.",
     "close": "Close"
   },
   "layout": {

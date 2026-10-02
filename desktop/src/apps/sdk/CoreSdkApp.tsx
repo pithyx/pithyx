@@ -8,7 +8,7 @@ import {
   type PithyxApp,
 } from '@pithyx/sdk';
 import { serveApp, type AppConnection, type HostExtensions } from '@pithyx/sdk/host';
-import i18next from 'i18next';
+import { formatLocale } from '../../i18n';
 import { useEffect, useEffectEvent, useRef, useState, type ComponentType } from 'react';
 import { queryKeys } from '../../api/queries';
 import { useSizeClass } from '../../wm/sizeClass';
@@ -84,7 +84,7 @@ export function CoreSdkApp({
           name: user?.username ?? '',
           displayName: user?.displayName ?? null,
         },
-        locale: i18next.language,
+        locale: formatLocale(),
         timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         theme: currentTheme(),
         sizeClass,

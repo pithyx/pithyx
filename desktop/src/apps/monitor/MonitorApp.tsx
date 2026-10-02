@@ -8,6 +8,7 @@ import { Performance } from './Performance';
 import { Processes } from './Processes';
 import { RANGES, type Range } from './series';
 import { createMonitorStore, type MonitorStore } from './store';
+import { useFormatLocale } from '../../i18n';
 
 type View = 'performance' | 'processes';
 
@@ -98,13 +99,14 @@ export function MonitorApp({ app }: SdkAppProps) {
 }
 
 function Summary({ monitor }: { monitor: MonitorStore }) {
-  const { t, i18n } = useTranslation('monitor');
+  const { t } = useTranslation('monitor');
+  const locale = useFormatLocale();
   const uptime = useStore(monitor.store, (state) => state.latest?.uptimeSeconds ?? null);
   const load = useStore(monitor.store, (state) => state.latest?.loadAverage ?? null);
   if (uptime === null || load === null) {
     return null;
   }
-  const number = new Intl.NumberFormat(i18n.language, {
+  const number = new Intl.NumberFormat(locale, {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });

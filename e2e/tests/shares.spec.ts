@@ -13,6 +13,7 @@ async function openSharedFolders(page: Page) {
   await signInAsAdmin(page);
   await openFromStart(page, 'Settings');
   const settings = appWindow(page, 'Settings');
+  await settings.getByRole('button', { name: /^Shared folders/ }).click();
   await expect(settings.getByRole('heading', { name: 'Shared folders', level: 2 })).toBeVisible();
   return settings;
 }
@@ -30,7 +31,26 @@ test('Shared folders lists the seeded share with its rights', async ({ page }) =
   await expect(shared).toContainText('Folder');
   await expect(shared).toContainText('No description');
   await expect(shared).toContainText('Administrators only');
+  // A folder share has no dataset, so it has no restore points.
+  await expect(shared).toContainText('Not for folder shares');
   await expect(settings.getByRole('button', { name: 'Open Storage' })).toHaveCount(0);
+});
+
+test('the restore points dialog explains space, deletes and backups in plain words', async ({
+  page,
+}) => {
+  const settings = await openSharedFolders(page);
+  await settings.getByRole('button', { name: 'What are restore points?' }).click();
+  const dialog = page.getByRole('dialog', { name: 'What are restore points?' });
+
+  await expect(dialog).toContainText('keeps each one for 7 days');
+  await expect(dialog).toContainText('only for files that were changed or deleted after it');
+  await expect(dialog).toContainText('frees its space only when the last restore point');
+  await expect(dialog).toContainText('ransomware');
+  await expect(dialog).toContainText('no replacement for a backup on another device');
+  expect(await violations(page)).toEqual([]);
+  await dialog.getByRole('button', { name: 'Got it' }).click();
+  await expect(dialog).toHaveCount(0);
 });
 
 test('the create dialog says when no pool is ready for shared folders', async ({ page }) => {

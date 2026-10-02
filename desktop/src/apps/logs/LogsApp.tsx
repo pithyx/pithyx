@@ -22,6 +22,7 @@ import {
 } from './filters';
 import styles from './Logs.module.css';
 import { LogSettingsDialog } from './LogSettingsDialog';
+import { useFormatLocale } from '../../i18n';
 
 const PAGE = 200;
 const ROW_HEIGHT = 32;
@@ -260,7 +261,8 @@ function EntryList({
   onSelect: (id: string) => void;
   sourceName: (source: string) => string;
 }) {
-  const { t, i18n } = useTranslation('logs');
+  const { t } = useTranslation('logs');
+  const locale = useFormatLocale();
   const scroll = useRef<HTMLDivElement>(null);
   const listId = useId();
   const [active, setActive] = useState(0);
@@ -282,7 +284,7 @@ function EntryList({
     }
   }, [hasMore, loading, loadMore, lastVisible, entries.length]);
 
-  const time = new Intl.DateTimeFormat(i18n.language, {
+  const time = new Intl.DateTimeFormat(locale, {
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
@@ -379,7 +381,8 @@ function EntryDetails({
   entry: LogEntry | null;
   sourceName: (source: string) => string;
 }) {
-  const { t, i18n } = useTranslation('logs');
+  const { t } = useTranslation('logs');
+  const locale = useFormatLocale();
   if (entry === null) {
     return (
       <aside className={styles.details} aria-label={t('details.label')}>
@@ -387,7 +390,7 @@ function EntryDetails({
       </aside>
     );
   }
-  const time = new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'medium' });
+  const time = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'medium' });
   const fields: [string, string][] = [
     [t('details.time'), time.format(new Date(entry.time))],
     [t('details.level'), t(`levels.${entry.level}`)],

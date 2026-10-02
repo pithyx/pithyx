@@ -4,7 +4,9 @@ public sealed record UserInfo(long Id, string Username, string? DisplayName, boo
 
 /// <param name="Required">True until the first administrator exists.</param>
 /// <param name="Hostname">Shown on the setup and sign-in screens, so users with several servers know where they sign in.</param>
-public sealed record SetupStatus(bool Required, string Hostname);
+/// <param name="Language">The system language, for the sign-in page and everyone whose browser asks for a language Pithyx does not have.</param>
+/// <param name="Region">The ISO 3166 country code whose formats every user sees, or null to follow each user's language.</param>
+public sealed record SetupStatus(bool Required, string Hostname, string Language, string? Region);
 
 public sealed record SetupRequest(string Username, string Password, string? DisplayName = null);
 

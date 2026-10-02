@@ -289,9 +289,28 @@ public sealed class StoragePlanner(
         return pool.ReadOnly ? throw new PithyxException(ErrorCodes.StoragePoolReadOnly, new Dictionary<string, object?> { ["name"] = pool.Name }) : pool;
     }
 
-    // Exporting or destroying a pool unmounts every dataset it lists.
-    private Result Releasing(Result result) =>
-        result.Plan is null ? result : result with { Plan = result.Plan with { Releases = PlanReleases.MountPointsOf(pools.Current, result.Datasets) } };
+    // Exporting or destroying a pool unmounts every dataset it lists; the empty folders of its mount points go afterwards.
+    private Result Releasing(Result result)
+    {
+        if (result.Plan is null)
+        {
+            return result;
+        }
+        var mountPoints = PlanReleases.MountPointsOf(pools.Current, result.Datasets);
+        var leftovers = LeftoverMountPoints.Of(mountPoints);
+        return result with
+        {
+            Plan = result.Plan with
+            {
+                Releases = mountPoints,
+                AfterRun = _ =>
+                {
+                    LeftoverMountPoints.Remove(leftovers);
+                    return Task.CompletedTask;
+                },
+            },
+        };
+    }
 
     private static void RequireEncryptionAnswer(string? encryption)
     {

@@ -41,3 +41,8 @@
 .lidRight {
   fill: light-dark(rgb(200 139 43 / 30%), #4d3a1b);
 }
+
+/* The plain wallpaper keeps the colors and the glow without the boxes. */
+.wallpaper[data-plain] g {
+  display: none;
+}

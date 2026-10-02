@@ -60,6 +60,23 @@ public sealed class ShareApiTests : IAsyncLifetime
     private static Task<HttpResponseMessage> PlanAsync(HttpClient client, object request) => client.PostAsJsonAsync("/api/shares/plans", request, Token);
 
     [Fact]
+    public async Task RestorePointsNeedADatasetAndAnAdministrator()
+    {
+        var (anna, _) = await UserAsync("anna");
+
+        Assert.Equal(JsonValueKind.Null, (await DetailsAsync("Shared")).GetProperty("restorePoints").ValueKind);
+        Assert.Equal(
+            (HttpStatusCode.Conflict, "fs.share.no_dataset"),
+            await RefusedAsync(await _admin.PutAsJsonAsync($"/api/shares/{_shared}/restore-points", new { enabled = true }, Token)));
+        Assert.Equal(
+            (HttpStatusCode.NotFound, "fs.share.not_found"),
+            await RefusedAsync(await _admin.PutAsJsonAsync("/api/shares/9999/restore-points", new { enabled = true }, Token)));
+        Assert.Equal(
+            (HttpStatusCode.Forbidden, "auth.permission.denied"),
+            await RefusedAsync(await anna.PutAsJsonAsync($"/api/shares/{_shared}/restore-points", new { enabled = true }, Token)));
+    }
+
+    [Fact]
     public async Task TheListShowsTheSeededFolderShareWithItsRights()
     {
         var (_, anna) = await UserAsync("anna");

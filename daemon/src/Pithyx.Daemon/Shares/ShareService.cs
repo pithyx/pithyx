@@ -137,13 +137,14 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
         ArgumentNullException.ThrowIfNull(pools);
         await using var connection = await connections.OpenAsync(cancellationToken);
         // Administrators use every share anyway, so the summary counts the others.
-        var rows = await connection.QueryAsync<(long Id, string Name, string Description, string Path, string? Dataset, long ReadUsers, long ReadWriteUsers)>(
+        var rows = await connection.QueryAsync<(long Id, string Name, string Description, string Path, string? Dataset, long ReadUsers, long ReadWriteUsers, long? RestorePoints)>(
             """
             SELECT shares.id, shares.name, shares.description, shares.path, shares.dataset,
                 (SELECT COUNT(*) FROM share_access JOIN users ON users.id = share_access.user_id
                     WHERE share_access.share_id = shares.id AND users.is_admin = 0 AND share_access.level = 'read'),
                 (SELECT COUNT(*) FROM share_access JOIN users ON users.id = share_access.user_id
-                    WHERE share_access.share_id = shares.id AND users.is_admin = 0 AND share_access.level = 'readWrite')
+                    WHERE share_access.share_id = shares.id AND users.is_admin = 0 AND share_access.level = 'readWrite'),
+                (SELECT enabled FROM snapshot_schedules WHERE snapshot_schedules.dataset = shares.dataset AND kind = 'daily')
             FROM shares ORDER BY shares.name
             """);
         var datasets = pools.Datasets.ToDictionary(dataset => dataset.Name, StringComparer.Ordinal);
@@ -161,7 +162,8 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
                 dataset?.AvailableBytes,
                 dataset?.QuotaBytes,
                 (int)row.ReadUsers,
-                (int)row.ReadWriteUsers);
+                (int)row.ReadWriteUsers,
+                row.Dataset is null ? null : row.RestorePoints == 1);
         })];
     }
 

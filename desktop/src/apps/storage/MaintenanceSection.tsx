@@ -16,6 +16,7 @@ import {
 } from '../sdk/internal';
 import styles from './Storage.module.css';
 import { describeProblem, formatDate, healthKey, storageKey, useHealth, usePools } from './shared';
+import { useFormatLocale } from '../../i18n';
 
 const schedulesKey = [...storageKey, 'schedules'] as const;
 
@@ -113,7 +114,8 @@ function Schedules({
   pools: Pool[];
   schedules: StorageScheduleList;
 }) {
-  const { t, i18n } = useTranslation('storage');
+  const { t } = useTranslation('storage');
+  const locale = useFormatLocale();
   const queryClient = useQueryClient();
   const change = useMutation({
     mutationFn: (update: StorageScheduleUpdate) =>
@@ -144,9 +146,7 @@ function Schedules({
       internalCall(app, 'internal.admin.storage.scrub', params),
   });
   const next = (value: string | null) =>
-    value === null
-      ? t('health.never')
-      : t('health.next', { date: formatDate(value, i18n.language) });
+    value === null ? t('health.never') : t('health.next', { date: formatDate(value, locale) });
   const frequencySelect = (kind: string, target: string, frequency: string, label: string) => (
     <label className={styles.selectField}>
       <span className={styles.fieldLabel}>{label}</span>

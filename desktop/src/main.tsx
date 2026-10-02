@@ -7,8 +7,10 @@ import { isSessionExpired } from './errors/describe';
 import { initI18n } from './i18n';
 import './theme/index.css';
 import { applyStoredTheme } from './theme/preference';
+import { applyStoredAppearance } from './theme/appearance';
 
 applyStoredTheme();
+applyStoredAppearance();
 
 const root = document.getElementById('root');
 if (!root) {
