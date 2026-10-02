@@ -1,5 +1,6 @@
 import i18next from 'i18next';
-import { initReactI18next } from 'react-i18next';
+import { useSyncExternalStore } from 'react';
+import { initReactI18next, useTranslation } from 'react-i18next';
 import { icuFormat } from './icuFormat';
 import { desktopNamespaces, signInNamespaces } from './i18nNamespaces';
 import type auth from '../../i18n/en/auth.json';
@@ -105,14 +106,72 @@ export function languageName(code: string): string {
   return new Intl.DisplayNames([code], { type: 'language' }).of(code) ?? code;
 }
 
-export function detectLanguage(preferred: readonly string[]): Language {
+// The box's regional settings (D282) from GET /api/setup: the language for browsers that ask for one Pithyx does not
+// have, and the region whose formats everyone sees (null: the formats of the language).
+let systemLanguage: Language = 'en';
+let systemFormats: string | null = null;
+
+export function detectLanguage(
+  preferred: readonly string[],
+  fallback: Language = systemLanguage,
+): Language {
   for (const tag of preferred) {
     const base = tag.toLowerCase().split('-')[0];
     if (base === 'en' || base === 'de') {
       return base;
     }
   }
-  return 'en';
+  return fallback;
+}
+
+const formatListeners = new Set<() => void>();
+
+export function subscribeFormats(listener: () => void): () => void {
+  formatListeners.add(listener);
+  return () => {
+    formatListeners.delete(listener);
+  };
+}
+
+/**
+ * The locale for dates, times and numbers: the language with the system's region, for example `de-AT` or `en-DE`.
+ * Texts and plural rules stay with the language alone.
+ */
+export function formatLocale(language: string = i18next.language): string {
+  return systemFormats === null ? language : `${language}-${systemFormats}`;
+}
+
+/** {@link formatLocale} for components: renders again when the language or the system region changes. */
+export function useFormatLocale(): string {
+  const { i18n } = useTranslation();
+  const formats = useSyncExternalStore(subscribeFormats, () => systemFormats);
+  return formats === null ? i18n.language : `${i18n.language}-${formats}`;
+}
+
+/**
+ * Takes the system language and region from the daemon. A user on "Automatic" whose browser language Pithyx does not
+ * have switches to the new system language; every open window formats with the new region.
+ */
+export async function applySystemRegion(region: {
+  language: string;
+  region?: string | null;
+}): Promise<void> {
+  const language = languages.find((code) => code === region.language) ?? 'en';
+  const formats = region.region ?? null;
+  if (language === systemLanguage && formats === systemFormats) {
+    return;
+  }
+  systemLanguage = language;
+  systemFormats = formats;
+  formatListeners.forEach((listener) => {
+    listener();
+  });
+  if (!i18next.isInitialized) {
+    return;
+  }
+  if (storedLanguage() === null) {
+    await setLanguage(null);
+  }
 }
 
 /** The language the user picked on this device, or null for the browser language. */

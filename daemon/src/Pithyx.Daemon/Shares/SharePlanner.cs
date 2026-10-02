@@ -22,6 +22,13 @@ public sealed partial class SharePlanner(
 {
     public const int MaxDatasetNameLength = 64;
 
+    /// <summary>Restore points of a shared folder: daily snapshots of its dataset, kept this many days (D283).</summary>
+    public const int RestorePointDays = 7;
+
+    /// <summary>The schedule behind a shared folder's restore point switch: daily, kept <see cref="RestorePointDays"/>.</summary>
+    public static SnapshotScheduleList RestorePoints(string dataset, bool enabled) =>
+        new(dataset, [new SnapshotSchedule("daily", enabled, RestorePointDays)]);
+
     /// <summary>Dataset names below <c>shares</c> that would mount where Pithyx keeps something else (D100).</summary>
     public static readonly IReadOnlySet<string> ReservedDatasetNames = new HashSet<string>(StringComparer.Ordinal) { "homes" };
 
@@ -125,6 +132,8 @@ public sealed partial class SharePlanner(
             var path = created.MountPoint
                 ?? throw new PithyxException(ErrorCodes.StorageDatasetNotFound, new Dictionary<string, object?> { ["dataset"] = full });
             var id = await shares.RegisterDatasetAsync(name, description, full, path, token);
+            // Every new shared folder starts with restore points on (owner's decision on 2026-09-30).
+            await snapshotService.SetSchedulesAsync(RestorePoints(full, enabled: true), token);
             changes.Announce();
             LogCreated(name, id, full);
         });

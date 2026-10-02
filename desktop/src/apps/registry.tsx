@@ -81,10 +81,10 @@ export const coreApps: readonly CoreApp[] = [
       minSize: { width: 340, height: 360 },
     },
     Component: lazy(() =>
-      // Settings runs plans with the Storage app's plan dialogs, and their texts.
+      // Settings runs plans with the Storage app's plan dialogs, and their texts; Users is one of its pages.
       Promise.all([
         import('./settings/SettingsWindow'),
-        loadTranslations('settings', 'storage'),
+        loadTranslations('settings', 'storage', 'users'),
       ]).then(([{ SettingsWindow }]) => ({ default: SettingsWindow })),
     ),
   },

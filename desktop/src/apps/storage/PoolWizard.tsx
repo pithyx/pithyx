@@ -20,6 +20,7 @@ import {
 import { isFinished, JobStatus, PlanPreview, RunButton, RunError, useRunPlan } from './PlanRun';
 import styles from './Storage.module.css';
 import { describeProblem, guardReason } from './shared';
+import { useFormatLocale } from '../../i18n';
 
 type Step = 'disks' | 'layout' | 'encryption' | 'review';
 const steps: Step[] = ['disks', 'layout', 'encryption', 'review'];
@@ -38,7 +39,8 @@ export function PoolWizard({
   disks: StorageDisk[];
   onClose: () => void;
 }) {
-  const { t, i18n } = useTranslation('storage');
+  const { t } = useTranslation('storage');
+  const locale = useFormatLocale();
   const [step, setStep] = useState<Step>('disks');
   const [selected, setSelected] = useState<readonly string[]>([]);
   const [confirmations, setConfirmations] = useState<Record<string, string>>({});
@@ -170,7 +172,7 @@ export function PoolWizard({
                   />
                   <span className={styles.mono}>{disk.name}</span>
                   <span className={styles.muted}>
-                    {disk.serial ?? ''} · {formatBytes(disk.sizeBytes, i18n.language)}
+                    {disk.serial ?? ''} · {formatBytes(disk.sizeBytes, locale)}
                   </span>
                 </label>
                 {guard.decision === 'needsSerialConfirmation' && selected.includes(disk.id) && (
@@ -214,7 +216,7 @@ export function PoolWizard({
             {wastedBytes(sizes) > 0 && (
               <p className={styles.notice}>
                 {t('wizard.mixedSizes', {
-                  wasted: formatBytes(wastedBytes(sizes), i18n.language),
+                  wasted: formatBytes(wastedBytes(sizes), locale),
                 })}
               </p>
             )}
@@ -278,7 +280,7 @@ export function PoolWizard({
                 count: selected.length,
                 usable: formatBytes(
                   options.find((option) => option.layout === effectiveLayout)?.usableBytes ?? 0,
-                  i18n.language,
+                  locale,
                 ),
               })}
             </p>
@@ -317,7 +319,8 @@ function LayoutCard({
   selected: boolean;
   onSelect: () => void;
 }) {
-  const { t, i18n } = useTranslation('storage');
+  const { t } = useTranslation('storage');
+  const locale = useFormatLocale();
   const key = `wizard.layouts.${option.layout}` as const;
   const tolerance =
     option.tolerance === 0
@@ -358,7 +361,7 @@ function LayoutCard({
         })}
       </span>
       <span className={styles.usable}>
-        {t('wizard.usable', { size: formatBytes(option.usableBytes, i18n.language) })}
+        {t('wizard.usable', { size: formatBytes(option.usableBytes, locale) })}
       </span>
       <span className={option.tolerance === 0 ? styles.errors : undefined}>{tolerance}</span>
       <Meter

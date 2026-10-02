@@ -22,8 +22,8 @@ type Action =
   | { kind: 'delete'; user: UserSummary };
 
 /**
- * The Users page: every user with its Linux uid and home, create, edit, reset the password, deactivate, delete. A standalone
- * component; the Settings app registers it once its new shell is in dev (with `usersHost` as internal methods).
+ * The Users page of Settings: every user with its Linux uid and home, create, edit, reset the password, deactivate,
+ * delete.
  */
 export function UsersPage({ app }: { app: PithyxApp }) {
   const { t } = useTranslation('users');

@@ -215,7 +215,8 @@
       "not_found": "This alert is no longer active. Its cause is gone."
     },
     "command": {
-      "failed": "The storage command {command} failed (exit code {exitCode}). Nothing after it was run; the log has the details."
+      "failed": "The storage command {command} failed (exit code {exitCode}). Nothing after it was run; the log has the details.",
+      "timed_out": "{command} did not finish within {minutes, plural, one {# minute} other {# minutes}}. A disk of the pool probably stopped answering and ZFS is waiting for it. Check the disks in Storage. If other pools stop responding too, restart the box."
     },
     "dataset": {
       "compression_invalid": "Pithyx does not set the compression {compression}. Choose off, lz4, zle, zstd (levels 1 to 19) or gzip (levels 1 to 9).",
@@ -302,6 +303,12 @@
     },
     "origin": {
       "forbidden": "The request came from another website and was rejected."
+    },
+    "time": {
+      "apply_failed": "The time setting could not be applied ({command} ended with exit code {exitCode}). The log has the details.",
+      "server_invalid": "“{server}” is neither a host name nor an address.",
+      "servers_too_many": "Enter at most {max} time servers.",
+      "zone_invalid": "The system does not know the time zone “{zone}”."
     }
   },
   "users": {

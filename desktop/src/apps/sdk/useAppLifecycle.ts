@@ -2,6 +2,7 @@ import { BEFORE_CLOSE_TIMEOUT, BEFORE_LOGOUT_TIMEOUT } from '@pithyx/sdk';
 import type { AppConnection } from '@pithyx/sdk/host';
 import i18next from 'i18next';
 import { useEffect, type RefObject } from 'react';
+import { formatLocale, subscribeFormats } from '../../i18n';
 import { guardClose } from '../../wm/commands';
 import { useSizeClass } from '../../wm/sizeClass';
 import { useDesktop } from '../../wm/store';
@@ -31,13 +32,15 @@ export function useAppLifecycle(
     connection.current?.emit('sizeClassChange', { sizeClass });
   }, [connection, sizeClass]);
   useEffect(() => {
-    const onLanguage = (language: string) => {
+    // The locale carries the system region (formatLocale), so a change of either reaches the app.
+    const onLocale = () => {
       connection.current?.emit('localeChange', {
-        locale: language,
+        locale: formatLocale(),
         timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       });
     };
-    i18next.on('languageChanged', onLanguage);
+    i18next.on('languageChanged', onLocale);
+    const stopFormats = subscribeFormats(onLocale);
     const stopTheme = onThemeChange(() => {
       connection.current?.emit('themeChange', currentTheme());
     });
@@ -50,7 +53,8 @@ export function useAppLifecycle(
       connection.current?.ask('beforeLogout', {}, BEFORE_LOGOUT_TIMEOUT),
     );
     return () => {
-      i18next.off('languageChanged', onLanguage);
+      i18next.off('languageChanged', onLocale);
+      stopFormats();
       stopTheme();
       stopGuard();
       stopLogout();

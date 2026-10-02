@@ -8,7 +8,7 @@ using Pithyx.Daemon.Users;
 
 namespace Pithyx.Daemon.Tests.Users;
 
-/// <summary>Real <c>setfacl</c> on a folder tree in a temporary folder, as root on the dev VM (D281).</summary>
+/// <summary>Real <c>setfacl</c> on a folder tree in a temporary folder, as root on the dev VM (D286).</summary>
 [Trait("Category", FileVdevs.Category)]
 public sealed class ShareAclIntegrationTests
 {

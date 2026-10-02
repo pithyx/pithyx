@@ -1,24 +1,74 @@
+import type { PithyxApp } from '@pithyx/sdk';
 import { useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ComponentType } from 'react';
 import { useTranslation } from 'react-i18next';
+import {
+  IconArrowLeft,
+  IconFolders,
+  IconInfoCircle,
+  IconNetwork,
+  IconServer2,
+  IconUsers,
+  IconWorld,
+  type TablerIcon,
+} from '../../ui/icons';
+import { SearchField } from '../../ui/TextField';
 import type { SdkAppProps } from '../sdk/CoreSdkApp';
 import { onInternal, SHARES_CHANGED, STORAGE_CHANGED } from '../sdk/internal';
+import { UsersPage } from '../users/UsersPage';
+import { FileServicesPage } from './FileServicesPage';
+import { InfoCenterPage } from './InfoCenterPage';
+import { NetworkPage } from './NetworkPage';
+import { RegionalPage } from './RegionalPage';
 import styles from './Settings.module.css';
 import { sharesKey } from './shares';
 import { SharesPage } from './SharesPage';
 
-// Pages in navigation order; later steps add users, network and energy.
-const pages = [{ id: 'shares', Component: SharesPage }] as const;
+type PageId = 'info' | 'network' | 'regional' | 'shares' | 'fileServices' | 'users';
+
+interface SettingsPage {
+  id: PageId;
+  category: 'system' | 'sharing' | 'accounts';
+  icon: TablerIcon;
+  Component: ComponentType<{ app: PithyxApp }>;
+  /** Shown on the tile until the page does what its title says. */
+  coming?: true;
+}
+
+// In the order of the overview. Only finished or clearly marked pages; personal settings are in the user menu.
+const PAGES: readonly SettingsPage[] = [
+  { id: 'info', category: 'system', icon: IconInfoCircle, Component: InfoCenterPage },
+  { id: 'network', category: 'system', icon: IconNetwork, Component: NetworkPage },
+  { id: 'regional', category: 'system', icon: IconWorld, Component: RegionalPage },
+  { id: 'shares', category: 'sharing', icon: IconFolders, Component: SharesPage },
+  {
+    id: 'fileServices',
+    category: 'sharing',
+    icon: IconServer2,
+    Component: FileServicesPage,
+    coming: true,
+  },
+  { id: 'users', category: 'accounts', icon: IconUsers, Component: UsersPage },
+];
+const CATEGORIES = ['system', 'sharing', 'accounts'] as const;
+
+/** The page named by launch arguments such as `{ page: 'users' }`, if any. */
+function pageOf(args: unknown): PageId | null {
+  const page = (args as { page?: unknown } | null)?.page;
+  return PAGES.find((entry) => entry.id === page)?.id ?? null;
+}
 
 /**
- * Settings: system settings only (users and groups, shared folders, network, energy, updates). Pages ship with the
- * step that makes them work; storage has its own app.
+ * Settings: system settings only, as an overview of categories with tiles and a search. A tile opens its page; "All
+ * settings" goes back. Personal settings (theme, accent color, language, taskbar, wallpaper) live in the user menu,
+ * and storage has its own app.
  */
 export function SettingsApp({ app }: SdkAppProps) {
   const { t } = useTranslation('settings');
   const queryClient = useQueryClient();
-  const [current, setCurrent] = useState(0);
-  const Page = (pages[current] ?? pages[0]).Component;
+  const [current, setCurrent] = useState<PageId | null>(() => pageOf(app.context.launch.args));
+  const [query, setQuery] = useState('');
+  const page = PAGES.find((entry) => entry.id === current);
 
   // The desktop forwards changes of the shares and the pools (used space); this syncs every cached answer with them.
   useEffect(() => {
@@ -35,27 +85,124 @@ export function SettingsApp({ app }: SdkAppProps) {
       });
     };
   }, [app, queryClient]);
+  // Opening Settings again may name the page to show.
+  useEffect(
+    () =>
+      app.on('launch', (launch) => {
+        const next = pageOf(launch.args);
+        if (next !== null) {
+          setCurrent(next);
+        }
+      }),
+    [app],
+  );
+
+  if (page !== undefined) {
+    const { Component } = page;
+    return (
+      <div className={styles.app}>
+        <nav className={styles.crumbs} aria-label={t('overview.navigation')}>
+          <button
+            type="button"
+            className={styles.back}
+            onClick={() => {
+              setCurrent(null);
+            }}
+          >
+            <IconArrowLeft size={16} stroke={1.75} aria-hidden />
+            {t('overview.all')}
+          </button>
+        </nav>
+        {/* Focusable, so keyboard users can scroll a page without controls. */}
+        <main className={styles.page} tabIndex={0}>
+          <Component app={app} />
+        </main>
+      </div>
+    );
+  }
+
+  const needle = query.trim().toLocaleLowerCase();
+  const matches = PAGES.filter(
+    (entry) =>
+      needle === '' ||
+      [
+        t(`pages.${entry.id}.title`),
+        t(`pages.${entry.id}.description`),
+        t(`pages.${entry.id}.keywords`),
+      ]
+        .join(' ')
+        .toLocaleLowerCase()
+        .includes(needle),
+  );
 
   return (
     <div className={styles.app}>
-      <nav className={styles.nav} aria-label={t('sections')}>
-        {pages.map((entry, index) => (
-          <button
-            key={entry.id}
-            type="button"
-            className={styles.navItem}
-            aria-current={index === current ? 'page' : undefined}
-            onClick={() => {
-              setCurrent(index);
+      <main className={styles.overview}>
+        <header className={styles.overviewHeader}>
+          <h2 className={styles.pageTitle}>{t('overview.title')}</h2>
+          <SearchField
+            label={t('overview.search')}
+            placeholder={t('overview.search')}
+            className={styles.search}
+            value={query}
+            onChange={setQuery}
+            onSubmit={() => {
+              const first = matches[0];
+              if (first !== undefined) {
+                setCurrent(first.id);
+              }
             }}
-          >
-            {t(`nav.${entry.id}`)}
-          </button>
-        ))}
-      </nav>
-      {/* Focusable, so keyboard users can scroll a page without controls. */}
-      <main className={styles.page} tabIndex={0}>
-        <Page app={app} />
+          />
+        </header>
+        {matches.length === 0 && <p className={styles.muted}>{t('overview.noMatch')}</p>}
+        {CATEGORIES.map((category) => {
+          const tiles = matches.filter((entry) => entry.category === category);
+          if (tiles.length === 0) {
+            return null;
+          }
+          return (
+            <section
+              key={category}
+              className={styles.category}
+              aria-labelledby={`settings-${category}`}
+            >
+              <h3 id={`settings-${category}`} className={styles.categoryTitle}>
+                {t(`categories.${category}`)}
+              </h3>
+              <ul className={styles.tiles}>
+                {tiles.map((entry) => {
+                  const Icon = entry.icon;
+                  return (
+                    <li key={entry.id}>
+                      <button
+                        type="button"
+                        className={styles.tile}
+                        onClick={() => {
+                          setCurrent(entry.id);
+                        }}
+                      >
+                        <span className={styles.tileIcon} aria-hidden>
+                          <Icon size={24} stroke={1.75} />
+                        </span>
+                        <span className={styles.tileText}>
+                          <span className={styles.tileTitle}>
+                            {t(`pages.${entry.id}.title`)}
+                            {entry.coming === true && (
+                              <span className={styles.badge}>{t('overview.coming')}</span>
+                            )}
+                          </span>
+                          <span className={styles.tileDescription}>
+                            {t(`pages.${entry.id}.description`)}
+                          </span>
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          );
+        })}
       </main>
     </div>
   );

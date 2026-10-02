@@ -81,6 +81,11 @@ export interface InternalMethods {
   };
   /** Plans creating or deleting a shared folder; the plan runs with `internal.admin.storage.run`. */
   'internal.admin.shares.plan': { params: SharePlanRequest; result: StoragePlanPreview };
+  /** Switches a shared folder's daily restore points (kept 7 days) on or off. */
+  'internal.admin.shares.restorePoints': {
+    params: { shareId: number; enabled: boolean };
+    result: null;
+  };
 }
 
 /** Administrator apps another core app may open, for example Settings opening Storage. */
@@ -423,6 +428,24 @@ export function adminStorageHost(emit: (event: string, data?: unknown) => void):
             await api.PUT('/api/shares/{shareId}/access/{userId}', {
               params: { path: { shareId, userId } },
               body: { access },
+            }),
+          );
+          return null;
+        }),
+    },
+    'internal.admin.shares.restorePoints': {
+      validate: (value) =>
+        isRecord(value) &&
+        Number.isSafeInteger(value.shareId) &&
+        typeof value.enabled === 'boolean',
+      handle: (params) =>
+        daemon(async () => {
+          const { shareId, enabled } =
+            params as InternalMethods['internal.admin.shares.restorePoints']['params'];
+          unwrap(
+            await api.PUT('/api/shares/{shareId}/restore-points', {
+              params: { path: { shareId } },
+              body: { enabled },
             }),
           );
           return null;

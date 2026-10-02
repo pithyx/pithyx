@@ -6,7 +6,7 @@ using Pithyx.Daemon.Database;
 namespace Pithyx.Daemon.Users;
 
 /// <summary>
-/// Gives every shared folder on a dataset the POSIX ACL of its rights (D264, D281): accounts have the primary group
+/// Gives every shared folder on a dataset the POSIX ACL of its rights (D264, D286): accounts have the primary group
 /// <c>users</c> and a umask of 077, so a share is reached only through these entries. Active administrators get read
 /// and write, active users with <c>read</c> read, with <c>readWrite</c> read and write; the owning user keeps its own
 /// files, and the group and others get nothing. Folders also get the same default ACL, so what SMB, SFTP or the daemon
