@@ -93,15 +93,23 @@ public sealed partial class LinuxAccountSync(
             Signal();
             await foreach (var _ in _changes.Reader.ReadAllAsync(stoppingToken))
             {
-                await using (var connection = await connections.OpenAsync(stoppingToken))
+                try
                 {
-                    foreach (var (username, uid) in await connection.QueryAsync<(string, long)>("SELECT username, uid FROM users WHERE uid IS NOT NULL"))
+                    await using (var connection = await connections.OpenAsync(stoppingToken))
                     {
-                        await accounts.CreateHomeAsync(username, uid, stoppingToken);
+                        foreach (var (username, uid) in await connection.QueryAsync<(string, long)>("SELECT username, uid FROM users WHERE uid IS NOT NULL"))
+                        {
+                            await accounts.CreateHomeAsync(username, uid, stoppingToken);
+                        }
                     }
+                    await accounts.ReconcileAsync(stoppingToken);
+                    await shareAcls.ReconcileAsync(stoppingToken);
                 }
-                await accounts.ReconcileAsync(stoppingToken);
-                await shareAcls.ReconcileAsync(stoppingToken);
+                catch (Exception exception) when (exception is not OperationCanceledException)
+                {
+                    // A command that cannot start (a missing tool, no root) must not stop the daemon; the next change tries again.
+                    LogSyncFailed(exception);
+                }
             }
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
@@ -114,6 +122,9 @@ public sealed partial class LinuxAccountSync(
             shareChanges.Changed -= SharesChanged;
         }
     }
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "Bringing the Linux accounts and share ACLs in line failed")]
+    private partial void LogSyncFailed(Exception exception);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "/etc/login.defs lets useradd outside Pithyx allocate ids in 20000 to 49999 ({Settings}); accounts made that way could collide with Pithyx users")]
     private partial void LogLoginDefsOverlap(string settings);

@@ -31,8 +31,21 @@ public sealed partial class LinuxAccounts(
     public IReadOnlyList<PasswdEntry> Actual() =>
         File.Exists(options.PasswdPath) ? PasswdParser.Parse(File.ReadAllText(options.PasswdPath)) : [];
 
-    private IReadOnlySet<string> Expiring() =>
-        File.Exists(options.ShadowPath) ? ShadowParser.Expiring(File.ReadAllText(options.ShadowPath)) : new HashSet<string>();
+    /// <summary>
+    /// The accounts with an expiry date. A daemon that is not root cannot read <c>/etc/shadow</c> (and cannot change
+    /// accounts either); it sees none.
+    /// </summary>
+    private IReadOnlySet<string> Expiring()
+    {
+        try
+        {
+            return File.Exists(options.ShadowPath) ? ShadowParser.Expiring(File.ReadAllText(options.ShadowPath)) : new HashSet<string>();
+        }
+        catch (UnauthorizedAccessException)
+        {
+            return new HashSet<string>();
+        }
+    }
 
     /// <summary>The first writable pool whose <c>homes</c> dataset is mounted, with its mount point.</summary>
     public static (string Pool, string Mount)? HomesOf(PoolList current)
