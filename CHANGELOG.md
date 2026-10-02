@@ -168,6 +168,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- The SFTP views changed the root folder of every shared folder offered over SFTP to mode 0755 when the daemon set them up again (after a restart or a change): nobody could write there any more and other accounts could read. The views no longer touch it, and migration 0018 makes the daemon set every shared folder's ACL again once.
 - Files created over SMB were executable (Samba created them with mode 0777 under the default ACL); they get 0660 now, and the named users of the shared folder keep their rights.
 - A failure while bringing the Linux accounts in line (for example a missing `userdel`, or a daemon that is not root and cannot read `/etc/shadow`) is logged and retried with the next change instead of stopping the daemon.
 - Deleting a user cancels the user's queued and running jobs and drops its jobs and notifications from the daemon's memory. Users created in user management take their uid as their id, so a user id is never given out again and a new user can never see what belonged to a deleted one.

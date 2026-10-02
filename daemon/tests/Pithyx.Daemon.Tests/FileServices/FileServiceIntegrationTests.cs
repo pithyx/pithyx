@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using System.Net.Sockets;
 using Dapper;
 using Microsoft.Extensions.Logging.Abstractions;
 using Pithyx.Daemon.Commands;
@@ -129,8 +128,15 @@ public sealed class FileServiceIntegrationTests
             var configPath = Path.Combine(work, "smb.conf");
             await File.WriteAllTextAsync(configPath, config, Token);
             Assert.Equal(0, (await RunAsync("testparm", "--suppress-prompt", "-s", configPath)).ExitCode);
-            // A session of its own: Samba signals its whole process group when it ends, which must not reach the test run.
-            smbd = Process.Start("setsid", ["/usr/sbin/smbd", "--foreground", "--no-process-group", "-s", configPath]);
+            // A session of its own, so Samba's signal to its process group when it ends never reaches the test run, and
+            // stdin a pipe that stays open: smbd serves a socket on stdin (a run from a remote shell) as an inetd
+            // connection, and in the foreground it ends when stdin closes.
+            var smbdStart = new ProcessStartInfo("setsid") { RedirectStandardInput = true };
+            foreach (var argument in (string[])["/usr/sbin/smbd", "--foreground", "--no-process-group", "-s", configPath])
+            {
+                smbdStart.ArgumentList.Add(argument);
+            }
+            smbd = Process.Start(smbdStart)!;
             await WaitForPortAsync(SmbPort);
 
             // rita writes, and a delete lands in the recycle bin with a row in her name.
@@ -190,7 +196,11 @@ public sealed class FileServiceIntegrationTests
             sshd = Process.Start("/usr/sbin/sshd", ["-D", "-f", sshdConfig]);
             await WaitForPortAsync(SshPort);
             var views = new SftpViews(_commands, SystemFiles.Host, new FileServiceOptions(Apply: true, SftpRoot: sftpRoot), NullLogger<SftpViews>.Instance);
+            var shareMode = (await RunAsync("stat", "-c", "%a", share)).StandardOutput;
             await views.ReconcileAsync(["pxit-rita"], [new SftpViewEntry("pxit-rita", "Media", share)], Token);
+            // A second run finds the view mounted and must leave the shared folder behind it as it is.
+            await views.ReconcileAsync(["pxit-rita"], [new SftpViewEntry("pxit-rita", "Media", share)], Token);
+            Assert.Equal(shareMode, (await RunAsync("stat", "-c", "%a", share)).StandardOutput);
 
             Environment.SetEnvironmentVariable("SSHPASS", Password);
             var sftp = await SftpAsync("pxit-rita", $"ls /\nput {configPath} /Media/sftp.txt\nls /Media\n", work);
@@ -237,20 +247,22 @@ public sealed class FileServiceIntegrationTests
         process?.Dispose();
     }
 
+    /// <summary>Waits until a socket listens on the port, read from <c>/proc/net/tcp</c> without connecting.</summary>
     private static async Task WaitForPortAsync(int port)
     {
+        var hex = $":{port:X4} ";
         for (var attempt = 0; attempt < 100; attempt++)
         {
-            try
+            foreach (var table in (string[])["/proc/net/tcp", "/proc/net/tcp6"])
             {
-                using var client = new TcpClient();
-                await client.ConnectAsync("127.0.0.1", port, Token);
-                return;
+                // Columns: sl local_address rem_address st ...; state 0A is LISTEN.
+                if ((await File.ReadAllLinesAsync(table, Token)).Skip(1).Select(line => line.Split(' ', StringSplitOptions.RemoveEmptyEntries))
+                    .Any(fields => fields.Length > 3 && (fields[1] + " ").EndsWith(hex, StringComparison.Ordinal) && fields[3] == "0A"))
+                {
+                    return;
+                }
             }
-            catch (SocketException)
-            {
-                await Task.Delay(100, Token);
-            }
+            await Task.Delay(100, Token);
         }
         Assert.Fail($"Nothing listens on port {port}.");
     }
