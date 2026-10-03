@@ -1,4 +1,4 @@
-import { useId } from 'react';
+import { useId, type CSSProperties } from 'react';
 import styles from './Wallpaper.module.css';
 
 interface Cube {
@@ -10,7 +10,7 @@ interface Cube {
 
 // Boxes drawn like the logo in the menu button: the geometry of desktop/public/logo.svg in its 100x100 units, with the
 // lid in its closed position, 13 units lower (as in ui/Logo.module.css), so only a narrow gap shows. Positions are in
-// the 1600x1000 viewBox; depth fades the smaller boxes into the background.
+// the 1600x1000 viewBox; in the dark theme depth fades the smaller boxes into the background.
 const CUBES: Cube[] = [
   { x: 1180, y: 430, scale: 7.2, depth: 1 },
   { x: 300, y: 760, scale: 3.4, depth: 0.6 },
@@ -117,7 +117,11 @@ export function Wallpaper({ plain = false }: { plain?: boolean }) {
       <rect width="1600" height="1000" className={styles.base} />
       <rect width="1600" height="1000" fill={`url(#${glow})`} />
       {CUBES.map((cube) => (
-        <g key={`${String(cube.x)}-${String(cube.y)}`} opacity={cube.depth}>
+        <g
+          key={`${String(cube.x)}-${String(cube.y)}`}
+          className={styles.cube}
+          style={{ '--depth': cube.depth } as CSSProperties}
+        >
           {SHAPES.map((shape) => (
             <polygon
               key={shape.className}

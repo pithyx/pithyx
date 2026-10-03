@@ -171,6 +171,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- In the light theme the wallpaper boxes were pale and see-through, so the lids looked muddy and the faces washed out; they now keep the colors of the dark theme, and only the dark theme fades the smaller boxes into the background.
 - The SFTP views changed the root folder of every shared folder offered over SFTP to mode 0755 when the daemon set them up again (after a restart or a change): nobody could write there any more and other accounts could read. The views no longer touch it, and migration 0018 makes the daemon set every shared folder's ACL again once.
 - Files created over SMB were executable (Samba created them with mode 0777 under the default ACL); they get 0660 now, and the named users of the shared folder keep their rights.
 - A failure while bringing the Linux accounts in line (for example a missing `userdel`, or a daemon that is not root and cannot read `/etc/shadow`) is logged and retried with the next change instead of stopping the daemon.

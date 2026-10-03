@@ -19,27 +19,42 @@
 }
 
 .inside {
-  fill: light-dark(rgb(150 185 195 / 55%), rgb(6 42 51 / 90%));
+  fill: #062c35;
 }
 
 .left {
-  fill: light-dark(rgb(159 193 202 / 60%), rgb(10 57 69 / 60%));
+  fill: #0a3b47;
 }
 
 .right {
-  fill: light-dark(rgb(200 221 226 / 70%), rgb(19 93 110 / 45%));
+  fill: #0f4b5a;
 }
 
 .lid {
-  fill: light-dark(rgb(224 163 58 / 30%), #5c4521);
+  fill: #5c4521;
 }
 
 .lidLeft {
-  fill: light-dark(rgb(179 122 31 / 30%), #3f2f16);
+  fill: #3f2f16;
 }
 
 .lidRight {
-  fill: light-dark(rgb(200 139 43 / 30%), #4d3a1b);
+  fill: #4d3a1b;
+}
+
+/* The boxes keep the colors of the dark theme: on the light background a fade would wash them out. */
+.cube {
+  opacity: var(--depth);
+}
+
+:global(:root[data-theme='light']) .cube {
+  opacity: 1;
+}
+
+@media (prefers-color-scheme: light) {
+  :global(:root:not([data-theme='dark'])) .cube {
+    opacity: 1;
+  }
 }
 
 /* The plain wallpaper keeps the colors and the glow without the boxes. */
