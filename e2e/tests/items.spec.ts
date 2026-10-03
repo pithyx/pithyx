@@ -229,38 +229,38 @@ test('the start menu and the taskbar put apps on the desktop, and the taskbar cl
   });
 
   await test.step('the keyboard opens the same menu, whose Open opens the app', async () => {
-    await start.getByRole('row', { name: 'Users' }).focus();
+    await start.getByRole('row', { name: 'Resource Monitor' }).focus();
     await page.keyboard.press('Shift+F10');
     await page
-      .getByRole('menu', { name: 'Menu for Users' })
+      .getByRole('menu', { name: 'Menu for Resource Monitor' })
       .getByRole('menuitem', { name: 'Open' })
       .click();
     await expect(start).toBeHidden();
-    await expect(appWindow(page, 'Users')).toBeVisible();
+    await expect(appWindow(page, 'Resource Monitor')).toBeVisible();
   });
 
-  const entry = taskbar.getByRole('button', { name: /^Users/ });
+  const entry = taskbar.getByRole('button', { name: /^Resource Monitor/ });
   await test.step('a right-click on a running app minimizes, restores and adds it', async () => {
     await entry.click({ button: 'right' });
-    const menu = page.getByRole('menu', { name: 'Menu for Users' });
+    const menu = page.getByRole('menu', { name: 'Menu for Resource Monitor' });
     await menu.getByRole('menuitem', { name: 'Minimize' }).click();
-    await expect(appWindow(page, 'Users')).toBeHidden();
+    await expect(appWindow(page, 'Resource Monitor')).toBeHidden();
     await entry.click({ button: 'right' });
     await menu.getByRole('menuitem', { name: 'Restore' }).click();
-    await expect(appWindow(page, 'Users')).toBeVisible();
+    await expect(appWindow(page, 'Resource Monitor')).toBeVisible();
     await entry.click({ button: 'right' });
     await menu.getByRole('menuitem', { name: 'Add to desktop' }).click();
-    expect(await cellOf(page, icon(page, 'Users'))).toEqual({ column: 0, row: 3 });
+    expect(await cellOf(page, icon(page, 'Resource Monitor'))).toEqual({ column: 0, row: 3 });
   });
 
   await test.step('Shift+F10 on a running app closes it from the menu', async () => {
     await entry.focus();
     await page.keyboard.press('Shift+F10');
     await page
-      .getByRole('menu', { name: 'Menu for Users' })
+      .getByRole('menu', { name: 'Menu for Resource Monitor' })
       .getByRole('menuitem', { name: 'Close' })
       .click();
-    await expect(appWindow(page, 'Users')).toHaveCount(0);
+    await expect(appWindow(page, 'Resource Monitor')).toHaveCount(0);
     await expect(entry).toHaveCount(0);
   });
 
@@ -271,7 +271,7 @@ test('the start menu and the taskbar put apps on the desktop, and the taskbar cl
       }[];
       return items.map((item) => item.app).sort();
     })
-    .toEqual(['about', 'logs', 'storage', 'users']);
+    .toEqual(['about', 'logs', 'monitor', 'storage']);
   expect(await rightClicks(page)).toEqual([true, true, true, true]);
 });
 
