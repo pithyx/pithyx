@@ -167,6 +167,11 @@
       "description": "Konten, Passwörter und Administratoren",
       "keywords": "benutzer konto passwort administrator anmeldung personen"
     },
+    "backup": {
+      "title": "Backup und Wiederherstellung",
+      "description": "Konfiguration dieser Box sichern und wiederherstellen",
+      "keywords": "backup sicherung wiederherstellen konfiguration export import neuinstallation systemplatte"
+    },
     "groups": {
       "title": "Gruppen",
       "description": "Gruppen, ihre Mitglieder und Rechte",
@@ -292,5 +297,76 @@
     "off": "Aus",
     "folder": "Nicht für Ordnerfreigaben",
     "switchLabel": "Wiederherstellungspunkte für {name}"
+  },
+  "backup": {
+    "intro": "Ein Konfigurationsbackup enthält alles, um diese Box wieder einzurichten: Benutzer, Gruppen und Passwörter, freigegebene Ordner und ihre Rechte, Dateidienste, Speicher-Zeitpläne, regionale Einstellungen, Zertifikate und SSH-Schlüssel. Die Dateien auf deinen Pools sind nicht enthalten.",
+    "create": {
+      "title": "Backup erstellen",
+      "intro": "Das Backup wird als eine Datei heruntergeladen, verschlüsselt mit einem Passwort, das du wählst. Bewahre es woanders auf als auf dieser Box.",
+      "password": "Backup-Passwort",
+      "repeat": "Backup-Passwort wiederholen",
+      "mismatch": "Die Passwörter stimmen nicht überein.",
+      "keepPassword": "Ohne dieses Passwort lässt sich das Backup nicht wiederherstellen. Pithyx speichert es nicht, und niemand kann es wiederbeschaffen.",
+      "submit": "Erstellen und herunterladen",
+      "running": "Backup wird erstellt…",
+      "done": "Das Backup wurde als {fileName} heruntergeladen."
+    },
+    "restore": {
+      "title": "Backup wiederherstellen",
+      "intro": "Wähle eine Backup-Datei und gib ihr Passwort ein. Pithyx prüft die Datei zuerst; geändert wird erst, wenn du bestätigst.",
+      "file": "Backup-Datei",
+      "password": "Backup-Passwort",
+      "check": "Backup prüfen",
+      "checking": "Wird geprüft…",
+      "contents": "Dieses Backup enthält",
+      "createdAt": "Erstellt",
+      "hostName": "Von",
+      "version": "Pithyx-Version",
+      "holds": "Inhalt",
+      "counts": "{users, plural, one {# Benutzer} other {# Benutzer}}, {groups, plural, one {# Gruppe} other {# Gruppen}}, {sharedFolders, plural, one {# freigegebener Ordner} other {# freigegebene Ordner}}",
+      "choose": "Was wiederhergestellt wird",
+      "warning": "Jeder gewählte Teil ersetzt den aktuellen vollständig. Die Dateien auf deinen Pools bleiben unberührt. Pithyx startet danach neu.",
+      "submit": "Wiederherstellen…",
+      "restarting": "Die Konfiguration wurde wiederhergestellt. Pithyx startet neu, und diese Seite lädt gleich neu.",
+      "problems": "Einige Schritte haben nicht geklappt; die Details stehen im Log Center:"
+    },
+    "confirm": {
+      "title": "Konfiguration wiederherstellen?",
+      "body": "Diese Teile werden durch das Backup ersetzt:",
+      "signOut": "Beim Wiederherstellen der Benutzer werden alle abgemeldet, auch du. Melde dich danach mit einem Konto und Passwort aus dem Backup an.",
+      "cancel": "Abbrechen",
+      "submit": "Jetzt wiederherstellen",
+      "running": "Wird wiederhergestellt…"
+    },
+    "categories": {
+      "users": {
+        "title": "Benutzer und Gruppen",
+        "description": "Konten, Gruppen, Passwörter (auch für SMB und SFTP), Zwei-Faktor-Anmeldung, der Wiederherstellungsschlüssel und persönliche Einstellungen"
+      },
+      "sharedFolders": {
+        "title": "Freigegebene Ordner und Dateidienste",
+        "description": "Freigegebene Ordner mit ihren Rechten und die Einstellungen von SMB, SFTP, WebDAV und FTP"
+      },
+      "storage": {
+        "title": "Speicher-Einstellungen",
+        "description": "Wiederherstellungspunkte der freigegebenen Ordner, Zeitpläne für Scrub und Selbsttests"
+      },
+      "system": {
+        "title": "Systemeinstellungen",
+        "description": "Systemsprache, Formate, Zeitzone, Zeitserver und Aufbewahrung der Logs"
+      },
+      "certificates": {
+        "title": "Zertifikate und Schlüssel",
+        "description": "Das Zertifikat dieser Box und ihre SSH-Host-Schlüssel, damit Clients ihr weiter vertrauen"
+      }
+    },
+    "steps": {
+      "accounts": "Linux-Konten und -Gruppen",
+      "linuxPasswords": "Passwörter für SFTP und SSH",
+      "sambaPasswords": "Passwörter für SMB",
+      "time": "Zeitzone und Zeitserver",
+      "tls": "Zertifikate",
+      "sshKeys": "SSH-Host-Schlüssel"
+    }
   }
 }

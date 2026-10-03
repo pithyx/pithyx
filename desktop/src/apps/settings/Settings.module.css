@@ -491,3 +491,9 @@
     height: 1.5rem;
   }
 }
+
+.fileInput {
+  max-width: 100%;
+  font: inherit;
+  color: var(--color-text);
+}

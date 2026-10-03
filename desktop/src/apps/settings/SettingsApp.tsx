@@ -7,6 +7,7 @@ import {
   IconFolders,
   IconInfoCircle,
   IconNetwork,
+  IconRestore,
   IconServer2,
   IconUsers,
   IconUsersGroup,
@@ -18,6 +19,7 @@ import type { SdkAppProps } from '../sdk/CoreSdkApp';
 import { onInternal, SHARES_CHANGED, STORAGE_CHANGED } from '../sdk/internal';
 import { GroupsPage } from '../users/GroupsPage';
 import { UsersPage } from '../users/UsersPage';
+import { BackupPage } from './BackupPage';
 import { FileServicesPage } from './FileServicesPage';
 import { InfoCenterPage } from './InfoCenterPage';
 import { NetworkPage } from './NetworkPage';
@@ -26,7 +28,8 @@ import styles from './Settings.module.css';
 import { sharesKey } from './shares';
 import { SharesPage } from './SharesPage';
 
-type PageId = 'info' | 'network' | 'regional' | 'shares' | 'fileServices' | 'users' | 'groups';
+type PageId =
+  'info' | 'network' | 'regional' | 'backup' | 'shares' | 'fileServices' | 'users' | 'groups';
 
 interface SettingsPage {
   id: PageId;
@@ -40,6 +43,7 @@ const PAGES: readonly SettingsPage[] = [
   { id: 'info', category: 'system', icon: IconInfoCircle, Component: InfoCenterPage },
   { id: 'network', category: 'system', icon: IconNetwork, Component: NetworkPage },
   { id: 'regional', category: 'system', icon: IconWorld, Component: RegionalPage },
+  { id: 'backup', category: 'system', icon: IconRestore, Component: BackupPage },
   { id: 'shares', category: 'sharing', icon: IconFolders, Component: SharesPage },
   { id: 'fileServices', category: 'sharing', icon: IconServer2, Component: FileServicesPage },
   { id: 'users', category: 'accounts', icon: IconUsers, Component: UsersPage },
