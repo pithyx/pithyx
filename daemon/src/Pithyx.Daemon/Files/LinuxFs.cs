@@ -26,6 +26,16 @@ internal static unsafe partial class LinuxFs
     public const int Exclusive = 0x80;
     public const int Truncate = 0x200;
     public const int Path = 0x200000;
+
+    /// <summary>
+    /// The mode of a new file (0666) and folder (0777). In a shared folder the default ACL decides, and the group bits
+    /// of this mode become the ACL mask, so anything less would take the write group's rights away; elsewhere the
+    /// daemon's umask applies as usual.
+    /// </summary>
+    public const uint NewFileMode = 0x1b6;
+
+    /// <inheritdoc cref="NewFileMode"/>
+    public const uint NewFolderMode = 0x1ff;
     private const int CloseOnExec = 0x80000;
 
     private const ulong ResolveNoMagicLinks = 0x02;
@@ -403,7 +413,7 @@ internal static unsafe partial class LinuxFs
         }
     }
 
-    public static void MakeDirectory(SafeFileHandle directory, string name, uint mode = 0x1ed)
+    public static void MakeDirectory(SafeFileHandle directory, string name, uint mode = NewFolderMode)
     {
         var bytes = Utf8(name);
         var result = WithHandle(directory, fd =>
