@@ -1,5 +1,5 @@
 import type { PithyxApp } from '@pithyx/sdk';
-import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState, type SyntheticEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NewPasswordField } from '../../auth/password/NewPasswordField';
@@ -18,11 +18,9 @@ import {
 } from '../sdk/users';
 import { FormDialog } from './FormDialog';
 import { GrantEditor, protocolKey } from './GrantEditor';
+import { groupsKey, useGroups, usersKey, useUsers } from './queries';
 import { RightsDialog, useGrantChoices } from './RightsDialog';
-import { GroupsSection, groupsKey, useGroups } from './GroupsSection';
 import styles from './Users.module.css';
-
-export const usersKey = ['users'] as const;
 
 type Action =
   | { kind: 'create' }
@@ -33,23 +31,11 @@ type Action =
 
 /**
  * The Users page of Settings: every user with its Linux uid and home, its groups, its file protocols and whether they
- * know the password yet; create, edit, rights, new password, deactivate, delete. Below it the groups.
+ * know the password yet; create, edit, rights, new password, deactivate, delete. Groups have their own page.
  */
 export function UsersPage({ app }: { app: PithyxApp }) {
-  const users = useQuery({
-    queryKey: usersKey,
-    queryFn: () => usersCall(app, 'internal.admin.users.list', {}),
-  });
-  return (
-    <div className={styles.page}>
-      <UsersSection app={app} users={users} />
-      <GroupsSection app={app} users={users.data ?? []} />
-    </div>
-  );
-}
-
-function UsersSection({ app, users }: { app: PithyxApp; users: UseQueryResult<UserSummary[]> }) {
   const { t } = useTranslation('users');
+  const users = useUsers(app);
   const [action, setAction] = useState<Action | null>(null);
   const groups = useGroups(app);
   const groupNames = new Map((groups.data ?? []).map((group) => [group.id, group.name]));
@@ -57,7 +43,7 @@ function UsersSection({ app, users }: { app: PithyxApp; users: UseQueryResult<Us
     setAction(null);
   };
   return (
-    <section className={styles.section} aria-labelledby="users-title">
+    <section className={`${styles.page} ${styles.section}`} aria-labelledby="users-title">
       <div className={styles.head}>
         <div>
           <h2 id="users-title" className={styles.title}>
