@@ -61,7 +61,7 @@ import { applySavedLayout, saveLayoutBeforeSignOut, useLayoutPersistence } from 
 import { useSizeClass } from '../wm/sizeClass';
 import { dispatch, openApp, useDesktop } from '../wm/store';
 import { useTopic } from '../realtime/useTopic';
-import { PowerDialog, type PowerAction } from './PowerDialog';
+import type { PowerAction } from './PowerDialog';
 import { requestClose } from '../wm/commands';
 import { WindowLayer } from '../wm/WindowLayer';
 import { useMinuteClock } from './clock';
@@ -286,7 +286,8 @@ function UserMenu({
 
 // The desktop items (icons, notes, their menus and gestures) are a chunk of their own that starts loading together with
 // this one and shows once it and the items query are there; the taskbar and windows never wait for it.
-// Setting up two-factor sign-in is rare; its dialog loads when it is opened, not with the desktop.
+// Setting up two-factor sign-in is rare; its dialog loads when it is opened, not with the desktop. So does the
+// confirmation of a restart or shutdown.
 // The storage alert banner loads when an administrator has a critical alert. The toasts and the notification panel
 // are a chunk of their own that starts loading with the first render, so the toasts' live region is in the page
 // before the first toast; the taskbar and windows never wait for it.
@@ -305,6 +306,9 @@ const NotificationToasts = lazy(() =>
 );
 const TotpSetup = lazy(() =>
   import('../auth/TotpSetup').then(({ TotpSetup }) => ({ default: TotpSetup })),
+);
+const PowerDialog = lazy(() =>
+  import('./PowerDialog').then(({ PowerDialog }) => ({ default: PowerDialog })),
 );
 
 type ItemsModule = typeof import('../items/ItemsLayer');
@@ -375,12 +379,32 @@ function useRunningApps(): RunningApp[] {
   });
 }
 
+/**
+ * Puts the rights the daemon pushes on `session/permissions` into the session. Its own component, so the snapshot
+ * every subscription starts with re-renders only this one when the rights are the same as at sign-in.
+ */
+function PermissionsSync() {
+  const queryClient = useQueryClient();
+  const permissions = useTopic('session/permissions');
+  useLayoutEffect(() => {
+    if (permissions === undefined) {
+      return;
+    }
+    queryClient.setQueryData<User>(queryKeys.session, (current) =>
+      current === undefined || JSON.stringify(current.permissions) === JSON.stringify(permissions)
+        ? current
+        : { ...current, isAdmin: permissions.admin, permissions },
+    );
+  }, [permissions, queryClient]);
+  return null;
+}
+
 /** The desktop after sign-in: wallpaper, app shortcuts, windows and the taskbar with start menu and status area. */
 export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   const { t, i18n } = useTranslation();
   const locale = useFormatLocale();
   const queryClient = useQueryClient();
-  const permissions = useTopic('session/permissions') ?? user.permissions;
+  const permissions = user.permissions;
   const status = useRealtime((state) => state.status);
   const now = useMinuteClock();
   const appName = useAppName();
@@ -410,20 +434,12 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   // the app's windows and leaves the start menu at once.
   useLayoutEffect(() => {
     setAppPermissions(permissions);
-    // Only a real change of rights touches the session, so a sign-in or reload renders once.
-    if (permissions !== user.permissions) {
-      queryClient.setQueryData<User>(queryKeys.session, (current) =>
-        current === undefined || JSON.stringify(current.permissions) === JSON.stringify(permissions)
-          ? current
-          : { ...current, isAdmin: permissions.admin, permissions },
-      );
-    }
     for (const window of Object.values(useDesktop.getState().windows)) {
       if (!isAppAllowed(window.app, permissions)) {
         dispatch({ type: 'close', id: window.id });
       }
     }
-  }, [permissions, queryClient, user.permissions]);
+  }, [permissions]);
   useLayoutPersistence();
   useQuery(itemsQuery);
   const items = useItemsModule();
@@ -629,13 +645,16 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
             <Suspense>
               <NotificationToasts position={taskbarPosition} locale={locale} />
             </Suspense>
+            <PermissionsSync />
             {powerAction !== null && (
-              <PowerDialog
-                action={powerAction}
-                onClose={() => {
-                  setPowerAction(null);
-                }}
-              />
+              <Suspense>
+                <PowerDialog
+                  action={powerAction}
+                  onClose={() => {
+                    setPowerAction(null);
+                  }}
+                />
+              </Suspense>
             )}
             {switcherOpen && (
               <AppSwitcher
