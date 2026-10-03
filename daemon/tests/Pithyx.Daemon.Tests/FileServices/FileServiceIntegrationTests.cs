@@ -8,9 +8,8 @@ using Pithyx.Daemon.FileServices;
 using Pithyx.Daemon.Shares;
 using Pithyx.Daemon.Storage;
 using Pithyx.Daemon.Tests.Storage.Integration;
-using Pithyx.Daemon.Users;
-
 using Pithyx.Daemon.Tests.Support;
+using Pithyx.Daemon.Users;
 
 namespace Pithyx.Daemon.Tests.FileServices;
 
@@ -95,8 +94,8 @@ public sealed class FileServiceIntegrationTests
 
             // The share's ACL (D286), then the recycle bin folders Samba needs.
             // Named users stand in for the share's groups here; the groups have their own test.
-            const string entries = "u::rwX,g::---,o::---,m::rwX,u:20950:rwX,u:20951:r-X";
-            foreach (var command in ShareAcls.Commands(share, entries))
+            const string Entries = "u::rwX,g::---,o::---,m::rwX,u:20950:rwX,u:20951:r-X";
+            foreach (var command in ShareAcls.Commands(share, Entries))
             {
                 Assert.Equal(0, (await _commands.RunAsync(command, Token)).ExitCode);
             }

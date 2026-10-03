@@ -243,8 +243,8 @@ test('signing out closes the windows, so the next sign-in starts with an empty d
   await expect(page.getByRole('region', { name: 'Storage', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Pithyx menu' }).click();
   const menu = page.getByRole('dialog', { name: 'Pithyx menu' });
-  // Nobody may shut down or restart through this daemon yet, so there is no power button.
-  await expect(menu.getByRole('button', { name: 'Power options' })).toHaveCount(0);
+  // Administrators may restart and shut down; nothing is pressed here.
+  await expect(menu.getByRole('button', { name: 'Power options' })).toBeVisible();
   await menu.getByRole('button', { name: 'Sign out' }).click();
   await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
 

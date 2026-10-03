@@ -171,13 +171,14 @@ test('groups and their rights reach their members, and the editors are accessibl
   page,
 }) => {
   const settings = await openSettings(page);
-  await settings.getByRole('button', { name: /^Users/ }).click();
+  // Created before the page opens, so its lists have the user.
   const user = await page.request.post('/api/users', {
     headers,
     data: { username: 'e2e-rights', password: 'river-candle-orbit-7' },
   });
   expect(user.ok()).toBe(true);
   const userId = ((await user.json()) as { id: number }).id;
+  await settings.getByRole('button', { name: /^Users/ }).click();
 
   // A group with the new user, created on the page.
   await settings.getByRole('button', { name: 'Create group' }).click();
