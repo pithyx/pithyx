@@ -40,6 +40,25 @@ public static partial class CredentialRules
         return username;
     }
 
+    /// <summary>
+    /// Lower-cases and validates a group name: the rules of a user name, and nothing that starts with <c>pithyx-</c>,
+    /// which the daemon keeps for its own groups.
+    /// </summary>
+    public static string NormalizeGroupName(string input)
+    {
+        ArgumentNullException.ThrowIfNull(input);
+        var name = input.Trim().ToLowerInvariant();
+        if (!UsernamePattern().IsMatch(name))
+        {
+            throw new PithyxException(ErrorCodes.UsersGroupNameInvalid);
+        }
+        if (_reserved.Contains(name) || name.StartsWith("systemd-", StringComparison.Ordinal) || name.StartsWith("pithyx-", StringComparison.Ordinal))
+        {
+            throw new PithyxException(ErrorCodes.UsersGroupNameReserved, new Dictionary<string, object?> { ["name"] = name });
+        }
+        return name;
+    }
+
     /// <summary>Trims a display name; an empty one becomes null.</summary>
     public static string? NormalizeDisplayName(string? input)
     {

@@ -36,7 +36,9 @@ public sealed class UserService(
         await using var connection = await connections.OpenAsync(cancellationToken);
         var rows = await connection.QueryAsync<Row>(Select + " ORDER BY username");
         var linux = passwords.LinuxWithPassword();
-        return [.. rows.Select(row => ToSummary(row, linux))];
+        var groups = (await connection.QueryAsync<(long UserId, long GroupId)>("SELECT user_id, group_id FROM group_members ORDER BY group_id"))
+            .ToLookup(member => member.UserId, member => member.GroupId);
+        return [.. rows.Select(row => ToSummary(row, linux, [.. groups[row.Id]]))];
     }
 
     public async Task<UserSummary> CreateAsync(ClaimsPrincipal caller, NewUser request, CancellationToken cancellationToken)
@@ -70,6 +72,7 @@ public sealed class UserService(
                 """,
                 new { username, displayName, hash, admin = request.IsAdmin ? 1 : 0, uid, smb = request.Smb ? 1 : 0, sftp = request.Sftp ? 1 : 0, now },
                 transaction);
+            await GroupService.SetUserGroupsAsync(connection, transaction, id, request.GroupIds ?? []);
             await transaction.CommitAsync(cancellationToken);
         }
         var home = await accounts.CreateHomeAsync(username, uid, cancellationToken);
@@ -126,6 +129,10 @@ public sealed class UserService(
             if (disabling)
             {
                 await connection.ExecuteAsync("DELETE FROM sessions WHERE user_id = @id", new { id }, transaction);
+            }
+            if (request.GroupIds is { } groupIds)
+            {
+                await GroupService.SetUserGroupsAsync(connection, transaction, id, groupIds);
             }
             await transaction.CommitAsync(cancellationToken);
         }
@@ -195,12 +202,12 @@ public sealed class UserService(
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
         var row = await connection.QuerySingleOrDefaultAsync<Row>(Select + " WHERE id = @id", new { id });
-        return row is null ? null : ToSummary(row, passwords.LinuxWithPassword());
+        return row is null ? null : ToSummary(row, passwords.LinuxWithPassword(), await GroupService.GroupIdsOfAsync(connection, id));
     }
 
     private string? HomeOrNull(string username) => accounts.HomeOf(username) is var home && home != AccountReconciler.NoHome ? home : null;
 
-    private UserSummary ToSummary(Row row, IReadOnlySet<string> linuxWithPassword) => new(
+    private UserSummary ToSummary(Row row, IReadOnlySet<string> linuxWithPassword, IReadOnlyList<long> groupIds) => new(
         row.Id,
         row.Username,
         row.DisplayName,
@@ -212,7 +219,8 @@ public sealed class UserService(
         row.DisabledAt is not null,
         row.IsAdmin == 1 || row.Smb == 1,
         row.IsAdmin == 1 || row.Sftp == 1,
-        passwords.HasPassword(row.Username, linuxWithPassword));
+        passwords.HasPassword(row.Username, linuxWithPassword),
+        groupIds);
 
     private static PithyxException NotFound() => new(ErrorCodes.UsersUserNotFound);
 

@@ -5,7 +5,8 @@
     "name": "Name",
     "uid": "Benutzer-ID",
     "home": "Home",
-    "actions": "Aktionen"
+    "actions": "Aktionen",
+    "groups": "Gruppen"
   },
   "badge": {
     "admin": "Administrator",
@@ -21,7 +22,9 @@
     "displayName": "Anzeigename (optional)",
     "password": "Passwort",
     "newPassword": "Neues Passwort",
-    "admin": "Administrator (darf alles ändern)"
+    "admin": "Administrator (darf alles ändern)",
+    "groups": "Gruppen",
+    "groupsHint": "Alle Benutzer sind außerdem in der Gruppe users."
   },
   "create": {
     "button": "Benutzer anlegen",
@@ -61,5 +64,40 @@
     "sftp": "Darf SFTP nutzen",
     "admin": "Administratoren dürfen jeden Dateidienst nutzen.",
     "signInOnce": "Noch nicht bereit für SMB und SFTP: Der Benutzer meldet sich einmal im Web an, oder du setzt ein neues Passwort."
+  },
+  "groups": {
+    "title": "Gruppen",
+    "intro": "Jede Gruppe ist eine eigene Linux-Gruppe; ihre Gruppen-ID wird nie wieder vergeben. Rechte einer Gruppe gelten für alle ihre Mitglieder.",
+    "column": {
+      "members": "Mitglieder",
+      "gid": "Gruppen-ID"
+    },
+    "badge": {
+      "builtin": "Eingebaut"
+    },
+    "builtinDescription": "Alle Benutzer sind Mitglied. Sie lässt sich nicht ändern.",
+    "everybody": "{count, plural, one {# Benutzer (alle)} other {# Benutzer (alle)}}",
+    "noMembers": "Keine Mitglieder",
+    "field": {
+      "name": "Gruppenname",
+      "description": "Beschreibung (optional)",
+      "members": "Mitglieder"
+    },
+    "create": {
+      "button": "Gruppe anlegen",
+      "title": "Gruppe anlegen",
+      "intro": "Benutzer können in beliebig vielen Gruppen sein.",
+      "submit": "Anlegen"
+    },
+    "edit": {
+      "title": "{name} bearbeiten",
+      "label": "Gruppe {name} bearbeiten"
+    },
+    "delete": {
+      "title": "Gruppe {name} löschen?",
+      "intro": "Die Gruppe wird entfernt, ihre Mitglieder bleiben. Dateien behalten die Gruppen-ID, und sie wird nie an eine andere Gruppe vergeben.",
+      "submit": "Gruppe löschen",
+      "label": "Gruppe {name} löschen"
+    }
   }
 }

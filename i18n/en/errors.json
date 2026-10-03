@@ -323,6 +323,18 @@
     "account": {
       "refused": "The Linux account {username} cannot be created ({reason}). A system account may already use this name."
     },
+    "gid": {
+      "exhausted": "No group ids are left. Every id from 30000 to 39999 has been given out once."
+    },
+    "group": {
+      "builtin": "The group users holds every user. It cannot be renamed, deleted or given members.",
+      "description_invalid": "The description can have at most {max} characters on one line.",
+      "exists": "A group named {name} already exists.",
+      "name_invalid": "Use lowercase letters, digits, hyphens and underscores, starting with a letter or underscore, at most 32 characters.",
+      "name_reserved": "The name {name} belongs to the system. Choose another one.",
+      "not_found": "The group was not found. Someone may have deleted it.",
+      "refused": "The Linux group {name} cannot be created ({reason}). A system group may already use this name."
+    },
     "uid": {
       "exhausted": "No user ids are left. Every id from 20000 to 29999 has been given out once."
     },

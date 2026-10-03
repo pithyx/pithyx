@@ -9,12 +9,14 @@ namespace Pithyx.Daemon.Users;
 /// <param name="PasswdPath">Where the accounts are read: <c>/etc/passwd</c>, a fixture in simulation.</param>
 /// <param name="Apply">Whether commands run; false in simulation, where only the plan is made.</param>
 /// <param name="ShadowPath">Where the account expiry is read: <c>/etc/shadow</c>; a missing file means no account expires.</param>
-public sealed record AccountOptions(string PasswdPath, bool Apply, string ShadowPath = "/etc/shadow");
+/// <param name="GroupPath">Where the groups are read: <c>/etc/group</c>, a fixture in simulation.</param>
+public sealed record AccountOptions(string PasswdPath, bool Apply, string ShadowPath = "/etc/shadow", string GroupPath = "/etc/group");
 
 /// <summary>
 /// Keeps the Linux accounts in line with the users in SQLite (step 10): at start and after every change, the
 /// difference (<see cref="AccountReconciler"/>) runs as <c>useradd</c>, <c>usermod</c> and <c>userdel</c>, only for
-/// accounts in the Pithyx range. A user's home is a dataset below the first pool's <c>homes</c> (D105), created with the
+/// accounts in the Pithyx range, and the groups the same way with <c>groupadd</c>, <c>groupmod</c>, <c>gpasswd</c> and
+/// <c>groupdel</c> (<see cref="GroupReconciler"/>), only for groups in the Pithyx range. A user's home is a dataset below the first pool's <c>homes</c> (D105), created with the
 /// user and never deleted with it.
 /// </summary>
 public sealed partial class LinuxAccounts(
@@ -30,6 +32,9 @@ public sealed partial class LinuxAccounts(
 
     public IReadOnlyList<PasswdEntry> Actual() =>
         File.Exists(options.PasswdPath) ? PasswdParser.Parse(File.ReadAllText(options.PasswdPath)) : [];
+
+    public IReadOnlyList<FileServices.GroupEntry> ActualGroups() =>
+        File.Exists(options.GroupPath) ? FileServices.GroupParser.Parse(File.ReadAllText(options.GroupPath)) : [];
 
     /// <summary>
     /// The accounts with an expiry date. A daemon that is not root cannot read <c>/etc/shadow</c> (and cannot change
@@ -76,7 +81,25 @@ public sealed partial class LinuxAccounts(
             user.DisabledAt is not null))];
     }
 
-    /// <summary>Plans and, in real mode, runs the difference; returns the refusals and failures by name.</summary>
+    /// <summary>
+    /// The groups in the database with their members; a member whose account is not in <paramref name="accounts"/>
+    /// (refused or not created yet) is left out. The built-in group <c>users</c> is the system's and never wanted here.
+    /// </summary>
+    public async Task<IReadOnlyList<WantedGroup>> WantedGroupsAsync(IReadOnlySet<string> accounts, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(accounts);
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        var groups = await connection.QueryAsync<(long Id, string Name)>("SELECT id, name FROM groups WHERE builtin = 0 ORDER BY id");
+        var members = (await connection.QueryAsync<(long GroupId, string Username)>(
+            "SELECT group_members.group_id, users.username FROM group_members JOIN users ON users.id = group_members.user_id"))
+            .ToLookup(member => member.GroupId, member => member.Username);
+        return [.. groups.Select(group => new WantedGroup(
+            group.Name,
+            group.Id,
+            [.. members[group.Id].Where(accounts.Contains).Order(StringComparer.Ordinal)]))];
+    }
+
+    /// <summary>Plans and, in real mode, runs the difference of the accounts, then of the groups; returns the refusals and failures by name.</summary>
     public async Task<IReadOnlyDictionary<string, string>> ReconcileAsync(CancellationToken cancellationToken)
     {
         await _running.WaitAsync(cancellationToken);
@@ -99,6 +122,28 @@ public sealed partial class LinuxAccounts(
                 if (result.ExitCode != 0)
                 {
                     problems[action.Name] = "command_failed";
+                }
+            }
+            var accounts = Actual().Select(entry => entry.Name).ToHashSet(StringComparer.Ordinal);
+            foreach (var action in GroupReconciler.Plan(await WantedGroupsAsync(accounts, cancellationToken), ActualGroups()))
+            {
+                if (action is RefuseGroup refusal)
+                {
+                    LogGroupRefused(refusal.Name, refusal.Reason);
+                    problems[GroupProblemKey(refusal.Name)] = refusal.Reason;
+                    continue;
+                }
+                if (!options.Apply)
+                {
+                    continue;
+                }
+                foreach (var command in GroupReconciler.Commands(action))
+                {
+                    if ((await commands.RunAsync(command, cancellationToken)).ExitCode != 0)
+                    {
+                        problems[GroupProblemKey(action.Name)] = "command_failed";
+                        break;
+                    }
                 }
             }
             return problems;
@@ -140,6 +185,12 @@ public sealed partial class LinuxAccounts(
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "The Linux account {Name} was not provisioned: {Reason}")]
     private partial void LogRefused(string name, string reason);
+
+    /// <summary>The key of a group's problem in the answer of <see cref="ReconcileAsync"/>; user names cannot contain a colon.</summary>
+    public static string GroupProblemKey(string name) => $"group:{name}";
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "The Linux group {Name} was not provisioned: {Reason}")]
+    private partial void LogGroupRefused(string name, string reason);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Could not create the home dataset of {Name} on pool {Pool}")]
     private partial void LogHomeFailed(string name, string pool);

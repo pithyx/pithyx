@@ -18,6 +18,7 @@ public static class UserEndpoints
         services.AddSingleton<LinuxAccounts>();
         services.AddSingleton<ShareAcls>();
         services.AddSingleton<UserService>();
+        services.AddSingleton<GroupService>();
         return services;
     }
 
@@ -59,6 +60,27 @@ public static class UserEndpoints
             })
             .WithName("DeleteUser")
             .WithDescription("Administrators only. Deletes the user and its Linux account; its files and home stay, and its uid is never given out again. Nobody deletes themselves, and the last administrator stays.");
+
+        var groups = api.MapGroup("/groups").WithTags("Users");
+        groups.MapGet("", async (GroupService service, HttpContext context, CancellationToken cancellationToken) =>
+                TypedResults.Ok(await service.ListAsync(context.User, cancellationToken)))
+            .WithName("GetGroups")
+            .WithDescription("Administrators only. Every group with its members, the built-in group users (every user) first.");
+        groups.MapPost("", async (NewGroup request, GroupService service, HttpContext context, CancellationToken cancellationToken) =>
+                TypedResults.Created((string?)null, await service.CreateAsync(context.User, request, cancellationToken)))
+            .WithName("CreateGroup")
+            .WithDescription("Administrators only. Creates a group with a Linux group (a gid from 30000 to 39999 that is never given out again) and its members.");
+        groups.MapPatch("/{groupId:long}", async (long groupId, GroupUpdate request, GroupService service, HttpContext context, CancellationToken cancellationToken) =>
+                TypedResults.Ok(await service.UpdateAsync(context.User, groupId, request, cancellationToken)))
+            .WithName("UpdateGroup")
+            .WithDescription("Administrators only. Renames a group, changes its description or sets its members; the gid stays. The built-in group cannot be changed.");
+        groups.MapDelete("/{groupId:long}", async (long groupId, GroupService service, HttpContext context, CancellationToken cancellationToken) =>
+            {
+                await service.DeleteAsync(context.User, groupId, cancellationToken);
+                return TypedResults.NoContent();
+            })
+            .WithName("DeleteGroup")
+            .WithDescription("Administrators only. Deletes a group and its Linux group; files keep its gid, which is never given out again. The built-in group stays.");
     }
 }
 

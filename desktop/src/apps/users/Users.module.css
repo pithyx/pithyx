@@ -1,8 +1,13 @@
 .page {
   container-type: inline-size;
   display: grid;
-  gap: var(--space-4);
+  gap: var(--space-6);
   padding: 0;
+}
+
+.section {
+  display: grid;
+  gap: var(--space-4);
 }
 
 .head {

@@ -554,6 +554,37 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string UsersAccountRefused = "users.account.refused";
 
+    /// <summary>Every gid of the group range (30000 to 39999) has been given out once.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string UsersGidExhausted = "users.gid.exhausted";
+
+    /// <summary>The built-in group <c>users</c> holds every user; it cannot be renamed, deleted or given members.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string UsersGroupBuiltin = "users.group.builtin";
+
+    /// <summary>A group description is longer than <c>params.max</c> characters or has line breaks.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string UsersGroupDescriptionInvalid = "users.group.description_invalid";
+
+    /// <summary>A group with this name exists; <c>params.name</c> names it.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string UsersGroupExists = "users.group.exists";
+
+    /// <summary>A group name is not a valid Linux group name: lowercase letters, digits, underscores and hyphens, starting with a letter or underscore, at most 32 characters.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string UsersGroupNameInvalid = "users.group.name_invalid";
+
+    /// <summary>The group name belongs to the system or to Pithyx; <c>params.name</c> names it.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string UsersGroupNameReserved = "users.group.name_reserved";
+
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string UsersGroupNotFound = "users.group.not_found";
+
+    /// <summary>The Linux group cannot be created; <c>params.name</c> is the group, <c>params.reason</c> <c>name_taken</c> (a system group has the name), <c>gid_taken</c> or <c>command_failed</c>.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string UsersGroupRefused = "users.group.refused";
+
     /// <summary>Every uid of the user range (20000 to 29999) has been given out once.</summary>
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string UsersUidExhausted = "users.uid.exhausted";

@@ -323,6 +323,18 @@
     "account": {
       "refused": "Das Linux-Konto {username} kann nicht angelegt werden ({reason}). Vielleicht nutzt ein Systemkonto diesen Namen schon."
     },
+    "gid": {
+      "exhausted": "Es sind keine Gruppen-IDs mehr frei. Jede ID von 30000 bis 39999 wurde schon einmal vergeben."
+    },
+    "group": {
+      "builtin": "Die Gruppe users enthält alle Benutzer. Sie lässt sich nicht umbenennen, löschen oder mit Mitgliedern füllen.",
+      "description_invalid": "Die Beschreibung darf höchstens {max} Zeichen in einer Zeile haben.",
+      "exists": "Es gibt schon eine Gruppe namens {name}.",
+      "name_invalid": "Verwende Kleinbuchstaben, Ziffern, Bindestriche und Unterstriche, beginnend mit einem Buchstaben oder Unterstrich, höchstens 32 Zeichen.",
+      "name_reserved": "Der Name {name} gehört dem System. Wähle einen anderen.",
+      "not_found": "Die Gruppe wurde nicht gefunden. Vielleicht hat sie jemand gelöscht.",
+      "refused": "Die Linux-Gruppe {name} kann nicht angelegt werden ({reason}). Vielleicht verwendet eine Systemgruppe diesen Namen schon."
+    },
     "uid": {
       "exhausted": "Es sind keine Benutzer-IDs mehr frei. Jede ID von 20000 bis 29999 wurde schon einmal vergeben."
     },
