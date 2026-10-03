@@ -172,6 +172,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- In the light theme the wallpaper boxes were pale and see-through, so the lids looked muddy and the faces washed out; they now keep the colors of the dark theme, and only the dark theme fades the smaller boxes into the background.
 - Files and folders created by uploads and copies in Files, over WebDAV and over FTP no longer take the write group's rights away: they were created with mode 0644 and 0755, which in a shared folder with an ACL cut its mask down to read only, so other users with read and write access could not change them. They are created with 0666 and 0777 now; the shared folder's default ACL decides, and elsewhere the umask applies as before.
 - The SFTP views changed the root folder of every shared folder offered over SFTP to mode 0755 when the daemon set them up again (after a restart or a change): nobody could write there any more and other accounts could read. The views no longer touch it, and migration 0018 makes the daemon set every shared folder's ACL again once.
 - Files created over SMB were executable (Samba created them with mode 0777 under the default ACL); they get 0660 now, and the named users of the shared folder keep their rights.
