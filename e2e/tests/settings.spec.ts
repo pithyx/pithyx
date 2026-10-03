@@ -184,7 +184,9 @@ test('groups and their rights reach their members, and the editors are accessibl
   await settings.getByRole('button', { name: 'Create group' }).click();
   const create = page.getByRole('dialog', { name: 'Create group' });
   await create.getByLabel('Group name').fill('e2e-media');
-  await create.getByRole('checkbox', { name: 'e2e-rights' }).check();
+  // Checkbox inputs are visually hidden behind the drawn box, so a user clicks the label.
+  await create.getByText('e2e-rights', { exact: true }).click();
+  await expect(create.getByRole('checkbox', { name: 'e2e-rights' })).toBeChecked();
   await create.getByRole('button', { name: 'Create' }).click();
   await expect(create).toHaveCount(0);
   const groups = settings.getByRole('table', { name: 'Groups' });
@@ -193,7 +195,8 @@ test('groups and their rights reach their members, and the editors are accessibl
   // FTP for the group, then the user's own rights show it as given by the group.
   await groups.getByRole('button', { name: 'Rights of the group e2e-media' }).click();
   const groupRights = page.getByRole('dialog', { name: 'Rights of the group e2e-media' });
-  await groupRights.getByRole('checkbox', { name: 'FTP' }).check();
+  await groupRights.getByText('FTP', { exact: true }).click();
+  await expect(groupRights.getByRole('checkbox', { name: 'FTP' })).toBeChecked();
   expect(await violations(page)).toEqual([]);
   await groupRights.getByRole('button', { name: 'Save rights' }).click();
   await expect(groupRights).toHaveCount(0);
@@ -208,7 +211,8 @@ test('groups and their rights reach their members, and the editors are accessibl
   await expect(userRights.getByRole('checkbox', { name: 'FTP' })).toBeDisabled();
   await expect(userRights).toContainText('Through the group e2e-media');
   await expect(userRights.getByRole('checkbox', { name: 'SMB (network drives)' })).toBeChecked();
-  await userRights.getByRole('checkbox', { name: 'Restart and shut down' }).check();
+  await userRights.getByText('Restart and shut down', { exact: true }).click();
+  await expect(userRights.getByRole('checkbox', { name: 'Restart and shut down' })).toBeChecked();
   await userRights.getByRole('button', { name: 'Save rights' }).click();
   await expect(userRights).toHaveCount(0);
   await expect(users.getByRole('row', { name: /^e2e-rights/ })).toContainText('FTP');
