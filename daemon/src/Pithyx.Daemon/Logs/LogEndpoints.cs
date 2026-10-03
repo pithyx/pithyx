@@ -43,6 +43,7 @@ public static class LogEndpoints
                 RequireAdmin(context.User);
                 return TypedResults.Ok(await service.QueryAsync(Query(from, to, level, source, search, cursor, limit ?? LogService.DefaultLimit), cancellationToken));
             })
+            .RequireAuthorization(Policies.Admin)
             .WithName("GetLogs")
             .WithDescription("Administrators only. Log entries of the daemon, the system services and the apps, newest first, from the current logs and the archive together. Filters: time range (from, to), level (repeat for several: debug, info, warn, error), source (repeat for several), search (text in the message or its fields, or an exact request id). Pass nextCursor as cursor for older entries; limit is 1 to 1000 (default 200).");
         logs.MapGet("/sources", async (LogService service, HttpContext context, CancellationToken cancellationToken) =>
@@ -50,6 +51,7 @@ public static class LogEndpoints
                 RequireAdmin(context.User);
                 return TypedResults.Ok(await service.SourcesAsync(cancellationToken));
             })
+            .RequireAuthorization(Policies.Admin)
             .WithName("GetLogSources")
             .WithDescription("Administrators only. Every source with entries in the current logs or the archive: daemon, system/<service>, app/<id>.");
         logs.MapGet("/export", async (
@@ -72,6 +74,7 @@ public static class LogEndpoints
                     text ? "text/plain; charset=utf-8" : "application/x-ndjson",
                     name);
             })
+            .RequireAuthorization(Policies.Admin)
             .WithName("ExportLogs")
             .WithDescription("Administrators only. Every entry matching the same filters as GET /api/logs, newest first, as a download: JSON lines, or text lines with format=text. At most 1,000,000 entries.");
         logs.MapGet("/settings", async (LogService service, HttpContext context, CancellationToken cancellationToken) =>
@@ -79,6 +82,7 @@ public static class LogEndpoints
                 RequireAdmin(context.User);
                 return TypedResults.Ok(await service.StatusAsync(cancellationToken));
             })
+            .RequireAuthorization(Policies.Admin)
             .WithName("GetLogSettings")
             .WithDescription("Administrators only. The retention of the current logs and of the archive, with the space they take, their oldest entries and the pools that can hold the archive.");
         logs.MapPut("/settings", async (LogSettings settings, LogService service, HttpContext context, CancellationToken cancellationToken) =>
@@ -86,14 +90,22 @@ public static class LogEndpoints
                 RequireAdmin(context.User);
                 return TypedResults.Ok(await service.SetSettingsAsync(settings, cancellationToken));
             })
+            .RequireAuthorization(Policies.Admin)
             .WithName("SetLogSettings")
             .WithDescription("Administrators only. Sets the retention. The current logs (system and apps together) stay below maxBytes, at most 4 GB; entries older than retentionDays go. The archive on a pool is optional; archivePool null means the first pool.");
 
-        api.MapPost("/apps/{app}/logs", (string app, AppLogBatch batch, LogService service, HttpContext context) =>
-                TypedResults.Ok(service.WriteApp(app, context.User.FindFirstValue(ClaimTypes.Name) ?? "", batch)))
+        api.MapPost("/apps/{app}/logs", (string app, AppLogBatch batch, LogService service, Permissions.PermissionService permissions, HttpContext context) =>
+            {
+                // Only an app the user may open writes in the user's name.
+                if (!Permissions.Resources.AllowsApp(permissions.ForUser(context.User), app))
+                {
+                    throw new PithyxException(ErrorCodes.AuthPermissionDenied);
+                }
+                return TypedResults.Ok(service.WriteApp(app, context.User.FindFirstValue(ClaimTypes.Name) ?? "", batch));
+            })
             .WithName("WriteAppLogs")
             .WithTags("Logs")
-            .WithDescription("Stores log entries an app wrote through the SDK for the signed-in user, as source app/<app>. At most 100 entries per request; each app may write bursts of 200 and then 20 entries a second, the rest is dropped and counted.");
+            .WithDescription("Stores log entries an app wrote through the SDK for the signed-in user, as source app/<app>; only for an app the user may open (auth.permission.denied otherwise). At most 100 entries per request; each app may write bursts of 200 and then 20 entries a second, the rest is dropped and counted.");
     }
 
     private static LogQuery Query(DateTimeOffset? from, DateTimeOffset? to, string[]? levels, string[]? sources, string? search, string? cursor, int limit)

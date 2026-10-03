@@ -17,8 +17,8 @@ import styles from './Settings.module.css';
 const fileServicesKey = ['settings', 'system', 'fileServices'] as const;
 
 /**
- * File services: SMB and SFTP switched on and off for the box, the SMB workgroup, how each service is doing and how
- * other computers connect. Who may use which protocol is set per user on the Users page, which shared folders they
+ * File services: SMB, SFTP and SSH logins switched on and off for the box, the SMB workgroup, how each service is
+ * doing and how other computers connect. Who may use which protocol is set per user on the Users page, which shared folders they
  * offer on the Shared folders page.
  */
 export function FileServicesPage({ app }: { app: PithyxApp }) {
@@ -130,6 +130,24 @@ function FileServicesForm({ app, saved }: { app: PithyxApp; saved: FileServiceSe
           </li>
           <li>{t('fileServices.sftp.view')}</li>
         </ul>
+      </section>
+      <section className={styles.card} aria-labelledby="file-services-ssh">
+        <h3 id="file-services-ssh" className={styles.sectionTitle}>
+          {t('fileServices.ssh.title')}
+        </h3>
+        <p className={styles.muted}>{t('fileServices.ssh.explain')}</p>
+        <Switch
+          isSelected={saved.sshEnabled}
+          isDisabled={save.isPending}
+          onChange={(sshEnabled) => {
+            save.mutate({ sshEnabled });
+          }}
+        >
+          {t('fileServices.ssh.switch')}
+        </Switch>
+        <p className={styles.notice} role="note">
+          {t('fileServices.ssh.warning')}
+        </p>
       </section>
       <p className={styles.notice} role="note">
         {t('fileServices.rights')}

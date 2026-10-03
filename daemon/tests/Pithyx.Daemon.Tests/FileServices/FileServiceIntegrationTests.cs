@@ -8,6 +8,7 @@ using Pithyx.Daemon.FileServices;
 using Pithyx.Daemon.Shares;
 using Pithyx.Daemon.Storage;
 using Pithyx.Daemon.Tests.Storage.Integration;
+using Pithyx.Daemon.Tests.Support;
 using Pithyx.Daemon.Users;
 
 namespace Pithyx.Daemon.Tests.FileServices;
@@ -92,8 +93,9 @@ public sealed class FileServiceIntegrationTests
             Assert.All(users, user => Assert.True(passwords.HasPassword(user, passwords.LinuxWithPassword()), user));
 
             // The share's ACL (D286), then the recycle bin folders Samba needs.
-            var entries = ShareAcls.Entries([(20950, true), (20951, false)]);
-            foreach (var command in ShareAcls.Commands(share, entries))
+            // Named users stand in for the share's groups here; the groups have their own test.
+            const string Entries = "u::rwX,g::---,o::---,m::rwX,u:20950:rwX,u:20951:r-X";
+            foreach (var command in ShareAcls.Commands(share, Entries))
             {
                 Assert.Equal(0, (await _commands.RunAsync(command, Token)).ExitCode);
             }
@@ -102,8 +104,7 @@ public sealed class FileServiceIntegrationTests
             long shareId;
             await using (var connection = await connections.OpenAsync(Token))
             {
-                await connection.ExecuteAsync("INSERT INTO id_allocations (id, kind, name, allocated_at) VALUES (20950, 'user', 'pxit-rita', 'x')");
-                await connection.ExecuteAsync("INSERT INTO users (id, username, password_hash, is_admin, uid, created_at, updated_at) VALUES (20950, 'pxit-rita', 'x', 0, 20950, 'x', 'x')");
+                await TestUsers.InsertAsync(connection, "pxit-rita", id: 20950, uid: 20950);
                 shareId = await connection.ExecuteScalarAsync<long>(
                     "INSERT INTO shares (name, path, dataset, created_at, updated_at) VALUES ('Media', @share, @dataset, 'x', 'x') RETURNING id", new { share, dataset });
             }

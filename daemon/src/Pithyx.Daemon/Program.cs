@@ -14,6 +14,7 @@ using Pithyx.Daemon.Layouts;
 using Pithyx.Daemon.Logs;
 using Pithyx.Daemon.Monitoring;
 using Pithyx.Daemon.Notifications;
+using Pithyx.Daemon.Permissions;
 using Pithyx.Daemon.Realtime;
 using Pithyx.Daemon.Shares;
 using Pithyx.Daemon.Storage;
@@ -65,6 +66,7 @@ builder.Services.AddPithyxAuth();
 builder.Services.AddPithyxLayouts();
 builder.Services.AddPithyxNotifications();
 builder.Services.AddPithyxJobs();
+builder.Services.AddPithyxPermissions();
 builder.Services.AddPithyxShares();
 builder.Services.AddPithyxUsers(mode == DaemonMode.Real
     ? new AccountOptions("/etc/passwd", Apply: true)
@@ -191,6 +193,7 @@ api.MapJobEndpoints();
 api.MapNotificationEndpoints();
 api.MapShareEndpoints();
 api.MapUserEndpoints();
+api.MapPermissionEndpoints();
 api.MapFileServiceEndpoints();
 api.MapFileEndpoints();
 api.MapStorageEndpoints();
@@ -198,6 +201,7 @@ api.MapSnapshotEndpoints();
 api.MapStorageHealthEndpoints();
 api.MapLogEndpoints();
 api.MapSystemSettingsEndpoints();
+api.MapPowerEndpoint();
 app.MapRealtime();
 app.MapDesktop(paths.DesktopDirectory);
 

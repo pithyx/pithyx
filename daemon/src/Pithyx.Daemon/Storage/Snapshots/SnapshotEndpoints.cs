@@ -31,6 +31,7 @@ public static class SnapshotEndpoints
                 RequireAdmin(context.User);
                 return TypedResults.Ok(service.List(dataset));
             })
+            .RequireAuthorization(Policies.Admin)
             .WithName("ListSnapshots")
             .WithDescription("Administrators only. The snapshots of a dataset as last read, oldest first. pithyxKind is set for snapshots Pithyx took.");
         snapshots.MapPost("", async (SnapshotCreateRequest request, SnapshotService service, HttpContext context, CancellationToken cancellationToken) =>
@@ -38,6 +39,7 @@ public static class SnapshotEndpoints
                 RequireAdmin(context.User);
                 return TypedResults.Created((string?)null, await service.TakeAsync(request.Dataset, SnapshotKinds.Manual, cancellationToken));
             })
+            .RequireAuthorization(Policies.Admin)
             .WithName("CreateSnapshot")
             .WithDescription("Administrators only. Takes pithyx-manual-<utc> of the dataset now. Manual snapshots are never pruned by a schedule.");
         snapshots.MapPost("/hold", async (SnapshotRequest request, SnapshotService service, HttpContext context, CancellationToken cancellationToken) =>
@@ -46,6 +48,7 @@ public static class SnapshotEndpoints
                 await service.HoldAsync(request.Dataset, request.Name, cancellationToken);
                 return TypedResults.NoContent();
             })
+            .RequireAuthorization(Policies.Admin)
             .WithName("HoldSnapshot")
             .WithDescription("Administrators only. Places the hold \"pithyx\" on the snapshot, so neither a schedule nor anyone else can destroy it.");
         snapshots.MapPost("/release", async (SnapshotRequest request, SnapshotService service, HttpContext context, CancellationToken cancellationToken) =>
@@ -54,6 +57,7 @@ public static class SnapshotEndpoints
                 await service.ReleaseAsync(request.Dataset, request.Name, cancellationToken);
                 return TypedResults.NoContent();
             })
+            .RequireAuthorization(Policies.Admin)
             .WithName("ReleaseSnapshot")
             .WithDescription("Administrators only. Releases the hold \"pithyx\" of the snapshot. Holds of other tools stay.");
         snapshots.MapGet("/schedules", async (string dataset, SnapshotService service, HttpContext context, CancellationToken cancellationToken) =>
@@ -61,6 +65,7 @@ public static class SnapshotEndpoints
                 RequireAdmin(context.User);
                 return TypedResults.Ok(await service.GetSchedulesAsync(dataset, cancellationToken));
             })
+            .RequireAuthorization(Policies.Admin)
             .WithName("GetSnapshotSchedules")
             .WithDescription("Administrators only. The hourly, daily, weekly and monthly schedules of a dataset; off with the default counts (24, 7, 4, 6) until saved.");
         snapshots.MapPut("/schedules", async (SnapshotScheduleList request, SnapshotService service, HttpContext context, CancellationToken cancellationToken) =>
@@ -68,6 +73,7 @@ public static class SnapshotEndpoints
                 RequireAdmin(context.User);
                 return TypedResults.Ok(await service.SetSchedulesAsync(request, cancellationToken));
             })
+            .RequireAuthorization(Policies.Admin)
             .WithName("SetSnapshotSchedules")
             .WithDescription(
                 "Administrators only. Saves the given schedules of a dataset. A schedule takes pithyx-<kind>-<utc> once per UTC hour, day, week (from Monday) or month "

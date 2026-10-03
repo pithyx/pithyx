@@ -10,7 +10,7 @@ export type paths = {
         };
         get?: never;
         put?: never;
-        /** @description Stores log entries an app wrote through the SDK for the signed-in user, as source app/<app>. At most 100 entries per request; each app may write bursts of 200 and then 20 entries a second, the rest is dropped and counted. */
+        /** @description Stores log entries an app wrote through the SDK for the signed-in user, as source app/<app>; only for an app the user may open (auth.permission.denied otherwise). At most 100 entries per request; each app may write bursts of 200 and then 20 entries a second, the rest is dropped and counted. */
         post: operations["WriteAppLogs"];
         delete?: never;
         options?: never;
@@ -286,9 +286,9 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** @description Administrators only. Whether SMB and SFTP are switched on, the SMB workgroup and how each service is doing. */
+        /** @description Administrators only. Whether SMB, SFTP and SSH logins are switched on, the SMB workgroup and how each service is doing. */
         get: operations["GetFileServices"];
-        /** @description Administrators only. Switches SMB or SFTP on or off and sets the SMB workgroup; the configuration is checked and applied before the answer. Switching SFTP off never stops sshd: it only stops letting Pithyx users in. */
+        /** @description Administrators only. Switches SMB, SFTP or SSH logins on or off and sets the SMB workgroup; the configuration is checked and applied before the answer. SSH logins give users with the SSH login right a shell. Switching SFTP or SSH logins off never stops sshd: it only stops letting Pithyx users in. */
         put: operations["UpdateFileServices"];
         post?: never;
         delete?: never;
@@ -570,6 +570,24 @@ export type paths = {
         patch: operations["UpdateGroup"];
         trace?: never;
     };
+    "/api/groups/{groupId}/grants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. Every grant of the group; its members have them all. */
+        get: operations["GetGroupGrants"];
+        /** @description Administrators only. Replaces every grant of the group. Refused when no active administrator would be left. */
+        put: operations["SetGroupGrants"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/health": {
         parameters: {
             query?: never;
@@ -775,6 +793,23 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/permissions/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. The special rights, file protocols and apps a grant can name, in the order the editors show them. */
+        get: operations["GetPermissionCatalog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/setup": {
         parameters: {
             query?: never;
@@ -826,33 +861,17 @@ export type paths = {
         patch: operations["UpdateShare"];
         trace?: never;
     };
-    "/api/shares/{shareId}/access": {
+    "/api/shares/{shareId}/grants": {
         parameters: {
             query?: never;
             header?: never;
             path?: never;
             cookie?: never;
         };
-        /** @description Administrators only. Every user with their access to the share: none, read or readWrite. Administrators use every share anyway. */
-        get: operations["ListShareAccess"];
-        put?: never;
-        post?: never;
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
-    "/api/shares/{shareId}/access/{userId}": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        /** @description Administrators only. Sets a user's access to a share: none, read or readWrite. Applies to the user's next request. */
-        put: operations["SetShareAccess"];
+        /** @description Administrators only. The grants of users and groups on the share (read or readWrite) and every user with the access it ends up with: the union of its own grants and those of its groups, read and write for administrators, nothing while deactivated. */
+        get: operations["GetShareGrants"];
+        /** @description Administrators only. Replaces every grant of users and groups on the share. Applies to the next request, on disk (the share's Linux groups) and over SMB and SFTP. */
+        put: operations["SetShareGrants"];
         post?: never;
         delete?: never;
         options?: never;
@@ -1205,6 +1224,23 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/system/power": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Users with the right to restart and shut down, and administrators. Restarts or shuts the box down a few seconds after the answer. */
+        post: operations["PowerSystem"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/system/region": {
         parameters: {
             query?: never;
@@ -1275,6 +1311,24 @@ export type paths = {
         head?: never;
         /** @description Administrators only. Changes the display name, the administrator right, the SMB and SFTP rights or whether the user is deactivated. Deactivating ends the user's sessions and expires the Linux account. The last active administrator keeps the right and stays active, and nobody deactivates themselves. */
         patch: operations["UpdateUser"];
+        trace?: never;
+    };
+    "/api/users/{userId}/grants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. The user's own grants, the grants its groups give it (the built-in group users included) and what it may do in the end. */
+        get: operations["GetUserGrants"];
+        /** @description Administrators only. Replaces every grant of the user. Refused when no active administrator would be left; applies to the user's next request and is pushed to its desktop. */
+        put: operations["SetUserGrants"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/users/{userId}/password": {
@@ -1672,7 +1726,7 @@ export type components = {
             }[];
         };
         /** @enum {string} */
-        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.account.disabled" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fileservices.service.unavailable" | "fileservices.workgroup.invalid" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.share.unavailable" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "logs.app.invalid" | "logs.archive.pool_unavailable" | "logs.batch.too_large" | "logs.query.invalid" | "logs.settings.invalid" | "notifications.message.invalid" | "notifications.notification.not_found" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.command.timed_out" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.disks_missing" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.pool.suspended" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "storage.zfs.unavailable" | "system.internal.unexpected" | "system.origin.forbidden" | "system.time.apply_failed" | "system.time.server_invalid" | "system.time.servers_too_many" | "system.time.zone_invalid" | "users.account.refused" | "users.gid.exhausted" | "users.group.builtin" | "users.group.description_invalid" | "users.group.exists" | "users.group.name_invalid" | "users.group.name_reserved" | "users.group.not_found" | "users.group.refused" | "users.uid.exhausted" | "users.user.exists" | "users.user.last_admin" | "users.user.not_found" | "users.user.self";
+        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.account.disabled" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.desktop.not_allowed" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fileservices.service.unavailable" | "fileservices.workgroup.invalid" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.share.unavailable" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "logs.app.invalid" | "logs.archive.pool_unavailable" | "logs.batch.too_large" | "logs.query.invalid" | "logs.settings.invalid" | "notifications.message.invalid" | "notifications.notification.not_found" | "permissions.grant.invalid" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.command.timed_out" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.disks_missing" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.pool.suspended" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "storage.zfs.unavailable" | "system.internal.unexpected" | "system.origin.forbidden" | "system.time.apply_failed" | "system.time.server_invalid" | "system.time.servers_too_many" | "system.time.zone_invalid" | "users.account.refused" | "users.gid.exhausted" | "users.group.builtin" | "users.group.description_invalid" | "users.group.exists" | "users.group.name_invalid" | "users.group.name_reserved" | "users.group.not_found" | "users.group.refused" | "users.uid.exhausted" | "users.user.exists" | "users.user.last_admin" | "users.user.not_found" | "users.user.self";
         /** @description A failed client message. `id` is empty when the message could not be parsed. */
         ErrorMessage: {
             code: components["schemas"]["ErrorCode"];
@@ -1753,6 +1807,8 @@ export type components = {
             smb: components["schemas"]["FileServiceState"];
             /** @description Whether SMB is switched on. */
             smbEnabled: boolean;
+            /** @description Whether users with the SSH login right may sign in over SSH with a shell. Off by default. */
+            sshEnabled: boolean;
             /** @description The SMB workgroup, 1 to 15 letters, digits, dots, dashes and underscores. */
             workgroup: string;
         };
@@ -1762,6 +1818,8 @@ export type components = {
             sftpEnabled?: null | boolean;
             /** @description Switches SMB on or off. */
             smbEnabled?: null | boolean;
+            /** @description Switches SSH logins with a shell on or off for users with the SSH login right. */
+            sshEnabled?: null | boolean;
             /** @description A new SMB workgroup. */
             workgroup?: null | string;
         };
@@ -1865,6 +1923,27 @@ export type components = {
             /** @description Whether changes are being delivered. */
             watching: boolean;
         };
+        /** @description One grant of a user or a group. */
+        GrantEntry: {
+            /** @description `read` or `readWrite` for a shared folder, `allow` for everything else. */
+            level: components["schemas"]["GrantLevel"];
+            /** @description `share:&lt;id&gt;`, `protocol:smb|sftp|webdav|ftp`, `app:&lt;id&gt;` or `right:admin|desktopLogin|sshLogin|power`. */
+            resource: string;
+        };
+        /**
+         * @description How far a grant goes: `read` or `readWrite` for a shared folder, `allow` for everything else.
+         * @enum {unknown}
+         */
+        GrantLevel: "read" | "readWrite" | "allow";
+        GrantsRequest: {
+            /** @description Every grant the subject should have; the others go. A subject has at most one grant per resource. */
+            grants: components["schemas"]["GrantEntry"][];
+        };
+        /** @description The grants of a group. Administrators only. */
+        GroupGrants: {
+            /** @description Every grant of the group. */
+            grants: components["schemas"]["GrantEntry"][];
+        };
         /** @description A group as the Users page shows it. Administrators only. */
         GroupSummary: {
             /** @description The built-in group `users`: every user is a member, and it can neither be renamed nor deleted. */
@@ -1963,6 +2042,20 @@ export type components = {
              *     `special` and `dedup` group headings, and for cache and spare devices, which an import lists without one.
              */
             state: null | string;
+        };
+        /** @description A grant that reaches a user through one of its groups. */
+        InheritedGrant: {
+            /**
+             * Format: int64
+             * @description The group that has the grant.
+             */
+            groupId: number;
+            /** @description Its name. */
+            groupName: string;
+            /** @description The level, as in GrantEntry. */
+            level: components["schemas"]["GrantLevel"];
+            /** @description The resource, as in GrantEntry. */
+            resource: string;
         };
         /** @description A long operation of a user, such as copying files. Also the data of the `jobs/{id}` topics. */
         Job: {
@@ -2078,6 +2171,7 @@ export type components = {
             challenge: null | string;
             /** @description True when a TOTP or recovery code must follow. */
             totpRequired: boolean;
+            /** @description The signed-in user. */
             user: null | components["schemas"]["UserInfo"];
         };
         /** @enum {unknown} */
@@ -2214,25 +2308,12 @@ export type components = {
         NewUser: {
             /** @description Optional, at most 64 characters. */
             displayName?: null | string;
+            /** @description The user's own grants; when left out, the desktop login, SMB and the apps files, viewer and demo. */
+            grants?: null | components["schemas"]["GrantEntry"][];
             /** @description The groups the user joins, besides the built-in group `users`. */
             groupIds?: null | number[];
-            /**
-             * @description Whether the user is an administrator.
-             * @default false
-             */
-            isAdmin: boolean;
             /** @description At least 8 characters and not one of the most common passwords. */
             password: string;
-            /**
-             * @description Whether the user may use SFTP; off when left out.
-             * @default false
-             */
-            sftp: boolean;
-            /**
-             * @description Whether the user may use SMB; on when left out.
-             * @default true
-             */
-            smb: boolean;
             /** @description Lowercase letters, digits, underscores and hyphens, starting with a letter or underscore, at most 32 characters; not a system name. */
             username: string;
         };
@@ -2348,6 +2429,15 @@ export type components = {
         PasswordReset: {
             /** @description The new password, with the same rules as everywhere. */
             password: string;
+        };
+        /** @description Every resource besides shared folders a grant can name, in the order the editors show them. */
+        PermissionCatalog: {
+            /** @description The app ids given to users; the administration apps come with the administrator right. */
+            apps: string[];
+            /** @description The file protocols. */
+            protocols: string[];
+            /** @description The special rights. */
+            rights: string[];
         };
         PlannedCommand: {
             /** @description Arguments, passed without a shell. */
@@ -2466,6 +2556,15 @@ export type components = {
              * @description Bytes the scan covers.
              */
             toExamineBytes: number;
+        };
+        /**
+         * @description What the power button does.
+         * @enum {unknown}
+         */
+        PowerAction: "restart" | "shutdown";
+        PowerRequest: {
+            /** @description `restart` or `shutdown`. */
+            action: components["schemas"]["PowerAction"];
         };
         /** @description Snapshot and event of `system/processes`. */
         ProcessList: {
@@ -2844,6 +2943,17 @@ export type components = {
             version: number;
         };
         ServerMessage: components["schemas"]["AckMessage"] | components["schemas"]["SnapshotMessage"] | components["schemas"]["EventMessage"] | components["schemas"]["ErrorMessage"];
+        /** @description What the signed-in user may do outside shared folders, for the desktop: which apps it shows and whether the power menu is there. */
+        SessionPermissions: {
+            /** @description Administrators may do everything. */
+            admin: boolean;
+            /** @description The ids of the apps of IReadOnlyList&lt;string&gt; PermissionCatalog.Apps the user may open. */
+            apps: string[];
+            /** @description The file protocols: `protocol:smb`, `protocol:sftp`, `protocol:webdav`, `protocol:ftp`. */
+            protocols: string[];
+            /** @description The special rights: `right:admin`, `right:desktopLogin`, `right:sshLogin`, `right:power`. */
+            rights: string[];
+        };
         SetupRequest: {
             displayName?: null | string;
             password: string;
@@ -2867,10 +2977,6 @@ export type components = {
         };
         /** @enum {unknown} */
         ShareAccess: "none" | "read" | "readWrite";
-        ShareAccessRequest: {
-            /** @description `none` removes the user's access. */
-            access: components["schemas"]["ShareAccess"];
-        };
         /** @enum {unknown} */
         ShareDataChoice: "keep" | "destroy" | null;
         /** @description A share with what the Shared folders page shows. Administrators only. */
@@ -2902,12 +3008,12 @@ export type components = {
             quotaBytes: null | number;
             /**
              * Format: int32
-             * @description Users other than administrators who may read.
+             * @description Active users other than administrators who may read, through their own grants or their groups.
              */
             readUsers: number;
             /**
              * Format: int32
-             * @description Users other than administrators who may read and write.
+             * @description Active users other than administrators who may read and write, through their own grants or their groups.
              */
             readWriteUsers: number;
             /** @description Whether daily restore points (snapshots kept 7 days) are on; null for a folder share. */
@@ -2923,6 +3029,17 @@ export type components = {
              * @description Space the dataset uses with its snapshots; null for a folder share or while the dataset is not there (pool missing).
              */
             usedBytes: null | number;
+        };
+        /** @description Who may use a shared folder. Administrators only. */
+        ShareGrants: {
+            /** @description The grants of users and groups on it; the editor changes these. */
+            grants: components["schemas"]["SubjectGrant"][];
+            /** @description Every user with the access it ends up with, administrators and deactivated users included. */
+            users: components["schemas"]["ShareUserAccess"][];
+        };
+        ShareGrantsRequest: {
+            /** @description Every grant the shared folder should have; the others go. */
+            grants: components["schemas"]["SubjectGrant"][];
         };
         /** @description A share the user can use. */
         ShareInfo: {
@@ -2983,17 +3100,19 @@ export type components = {
             /** @description Requires SMB clients to encrypt, or lets them choose. */
             smbEncrypt?: null | boolean;
         };
-        /** @description One user's access to a share, for editing rights. */
+        /** @description One user's effective access to a shared folder. */
         ShareUserAccess: {
-            /** @description The access granted: `none`, `read` or `readWrite`. */
+            /** @description What the user ends up with: `none`, `read` or `readWrite`. */
             access: components["schemas"]["ShareAccess"];
-            /** @description Administrators use every share with read and write access, whatever Access says. */
+            /** @description Administrators use every shared folder with read and write. */
             administrator: boolean;
+            /** @description Deactivated users use none. */
+            disabled: boolean;
             /** @description Name shown, if set. */
             displayName: null | string;
             /**
              * Format: int64
-             * @description The user's id, for `PUT /api/shares/{shareId}/access/{userId}`.
+             * @description The user's id.
              */
             userId: number;
             /** @description Login name. */
@@ -3321,6 +3440,23 @@ export type components = {
             /** @description The pool name for scrubs; empty for self-tests. */
             target: string;
         };
+        /** @description A user's or a group's access to one shared folder. */
+        SubjectGrant: {
+            /** @description `read` or `readWrite`. */
+            level: components["schemas"]["GrantLevel"];
+            /**
+             * Format: int64
+             * @description The user's or the group's id.
+             */
+            subjectId: number;
+            /** @description `user` or `group`. */
+            subjectKind: components["schemas"]["SubjectKind"];
+        };
+        /**
+         * @description Who a grant is for. Apps join in M4; until then nothing grants to them.
+         * @enum {unknown}
+         */
+        SubjectKind: "user" | "group" | "app";
         SystemInfo: {
             /**
              * Format: double
@@ -3471,6 +3607,7 @@ export type components = {
             jobs: components["schemas"]["Job"];
             "jobs/+": components["schemas"]["Job"];
             notifications: components["schemas"]["NotificationEvent"];
+            "session/permissions": components["schemas"]["SessionPermissions"];
             "shares/list": components["schemas"]["ShareListRevision"];
             "storage/alerts": components["schemas"]["StorageHealth"];
             "storage/disks": components["schemas"]["DisksChanged"];
@@ -3485,6 +3622,7 @@ export type components = {
             jobs: components["schemas"]["JobList"];
             "jobs/+": components["schemas"]["Job"];
             notifications: components["schemas"]["NotificationList"];
+            "session/permissions": components["schemas"]["SessionPermissions"];
             "shares/list": components["schemas"]["ShareListRevision"];
             "storage/alerts": components["schemas"]["StorageHealth"];
             "storage/disks": components["schemas"]["DiskList"];
@@ -3580,12 +3718,31 @@ export type components = {
              */
             reason: string;
         };
+        /** @description The rights of a user for the editor. Administrators only. */
+        UserGrants: {
+            /** @description What the user may do: the union of both, or everything for an administrator. */
+            effective: components["schemas"]["SessionPermissions"];
+            /** @description The user's own grants; the editor changes these. */
+            grants: components["schemas"]["GrantEntry"][];
+            /** @description What its groups give it; changed on the group. */
+            inherited: components["schemas"]["InheritedGrant"][];
+        };
+        /** @description The signed-in user. */
         UserInfo: {
+            /** @description Name shown, if set. */
             displayName: null | string;
-            /** Format: int64 */
+            /**
+             * Format: int64
+             * @description Stable id.
+             */
             id: number;
+            /** @description Whether the user has the administrator right, its own or through a group. */
             isAdmin: boolean;
+            /** @description What the user may do; the topic `session/permissions` sends changes. */
+            permissions: components["schemas"]["SessionPermissions"];
+            /** @description Whether the user signs in with a second factor. */
             totpEnabled: boolean;
+            /** @description Login name. */
             username: string;
         };
         /** @description A user as the Users page shows it. Administrators only. */
@@ -3610,12 +3767,12 @@ export type components = {
              * @description Stable id.
              */
             id: number;
-            /** @description Administrators have every right. */
+            /** @description Whether the user has the administrator right, its own or through a group; administrators have every right. */
             isAdmin: boolean;
-            /** @description Whether the user may use SFTP; administrators always may. */
-            sftp: boolean;
-            /** @description Whether the user may use SMB; administrators always may. */
-            smb: boolean;
+            /** @description The file protocols the user may use (`protocol:smb`, `protocol:sftp`, `protocol:webdav`, `protocol:ftp`), the same way. */
+            protocols: string[];
+            /** @description The special rights the user has (`right:admin`, `right:desktopLogin`, `right:sshLogin`, `right:power`), its own and through its groups; a deactivated user gets them back when activated. */
+            rights: string[];
             /** @description Whether the user signs in with a second factor. */
             totpEnabled: boolean;
             /**
@@ -3634,12 +3791,6 @@ export type components = {
             displayName?: null | string;
             /** @description Every group the user should be a member of, besides the built-in group `users`; the user leaves the others. */
             groupIds?: null | number[];
-            /** @description The last administrator cannot lose the right. */
-            isAdmin?: null | boolean;
-            /** @description Allows or forbids SFTP. */
-            sftp?: null | boolean;
-            /** @description Allows or forbids SMB. */
-            smb?: null | boolean;
         };
         Vdev: {
             /**
@@ -5012,6 +5163,72 @@ export interface operations {
             };
         };
     };
+    GetGroupGrants: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupGrants"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SetGroupGrants: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                groupId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GrantsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GroupGrants"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
     GetHealth: {
         parameters: {
             query?: never;
@@ -5441,6 +5658,35 @@ export interface operations {
             };
         };
     };
+    GetPermissionCatalog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PermissionCatalog"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
     GetSetupStatus: {
         parameters: {
             query?: never;
@@ -5600,7 +5846,7 @@ export interface operations {
             };
         };
     };
-    ListShareAccess: {
+    GetShareGrants: {
         parameters: {
             query?: never;
             header?: never;
@@ -5617,7 +5863,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["ShareUserAccess"][];
+                    "application/json": components["schemas"]["ShareGrants"];
                 };
             };
             /** @description Problem details with a stable error code. */
@@ -5631,28 +5877,29 @@ export interface operations {
             };
         };
     };
-    SetShareAccess: {
+    SetShareGrants: {
         parameters: {
             query?: never;
             header?: never;
             path: {
                 shareId: number;
-                userId: number;
             };
             cookie?: never;
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["ShareAccessRequest"];
+                "application/json": components["schemas"]["ShareGrantsRequest"];
             };
         };
         responses: {
-            /** @description No Content */
-            204: {
+            /** @description OK */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["ShareGrants"];
+                };
             };
             /** @description Problem details with a stable error code. */
             default: {
@@ -6432,6 +6679,37 @@ export interface operations {
             };
         };
     };
+    PowerSystem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PowerRequest"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
     GetSystemRegion: {
         parameters: {
             query?: never;
@@ -6669,6 +6947,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserSummary"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetUserGrants: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserGrants"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SetUserGrants: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["GrantsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["UserGrants"];
                 };
             };
             /** @description Problem details with a stable error code. */

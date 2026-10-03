@@ -11,9 +11,7 @@
   "badge": {
     "admin": "Administrator",
     "totp": "Zwei-Faktor",
-    "disabled": "Deaktiviert",
-    "smb": "SMB",
-    "sftp": "SFTP"
+    "disabled": "Deaktiviert"
   },
   "noHome": "Noch kein Pool",
   "field": {
@@ -22,7 +20,6 @@
     "displayName": "Anzeigename (optional)",
     "password": "Passwort",
     "newPassword": "Neues Passwort",
-    "admin": "Administrator (darf alles ändern)",
     "groups": "Gruppen",
     "groupsHint": "Alle Benutzer sind außerdem in der Gruppe users."
   },
@@ -60,9 +57,6 @@
   },
   "fileServices": {
     "title": "Dateidienste",
-    "smb": "Darf SMB nutzen (Netzlaufwerke)",
-    "sftp": "Darf SFTP nutzen",
-    "admin": "Administratoren dürfen jeden Dateidienst nutzen.",
     "signInOnce": "Noch nicht bereit für SMB und SFTP: Der Benutzer meldet sich einmal im Web an, oder du setzt ein neues Passwort."
   },
   "groups": {
@@ -98,6 +92,41 @@
       "intro": "Die Gruppe wird entfernt, ihre Mitglieder bleiben. Dateien behalten die Gruppen-ID, und sie wird nie an eine andere Gruppe vergeben.",
       "submit": "Gruppe löschen",
       "label": "Gruppe {name} löschen"
+    },
+    "rights": "Rechte der Gruppe {name}"
+  },
+  "grants": {
+    "button": "Rechte",
+    "userTitle": "Rechte von {name}",
+    "groupTitle": "Rechte der Gruppe {name}",
+    "userIntro": "Der Benutzer hat diese Rechte und alles, was seine Gruppen ihm geben. Es gibt keine Regeln, die ein Recht wieder wegnehmen.",
+    "groupIntro": "Jedes Mitglied hat diese Rechte, zusätzlich zu seinen eigenen und denen seiner anderen Gruppen.",
+    "save": "Rechte speichern",
+    "rights": "Sonderrechte",
+    "protocols": "Dateidienste",
+    "apps": "Apps",
+    "shares": "Freigegebene Ordner",
+    "noShares": "Es gibt noch keine freigegebenen Ordner.",
+    "adminHasAll": "Administratoren haben jedes Recht und erreichen jeden freigegebenen Ordner.",
+    "through": "Über die Gruppe {groups}",
+    "throughShare": "Gruppen geben mehr: {groups}",
+    "shareAccess": "Zugriff auf {share}",
+    "right": {
+      "admin": "Administrator (darf alles ändern)",
+      "desktopLogin": "Am Desktop anmelden",
+      "sshLogin": "Über SSH mit einer Shell anmelden",
+      "power": "Neu starten und herunterfahren"
+    },
+    "protocol": {
+      "smb": "SMB (Netzlaufwerke)",
+      "sftp": "SFTP",
+      "webdav": "WebDAV",
+      "ftp": "FTP"
+    },
+    "access": {
+      "none": "Kein Zugriff",
+      "read": "Lesen",
+      "readWrite": "Lesen und schreiben"
     }
   }
 }

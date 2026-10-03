@@ -79,8 +79,10 @@ export interface StartMenuProps {
   /** Opens an app or a search result by its id. */
   onOpen?: (id: string) => void;
   onSignOut?: () => void;
-  /** Restart and shut down, for users with that right once the daemon offers them; sign-out has its own button. */
+  /** Restart and shut down, for users with that right; sign-out has its own button. */
   power?: boolean;
+  /** The power menu's choice; the caller asks for confirmation. */
+  onPower?: (action: 'restart' | 'shutdown') => void;
 }
 
 /** Start menu with search. Results are grouped into apps, settings and files; Enter opens the first one. */
@@ -97,6 +99,7 @@ export function StartMenu({
   onOpen,
   onSignOut,
   power = true,
+  onPower,
 }: StartMenuProps) {
   const { t } = useTranslation();
   const groups = [
@@ -253,11 +256,20 @@ export function StartMenu({
                 <IconPower size={20} stroke={1.75} />
               </IconButton>
               <MenuPopover placement={position === 'top' ? 'bottom end' : 'top end'}>
-                <Menu aria-label={t('start.power')}>
-                  <MenuItem icon={<IconRotateClockwise size={18} stroke={1.75} />}>
+                <Menu
+                  aria-label={t('start.power')}
+                  onAction={(key) => {
+                    onPower?.(key === 'shutdown' ? 'shutdown' : 'restart');
+                  }}
+                >
+                  <MenuItem id="restart" icon={<IconRotateClockwise size={18} stroke={1.75} />}>
                     {t('start.restart')}
                   </MenuItem>
-                  <MenuItem icon={<IconPower size={18} stroke={1.75} />} tone="danger">
+                  <MenuItem
+                    id="shutdown"
+                    icon={<IconPower size={18} stroke={1.75} />}
+                    tone="danger"
+                  >
                     {t('start.shutDown')}
                   </MenuItem>
                 </Menu>

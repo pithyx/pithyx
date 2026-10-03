@@ -13,7 +13,7 @@ namespace Pithyx.Daemon.Users;
 /// gets a gid from the Pithyx range that is never given out again, and a Linux group with its members
 /// (<see cref="LinuxAccounts"/>). The built-in group <c>users</c> holds every user and cannot be changed.
 /// </summary>
-public sealed class GroupService(SqliteConnectionFactory connections, LinuxAccounts accounts, TimeProvider time)
+public sealed class GroupService(SqliteConnectionFactory connections, LinuxAccounts accounts, Permissions.PermissionService permissions, TimeProvider time)
 {
     public const int MaxDescriptionLength = 200;
 
@@ -45,11 +45,13 @@ public sealed class GroupService(SqliteConnectionFactory connections, LinuxAccou
             await SetMembersAsync(connection, transaction, id, request.MemberIds ?? []);
             await transaction.CommitAsync(cancellationToken);
         }
+        permissions.Invalidate();
         if ((await accounts.ReconcileAsync(cancellationToken)).TryGetValue(LinuxAccounts.GroupProblemKey(name), out var reason))
         {
             // The gid stays allocated: numbers are never reused.
             await using var connection = await connections.OpenAsync(cancellationToken);
             await connection.ExecuteAsync("DELETE FROM groups WHERE id = @id", new { id });
+            permissions.Invalidate();
             await accounts.ReconcileAsync(cancellationToken);
             throw new PithyxException(ErrorCodes.UsersGroupRefused, new Dictionary<string, object?> { ["name"] = name, ["reason"] = reason });
         }
@@ -82,9 +84,12 @@ public sealed class GroupService(SqliteConnectionFactory connections, LinuxAccou
             if (request.MemberIds is { } members)
             {
                 await SetMembersAsync(connection, transaction, id, members);
+                // Members may get their administrator right from this group.
+                await Permissions.PermissionService.EnsureAdministratorRemainsAsync(connection, transaction);
             }
             await transaction.CommitAsync(cancellationToken);
         }
+        permissions.Invalidate();
         if ((await accounts.ReconcileAsync(cancellationToken)).TryGetValue(LinuxAccounts.GroupProblemKey(name), out var reason))
         {
             throw new PithyxException(ErrorCodes.UsersGroupRefused, new Dictionary<string, object?> { ["name"] = name, ["reason"] = reason });
@@ -102,9 +107,14 @@ public sealed class GroupService(SqliteConnectionFactory connections, LinuxAccou
             throw new PithyxException(ErrorCodes.UsersGroupBuiltin);
         }
         await using (var connection = await connections.OpenAsync(cancellationToken))
+        await using (var transaction = await connection.BeginTransactionAsync(cancellationToken))
         {
-            await connection.ExecuteAsync("DELETE FROM groups WHERE id = @id", new { id });
+            // Its grants and memberships go with it.
+            await connection.ExecuteAsync("DELETE FROM groups WHERE id = @id", new { id }, transaction);
+            await Permissions.PermissionService.EnsureAdministratorRemainsAsync(connection, transaction);
+            await transaction.CommitAsync(cancellationToken);
         }
+        permissions.Invalidate();
         await accounts.ReconcileAsync(cancellationToken);
     }
 

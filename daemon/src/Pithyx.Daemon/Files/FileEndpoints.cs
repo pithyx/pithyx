@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Net.Http.Headers;
+using Pithyx.Daemon.Auth;
 using Pithyx.Daemon.Errors;
 using Pithyx.Daemon.Files.Thumbnails;
 using Pithyx.Daemon.Hosting;
@@ -89,6 +90,7 @@ public static class FileEndpoints
             .WithDescription("Starts a job that deletes everything in the share's recycle bin for good.");
         api.MapPut("/shares/{shareId:long}/trash", SetTrashAsync)
             .WithTags("Shares")
+            .RequireAuthorization(Policies.Admin)
             .WithName("SetShareTrash")
             .WithDescription("Administrators only. Days the recycle bin keeps deleted items (0 to 3650; 0 keeps them until emptied). Applies to items already in the bin.");
         files.MapGet("/versions", ListVersionsAsync)

@@ -1,4 +1,3 @@
-using System.Collections.Concurrent;
 using System.Security.Claims;
 using Dapper;
 using Pithyx.Daemon.Auth;
@@ -13,8 +12,10 @@ namespace Pithyx.Daemon.Shares;
 /// Shares and who may use them. Every file request resolves its share here, so a changed or revoked access applies to
 /// the next request. A share the caller cannot use is reported as not found, so share names do not leak.
 /// </summary>
-public sealed class ShareService(SqliteConnectionFactory connections, TimeProvider time, PoolInventory? pools = null)
+public sealed class ShareService(SqliteConnectionFactory connections, TimeProvider time, PoolInventory? pools = null, Permissions.PermissionService? permissions = null)
 {
+    private readonly Permissions.PermissionService _permissions = permissions ?? new Permissions.PermissionService(connections);
+
     public const int MaxNameLength = 64;
 
     public const int MaxDescriptionLength = 200;
@@ -23,37 +24,11 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
     private static readonly string[] _forbiddenRoots =
         ["/bin", "/boot", "/dev", "/etc", "/lib", "/lib32", "/lib64", "/proc", "/root", "/run", "/sbin", "/sys", "/usr", "/var"];
 
-    /// <summary>How long a read check of <see cref="CanRead"/> is reused; access changes clear it at once.</summary>
-    public static readonly TimeSpan ReadCheckLifetime = TimeSpan.FromSeconds(5);
-
-    private readonly ConcurrentDictionary<(long User, long Share), (bool Allowed, DateTimeOffset Until)> _readChecks = new();
-
     /// <summary>
-    /// Whether the user may read a share, for checks that run per realtime event and must not wait for the database.
+    /// Whether the user may read a share, for checks that run per realtime event and must not wait for the database:
+    /// the resolved rights stay in memory until a right changes.
     /// </summary>
-    public bool CanRead(ClaimsPrincipal user, long shareId)
-    {
-        if (IsAdmin(user))
-        {
-            return true;
-        }
-        if (user?.Identity?.IsAuthenticated != true)
-        {
-            return false;
-        }
-        var userId = CurrentUser.Id(user);
-        var now = time.GetUtcNow();
-        if (_readChecks.TryGetValue((userId, shareId), out var check) && check.Until > now)
-        {
-            return check.Allowed;
-        }
-        using var connection = connections.Open();
-        var allowed = connection.ExecuteScalar<long>(
-            "SELECT COUNT(*) FROM share_access WHERE share_id = @shareId AND user_id = @userId",
-            new { shareId, userId }) > 0;
-        _readChecks[(userId, shareId)] = (allowed, now + ReadCheckLifetime);
-        return allowed;
-    }
+    public bool CanRead(ClaimsPrincipal user, long shareId) => _permissions.ForUser(user).Share(shareId) != ShareAccess.None;
 
     public static bool IsAdmin(ClaimsPrincipal user) => user?.IsInRole(SessionAuthenticationHandler.AdminRole) == true;
 
@@ -65,10 +40,11 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
             var all = await connection.QueryAsync<(long Id, string Name, string Path, string? Dataset)>("SELECT id, name, path, dataset FROM shares ORDER BY name");
             return [.. all.Select(share => new ShareInfo(share.Id, share.Name, ShareAccess.ReadWrite, share.Path, UnavailableReason(share.Dataset)))];
         }
-        var rows = await connection.QueryAsync<(long Id, string Name, string Level, string? Dataset)>(
-            "SELECT shares.id, shares.name, share_access.level, shares.dataset FROM shares JOIN share_access ON share_access.share_id = shares.id WHERE share_access.user_id = @userId ORDER BY shares.name",
-            new { userId = CurrentUser.Id(user) });
-        return [.. rows.Select(share => new ShareInfo(share.Id, share.Name, Parse(share.Level), null, UnavailableReason(share.Dataset)))];
+        var rights = await _permissions.ForUserAsync(CurrentUser.Id(user), cancellationToken);
+        var rows = await connection.QueryAsync<(long Id, string Name, string? Dataset)>("SELECT id, name, dataset FROM shares ORDER BY name");
+        return [.. rows
+            .Where(share => rights.Share(share.Id) != ShareAccess.None)
+            .Select(share => new ShareInfo(share.Id, share.Name, rights.Share(share.Id), null, UnavailableReason(share.Dataset)))];
     }
 
     /// <summary>
@@ -78,14 +54,10 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
     public async Task<ResolvedShare> ResolveAsync(ClaimsPrincipal user, long shareId, bool write, CancellationToken cancellationToken)
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
-        var row = await connection.QuerySingleOrDefaultAsync<(long Id, string Name, string Path, string? Level, string? Dataset)?>(
-            """
-            SELECT shares.id, shares.name, shares.path, share_access.level, shares.dataset
-            FROM shares LEFT JOIN share_access ON share_access.share_id = shares.id AND share_access.user_id = @userId
-            WHERE shares.id = @shareId
-            """,
-            new { shareId, userId = CurrentUser.Id(user) });
-        var access = row is null ? ShareAccess.None : IsAdmin(user) ? ShareAccess.ReadWrite : row.Value.Level is { } level ? Parse(level) : ShareAccess.None;
+        var row = await connection.QuerySingleOrDefaultAsync<(long Id, string Name, string Path, string? Dataset)?>(
+            "SELECT id, name, path, dataset FROM shares WHERE id = @shareId",
+            new { shareId });
+        var access = row is null ? ShareAccess.None : (await _permissions.ForUserAsync(CurrentUser.Id(user), cancellationToken)).Share(shareId);
         if (row is null || access == ShareAccess.None)
         {
             throw new PithyxException(ErrorCodes.FsShareNotFound);
@@ -136,14 +108,11 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
         RequireAdmin(user);
         ArgumentNullException.ThrowIfNull(pools);
         await using var connection = await connections.OpenAsync(cancellationToken);
-        // Administrators use every share anyway, so the summary counts the others.
-        var rows = await connection.QueryAsync<(long Id, string Name, string Description, string Path, string? Dataset, long ReadUsers, long ReadWriteUsers, long? RestorePoints, long Smb, long Sftp, long SmbEncrypt)>(
+        // Administrators use every share anyway, so the summary counts the others who are active.
+        var others = (await Permissions.PermissionService.AllUsersAsync(connection, null)).Where(other => !other.Disabled && !other.Permissions.IsAdmin).ToList();
+        var rows = await connection.QueryAsync<(long Id, string Name, string Description, string Path, string? Dataset, long? RestorePoints, long Smb, long Sftp, long SmbEncrypt)>(
             """
             SELECT shares.id, shares.name, shares.description, shares.path, shares.dataset,
-                (SELECT COUNT(*) FROM share_access JOIN users ON users.id = share_access.user_id
-                    WHERE share_access.share_id = shares.id AND users.is_admin = 0 AND share_access.level = 'read'),
-                (SELECT COUNT(*) FROM share_access JOIN users ON users.id = share_access.user_id
-                    WHERE share_access.share_id = shares.id AND users.is_admin = 0 AND share_access.level = 'readWrite'),
                 (SELECT enabled FROM snapshot_schedules WHERE snapshot_schedules.dataset = shares.dataset AND kind = 'daily'),
                 shares.smb, shares.sftp, shares.smb_encrypt
             FROM shares ORDER BY shares.name
@@ -162,32 +131,13 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
                 dataset?.UsedBytes,
                 dataset?.AvailableBytes,
                 dataset?.QuotaBytes,
-                (int)row.ReadUsers,
-                (int)row.ReadWriteUsers,
+                others.Count(other => other.Permissions.Share(row.Id) == ShareAccess.Read),
+                others.Count(other => other.Permissions.Share(row.Id) == ShareAccess.ReadWrite),
                 row.Dataset is null ? null : row.RestorePoints == 1,
                 row.Smb == 1,
                 row.Sftp == 1,
                 row.SmbEncrypt == 1);
         })];
-    }
-
-    /// <summary>Every user with their access to one share, administrators included and marked.</summary>
-    public async Task<IReadOnlyList<ShareUserAccess>> ListUserAccessAsync(ClaimsPrincipal user, long shareId, CancellationToken cancellationToken)
-    {
-        RequireAdmin(user);
-        await using var connection = await connections.OpenAsync(cancellationToken);
-        if (await connection.ExecuteScalarAsync<long>("SELECT COUNT(*) FROM shares WHERE id = @shareId", new { shareId }) == 0)
-        {
-            throw new PithyxException(ErrorCodes.FsShareNotFound);
-        }
-        var rows = await connection.QueryAsync<(long Id, string Username, string? DisplayName, long IsAdmin, string? Level)>(
-            """
-            SELECT users.id, users.username, users.display_name, users.is_admin, share_access.level
-            FROM users LEFT JOIN share_access ON share_access.user_id = users.id AND share_access.share_id = @shareId
-            ORDER BY users.username
-            """,
-            new { shareId });
-        return [.. rows.Select(row => new ShareUserAccess(row.Id, row.Username, row.DisplayName, row.IsAdmin == 1, row.Level is { } level ? Parse(level) : ShareAccess.None))];
     }
 
     /// <summary>Changes the name shown, the description and the protocols. The folder and the dataset stay where they are.</summary>
@@ -269,33 +219,9 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
         var removed = await connection.ExecuteAsync("DELETE FROM shares WHERE id = @shareId", new { shareId }) > 0;
-        _readChecks.Clear();
+        // Its grants went with it.
+        _permissions.Invalidate();
         return removed;
-    }
-
-    public async Task SetAccessAsync(ClaimsPrincipal user, long shareId, long userId, ShareAccess access, CancellationToken cancellationToken)
-    {
-        RequireAdmin(user);
-        await using var connection = await connections.OpenAsync(cancellationToken);
-        var exists = await connection.ExecuteScalarAsync<long>(
-            "SELECT (SELECT COUNT(*) FROM shares WHERE id = @shareId) * (SELECT COUNT(*) FROM users WHERE id = @userId)",
-            new { shareId, userId });
-        if (exists == 0)
-        {
-            throw new PithyxException(ErrorCodes.FsShareNotFound);
-        }
-        _readChecks.Clear();
-        if (access == ShareAccess.None)
-        {
-            await connection.ExecuteAsync("DELETE FROM share_access WHERE share_id = @shareId AND user_id = @userId", new { shareId, userId });
-            return;
-        }
-        await connection.ExecuteAsync(
-            """
-            INSERT INTO share_access (share_id, user_id, level) VALUES (@shareId, @userId, @level)
-            ON CONFLICT (share_id, user_id) DO UPDATE SET level = excluded.level
-            """,
-            new { shareId, userId, level = access == ShareAccess.Read ? "read" : "readWrite" });
     }
 
     /// <summary>Simulation and development: one share "Shared" in the data directory, so the file manager has files to show.</summary>
@@ -364,7 +290,6 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
             WHERE path = @oldRoot OR substr(path, 1, length(@oldRoot) + 1) = @oldRoot || '/'
             """,
             new { oldRoot, newRoot, now = SessionService.Format(time.GetUtcNow()) });
-        _readChecks.Clear();
         return moved;
     }
 
@@ -434,6 +359,4 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
         await connection.ExecuteScalarAsync<long>(
             "SELECT COUNT(*) FROM shares WHERE name = @name COLLATE NOCASE AND (@exceptId IS NULL OR id <> @exceptId)",
             new { name, exceptId }) > 0;
-
-    private static ShareAccess Parse(string level) => level == "readWrite" ? ShareAccess.ReadWrite : ShareAccess.Read;
 }

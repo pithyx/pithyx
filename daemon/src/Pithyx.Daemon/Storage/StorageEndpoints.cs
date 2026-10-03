@@ -18,6 +18,7 @@ public static class StorageEndpoints
                 RequireAdmin(context.User);
                 return TypedResults.Ok(pools.Current);
             })
+            .RequireAuthorization(Policies.Admin)
             .WithName("GetPools")
             .WithDescription("Administrators only. Pools with their vdevs, and datasets, as last read; live through the storage/pools topic.");
         storage.MapGet("/disks", (StorageFacts facts, HttpContext context) =>
@@ -29,6 +30,7 @@ public static class StorageEndpoints
                     [.. current.Disks.Select(disk => new StorageDisk(disk.Disk, verdicts[disk.Disk.Id]))],
                     facts.Environment.Kind == DeploymentKind.Dev ? "dev" : "prod"));
             })
+            .RequireAuthorization(Policies.Admin)
             .WithName("GetStorageDisks")
             .WithDescription("Administrators only. Every disk with the disk guard's verdict: whether a new pool may use it, and why not.");
         storage.MapPost("/import/scan", async (PoolImportScanner scanner, HttpContext context, CancellationToken cancellationToken) =>
@@ -36,12 +38,15 @@ public static class StorageEndpoints
                 RequireAdmin(context.User);
                 return TypedResults.Ok(await scanner.ScanAsync(cancellationToken));
             })
+            .RequireAuthorization(Policies.Admin)
             .WithName("ScanImportablePools")
             .WithDescription("Administrators only. Looks for pools on the disks that are not imported (zpool import, which reads every disk's labels and may wake a sleeping disk) and returns each with its layout and the disk guard's import verdict. Imports nothing; importing is the plan pool.import.readonly, then pool.import.");
         storage.MapPost("/plans", PlanAsync)
+            .RequireAuthorization(Policies.Admin)
             .WithName("PlanStorageAction")
             .WithDescription("Administrators only. Probes the chosen disks, asks the disk guard and returns the exact commands of a destructive storage action, with a plan id to run them. Runs nothing.");
         storage.MapPost("/plans/{planId}/run", RunAsync)
+            .RequireAuthorization(Policies.Admin)
             .WithName("RunStoragePlan")
             .WithDescription("Administrators only. Runs a plan exactly as it was shown, as a job; the disk guard checks every disk again right before each command. A plan runs once and expires after 10 minutes.");
     }

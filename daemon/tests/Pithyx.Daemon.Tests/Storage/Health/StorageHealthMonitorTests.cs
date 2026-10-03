@@ -138,8 +138,8 @@ public sealed class StorageHealthMonitorTests : IAsyncDisposable
         long admin, user;
         await using (var connection = await _connections.OpenAsync(TestContext.Current.CancellationToken))
         {
-            admin = await connection.ExecuteScalarAsync<long>("INSERT INTO users (username, password_hash, is_admin, created_at, updated_at) VALUES ('ada', 'x', 1, '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z') RETURNING id");
-            user = await connection.ExecuteScalarAsync<long>("INSERT INTO users (username, password_hash, is_admin, created_at, updated_at) VALUES ('bob', 'x', 0, '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z') RETURNING id");
+            admin = await TestUsers.InsertAsync(connection, "ada", admin: true);
+            user = await TestUsers.InsertAsync(connection, "bob");
         }
         _smartOutput = Fixture("ata-failing");
 

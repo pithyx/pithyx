@@ -9,8 +9,16 @@ import { Button } from '../../ui/Button';
 import { Badge, Checkbox } from '../../ui/Controls';
 import { IconPlus } from '../../ui/icons';
 import { TextField } from '../../ui/TextField';
-import { describeProblem, usersCall, type GroupSummary, type UserSummary } from '../sdk/users';
+import {
+  describeProblem,
+  usersCall,
+  type GrantEntry,
+  type GroupSummary,
+  type UserSummary,
+} from '../sdk/users';
 import { FormDialog } from './FormDialog';
+import { GrantEditor, protocolKey } from './GrantEditor';
+import { RightsDialog, useGrantChoices } from './RightsDialog';
 import { GroupsSection, groupsKey, useGroups } from './GroupsSection';
 import styles from './Users.module.css';
 
@@ -19,12 +27,13 @@ export const usersKey = ['users'] as const;
 type Action =
   | { kind: 'create' }
   | { kind: 'edit'; user: UserSummary }
+  | { kind: 'rights'; user: UserSummary }
   | { kind: 'password'; user: UserSummary }
   | { kind: 'delete'; user: UserSummary };
 
 /**
- * The Users page of Settings: every user with its Linux uid and home, its groups, its SMB and SFTP rights and whether
- * those know the password yet, create, edit, reset the password, deactivate, delete; below it the groups.
+ * The Users page of Settings: every user with its Linux uid and home, its groups, its file protocols and whether they
+ * know the password yet; create, edit, rights, new password, deactivate, delete. Below it the groups.
  */
 export function UsersPage({ app }: { app: PithyxApp }) {
   const users = useQuery({
@@ -99,10 +108,13 @@ function UsersSection({ app, users }: { app: PithyxApp; users: UseQueryResult<Us
                     {user.isAdmin && <Badge tone="accent">{t('badge.admin')}</Badge>}
                     {user.totpEnabled && <Badge tone="neutral">{t('badge.totp')}</Badge>}
                     {user.disabled && <Badge tone="neutral">{t('badge.disabled')}</Badge>}
-                    {user.smb && <Badge tone="neutral">{t('badge.smb')}</Badge>}
-                    {user.sftp && <Badge tone="neutral">{t('badge.sftp')}</Badge>}
+                    {user.protocols.map((protocol) => (
+                      <Badge key={protocol} tone="neutral">
+                        {t(`grants.protocol.${protocolKey(protocol)}`)}
+                      </Badge>
+                    ))}
                   </span>
-                  {!user.disabled && (user.smb || user.sftp) && !user.fileServicePassword && (
+                  {!user.disabled && user.protocols.length > 0 && !user.fileServicePassword && (
                     <span className={styles.hint}>{t('fileServices.signInOnce')}</span>
                   )}
                 </th>
@@ -120,6 +132,14 @@ function UsersSection({ app, users }: { app: PithyxApp; users: UseQueryResult<Us
                       }}
                     >
                       {t('edit.button')}
+                    </Button>
+                    <Button
+                      size="sm"
+                      onPress={() => {
+                        setAction({ kind: 'rights', user });
+                      }}
+                    >
+                      {t('grants.button')}
                     </Button>
                     <Button
                       size="sm"
@@ -151,6 +171,9 @@ function UsersSection({ app, users }: { app: PithyxApp; users: UseQueryResult<Us
       )}
       {action?.kind === 'edit' && (
         <EditDialog app={app} user={action.user} groups={groups.data ?? []} onClose={close} />
+      )}
+      {action?.kind === 'rights' && (
+        <RightsDialog app={app} subject={{ kind: 'user', user: action.user }} onClose={close} />
       )}
       {action?.kind === 'password' && (
         <PasswordDialog app={app} user={action.user} onClose={close} />
@@ -217,8 +240,16 @@ function CreateDialog({
   const [username, setUsername] = useState('');
   const [displayName, setDisplayName] = useState('');
   const [password, setPassword] = useState('');
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [protocols, setProtocols] = useState({ smb: true, sftp: false });
+  const { catalog, shares } = useGrantChoices(app);
+  const [edited, setEdited] = useState<GrantEntry[] | undefined>();
+  // A new user may sign in, use SMB and open the apps unless the administrator changes it.
+  const grants =
+    edited ??
+    [
+      'right:desktopLogin',
+      'protocol:smb',
+      ...(catalog.data?.apps ?? []).map((id) => `app:${id}`),
+    ].map((resource): GrantEntry => ({ resource, level: 'allow' }));
   const [groupIds, setGroupIds] = useState<number[]>([]);
   const [passwordError, setPasswordError] = useState<string | undefined>();
   const create = useChange(
@@ -227,9 +258,8 @@ function CreateDialog({
         username,
         password,
         displayName: displayName.trim() === '' ? null : displayName,
-        isAdmin,
-        ...protocols,
         groupIds,
+        grants,
       }),
     onClose,
   );
@@ -274,11 +304,15 @@ function CreateDialog({
         }}
         required
       />
-      <Checkbox isSelected={isAdmin} onChange={setIsAdmin}>
-        {t('field.admin')}
-      </Checkbox>
-      <Protocols isAdmin={isAdmin} value={protocols} onChange={setProtocols} />
       <Memberships groups={groups} value={groupIds} onChange={setGroupIds} />
+      {catalog.data !== undefined && shares.data !== undefined && (
+        <GrantEditor
+          catalog={catalog.data}
+          shares={shares.data}
+          value={grants}
+          onChange={setEdited}
+        />
+      )}
       {create.isError && <ErrorNotice error={describeProblem(create.error)} />}
     </FormDialog>
   );
@@ -297,16 +331,12 @@ function EditDialog({
 }) {
   const { t } = useTranslation('users');
   const [displayName, setDisplayName] = useState(user.displayName ?? '');
-  const [isAdmin, setIsAdmin] = useState(user.isAdmin);
-  const [protocols, setProtocols] = useState({ smb: user.smb, sftp: user.sftp });
   const [groupIds, setGroupIds] = useState<number[]>(user.groupIds);
   const edit = useChange(
     () =>
       usersCall(app, 'internal.admin.users.update', {
         userId: user.id,
         displayName,
-        isAdmin,
-        ...protocols,
         groupIds,
       }),
     onClose,
@@ -327,56 +357,10 @@ function EditDialog({
         onChange={setDisplayName}
         autoComplete="off"
       />
-      <Checkbox isSelected={isAdmin} onChange={setIsAdmin}>
-        {t('field.admin')}
-      </Checkbox>
-      <Protocols isAdmin={isAdmin} value={protocols} onChange={setProtocols} />
       <Memberships groups={groups} value={groupIds} onChange={setGroupIds} />
       {!user.fileServicePassword && <p className={styles.muted}>{t('fileServices.signInOnce')}</p>}
       {edit.isError && <ErrorNotice error={describeProblem(edit.error)} />}
     </FormDialog>
-  );
-}
-
-interface ProtocolRights {
-  smb: boolean;
-  sftp: boolean;
-}
-
-/** The SMB and SFTP rights of a user; administrators have both, whatever is stored. */
-function Protocols({
-  isAdmin,
-  value,
-  onChange,
-}: {
-  isAdmin: boolean;
-  value: ProtocolRights;
-  onChange: (value: ProtocolRights) => void;
-}) {
-  const { t } = useTranslation('users');
-  return (
-    <fieldset className={styles.fieldset}>
-      <legend className={styles.legend}>{t('fileServices.title')}</legend>
-      <Checkbox
-        isSelected={isAdmin || value.smb}
-        isDisabled={isAdmin}
-        onChange={(smb) => {
-          onChange({ ...value, smb });
-        }}
-      >
-        {t('fileServices.smb')}
-      </Checkbox>
-      <Checkbox
-        isSelected={isAdmin || value.sftp}
-        isDisabled={isAdmin}
-        onChange={(sftp) => {
-          onChange({ ...value, sftp });
-        }}
-      >
-        {t('fileServices.sftp')}
-      </Checkbox>
-      {isAdmin && <p className={styles.muted}>{t('fileServices.admin')}</p>}
-    </fieldset>
   );
 }
 

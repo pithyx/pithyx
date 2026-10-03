@@ -42,6 +42,9 @@ public static class AccountReconciler
     public const long MinUid = 20000;
     public const long MaxUid = 29999;
     public const string NoLogin = "/usr/sbin/nologin";
+
+    /// <summary>The shell of a user with the SSH login right while SSH logins are on.</summary>
+    public const string LoginShell = "/bin/bash";
     public const string NoHome = "/nonexistent";
 
     /// <summary>The expiry date of a deactivated account, in days since 1970-01-01: long past.</summary>

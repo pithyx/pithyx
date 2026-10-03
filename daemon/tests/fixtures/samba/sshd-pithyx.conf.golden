@@ -12,7 +12,16 @@ Match Group pithyx-sftp
     PermitTunnel no
     PermitTTY no
 
-Match Group pithyx-users,!pithyx-sftp
+Match Group pithyx-ssh
+    PasswordAuthentication yes
+    PubkeyAuthentication yes
+    AllowTcpForwarding no
+    AllowAgentForwarding no
+    AllowStreamLocalForwarding no
+    X11Forwarding no
+    PermitTunnel no
+
+Match Group pithyx-users,!pithyx-sftp,!pithyx-ssh
     PasswordAuthentication no
     PubkeyAuthentication no
     KbdInteractiveAuthentication no

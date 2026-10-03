@@ -27,6 +27,7 @@ import { api } from '../api/client';
 import { queryKeys } from '../api/queries';
 import { runBeforeLogout } from '../apps/lifecycle';
 import { useAppName } from '../apps/names';
+import { isAppAllowed, setAppPermissions } from '../apps/access';
 import { appsFor, findApp } from '../apps/registry';
 import { initialsOf } from '../auth/parts';
 import { clearSessionHint } from '../auth/sessionHint';
@@ -59,6 +60,8 @@ import { useBackGesture } from '../wm/backGesture';
 import { applySavedLayout, saveLayoutBeforeSignOut, useLayoutPersistence } from '../wm/persistence';
 import { useSizeClass } from '../wm/sizeClass';
 import { dispatch, openApp, useDesktop } from '../wm/store';
+import { useTopic } from '../realtime/useTopic';
+import type { PowerAction } from './PowerDialog';
 import { requestClose } from '../wm/commands';
 import { WindowLayer } from '../wm/WindowLayer';
 import { useMinuteClock } from './clock';
@@ -283,7 +286,8 @@ function UserMenu({
 
 // The desktop items (icons, notes, their menus and gestures) are a chunk of their own that starts loading together with
 // this one and shows once it and the items query are there; the taskbar and windows never wait for it.
-// Setting up two-factor sign-in is rare; its dialog loads when it is opened, not with the desktop.
+// Setting up two-factor sign-in is rare; its dialog loads when it is opened, not with the desktop. So does the
+// confirmation of a restart or shutdown.
 // The storage alert banner loads when an administrator has a critical alert. The toasts and the notification panel
 // are a chunk of their own that starts loading with the first render, so the toasts' live region is in the page
 // before the first toast; the taskbar and windows never wait for it.
@@ -302,6 +306,9 @@ const NotificationToasts = lazy(() =>
 );
 const TotpSetup = lazy(() =>
   import('../auth/TotpSetup').then(({ TotpSetup }) => ({ default: TotpSetup })),
+);
+const PowerDialog = lazy(() =>
+  import('./PowerDialog').then(({ PowerDialog }) => ({ default: PowerDialog })),
 );
 
 type ItemsModule = typeof import('../items/ItemsLayer');
@@ -372,11 +379,32 @@ function useRunningApps(): RunningApp[] {
   });
 }
 
+/**
+ * Puts the rights the daemon pushes on `session/permissions` into the session. Its own component, so the snapshot
+ * every subscription starts with re-renders only this one when the rights are the same as at sign-in.
+ */
+function PermissionsSync() {
+  const queryClient = useQueryClient();
+  const permissions = useTopic('session/permissions');
+  useLayoutEffect(() => {
+    if (permissions === undefined) {
+      return;
+    }
+    queryClient.setQueryData<User>(queryKeys.session, (current) =>
+      current === undefined || JSON.stringify(current.permissions) === JSON.stringify(permissions)
+        ? current
+        : { ...current, isAdmin: permissions.admin, permissions },
+    );
+  }, [permissions, queryClient]);
+  return null;
+}
+
 /** The desktop after sign-in: wallpaper, app shortcuts, windows and the taskbar with start menu and status area. */
 export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   const { t, i18n } = useTranslation();
   const locale = useFormatLocale();
   const queryClient = useQueryClient();
+  const permissions = user.permissions;
   const status = useRealtime((state) => state.status);
   const now = useMinuteClock();
   const appName = useAppName();
@@ -385,6 +413,7 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   const [query, setQuery] = useState('');
   const [switcherOpen, setSwitcherOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [powerAction, setPowerAction] = useState<PowerAction | null>(null);
   // The toast store lives outside React; it hides notification toasts while the panel shows them.
   useEffect(() => {
     setNotificationPanelOpen(notificationsOpen);
@@ -394,13 +423,23 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   }, [notificationsOpen]);
   const notificationsButton = useRef<HTMLButtonElement>(null);
   const notificationsPanel = useRef<HTMLElement>(null);
-  const alerts = useStorageAlerts(user.isAdmin);
+  const alerts = useStorageAlerts(permissions.admin);
   const banner = bannerAlert(alerts);
   const startButton = useRef<HTMLButtonElement>(null);
   const startMenu = useRef<HTMLDivElement>(null);
   const switcherButton = useRef<HTMLButtonElement>(null);
   const switcher = useRef<HTMLElement>(null);
   const workspace = useWorkspaceSize();
+  // Before the layout is restored: windows of apps the user may not open are skipped, and a right taken away closes
+  // the app's windows and leaves the start menu at once.
+  useLayoutEffect(() => {
+    setAppPermissions(permissions);
+    for (const window of Object.values(useDesktop.getState().windows)) {
+      if (!isAppAllowed(window.app, permissions)) {
+        dispatch({ type: 'close', id: window.id });
+      }
+    }
+  }, [permissions]);
   useLayoutPersistence();
   useQuery(itemsQuery);
   const items = useItemsModule();
@@ -501,7 +540,7 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
     openApp(id);
   }
 
-  const apps = appsFor(user.isAdmin).map((app) => ({
+  const apps = appsFor((id) => isAppAllowed(id, permissions)).map((app) => ({
     id: app.id,
     name: appName(app.id),
     icon: app.icon,
@@ -574,7 +613,7 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
                 user={{
                   name,
                   initials: initialsOf(name),
-                  role: user.isAdmin ? t('roles.administrator') : t('roles.user'),
+                  role: permissions.admin ? t('roles.administrator') : t('roles.user'),
                 }}
                 userMenu={(trigger) => (
                   <UserMenu
@@ -591,7 +630,11 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
                     }}
                   />
                 )}
-                power={false}
+                power={permissions.admin || permissions.rights.includes('right:power')}
+                onPower={(action) => {
+                  closeStart(false);
+                  setPowerAction(action);
+                }}
                 onOpen={open}
                 onSignOut={() => {
                   closeStart(false);
@@ -602,6 +645,17 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
             <Suspense>
               <NotificationToasts position={taskbarPosition} locale={locale} />
             </Suspense>
+            <PermissionsSync />
+            {powerAction !== null && (
+              <Suspense>
+                <PowerDialog
+                  action={powerAction}
+                  onClose={() => {
+                    setPowerAction(null);
+                  }}
+                />
+              </Suspense>
+            )}
             {switcherOpen && (
               <AppSwitcher
                 switcherRef={switcher}

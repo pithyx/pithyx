@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import type { Dataset, Pool, PoolList, ShareUserAccess } from '../sdk/internal';
-import { sharePools, withAccess } from './shares';
+import type { Dataset, Pool, PoolList, SubjectGrant } from '../sdk/internal';
+import { accessOf, sharePools, withSubjectAccess } from './shares';
 
 function pool(name: string): Pool {
   return { name } as Pool;
@@ -28,14 +28,18 @@ describe('sharePools', () => {
   });
 });
 
-describe('withAccess', () => {
-  it('changes one user and leaves the others as they are', () => {
-    const users: ShareUserAccess[] = [
-      { userId: 1, username: 'admin', displayName: null, administrator: true, access: 'none' },
-      { userId: 2, username: 'anna', displayName: 'Anna', administrator: false, access: 'none' },
+describe('withSubjectAccess', () => {
+  it('changes one subject and leaves the others as they are', () => {
+    const grants: SubjectGrant[] = [
+      { subjectKind: 'user', subjectId: 2, level: 'read' },
+      { subjectKind: 'group', subjectId: 2, level: 'readWrite' },
     ];
-    const changed = withAccess(users, 2, 'readWrite');
-    expect(changed.map((user) => user.access)).toEqual(['none', 'readWrite']);
-    expect(users[1]?.access).toBe('none');
+    const changed = withSubjectAccess(grants, 'user', 2, 'readWrite');
+    expect(accessOf(changed, 'user', 2)).toBe('readWrite');
+    expect(accessOf(changed, 'group', 2)).toBe('readWrite');
+    expect(accessOf(grants, 'user', 2)).toBe('read');
+    const removed = withSubjectAccess(changed, 'group', 2, 'none');
+    expect(removed).toEqual([{ subjectKind: 'user', subjectId: 2, level: 'readWrite' }]);
+    expect(accessOf(removed, 'group', 3)).toBe('none');
   });
 });

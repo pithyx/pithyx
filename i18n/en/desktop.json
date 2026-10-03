@@ -226,5 +226,20 @@
     "failed": "Failed. The connection was lost or the daemon refused the file.",
     "cancel": "Cancel the transfer of {name}",
     "dismiss": "Remove {name} from the list"
+  },
+  "power": {
+    "cancel": "Cancel",
+    "restart": {
+      "title": "Restart Pithyx?",
+      "intro": "Every user is signed out, and file transfers over the network stop. The box is back in a few minutes.",
+      "confirm": "Restart",
+      "done": "Pithyx restarts now. This page reconnects when it is back."
+    },
+    "shutdown": {
+      "title": "Shut down Pithyx?",
+      "intro": "Every user is signed out, and nothing is reachable until someone switches the box on again.",
+      "confirm": "Shut down",
+      "done": "Pithyx shuts down now."
+    }
   }
 }

@@ -20,6 +20,9 @@
     "csrf": {
       "header_missing": "The request was rejected because a security header is missing."
     },
+    "desktop": {
+      "not_allowed": "You may not sign in to the desktop. Ask an administrator for the desktop sign-in right."
+    },
     "display_name": {
       "invalid": "The display name can have at most {maxLength} characters and no control characters."
     },
@@ -172,6 +175,11 @@
     },
     "notification": {
       "not_found": "This notification no longer exists."
+    }
+  },
+  "permissions": {
+    "grant": {
+      "invalid": "The right “{resource}” cannot be given like this: it is unknown, given twice, or the level does not fit (read or read and write for a shared folder)."
     }
   },
   "realtime": {

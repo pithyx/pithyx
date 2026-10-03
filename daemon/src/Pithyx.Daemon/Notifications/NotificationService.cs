@@ -114,7 +114,8 @@ public sealed partial class NotificationService : IDisposable
         List<long> administrators;
         await using (var connection = await _connections.OpenAsync(cancellationToken))
         {
-            administrators = [.. await connection.QueryAsync<long>("SELECT id FROM users WHERE is_admin = 1 ORDER BY id")];
+            // Deactivated administrators too: they read it when they are back.
+            administrators = [.. (await Permissions.PermissionService.AllUsersAsync(connection, null, asIfActive: true)).Where(user => user.Permissions.IsAdmin).Select(user => user.Id).Order()];
         }
         foreach (var administrator in administrators)
         {

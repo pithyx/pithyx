@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { isAppAllowed } from '../apps/access';
 import { findApp } from '../apps/registry';
 import { preferredSize } from './preferences';
 import { canOpen, initialState, reduce } from './state';
@@ -11,10 +12,17 @@ export function dispatch(action: Action): void {
   useDesktop.setState((state) => reduce(state, action), true);
 }
 
-/** Opens a window of a core app, or focuses it for single-instance apps. False if the app is unknown or full. */
+/**
+ * Opens a window of a core app, or focuses it for single-instance apps. False if the app is unknown, not allowed for
+ * the user or full.
+ */
 export function openApp(id: string, args?: unknown): boolean {
   const app = findApp(id);
-  if (app === undefined || !canOpen(useDesktop.getState(), id, app.window.instances)) {
+  if (
+    app === undefined ||
+    !isAppAllowed(id) ||
+    !canOpen(useDesktop.getState(), id, app.window.instances)
+  ) {
     return false;
   }
   const size = preferredSize(id);

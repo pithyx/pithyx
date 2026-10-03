@@ -31,6 +31,10 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.Forbidden)]
     public const string AuthCsrfHeaderMissing = "auth.csrf.header_missing";
 
+    /// <summary>The user may not sign in to the desktop: it lacks the desktop login right. Shown only after the right password.</summary>
+    [ErrorStatus(HttpStatusCode.Forbidden)]
+    public const string AuthDesktopNotAllowed = "auth.desktop.not_allowed";
+
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string AuthDisplayNameInvalid = "auth.display_name.invalid";
 
@@ -261,6 +265,10 @@ public static class ErrorCodes
     /// <summary>The signed-in user has no notification with this id (it was deleted, or belongs to someone else).</summary>
     [ErrorStatus(HttpStatusCode.NotFound)]
     public const string NotificationsNotificationNotFound = "notifications.notification.not_found";
+
+    /// <summary>A grant names an unknown resource, a level that does not fit it (<c>read</c> or <c>readWrite</c> for a shared folder, <c>allow</c> for the rest) or a resource twice; <c>params.resource</c> names it.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string PermissionsGrantInvalid = "permissions.grant.invalid";
 
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string RealtimeMessageInvalid = "realtime.message.invalid";

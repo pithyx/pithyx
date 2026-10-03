@@ -1,19 +1,14 @@
 import type { PithyxApp } from '@pithyx/sdk';
 import { useQuery } from '@tanstack/react-query';
-import {
-  internalCall,
-  type PoolList,
-  type ShareAccess,
-  type ShareUserAccess,
-} from '../sdk/internal';
+import { internalCall, type PoolList, type ShareAccess, type SubjectGrant } from '../sdk/internal';
 
 /** Every cached answer of the Shared folders page; a change of the shares or the pools refreshes them. */
 export const sharesKey = ['settings', 'shares'] as const;
 
 export const shareListKey = [...sharesKey, 'list'] as const;
 
-export function shareAccessKey(shareId: number) {
-  return [...sharesKey, 'access', shareId] as const;
+export function shareGrantsKey(shareId: number) {
+  return [...sharesKey, 'grants', shareId] as const;
 }
 
 export const poolsKey = [...sharesKey, 'pools'] as const;
@@ -26,11 +21,11 @@ export function useShares(app: PithyxApp) {
   });
 }
 
-/** Every user with their access to one share. */
-export function useShareAccess(app: PithyxApp, shareId: number) {
+/** The grants of users and groups on one share, and every user's effective access. */
+export function useShareGrants(app: PithyxApp, shareId: number) {
   return useQuery({
-    queryKey: shareAccessKey(shareId),
-    queryFn: () => internalCall(app, 'internal.admin.shares.access', { shareId }),
+    queryKey: shareGrantsKey(shareId),
+    queryFn: () => internalCall(app, 'internal.admin.shares.grants', { shareId }),
   });
 }
 
@@ -53,11 +48,27 @@ export function sharePools(pools: PoolList): string[] {
     .sort((a, b) => a.localeCompare(b, 'en'));
 }
 
-/** The users with one user's access changed, for an optimistic update. */
-export function withAccess(
-  users: readonly ShareUserAccess[],
-  userId: number,
+/** The grants with one user's or group's access changed; `none` removes its grant. */
+export function withSubjectAccess(
+  grants: readonly SubjectGrant[],
+  subjectKind: SubjectGrant['subjectKind'],
+  subjectId: number,
   access: ShareAccess,
-): ShareUserAccess[] {
-  return users.map((user) => (user.userId === userId ? { ...user, access } : user));
+): SubjectGrant[] {
+  const others = grants.filter(
+    (grant) => !(grant.subjectKind === subjectKind && grant.subjectId === subjectId),
+  );
+  return access === 'none' ? others : [...others, { subjectKind, subjectId, level: access }];
+}
+
+/** The access a grant list gives one subject directly. */
+export function accessOf(
+  grants: readonly SubjectGrant[],
+  subjectKind: SubjectGrant['subjectKind'],
+  subjectId: number,
+): ShareAccess {
+  const grant = grants.find(
+    (entry) => entry.subjectKind === subjectKind && entry.subjectId === subjectId,
+  );
+  return grant === undefined ? 'none' : grant.level === 'readWrite' ? 'readWrite' : 'read';
 }

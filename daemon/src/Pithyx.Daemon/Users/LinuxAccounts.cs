@@ -24,7 +24,8 @@ public sealed partial class LinuxAccounts(
     ICommandRunner commands,
     PoolInventory pools,
     AccountOptions options,
-    ILogger<LinuxAccounts> logger) : IDisposable
+    ILogger<LinuxAccounts> logger,
+    TimeProvider? time = null) : IDisposable
 {
     private readonly SemaphoreSlim _running = new(1, 1);
 
@@ -67,36 +68,50 @@ public sealed partial class LinuxAccounts(
     /// <summary>The home folder of a user: below the first pool's homes when it is there, otherwise none.</summary>
     public string HomeOf(string username) => HomesOf(pools.Current) is { } homes ? Path.Combine(homes.Mount, username) : AccountReconciler.NoHome;
 
+    /// <summary>
+    /// Every user's account. A user with the SSH login right gets a shell while SSH logins are switched on; everybody
+    /// else <c>nologin</c>.
+    /// </summary>
     public async Task<IReadOnlyList<WantedAccount>> WantedAsync(CancellationToken cancellationToken)
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
-        var users = await connection.QueryAsync<(string Username, string? DisplayName, long? Uid, string? DisabledAt)>(
-            "SELECT username, display_name, uid, disabled_at FROM users WHERE uid IS NOT NULL ORDER BY uid");
+        var users = await connection.QueryAsync<(long Id, string Username, string? DisplayName, long? Uid, string? DisabledAt)>(
+            "SELECT id, username, display_name, uid, disabled_at FROM users WHERE uid IS NOT NULL ORDER BY uid");
+        var ssh = await connection.ExecuteScalarAsync<long>("SELECT ssh_enabled FROM file_services WHERE id = 1") == 1;
+        var rights = (await Permissions.PermissionService.AllUsersAsync(connection, null)).ToDictionary(user => user.Id, user => user.Permissions);
         return [.. users.Select(user => new WantedAccount(
             user.Username,
             user.Uid!.Value,
             AccountReconciler.Comment(user.DisplayName),
             HomeOf(user.Username),
-            AccountReconciler.NoLogin,
+            ssh && rights[user.Id].Has(Permissions.Resources.SshLogin) ? AccountReconciler.LoginShell : AccountReconciler.NoLogin,
             user.DisabledAt is not null))];
     }
 
     /// <summary>
-    /// The groups in the database with their members; a member whose account is not in <paramref name="accounts"/>
-    /// (refused or not created yet) is left out. The built-in group <c>users</c> is the system's and never wanted here.
+    /// The groups in the database with their members, and the two groups of every shared folder
+    /// (<see cref="Permissions.ShareGroups"/>); a member whose account is not in <paramref name="accounts"/> (refused or
+    /// not created yet) is left out. The built-in group <c>users</c> is the system's and never wanted here.
     /// </summary>
     public async Task<IReadOnlyList<WantedGroup>> WantedGroupsAsync(IReadOnlySet<string> accounts, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(accounts);
+        await Permissions.ShareGroups.AllocateAsync(connections, time ?? TimeProvider.System, cancellationToken);
         await using var connection = await connections.OpenAsync(cancellationToken);
+        var shares = (await connection.QueryAsync<(long Id, long ReadGid, long WriteGid)>(
+            "SELECT id, read_gid, write_gid FROM shares WHERE dataset IS NOT NULL AND read_gid IS NOT NULL AND write_gid IS NOT NULL ORDER BY id")).ToList();
+        var shareGroups = Permissions.ShareGroups.Wanted(shares, await Permissions.PermissionService.AllUsersAsync(connection, null), accounts);
         var groups = await connection.QueryAsync<(long Id, string Name)>("SELECT id, name FROM groups WHERE builtin = 0 ORDER BY id");
         var members = (await connection.QueryAsync<(long GroupId, string Username)>(
             "SELECT group_members.group_id, users.username FROM group_members JOIN users ON users.id = group_members.user_id"))
             .ToLookup(member => member.GroupId, member => member.Username);
-        return [.. groups.Select(group => new WantedGroup(
-            group.Name,
-            group.Id,
-            [.. members[group.Id].Where(accounts.Contains).Order(StringComparer.Ordinal)]))];
+        return [
+            .. groups.Select(group => new WantedGroup(
+                group.Name,
+                group.Id,
+                [.. members[group.Id].Where(accounts.Contains).Order(StringComparer.Ordinal)])),
+            .. shareGroups,
+        ];
     }
 
     /// <summary>Plans and, in real mode, runs the difference of the accounts, then of the groups; returns the refusals and failures by name.</summary>

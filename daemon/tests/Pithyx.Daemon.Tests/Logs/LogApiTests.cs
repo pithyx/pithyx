@@ -71,8 +71,20 @@ public sealed class LogApiTests : IDisposable
             using var response = await rita.GetAsync(path, Token);
             Assert.Equal("auth.permission.denied", await response.ErrorCodeAsync());
         }
+        // An app writes in the user's name only when the user may open it.
+        using (var refused = await rita.PostAsync("/api/apps/files/logs", new { entries = new[] { new { level = "info", message = "hi" } } }))
+        {
+            Assert.Equal("auth.permission.denied", await refused.ErrorCodeAsync());
+        }
+        await using (var connection = await _factory.Services.GetRequiredService<Pithyx.Daemon.Database.SqliteConnectionFactory>().OpenAsync(Token))
+        {
+            await TestUsers.GrantAsync(connection, userId, "app:files");
+        }
+        _factory.Services.GetRequiredService<Pithyx.Daemon.Permissions.PermissionService>().Invalidate();
         using var written = await rita.PostAsync("/api/apps/files/logs", new { entries = new[] { new { level = "info", message = "hi" } } });
         Assert.Equal(HttpStatusCode.OK, written.StatusCode);
+        using var admin = await rita.PostAsync("/api/apps/storage/logs", new { entries = new[] { new { level = "info", message = "hi" } } });
+        Assert.Equal("auth.permission.denied", await admin.ErrorCodeAsync());
     }
 
     [Fact]

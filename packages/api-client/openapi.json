@@ -35,6 +35,221 @@
         }
       }
     },
+    "/api/permissions/catalog": {
+      "get": {
+        "tags": [
+          "Permissions"
+        ],
+        "description": "Administrators only. The special rights, file protocols and apps a grant can name, in the order the editors show them.",
+        "operationId": "GetPermissionCatalog",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionCatalog"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/users/{userId}/grants": {
+      "get": {
+        "tags": [
+          "Permissions"
+        ],
+        "description": "Administrators only. The user's own grants, the grants its groups give it (the built-in group users included) and what it may do in the end.",
+        "operationId": "GetUserGrants",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserGrants"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Permissions"
+        ],
+        "description": "Administrators only. Replaces every grant of the user. Refused when no active administrator would be left; applies to the user's next request and is pushed to its desktop.",
+        "operationId": "SetUserGrants",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserGrants"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}/grants": {
+      "get": {
+        "tags": [
+          "Permissions"
+        ],
+        "description": "Administrators only. Every grant of the group; its members have them all.",
+        "operationId": "GetGroupGrants",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupGrants"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Permissions"
+        ],
+        "description": "Administrators only. Replaces every grant of the group. Refused when no active administrator would be left.",
+        "operationId": "SetGroupGrants",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupGrants"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/files/operations": {
       "post": {
         "tags": [
@@ -126,7 +341,7 @@
         "tags": [
           "Logs"
         ],
-        "description": "Stores log entries an app wrote through the SDK for the signed-in user, as source app/<app>. At most 100 entries per request; each app may write bursts of 200 and then 20 entries a second, the rest is dropped and counted.",
+        "description": "Stores log entries an app wrote through the SDK for the signed-in user, as source app/<app>; only for an app the user may open (auth.permission.denied otherwise). At most 100 entries per request; each app may write bursts of 200 and then 20 entries a second, the rest is dropped and counted.",
         "operationId": "WriteAppLogs",
         "parameters": [
           {
@@ -158,6 +373,40 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/power": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "description": "Users with the right to restart and shut down, and administrators. Restarts or shuts the box down a few seconds after the answer.",
+        "operationId": "PowerSystem",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PowerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted"
           },
           "default": {
             "description": "Problem details with a stable error code.",
@@ -1336,13 +1585,13 @@
         }
       }
     },
-    "/api/shares/{shareId}/access": {
+    "/api/shares/{shareId}/grants": {
       "get": {
         "tags": [
           "Shares"
         ],
-        "description": "Administrators only. Every user with their access to the share: none, read or readWrite. Administrators use every share anyway.",
-        "operationId": "ListShareAccess",
+        "description": "Administrators only. The grants of users and groups on the share (read or readWrite) and every user with the access it ends up with: the union of its own grants and those of its groups, read and write for administrators, nothing while deactivated.",
+        "operationId": "GetShareGrants",
         "parameters": [
           {
             "name": "shareId",
@@ -1360,10 +1609,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/ShareUserAccess"
-                  }
+                  "$ref": "#/components/schemas/ShareGrants"
                 }
               }
             }
@@ -1379,27 +1625,16 @@
             }
           }
         }
-      }
-    },
-    "/api/shares/{shareId}/access/{userId}": {
+      },
       "put": {
         "tags": [
           "Shares"
         ],
-        "description": "Administrators only. Sets a user's access to a share: none, read or readWrite. Applies to the user's next request.",
-        "operationId": "SetShareAccess",
+        "description": "Administrators only. Replaces every grant of users and groups on the share. Applies to the next request, on disk (the share's Linux groups) and over SMB and SFTP.",
+        "operationId": "SetShareGrants",
         "parameters": [
           {
             "name": "shareId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "format": "int64"
-            }
-          },
-          {
-            "name": "userId",
             "in": "path",
             "required": true,
             "schema": {
@@ -1412,15 +1647,22 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ShareAccessRequest"
+                "$ref": "#/components/schemas/ShareGrantsRequest"
               }
             }
           },
           "required": true
         },
         "responses": {
-          "204": {
-            "description": "No Content"
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ShareGrants"
+                }
+              }
+            }
           },
           "default": {
             "description": "Problem details with a stable error code.",
@@ -1887,7 +2129,7 @@
         "tags": [
           "FileServices"
         ],
-        "description": "Administrators only. Whether SMB and SFTP are switched on, the SMB workgroup and how each service is doing.",
+        "description": "Administrators only. Whether SMB, SFTP and SSH logins are switched on, the SMB workgroup and how each service is doing.",
         "operationId": "GetFileServices",
         "responses": {
           "200": {
@@ -1916,7 +2158,7 @@
         "tags": [
           "FileServices"
         ],
-        "description": "Administrators only. Switches SMB or SFTP on or off and sets the SMB workgroup; the configuration is checked and applied before the answer. Switching SFTP off never stops sshd: it only stops letting Pithyx users in.",
+        "description": "Administrators only. Switches SMB, SFTP or SSH logins on or off and sets the SMB workgroup; the configuration is checked and applied before the answer. SSH logins give users with the SSH login right a shell. Switching SFTP or SSH logins off never stops sshd: it only stops letting Pithyx users in.",
         "operationId": "UpdateFileServices",
         "requestBody": {
           "content": {
@@ -4827,6 +5069,7 @@
           "auth.challenge.expired",
           "auth.credentials.invalid",
           "auth.csrf.header_missing",
+          "auth.desktop.not_allowed",
           "auth.display_name.invalid",
           "auth.password.too_common",
           "auth.password.too_long",
@@ -4894,6 +5137,7 @@
           "logs.settings.invalid",
           "notifications.message.invalid",
           "notifications.notification.not_found",
+          "permissions.grant.invalid",
           "realtime.message.invalid",
           "realtime.topic.invalid",
           "realtime.topic.unknown",
@@ -5169,7 +5413,8 @@
           "workgroup",
           "sftpEnabled",
           "smb",
-          "sftp"
+          "sftp",
+          "sshEnabled"
         ],
         "type": "object",
         "properties": {
@@ -5192,6 +5437,10 @@
           "sftp": {
             "description": "How SFTP is doing.",
             "$ref": "#/components/schemas/FileServiceState"
+          },
+          "sshEnabled": {
+            "type": "boolean",
+            "description": "Whether users with the SSH login right may sign in over SSH with a shell. Off by default."
           }
         },
         "description": "The file services of the box. Administrators only."
@@ -5219,6 +5468,13 @@
               "boolean"
             ],
             "description": "Switches SFTP on or off."
+          },
+          "sshEnabled": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Switches SSH logins with a shell on or off for users with the SSH login right."
           }
         },
         "description": "Changes of the file services; fields left out stay."
@@ -5453,6 +5709,63 @@
           }
         },
         "description": "The snapshot of a folder topic: the folder as the watch sees it."
+      },
+      "GrantEntry": {
+        "required": [
+          "resource",
+          "level"
+        ],
+        "type": "object",
+        "properties": {
+          "resource": {
+            "type": "string",
+            "description": "`share:&lt;id&gt;`, `protocol:smb|sftp|webdav|ftp`, `app:&lt;id&gt;` or `right:admin|desktopLogin|sshLogin|power`."
+          },
+          "level": {
+            "description": "`read` or `readWrite` for a shared folder, `allow` for everything else.",
+            "$ref": "#/components/schemas/GrantLevel"
+          }
+        },
+        "description": "One grant of a user or a group."
+      },
+      "GrantLevel": {
+        "enum": [
+          "read",
+          "readWrite",
+          "allow"
+        ],
+        "description": "How far a grant goes: `read` or `readWrite` for a shared folder, `allow` for everything else."
+      },
+      "GrantsRequest": {
+        "required": [
+          "grants"
+        ],
+        "type": "object",
+        "properties": {
+          "grants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GrantEntry"
+            },
+            "description": "Every grant the subject should have; the others go. A subject has at most one grant per resource."
+          }
+        }
+      },
+      "GroupGrants": {
+        "required": [
+          "grants"
+        ],
+        "type": "object",
+        "properties": {
+          "grants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GrantEntry"
+            },
+            "description": "Every grant of the group."
+          }
+        },
+        "description": "The grants of a group. Administrators only."
       },
       "GroupSummary": {
         "required": [
@@ -5737,6 +6050,35 @@
             "description": "True when the pool can be imported: ZFS can, and every device is on a disk the guard allows."
           }
         }
+      },
+      "InheritedGrant": {
+        "required": [
+          "resource",
+          "level",
+          "groupId",
+          "groupName"
+        ],
+        "type": "object",
+        "properties": {
+          "resource": {
+            "type": "string",
+            "description": "The resource, as in GrantEntry."
+          },
+          "level": {
+            "description": "The level, as in GrantEntry.",
+            "$ref": "#/components/schemas/GrantLevel"
+          },
+          "groupId": {
+            "type": "integer",
+            "description": "The group that has the grant.",
+            "format": "int64"
+          },
+          "groupName": {
+            "type": "string",
+            "description": "Its name."
+          }
+        },
+        "description": "A grant that reaches a user through one of its groups."
       },
       "Job": {
         "required": [
@@ -6167,7 +6509,8 @@
                 "description": "Set when the login is complete.",
                 "$ref": "#/components/schemas/UserInfo"
               }
-            ]
+            ],
+            "description": "The signed-in user."
           },
           "totpRequired": {
             "type": "boolean",
@@ -6379,21 +6722,6 @@
             ],
             "description": "Optional, at most 64 characters."
           },
-          "isAdmin": {
-            "type": "boolean",
-            "description": "Whether the user is an administrator.",
-            "default": false
-          },
-          "smb": {
-            "type": "boolean",
-            "description": "Whether the user may use SMB; on when left out.",
-            "default": true
-          },
-          "sftp": {
-            "type": "boolean",
-            "description": "Whether the user may use SFTP; off when left out.",
-            "default": false
-          },
           "groupIds": {
             "type": [
               "null",
@@ -6404,6 +6732,16 @@
               "format": "int64"
             },
             "description": "The groups the user joins, besides the built-in group `users`."
+          },
+          "grants": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/GrantEntry"
+            },
+            "description": "The user's own grants; when left out, the desktop login, SMB and the apps files, viewer and demo."
           }
         }
       },
@@ -6643,6 +6981,38 @@
             "description": "The new password, with the same rules as everywhere."
           }
         }
+      },
+      "PermissionCatalog": {
+        "required": [
+          "rights",
+          "protocols",
+          "apps"
+        ],
+        "type": "object",
+        "properties": {
+          "rights": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The special rights."
+          },
+          "protocols": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The file protocols."
+          },
+          "apps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The app ids given to users; the administration apps come with the administrator right."
+          }
+        },
+        "description": "Every resource besides shared folders a grant can name, in the order the editors show them."
       },
       "PlannedCommand": {
         "required": [
@@ -6895,6 +7265,25 @@
             "type": "integer",
             "description": "Errors the scan found.",
             "format": "int64"
+          }
+        }
+      },
+      "PowerAction": {
+        "enum": [
+          "restart",
+          "shutdown"
+        ],
+        "description": "What the power button does."
+      },
+      "PowerRequest": {
+        "required": [
+          "action"
+        ],
+        "type": "object",
+        "properties": {
+          "action": {
+            "description": "`restart` or `shutdown`.",
+            "$ref": "#/components/schemas/PowerAction"
           }
         }
       },
@@ -7706,6 +8095,43 @@
           }
         }
       },
+      "SessionPermissions": {
+        "required": [
+          "admin",
+          "rights",
+          "protocols",
+          "apps"
+        ],
+        "type": "object",
+        "properties": {
+          "admin": {
+            "type": "boolean",
+            "description": "Administrators may do everything."
+          },
+          "rights": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The special rights: `right:admin`, `right:desktopLogin`, `right:sshLogin`, `right:power`."
+          },
+          "protocols": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The file protocols: `protocol:smb`, `protocol:sftp`, `protocol:webdav`, `protocol:ftp`."
+          },
+          "apps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The ids of the apps of IReadOnlyList&lt;string&gt; PermissionCatalog.Apps the user may open."
+          }
+        },
+        "description": "What the signed-in user may do outside shared folders, for the desktop: which apps it shows and whether the power menu is there."
+      },
       "SetupRequest": {
         "required": [
           "username",
@@ -7780,18 +8206,6 @@
           "read",
           "readWrite"
         ]
-      },
-      "ShareAccessRequest": {
-        "required": [
-          "access"
-        ],
-        "type": "object",
-        "properties": {
-          "access": {
-            "description": "`none` removes the user's access.",
-            "$ref": "#/components/schemas/ShareAccess"
-          }
-        }
       },
       "ShareDataChoice": {
         "enum": [
@@ -7877,12 +8291,12 @@
           },
           "readUsers": {
             "type": "integer",
-            "description": "Users other than administrators who may read.",
+            "description": "Active users other than administrators who may read, through their own grants or their groups.",
             "format": "int32"
           },
           "readWriteUsers": {
             "type": "integer",
-            "description": "Users other than administrators who may read and write.",
+            "description": "Active users other than administrators who may read and write, through their own grants or their groups.",
             "format": "int32"
           },
           "restorePoints": {
@@ -7906,6 +8320,45 @@
           }
         },
         "description": "A share with what the Shared folders page shows. Administrators only."
+      },
+      "ShareGrants": {
+        "required": [
+          "grants",
+          "users"
+        ],
+        "type": "object",
+        "properties": {
+          "grants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubjectGrant"
+            },
+            "description": "The grants of users and groups on it; the editor changes these."
+          },
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ShareUserAccess"
+            },
+            "description": "Every user with the access it ends up with, administrators and deactivated users included."
+          }
+        },
+        "description": "Who may use a shared folder. Administrators only."
+      },
+      "ShareGrantsRequest": {
+        "required": [
+          "grants"
+        ],
+        "type": "object",
+        "properties": {
+          "grants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubjectGrant"
+            },
+            "description": "Every grant the shared folder should have; the others go."
+          }
+        }
       },
       "ShareInfo": {
         "required": [
@@ -8067,13 +8520,14 @@
           "username",
           "displayName",
           "administrator",
+          "disabled",
           "access"
         ],
         "type": "object",
         "properties": {
           "userId": {
             "type": "integer",
-            "description": "The user's id, for `PUT /api/shares/{shareId}/access/{userId}`.",
+            "description": "The user's id.",
             "format": "int64"
           },
           "username": {
@@ -8089,14 +8543,18 @@
           },
           "administrator": {
             "type": "boolean",
-            "description": "Administrators use every share with read and write access, whatever Access says."
+            "description": "Administrators use every shared folder with read and write."
+          },
+          "disabled": {
+            "type": "boolean",
+            "description": "Deactivated users use none."
           },
           "access": {
-            "description": "The access granted: `none`, `read` or `readWrite`.",
+            "description": "What the user ends up with: `none`, `read` or `readWrite`.",
             "$ref": "#/components/schemas/ShareAccess"
           }
         },
-        "description": "One user's access to a share, for editing rights."
+        "description": "One user's effective access to a shared folder."
       },
       "SmartReport": {
         "required": [
@@ -8795,6 +9253,38 @@
         },
         "description": "Body of `PUT /api/storage/schedules`."
       },
+      "SubjectGrant": {
+        "required": [
+          "subjectKind",
+          "subjectId",
+          "level"
+        ],
+        "type": "object",
+        "properties": {
+          "subjectKind": {
+            "description": "`user` or `group`.",
+            "$ref": "#/components/schemas/SubjectKind"
+          },
+          "subjectId": {
+            "type": "integer",
+            "description": "The user's or the group's id.",
+            "format": "int64"
+          },
+          "level": {
+            "description": "`read` or `readWrite`.",
+            "$ref": "#/components/schemas/GrantLevel"
+          }
+        },
+        "description": "A user's or a group's access to one shared folder."
+      },
+      "SubjectKind": {
+        "enum": [
+          "user",
+          "group",
+          "app"
+        ],
+        "description": "Who a grant is for. Apps join in M4; until then nothing grants to them."
+      },
       "SystemInfo": {
         "required": [
           "hostname",
@@ -9145,6 +9635,7 @@
           "jobs",
           "jobs/+",
           "notifications",
+          "session/permissions",
           "shares/list",
           "storage/alerts",
           "storage/disks",
@@ -9167,6 +9658,9 @@
           },
           "notifications": {
             "$ref": "#/components/schemas/NotificationEvent"
+          },
+          "session/permissions": {
+            "$ref": "#/components/schemas/SessionPermissions"
           },
           "shares/list": {
             "$ref": "#/components/schemas/ShareListRevision"
@@ -9200,6 +9694,7 @@
           "jobs",
           "jobs/+",
           "notifications",
+          "session/permissions",
           "shares/list",
           "storage/alerts",
           "storage/disks",
@@ -9222,6 +9717,9 @@
           },
           "notifications": {
             "$ref": "#/components/schemas/NotificationList"
+          },
+          "session/permissions": {
+            "$ref": "#/components/schemas/SessionPermissions"
           },
           "shares/list": {
             "$ref": "#/components/schemas/ShareListRevision"
@@ -9463,36 +9961,76 @@
           }
         }
       },
+      "UserGrants": {
+        "required": [
+          "grants",
+          "inherited",
+          "effective"
+        ],
+        "type": "object",
+        "properties": {
+          "grants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GrantEntry"
+            },
+            "description": "The user's own grants; the editor changes these."
+          },
+          "inherited": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InheritedGrant"
+            },
+            "description": "What its groups give it; changed on the group."
+          },
+          "effective": {
+            "description": "What the user may do: the union of both, or everything for an administrator.",
+            "$ref": "#/components/schemas/SessionPermissions"
+          }
+        },
+        "description": "The rights of a user for the editor. Administrators only."
+      },
       "UserInfo": {
         "required": [
           "id",
           "username",
           "displayName",
           "isAdmin",
-          "totpEnabled"
+          "totpEnabled",
+          "permissions"
         ],
         "type": "object",
         "properties": {
           "id": {
             "type": "integer",
+            "description": "Stable id.",
             "format": "int64"
           },
           "username": {
-            "type": "string"
+            "type": "string",
+            "description": "Login name."
           },
           "displayName": {
             "type": [
               "null",
               "string"
-            ]
+            ],
+            "description": "Name shown, if set."
           },
           "isAdmin": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Whether the user has the administrator right, its own or through a group."
           },
           "totpEnabled": {
-            "type": "boolean"
+            "type": "boolean",
+            "description": "Whether the user signs in with a second factor."
+          },
+          "permissions": {
+            "description": "What the user may do; the topic `session/permissions` sends changes.",
+            "$ref": "#/components/schemas/SessionPermissions"
           }
-        }
+        },
+        "description": "The signed-in user."
       },
       "UserSummary": {
         "required": [
@@ -9505,8 +10043,8 @@
           "createdAt",
           "home",
           "disabled",
-          "smb",
-          "sftp",
+          "rights",
+          "protocols",
           "fileServicePassword",
           "groupIds"
         ],
@@ -9530,7 +10068,7 @@
           },
           "isAdmin": {
             "type": "boolean",
-            "description": "Administrators have every right."
+            "description": "Whether the user has the administrator right, its own or through a group; administrators have every right."
           },
           "uid": {
             "type": [
@@ -9560,13 +10098,19 @@
             "type": "boolean",
             "description": "Deactivated: cannot sign in, and the Linux account is expired."
           },
-          "smb": {
-            "type": "boolean",
-            "description": "Whether the user may use SMB; administrators always may."
+          "rights": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The special rights the user has (`right:admin`, `right:desktopLogin`, `right:sshLogin`, `right:power`), its own and through its groups; a deactivated user gets them back when activated."
           },
-          "sftp": {
-            "type": "boolean",
-            "description": "Whether the user may use SFTP; administrators always may."
+          "protocols": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The file protocols the user may use (`protocol:smb`, `protocol:sftp`, `protocol:webdav`, `protocol:ftp`), the same way."
           },
           "fileServicePassword": {
             "type": "boolean",
@@ -9593,33 +10137,12 @@
             ],
             "description": "An empty text removes the display name."
           },
-          "isAdmin": {
-            "type": [
-              "null",
-              "boolean"
-            ],
-            "description": "The last administrator cannot lose the right."
-          },
           "disabled": {
             "type": [
               "null",
               "boolean"
             ],
             "description": "Deactivates or activates the user; deactivating ends the user's sessions. Nobody deactivates themselves or the last active administrator."
-          },
-          "smb": {
-            "type": [
-              "null",
-              "boolean"
-            ],
-            "description": "Allows or forbids SMB."
-          },
-          "sftp": {
-            "type": [
-              "null",
-              "boolean"
-            ],
-            "description": "Allows or forbids SFTP."
           },
           "groupIds": {
             "type": [
@@ -9787,6 +10310,9 @@
   "tags": [
     {
       "name": "System"
+    },
+    {
+      "name": "Permissions"
     },
     {
       "name": "Files"

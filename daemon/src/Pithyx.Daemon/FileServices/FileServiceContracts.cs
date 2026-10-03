@@ -36,10 +36,12 @@ public enum FileServiceState
 /// <param name="SftpEnabled">Whether SFTP is switched on.</param>
 /// <param name="Smb">How SMB is doing.</param>
 /// <param name="Sftp">How SFTP is doing.</param>
-public sealed record FileServiceSettings(bool SmbEnabled, string Workgroup, bool SftpEnabled, FileServiceState Smb, FileServiceState Sftp);
+/// <param name="SshEnabled">Whether users with the SSH login right may sign in over SSH with a shell. Off by default.</param>
+public sealed record FileServiceSettings(bool SmbEnabled, string Workgroup, bool SftpEnabled, FileServiceState Smb, FileServiceState Sftp, bool SshEnabled);
 
 /// <summary>Changes of the file services; fields left out stay.</summary>
 /// <param name="SmbEnabled">Switches SMB on or off.</param>
 /// <param name="Workgroup">A new SMB workgroup.</param>
 /// <param name="SftpEnabled">Switches SFTP on or off.</param>
-public sealed record FileServiceSettingsRequest(bool? SmbEnabled = null, string? Workgroup = null, bool? SftpEnabled = null);
+/// <param name="SshEnabled">Switches SSH logins with a shell on or off for users with the SSH login right.</param>
+public sealed record FileServiceSettingsRequest(bool? SmbEnabled = null, string? Workgroup = null, bool? SftpEnabled = null, bool? SshEnabled = null);

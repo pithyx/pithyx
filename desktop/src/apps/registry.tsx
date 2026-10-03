@@ -175,8 +175,8 @@ export const coreApps: readonly CoreApp[] = [
 ];
 
 /** The apps a user sees in the start menu and can put on the desktop. */
-export function appsFor(isAdmin: boolean): readonly CoreApp[] {
-  return coreApps.filter((app) => app.launchOnly !== true && (app.adminOnly !== true || isAdmin));
+export function appsFor(allowed: (id: string) => boolean): readonly CoreApp[] {
+  return coreApps.filter((app) => app.launchOnly !== true && allowed(app.id));
 }
 
 export function findApp(id: string): CoreApp | undefined {

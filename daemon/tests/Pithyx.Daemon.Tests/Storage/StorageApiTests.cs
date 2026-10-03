@@ -2,7 +2,6 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Security.Claims;
 using System.Text.Json;
-using Dapper;
 using Microsoft.Extensions.DependencyInjection;
 using Pithyx.Daemon.Auth;
 using Pithyx.Daemon.Database;
@@ -42,9 +41,7 @@ public sealed class StorageApiTests : IAsyncLifetime
         var hash = await _factory.Services.GetRequiredService<PasswordHasher>().HashAsync(AdminPassword, Token);
         await using (var connection = await _factory.Services.GetRequiredService<SqliteConnectionFactory>().OpenAsync(Token))
         {
-            await connection.ExecuteAsync(
-                "INSERT INTO users (username, password_hash, is_admin, created_at, updated_at) VALUES ('bob', @hash, 0, '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z')",
-                new { hash });
+            await TestUsers.InsertAsync(connection, "bob", hash: hash);
         }
         var client = _factory.CreateApiClient();
         (await client.LoginAsync("bob", AdminPassword)).EnsureSuccessStatusCode();

@@ -264,10 +264,7 @@ public sealed class FileOperationTests : IAsyncLifetime
         await RunAsync(new { kind = "delete", items = new[] { new { shareId = _mediaId, path = "a.txt" } } });
         var id = (await TrashAsync()).GetProperty("items")[0].GetProperty("id").GetInt64();
         var userId = await _factory.InsertUserAsync("rita");
-        using (var grant = await _admin.PutAsJsonAsync($"/api/shares/{_mediaId}/access/{userId}", new { access = "read" }, Token))
-        {
-            Assert.Equal(HttpStatusCode.NoContent, grant.StatusCode);
-        }
+        await _admin.SetShareAccessAsync(_mediaId, userId, "read");
         using var reader = _factory.ClientWithCookie(await _factory.SessionCookieAsync(userId));
         Assert.Single((await TrashAsync(reader)).GetProperty("items").EnumerateArray());
         using var restore = await reader.PostAsync($"/api/files/{_mediaId}/trash/restore", new { ids = new[] { id } });
@@ -318,10 +315,7 @@ public sealed class FileOperationTests : IAsyncLifetime
     {
         Write("a.txt");
         var userId = await _factory.InsertUserAsync("rita");
-        using (var grant = await _admin.PutAsJsonAsync($"/api/shares/{_mediaId}/access/{userId}", new { access = "read" }, Token))
-        {
-            Assert.Equal(HttpStatusCode.NoContent, grant.StatusCode);
-        }
+        await _admin.SetShareAccessAsync(_mediaId, userId, "read");
         using var reader = _factory.ClientWithCookie(await _factory.SessionCookieAsync(userId));
         using var delete = await reader.PostAsync("/api/files/operations", new { kind = "delete", items = new[] { new { shareId = _mediaId, path = "a.txt" } } });
         Assert.Equal("fs.share.read_only", await delete.ErrorCodeAsync());

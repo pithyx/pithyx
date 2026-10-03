@@ -30,7 +30,8 @@ public sealed class UserApiTests : IDisposable
 
     private async Task<JsonElement> CreateAsync(string username, bool isAdmin = false)
     {
-        using var response = await _admin.PostAsync("/api/users", new { username, displayName = (string?)null, password = "river-candle-orbit-7", isAdmin });
+        string[] rights = isAdmin ? ["right:desktopLogin", "right:admin"] : ["right:desktopLogin"];
+        using var response = await _admin.PostAsync("/api/users", new { username, displayName = (string?)null, password = "river-candle-orbit-7", grants = rights.Select(resource => new { resource, level = "allow" }) });
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         return await response.JsonAsync();
     }
@@ -104,15 +105,15 @@ public sealed class UserApiTests : IDisposable
         await _admin.SetupAdminAsync();
         var adminId = (await _admin.GetFromJsonAsync<JsonElement>("/api/users", Token))[0].GetProperty("id").GetInt64();
 
-        using var demote = await _admin.PatchAsJsonAsync($"/api/users/{adminId}", new { isAdmin = false }, Token);
+        using var demote = await _admin.PutAsJsonAsync($"/api/users/{adminId}/grants", new { grants = new[] { new { resource = "right:desktopLogin", level = "allow" } } }, Token);
         Assert.Equal("users.user.last_admin", await demote.ErrorCodeAsync());
         using var self = await _admin.DeleteAsync($"/api/users/{adminId}", Token);
         Assert.Equal("users.user.self", await self.ErrorCodeAsync());
 
         var second = await CreateAsync("bea", isAdmin: true);
-        using var demoted = await _admin.PatchAsJsonAsync($"/api/users/{adminId}", new { isAdmin = false }, Token);
+        using var demoted = await _admin.PutAsJsonAsync($"/api/users/{adminId}/grants", new { grants = new[] { new { resource = "right:desktopLogin", level = "allow" } } }, Token);
         Assert.Equal(HttpStatusCode.OK, demoted.StatusCode);
-        Assert.False((await demoted.JsonAsync()).GetProperty("isAdmin").GetBoolean());
+        Assert.False((await demoted.JsonAsync()).GetProperty("effective").GetProperty("admin").GetBoolean());
         _ = second;
     }
 
@@ -170,17 +171,18 @@ public sealed class UserApiTests : IDisposable
         {
             Assert.Equal(HttpStatusCode.OK, off.StatusCode);
         }
-        using var demote = await _admin.PatchAsJsonAsync($"/api/users/{adminId}", new { isAdmin = false }, Token);
+        using var demote = await _admin.PutAsJsonAsync($"/api/users/{adminId}/grants", new { grants = new[] { new { resource = "right:desktopLogin", level = "allow" } } }, Token);
         Assert.Equal("users.user.last_admin", await demote.ErrorCodeAsync());
     }
 
     [Fact]
-    public void ShareAclsGiveAdministratorsAndGrantedUsersTheirAccessAndNobodyElse()
+    public void ShareAclsNameOnlyTheSharesReadAndWriteGroups()
     {
-        Assert.Equal("u::rwX,g::---,o::---,m::rwX", ShareAcls.Entries([]));
-        Assert.Equal(
-            "u::rwX,g::---,o::---,m::rwX,u:20000:rwX,u:20001:r-X,u:20002:rwX",
-            ShareAcls.Entries([(20002, false), (20000, true), (20001, false), (20002, true)]));
+        Assert.Equal("u::rwX,g::---,o::---,m::rwX,g:30004:r-X,g:30005:rwX", ShareAcls.Entries(30004, 30005));
+        // getfacl of a folder with these entries, and the same with an entry added behind Pithyx's back.
+        const string Folder = "user::rwx\ngroup::---\ngroup:30004:r-x\ngroup:30005:rwx\nmask::rwx\nother::---\ndefault:user::rwx\ndefault:group:30004:r-x\n";
+        Assert.True(ShareAcls.ParseGetfacl(Folder).SetEquals(ShareAcls.FolderEntries(ShareAcls.Entries(30004, 30005))));
+        Assert.False(ShareAcls.ParseGetfacl(Folder + "user:1000:rwx\t#effective:rwx\n").SetEquals(ShareAcls.FolderEntries(ShareAcls.Entries(30004, 30005))));
         var commands = ShareAcls.Commands("/tank/media", "u::rwX");
         Assert.Equal(["-R", "-P", "--set", "u::rwX", "--", "/tank/media"], commands[0].Arguments);
         Assert.Equal(["-R", "-P", "-d", "--set", "u::rwX", "--", "/tank/media"], commands[1].Arguments);

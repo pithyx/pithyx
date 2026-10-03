@@ -11,9 +11,7 @@
   "badge": {
     "admin": "Administrator",
     "totp": "Two-factor",
-    "disabled": "Deactivated",
-    "smb": "SMB",
-    "sftp": "SFTP"
+    "disabled": "Deactivated"
   },
   "noHome": "No pool yet",
   "field": {
@@ -22,7 +20,6 @@
     "displayName": "Display name (optional)",
     "password": "Password",
     "newPassword": "New password",
-    "admin": "Administrator (may change everything)",
     "groups": "Groups",
     "groupsHint": "Every user is also in the group users."
   },
@@ -60,9 +57,6 @@
   },
   "fileServices": {
     "title": "File services",
-    "smb": "May use SMB (network drives)",
-    "sftp": "May use SFTP",
-    "admin": "Administrators may use every file service.",
     "signInOnce": "Not ready for SMB and SFTP yet: the user signs in once on the web, or you set a new password."
   },
   "groups": {
@@ -98,6 +92,41 @@
       "intro": "The group goes; its members stay. Files keep the group id, and it is never given to another group.",
       "submit": "Delete group",
       "label": "Delete group {name}"
+    },
+    "rights": "Rights of the group {name}"
+  },
+  "grants": {
+    "button": "Rights",
+    "userTitle": "Rights of {name}",
+    "groupTitle": "Rights of the group {name}",
+    "userIntro": "The user has these rights and everything its groups give it. There are no rules that take a right away.",
+    "groupIntro": "Every member has these rights, besides its own and those of its other groups.",
+    "save": "Save rights",
+    "rights": "Special rights",
+    "protocols": "File services",
+    "apps": "Apps",
+    "shares": "Shared folders",
+    "noShares": "There are no shared folders yet.",
+    "adminHasAll": "Administrators have every right and reach every shared folder.",
+    "through": "Through the group {groups}",
+    "throughShare": "Groups give more: {groups}",
+    "shareAccess": "Access to {share}",
+    "right": {
+      "admin": "Administrator (may change everything)",
+      "desktopLogin": "Sign in to the desktop",
+      "sshLogin": "Sign in over SSH with a shell",
+      "power": "Restart and shut down"
+    },
+    "protocol": {
+      "smb": "SMB (network drives)",
+      "sftp": "SFTP",
+      "webdav": "WebDAV",
+      "ftp": "FTP"
+    },
+    "access": {
+      "none": "No access",
+      "read": "Read",
+      "readWrite": "Read and write"
     }
   }
 }

@@ -11,6 +11,8 @@ using Pithyx.Daemon.Realtime;
 using Pithyx.Daemon.Storage;
 using Pithyx.Daemon.Storage.Health;
 
+using Pithyx.Daemon.Tests.Support;
+
 namespace Pithyx.Daemon.Tests.Storage.Health;
 
 /// <summary>Which alert changes notify the administrators, against a real database.</summary>
@@ -41,12 +43,9 @@ public sealed class StorageAlertNotifierTests : IAsyncLifetime
     {
         await new MigrationRunner(_connections, _time, NullLogger<MigrationRunner>.Instance).RunAsync(Migration.Embedded(), Token);
         await using var connection = await _connections.OpenAsync(Token);
-        async Task<long> InsertAsync(string name, int admin) => await connection.ExecuteScalarAsync<long>(
-            "INSERT INTO users (username, password_hash, is_admin, created_at, updated_at) VALUES (@name, 'x', @admin, '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z') RETURNING id",
-            new { name, admin });
-        _adminId = await InsertAsync("ada", 1);
-        _otherAdminId = await InsertAsync("grace", 1);
-        _userId = await InsertAsync("bob", 0);
+        _adminId = await TestUsers.InsertAsync(connection, "ada", admin: true);
+        _otherAdminId = await TestUsers.InsertAsync(connection, "grace", admin: true);
+        _userId = await TestUsers.InsertAsync(connection, "bob");
     }
 
     public ValueTask DisposeAsync()
@@ -148,12 +147,12 @@ public sealed class StorageAlertNotifierTests : IAsyncLifetime
     {
         await using (var connection = await _connections.OpenAsync(Token))
         {
-            await connection.ExecuteAsync("UPDATE users SET is_admin = 0");
+            await connection.ExecuteAsync("DELETE FROM grants WHERE resource = 'right:admin'");
         }
         await _notifier.SyncAsync([Warning()], Tank(85), settled: true, Token);
         await using (var connection = await _connections.OpenAsync(Token))
         {
-            await connection.ExecuteAsync("UPDATE users SET is_admin = 1 WHERE id = @_adminId", new { _adminId });
+            await TestUsers.GrantAsync(connection, _adminId, "right:admin");
         }
 
         await _notifier.SyncAsync([Warning()], Tank(85), settled: true, Token);

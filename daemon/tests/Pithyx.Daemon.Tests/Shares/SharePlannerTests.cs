@@ -57,12 +57,8 @@ public sealed class SharePlannerTests : IAsyncLifetime
     {
         await new MigrationRunner(_connections, _time, NullLogger<MigrationRunner>.Instance).RunAsync(Migration.Embedded(), Token);
         await using var connection = await _connections.OpenAsync(Token);
-        await connection.ExecuteAsync(
-            """
-            INSERT INTO users (id, username, password_hash, is_admin, created_at, updated_at)
-            VALUES (1, 'admin', 'x', 1, '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z'),
-                (2, 'anna', 'x', 0, '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z')
-            """);
+        await TestUsers.InsertAsync(connection, "admin", admin: true, id: 1);
+        await TestUsers.InsertAsync(connection, "anna", id: 2);
     }
 
     public ValueTask DisposeAsync()
@@ -172,7 +168,7 @@ public sealed class SharePlannerTests : IAsyncLifetime
         var row = await connection.QuerySingleAsync<(long Id, string Name, string Path, string Description, string Dataset)>(
             "SELECT id, name, path, description, dataset FROM shares");
         Assert.Equal(("My Photos", "/tank/my-photos", "Holidays and family", "tank/pithyx/shares/my-photos"), (row.Name, row.Path, row.Description, row.Dataset));
-        Assert.Equal(0L, await connection.ExecuteScalarAsync<long>("SELECT COUNT(*) FROM share_access"));
+        Assert.Equal(0L, await connection.ExecuteScalarAsync<long>("SELECT COUNT(*) FROM grants WHERE resource GLOB 'share:*'"));
         Assert.Equal(revision + 1, _changes.Revision);
         // Restore points are on from the start: daily, kept 7 days.
         var schedules = await _snapshotService.GetSchedulesAsync("tank/pithyx/shares/my-photos", Token);
@@ -222,7 +218,7 @@ public sealed class SharePlannerTests : IAsyncLifetime
         var id = await AddShareAsync("Media", "/tank/media", "tank/pithyx/shares/media");
         await using (var connection = await _connections.OpenAsync(Token))
         {
-            await connection.ExecuteAsync("INSERT INTO share_access (share_id, user_id, level) VALUES (@id, 2, 'read')", new { id });
+            await TestUsers.GrantAsync(connection, 2, $"share:{id}", "read");
             await connection.ExecuteAsync(
                 "INSERT INTO trash_items (share_id, original_path, kind, size, deleted_at) VALUES (@id, 'a.txt', 'file', 1, '2026-01-01T00:00:00Z')",
                 new { id });
@@ -234,7 +230,7 @@ public sealed class SharePlannerTests : IAsyncLifetime
         Assert.Empty(datasets);
         await plan.AfterRun!(Token);
         Assert.Equal(0L, await ScalarAsync<long>("SELECT COUNT(*) FROM shares"));
-        Assert.Equal(0L, await ScalarAsync<long>("SELECT COUNT(*) FROM share_access"));
+        Assert.Equal(0L, await ScalarAsync<long>("SELECT COUNT(*) FROM grants WHERE resource GLOB 'share:*'"));
         Assert.Equal(0L, await ScalarAsync<long>("SELECT COUNT(*) FROM trash_items"));
     }
 
@@ -331,8 +327,11 @@ public sealed class SharePlannerTests : IAsyncLifetime
         await AddShareAsync("Folder", "/srv/folder");
         await AddShareAsync("Gone", "/tank/gone", "tank/pithyx/shares/gone");
         var admin = Jobs.JobTestSupport.Principal(1, admin: true);
-        await _shares.SetAccessAsync(admin, media, 1, ShareAccess.ReadWrite, Token);
-        await _shares.SetAccessAsync(admin, media, 2, ShareAccess.Read, Token);
+        await using (var connection = await _connections.OpenAsync(Token))
+        {
+            await TestUsers.GrantAsync(connection, 1, $"share:{media}", "readWrite");
+            await TestUsers.GrantAsync(connection, 2, $"share:{media}", "read");
+        }
 
         var details = (await _shares.ListDetailsAsync(admin, _pools.Current, Token)).ToDictionary(share => share.Name);
 

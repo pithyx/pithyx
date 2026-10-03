@@ -83,3 +83,13 @@ public sealed record SystemRegion(string Language, string? Region)
 
     public bool IsValid() => Languages.Contains(Language) && (Region is null || (Region.Length == 2 && Region.All(char.IsAsciiLetterUpper)));
 }
+
+/// <summary>What the power button does.</summary>
+public enum PowerAction
+{
+    Restart,
+    Shutdown,
+}
+
+/// <param name="Action"><c>restart</c> or <c>shutdown</c>.</param>
+public sealed record PowerRequest(PowerAction Action);

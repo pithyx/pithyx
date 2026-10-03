@@ -5,6 +5,7 @@ import { useAppName } from '../apps/names';
 import { useQueryClient } from '@tanstack/react-query';
 import type { components } from '@pithyx/api-client';
 import { queryKeys } from '../api/queries';
+import { isAppAllowed } from '../apps/access';
 import { appsFor } from '../apps/registry';
 import { AppIcon } from '../shell/AppIcon';
 import { Button } from '../ui/Button';
@@ -49,7 +50,7 @@ export function ItemMenu({
   const appName = useAppName();
   const icon = { size: 18, stroke: 1.75 };
   const user = useQueryClient().getQueryData<components['schemas']['UserInfo']>(queryKeys.session);
-  const apps = appsFor(user?.isAdmin === true);
+  const apps = appsFor((id) => isAppAllowed(id, user?.permissions));
   return (
     <ContextMenuPopover x={x} y={y} onClose={onClose}>
       <Menu

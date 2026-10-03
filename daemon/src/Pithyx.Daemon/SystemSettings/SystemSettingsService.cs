@@ -29,6 +29,28 @@ public sealed class SystemSettingsService(
 
     public void Dispose() => _timeChange.Dispose();
 
+    /// <summary>The last power action asked for in simulation, where nothing restarts.</summary>
+    public PowerAction? SimulatedPower { get; private set; }
+
+    /// <summary>
+    /// Restarts or shuts down the box a few seconds after the answer went out, so the desktop learns that it worked.
+    /// Simulation only remembers it.
+    /// </summary>
+    public void Power(PowerAction action)
+    {
+        if (mode != DaemonMode.Real)
+        {
+            SimulatedPower = action;
+            return;
+        }
+        var command = new CommandRequest("systemctl", [action == PowerAction.Restart ? "reboot" : "poweroff"]);
+        _ = Task.Run(async () =>
+        {
+            await Task.Delay(TimeSpan.FromSeconds(2), time);
+            await commands.RunAsync(command, CancellationToken.None);
+        });
+    }
+
     public SystemOverview Overview()
     {
         var build = BuildInfo.Current;
