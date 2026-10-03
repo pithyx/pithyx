@@ -21,9 +21,16 @@ public sealed class LoginRateLimiter(TimeProvider time)
     /// <summary>Throws <c>auth.rate.limited</c> with the seconds until the next attempt is allowed.</summary>
     public void EnsureAllowed(HttpContext context, string username)
     {
+        ArgumentNullException.ThrowIfNull(context);
+        EnsureAllowed(Address(context), username);
+    }
+
+    /// <summary>The same for a client of a file protocol, known by its address only.</summary>
+    public void EnsureAllowed(string address, string username)
+    {
         var now = time.GetUtcNow();
         RemoveExpired(now);
-        foreach (var (key, limit) in Keys(context, username))
+        foreach (var (key, limit) in Keys(address, username))
         {
             if (_counters.TryGetValue(key, out var counter) && counter.Failures >= limit)
             {
@@ -37,8 +44,14 @@ public sealed class LoginRateLimiter(TimeProvider time)
 
     public void RecordFailure(HttpContext context, string username)
     {
+        ArgumentNullException.ThrowIfNull(context);
+        RecordFailure(Address(context), username);
+    }
+
+    public void RecordFailure(string address, string username)
+    {
         var now = time.GetUtcNow();
-        foreach (var (key, _) in Keys(context, username))
+        foreach (var (key, _) in Keys(address, username))
         {
             _counters.AddOrUpdate(
                 key,
@@ -47,10 +60,10 @@ public sealed class LoginRateLimiter(TimeProvider time)
         }
     }
 
-    private static (string Key, int Limit)[] Keys(HttpContext context, string username)
+    private static string Address(HttpContext context) => context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
+
+    private static (string Key, int Limit)[] Keys(string address, string username)
     {
-        ArgumentNullException.ThrowIfNull(context);
-        var address = context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
         return [($"user|{address}|{username.Trim().ToLowerInvariant()}", FailuresPerUser), ($"address|{address}", FailuresPerAddress)];
     }
 

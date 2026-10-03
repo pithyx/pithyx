@@ -87,6 +87,40 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
 
     public async Task<Job> StartAsync(ClaimsPrincipal user, FileOperationRequest request, CancellationToken cancellationToken)
     {
+        var plan = await PrepareAsync(user, request, cancellationToken);
+        var kind = plan.ToTrash ? "trash" : request.Kind.ToString().ToLowerInvariant();
+        return await StartJobAsync(plan.UserId, $"files.{kind}", request, context => Task.Run(() => Run(request.Kind, plan.ToTrash, plan.UserId, plan.Sources, plan.Target, plan.Policy, new Progress(context, plan.Owner, context.Cancellation)), context.Cancellation), cancellationToken);
+    }
+
+    /// <summary>
+    /// Runs a file operation while the caller waits, with the same checks as <see cref="StartAsync"/> but without a job
+    /// or a notification: for file protocols (WebDAV, FTP) whose clients wait for the answer.
+    /// </summary>
+    public async Task<FileOperationResult> RunNowAsync(ClaimsPrincipal user, FileOperationRequest request, CancellationToken cancellationToken)
+    {
+        var plan = await PrepareAsync(user, request, cancellationToken);
+        var run = new Progress(null, plan.Owner, cancellationToken);
+        try
+        {
+            await Task.Run(() => Run(request.Kind, plan.ToTrash, plan.UserId, plan.Sources, plan.Target, plan.Policy, run), cancellationToken);
+        }
+        finally
+        {
+            usage?.Written();
+        }
+        return new FileOperationResult(run.Done, run.Skipped);
+    }
+
+    private sealed record Prepared(
+        long UserId,
+        List<(ResolvedShare Share, string Path)> Sources,
+        (ResolvedShare Share, string Path)? Target,
+        ConflictPolicy Policy,
+        bool ToTrash,
+        FileOwner? Owner);
+
+    private async Task<Prepared> PrepareAsync(ClaimsPrincipal user, FileOperationRequest request, CancellationToken cancellationToken)
+    {
         ArgumentNullException.ThrowIfNull(user);
         ArgumentNullException.ThrowIfNull(request);
         var hasItems = request.Items is { Count: > 0 and <= MaxItems };
@@ -124,12 +158,13 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
             target = (share, path);
         }
 
-        var policy = request.OnConflict ?? ConflictPolicy.Fail;
-        var toTrash = request.Kind == FileOperationKind.Delete && !request.Permanent;
-        var kind = toTrash ? "trash" : request.Kind.ToString().ToLowerInvariant();
-        var userId = CurrentUserId(user);
-        var owner = await owners.ForAsync(user, cancellationToken);
-        return await StartJobAsync(userId, $"files.{kind}", request, context => Task.Run(() => Run(request.Kind, toTrash, userId, sources, target, policy, new Progress(context, owner)), context.Cancellation), cancellationToken);
+        return new Prepared(
+            CurrentUserId(user),
+            sources,
+            target,
+            request.OnConflict ?? ConflictPolicy.Fail,
+            request.Kind == FileOperationKind.Delete && !request.Permanent,
+            await owners.ForAsync(user, cancellationToken));
     }
 
     /// <summary>Puts recycle bin items back where they were, recreating missing parent folders.</summary>
@@ -139,7 +174,7 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
         var (share, items) = await ResolveTrashAsync(user, shareId, request.Ids, cancellationToken);
         var policy = request.OnConflict ?? ConflictPolicy.Rename;
         var owner = await owners.ForAsync(user, cancellationToken);
-        return await StartJobAsync(CurrentUserId(user), "files.restore", request, context => Task.Run(() => Restore(share, items, policy, new Progress(context, owner)), context.Cancellation), cancellationToken);
+        return await StartJobAsync(CurrentUserId(user), "files.restore", request, context => Task.Run(() => Restore(share, items, policy, new Progress(context, owner, context.Cancellation)), context.Cancellation), cancellationToken);
     }
 
     /// <summary>Deletes recycle bin items for good; all of them when <paramref name="ids"/> is null (emptying the bin).</summary>
@@ -171,13 +206,12 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
             CurrentUserId(user),
             kind,
             parameters,
-            context => Task.Run(() => CopyIn(openSource, sourcePath, target, targetFolder, targetName, overwrite, new Progress(context, owner)), context.Cancellation),
+            context => Task.Run(() => CopyIn(openSource, sourcePath, target, targetFolder, targetName, overwrite, new Progress(context, owner, context.Cancellation)), context.Cancellation),
             cancellationToken);
     }
 
     private static void CopyIn(Func<SafeFileHandle> openSource, string sourcePath, ResolvedShare target, string targetFolder, string targetName, bool overwrite, Progress run)
     {
-        var context = run.Context;
         using var source = openSource();
         var (parent, name) = FsPath.Split(sourcePath);
         using var sourceFolder = FileService.Open(source, parent, LinuxFs.ReadOnly | LinuxFs.Directory);
@@ -187,7 +221,7 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
         using var folder = FileService.Open(root, targetFolder, LinuxFs.Path | LinuxFs.Directory);
         var free = overwrite || FileService.TryStat(folder, targetName) is null ? targetName : FreeName(folder, targetName);
         Copy(sourceFolder, name, name, folder, overwrite ? ConflictPolicy.Overwrite : ConflictPolicy.Fail, run, free);
-        context.SetResult(new FileOperationResult(run.Done, run.Skipped));
+        run.Context?.SetResult(new FileOperationResult(run.Done, run.Skipped));
         run.Report(null);
     }
 
@@ -203,7 +237,6 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
 
     private void Restore(ResolvedShare share, IReadOnlyList<TrashItem> items, ConflictPolicy policy, Progress run)
     {
-        var context = run.Context;
         using var root = FileService.OpenRoot(share);
         using var bin = TrashService.OpenFolder(root);
         foreach (var item in items)
@@ -213,7 +246,7 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
         run.Report(null);
         foreach (var item in items)
         {
-            context.Cancellation.ThrowIfCancellationRequested();
+            run.Cancellation.ThrowIfCancellationRequested();
             var stored = Stored(item);
             if (FileService.TryStat(bin, stored) is null)
             {
@@ -255,13 +288,13 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
             trash.Forget(item.Id);
             run.Add(run.CountOf(FsPath.Join(TrashService.Folder, stored)));
         }
-        context.SetResult(new FileOperationResult(run.Done, run.Skipped));
+        run.Context?.SetResult(new FileOperationResult(run.Done, run.Skipped));
         run.Report(null);
     }
 
     private void Purge(ResolvedShare share, IReadOnlyList<TrashItem> items, JobContext context)
     {
-        var run = new Progress(context, null);
+        var run = new Progress(context, null, context.Cancellation);
         using var root = FileService.OpenRoot(share);
         using var bin = TrashService.OpenFolder(root);
         foreach (var item in items)
@@ -387,7 +420,6 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
 
     private void Run(FileOperationKind kind, bool toTrash, long userId, List<(ResolvedShare Share, string Path)> sources, (ResolvedShare Share, string Path)? target, ConflictPolicy policy, Progress run)
     {
-        var context = run.Context;
         foreach (var (share, path) in sources)
         {
             using var root = FileService.OpenRoot(share);
@@ -397,7 +429,7 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
 
         foreach (var (share, path) in sources)
         {
-            context.Cancellation.ThrowIfCancellationRequested();
+            run.Cancellation.ThrowIfCancellationRequested();
             using var root = FileService.OpenRoot(share);
             var (parent, name) = FsPath.Split(path);
             using var sourceFolder = FileService.Open(root, parent, LinuxFs.Path | LinuxFs.Directory);
@@ -426,7 +458,7 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
                 Delete(sourceFolder, name, path, run, counted: false);
             }
         }
-        context.SetResult(new FileOperationResult(run.Done, run.Skipped));
+        run.Context?.SetResult(new FileOperationResult(run.Done, run.Skipped));
         run.Report(null);
     }
 
@@ -688,9 +720,10 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
     }
 
     /// <summary>Totals, progress and the skipped paths of one job.</summary>
-    private sealed class Progress(JobContext context, FileOwner? owner)
+    private sealed class Progress(JobContext? context, FileOwner? owner, CancellationToken cancellation)
     {
-        public JobContext Context => context;
+        /// <summary>The job, or null for an operation a file protocol runs while its client waits.</summary>
+        public JobContext? Context => context;
 
         /// <summary>Who gets what the operation creates; null keeps the daemon's ownership.</summary>
         public FileOwner? Owner => owner;
@@ -701,7 +734,7 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
         private long _bytes;
         private long _bytesDone;
 
-        public CancellationToken Cancellation => context.Cancellation;
+        public CancellationToken Cancellation => cancellation;
 
         public long Done { get; private set; }
 
@@ -758,6 +791,6 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
         public bool SkippedBelow(string path) => Skipped.Any(skipped => FsPath.IsSameOrInside(skipped, path));
 
         public void Report(string? current) =>
-            context.Report(new JobProgress(Math.Min(Done, _items), _items, Math.Min(_bytesDone, _bytes), _bytes, current));
+            context?.Report(new JobProgress(Math.Min(Done, _items), _items, Math.Min(_bytesDone, _bytes), _bytes, current));
     }
 }

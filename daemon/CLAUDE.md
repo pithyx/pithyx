@@ -28,7 +28,7 @@ Rules for `daemon/`; the root `CLAUDE.md` applies as well.
 ```
 /usr/lib/pithyx/     binaries, read-only
 /etc/pithyx/         bootstrap only
-/var/lib/pithyx/     database and secrets
+/var/lib/pithyx/     database and secrets (tls/ftps.pfx: the FTPS certificate)
 /var/cache/pithyx/   rebuildable, safe to delete
 /var/log/pithyx/     logs: daemon.json files and logs.db (the Log Center, capped at 4 GB)
 /run/pithyx/         API socket

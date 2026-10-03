@@ -234,9 +234,9 @@ function ShareRights({ app, shareId }: { app: PithyxApp; shareId: number }) {
   );
 }
 
-type ProtocolFlag = 'smb' | 'sftp' | 'smbEncrypt';
+type ProtocolFlag = 'smb' | 'sftp' | 'smbEncrypt' | 'webDav' | 'ftp';
 
-/** Whether SMB and SFTP offer the shared folder, and whether SMB must encrypt; applied at once, optimistically. */
+/** Whether SMB, SFTP, WebDAV and FTP offer the shared folder, and whether SMB must encrypt; applied at once, optimistically. */
 function ShareProtocols({ app, share }: { app: PithyxApp; share: ShareDetails }) {
   const { t } = useTranslation('settings');
   const queryClient = useQueryClient();
@@ -276,6 +276,8 @@ function ShareProtocols({ app, share }: { app: PithyxApp; share: ShareDetails })
       {flag('smbEncrypt', t('shares.editDialog.smbEncrypt'))}
       <p className={styles.muted}>{t('shares.editDialog.smbEncryptHint')}</p>
       {flag('sftp', t('shares.editDialog.sftp'))}
+      {flag('webDav', t('shares.editDialog.webdav'))}
+      {flag('ftp', t('shares.editDialog.ftp'))}
       {change.isError && <ErrorNotice error={describeProblem(change.error)} />}
     </section>
   );

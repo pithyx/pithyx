@@ -17,7 +17,7 @@ import styles from './Settings.module.css';
 const fileServicesKey = ['settings', 'system', 'fileServices'] as const;
 
 /**
- * File services: SMB, SFTP and SSH logins switched on and off for the box, the SMB workgroup, how each service is
+ * File services: SMB, SFTP, WebDAV, FTP and SSH logins switched on and off for the box, the SMB workgroup, how each service is
  * doing and how other computers connect. Who may use which protocol is set per user on the Users page, which shared folders they
  * offer on the Shared folders page.
  */
@@ -55,7 +55,13 @@ function FileServicesForm({ app, saved }: { app: PithyxApp; saved: FileServiceSe
   });
   // The address the browser uses reaches the box from this computer; other computers may need another one.
   const host = window.location.hostname;
-  const addresses = { windows: `\\\\${host}\\`, smb: `smb://${host}/`, sftp: `sftp://${host}` };
+  const addresses = {
+    windows: `\\\\${host}\\`,
+    smb: `smb://${host}/`,
+    sftp: `sftp://${host}`,
+    webdav: `${window.location.origin}/webdav/`,
+    ftp: `ftpes://${host}`,
+  };
 
   return (
     <div className={styles.form}>
@@ -129,6 +135,68 @@ function FileServicesForm({ app, saved }: { app: PithyxApp; saved: FileServiceSe
             {t('fileServices.sftp.connect')} <span className={styles.mono}>{addresses.sftp}</span>
           </li>
           <li>{t('fileServices.sftp.view')}</li>
+        </ul>
+      </section>
+      <section className={styles.card} aria-labelledby="file-services-webdav">
+        <h3 id="file-services-webdav" className={styles.sectionTitle}>
+          {t('fileServices.webdav.title')}
+        </h3>
+        <p className={styles.muted}>{t('fileServices.webdav.explain')}</p>
+        <Switch
+          isSelected={saved.webDavEnabled}
+          isDisabled={save.isPending}
+          onChange={(webDavEnabled) => {
+            save.mutate({ webDavEnabled });
+          }}
+        >
+          {t('fileServices.webdav.switch')}
+        </Switch>
+        <ul className={styles.explainList}>
+          <li>
+            {t('fileServices.webdav.connect')}{' '}
+            <span className={styles.mono}>{addresses.webdav}</span>
+          </li>
+          <li>{t('fileServices.webdav.trash')}</li>
+        </ul>
+      </section>
+      <section className={styles.card} aria-labelledby="file-services-ftp">
+        <h3 id="file-services-ftp" className={styles.sectionTitle}>
+          {t('fileServices.ftp.title')} <State state={saved.ftp} />
+        </h3>
+        <p className={styles.muted}>{t('fileServices.ftp.explain')}</p>
+        <Switch
+          isSelected={saved.ftpEnabled}
+          isDisabled={save.isPending}
+          onChange={(ftpEnabled) => {
+            save.mutate({ ftpEnabled });
+          }}
+        >
+          {t('fileServices.ftp.switch')}
+        </Switch>
+        <Switch
+          isSelected={saved.ftpPlainAllowed}
+          isDisabled={save.isPending}
+          onChange={(ftpPlainAllowed) => {
+            save.mutate({ ftpPlainAllowed });
+          }}
+        >
+          {t('fileServices.ftp.plainSwitch')}
+        </Switch>
+        <p className={styles.notice} role="note">
+          {t('fileServices.ftp.plainWarning')}
+        </p>
+        <ul className={styles.explainList}>
+          <li>
+            {t('fileServices.ftp.connect')}{' '}
+            <span className={styles.mono}>{`${addresses.ftp}:${String(saved.ftpPort)}`}</span>
+          </li>
+          <li>{t('fileServices.ftp.tls')}</li>
+          {saved.ftpFingerprint !== null && (
+            <li>
+              {t('fileServices.ftp.fingerprint')}{' '}
+              <span className={styles.mono}>{saved.ftpFingerprint}</span>
+            </li>
+          )}
         </ul>
       </section>
       <section className={styles.card} aria-labelledby="file-services-ssh">
