@@ -150,11 +150,12 @@ public sealed class SystemSettingsService(
                 return Time();
             }
             await RunAsync(new CommandRequest("timedatectl", ["set-timezone", request.TimeZone]), cancellationToken);
-            if (servers.Count == 0)
+            // File.Delete throws when the folder is missing, which it is on a box that never had time servers set.
+            if (servers.Count == 0 && File.Exists(TimesyncdDropIn))
             {
                 File.Delete(TimesyncdDropIn);
             }
-            else
+            else if (servers.Count > 0)
             {
                 Directory.CreateDirectory(Path.GetDirectoryName(TimesyncdDropIn)!);
                 await File.WriteAllTextAsync(TimesyncdDropIn, HostParsers.RenderTimesyncdDropIn(servers), cancellationToken);
