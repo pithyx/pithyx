@@ -204,7 +204,7 @@ test('groups and their rights reach their members, and the editors are accessibl
   const users = settings.getByRole('table', { name: 'Users' });
   await users
     .getByRole('row', { name: /^e2e-rights/ })
-    .getByRole('button', { name: 'Rights' })
+    .getByRole('button', { name: 'Rights', exact: true })
     .click();
   const userRights = page.getByRole('dialog', { name: 'Rights of e2e-rights' });
   await expect(userRights.getByRole('checkbox', { name: 'FTP', exact: true })).toBeChecked();
