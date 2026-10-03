@@ -34,6 +34,7 @@ public static class StorageHealthEndpoints
                 RequireAdmin(context.User);
                 return TypedResults.Ok(alerts.For(context.User, alerts.Current));
             })
+            .RequireAuthorization(Policies.Admin)
             .WithName("GetStorageAlerts")
             .WithDescription("Administrators only. Current storage alerts with the caller's mute flags, and the SMART state of every disk; live through the storage/alerts topic.");
         storage.MapPost("/alerts/{key}/mute", async (string key, StorageAlertService alerts, TopicHub hub, HttpContext context, CancellationToken cancellationToken) =>
@@ -43,6 +44,7 @@ public static class StorageHealthEndpoints
                 hub.Publish(StorageAlertService.Topic, alerts.Current);
                 return TypedResults.Ok(alerts.For(context.User, alerts.Current));
             })
+            .RequireAuthorization(Policies.Admin)
             .WithName("MuteStorageAlert")
             .WithDescription("Administrators only. Hides a current alert for the caller until it goes away or becomes more severe. Alerts cannot be deleted.");
         storage.MapDelete("/alerts/{key}/mute", async (string key, StorageAlertService alerts, TopicHub hub, HttpContext context, CancellationToken cancellationToken) =>
@@ -52,18 +54,22 @@ public static class StorageHealthEndpoints
                 hub.Publish(StorageAlertService.Topic, alerts.Current);
                 return TypedResults.Ok(alerts.For(context.User, alerts.Current));
             })
+            .RequireAuthorization(Policies.Admin)
             .WithName("UnmuteStorageAlert")
             .WithDescription("Administrators only. Shows a muted alert again.");
         storage.MapPost("/pools/{pool}/scrub", (string pool, PoolInventory pools, ICommandRunner commands, HttpContext context, CancellationToken cancellationToken) =>
                 ScrubAsync(pool, "start", pools, commands, context.User, cancellationToken))
+            .RequireAuthorization(Policies.Admin)
             .WithName("StartScrub")
             .WithDescription("Administrators only. Starts a scrub of the pool, or resumes a paused one, and returns at once; progress arrives on storage/pools.");
         storage.MapPost("/pools/{pool}/scrub/pause", (string pool, PoolInventory pools, ICommandRunner commands, HttpContext context, CancellationToken cancellationToken) =>
                 ScrubAsync(pool, "pause", pools, commands, context.User, cancellationToken))
+            .RequireAuthorization(Policies.Admin)
             .WithName("PauseScrub")
             .WithDescription("Administrators only. Pauses the running scrub; starting it again resumes where it stopped.");
         storage.MapDelete("/pools/{pool}/scrub", (string pool, PoolInventory pools, ICommandRunner commands, HttpContext context, CancellationToken cancellationToken) =>
                 ScrubAsync(pool, "stop", pools, commands, context.User, cancellationToken))
+            .RequireAuthorization(Policies.Admin)
             .WithName("StopScrub")
             .WithDescription("Administrators only. Stops the running scrub; the next one starts from the beginning.");
         storage.MapGet("/schedules", async (StorageHealthMonitor monitor, HttpContext context, CancellationToken cancellationToken) =>
@@ -71,6 +77,7 @@ public static class StorageHealthEndpoints
                 RequireAdmin(context.User);
                 return TypedResults.Ok(await monitor.ListAsync(cancellationToken));
             })
+            .RequireAuthorization(Policies.Admin)
             .WithName("GetStorageSchedules")
             .WithDescription("Administrators only. Scrub schedules per pool and the SMART self-test schedules, with their last and next runs.");
         storage.MapPut("/schedules", async (StorageScheduleUpdate update, StorageSchedules schedules, StorageHealthMonitor monitor, PoolInventory pools, HttpContext context, CancellationToken cancellationToken) =>
@@ -81,6 +88,7 @@ public static class StorageHealthEndpoints
                 monitor.Wake();
                 return TypedResults.Ok(await monitor.ListAsync(cancellationToken));
             })
+            .RequireAuthorization(Policies.Admin)
             .WithName("SetStorageSchedule")
             .WithDescription("Administrators only. Sets how often a pool is scrubbed or the disks run a self-test: off, weekly or monthly.");
     }

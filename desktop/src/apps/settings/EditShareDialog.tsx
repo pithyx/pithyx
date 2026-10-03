@@ -1,5 +1,5 @@
 import type { PithyxApp } from '@pithyx/sdk';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ErrorNotice } from '../../errors/ErrorNotice';
@@ -11,15 +11,24 @@ import {
   internalCall,
   type ShareAccess,
   type ShareDetails,
-  type ShareUserAccess,
+  type ShareGrants,
+  type SubjectGrant,
 } from '../sdk/internal';
 import { describeProblem } from '../storage/shared';
+import { usersCall } from '../sdk/users';
 import styles from './Settings.module.css';
-import { shareAccessKey, shareListKey, useShareAccess, useShares, withAccess } from './shares';
+import {
+  accessOf,
+  shareGrantsKey,
+  shareListKey,
+  useShareGrants,
+  useShares,
+  withSubjectAccess,
+} from './shares';
 
 const LEVELS: readonly ShareAccess[] = ['none', 'read', 'readWrite'];
 
-/** Name and description of a shared folder, and every user's access to it (applied at once, optimistically). */
+/** Name and description of a shared folder, and the access of every group and user to it (applied at once, optimistically). */
 export function EditShareDialog({
   app,
   share,
@@ -113,29 +122,52 @@ export function EditShareDialog({
 function ShareRights({ app, shareId }: { app: PithyxApp; shareId: number }) {
   const { t } = useTranslation('settings');
   const queryClient = useQueryClient();
-  const users = useShareAccess(app, shareId);
-  const key = shareAccessKey(shareId);
+  const grants = useShareGrants(app, shareId);
+  const groups = useQuery({
+    queryKey: ['groups'],
+    queryFn: () => usersCall(app, 'internal.admin.groups.list', {}),
+  });
+  const key = shareGrantsKey(shareId);
   const change = useMutation({
-    mutationFn: ({ userId, access }: { userId: number; access: ShareAccess }) =>
-      internalCall(app, 'internal.admin.shares.setAccess', { shareId, userId, access }),
-    onMutate: async ({ userId, access }) => {
+    mutationFn: (next: SubjectGrant[]) =>
+      internalCall(app, 'internal.admin.shares.setGrants', { shareId, grants: next }),
+    onMutate: async (next) => {
       await queryClient.cancelQueries({ queryKey: key });
-      const previous = queryClient.getQueryData<ShareUserAccess[]>(key);
+      const previous = queryClient.getQueryData<ShareGrants>(key);
       if (previous !== undefined) {
-        queryClient.setQueryData(key, withAccess(previous, userId, access));
+        queryClient.setQueryData(key, { ...previous, grants: next });
       }
       return { previous };
     },
-    onError: (_error, _change, context) => {
+    onError: (_error, _next, context) => {
       if (context?.previous !== undefined) {
         queryClient.setQueryData(key, context.previous);
       }
     },
+    onSuccess: (answer) => {
+      queryClient.setQueryData(key, answer);
+    },
     onSettled: () => {
-      void queryClient.invalidateQueries({ queryKey: key });
       void queryClient.invalidateQueries({ queryKey: shareListKey });
     },
   });
+  const current = grants.data?.grants ?? [];
+  const select = (kind: SubjectGrant['subjectKind'], id: number, label: string) => (
+    <select
+      className={styles.select}
+      aria-label={t('shares.editDialog.access', { user: label })}
+      value={accessOf(current, kind, id)}
+      onChange={(event) => {
+        change.mutate(withSubjectAccess(current, kind, id, event.target.value as ShareAccess));
+      }}
+    >
+      {LEVELS.map((level) => (
+        <option key={level} value={level}>
+          {t(`shares.editDialog.levels.${level}`)}
+        </option>
+      ))}
+    </select>
+  );
 
   return (
     <section className={styles.group} aria-labelledby={`rights-${String(shareId)}`}>
@@ -143,50 +175,60 @@ function ShareRights({ app, shareId }: { app: PithyxApp; shareId: number }) {
         {t('shares.editDialog.rights')}
       </h3>
       <p className={styles.muted}>{t('shares.editDialog.rightsIntro')}</p>
-      {users.isPending && (
+      {(grants.isPending || groups.isPending) && (
         <p className={styles.loading} role="status">
           {t('shares.editDialog.loading')}
         </p>
       )}
-      {users.isError && <ErrorNotice error={describeProblem(users.error)} />}
+      {grants.isError && <ErrorNotice error={describeProblem(grants.error)} />}
+      {groups.isError && <ErrorNotice error={describeProblem(groups.error)} />}
       {change.isError && <ErrorNotice error={describeProblem(change.error)} />}
-      {users.data !== undefined && (
-        <ul className={styles.users}>
-          {users.data.map((user) => {
-            const label = user.displayName ?? user.username;
-            return (
-              <li key={user.userId} className={styles.user}>
+      {grants.data !== undefined && groups.data !== undefined && (
+        <>
+          <h4 className={styles.subTitle}>{t('shares.editDialog.groups')}</h4>
+          <ul className={styles.users}>
+            {groups.data.map((group) => (
+              <li key={`group-${String(group.id)}`} className={styles.user}>
                 <span className={styles.userName}>
-                  {label}
-                  {user.displayName !== null && (
-                    <span className={styles.path}>{user.username}</span>
+                  {group.name}
+                  {group.builtin && (
+                    <span className={styles.path}>{t('shares.editDialog.everybody')}</span>
                   )}
                 </span>
-                {user.administrator ? (
-                  <span className={styles.muted}>{t('shares.editDialog.administrator')}</span>
-                ) : (
-                  <select
-                    className={styles.select}
-                    aria-label={t('shares.editDialog.access', { user: label })}
-                    value={user.access}
-                    onChange={(event) => {
-                      change.mutate({
-                        userId: user.userId,
-                        access: event.target.value as ShareAccess,
-                      });
-                    }}
-                  >
-                    {LEVELS.map((level) => (
-                      <option key={level} value={level}>
-                        {t(`shares.editDialog.levels.${level}`)}
-                      </option>
-                    ))}
-                  </select>
-                )}
+                {select('group', group.id, group.name)}
               </li>
-            );
-          })}
-        </ul>
+            ))}
+          </ul>
+          <h4 className={styles.subTitle}>{t('shares.editDialog.users')}</h4>
+          <ul className={styles.users}>
+            {grants.data.users.map((user) => {
+              const label = user.displayName ?? user.username;
+              const own = accessOf(current, 'user', user.userId);
+              return (
+                <li key={`user-${String(user.userId)}`} className={styles.user}>
+                  <span className={styles.userName}>
+                    {label}
+                    {user.displayName !== null && (
+                      <span className={styles.path}>{user.username}</span>
+                    )}
+                    {!user.administrator && !user.disabled && user.access !== own && (
+                      <span className={styles.path}>
+                        {t('shares.editDialog.effective', {
+                          access: t(`shares.editDialog.levels.${user.access}`),
+                        })}
+                      </span>
+                    )}
+                  </span>
+                  {user.administrator ? (
+                    <span className={styles.muted}>{t('shares.editDialog.administrator')}</span>
+                  ) : (
+                    select('user', user.userId, label)
+                  )}
+                </li>
+              );
+            })}
+          </ul>
+        </>
       )}
     </section>
   );

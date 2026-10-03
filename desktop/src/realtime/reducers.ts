@@ -56,6 +56,8 @@ export const reducers: { [K in TopicName]: Reducer<K> } = {
         return { items: items.filter((item) => !ids.has(item.id)) };
     }
   },
+  // Every event is the user's whole set of rights.
+  'session/permissions': (_, event) => event,
   // Pools are few; every event is the whole state.
   'storage/pools': (_, event) => event,
   // Alerts and SMART reports are few too; every event is the whole state as this user sees it.

@@ -101,3 +101,25 @@
   padding: 0;
   font-weight: var(--font-weight-semibold);
 }
+
+.shareRow {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: var(--space-1) var(--space-2);
+}
+
+.shareRow .hint {
+  grid-column: 1 / -1;
+  margin-top: 0;
+}
+
+.select {
+  min-height: 2.5rem;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-1);
+  color: var(--color-text);
+  font: inherit;
+}

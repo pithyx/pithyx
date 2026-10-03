@@ -34,6 +34,8 @@ export type StorageScheduleUpdate = components['schemas']['StorageScheduleUpdate
 export type ScrubAction = 'start' | 'pause' | 'stop';
 export type ShareDetails = components['schemas']['ShareDetails'];
 export type ShareUserAccess = components['schemas']['ShareUserAccess'];
+export type ShareGrants = components['schemas']['ShareGrants'];
+export type SubjectGrant = components['schemas']['SubjectGrant'];
 export type ShareAccess = components['schemas']['ShareAccess'];
 export type SharePlanRequest = components['schemas']['SharePlanRequest'];
 
@@ -70,10 +72,10 @@ export interface InternalMethods {
   'internal.admin.storage.schedule': { params: StorageScheduleUpdate; result: StorageScheduleList };
   'internal.admin.openApp': { params: { app: AdminApp }; result: boolean };
   'internal.admin.shares.list': { params: Record<string, never>; result: ShareDetails[] };
-  'internal.admin.shares.access': { params: { shareId: number }; result: ShareUserAccess[] };
-  'internal.admin.shares.setAccess': {
-    params: { shareId: number; userId: number; access: ShareAccess };
-    result: null;
+  'internal.admin.shares.grants': { params: { shareId: number }; result: ShareGrants };
+  'internal.admin.shares.setGrants': {
+    params: { shareId: number; grants: SubjectGrant[] };
+    result: ShareGrants;
   };
   'internal.admin.shares.update': {
     params: {
@@ -178,14 +180,17 @@ function isShareId(value: unknown): value is Record<string, unknown> & { shareId
   return isRecord(value) && Number.isSafeInteger(value.shareId);
 }
 
-const SHARE_ACCESS: readonly string[] = ['none', 'read', 'readWrite'];
-
-function isShareAccess(value: unknown): boolean {
+function isShareGrants(value: unknown): boolean {
   return (
     isShareId(value) &&
-    Number.isSafeInteger(value.userId) &&
-    typeof value.access === 'string' &&
-    SHARE_ACCESS.includes(value.access)
+    Array.isArray(value.grants) &&
+    value.grants.every(
+      (grant: unknown) =>
+        isRecord(grant) &&
+        (grant.subjectKind === 'user' || grant.subjectKind === 'group') &&
+        Number.isSafeInteger(grant.subjectId) &&
+        (grant.level === 'read' || grant.level === 'readWrite'),
+    )
   );
 }
 
@@ -417,30 +422,29 @@ export function adminStorageHost(emit: (event: string, data?: unknown) => void):
       validate: isRecord,
       handle: () => daemon(async () => unwrap(await api.GET('/api/shares/details'))),
     },
-    'internal.admin.shares.access': {
+    'internal.admin.shares.grants': {
       validate: isShareId,
       handle: (params) =>
         daemon(async () =>
           unwrap(
-            await api.GET('/api/shares/{shareId}/access', {
+            await api.GET('/api/shares/{shareId}/grants', {
               params: { path: { shareId: (params as { shareId: number }).shareId } },
             }),
           ),
         ),
     },
-    'internal.admin.shares.setAccess': {
-      validate: isShareAccess,
+    'internal.admin.shares.setGrants': {
+      validate: isShareGrants,
       handle: (params) =>
         daemon(async () => {
-          const { shareId, userId, access } =
-            params as InternalMethods['internal.admin.shares.setAccess']['params'];
-          unwrap(
-            await api.PUT('/api/shares/{shareId}/access/{userId}', {
-              params: { path: { shareId, userId } },
-              body: { access },
+          const { shareId, grants } =
+            params as InternalMethods['internal.admin.shares.setGrants']['params'];
+          return unwrap(
+            await api.PUT('/api/shares/{shareId}/grants', {
+              params: { path: { shareId } },
+              body: { grants },
             }),
           );
-          return null;
         }),
     },
     'internal.admin.shares.restorePoints': {

@@ -20,6 +20,9 @@
     "csrf": {
       "header_missing": "Die Anfrage wurde abgelehnt, weil ein Sicherheits-Header fehlt."
     },
+    "desktop": {
+      "not_allowed": "Du darfst dich nicht am Desktop anmelden. Bitte eine Administratorin oder einen Administrator um das Recht zur Desktop-Anmeldung."
+    },
     "display_name": {
       "invalid": "Dein Anzeigename darf höchstens {maxLength} Zeichen und keine Steuerzeichen enthalten."
     },
@@ -172,6 +175,11 @@
     },
     "notification": {
       "not_found": "Diese Benachrichtigung gibt es nicht mehr."
+    }
+  },
+  "permissions": {
+    "grant": {
+      "invalid": "Das Recht „{resource}“ lässt sich so nicht vergeben: Es ist unbekannt, doppelt angegeben oder die Stufe passt nicht (Lesen oder Lesen und Schreiben für einen freigegebenen Ordner)."
     }
   },
   "realtime": {

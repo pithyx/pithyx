@@ -17,7 +17,7 @@ public static class AuthEndpoints
         services.AddSingleton<AuthService>();
         services.AddAuthentication(SessionAuthenticationHandler.SchemeName)
             .AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, SessionAuthenticationHandler>(SessionAuthenticationHandler.SchemeName, null);
-        services.AddAuthorization();
+        services.AddAuthorization(Policies.Add);
         return services;
     }
 

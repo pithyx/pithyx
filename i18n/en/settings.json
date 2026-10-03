@@ -86,7 +86,7 @@
       "save": "Save",
       "saved": "Saved.",
       "rights": "Rights",
-      "rightsIntro": "Changes apply right away. Administrators can always read and change everything.",
+      "rightsIntro": "Changes apply right away. A user gets the most that it or one of its groups is given; administrators can always read and change everything.",
       "loading": "Loading users…",
       "access": "Access of {user}",
       "administrator": "Administrator, full access",
@@ -100,7 +100,11 @@
       "smb": "Offer over SMB",
       "sftp": "Show over SFTP",
       "smbEncrypt": "Require encryption over SMB",
-      "smbEncryptHint": "Older clients without SMB encryption cannot connect then."
+      "smbEncryptHint": "Older clients without SMB encryption cannot connect then.",
+      "groups": "Groups",
+      "users": "Users",
+      "everybody": "every user",
+      "effective": "ends up with: {access}"
     },
     "deleteDialog": {
       "title": "Delete {name}",
@@ -179,7 +183,7 @@
   "fileServices": {
     "intro": "File services let other computers open your shared folders over the network. Users sign in with their Pithyx user name and password.",
     "save": "Save",
-    "rights": "Who may use SMB and SFTP is set per user on the Users page. Which shared folders they offer is set per folder on the Shared folders page. A user who has not signed in on the web since file services arrived must sign in once, so SMB and SFTP learn the password.",
+    "rights": "Who may use which file service is set with the rights of each user or group on the Users page. Which shared folders they offer is set per folder on the Shared folders page. A user who has not signed in on the web since file services arrived must sign in once, so the services learn the password.",
     "state": {
       "off": "Off",
       "running": "Running",
@@ -203,6 +207,12 @@
       "switch": "Offer shared folders over SFTP",
       "connect": "Connect to",
       "view": "Switching SFTP off only stops letting Pithyx users in; it does not stop SSH for other accounts."
+    },
+    "ssh": {
+      "title": "SSH logins",
+      "explain": "Users with the right to sign in over SSH get a shell on the box. Off by default.",
+      "switch": "Let users with the SSH login right sign in with a shell",
+      "warning": "A shell reaches the whole system with the user's rights. Give the right only to people who need it. Switching this off never stops SSH for the system's own accounts."
     }
   },
   "network": {

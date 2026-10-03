@@ -17,9 +17,7 @@ internal static class JobTestSupport
     public static async Task<long> InsertUserAsync(this DaemonFactory factory, string username, bool admin = false)
     {
         await using var connection = await factory.Services.GetRequiredService<SqliteConnectionFactory>().OpenAsync(Token);
-        return await connection.ExecuteScalarAsync<long>(
-            "INSERT INTO users (username, password_hash, is_admin, created_at, updated_at) VALUES (@username, 'x', @admin, '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z') RETURNING id",
-            new { username, admin = admin ? 1 : 0 });
+        return await TestUsers.InsertAsync(connection, username, admin);
     }
 
     /// <summary>A Cookie header value with a new session of the user.</summary>

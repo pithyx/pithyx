@@ -64,9 +64,7 @@ public sealed class StorageHealthApiTests : IAsyncLifetime
         long id;
         await using (var connection = await _factory.Services.GetRequiredService<SqliteConnectionFactory>().OpenAsync(Token))
         {
-            id = await connection.ExecuteScalarAsync<long>(
-                "INSERT INTO users (username, password_hash, is_admin, created_at, updated_at) VALUES (@name, @hash, @admin, '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z') RETURNING id",
-                new { name, hash, admin = admin ? 1 : 0 });
+            id = await TestUsers.InsertAsync(connection, name, admin, hash);
         }
         var client = _factory.CreateApiClient();
         (await client.LoginAsync(name, AdminPassword)).EnsureSuccessStatusCode();

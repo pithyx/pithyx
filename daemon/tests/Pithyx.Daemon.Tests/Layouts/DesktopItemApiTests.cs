@@ -57,9 +57,7 @@ public sealed class DesktopItemApiTests : IDisposable
     private async Task<long> InsertUserAsync(string username)
     {
         await using var connection = await _factory.Services.GetRequiredService<SqliteConnectionFactory>().OpenAsync(Token);
-        return await connection.ExecuteScalarAsync<long>(
-            "INSERT INTO users (username, password_hash, is_admin, created_at, updated_at) VALUES (@username, 'x', 0, '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z') RETURNING id",
-            new { username });
+        return await TestUsers.InsertAsync(connection, username);
     }
 
     [Fact]

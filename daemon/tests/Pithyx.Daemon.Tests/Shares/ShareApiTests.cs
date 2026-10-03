@@ -81,8 +81,8 @@ public sealed class ShareApiTests : IAsyncLifetime
     {
         var (_, anna) = await UserAsync("anna");
         var (_, ben) = await UserAsync("ben");
-        (await _admin.PutAsJsonAsync($"/api/shares/{_shared}/access/{anna}", new { access = "read" }, Token)).EnsureSuccessStatusCode();
-        (await _admin.PutAsJsonAsync($"/api/shares/{_shared}/access/{ben}", new { access = "readWrite" }, Token)).EnsureSuccessStatusCode();
+        await _admin.SetShareAccessAsync(_shared, anna, "read");
+        await _admin.SetShareAccessAsync(_shared, ben, "readWrite");
 
         var shared = await DetailsAsync("Shared");
 
@@ -92,12 +92,12 @@ public sealed class ShareApiTests : IAsyncLifetime
         Assert.EndsWith("/shares/shared", shared.GetProperty("path").GetString(), StringComparison.Ordinal);
         Assert.Equal((1, 1), (shared.GetProperty("readUsers").GetInt32(), shared.GetProperty("readWriteUsers").GetInt32()));
 
-        var access = (await (await _admin.GetAsync($"/api/shares/{_shared}/access", Token)).JsonAsync()).EnumerateArray()
+        var access = (await (await _admin.GetAsync($"/api/shares/{_shared}/grants", Token)).JsonAsync()).GetProperty("users").EnumerateArray()
             .ToDictionary(user => user.GetProperty("username").GetString()!, user => (user.GetProperty("administrator").GetBoolean(), user.GetProperty("access").GetString()));
-        Assert.Equal((true, "none"), access["admin"]);
+        Assert.Equal((true, "readWrite"), access["admin"]);
         Assert.Equal((false, "read"), access["anna"]);
         Assert.Equal((false, "readWrite"), access["ben"]);
-        Assert.Equal((HttpStatusCode.NotFound, "fs.share.not_found"), await RefusedAsync(await _admin.GetAsync("/api/shares/999/access", Token)));
+        Assert.Equal((HttpStatusCode.NotFound, "fs.share.not_found"), await RefusedAsync(await _admin.GetAsync("/api/shares/999/grants", Token)));
     }
 
     [Fact]
@@ -127,7 +127,7 @@ public sealed class ShareApiTests : IAsyncLifetime
         {
             var denied = (HttpStatusCode.Forbidden, "auth.permission.denied");
             Assert.Equal(denied, await RefusedAsync(await user.GetAsync("/api/shares/details", Token)));
-            Assert.Equal(denied, await RefusedAsync(await user.GetAsync($"/api/shares/{_shared}/access", Token)));
+            Assert.Equal(denied, await RefusedAsync(await user.GetAsync($"/api/shares/{_shared}/grants", Token)));
             Assert.Equal(denied, await RefusedAsync(await user.PatchAsJsonAsync($"/api/shares/{_shared}", new { description = "mine" }, Token)));
             Assert.Equal(denied, await RefusedAsync(await PlanAsync(user, new { action = "share.create", name = "Mine", pool = "pithyxtestm" })));
             Assert.Equal(denied, await RefusedAsync(await PlanAsync(user, new { action = "share.delete", shareId = _shared, confirmName = "Shared", data = "keep" })));
@@ -201,7 +201,7 @@ public sealed class ShareApiTests : IAsyncLifetime
         Assert.NotEqual(revision, data.GetProperty("revision").GetInt64());
         Assert.DoesNotContain("Shared", changed.GetRawText(), StringComparison.Ordinal);
 
-        (await _admin.PutAsJsonAsync($"/api/shares/{_shared}/access/{anna}", new { access = "read" }, Token)).EnsureSuccessStatusCode();
+        await _admin.SetShareAccessAsync(_shared, anna, "read");
         Assert.Equal("event", (await ReceiveAsync(socket)).GetProperty("type").GetString());
     }
 

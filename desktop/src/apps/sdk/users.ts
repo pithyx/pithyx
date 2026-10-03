@@ -10,6 +10,10 @@ export type UserUpdate = components['schemas']['UserUpdate'];
 export type GroupSummary = components['schemas']['GroupSummary'];
 export type NewGroup = components['schemas']['NewGroup'];
 export type GroupUpdate = components['schemas']['GroupUpdate'];
+export type GrantEntry = components['schemas']['GrantEntry'];
+export type UserGrants = components['schemas']['UserGrants'];
+export type GroupGrants = components['schemas']['GroupGrants'];
+export type PermissionCatalog = components['schemas']['PermissionCatalog'];
 
 /** User management for administrators, outside the public SDK; the daemon checks the right on every request. */
 interface UserMethods {
@@ -28,6 +32,20 @@ interface UserMethods {
     result: GroupSummary;
   };
   'internal.admin.groups.delete': { params: { groupId: number }; result: null };
+  'internal.admin.permissions.catalog': {
+    params: Record<string, never>;
+    result: PermissionCatalog;
+  };
+  'internal.admin.users.grants': { params: { userId: number }; result: UserGrants };
+  'internal.admin.users.setGrants': {
+    params: { userId: number; grants: GrantEntry[] };
+    result: UserGrants;
+  };
+  'internal.admin.groups.grants': { params: { groupId: number }; result: GroupGrants };
+  'internal.admin.groups.setGrants': {
+    params: { groupId: number; grants: GrantEntry[] };
+    result: GroupGrants;
+  };
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
@@ -35,6 +53,15 @@ const isRecord = (value: unknown): value is Record<string, unknown> =>
 
 const hasGroupId = (value: unknown): value is Record<string, unknown> & { groupId: number } =>
   isRecord(value) && Number.isSafeInteger(value.groupId);
+
+const LEVELS: readonly string[] = ['read', 'readWrite', 'allow'];
+
+const hasGrants = (value: Record<string, unknown>): boolean =>
+  Array.isArray(value.grants) &&
+  value.grants.every(
+    (grant: unknown) =>
+      isRecord(grant) && typeof grant.resource === 'string' && LEVELS.includes(String(grant.level)),
+  );
 
 const hasUserId = (value: unknown): value is Record<string, unknown> & { userId: number } =>
   isRecord(value) && Number.isSafeInteger(value.userId);
@@ -119,6 +146,60 @@ export function usersHost(): HostExtensions {
         const { groupId, ...body } = params as GroupUpdate & { groupId: number };
         return daemon(async () =>
           unwrap(await api.PATCH('/api/groups/{groupId}', { params: { path: { groupId } }, body })),
+        );
+      },
+    },
+    'internal.admin.permissions.catalog': {
+      validate: isRecord,
+      handle: () => daemon(async () => unwrap(await api.GET('/api/permissions/catalog'))),
+    },
+    'internal.admin.users.grants': {
+      validate: hasUserId,
+      handle: (params) =>
+        daemon(async () =>
+          unwrap(
+            await api.GET('/api/users/{userId}/grants', {
+              params: { path: { userId: (params as { userId: number }).userId } },
+            }),
+          ),
+        ),
+    },
+    'internal.admin.users.setGrants': {
+      validate: (value) => hasUserId(value) && hasGrants(value),
+      handle: (params) => {
+        const { userId, grants } = params as { userId: number; grants: GrantEntry[] };
+        return daemon(async () =>
+          unwrap(
+            await api.PUT('/api/users/{userId}/grants', {
+              params: { path: { userId } },
+              body: { grants },
+            }),
+          ),
+        );
+      },
+    },
+    'internal.admin.groups.grants': {
+      validate: hasGroupId,
+      handle: (params) =>
+        daemon(async () =>
+          unwrap(
+            await api.GET('/api/groups/{groupId}/grants', {
+              params: { path: { groupId: (params as { groupId: number }).groupId } },
+            }),
+          ),
+        ),
+    },
+    'internal.admin.groups.setGrants': {
+      validate: (value) => hasGroupId(value) && hasGrants(value),
+      handle: (params) => {
+        const { groupId, grants } = params as { groupId: number; grants: GrantEntry[] };
+        return daemon(async () =>
+          unwrap(
+            await api.PUT('/api/groups/{groupId}/grants', {
+              params: { path: { groupId } },
+              body: { grants },
+            }),
+          ),
         );
       },
     },

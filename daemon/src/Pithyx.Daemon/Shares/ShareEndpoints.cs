@@ -27,24 +27,31 @@ public static class ShareEndpoints
             .WithName("ListShares")
             .WithDescription("The shares the user can use, with the user's access. Administrators get every share and its path on the host. The shares/list topic says when the list may have changed.");
         shares.MapPost("", CreateAsync)
+            .RequireAuthorization(Policies.Admin)
             .WithName("CreateShare")
             .WithDescription("Administrators only, and only on a development machine (fs.share.folder_dev_only elsewhere). Registers an existing folder on the host as a share; nobody but administrators has access until it is granted. Shared folders are otherwise created as datasets with POST /api/shares/plans.");
         shares.MapGet("/details", DetailsAsync)
+            .RequireAuthorization(Policies.Admin)
             .WithName("ListShareDetails")
             .WithDescription("Administrators only. Every share with its description, dataset, used and available space, quota, how many users may read or write and its SMB and SFTP settings.");
         shares.MapPatch("/{shareId:long}", UpdateAsync)
+            .RequireAuthorization(Policies.Admin)
             .WithName("UpdateShare")
             .WithDescription("Administrators only. Changes the name shown, the description and whether SMB and SFTP offer the share (and whether SMB clients must encrypt); the folder and the dataset stay where they are.");
-        shares.MapGet("/{shareId:long}/access", AccessAsync)
-            .WithName("ListShareAccess")
-            .WithDescription("Administrators only. Every user with their access to the share: none, read or readWrite. Administrators use every share anyway.");
-        shares.MapPut("/{shareId:long}/access/{userId:long}", SetAccessAsync)
-            .WithName("SetShareAccess")
-            .WithDescription("Administrators only. Sets a user's access to a share: none, read or readWrite. Applies to the user's next request.");
+        shares.MapGet("/{shareId:long}/grants", GrantsAsync)
+            .RequireAuthorization(Policies.Admin)
+            .WithName("GetShareGrants")
+            .WithDescription("Administrators only. The grants of users and groups on the share (read or readWrite) and every user with the access it ends up with: the union of its own grants and those of its groups, read and write for administrators, nothing while deactivated.");
+        shares.MapPut("/{shareId:long}/grants", SetGrantsAsync)
+            .RequireAuthorization(Policies.Admin)
+            .WithName("SetShareGrants")
+            .WithDescription("Administrators only. Replaces every grant of users and groups on the share. Applies to the next request, on disk (the share's Linux groups) and over SMB and SFTP.");
         shares.MapPut("/{shareId:long}/restore-points", SetRestorePointsAsync)
+            .RequireAuthorization(Policies.Admin)
             .WithName("SetShareRestorePoints")
             .WithDescription("Administrators only. Switches the shared folder's daily restore points (snapshots of its dataset kept 7 days) on or off. A folder share without a dataset answers fs.share.no_dataset.");
         shares.MapPost("/plans", PlanAsync)
+            .RequireAuthorization(Policies.Admin)
             .WithName("PlanShareAction")
             .WithDescription("Administrators only. Returns the exact commands of creating a shared folder as a dataset (share.create) or deleting one (share.delete: keep its data, or destroy its dataset with every snapshot listed), with a plan id to run them with POST /api/storage/plans/{planId}/run. Runs nothing.");
     }
@@ -92,8 +99,16 @@ public static class ShareEndpoints
         return TypedResults.Ok(details.Single(share => share.Id == shareId));
     }
 
-    private static async Task<Ok<IReadOnlyList<ShareUserAccess>>> AccessAsync(long shareId, ShareService shares, HttpContext context, CancellationToken cancellationToken) =>
-        TypedResults.Ok(await shares.ListUserAccessAsync(context.User, shareId, cancellationToken));
+    private static async Task<Ok<Permissions.ShareGrants>> GrantsAsync(long shareId, Permissions.GrantService grants, HttpContext context, CancellationToken cancellationToken) =>
+        TypedResults.Ok(await grants.ShareGrantsAsync(context.User, shareId, cancellationToken));
+
+    private static async Task<Ok<Permissions.ShareGrants>> SetGrantsAsync(
+        long shareId,
+        Permissions.ShareGrantsRequest request,
+        Permissions.GrantService grants,
+        HttpContext context,
+        CancellationToken cancellationToken) =>
+        TypedResults.Ok(await grants.ReplaceShareGrantsAsync(context.User, shareId, request, cancellationToken));
 
     private static async Task<NoContent> SetRestorePointsAsync(
         long shareId,
@@ -111,20 +126,6 @@ public static class ShareEndpoints
         var share = await shares.FindAsync(shareId, cancellationToken) ?? throw new PithyxException(ErrorCodes.FsShareNotFound);
         var dataset = share.Dataset ?? throw new PithyxException(ErrorCodes.FsShareNoDataset);
         await snapshots.SetSchedulesAsync(SharePlanner.RestorePoints(dataset, request.Enabled), cancellationToken);
-        changes.Announce();
-        return TypedResults.NoContent();
-    }
-
-    private static async Task<NoContent> SetAccessAsync(
-        long shareId,
-        long userId,
-        ShareAccessRequest request,
-        ShareService shares,
-        ShareChanges changes,
-        HttpContext context,
-        CancellationToken cancellationToken)
-    {
-        await shares.SetAccessAsync(context.User, shareId, userId, request.Access, cancellationToken);
         changes.Announce();
         return TypedResults.NoContent();
     }

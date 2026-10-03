@@ -32,7 +32,8 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
         private readonly HashSet<string> _patterns = new(StringComparer.Ordinal);
 
         public Guid Id { get; } = Guid.NewGuid();
-        public ClaimsPrincipal User { get; } = user;
+        /// <summary>The user as of the last change of rights; every snapshot and event is checked against it.</summary>
+        public ClaimsPrincipal User { get; internal set; } = user;
         public string SessionId { get; } = sessionId;
         public Channel<ReadOnlyMemory<byte>> Outbox { get; } = Channel.CreateBounded<ReadOnlyMemory<byte>>(
             new BoundedChannelOptions(OutboxCapacity) { SingleReader = true, FullMode = BoundedChannelFullMode.Wait });
@@ -105,6 +106,27 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
         {
             connection.Close(WebSocketCloseCode.SessionEnded);
         }
+    }
+
+    /// <summary>
+    /// Gives every connection its user's current rights: <paramref name="refresh"/> returns the new principal, or null
+    /// to close the connection because the user may no longer be signed in.
+    /// </summary>
+    public void Reauthorize(Func<ClaimsPrincipal, ClaimsPrincipal?> refresh)
+    {
+        ArgumentNullException.ThrowIfNull(refresh);
+        foreach (var connection in _connections.Values)
+        {
+            if (refresh(connection.User) is { } user)
+            {
+                connection.User = user;
+            }
+            else
+            {
+                connection.Close(WebSocketCloseCode.SessionEnded);
+            }
+        }
+        SubscribersRemoved?.Invoke();
     }
 
     /// <summary>Closes every connection because the daemon stops.</summary>

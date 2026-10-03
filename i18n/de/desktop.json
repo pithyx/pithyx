@@ -226,5 +226,20 @@
     "failed": "Fehlgeschlagen. Die Verbindung ist abgebrochen oder der Daemon hat die Datei abgelehnt.",
     "cancel": "Übertragung von {name} abbrechen",
     "dismiss": "{name} aus der Liste entfernen"
+  },
+  "power": {
+    "cancel": "Abbrechen",
+    "restart": {
+      "title": "Pithyx neu starten?",
+      "intro": "Alle Benutzer werden abgemeldet, und Dateiübertragungen über das Netzwerk brechen ab. Die Box ist in ein paar Minuten wieder da.",
+      "confirm": "Neu starten",
+      "done": "Pithyx startet jetzt neu. Diese Seite verbindet sich wieder, sobald die Box zurück ist."
+    },
+    "shutdown": {
+      "title": "Pithyx herunterfahren?",
+      "intro": "Alle Benutzer werden abgemeldet, und nichts ist erreichbar, bis jemand die Box wieder einschaltet.",
+      "confirm": "Herunterfahren",
+      "done": "Pithyx fährt jetzt herunter."
+    }
   }
 }

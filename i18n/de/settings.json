@@ -86,7 +86,7 @@
       "save": "Speichern",
       "saved": "Gespeichert.",
       "rights": "Rechte",
-      "rightsIntro": "Änderungen gelten sofort. Administratoren können immer alles lesen und ändern.",
+      "rightsIntro": "Änderungen gelten sofort. Ein Benutzer bekommt das Meiste, was ihm selbst oder einer seiner Gruppen gegeben ist; Administratoren können immer alles lesen und ändern.",
       "loading": "Benutzer werden geladen…",
       "access": "Zugriff von {user}",
       "administrator": "Administrator, voller Zugriff",
@@ -100,7 +100,11 @@
       "smb": "Über SMB anbieten",
       "sftp": "Über SFTP zeigen",
       "smbEncrypt": "Verschlüsselung über SMB verlangen",
-      "smbEncryptHint": "Ältere Clients ohne SMB-Verschlüsselung können sich dann nicht verbinden."
+      "smbEncryptHint": "Ältere Clients ohne SMB-Verschlüsselung können sich dann nicht verbinden.",
+      "groups": "Gruppen",
+      "users": "Benutzer",
+      "everybody": "alle Benutzer",
+      "effective": "bekommt insgesamt: {access}"
     },
     "deleteDialog": {
       "title": "{name} löschen",
@@ -179,7 +183,7 @@
   "fileServices": {
     "intro": "Mit Dateidiensten öffnen andere Computer deine freigegebenen Ordner über das Netzwerk. Benutzer melden sich mit ihrem Pithyx-Benutzernamen und Passwort an.",
     "save": "Speichern",
-    "rights": "Wer SMB und SFTP nutzen darf, legst du pro Benutzer auf der Seite Benutzer fest. Welche freigegebenen Ordner sie anbieten, legst du pro Ordner auf der Seite Freigegebene Ordner fest. Wer sich seit der Einführung der Dateidienste nicht im Web angemeldet hat, muss das einmal tun, damit SMB und SFTP das Passwort kennen.",
+    "rights": "Wer welchen Dateidienst nutzen darf, legst du mit den Rechten jedes Benutzers oder jeder Gruppe auf der Seite Benutzer fest. Welche freigegebenen Ordner sie anbieten, legst du pro Ordner auf der Seite Freigegebene Ordner fest. Wer sich seit den Dateidiensten nicht im Web angemeldet hat, muss das einmal tun, damit die Dienste das Passwort kennen.",
     "state": {
       "off": "Aus",
       "running": "Läuft",
@@ -203,6 +207,12 @@
       "switch": "Freigegebene Ordner über SFTP anbieten",
       "connect": "Verbinde dich mit",
       "view": "SFTP ausschalten lässt nur keine Pithyx-Benutzer mehr herein; SSH für andere Konten läuft weiter."
+    },
+    "ssh": {
+      "title": "SSH-Anmeldungen",
+      "explain": "Benutzer mit dem Recht zur SSH-Anmeldung bekommen eine Shell auf der Box. Standardmäßig aus.",
+      "switch": "Benutzer mit dem Recht zur SSH-Anmeldung mit einer Shell anmelden lassen",
+      "warning": "Eine Shell erreicht das ganze System mit den Rechten des Benutzers. Gib das Recht nur Menschen, die es brauchen. Ausschalten beendet SSH für die eigenen Konten des Systems nie."
     }
   },
   "network": {

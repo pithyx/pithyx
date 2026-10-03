@@ -166,3 +166,56 @@ test('theme, accent color and wallpaper are in the account menu', async ({ page 
     });
   }
 });
+
+test('groups and their rights reach their members, and the editors are accessible', async ({
+  page,
+}) => {
+  const settings = await openSettings(page);
+  await settings.getByRole('button', { name: /^Users/ }).click();
+  const user = await page.request.post('/api/users', {
+    headers,
+    data: { username: 'e2e-rights', password: 'river-candle-orbit-7' },
+  });
+  expect(user.ok()).toBe(true);
+  const userId = ((await user.json()) as { id: number }).id;
+
+  // A group with the new user, created on the page.
+  await settings.getByRole('button', { name: 'Create group' }).click();
+  const create = page.getByRole('dialog', { name: 'Create group' });
+  await create.getByLabel('Group name').fill('e2e-media');
+  await create.getByRole('checkbox', { name: 'e2e-rights' }).check();
+  await create.getByRole('button', { name: 'Create' }).click();
+  await expect(create).toHaveCount(0);
+  const groups = settings.getByRole('table', { name: 'Groups' });
+  await expect(groups.getByRole('row', { name: /^e2e-media / })).toContainText('e2e-rights');
+
+  // FTP for the group, then the user's own rights show it as given by the group.
+  await groups.getByRole('button', { name: 'Rights of the group e2e-media' }).click();
+  const groupRights = page.getByRole('dialog', { name: 'Rights of the group e2e-media' });
+  await groupRights.getByRole('checkbox', { name: 'FTP' }).check();
+  expect(await violations(page)).toEqual([]);
+  await groupRights.getByRole('button', { name: 'Save rights' }).click();
+  await expect(groupRights).toHaveCount(0);
+
+  const users = settings.getByRole('table', { name: 'Users' });
+  await users
+    .getByRole('row', { name: /^e2e-rights/ })
+    .getByRole('button', { name: 'Rights' })
+    .click();
+  const userRights = page.getByRole('dialog', { name: 'Rights of e2e-rights' });
+  await expect(userRights.getByRole('checkbox', { name: 'FTP' })).toBeChecked();
+  await expect(userRights.getByRole('checkbox', { name: 'FTP' })).toBeDisabled();
+  await expect(userRights).toContainText('Through the group e2e-media');
+  await expect(userRights.getByRole('checkbox', { name: 'SMB (network drives)' })).toBeChecked();
+  await userRights.getByRole('checkbox', { name: 'Restart and shut down' }).check();
+  await userRights.getByRole('button', { name: 'Save rights' }).click();
+  await expect(userRights).toHaveCount(0);
+  await expect(users.getByRole('row', { name: /^e2e-rights/ })).toContainText('FTP');
+
+  const grants = await page.request.get(`/api/users/${String(userId)}/grants`, { headers });
+  const effective = (
+    (await grants.json()) as { effective: { rights: string[]; protocols: string[] } }
+  ).effective;
+  expect(effective.rights).toContain('right:power');
+  expect(effective.protocols).toEqual(['protocol:smb', 'protocol:ftp']);
+});

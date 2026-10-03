@@ -33,10 +33,10 @@ Update in the same PR whenever the state changes. Last updated: 2026-10-03.
 - 7484 runs `dev` from `/home/gabriel/code/pithyx`. Check with `systemctl status pithyx-dev` and `git -C /home/gabriel/code/pithyx log -1`; the deployed commit must equal `origin/dev`.
 - `owner.env` and `e2e.env` work again (the deploy of 2026-10-03 signed in as the owner and found `e2e-admin` and `e2e-user`).
 - The runner has `libatomic1`, `shellcheck`, Playwright libs. dev01 has `acl`, `smbclient`, `sshpass`. 7484 writes `/etc/samba/smb.conf` (original kept as `smb.conf.pre-pithyx`), runs `smbd` and owns `/etc/ssh/sshd_config.d/50-pithyx.conf`.
-- Migrations on `dev`: 0001 to 0019 (0019 groups). Merged history: `git log origin/dev`. 7484 has test pool `pithyxtestfs` (VYXTEST01) with shared folder "FS Test" for `e2e-user` (read-write, SFTP).
-- The owner widened v0.1 on 2026-10-03 (`TODO.md`, "Scope of v0.1"): groups, the permission model, WebDAV and FTP, changing the network. Open, one PR at a time in this order: A groups (step 10, `feature/groups`), B permission model (step 11, label `e2e`), C WebDAV and FTP (step 12, its architecture is a `[DECISION]` first), D network (step 14.2, label `e2e`; nothing on the host changes until the owner decides the test method, D110).
+- Migrations on `dev`: 0001 to 0020 (0019 groups, 0020 grants). Merged history: `git log origin/dev`. 7484 has test pool `pithyxtestfs` (VYXTEST01) with shared folder "FS Test" for `e2e-user` (read-write, SFTP).
+- The owner widened v0.1 on 2026-10-03 (`TODO.md`, "Scope of v0.1"): groups, the permission model, WebDAV and FTP, changing the network. Open, one PR at a time in this order: A groups (step 10, #70, merged), B permission model (step 11, `feature/permissions`, label `e2e`), C WebDAV and FTP (step 12, its architecture is a `[DECISION]` first), D network (step 14.2, label `e2e`; nothing on the host changes until the owner decides the test method, D110).
 - Next after D: verify every "Release 0.1" item in `TODO.md` on 7484 in the browser (Playwright and screenshots as `e2e-admin`/`e2e-user`), fix failures, then report: deployed commit and `dev` HEAD, runner status per job, a table (item, status, proof), merged PRs with migration numbers, the rename grep (D279, only `VYXTEST` allowed), open problems with cause and proposal.
-- Decisions D269 to D289 are on `dev`; next free number D290. The decision log at the end of `TODO.md` conflicts on every merge; keep all entries in number order.
+- Decisions D269 to D290 are on `dev`; next free number D291. The decision log at the end of `TODO.md` conflicts on every merge; keep all entries in number order.
 
 ## Known pitfalls
 

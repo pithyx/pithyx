@@ -9,7 +9,7 @@ using Pithyx.Daemon.Layouts;
 namespace Pithyx.Daemon.Auth;
 
 /// <summary>Setup, login, TOTP and recovery. Sessions and cookies are handled by the endpoints.</summary>
-public sealed class AuthService(SqliteConnectionFactory connections, PasswordHasher hasher, LoginChallenges challenges, TimeProvider time)
+public sealed class AuthService(SqliteConnectionFactory connections, PasswordHasher hasher, LoginChallenges challenges, Permissions.PermissionService permissions, TimeProvider time)
 {
     public const string RecoveryKeySetting = "recovery_key_hash";
     public const string RecoveryKeyPrefix = "PTHX";
@@ -51,8 +51,8 @@ public sealed class AuthService(SqliteConnectionFactory connections, PasswordHas
         var uid = await Users.UidAllocator.AllocateUserAsync(connection, transaction, username, now);
         var id = await connection.ExecuteScalarAsync<long?>(
             """
-            INSERT INTO users (username, display_name, password_hash, is_admin, uid, created_at, updated_at)
-            SELECT @username, @displayName, @passwordHash, 1, @uid, @now, @now
+            INSERT INTO users (username, display_name, password_hash, uid, created_at, updated_at)
+            SELECT @username, @displayName, @passwordHash, @uid, @now, @now
             WHERE NOT EXISTS (SELECT 1 FROM users)
             RETURNING id
             """,
@@ -62,10 +62,13 @@ public sealed class AuthService(SqliteConnectionFactory connections, PasswordHas
         {
             throw new PithyxException(ErrorCodes.AuthSetupAlreadyDone);
         }
+        // The first administrator gets the administrator right and the desktop of its own; it has everything else through the first.
+        await Permissions.GrantService.GrantNewUserAsync(connection, transaction, id.Value, [new(Permissions.Resources.Admin, Permissions.GrantLevel.Allow), new(Permissions.Resources.DesktopLogin, Permissions.GrantLevel.Allow)]);
         await SetSettingAsync(connection, transaction, RecoveryKeySetting, recoveryKeyHash);
         await DesktopItemService.SeedDefaultsAsync(connection, transaction, id.Value, isAdmin: true, now);
         await transaction.CommitAsync(cancellationToken);
-        return (new UserInfo(id.Value, username, displayName, IsAdmin: true, TotpEnabled: false), recoveryKey);
+        permissions.Invalidate();
+        return ((await GetUserAsync(id.Value, cancellationToken))!, recoveryKey);
     }
 
     /// <summary>Checks the password. Returns the user, or a challenge when TOTP is enabled.</summary>
@@ -89,13 +92,18 @@ public sealed class AuthService(SqliteConnectionFactory connections, PasswordHas
         {
             throw new PithyxException(ErrorCodes.AuthAccountDisabled);
         }
+        var info = await InfoAsync(user, cancellationToken);
+        if (!info.Permissions.Rights.Contains(Permissions.Resources.DesktopLogin))
+        {
+            throw new PithyxException(ErrorCodes.AuthDesktopNotAllowed);
+        }
         if (needsRehash)
         {
             await SetPasswordAsync(user.Id, request.Password, cancellationToken);
         }
 
         return user.TotpEnabledAt is null
-            ? new LoginOutcome(user.ToInfo(), null)
+            ? new LoginOutcome(info, null)
             : new LoginOutcome(null, challenges.Create(user.Id, user.Username, address));
     }
 
@@ -121,12 +129,23 @@ public sealed class AuthService(SqliteConnectionFactory connections, PasswordHas
             throw new PithyxException(ErrorCodes.AuthTotpInvalid);
         }
 
+        var info = await InfoAsync(user, cancellationToken);
+        if (!info.Permissions.Rights.Contains(Permissions.Resources.DesktopLogin))
+        {
+            throw new PithyxException(ErrorCodes.AuthDesktopNotAllowed);
+        }
         challenges.Complete(request.Challenge);
-        return (await FindByIdAsync(user.Id, cancellationToken))!.ToInfo();
+        return info;
     }
 
     public async Task<UserInfo?> GetUserAsync(long userId, CancellationToken cancellationToken) =>
-        (await FindByIdAsync(userId, cancellationToken))?.ToInfo();
+        await FindByIdAsync(userId, cancellationToken) is { } user ? await InfoAsync(user, cancellationToken) : null;
+
+    private async Task<UserInfo> InfoAsync(UserRow user, CancellationToken cancellationToken)
+    {
+        var effective = await permissions.ForUserAsync(user.Id, cancellationToken);
+        return new UserInfo(user.Id, user.Username, user.DisplayName, effective.IsAdmin, user.TotpEnabledAt is not null, Permissions.GrantService.Session(effective));
+    }
 
     /// <summary>Starts TOTP enrollment with a new secret. TOTP stays off until a code is confirmed.</summary>
     public async Task<TotpEnrollment> EnrollTotpAsync(long userId, string hostName, CancellationToken cancellationToken)
@@ -205,7 +224,10 @@ public sealed class AuthService(SqliteConnectionFactory connections, PasswordHas
         await using var connection = await connections.OpenAsync(cancellationToken);
         var keyHash = await connection.ExecuteScalarAsync<string?>("SELECT value FROM settings WHERE key = @key", new { key = RecoveryKeySetting });
         var normalizedKey = NormalizeRecoveryKey(request.RecoveryKey);
-        if (user is not { IsAdmin: 1 } || keyHash is null)
+        // Only for administrators; a deactivated one counts, as before the permission model.
+        var admin = user is not null
+            && (await Permissions.PermissionService.AllUsersAsync(connection, null, asIfActive: true)).Any(other => other.Id == user.Id && other.Permissions.IsAdmin);
+        if (user is null || !admin || keyHash is null)
         {
             await hasher.WasteTimeAsync(normalizedKey, cancellationToken);
             throw new PithyxException(ErrorCodes.AuthRecoveryInvalid);
@@ -314,14 +336,11 @@ public sealed class AuthService(SqliteConnectionFactory connections, PasswordHas
         string Username,
         string? DisplayName,
         string PasswordHash,
-        long IsAdmin,
         string? TotpSecret,
         string? TotpEnabledAt,
         string? DisabledAt)
     {
         public const string Select =
-            "SELECT id AS Id, username AS Username, display_name AS DisplayName, password_hash AS PasswordHash, is_admin AS IsAdmin, totp_secret AS TotpSecret, totp_enabled_at AS TotpEnabledAt, disabled_at AS DisabledAt FROM users";
-
-        public UserInfo ToInfo() => new(Id, Username, DisplayName, IsAdmin == 1, TotpEnabledAt is not null);
+            "SELECT id AS Id, username AS Username, display_name AS DisplayName, password_hash AS PasswordHash, totp_secret AS TotpSecret, totp_enabled_at AS TotpEnabledAt, disabled_at AS DisabledAt FROM users";
     }
 }

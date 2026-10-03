@@ -4,7 +4,8 @@ namespace Pithyx.Daemon.FileServices;
 
 /// <summary>
 /// Renders the sshd drop-in for Pithyx accounts (D288). Every account Pithyx manages is in <see cref="UsersGroup"/>;
-/// those with the SFTP right, while SFTP is on, are also in <see cref="SftpGroup"/>. SFTP users get
+/// those with the SFTP right, while SFTP is on, are also in <see cref="SftpGroup"/>, and those with the SSH login right,
+/// while SSH logins are on, in <see cref="SshGroup"/> instead (D290): they get a shell. SFTP users get
 /// <c>internal-sftp</c> in a chroot that shows only their shared folders (<see cref="SftpViews"/>), with a password and
 /// without a shell, forwarding or a terminal. Every other Pithyx account has no way to sign in over SSH. Accounts
 /// outside Pithyx (the owner's own, root) are not touched; whether sshd runs at all belongs to the SSH setting.
@@ -16,6 +17,9 @@ public static class SshdConfig
     public const string UsersGroup = "pithyx-users";
 
     public const string SftpGroup = "pithyx-sftp";
+
+    /// <summary>The users with the SSH login right while SSH logins are on (D290); never also in <see cref="SftpGroup"/>.</summary>
+    public const string SshGroup = "pithyx-ssh";
 
     public const string Header = "# Managed by pithyx. Pithyx writes this file again on every change; put your own settings into another file in this folder.";
 
@@ -33,7 +37,17 @@ public static class SshdConfig
         text.AppendLine("    PubkeyAuthentication no");
         Closed(text);
         text.AppendLine();
-        text.AppendLine($"Match Group {UsersGroup},!{SftpGroup}");
+        // Users who sign in with a shell: a password and a terminal, nothing forwarded.
+        text.AppendLine($"Match Group {SshGroup}");
+        text.AppendLine("    PasswordAuthentication yes");
+        text.AppendLine("    PubkeyAuthentication yes");
+        text.AppendLine("    AllowTcpForwarding no");
+        text.AppendLine("    AllowAgentForwarding no");
+        text.AppendLine("    AllowStreamLocalForwarding no");
+        text.AppendLine("    X11Forwarding no");
+        text.AppendLine("    PermitTunnel no");
+        text.AppendLine();
+        text.AppendLine($"Match Group {UsersGroup},!{SftpGroup},!{SshGroup}");
         text.AppendLine("    PasswordAuthentication no");
         text.AppendLine("    PubkeyAuthentication no");
         text.AppendLine("    KbdInteractiveAuthentication no");

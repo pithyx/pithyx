@@ -1,7 +1,6 @@
 using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Json;
-using Dapper;
 using Microsoft.Extensions.DependencyInjection;
 using Pithyx.Daemon.Auth;
 using Pithyx.Daemon.Database;
@@ -83,14 +82,11 @@ public sealed class ThumbnailApiTests : IAsyncLifetime
         long id;
         await using (var connection = await _factory.Services.GetRequiredService<SqliteConnectionFactory>().OpenAsync(Token))
         {
-            id = await connection.ExecuteScalarAsync<long>(
-                "INSERT INTO users (username, password_hash, is_admin, created_at, updated_at) VALUES (@username, @hash, 0, '2026-01-01T00:00:00Z', '2026-01-01T00:00:00Z') RETURNING id",
-                new { username, hash });
+            id = await TestUsers.InsertAsync(connection, username, hash: hash);
         }
         if (access is not null)
         {
-            using var granted = await _admin.PutAsJsonAsync($"/api/shares/{_share}/access/{id}", new { access }, Token);
-            Assert.Equal(HttpStatusCode.NoContent, granted.StatusCode);
+            await _admin.SetShareAccessAsync(_share, id, access);
         }
         var client = _factory.CreateApiClient();
         (await client.LoginAsync(username, AdminPassword)).EnsureSuccessStatusCode();

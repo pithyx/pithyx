@@ -9,6 +9,7 @@ import { IconPlus } from '../../ui/icons';
 import { TextField } from '../../ui/TextField';
 import { describeProblem, usersCall, type GroupSummary, type UserSummary } from '../sdk/users';
 import { FormDialog } from './FormDialog';
+import { RightsDialog } from './RightsDialog';
 import styles from './Users.module.css';
 
 export const groupsKey = ['groups'] as const;
@@ -23,6 +24,7 @@ export function useGroups(app: PithyxApp) {
 type Action =
   | { kind: 'create' }
   | { kind: 'edit'; group: GroupSummary }
+  | { kind: 'rights'; group: GroupSummary }
   | { kind: 'delete'; group: GroupSummary };
 
 /**
@@ -95,29 +97,40 @@ export function GroupsSection({ app, users }: { app: PithyxApp; users: UserSumma
                 </td>
                 <td className={styles.optional}>{group.id}</td>
                 <td>
-                  {!group.builtin && (
-                    <span className={styles.actions}>
-                      <Button
-                        size="sm"
-                        aria-label={t('groups.edit.label', { name: group.name })}
-                        onPress={() => {
-                          setAction({ kind: 'edit', group });
-                        }}
-                      >
-                        {t('edit.button')}
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="danger"
-                        aria-label={t('groups.delete.label', { name: group.name })}
-                        onPress={() => {
-                          setAction({ kind: 'delete', group });
-                        }}
-                      >
-                        {t('delete.button')}
-                      </Button>
-                    </span>
-                  )}
+                  <span className={styles.actions}>
+                    <Button
+                      size="sm"
+                      aria-label={t('groups.rights', { name: group.name })}
+                      onPress={() => {
+                        setAction({ kind: 'rights', group });
+                      }}
+                    >
+                      {t('grants.button')}
+                    </Button>
+                    {!group.builtin && (
+                      <>
+                        <Button
+                          size="sm"
+                          aria-label={t('groups.edit.label', { name: group.name })}
+                          onPress={() => {
+                            setAction({ kind: 'edit', group });
+                          }}
+                        >
+                          {t('edit.button')}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="danger"
+                          aria-label={t('groups.delete.label', { name: group.name })}
+                          onPress={() => {
+                            setAction({ kind: 'delete', group });
+                          }}
+                        >
+                          {t('delete.button')}
+                        </Button>
+                      </>
+                    )}
+                  </span>
                 </td>
               </tr>
             ))}
@@ -127,6 +140,9 @@ export function GroupsSection({ app, users }: { app: PithyxApp; users: UserSumma
       {action?.kind === 'create' && <GroupDialog app={app} users={users} onClose={close} />}
       {action?.kind === 'edit' && (
         <GroupDialog app={app} users={users} group={action.group} onClose={close} />
+      )}
+      {action?.kind === 'rights' && (
+        <RightsDialog app={app} subject={{ kind: 'group', group: action.group }} onClose={close} />
       )}
       {action?.kind === 'delete' && (
         <DeleteGroupDialog app={app} group={action.group} onClose={close} />

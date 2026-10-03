@@ -3,6 +3,9 @@ using Pithyx.Daemon.Storage;
 using Pithyx.Daemon.Tests.Support;
 using Pithyx.Daemon.Users;
 
+using Pithyx.Daemon.Permissions;
+using Pithyx.Daemon.Shares;
+
 namespace Pithyx.Daemon.Tests.FileServices;
 
 public sealed class FileServiceConfigTests
@@ -118,35 +121,30 @@ public sealed class FileServiceConfigTests
 
     private static readonly PoolList _pools = new([new Pool("tank", "1", "ONLINE", 1, 0, 1, 0, 0, false, 0, null, [])], [Share("media"), Share("docs")]);
 
+    private static UserPermissions User(long id, string name, bool admin = false, bool disabled = false, string[]? allowed = null, Dictionary<long, ShareAccess>? shares = null) =>
+        new(id, name, id, disabled, disabled
+            ? EffectivePermissions.None
+            : new EffectivePermissions(admin, shares ?? [], new HashSet<string>(allowed ?? [], StringComparer.Ordinal)));
+
+    private static readonly IReadOnlyList<(long Id, string Name, string Path, string Dataset, long Smb, long Sftp, long Encrypt)> _shares =
+    [
+        (1, "Media", "/tank/pithyx/shares/media", "tank/pithyx/shares/media", 1, 1, 0),
+        (2, "Docs", "/tank/pithyx/shares/docs", "tank/pithyx/shares/docs", 0, 1, 1),
+        (3, "Lost", "/lost/pithyx/shares/lost", "lost/pithyx/shares/lost", 1, 1, 0),
+    ];
+
     [Fact]
     public void GivesEachUserTheSharesOfTheirRightsOverTheirProtocols()
     {
-        var plan = FileServiceSync.Plan(
-            smbEnabled: true,
-            "WORKGROUP",
-            sftpEnabled: true,
-            [
-                (20000, "ada", 20000, 1, null, 0, 0),
-                (20001, "rita", 20001, 0, null, 1, 1),
-                (20002, "tom", 20002, 0, null, 1, 0),
-                (20003, "gone", 20003, 0, "2026-10-01", 1, 1),
-                (20004, "nosmb", 20004, 0, null, 0, 1),
-            ],
-            [
-                (1, "Media", "/tank/pithyx/shares/media", "tank/pithyx/shares/media", 1, 1, 0),
-                (2, "Docs", "/tank/pithyx/shares/docs", "tank/pithyx/shares/docs", 0, 1, 1),
-                (3, "Lost", "/lost/pithyx/shares/lost", "lost/pithyx/shares/lost", 1, 1, 0),
-            ],
-            new Dictionary<(long, long), string>
-            {
-                [(1, 20001)] = "readWrite",
-                [(1, 20002)] = "read",
-                [(1, 20003)] = "readWrite",
-                [(1, 20004)] = "read",
-                [(2, 20001)] = "read",
-            },
-            _pools,
-            poolsAvailable: true);
+        IReadOnlyList<UserPermissions> users =
+        [
+            User(20000, "ada", admin: true),
+            User(20001, "rita", allowed: [Resources.Smb, Resources.Sftp], shares: new() { [1] = ShareAccess.ReadWrite, [2] = ShareAccess.Read }),
+            User(20002, "tom", allowed: [Resources.Smb], shares: new() { [1] = ShareAccess.Read }),
+            User(20003, "gone", disabled: true),
+            User(20004, "nosmb", allowed: [Resources.Sftp], shares: new() { [1] = ShareAccess.Read }),
+        ];
+        var plan = FileServiceSync.Plan(smbEnabled: true, "WORKGROUP", sftpEnabled: true, sshEnabled: false, users, _shares, _pools, poolsAvailable: true);
 
         var media = Assert.Single(plan.SmbShares);
         Assert.Equal(new SmbShare("Media", "/tank/pithyx/shares/media", ["tom"], ["ada", "rita"], false), media with { Readers = [.. media.Readers], Writers = [.. media.Writers] }, new SmbShareComparer());
@@ -156,10 +154,32 @@ public sealed class FileServiceConfigTests
             plan.SftpEntries.Select(entry => $"{entry.User}/{entry.Share}").Order());
         Assert.Contains(("gone", true), plan.Accounts);
         Assert.Equal([1L, 2L], plan.SharePaths.Keys.Order());
+        Assert.Empty(plan.SshUsers);
 
-        var off = FileServiceSync.Plan(true, "WORKGROUP", sftpEnabled: false, [(20000, "ada", 20000, 1, null, 1, 1)], [(1, "Media", "/tank/pithyx/shares/media", "tank/pithyx/shares/media", 1, 1, 0)], new Dictionary<(long, long), string>(), _pools, true);
+        var off = FileServiceSync.Plan(true, "WORKGROUP", sftpEnabled: false, sshEnabled: false, [User(20000, "ada", admin: true)], _shares, _pools, true);
         Assert.Empty(off.SftpUsers);
         Assert.Empty(off.SftpEntries);
+    }
+
+    [Fact]
+    public void UsersWithAnSshLoginGetAShellInsteadOfAnSftpView()
+    {
+        IReadOnlyList<UserPermissions> users =
+        [
+            User(20001, "rita", allowed: [Resources.Sftp, Resources.SshLogin], shares: new() { [1] = ShareAccess.ReadWrite }),
+            User(20002, "tom", allowed: [Resources.Sftp], shares: new() { [1] = ShareAccess.Read }),
+            User(20003, "eve", allowed: [Resources.SshLogin]),
+        ];
+
+        var on = FileServiceSync.Plan(true, "WORKGROUP", sftpEnabled: true, sshEnabled: true, users, _shares, _pools, true);
+        Assert.Equal(["eve", "rita"], on.SshUsers.Order());
+        Assert.Equal(["tom"], on.SftpUsers);
+        Assert.Equal(["tom/Media"], on.SftpEntries.Select(entry => $"{entry.User}/{entry.Share}"));
+
+        // Without SSH logins the right does nothing, and SFTP users keep their views.
+        var off = FileServiceSync.Plan(true, "WORKGROUP", sftpEnabled: true, sshEnabled: false, users, _shares, _pools, true);
+        Assert.Empty(off.SshUsers);
+        Assert.Equal(["rita", "tom"], off.SftpUsers.Order());
     }
 
     private sealed class SmbShareComparer : IEqualityComparer<SmbShare>
@@ -174,7 +194,7 @@ public sealed class FileServiceConfigTests
     [Fact]
     public void ManagedAccountsAreTheOnlyOnesInThePlan()
     {
-        var plan = FileServiceSync.Plan(true, "WORKGROUP", true, [(1, "owner", 1000, 1, null, 1, 1)], [], new Dictionary<(long, long), string>(), _pools, true);
+        var plan = FileServiceSync.Plan(true, "WORKGROUP", true, true, [new UserPermissions(1, "owner", 1000, false, new EffectivePermissions(true, new Dictionary<long, ShareAccess>(), new HashSet<string>()))], [], _pools, true);
         Assert.False(AccountReconciler.IsManaged(1000));
         Assert.Empty(plan.Accounts);
         Assert.Empty(plan.SftpUsers);

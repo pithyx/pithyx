@@ -51,26 +51,25 @@ public sealed class FileServiceApiTests : IDisposable
     public async Task UsersCarryTheirProtocolRightsAndWhetherTheServicesKnowTheirPassword()
     {
         await _admin.SetupAdminAsync();
-        using (var created = await _admin.PostAsJsonAsync("/api/users", new { username = "rita", password = "river-candle-orbit-7", sftp = true }, Token))
+        long ritaId;
+        // Without grants in the request a new user gets the defaults: the desktop, SMB and the apps.
+        using (var created = await _admin.PostAsJsonAsync("/api/users", new { username = "rita", password = "river-candle-orbit-7" }, Token))
         {
             Assert.Equal(HttpStatusCode.Created, created.StatusCode);
             var rita = await created.JsonAsync();
-            Assert.True(rita.GetProperty("smb").GetBoolean());
-            Assert.True(rita.GetProperty("sftp").GetBoolean());
+            ritaId = rita.GetProperty("id").GetInt64();
+            Assert.Equal(["protocol:smb"], rita.GetProperty("protocols").EnumerateArray().Select(protocol => protocol.GetString()));
             Assert.True(rita.GetProperty("fileServicePassword").GetBoolean());
         }
-        var users = await _admin.GetFromJsonAsync<JsonElement>("/api/users", Token);
-        var ritaId = users.EnumerateArray().Single(user => user.GetProperty("username").GetString() == "rita").GetProperty("id").GetInt64();
 
-        using var update = await _admin.PatchAsJsonAsync($"/api/users/{ritaId}", new { smb = false }, Token);
-        var updated = await update.JsonAsync();
-        Assert.False(updated.GetProperty("smb").GetBoolean());
-        Assert.True(updated.GetProperty("sftp").GetBoolean());
+        using var update = await _admin.PutAsJsonAsync($"/api/users/{ritaId}/grants", new { grants = new[] { new { resource = "right:desktopLogin", level = "allow" }, new { resource = "protocol:sftp", level = "allow" } } }, Token);
+        Assert.Equal(["protocol:sftp"], (await update.JsonAsync()).GetProperty("effective").GetProperty("protocols").EnumerateArray().Select(protocol => protocol.GetString()));
+        var users = await _admin.GetFromJsonAsync<JsonElement>("/api/users", Token);
+        Assert.Equal(["protocol:sftp"], users.EnumerateArray().Single(user => user.GetProperty("username").GetString() == "rita").GetProperty("protocols").EnumerateArray().Select(protocol => protocol.GetString()));
 
         // Administrators have every right, whatever is stored.
         var admin = users.EnumerateArray().Single(user => user.GetProperty("username").GetString() == "admin");
-        Assert.True(admin.GetProperty("smb").GetBoolean());
-        Assert.True(admin.GetProperty("sftp").GetBoolean());
+        Assert.Equal(["protocol:smb", "protocol:sftp", "protocol:webdav", "protocol:ftp"], admin.GetProperty("protocols").EnumerateArray().Select(protocol => protocol.GetString()));
     }
 
     [Fact]

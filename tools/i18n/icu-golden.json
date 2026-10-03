@@ -29,6 +29,10 @@
       "params": {},
       "expected": "The request was rejected because a security header is missing."
     },
+    "auth.desktop.not_allowed": {
+      "params": {},
+      "expected": "You may not sign in to the desktop. Ask an administrator for the desktop sign-in right."
+    },
     "auth.display_name.invalid": {
       "params": {
         "maxLength": 64
@@ -357,6 +361,12 @@
     "notifications.notification.not_found": {
       "params": {},
       "expected": "This notification no longer exists."
+    },
+    "permissions.grant.invalid": {
+      "params": {
+        "resource": "share:7"
+      },
+      "expected": "The right “share:7” cannot be given like this: it is unknown, given twice, or the level does not fit (read or read and write for a shared folder)."
     },
     "realtime.message.invalid": {
       "params": {},

@@ -19,9 +19,6 @@ public sealed record ShareInfo(long Id, string Name, ShareAccess Access, string?
 /// <param name="Path">An existing folder on the host: absolute, without symlinks, outside the system directories and not overlapping another share.</param>
 public sealed record NewShare(string Name, string Path);
 
-/// <param name="Access"><c>none</c> removes the user's access.</param>
-public sealed record ShareAccessRequest(ShareAccess Access);
-
 /// <summary>A share resolved for one request, with the caller's access.</summary>
 public sealed record ResolvedShare(long Id, string Name, string Path, ShareAccess Access);
 
@@ -35,8 +32,8 @@ public sealed record ResolvedShare(long Id, string Name, string Path, ShareAcces
 /// <param name="UsedBytes">Space the dataset uses with its snapshots; null for a folder share or while the dataset is not there (pool missing).</param>
 /// <param name="AvailableBytes">Space still available to the dataset; null like <paramref name="UsedBytes"/>.</param>
 /// <param name="QuotaBytes">The dataset's quota, or null for none.</param>
-/// <param name="ReadUsers">Users other than administrators who may read.</param>
-/// <param name="ReadWriteUsers">Users other than administrators who may read and write.</param>
+/// <param name="ReadUsers">Active users other than administrators who may read, through their own grants or their groups.</param>
+/// <param name="ReadWriteUsers">Active users other than administrators who may read and write, through their own grants or their groups.</param>
 /// <param name="RestorePoints">Whether daily restore points (snapshots kept 7 days) are on; null for a folder share.</param>
 /// <param name="Smb">Whether SMB offers the shared folder (dataset shares only).</param>
 /// <param name="Sftp">Whether SFTP shows the shared folder (dataset shares only).</param>
@@ -60,14 +57,6 @@ public sealed record ShareDetails(
 
 /// <param name="Enabled">Daily restore points, kept 7 days, on or off.</param>
 public sealed record RestorePointsRequest(bool Enabled);
-
-/// <summary>One user's access to a share, for editing rights.</summary>
-/// <param name="UserId">The user's id, for <c>PUT /api/shares/{shareId}/access/{userId}</c>.</param>
-/// <param name="Username">Login name.</param>
-/// <param name="DisplayName">Name shown, if set.</param>
-/// <param name="Administrator">Administrators use every share with read and write access, whatever <paramref name="Access"/> says.</param>
-/// <param name="Access">The access granted: <c>none</c>, <c>read</c> or <c>readWrite</c>.</param>
-public sealed record ShareUserAccess(long UserId, string Username, string? DisplayName, bool Administrator, ShareAccess Access);
 
 /// <summary>Changes of a share; fields left out stay. The dataset is never renamed by this.</summary>
 /// <param name="Name">New name shown to users, unique like every share name.</param>

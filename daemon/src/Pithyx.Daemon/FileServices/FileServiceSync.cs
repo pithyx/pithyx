@@ -3,6 +3,7 @@ using System.Threading.Channels;
 using Dapper;
 using Pithyx.Daemon.Commands;
 using Pithyx.Daemon.Database;
+using Pithyx.Daemon.Permissions;
 using Pithyx.Daemon.Shares;
 using Pithyx.Daemon.Storage;
 using Pithyx.Daemon.Users;
@@ -21,18 +22,22 @@ public sealed class FileServiceChanges
 /// <param name="SmbEnabled">SMB is switched on.</param>
 /// <param name="Workgroup">The SMB workgroup.</param>
 /// <param name="SftpEnabled">SFTP is switched on.</param>
+/// <param name="SshEnabled">SSH logins with a shell are switched on for users with the SSH login right.</param>
 /// <param name="Accounts">Every Pithyx account with whether it is deactivated.</param>
 /// <param name="SmbShares">The shares SMB offers.</param>
-/// <param name="SftpUsers">The users with an SFTP view.</param>
+/// <param name="SftpUsers">The users with an SFTP view; users with an SSH login are not among them.</param>
+/// <param name="SshUsers">The users who sign in over SSH with a shell.</param>
 /// <param name="SftpEntries">The shares in the SFTP views.</param>
 /// <param name="SharePaths">Every available dataset share by id, for the recycle bin.</param>
 public sealed record FileServicePlan(
     bool SmbEnabled,
     string Workgroup,
     bool SftpEnabled,
+    bool SshEnabled,
     IReadOnlyList<(string Name, bool Disabled)> Accounts,
     IReadOnlyList<SmbShare> SmbShares,
     IReadOnlyList<string> SftpUsers,
+    IReadOnlyList<string> SshUsers,
     IReadOnlyList<SftpViewEntry> SftpEntries,
     IReadOnlyDictionary<long, string> SharePaths);
 
@@ -74,52 +79,55 @@ public sealed partial class FileServiceSync(
     public async Task<FileServicePlan> WantedAsync(CancellationToken cancellationToken)
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
-        var settings = await connection.QuerySingleAsync<(long Smb, string Workgroup, long Sftp)>("SELECT smb_enabled, smb_workgroup, sftp_enabled FROM file_services WHERE id = 1");
-        var users = (await connection.QueryAsync<(long Id, string Username, long Uid, long IsAdmin, string? DisabledAt, long Smb, long Sftp)>(
-            "SELECT id, username, uid, is_admin, disabled_at, smb, sftp FROM users WHERE uid IS NOT NULL ORDER BY username")).ToList();
+        var settings = await connection.QuerySingleAsync<(long Smb, string Workgroup, long Sftp, long Ssh)>("SELECT smb_enabled, smb_workgroup, sftp_enabled, ssh_enabled FROM file_services WHERE id = 1");
+        var users = await PermissionService.AllUsersAsync(connection, null);
         var shares = (await connection.QueryAsync<(long Id, string Name, string Path, string Dataset, long Smb, long Sftp, long Encrypt)>(
             "SELECT id, name, path, dataset, smb, sftp, smb_encrypt FROM shares WHERE dataset IS NOT NULL ORDER BY id")).ToList();
-        var access = (await connection.QueryAsync<(long ShareId, long UserId, string Level)>("SELECT share_id, user_id, level FROM share_access"))
-            .ToDictionary(row => (row.ShareId, row.UserId), row => row.Level);
-        return Plan(settings.Smb == 1, settings.Workgroup, settings.Sftp == 1, users, shares, access, pools.Current, pools.Available);
+        return Plan(settings.Smb == 1, settings.Workgroup, settings.Sftp == 1, settings.Ssh == 1, users, shares, pools.Current, pools.Available);
     }
 
-    /// <summary>The pure part of <see cref="WantedAsync"/>: who gets which share over which protocol.</summary>
+    /// <summary>
+    /// The pure part of <see cref="WantedAsync"/>: who gets which share over which protocol, from the users' effective
+    /// rights (<see cref="PermissionResolver"/>). A user needs the protocol and access to the share; the share must
+    /// offer the protocol. A user who signs in over SSH with a shell (SSH logins on and the SSH login right) uses SFTP
+    /// as an ordinary SSH user and gets no SFTP view.
+    /// </summary>
     public static FileServicePlan Plan(
         bool smbEnabled,
         string workgroup,
         bool sftpEnabled,
-        IReadOnlyList<(long Id, string Username, long Uid, long IsAdmin, string? DisabledAt, long Smb, long Sftp)> users,
+        bool sshEnabled,
+        IReadOnlyList<UserPermissions> users,
         IReadOnlyList<(long Id, string Name, string Path, string Dataset, long Smb, long Sftp, long Encrypt)> shares,
-        IReadOnlyDictionary<(long ShareId, long UserId), string> access,
         PoolList current,
         bool poolsAvailable)
     {
         ArgumentNullException.ThrowIfNull(users);
         ArgumentNullException.ThrowIfNull(shares);
-        ArgumentNullException.ThrowIfNull(access);
-        var active = users.Where(user => user.DisabledAt is null && AccountReconciler.IsManaged(user.Uid)).ToList();
-        var smbUsers = active.Where(user => user.IsAdmin == 1 || user.Smb == 1).ToList();
-        var sftpUsers = sftpEnabled ? active.Where(user => user.IsAdmin == 1 || user.Sftp == 1).ToList() : [];
+        var managed = users.Where(user => user.Uid is { } uid && AccountReconciler.IsManaged(uid)).OrderBy(user => user.Username, StringComparer.Ordinal).ToList();
+        var active = managed.Where(user => !user.Disabled).ToList();
+        var sshUsers = sshEnabled ? active.Where(user => user.Permissions.Has(Resources.SshLogin)).ToList() : [];
+        var smbUsers = active.Where(user => user.Permissions.Has(Resources.Smb)).ToList();
+        var sftpUsers = sftpEnabled ? active.Where(user => user.Permissions.Has(Resources.Sftp) && !sshUsers.Contains(user)).ToList() : [];
         var available = shares.Where(share => ShareAvailability.Reason(share.Dataset, current, poolsAvailable) is null).ToList();
-        string? Level(long shareId, (long Id, string Username, long Uid, long IsAdmin, string? DisabledAt, long Smb, long Sftp) user) =>
-            user.IsAdmin == 1 ? "readWrite" : access.TryGetValue((shareId, user.Id), out var level) ? level : null;
         var smbShares = available.Where(share => share.Smb == 1 && !SmbConfig.ReservedNames.Contains(share.Name)).Select(share => new SmbShare(
             share.Name,
             share.Path,
-            [.. smbUsers.Where(user => Level(share.Id, user) == "read").Select(user => user.Username)],
-            [.. smbUsers.Where(user => Level(share.Id, user) == "readWrite").Select(user => user.Username)],
+            [.. smbUsers.Where(user => user.Permissions.Share(share.Id) == ShareAccess.Read).Select(user => user.Username)],
+            [.. smbUsers.Where(user => user.Permissions.Share(share.Id) == ShareAccess.ReadWrite).Select(user => user.Username)],
             share.Encrypt == 1)).ToList();
         var entries = available.Where(share => share.Sftp == 1)
-            .SelectMany(share => sftpUsers.Where(user => Level(share.Id, user) is "read" or "readWrite").Select(user => new SftpViewEntry(user.Username, share.Name, share.Path)))
+            .SelectMany(share => sftpUsers.Where(user => user.Permissions.Share(share.Id) != ShareAccess.None).Select(user => new SftpViewEntry(user.Username, share.Name, share.Path)))
             .ToList();
         return new FileServicePlan(
             smbEnabled,
             workgroup,
             sftpEnabled,
-            [.. users.Where(user => AccountReconciler.IsManaged(user.Uid)).Select(user => (user.Username, user.DisabledAt is not null))],
+            sshEnabled,
+            [.. managed.Select(user => (user.Username, user.Disabled))],
             smbShares,
             [.. sftpUsers.Select(user => user.Username)],
+            [.. sshUsers.Select(user => user.Username)],
             entries,
             available.ToDictionary(share => share.Id, share => share.Path));
     }
@@ -194,6 +202,7 @@ public sealed partial class FileServiceSync(
         {
             [SshdConfig.UsersGroup] = [.. plan.Accounts.Select(account => account.Name).Where(accounts.Contains).Order(StringComparer.Ordinal)],
             [SshdConfig.SftpGroup] = [.. plan.SftpUsers.Where(accounts.Contains).Order(StringComparer.Ordinal)],
+            [SshdConfig.SshGroup] = [.. plan.SshUsers.Where(accounts.Contains).Order(StringComparer.Ordinal)],
         };
         foreach (var (group, members) in wanted)
         {
@@ -276,16 +285,16 @@ public sealed partial class FileServiceSync(
         {
             await commands.RunAsync(new CommandRequest("systemctl", ["reload", SshUnit]), cancellationToken);
         }
-        if (!plan.SftpEnabled)
+        if (!plan.SftpEnabled && !plan.SshEnabled)
         {
-            // Whether sshd runs at all belongs to the SSH setting; SFTP only stops letting Pithyx accounts in.
+            // Pithyx never stops sshd: an administrator may reach the box over it. Switching off only stops letting Pithyx accounts in.
             return FileServiceState.Off;
         }
         if (!active && (await commands.RunAsync(new CommandRequest("systemctl", ["enable", "--now", SshUnit]), cancellationToken)).ExitCode != 0)
         {
-            return FileServiceState.Failed;
+            return plan.SftpEnabled ? FileServiceState.Failed : FileServiceState.Off;
         }
-        return FileServiceState.Running;
+        return plan.SftpEnabled ? FileServiceState.Running : FileServiceState.Off;
     }
 
     /// <summary>Starts, reloads or stops a unit as wanted and tells how it is doing.</summary>

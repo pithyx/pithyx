@@ -2,6 +2,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { unwrap } from '@pithyx/api-client';
 import { useEffect, useLayoutEffect } from 'react';
 import { api } from '../api/client';
+import { isAppAllowed } from '../apps/access';
 import { findApp } from '../apps/registry';
 import { describeError, isSessionExpired } from '../errors/describe';
 import { clearToasts, notify } from '../shell/toasts';
@@ -30,7 +31,8 @@ let saveQueue: Promise<void> = Promise.resolve();
 let failureShown = false;
 
 function appOptions(app: string): WindowOptions | undefined {
-  return findApp(app)?.window;
+  // A window of an app the user may no longer open is skipped like one of an app that is gone.
+  return isAppAllowed(app) ? findApp(app)?.window : undefined;
 }
 
 /** Only the tab the user works in saves: the tabs of one browser share its layout. */

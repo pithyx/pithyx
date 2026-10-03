@@ -1,6 +1,13 @@
 namespace Pithyx.Daemon.Auth;
 
-public sealed record UserInfo(long Id, string Username, string? DisplayName, bool IsAdmin, bool TotpEnabled);
+/// <summary>The signed-in user.</summary>
+/// <param name="Id">Stable id.</param>
+/// <param name="Username">Login name.</param>
+/// <param name="DisplayName">Name shown, if set.</param>
+/// <param name="IsAdmin">Whether the user has the administrator right, its own or through a group.</param>
+/// <param name="TotpEnabled">Whether the user signs in with a second factor.</param>
+/// <param name="Permissions">What the user may do; the topic <c>session/permissions</c> sends changes.</param>
+public sealed record UserInfo(long Id, string Username, string? DisplayName, bool IsAdmin, bool TotpEnabled, Permissions.SessionPermissions Permissions);
 
 /// <param name="Required">True until the first administrator exists.</param>
 /// <param name="Hostname">Shown on the setup and sign-in screens, so users with several servers know where they sign in.</param>

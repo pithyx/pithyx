@@ -397,13 +397,10 @@ public sealed class LayoutApiTests : IDisposable
     /// <summary>A second user with a session; user management comes with M3, so the row is inserted directly.</summary>
     private async Task<string> OtherUserAsync()
     {
-        var now = SessionService.Format(_factory.Time.GetUtcNow());
         long id;
         await using (var connection = await _factory.Services.GetRequiredService<SqliteConnectionFactory>().OpenAsync(Token))
         {
-            id = await connection.ExecuteScalarAsync<long>(
-                "INSERT INTO users (username, password_hash, created_at, updated_at) VALUES ('bob', 'x', @now, @now) RETURNING id",
-                new { now });
+            id = await TestUsers.InsertAsync(connection, "bob");
         }
         var session = await _factory.Services.GetRequiredService<SessionService>().CreateAsync(id, null, Token);
         return $"{SessionService.CookieName}={session.Token}";

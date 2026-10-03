@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Threading.Channels;
 using Dapper;
+using Pithyx.Daemon.Auth;
 using Pithyx.Daemon.Database;
 using Pithyx.Daemon.FileServices;
 using Pithyx.Daemon.Realtime;
@@ -27,10 +28,12 @@ public static class UserEndpoints
         var users = api.MapGroup("/users").WithTags("Users");
         users.MapGet("", async (UserService service, HttpContext context, CancellationToken cancellationToken) =>
                 TypedResults.Ok(await service.ListAsync(context.User, cancellationToken)))
+            .RequireAuthorization(Policies.Admin)
             .WithName("GetUsers")
             .WithDescription("Administrators only. Every user with its Linux uid and home folder.");
         users.MapPost("", async (NewUser request, UserService service, HttpContext context, CancellationToken cancellationToken) =>
                 TypedResults.Created((string?)null, await service.CreateAsync(context.User, request, cancellationToken)))
+            .RequireAuthorization(Policies.Admin)
             .WithName("CreateUser")
             .WithDescription("Administrators only. Creates a user with a Linux and a Samba account with the password (a uid from 20000 to 29999 that is never given out again, the group users, no login shell) and a home dataset below the first pool's homes when there is a pool.");
         users.MapPatch("/{userId:long}", async (long userId, UserUpdate request, UserService service, TopicHub hub, HttpContext context, CancellationToken cancellationToken) =>
@@ -42,6 +45,7 @@ public static class UserEndpoints
                 }
                 return TypedResults.Ok(user);
             })
+            .RequireAuthorization(Policies.Admin)
             .WithName("UpdateUser")
             .WithDescription("Administrators only. Changes the display name, the administrator right, the SMB and SFTP rights or whether the user is deactivated. Deactivating ends the user's sessions and expires the Linux account. The last active administrator keeps the right and stays active, and nobody deactivates themselves.");
         users.MapPut("/{userId:long}/password", async (long userId, PasswordReset request, UserService service, TopicHub hub, HttpContext context, CancellationToken cancellationToken) =>
@@ -50,6 +54,7 @@ public static class UserEndpoints
                 hub.CloseUser(userId.ToString(CultureInfo.InvariantCulture));
                 return TypedResults.NoContent();
             })
+            .RequireAuthorization(Policies.Admin)
             .WithName("ResetUserPassword")
             .WithDescription("Administrators only. Sets a new password, for SMB and SFTP as well, and ends every session of the user.");
         users.MapDelete("/{userId:long}", async (long userId, UserService service, TopicHub hub, HttpContext context, CancellationToken cancellationToken) =>
@@ -58,20 +63,24 @@ public static class UserEndpoints
                 hub.CloseUser(userId.ToString(CultureInfo.InvariantCulture));
                 return TypedResults.NoContent();
             })
+            .RequireAuthorization(Policies.Admin)
             .WithName("DeleteUser")
             .WithDescription("Administrators only. Deletes the user and its Linux account; its files and home stay, and its uid is never given out again. Nobody deletes themselves, and the last administrator stays.");
 
         var groups = api.MapGroup("/groups").WithTags("Users");
         groups.MapGet("", async (GroupService service, HttpContext context, CancellationToken cancellationToken) =>
                 TypedResults.Ok(await service.ListAsync(context.User, cancellationToken)))
+            .RequireAuthorization(Policies.Admin)
             .WithName("GetGroups")
             .WithDescription("Administrators only. Every group with its members, the built-in group users (every user) first.");
         groups.MapPost("", async (NewGroup request, GroupService service, HttpContext context, CancellationToken cancellationToken) =>
                 TypedResults.Created((string?)null, await service.CreateAsync(context.User, request, cancellationToken)))
+            .RequireAuthorization(Policies.Admin)
             .WithName("CreateGroup")
             .WithDescription("Administrators only. Creates a group with a Linux group (a gid from 30000 to 39999 that is never given out again) and its members.");
         groups.MapPatch("/{groupId:long}", async (long groupId, GroupUpdate request, GroupService service, HttpContext context, CancellationToken cancellationToken) =>
                 TypedResults.Ok(await service.UpdateAsync(context.User, groupId, request, cancellationToken)))
+            .RequireAuthorization(Policies.Admin)
             .WithName("UpdateGroup")
             .WithDescription("Administrators only. Renames a group, changes its description or sets its members; the gid stays. The built-in group cannot be changed.");
         groups.MapDelete("/{groupId:long}", async (long groupId, GroupService service, HttpContext context, CancellationToken cancellationToken) =>
@@ -79,6 +88,7 @@ public static class UserEndpoints
                 await service.DeleteAsync(context.User, groupId, cancellationToken);
                 return TypedResults.NoContent();
             })
+            .RequireAuthorization(Policies.Admin)
             .WithName("DeleteGroup")
             .WithDescription("Administrators only. Deletes a group and its Linux group; files keep its gid, which is never given out again. The built-in group stays.");
     }

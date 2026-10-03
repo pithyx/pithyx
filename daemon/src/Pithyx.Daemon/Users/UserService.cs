@@ -7,15 +7,15 @@ using Pithyx.Daemon.Errors;
 using Pithyx.Daemon.FileServices;
 using Pithyx.Daemon.Jobs;
 using Pithyx.Daemon.Notifications;
-using Pithyx.Daemon.Shares;
+using Pithyx.Daemon.Permissions;
 
 namespace Pithyx.Daemon.Users;
 
 /// <summary>
 /// User management for administrators: create, change, reset the password, delete. Every user gets a uid from the
-/// Pithyx range that is never given out again, and a Linux account (<see cref="LinuxAccounts"/>). The last
-/// active administrator can neither be deleted, deactivated nor lose the right, and nobody deletes or deactivates
-/// themselves. A user created here takes
+/// Pithyx range that is never given out again, and a Linux account (<see cref="LinuxAccounts"/>). Its rights are
+/// grants (<see cref="GrantService"/>); no change may leave the box without an active administrator, and nobody
+/// deletes or deactivates themselves. A user created here takes
 /// its uid as its id, so an id is never given out again either: notifications, jobs and grants that still name a
 /// deleted user's id can never reach a new user.
 /// </summary>
@@ -25,20 +25,15 @@ public sealed class UserService(
     LinuxAccounts accounts,
     NotificationStore notifications,
     JobService jobs,
-    ShareChanges shareChanges,
+    PermissionService permissions,
     FileServicePasswords passwords,
-    FileServiceChanges fileServiceChanges,
     TimeProvider time)
 {
     public async Task<IReadOnlyList<UserSummary>> ListAsync(ClaimsPrincipal caller, CancellationToken cancellationToken)
     {
         RequireAdmin(caller);
         await using var connection = await connections.OpenAsync(cancellationToken);
-        var rows = await connection.QueryAsync<Row>(Select + " ORDER BY username");
-        var linux = passwords.LinuxWithPassword();
-        var groups = (await connection.QueryAsync<(long UserId, long GroupId)>("SELECT user_id, group_id FROM group_members ORDER BY group_id"))
-            .ToLookup(member => member.UserId, member => member.GroupId);
-        return [.. rows.Select(row => ToSummary(row, linux, [.. groups[row.Id]]))];
+        return await SummariesAsync(connection, null);
     }
 
     public async Task<UserSummary> CreateAsync(ClaimsPrincipal caller, NewUser request, CancellationToken cancellationToken)
@@ -67,14 +62,20 @@ public sealed class UserService(
             uid = await UidAllocator.AllocateUserAsync(connection, transaction, username, now);
             id = await connection.ExecuteScalarAsync<long>(
                 """
-                INSERT INTO users (id, username, display_name, password_hash, is_admin, uid, smb, sftp, created_at, updated_at)
-                VALUES (@uid, @username, @displayName, @hash, @admin, @uid, @smb, @sftp, @now, @now) RETURNING id
+                INSERT INTO users (id, username, display_name, password_hash, uid, created_at, updated_at)
+                VALUES (@uid, @username, @displayName, @hash, @uid, @now, @now) RETURNING id
                 """,
-                new { username, displayName, hash, admin = request.IsAdmin ? 1 : 0, uid, smb = request.Smb ? 1 : 0, sftp = request.Sftp ? 1 : 0, now },
+                new { username, displayName, hash, uid, now },
                 transaction);
             await GroupService.SetUserGroupsAsync(connection, transaction, id, request.GroupIds ?? []);
+            await GrantService.GrantNewUserAsync(
+                connection,
+                transaction,
+                id,
+                request.Grants ?? [.. Resources.NewUserDefaults.Select(resource => new GrantEntry(resource, GrantLevel.Allow))]);
             await transaction.CommitAsync(cancellationToken);
         }
+        permissions.Invalidate();
         var home = await accounts.CreateHomeAsync(username, uid, cancellationToken);
         var problems = await accounts.ReconcileAsync(cancellationToken);
         if (problems.TryGetValue(username, out var reason))
@@ -82,16 +83,11 @@ public sealed class UserService(
             // The uid stays allocated: numbers are never reused.
             await using var connection = await connections.OpenAsync(cancellationToken);
             await connection.ExecuteAsync("DELETE FROM users WHERE id = @id", new { id });
+            permissions.Invalidate();
             throw new PithyxException(ErrorCodes.UsersAccountRefused, new Dictionary<string, object?> { ["username"] = username, ["reason"] = reason });
         }
         // SMB and SFTP check the Linux and Samba accounts, which get the password now that the account exists.
         await passwords.SetAsync(username, request.Password, cancellationToken);
-        if (request.IsAdmin)
-        {
-            // Administrators reach every shared folder: their ACLs follow.
-            shareChanges.Announce();
-        }
-        fileServiceChanges.Announce();
         return (await FindAsync(id, cancellationToken))! with { Home = home ?? HomeOrNull(username) };
     }
 
@@ -108,23 +104,15 @@ public sealed class UserService(
         await using (var connection = await connections.OpenAsync(cancellationToken))
         await using (var transaction = await connection.BeginTransactionAsync(cancellationToken))
         {
-            var losesAdmin = user.IsAdmin && !user.Disabled && (request.IsAdmin == false || disabling);
-            if (losesAdmin && await AdminCountAsync(connection, transaction) <= 1)
-            {
-                throw new PithyxException(ErrorCodes.UsersUserLastAdmin);
-            }
             var displayName = request.DisplayName is null ? user.DisplayName : CredentialRules.NormalizeDisplayName(request.DisplayName);
-            var admin = request.IsAdmin ?? user.IsAdmin;
             var disabled = request.Disabled ?? user.Disabled;
-            var smb = request.Smb ?? user.Smb;
-            var sftp = request.Sftp ?? user.Sftp;
             await connection.ExecuteAsync(
                 """
-                UPDATE users SET display_name = @displayName, is_admin = @admin, smb = @smb, sftp = @sftp,
+                UPDATE users SET display_name = @displayName,
                     disabled_at = CASE WHEN @disabled THEN coalesce(disabled_at, @now) END, updated_at = @now
                 WHERE id = @id
                 """,
-                new { id, displayName, admin = admin ? 1 : 0, smb = smb ? 1 : 0, sftp = sftp ? 1 : 0, disabled, now = time.GetUtcNow().ToString("O", CultureInfo.InvariantCulture) },
+                new { id, displayName, disabled, now = time.GetUtcNow().ToString("O", CultureInfo.InvariantCulture) },
                 transaction);
             if (disabling)
             {
@@ -134,14 +122,11 @@ public sealed class UserService(
             {
                 await GroupService.SetUserGroupsAsync(connection, transaction, id, groupIds);
             }
+            await PermissionService.EnsureAdministratorRemainsAsync(connection, transaction);
             await transaction.CommitAsync(cancellationToken);
         }
         await accounts.ReconcileAsync(cancellationToken);
-        if ((request.IsAdmin is { } isAdmin && isAdmin != user.IsAdmin) || (request.Disabled is { } off && off != user.Disabled))
-        {
-            shareChanges.Announce();
-        }
-        fileServiceChanges.Announce();
+        permissions.Invalidate();
         return (await FindAsync(id, cancellationToken))!;
     }
 
@@ -175,52 +160,58 @@ public sealed class UserService(
         {
             throw new PithyxException(ErrorCodes.UsersUserSelf);
         }
-        var user = await FindAsync(id, cancellationToken) ?? throw NotFound();
+        _ = await FindAsync(id, cancellationToken) ?? throw NotFound();
         await using (var connection = await connections.OpenAsync(cancellationToken))
         await using (var transaction = await connection.BeginTransactionAsync(cancellationToken))
         {
-            if (user.IsAdmin && !user.Disabled && await AdminCountAsync(connection, transaction) <= 1)
-            {
-                throw new PithyxException(ErrorCodes.UsersUserLastAdmin);
-            }
-            await connection.ExecuteAsync("DELETE FROM share_access WHERE user_id = @id", new { id }, transaction);
+            // Its grants and memberships go with it.
             await connection.ExecuteAsync("DELETE FROM users WHERE id = @id", new { id }, transaction);
+            await PermissionService.EnsureAdministratorRemainsAsync(connection, transaction);
             await transaction.CommitAsync(cancellationToken);
         }
         await jobs.ForgetUserAsync(id);
         notifications.Forget(id);
         await accounts.ReconcileAsync(cancellationToken);
-        shareChanges.Announce();
-        fileServiceChanges.Announce();
+        permissions.Invalidate();
     }
-
-    /// <summary>Administrators who can still sign in.</summary>
-    private static Task<long> AdminCountAsync(System.Data.Common.DbConnection connection, System.Data.Common.DbTransaction transaction) =>
-        connection.ExecuteScalarAsync<long>("SELECT count(*) FROM users WHERE is_admin = 1 AND disabled_at IS NULL", transaction: transaction);
 
     private async Task<UserSummary?> FindAsync(long id, CancellationToken cancellationToken)
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
-        var row = await connection.QuerySingleOrDefaultAsync<Row>(Select + " WHERE id = @id", new { id });
-        return row is null ? null : ToSummary(row, passwords.LinuxWithPassword(), await GroupService.GroupIdsOfAsync(connection, id));
+        return (await SummariesAsync(connection, id)) is [var user] ? user : null;
+    }
+
+    private async Task<IReadOnlyList<UserSummary>> SummariesAsync(System.Data.Common.DbConnection connection, long? id)
+    {
+        var rows = await connection.QueryAsync<Row>(Select + " WHERE @id IS NULL OR id = @id ORDER BY username", new { id });
+        var linux = passwords.LinuxWithPassword();
+        var groups = (await connection.QueryAsync<(long UserId, long GroupId)>("SELECT user_id, group_id FROM group_members ORDER BY group_id"))
+            .ToLookup(member => member.UserId, member => member.GroupId);
+        // What deactivated users would have, so the page shows it next to "Deactivated".
+        var rights = (await PermissionService.AllUsersAsync(connection, null, asIfActive: true)).ToDictionary(user => user.Id, user => user.Permissions);
+        return [.. rows.Select(row => ToSummary(row, linux, [.. groups[row.Id]], rights[row.Id]))];
     }
 
     private string? HomeOrNull(string username) => accounts.HomeOf(username) is var home && home != AccountReconciler.NoHome ? home : null;
 
-    private UserSummary ToSummary(Row row, IReadOnlySet<string> linuxWithPassword, IReadOnlyList<long> groupIds) => new(
-        row.Id,
-        row.Username,
-        row.DisplayName,
-        row.IsAdmin == 1,
-        row.Uid,
-        row.TotpEnabledAt is not null,
-        DateTimeOffset.Parse(row.CreatedAt, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal),
-        HomeOrNull(row.Username),
-        row.DisabledAt is not null,
-        row.IsAdmin == 1 || row.Smb == 1,
-        row.IsAdmin == 1 || row.Sftp == 1,
-        passwords.HasPassword(row.Username, linuxWithPassword),
-        groupIds);
+    private UserSummary ToSummary(Row row, IReadOnlySet<string> linuxWithPassword, IReadOnlyList<long> groupIds, EffectivePermissions rights)
+    {
+        var session = GrantService.Session(rights);
+        return new(
+            row.Id,
+            row.Username,
+            row.DisplayName,
+            rights.IsAdmin,
+            row.Uid,
+            row.TotpEnabledAt is not null,
+            DateTimeOffset.Parse(row.CreatedAt, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal),
+            HomeOrNull(row.Username),
+            row.DisabledAt is not null,
+            session.Rights,
+            session.Protocols,
+            passwords.HasPassword(row.Username, linuxWithPassword),
+            groupIds);
+    }
 
     private static PithyxException NotFound() => new(ErrorCodes.UsersUserNotFound);
 
@@ -232,7 +223,7 @@ public sealed class UserService(
         }
     }
 
-    private const string Select = "SELECT id, username, display_name AS displayName, is_admin AS isAdmin, uid, totp_enabled_at AS totpEnabledAt, created_at AS createdAt, disabled_at AS disabledAt, smb, sftp FROM users";
+    private const string Select = "SELECT id, username, display_name AS displayName, uid, totp_enabled_at AS totpEnabledAt, created_at AS createdAt, disabled_at AS disabledAt FROM users";
 
-    private sealed record Row(long Id, string Username, string? DisplayName, long IsAdmin, long? Uid, string? TotpEnabledAt, string CreatedAt, string? DisabledAt, long Smb, long Sftp);
+    private sealed record Row(long Id, string Username, string? DisplayName, long? Uid, string? TotpEnabledAt, string CreatedAt, string? DisabledAt);
 }
