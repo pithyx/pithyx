@@ -82,6 +82,7 @@ export { default as IconTrash } from '@tabler/icons-react/dist/esm/icons/IconTra
 export { default as IconTrashX } from '@tabler/icons-react/dist/esm/icons/IconTrashX.mjs';
 export { default as IconUpload } from '@tabler/icons-react/dist/esm/icons/IconUpload.mjs';
 export { default as IconUsers } from '@tabler/icons-react/dist/esm/icons/IconUsers.mjs';
+export { default as IconUsersGroup } from '@tabler/icons-react/dist/esm/icons/IconUsersGroup.mjs';
 export { default as IconWallpaper } from '@tabler/icons-react/dist/esm/icons/IconWallpaper.mjs';
 export { default as IconWorld } from '@tabler/icons-react/dist/esm/icons/IconWorld.mjs';
 export { default as IconX } from '@tabler/icons-react/dist/esm/icons/IconX.mjs';

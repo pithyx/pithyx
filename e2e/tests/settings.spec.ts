@@ -96,6 +96,7 @@ test('the Info Center, Network, File services and Users pages open from their ti
   await settings.getByRole('button', { name: /^Users/ }).click();
   await expect(settings.getByRole('heading', { name: 'Users', level: 2 })).toBeVisible();
   await expect(settings.getByRole('button', { name: 'Create user' })).toBeVisible();
+  await expect(settings.getByRole('table', { name: 'Groups' })).toHaveCount(0);
   expect(await violations(page)).toEqual([]);
 });
 
@@ -179,7 +180,8 @@ test('groups and their rights reach their members, and the editors are accessibl
   });
   expect(user.ok()).toBe(true);
   const userId = ((await user.json()) as { id: number }).id;
-  await settings.getByRole('button', { name: /^Users/ }).click();
+  await settings.getByRole('button', { name: /^Groups/ }).click();
+  await expect(settings.getByRole('heading', { name: 'Groups', level: 2 })).toBeVisible();
 
   // A group with the new user, created on the page.
   await settings.getByRole('button', { name: 'Create group' }).click();
@@ -202,6 +204,8 @@ test('groups and their rights reach their members, and the editors are accessibl
   await groupRights.getByRole('button', { name: 'Save rights' }).click();
   await expect(groupRights).toHaveCount(0);
 
+  await settings.getByRole('button', { name: 'All settings' }).click();
+  await settings.getByRole('button', { name: /^Users/ }).click();
   const users = settings.getByRole('table', { name: 'Users' });
   await users
     .getByRole('row', { name: /^e2e-rights/ })

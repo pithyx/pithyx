@@ -703,7 +703,7 @@ Part of v0.1 since 2026-10-03 including groups (see "Scope of v0.1"); quotas and
 - [x] File ownership (release blocker D89): the file service sets owner and group with `fchownat` on everything it creates (uploads, copies, restored items, new folders).
 - [ ] A home dataset per user (D105, decided) under `<pool>/pithyx/homes/<user>`, with the `Desktop` folder that step 5's desktop items use. The dataset on the first pool (owner the user, mode 0700) is done; the `Desktop` folder follows.
 - [ ] Optional user quotas (`userquota@<user>`) on shares and on the home dataset.
-- [ ] Settings page Users (the `UsersPage` in Settings has create, edit, password reset, deactivate and delete, and the groups with their members since D289): users and groups, create, disable, delete (with a choice for the home data: keep, move to a share, delete after typing the name), admin password reset, quotas.
+- [ ] Settings page Users (the `UsersPage` in Settings has create, edit, password reset, deactivate and delete, and since D289 the groups with their members, on their own Groups page next to Users): users and groups, create, disable, delete (with a choice for the home data: keep, move to a share, delete after typing the name), admin password reset, quotas.
 
 ### Test on dev01
 

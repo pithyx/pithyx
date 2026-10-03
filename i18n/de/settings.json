@@ -134,7 +134,7 @@
   "categories": {
     "system": "System",
     "sharing": "Dateien und Freigaben",
-    "accounts": "Benutzer"
+    "accounts": "Benutzer und Gruppen"
   },
   "pages": {
     "info": {
@@ -171,6 +171,11 @@
       "title": "Backup und Wiederherstellung",
       "description": "Konfiguration dieser Box sichern und wiederherstellen",
       "keywords": "backup sicherung wiederherstellen konfiguration export import neuinstallation systemplatte"
+    },
+    "groups": {
+      "title": "Gruppen",
+      "description": "Gruppen, ihre Mitglieder und Rechte",
+      "keywords": "gruppe team mitglieder rechte berechtigungen"
     }
   },
   "info": {
@@ -190,7 +195,7 @@
   "fileServices": {
     "intro": "Mit Dateidiensten öffnen andere Computer deine freigegebenen Ordner über das Netzwerk. Benutzer melden sich mit ihrem Pithyx-Benutzernamen und Passwort an.",
     "save": "Speichern",
-    "rights": "Wer welchen Dateidienst nutzen darf, legst du mit den Rechten jedes Benutzers oder jeder Gruppe auf der Seite Benutzer fest. Welche freigegebenen Ordner sie anbieten, legst du pro Ordner auf der Seite Freigegebene Ordner fest. Wer sich seit den Dateidiensten nicht im Web angemeldet hat, muss das einmal tun, damit die Dienste das Passwort kennen.",
+    "rights": "Wer welchen Dateidienst nutzen darf, legst du mit den Rechten jedes Benutzers oder jeder Gruppe auf den Seiten Benutzer und Gruppen fest. Welche freigegebenen Ordner sie anbieten, legst du pro Ordner auf der Seite Freigegebene Ordner fest. Wer sich seit den Dateidiensten nicht im Web angemeldet hat, muss das einmal tun, damit die Dienste das Passwort kennen.",
     "state": {
       "off": "Aus",
       "running": "Läuft",
