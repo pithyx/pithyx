@@ -1,12 +1,14 @@
 import {
   IconCornerDownLeft,
+  IconExternalLink,
   IconLogout,
+  IconPlus,
   IconPower,
   IconRotateClockwise,
   IconSelector,
 } from '../ui/icons';
 import type { TablerIcon } from '../ui/icons';
-import type { ReactNode, Ref } from 'react';
+import { useState, type ReactNode, type Ref } from 'react';
 import {
   Button as AriaButton,
   GridList,
@@ -18,6 +20,7 @@ import {
 } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
 import { IconButton } from '../ui/Button';
+import { ContextMenuPopover } from '../ui/ContextMenu';
 import { Menu, MenuItem, MenuPopover, MenuTrigger } from '../ui/Menu';
 import { SearchField } from '../ui/TextField';
 import { AppIcon } from './AppIcon';
@@ -78,6 +81,8 @@ export interface StartMenuProps {
   menuRef?: Ref<HTMLDivElement>;
   /** Opens an app or a search result by its id. */
   onOpen?: (id: string) => void;
+  /** Puts a shortcut to an app on the desktop; the app tiles' context menu offers it when set. */
+  onAddToDesktop?: (id: string) => void;
   onSignOut?: () => void;
   /** Restart and shut down, for users with that right; sign-out has its own button. */
   power?: boolean;
@@ -97,6 +102,7 @@ export function StartMenu({
   userMenu,
   menuRef,
   onOpen,
+  onAddToDesktop,
   onSignOut,
   power = true,
   onPower,
@@ -108,6 +114,7 @@ export function StartMenu({
     { key: 'files', title: t('start.results.files'), entries: results.files },
   ].filter((group) => group.entries.length > 0);
   const firstId = groups[0]?.entries[0]?.id;
+  const [menu, setMenu] = useState<{ app: AppInfo; x: number; y: number } | null>(null);
   const profile = (
     <AriaButton className={styles.user} aria-label={t('start.userMenu', { name: user.name })}>
       <span className={styles.avatar} aria-hidden>
@@ -148,7 +155,23 @@ export function StartMenu({
 
       {query === '' ? (
         <div className={styles.body}>
-          <section className={styles.section} aria-labelledby="start-apps">
+          <section
+            className={styles.section}
+            aria-labelledby="start-apps"
+            onKeyDown={(event) => {
+              if (event.key !== 'ContextMenu' && !(event.key === 'F10' && event.shiftKey)) {
+                return;
+              }
+              const tile =
+                event.target instanceof Element ? event.target.closest('[data-app]') : null;
+              const app = apps.find((entry) => entry.id === tile?.getAttribute('data-app'));
+              if (tile !== null && app !== undefined) {
+                event.preventDefault();
+                const rect = tile.getBoundingClientRect();
+                setMenu({ app, x: rect.left, y: rect.bottom });
+              }
+            }}
+          >
             <h3 id="start-apps" className={styles.sectionTitle}>
               {t('start.apps')}
             </h3>
@@ -160,7 +183,15 @@ export function StartMenu({
               onAction={(key) => onOpen?.(String(key))}
             >
               {(app) => (
-                <GridListItem className={styles.tile} textValue={app.name}>
+                <GridListItem
+                  className={styles.tile}
+                  textValue={app.name}
+                  onContextMenu={(event) => {
+                    event.preventDefault();
+                    setMenu({ app, x: event.clientX, y: event.clientY });
+                  }}
+                  data-app={app.id}
+                >
                   <AppIcon app={app} size={40} />
                   <span className={styles.tileName}>{app.name}</span>
                 </GridListItem>
@@ -237,6 +268,38 @@ export function StartMenu({
             </ListBox>
           )}
         </div>
+      )}
+
+      {menu !== null && (
+        <ContextMenuPopover
+          x={menu.x}
+          y={menu.y}
+          onClose={() => {
+            setMenu(null);
+          }}
+        >
+          <Menu
+            aria-label={t('start.appMenu', { name: menu.app.name })}
+            autoFocus="first"
+            onAction={(key) => {
+              setMenu(null);
+              if (key === 'add') {
+                onAddToDesktop?.(menu.app.id);
+              } else {
+                onOpen?.(menu.app.id);
+              }
+            }}
+          >
+            <MenuItem id="open" icon={<IconExternalLink size={18} stroke={1.75} />}>
+              {t('start.open')}
+            </MenuItem>
+            {onAddToDesktop !== undefined && (
+              <MenuItem id="add" icon={<IconPlus size={18} stroke={1.75} />}>
+                {t('taskbar.addToDesktop')}
+              </MenuItem>
+            )}
+          </Menu>
+        </ContextMenuPopover>
       )}
 
       <footer className={styles.footer}>

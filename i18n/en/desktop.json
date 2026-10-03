@@ -76,7 +76,10 @@
       "top": "Top",
       "left": "Left",
       "right": "Right"
-    }
+    },
+    "appMenu": "Menu for {name}",
+    "addToDesktop": "Add to desktop",
+    "shortcutAdded": "{name} added to the desktop"
   },
   "start": {
     "label": "Pithyx menu",
@@ -97,7 +100,9 @@
     "shutDown": "Shut down",
     "settingsPath": "Settings › {section}",
     "appDetail": "App",
-    "userMenu": "Account menu for {name}"
+    "userMenu": "Account menu for {name}",
+    "appMenu": "Menu for {name}",
+    "open": "Open"
   },
   "window": {
     "minimize": "Minimize",
