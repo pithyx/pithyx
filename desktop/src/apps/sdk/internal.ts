@@ -199,7 +199,7 @@ function isShareUpdate(value: unknown): boolean {
     isShareId(value) &&
     (value.name === undefined || typeof value.name === 'string') &&
     (value.description === undefined || typeof value.description === 'string') &&
-    [value.smb, value.sftp, value.smbEncrypt].every(
+    [value.smb, value.sftp, value.smbEncrypt, value.webDav, value.ftp].every(
       (flag) => flag === undefined || typeof flag === 'boolean',
     )
   );

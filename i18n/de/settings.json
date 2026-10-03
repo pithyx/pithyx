@@ -104,7 +104,9 @@
       "groups": "Gruppen",
       "users": "Benutzer",
       "everybody": "alle Benutzer",
-      "effective": "bekommt insgesamt: {access}"
+      "effective": "bekommt insgesamt: {access}",
+      "webdav": "Über WebDAV anbieten",
+      "ftp": "Über FTP anbieten"
     },
     "deleteDialog": {
       "title": "{name} löschen",
@@ -213,6 +215,23 @@
       "explain": "Benutzer mit dem Recht zur SSH-Anmeldung bekommen eine Shell auf der Box. Standardmäßig aus.",
       "switch": "Benutzer mit dem Recht zur SSH-Anmeldung mit einer Shell anmelden lassen",
       "warning": "Eine Shell erreicht das ganze System mit den Rechten des Benutzers. Gib das Recht nur Menschen, die es brauchen. Ausschalten beendet SSH für die eigenen Konten des Systems nie."
+    },
+    "webdav": {
+      "title": "WebDAV",
+      "explain": "Freigegebene Ordner als Netzlaufwerk über die Webadresse der Box, zum Beispiel in einem Dateimanager oder einem Sync-Programm. Benutzer melden sich mit ihrem Pithyx-Benutzernamen und Passwort an. Standardmäßig aus.",
+      "switch": "Freigegebene Ordner über WebDAV anbieten",
+      "connect": "Verbinde dich mit",
+      "trash": "Über WebDAV gelöschte Dateien kommen in den Papierkorb des freigegebenen Ordners, und neue Dateien gehören dem Benutzer, der sie geschrieben hat."
+    },
+    "ftp": {
+      "title": "FTP",
+      "explain": "Für Geräte und Programme, die weder SFTP noch WebDAV kennen, etwa Scanner. Verschlüsselte Verbindungen (FTP mit TLS, auch FTPS genannt), unverschlüsseltes FTP nur, wenn du es unten erlaubst, und nur passiver Modus. Standardmäßig aus.",
+      "switch": "Freigegebene Ordner über FTP mit TLS anbieten",
+      "plainSwitch": "Auch unverschlüsseltes FTP erlauben",
+      "plainWarning": "Auf eigene Gefahr: Ohne Verschlüsselung gehen Benutzernamen, Passwörter und Dateien lesbar für alle im Netzwerk über die Leitung. Erlaube es nur für Geräte, die kein TLS können, und nur in einem Netzwerk, dem du vertraust. Nimmst du es wieder zurück, enden alle unverschlüsselten Sitzungen.",
+      "connect": "Verbinde dich mit",
+      "tls": "Wähle in deinem Programm „explizites FTP über TLS“. Die Box hat ein eigenes Zertifikat, daher fragt das Programm einmal, ob es ihm vertrauen soll; vergleiche den Fingerabdruck unten.",
+      "fingerprint": "Fingerabdruck des Zertifikats (SHA-256):"
     }
   },
   "network": {

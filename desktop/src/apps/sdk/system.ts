@@ -110,9 +110,14 @@ export function systemHost(queryClient: QueryClient): HostExtensions {
     'internal.admin.system.setFileServices': {
       validate: (value) =>
         isRecord(value) &&
-        [value.smbEnabled, value.sftpEnabled].every(
-          (flag) => flag === undefined || flag === null || typeof flag === 'boolean',
-        ) &&
+        [
+          value.smbEnabled,
+          value.sftpEnabled,
+          value.sshEnabled,
+          value.webDavEnabled,
+          value.ftpEnabled,
+          value.ftpPlainAllowed,
+        ].every((flag) => flag === undefined || flag === null || typeof flag === 'boolean') &&
         (value.workgroup === undefined ||
           value.workgroup === null ||
           typeof value.workgroup === 'string'),

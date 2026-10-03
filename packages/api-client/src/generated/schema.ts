@@ -286,9 +286,9 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** @description Administrators only. Whether SMB, SFTP and SSH logins are switched on, the SMB workgroup and how each service is doing. */
+        /** @description Administrators only. Whether SMB, SFTP, SSH logins, WebDAV and FTP are switched on, the SMB workgroup, how each service is doing, the FTP port and the FTPS certificate's fingerprint. */
         get: operations["GetFileServices"];
-        /** @description Administrators only. Switches SMB, SFTP or SSH logins on or off and sets the SMB workgroup; the configuration is checked and applied before the answer. SSH logins give users with the SSH login right a shell. Switching SFTP or SSH logins off never stops sshd: it only stops letting Pithyx users in. */
+        /** @description Administrators only. Switches SMB, SFTP or SSH logins on or off and sets the SMB workgroup; the configuration is checked and applied before the answer. SSH logins give users with the SSH login right a shell. Switching SFTP or SSH logins off never stops sshd: it only stops letting Pithyx users in. WebDAV answers at /webdav/, FTP with TLS (FTPS), and without TLS only while plain FTP is allowed, at the users' own risk. */
         put: operations["UpdateFileServices"];
         post?: never;
         delete?: never;
@@ -1799,6 +1799,19 @@ export type components = {
         };
         /** @description The file services of the box. Administrators only. */
         FileServiceSettings: {
+            /** @description How FTP is doing. */
+            ftp: components["schemas"]["FileServiceState"];
+            /** @description Whether FTP is switched on, with TLS (FTPS). Off by default. */
+            ftpEnabled: boolean;
+            /** @description The SHA-256 fingerprint of the FTPS certificate, for clients that ask whether to trust it; null until FTP ran once. */
+            ftpFingerprint: null | string;
+            /** @description Whether FTP also works without TLS, at the users' own risk. Off by default. */
+            ftpPlainAllowed: boolean;
+            /**
+             * Format: int32
+             * @description The FTP control port.
+             */
+            ftpPort: number;
             /** @description How SFTP is doing. */
             sftp: components["schemas"]["FileServiceState"];
             /** @description Whether SFTP is switched on. */
@@ -1809,17 +1822,25 @@ export type components = {
             smbEnabled: boolean;
             /** @description Whether users with the SSH login right may sign in over SSH with a shell. Off by default. */
             sshEnabled: boolean;
+            /** @description Whether WebDAV is switched on, at `/webdav/` of the daemon's address. Off by default. */
+            webDavEnabled: boolean;
             /** @description The SMB workgroup, 1 to 15 letters, digits, dots, dashes and underscores. */
             workgroup: string;
         };
         /** @description Changes of the file services; fields left out stay. */
         FileServiceSettingsRequest: {
+            /** @description Switches FTP (FTPS) on or off. */
+            ftpEnabled?: null | boolean;
+            /** @description Allows or refuses plain FTP without TLS; refusing it ends every plain session. */
+            ftpPlainAllowed?: null | boolean;
             /** @description Switches SFTP on or off. */
             sftpEnabled?: null | boolean;
             /** @description Switches SMB on or off. */
             smbEnabled?: null | boolean;
             /** @description Switches SSH logins with a shell on or off for users with the SSH login right. */
             sshEnabled?: null | boolean;
+            /** @description Switches WebDAV on or off. */
+            webDavEnabled?: null | boolean;
             /** @description A new SMB workgroup. */
             workgroup?: null | string;
         };
@@ -2990,6 +3011,8 @@ export type components = {
             dataset: null | string;
             /** @description Free text for administrators and users, may be empty. */
             description: string;
+            /** @description Whether FTP offers the shared folder. */
+            ftp: boolean;
             /**
              * Format: int64
              * @description Stable id.
@@ -3029,6 +3052,8 @@ export type components = {
              * @description Space the dataset uses with its snapshots; null for a folder share or while the dataset is not there (pool missing).
              */
             usedBytes: null | number;
+            /** @description Whether WebDAV offers the shared folder. */
+            webDav: boolean;
         };
         /** @description Who may use a shared folder. Administrators only. */
         ShareGrants: {
@@ -3091,6 +3116,8 @@ export type components = {
         ShareUpdate: {
             /** @description New description, at most 200 characters, empty to remove it. */
             description?: null | string;
+            /** @description Offers the shared folder over FTP or stops it. */
+            ftp?: null | boolean;
             /** @description New name shown to users, unique like every share name. */
             name?: null | string;
             /** @description Shows the shared folder over SFTP or hides it. */
@@ -3099,6 +3126,8 @@ export type components = {
             smb?: null | boolean;
             /** @description Requires SMB clients to encrypt, or lets them choose. */
             smbEncrypt?: null | boolean;
+            /** @description Offers the shared folder over WebDAV or stops it. */
+            webDav?: null | boolean;
         };
         /** @description One user's effective access to a shared folder. */
         ShareUserAccess: {

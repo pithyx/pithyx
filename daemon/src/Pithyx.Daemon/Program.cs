@@ -75,7 +75,10 @@ builder.Services.AddPithyxUsers(mode == DaemonMode.Real
         Apply: false,
         ShadowPath: Path.Combine(builder.Configuration["PITHYX_FIXTURES"] ?? Path.Combine(builder.Environment.ContentRootPath, "..", "..", "tests", "fixtures"), "etc", "shadow"),
         GroupPath: Path.Combine(builder.Configuration["PITHYX_FIXTURES"] ?? Path.Combine(builder.Environment.ContentRootPath, "..", "..", "tests", "fixtures"), "etc", "group")));
-builder.Services.AddPithyxFileServices(new FileServiceOptions(Apply: mode == DaemonMode.Real));
+builder.Services.AddPithyxFileServices(new FileServiceOptions(
+    Apply: mode == DaemonMode.Real,
+    TlsDirectory: Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "tls"),
+    FtpPort: int.TryParse(builder.Configuration["PITHYX_FTP_PORT"], System.Globalization.CultureInfo.InvariantCulture, out var ftpPort) ? ftpPort : mode == DaemonMode.Real ? 21 : 0));
 builder.Services.AddPithyxFiles();
 builder.Services.AddSingleton<TopicRegistry>();
 builder.Services.AddSingleton<TopicHub>();
@@ -109,6 +112,7 @@ if (!BuildTimeDocument.IsGenerating)
         builder.Services.AddHostedService<LinuxAccountSync>();
         builder.Services.AddHostedService(services => services.GetRequiredService<FileServiceSync>());
     }
+    builder.Services.AddHostedService(services => services.GetRequiredService<Pithyx.Daemon.FileServices.Ftp.FtpServer>());
 }
 builder.Services.AddPithyxOpenApi();
 builder.Services.AddDesktopHosting();
@@ -203,6 +207,7 @@ api.MapLogEndpoints();
 api.MapSystemSettingsEndpoints();
 api.MapPowerEndpoint();
 app.MapRealtime();
+app.MapWebDav();
 app.MapDesktop(paths.DesktopDirectory);
 
 await app.RunAsync();

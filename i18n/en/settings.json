@@ -104,7 +104,9 @@
       "groups": "Groups",
       "users": "Users",
       "everybody": "every user",
-      "effective": "ends up with: {access}"
+      "effective": "ends up with: {access}",
+      "webdav": "Offer over WebDAV",
+      "ftp": "Offer over FTP"
     },
     "deleteDialog": {
       "title": "Delete {name}",
@@ -213,6 +215,23 @@
       "explain": "Users with the right to sign in over SSH get a shell on the box. Off by default.",
       "switch": "Let users with the SSH login right sign in with a shell",
       "warning": "A shell reaches the whole system with the user's rights. Give the right only to people who need it. Switching this off never stops SSH for the system's own accounts."
+    },
+    "webdav": {
+      "title": "WebDAV",
+      "explain": "Shared folders as a network drive over the web address of the box, for example in a file manager or a sync program. Users sign in with their Pithyx user name and password. Off by default.",
+      "switch": "Offer shared folders over WebDAV",
+      "connect": "Connect to",
+      "trash": "Files deleted over WebDAV go to the shared folder's recycle bin, and new files belong to the user who wrote them."
+    },
+    "ftp": {
+      "title": "FTP",
+      "explain": "For devices and programs that know neither SFTP nor WebDAV, such as scanners. Encrypted connections (FTP with TLS, also called FTPS), plain FTP only if you allow it below, and only passive mode. Off by default.",
+      "switch": "Offer shared folders over FTP with TLS",
+      "plainSwitch": "Also allow plain FTP without encryption",
+      "plainWarning": "At your own risk: without encryption, user names, passwords and files cross the network readable for anybody on it. Allow it only for devices that cannot use TLS, and only on a network you trust. Refusing it again ends every unencrypted session.",
+      "connect": "Connect to",
+      "tls": "Choose \"explicit FTP over TLS\" in your program. The box has its own certificate, so the program asks once whether to trust it; compare the fingerprint below.",
+      "fingerprint": "Certificate fingerprint (SHA-256):"
     }
   },
   "network": {

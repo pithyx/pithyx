@@ -38,6 +38,8 @@ public sealed record ResolvedShare(long Id, string Name, string Path, ShareAcces
 /// <param name="Smb">Whether SMB offers the shared folder (dataset shares only).</param>
 /// <param name="Sftp">Whether SFTP shows the shared folder (dataset shares only).</param>
 /// <param name="SmbEncrypt">Whether SMB clients must encrypt.</param>
+/// <param name="WebDav">Whether WebDAV offers the shared folder.</param>
+/// <param name="Ftp">Whether FTP offers the shared folder.</param>
 public sealed record ShareDetails(
     long Id,
     string Name,
@@ -53,7 +55,9 @@ public sealed record ShareDetails(
     bool? RestorePoints,
     bool Smb,
     bool Sftp,
-    bool SmbEncrypt);
+    bool SmbEncrypt,
+    bool WebDav,
+    bool Ftp);
 
 /// <param name="Enabled">Daily restore points, kept 7 days, on or off.</param>
 public sealed record RestorePointsRequest(bool Enabled);
@@ -64,7 +68,9 @@ public sealed record RestorePointsRequest(bool Enabled);
 /// <param name="Smb">Offers the shared folder over SMB or stops it.</param>
 /// <param name="Sftp">Shows the shared folder over SFTP or hides it.</param>
 /// <param name="SmbEncrypt">Requires SMB clients to encrypt, or lets them choose.</param>
-public sealed record ShareUpdate(string? Name = null, string? Description = null, bool? Smb = null, bool? Sftp = null, bool? SmbEncrypt = null);
+/// <param name="WebDav">Offers the shared folder over WebDAV or stops it.</param>
+/// <param name="Ftp">Offers the shared folder over FTP or stops it.</param>
+public sealed record ShareUpdate(string? Name = null, string? Description = null, bool? Smb = null, bool? Sftp = null, bool? SmbEncrypt = null, bool? WebDav = null, bool? Ftp = null);
 
 public enum ShareDataChoice
 {

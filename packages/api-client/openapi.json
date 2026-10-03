@@ -2129,7 +2129,7 @@
         "tags": [
           "FileServices"
         ],
-        "description": "Administrators only. Whether SMB, SFTP and SSH logins are switched on, the SMB workgroup and how each service is doing.",
+        "description": "Administrators only. Whether SMB, SFTP, SSH logins, WebDAV and FTP are switched on, the SMB workgroup, how each service is doing, the FTP port and the FTPS certificate's fingerprint.",
         "operationId": "GetFileServices",
         "responses": {
           "200": {
@@ -2158,7 +2158,7 @@
         "tags": [
           "FileServices"
         ],
-        "description": "Administrators only. Switches SMB, SFTP or SSH logins on or off and sets the SMB workgroup; the configuration is checked and applied before the answer. SSH logins give users with the SSH login right a shell. Switching SFTP or SSH logins off never stops sshd: it only stops letting Pithyx users in.",
+        "description": "Administrators only. Switches SMB, SFTP or SSH logins on or off and sets the SMB workgroup; the configuration is checked and applied before the answer. SSH logins give users with the SSH login right a shell. Switching SFTP or SSH logins off never stops sshd: it only stops letting Pithyx users in. WebDAV answers at /webdav/, FTP with TLS (FTPS), and without TLS only while plain FTP is allowed, at the users' own risk.",
         "operationId": "UpdateFileServices",
         "requestBody": {
           "content": {
@@ -5414,7 +5414,13 @@
           "sftpEnabled",
           "smb",
           "sftp",
-          "sshEnabled"
+          "sshEnabled",
+          "webDavEnabled",
+          "ftpEnabled",
+          "ftpPlainAllowed",
+          "ftp",
+          "ftpPort",
+          "ftpFingerprint"
         ],
         "type": "object",
         "properties": {
@@ -5441,6 +5447,34 @@
           "sshEnabled": {
             "type": "boolean",
             "description": "Whether users with the SSH login right may sign in over SSH with a shell. Off by default."
+          },
+          "webDavEnabled": {
+            "type": "boolean",
+            "description": "Whether WebDAV is switched on, at `/webdav/` of the daemon's address. Off by default."
+          },
+          "ftpEnabled": {
+            "type": "boolean",
+            "description": "Whether FTP is switched on, with TLS (FTPS). Off by default."
+          },
+          "ftpPlainAllowed": {
+            "type": "boolean",
+            "description": "Whether FTP also works without TLS, at the users' own risk. Off by default."
+          },
+          "ftp": {
+            "description": "How FTP is doing.",
+            "$ref": "#/components/schemas/FileServiceState"
+          },
+          "ftpPort": {
+            "type": "integer",
+            "description": "The FTP control port.",
+            "format": "int32"
+          },
+          "ftpFingerprint": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The SHA-256 fingerprint of the FTPS certificate, for clients that ask whether to trust it; null until FTP ran once."
           }
         },
         "description": "The file services of the box. Administrators only."
@@ -5475,6 +5509,27 @@
               "boolean"
             ],
             "description": "Switches SSH logins with a shell on or off for users with the SSH login right."
+          },
+          "webDavEnabled": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Switches WebDAV on or off."
+          },
+          "ftpEnabled": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Switches FTP (FTPS) on or off."
+          },
+          "ftpPlainAllowed": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Allows or refuses plain FTP without TLS; refusing it ends every plain session."
           }
         },
         "description": "Changes of the file services; fields left out stay."
@@ -8230,7 +8285,9 @@
           "restorePoints",
           "smb",
           "sftp",
-          "smbEncrypt"
+          "smbEncrypt",
+          "webDav",
+          "ftp"
         ],
         "type": "object",
         "properties": {
@@ -8317,6 +8374,14 @@
           "smbEncrypt": {
             "type": "boolean",
             "description": "Whether SMB clients must encrypt."
+          },
+          "webDav": {
+            "type": "boolean",
+            "description": "Whether WebDAV offers the shared folder."
+          },
+          "ftp": {
+            "type": "boolean",
+            "description": "Whether FTP offers the shared folder."
           }
         },
         "description": "A share with what the Shared folders page shows. Administrators only."
@@ -8510,6 +8575,20 @@
               "boolean"
             ],
             "description": "Requires SMB clients to encrypt, or lets them choose."
+          },
+          "webDav": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Offers the shared folder over WebDAV or stops it."
+          },
+          "ftp": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Offers the shared folder over FTP or stops it."
           }
         },
         "description": "Changes of a share; fields left out stay. The dataset is never renamed by this."
