@@ -124,7 +124,7 @@ public sealed class FileService(ShareService shares, FolderCache cache, TimeProv
         var written = 0L;
         try
         {
-            using (var handle = Open(root, FsPath.Join(parent, temporary), LinuxFs.WriteOnly | LinuxFs.Create | LinuxFs.Exclusive, 0x1a4))
+            using (var handle = Open(root, FsPath.Join(parent, temporary), LinuxFs.WriteOnly | LinuxFs.Create | LinuxFs.Exclusive, LinuxFs.NewFileMode))
             await using (var file = new FileStream(handle, FileAccess.Write, bufferSize: 0, isAsync: false))
             {
                 owner?.Apply(handle);
