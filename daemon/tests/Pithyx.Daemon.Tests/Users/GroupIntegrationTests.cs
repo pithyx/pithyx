@@ -47,11 +47,13 @@ public sealed class GroupIntegrationTests
         var name = $"pithyxcig{suffix}";
         var renamed = $"pithyxcin{suffix}";
         var member = $"pithyxciu{suffix}";
+        // The integration tests run in parallel; each has ids of its own at the top of the ranges.
         const long Gid = GroupReconciler.MaxGid;
+        const long Uid = AccountReconciler.MaxUid - 1;
         try
         {
             Assert.DoesNotContain(GroupParser.Parse(await File.ReadAllTextAsync("/etc/group", Token)), entry => entry.Gid == Gid);
-            Assert.Equal(0, (await _commands.RunAsync(new CommandRequest("useradd", ["--uid", AccountReconciler.MaxUid.ToString(System.Globalization.CultureInfo.InvariantCulture), "--gid", "users", "--no-create-home", "--shell", AccountReconciler.NoLogin, member]), Token)).ExitCode);
+            Assert.Equal(0, (await _commands.RunAsync(new CommandRequest("useradd", ["--uid", Uid.ToString(System.Globalization.CultureInfo.InvariantCulture), "--gid", "users", "--no-create-home", "--shell", AccountReconciler.NoLogin, member]), Token)).ExitCode);
 
             await ApplyAsync(GroupReconciler.Plan([new WantedGroup(name, Gid, [member])], await GroupsAsync(name)));
             Assert.Equal($"{name}:x:{Gid}:{member}", await GetentAsync(name));

@@ -36,10 +36,12 @@ public sealed class PermissionIntegrationTests
         FileVdevs.RequireEnabled();
         var suffix = RandomNumberGenerator.GetHexString(4, lowercase: true);
         string[] names = [$"pxa{suffix}", $"pxb{suffix}", $"pxc{suffix}"];
-        long[] uids = [AccountReconciler.MaxUid - 2, AccountReconciler.MaxUid - 1, AccountReconciler.MaxUid];
-        const long ReadGid = GroupReconciler.MaxGid - 1;
-        const long WriteGid = GroupReconciler.MaxGid;
-        const long ShareId = 1;
+        // The integration tests run in parallel; each has ids of its own at the top of the ranges.
+        long[] uids = [AccountReconciler.MaxUid - 4, AccountReconciler.MaxUid - 3, AccountReconciler.MaxUid - 2];
+        const long ReadGid = GroupReconciler.MaxGid - 3;
+        const long WriteGid = GroupReconciler.MaxGid - 2;
+        // The installation on the dev VM has groups of its own shares (pithyx-s1-r and so on); this id stays clear of them.
+        const long ShareId = 999_999;
         const long Media = 30500;
         // In RAM and outside the run's own temporary folder, which only root may enter.
         var directory = Directory.CreateDirectory($"/dev/shm/pithyx-rights-{suffix}").FullName;
