@@ -36,6 +36,8 @@ export function ContextMenuPopover({
         }}
         placement="bottom start"
         offset={2}
+        // Overlays that close on an outside press (the start menu) treat popovers with data-trigger as their own.
+        trigger="ContextMenu"
         className={menuStyles.popover}
       >
         {children}

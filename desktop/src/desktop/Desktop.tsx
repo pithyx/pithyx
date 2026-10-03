@@ -62,6 +62,7 @@ import { useSizeClass } from '../wm/sizeClass';
 import { dispatch, openApp, useDesktop } from '../wm/store';
 import { useTopic } from '../realtime/useTopic';
 import type { PowerAction } from './PowerDialog';
+import { announce } from '../wm/announce';
 import { requestClose } from '../wm/commands';
 import { WindowLayer } from '../wm/WindowLayer';
 import { useMinuteClock } from './clock';
@@ -540,6 +541,14 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
     openApp(id);
   }
 
+  const addToDesktop =
+    items === undefined
+      ? undefined
+      : (app: string) => {
+          items.addShortcut(queryClient, app);
+          announce(t('taskbar.shortcutAdded', { name: appName(app) }));
+        };
+
   const apps = appsFor((id) => isAppAllowed(id, permissions)).map((app) => ({
     id: app.id,
     name: appName(app.id),
@@ -584,6 +593,19 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
             }}
             onApp={(id) => {
               dispatch(id === focused ? { type: 'minimize', id } : { type: 'focus', id });
+            }}
+            canAddToDesktop={addToDesktop !== undefined}
+            onAppAction={(id, action) => {
+              if (action === 'close') {
+                void requestClose(id);
+              } else if (action === 'addToDesktop') {
+                const app = useDesktop.getState().windows[id]?.app;
+                if (app !== undefined) {
+                  addToDesktop?.(app);
+                }
+              } else {
+                dispatch(action === 'minimize' ? { type: 'minimize', id } : { type: 'focus', id });
+              }
             }}
             jobs={runningJobs}
             unread={alerts.filter((alert) => !alert.muted).length + unreadNotifications}
@@ -636,6 +658,7 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
                   setPowerAction(action);
                 }}
                 onOpen={open}
+                {...(addToDesktop === undefined ? {} : { onAddToDesktop: addToDesktop })}
                 onSignOut={() => {
                   closeStart(false);
                   logout.mutate();

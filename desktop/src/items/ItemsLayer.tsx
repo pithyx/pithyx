@@ -1,4 +1,4 @@
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import {
   useEffect,
   useEffectEvent,
@@ -39,6 +39,7 @@ import { ItemMenu, RenameDialog, type ItemAction } from './ItemMenus';
 import styles from './ItemsLayer.module.css';
 import { Note } from './Note';
 import { trackPointer } from './pointer';
+import { itemsKey } from './query';
 import {
   changeItems,
   createItem,
@@ -84,6 +85,14 @@ function visibleShortcuts(items: readonly DesktopItem[]): DesktopItem[] {
   return items.filter(
     (item) => item.kind === 'shortcut' && item.app !== null && findApp(item.app) !== undefined,
   );
+}
+
+/** Puts a shortcut to an app in the first free cell of the visible grid, for the taskbar and start menu. */
+export function addShortcut(client: QueryClient, app: string): void {
+  const items = client.getQueryData<DesktopItem[]>(itemsKey) ?? [];
+  const size = gridSize(useDesktop.getState().workspace);
+  const cell = firstFreeCell(placeIcons(visibleShortcuts(items), size), size);
+  createItem(client, { kind: 'shortcut', app, ...cell });
 }
 
 /**

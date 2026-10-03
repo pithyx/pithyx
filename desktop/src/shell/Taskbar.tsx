@@ -1,15 +1,27 @@
-import { IconBell, IconLayoutGrid, IconLoader2 } from '../ui/icons';
-import type { Ref } from 'react';
+import {
+  IconBell,
+  IconLayoutGrid,
+  IconLoader2,
+  IconMinus,
+  IconPlus,
+  IconSquare,
+  IconX,
+} from '../ui/icons';
+import { useState, type Ref } from 'react';
 import { Button as AriaButton, Tooltip, TooltipTrigger } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
+import { ContextMenuPopover } from '../ui/ContextMenu';
 import { Badge } from '../ui/Controls';
 import { cx } from '../ui/cx';
 import { BrandText, LogoMark } from '../ui/Logo';
+import { Menu, MenuItem, MenuSeparator } from '../ui/Menu';
 import tooltipStyles from '../ui/Tooltip.module.css';
 import { AppIcon } from './AppIcon';
 import { TransfersButton } from './TransfersButton';
 import styles from './Taskbar.module.css';
 import type { RunningApp, TaskbarPosition } from './types';
+
+export type TaskbarAppAction = 'minimize' | 'restore' | 'addToDesktop' | 'close';
 
 export interface TaskbarProps {
   position: TaskbarPosition;
@@ -25,6 +37,10 @@ export interface TaskbarProps {
   onNotifications?: () => void;
   onSwitcher?: () => void;
   onApp?: (id: string) => void;
+  /** The choice in a running app's context menu; without it the bar has no menu. */
+  onAppAction?: (id: string, action: TaskbarAppAction) => void;
+  /** Offers "Add to desktop" in the context menu (once the desktop items have loaded). */
+  canAddToDesktop?: boolean;
   startRef?: Ref<HTMLButtonElement>;
   switcherRef?: Ref<HTMLButtonElement>;
   notificationsRef?: Ref<HTMLButtonElement>;
@@ -66,6 +82,8 @@ export function Taskbar({
   onNotifications,
   onSwitcher,
   onApp,
+  onAppAction,
+  canAddToDesktop = false,
   startRef,
   switcherRef,
   notificationsRef,
@@ -76,6 +94,9 @@ export function Taskbar({
   const time = formats.time.format(now);
   const date = formats.date.format(now);
   const longDate = formats.long.format(now);
+  const [menu, setMenu] = useState<{ id: string; x: number; y: number } | null>(null);
+  const menuApp = menu === null ? undefined : apps.find((app) => app.id === menu.id);
+  const icon = { size: 18, stroke: 1.75 };
 
   return (
     <nav
@@ -145,6 +166,25 @@ export function Taskbar({
               data-state={app.state}
               aria-label={t('taskbar.app', { name: app.name, state: app.state })}
               onPress={() => onApp?.(app.id)}
+              onContextMenu={(event) => {
+                if (onAppAction !== undefined) {
+                  event.preventDefault();
+                  setMenu({ id: app.id, x: event.clientX, y: event.clientY });
+                }
+              }}
+              onKeyDown={(event) => {
+                if (
+                  onAppAction !== undefined &&
+                  event.target instanceof Element &&
+                  (event.key === 'ContextMenu' || (event.key === 'F10' && event.shiftKey))
+                ) {
+                  event.preventDefault();
+                  const rect = event.target.getBoundingClientRect();
+                  setMenu({ id: app.id, x: rect.left, y: rect.top });
+                } else {
+                  event.continuePropagation();
+                }
+              }}
             >
               <AppIcon app={app} size={26} />
               <span className={styles.appName}>{app.name}</span>
@@ -153,6 +193,44 @@ export function Taskbar({
           </li>
         ))}
       </ul>
+
+      {menu !== null && menuApp !== undefined && onAppAction !== undefined && (
+        <ContextMenuPopover
+          x={menu.x}
+          y={menu.y}
+          onClose={() => {
+            setMenu(null);
+          }}
+        >
+          <Menu
+            aria-label={t('taskbar.appMenu', { name: menuApp.name })}
+            autoFocus="first"
+            onAction={(key) => {
+              setMenu(null);
+              onAppAction(menuApp.id, String(key) as TaskbarAppAction);
+            }}
+          >
+            {menuApp.state === 'minimized' ? (
+              <MenuItem id="restore" icon={<IconSquare {...icon} />}>
+                {t('window.restore')}
+              </MenuItem>
+            ) : (
+              <MenuItem id="minimize" icon={<IconMinus {...icon} />}>
+                {t('window.minimize')}
+              </MenuItem>
+            )}
+            {canAddToDesktop && (
+              <MenuItem id="addToDesktop" icon={<IconPlus {...icon} />}>
+                {t('taskbar.addToDesktop')}
+              </MenuItem>
+            )}
+            <MenuSeparator />
+            <MenuItem id="close" icon={<IconX {...icon} />}>
+              {t('window.close')}
+            </MenuItem>
+          </Menu>
+        </ContextMenuPopover>
+      )}
 
       <AriaButton
         ref={switcherRef}
