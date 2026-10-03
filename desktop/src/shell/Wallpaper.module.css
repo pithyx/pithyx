@@ -19,30 +19,30 @@
 }
 
 .inside {
-  fill: light-dark(var(--petrol-900), #062c35);
+  fill: light-dark(var(--petrol-700), #062c35);
 }
 
 .left {
-  fill: light-dark(var(--petrol-700), #0a3b47);
+  fill: light-dark(var(--petrol-500), #0a3b47);
 }
 
 .right {
-  fill: light-dark(var(--petrol-500), #0f4b5a);
+  fill: light-dark(var(--petrol-400), #0f4b5a);
 }
 
 .lid {
-  fill: light-dark(var(--amber-500), #5c4521);
+  fill: light-dark(var(--amber-400), #5c4521);
 }
 
 .lidLeft {
-  fill: light-dark(var(--amber-650), #3f2f16);
+  fill: light-dark(var(--amber-600), #3f2f16);
 }
 
 .lidRight {
-  fill: light-dark(var(--amber-600), #4d3a1b);
+  fill: light-dark(var(--amber-500), #4d3a1b);
 }
 
-/* The light theme draws the boxes in the logo's colors without a fade: on the light background it would wash them out. */
+/* The light theme draws the boxes one step lighter than the logo and without a fade: on the light background a fade would wash them out. */
 .cube {
   opacity: var(--depth);
 }
