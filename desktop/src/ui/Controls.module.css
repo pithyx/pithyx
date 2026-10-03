@@ -2,6 +2,16 @@
   display: inline-flex;
 }
 
+/*
+ * React Aria hides the input absolutely; without a positioned box around it, it is placed against the window and,
+ * on a scrolled page, outside the scrolled area. Focusing it then scrolls the whole window away.
+ */
+.field,
+.checkbox,
+.switch {
+  position: relative;
+}
+
 .checkbox,
 .switch {
   display: inline-flex;

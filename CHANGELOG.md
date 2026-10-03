@@ -174,6 +174,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- Checkboxes on a long, scrolled settings page no longer scroll the whole window out of sight when they get the focus (the backup page went white after unchecking a part). The backup file is chosen with a Pithyx button that shows the file name instead of the browser's file field.
 - Saving the time zone without time servers failed with an unexpected error on a box where no time servers had ever been set (the folder of the timesyncd drop-in was missing). A configuration restore that hit such an error answered 500 and did not restart the daemon; every step after the database now reports its failure as a problem, and the daemon always restarts.
 - In the light theme the wallpaper boxes were pale and see-through, so the lids looked muddy and the faces washed out; they now keep the colors of the dark theme, and only the dark theme fades the smaller boxes into the background.
 - In the light theme the wallpaper boxes were pale and see-through, so the lids looked muddy and the faces washed out; they now use opaque petrol and amber one step lighter than the logo, and only the dark theme fades the smaller boxes into the background.

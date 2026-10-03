@@ -1,6 +1,6 @@
 import type { PithyxApp } from '@pithyx/sdk';
 import { useMutation } from '@tanstack/react-query';
-import { useState, type SyntheticEvent } from 'react';
+import { useId, useRef, useState, type SyntheticEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PasswordField as NativePasswordField } from '../../auth/controls';
 import { NewPasswordField } from '../../auth/password/NewPasswordField';
@@ -113,6 +113,8 @@ function CreateForm({ app }: { app: PithyxApp }) {
 
 function RestoreForm({ app }: { app: PithyxApp }) {
   const { t } = useTranslation('settings');
+  const ids = useId();
+  const fileInput = useRef<HTMLInputElement>(null);
   const [file, setFile] = useState<File | null>(null);
   const [password, setPassword] = useState('');
   const inspect = useMutation({
@@ -135,19 +137,37 @@ function RestoreForm({ app }: { app: PithyxApp }) {
           }
         }}
       >
-        <label className={styles.selectField}>
-          <span className={styles.fieldLabel}>{t('backup.restore.file')}</span>
-          <input
-            className={styles.fileInput}
-            type="file"
-            accept=".pithyxbackup"
-            required
-            onChange={(event) => {
-              setFile(event.target.files?.[0] ?? null);
-              inspect.reset();
-            }}
-          />
-        </label>
+        <div className={styles.selectField}>
+          <span id={`${ids}-file`} className={styles.fieldLabel}>
+            {t('backup.restore.file')}
+          </span>
+          <div className={styles.filePicker}>
+            <Button
+              aria-describedby={`${ids}-name`}
+              onPress={() => {
+                fileInput.current?.click();
+              }}
+            >
+              {t('backup.restore.chooseFile')}
+            </Button>
+            <span id={`${ids}-name`} className={styles.muted}>
+              {file?.name ?? t('backup.restore.noFile')}
+            </span>
+            {/* The native picker opens from the button; the input itself stays out of sight and out of the tab order. */}
+            <input
+              ref={fileInput}
+              className="visually-hidden"
+              type="file"
+              accept=".pithyxbackup"
+              tabIndex={-1}
+              aria-labelledby={`${ids}-file`}
+              onChange={(event) => {
+                setFile(event.target.files?.[0] ?? null);
+                inspect.reset();
+              }}
+            />
+          </div>
+        </div>
         <NativePasswordField
           label={t('backup.restore.password')}
           name="backup-restore-password"
@@ -240,7 +260,7 @@ function RestoreChoice({ app, summary }: { app: PithyxApp; summary: BackupSummar
           </dd>
         </div>
       </dl>
-      <fieldset className={styles.form}>
+      <fieldset className={styles.choices}>
         <legend className={styles.fieldLabel}>{t('backup.restore.choose')}</legend>
         {available.map((category) => (
           <div key={category}>
