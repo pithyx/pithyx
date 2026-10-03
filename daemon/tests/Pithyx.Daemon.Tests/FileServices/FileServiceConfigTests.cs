@@ -53,6 +53,18 @@ public sealed class FileServiceConfigTests
     }
 
     [Fact]
+    public void HandsTheHashesOfPithyxAccountsToTheBackupOnly()
+    {
+        var passdb = PassdbParser.Lines(Fixture("samba", "pdbedit-L-w"), AccountReconciler.IsManaged);
+        Assert.Equal(["fx-ada"], passdb.Split('\n', StringSplitOptions.RemoveEmptyEntries).Select(line => line.Split(':')[0]));
+        Assert.Equal(PassdbParser.Parse(passdb), [new PassdbEntry("fx-ada", 20900, true, false)]);
+
+        var hashes = ShadowParser.Hashes(Fixture("etc-passwd", "shadow-handwritten"), new HashSet<string>(["ada", "rita", "tom", "empty"]));
+        Assert.Equal(["ada"], hashes.Keys);
+        Assert.StartsWith("$y$", hashes["ada"], StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void RendersSmbConfWithEveryRuleOfTheShare()
     {
         var config = SmbConfig.Render("WORKGROUP",

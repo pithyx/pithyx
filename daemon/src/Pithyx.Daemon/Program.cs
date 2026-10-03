@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Pithyx.Daemon;
 using Pithyx.Daemon.Auth;
+using Pithyx.Daemon.Backup;
 using Pithyx.Daemon.Commands;
 using Pithyx.Daemon.Database;
 using Pithyx.Daemon.Errors;
@@ -84,6 +85,10 @@ builder.Services.AddSingleton<TopicRegistry>();
 builder.Services.AddSingleton<TopicHub>();
 builder.Services.AddPithyxMonitoring();
 builder.Services.AddPithyxSystemSettings(mode);
+builder.Services.AddSingleton(services => new DaemonRestart(services.GetRequiredService<IHostApplicationLifetime>(), mode, services.GetRequiredService<TimeProvider>()));
+builder.Services.AddPithyxBackup(mode == DaemonMode.Real
+    ? new BackupOptions(Apply: true, TlsDirectory: Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "tls"), SshDirectory: "/etc/ssh", ShadowPath: "/etc/shadow", WorkDirectory: "/run/pithyx/backup")
+    : new BackupOptions(Apply: false, TlsDirectory: Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "tls"), SshDirectory: null, ShadowPath: null, WorkDirectory: Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "backup-work")));
 builder.Services.AddSingleton<DiskInventory>();
 builder.Services.AddSingleton(services => services.GetRequiredService<DiskInventory>().Definition());
 builder.Services.AddSingleton<PoolInventory>();
@@ -206,12 +211,13 @@ api.MapStorageHealthEndpoints();
 api.MapLogEndpoints();
 api.MapSystemSettingsEndpoints();
 api.MapPowerEndpoint();
+api.MapBackupEndpoints();
 app.MapRealtime();
 app.MapWebDav();
 app.MapDesktop(paths.DesktopDirectory);
 
 await app.RunAsync();
-return 0;
+return app.Services.GetRequiredService<DaemonRestart>().Restarting ? DaemonExitCode.RestartRequested : 0;
 
 static bool IsApiRequest(PathString path) => path.StartsWithSegments("/api", StringComparison.OrdinalIgnoreCase);
 

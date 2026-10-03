@@ -1,7 +1,7 @@
 namespace Pithyx.Daemon;
 
 /// <summary>
-/// Exit codes that tell systemd and the dev scripts why the daemon did not start. Codes a restart cannot fix are
+/// Exit codes that tell systemd and the dev scripts why the daemon did not start or stopped. Codes a restart cannot fix are
 /// listed in the unit's <c>RestartPreventExitStatus</c>.
 /// </summary>
 public static class DaemonExitCode
@@ -11,6 +11,12 @@ public static class DaemonExitCode
 
     /// <summary>A newer daemon wrote the database (EX_DATAERR). Only another daemon build or database fixes it.</summary>
     public const int DatabaseNewerThanDaemon = 65;
+
+    /// <summary>
+    /// The daemon stopped on purpose so systemd starts it again (EX_TEMPFAIL), for example after a configuration restore.
+    /// Never in <c>RestartPreventExitStatus</c>.
+    /// </summary>
+    public const int RestartRequested = 75;
 
     /// <summary>A daemon from a checkout would start a second installation on a Pithyx machine (EX_CONFIG).</summary>
     public const int SecondInstallation = 78;

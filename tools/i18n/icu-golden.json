@@ -778,6 +778,44 @@
       "params": {},
       "expected": "ZFS did not answer in time or reported an error, so Pithyx cannot show what this would change. Try again in a moment. If it keeps happening, a pool may be waiting for disks that are gone: see Storage."
     },
+    "system.backup.category_missing": {
+      "params": {
+        "category": "sharedFolders"
+      },
+      "expected": "This backup does not contain the shared folders."
+    },
+    "system.backup.invalid": {
+      "params": {},
+      "expected": "This file is not a Pithyx configuration backup, or it is damaged."
+    },
+    "system.backup.password_wrong": {
+      "params": {},
+      "expected": "The backup password is wrong."
+    },
+    "system.backup.restore_expired": {
+      "params": {},
+      "expected": "The checked backup is no longer available. Choose the file again."
+    },
+    "system.backup.restore_failed": {
+      "params": {},
+      "expected": "The restore could not be applied. Nothing was changed; the details are in the Log Center."
+    },
+    "system.backup.restore_running": {
+      "params": {},
+      "expected": "A restore is already running."
+    },
+    "system.backup.too_large": {
+      "params": {
+        "maxMb": 16
+      },
+      "expected": "This file is larger than a configuration backup can be (at most 16 MB)."
+    },
+    "system.backup.too_new": {
+      "params": {
+        "version": "0.2.0"
+      },
+      "expected": "A newer version of Pithyx (0.2.0) created this backup. Update this box first."
+    },
     "system.internal.unexpected": {
       "params": {},
       "expected": "Something went wrong on the server. The details are in the logs."

@@ -167,6 +167,11 @@
       "description": "Accounts, passwords and administrators",
       "keywords": "user account password administrator login people"
     },
+    "backup": {
+      "title": "Backup and restore",
+      "description": "Save the configuration of this box and restore it",
+      "keywords": "backup restore configuration export import save recover reinstall system disk"
+    },
     "groups": {
       "title": "Groups",
       "description": "Groups, their members and rights",
@@ -292,5 +297,76 @@
     "off": "Off",
     "folder": "Not for folder shares",
     "switchLabel": "Restore points for {name}"
+  },
+  "backup": {
+    "intro": "A configuration backup holds everything needed to set this box up again: users, groups and passwords, shared folders and their rights, file services, storage schedules, regional settings, certificates and SSH keys. It does not hold the files on your pools.",
+    "create": {
+      "title": "Create a backup",
+      "intro": "The backup is downloaded as one file, encrypted with a password you choose. Keep it somewhere other than this box.",
+      "password": "Backup password",
+      "repeat": "Repeat the backup password",
+      "mismatch": "The passwords do not match.",
+      "keepPassword": "Without this password the backup cannot be restored. Pithyx does not keep it, and nobody can recover it.",
+      "submit": "Create and download",
+      "running": "Creating the backup…",
+      "done": "The backup was downloaded as {fileName}."
+    },
+    "restore": {
+      "title": "Restore a backup",
+      "intro": "Choose a backup file and enter its password. Pithyx checks the file first; nothing changes until you confirm.",
+      "file": "Backup file",
+      "password": "Backup password",
+      "check": "Check backup",
+      "checking": "Checking…",
+      "contents": "This backup holds",
+      "createdAt": "Created",
+      "hostName": "From",
+      "version": "Pithyx version",
+      "holds": "Contents",
+      "counts": "{users, plural, one {# user} other {# users}}, {groups, plural, one {# group} other {# groups}}, {sharedFolders, plural, one {# shared folder} other {# shared folders}}",
+      "choose": "What to restore",
+      "warning": "Each part you choose replaces the current one completely. Files on your pools stay untouched. Pithyx restarts afterwards.",
+      "submit": "Restore…",
+      "restarting": "The configuration was restored. Pithyx restarts and this page loads again in a moment.",
+      "problems": "Some steps did not work; the Log Center has the details:"
+    },
+    "confirm": {
+      "title": "Restore the configuration?",
+      "body": "These parts are replaced by the backup:",
+      "signOut": "Restoring the users signs everybody out, you included. Sign in again with an account and password from the backup.",
+      "cancel": "Cancel",
+      "submit": "Restore now",
+      "running": "Restoring…"
+    },
+    "categories": {
+      "users": {
+        "title": "Users and groups",
+        "description": "Accounts, groups, passwords (also for SMB and SFTP), two-factor authentication, the recovery key and personal settings"
+      },
+      "sharedFolders": {
+        "title": "Shared folders and file services",
+        "description": "Shared folders with their rights, and the settings of SMB, SFTP, WebDAV and FTP"
+      },
+      "storage": {
+        "title": "Storage settings",
+        "description": "Restore points of the shared folders, scrub and self-test schedules"
+      },
+      "system": {
+        "title": "System settings",
+        "description": "System language, formats, time zone, time servers and log retention"
+      },
+      "certificates": {
+        "title": "Certificates and keys",
+        "description": "The certificate of this box and its SSH host keys, so clients keep trusting it"
+      }
+    },
+    "steps": {
+      "accounts": "Linux accounts and groups",
+      "linuxPasswords": "Passwords for SFTP and SSH",
+      "sambaPasswords": "Passwords for SMB",
+      "time": "Time zone and time servers",
+      "tls": "Certificates",
+      "sshKeys": "SSH host keys"
+    }
   }
 }
