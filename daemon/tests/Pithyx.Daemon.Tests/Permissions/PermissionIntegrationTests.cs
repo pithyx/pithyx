@@ -3,6 +3,7 @@ using System.Security.Cryptography;
 using Microsoft.Extensions.Logging.Abstractions;
 using Pithyx.Daemon.Commands;
 using Pithyx.Daemon.FileServices;
+using Pithyx.Daemon.Files;
 using Pithyx.Daemon.Permissions;
 using Pithyx.Daemon.Shares;
 using Pithyx.Daemon.Tests.Storage.Integration;
@@ -93,6 +94,17 @@ public sealed class PermissionIntegrationTests
             Assert.False(await AsAsync(names[2], $"ls '{share}'"));
             // What A created inherits the share's ACL, so B reads it too.
             Assert.True(await AsAsync(names[1], $"cat '{share}/a.txt'"));
+
+            // What the daemon creates for Files, WebDAV and FTP keeps the write group's rights: the mask is not cut down.
+            using (var root = LinuxFs.OpenRoot(share))
+            {
+                LinuxFs.OpenBeneath(root, "daemon.txt", LinuxFs.WriteOnly | LinuxFs.Create | LinuxFs.Exclusive, LinuxFs.NewFileMode).Dispose();
+                LinuxFs.MakeDirectory(root, "daemon");
+            }
+            Assert.True(await AsAsync(names[0], $"echo a >> '{share}/daemon.txt' && touch '{share}/daemon/a.txt'"));
+            Assert.True(await AsAsync(names[1], $"cat '{share}/daemon.txt' && ls '{share}/daemon'"));
+            Assert.False(await AsAsync(names[1], $"echo b >> '{share}/daemon.txt'"));
+            Assert.False(await AsAsync(names[2], $"cat '{share}/daemon.txt'"));
 
             // Out of the group: only group members changed, no walk of the files, and A's next login has no access.
             await ApplyGroupsAsync(aInGroup: false);
