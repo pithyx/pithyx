@@ -70,12 +70,20 @@ public sealed class UserApiTests : IDisposable
             null,
             async context =>
             {
-                using var registration = context.Cancellation.Register(() => cancelled.TrySetResult());
                 running.TrySetResult();
-                await Task.Delay(Timeout.Infinite, context.Cancellation);
+                // Not a registration on the token: the delay's continuation can run inline and dispose it before its callback.
+                try
+                {
+                    await Task.Delay(Timeout.Infinite, context.Cancellation);
+                }
+                catch (OperationCanceledException)
+                {
+                    cancelled.TrySetResult();
+                    throw;
+                }
             },
             Token);
-        // A job cancelled before its body ran never registers the callback; delete only once it runs.
+        // A job cancelled before its body ran never reaches the delay; delete only once it runs.
         await running.Task.WaitAsync(TimeSpan.FromSeconds(10), Token);
         Assert.Single(store.Of(ritaId));
 
