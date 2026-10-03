@@ -19,7 +19,7 @@ Rules for `daemon/`; the root `CLAUDE.md` applies as well.
 - No read request ever spawns a process. Actions that need a CLI (for example `docker compose`) run as jobs with progress. `SystemStateService` keeps disks, pools, shares and containers in memory, updated by events (udev, zed, Docker) and polling only where no events exist.
 - Derived, expensive data uses `HybridCache` without L2. Anything that must survive a restart goes to SQLite.
 - System config files (`smb.conf`, `/etc/exports`, users) are generated from SQLite and reconciled on start and change. Generated files carry a "Managed by pithyx" header. Manual overrides go into include files that are never touched.
-- The system disk is disposable. Everything needed to rebuild it is in the config backup: `pithyx.db`, Samba passdb, TLS certs, SSH host keys.
+- The system disk is disposable. Everything needed to rebuild it is in the config backup (D293, `Backup/`): `pithyx.db`, Samba passdb, TLS certs, SSH host keys. Every new table belongs to a backup part or is runtime state (`BackupDatabase`).
 - App data and Docker volumes live on a pool under `/<pool>/.pithyx/`, never on the system disk.
 - Logs of the daemon, the system services (one `journalctl --follow`, never a process per request) and the apps go into `logs.db` on the system disk in batches, never one write per line. The archive on a pool is optional and copied about once a day.
 
@@ -33,7 +33,8 @@ Rules for `daemon/`; the root `CLAUDE.md` applies as well.
 /var/log/pithyx/     logs: daemon.json files and logs.db (the Log Center, capped at 4 GB)
 /run/pithyx/         API socket
 /run/pithyx/sftp/    SFTP views: one chroot per user with bind mounts of its shared folders, rebuilt at start
-/<pool>/.pithyx/     app data, volumes, config backups
+/run/pithyx/backup/  a checked configuration backup's database until it is restored (tmpfs, never on a disk)
+/<pool>/.pithyx/     app data, volumes
 /<pool>/.pithyx/cache/  the pool's thumbnails and other derived data (<pool>/pithyx/cache, hidden)
 /<pool>/.pithyx/system/logs/  the optional log archive (archive.db)
 ```

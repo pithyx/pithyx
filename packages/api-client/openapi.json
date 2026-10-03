@@ -4102,6 +4102,130 @@
           }
         }
       }
+    },
+    "/api/system/backup": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. The configuration of the box (users, groups, passwords, shared folders, rights, file services, storage schedules, regional settings, certificates and SSH host keys) as one file, encrypted with the password. Files on the pools are not part of it.",
+        "operationId": "CreateConfigBackup",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateBackupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/backup/inspect": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Decrypts and checks a backup file and keeps it for 15 minutes for a restore by the same administrator; returns what it holds.",
+        "operationId": "InspectConfigBackup",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InspectBackupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackupSummary"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/backup/restore": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Replaces the chosen parts of the configuration with those of the checked backup, then restarts the daemon. Restoring users signs everybody out.",
+        "operationId": "RestoreConfigBackup",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RestoreBackupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RestoreResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4282,6 +4406,71 @@
         },
         "description": "How the desktop looks for the user on every device. The theme (light, dark) is a choice of each device."
       },
+      "BackupCategory": {
+        "enum": [
+          "users",
+          "sharedFolders",
+          "storage",
+          "system",
+          "certificates"
+        ],
+        "description": "A part of the configuration that can be restored on its own."
+      },
+      "BackupSummary": {
+        "required": [
+          "restoreId",
+          "createdAt",
+          "hostName",
+          "version",
+          "categories",
+          "users",
+          "groups",
+          "sharedFolders"
+        ],
+        "type": "object",
+        "properties": {
+          "restoreId": {
+            "type": "string",
+            "description": "Names the checked backup in the restore request."
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "When the backup was created, UTC.",
+            "format": "date-time"
+          },
+          "hostName": {
+            "type": "string",
+            "description": "The host name of the box that created it."
+          },
+          "version": {
+            "type": "string",
+            "description": "The Pithyx version that created it."
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BackupCategory"
+            },
+            "description": "What it holds and can restore."
+          },
+          "users": {
+            "type": "integer",
+            "description": "Users in the backup.",
+            "format": "int32"
+          },
+          "groups": {
+            "type": "integer",
+            "description": "Groups in the backup, without the built-in one.",
+            "format": "int32"
+          },
+          "sharedFolders": {
+            "type": "integer",
+            "description": "Shared folders in the backup.",
+            "format": "int32"
+          }
+        },
+        "description": "A backup the daemon decrypted and checked, kept for a restore for 15 minutes."
+      },
       "ClientMessage": {
         "required": [
           "type",
@@ -4327,6 +4516,18 @@
         "properties": {
           "deviceId": {
             "type": "string"
+          }
+        }
+      },
+      "CreateBackupRequest": {
+        "required": [
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "string",
+            "description": "The backup password: needed to restore, never stored. The same rules as for an account password."
           }
         }
       },
@@ -5203,6 +5404,14 @@
           "storage.volume.size_invalid",
           "storage.volume.too_large",
           "storage.zfs.unavailable",
+          "system.backup.category_missing",
+          "system.backup.invalid",
+          "system.backup.password_wrong",
+          "system.backup.restore_expired",
+          "system.backup.restore_failed",
+          "system.backup.restore_running",
+          "system.backup.too_large",
+          "system.backup.too_new",
           "system.internal.unexpected",
           "system.origin.forbidden",
           "system.time.apply_failed",
@@ -6134,6 +6343,23 @@
           }
         },
         "description": "A grant that reaches a user through one of its groups."
+      },
+      "InspectBackupRequest": {
+        "required": [
+          "archive",
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "archive": {
+            "type": "string",
+            "description": "The backup file, base64."
+          },
+          "password": {
+            "type": "string",
+            "description": "The password it was created with."
+          }
+        }
       },
       "Job": {
         "required": [
@@ -8095,6 +8321,26 @@
         },
         "description": "Snapshot of `system/resources`: what the box is and the last hour, as far as someone watched it."
       },
+      "RestoreBackupRequest": {
+        "required": [
+          "restoreId",
+          "categories"
+        ],
+        "type": "object",
+        "properties": {
+          "restoreId": {
+            "type": "string",
+            "description": "From the summary of the checked backup."
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BackupCategory"
+            },
+            "description": "The parts to restore; each replaces the current one completely."
+          }
+        }
+      },
       "RestorePointsRequest": {
         "required": [
           "enabled"
@@ -8104,6 +8350,52 @@
           "enabled": {
             "type": "boolean",
             "description": "Daily restore points, kept 7 days, on or off."
+          }
+        }
+      },
+      "RestoreProblem": {
+        "required": [
+          "category",
+          "step"
+        ],
+        "type": "object",
+        "properties": {
+          "category": {
+            "description": "The part it belongs to.",
+            "$ref": "#/components/schemas/BackupCategory"
+          },
+          "step": {
+            "type": "string",
+            "description": "`accounts` (Linux accounts and groups), `linuxPasswords`, `sambaPasswords`, `time`,\n`tls` or `sshKeys`."
+          }
+        },
+        "description": "A step of a restore that did not work; the rest was restored."
+      },
+      "RestoreResult": {
+        "required": [
+          "restored",
+          "problems",
+          "restarting"
+        ],
+        "type": "object",
+        "properties": {
+          "restored": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BackupCategory"
+            },
+            "description": "The parts that were restored."
+          },
+          "problems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RestoreProblem"
+            },
+            "description": "Steps that failed; details are in the Log Center."
+          },
+          "restarting": {
+            "type": "boolean",
+            "description": "The daemon restarts in a few seconds to load the restored configuration."
           }
         }
       },

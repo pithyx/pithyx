@@ -314,6 +314,16 @@
     }
   },
   "system": {
+    "backup": {
+      "category_missing": "This backup does not contain {category, select, users {the users} sharedFolders {the shared folders} storage {the storage settings} system {the system settings} certificates {the certificates and keys} other {{category}}}.",
+      "invalid": "This file is not a Pithyx configuration backup, or it is damaged.",
+      "password_wrong": "The backup password is wrong.",
+      "restore_expired": "The checked backup is no longer available. Choose the file again.",
+      "restore_failed": "The restore could not be applied. Nothing was changed; the details are in the Log Center.",
+      "restore_running": "A restore is already running.",
+      "too_large": "This file is larger than a configuration backup can be (at most {maxMb} MB).",
+      "too_new": "A newer version of Pithyx ({version}) created this backup. Update this box first."
+    },
     "internal": {
       "unexpected": "Something went wrong on the server. The details are in the logs."
     },

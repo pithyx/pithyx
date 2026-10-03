@@ -55,6 +55,10 @@ public sealed class PasswordHasher : IDisposable
     public async Task WasteTimeAsync(string password, CancellationToken cancellationToken) =>
         await VerifyAsync(password, await _dummyHash.Value, cancellationToken);
 
+    /// <summary>A 32-byte key from a password, for example to encrypt a configuration backup; shares the hash slots.</summary>
+    public Task<byte[]> DeriveKeyAsync(string password, byte[] salt, long memoryKib, long passes, CancellationToken cancellationToken) =>
+        DeriveAsync(password, salt, memoryKib, passes, cancellationToken);
+
     public void Dispose() => _slots.Dispose();
 
     private async Task<byte[]> DeriveAsync(string password, byte[] salt, long memoryKib, long passes, CancellationToken cancellationToken)

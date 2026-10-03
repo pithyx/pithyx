@@ -34,6 +34,7 @@ test('Settings opens as an overview of categories with a search', async ({ page 
     'Info Center',
     'Network',
     'Regional settings',
+    'Backup and restore',
     'Shared folders',
     'File services',
     'Users',
@@ -223,4 +224,50 @@ test('groups and their rights reach their members, and the editors are accessibl
   ).effective;
   expect(effective.rights).toContain('right:power');
   expect(effective.protocols).toEqual(['protocol:smb', 'protocol:ftp']);
+});
+
+test('a configuration backup downloads encrypted and is checked before a restore', async ({
+  page,
+}, testInfo) => {
+  const settings = await openSettings(page);
+  await settings.getByRole('button', { name: /^Backup and restore/ }).click();
+  await expect(
+    settings.getByRole('heading', { name: 'Backup and restore', level: 2 }),
+  ).toBeVisible();
+  expect(await violations(page)).toEqual([]);
+
+  const password = 'orange tractor sunset';
+  await settings.getByLabel('Backup password', { exact: true }).first().fill(password);
+  await settings.getByLabel('Repeat the backup password').fill('something else');
+  await settings.getByRole('button', { name: 'Create and download' }).click();
+  await expect(settings.getByText('The passwords do not match.')).toBeVisible();
+  await settings.getByLabel('Repeat the backup password').fill(password);
+  const download = page.waitForEvent('download');
+  await settings.getByRole('button', { name: 'Create and download' }).click();
+  const file = await download;
+  expect(file.suggestedFilename()).toMatch(/^pithyx-config-.+\.pithyxbackup$/);
+  const path = testInfo.outputPath(file.suggestedFilename());
+  await file.saveAs(path);
+  await expect(settings.getByRole('status')).toContainText(file.suggestedFilename());
+
+  const restore = settings.getByRole('region', { name: 'Restore a backup' });
+  await restore.getByLabel('Backup file').setInputFiles(path);
+  await restore.getByLabel('Backup password').fill('not the password');
+  await restore.getByRole('button', { name: 'Check backup' }).click();
+  await expect(restore.getByText('The backup password is wrong.')).toBeVisible();
+  await restore.getByLabel('Backup password').fill(password);
+  await restore.getByRole('button', { name: 'Check backup' }).click();
+  await expect(restore.getByText('This backup holds')).toBeVisible();
+  expect(await violations(page)).toEqual([]);
+
+  // Only the storage settings: the other tests share this daemon and its users.
+  for (const part of ['Users and groups', 'Shared folders and file services', 'System settings']) {
+    await restore.getByRole('checkbox', { name: part }).uncheck();
+  }
+  await restore.getByRole('button', { name: 'Restore…' }).click();
+  const confirm = page.getByRole('dialog', { name: 'Restore the configuration?' });
+  await expect(confirm.getByText('Storage settings')).toBeVisible();
+  await expect(confirm.getByText(/signs everybody out/)).toHaveCount(0);
+  await confirm.getByRole('button', { name: 'Restore now' }).click();
+  await expect(restore.getByText(/The configuration was restored/)).toBeVisible();
 });
