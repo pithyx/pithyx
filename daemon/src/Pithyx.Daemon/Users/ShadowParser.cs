@@ -2,7 +2,10 @@ using System.Globalization;
 
 namespace Pithyx.Daemon.Users;
 
-/// <summary>Reads the account expiry and whether a password is set from <c>/etc/shadow</c>; the password field never leaves the parser.</summary>
+/// <summary>
+/// Reads the account expiry and whether a password is set from <c>/etc/shadow</c>. The password field leaves the parser
+/// only through <see cref="Hashes"/>, for the encrypted configuration backup.
+/// </summary>
 public static class ShadowParser
 {
     /// <summary>The names of accounts with an expiry date set (field 8), which Pithyx sets only to deactivate an account.</summary>
@@ -39,5 +42,25 @@ public static class ShadowParser
             }
         }
         return names;
+    }
+
+    /// <summary>
+    /// The password field of each named account, as <c>chpasswd -e</c> takes it back. Only for the configuration backup,
+    /// which encrypts it; accounts without a usable password are left out.
+    /// </summary>
+    public static IReadOnlyDictionary<string, string> Hashes(string text, IReadOnlySet<string> names)
+    {
+        ArgumentNullException.ThrowIfNull(text);
+        ArgumentNullException.ThrowIfNull(names);
+        var hashes = new Dictionary<string, string>(StringComparer.Ordinal);
+        foreach (var line in text.Split('\n'))
+        {
+            var fields = line.TrimEnd('\r').Split(':');
+            if (fields.Length == 9 && names.Contains(fields[0]) && fields[1].Length > 0 && fields[1][0] is not ('!' or '*'))
+            {
+                hashes[fields[0]] = fields[1];
+            }
+        }
+        return hashes;
     }
 }

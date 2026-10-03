@@ -535,6 +535,38 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string StorageVdevNotRaidz = "storage.vdev.not_raidz";
 
+    /// <summary>The backup does not hold a part that should be restored; <c>params.category</c> names it.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string SystemBackupCategoryMissing = "system.backup.category_missing";
+
+    /// <summary>The file is no Pithyx configuration backup, or it is damaged.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string SystemBackupInvalid = "system.backup.invalid";
+
+    /// <summary>The backup password is wrong.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string SystemBackupPasswordWrong = "system.backup.password_wrong";
+
+    /// <summary>The checked backup is gone: it expired after 15 minutes, another one was checked, or the daemon restarted.</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string SystemBackupRestoreExpired = "system.backup.restore_expired";
+
+    /// <summary>The restore would leave the database inconsistent; nothing was changed.</summary>
+    [ErrorStatus(HttpStatusCode.InternalServerError)]
+    public const string SystemBackupRestoreFailed = "system.backup.restore_failed";
+
+    /// <summary>Another restore is running.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string SystemBackupRestoreRunning = "system.backup.restore_running";
+
+    /// <summary>The file is larger than any configuration backup; <c>params.maxMb</c> is the limit.</summary>
+    [ErrorStatus(HttpStatusCode.RequestEntityTooLarge)]
+    public const string SystemBackupTooLarge = "system.backup.too_large";
+
+    /// <summary>A newer Pithyx created the backup; <c>params.version</c> is its version. Update first.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string SystemBackupTooNew = "system.backup.too_new";
+
     [ErrorStatus(HttpStatusCode.InternalServerError)]
     public const string SystemInternalUnexpected = "system.internal.unexpected";
 

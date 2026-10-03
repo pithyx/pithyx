@@ -29,7 +29,7 @@ public sealed partial class LogService(
     public const int MaxDataLength = 1000;
     public const int MaxExportEntries = 1_000_000;
 
-    private const string SettingsKey = "logs.settings";
+    public const string SettingsKey = "logs.settings";
 
     private LogSettings? _settings;
 

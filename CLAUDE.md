@@ -36,7 +36,7 @@ Update in the same PR whenever the state changes. Last updated: 2026-10-03.
 - Migrations on `dev`: 0001 to 0021 (0019 groups, 0020 grants, 0021 WebDAV and FTP). Merged history: `git log origin/dev`. 7484 has test pool `pithyxtestfs` (VYXTEST01) with shared folder "FS Test" for `e2e-user` (read-write, SFTP).
 - The owner widened v0.1 on 2026-10-03 (`TODO.md`, "Scope of v0.1"): groups, the permission model, WebDAV and FTP, changing the network. Open, one PR at a time in this order: A groups (step 10, #70, merged), B permission model (step 11, #71, merged), C WebDAV and FTP (step 12, `feature/webdav-ftp`, D291), D network (step 14.2, label `e2e`; nothing on the host changes until the owner decides the test method, D110).
 - Next after D: verify every "Release 0.1" item in `TODO.md` on 7484 in the browser (Playwright and screenshots as `e2e-admin`/`e2e-user`), fix failures, then report: deployed commit and `dev` HEAD, runner status per job, a table (item, status, proof), merged PRs with migration numbers, the rename grep (D279, only `VYXTEST` allowed), open problems with cause and proposal.
-- Decisions D269 to D291 are on `dev`; next free number D292. The decision log at the end of `TODO.md` conflicts on every merge; keep all entries in number order.
+- Decisions D269 to D291 and D293 (configuration backup) are on `dev`; D292 belongs to `feature/network`; next free number D294. The decision log at the end of `TODO.md` conflicts on every merge; keep all entries in number order.
 
 ## Known pitfalls
 

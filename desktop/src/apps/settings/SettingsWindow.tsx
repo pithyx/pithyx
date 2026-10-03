@@ -1,6 +1,7 @@
 import { useQueryClient } from '@tanstack/react-query';
 import type { AppProps } from '../registry';
 import { CoreSdkApp } from '../sdk/CoreSdkApp';
+import { backupHost } from '../sdk/backup';
 import { adminStorageHost } from '../sdk/internal';
 import { systemHost } from '../sdk/system';
 import { usersHost } from '../sdk/users';
@@ -17,7 +18,12 @@ export function SettingsWindow({ windowId }: AppProps) {
       internal={(emit) => {
         const storage = adminStorageHost(emit);
         return {
-          extensions: { ...storage.extensions, ...usersHost(), ...systemHost(queryClient) },
+          extensions: {
+            ...storage.extensions,
+            ...usersHost(),
+            ...systemHost(queryClient),
+            ...backupHost(),
+          },
           close: storage.close,
         };
       }}

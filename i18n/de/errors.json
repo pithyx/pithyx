@@ -314,6 +314,16 @@
     }
   },
   "system": {
+    "backup": {
+      "category_missing": "Dieses Backup enthält {category, select, users {die Benutzer} sharedFolders {die freigegebenen Ordner} storage {die Speicher-Einstellungen} system {die Systemeinstellungen} certificates {die Zertifikate und Schlüssel} other {{category}}} nicht.",
+      "invalid": "Diese Datei ist kein Pithyx-Konfigurationsbackup oder sie ist beschädigt.",
+      "password_wrong": "Das Backup-Passwort ist falsch.",
+      "restore_expired": "Das geprüfte Backup ist nicht mehr verfügbar. Wähle die Datei noch einmal aus.",
+      "restore_failed": "Die Wiederherstellung konnte nicht angewendet werden. Es wurde nichts geändert; die Details stehen im Log Center.",
+      "restore_running": "Es läuft bereits eine Wiederherstellung.",
+      "too_large": "Diese Datei ist größer, als ein Konfigurationsbackup sein kann (höchstens {maxMb} MB).",
+      "too_new": "Eine neuere Pithyx-Version ({version}) hat dieses Backup erstellt. Aktualisiere zuerst diese Box."
+    },
     "internal": {
       "unexpected": "Auf dem Server ist ein Fehler aufgetreten. Die Details stehen in den Logs."
     },

@@ -1190,6 +1190,57 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/system/backup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. The configuration of the box (users, groups, passwords, shared folders, rights, file services, storage schedules, regional settings, certificates and SSH host keys) as one file, encrypted with the password. Files on the pools are not part of it. */
+        post: operations["CreateConfigBackup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/backup/inspect": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Decrypts and checks a backup file and keeps it for 15 minutes for a restore by the same administrator; returns what it holds. */
+        post: operations["InspectConfigBackup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/backup/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Replaces the chosen parts of the configuration with those of the checked backup, then restarts the daemon. Restoring users signs everybody out. */
+        post: operations["RestoreConfigBackup"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/system/network": {
         parameters: {
             query?: never;
@@ -1421,6 +1472,42 @@ export type components = {
             title: string;
             tone?: null | components["schemas"]["NotificationTone"];
         };
+        /**
+         * @description A part of the configuration that can be restored on its own.
+         * @enum {unknown}
+         */
+        BackupCategory: "users" | "sharedFolders" | "storage" | "system" | "certificates";
+        /** @description A backup the daemon decrypted and checked, kept for a restore for 15 minutes. */
+        BackupSummary: {
+            /** @description What it holds and can restore. */
+            categories: components["schemas"]["BackupCategory"][];
+            /**
+             * Format: date-time
+             * @description When the backup was created, UTC.
+             */
+            createdAt: string;
+            /**
+             * Format: int32
+             * @description Groups in the backup, without the built-in one.
+             */
+            groups: number;
+            /** @description The host name of the box that created it. */
+            hostName: string;
+            /** @description Names the checked backup in the restore request. */
+            restoreId: string;
+            /**
+             * Format: int32
+             * @description Shared folders in the backup.
+             */
+            sharedFolders: number;
+            /**
+             * Format: int32
+             * @description Users in the backup.
+             */
+            users: number;
+            /** @description The Pithyx version that created it. */
+            version: string;
+        };
         /** @description A message from the client: `sub` or `unsub` for a topic or pattern. */
         ClientMessage: {
             /** @description Chosen by the client; echoed in the ack, snapshots and errors that answer this message. */
@@ -1434,6 +1521,10 @@ export type components = {
         ConflictPolicy: "fail" | "skip" | "overwrite" | "rename" | null;
         CopyLayoutRequest: {
             deviceId: string;
+        };
+        CreateBackupRequest: {
+            /** @description The backup password: needed to restore, never stored. The same rules as for an account password. */
+            password: string;
         };
         /** @enum {unknown} */
         DaemonMode: "real" | "simulated";
@@ -1726,7 +1817,7 @@ export type components = {
             }[];
         };
         /** @enum {string} */
-        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.account.disabled" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.desktop.not_allowed" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fileservices.service.unavailable" | "fileservices.workgroup.invalid" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.share.unavailable" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "logs.app.invalid" | "logs.archive.pool_unavailable" | "logs.batch.too_large" | "logs.query.invalid" | "logs.settings.invalid" | "notifications.message.invalid" | "notifications.notification.not_found" | "permissions.grant.invalid" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.command.timed_out" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.disks_missing" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.pool.suspended" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "storage.zfs.unavailable" | "system.internal.unexpected" | "system.origin.forbidden" | "system.time.apply_failed" | "system.time.server_invalid" | "system.time.servers_too_many" | "system.time.zone_invalid" | "users.account.refused" | "users.gid.exhausted" | "users.group.builtin" | "users.group.description_invalid" | "users.group.exists" | "users.group.name_invalid" | "users.group.name_reserved" | "users.group.not_found" | "users.group.refused" | "users.uid.exhausted" | "users.user.exists" | "users.user.last_admin" | "users.user.not_found" | "users.user.self";
+        ErrorCode: "app.permission.denied" | "app.storage.too_large" | "auth.account.disabled" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.desktop.not_allowed" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fileservices.service.unavailable" | "fileservices.workgroup.invalid" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.share.unavailable" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "jobs.job.not_found" | "logs.app.invalid" | "logs.archive.pool_unavailable" | "logs.batch.too_large" | "logs.query.invalid" | "logs.settings.invalid" | "notifications.message.invalid" | "notifications.notification.not_found" | "permissions.grant.invalid" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.command.timed_out" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.disks_missing" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.pool.suspended" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "storage.zfs.unavailable" | "system.backup.category_missing" | "system.backup.invalid" | "system.backup.password_wrong" | "system.backup.restore_expired" | "system.backup.restore_failed" | "system.backup.restore_running" | "system.backup.too_large" | "system.backup.too_new" | "system.internal.unexpected" | "system.origin.forbidden" | "system.time.apply_failed" | "system.time.server_invalid" | "system.time.servers_too_many" | "system.time.zone_invalid" | "users.account.refused" | "users.gid.exhausted" | "users.group.builtin" | "users.group.description_invalid" | "users.group.exists" | "users.group.name_invalid" | "users.group.name_reserved" | "users.group.not_found" | "users.group.refused" | "users.uid.exhausted" | "users.user.exists" | "users.user.last_admin" | "users.user.not_found" | "users.user.self";
         /** @description A failed client message. `id` is empty when the message could not be parsed. */
         ErrorMessage: {
             code: components["schemas"]["ErrorCode"];
@@ -2077,6 +2168,12 @@ export type components = {
             level: components["schemas"]["GrantLevel"];
             /** @description The resource, as in GrantEntry. */
             resource: string;
+        };
+        InspectBackupRequest: {
+            /** @description The backup file, base64. */
+            archive: string;
+            /** @description The password it was created with. */
+            password: string;
         };
         /** @description A long operation of a user, such as copying files. Also the data of the `jobs/{id}` topics. */
         Job: {
@@ -2950,9 +3047,33 @@ export type components = {
              */
             memoryTotalBytes: number;
         };
+        RestoreBackupRequest: {
+            /** @description The parts to restore; each replaces the current one completely. */
+            categories: components["schemas"]["BackupCategory"][];
+            /** @description From the summary of the checked backup. */
+            restoreId: string;
+        };
         RestorePointsRequest: {
             /** @description Daily restore points, kept 7 days, on or off. */
             enabled: boolean;
+        };
+        /** @description A step of a restore that did not work; the rest was restored. */
+        RestoreProblem: {
+            /** @description The part it belongs to. */
+            category: components["schemas"]["BackupCategory"];
+            /**
+             * @description `accounts` (Linux accounts and groups), `linuxPasswords`, `sambaPasswords`, `time`,
+             *     `tls` or `sshKeys`.
+             */
+            step: string;
+        };
+        RestoreResult: {
+            /** @description Steps that failed; details are in the Log Center. */
+            problems: components["schemas"]["RestoreProblem"][];
+            /** @description The daemon restarts in a few seconds to load the restored configuration. */
+            restarting: boolean;
+            /** @description The parts that were restored. */
+            restored: components["schemas"]["BackupCategory"][];
         };
         SavedLayout: {
             /** @description The layout now saved for this device. */
@@ -6637,6 +6758,105 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SnapshotScheduleList"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    CreateConfigBackup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateBackupRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/octet-stream": string;
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    InspectConfigBackup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["InspectBackupRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BackupSummary"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    RestoreConfigBackup: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RestoreBackupRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RestoreResult"];
                 };
             };
             /** @description Problem details with a stable error code. */

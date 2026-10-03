@@ -132,6 +132,9 @@ public sealed partial class EndpointMatrixTests : IDisposable
         ["SetSystemTime"] = Need.Admin,
         ["GetSystemRegion"] = Need.Admin,
         ["SetSystemRegion"] = Need.Admin,
+        ["CreateConfigBackup"] = Need.Admin,
+        ["InspectConfigBackup"] = Need.Admin,
+        ["RestoreConfigBackup"] = Need.Admin,
     };
 
     private readonly DaemonFactory _factory = new();
