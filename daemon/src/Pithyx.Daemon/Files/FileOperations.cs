@@ -558,7 +558,7 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
         try
         {
             using (var input = Child(fromFolder, name, LinuxFs.ReadOnly))
-            using (var output = Child(toFolder, temporary, LinuxFs.WriteOnly | LinuxFs.Create | LinuxFs.Exclusive, 0x1a4))
+            using (var output = Child(toFolder, temporary, LinuxFs.WriteOnly | LinuxFs.Create | LinuxFs.Exclusive, LinuxFs.NewFileMode))
             {
                 run.Owner?.Apply(output);
                 CopyContent(input, output, run);
