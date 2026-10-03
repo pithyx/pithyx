@@ -410,15 +410,20 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   // the app's windows and leaves the start menu at once.
   useLayoutEffect(() => {
     setAppPermissions(permissions);
-    queryClient.setQueryData<User>(queryKeys.session, (current) =>
-      current === undefined ? current : { ...current, isAdmin: permissions.admin, permissions },
-    );
+    // Only a real change of rights touches the session, so a sign-in or reload renders once.
+    if (permissions !== user.permissions) {
+      queryClient.setQueryData<User>(queryKeys.session, (current) =>
+        current === undefined || JSON.stringify(current.permissions) === JSON.stringify(permissions)
+          ? current
+          : { ...current, isAdmin: permissions.admin, permissions },
+      );
+    }
     for (const window of Object.values(useDesktop.getState().windows)) {
       if (!isAppAllowed(window.app, permissions)) {
         dispatch({ type: 'close', id: window.id });
       }
     }
-  }, [permissions, queryClient]);
+  }, [permissions, queryClient, user.permissions]);
   useLayoutPersistence();
   useQuery(itemsQuery);
   const items = useItemsModule();

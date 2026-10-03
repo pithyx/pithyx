@@ -196,7 +196,7 @@ test('groups and their rights reach their members, and the editors are accessibl
   await groups.getByRole('button', { name: 'Rights of the group e2e-media' }).click();
   const groupRights = page.getByRole('dialog', { name: 'Rights of the group e2e-media' });
   await groupRights.getByText('FTP', { exact: true }).click();
-  await expect(groupRights.getByRole('checkbox', { name: 'FTP' })).toBeChecked();
+  await expect(groupRights.getByRole('checkbox', { name: 'FTP', exact: true })).toBeChecked();
   expect(await violations(page)).toEqual([]);
   await groupRights.getByRole('button', { name: 'Save rights' }).click();
   await expect(groupRights).toHaveCount(0);
@@ -207,8 +207,8 @@ test('groups and their rights reach their members, and the editors are accessibl
     .getByRole('button', { name: 'Rights' })
     .click();
   const userRights = page.getByRole('dialog', { name: 'Rights of e2e-rights' });
-  await expect(userRights.getByRole('checkbox', { name: 'FTP' })).toBeChecked();
-  await expect(userRights.getByRole('checkbox', { name: 'FTP' })).toBeDisabled();
+  await expect(userRights.getByRole('checkbox', { name: 'FTP', exact: true })).toBeChecked();
+  await expect(userRights.getByRole('checkbox', { name: 'FTP', exact: true })).toBeDisabled();
   await expect(userRights).toContainText('Through the group e2e-media');
   await expect(userRights.getByRole('checkbox', { name: 'SMB (network drives)' })).toBeChecked();
   await userRights.getByText('Restart and shut down', { exact: true }).click();
