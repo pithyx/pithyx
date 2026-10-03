@@ -134,7 +134,7 @@
   "categories": {
     "system": "System",
     "sharing": "Files and sharing",
-    "accounts": "Users"
+    "accounts": "Users and groups"
   },
   "pages": {
     "info": {
@@ -166,6 +166,11 @@
       "title": "Users",
       "description": "Accounts, passwords and administrators",
       "keywords": "user account password administrator login people"
+    },
+    "groups": {
+      "title": "Groups",
+      "description": "Groups, their members and rights",
+      "keywords": "group team members rights permissions"
     }
   },
   "info": {
@@ -185,7 +190,7 @@
   "fileServices": {
     "intro": "File services let other computers open your shared folders over the network. Users sign in with their Pithyx user name and password.",
     "save": "Save",
-    "rights": "Who may use which file service is set with the rights of each user or group on the Users page. Which shared folders they offer is set per folder on the Shared folders page. A user who has not signed in on the web since file services arrived must sign in once, so the services learn the password.",
+    "rights": "Who may use which file service is set with the rights of each user or group on the Users and Groups pages. Which shared folders they offer is set per folder on the Shared folders page. A user who has not signed in on the web since file services arrived must sign in once, so the services learn the password.",
     "state": {
       "off": "Off",
       "running": "Running",

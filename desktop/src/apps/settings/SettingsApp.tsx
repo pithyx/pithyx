@@ -9,12 +9,14 @@ import {
   IconNetwork,
   IconServer2,
   IconUsers,
+  IconUsersGroup,
   IconWorld,
   type TablerIcon,
 } from '../../ui/icons';
 import { SearchField } from '../../ui/TextField';
 import type { SdkAppProps } from '../sdk/CoreSdkApp';
 import { onInternal, SHARES_CHANGED, STORAGE_CHANGED } from '../sdk/internal';
+import { GroupsPage } from '../users/GroupsPage';
 import { UsersPage } from '../users/UsersPage';
 import { FileServicesPage } from './FileServicesPage';
 import { InfoCenterPage } from './InfoCenterPage';
@@ -24,7 +26,7 @@ import styles from './Settings.module.css';
 import { sharesKey } from './shares';
 import { SharesPage } from './SharesPage';
 
-type PageId = 'info' | 'network' | 'regional' | 'shares' | 'fileServices' | 'users';
+type PageId = 'info' | 'network' | 'regional' | 'shares' | 'fileServices' | 'users' | 'groups';
 
 interface SettingsPage {
   id: PageId;
@@ -41,6 +43,7 @@ const PAGES: readonly SettingsPage[] = [
   { id: 'shares', category: 'sharing', icon: IconFolders, Component: SharesPage },
   { id: 'fileServices', category: 'sharing', icon: IconServer2, Component: FileServicesPage },
   { id: 'users', category: 'accounts', icon: IconUsers, Component: UsersPage },
+  { id: 'groups', category: 'accounts', icon: IconUsersGroup, Component: GroupsPage },
 ];
 const CATEGORIES = ['system', 'sharing', 'accounts'] as const;
 

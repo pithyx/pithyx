@@ -1,5 +1,5 @@
 import type { PithyxApp } from '@pithyx/sdk';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ErrorNotice } from '../../errors/ErrorNotice';
@@ -9,17 +9,9 @@ import { IconPlus } from '../../ui/icons';
 import { TextField } from '../../ui/TextField';
 import { describeProblem, usersCall, type GroupSummary, type UserSummary } from '../sdk/users';
 import { FormDialog } from './FormDialog';
+import { groupsKey, useGroups, usersKey, useUsers } from './queries';
 import { RightsDialog } from './RightsDialog';
 import styles from './Users.module.css';
-
-export const groupsKey = ['groups'] as const;
-
-export function useGroups(app: PithyxApp) {
-  return useQuery({
-    queryKey: groupsKey,
-    queryFn: () => usersCall(app, 'internal.admin.groups.list', {}),
-  });
-}
 
 type Action =
   | { kind: 'create' }
@@ -28,19 +20,20 @@ type Action =
   | { kind: 'delete'; group: GroupSummary };
 
 /**
- * The groups on the Users page: the built-in group "users" with everybody, and the groups of the administrators with
+ * The Groups page of Settings: the built-in group "users" with everybody, and the groups of the administrators with
  * their members, created, edited and deleted here. Every group is a Linux group with a gid that is never reused.
  */
-export function GroupsSection({ app, users }: { app: PithyxApp; users: UserSummary[] }) {
+export function GroupsPage({ app }: { app: PithyxApp }) {
   const { t } = useTranslation('users');
   const [action, setAction] = useState<Action | null>(null);
   const groups = useGroups(app);
+  const users = useUsers(app).data ?? [];
   const names = new Map(users.map((user) => [user.id, user.displayName ?? user.username]));
   const close = () => {
     setAction(null);
   };
   return (
-    <section className={styles.section} aria-labelledby="groups-title">
+    <section className={`${styles.page} ${styles.section}`} aria-labelledby="groups-title">
       <div className={styles.head}>
         <div>
           <h2 id="groups-title" className={styles.title}>
@@ -158,7 +151,7 @@ function useGroupChange<T>(run: () => Promise<T>, onClose: () => void) {
     onSuccess: async () => {
       // Memberships show on both lists.
       await client.invalidateQueries({ queryKey: groupsKey });
-      await client.invalidateQueries({ queryKey: ['users'] });
+      await client.invalidateQueries({ queryKey: usersKey });
       onClose();
     },
   });
