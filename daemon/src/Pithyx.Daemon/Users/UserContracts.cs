@@ -13,6 +13,7 @@ namespace Pithyx.Daemon.Users;
 /// <param name="Smb">Whether the user may use SMB; administrators always may.</param>
 /// <param name="Sftp">Whether the user may use SFTP; administrators always may.</param>
 /// <param name="FileServicePassword">Whether SMB and SFTP know the user's password. They learn it when the user signs in on the web or an administrator sets it; until then the user cannot use them.</param>
+/// <param name="GroupIds">The groups the user is a member of; the built-in group <c>users</c>, which has everybody, is left out.</param>
 public sealed record UserSummary(
     long Id,
     string Username,
@@ -25,7 +26,8 @@ public sealed record UserSummary(
     bool Disabled,
     bool Smb,
     bool Sftp,
-    bool FileServicePassword);
+    bool FileServicePassword,
+    IReadOnlyList<long> GroupIds);
 
 /// <param name="Username">Lowercase letters, digits, underscores and hyphens, starting with a letter or underscore, at most 32 characters; not a system name.</param>
 /// <param name="Password">At least 8 characters and not one of the most common passwords.</param>
@@ -33,7 +35,8 @@ public sealed record UserSummary(
 /// <param name="IsAdmin">Whether the user is an administrator.</param>
 /// <param name="Smb">Whether the user may use SMB; on when left out.</param>
 /// <param name="Sftp">Whether the user may use SFTP; off when left out.</param>
-public sealed record NewUser(string Username, string Password, string? DisplayName = null, bool IsAdmin = false, bool Smb = true, bool Sftp = false);
+/// <param name="GroupIds">The groups the user joins, besides the built-in group <c>users</c>.</param>
+public sealed record NewUser(string Username, string Password, string? DisplayName = null, bool IsAdmin = false, bool Smb = true, bool Sftp = false, IReadOnlyList<long>? GroupIds = null);
 
 /// <summary>Fields left out stay as they are.</summary>
 /// <param name="DisplayName">An empty text removes the display name.</param>
@@ -41,7 +44,8 @@ public sealed record NewUser(string Username, string Password, string? DisplayNa
 /// <param name="Disabled">Deactivates or activates the user; deactivating ends the user's sessions. Nobody deactivates themselves or the last active administrator.</param>
 /// <param name="Smb">Allows or forbids SMB.</param>
 /// <param name="Sftp">Allows or forbids SFTP.</param>
-public sealed record UserUpdate(string? DisplayName = null, bool? IsAdmin = null, bool? Disabled = null, bool? Smb = null, bool? Sftp = null);
+/// <param name="GroupIds">Every group the user should be a member of, besides the built-in group <c>users</c>; the user leaves the others.</param>
+public sealed record UserUpdate(string? DisplayName = null, bool? IsAdmin = null, bool? Disabled = null, bool? Smb = null, bool? Sftp = null, IReadOnlyList<long>? GroupIds = null);
 
 /// <param name="Password">The new password, with the same rules as everywhere.</param>
 public sealed record PasswordReset(string Password);

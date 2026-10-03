@@ -5,7 +5,8 @@
     "name": "Name",
     "uid": "User id",
     "home": "Home",
-    "actions": "Actions"
+    "actions": "Actions",
+    "groups": "Groups"
   },
   "badge": {
     "admin": "Administrator",
@@ -21,7 +22,9 @@
     "displayName": "Display name (optional)",
     "password": "Password",
     "newPassword": "New password",
-    "admin": "Administrator (may change everything)"
+    "admin": "Administrator (may change everything)",
+    "groups": "Groups",
+    "groupsHint": "Every user is also in the group users."
   },
   "create": {
     "button": "Create user",
@@ -61,5 +64,40 @@
     "sftp": "May use SFTP",
     "admin": "Administrators may use every file service.",
     "signInOnce": "Not ready for SMB and SFTP yet: the user signs in once on the web, or you set a new password."
+  },
+  "groups": {
+    "title": "Groups",
+    "intro": "Every group is a Linux group of its own; its group id is never given out again. Rights given to a group apply to all its members.",
+    "column": {
+      "members": "Members",
+      "gid": "Group id"
+    },
+    "badge": {
+      "builtin": "Built in"
+    },
+    "builtinDescription": "Every user is a member. It cannot be changed.",
+    "everybody": "{count, plural, one {# user (everybody)} other {# users (everybody)}}",
+    "noMembers": "No members",
+    "field": {
+      "name": "Group name",
+      "description": "Description (optional)",
+      "members": "Members"
+    },
+    "create": {
+      "button": "Create group",
+      "title": "Create group",
+      "intro": "Users can be in any number of groups.",
+      "submit": "Create"
+    },
+    "edit": {
+      "title": "Edit {name}",
+      "label": "Edit group {name}"
+    },
+    "delete": {
+      "title": "Delete group {name}?",
+      "intro": "The group goes; its members stay. Files keep the group id, and it is never given to another group.",
+      "submit": "Delete group",
+      "label": "Delete group {name}"
+    }
   }
 }

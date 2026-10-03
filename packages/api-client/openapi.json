@@ -1724,6 +1724,164 @@
         }
       }
     },
+    "/api/groups": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "description": "Administrators only. Every group with its members, the built-in group users (every user) first.",
+        "operationId": "GetGroups",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GroupSummary"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "description": "Administrators only. Creates a group with a Linux group (a gid from 30000 to 39999 that is never given out again) and its members.",
+        "operationId": "CreateGroup",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NewGroup"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupSummary"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/groups/{groupId}": {
+      "patch": {
+        "tags": [
+          "Users"
+        ],
+        "description": "Administrators only. Renames a group, changes its description or sets its members; the gid stays. The built-in group cannot be changed.",
+        "operationId": "UpdateGroup",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GroupUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GroupSummary"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Users"
+        ],
+        "description": "Administrators only. Deletes a group and its Linux group; files keep its gid, which is never given out again. The built-in group stays.",
+        "operationId": "DeleteGroup",
+        "parameters": [
+          {
+            "name": "groupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/file-services": {
       "get": {
         "tags": [
@@ -4808,6 +4966,14 @@
           "system.time.servers_too_many",
           "system.time.zone_invalid",
           "users.account.refused",
+          "users.gid.exhausted",
+          "users.group.builtin",
+          "users.group.description_invalid",
+          "users.group.exists",
+          "users.group.name_invalid",
+          "users.group.name_reserved",
+          "users.group.not_found",
+          "users.group.refused",
           "users.uid.exhausted",
           "users.user.exists",
           "users.user.last_admin",
@@ -5287,6 +5453,81 @@
           }
         },
         "description": "The snapshot of a folder topic: the folder as the watch sees it."
+      },
+      "GroupSummary": {
+        "required": [
+          "id",
+          "name",
+          "description",
+          "builtin",
+          "memberIds",
+          "createdAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Stable id, and the Linux gid: 30000 to 39999 and never reused, 100 for the built-in group.",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "description": "The Linux group name, lower case."
+          },
+          "description": {
+            "type": "string",
+            "description": "Free text, may be empty."
+          },
+          "builtin": {
+            "type": "boolean",
+            "description": "The built-in group `users`: every user is a member, and it can neither be renamed nor deleted."
+          },
+          "memberIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "The ids of its members; every user for the built-in group."
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "When the group was created, UTC.",
+            "format": "date-time"
+          }
+        },
+        "description": "A group as the Users page shows it. Administrators only."
+      },
+      "GroupUpdate": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "A new name; the gid stays."
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "An empty text removes the description."
+          },
+          "memberIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Every member the group should have; the others leave it."
+          }
+        },
+        "description": "Fields left out stay as they are. The built-in group takes none of them."
       },
       "GuardDecision": {
         "enum": [
@@ -6069,6 +6310,36 @@
           }
         }
       },
+      "NewGroup": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Lowercase letters, digits, underscores and hyphens, starting with a letter or underscore, at most 32 characters; not a system name."
+          },
+          "description": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Optional, at most 200 characters."
+          },
+          "memberIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "The ids of the first members."
+          }
+        }
+      },
       "NewShare": {
         "required": [
           "name",
@@ -6122,6 +6393,17 @@
             "type": "boolean",
             "description": "Whether the user may use SFTP; off when left out.",
             "default": false
+          },
+          "groupIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "The groups the user joins, besides the built-in group `users`."
           }
         }
       },
@@ -9225,7 +9507,8 @@
           "disabled",
           "smb",
           "sftp",
-          "fileServicePassword"
+          "fileServicePassword",
+          "groupIds"
         ],
         "type": "object",
         "properties": {
@@ -9288,6 +9571,14 @@
           "fileServicePassword": {
             "type": "boolean",
             "description": "Whether SMB and SFTP know the user's password. They learn it when the user signs in on the web or an administrator sets it; until then the user cannot use them."
+          },
+          "groupIds": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "The groups the user is a member of; the built-in group `users`, which has everybody, is left out."
           }
         },
         "description": "A user as the Users page shows it. Administrators only."
@@ -9329,6 +9620,17 @@
               "boolean"
             ],
             "description": "Allows or forbids SFTP."
+          },
+          "groupIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Every group the user should be a member of, besides the built-in group `users`; the user leaves the others."
           }
         },
         "description": "Fields left out stay as they are."

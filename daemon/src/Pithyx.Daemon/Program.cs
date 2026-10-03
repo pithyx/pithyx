@@ -71,7 +71,8 @@ builder.Services.AddPithyxUsers(mode == DaemonMode.Real
     : new AccountOptions(
         Path.Combine(builder.Configuration["PITHYX_FIXTURES"] ?? Path.Combine(builder.Environment.ContentRootPath, "..", "..", "tests", "fixtures"), "etc", "passwd"),
         Apply: false,
-        ShadowPath: Path.Combine(builder.Configuration["PITHYX_FIXTURES"] ?? Path.Combine(builder.Environment.ContentRootPath, "..", "..", "tests", "fixtures"), "etc", "shadow")));
+        ShadowPath: Path.Combine(builder.Configuration["PITHYX_FIXTURES"] ?? Path.Combine(builder.Environment.ContentRootPath, "..", "..", "tests", "fixtures"), "etc", "shadow"),
+        GroupPath: Path.Combine(builder.Configuration["PITHYX_FIXTURES"] ?? Path.Combine(builder.Environment.ContentRootPath, "..", "..", "tests", "fixtures"), "etc", "group")));
 builder.Services.AddPithyxFileServices(new FileServiceOptions(Apply: mode == DaemonMode.Real));
 builder.Services.AddPithyxFiles();
 builder.Services.AddSingleton<TopicRegistry>();

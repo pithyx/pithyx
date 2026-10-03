@@ -1,0 +1,8 @@
+root:x:0:
+users:x:100:gabriel
+staff:x:50:
+engineering:x:30000:ada,rita
+stale:x:30001:tom
+old-name:x:30002:
+backup:x:34:
+pithyx-users:x:990:ada,rita,tom

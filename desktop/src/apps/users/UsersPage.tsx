@@ -1,19 +1,20 @@
 import type { PithyxApp } from '@pithyx/sdk';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useId, useState, type ReactNode, type SyntheticEvent } from 'react';
+import { useMutation, useQuery, useQueryClient, type UseQueryResult } from '@tanstack/react-query';
+import { useState, type SyntheticEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { NewPasswordField } from '../../auth/password/NewPasswordField';
 import { useNewPasswordCheck } from '../../auth/password/PasswordStrengthMeter';
 import { ErrorNotice } from '../../errors/ErrorNotice';
 import { Button } from '../../ui/Button';
 import { Badge, Checkbox } from '../../ui/Controls';
-import { Dialog } from '../../ui/Dialog';
 import { IconPlus } from '../../ui/icons';
 import { TextField } from '../../ui/TextField';
-import { describeProblem, usersCall, type UserSummary } from '../sdk/users';
+import { describeProblem, usersCall, type GroupSummary, type UserSummary } from '../sdk/users';
+import { FormDialog } from './FormDialog';
+import { GroupsSection, groupsKey, useGroups } from './GroupsSection';
 import styles from './Users.module.css';
 
-const usersKey = ['users'] as const;
+export const usersKey = ['users'] as const;
 
 type Action =
   | { kind: 'create' }
@@ -22,21 +23,32 @@ type Action =
   | { kind: 'delete'; user: UserSummary };
 
 /**
- * The Users page of Settings: every user with its Linux uid and home, its SMB and SFTP rights and whether those know
- * the password yet, create, edit, reset the password, deactivate, delete.
+ * The Users page of Settings: every user with its Linux uid and home, its groups, its SMB and SFTP rights and whether
+ * those know the password yet, create, edit, reset the password, deactivate, delete; below it the groups.
  */
 export function UsersPage({ app }: { app: PithyxApp }) {
-  const { t } = useTranslation('users');
-  const [action, setAction] = useState<Action | null>(null);
   const users = useQuery({
     queryKey: usersKey,
     queryFn: () => usersCall(app, 'internal.admin.users.list', {}),
   });
+  return (
+    <div className={styles.page}>
+      <UsersSection app={app} users={users} />
+      <GroupsSection app={app} users={users.data ?? []} />
+    </div>
+  );
+}
+
+function UsersSection({ app, users }: { app: PithyxApp; users: UseQueryResult<UserSummary[]> }) {
+  const { t } = useTranslation('users');
+  const [action, setAction] = useState<Action | null>(null);
+  const groups = useGroups(app);
+  const groupNames = new Map((groups.data ?? []).map((group) => [group.id, group.name]));
   const close = () => {
     setAction(null);
   };
   return (
-    <section className={styles.page} aria-labelledby="users-title">
+    <section className={styles.section} aria-labelledby="users-title">
       <div className={styles.head}>
         <div>
           <h2 id="users-title" className={styles.title}>
@@ -61,6 +73,9 @@ export function UsersPage({ app }: { app: PithyxApp }) {
           <thead>
             <tr>
               <th scope="col">{t('column.name')}</th>
+              <th scope="col" className={styles.optional}>
+                {t('column.groups')}
+              </th>
               <th scope="col" className={styles.optional}>
                 {t('column.uid')}
               </th>
@@ -91,6 +106,9 @@ export function UsersPage({ app }: { app: PithyxApp }) {
                     <span className={styles.hint}>{t('fileServices.signInOnce')}</span>
                   )}
                 </th>
+                <td className={styles.optional}>
+                  {user.groupIds.map((id) => groupNames.get(id) ?? '').join(', ')}
+                </td>
                 <td className={styles.optional}>{user.uid ?? ''}</td>
                 <td className={styles.optional}>{user.home ?? t('noHome')}</td>
                 <td>
@@ -128,8 +146,12 @@ export function UsersPage({ app }: { app: PithyxApp }) {
           </tbody>
         </table>
       )}
-      {action?.kind === 'create' && <CreateDialog app={app} onClose={close} />}
-      {action?.kind === 'edit' && <EditDialog app={app} user={action.user} onClose={close} />}
+      {action?.kind === 'create' && (
+        <CreateDialog app={app} groups={groups.data ?? []} onClose={close} />
+      )}
+      {action?.kind === 'edit' && (
+        <EditDialog app={app} user={action.user} groups={groups.data ?? []} onClose={close} />
+      )}
       {action?.kind === 'password' && (
         <PasswordDialog app={app} user={action.user} onClose={close} />
       )}
@@ -173,13 +195,23 @@ function useChange<T>(run: () => Promise<T>, onClose: () => void) {
   return useMutation({
     mutationFn: run,
     onSuccess: async () => {
+      // Memberships show on both lists.
       await client.invalidateQueries({ queryKey: usersKey });
+      await client.invalidateQueries({ queryKey: groupsKey });
       onClose();
     },
   });
 }
 
-function CreateDialog({ app, onClose }: { app: PithyxApp; onClose: () => void }) {
+function CreateDialog({
+  app,
+  groups,
+  onClose,
+}: {
+  app: PithyxApp;
+  groups: GroupSummary[];
+  onClose: () => void;
+}) {
   const { t } = useTranslation('users');
   const checkPassword = useNewPasswordCheck();
   const [username, setUsername] = useState('');
@@ -187,6 +219,7 @@ function CreateDialog({ app, onClose }: { app: PithyxApp; onClose: () => void })
   const [password, setPassword] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
   const [protocols, setProtocols] = useState({ smb: true, sftp: false });
+  const [groupIds, setGroupIds] = useState<number[]>([]);
   const [passwordError, setPasswordError] = useState<string | undefined>();
   const create = useChange(
     () =>
@@ -196,6 +229,7 @@ function CreateDialog({ app, onClose }: { app: PithyxApp; onClose: () => void })
         displayName: displayName.trim() === '' ? null : displayName,
         isAdmin,
         ...protocols,
+        groupIds,
       }),
     onClose,
   );
@@ -244,6 +278,7 @@ function CreateDialog({ app, onClose }: { app: PithyxApp; onClose: () => void })
         {t('field.admin')}
       </Checkbox>
       <Protocols isAdmin={isAdmin} value={protocols} onChange={setProtocols} />
+      <Memberships groups={groups} value={groupIds} onChange={setGroupIds} />
       {create.isError && <ErrorNotice error={describeProblem(create.error)} />}
     </FormDialog>
   );
@@ -252,16 +287,19 @@ function CreateDialog({ app, onClose }: { app: PithyxApp; onClose: () => void })
 function EditDialog({
   app,
   user,
+  groups,
   onClose,
 }: {
   app: PithyxApp;
   user: UserSummary;
+  groups: GroupSummary[];
   onClose: () => void;
 }) {
   const { t } = useTranslation('users');
   const [displayName, setDisplayName] = useState(user.displayName ?? '');
   const [isAdmin, setIsAdmin] = useState(user.isAdmin);
   const [protocols, setProtocols] = useState({ smb: user.smb, sftp: user.sftp });
+  const [groupIds, setGroupIds] = useState<number[]>(user.groupIds);
   const edit = useChange(
     () =>
       usersCall(app, 'internal.admin.users.update', {
@@ -269,6 +307,7 @@ function EditDialog({
         displayName,
         isAdmin,
         ...protocols,
+        groupIds,
       }),
     onClose,
   );
@@ -292,6 +331,7 @@ function EditDialog({
         {t('field.admin')}
       </Checkbox>
       <Protocols isAdmin={isAdmin} value={protocols} onChange={setProtocols} />
+      <Memberships groups={groups} value={groupIds} onChange={setGroupIds} />
       {!user.fileServicePassword && <p className={styles.muted}>{t('fileServices.signInOnce')}</p>}
       {edit.isError && <ErrorNotice error={describeProblem(edit.error)} />}
     </FormDialog>
@@ -336,6 +376,37 @@ function Protocols({
         {t('fileServices.sftp')}
       </Checkbox>
       {isAdmin && <p className={styles.muted}>{t('fileServices.admin')}</p>}
+    </fieldset>
+  );
+}
+
+/** The groups a user is a member of; the built-in group has everybody and is only named. */
+function Memberships({
+  groups,
+  value,
+  onChange,
+}: {
+  groups: GroupSummary[];
+  value: number[];
+  onChange: (value: number[]) => void;
+}) {
+  const { t } = useTranslation('users');
+  const own = groups.filter((group) => !group.builtin);
+  return (
+    <fieldset className={styles.fieldset}>
+      <legend className={styles.legend}>{t('field.groups')}</legend>
+      {own.map((group) => (
+        <Checkbox
+          key={group.id}
+          isSelected={value.includes(group.id)}
+          onChange={(selected) => {
+            onChange(selected ? [...value, group.id] : value.filter((id) => id !== group.id));
+          }}
+        >
+          {group.name}
+        </Checkbox>
+      ))}
+      <p className={styles.muted}>{t('field.groupsHint')}</p>
     </fieldset>
   );
 }
@@ -425,56 +496,5 @@ function DeleteDialog({
       />
       {remove.isError && <ErrorNotice error={describeProblem(remove.error)} />}
     </FormDialog>
-  );
-}
-
-function FormDialog({
-  title,
-  submit,
-  danger = false,
-  disabled = false,
-  onClose,
-  onSubmit,
-  children,
-}: {
-  title: string;
-  submit: string;
-  danger?: boolean;
-  disabled?: boolean;
-  onClose: () => void;
-  onSubmit: (event: SyntheticEvent<HTMLFormElement>) => void;
-  children: ReactNode;
-}) {
-  const { t } = useTranslation('users');
-  const formId = useId();
-  return (
-    <Dialog
-      isOpen
-      isDismissable
-      tone={danger ? 'danger' : 'default'}
-      onOpenChange={(open) => {
-        if (!open) {
-          onClose();
-        }
-      }}
-      title={title}
-      actions={
-        <>
-          <Button onPress={onClose}>{t('cancel')}</Button>
-          <Button
-            type="submit"
-            form={formId}
-            variant={danger ? 'danger' : 'primary'}
-            isDisabled={disabled}
-          >
-            {submit}
-          </Button>
-        </>
-      }
-    >
-      <form id={formId} className={styles.form} onSubmit={onSubmit} noValidate>
-        {children}
-      </form>
-    </Dialog>
   );
 }

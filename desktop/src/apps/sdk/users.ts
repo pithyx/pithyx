@@ -7,6 +7,9 @@ import type { DescribedError } from '../../errors/describe';
 export type UserSummary = components['schemas']['UserSummary'];
 export type NewUser = components['schemas']['NewUser'];
 export type UserUpdate = components['schemas']['UserUpdate'];
+export type GroupSummary = components['schemas']['GroupSummary'];
+export type NewGroup = components['schemas']['NewGroup'];
+export type GroupUpdate = components['schemas']['GroupUpdate'];
 
 /** User management for administrators, outside the public SDK; the daemon checks the right on every request. */
 interface UserMethods {
@@ -18,10 +21,20 @@ interface UserMethods {
     result: null;
   };
   'internal.admin.users.delete': { params: { userId: number }; result: null };
+  'internal.admin.groups.list': { params: Record<string, never>; result: GroupSummary[] };
+  'internal.admin.groups.create': { params: NewGroup; result: GroupSummary };
+  'internal.admin.groups.update': {
+    params: GroupUpdate & { groupId: number };
+    result: GroupSummary;
+  };
+  'internal.admin.groups.delete': { params: { groupId: number }; result: null };
 }
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
+
+const hasGroupId = (value: unknown): value is Record<string, unknown> & { groupId: number } =>
+  isRecord(value) && Number.isSafeInteger(value.groupId);
 
 const hasUserId = (value: unknown): value is Record<string, unknown> & { userId: number } =>
   isRecord(value) && Number.isSafeInteger(value.userId);
@@ -87,6 +100,34 @@ export function usersHost(): HostExtensions {
         const { userId } = params as { userId: number };
         await daemon(async () => {
           unwrap(await api.DELETE('/api/users/{userId}', { params: { path: { userId } } }));
+        });
+        return null;
+      },
+    },
+    'internal.admin.groups.list': {
+      validate: isRecord,
+      handle: () => daemon(async () => unwrap(await api.GET('/api/groups'))),
+    },
+    'internal.admin.groups.create': {
+      validate: (value) => isRecord(value) && typeof value.name === 'string',
+      handle: (params) =>
+        daemon(async () => unwrap(await api.POST('/api/groups', { body: params as NewGroup }))),
+    },
+    'internal.admin.groups.update': {
+      validate: hasGroupId,
+      handle: (params) => {
+        const { groupId, ...body } = params as GroupUpdate & { groupId: number };
+        return daemon(async () =>
+          unwrap(await api.PATCH('/api/groups/{groupId}', { params: { path: { groupId } }, body })),
+        );
+      },
+    },
+    'internal.admin.groups.delete': {
+      validate: hasGroupId,
+      handle: async (params) => {
+        const { groupId } = params as { groupId: number };
+        await daemon(async () => {
+          unwrap(await api.DELETE('/api/groups/{groupId}', { params: { path: { groupId } } }));
         });
         return null;
       },
