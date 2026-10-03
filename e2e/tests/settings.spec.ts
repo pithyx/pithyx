@@ -262,7 +262,9 @@ test('a configuration backup downloads encrypted and is checked before a restore
 
   // Only the storage settings: the other tests share this daemon and its users.
   for (const part of ['Users and groups', 'Shared folders and file services', 'System settings']) {
-    await restore.getByRole('checkbox', { name: part }).uncheck();
+    // The checkbox input is visually hidden behind the drawn box, so a user clicks the label.
+    await restore.getByText(part, { exact: true }).click();
+    await expect(restore.getByRole('checkbox', { name: part })).not.toBeChecked();
   }
   await restore.getByRole('button', { name: 'Restore…' }).click();
   const confirm = page.getByRole('dialog', { name: 'Restore the configuration?' });
