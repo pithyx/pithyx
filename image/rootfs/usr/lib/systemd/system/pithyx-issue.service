@@ -1,0 +1,14 @@
+# Managed by pithyx: shipped in the image (image/rootfs).
+[Unit]
+Description=Pithyx console greeting with the addresses of this box
+After=systemd-networkd.service
+Before=getty@tty1.service
+
+[Service]
+Type=simple
+ExecStart=/usr/lib/pithyx/issue.sh
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

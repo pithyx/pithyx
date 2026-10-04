@@ -45,3 +45,6 @@ desktop.ini
 tools/design-shots/out/
 tools/design-shots/test-results/
 tools/design-shots/*.zip
+
+# Image build output (image/build.sh)
+image/out/

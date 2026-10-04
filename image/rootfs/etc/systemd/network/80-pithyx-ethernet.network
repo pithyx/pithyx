@@ -1,0 +1,13 @@
+# Managed by pithyx: DHCP on every wired network card until the installer or Settings > Network writes its own file.
+# ClientIdentifier=mac makes the live system and the installed system ask for the same address (D294).
+[Match]
+Type=ether
+Kind=!*
+
+[Network]
+DHCP=yes
+IPv6AcceptRA=yes
+LinkLocalAddressing=yes
+
+[DHCPv4]
+ClientIdentifier=mac
