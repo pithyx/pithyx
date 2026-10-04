@@ -28,7 +28,7 @@ These rules are binding. If a rule blocks you, stop and ask; never work around i
 
 ## Current state
 
-Update in the same PR whenever the state changes. Last updated: 2026-10-03.
+Update in the same PR whenever the state changes. Last updated: 2026-10-04.
 
 - 7484 runs `dev` from `/home/gabriel/code/pithyx`. Check with `systemctl status pithyx-dev` and `git -C /home/gabriel/code/pithyx log -1`; the deployed commit must equal `origin/dev`.
 - `owner.env` and `e2e.env` work again (the deploy of 2026-10-03 signed in as the owner and found `e2e-admin` and `e2e-user`).
@@ -36,7 +36,8 @@ Update in the same PR whenever the state changes. Last updated: 2026-10-03.
 - Migrations on `dev`: 0001 to 0021 (0019 groups, 0020 grants, 0021 WebDAV and FTP). Merged history: `git log origin/dev`. 7484 has test pool `pithyxtestfs` (VYXTEST01) with shared folder "FS Test" for `e2e-user` (read-write, SFTP).
 - The owner widened v0.1 on 2026-10-03 (`TODO.md`, "Scope of v0.1"): groups, the permission model, WebDAV and FTP, changing the network. Open, one PR at a time in this order: A groups (step 10, #70, merged), B permission model (step 11, #71, merged), C WebDAV and FTP (step 12, `feature/webdav-ftp`, D291), D network (step 14.2, label `e2e`; nothing on the host changes until the owner decides the test method, D110).
 - Next after D: verify every "Release 0.1" item in `TODO.md` on 7484 in the browser (Playwright and screenshots as `e2e-admin`/`e2e-user`), fix failures, then report: deployed commit and `dev` HEAD, runner status per job, a table (item, status, proof), merged PRs with migration numbers, the rename grep (D279, only `VYXTEST` allowed), open problems with cause and proposal.
-- Decisions D269 to D291 and D293 (configuration backup) are on `dev`; D292 belongs to `feature/network`; next free number D294. The decision log at the end of `TODO.md` conflicts on every merge; keep all entries in number order.
+- The web installer, image build and updater are planned (D294 to D297, `TODO.md` "Web installer v0.1" to "Updates v0.1"); building starts after D. The owner sets up the image runner (`pithyx-image`) before the first image build.
+- Decisions D269 to D291 and D293 to D297 are on `dev`; D292 belongs to `feature/network`; next free number D298. The decision log at the end of `TODO.md` conflicts on every merge; keep all entries in number order.
 
 ## Known pitfalls
 
@@ -76,7 +77,7 @@ daemon/   C# / ASP.NET Core (.NET 10), the only privileged process
 desktop/  Vite + React + TypeScript web desktop
 sdk/      npm package for app developers (@pithyx/sdk)
 apps/     bundled apps (files, settings, store)
-image/    mmdebstrap, live-build, mkosi
+image/    ISO build (mmdebstrap, squashfs, GRUB, xorriso)
 i18n/     translation files (en is the reference)
 website/  landing page and user docs (Starlight)
 ```
@@ -123,7 +124,7 @@ website/  landing page and user docs (Starlight)
 - Permissions to groups and users; effective = union; admins have everything. Share access: none, read, read-write. Protocol access per user (SMB, NFS, SFTP, WebDAV). App access per app. Special rights: admin, desktop login, SSH login, reboot/shutdown.
 - TOTP 2FA per user. Login forms have correct `autocomplete` attributes.
 - No password reset without proof: only the recovery key from setup, otherwise reinstall.
-- No Secure Boot (installer detects it and asks to disable). SSH off by default; its MOTD shows the ASCII logo and a warning (the only allowed ASCII art).
+- No Secure Boot (installer detects it and asks to disable). SSH off by default; its MOTD shows the ASCII logo and a warning. The ASCII logo also appears on the console after boot and in the installer's console (D294); it is the only allowed ASCII art.
 - Pool encryption: ZFS native. Unlock manually, from a key vault on the system disk (UI explains it only protects against stolen disks) or a USB key.
 
 ## Apps
