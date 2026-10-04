@@ -4,6 +4,7 @@ import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ErrorNotice } from '../../errors/ErrorNotice';
 import { languageName, languages, useFormatLocale } from '../../i18n';
+import { REGIONS } from '../../regions';
 import { Button } from '../../ui/Button';
 import { TextField } from '../../ui/TextField';
 import { systemCall, type SystemRegion, type TimeSettings } from '../sdk/system';
@@ -12,48 +13,6 @@ import styles from './Settings.module.css';
 
 const timeKey = ['settings', 'system', 'time'] as const;
 const regionKey = ['settings', 'system', 'region'] as const;
-
-// Countries offered for formats; their names come from Intl in the user's language. A curated list keeps the select
-// short; the daemon takes any ISO 3166 code.
-const REGIONS = [
-  'AR',
-  'AT',
-  'AU',
-  'BE',
-  'BR',
-  'CA',
-  'CH',
-  'CN',
-  'CZ',
-  'DE',
-  'DK',
-  'ES',
-  'FI',
-  'FR',
-  'GB',
-  'GR',
-  'HU',
-  'IE',
-  'IN',
-  'IT',
-  'JP',
-  'KR',
-  'LU',
-  'MX',
-  'NL',
-  'NO',
-  'NZ',
-  'PL',
-  'PT',
-  'RO',
-  'SE',
-  'SG',
-  'SK',
-  'TR',
-  'UA',
-  'US',
-  'ZA',
-] as const;
 
 /**
  * Regional settings of the box: the system language, the region whose date, time and number formats everyone sees,

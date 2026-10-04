@@ -24,9 +24,7 @@ public static class AuthEndpoints
     /// <param name="api">The <c>/api</c> group, which requires a session unless an endpoint allows anonymous access.</param>
     public static void MapAuthEndpoints(this RouteGroupBuilder api)
     {
-        var setup = api.MapGroup("/setup").WithTags("Setup").AllowAnonymous();
-        setup.MapGet("", GetSetupStatusAsync).WithName("GetSetupStatus");
-        setup.MapPost("", SetupAsync).WithName("Setup");
+        api.MapPost("/setup", SetupAsync).WithName("Setup").WithTags("Setup").AllowAnonymous();
 
         var auth = api.MapGroup("/auth").WithTags("Auth");
         auth.MapPost("/login", LoginAsync).WithName("Login").AllowAnonymous();
@@ -39,10 +37,19 @@ public static class AuthEndpoints
         auth.MapPost("/totp/disable", DisableTotpAsync).WithName("DisableTotp");
     }
 
-    private static async Task<Ok<SetupStatus>> GetSetupStatusAsync(AuthService auth, SystemSettingsService system, CancellationToken cancellationToken)
+    /// <summary><c>GET /api/setup</c>, which the live system answers as well: it tells the desktop to show the installer.</summary>
+    public static void MapSetupStatusEndpoint(this RouteGroupBuilder api) =>
+        api.MapGet("/setup", GetSetupStatusAsync).WithName("GetSetupStatus").WithTags("Setup").AllowAnonymous();
+
+    private static async Task<Ok<SetupStatus>> GetSetupStatusAsync(AuthService auth, SystemSettingsService system, Installer.InstallerEnvironment installer, CancellationToken cancellationToken)
     {
         var region = await system.RegionAsync(cancellationToken);
-        return TypedResults.Ok(new SetupStatus(await auth.SetupRequiredAsync(cancellationToken), Environment.MachineName, region.Language, region.Region));
+        return TypedResults.Ok(new SetupStatus(
+            !installer.Active && await auth.SetupRequiredAsync(cancellationToken),
+            Environment.MachineName,
+            region.Language,
+            region.Region,
+            installer.Active));
     }
 
     private static async Task<Ok<SetupResponse>> SetupAsync(
@@ -53,7 +60,6 @@ public static class AuthEndpoints
         FileServices.FileServicePasswords passwords,
         FileServices.FileServiceChanges fileServices,
         HttpContext context,
-        IHostEnvironment environment,
         CancellationToken cancellationToken)
     {
         var (user, recoveryKey) = await auth.SetupAsync(request, cancellationToken);
@@ -61,7 +67,7 @@ public static class AuthEndpoints
         await accounts.ReconcileAsync(cancellationToken);
         await passwords.SetAsync(user.Username, request.Password, cancellationToken);
         fileServices.Announce();
-        await StartSessionAsync(context, sessions, environment, user.Id, cancellationToken);
+        await StartSessionAsync(context, sessions, user.Id, cancellationToken);
         return TypedResults.Ok(new SetupResponse(user, recoveryKey));
     }
 
@@ -72,7 +78,6 @@ public static class AuthEndpoints
         LoginRateLimiter limiter,
         FileServices.FileServicePasswords passwords,
         HttpContext context,
-        IHostEnvironment environment,
         CancellationToken cancellationToken)
     {
         limiter.EnsureAllowed(context, request.Username);
@@ -83,17 +88,17 @@ public static class AuthEndpoints
         {
             return TypedResults.Ok(new LoginResponse(null, TotpRequired: true, outcome.Challenge));
         }
-        await StartSessionAsync(context, sessions, environment, outcome.User.Id, cancellationToken);
+        await StartSessionAsync(context, sessions, outcome.User.Id, cancellationToken);
         return TypedResults.Ok(new LoginResponse(outcome.User, TotpRequired: false, null));
     }
 
     private static async Task<Ok<UserInfo>> CompleteTotpLoginAsync(
-        TotpLoginRequest request, AuthService auth, SessionService sessions, LoginRateLimiter limiter, HttpContext context, IHostEnvironment environment, CancellationToken cancellationToken)
+        TotpLoginRequest request, AuthService auth, SessionService sessions, LoginRateLimiter limiter, HttpContext context, CancellationToken cancellationToken)
     {
         var username = auth.ChallengeUsername(request.Challenge, Address(context)) ?? "";
         limiter.EnsureAllowed(context, username);
         var user = await CountFailuresAsync(limiter, context, username, () => auth.CompleteTotpLoginAsync(request, Address(context), cancellationToken));
-        await StartSessionAsync(context, sessions, environment, user.Id, cancellationToken);
+        await StartSessionAsync(context, sessions, user.Id, cancellationToken);
         return TypedResults.Ok(user);
     }
 
@@ -113,14 +118,14 @@ public static class AuthEndpoints
         return TypedResults.Ok(new RecoverResponse(recoveryKey));
     }
 
-    private static async Task<NoContent> LogoutAsync(SessionService sessions, TopicHub hub, HttpContext context, IHostEnvironment environment, CancellationToken cancellationToken)
+    private static async Task<NoContent> LogoutAsync(SessionService sessions, TopicHub hub, HttpContext context, CancellationToken cancellationToken)
     {
         if (context.Request.Cookies.TryGetValue(SessionService.CookieName, out var token) && !string.IsNullOrEmpty(token))
         {
             await sessions.DeleteAsync(token, cancellationToken);
             hub.CloseSession(SessionService.IdOf(token));
         }
-        context.Response.Cookies.Delete(SessionService.CookieName, SessionService.CookieOptions(Secure(environment), null));
+        context.Response.Cookies.Delete(SessionService.CookieName, SessionService.CookieOptions(Secure(context), null));
         return TypedResults.NoContent();
     }
 
@@ -153,16 +158,16 @@ public static class AuthEndpoints
         }
     }
 
-    private static async Task StartSessionAsync(HttpContext context, SessionService sessions, IHostEnvironment environment, long userId, CancellationToken cancellationToken)
+    private static async Task StartSessionAsync(HttpContext context, SessionService sessions, long userId, CancellationToken cancellationToken)
     {
         var session = await sessions.CreateAsync(userId, context.Request.Headers.UserAgent.ToString(), cancellationToken);
-        context.Response.Cookies.Append(SessionService.CookieName, session.Token, SessionService.CookieOptions(Secure(environment), session.AbsoluteExpiresAt));
+        context.Response.Cookies.Append(SessionService.CookieName, session.Token, SessionService.CookieOptions(Secure(context), session.AbsoluteExpiresAt));
         // The desktop saves this browser's layout under its device id.
         DeviceCookie.Ensure(context);
     }
 
-    // Development runs over plain HTTP, where browsers drop Secure cookies. HTTPS for every other environment is M5.
-    private static bool Secure(IHostEnvironment environment) => !environment.IsDevelopment();
+    // Plain HTTP by address must work (CLAUDE.md, Network): a Secure cookie sent over HTTP is dropped by the browser.
+    private static bool Secure(HttpContext context) => context.Request.IsHttps;
 
     private static string Address(HttpContext context) => context.Connection.RemoteIpAddress?.ToString() ?? "unknown";
 }

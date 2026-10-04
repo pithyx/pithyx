@@ -317,6 +317,50 @@
       "params": {},
       "expected": "The storage is read-only."
     },
+    "installer.check.failed": {
+      "params": {},
+      "expected": "This computer does not meet a requirement of Pithyx. The first page of the installer shows which."
+    },
+    "installer.claim.required": {
+      "params": {},
+      "expected": "Another browser owns this installation. To start over, restart the computer from the USB stick."
+    },
+    "installer.claim.taken": {
+      "params": {},
+      "expected": "This installation is already in use in another browser. To start over, restart the computer from the USB stick."
+    },
+    "installer.disk.count": {
+      "params": {},
+      "expected": "Choose one disk, or two different disks for a mirror."
+    },
+    "installer.disk.unsuitable": {
+      "params": {},
+      "expected": "Pithyx cannot be installed on this disk. Choose another one."
+    },
+    "installer.erase.not_confirmed": {
+      "params": {},
+      "expected": "Confirm that all data on the chosen disks will be erased."
+    },
+    "installer.hostname.invalid": {
+      "params": {},
+      "expected": "Use lowercase letters, digits and hyphens for the name, at most 63 characters, not starting or ending with a hyphen."
+    },
+    "installer.install.failed": {
+      "params": {},
+      "expected": "The installation failed. Nothing was installed completely; you can try again. The log of the installer has the details."
+    },
+    "installer.install.running": {
+      "params": {},
+      "expected": "The installation is already running or finished."
+    },
+    "installer.keyboard.invalid": {
+      "params": {},
+      "expected": "Choose a keyboard layout from the list."
+    },
+    "installer.reboot.not_ready": {
+      "params": {},
+      "expected": "The computer can only restart once the installation is finished."
+    },
     "jobs.job.not_found": {
       "params": {},
       "expected": "This job does not exist or has already been removed."

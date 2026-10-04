@@ -7,6 +7,7 @@ import type auth from '../../i18n/en/auth.json';
 import type desktop from '../../i18n/en/desktop.json';
 import type errors from '../../i18n/en/errors.json';
 import type files from '../../i18n/en/files.json';
+import type installer from '../../i18n/en/installer.json';
 import type jobs from '../../i18n/en/jobs.json';
 import type logs from '../../i18n/en/logs.json';
 import type monitor from '../../i18n/en/monitor.json';
@@ -22,6 +23,7 @@ export interface Resources {
   auth: typeof auth;
   errors: typeof errors;
   files: typeof files;
+  installer: typeof installer;
   storage: typeof storage;
   settings: typeof settings;
   notifications: typeof notifications;

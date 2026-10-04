@@ -124,7 +124,7 @@ public sealed class SystemSettingsService(
     public async Task<TimeSettings> SetTimeAsync(TimeSettingsRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (request.TimeZone is null || !IsZoneName(request.TimeZone) || !TimeZoneInfo.TryFindSystemTimeZoneById(request.TimeZone, out _))
+        if (!IsTimeZone(request.TimeZone))
         {
             throw new PithyxException(ErrorCodes.SystemTimeZoneInvalid, new Dictionary<string, object?> { ["zone"] = request.TimeZone ?? "" });
         }
@@ -194,6 +194,9 @@ public sealed class SystemSettingsService(
             new { region.Language, region.Region, now = SessionService.Format(time.GetUtcNow()) });
         return region;
     }
+
+    /// <summary>Whether the value is an IANA time zone this box knows (Area/City or UTC).</summary>
+    public static bool IsTimeZone(string? zone) => zone is not null && IsZoneName(zone) && TimeZoneInfo.TryFindSystemTimeZoneById(zone, out _);
 
     // Area/City names and UTC; the legacy aliases without a slash (EST, GMT0) stay out of the list.
     private static bool IsZoneName(string id) => id.Contains('/', StringComparison.Ordinal) || id == "UTC";

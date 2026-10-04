@@ -9,7 +9,7 @@ import { SetupScreen } from './auth/SetupScreen';
 import { Unreachable } from './auth/Unreachable';
 import { isSessionExpired } from './errors/describe';
 import { useErrorStore } from './errors/errorStore';
-import { loadDesktopTranslations } from './i18n';
+import { loadDesktopTranslations, loadTranslations } from './i18n';
 import { realtime, useRealtime } from './realtime/connection';
 import { AuthLayout } from './shell/AuthLayout';
 
@@ -55,6 +55,13 @@ function useDesktopModule(): DesktopModule | undefined {
     () => desktopModule,
   );
 }
+
+// Only the live system of the ISO shows the installer; its code and texts stay out of the sign-in chunk.
+const InstallerScreen = lazy(() =>
+  Promise.all([import('./installer/InstallerScreen'), loadTranslations('installer')]).then(
+    ([{ InstallerScreen }]) => ({ default: InstallerScreen }),
+  ),
+);
 
 const ErrorDialog = lazy(() =>
   import('./errors/ErrorDialog').then(({ ErrorDialog }) => ({ default: ErrorDialog })),
@@ -144,7 +151,13 @@ export function App() {
   }, [confirmedUser, sessionEnded]);
 
   let screen;
-  if (session.data !== undefined && !sessionEnded) {
+  if (setup.data?.installer === true) {
+    screen = (
+      <Suspense fallback={null}>
+        <InstallerScreen />
+      </Suspense>
+    );
+  } else if (session.data !== undefined && !sessionEnded) {
     const name = session.data.displayName ?? session.data.username;
     screen = (
       <>

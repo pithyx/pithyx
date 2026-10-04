@@ -147,6 +147,35 @@
       "read_only": "The storage is read-only."
     }
   },
+  "installer": {
+    "check": {
+      "failed": "This computer does not meet a requirement of Pithyx. The first page of the installer shows which."
+    },
+    "claim": {
+      "required": "Another browser owns this installation. To start over, restart the computer from the USB stick.",
+      "taken": "This installation is already in use in another browser. To start over, restart the computer from the USB stick."
+    },
+    "disk": {
+      "count": "Choose one disk, or two different disks for a mirror.",
+      "unsuitable": "Pithyx cannot be installed on this disk. Choose another one."
+    },
+    "erase": {
+      "not_confirmed": "Confirm that all data on the chosen disks will be erased."
+    },
+    "hostname": {
+      "invalid": "Use lowercase letters, digits and hyphens for the name, at most 63 characters, not starting or ending with a hyphen."
+    },
+    "install": {
+      "failed": "The installation failed. Nothing was installed completely; you can try again. The log of the installer has the details.",
+      "running": "The installation is already running or finished."
+    },
+    "keyboard": {
+      "invalid": "Choose a keyboard layout from the list."
+    },
+    "reboot": {
+      "not_ready": "The computer can only restart once the installation is finished."
+    }
+  },
   "jobs": {
     "job": {
       "not_found": "This job does not exist or has already been removed."

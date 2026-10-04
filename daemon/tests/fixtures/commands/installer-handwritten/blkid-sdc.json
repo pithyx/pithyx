@@ -1,0 +1,10 @@
+{
+  "command": "blkid",
+  "args": [
+    "-p",
+    "-o",
+    "export",
+    "/dev/sdc"
+  ],
+  "exitCode": 2
+}

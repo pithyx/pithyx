@@ -1,0 +1,9 @@
+{
+  "command": "wipefs",
+  "args": [
+    "--no-act",
+    "--json",
+    "/dev/sdb"
+  ],
+  "exitCode": 0
+}

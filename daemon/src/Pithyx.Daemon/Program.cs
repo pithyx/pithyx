@@ -10,6 +10,7 @@ using Pithyx.Daemon.Files;
 using Pithyx.Daemon.FileServices;
 using Pithyx.Daemon.Health;
 using Pithyx.Daemon.Hosting;
+using Pithyx.Daemon.Installer;
 using Pithyx.Daemon.Jobs;
 using Pithyx.Daemon.Layouts;
 using Pithyx.Daemon.Logs;
@@ -50,7 +51,17 @@ builder.AddPithyxLogging(paths.LogDirectory);
 var httpPort = builder.Environment.IsDevelopment() && int.TryParse(builder.Configuration["PITHYX_DEV_PORT"], out var devPort)
     ? devPort
     : HttpPort;
-builder.WebHost.ConfigureKestrel(options => options.ListenAnyIP(httpPort));
+var installer = InstallerEnvironment.Resolve(builder.Configuration, mode, Path.GetDirectoryName(paths.DatabasePath) ?? ".");
+// A box (production build, real mode) also listens on port 80, which redirects to 7484 (PlainHttpRedirect).
+var redirectPort = mode == DaemonMode.Real && !builder.Environment.IsDevelopment() ? PlainHttpRedirect.Port : (int?)null;
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.ListenAnyIP(httpPort);
+    if (redirectPort is { } port)
+    {
+        options.ListenAnyIP(port);
+    }
+});
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.RespectNullableAnnotations = true;
@@ -86,6 +97,7 @@ builder.Services.AddSingleton<TopicHub>();
 builder.Services.AddPithyxMonitoring();
 builder.Services.AddPithyxSystemSettings(mode);
 builder.Services.AddSingleton(services => new DaemonRestart(services.GetRequiredService<IHostApplicationLifetime>(), mode, services.GetRequiredService<TimeProvider>()));
+builder.Services.AddPithyxInstaller(installer);
 builder.Services.AddPithyxBackup(mode == DaemonMode.Real
     ? new BackupOptions(Apply: true, TlsDirectory: Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "tls"), SshDirectory: "/etc/ssh", ShadowPath: "/etc/shadow", WorkDirectory: "/run/pithyx/backup")
     : new BackupOptions(Apply: false, TlsDirectory: Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "tls"), SshDirectory: null, ShadowPath: null, WorkDirectory: Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "backup-work")));
@@ -109,15 +121,22 @@ builder.Services.AddPithyxStorageHealth();
 if (!BuildTimeDocument.IsGenerating)
 {
     builder.Services.AddHostedService(services => services.GetRequiredService<SystemStateService>());
-    builder.Services.AddPithyxStorageHealthMonitor();
-    if (mode == DaemonMode.Real)
+    // The installer of the live system only needs the disks; nothing may touch accounts, shares or pools there.
+    if (!installer.Active)
+    {
+        builder.Services.AddPithyxStorageHealthMonitor();
+    }
+    if (mode == DaemonMode.Real && !installer.Active)
     {
         builder.Services.AddHostedService<JournalReader>();
         builder.Services.AddHostedService<Pithyx.Daemon.Files.Thumbnails.ThumbnailCacheProvisioner>();
         builder.Services.AddHostedService<LinuxAccountSync>();
         builder.Services.AddHostedService(services => services.GetRequiredService<FileServiceSync>());
     }
-    builder.Services.AddHostedService(services => services.GetRequiredService<Pithyx.Daemon.FileServices.Ftp.FtpServer>());
+    if (!installer.Active)
+    {
+        builder.Services.AddHostedService(services => services.GetRequiredService<Pithyx.Daemon.FileServices.Ftp.FtpServer>());
+    }
 }
 builder.Services.AddPithyxOpenApi();
 builder.Services.AddDesktopHosting();
@@ -172,6 +191,10 @@ if (!BuildTimeDocument.IsGenerating)
 }
 
 app.UseMiddleware<RequestIdMiddleware>();
+if (redirectPort is { } plainPort)
+{
+    app.UseMiddleware<PlainHttpRedirect>(plainPort, HttpPort);
+}
 app.UseSerilogRequestLogging(options => options.Logger = app.Services.GetRequiredService<Serilog.ILogger>());
 app.UseExceptionHandler();
 // Only the API answers bare status codes with problem details. Every other path belongs to the desktop,
@@ -196,24 +219,34 @@ api.MapGet("/health", () => TypedResults.Ok(new HealthResponse("ok", mode)))
     .WithTags("System")
     .AllowAnonymous();
 
-api.MapAuthEndpoints();
-api.MapLayoutEndpoints();
-api.MapJobEndpoints();
-api.MapNotificationEndpoints();
-api.MapShareEndpoints();
-api.MapUserEndpoints();
-api.MapPermissionEndpoints();
-api.MapFileServiceEndpoints();
-api.MapFileEndpoints();
-api.MapStorageEndpoints();
-api.MapSnapshotEndpoints();
-api.MapStorageHealthEndpoints();
-api.MapLogEndpoints();
-api.MapSystemSettingsEndpoints();
-api.MapPowerEndpoint();
-api.MapBackupEndpoints();
-app.MapRealtime();
-app.MapWebDav();
+api.MapSetupStatusEndpoint();
+// The live system serves only the installer and the desktop that shows it; the build-time document has everything.
+if (installer.Active || BuildTimeDocument.IsGenerating)
+{
+    api.MapInstallerEndpoints();
+}
+if (!installer.Active)
+{
+    api.MapInstallIdEndpoint(Path.GetDirectoryName(paths.DatabasePath) ?? ".");
+    api.MapAuthEndpoints();
+    api.MapLayoutEndpoints();
+    api.MapJobEndpoints();
+    api.MapNotificationEndpoints();
+    api.MapShareEndpoints();
+    api.MapUserEndpoints();
+    api.MapPermissionEndpoints();
+    api.MapFileServiceEndpoints();
+    api.MapFileEndpoints();
+    api.MapStorageEndpoints();
+    api.MapSnapshotEndpoints();
+    api.MapStorageHealthEndpoints();
+    api.MapLogEndpoints();
+    api.MapSystemSettingsEndpoints();
+    api.MapPowerEndpoint();
+    api.MapBackupEndpoints();
+    app.MapRealtime();
+    app.MapWebDav();
+}
 app.MapDesktop(paths.DesktopDirectory);
 
 await app.RunAsync();
