@@ -1,6 +1,6 @@
 import { useEffect, useEffectEvent, useRef, type ReactNode, type RefObject } from 'react';
 import { Popover } from 'react-aria-components';
-import { flushSync } from 'react-dom';
+import { createPortal, flushSync } from 'react-dom';
 import menuStyles from './Menu.module.css';
 
 /**
@@ -23,8 +23,14 @@ export function ContextMenuPopover({
   useContextMenuHandOff(popover, onClose);
   return (
     <>
-      {/* An empty anchor at the point: fixed and without content, it has no size. */}
-      <div ref={anchor} style={{ position: 'fixed', left: x, top: y }} aria-hidden />
+      {/*
+        An empty anchor at the point: fixed and without content, it has no size. On the body, because a backdrop
+        filter or transform of an ancestor (taskbar, start menu) would make it fixed to that ancestor instead.
+      */}
+      {createPortal(
+        <div ref={anchor} style={{ position: 'fixed', left: x, top: y }} aria-hidden />,
+        document.body,
+      )}
       <Popover
         ref={popover}
         triggerRef={anchor}

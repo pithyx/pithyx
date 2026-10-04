@@ -219,8 +219,12 @@ test('the start menu and the taskbar put apps on the desktop, and the taskbar cl
 
   await test.step('a right-click on an app in the start menu adds it to the desktop', async () => {
     await page.getByRole('button', { name: 'Pithyx menu' }).click();
-    await start.getByRole('row', { name: 'Log Center' }).click({ button: 'right' });
+    const tile = await box(start.getByRole('row', { name: 'Log Center' }));
+    const point = { x: tile.x + tile.width / 2, y: tile.y + tile.height / 2 };
+    await page.mouse.click(point.x, point.y, { button: 'right' });
     const menu = page.getByRole('menu', { name: 'Menu for Log Center' });
+    // The start menu's backdrop filter must not move the menu away from the pointer.
+    expect(openedAt(await box(menu), point)).toBe(true);
     await expect(menu.getByRole('menuitem', { name: 'Open' })).toBeFocused();
     await menu.getByRole('menuitem', { name: 'Add to desktop' }).click();
     await expect(menu).toHaveCount(0);
@@ -241,8 +245,17 @@ test('the start menu and the taskbar put apps on the desktop, and the taskbar cl
 
   const entry = taskbar.getByRole('button', { name: /^Resource Monitor/ });
   await test.step('a right-click on a running app minimizes, restores and adds it', async () => {
-    await entry.click({ button: 'right' });
+    const button = await box(entry);
+    const point = { x: button.x + button.width / 2, y: button.y + button.height / 2 };
+    await page.mouse.click(point.x, point.y, { button: 'right' });
     const menu = page.getByRole('menu', { name: 'Menu for Resource Monitor' });
+    // Above the bar, next to the pointer, within the viewport.
+    const opened = await box(menu);
+    const viewport = page.viewportSize();
+    expect(Math.abs(opened.x - point.x)).toBeLessThan(8);
+    expect(opened.y + opened.height).toBeLessThanOrEqual(point.y);
+    expect(opened.y).toBeGreaterThanOrEqual(0);
+    expect(opened.y + opened.height).toBeLessThanOrEqual(viewport?.height ?? 0);
     await menu.getByRole('menuitem', { name: 'Minimize' }).click();
     await expect(appWindow(page, 'Resource Monitor')).toBeHidden();
     await entry.click({ button: 'right' });
