@@ -1,0 +1,76 @@
+{
+ "json_format_version": [
+  1,
+  0
+ ],
+ "smartctl": {
+  "version": [
+   7,
+   4
+  ],
+  "pre_release": false,
+  "svn_revision": "5530",
+  "platform_info": "x86_64-linux-6.12.48+deb13-amd64",
+  "build_info": "(local build)",
+  "argv": [
+   "smartctl",
+   "-n",
+   "standby",
+   "-j",
+   "-a",
+   "/dev/sda"
+  ],
+  "messages": [
+   {
+    "string": "Device does not support Self Test logging",
+    "severity": "error"
+   }
+  ],
+  "exit_status": 4
+ },
+ "local_time": {
+  "time_t": 1790496000,
+  "asctime": "Sun Sep 27 08:00:00 2026 UTC"
+ },
+ "device": {
+  "name": "/dev/sda",
+  "info_name": "/dev/sda",
+  "type": "scsi",
+  "protocol": "SCSI"
+ },
+ "scsi_vendor": "QEMU",
+ "scsi_product": "QEMU HARDDISK",
+ "scsi_model_name": "QEMU QEMU HARDDISK",
+ "scsi_revision": "2.5+",
+ "scsi_version": "SPC-3",
+ "user_capacity": {
+  "blocks": 20971520,
+  "bytes": 10737418240
+ },
+ "logical_block_size": 512,
+ "scsi_lb_provisioning": {
+  "name": "fully provisioned",
+  "value": 0,
+  "management_enabled": {
+   "name": "LBPME",
+   "value": 0
+  },
+  "read_zeros": {
+   "name": "LBPRZ",
+   "value": 0
+  }
+ },
+ "device_type": {
+  "scsi_terminology": "Peripheral Device Type [PDT]",
+  "scsi_value": 0,
+  "name": "disk"
+ },
+ "serial_number": "02609329D99",
+ "smart_support": {
+  "available": false
+ },
+ "temperature": {
+  "current": 0,
+  "drive_trip": 0
+ }
+}

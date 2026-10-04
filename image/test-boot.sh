@@ -37,7 +37,9 @@ readonly OVMF_CODE=/usr/share/OVMF/OVMF_CODE_4M.fd
 readonly OVMF_VARS=/usr/share/OVMF/OVMF_VARS_4M.fd
 [[ -f "$OVMF_CODE" ]] || die "$OVMF_CODE not found; install ovmf"
 
-vm="$(mktemp -d "${TMPDIR:-/tmp}/pithyx-vm.XXXXXX")"
+# On disk, not in /tmp: a tmpfs fills up with the VM's disks and the VM stalls.
+mkdir -p "$repo/image/out/vm"
+vm="$(mktemp -d "$repo/image/out/vm/pithyx-vm.XXXXXX")"
 cleanup() {
   if [[ -f "$vm/qemu.pid" ]]; then
     kill "$(cat "$vm/qemu.pid")" 2>/dev/null || true
@@ -63,8 +65,8 @@ qemu-system-x86_64 -name pithyx-test -machine q35,accel="$accel" -cpu "$([[ $acc
   -drive if=pflash,format=raw,readonly=on,file="$OVMF_CODE" \
   -drive if=pflash,format=raw,file="$vm/vars.fd" \
   -device ahci,id=ahci \
-  -drive id=disk1,if=none,format=qcow2,file="$vm/disk1.qcow2" -device ide-hd,drive=disk1,bus=ahci.0,serial=PITHYXVM01 \
-  -drive id=disk2,if=none,format=qcow2,file="$vm/disk2.qcow2" -device ide-hd,drive=disk2,bus=ahci.1,serial=PITHYXVM02 \
+  -drive id=disk1,if=none,format=qcow2,discard=unmap,detect-zeroes=unmap,file="$vm/disk1.qcow2" -device ide-hd,drive=disk1,bus=ahci.0,serial=PITHYXVM01 \
+  -drive id=disk2,if=none,format=qcow2,discard=unmap,detect-zeroes=unmap,file="$vm/disk2.qcow2" -device ide-hd,drive=disk2,bus=ahci.1,serial=PITHYXVM02 \
   -drive id=stick,if=none,format=raw,readonly=on,file="$iso" -device usb-ehci -device usb-storage,drive=stick,removable=on \
   -netdev user,id=net0,hostfwd=tcp:127.0.0.1:"$port"-:7484 -device virtio-net-pci,netdev=net0 \
   -display none -serial file:"$vm/serial.log" -monitor unix:"$vm/monitor.sock",server,nowait \

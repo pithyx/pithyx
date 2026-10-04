@@ -235,6 +235,48 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string FsVolumeReadOnly = "fs.volume.read_only";
 
+    /// <summary>The box misses a requirement of the installer; <c>params.check</c> names it (see <c>InstallerCheck</c>).</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string InstallerCheckFailed = "installer.check.failed";
+
+    /// <summary>The call needs the browser that owns the installation.</summary>
+    [ErrorStatus(HttpStatusCode.Forbidden)]
+    public const string InstallerClaimRequired = "installer.claim.required";
+
+    /// <summary>Another browser owns the installation.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string InstallerClaimTaken = "installer.claim.taken";
+
+    /// <summary>The system goes onto one disk or a mirror of two different disks.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string InstallerDiskCount = "installer.disk.count";
+
+    /// <summary>A chosen disk cannot hold the system; <c>params.diskId</c> and <c>params.reason</c> say which and why.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string InstallerDiskUnsuitable = "installer.disk.unsuitable";
+
+    /// <summary>The user did not confirm that the chosen disks are erased.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string InstallerEraseNotConfirmed = "installer.erase.not_confirmed";
+
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string InstallerHostnameInvalid = "installer.hostname.invalid";
+
+    /// <summary>A step of the installation failed; <c>params.step</c> names it. The log of the live system has the command.</summary>
+    [ErrorStatus(HttpStatusCode.InternalServerError)]
+    public const string InstallerInstallFailed = "installer.install.failed";
+
+    /// <summary>The installation runs already or is done.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string InstallerInstallRunning = "installer.install.running";
+
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string InstallerKeyboardInvalid = "installer.keyboard.invalid";
+
+    /// <summary>The box restarts only once the installation is done.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string InstallerRebootNotReady = "installer.reboot.not_ready";
+
     [ErrorStatus(HttpStatusCode.NotFound)]
     public const string JobsJobNotFound = "jobs.job.not_found";
 

@@ -147,6 +147,35 @@
       "read_only": "Der Speicher ist schreibgeschützt."
     }
   },
+  "installer": {
+    "check": {
+      "failed": "Dieser Computer erfüllt eine Voraussetzung von Pithyx nicht. Die erste Seite des Installers zeigt, welche."
+    },
+    "claim": {
+      "required": "Ein anderer Browser führt diese Installation. Um neu zu beginnen, starte den Computer erneut vom USB-Stick.",
+      "taken": "Diese Installation wird schon in einem anderen Browser ausgeführt. Um neu zu beginnen, starte den Computer erneut vom USB-Stick."
+    },
+    "disk": {
+      "count": "Wähle eine Festplatte oder zwei verschiedene für einen Spiegel.",
+      "unsuitable": "Auf dieser Festplatte kann Pithyx nicht installiert werden. Wähle eine andere."
+    },
+    "erase": {
+      "not_confirmed": "Bestätige, dass alle Daten auf den gewählten Festplatten gelöscht werden."
+    },
+    "hostname": {
+      "invalid": "Verwende für den Namen Kleinbuchstaben, Ziffern und Bindestriche, höchstens 63 Zeichen, ohne Bindestrich am Anfang oder Ende."
+    },
+    "install": {
+      "failed": "Die Installation ist fehlgeschlagen. Nichts wurde vollständig installiert; du kannst es erneut versuchen. Das Protokoll des Installers enthält die Details.",
+      "running": "Die Installation läuft bereits oder ist abgeschlossen."
+    },
+    "keyboard": {
+      "invalid": "Wähle ein Tastaturlayout aus der Liste."
+    },
+    "reboot": {
+      "not_ready": "Der Computer kann erst neu starten, wenn die Installation abgeschlossen ist."
+    }
+  },
   "jobs": {
     "job": {
       "not_found": "Diese Aufgabe gibt es nicht oder sie wurde bereits entfernt."

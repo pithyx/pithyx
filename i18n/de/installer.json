@@ -1,0 +1,120 @@
+{
+  "welcome": {
+    "title": "Willkommen bei Pithyx",
+    "tagline": "Lass uns die freie Reise beginnen.",
+    "intro": "Damit installierst du Pithyx {version} auf diesem Computer. Es dauert ein paar Minuten und braucht keine Internetverbindung.",
+    "start": "Los geht's",
+    "checksTitle": "Voraussetzungen"
+  },
+  "checks": {
+    "cpu": "64-Bit-Prozessor mit x86-64-v2",
+    "cpuFailed": "Der Prozessor ist zu alt. Pithyx braucht einen 64-Bit-Prozessor mit x86-64-v2 (SSE4.2 und POPCNT).",
+    "uefi": "Mit UEFI gestartet",
+    "uefiFailed": "Der Computer ist im Legacy-Modus (BIOS) gestartet. Stelle die Firmware auf UEFI um und starte dann erneut vom USB-Stick.",
+    "memory": "Mindestens {minGb} GB Arbeitsspeicher ({foundGb} GB gefunden)",
+    "memoryFailed": "Pithyx braucht mindestens {minGb} GB Arbeitsspeicher; dieser Computer hat {foundGb} GB.",
+    "secure_boot": "Secure Boot ist aus",
+    "secure_bootFailed": "Secure Boot ist an. Pithyx nutzt ein ZFS-Modul, das nicht signiert ist: Schalte Secure Boot in den Firmware-Einstellungen aus (oft unter Security oder Boot) und starte dann erneut vom USB-Stick.",
+    "disk": "Eine interne Festplatte mit mindestens {minGb} GB",
+    "diskFailed": "Es wurde keine interne Festplatte mit mindestens {minGb} GB gefunden. USB-Festplatten und der USB-Stick können das System nicht aufnehmen."
+  },
+  "taken": {
+    "title": "Installation läuft woanders",
+    "intro": "In einem anderen Browser wird Pithyx bereits auf diesem Computer installiert. Um neu zu beginnen, starte den Computer erneut vom USB-Stick."
+  },
+  "step": "Schritt {current} von {total}",
+  "back": "Zurück",
+  "next": "Weiter",
+  "region": {
+    "title": "Name und Region",
+    "hostname": "Name des NAS",
+    "hostnameHint": "Kleinbuchstaben, Ziffern und Bindestriche. Andere Geräte sehen die Box unter diesem Namen.",
+    "language": "Sprache",
+    "region": "Formate",
+    "regionAuto": "Der Sprache jedes Benutzers folgen",
+    "timeZone": "Zeitzone",
+    "ntp": "Zeitserver (optional)",
+    "ntpHint": "Durch Kommas getrennt. Leer lassen für die Standardserver.",
+    "keyboard": "Tastaturlayout der Konsole"
+  },
+  "network": {
+    "title": "Netzwerk",
+    "intro": "Pithyx bezieht seine Adresse per DHCP auf jeder verbundenen Netzwerkkarte. Eine feste Adresse kannst du nach der Installation unter Einstellungen > Netzwerk festlegen.",
+    "connected": "Verbunden",
+    "disconnected": "Kein Kabel",
+    "noAddress": "Noch keine Adresse",
+    "none": "Es wurde keine Netzwerkkarte gefunden."
+  },
+  "disks": {
+    "title": "Systemfestplatte",
+    "intro": "Pithyx wird auf einer internen Festplatte installiert. Deine Daten kommen später in Speicher auf andere Festplatten.",
+    "first": "Festplatte",
+    "mirror": "Auf zwei Festplatten spiegeln",
+    "mirrorHint": "Das System wird auf beide Festplatten geschrieben; die Box läuft weiter, wenn eine davon ausfällt.",
+    "second": "Zweite Festplatte",
+    "choose": "Wähle eine Festplatte",
+    "chooseSecond": "Wähle eine zweite Festplatte oder schalte den Spiegel aus.",
+    "details": "{size} · Seriennummer {serial}",
+    "noSerial": "keine Seriennummer",
+    "hdd": "Festplatte mit Magnetscheiben: Das geht, aber eine SSD ist schneller, leiser und braucht weniger Strom.",
+    "hasData": "Auf dieser Festplatte liegen Daten, die gelöscht werden.",
+    "unsuitable": "Nicht angeboten: {reason}",
+    "reason": {
+      "usb": "USB-Festplatte",
+      "removable": "Wechseldatenträger",
+      "boot_medium": "der USB-Stick dieses Installers",
+      "read_only": "schreibgeschützt",
+      "in_use": "in Benutzung",
+      "too_small": "kleiner als {minGb} GB"
+    }
+  },
+  "admin": {
+    "title": "Administrator",
+    "intro": "Der erste Benutzer der Box. Er kann nach der Installation weitere Benutzer anlegen."
+  },
+  "summary": {
+    "title": "Zusammenfassung",
+    "name": "Name",
+    "language": "Sprache",
+    "timeZone": "Zeitzone",
+    "keyboard": "Tastatur",
+    "administrator": "Administrator",
+    "erased": "Diese Festplatten werden gelöscht",
+    "confirm": "Alle Daten auf diesen Festplatten werden gelöscht",
+    "install": "Pithyx installieren"
+  },
+  "progress": {
+    "title": "Pithyx wird installiert",
+    "intro": "Lass den Computer eingeschaltet.",
+    "steps": {
+      "partition": "Festplatten werden partitioniert",
+      "raid": "Spiegel wird angelegt",
+      "filesystems": "Dateisysteme werden angelegt",
+      "copy": "System wird kopiert",
+      "configure": "Einstellungen werden geschrieben",
+      "bootloader": "Bootloader wird installiert",
+      "finish": "Abschluss"
+    }
+  },
+  "failed": {
+    "title": "Die Installation ist fehlgeschlagen",
+    "step": "Fehlgeschlagen bei: {step}",
+    "change": "Einstellungen ändern",
+    "command": "Befehl: {command} (Exit-Code {exitCode})"
+  },
+  "done": {
+    "title": "Pithyx ist installiert",
+    "recoveryIntro": "Dieser Schlüssel ist der einzige Weg, das Administratorpasswort zurückzusetzen. Er wird nur jetzt angezeigt. Bewahre ihn sicher auf, bevor du neu startest.",
+    "continue": "Weiter"
+  },
+  "reboot": {
+    "title": "USB-Stick entfernen",
+    "intro": "Entferne den USB-Stick und starte dann neu. Der Computer startet Pithyx von seiner Festplatte, und diese Seite öffnet es, sobald es antwortet.",
+    "restart": "Jetzt neu starten"
+  },
+  "rebooting": {
+    "title": "Pithyx startet",
+    "intro": "Diese Seite öffnet das neue System, sobald es antwortet. Das kann ein paar Minuten dauern.",
+    "manual": "Wenn nichts passiert, öffne {url} selbst."
+  }
+}

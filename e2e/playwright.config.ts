@@ -9,6 +9,8 @@ process.env.PITHYX_E2E_DATA ??= mkdtempSync(join(tmpdir(), 'pithyx-e2e-'));
 const dataDirectory = process.env.PITHYX_E2E_DATA;
 // 7484 by default; PITHYX_E2E_PORT runs the suite next to a daemon that already uses it (dev01's dev unit).
 const port = process.env.PITHYX_E2E_PORT ?? '7484';
+// The installer of the live system runs as a second daemon on the next port.
+const installerPort = String(Number(port) + 1);
 
 // Chromium resolves pithyx.test to this machine, so the daemon is reached at an origin that is not a secure context.
 const insecureOrigin = {
@@ -45,25 +47,53 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'], ...insecureOrigin },
     },
     {
+      name: 'installer',
+      testMatch: 'installer.spec.ts',
+      use: {
+        ...devices['Desktop Chrome'],
+        ...insecureOrigin,
+        baseURL: `http://pithyx.test:${installerPort}`,
+      },
+    },
+    {
       name: 'chromium',
-      testIgnore: ['auth.spec.ts', 'insecure.spec.ts'],
+      testIgnore: ['auth.spec.ts', 'insecure.spec.ts', 'installer.spec.ts'],
       dependencies: ['first-run'],
       use: { ...devices['Desktop Chrome'] },
     },
   ],
-  webServer: {
-    command: 'dotnet run --project ../daemon/src/Pithyx.Daemon --no-launch-profile',
-    url: `http://localhost:${port}/api/health`,
-    timeout: 180_000,
-    reuseExistingServer: false,
-    env: {
-      ASPNETCORE_ENVIRONMENT: 'Development',
-      PITHYX_SIMULATE: '1',
-      PITHYX_DEV_PORT: port,
-      PITHYX_DB: join(dataDirectory, 'pithyx.db'),
-      PITHYX_CACHE_DIR: join(dataDirectory, 'cache'),
-      PITHYX_LOG_DIR: join(dataDirectory, 'logs'),
-      PITHYX_DESKTOP_DIR: join(import.meta.dirname, '..', 'desktop', 'dist'),
+  webServer: [
+    {
+      command: 'dotnet run --project ../daemon/src/Pithyx.Daemon --no-launch-profile',
+      url: `http://localhost:${port}/api/health`,
+      timeout: 180_000,
+      reuseExistingServer: false,
+      env: {
+        ASPNETCORE_ENVIRONMENT: 'Development',
+        PITHYX_SIMULATE: '1',
+        PITHYX_DEV_PORT: port,
+        PITHYX_DB: join(dataDirectory, 'pithyx.db'),
+        PITHYX_CACHE_DIR: join(dataDirectory, 'cache'),
+        PITHYX_LOG_DIR: join(dataDirectory, 'logs'),
+        PITHYX_DESKTOP_DIR: join(import.meta.dirname, '..', 'desktop', 'dist'),
+      },
     },
-  },
+    {
+      command: 'dotnet run --project ../daemon/src/Pithyx.Daemon --no-launch-profile',
+      url: `http://localhost:${installerPort}/api/health`,
+      timeout: 180_000,
+      reuseExistingServer: false,
+      env: {
+        ASPNETCORE_ENVIRONMENT: 'Development',
+        PITHYX_SIMULATE: '1',
+        PITHYX_SIMULATE_SCENARIO: 'installer-handwritten',
+        PITHYX_INSTALLER: '1',
+        PITHYX_DEV_PORT: installerPort,
+        PITHYX_DB: join(dataDirectory, 'installer', 'pithyx.db'),
+        PITHYX_CACHE_DIR: join(dataDirectory, 'installer', 'cache'),
+        PITHYX_LOG_DIR: join(dataDirectory, 'installer', 'logs'),
+        PITHYX_DESKTOP_DIR: join(import.meta.dirname, '..', 'desktop', 'dist'),
+      },
+    },
+  ],
 });

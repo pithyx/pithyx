@@ -30,6 +30,7 @@ public sealed partial class EndpointMatrixTests : IDisposable
     {
         ["GetHealth"] = Need.Anonymous,
         ["GetSetupStatus"] = Need.Anonymous,
+        ["GetInstallId"] = Need.Anonymous,
         ["Setup"] = Need.Anonymous,
         ["Login"] = Need.Anonymous,
         ["LoginTotp"] = Need.Anonymous,

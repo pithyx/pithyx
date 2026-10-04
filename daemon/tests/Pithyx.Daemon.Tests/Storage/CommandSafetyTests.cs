@@ -5,12 +5,13 @@ namespace Pithyx.Daemon.Tests.Storage;
 
 /// <summary>
 /// Pools are imported only by the import plans, never all at once, never destroyed ones, and changed only through a
-/// command plan. The daemon's source may name destructive storage commands only in the plan builders.
+/// command plan. The daemon's source may name destructive storage commands only in the plan builders and in the
+/// installer's plans, which run only on the live system.
 /// </summary>
 public sealed partial class CommandSafetyTests
 {
     private const string ImportPlans = "Storage/Zfs/ImportPlans.cs";
-    private static readonly string[] _planBuilders = ["Storage/Zfs/ZfsPlans.cs", "Storage/Zfs/ZfsDatasetPlans.cs", "Storage/Zfs/SnapshotPlans.cs", ImportPlans];
+    private static readonly string[] _planBuilders = ["Storage/Zfs/ZfsPlans.cs", "Storage/Zfs/ZfsDatasetPlans.cs", "Storage/Zfs/SnapshotPlans.cs", ImportPlans, "Installer/InstallPlans.cs"];
 
     private static IEnumerable<(string File, string Text)> DaemonSources()
     {

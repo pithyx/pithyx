@@ -35,6 +35,107 @@
         }
       }
     },
+    "/api/setup": {
+      "get": {
+        "tags": [
+          "Setup"
+        ],
+        "operationId": "GetSetupStatus",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetupStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Setup"
+        ],
+        "operationId": "Setup",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SetupResponse"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/install-id": {
+      "get": {
+        "tags": [
+          "Installer"
+        ],
+        "operationId": "GetInstallId",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstallIdResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/permissions/catalog": {
       "get": {
         "tags": [
@@ -421,19 +522,19 @@
         }
       }
     },
-    "/api/setup": {
+    "/api/installer": {
       "get": {
         "tags": [
-          "Setup"
+          "Installer"
         ],
-        "operationId": "GetSetupStatus",
+        "operationId": "GetInstallerStatus",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SetupStatus"
+                  "$ref": "#/components/schemas/InstallerStatus"
                 }
               }
             }
@@ -449,32 +550,117 @@
             }
           }
         }
-      },
+      }
+    },
+    "/api/installer/claim": {
       "post": {
         "tags": [
-          "Setup"
+          "Installer"
         ],
-        "operationId": "Setup",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SetupRequest"
-              }
-            }
-          },
-          "required": true
-        },
+        "operationId": "ClaimInstaller",
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SetupResponse"
+                  "$ref": "#/components/schemas/InstallerStatus"
                 }
               }
             }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/installer/options": {
+      "get": {
+        "tags": [
+          "Installer"
+        ],
+        "operationId": "GetInstallerOptions",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstallerOptions"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/installer/install": {
+      "post": {
+        "tags": [
+          "Installer"
+        ],
+        "operationId": "Install",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InstallRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InstallerStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/installer/reboot": {
+      "post": {
+        "tags": [
+          "Installer"
+        ],
+        "operationId": "RebootInstaller",
+        "responses": {
+          "204": {
+            "description": "No Content"
           },
           "default": {
             "description": "Problem details with a stable error code.",
@@ -5330,6 +5516,17 @@
           "fs.version.not_found",
           "fs.volume.full",
           "fs.volume.read_only",
+          "installer.check.failed",
+          "installer.claim.required",
+          "installer.claim.taken",
+          "installer.disk.count",
+          "installer.disk.unsuitable",
+          "installer.erase.not_confirmed",
+          "installer.hostname.invalid",
+          "installer.install.failed",
+          "installer.install.running",
+          "installer.keyboard.invalid",
+          "installer.reboot.not_ready",
           "jobs.job.not_found",
           "logs.app.invalid",
           "logs.archive.pool_unavailable",
@@ -6360,6 +6557,287 @@
             "description": "The password it was created with."
           }
         }
+      },
+      "InstallIdResponse": {
+        "required": [
+          "installId"
+        ],
+        "type": "object",
+        "properties": {
+          "installId": {
+            "type": "string"
+          }
+        },
+        "description": "Response of `GET /api/install-id` on an installed box."
+      },
+      "InstallRequest": {
+        "required": [
+          "hostname",
+          "language",
+          "region",
+          "timeZone",
+          "ntpServers",
+          "keyboardLayout",
+          "diskIds",
+          "username",
+          "password",
+          "displayName",
+          "eraseConfirmed"
+        ],
+        "type": "object",
+        "properties": {
+          "hostname": {
+            "type": "string",
+            "description": "Name of the box, a DNS label."
+          },
+          "language": {
+            "type": "string",
+            "description": "System language."
+          },
+          "region": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Country of the formats, or null to follow each user's language."
+          },
+          "timeZone": {
+            "type": "string",
+            "description": "IANA time zone."
+          },
+          "ntpServers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Time servers; empty for the defaults."
+          },
+          "keyboardLayout": {
+            "type": "string",
+            "description": "XKB layout of the console keyboard."
+          },
+          "diskIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "One disk, or two for a mirror."
+          },
+          "username": {
+            "type": "string",
+            "description": "The administrator."
+          },
+          "password": {
+            "type": "string",
+            "description": "The administrator's password."
+          },
+          "displayName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The administrator's display name."
+          },
+          "eraseConfirmed": {
+            "type": "boolean",
+            "description": "The user confirmed that every listed disk is erased."
+          }
+        },
+        "description": "Body of `POST /api/installer/install`."
+      },
+      "InstallerCheck": {
+        "required": [
+          "id",
+          "passed",
+          "params"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`cpu` (x86-64-v2), `uefi`, `memory`, `secure_boot` (off) or `disk` (a suitable disk exists)."
+          },
+          "passed": {
+            "type": "boolean",
+            "description": "Whether the box meets it."
+          },
+          "params": {
+            "type": "object",
+            "description": "Values for the text, for example `minGb` and `foundGb` of `memory`."
+          }
+        },
+        "description": "A requirement the box must meet before the installation starts."
+      },
+      "InstallerDisk": {
+        "required": [
+          "disk",
+          "suitable",
+          "reason",
+          "hasData"
+        ],
+        "type": "object",
+        "properties": {
+          "disk": {
+            "description": "The disk.",
+            "$ref": "#/components/schemas/Disk"
+          },
+          "suitable": {
+            "type": "boolean",
+            "description": "Whether the system may be installed on it."
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Why not: `usb`, `removable`, `boot_medium`, `read_only`, `in_use` (mounted or swap) or `too_small`."
+          },
+          "hasData": {
+            "type": "boolean",
+            "description": "Whether it holds partitions or file systems that the installation erases."
+          }
+        },
+        "description": "A disk as the installer offers it."
+      },
+      "InstallerOptions": {
+        "required": [
+          "disks",
+          "network",
+          "timeZones",
+          "keyboardLayouts",
+          "minDiskBytes"
+        ],
+        "type": "object",
+        "properties": {
+          "disks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InstallerDisk"
+            },
+            "description": "Every disk, suitable or not."
+          },
+          "network": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NetworkInterfaceInfo"
+            },
+            "description": "The network cards with their state and addresses."
+          },
+          "timeZones": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "IANA time zone names."
+          },
+          "keyboardLayouts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "XKB layout codes for the console keyboard."
+          },
+          "minDiskBytes": {
+            "type": "integer",
+            "description": "The smallest disk the system fits on.",
+            "format": "int64"
+          }
+        },
+        "description": "Response of `GET /api/installer/options`: what the steps offer."
+      },
+      "InstallerPhase": {
+        "enum": [
+          "ready",
+          "installing",
+          "installed",
+          "failed",
+          "rebooting"
+        ]
+      },
+      "InstallerStatus": {
+        "required": [
+          "claimed",
+          "owner",
+          "phase",
+          "step",
+          "stepIndex",
+          "stepCount",
+          "errorCode",
+          "errorParams",
+          "installId",
+          "recoveryKey",
+          "version",
+          "checks"
+        ],
+        "type": "object",
+        "properties": {
+          "claimed": {
+            "type": "boolean",
+            "description": "Whether a browser owns the installation."
+          },
+          "owner": {
+            "type": "boolean",
+            "description": "Whether this browser owns it."
+          },
+          "phase": {
+            "description": "Where the installation is.",
+            "$ref": "#/components/schemas/InstallerPhase"
+          },
+          "step": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The step that runs or failed: `partition`, `raid`, `filesystems`, `copy`, `configure`, `bootloader` or `finish`."
+          },
+          "stepIndex": {
+            "type": "integer",
+            "description": "Zero-based position of Step.",
+            "format": "int32"
+          },
+          "stepCount": {
+            "type": "integer",
+            "description": "Number of steps.",
+            "format": "int32"
+          },
+          "errorCode": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Why the installation failed."
+          },
+          "errorParams": {
+            "type": "object",
+            "description": "Values for its text; for `installer.install.failed` the `step`, the `command` and its `exitCode`."
+          },
+          "installId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Set once installed: the installed system answers it on `http://&lt;address&gt;/api/install-id`."
+          },
+          "recoveryKey": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Set once installed, for the owner only: the administrator's recovery key, shown before the reboot."
+          },
+          "version": {
+            "type": "string",
+            "description": "The Pithyx version that gets installed."
+          },
+          "checks": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InstallerCheck"
+            },
+            "description": "The requirements and whether the box meets them."
+          }
+        },
+        "description": "Response of `GET /api/installer`."
       },
       "Job": {
         "required": [
@@ -8522,7 +9000,8 @@
           "required",
           "hostname",
           "language",
-          "region"
+          "region",
+          "installer"
         ],
         "type": "object",
         "properties": {
@@ -8544,6 +9023,10 @@
               "string"
             ],
             "description": "The ISO 3166 country code whose formats every user sees, or null to follow each user's language."
+          },
+          "installer": {
+            "type": "boolean",
+            "description": "True on the live system of the ISO: the desktop shows the installer (`/api/installer`) instead of the sign-in."
           }
         }
       },
@@ -10683,6 +11166,12 @@
       "name": "System"
     },
     {
+      "name": "Setup"
+    },
+    {
+      "name": "Installer"
+    },
+    {
       "name": "Permissions"
     },
     {
@@ -10693,9 +11182,6 @@
     },
     {
       "name": "Logs"
-    },
-    {
-      "name": "Setup"
     },
     {
       "name": "Auth"
