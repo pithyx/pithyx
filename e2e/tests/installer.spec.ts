@@ -23,7 +23,7 @@ test('the first browser installs Pithyx on a mirror and restarts into it', async
   await page.getByRole('button', { name: 'Next' }).click();
 
   await expect(page.getByRole('heading', { name: 'System disk' })).toBeVisible();
-  await expect(page.getByText('Not offered: smaller than 40 GB')).toBeVisible();
+  await expect(page.getByText('Not offered: smaller than 40 GB').first()).toBeVisible();
   await page.getByRole('button', { name: 'Next' }).click();
   await expect(page.getByRole('alert')).toHaveText('Choose a disk');
   const first = page.getByRole('group', { name: 'Disk', exact: true });
