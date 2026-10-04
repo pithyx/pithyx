@@ -44,7 +44,7 @@ test('the first browser installs Pithyx on a mirror and restarts into it', async
   await page.getByRole('button', { name: 'Next' }).click();
 
   await expect(page.getByRole('heading', { name: 'Summary' })).toBeVisible();
-  await expect(page.getByText('nas-e2e')).toBeVisible();
+  await expect(page.locator('dd').filter({ hasText: 'nas-e2e' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'These disks will be erased' })).toBeVisible();
   await expect(page.locator('ul li').filter({ hasText: 'serial' })).toHaveCount(2);
   await page.getByText('All data on these disks will be erased').click();
