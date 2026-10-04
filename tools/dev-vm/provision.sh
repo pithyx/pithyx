@@ -166,8 +166,8 @@ install_packages() {
   arch=$(dpkg --print-architecture)
   local qemu=()
   case "$arch" in
-    amd64) qemu=(qemu-system-x86 ovmf grub-efi-amd64-bin) ;;
-    arm64) qemu=(qemu-system-arm qemu-efi-aarch64) ;;
+    amd64) qemu=(qemu-system-x86 qemu-utils ovmf grub-efi-amd64-bin) ;;
+    arm64) qemu=(qemu-system-arm qemu-utils qemu-efi-aarch64) ;;
     *) die "unsupported architecture $arch" ;;
   esac
   echo 'zfs-dkms zfs-dkms/note-incompatible-licenses note true' | debconf-set-selections

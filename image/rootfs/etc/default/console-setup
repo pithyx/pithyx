@@ -1,0 +1,7 @@
+# Managed by pithyx: a console font with the half blocks of the QR code in the greeting (image/rootfs/usr/lib/pithyx/issue.sh).
+ACTIVE_CONSOLES="/dev/tty[1-6]"
+CHARMAP="UTF-8"
+CODESET="FullCyrSlav"
+FONTFACE="Terminus"
+FONTSIZE="8x16"
+VIDEOMODE=

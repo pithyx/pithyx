@@ -213,6 +213,66 @@
           "SQLitePCLRaw.core": "2.1.12"
         }
       }
+    },
+    "net10.0/linux-arm64": {
+      "SkiaSharp.NativeAssets.Linux.NoDependencies": {
+        "type": "Direct",
+        "requested": "[4.153.0, )",
+        "resolved": "4.153.0",
+        "contentHash": "wFHdjGdc6KL6a5TUh73b3UKPmzIZJ6mu1qHvMuamVBvNtuq0VkQsDBv027gyumencJ5qmUfpJJpnqmp25G69CQ=="
+      },
+      "SkiaSharp.NativeAssets.macOS": {
+        "type": "Direct",
+        "requested": "[4.153.0, )",
+        "resolved": "4.153.0",
+        "contentHash": "HupVxGOlrSHW4G0yXtNQW2c56tqlQeXoBXt1yxjDX2V49AgmmhnvS81U/arLX/a9M388PZZKJyjIjK7nVT1eGQ=="
+      },
+      "SkiaSharp.NativeAssets.Win32": {
+        "type": "Direct",
+        "requested": "[4.153.0, )",
+        "resolved": "4.153.0",
+        "contentHash": "c1glJgnMtRYQE05h71nkotqZAdcmi8+9B9UcTvsQRKSA8G3QEM50lktSR119hJt3JE6KN8lHqihKMsJNbIVWOA=="
+      },
+      "libsodium": {
+        "type": "Transitive",
+        "resolved": "1.0.22",
+        "contentHash": "KPD9SloJFclrsjnhABu7dzWrcyYkwPbvx5l1gRSPAX/0n+OBtSiVCKtGFv4n+ecWUHU0tCG9LSSwoZZx673zBQ=="
+      },
+      "SQLitePCLRaw.lib.e_sqlite3": {
+        "type": "Transitive",
+        "resolved": "2.1.12",
+        "contentHash": "fWi8Dbknuhgg72fWinIdjXVaqO1hHL4YBBwVLnr7e1c9TAZwJ0QE38j9syW1hwx6HaqEVTwI+O07WPdZn8Rp0w=="
+      }
+    },
+    "net10.0/linux-x64": {
+      "SkiaSharp.NativeAssets.Linux.NoDependencies": {
+        "type": "Direct",
+        "requested": "[4.153.0, )",
+        "resolved": "4.153.0",
+        "contentHash": "wFHdjGdc6KL6a5TUh73b3UKPmzIZJ6mu1qHvMuamVBvNtuq0VkQsDBv027gyumencJ5qmUfpJJpnqmp25G69CQ=="
+      },
+      "SkiaSharp.NativeAssets.macOS": {
+        "type": "Direct",
+        "requested": "[4.153.0, )",
+        "resolved": "4.153.0",
+        "contentHash": "HupVxGOlrSHW4G0yXtNQW2c56tqlQeXoBXt1yxjDX2V49AgmmhnvS81U/arLX/a9M388PZZKJyjIjK7nVT1eGQ=="
+      },
+      "SkiaSharp.NativeAssets.Win32": {
+        "type": "Direct",
+        "requested": "[4.153.0, )",
+        "resolved": "4.153.0",
+        "contentHash": "c1glJgnMtRYQE05h71nkotqZAdcmi8+9B9UcTvsQRKSA8G3QEM50lktSR119hJt3JE6KN8lHqihKMsJNbIVWOA=="
+      },
+      "libsodium": {
+        "type": "Transitive",
+        "resolved": "1.0.22",
+        "contentHash": "KPD9SloJFclrsjnhABu7dzWrcyYkwPbvx5l1gRSPAX/0n+OBtSiVCKtGFv4n+ecWUHU0tCG9LSSwoZZx673zBQ=="
+      },
+      "SQLitePCLRaw.lib.e_sqlite3": {
+        "type": "Transitive",
+        "resolved": "2.1.12",
+        "contentHash": "fWi8Dbknuhgg72fWinIdjXVaqO1hHL4YBBwVLnr7e1c9TAZwJ0QE38j9syW1hwx6HaqEVTwI+O07WPdZn8Rp0w=="
+      }
     }
   }
 }

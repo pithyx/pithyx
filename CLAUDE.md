@@ -36,8 +36,8 @@ Update in the same PR whenever the state changes. Last updated: 2026-10-04.
 - Migrations on `dev`: 0001 to 0021 (0019 groups, 0020 grants, 0021 WebDAV and FTP). Merged history: `git log origin/dev`. 7484 has test pool `pithyxtestfs` (VYXTEST01) with shared folder "FS Test" for `e2e-user` (read-write, SFTP).
 - The owner widened v0.1 on 2026-10-03 (`TODO.md`, "Scope of v0.1"): groups, the permission model, WebDAV and FTP, changing the network. Open, one PR at a time in this order: A groups (step 10, #70, merged), B permission model (step 11, #71, merged), C WebDAV and FTP (step 12, `feature/webdav-ftp`, D291), D network (step 14.2, label `e2e`; nothing on the host changes until the owner decides the test method, D110).
 - Next after D: verify every "Release 0.1" item in `TODO.md` on 7484 in the browser (Playwright and screenshots as `e2e-admin`/`e2e-user`), fix failures, then report: deployed commit and `dev` HEAD, runner status per job, a table (item, status, proof), merged PRs with migration numbers, the rename grep (D279, only `VYXTEST` allowed), open problems with cause and proposal.
-- The web installer, image build and updater are planned (D294 to D297, `TODO.md` "Web installer v0.1" to "Updates v0.1"); building starts after D. Images are built and the QEMU installer test runs on dev01 (D296); a build runner (`pithyx-image`) comes later. dev01 has the image packages and its user is in group `kvm`.
-- Decisions D269 to D291 and D293 to D297 are on `dev`; D292 belongs to `feature/network`; next free number D298. The decision log at the end of `TODO.md` conflicts on every merge; keep all entries in number order.
+- The web installer, image build and updater are planned (D294 to D297, `TODO.md` "Web installer v0.1" to "Updates v0.1"). The owner asked on 2026-10-04 to build the installer and the image now, before D (D298). `image/build.sh` builds the ISO on dev01 in about 7 minutes (`--reuse-rootfs` about 1), `image/test-boot.sh` boots it in QEMU with KVM; a build runner (`pithyx-image`) comes later. dev01 has the image packages (also `qemu-utils`), its user is in group `kvm`, and dev01 has 8 cores and 21 GB since 2026-10-04.
+- Decisions D269 to D291 and D293 to D298 are on `dev`; D292 belongs to `feature/network`; next free number D299. The decision log at the end of `TODO.md` conflicts on every merge; keep all entries in number order.
 
 ## Known pitfalls
 
@@ -49,6 +49,7 @@ Update in the same PR whenever the state changes. Last updated: 2026-10-04.
 - A test that starts its own `smbd` needs `setsid` and a stdin pipe that stays open: a socket on stdin is served as an inetd connection, a closed stdin ends smbd, and an ending smbd signals its whole process group.
 - Old WIP commits were made with `--no-verify`; lefthook never checked them.
 - A fresh worktree needs `pnpm install --frozen-lockfile` before the first commit, or the repo-check hook fails.
+- An interrupted `image/build.sh` can leave mmdebstrap processes (they ignore SIGTERM inside the namespace; `pkill -9 -f "[m]mdebstrap --mode"`) and a root file system in `/tmp/mmdebstrap.*` owned by subuids (`unshare --map-auto --map-root-user rm -rf /tmp/mmdebstrap.*`). The script holds a lock on its work directory, so a second run refuses to start.
 
 ## Workflow
 
