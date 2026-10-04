@@ -142,6 +142,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- `tools/dev-vm/provision.sh` installs the image build tools (`mmdebstrap`, `uidmap`, `squashfs-tools`, `xorriso`, `mtools`, `dosfstools`, `grub-efi-amd64-bin`) and adds the user to group `kvm` for the QEMU installer test (D296), and leaves Samba and NFS alone once the daemon owns them (before, a second run stopped and disabled `smbd`).
 - Groups have their own page in Settings, next to Users in the category now called "Users and groups"; the Users page lists only the users.
 - Storage never shows the internal datasets of the Pithyx layout (D284). Its sections are Pools, Disks, Health and maintenance and the new Advanced, which explains and holds volumes, exporting and importing a pool and the datasets table; the Snapshots section and the export and import buttons on the Pools page are gone (the API stays).
 - The daemon reports the version `0.1.0-dev` with the commit it was built from.

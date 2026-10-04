@@ -166,15 +166,16 @@ install_packages() {
   arch=$(dpkg --print-architecture)
   local qemu=()
   case "$arch" in
-    amd64) qemu=(qemu-system-x86 ovmf) ;;
+    amd64) qemu=(qemu-system-x86 ovmf grub-efi-amd64-bin) ;;
     arm64) qemu=(qemu-system-arm qemu-efi-aarch64) ;;
     *) die "unsupported architecture $arch" ;;
   esac
   echo 'zfs-dkms zfs-dkms/note-incompatible-licenses note true' | debconf-set-selections
-  # smbclient and sshpass are for the SMB and SFTP integration test. The font and libraries after git are for headless Chromium (Playwright); without any font, text renders invisible.
+  # smbclient and sshpass are for the SMB and SFTP integration test. mmdebstrap to dosfstools build the ISO (image/build.sh, D296). The font and libraries after git are for headless Chromium (Playwright); without any font, text renders invisible.
   apt_install "linux-headers-$(uname -r)" "linux-headers-$arch" dkms zfs-dkms zfsutils-linux \
     mdadm btrfs-progs smartmontools samba nfs-kernel-server docker.io acl openssh-server "${qemu[@]}" \
     smbclient sshpass shellcheck git \
+    mmdebstrap uidmap squashfs-tools xorriso mtools dosfstools \
     fonts-dejavu-core libgbm1 libxkbcommon0 libatk1.0-0t64 libatk-bridge2.0-0t64 libatspi2.0-0t64 \
     libxcomposite1 libxdamage1 libxfixes3 libxrandr2
   apt_install "$DOTNET_SDK_PACKAGE" "$NODEJS_PACKAGE"
@@ -199,7 +200,9 @@ load_zfs() {
 }
 
 # Samba and NFS are configured by the daemon later; until then the dev VM exposes no shares.
+# Once the daemon has written smb.conf it owns these units, and a later run leaves them alone.
 disable_share_services() {
+  [[ ! -e /etc/samba/smb.conf.pre-pithyx ]] || return 0
   local unit
   for unit in smbd nmbd nfs-server; do
     if systemctl is-enabled --quiet "$unit" 2>/dev/null || systemctl is-active --quiet "$unit"; then
@@ -222,6 +225,16 @@ set_locale() {
   if ! grep -Eq '^LANG="?en_US\.UTF-8"?$' /etc/default/locale 2>/dev/null; then
     log "setting the system locale to en_US.UTF-8 (applies to new sessions)"
     update-locale LANG=en_US.UTF-8
+  fi
+}
+
+# The QEMU installer test (image/, D296) needs /dev/kvm without root.
+add_user_to_kvm() {
+  local user=${SUDO_USER:-}
+  [[ -n "$user" && "$user" != root ]] || return 0
+  if ! id -nG "$user" | tr ' ' '\n' | grep -qx kvm; then
+    log "adding $user to group kvm (applies to new sessions)"
+    usermod -aG kvm "$user"
   fi
 }
 
@@ -273,5 +286,6 @@ install_packages
 load_zfs
 disable_share_services
 set_locale
+add_user_to_kvm
 write_markers
 log "done"
