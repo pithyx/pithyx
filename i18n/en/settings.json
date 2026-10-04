@@ -315,6 +315,8 @@
       "title": "Restore a backup",
       "intro": "Choose a backup file and enter its password. Pithyx checks the file first; nothing changes until you confirm.",
       "file": "Backup file",
+      "chooseFile": "Choose file…",
+      "noFile": "No file chosen",
       "password": "Backup password",
       "check": "Check backup",
       "checking": "Checking…",

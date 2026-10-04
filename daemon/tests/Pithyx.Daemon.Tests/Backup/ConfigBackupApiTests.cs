@@ -19,6 +19,7 @@ public sealed class ConfigBackupApiTests : IAsyncLifetime
     private static readonly string[] _storage = ["storage"];
     private static readonly string[] _certificates = ["certificates"];
     private static readonly string[] _usersSystemCertificates = ["users", "system", "certificates"];
+    private static readonly string[] _storageCertificates = ["storage", "certificates"];
     private readonly DaemonFactory _factory = new();
     private HttpClient _admin = null!;
 
@@ -101,6 +102,26 @@ public sealed class ConfigBackupApiTests : IAsyncLifetime
         using var session = await _admin.GetAsync("/api/auth/session", Token);
         Assert.Equal(HttpStatusCode.Unauthorized, session.StatusCode);
         // The checked backup is used up.
+        Assert.Empty(Directory.EnumerateFiles(Path.Combine(_factory.DataDirectory, "backup-work")));
+    }
+
+    [Fact]
+    public async Task AFailedStepAfterTheDatabaseIsReportedAndTheDaemonStillRestarts()
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(TlsFile)!);
+        await File.WriteAllBytesAsync(TlsFile, [1, 2, 3], Token);
+        var archive = await CreateAsync();
+        var (_, summary) = await InspectAsync(archive, BackupPassword);
+        // The certificate folder cannot be written: a file stands where it should be.
+        Directory.Delete(Path.GetDirectoryName(TlsFile)!, recursive: true);
+        await File.WriteAllBytesAsync(Path.GetDirectoryName(TlsFile)!, [0], Token);
+
+        using var restore = await _admin.PostAsync("/api/system/backup/restore", new { restoreId = summary.GetProperty("restoreId").GetString(), categories = _storageCertificates });
+
+        Assert.Equal(HttpStatusCode.OK, restore.StatusCode);
+        var problems = (await restore.JsonAsync()).GetProperty("problems").EnumerateArray().ToList();
+        Assert.Equal(["certificates tls"], problems.Select(problem => $"{problem.GetProperty("category").GetString()} {problem.GetProperty("step").GetString()}"));
+        Assert.True(_factory.Services.GetRequiredService<DaemonRestart>().Requested);
         Assert.Empty(Directory.EnumerateFiles(Path.Combine(_factory.DataDirectory, "backup-work")));
     }
 
