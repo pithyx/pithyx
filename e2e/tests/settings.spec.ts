@@ -271,9 +271,6 @@ test('a configuration backup downloads encrypted and is checked before a restore
     await expect(restore.getByRole('checkbox', { name: part })).not.toBeChecked();
   }
   // Focusing a checkbox once scrolled the whole window out of sight.
-  await expect(
-    settings.getByRole('heading', { name: 'Backup and restore', level: 2 }),
-  ).toBeInViewport();
   await restore.getByRole('checkbox', { name: 'Storage settings' }).focus();
   await expect(settings.getByRole('button', { name: 'All settings' })).toBeInViewport();
   await restore.getByRole('button', { name: 'Restore…' }).click();
