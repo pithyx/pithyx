@@ -315,6 +315,8 @@
       "title": "Backup wiederherstellen",
       "intro": "Wähle eine Backup-Datei und gib ihr Passwort ein. Pithyx prüft die Datei zuerst; geändert wird erst, wenn du bestätigst.",
       "file": "Backup-Datei",
+      "chooseFile": "Datei auswählen…",
+      "noFile": "Keine Datei ausgewählt",
       "password": "Backup-Passwort",
       "check": "Backup prüfen",
       "checking": "Wird geprüft…",

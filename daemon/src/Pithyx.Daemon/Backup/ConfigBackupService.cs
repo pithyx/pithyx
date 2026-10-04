@@ -253,27 +253,33 @@ public sealed partial class ConfigBackupService(
                 }
             }
 
+            // The database changed: every step runs, and the daemon restarts whatever a step does.
             var problems = new List<RestoreProblem>();
-            if (categories.Contains(BackupCategory.Users))
+            try
             {
-                await RestoreAccountsAsync(pending.Files, problems, cancellationToken);
+                if (categories.Contains(BackupCategory.Users))
+                {
+                    await RestoreAccountsAsync(pending.Files, problems, cancellationToken);
+                }
+                if (categories.Contains(BackupCategory.System) && pending.Files.TryGetValue(TimeEntry, out var timeJson))
+                {
+                    await RestoreTimeAsync(timeJson, problems, cancellationToken);
+                }
+                if (categories.Contains(BackupCategory.Certificates))
+                {
+                    await RestoreCertificatesAsync(pending.Files, problems, cancellationToken);
+                }
             }
-            if (categories.Contains(BackupCategory.System) && pending.Files.TryGetValue(TimeEntry, out var timeJson))
+            finally
             {
-                await RestoreTimeAsync(timeJson, problems, cancellationToken);
-            }
-            if (categories.Contains(BackupCategory.Certificates))
-            {
-                await RestoreCertificatesAsync(pending.Files, problems, cancellationToken);
-            }
-
-            lock (_pendingLock)
-            {
-                Discard();
+                lock (_pendingLock)
+                {
+                    Discard();
+                }
+                restart.Request();
             }
             var restored = categories.Order().ToList();
             LogRestored(restored, problems.Count);
-            restart.Request();
             return new RestoreResult(restored, problems, restart.Requested);
         }
         finally
@@ -289,13 +295,21 @@ public sealed partial class ConfigBackupService(
         {
             return;
         }
-        if ((await accounts.ReconcileAsync(cancellationToken)).Count > 0)
+        try
         {
+            if ((await accounts.ReconcileAsync(cancellationToken)).Count > 0)
+            {
+                problems.Add(new RestoreProblem(BackupCategory.Users, "accounts"));
+            }
+            var existing = accounts.Actual().Where(entry => AccountReconciler.IsManaged(entry.Uid)).Select(entry => entry.Name).ToHashSet(StringComparer.Ordinal);
+            problems.AddRange((await RestorePasswordsAsync(commands, passwords, options, files, existing, cancellationToken))
+                .Select(step => new RestoreProblem(BackupCategory.Users, step)));
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            LogStepFailed(exception, "accounts");
             problems.Add(new RestoreProblem(BackupCategory.Users, "accounts"));
         }
-        var existing = accounts.Actual().Where(entry => AccountReconciler.IsManaged(entry.Uid)).Select(entry => entry.Name).ToHashSet(StringComparer.Ordinal);
-        problems.AddRange((await RestorePasswordsAsync(commands, passwords, options, files, existing, cancellationToken))
-            .Select(step => new RestoreProblem(BackupCategory.Users, step)));
     }
 
     /// <summary>The Linux and Samba password hashes of the named accounts, as backup entries.</summary>
@@ -383,7 +397,7 @@ public sealed partial class ConfigBackupService(
                 await system.SetTimeAsync(settings, cancellationToken);
             }
         }
-        catch (Exception exception) when (exception is PithyxException or JsonException)
+        catch (Exception exception) when (exception is not OperationCanceledException)
         {
             LogStepFailed(exception, "time");
             problems.Add(new RestoreProblem(BackupCategory.System, "time"));
@@ -403,7 +417,7 @@ public sealed partial class ConfigBackupService(
                     await WriteAsync(Path.Combine(options.TlsDirectory, name), content, secret: true, cancellationToken);
                 }
             }
-            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            catch (Exception exception) when (exception is not OperationCanceledException)
             {
                 LogStepFailed(exception, "tls");
                 problems.Add(new RestoreProblem(BackupCategory.Certificates, "tls"));
@@ -426,7 +440,7 @@ public sealed partial class ConfigBackupService(
                 problems.Add(new RestoreProblem(BackupCategory.Certificates, "sshKeys"));
             }
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        catch (Exception exception) when (exception is not OperationCanceledException)
         {
             LogStepFailed(exception, "sshKeys");
             problems.Add(new RestoreProblem(BackupCategory.Certificates, "sshKeys"));
