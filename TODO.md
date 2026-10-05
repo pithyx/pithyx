@@ -15,7 +15,7 @@ Step-by-step plan for building the Pithyx foundation. Read `CLAUDE.md` before st
 
 ## Release 0.1 (minimal)
 
-Set by the owner on 2026-09-29. This section is the roadmap from now on: work through it top to bottom. M4 and everything else below (including the parts of steps 9 to 14 that are not listed here) come after it. The release blockers apply to v0.1 as far as its scope reaches; a blocker about a feature v0.1 does not ship (third-party apps, NFS) is met by not shipping it and moves to the release that does.
+Set by the owner on 2026-09-29. This section is the roadmap from now on: work through it top to bottom. Everything else below (including the parts of steps 9 to 14 that are not listed here) comes after it. M4 was pulled into v0.1 on 2026-10-05 as "Apps v0.1 (SDK and runtime)" (D300); store catalogs stay later. The release blockers apply to v0.1 as far as its scope reaches; a blocker about a feature v0.1 does not ship (NFS) is met by not shipping it and moves to the release that does. Third-party apps ship with v0.1, so their blockers hold for it.
 
 ### Findings from the owner's test on 2026-09-29
 
@@ -75,7 +75,7 @@ Thumbnail cache (one PR, replaces D197 in pithyx/pithyx#33):
 
 Owner feedback on 2026-09-30 (the rest is in #56):
 
-- [ ] SDK: a context menu API for apps. The desktop draws the menu (same look, keyboard and touch handling as its own menus) from items the app passes with the point of the right-click, and returns the chosen item; an app can also ask for the browser's menu in an area. Until then the SDK and the window frame only suppress the browser's menu outside text fields. Needs its own decision number and TSDoc.
+- [ ] SDK: a context menu API for apps. The desktop draws the menu (same look, keyboard and touch handling as its own menus) from items the app passes with the point of the right-click, and returns the chosen item; an app can also ask for the browser's menu in an area. Until then the SDK and the window frame only suppress the browser's menu outside text fields. Needs its own decision number and TSDoc. (Moved to Apps v0.1: `app.contextMenu.show` in A4, drawn by the desktop in A7.)
 
 ### Scope of v0.1
 
@@ -85,11 +85,366 @@ Owner feedback on 2026-09-30 (the rest is in #56):
 - [x] Users and groups: create, edit, delete, as Linux and Samba accounts; users belong to groups (step 10, extended by the owner on 2026-10-03: groups are part of v0.1). (D289.)
 - [x] Permission model (step 11, extended on 2026-10-03, D290): rights go to users and groups, the effective right is the union, there are no deny rules and administrators have everything. Resources: shared folders (none, read, readWrite), protocols (SMB, SFTP, WebDAV, FTP, SSH login), apps (allowed or not), special rights (administrator, desktop login, SSH login, reboot and shutdown).
 - [x] SMB, SFTP, WebDAV and FTP (step 12 without NFS; WebDAV and FTP added by the owner on 2026-10-03, FTP as a fallback for software without SFTP): Settings > File services, rights per user and group and per shared folder. (Built, D287 and D288: Settings > File services, rights per user and per shared folder, the SMB recycle bin; `integration.sh` passes with a real Samba and sshd. Open: the owner's test on dev01, step 12 is `[REVIEW]`.)
-- [ ] Core apps: Files, Storage, Settings, Resource Monitor, Viewer, Log Center.
+- [ ] Core apps: Files, Storage, Settings, Resource Monitor, Viewer, Log Center, Store (only the tab "Installed" and installing from a file, D308).
+- [ ] Apps (pulled forward by the owner on 2026-10-05, before D): `@pithyx/sdk` 1.0 on npm with `@pithyx/ui` and `@pithyx/cli`, third-party apps as packages with a static frontend and an optional container backend, installed from a file, permissions checked by the daemon, backends behind the proxy. Details under "Apps v0.1 (SDK and runtime)" below (D300 to D308).
 - [ ] Network (step 14.2, added by the owner on 2026-10-03): Settings > Network changes the settings (DHCP or static, IPv4 and IPv6, DNS, host name), not only shows them, each change with the 60 second confirmation timer and automatic rollback (D110).
 - [ ] Updater with rollback (from M5). Details under "Updates v0.1" below (D297).
 - [x] Configuration backup and restore (`pithyx.db`, Samba passdb, TLS certificates, SSH host keys; see `daemon/CLAUDE.md`). (D293: Settings > Backup and restore, always everything, encrypted with a backup password and downloaded; a restore checks the file and replaces the chosen parts. Follow-ups below.)
 - [x] Encryption comes after v0.2 (owner's decision on 2026-09-30; step 9 moves there). ZFS encrypts a dataset only when it is created: an existing pool cannot be encrypted in place, its data would have to be copied into a new encrypted dataset. Pools created with v0.1 and v0.2 therefore stay unencrypted, even after an update that brings encryption; only pools created later can be encrypted. The pool wizard keeps saying that encryption can only be chosen at creation, and the release notes of v0.1 say that its pools stay unencrypted.
+
+### Apps v0.1 (SDK and runtime)
+
+Planned with the owner on 2026-10-05 (D300 to D308). The goal is the first SDK release (`@pithyx/sdk` on npm) and the runtime that installs, runs and proxies third-party apps; the system apps run on the same base. Built now, before D (network, step 14.2) and before the updater. It replaces M4 "to be detailed" and the open items of step 5.3 (each one points here).
+
+What exists (since pithyx/pithyx#16, D54 to D78): the SDK protocol, 17 events, `app.log`, a TypeScript manifest, and the core apps on the in-process transport (`CoreSdkApp`, the `internal.*` extensions). What is missing is the runtime: the JSON Schema and the package format, the app registry with install, update and uninstall, tokens (`auth.token` only throws today), the proxy, Docker (not in the image) and backends, the example apps, the developer tooling and the way to npm. The demo app is wired in by hand (`desktop/src/apps/registry.tsx`, `daemon/src/Pithyx.Daemon/Permissions/Grant.cs`), and only the browser checks app permissions (release blocker).
+
+Working rules for these steps:
+
+- One step is one PR. The owner starts each step; `[REVIEW]` steps stop after a green CI run until the owner approves.
+- Steps of the same wave may be built in parallel by agents, each in its own worktree. They merge one after another, because the runner takes one PR run at a time.
+- Migration order: A3 merges before A10 and takes the lower migration number, because both change `grants` (A3 renames the `app:<id>` resources of the system apps, A10 lets third-party apps in only through grants). If A10 is ready first, it waits for A3 and renumbers after merging `dev`. The next free migration on `dev` is 0022.
+- The owner publishes the npm packages with `tools/release/publish-sdk.sh` and the npm 2FA; no token is stored anywhere (D306). The npm org `pithyx` exists and has no packages yet.
+- Decision numbers D309 (Docker, A1), D310 (Compose, A6) and D311 (elevated rights, A16) are reserved for these steps.
+
+#### Waves and dependencies
+
+| Wave | Steps           |
+| ---- | --------------- |
+| W0   | A0              |
+| W1   | A1, A2, A4, A5  |
+| W2   | A3, A6, A7, A10 |
+| W3   | A8, A11, A12    |
+| W4   | A9, A13, A14    |
+| W5   | A15, A16        |
+| W6   | A17             |
+
+| Step | Needs merged first                                                  |
+| ---- | ------------------------------------------------------------------- |
+| A1   | A0                                                                  |
+| A2   | A0                                                                  |
+| A3   | A2                                                                  |
+| A4   | A0                                                                  |
+| A5   | A0                                                                  |
+| A6   | A1, A2                                                              |
+| A7   | A4, A5                                                              |
+| A8   | A2, A4, A6 (the validators), A7 (the host behavior the mock copies) |
+| A9   | A8, and the owner's go before the public repositories are created   |
+| A10  | A2, A3 (migration order above)                                      |
+| A11  | A10                                                                 |
+| A12  | A10, A7                                                             |
+| A13  | A11                                                                 |
+| A14  | A1, A6, A10                                                         |
+| A15  | A13, A14                                                            |
+| A16  | A12, A14                                                            |
+| A17  | every step above                                                    |
+
+Critical path: A0, A2, A10, A11, A13, A15, A17. The release candidate rc.1 needs A2 and A4.
+
+#### Architecture
+
+An app is a static frontend that the daemon serves, plus an optional backend of zero to n containers (D300). Web apps with their own port and single sign-on (Grafana and the like, `kind: "web"`) come after 1.0.
+
+Routes, for the app `com.mueller.chat` on `https://nas.muellers.com`, whose service `server` offers port 8080 as the endpoint `api` and port 9090 as `metrics` (D303):
+
+| What                     | URL                                                                                       | In the app                                             |
+| ------------------------ | ----------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| Window                   | `https://nas.muellers.com/apps/com.mueller.chat/index.html`                               | (the desktop loads it)                                 |
+| REST                     | `https://nas.muellers.com/apps/com.mueller.chat/api/messages` to `server:8080/messages`   | `app.backend.fetch('/messages')`                       |
+| Second endpoint          | `https://nas.muellers.com/apps/com.mueller.chat/api-metrics/stats` to `server:9090/stats` | `app.backend.fetch('/stats', { endpoint: 'metrics' })` |
+| WebSocket                | `wss://nas.muellers.com/apps/com.mueller.chat/api/live?pithyx-ticket=...`                 | `app.backend.socket('/live')`                          |
+| Full URL for `<img>` etc | as REST, with the token parameter                                                         | `app.backend.url('/avatar/1')`                         |
+
+- The default endpoint is `api` at `/apps/<id>/api/`; every other endpoint `<name>` is `/apps/<id>/api-<name>/`. Container ports never appear in a URL; a new port only changes the manifest.
+- Port 7484 serves the same paths. The SDK takes the box's address from its own window's URL and the app id from the handshake.
+
+Package `<id>-<version>.pithyxapp`, a deterministic tar.gz built by `pithyx pack` (D301). The box never runs npm or a compiler.
+
+- `pithyx.json` (the manifest) and `icon.svg`
+- `frontend/`, entry `frontend/index.html`
+- optional `backend/compose.yaml` and `backend/images.lock.json` (reference, manifest digest and config digest per architecture)
+- optional `backend/images/<arch>/*.tar` for offline installs
+- checksums, optional README and LICENSE
+
+On the box (D301): one dataset per app `<pool>/pithyx/apps/<id>`, mounted at `/<pool>/.pithyx/apps/<id>/` with `versions/<version>`, `current`, `volumes/` and `run/`; Docker's data in `/<pool>/.pithyx/docker`. The administrator picks the app pool at the first install (setting `apps.pool`). Nothing of it lives on the system disk.
+
+Frontend files (mandatory, D303). Every response under `/apps/<id>/` carries:
+
+- `Content-Security-Policy: sandbox allow-scripts allow-forms; default-src 'self'; ...`, with `connect-src https:` only for apps holding `network.internet` (never script sources from a CDN);
+- `X-Content-Type-Options: nosniff`;
+- `Access-Control-Allow-Origin: *`.
+
+Without `sandbox`, an `/apps/<id>/index.html` opened directly in a tab would run in the desktop's origin and could use the user's session. The icon is served from the database at `/api/apps/{id}/icon` with `Content-Security-Policy: default-src 'none'; sandbox`.
+
+Tokens (D303):
+
+- The desktop gets them with `POST /api/apps/{id}/tokens` (session cookie and CSRF header) and keeps them in memory: 256 bits, valid 5 minutes, bound to user, session, app and window instance.
+- `host` tokens are valid for `/api/app/**`, the daemon's API for apps. The app identity comes from the token, never from the route.
+- `backend` tokens are valid for the proxy, as a bearer header or `?pithyx-token=`.
+- A WebSocket needs a one-time ticket, valid 30 seconds, passed as `?pithyx-ticket=`.
+- A cookie alone never authenticates at the proxy.
+
+Proxy (YARP in the daemon process, routes set at runtime, D303):
+
+- removes `Cookie`, `Authorization`, the `pithyx-*` query parameters and every incoming `X-Pithyx-*` header;
+- sets `X-Pithyx-User`, `X-Pithyx-User-Id`, `X-Pithyx-Groups`, `X-Pithyx-Admin`, `traceparent` and `X-Forwarded-Prefix`;
+- answers CORS preflights for `Origin: null` itself;
+- answers 503 `app.backend.unavailable` when no backend runs.
+
+Docker (details in D309 after A1):
+
+- From Debian (`docker.io`, `docker-cli`, `docker-compose`); it runs only while a backend app is installed and its pool is mounted.
+- State and events come from the Engine API on the Unix socket, without polling. `docker compose up --wait` runs as a job through `ICommandRunner`.
+- Every app gets its own internal network and its own uid from 40000 to 49999. Backends have no internet; outgoing traffic only with `network.internet`. Root in a container only when declared (`backend.root`), unprivileged through userns and shown with a warning; root on the host only through `host.full` (D304, D71).
+- Container output goes through journald into the Log Center source `app/<id>` (D305).
+
+#### Manifest v1 (draft, approved in A2)
+
+Texts are objects with one key per language (`en` required). Changes against pithyx/pithyx#16: `icon` goes (always `icon.svg`), `elevated` moves into `backend`, `image` and `port` become `compose` and `endpoints`, and the permission `backend` goes.
+
+```json
+{
+  "$schema": "./node_modules/@pithyx/sdk/schema/manifest.v1.schema.json",
+  "manifestVersion": 1,
+  "id": "com.mueller.chat",
+  "version": "1.2.0",
+  "name": { "en": "Chat", "de": "Chat" },
+  "description": { "en": "Team chat on your box." },
+  "author": { "name": "Jan Mueller", "url": "https://mueller.com" },
+  "license": "MIT",
+  "homepage": "https://github.com/janmueller/pithyx-chat",
+  "entry": "frontend/index.html",
+  "sdk": "^1.0.0",
+  "permissions": ["notifications", "directory.read", "network.internet", "files.read"],
+  "window": {
+    "instances": "single",
+    "defaultSize": { "width": 900, "height": 640 },
+    "minSize": { "width": 320, "height": 400 }
+  },
+  "storage": [
+    {
+      "id": "attachments",
+      "name": { "en": "Chat attachments" },
+      "access": "readWrite",
+      "required": false,
+      "services": ["server"]
+    }
+  ],
+  "fileHandlers": [{ "extensions": ["chatlog"], "mimeTypes": ["application/x-chatlog"] }],
+  "backend": {
+    "compose": "backend/compose.yaml",
+    "endpoints": {
+      "api": { "service": "server", "port": 8080 },
+      "metrics": { "service": "server", "port": 9090 }
+    },
+    "lifecycle": "onDemand",
+    "idleTimeout": 600,
+    "root": false,
+    "health": { "endpoint": "api", "path": "/healthz" },
+    "resources": { "memory": 512, "cpus": 1 },
+    "schedules": [
+      { "id": "cleanup", "cron": "0 3 * * *", "endpoint": "api", "path": "/jobs/cleanup" }
+    ],
+    "elevated": ["device:/dev/dri/renderD128"]
+  }
+}
+```
+
+Rules:
+
+- ID (D302): `^[a-z][a-z0-9-]*(\.[a-z0-9][a-z0-9-]*){2,4}$`, at most 100 characters: the author's domain reversed, then the app name as the last part (`com.mueller.chat`, `io.github.schecher1.chat`, `io.gitlab.jan.chat`). `org.pithyx.*` is reserved for system apps and later the official catalog.
+- Unknown fields are errors.
+- Permissions in v1: `files.read`, `files.write`, `files.shares`, `notifications`, `directory.read`, `network.internet`, plus the elevated rights of D71 under `backend.elevated`. In v0.1 `docker.socket` and `host.full` are refused with `app.elevated.unsupported` (A16).
+- Icon: a square viewBox, at most 64 KB; no `<script>`, `foreignObject`, `on*` attributes, external `href`, `<image>`, or `@import` and `url()` in styles. What matters belongs in the inner 80 percent, because the desktop rounds the corners. Without an icon of its own an app shows the default icon, the Pithyx box glyph on a neutral tile (D307).
+
+Compose subset (contract in A6, D310):
+
+- Allowed: `image` with `@sha256`, `command`, `entrypoint`, `environment` without `$` interpolation, `working_dir`, `volumes` (declared names and tmpfs only), `depends_on`, `healthcheck`, `expose`, `read_only`, `init`, `stop_*`, `shm_size` (capped), `labels`.
+- Refused: `ports`, `privileged`, `network_mode`, `pid`, `devices`, `cap_add`, `build`, `networks` and everything else, unless the matching elevated right is declared; the check runs in both directions (a right without its compose key is an error too).
+- Volumes: a named volume with the id of a `storage` request is mapped to the folder the administrator assigned (read-only or read-write); every other named volume is a folder in the app's dataset.
+- The daemon rewrites the file before use: project name `pithyx-<id with _>`, the app's network, `user` and `group_add`, the journald log driver, mounts and limits, labels `com.pithyx.*`.
+
+#### SDK API v1 additions (contract in A4)
+
+```ts
+// Context, without any permission: user {id, name, displayName, groups[], isAdmin, twoFactor}, language, formats,
+// time zone, theme, box {name, version}, visible, online, logLevel, backend {status, endpoints} | null,
+// storage[{id, state, access}]. All users and groups only with directory.read (D304).
+app.backend.url(path, { endpoint? }) / app.backend.fetch(path, init & { endpoint? }) / app.backend.socket(path, { endpoint?, protocols? })
+app.backend.token()                                // replaces auth.token
+app.directory.users() / app.directory.groups()     // only with directory.read
+app.log.log(...)                                   // alias of info; every level also goes to the browser console
+app.notify({ ..., actions?, data?, tag? })         // action buttons
+app.setBadge(count | null)                         // counter on the taskbar entry
+app.window.requestAttention()                      // pulses, never takes the focus (guardrail 7)
+app.window.setDirty(dirty)                         // beforeClose asks only while there are unsaved changes
+app.contextMenu.show(at, items)                    // the desktop draws the menu
+app.clipboard.writeText(text)                      // the iframe has no Clipboard API over plain HTTP
+app.openUrl(url)                                   // new tab, noopener
+```
+
+New events:
+
+| Event                                                            | Why                                                                                                               |
+| ---------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `visibilityChange {visible}`                                     | Minimizing a window in the desktop does not change the iframe's visibility.                                       |
+| `connectionChange {online}`                                      | The box cannot be reached, for example while it restarts.                                                         |
+| `backendStatus {status}`                                         | `stopped`, `starting`, `running`, `updating`, `unavailable`. Replaces `backendUnavailable` and `backendRestored`. |
+| `permissionsChange {permissions}`                                | Replaces `permissionRevoked` and also covers new grants.                                                          |
+| `storageChange {storage}`                                        | A mapping changed, or its pool was locked or came back.                                                           |
+| `notificationAction {notification, action, data}`                | Without an open window the app starts with `launch.notification`.                                                 |
+| `logLevelChange {level}`                                         | An administrator switched debug on or off.                                                                        |
+| `filesDropped {files, x, y}`                                     | Optional, otherwise in 1.1.                                                                                       |
+| query `beforeUnload {reason: logout, shutdown, restart, update}` | Replaces `beforeLogout`. No veto, 2 seconds.                                                                      |
+
+Refused: `resize` (a ResizeObserver in the iframe is enough), `idle` and `clipboardChange` (privacy).
+
+Logs (D305): every level also appears in the browser console. `info`, `warn` and `error` always go to the daemon, `debug` only while an administrator switched it on for the app. The daemon adds the checked user. Backend output lands in the same source `app/<id>`.
+
+#### A1 Docker spike on dev01
+
+- [ ] `tools/dev-vm/provision.sh` also installs `docker-cli` and `docker-compose`.
+- [ ] `tools/dev-vm/docker-spike.sh` checks: userns-remap with identity sub-ranges (app uids 40000 to 49999 and share gids 30000 to 39999 stay 1:1, container root is unprivileged); overlay2 on ZFS; internal networks reachable from the host and without internet; Compose with `--wait` and `--progress json`; image ids after `save` and `load`; the journald fields; cgroup limits; a .NET `HttpClient` on the Unix socket.
+- [ ] The Engine API answers are recorded as fixtures. The result is D309.
+- [ ] Fallbacks: without identity ranges no remap, `user: <app uid>`, `cap_drop: ALL`, `no-new-privileges`, `backend.root` refused for now and Podman (`--userns=auto`) checked; without overlay2 on ZFS a zvol with ext4. The owner decides only when a fallback is needed.
+
+#### A2 Manifest contract `[REVIEW]`
+
+- [ ] `sdk/schema/manifest.v1.schema.json` is the source; `sdk/src/manifest.generated.ts` is generated from it (never edited by hand), and `sdk/src/manifest.ts` re-exports it.
+- [ ] Daemon, `Apps/Manifest/`: `AppId.cs` (replaces the private regexes in `Logs/LogService.cs` and `Notifications/NotificationService.cs`), `ManifestValidator.cs` with JsonSchema.Net plus the semantic rules, `IconValidator.cs`.
+- [ ] TypeScript: the validator in the scaffold of `packages/cli`.
+- [ ] One shared corpus `sdk/schema/fixtures/manifest/{valid,invalid}` with the expected codes, run by Vitest and xUnit.
+- [ ] Codes `app.manifest.*`, `app.icon.invalid`, `app.package.layout_invalid`, each in en and de.
+
+#### A3 System app ids `org.pithyx.*` (after A2, before A10)
+
+- [ ] A migration renames: `grants` (`app:files` becomes `app:org.pithyx.files`), `window_preferences`, `desktop_items`, `notifications.app` and the app ids in `desktop_layouts`. It takes a lower number than A10's migration.
+- [ ] Old entries in `logs.db` keep their source; the Log Center filter knows both names.
+- [ ] Also switched: `Permissions/Grant.cs` (becomes `Apps/CoreApps.cs`), `desktop/src/apps/registry.tsx`, `access.ts`, the i18n keys `apps.*`, the E2E tests.
+- [ ] Upgrade proven on 7484.
+
+#### A4 SDK API contract and rc.1 `[REVIEW]`
+
+- [ ] The additions above in `protocol.ts`, `app.ts`, `host.ts` and `errors.ts`, with contract and connection tests.
+- [ ] The desktop gets shims; `supports()` answers `false` for everything it cannot do yet.
+- [ ] `tools/release/publish-sdk.sh`; the version comes from `package.json` instead of a constant in `version.ts`; `repository`, `publishConfig` and a README.
+- [ ] Then the owner publishes `@pithyx/sdk@1.0.0-rc.1` under the dist-tag `next`.
+
+#### A5 `@pithyx/ui` and tokens
+
+- [ ] `packages/ui` (MIT) with Button, TextField, SearchField, Controls, Dialog, Menu, ContextMenu and Tooltip, moved from `desktop/src/ui`.
+- [ ] `UiProvider({ locale })` with its own texts in en and de.
+- [ ] `tokens.css` becomes the only token file; the contrast test follows it.
+- [ ] The desktop uses the package through the `pithyx-source` condition (about 76 imports).
+- [ ] The 150 KB desktop budget, the design shots and the label `e2e` stay green.
+
+#### A6 Compose contract `[REVIEW]` (after A1 and A2)
+
+- [ ] `sdk/schema/compose.v1.rules.json` is the allowlist as data. Both validators read it: TypeScript with `yaml`, C# in `Apps/Compose/ComposeValidator.cs` with YamlDotNet.
+- [ ] `ComposeRewriter.cs` is a pure function that sets the project name, network, `user` and `group_add`, journald, mounts, limits and the `com.pithyx.*` labels.
+- [ ] One shared corpus, golden outputs and the codes `app.compose.*`. The result is D310.
+
+#### A7 Desktop host v1 (after A4 and A5)
+
+- [ ] Launch arguments and relaunching `single` apps (from 5.3).
+- [ ] `visibilityChange` and `connectionChange`.
+- [ ] The desktop draws app context menus (the 5.3 wish under "Owner feedback on 2026-09-30").
+- [ ] Badge and attention.
+- [ ] `setDirty`, the "not responding, close anyway?" dialog (D62), "Close all", `beforeUnload` (from 5.3).
+- [ ] `openUrl` and the clipboard through `platform/browser.ts`.
+- [ ] Action buttons in notifications, the console mirror of app logs, the default icon (box glyph).
+- [ ] E2E with the label `e2e` and axe.
+
+#### A8 CLI, docs, rc.2 `[REVIEW]`
+
+- [ ] `@pithyx/cli` with the command `pithyx`: `validate` (manifest, icon, entry in the build, compose, layout; warns while the template icon is still in place), `pack` (deterministic, `--images` for offline packages), `dev` (a local mock desktop with the box's sandbox and CSP; switches for theme, language, size class and user, a button per event; in front of it a proxy to the local `docker compose` with the real behavior of tokens, tickets and headers), and a Vite plugin. There is no development mode on the box (D307).
+- [ ] TypeDoc for `sdk` and `ui`; CI fails on an undocumented export (replaces the 5.3 item "SDK reference generated with TypeDoc").
+- [ ] A repository check keeps the versions of the npm packages equal.
+- [ ] Then the owner publishes rc.2 (sdk, ui, cli) under `next`.
+
+#### A9 Three template repositories (after A8, the owner's go before creating them)
+
+- [ ] `pithyx/app-blank`: plain TypeScript with Vite, no backend.
+- [ ] `pithyx/app-chat`: React with `@pithyx/ui`, a Node backend with WebSocket and SQLite in a volume; uses `directory.read`, notifications with an action and the badge.
+- [ ] `pithyx/app-showcase`: every SDK method, every event, every component.
+- [ ] In all three: `npm test` runs `pithyx validate` and Vitest, `npm run pack`, marked as GitHub templates, CI through a reusable workflow in `pithyx/.github` on GitHub-hosted runners, releases attach the `.pithyxapp`.
+- [ ] A script raises the SDK version in all three on every SDK release.
+
+#### A10 Registry and install, frontend only (after A2 and A3)
+
+- [ ] Migration (after A3's): table `apps` with `source` (sideload or catalog), `app_permissions`, `storage_mappings`, the setting `apps.pool`, and a new backup part "Apps".
+- [ ] Third-party apps are allowed only through grants (the CHECK of `grants` already allows dots).
+- [ ] `UidAllocator.AllocateAppAsync`.
+- [ ] Flow: `PUT /api/apps/packages` (streamed), a safe tar reader, a check with preview and diff kept for 15 minutes, the install as a job, the update with snapshot, hold and rollback, `DELETE ?data=keep|delete`. Sideloads under `org.pithyx.*` are refused.
+- [ ] `AppFrontendHosting.cs` serves the frontends with the security headers above; topics `apps` and `apps/admin`.
+- [ ] The demo becomes the E2E probe app `e2e/apps/sdk-probe`; `copySampleApps` goes.
+- [ ] Tests: tar attacks, the state machine with a fake clock, the endpoint matrix and the backup table check, `integration.sh` for the dataset and the rollback.
+- [ ] Upgrade proven on 7484.
+
+#### A11 Tokens and checks in the daemon (after A10)
+
+- [ ] `Apps/AppTokens.cs`.
+- [ ] `/api/app/**`: `logs` (ends D261; debug only while switched on, the checked user added), `notifications` with actions, `storage` (D61, table `app_storage`), `directory`, `files` (D69), `tickets`.
+- [ ] The per-user topic `apps/<id>/context` also serves as the window lease.
+- [ ] The broker gets and renews tokens; the context grows to the list above.
+- [ ] Done when the release blocker "App permissions on the daemon" holds without elevated rights, and D261 is closed.
+
+#### A12 Store app and dynamic registry `[REVIEW]` on 7484 (after A10 and A7)
+
+- [ ] `org.pithyx.store`: the tab "Installed"; "Install from file" with preview and the prefilled access (D304: "Everybody", or "Administrators only" for elevated rights, root or `directory.read`); the pool choice; updates with a diff; revoking permissions and mapping folders; who may use the app; uninstall with or without data; the log level. The tabs Official, Community and Own are prepared and hidden.
+- [ ] `registry.tsx` merges the core apps with the topic `apps`; `grantedApps` goes.
+- [ ] Icons in the Pithyx menu, on the desktop and in notifications.
+- [ ] Done when blank and showcase run installed on 7484.
+
+#### A13 Proxy without Docker (after A11)
+
+- [ ] `Yarp.ReverseProxy` under `Apps/Proxy/` with tokens, tickets, CORS and headers as above.
+- [ ] Sockets close on a revoke, a sign-out or an uninstall.
+- [ ] Tokens and tickets are masked in logs.
+- [ ] Without a backend: 503 `app.backend.unavailable`.
+- [ ] Every test runs in CI against Kestrel backends.
+
+#### A14 Docker runtime (after A1, A6 and A10, dev01)
+
+- [ ] The image ships the Docker packages, disabled.
+- [ ] `Apps/Docker/DockerHost.cs` owns `daemon.json`, subuid and subgid and a systemd drop-in.
+- [ ] `Apps/Docker/DockerEngine.cs` talks to the Unix socket; `/events` feeds `SystemStateService`.
+- [ ] Compose runs as a job; images are loaded from the package or pulled by digest and checked against the lock file.
+- [ ] Volumes live in the app's dataset; a missing required folder or a locked pool keeps the app from starting.
+- [ ] `JournalParser` maps container output to `app/<id>`: stdout is info, stderr warn, a JSON field `level` wins.
+- [ ] Update with snapshot, `up --wait` and rollback.
+- [ ] `Category=DockerIntegration` runs through `integration.sh` with a locally imported image.
+
+#### A15 Lifecycle, schedules, chat (after A13 and A14)
+
+- [ ] `BackendLifecycle` as a pure state machine: the lease through the context topic, 2 minutes of grace, then `idleTimeout`; a request wakes the backend and the proxy holds it up to 30 seconds; `always` backends start at boot; a locked pool stops the app.
+- [ ] Cron schedules with `X-Pithyx-Schedule`; the healthcheck feeds `backendStatus`.
+- [ ] Done when the chat runs on 7484 between `e2e-admin` and `e2e-user`, stops when idle and wakes when opened.
+
+#### A16 Elevated rights `[REVIEW]` of the risk texts (after A12 and A14)
+
+- [ ] Step-up with password and TOTP, valid 5 minutes.
+- [ ] Table `audit_log`, also shown in the Log Center.
+- [ ] Dialogs with risk texts in en and de, a warning for root, a hint for internet, a permanent badge.
+- [ ] An update with new rights waits for an administrator's confirmation; a revoke restarts the backend without the matching key.
+- [ ] v0.1 grants `device:`, `capability:` (with the block list of D71), `host.network` and `host.pid`. `docker.socket` and `host.full` are refused with `app.elevated.unsupported` and get a TODO item. The result is D311.
+
+#### A17 SDK 1.0.0 `[REVIEW]`
+
+- [ ] The owner tests the three examples installed on 7484; we fix what comes up.
+- [ ] The owner publishes 1.0.0 under `latest` with the tag `sdk-v1.0.0`.
+- [ ] The release blockers on app permissions, D261 and the demo app are checked off.
+- [ ] TODO items for the website: SDK and manifest reference, developer guide, error code pages, npm trusted publishing.
+
+#### Verification
+
+- Per step: the runner is green (`daemon`, `frontend`, `repo`; `e2e` for desktop and SDK changes); storage, Docker and account changes attach an `integration.sh` result from dev01; after the merge `install-dev-daemon.sh --yes` deploys and the change is checked on 7484.
+- Contracts: the same fixture corpora run in TypeScript and C#, so the CLI and the box judge alike.
+- End to end: `validate`, `pack` and `dev` with the three repositories; upload into the Store on 7484, install, open as `e2e-user`; the chat between two users, stop when idle, wake; uninstall with "keep data" and with "delete"; an update with rollback; logs with the right user; an `/apps/<id>/index.html` opened directly cannot reach the API.
+- npm: `npm view @pithyx/sdk dist-tags` shows `next`, later `latest`; a fresh template repository installs against the published version.
+
+#### Later (own plans)
+
+Store catalogs ("Store (after SDK 1.0)" below), a backend API (notify a user, log, directory, keep-alive), web apps (`kind: "web"`), the filtering Docker socket proxy with `docker.socket` and `host.full`, signatures.
 
 ### Web installer v0.1
 
@@ -151,22 +506,52 @@ Planned with the owner on 2026-10-04 (D294); built after the items above, in thi
 
 ### Not in v0.1
 
-App store and M4, NFS, SSD cache (step 13), energy (step 14.1), resource history, the Files rework (layout of shares and the recycle bin), video thumbnails.
+Store catalogs (official, community, own repositories; see below), web apps (`kind: "web"`), the elevated rights `docker.socket` and `host.full` with the filtering Docker socket proxy, app signatures, a backend API for apps, NFS, SSD cache (step 13), energy (step 14.1), resource history, the Files rework (layout of shares and the recycle bin), video thumbnails.
+
+### Store (after SDK 1.0)
+
+Drafted on 2026-10-03 and folded into the app plan on 2026-10-05. v0.1 ships only the Store app `org.pithyx.store` with the tab "Installed" and installing from a file (A12, D308); everything here comes after SDK 1.0 and gets its own plan before it starts. `[REVIEW]`
+
+Trust tiers (by role and trust, not by author):
+
+- System: in the image (the monorepo's apps: Store, Settings, Storage, Log Center, Files, Users and the rest), updated with the OS, not removable, ids `org.pithyx.*` (D302). No catalog repository, nothing cloned.
+- Official: optional apps maintained by Pithyx (for example Tailscale, NetBird, Immich, Jellyfin). Repository `apps-official`, badge "Pithyx", the only catalog that may ship `org.pithyx.*` ids.
+- Community: third-party apps added by PR to `apps-community`, merged by the owner. Off by default; an administrator turns it on after a warning.
+- Own: custom catalog repositories and sideloaded packages, administrators only, badge "unverified".
+- Tabs: Installed, Official, Community, Own (Own appears once a custom repository or a sideload exists). Settled: "Official" instead of a "System Apps" tab (D308).
+
+Catalog:
+
+- A Git repository with one folder per app: the manifest, icon, screenshots and a pinned release (the `.pithyxapp` with its sha256, image digests, source repository and commit).
+- CI in the catalog repository validates with `pithyx validate`, builds and publishes the packages (GitHub Releases, images on GHCR) and writes `index.json` (id, version, `minPithyxVersion`, architectures, source, digest, license).
+- The box shallow-clones it (`--depth 1 --filter=blob:none`) into a hidden folder, refreshes on a timer (there is no event source) and works offline from that copy.
+- Installing fetches the pinned package, checks the digest and goes through the same preview and permission dialog as a sideload (A10, A12). Nothing is built on the box (settled by D301).
+
+Settings: the Store's settings (update policy, community on or off, custom repositories, sideload) live in the Store app behind a gear; system Settings only links there. Update policy: a global default (notify, nothing, automatic) with a per-app override. An update that asks for new permissions never installs automatically. An automatic update snapshots the app's data first and offers a rollback.
+
+Sideload (settled for v0.1): a `.pithyxapp` built with `pithyx pack`, administrators only, the same dialog, flagged unverified. Instead of a `local.*` id namespace the box stores the origin (sideload or catalog), so a sideloaded app can later be updated from a catalog under the same id (D308). Development uses `pithyx dev` on the developer's machine; there is no development mode on the box (D307).
+
+- [ ] `[DECISION]` Signing: does the box verify signed commits of a catalog, or signed packages, against a pinned key?
+- [ ] `[DECISION]` Own repositories: may a custom catalog serve packages from any URL, or only from its own releases?
+- [ ] Catalog format and CI (the schema of the catalog fields above), as a contract with fixtures like A2.
+- [ ] Daemon: catalog sync, install, update, uninstall from a catalog, the update policy, snapshot before an automatic update.
+- [ ] Store app: the tabs Official, Community and Own, detail pages with screenshots, en and de, axe.
+- [ ] Website docs, `CHANGELOG.md`, E2E.
 
 ---
 
 ## Milestones
 
-| Milestone               | Content                                             | Steps          |
-| ----------------------- | --------------------------------------------------- | -------------- |
-| M0 Foundation           | Repository, tooling, CI, dev environment            | 1, 2           |
-| M1 Walking skeleton     | Daemon core, login, WebSocket, first window         | 3              |
-| M2 Desktop              | Design, window manager, SDK, file manager           | 4, 5, 6        |
-| M3 NAS core             | Pools, snapshots, users, shares, SSD cache          | 7 to 14        |
-| M4 Apps                 | Manifest, containers, YARP routes, app template     | to be detailed |
-| M5 Image and operations | ISO, installer, updates with rollback, self-healing | to be detailed |
-| M5b Self-hosting        | Docker UI, VM MVP                                   | to be detailed |
-| M6 Backup               | restic, ZFS replication                             | to be detailed |
+| Milestone               | Content                                             | Steps                |
+| ----------------------- | --------------------------------------------------- | -------------------- |
+| M0 Foundation           | Repository, tooling, CI, dev environment            | 1, 2                 |
+| M1 Walking skeleton     | Daemon core, login, WebSocket, first window         | 3                    |
+| M2 Desktop              | Design, window manager, SDK, file manager           | 4, 5, 6              |
+| M3 NAS core             | Pools, snapshots, users, shares, SSD cache          | 7 to 14              |
+| M4 Apps                 | Manifest, containers, YARP routes, app template     | Apps v0.1, A0 to A17 |
+| M5 Image and operations | ISO, installer, updates with rollback, self-healing | to be detailed       |
+| M5b Self-hosting        | Docker UI, VM MVP                                   | to be detailed       |
+| M6 Backup               | restic, ZFS replication                             | to be detailed       |
 
 ## Release blockers
 
@@ -178,8 +563,8 @@ The first release, v1.0.0, carries the constellation codename Pyxis: the mariner
 - [ ] Trust step and TLS: development runs over plain HTTP on 7484. Ship HTTPS on 443 (80 redirects, 7484 as the fixed alternative) with the self-signed certificate from the install, the trust wizard and the "Trust this device" setup step (see the M5 items below); passkeys and the service worker switch on only once trusted.
 - [ ] Branch protection: only the lefthook `pre-push` hook guards `master` and `dev` today (rulesets need a public repository or a paid plan). Run `tools/github/protect-branches.sh` (PR required, CI green, no force push) before or right when the repository goes public.
 - [ ] CI runners: a self-hosted runner, if one is set up for the private repository, is replaced by GitHub-hosted runners before the repository goes public (`vars.CI_RUNNER` back to the default); integration tests on real ZFS then need an approved environment, and self-hosted runners never run code from forks.
-- [ ] App permissions on the daemon: until the app registry (M4), the desktop broker checks SDK permissions only in the browser. No third-party app is installable before the daemon checks every permission itself (guardrail 1), including the install confirmation for elevated rights and the `host.full` warning (D71). The same holds for app logs (D261): until app tokens exist, the daemon takes the app id of `POST /api/apps/{app}/logs` from the desktop.
-- [ ] The SDK demo app (`apps/demo`) is registered as a built-in app for the prototype; remove it from the app list (or make it an installable example) before the release.
+- [ ] App permissions on the daemon: until the app registry, the desktop broker checks SDK permissions only in the browser. Third-party apps ship with v0.1 (D300), so this holds for v0.1: no third-party app is installable on a release before the daemon checks every permission itself (guardrail 1) with app tokens and `/api/app/**` (A11), and before elevated rights need the step-up confirmation, the audit log and the badge (A16). `docker.socket` and `host.full` are refused in v0.1, so the `host.full` warning (D71) moves with them. The same holds for app logs (D261): until app tokens exist (A11), the daemon takes the app id of `POST /api/apps/{app}/logs` from the desktop. Checked off in A17.
+- [ ] The SDK demo app (`apps/demo`) is registered as a built-in app for the prototype. A10 turns it into the E2E probe app `e2e/apps/sdk-probe`, installed like any third-party app, and the examples move to the template repositories (A9). Checked off in A17.
 - [ ] Recycle bin over SMB and NFS: hide `.pithyx-trash` (`veto files`) and route Samba's `vfs_recycle` into the same bin (step 12). SMB is done (D287); NFS follows with NFS.
 - [ ] Error code docs: every error code needs its entry on the website with a CI completeness check (`CLAUDE.md`, Errors); today codes are documented only through their i18n texts.
 - [ ] Third-party notices: generate the list of bundled npm and NuGet packages with their licenses for the About page and check it in CI (Later milestones item); today only fonts, Tabler and React Aria are listed.
@@ -437,7 +822,7 @@ Goal: the desktop works like a desktop, and apps can be built against the SDK.
 - [x] Keyboard: focus cycling, close, maximize. Visible focus states. Alt+Shift shortcuts and a window menu with keyboard move and size modes.
 - [x] Every window belongs to a `screen` (always 1 for now).
 - [x] Size classes from `CLAUDE.md` (compact, medium, expanded): full-screen apps with app switcher on compact, maximized windows and split view on medium, free windows and snap zones (thirds on ultrawide) on expanded.
-- [ ] SDK reports the window size class; sample apps use container queries. Waits for the SDK (5.3); the core apps already use container queries.
+- [ ] SDK reports the window size class; sample apps use container queries. (The SDK context has `sizeClass` and `sizeClassChange` since pithyx/pithyx#16 and the core apps use container queries; the template repositories of A9 follow.)
 - [x] Touch: 44 px targets on coarse pointers, swipe to switch apps on compact, no hover-only actions. Plus the back gesture on compact.
 - [x] Taskbar with running apps, start menu with search, notification toasts. (Toasts show the desktop's own messages and every new notification of the daemon, see "Release 0.1".)
 - [x] Taskbar positions left and right (step 4 designed bottom and top only).
@@ -453,6 +838,8 @@ Goal: the desktop works like a desktop, and apps can be built against the SDK.
 ### 5.3 App runtime and SDK
 
 Spec first, then implementation together with the sample apps. Freeze SDK 1.0 only after the file manager (step 6) runs on it.
+
+Since 2026-10-05 the open items below are assigned to the steps of "Apps v0.1 (SDK and runtime)" (D300) or struck; each says where it went. Work on them there, not here.
 
 Guardrails (set by the owner on 2026-09-27, binding like `CLAUDE.md`; the spec and every later SDK change follow them):
 
@@ -470,30 +857,30 @@ Guardrails (set by the owner on 2026-09-27, binding like `CLAUDE.md`; the spec a
 12. Named storage requests in the manifest. An administrator maps them to real shares; the app never sees real paths.
 13. Elevated rights are allowed, each named on its own (`docker.socket`, `host.network`, `device:<path>`, ..., `host.full`). They apply to the backend container only. Installing needs plain-language risk text plus password (and TOTP), by administrators only. New rights in an update need a new confirmation. A permanent badge, an audit log entry, revocable. Never sessions, password hashes or recovery keys of other users.
 
-- [ ] Write the SDK specification as TypeScript interfaces with TSDoc: transports, handshake, versioning, error model, and the lifecycle below. `[REVIEW]` Draft in the `feature/sdk-spec` PR (types in `sdk/src/`, prototype `apps/demo`, decisions D54 to D66 and the guardrail review D68 to D78 in the PR); waits for the owner's review.
-- [ ] After the spec review: daemon-backed app storage (`/api/apps/{id}/storage`, D61), the "not responding, close anyway?" dialog for `beforeClose` (D62), "Close all" in the app switcher asking guarded windows, relaunch of `single` apps sending `launch`, and the Vite dev server serving `apps/*` (only the production build does today).
-- [ ] Lifecycle events: `launch` (with arguments, for example a file to open), `focus`, `blur`, `minimize`, `restore`, `beforeClose` (can be vetoed for unsaved changes), `beforeLogout` (last chance to save), `themeChange`, `localeChange`, `openFile` (file handler).
-- [ ] Manifest fields for runtime behavior: `window.instances` (`single` or `multi`), `backend.lifecycle` (`always` or `onDemand`), `backend.idleTimeout`, `backend.resources` (memory, CPU), `backend.schedules`.
-- [ ] Lifecycle events for updates and failures: `appUpdated` (reload required), `backendUnavailable`, `backendRestored`, `permissionRevoked`.
-- [ ] One SDK, two transports: in-process for core apps, MessageChannel for third-party iframes. Core apps must not bypass the SDK.
+- [x] Write the SDK specification as TypeScript interfaces with TSDoc: transports, handshake, versioning, error model, and the lifecycle below. `[REVIEW]` (Merged with pithyx/pithyx#16, decisions D54 to D66 and the guardrail review D68 to D78 in the PR. The v1 additions and replacements are A4.)
+- [ ] After the spec review: daemon-backed app storage (`/api/apps/{id}/storage`, D61), the "not responding, close anyway?" dialog for `beforeClose` (D62), "Close all" in the app switcher asking guarded windows, relaunch of `single` apps sending `launch`, and the Vite dev server serving `apps/*` (only the production build does today). (App storage: A11, as `/api/app/storage` with an app token. The dialog, "Close all" and the relaunch: A7. The Vite dev server item is struck: `apps/demo` becomes an installed probe app (A10), and apps are developed with `pithyx dev` (A8, D307).)
+- [x] Lifecycle events: `launch` (with arguments, for example a file to open), `focus`, `blur`, `minimize`, `restore`, `beforeClose` (can be vetoed for unsaved changes), `beforeLogout` (last chance to save), `themeChange`, `localeChange`, `openFile` (file handler). (Specified in pithyx/pithyx#16. `beforeLogout` becomes `beforeUnload` with a reason in A4; the launch arguments of `single` apps follow in A7.)
+- [ ] Manifest fields for runtime behavior: `window.instances` (`single` or `multi`), `backend.lifecycle` (`always` or `onDemand`), `backend.idleTimeout`, `backend.resources` (memory, CPU), `backend.schedules`. (In the schema: A2. Enforced: `single` in A7, resources in A6 and A14, lifecycle and schedules in A15.)
+- [ ] Lifecycle events for updates and failures: `appUpdated` (reload required), `backendUnavailable`, `backendRestored`, `permissionRevoked`. (A4: `appUpdated` stays; `backendStatus` replaces `backendUnavailable` and `backendRestored`, `permissionsChange` replaces `permissionRevoked`. Sent by the daemon from A11, A12 and A15.)
+- [x] One SDK, two transports: in-process for core apps, MessageChannel for third-party iframes. Core apps must not bypass the SDK. (pithyx/pithyx#16; Files, Storage, Settings and the other core apps run on it.)
 
-- [ ] App manifest: JSON Schema as the source, C# and TS types generated, validation with clear error codes.
-- [ ] App registry: core apps loaded with `import()` in the desktop context; third-party apps in iframes with `sandbox="allow-scripts allow-forms"` (no `allow-same-origin`), served from the same host.
-- [ ] SDK transport: one `MessageChannel` per app instance, `init` handshake with SDK version, locale and theme tokens.
-- [ ] SDK API v1: `window.setTitle`, `window.close`, `window.setSize`, `notify`, `session.save`, `session.restore`, `storage.get`, `storage.set` (daemon-backed, replaces `localStorage` in opaque-origin iframes), the file API (`files.pick`, `files.saveAs`, `files.read`, `files.write`, `files.url`, `files.list`, `files.open` with opaque file handles, served with step 6), formatters and the optional `@pithyx/sdk/i18n` helper.
-- [ ] Permission broker in the desktop; app identity comes from the port. The broker only answers early; the daemon checks every permission again (guardrail 1), with `app.permission.denied`.
-- [ ] Daemon side of the manifest permissions (M4): install dialog with confirmation, per-permission revoke pushed as `permissionRevoked`, named storage mapping to share folders, elevated rights with risk texts, password and TOTP confirmation, badge, audit log and the filtering Docker socket proxy (guardrail 13, D71). The `host.full` warning says plainly that it is root on the host and that the promise about other users' secrets then only covers the SDK API.
-- [ ] Two sample apps: one core app in React, one third-party app in plain TypeScript that uses only `@pithyx/sdk`.
-- [ ] SDK reference generated with TypeDoc.
+- [ ] App manifest: JSON Schema as the source, C# and TS types generated, validation with clear error codes. (A2: the schema generates the TypeScript types; the daemon validates with JsonSchema.Net plus semantic rules instead of generated C# types.)
+- [ ] App registry: core apps loaded with `import()` in the desktop context; third-party apps in iframes with `sandbox="allow-scripts allow-forms"` (no `allow-same-origin`), served from the same host. (Core apps and the sandboxed iframe exist. The registry of installed apps: A10 in the daemon, A12 in the desktop.)
+- [x] SDK transport: one `MessageChannel` per app instance, `init` handshake with SDK version, locale and theme tokens. (pithyx/pithyx#16.)
+- [ ] SDK API v1: `window.setTitle`, `window.close`, `window.setSize`, `notify`, `session.save`, `session.restore`, `storage.get`, `storage.set` (daemon-backed, replaces `localStorage` in opaque-origin iframes), the file API (`files.pick`, `files.saveAs`, `files.read`, `files.write`, `files.url`, `files.list`, `files.open` with opaque file handles, served with step 6), formatters and the optional `@pithyx/sdk/i18n` helper. (Specified in pithyx/pithyx#16, the file manager API with step 6. Daemon-backed `storage.*` and `files.*` for third-party apps: A11 (D61, D69). The v1 additions: A4.)
+- [ ] Permission broker in the desktop; app identity comes from the port. The broker only answers early; the daemon checks every permission again (guardrail 1), with `app.permission.denied`. (The broker exists. The daemon's check: A11.)
+- [ ] Daemon side of the manifest permissions (M4): install dialog with confirmation, per-permission revoke pushed as `permissionRevoked`, named storage mapping to share folders, elevated rights with risk texts, password and TOTP confirmation, badge, audit log and the filtering Docker socket proxy (guardrail 13, D71). The `host.full` warning says plainly that it is root on the host and that the promise about other users' secrets then only covers the SDK API. (Install dialog, revoke and storage mapping: A10 and A12, pushed as `permissionsChange`; elevated rights with step-up, badge and audit log: A16. The filtering Docker socket proxy, `docker.socket` and `host.full` are refused in v0.1 and come later.)
+- [ ] Two sample apps: one core app in React, one third-party app in plain TypeScript that uses only `@pithyx/sdk`. (Replaced: the core apps are React apps on the SDK, and A9 builds three template repositories, `app-blank` in plain TypeScript, `app-chat` and `app-showcase`.)
+- [ ] SDK reference generated with TypeDoc. (A8, for `@pithyx/sdk` and `@pithyx/ui`, with a CI check for undocumented exports.)
 
 ### 5.4 Tests and budgets
 
-- [ ] Unit tests for the window store and the SDK RPC layer. Window store done (`desktop/src/wm/*.test.ts`); the SDK RPC layer comes with 5.3.
+- [ ] Unit tests for the window store and the SDK RPC layer. Window store done (`desktop/src/wm/*.test.ts`); the SDK RPC layer has connection and contract tests since pithyx/pithyx#16 (`sdk/src/connect.test.ts`, `contract.test.ts`), extended in A4.
 - [x] Playwright: open, drag, resize, maximize, restore, close; layout survives a reload. Run at phone, tablet, laptop and ultrawide sizes with touch and mouse.
 - [x] Accessibility checks (axe) in CI; keyboard-only walkthrough of login and desktop. axe (WCAG 2.2 AA) runs in E2E for sign-in, reset, desktop, start menu, window and account menus and the phone switcher; `e2e/tests/keyboard.spec.ts` signs in, opens an app, closes it and signs out with the keyboard only.
 - [x] Performance budgets as CI tests: initial desktop bundle under 200 KB gzip, desktop usable after login under 1 s on repeat visit. The bundle budget runs in CI (`pnpm check:bundle`); it is split into sign-in and desktop since the #13 review. Sign-in keeps its 5 percent tolerance against `tools/checks/bundle-budget.json`; the desktop has a fixed limit of 150 KB gzip since 2026-09-29 (owner's decision: the timing budgets decide). `e2e/tests/budgets.spec.ts` holds the timing budgets against the production build on Fast 4G with 4x CPU slowdown: sign-in usable under 1.5 s cold, click feedback under 100 ms, desktop under 1 s after the click without Argon2, reload under 500 ms.
 
-**Done when:** the plain TypeScript sample app opens in a window, sets its title, sends a notification and restores its state after a reload, and the owner confirms the desktop feels right. `[REVIEW]`
+**Done when:** the plain TypeScript sample app opens in a window, sets its title, sends a notification and restores its state after a reload, and the owner confirms the desktop feels right. `[REVIEW]` (Since D300: met by A12, `app-blank` installed on 7484, and A17.)
 
 ---
 
@@ -910,7 +1297,7 @@ Part of v0.1 since 2026-10-03 (see "Scope of v0.1"); 14.1 and the Energy page st
 
 ## Interfaces for M4
 
-M3 builds these so M4 (apps) uses them without rework. M4 itself is not part of M3.
+M3 builds these so M4 (apps) uses them without rework. M4 itself is not part of M3; it is "Apps v0.1 (SDK and runtime)" since D300 (storage mappings in A10 and A14, app uids in A10, datasets in A10, permissions in A10 and A11, availability in A14).
 
 - Named storage (SDK guardrail 12): M3 provides shares as datasets with grants and an internal daemon API that resolves a share and a relative path to a mount path. M4 adds `storage_mappings` (app, storage id, share, subpath, access) on top and bind-mounts the folder into the backend at `/pithyx/storage/<id>`. A window's effective access is the lesser of the manifest's access and the user's share right; the backend's access comes from the share groups.
 - Users: `X-Pithyx-User` carries the stable, Linux-valid user name and the user id. Each app backend runs as its own uid and gid from the app range that M3 reserves (40000 to 49999, same allocator), mapped through userns-remap. An app reaches shares only as a member of the share groups from step 11, never with a user's uid.
@@ -992,3 +1379,12 @@ Decisions up to D268 are recorded in the pull requests that made them. From D269
 - **D297** (medium, 2026-10-04) Updates, `[DECISION]` with the owner on 2026-10-04. Debian updates come from Debian; Pithyx comes as `.deb` packages from a signed apt repository of static files on GitHub, with the channels stable and beta. Kernel and ZFS module change only together through the Pithyx channel. The check is on by default, runs once a day at a random time and only notifies; nothing installs automatically, and Settings can switch the check off. An offline update file works without the check. Before every update a btrfs snapshot of the system including `/var/lib/pithyx`, after it a health check, and an automatic rollback when it fails; pools are never upgraded automatically. Alternatives: whole-image A/B updates (rejected: every Debian security fix would need a Pithyx release), automatic installs (rejected by the owner), the check off by default (rejected by the owner: a daily request for a static file reveals only the address, and the switch is in Settings), an update server of our own (rejected: no project-run services).
 - **D298** (medium, 2026-10-04) Image build details. The owner asked on 2026-10-04 to build the installer and the image now, before step 14.2. `image/build.sh` runs mmdebstrap with the variant `apt` and the packages in the script, copies `image/rootfs`, the self-contained daemon and the desktop in with a customize hook and runs `image/customize.sh` inside (units, uid ranges, locked root, no SSH host keys and an empty machine id, apt sources pointing at Debian instead of the snapshot). The ZFS module is built by `zfs-dkms` during the build and checked; dkms stays in the image until the updater ships kernel and module as a pair (D297). The firmware for common network cards (`firmware-realtek`) and the processor microcode come along, so a box finds its network card without an internet connection. live-boot stays in the installed system, where it does nothing without `boot=live`. One systemd unit `pithyx.service` runs on both systems; the daemon itself tells the installer from the NAS by `pithyx.installer` on the kernel command line. The console greeting is agetty's issue (`/run/issue.d`), redrawn by `issue.sh` on address events and drawn with the Terminus font of console-setup (`FullCyrSlav`, the only Latin font with the half blocks of the QR code); the QR code comes from `qrencode`. The unit does not wait for `network-online.target`, so the installer starts without a cable. Alternatives: a getty replacement of our own on tty1 (rejected: agetty already redraws on reload and keeps the login prompt for the installed system), the QR code in two-character full blocks with the default font (rejected: it does not fit on an 80x25 console next to the logo), building the ZFS module outside the root file system (later, with the update channel).
 - **D299** (high, 2026-10-04) Web installer implementation (D294, D295). The daemon is the installer when the kernel command line carries `pithyx.installer` (or `PITHYX_INSTALLER=1` in simulation); it then maps only `GET /api/setup` (with `installer: true`), `/api/installer` and the desktop, and starts no account, file service, FTP or pool health service. `POST /api/installer/claim` gives the first browser a cookie for `/api/installer`; the other calls need it (`installer.claim.required`, `installer.claim.taken`). The checks need x86-64-v2 flags, UEFI, 4 GB memory, Secure Boot off (read from the EFI variable) and an internal disk of 40 GB that is not USB, removable, read only, in use or the boot medium. The install (`SystemInstaller`, the disk commands in `InstallPlans.cs` next to the storage plan builders) partitions, creates the RAID1 arrays (one member with `--force` on a single disk, `--homehost=any`), formats, mounts the btrfs subvolume `@` at `/mnt/pithyx/target`, unpacks the live squashfs, writes fstab (the mirror's ESP with `nofail`), `mdadm.conf`, host name, time zone, keyboard, time servers and GRUB defaults, prepares the database with the same setup code as the first run plus the system language and region, binds `/dev`, `/proc`, `/sys` and `/run` as rslave, generates SSH host keys and the initramfs and installs GRUB to every ESP (the removable fallback on each, the second disk's boot entry first so the first disk leads). A failed command fails the step with `installer.install.failed` and `step`, `command`, `exitCode`; the user can change the settings and start again. The recovery key is shown after the installation and before the restart: the key belongs to the administrator in the new database, and showing it in step 4 would need a key that survives going back and forth. The installed system gets `install-id` next to its database and answers it on `GET /api/install-id` (CORS `*`); a box (production build in real mode) listens on port 80 as well and redirects everything else there to 7484 with 307. The session cookie is `Secure` only over HTTPS: the production build marked it `Secure` always, so nobody could sign in over plain HTTP. The network step shows the cards and stays DHCP until step 14.2 brings its generator, which the installer then reuses. Alternatives: the recovery key in step 4 (deferred, see above), a second network UI in the installer (rejected: no second UI, D294), the destructive commands inline in the installer (rejected: `CommandSafetyTests` allows them only in plan builders).
+- **D300** (high, 2026-10-05) SDK 1.0 and the app runtime become part of v0.1, by the owner: M4 is pulled forward before D (network) and built as "Apps v0.1 (SDK and runtime)", steps A0 to A17 in waves, one PR per step, parallel agents in worktrees within a wave and serial merges. An app is a static frontend that the daemon serves plus an optional backend of zero to n containers; web apps with their own port and single sign-on (`kind: "web"`) come after 1.0. The contracts (manifest, compose subset, SDK additions) are drafts in `TODO.md` and approved in A2, A4 and A6. Against pithyx/pithyx#16 this replaces the permission `backend` (a backend is declared by `backend`), `auth.token` (`app.backend.token`), `beforeLogout` (`beforeUnload` with a reason), `backendUnavailable` and `backendRestored` (`backendStatus`), `permissionRevoked` (`permissionsChange`), and drops the manifest field `icon` (always `icon.svg`). A3 merges before A10 and takes the lower migration number, because both change `grants`. Alternatives: the store plan of 2026-10-03 first (rejected: it needs the runtime underneath), M4 after v0.1 (rejected by the owner: the first SDK release is wanted now), one large PR (rejected: no session can carry it and the runner takes one PR run at a time).
+- **D301** (high, 2026-10-05) App packages and backends. An app ships built, as a deterministic tar.gz `<id>-<version>.pithyxapp` (the extension from the store plan) with `pithyx.json`, `icon.svg`, `frontend/`, optional `backend/compose.yaml` with `backend/images.lock.json` and offline image tarballs per architecture, and checksums; the box never runs npm or a compiler. The backend is a subset of Compose with images pinned by digest, checked against an allowlist that both validators read as data and rewritten by the daemon (project name, network, user, logging, mounts, limits, labels; D310 records the details after A6). On the box each app has a dataset `<pool>/pithyx/apps/<id>` mounted at `/<pool>/.pithyx/apps/<id>/` with `versions/`, `current`, `volumes/` and `run/`, and Docker keeps its data in `/<pool>/.pithyx/docker`; the administrator picks the app pool at the first install, and nothing lives on the system disk. Docker comes from Debian and runs only while a backend app is installed and its pool is mounted. Alternatives: building on the box (rejected: toolchains and network on the box, unreproducible results), a single image and port per app as in pithyx/pithyx#16 (rejected: real apps need a database or a worker next to the server), a Compose file passed through unchecked (rejected: `privileged`, host ports and host mounts would bypass the permission model), our own backend format (rejected: developers already write Compose and test it locally with `docker compose`).
+- **D302** (medium, 2026-10-05) App ids are the author's domain reversed plus the app name: 3 to 5 parts, `^[a-z][a-z0-9-]*(\.[a-z0-9][a-z0-9-]*){2,4}$`, at most 100 characters, the last part the app name (`com.mueller.chat`, `io.github.schecher1.chat`, `io.gitlab.jan.chat`). System apps are `org.pithyx.<name>` (the project owns pithyx.org); the box accepts `org.pithyx.*` only for system apps and later from the official catalog, never from a sideload. A migration (A3) renames the short ids of today (`files`, `viewer`, ...) everywhere they are stored. Alternatives: short ids with a `local.*` namespace for sideloads (rejected: collisions between authors, and a sideload could never move to a catalog under the same id), random ids (rejected: unreadable in logs and paths), npm-style scopes (rejected: `@` and `/` do not belong in paths, topics and Docker project names).
+- **D303** (high, 2026-10-05) Routes, tokens and proxy. A backend offers named endpoints (`backend.endpoints`, service and port); the default endpoint `api` is `/apps/<id>/api/`, any other `/apps/<id>/api-<name>/`, and container ports never appear in a URL. The SDK offers `app.backend.url`, `fetch` and `socket` and finds the box from its own window's URL. Every frontend file under `/apps/<id>/` carries `Content-Security-Policy: sandbox allow-scripts allow-forms; default-src 'self'; ...` (with `connect-src https:` only for `network.internet`), `nosniff` and `Access-Control-Allow-Origin: *`, so a frontend opened directly in a tab never runs in the desktop's origin; the icon comes from the database at `/api/apps/{id}/icon` with `default-src 'none'; sandbox`. Tokens come from `POST /api/apps/{id}/tokens` (session cookie and CSRF header), live in memory, 256 bits, 5 minutes, bound to user, session, app and window instance: `host` tokens for the daemon's app API `/api/app/**` (the app's identity comes from the token, never from the route) and `backend` tokens for the proxy (bearer header or `?pithyx-token=`); a WebSocket takes a one-time ticket valid 30 seconds, and a cookie alone never authenticates at the proxy. The proxy is YARP in the daemon with routes set at runtime; it strips `Cookie`, `Authorization`, the `pithyx-*` parameters and incoming `X-Pithyx-*` headers, sets `X-Pithyx-User`, `-User-Id`, `-Groups`, `-Admin`, `traceparent` and `X-Forwarded-Prefix`, and answers preflights for `Origin: null` itself. Alternatives: one port per app (rejected: CLAUDE.md keeps the core on 443 and 7484 without subdomains), container ports in URLs (rejected: a port change would break every client), the session cookie at the proxy (rejected: guardrail 1; an app could act as the user beyond its permissions), long-lived tokens (rejected: revocation must apply within minutes).
+- **D304** (medium, 2026-10-05) Access and isolation. The SDK context without any permission holds the user's own id, name, display name, groups, administrator flag and 2FA state, the language, formats, time zone, theme, the box's name and version; listing all users and groups needs `directory.read`. The install dialog asks who may use the app, prefilled with "Everybody", or "Administrators only" for elevated rights, root in the container or `directory.read`. Backends have no internet; outgoing traffic needs `network.internet`. Root inside a container only when the manifest declares it (`backend.root`), unprivileged on the host through userns and shown with a warning; root on the host only through `host.full` (D71), which v0.1 refuses. Alternatives: the context behind a permission (rejected: every app needs to greet the user and format dates), internet by default (rejected: a NAS app should not phone home unasked), root refused entirely (rejected: many existing images need it, and userns makes it harmless on the host).
+- **D305** (medium, 2026-10-05) App logs. Every level of `app.log` also appears in the browser console. `info`, `warn` and `error` always go to the daemon, `debug` only while an administrator switched it on for the app (`logLevelChange` tells the app). The daemon adds the user it checked from the token (ends D261's trust in the desktop), and backend output from journald lands in the same Log Center source `app/<id>` (stdout info, stderr warn, a JSON field `level` wins). Alternatives: debug always to the daemon (rejected: floods `logs.db` under the 4 GB cap), backend logs in a source of their own (rejected: one app, one place to look).
+- **D306** (medium, 2026-10-05) npm packages and releases. `@pithyx/sdk`, `@pithyx/ui` (React components from `desktop/src/ui`, used by the core apps and third-party apps, plus a `tokens.css` without React) and `@pithyx/cli` are MIT and follow their own SemVer line with the tags `sdk-vX.Y.Z`, all three at the same version; the product keeps `vX.Y.Z`. Release candidates go out under the dist-tag `next`; `1.0.0` goes to `latest` only after the owner approved the three examples installed on 7484. The owner publishes with `tools/release/publish-sdk.sh` and the npm 2FA; no npm token is stored on a machine or in CI (trusted publishing is a later website and CI item). Alternatives: the product version for the SDK (rejected: every box release would bump the SDK and its users without an API change), publishing from CI with a token (rejected by the owner: a stored token is a supply chain risk), `@pithyx/ui` later (rejected: third-party apps should look native from 1.0).
+- **D307** (medium, 2026-10-05) Developer workflow. `pithyx dev` (A8) is a local mock desktop with the box's sandbox and CSP, switches for theme, language, size class and user, a button per event, and a proxy to the local `docker compose` that behaves like the box for tokens, tickets and headers. A developer then uploads the `.pithyxapp` in the Store; there is no development mode on the box, and the Vite dev server no longer serves `apps/*`. The default icon is the Pithyx box glyph on a neutral tile: the placeholder in the templates (`pithyx validate` warns while it is still there) and the fallback on the box. Three public template repositories show the way: `pithyx/app-blank`, `pithyx/app-chat` and `pithyx/app-showcase`, with CI from one reusable workflow in `pithyx/.github` on GitHub-hosted runners; they are created only after the owner's go (A9). Alternatives: a development mode on the box that frames a dev server URL (rejected: a switch that weakens the sandbox on real boxes; the owner chose no development mode), examples inside the monorepo (rejected: developers start from a template repository, and the examples must build against the published packages).
+- **D308** (medium, 2026-10-05) App management in v0.1 is the Store app `org.pithyx.store` from the store plan of 2026-10-03, with only the tab "Installed" and installing from a file (sideload); the tabs Official, Community and Own are prepared and hidden until the catalogs come ("Store (after SDK 1.0)"). Instead of a `local.*` namespace the box stores each app's origin (sideload or catalog), so a sideloaded app can later be updated from a catalog under the same id. The open store decisions (signing, packages from any URL) stay open there. Alternatives: an apps page in Settings (rejected: the store plan already puts app management in the Store, and a second UI would be thrown away), the catalogs in v0.1 (rejected: signing and catalog CI are not decided yet).

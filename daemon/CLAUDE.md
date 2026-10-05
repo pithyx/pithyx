@@ -14,7 +14,8 @@ Rules for `daemon/`; the root `CLAUDE.md` applies as well.
 - No external services. The daemon is one binary plus one SQLite database (WAL) on the system disk. No Postgres, no Redis, no S3 for daemon state.
 - Caching, job queues and event fan-out are in-process (`SystemStateService`, `HybridCache`, `Channels`, `BackgroundService`). Job state is persisted in SQLite.
 - User files live on the pool filesystem so SMB, NFS and snapshots see the same data.
-- Docker is controlled through the Engine API on the Unix socket, not by parsing CLI output.
+- Docker is controlled through the Engine API on the Unix socket, not by parsing CLI output. Engine `/events` feed `SystemStateService`; only `docker compose up --wait` (and down) runs as a job through `ICommandRunner`. Docker (Debian's `docker.io`, `docker-cli`, `docker-compose`) runs only while a backend app is installed and the app pool is mounted.
+- The apps module is `Apps/`: `Manifest/` (`AppId`, `ManifestValidator` with JsonSchema.Net, `IconValidator`), `Compose/` (`ComposeValidator` on the shared allowlist, `ComposeRewriter` as a pure function), `Proxy/` (YARP, routes set at runtime), `Docker/` (`DockerHost`, `DockerEngine`), `AppTokens`, `AppFrontendHosting`, `CoreApps`. Each app gets a uid from 40000 to 49999 (`UidAllocator.AllocateAppAsync`) and its own internal network; container output comes from journald into the source `app/<id>`.
 - SQLite is the source of truth for users and groups. The daemon provisions Linux users and Samba entries from it.
 - No read request ever spawns a process. Actions that need a CLI (for example `docker compose`) run as jobs with progress. `SystemStateService` keeps disks, pools, shares and containers in memory, updated by events (udev, zed, Docker) and polling only where no events exist.
 - Derived, expensive data uses `HybridCache` without L2. Anything that must survive a restart goes to SQLite.
@@ -35,10 +36,13 @@ Rules for `daemon/`; the root `CLAUDE.md` applies as well.
 /run/pithyx/sftp/    SFTP views: one chroot per user with bind mounts of its shared folders, rebuilt at start
 /run/pithyx/backup/  a checked configuration backup's database until it is restored (tmpfs, never on a disk)
 /<pool>/.pithyx/     app data, volumes
+/<pool>/.pithyx/apps/<id>/  one app (dataset <pool>/pithyx/apps/<id>): versions/<version>, current, volumes/, run/
+/<pool>/.pithyx/docker/     Docker's data root on the app pool (setting apps.pool, chosen at the first install)
 /<pool>/.pithyx/cache/  the pool's thumbnails and other derived data (<pool>/pithyx/cache, hidden)
 /<pool>/.pithyx/system/logs/  the optional log archive (archive.db)
 ```
 
+- Apps never touch the system disk: frontends, images, volumes and Docker's data live on the app pool. Only the app registry (`apps`, permissions, storage mappings, icons) is in `pithyx.db`, in the backup part "Apps". A locked or missing app pool stops its apps.
 - Derived data of files on a pool (thumbnails) lives in that pool's cache dataset `<pool>/pithyx/cache`, capped at 2 GB, never on the system disk. It goes with the pool when the pool is destroyed or exported; shares outside a pool (development only) use the development cache folder.
 
 ## Operations

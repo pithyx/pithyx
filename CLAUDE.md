@@ -1,6 +1,6 @@
 # Pithyx
 
-Free, self-hosted NAS and server OS with a web desktop. Debian 13, C# daemon, React desktop, apps as containers. AGPL-3.0, SDK MIT. GitHub org `pithyx`.
+Free, self-hosted NAS and server OS with a web desktop. Debian 13, C# daemon, React desktop, apps as containers. AGPL-3.0; the npm packages (`@pithyx/sdk`, `@pithyx/ui`, `@pithyx/cli`) MIT. GitHub org `pithyx`, npm org `pithyx`.
 
 These rules are binding. If a rule blocks you, stop and ask; never work around it.
 
@@ -28,16 +28,17 @@ These rules are binding. If a rule blocks you, stop and ask; never work around i
 
 ## Current state
 
-Update in the same PR whenever the state changes. Last updated: 2026-10-04.
+Update in the same PR whenever the state changes. Last updated: 2026-10-05.
 
 - 7484 runs `dev` from `/home/gabriel/code/pithyx`. Check with `systemctl status pithyx-dev` and `git -C /home/gabriel/code/pithyx log -1`; the deployed commit must equal `origin/dev`.
 - `owner.env` and `e2e.env` work again (the deploy of 2026-10-03 signed in as the owner and found `e2e-admin` and `e2e-user`).
 - The runner has `libatomic1`, `shellcheck`, Playwright libs. dev01 has `acl`, `smbclient`, `sshpass`. 7484 writes `/etc/samba/smb.conf` (original kept as `smb.conf.pre-pithyx`), runs `smbd` and owns `/etc/ssh/sshd_config.d/50-pithyx.conf`.
 - Migrations on `dev`: 0001 to 0021 (0019 groups, 0020 grants, 0021 WebDAV and FTP). Merged history: `git log origin/dev`. 7484 has test pool `pithyxtestfs` (VYXTEST01) with shared folder "FS Test" for `e2e-user` (read-write, SFTP).
 - The owner widened v0.1 on 2026-10-03 (`TODO.md`, "Scope of v0.1"): groups, the permission model, WebDAV and FTP, changing the network. Open, one PR at a time in this order: A groups (step 10, #70, merged), B permission model (step 11, #71, merged), C WebDAV and FTP (step 12, `feature/webdav-ftp`, D291), D network (step 14.2, label `e2e`; nothing on the host changes until the owner decides the test method, D110).
+- On 2026-10-05 the owner pulled SDK 1.0 and the app runtime into v0.1, before D (D300): `TODO.md` "Apps v0.1 (SDK and runtime)", steps A0 to A17 in waves W0 to W6, with the architecture, contract drafts and dependencies there. The owner starts each step; parallel agents of a wave work in their own worktrees and merge one after another. A3 merges before A10 (lower migration number, both change `grants`). The owner publishes to npm (D306); nothing is published and no public repository is created without the owner.
 - Next after D: verify every "Release 0.1" item in `TODO.md` on 7484 in the browser (Playwright and screenshots as `e2e-admin`/`e2e-user`), fix failures, then report: deployed commit and `dev` HEAD, runner status per job, a table (item, status, proof), merged PRs with migration numbers, the rename grep (D279, only `VYXTEST` allowed), open problems with cause and proposal.
 - The web installer, image build and updater are planned (D294 to D297, `TODO.md` "Web installer v0.1" to "Updates v0.1"). The owner asked on 2026-10-04 to build the installer and the image now, before D (D298). `image/build.sh` builds the ISO on dev01 in about 7 minutes (`--reuse-rootfs` about 1), `image/test-boot.sh` boots it in QEMU with KVM, `image/test-install.sh [--mirror]` installs it into a QEMU VM through the installer's API and checks the installed system (D299); a build runner (`pithyx-image`) comes later. dev01 has the image packages (also `qemu-utils`), its user is in group `kvm`, and dev01 has 8 cores and 21 GB since 2026-10-04.
-- Decisions D269 to D291 and D293 to D299 are on `dev`; D292 belongs to `feature/network`; next free number D300. The decision log at the end of `TODO.md` conflicts on every merge; keep all entries in number order.
+- Decisions D269 to D291 and D293 to D308 are on `dev`; D292 belongs to `feature/network`; D309 (Docker, A1), D310 (Compose, A6) and D311 (elevated rights, A16) are reserved; next free number D312. The decision log at the end of `TODO.md` conflicts on every merge; keep all entries in number order.
 
 ## Known pitfalls
 
@@ -61,9 +62,9 @@ Update in the same PR whenever the state changes. Last updated: 2026-10-04.
 - Commits and PR titles: `<gitmoji> <type>(<scope>): <subject>`, Unicode emoji, English, imperative, no em dashes. E.g. `✨ feat(desktop): add window snapping`, `🐛 fix(daemon): handle missing lsblk serial`, `♻️ refactor(storage): extract zpool parser`, `👷 ci: add DCO check`. Always `git commit -s` (DCO).
 - PR flow: merge `dev` into the branch, push, wait for a green runner run (label `e2e` for larger changes, see CI). Storage, account and command runner changes also attach an `integration.sh` result from dev01. Then squash-merge into `dev` (you may once CI is green; `master` always needs the owner). The squash subject including ` (#n)` stays at or under 100 characters, and the message ends with `Signed-off-by: Schecher_1 <74829802+Schecher1@users.noreply.github.com>`. Then deploy with `install-dev-daemon.sh --yes` and check the change on 7484; a branch with a migration proves its upgrade there (the daemon keeps `pithyx.db.pre-<version>-<time>.bak`).
 - One PR run on the runner host at a time, and only after the previous merge's `dev` run finished; parallel runs break timing budgets.
-- Generated files (`openapi.json`, `schema.ts`, `error-codes.ts`) are never merged by hand: take one side, build the daemon, run `pnpm --filter @pithyx/api-client generate`.
+- Generated files (`openapi.json`, `schema.ts`, `error-codes.ts`, `sdk/src/manifest.generated.ts`) are never merged by hand: take one side and regenerate (build the daemon and run `pnpm --filter @pithyx/api-client generate`; the manifest types come from `sdk/schema/manifest.v1.schema.json`).
 - Every user-visible or developer-relevant change adds a line under `Unreleased` in `CHANGELOG.md` (Keep a Changelog).
-- SemVer for the whole monorepo; releases tagged on `master` as `vX.Y.Z` with a constellation codename.
+- SemVer for the product; releases tagged on `master` as `vX.Y.Z` with a constellation codename. The npm packages (`sdk/`, `packages/ui`, `packages/cli`) have their own SemVer line, all at the same version, tagged `sdk-vX.Y.Z`; release candidates go to the dist-tag `next`, `latest` only after the owner's approval. Only the owner publishes, with `tools/release/publish-sdk.sh` and npm 2FA; no npm token is stored (D306).
 
 ## Before you commit
 
@@ -78,14 +79,15 @@ Update in the same PR whenever the state changes. Last updated: 2026-10-04.
 ```
 daemon/   C# / ASP.NET Core (.NET 10), the only privileged process
 desktop/  Vite + React + TypeScript web desktop
-sdk/      npm package for app developers (@pithyx/sdk)
+sdk/      npm package for app developers (@pithyx/sdk, MIT), manifest and compose schemas in sdk/schema/
+packages/ api-client (generated), ui (@pithyx/ui, MIT), cli (@pithyx/cli, MIT, the `pithyx` command)
 apps/     bundled apps (files, settings, store)
 image/    ISO build (mmdebstrap, squashfs, GRUB, xorriso)
 i18n/     translation files (en is the reference)
 website/  landing page and user docs (Starlight)
 ```
 
-- One monorepo, one version. Nested rules: `daemon/CLAUDE.md` (architecture, paths, operations, VMs), `desktop/CLAUDE.md` (responsive, accessibility, performance, layout memory); equally binding.
+- One monorepo, one product version (the npm packages have their own, see Workflow). Nested rules: `daemon/CLAUDE.md` (architecture, paths, operations, VMs), `desktop/CLAUDE.md` (responsive, accessibility, performance, layout memory); equally binding.
 - No developer docs in markdown; the code documents itself. Allowed markdown outside `website/`: README, CLAUDE (root and per top-level folder), CONTRIBUTING, TODO, CHANGELOG, SECURITY. No other markdown for agents; state lives in this file.
 - `website/` publishes `/llms.txt` and `/llms-full.txt`. API and SDK references are generated from OpenAPI and TSDoc.
 - An API change updates daemon, generated client, SDK and desktop in the same commit. Never edit generated files.
@@ -134,10 +136,18 @@ website/  landing page and user docs (Starlight)
 
 - Every app, core or third-party, uses `@pithyx/sdk` with an identical API: core apps in-process transport, third-party a MessageChannel (one per app instance; identity from the port, never from message data).
 - Third-party apps run in an iframe `sandbox="allow-scripts allow-forms"` without `allow-same-origin`, same host. They store data through the SDK, not `localStorage`/IndexedDB.
-- Backends: one instance per app shared by all users (separated by `X-Pithyx-User`), non-root with userns-remap, on an internal Docker network, no host ports, reached only via YARP at `/apps/<id>/api/` with a 5-minute SDK token. YARP validates the token, strips the desktop session cookie (mandatory for every proxied app, including external ones), adds `X-Pithyx-User`, `X-Pithyx-Groups` and the request id. No `docker.sock`, `privileged` or host network unless the manifest requests it and the install dialog shows it.
-- Lifecycle in the manifest: `always` or `onDemand` (runs while any window is open, plus 10 min idle). Windows are counted via WebSocket with a 2-minute grace on disconnect. Background work needs a keep-alive lease or manifest schedules; otherwise idle backends get SIGTERM with a timeout.
+- An app is a static frontend served by the daemon plus an optional backend of zero to n containers (D300). It ships built as `<id>-<version>.pithyxapp` (deterministic tar.gz: `pithyx.json`, `icon.svg`, `frontend/`, optional `backend/compose.yaml` with `images.lock.json`); the box never runs npm or a compiler (D301). Web apps with their own port (`kind: "web"`) come after SDK 1.0.
+- IDs (D302): the author's domain reversed plus the app name, 3 to 5 parts (`com.mueller.chat`), validated by `AppId` in the daemon and the schema in `sdk/schema/`. System apps are `org.pithyx.<name>`; the box accepts `org.pithyx.*` only for system apps and the official catalog, never from a sideload. The box stores each app's origin (sideload or catalog), no `local.*` ids.
+- Routes (D303): frontend `/apps/<id>/...`, backend endpoint `api` at `/apps/<id>/api/`, any other endpoint `<name>` at `/apps/<id>/api-<name>/`; endpoints have names, container ports never appear in a URL. Icons from the database at `/api/apps/{id}/icon`. The daemon's API for apps is `/api/app/**`.
+- Frontend headers, mandatory on every file under `/apps/<id>/`: `Content-Security-Policy: sandbox allow-scripts allow-forms; default-src 'self'; ...` (`connect-src https:` only with `network.internet`, never scripts from a CDN), `X-Content-Type-Options: nosniff`, `Access-Control-Allow-Origin: *`. Without `sandbox`, a frontend opened directly would run in the desktop's origin with the user's session. The icon is served with `default-src 'none'; sandbox`.
+- Tokens (D303): the desktop gets them with `POST /api/apps/{id}/tokens` (cookie and CSRF header) and keeps them in memory; 256 bits, 5 minutes, bound to user, session, app and window instance. `host` tokens only for `/api/app/**` (the app's identity comes from the token, never from the route), `backend` tokens only for the proxy (bearer header or `?pithyx-token=`), one-time WebSocket tickets valid 30 seconds (`?pithyx-ticket=`). A cookie alone never authenticates at the proxy; tokens and tickets are masked in logs.
+- Backends: one instance per app shared by all users (separated by `X-Pithyx-User`), on an internal Docker network of its own without internet (outgoing only with `network.internet`), no host ports, with an own uid from 40000 to 49999. Root in the container only when declared (`backend.root`), unprivileged through userns and shown with a warning. The backend is a Compose subset with images pinned by digest; the daemon checks it against the allowlist `sdk/schema/compose.v1.rules.json` and rewrites it (D301). Reached only through YARP in the daemon, which strips `Cookie`, `Authorization`, the `pithyx-*` parameters and incoming `X-Pithyx-*` headers (mandatory for every proxied app, including external ones) and sets `X-Pithyx-User`, `X-Pithyx-User-Id`, `X-Pithyx-Groups`, `X-Pithyx-Admin`, `traceparent` and `X-Forwarded-Prefix`. No `docker.sock`, `privileged` or host network unless the manifest requests the elevated right and the install dialog shows it; v0.1 refuses `docker.socket` and `host.full`.
+- App data lives on the app pool the administrator picks at the first install: a dataset per app, Docker's data on the same pool, nothing on the system disk (paths in `daemon/CLAUDE.md`).
+- App logs (D305): every level also goes to the browser console; `info`, `warn` and `error` to the daemon, `debug` only while an administrator switched it on. The daemon adds the checked user; backend output lands in the same source `app/<id>`.
+- Apps are developed with `pithyx dev` on the developer's machine and installed from the `.pithyxapp`; there is no development mode on the box (D307).
+- Lifecycle in the manifest: `always` or `onDemand` (runs while any window is open, plus `idleTimeout`, default 10 min). Windows are counted through the per-user topic `apps/<id>/context` (the window lease) with a 2-minute grace on disconnect. Background work needs a keep-alive lease or manifest schedules; otherwise idle backends get SIGTERM with a timeout.
 - Window instances in the manifest: `single` (focus the user's window on this device, pass launch args) or `multi`.
-- Apps with mounts on a locked or missing pool do not start; the UI says why. Revoked permissions apply on the next token refresh and close affected windows over the WebSocket.
+- Apps with mounts on a locked or missing pool do not start; the UI says why. Revoked permissions apply on the next token refresh, reach the app as `permissionsChange` and close affected windows and proxied sockets over the WebSocket.
 - External web apps (Immich, Jellyfin) keep their own ports behind a YARP listener that may rewrite `X-Frame-Options`/`frame-ancestors`. Linked apps on other hosts open in a window if framable, else a new tab.
 - Apps open in windows, never redirect the page; "Open in tab" is optional.
 
@@ -151,7 +161,8 @@ website/  landing page and user docs (Starlight)
 
 - Test parsers, decision logic, permission checks, manifest validation, the update state machine. Not getters, DTOs, pass-through controllers or individual React components.
 - Daemon tests run in simulation (`DaemonFactory`) with a fake clock where time matters. E2E in `e2e/` (Playwright, `pnpm build && pnpm e2e`) with its own daemon and fresh DB.
-- Tests needing root, real ZFS, loop devices, scsi_debug or Linux accounts (`Category=StorageIntegration`) never run in GitHub CI, only on dev01 via `tools/dev-vm/integration.sh`. Storage PRs run their destructive suite there against the test disks before merge.
+- Tests needing root, real ZFS, loop devices, scsi_debug or Linux accounts (`Category=StorageIntegration`) or a real Docker engine (`Category=DockerIntegration`) never run in GitHub CI, only on dev01 via `tools/dev-vm/integration.sh`. Storage and Docker PRs run their destructive suite there before merge.
+- Contracts shared by the CLI and the box (manifest, compose) have one fixture corpus under `sdk/schema/fixtures/` that runs in Vitest and xUnit, so both judge alike.
 
 ## CI
 
@@ -159,5 +170,5 @@ website/  landing page and user docs (Starlight)
 - The runner has no Docker and no root: no `services:` or `container:`, nothing needing ZFS, disks or root. The owner maintains it: never change it or add workflow workarounds for something missing; tell the owner.
 - Workflows: top-level `permissions: contents: read`, widened per job only when needed. No `pull_request_target`, no secrets in logs, no fork code without approval.
 - The runner does all build-only work (build, lint, typecheck, unit tests, E2E, perf gate): push, keep working, read the result. Use dev01 only for ZFS/root tests, image builds and deploys. There is no local CI fallback.
-- Every PR runs `changes` and `repo` (format, repo rules, shellcheck, commit messages, sign-off), plus `daemon` (without `StorageIntegration` and `TimingBudget`) and `frontend` when their files changed. That suffices for a small change.
+- Every PR runs `changes` and `repo` (format, repo rules, shellcheck, commit messages, sign-off), plus `daemon` (without `StorageIntegration`, `DockerIntegration` and `TimingBudget`) and `frontend` when their files changed. That suffices for a small change.
 - E2E with perf gate and design checks only on request (D278): label `e2e` (`gh pr edit <n> --add-label e2e`), `gh workflow run CI --ref <branch>`, or any PR to `master`. Add the label for user flows, desktop shell, window manager, sign-in, setup, SDK transport, API contract, loading path or bundle, or several PRs merged in a row. Run it on `dev` before the owner verifies a round on 7484.
