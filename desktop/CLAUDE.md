@@ -24,6 +24,12 @@ Rules for `desktop/`. The root `CLAUDE.md` applies as well.
 - Use the React Compiler instead of hand-written `useMemo` and `useCallback`.
 - No `useEffect` for derived state or data fetching. REST data goes through TanStack Query, live data through the WebSocket store. `useEffect` is only for syncing with things outside React.
 - Core apps run in the desktop context. Only third-party apps use iframes.
+
+## Shared UI
+
+- Components shared by the desktop, core apps and third-party apps come from `@pithyx/ui` (`packages/ui`, MIT): Button, TextField, SearchField, Controls, Dialog, Menu, ContextMenu, Tooltip, with `UiProvider({ locale })` and its own en and de texts. `desktop/src/ui` moves there in A5; the desktop consumes it from source through the `pithyx-source` condition, so the bundle budget still applies. Desktop-only components stay in `desktop/`.
+- `tokens.css` in `@pithyx/ui` is the only token file (usable without React); the contrast test checks it.
+- The desktop draws everything an iframe cannot do for itself: app context menus, badges, attention, the clipboard and `openUrl` (through `platform/browser.ts`), the default icon (the box glyph on a neutral tile).
 - Performance budgets are CI tests. The timing budgets (`e2e/tests/budgets.spec.ts`) are the deciding gate; a regression of more than 5 percent on any tracked timing fails the build. They run with the E2E suite, so a change on the loading path, the sign-in or the bundle gets the label `e2e` (D278); the bundle size check runs in every frontend job. Do not trade code clarity for a few bytes of bundle size while the desktop stays within its limit.
 
 ## Desktop layout
