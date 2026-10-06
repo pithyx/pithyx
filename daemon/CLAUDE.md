@@ -42,7 +42,7 @@ Rules for `daemon/`; the root `CLAUDE.md` applies as well.
 /<pool>/.pithyx/system/logs/  the optional log archive (archive.db)
 ```
 
-- Apps never touch the system disk: frontends, images, volumes and Docker's data live on the app pool. Only the app registry (`apps`, permissions, storage mappings, icons) is in `pithyx.db`, in the backup part "Apps". A locked or missing app pool stops its apps.
+- Apps never run or keep data on the system disk: frontends, images, volumes and Docker's data live on the app pool, and an app's runtime is its containers. An uploaded package waiting for the install (at most 15 minutes) is unpacked in `/var/cache/pithyx/app-packages`; it is rebuildable scratch, not app data. Only the app registry (`apps`, permissions, storage mappings, icons) is in `pithyx.db`, in the backup part "Apps". A locked or missing app pool stops its apps.
 - Derived data of files on a pool (thumbnails) lives in that pool's cache dataset `<pool>/pithyx/cache`, capped at 2 GB, never on the system disk. It goes with the pool when the pool is destroyed or exported; shares outside a pool (development only) use the development cache folder.
 
 ## Operations

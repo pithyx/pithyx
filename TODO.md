@@ -352,7 +352,7 @@ Logs (D305): every level also appears in the browser console. `info`, `warn` and
 - [x] `setDirty`, the "not responding, close anyway?" dialog (D62), "Close all", `beforeUnload` (from 5.3).
 - [x] `openUrl` and the clipboard through `platform/browser.ts`.
 - [x] Action buttons in notifications, the console mirror of app logs, the default icon (box glyph).
-- [ ] E2E with the label `e2e` and axe. (`e2e/tests/host.spec.ts` passes locally; the runner run with the label is open.)
+- [x] E2E with the label `e2e` and axe. (`e2e/tests/host.spec.ts`; the runner's `e2e` run of #93 passed.)
 
 #### A8 CLI, docs, rc.2 `[REVIEW]`
 
@@ -378,7 +378,7 @@ Logs (D305): every level also appears in the browser console. `info`, `warn` and
 - [x] `AppFrontendHosting.cs` serves the frontends with the security headers above; topics `apps` and `apps/admin`. (The files are public like the desktop's: a sandboxed window sends no cookie, so the grant is checked where the app is launched and, from A11, where its tokens come from.)
 - [x] The demo becomes the E2E probe app `e2e/apps/sdk-probe`; `copySampleApps` goes. (Its package is built by `e2e/apps/sdk-probe/pack.ts` until `pithyx pack` exists; the desktop wires it in by id until A12.)
 - [x] Tests: tar attacks, the state machine with a fake clock, the endpoint matrix and the backup table check, `integration.sh` for the dataset and the rollback.
-- [ ] Upgrade proven on 7484.
+- [x] Upgrade proven on 7484. (2026-10-06: 1751de8 deployed, `pithyx.db.pre-0023-20261006T213954Z.bak` kept, the grants of `e2e-user` lost `org.pithyx.demo`; the probe installed from its package as `e2e-admin` onto `pithyxtestfs` (job `apps.install` succeeded, dataset `pithyxtestfs/pithyx/apps/com.example.sdk-probe` with `versions/1.0.0`, `current`, `volumes/`, `run/`); `/apps/com.example.sdk-probe/` answers files and 404s with the sandbox CSP, `nosniff` and `Access-Control-Allow-Origin: *`, the icon with `default-src 'none'; sandbox`.)
 
 #### A11 Tokens and checks in the daemon (after A10)
 
