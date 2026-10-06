@@ -1,0 +1,2 @@
+{"Type":"network","Action":"create","Actor":{"ID":"9037ce4ecf3ae3790827e73887be24396d9e5a5705b60f81e923f7fe55bc2522","Attributes":{"name":"pithyx-spike-probe","type":"bridge"}},"scope":"local","time":1791249266,"timeNano":1791249266645816918}
+{"Type":"network","Action":"destroy","Actor":{"ID":"9037ce4ecf3ae3790827e73887be24396d9e5a5705b60f81e923f7fe55bc2522","Attributes":{"name":"pithyx-spike-probe","type":"bridge"}},"scope":"local","time":1791249266,"timeNano":1791249266794995916}
