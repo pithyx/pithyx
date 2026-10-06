@@ -1,0 +1,37 @@
+{
+  "name": "@pithyx/cli",
+  "version": "0.0.0",
+  "description": "The pithyx command for building Pithyx apps",
+  "license": "MIT",
+  "type": "module",
+  "files": [
+    "dist",
+    "LICENSE"
+  ],
+  "bin": {
+    "pithyx": "./dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "pithyx-source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "vite build",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@pithyx/sdk": "workspace:*",
+    "ajv": "^8.20.0",
+    "saxes": "^6.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.6",
+    "vite": "^8.3.1",
+    "vite-plugin-dts": "^5.1.1",
+    "vitest": "^5.0.2"
+  }
+}

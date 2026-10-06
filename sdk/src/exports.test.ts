@@ -24,6 +24,13 @@ describe('the public SDK', () => {
     expect(sdk.SDK_VERSION).toBe(packageJson.version);
   });
 
+  // pnpm publishes publishConfig.exports in place of exports, so a path missing there is missing on npm.
+  it('publishes every export', () => {
+    expect(Object.keys(packageJson.publishConfig.exports)).toEqual(
+      Object.keys(packageJson.exports),
+    );
+  });
+
   it('has the v1 additions and none of what they replaced or what was refused (D300)', () => {
     expectTypeOf<
       | 'backend.token'

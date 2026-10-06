@@ -1,0 +1,165 @@
+{
+  "too-large.svg": [
+    {
+      "reason": "too_large"
+    }
+  ],
+  "malformed.svg": [
+    {
+      "reason": "malformed"
+    }
+  ],
+  "not-utf8.svg": [
+    {
+      "reason": "malformed"
+    }
+  ],
+  "undefined-entity.svg": [
+    {
+      "reason": "malformed"
+    }
+  ],
+  "two-roots.svg": [
+    {
+      "reason": "malformed"
+    }
+  ],
+  "html-root.svg": [
+    {
+      "reason": "not_svg"
+    }
+  ],
+  "no-namespace.svg": [
+    {
+      "reason": "not_svg"
+    }
+  ],
+  "viewbox-missing.svg": [
+    {
+      "reason": "viewbox"
+    }
+  ],
+  "viewbox-not-square.svg": [
+    {
+      "reason": "viewbox"
+    }
+  ],
+  "viewbox-zero.svg": [
+    {
+      "reason": "viewbox"
+    }
+  ],
+  "viewbox-three-numbers.svg": [
+    {
+      "reason": "viewbox"
+    }
+  ],
+  "doctype.svg": [
+    {
+      "reason": "doctype"
+    }
+  ],
+  "processing-instruction.svg": [
+    {
+      "reason": "processing_instruction"
+    }
+  ],
+  "script.svg": [
+    {
+      "reason": "element_forbidden",
+      "element": "script"
+    }
+  ],
+  "script-uppercase.svg": [
+    {
+      "reason": "element_forbidden",
+      "element": "SCRIPT"
+    }
+  ],
+  "foreign-object.svg": [
+    {
+      "reason": "element_forbidden",
+      "element": "foreignObject"
+    }
+  ],
+  "image.svg": [
+    {
+      "reason": "element_forbidden",
+      "element": "image"
+    },
+    {
+      "reason": "external_href"
+    }
+  ],
+  "iframe.svg": [
+    {
+      "reason": "element_forbidden",
+      "element": "iframe"
+    }
+  ],
+  "event-attribute.svg": [
+    {
+      "reason": "event_attribute",
+      "attribute": "onload"
+    }
+  ],
+  "event-attribute-mixed-case.svg": [
+    {
+      "reason": "event_attribute",
+      "attribute": "OnClick"
+    }
+  ],
+  "external-href.svg": [
+    {
+      "reason": "external_href"
+    }
+  ],
+  "xlink-href.svg": [
+    {
+      "reason": "external_href"
+    }
+  ],
+  "animate-href.svg": [
+    {
+      "reason": "external_href"
+    }
+  ],
+  "style-import.svg": [
+    {
+      "reason": "style_import"
+    }
+  ],
+  "style-url.svg": [
+    {
+      "reason": "style_url"
+    }
+  ],
+  "style-attribute-url.svg": [
+    {
+      "reason": "style_url"
+    }
+  ],
+  "fill-url.svg": [
+    {
+      "reason": "style_url"
+    }
+  ],
+  "style-escape.svg": [
+    {
+      "reason": "style_escape"
+    }
+  ],
+  "several.svg": [
+    {
+      "reason": "viewbox"
+    },
+    {
+      "reason": "element_forbidden",
+      "element": "script"
+    },
+    {
+      "reason": "event_attribute",
+      "attribute": "onclick"
+    }
+  ]
+}

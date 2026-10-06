@@ -1,6 +1,87 @@
 {
   "$comment": "Golden cases for the two ICU renderers: IcuMessageFormatter (daemon) and intl-messageformat on build-time compiled messages (desktop). Both test suites render every entry and must produce exactly `expected`. Every code in i18n/en/errors.json needs an entry with example params.",
   "errors": {
+    "app.elevated.unsupported": {
+      "params": {
+        "right": "docker.socket"
+      },
+      "expected": "The app asks for the right docker.socket, which this version of Pithyx does not grant."
+    },
+    "app.icon.invalid": {
+      "params": {
+        "reason": "element_forbidden",
+        "element": "script"
+      },
+      "expected": "The app's icon cannot be used: it contains the element script."
+    },
+    "app.manifest.cron_invalid": {
+      "params": {
+        "path": "/backend/schedules/0/cron",
+        "cron": "0 3 * *"
+      },
+      "expected": "The schedule at /backend/schedules/0/cron is not a valid cron expression: 0 3 * *"
+    },
+    "app.manifest.duplicate": {
+      "params": {
+        "path": "/storage/1/id",
+        "value": "files"
+      },
+      "expected": "The manifest has files twice (at /storage/1/id)."
+    },
+    "app.manifest.id_invalid": {
+      "params": {
+        "id": "Chat"
+      },
+      "expected": "The app id Chat is not valid. It is the author's domain reversed plus the app name, for example com.example.chat."
+    },
+    "app.manifest.id_reserved": {
+      "params": {
+        "id": "org.pithyx.files"
+      },
+      "expected": "The app id org.pithyx.files is reserved for the apps that come with Pithyx."
+    },
+    "app.manifest.invalid_json": {
+      "params": {},
+      "expected": "The app's manifest (pithyx.json) is not valid JSON."
+    },
+    "app.manifest.reference_unknown": {
+      "params": {
+        "path": "/backend/health/endpoint",
+        "name": "status"
+      },
+      "expected": "The manifest refers to status at /backend/health/endpoint, which it does not declare."
+    },
+    "app.manifest.schema_violation": {
+      "params": {
+        "path": "/icon",
+        "keyword": "additionalProperties"
+      },
+      "expected": "The app's manifest is not valid at /icon (additionalProperties)."
+    },
+    "app.manifest.sdk_invalid": {
+      "params": {
+        "sdk": "latest"
+      },
+      "expected": "The SDK version range latest in the manifest is not valid."
+    },
+    "app.manifest.version_unsupported": {
+      "params": {
+        "version": "2",
+        "supported": 1
+      },
+      "expected": "This app needs a newer version of Pithyx (manifest version 2, this box reads version 1)."
+    },
+    "app.manifest.window_size_invalid": {
+      "params": {},
+      "expected": "The app's smallest window size is larger than its default size."
+    },
+    "app.package.layout_invalid": {
+      "params": {
+        "path": "icon.svg",
+        "reason": "missing"
+      },
+      "expected": "The app package is not valid: icon.svg is missing."
+    },
     "app.permission.denied": {
       "params": {
         "permission": "notifications"
