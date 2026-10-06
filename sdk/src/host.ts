@@ -44,7 +44,10 @@ export interface ServeOptions {
 }
 
 export interface AppConnection {
-  /** Sends an event; an event that needs a permission the app does not hold (`sharesChanged`) is dropped. */
+  /**
+   * Sends an event; an event that needs a permission the app does not hold (`sharesChanged`) is dropped.
+   * `permissionsChange` also updates the permissions the host checks.
+   */
   emit<E extends EventName>(event: E, data: Events[E]): void;
   /** Asks the app and waits; resolves undefined when it does not answer in time. */
   ask<Q extends QueryName>(
@@ -60,8 +63,22 @@ const eventPermissions: Partial<Record<EventName, string>> = {
   sharesChanged: 'files.shares',
 };
 
+/**
+ * Methods the host refuses with `app.permission.denied` unless the app holds the permission. The daemon checks again;
+ * this only answers early and keeps a handler from running for an app that may not call it.
+ */
+const methodPermissions: Partial<Record<MethodName, string>> = {
+  'directory.users': 'directory.read',
+  'directory.groups': 'directory.read',
+};
+
 const MAX_TITLE = 200;
 const MAX_KEY = 128;
+const MAX_ACTIONS = 2;
+const MAX_NOTIFICATION_DATA = 4096;
+const MAX_MENU_ITEMS = 50;
+const MAX_CLIPBOARD = 1024 * 1024;
+const MAX_URL = 2048;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -183,6 +200,70 @@ function isLogRecord(entry: unknown): boolean {
   );
 }
 
+function isText(value: unknown, max: number, min = 1): value is string {
+  return typeof value === 'string' && value.length >= min && value.length <= max;
+}
+
+const isOptionalBoolean = (value: unknown) => value === undefined || typeof value === 'boolean';
+
+/** Data that survives as JSON within the size limit. */
+function isSmallJson(value: unknown, max: number): boolean {
+  try {
+    // JSON.stringify returns undefined for undefined, which means no data.
+    const json = JSON.stringify(value) as string | undefined;
+    return json === undefined || json.length <= max;
+  } catch {
+    return false;
+  }
+}
+
+function isNotification(p: unknown): boolean {
+  return (
+    isRecord(p) &&
+    isText(p.title, MAX_TITLE) &&
+    (p.body === undefined || isText(p.body, 1000, 0)) &&
+    (p.level === undefined ||
+      ['info', 'success', 'warning', 'error'].includes(p.level as string)) &&
+    (p.actions === undefined ||
+      (Array.isArray(p.actions) &&
+        p.actions.length <= MAX_ACTIONS &&
+        p.actions.every(
+          (action) => isRecord(action) && isText(action.id, 64) && isText(action.label, 40),
+        ))) &&
+    isSmallJson(p.data, MAX_NOTIFICATION_DATA) &&
+    (p.tag === undefined || isText(p.tag, 64))
+  );
+}
+
+function isMenuItem(item: unknown): boolean {
+  if (!isRecord(item)) {
+    return false;
+  }
+  if ('separator' in item) {
+    return item.separator === true && Object.keys(item).length === 1;
+  }
+  return (
+    isText(item.id, 64) &&
+    isText(item.label, 100) &&
+    isOptionalBoolean(item.disabled) &&
+    isOptionalBoolean(item.checked) &&
+    isOptionalBoolean(item.danger) &&
+    (item.shortcut === undefined || isText(item.shortcut, 32))
+  );
+}
+
+/** Only web and mail addresses open in a tab; `javascript:`, `data:` and the like never do. */
+function isOpenableUrl(value: unknown): boolean {
+  if (!isText(value, MAX_URL)) {
+    return false;
+  }
+  try {
+    return ['https:', 'http:', 'mailto:'].includes(new URL(value).protocol);
+  } catch {
+    return false;
+  }
+}
+
 const isPage = (p: Record<string, unknown>) =>
   (p.cursor === undefined || typeof p.cursor === 'string') &&
   (p.limit === undefined || Number.isSafeInteger(p.limit));
@@ -196,22 +277,37 @@ const validators: Record<MethodName, (params: unknown) => boolean> = {
     isRecord(p) && typeof p.title === 'string' && p.title.length <= MAX_TITLE,
   'window.close': isRecord,
   'window.setSize': isSize,
+  'window.setDirty': (p) => isRecord(p) && typeof p.dirty === 'boolean',
+  'window.requestAttention': isRecord,
   'log.write': (p) =>
     isRecord(p) &&
     Array.isArray(p.entries) &&
     p.entries.length <= 100 &&
     p.entries.every(isLogRecord),
-  notify: (p) =>
+  notify: isNotification,
+  setBadge: (p) =>
     isRecord(p) &&
-    typeof p.title === 'string' &&
-    (p.body === undefined || typeof p.body === 'string') &&
-    (p.level === undefined || ['info', 'success', 'warning', 'error'].includes(p.level as string)),
+    (p.count === null || (Number.isSafeInteger(p.count) && (p.count as number) >= 0)),
   'session.save': (p) => isRecord(p) && 'state' in p,
   'storage.get': isKey,
   'storage.set': (p) => isKey(p) && isRecord(p) && 'value' in p,
   'storage.remove': isKey,
   'storage.keys': isRecord,
-  'auth.token': isRecord,
+  'backend.token': isRecord,
+  'backend.ticket': (p) => isRecord(p) && isText(p.endpoint, 63),
+  'directory.users': isRecord,
+  'directory.groups': isRecord,
+  'contextMenu.show': (p) =>
+    isRecord(p) &&
+    isRecord(p.at) &&
+    Number.isFinite(p.at.x) &&
+    Number.isFinite(p.at.y) &&
+    Array.isArray(p.items) &&
+    p.items.length > 0 &&
+    p.items.length <= MAX_MENU_ITEMS &&
+    p.items.every(isMenuItem),
+  'clipboard.writeText': (p) => isRecord(p) && isText(p.text, MAX_CLIPBOARD, 0),
+  openUrl: (p) => isRecord(p) && isOpenableUrl(p.url),
   'files.pick': (p) =>
     isRecord(p) &&
     (p.multiple === undefined || typeof p.multiple === 'boolean') &&
@@ -268,8 +364,8 @@ export function serveApp(endpoint: Endpoint, options: ServeOptions): AppConnecti
   let nextQuery = 1;
   const waiting = new Map<number, (answer: unknown) => void>();
   const capabilities = Object.keys(options.methods).filter(isMethod);
-  // The app's permissions as it knows them: from the context, minus what `permissionRevoked` took away.
-  const permissions = new Set(options.context.permissions);
+  // The app's permissions as it knows them: from the context, then from each `permissionsChange`.
+  let permissions = new Set(options.context.permissions);
 
   async function answer(id: number, method: string, params: unknown) {
     try {
@@ -293,6 +389,10 @@ export function serveApp(endpoint: Endpoint, options: ServeOptions): AppConnecti
       const handler = options.methods[method] as ((params: unknown) => unknown) | undefined;
       if (handler === undefined) {
         throw sdkError('sdk.method.unknown', { method });
+      }
+      const permission = methodPermissions[method];
+      if (permission !== undefined && !permissions.has(permission)) {
+        throw new PithyxError({ code: 'app.permission.denied', params: { permission } });
       }
       if (!validators[method](params)) {
         throw sdkError('sdk.request.invalid', { method });
@@ -347,8 +447,8 @@ export function serveApp(endpoint: Endpoint, options: ServeOptions): AppConnecti
 
   const connection: AppConnection = {
     emit: (event, data) => {
-      if (event === 'permissionRevoked') {
-        permissions.delete((data as Events['permissionRevoked']).permission);
+      if (event === 'permissionsChange') {
+        permissions = new Set((data as Events['permissionsChange']).permissions);
       }
       const needed = eventPermissions[event];
       if (ready && !closed && (needed === undefined || permissions.has(needed))) {

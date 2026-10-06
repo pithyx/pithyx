@@ -238,6 +238,10 @@
     }
   },
   "sdk": {
+    "backend": {
+      "endpoint_unknown": "Die App hat eine Backend-Verbindung angefragt, die sie nicht hat ({endpoint}).",
+      "unreachable": "Die App hat ihr Backend nicht erreicht ({endpoint}). Prüf die Verbindung zur Box."
+    },
     "method": {
       "unknown": "Diese Pithyx-Version unterstützt nicht, was die App angefragt hat ({method})."
     },

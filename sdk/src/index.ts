@@ -11,6 +11,7 @@
  * await app.window.setTitle('Notes');
  * app.on('themeChange', () => render());
  * app.answer('beforeClose', () => ({ allow: !hasUnsavedChanges() }));
+ * const messages = await (await app.backend.fetch('/messages')).json();
  * ```
  *
  * Core apps use the same API over the in-process transport ({@link createApp} with {@link inProcessPair}); they
@@ -31,15 +32,24 @@ export type * from './files';
 export type * from './manifest';
 export {
   BEFORE_CLOSE_TIMEOUT,
-  BEFORE_LOGOUT_TIMEOUT,
+  BEFORE_UNLOAD_TIMEOUT,
   REQUEST_TIMEOUT,
   UNTIMED_METHODS,
   type AppContext,
+  type AppLogLevel,
   type AppMessage,
+  type BackendInfo,
+  type BackendStatus,
+  type BackendTicket,
+  type BackendToken,
   type ConnectMessage,
+  type ContextMenuItem,
+  type DirectoryGroup,
+  type DirectoryUser,
   type EventName,
   type Events,
   type FileRef,
+  type GroupRef,
   type HostMessage,
   type LaunchArgs,
   type LogData,
@@ -47,10 +57,16 @@ export {
   type LogRecord,
   type MethodName,
   type Methods,
+  type NotificationAction,
+  type NotificationActivation,
   type NotificationRequest,
+  type Point,
   type Queries,
   type QueryName,
   type SizeClass,
+  type StorageInfo,
+  type StorageState,
+  type UnloadReason,
 } from './protocol';
 export { applyTheme, themeTokenNames, type Theme, type ThemeTokenName } from './theme';
 export { inProcessPair, portEndpoint, type Endpoint } from './transport';
