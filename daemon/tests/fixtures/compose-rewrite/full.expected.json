@@ -92,6 +92,8 @@
       "stop_signal": "SIGTERM",
       "stop_grace_period": "1m30s",
       "shm_size": "64m",
+      "mem_limit": "512m",
+      "cpus": 1.5,
       "cap_drop": [
         "ALL"
       ],
@@ -109,6 +111,7 @@
         }
       },
       "pids_limit": 1024,
+      "oom_score_adj": 500,
       "security_opt": [
         "no-new-privileges:true"
       ],
@@ -146,6 +149,8 @@
       },
       "shm_size": 268435456,
       "stop_grace_period": "0s",
+      "mem_limit": "1GB",
+      "cpus": 2,
       "pull_policy": "never",
       "user": "40001:40001",
       "networks": [
@@ -160,6 +165,7 @@
         }
       },
       "pids_limit": 1024,
+      "oom_score_adj": 500,
       "security_opt": [
         "no-new-privileges:true"
       ],

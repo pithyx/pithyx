@@ -15,6 +15,15 @@
         },
         {
           "type": "bind",
+          "source": "/tank/.pithyx/apps/com.example.chat/volumes/library",
+          "target": "/data/library",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
           "source": "/tank/.pithyx/apps/com.example.chat/volumes/cache",
           "target": "/cache",
           "read_only": false,
@@ -36,9 +45,8 @@
           "tag": "{{.Name}}"
         }
       },
-      "mem_limit": "512m",
-      "cpus": 1.5,
       "pids_limit": 1024,
+      "oom_score_adj": 500,
       "security_opt": [
         "no-new-privileges:true"
       ],
@@ -74,9 +82,8 @@
           "tag": "{{.Name}}"
         }
       },
-      "mem_limit": "512m",
-      "cpus": 1.5,
       "pids_limit": 1024,
+      "oom_score_adj": 500,
       "security_opt": [
         "no-new-privileges:true"
       ],

@@ -542,6 +542,78 @@
       }
     }
   ],
+  "limits.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/mem_limit",
+        "reason": "format"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/s0/mem_limit",
+        "reason": "range"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/s1/mem_limit",
+        "reason": "range"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/s2/mem_limit",
+        "reason": "format"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/s3/cpus",
+        "reason": "range"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/s4/cpus",
+        "reason": "format"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/s5/cpus",
+        "reason": "range"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/s6/cpus",
+        "reason": "format"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/s7/cpus",
+        "reason": "type"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/s8/cpus",
+        "reason": "format"
+      }
+    }
+  ],
   "line-separator.yaml": [
     {
       "code": "app.compose.yaml_invalid",
@@ -655,6 +727,20 @@
       "params": {
         "path": "/services/server/deploy",
         "key": "deploy"
+      }
+    },
+    {
+      "code": "app.compose.key_unsupported",
+      "params": {
+        "path": "/services/server/oom_score_adj",
+        "key": "oom_score_adj"
+      }
+    },
+    {
+      "code": "app.compose.key_unsupported",
+      "params": {
+        "path": "/services/server/pids_limit",
+        "key": "pids_limit"
       }
     },
     {

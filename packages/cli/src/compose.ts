@@ -289,7 +289,9 @@ class Checker {
       case 'duration':
         return this.duration(node, path, rule);
       case 'byteSize':
-        return this.byteSize(node, path, rule.max as keyof Limits);
+        return this.byteSize(node, path, rule);
+      case 'cpus':
+        return this.cpus(node, path, rule);
       case 'object':
         return this.object(node, path, rule.keys ?? {});
       case 'healthTest':
@@ -696,7 +698,7 @@ class Checker {
     return value;
   }
 
-  private byteSize(node: YamlNode, path: string, limit: keyof Limits): number | undefined {
+  private byteSize(node: YamlNode, path: string, rule: KeyRule): number | undefined {
     let text: string | undefined;
     if (node.kind === 'scalar' && scalarKind(node) === 'int') {
       text = node.value;
@@ -706,16 +708,36 @@ class Checker {
         return undefined;
       }
     }
-    if (!patterns.byteSize.test(text)) {
+    if (!patterns[(rule.pattern ?? 'byteSize') as keyof typeof patterns].test(text)) {
       this.invalid(path, 'format');
       return undefined;
     }
     const bytes = byteCount(text);
-    if (bytes === 0 || bytes > rules.limits[limit]) {
+    const min = rule.min === undefined ? 1 : rules.limits[rule.min as keyof Limits];
+    if (bytes < min || bytes > rules.limits[rule.max as keyof Limits]) {
       this.invalid(path, 'range');
       return undefined;
     }
     return bytes;
+  }
+
+  /** A CPU limit in cores: a plain decimal or a string, above 0. */
+  private cpus(node: YamlNode, path: string, rule: KeyRule): number | undefined {
+    const kind = node.kind === 'scalar' ? scalarKind(node) : undefined;
+    if (node.kind !== 'scalar' || (kind !== 'int' && kind !== 'number' && kind !== 'string')) {
+      this.invalid(path, 'type');
+      return undefined;
+    }
+    if (!patterns.cpus.test(node.value)) {
+      this.invalid(path, 'format');
+      return undefined;
+    }
+    const cores = Number(node.value);
+    if (cores <= 0 || cores > rules.limits[rule.max as keyof Limits]) {
+      this.invalid(path, 'range');
+      return undefined;
+    }
+    return cores;
   }
 
   private ports(node: YamlNode, path: string): void {

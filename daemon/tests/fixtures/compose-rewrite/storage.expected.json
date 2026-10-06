@@ -49,9 +49,8 @@
           "tag": "{{.Name}}"
         }
       },
-      "mem_limit": "512m",
-      "cpus": 1.5,
       "pids_limit": 1024,
+      "oom_score_adj": 500,
       "security_opt": [
         "no-new-privileges:true"
       ],
@@ -90,9 +89,8 @@
           "tag": "{{.Name}}"
         }
       },
-      "mem_limit": "512m",
-      "cpus": 1.5,
       "pids_limit": 1024,
+      "oom_score_adj": 500,
       "security_opt": [
         "no-new-privileges:true"
       ],

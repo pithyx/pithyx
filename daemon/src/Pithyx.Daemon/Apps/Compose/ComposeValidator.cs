@@ -29,7 +29,7 @@ public static partial class ComposeValidator
     public static ComposeValidationResult Validate(ReadOnlySpan<byte> utf8, JsonElement manifest)
     {
         var rules = _rules.Value;
-        var (root, yamlIssues) = ComposeYaml.Read(utf8, rules.Limit("fileBytes"), rules.Limit("depth"));
+        var (root, yamlIssues) = ComposeYaml.Read(utf8, (int)rules.Limit("fileBytes"), (int)rules.Limit("depth"));
         if (root is null)
         {
             return new ComposeValidationResult(yamlIssues, null);
@@ -296,7 +296,9 @@ public static partial class ComposeValidator
                 case "duration":
                     return Duration(node, path, rule);
                 case "byteSize":
-                    return ByteSize(node, path, rules.Limit(rule.Max!.Value.GetString()!));
+                    return ByteSize(node, path, rule);
+                case "cpus":
+                    return Cpus(node, path, rule);
                 case "object":
                     return Object(node, path, rule.Keys ?? new Dictionary<string, KeyRule>());
                 case "healthTest":
@@ -789,7 +791,7 @@ public static partial class ComposeValidator
             return value;
         }
 
-        private double? ByteSize(ComposeNode node, string path, double limit)
+        private double? ByteSize(ComposeNode node, string path, KeyRule rule)
         {
             string? text;
             if (node is ComposeScalar { Kind: ComposeScalarKind.WholeNumber } number)
@@ -800,18 +802,41 @@ public static partial class ComposeValidator
             {
                 return null;
             }
-            if (!rules.Matches("byteSize", text))
+            if (!rules.Matches(rule.Pattern ?? "byteSize", text))
             {
                 Invalid(path, "format");
                 return null;
             }
             var bytes = ByteCount(text);
-            if (bytes == 0 || bytes > limit)
+            var min = rule.Min is { } limit ? rules.Limit(limit.GetString()!) : 1;
+            if (bytes < min || bytes > rules.Limit(rule.Max!.Value.GetString()!))
             {
                 Invalid(path, "range");
                 return null;
             }
             return bytes;
+        }
+
+        /// <summary>A CPU limit in cores: a plain decimal or a string, above 0.</summary>
+        private double? Cpus(ComposeNode node, string path, KeyRule rule)
+        {
+            if (node is not ComposeScalar { Kind: ComposeScalarKind.WholeNumber or ComposeScalarKind.OtherNumber or ComposeScalarKind.Text } scalar)
+            {
+                Invalid(path, "type");
+                return null;
+            }
+            if (!rules.Matches("cpus", scalar.Value))
+            {
+                Invalid(path, "format");
+                return null;
+            }
+            var cores = double.Parse(scalar.Value, CultureInfo.InvariantCulture);
+            if (cores <= 0 || cores > rules.Limit(rule.Max!.Value.GetString()!))
+            {
+                Invalid(path, "range");
+                return null;
+            }
+            return cores;
         }
 
         private void Ports(ComposeNode node, string path)
@@ -1129,7 +1154,7 @@ internal sealed class ComposeRules
 
     public IReadOnlyList<string> ReservedLabelPrefixes { get; }
 
-    public int Limit(string name) => (int)_limits[name];
+    public double Limit(string name) => _limits[name];
 
     public bool Matches(string pattern, string text) => _patterns[pattern].IsMatch(text);
 

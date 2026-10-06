@@ -30,8 +30,11 @@ public sealed record ComposeHost(
 /// </summary>
 public static class ComposeRewriter
 {
-    /// <summary>The most processes a container may run.</summary>
+    /// <summary>The most processes a container may run, against fork bombs.</summary>
     public const int PidsLimit = 1024;
+
+    /// <summary>Makes the kernel's OOM killer pick app containers before the daemon and the system services.</summary>
+    public const int OomScoreAdjust = 500;
 
     /// <summary>The name of the app's internal network inside the file.</summary>
     public const string NetworkKey = "app";
@@ -52,7 +55,6 @@ public static class ComposeRewriter
         var version = manifest.GetProperty("version").GetString()!;
         var backend = manifest.GetProperty("backend");
         var root = backend.TryGetProperty("root", out var rootFlag) && rootFlag.GetBoolean();
-        var resources = backend.TryGetProperty("resources", out var limits) ? limits : (JsonElement?)null;
         var storage = Storage(manifest, host);
 
         using var buffer = new MemoryStream();
@@ -66,7 +68,7 @@ public static class ComposeRewriter
             foreach (var (name, node) in ((ComposeMap)document.Get("services")!).Entries)
             {
                 writer.WritePropertyName(name);
-                attached |= Service(writer, name, (ComposeMap)node, appId, version, root, resources, storage, host);
+                attached |= Service(writer, name, (ComposeMap)node, appId, version, root, storage, host);
             }
             writer.WriteEndObject();
             if (attached)
@@ -125,7 +127,6 @@ public static class ComposeRewriter
         string appId,
         string version,
         bool root,
-        JsonElement? resources,
         Dictionary<string, StorageRequest> storage,
         ComposeHost host)
     {
@@ -146,6 +147,9 @@ public static class ComposeRewriter
                     Mounts(writer, (ComposeSequence)value, storage, groups, host);
                     break;
                 case "labels":
+                    break;
+                case "cpus":
+                    writer.WriteNumber("cpus", double.Parse(((ComposeScalar)value).Value, CultureInfo.InvariantCulture));
                     break;
                 default:
                     writer.WritePropertyName(key);
@@ -184,15 +188,8 @@ public static class ComposeRewriter
         writer.WriteString("tag", "{{.Name}}");
         writer.WriteEndObject();
         writer.WriteEndObject();
-        if (resources?.TryGetProperty("memory", out var memory) == true)
-        {
-            writer.WriteString("mem_limit", $"{memory.GetInt32()}m");
-        }
-        if (resources?.TryGetProperty("cpus", out var cpus) == true)
-        {
-            writer.WriteNumber("cpus", cpus.GetDouble());
-        }
         writer.WriteNumber("pids_limit", PidsLimit);
+        writer.WriteNumber("oom_score_adj", OomScoreAdjust);
         writer.WritePropertyName("security_opt");
         writer.WriteStartArray();
         writer.WriteStringValue("no-new-privileges:true");
@@ -237,14 +234,10 @@ public static class ComposeRewriter
                 (volume, target, readOnly) = (parts[0], parts[1], parts.Length > 2 && parts[2] == "ro");
             }
 
-            string source;
-            if (storage.TryGetValue(volume, out var request))
+            // An optional storage request that is not mapped is a folder of the app's dataset, so data never lands in the container.
+            var source = $"{host.AppDirectory}/volumes/{volume}";
+            if (storage.TryGetValue(volume, out var request) && request.Mapping is not null)
             {
-                if (request.Mapping is null)
-                {
-                    // An optional storage request that is not mapped: the service runs without it.
-                    continue;
-                }
                 source = request.Mapping.HostPath;
                 readOnly |= request.ReadOnly;
                 if (request.Mapping.Gid is { } gid)
@@ -252,9 +245,9 @@ public static class ComposeRewriter
                     groups.Add(gid);
                 }
             }
-            else
+            else if (request?.ReadOnly == true)
             {
-                source = $"{host.AppDirectory}/volumes/{volume}";
+                readOnly = true;
             }
             writer.WriteStartObject();
             writer.WriteString("type", "bind");

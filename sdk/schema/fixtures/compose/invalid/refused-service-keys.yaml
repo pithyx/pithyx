@@ -7,6 +7,8 @@ services:
     restart: always
     logging: {driver: none}
     deploy: {resources: {limits: {memory: 1g}}}
+    oom_score_adj: -1000
+    pids_limit: 0
     env_file: .env
     security_opt: ['seccomp:unconfined']
     container_name: chat

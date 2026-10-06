@@ -34,11 +34,7 @@
         "port": 9090
       }
     },
-    "lifecycle": "onDemand",
-    "resources": {
-      "memory": 512,
-      "cpus": 1.5
-    }
+    "lifecycle": "onDemand"
   },
   "storage": [
     {

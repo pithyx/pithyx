@@ -48,6 +48,8 @@ services:
     stop_signal: SIGTERM
     stop_grace_period: 1m30s
     shm_size: 64m
+    mem_limit: 512m
+    cpus: 1.5
     labels:
       - org.opencontainers.image.title=Chat
       - com.example.tier=web
@@ -61,6 +63,8 @@ services:
       interval: 10s
     shm_size: 268435456
     stop_grace_period: 0s
+    mem_limit: 1GB
+    cpus: '2'
 volumes:
   data:
   cache: {}
