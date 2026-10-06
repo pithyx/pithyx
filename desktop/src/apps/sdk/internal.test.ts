@@ -6,7 +6,8 @@ import type { InternalMethods } from './internal';
 const context: Omit<AppContext, 'capabilities'> = {
   app: { id: 'demo', version: '0.0.0' },
   instance: 'w1',
-  user: { id: 1, name: 'ada', displayName: null },
+  user: { id: 1, name: 'ada', displayName: null, groups: [], isAdmin: true, twoFactor: false },
+  language: 'en',
   locale: 'en',
   timeZone: 'UTC',
   theme: {
@@ -19,6 +20,12 @@ const context: Omit<AppContext, 'capabilities'> = {
   launch: { args: null },
   session: null,
   permissions: [],
+  box: { name: 'nas', version: '0.0.0' },
+  visible: true,
+  online: true,
+  logLevel: 'info',
+  backend: null,
+  storage: [],
   host: { version: '0.0.0', protocol: 1 },
 };
 
@@ -31,7 +38,7 @@ const sources = import.meta.glob<string>('../sandbox/*.tsx', {
 describe('the internal administrator calls', () => {
   it('are unknown to an app served like a sandboxed app', async () => {
     const [appEnd, hostEnd] = inProcessPair();
-    serveApp(hostEnd, { context, methods: { notify: () => undefined } });
+    serveApp(hostEnd, { context, methods: { notify: () => ({ id: '1' }) } });
     const app = await createApp(appEnd, { themeRoot: null, timeout: 500 });
     const names: (keyof InternalMethods)[] = [
       'internal.admin.storage.disks',

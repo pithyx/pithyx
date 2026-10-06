@@ -1,18 +1,16 @@
 import { useQueryClient } from '@tanstack/react-query';
 import type { components } from '@pithyx/api-client';
-import { PROTOCOL_VERSION, SDK_VERSION, portEndpoint, type Permission } from '@pithyx/sdk';
+import { portEndpoint, type Permission } from '@pithyx/sdk';
 import { serveApp, type AppConnection } from '@pithyx/sdk/host';
-import { formatLocale } from '../../i18n';
 import { useRef } from 'react';
 import { queryKeys } from '../../api/queries';
 import { useSizeClass } from '../../wm/sizeClass';
-import { useDesktop } from '../../wm/store';
 import { useAppName } from '../names';
 import type { AppProps } from '../registry';
 import { brokerFor } from './broker';
 import styles from './SandboxApp.module.css';
+import { appContext } from '../sdk/context';
 import { useAppLifecycle } from '../sdk/useAppLifecycle';
-import { currentTheme } from './theme';
 
 type User = components['schemas']['UserInfo'];
 
@@ -41,26 +39,14 @@ export function SandboxApp({
     connection.current?.close();
     const channel = new MessageChannel();
     const user = client.getQueryData<User>(queryKeys.session);
-    const args = useDesktop.getState().windows[windowId]?.args as
-      { session?: unknown } | null | undefined;
     connection.current = serveApp(portEndpoint(channel.port1), {
-      context: {
+      context: appContext({
+        client,
+        windowId,
         app: { id: app, version: '0.1.0' },
-        instance: windowId,
-        user: {
-          id: user?.id ?? 0,
-          name: user?.username ?? '',
-          displayName: user?.displayName ?? null,
-        },
-        locale: formatLocale(),
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        theme: currentTheme(),
+        permissions,
         sizeClass,
-        launch: { args: null },
-        session: args?.session ?? null,
-        permissions: [...permissions],
-        host: { version: SDK_VERSION, protocol: PROTOCOL_VERSION },
-      },
+      }),
       methods: brokerFor({
         windowId,
         app,

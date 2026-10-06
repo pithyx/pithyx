@@ -1,3 +1,11 @@
+import {
+  backendUrl,
+  DEFAULT_ENDPOINT,
+  socketUrl,
+  TICKET_PARAMETER,
+  TOKEN_PARAMETER,
+  windowOrigin,
+} from './backend';
 import { isProblem, sdkError, toProblem, PithyxError } from './errors';
 import type {
   ConflictPolicy,
@@ -18,6 +26,10 @@ import {
   REQUEST_TIMEOUT,
   UNTIMED_METHODS,
   type AppContext,
+  type BackendToken,
+  type ContextMenuItem,
+  type DirectoryGroup,
+  type DirectoryUser,
   type Events,
   type EventName,
   type HostMessage,
@@ -28,6 +40,7 @@ import {
   type LogLevel,
   type LogRecord,
   type NotificationRequest,
+  type Point,
   type Queries,
   type QueryName,
 } from './protocol';
@@ -41,6 +54,8 @@ const LOG_BUFFER = 500;
 const LOG_MESSAGE = 4000;
 const LOG_FIELDS = 20;
 const LOG_FIELD = 1000;
+/** A cached backend token is used until this long before it expires. */
+const TOKEN_MARGIN = 30_000;
 
 /** Cuts a log entry to the limits the desktop and the daemon accept; values become text. */
 export function logRecord(level: LogLevel, message: string, data?: LogData): LogRecord {
@@ -58,6 +73,63 @@ export function logRecord(level: LogLevel, message: string, data?: LogData): Log
   return record;
 }
 
+const consoleMethods: Record<LogLevel, (...data: unknown[]) => void> = {
+  debug: (...data) => {
+    console.debug(...data);
+  },
+  info: (...data) => {
+    console.info(...data);
+  },
+  warn: (...data) => {
+    console.warn(...data);
+  },
+  error: (...data) => {
+    console.error(...data);
+  },
+};
+
+/** Every `app.log` entry also appears in the browser console, at its own level (D305). */
+function mirrorToConsole(level: LogLevel, message: string, data?: LogData) {
+  if (data === undefined) {
+    consoleMethods[level](message);
+  } else {
+    consoleMethods[level](message, data);
+  }
+}
+
+/** The context after an event: the SDK keeps the values an event changes current. */
+function updatedContext(context: AppContext, event: string, data: unknown): AppContext {
+  switch (event) {
+    case 'themeChange':
+      return { ...context, theme: data as AppContext['theme'] };
+    case 'localeChange': {
+      const { language, locale, timeZone } = data as Events['localeChange'];
+      return { ...context, language, locale, timeZone };
+    }
+    case 'sizeClassChange':
+      return { ...context, sizeClass: (data as Events['sizeClassChange']).sizeClass };
+    case 'permissionsChange':
+      return { ...context, permissions: [...(data as Events['permissionsChange']).permissions] };
+    case 'visibilityChange':
+      return { ...context, visible: (data as Events['visibilityChange']).visible };
+    case 'connectionChange':
+      return { ...context, online: (data as Events['connectionChange']).online };
+    case 'logLevelChange':
+      return { ...context, logLevel: (data as Events['logLevelChange']).level };
+    case 'storageChange':
+      return { ...context, storage: [...(data as Events['storageChange']).storage] };
+    case 'backendStatus':
+      return context.backend === null
+        ? context
+        : {
+            ...context,
+            backend: { ...context.backend, status: (data as Events['backendStatus']).status },
+          };
+    default:
+      return context;
+  }
+}
+
 type EventHandler<E extends EventName> = (data: Events[E]) => void;
 type QueryHandler<Q extends QueryName> = (
   data: Queries[Q]['data'],
@@ -69,8 +141,8 @@ type QueryHandler<Q extends QueryName> = (
  */
 export interface PithyxApp {
   /**
-   * What the desktop told the app at start. `theme`, `locale`, `timeZone`, `sizeClass` and `permissions` stay
-   * current.
+   * What the desktop told the app at start. The SDK keeps it current with the events: `theme`, `language`, `locale`,
+   * `timeZone`, `sizeClass`, `permissions`, `visible`, `online`, `logLevel`, `backend.status` and `storage`.
    */
   readonly context: AppContext;
   /** Dates, numbers, sizes and lists in the user's language and time zone. */
@@ -79,13 +151,28 @@ export interface PithyxApp {
     setTitle(title: string): Promise<void>;
     close(): Promise<void>;
     setSize(size: { width: number; height: number }): Promise<{ width: number; height: number }>;
+    /**
+     * Marks the window as having unsaved changes or not. Once called, `beforeClose` is asked only while the window is
+     * dirty.
+     */
+    setDirty(dirty: boolean): Promise<void>;
+    /** Makes the taskbar entry pulse until the user looks; never takes the focus. */
+    requestAttention(): Promise<void>;
   };
-  notify(notification: NotificationRequest): Promise<void>;
+  /**
+   * Shows a notification and resolves with its id. Needs `notifications`. A click on one of its `actions` (or on the
+   * notification) comes back as `notificationAction`, or as `launch.notification` when no window was open.
+   */
+  notify(notification: NotificationRequest): Promise<{ id: string }>;
+  /** A counter on the app's taskbar entry; 0 or null removes it. */
+  setBadge(count: number | null): Promise<void>;
   /**
    * The app's log in the Log Center, where administrators see it next to the system's logs (source `app/<id>`, with
-   * the signed-in user). Calls return at once and never throw: the SDK collects entries for a moment and sends them
-   * together, and drops entries when the app logs faster than its limit (bursts of 200, then 20 a second). Never log
-   * secrets such as passwords or tokens. Messages are cut at 4000 characters, `data` at 20 fields of 1000 characters.
+   * the signed-in user). Every entry also appears in the browser console. `info`, `warn` and `error` always go to the
+   * daemon, `debug` only while an administrator switched debug logging on for the app (`context.logLevel`). Calls
+   * return at once and never throw: the SDK collects entries for a moment and sends them together, and drops entries
+   * when the app logs faster than its limit (bursts of 200, then 20 a second). Never log secrets such as passwords or
+   * tokens. Messages are cut at 4000 characters, `data` at 20 fields of 1000 characters.
    *
    * @example
    * ```ts
@@ -97,6 +184,8 @@ export interface PithyxApp {
     info(message: string, data?: LogData): void;
     warn(message: string, data?: LogData): void;
     error(message: string, data?: LogData): void;
+    /** The same as `info`, for code written against `console.log`. */
+    log(message: string, data?: LogData): void;
   };
   readonly session: {
     save(state: unknown): Promise<void>;
@@ -109,9 +198,60 @@ export interface PithyxApp {
     remove(key: string): Promise<void>;
     keys(): Promise<string[]>;
   };
-  readonly auth: {
-    token(): Promise<{ token: string; expiresAt: string }>;
+  /**
+   * The app's own backend, through the daemon's proxy (D303). Paths are relative to an endpoint: the default `api` at
+   * `/apps/<id>/api/`, any other endpoint `<name>` at `/apps/<id>/api-<name>/`. The SDK adds a token for the signed-in
+   * user; the backend learns the user from the proxy's `X-Pithyx-*` headers. A name the manifest does not declare
+   * fails with `sdk.backend.endpoint_unknown`.
+   *
+   * @example
+   * ```ts
+   * const messages = await (await app.backend.fetch('/messages')).json();
+   * const stats = await app.backend.fetch('/stats', { endpoint: 'metrics' });
+   * avatar.src = await app.backend.url('/avatar/1');
+   * const live = await app.backend.socket('/live');
+   * ```
+   */
+  readonly backend: {
+    /**
+     * A full URL with the token as `?pithyx-token=`, for `<img>`, `<video>` or a download link. It is valid as long as
+     * its token, at least 30 seconds and at most 5 minutes; ask again for a new one.
+     */
+    url(path: string, options?: { endpoint?: string }): Promise<string>;
+    /**
+     * `fetch` against the backend with `Authorization: Bearer <token>` and without cookies. Resolves with the response
+     * whatever its status; a request that does not reach the box fails with `sdk.backend.unreachable`.
+     */
+    fetch(path: string, init?: RequestInit & { endpoint?: string }): Promise<Response>;
+    /** Opens a WebSocket to the backend with a one-time ticket (`?pithyx-ticket=`, valid 30 seconds). */
+    socket(
+      path: string,
+      options?: { endpoint?: string; protocols?: string | string[] },
+    ): Promise<WebSocket>;
+    /**
+     * The current token, for clients that build their own requests. The SDK keeps it until 30 seconds before it
+     * expires and fetches a new one after that or after `permissionsChange`.
+     */
+    token(): Promise<BackendToken>;
   };
+  /** The users and groups of the box. Needs `directory.read`; the app's own user is in `context.user` without it. */
+  readonly directory: {
+    users(): Promise<DirectoryUser[]>;
+    groups(): Promise<DirectoryGroup[]>;
+  };
+  readonly contextMenu: {
+    /**
+     * Shows a menu drawn by the desktop at `at` (CSS pixels in the app's window) and resolves with the `id` of the
+     * picked entry, or null when the user dismissed it. Call it from a `contextmenu` or click handler.
+     */
+    show(at: Point, items: ContextMenuItem[]): Promise<string | null>;
+  };
+  readonly clipboard: {
+    /** Copies text, also over plain HTTP where the frame has no Clipboard API. Only for a user action. */
+    writeText(text: string): Promise<void>;
+  };
+  /** Opens an `https:`, `http:` or `mailto:` URL in a new browser tab, without a reference to the desktop. */
+  openUrl(url: string): Promise<void>;
   /**
    * Files. The first group works on files the user handed to the app (`files.read`, `files.write`); the second is the
    * file manager API over shares and named storage (`files.shares` for shares). See {@link Methods} for every call.
@@ -224,11 +364,17 @@ export interface PithyxApp {
      */
     showError(error: unknown): Promise<void>;
   };
-  /** Whether the desktop supports a method; methods added after 1.0 may be missing on an older desktop. */
+  /**
+   * Whether the desktop supports a method. Methods added after 1.0 may be missing on an older desktop; a call to a
+   * method it does not support fails with `sdk.method.unknown`.
+   */
   supports(method: MethodName): boolean;
   /** Listens to an event of the desktop (see {@link Events}). Returns a function that stops listening. */
   on<E extends EventName>(event: E, handler: EventHandler<E>): () => void;
-  /** Answers a question of the desktop (`beforeClose`, `beforeLogout`). One handler per question; the last one wins. */
+  /**
+   * Answers a question of the desktop (`beforeClose`, `beforeUnload`). One handler per question; the last one wins.
+   * The answer to `beforeUnload` is ignored: it cannot be refused, only used to save.
+   */
   answer<Q extends QueryName>(query: Q, handler: QueryHandler<Q>): void;
   /** Low-level call of any method, for methods newer than this SDK's typed helpers. */
   call<M extends MethodName>(
@@ -242,6 +388,8 @@ export interface CreateAppOptions {
   themeRoot?: HTMLElement | null;
   /** Time limit of a call in milliseconds. */
   timeout?: number;
+  /** The box's address for backend URLs; by default taken from the window's own URL. */
+  origin?: string;
 }
 
 /**
@@ -299,23 +447,14 @@ export function createApp(endpoint: Endpoint, options: CreateAppOptions = {}): P
     function emit(event: string, data: unknown) {
       if (context !== undefined) {
         // The context follows the changes, so an app can read the current values at any time.
-        if (event === 'themeChange') {
-          context = { ...context, theme: data as AppContext['theme'] };
-          if (themeRoot !== null) {
-            applyTheme(context.theme, themeRoot);
-          }
+        context = updatedContext(context, event, data);
+        if (event === 'themeChange' && themeRoot !== null) {
+          applyTheme(context.theme, themeRoot);
         } else if (event === 'localeChange') {
-          const change = data as Events['localeChange'];
-          context = { ...context, locale: change.locale, timeZone: change.timeZone };
           applyLocale();
-        } else if (event === 'permissionRevoked') {
-          const { permission } = data as Events['permissionRevoked'];
-          context = {
-            ...context,
-            permissions: context.permissions.filter((granted) => granted !== permission),
-          };
-        } else if (event === 'sizeClassChange') {
-          context = { ...context, sizeClass: (data as Events['sizeClassChange']).sizeClass };
+        } else if (event === 'permissionsChange') {
+          // A new token carries the new permissions; the old one is not used again.
+          backendToken = undefined;
         }
       }
       for (const handler of listeners.get(event) ?? []) {
@@ -333,7 +472,8 @@ export function createApp(endpoint: Endpoint, options: CreateAppOptions = {}): P
           // A failing handler must not keep a window open or block a sign-out.
         }
       }
-      endpoint.post({ type: 'reply', id, answer });
+      // Only beforeClose can be refused; every other question gets an empty answer, whatever the handler returned.
+      endpoint.post({ type: 'reply', id, answer: query === 'beforeClose' ? answer : {} });
     }
 
     function handle(message: HostMessage) {
@@ -396,11 +536,43 @@ export function createApp(endpoint: Endpoint, options: CreateAppOptions = {}): P
       }
     }
     function log(level: LogLevel, message: string, data?: LogData) {
-      if (logBuffer.length >= LOG_BUFFER) {
+      mirrorToConsole(level, message, data);
+      if (logBuffer.length >= LOG_BUFFER || (level === 'debug' && context?.logLevel !== 'debug')) {
         return;
       }
       logBuffer.push(logRecord(level, message, data));
       logTimer ??= setTimeout(flushLog, LOG_DELAY);
+    }
+
+    function requirePermission(permission: string) {
+      if (context?.permissions.includes(permission) !== true) {
+        throw new PithyxError({ code: 'app.permission.denied', params: { permission } });
+      }
+    }
+
+    // One token for all endpoints, shared by concurrent calls and kept until shortly before it expires.
+    let backendToken: Promise<BackendToken> | undefined;
+    function token(): Promise<BackendToken> {
+      const current = backendToken;
+      backendToken = (current ?? typed('backend.token', {})).then((value) =>
+        Date.parse(value.expiresAt) - Date.now() > TOKEN_MARGIN
+          ? value
+          : typed('backend.token', {}),
+      );
+      const fresh = backendToken;
+      fresh.catch(() => {
+        if (backendToken === fresh) {
+          backendToken = undefined;
+        }
+      });
+      return fresh;
+    }
+
+    function endpointUrl(path: string, endpoint = DEFAULT_ENDPOINT): URL {
+      if (api.context.backend?.endpoints.includes(endpoint) !== true) {
+        throw sdkError('sdk.backend.endpoint_unknown', { endpoint });
+      }
+      return backendUrl(options.origin ?? windowOrigin(), api.context.app.id, path, endpoint);
     }
 
     function typed<M extends MethodName>(
@@ -427,9 +599,16 @@ export function createApp(endpoint: Endpoint, options: CreateAppOptions = {}): P
         },
         setSize: async (size) =>
           (await call('window.setSize', size)) as { width: number; height: number },
+        setDirty: async (dirty) => {
+          await typed('window.setDirty', { dirty });
+        },
+        requestAttention: async () => {
+          await typed('window.requestAttention', {});
+        },
       },
-      notify: async (notification) => {
-        await call('notify', notification);
+      notify: async (notification) => typed('notify', notification),
+      setBadge: async (count) => {
+        await typed('setBadge', { count });
       },
       log: {
         debug: (message, data) => {
@@ -443,6 +622,9 @@ export function createApp(endpoint: Endpoint, options: CreateAppOptions = {}): P
         },
         error: (message, data) => {
           log('error', message, data);
+        },
+        log: (message, data) => {
+          log('info', message, data);
         },
       },
       session: {
@@ -461,8 +643,55 @@ export function createApp(endpoint: Endpoint, options: CreateAppOptions = {}): P
         },
         keys: async () => (await call('storage.keys', {})) as string[],
       },
-      auth: {
-        token: async () => (await call('auth.token', {})) as { token: string; expiresAt: string },
+      backend: {
+        url: async (path, { endpoint } = {}) => {
+          const url = endpointUrl(path, endpoint);
+          url.searchParams.set(TOKEN_PARAMETER, (await token()).token);
+          return url.href;
+        },
+        fetch: async (path, init = {}) => {
+          const { endpoint, ...request } = init;
+          const url = endpointUrl(path, endpoint);
+          const headers = new Headers(request.headers);
+          headers.set('Authorization', `Bearer ${(await token()).token}`);
+          try {
+            return await fetch(url, { ...request, headers, credentials: 'omit' });
+          } catch (error) {
+            // fetch fails with a TypeError when the request never got an answer; an abort stays an abort.
+            if (error instanceof TypeError) {
+              throw sdkError('sdk.backend.unreachable', { endpoint: endpoint ?? DEFAULT_ENDPOINT });
+            }
+            throw error;
+          }
+        },
+        socket: async (path, { endpoint = DEFAULT_ENDPOINT, protocols } = {}) => {
+          const url = socketUrl(endpointUrl(path, endpoint));
+          const { ticket } = await typed('backend.ticket', { endpoint });
+          url.searchParams.set(TICKET_PARAMETER, ticket);
+          return new WebSocket(url, protocols);
+        },
+        token,
+      },
+      directory: {
+        users: async () => {
+          requirePermission('directory.read');
+          return typed('directory.users', {});
+        },
+        groups: async () => {
+          requirePermission('directory.read');
+          return typed('directory.groups', {});
+        },
+      },
+      contextMenu: {
+        show: async (at, items) => typed('contextMenu.show', { at, items }),
+      },
+      clipboard: {
+        writeText: async (text) => {
+          await typed('clipboard.writeText', { text });
+        },
+      },
+      openUrl: async (url) => {
+        await typed('openUrl', { url });
       },
       files: {
         pick: async (options = {}) => typed('files.pick', options),

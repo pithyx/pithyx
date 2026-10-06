@@ -1,9 +1,10 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createApp } from './app';
+import { backendUrl, endpointPath, socketUrl } from './backend';
 import { PithyxError } from './errors';
 import { serveApp, type MethodHandlers } from './host';
 import type { FileEntry, FileVersion, JobInfo } from './files';
-import type { AppContext } from './protocol';
+import { BEFORE_UNLOAD_TIMEOUT, type AppContext } from './protocol';
 import { themeTokenNames, type Theme } from './theme';
 import { inProcessPair, portEndpoint, type Endpoint } from './transport';
 import { PROTOCOL_VERSION } from './version';
@@ -21,7 +22,15 @@ function theme(scheme: 'light' | 'dark'): Theme {
 const context: Omit<AppContext, 'capabilities'> = {
   app: { id: 'demo', version: '1.0.0' },
   instance: 'w1',
-  user: { id: 1, name: 'ada', displayName: 'Ada Admin' },
+  user: {
+    id: 1,
+    name: 'ada',
+    displayName: 'Ada Admin',
+    groups: [{ id: 30000, name: 'family' }],
+    isAdmin: true,
+    twoFactor: false,
+  },
+  language: 'en',
   locale: 'en-US',
   timeZone: 'Europe/Berlin',
   theme: theme('light'),
@@ -29,6 +38,12 @@ const context: Omit<AppContext, 'capabilities'> = {
   launch: { args: null },
   session: { folder: '/tank' },
   permissions: ['notifications'],
+  box: { name: 'nas', version: '0.1.0' },
+  visible: true,
+  online: true,
+  logLevel: 'info',
+  backend: null,
+  storage: [],
   host: { version: '0.1.0', protocol: PROTOCOL_VERSION },
 };
 
@@ -44,20 +59,45 @@ const transports: [string, () => [Endpoint, Endpoint]][] = [
   ],
 ];
 
+const ORIGIN = 'https://nas.example:7484';
+
+/** The console the SDK mirrors log entries to, silenced and recorded. */
+function spyConsole() {
+  return {
+    debug: vi.spyOn(console, 'debug').mockImplementation(() => undefined),
+    info: vi.spyOn(console, 'info').mockImplementation(() => undefined),
+    warn: vi.spyOn(console, 'warn').mockImplementation(() => undefined),
+    error: vi.spyOn(console, 'error').mockImplementation(() => undefined),
+  };
+}
+
+let consoleSpy: ReturnType<typeof spyConsole>;
+beforeEach(() => {
+  consoleSpy = spyConsole();
+});
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+  vi.useRealTimers();
+});
+
 describe.each(transports)('over the %s transport', (_, pair) => {
-  function connectTo(methods: MethodHandlers) {
+  function connectTo(methods: MethodHandlers, overrides: Partial<typeof context> = {}) {
     const [appEnd, hostEnd] = pair();
-    const host = serveApp(hostEnd, { context, methods });
-    return { host, app: createApp(appEnd, { themeRoot: null, timeout: 500 }) };
+    const host = serveApp(hostEnd, { context: { ...context, ...overrides }, methods });
+    return { host, app: createApp(appEnd, { themeRoot: null, timeout: 500, origin: ORIGIN }) };
   }
 
   it('batches log calls into log.write, cut to the limits, and never throws', async () => {
     const received: unknown[][] = [];
-    const { app } = connectTo({
-      'log.write': ({ entries }) => {
-        received.push(entries);
+    const { app } = connectTo(
+      {
+        'log.write': ({ entries }) => {
+          received.push(entries);
+        },
       },
-    });
+      { logLevel: 'debug' },
+    );
     const connected = await app;
     connected.log.info('started', { attempt: 2, ok: true });
     connected.log.error('x'.repeat(5000));
@@ -78,7 +118,7 @@ describe.each(transports)('over the %s transport', (_, pair) => {
   });
 
   it('drops log entries silently when the desktop does not serve log.write', async () => {
-    const { app } = connectTo({ notify: () => undefined });
+    const { app } = connectTo({ notify: () => ({ id: '1' }) });
     const connected = await app;
     expect(() => {
       connected.log.warn('nobody listens');
@@ -86,7 +126,7 @@ describe.each(transports)('over the %s transport', (_, pair) => {
   });
 
   it('hands the app its context with the capabilities the desktop serves', async () => {
-    const { app } = connectTo({ 'window.setTitle': () => undefined, notify: () => undefined });
+    const { app } = connectTo({ 'window.setTitle': () => undefined, notify: () => ({ id: '1' }) });
     const connected = await app;
     expect(connected.context.user.name).toBe('ada');
     expect(connected.context.capabilities).toEqual(['window.setTitle', 'notify']);
@@ -309,16 +349,17 @@ describe.each(transports)('over the %s transport', (_, pair) => {
     connected.on('focus', focus);
     host.emit('themeChange', theme('dark'));
     host.emit('focus', {});
-    host.emit('localeChange', { locale: 'de-DE', timeZone: 'UTC' });
+    host.emit('localeChange', { language: 'de', locale: 'de-DE', timeZone: 'UTC' });
     await vi.waitFor(() => {
       expect(connected.context.locale).toBe('de-DE');
     });
+    expect(connected.context.language).toBe('de');
     expect(themes).toEqual(['dark']);
     expect(focus).toHaveBeenCalledOnce();
     expect(connected.context.theme.scheme).toBe('dark');
     stop();
     host.emit('themeChange', theme('light'));
-    host.emit('permissionRevoked', { permission: 'notifications' });
+    host.emit('permissionsChange', { permissions: [] });
     await vi.waitFor(() => {
       expect(connected.context.theme.scheme).toBe('light');
     });
@@ -340,7 +381,7 @@ describe.each(transports)('over the %s transport', (_, pair) => {
     await vi.waitFor(() => {
       expect(changed).toHaveBeenCalledOnce();
     });
-    host.emit('permissionRevoked', { permission: 'files.shares' });
+    host.emit('permissionsChange', { permissions: [] });
     await vi.waitFor(() => {
       expect(connected.context.permissions).not.toContain('files.shares');
     });
@@ -374,8 +415,348 @@ describe.each(transports)('over the %s transport', (_, pair) => {
     expect(await host.ask('beforeClose', {}, 500)).toEqual({ allow: true });
     connected.answer('beforeClose', () => ({ allow: false }));
     expect(await host.ask('beforeClose', {}, 500)).toEqual({ allow: false });
-    connected.answer('beforeLogout', () => new Promise(() => undefined));
-    expect(await host.ask('beforeLogout', {}, 50)).toBeUndefined();
+    connected.answer('beforeUnload', () => new Promise(() => undefined));
+    expect(await host.ask('beforeUnload', { reason: 'logout' }, 50)).toBeUndefined();
+  });
+
+  it('mirrors every log level to the console and sends debug only while it is switched on', async () => {
+    const received: string[] = [];
+    const { host, app } = connectTo({
+      'log.write': ({ entries }) => {
+        received.push(...entries.map((entry) => `${entry.level}:${entry.message}`));
+      },
+    });
+    const connected = await app;
+    connected.log.debug('details', { step: 1 });
+    connected.log.info('started');
+    connected.log.log('also info');
+    connected.log.warn('slow');
+    connected.log.error('failed');
+    expect(consoleSpy.debug).toHaveBeenCalledWith('details', { step: 1 });
+    expect(consoleSpy.info).toHaveBeenCalledWith('started');
+    expect(consoleSpy.info).toHaveBeenCalledWith('also info');
+    expect(consoleSpy.warn).toHaveBeenCalledWith('slow');
+    expect(consoleSpy.error).toHaveBeenCalledWith('failed');
+    await vi.waitFor(() => {
+      expect(received).toEqual(['info:started', 'info:also info', 'warn:slow', 'error:failed']);
+    });
+
+    host.emit('logLevelChange', { level: 'debug' });
+    await vi.waitFor(() => {
+      expect(connected.context.logLevel).toBe('debug');
+    });
+    connected.log.debug('now sent');
+    await vi.waitFor(() => {
+      expect(received).toContain('debug:now sent');
+    });
+  });
+
+  it('keeps the context current with every event that changes it', async () => {
+    const { host, app } = connectTo(
+      {},
+      {
+        backend: { status: 'stopped', endpoints: ['api'] },
+        storage: [{ id: 'library', state: 'unmapped', access: null }],
+      },
+    );
+    const connected = await app;
+    const actions = vi.fn();
+    connected.on('notificationAction', actions);
+    host.emit('visibilityChange', { visible: false });
+    host.emit('connectionChange', { online: false });
+    host.emit('backendStatus', { status: 'running' });
+    host.emit('storageChange', {
+      storage: [{ id: 'library', state: 'ready', access: 'read' }],
+    });
+    host.emit('permissionsChange', { permissions: ['notifications', 'directory.read'] });
+    host.emit('notificationAction', { notification: '7', action: 'reply', data: { chat: 3 } });
+    await vi.waitFor(() => {
+      expect(actions).toHaveBeenCalledWith({
+        notification: '7',
+        action: 'reply',
+        data: { chat: 3 },
+      });
+    });
+    expect(connected.context).toMatchObject({
+      visible: false,
+      online: false,
+      backend: { status: 'running', endpoints: ['api'] },
+      storage: [{ id: 'library', state: 'ready', access: 'read' }],
+      permissions: ['notifications', 'directory.read'],
+    });
+
+    const { host: other, app: withoutBackend } = connectTo({});
+    const plain = await withoutBackend;
+    const status = vi.fn();
+    plain.on('backendStatus', status);
+    other.emit('backendStatus', { status: 'running' });
+    await vi.waitFor(() => {
+      expect(status).toHaveBeenCalledOnce();
+    });
+    expect(plain.context.backend).toBeNull();
+  });
+
+  it('lists users and groups only while the app holds directory.read', async () => {
+    const users = vi.fn(() => [{ id: 1, name: 'ada', displayName: null, groups: [30000] }]);
+    const groups = vi.fn(() => [{ id: 30000, name: 'family', description: '' }]);
+    const methods = { 'directory.users': users, 'directory.groups': groups };
+
+    const { app } = connectTo(methods);
+    const without = await app;
+    await expect(without.directory.users()).rejects.toMatchObject({
+      code: 'app.permission.denied',
+      params: { permission: 'directory.read' },
+    });
+    // The host refuses too, for an app that skips the SDK's own check.
+    await expect(without.call('directory.groups', {})).rejects.toMatchObject({
+      code: 'app.permission.denied',
+    });
+    expect(users).not.toHaveBeenCalled();
+    expect(groups).not.toHaveBeenCalled();
+
+    const { host, app: granted } = connectTo(methods, { permissions: ['directory.read'] });
+    const allowed = await granted;
+    expect(await allowed.directory.users()).toEqual([
+      { id: 1, name: 'ada', displayName: null, groups: [30000] },
+    ]);
+    expect(await allowed.directory.groups()).toHaveLength(1);
+    host.emit('permissionsChange', { permissions: [] });
+    await vi.waitFor(() => {
+      expect(allowed.context.permissions).toEqual([]);
+    });
+    await expect(allowed.call('directory.users', {})).rejects.toMatchObject({
+      code: 'app.permission.denied',
+    });
+    expect(users).toHaveBeenCalledOnce();
+  });
+
+  it('checks the parameters of the window, notification, menu, clipboard and link calls', async () => {
+    const handlers = {
+      notify: vi.fn(() => ({ id: '42' })),
+      setBadge: vi.fn(),
+      'window.setDirty': vi.fn(),
+      'window.requestAttention': vi.fn(),
+      'contextMenu.show': vi.fn(() => 'copy'),
+      'clipboard.writeText': vi.fn(),
+      openUrl: vi.fn(),
+    };
+    const { app } = connectTo(handlers);
+    const connected = await app;
+
+    expect(
+      await connected.notify({
+        title: 'New message',
+        actions: [
+          { id: 'reply', label: 'Reply' },
+          { id: 'mute', label: 'Mute' },
+        ],
+        data: { chat: 3 },
+        tag: 'chat-3',
+      }),
+    ).toEqual({ id: '42' });
+    await connected.setBadge(3);
+    await connected.setBadge(null);
+    await connected.window.setDirty(true);
+    await connected.window.requestAttention();
+    expect(
+      await connected.contextMenu.show({ x: 10, y: 20 }, [
+        { id: 'copy', label: 'Copy', shortcut: 'Ctrl+C' },
+        { separator: true },
+        { id: 'delete', label: 'Delete', danger: true },
+      ]),
+    ).toBe('copy');
+    await connected.clipboard.writeText('hello');
+    await connected.openUrl('https://example.org/docs');
+    await connected.openUrl('mailto:ada@example.org');
+
+    const action = (n: number) => ({ id: `a${String(n)}`, label: 'Go' });
+    const invalid: [string, unknown][] = [
+      ['notify', { title: '' }],
+      ['notify', { title: 'x', actions: [action(1), action(2), action(3)] }],
+      ['notify', { title: 'x', actions: [{ id: '', label: 'Go' }] }],
+      ['notify', { title: 'x', tag: 'x'.repeat(65) }],
+      ['notify', { title: 'x', data: 'x'.repeat(5000) }],
+      ['setBadge', { count: -1 }],
+      ['setBadge', { count: 1.5 }],
+      ['window.setDirty', { dirty: 'yes' }],
+      ['contextMenu.show', { at: { x: 0, y: 0 }, items: [] }],
+      ['contextMenu.show', { at: { x: 0 }, items: [{ id: 'a', label: 'A' }] }],
+      ['contextMenu.show', { at: { x: 0, y: 0 }, items: [{ separator: true, id: 'x' }] }],
+      ['clipboard.writeText', { text: 7 }],
+      ['openUrl', { url: 'javascript:alert(1)' }],
+      ['openUrl', { url: 'data:text/html,hi' }],
+      ['openUrl', { url: '/relative' }],
+    ];
+    for (const [method, params] of invalid) {
+      await expect(
+        connected.call(method as 'notify', params as never),
+        method,
+      ).rejects.toMatchObject({ code: 'sdk.request.invalid' });
+    }
+    expect(handlers.notify).toHaveBeenCalledOnce();
+    expect(handlers.setBadge).toHaveBeenCalledTimes(2);
+    expect(handlers.openUrl).toHaveBeenCalledTimes(2);
+  });
+
+  it('asks beforeUnload with its reason, ignores a refusal and gives up after two seconds', async () => {
+    const { host, app } = connectTo({});
+    const connected = await app;
+    const reasons: string[] = [];
+    connected.answer('beforeUnload', ({ reason }) => {
+      reasons.push(reason);
+      return { allow: false } as never;
+    });
+    expect(await host.ask('beforeUnload', { reason: 'restart' }, BEFORE_UNLOAD_TIMEOUT)).toEqual(
+      {},
+    );
+    expect(reasons).toEqual(['restart']);
+
+    connected.answer('beforeUnload', () => new Promise(() => undefined));
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
+    let settled = false;
+    const asked = host.ask('beforeUnload', { reason: 'logout' }, BEFORE_UNLOAD_TIMEOUT);
+    void asked.then(() => {
+      settled = true;
+    });
+    await vi.advanceTimersByTimeAsync(BEFORE_UNLOAD_TIMEOUT - 1);
+    expect(settled).toBe(false);
+    await vi.advanceTimersByTimeAsync(1);
+    expect(await asked).toBeUndefined();
+    expect(BEFORE_UNLOAD_TIMEOUT).toBe(2000);
+  });
+
+  it('reaches the backend endpoints with a token, a ticket and without cookies', async () => {
+    const expiresAt = new Date(Date.now() + 5 * 60_000).toISOString();
+    const token = vi.fn(() => ({ token: 't1', expiresAt }));
+    const ticket = vi.fn(({ endpoint }: { endpoint: string }) => ({
+      ticket: `k-${endpoint}`,
+      expiresAt,
+    }));
+    const fetchMock = vi.fn<(url: URL, init: RequestInit) => Promise<Response>>(() =>
+      Promise.resolve(new Response('ok')),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+    const sockets: { url: string; protocols: unknown }[] = [];
+    vi.stubGlobal(
+      'WebSocket',
+      class {
+        readonly url: string;
+        constructor(url: URL, protocols?: string | string[]) {
+          this.url = url.href;
+          sockets.push({ url: url.href, protocols });
+        }
+      },
+    );
+    const { app } = connectTo(
+      { 'backend.token': token, 'backend.ticket': ticket },
+      {
+        app: { id: 'com.mueller.chat', version: '1.2.0' },
+        backend: { status: 'running', endpoints: ['api', 'metrics'] },
+      },
+    );
+    const connected = await app;
+
+    expect(await connected.backend.url('/avatar/1')).toBe(
+      `${ORIGIN}/apps/com.mueller.chat/api/avatar/1?pithyx-token=t1`,
+    );
+    expect(await connected.backend.url('stats?day=1', { endpoint: 'metrics' })).toBe(
+      `${ORIGIN}/apps/com.mueller.chat/api-metrics/stats?day=1&pithyx-token=t1`,
+    );
+
+    const response = await connected.backend.fetch('/messages', {
+      method: 'POST',
+      body: 'hi',
+      headers: { 'Content-Type': 'text/plain' },
+    });
+    expect(await response.text()).toBe('ok');
+    const [url, init] = fetchMock.mock.calls[0] ?? [];
+    expect(url?.href).toBe(`${ORIGIN}/apps/com.mueller.chat/api/messages`);
+    expect(init).toMatchObject({ method: 'POST', body: 'hi', credentials: 'omit' });
+    const headers = new Headers(init?.headers);
+    expect(headers.get('Authorization')).toBe('Bearer t1');
+    expect(headers.get('Content-Type')).toBe('text/plain');
+    expect(url?.searchParams.has('pithyx-token')).toBe(false);
+
+    await connected.backend.socket('/live', { protocols: 'chat' });
+    await connected.backend.socket('/feed', { endpoint: 'metrics' });
+    expect(sockets).toEqual([
+      {
+        url: 'wss://nas.example:7484/apps/com.mueller.chat/api/live?pithyx-ticket=k-api',
+        protocols: 'chat',
+      },
+      {
+        url: 'wss://nas.example:7484/apps/com.mueller.chat/api-metrics/feed?pithyx-ticket=k-metrics',
+        protocols: undefined,
+      },
+    ]);
+    // One token serves every call while it is fresh; every socket gets its own ticket.
+    expect(token).toHaveBeenCalledOnce();
+    expect(ticket).toHaveBeenCalledTimes(2);
+    expect(await connected.backend.token()).toEqual({ token: 't1', expiresAt });
+
+    await expect(connected.backend.fetch('/x', { endpoint: 'admin' })).rejects.toMatchObject({
+      code: 'sdk.backend.endpoint_unknown',
+      params: { endpoint: 'admin' },
+    });
+    await expect(connected.backend.url('/../../org.pithyx.files/api/x')).rejects.toMatchObject({
+      code: 'sdk.request.invalid',
+    });
+    await expect(connected.backend.url('/%2e%2e/%2e%2e/other/api/x')).rejects.toMatchObject({
+      code: 'sdk.request.invalid',
+    });
+
+    fetchMock.mockRejectedValueOnce(new TypeError('Failed to fetch'));
+    await expect(connected.backend.fetch('/messages')).rejects.toMatchObject({
+      code: 'sdk.backend.unreachable',
+      params: { endpoint: 'api' },
+    });
+    const aborted = new DOMException('Aborted', 'AbortError');
+    fetchMock.mockRejectedValueOnce(aborted);
+    await expect(connected.backend.fetch('/messages')).rejects.toBe(aborted);
+  });
+
+  it('fails backend calls of an app without a backend before asking the desktop', async () => {
+    const token = vi.fn(() => ({ token: 't', expiresAt: new Date().toISOString() }));
+    const { app } = connectTo({ 'backend.token': token });
+    const connected = await app;
+    for (const attempt of [
+      () => connected.backend.url('/x'),
+      () => connected.backend.fetch('/x'),
+      () => connected.backend.socket('/x'),
+    ]) {
+      await expect(attempt()).rejects.toMatchObject({
+        code: 'sdk.backend.endpoint_unknown',
+        params: { endpoint: 'api' },
+      });
+    }
+    expect(token).not.toHaveBeenCalled();
+  });
+
+  it('renews the backend token before it expires and after permissionsChange', async () => {
+    let issued = 0;
+    const token = vi.fn(() => {
+      issued += 1;
+      // The first token is almost expired, the later ones fresh.
+      const lifetime = issued === 1 ? 10_000 : 5 * 60_000;
+      return {
+        token: `t${String(issued)}`,
+        expiresAt: new Date(Date.now() + lifetime).toISOString(),
+      };
+    });
+    const { host, app } = connectTo(
+      { 'backend.token': token },
+      { backend: { status: 'running', endpoints: ['api'] }, permissions: [] },
+    );
+    const connected = await app;
+    // A token with less than 30 seconds left is never handed out; the next one is kept while fresh.
+    expect((await connected.backend.token()).token).toBe('t2');
+    expect((await connected.backend.token()).token).toBe('t2');
+    expect(token).toHaveBeenCalledTimes(2);
+    host.emit('permissionsChange', { permissions: ['notifications'] });
+    await vi.waitFor(() => {
+      expect(connected.context.permissions).toEqual(['notifications']);
+    });
+    expect((await connected.backend.token()).token).toBe('t3');
   });
 
   it('fails a call that the desktop never answers', async () => {
@@ -393,6 +774,37 @@ describe.each(transports)('over the %s transport', (_, pair) => {
     });
     const connected = await app;
     await expect(connected.window.close()).rejects.toMatchObject({ code: 'sdk.request.timeout' });
+  });
+});
+
+describe('backend addresses', () => {
+  it('put the default endpoint at api/ and every other one at api-<name>/', () => {
+    expect(endpointPath('com.mueller.chat')).toBe('/apps/com.mueller.chat/api/');
+    expect(endpointPath('com.mueller.chat', 'metrics')).toBe('/apps/com.mueller.chat/api-metrics/');
+    for (const name of ['', 'Metrics', 'a/b', '../x', 'x'.repeat(64)]) {
+      expect(() => endpointPath('com.mueller.chat', name), name).toThrow(
+        expect.objectContaining({ code: 'sdk.backend.endpoint_unknown' }),
+      );
+    }
+  });
+
+  it('follow the window: the port of the address, ws on plain HTTP, no smuggled credentials', () => {
+    const plain = backendUrl(
+      'http://192.168.1.5:7484',
+      'io.github.ada.notes',
+      'live?x=1&pithyx-token=evil',
+    );
+    expect(plain.href).toBe('http://192.168.1.5:7484/apps/io.github.ada.notes/api/live?x=1');
+    expect(socketUrl(plain).href).toBe(
+      'ws://192.168.1.5:7484/apps/io.github.ada.notes/api/live?x=1',
+    );
+    expect(socketUrl(backendUrl('https://[::1]', 'a.b.c', '/x')).href).toBe(
+      'wss://[::1]/apps/a.b.c/api/x',
+    );
+    expect(backendUrl('https://nas', 'a.b.c', '//evil.example/x').origin).toBe('https://nas');
+    expect(() => backendUrl('https://nas', 'a.b.c', 'x/../../../d.e.f/api/y')).toThrow(
+      expect.objectContaining({ code: 'sdk.request.invalid' }),
+    );
   });
 });
 

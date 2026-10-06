@@ -1,12 +1,30 @@
 {
   "name": "@pithyx/sdk",
-  "version": "0.0.0",
-  "description": "SDK for building Pithyx apps",
+  "version": "1.0.0-rc.1",
+  "description": "SDK for building Pithyx apps: the API between an app and the Pithyx desktop",
+  "keywords": [
+    "pithyx",
+    "sdk",
+    "nas",
+    "self-hosted",
+    "apps",
+    "desktop"
+  ],
+  "homepage": "https://github.com/pithyx/pithyx/tree/dev/sdk#readme",
+  "bugs": {
+    "url": "https://github.com/pithyx/pithyx/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pithyx/pithyx.git",
+    "directory": "sdk"
+  },
   "license": "MIT",
   "type": "module",
   "files": [
     "dist",
-    "LICENSE"
+    "LICENSE",
+    "README.md"
   ],
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -39,5 +57,22 @@
   },
   "dependencies": {
     "intl-messageformat": "^11.2.15"
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js"
+      },
+      "./host": {
+        "types": "./dist/host.d.ts",
+        "import": "./dist/host.js"
+      },
+      "./i18n": {
+        "types": "./dist/i18n.d.ts",
+        "import": "./dist/i18n.js"
+      }
+    }
   }
 }

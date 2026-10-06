@@ -45,8 +45,13 @@ export interface BrokerTarget {
  * here; nothing in a message can point a call at another window or app. Window calls act on this window only.
  *
  * The permission checks here only answer early. The daemon is the authority: once apps are installed on the daemon
- * (M4), every call that reaches data (storage, files, notifications, backend tokens) goes through an endpoint that
- * checks the app's permissions and the user's rights again, and fails with the same codes.
+ * (A10, A11), every call that reaches data (storage, files, notifications, backend tokens) goes through an endpoint
+ * that checks the app's permissions and the user's rights again, and fails with the same codes.
+ *
+ * Not served yet, so they fail with `sdk.method.unknown` and `supports()` is false for them: `backend.token`,
+ * `backend.ticket` and `directory.*` (the daemon's app API, A11), and `setBadge`, `window.requestAttention`,
+ * `window.setDirty`, `contextMenu.show`, `clipboard.writeText` and `openUrl` (desktop host v1, A7). `notify` shows
+ * the notification without its `actions`, `data` and `tag` until A7 and A11.
  */
 export function brokerFor(target: BrokerTarget): MethodHandlers {
   const store = storeOf(target.user, target.app);
@@ -86,7 +91,7 @@ export function brokerFor(target: BrokerTarget): MethodHandlers {
     notify: async ({ title, body, level }) => {
       require('notifications');
       try {
-        unwrap(
+        const notification = unwrap(
           await api.POST('/api/notifications/app', {
             body: {
               app: target.app,
@@ -96,6 +101,7 @@ export function brokerFor(target: BrokerTarget): MethodHandlers {
             },
           }),
         );
+        return { id: String(notification.id) };
       } catch (error) {
         throw toPithyxError(error);
       }
@@ -132,10 +138,5 @@ export function brokerFor(target: BrokerTarget): MethodHandlers {
       store.delete(key);
     },
     'storage.keys': () => [...store.keys()],
-    'auth.token': () => {
-      require('backend');
-      // Backends arrive with the app runtime (M4); the daemon will issue the token.
-      throw new PithyxError({ code: 'sdk.method.unknown', params: { method: 'auth.token' } });
-    },
   };
 }

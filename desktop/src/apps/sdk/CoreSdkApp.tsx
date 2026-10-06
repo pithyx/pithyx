@@ -1,21 +1,13 @@
 import { useQueryClient } from '@tanstack/react-query';
 import type { components } from '@pithyx/api-client';
-import {
-  createApp,
-  inProcessPair,
-  PROTOCOL_VERSION,
-  SDK_VERSION,
-  type PithyxApp,
-} from '@pithyx/sdk';
+import { createApp, inProcessPair, type PithyxApp } from '@pithyx/sdk';
 import { serveApp, type AppConnection, type HostExtensions } from '@pithyx/sdk/host';
-import { formatLocale } from '../../i18n';
 import { useEffect, useEffectEvent, useRef, useState, type ComponentType } from 'react';
 import { queryKeys } from '../../api/queries';
 import { useSizeClass } from '../../wm/sizeClass';
-import { useDesktop } from '../../wm/store';
 import type { AppProps } from '../registry';
 import { brokerFor } from '../sandbox/broker';
-import { currentTheme } from '../sandbox/theme';
+import { appContext, PITHYX_VERSION } from './context';
 import styles from './CoreSdkApp.module.css';
 import { fileBrokerFor } from './fileBroker';
 import { useAppLifecycle } from './useAppLifecycle';
@@ -34,13 +26,13 @@ export interface SdkAppProps {
 export function CoreSdkApp({
   windowId,
   app: appId,
-  version = SDK_VERSION,
+  version = PITHYX_VERSION,
   permissions,
   internal,
   Component,
 }: AppProps & {
   app: string;
-  /** Core apps ship with the desktop, so their version is the monorepo's. */
+  /** Core apps ship with the desktop, so their version is the product's. */
   version?: string;
   permissions: readonly string[];
   /** Internal methods for this core app (apps/sdk/internal.ts); `emit` sends an internal event to this window. */
@@ -61,8 +53,6 @@ export function CoreSdkApp({
   const open = useEffectEvent(() => {
     const [hostEnd, appEnd] = inProcessPair();
     const user = client.getQueryData<User>(queryKeys.session);
-    const args = useDesktop.getState().windows[windowId]?.args as
-      { session?: unknown } | null | undefined;
     const files = fileBrokerFor({
       permissions,
       emit: (event, data) => {
@@ -76,23 +66,13 @@ export function CoreSdkApp({
       );
     });
     connection.current = serveApp(hostEnd, {
-      context: {
+      context: appContext({
+        client,
+        windowId,
         app: { id: appId, version },
-        instance: windowId,
-        user: {
-          id: user?.id ?? 0,
-          name: user?.username ?? '',
-          displayName: user?.displayName ?? null,
-        },
-        locale: formatLocale(),
-        timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        theme: currentTheme(),
+        permissions,
         sizeClass,
-        launch: { args: null },
-        session: args?.session ?? null,
-        permissions: [...permissions],
-        host: { version: SDK_VERSION, protocol: PROTOCOL_VERSION },
-      },
+      }),
       methods: {
         ...brokerFor({
           windowId,

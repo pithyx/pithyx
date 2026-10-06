@@ -293,7 +293,7 @@ New events:
 | `storageChange {storage}`                                        | A mapping changed, or its pool was locked or came back.                                                           |
 | `notificationAction {notification, action, data}`                | Without an open window the app starts with `launch.notification`.                                                 |
 | `logLevelChange {level}`                                         | An administrator switched debug on or off.                                                                        |
-| `filesDropped {files, x, y}`                                     | Optional, otherwise in 1.1.                                                                                       |
+| `filesDropped {files, x, y}`                                     | Deferred to 1.1 (A4).                                                                                             |
 | query `beforeUnload {reason: logout, shutdown, restart, update}` | Replaces `beforeLogout`. No veto, 2 seconds.                                                                      |
 
 Refused: `resize` (a ResizeObserver in the iframe is enough), `idle` and `clipboardChange` (privacy).
@@ -324,9 +324,9 @@ Logs (D305): every level also appears in the browser console. `info`, `warn` and
 
 #### A4 SDK API contract and rc.1 `[REVIEW]`
 
-- [ ] The additions above in `protocol.ts`, `app.ts`, `host.ts` and `errors.ts`, with contract and connection tests.
-- [ ] The desktop gets shims; `supports()` answers `false` for everything it cannot do yet.
-- [ ] `tools/release/publish-sdk.sh`; the version comes from `package.json` instead of a constant in `version.ts`; `repository`, `publishConfig` and a README.
+- [x] The additions above in `protocol.ts`, `app.ts`, `host.ts` and `errors.ts`, with contract and connection tests. `filesDropped` moves to 1.1 (an event added later is a minor change).
+- [x] The desktop gets shims; `supports()` answers `false` for everything it cannot do yet.
+- [x] `tools/release/publish-sdk.sh`; the version comes from `package.json` instead of a constant in `version.ts`; `repository`, `publishConfig` and a README.
 - [ ] Then the owner publishes `@pithyx/sdk@1.0.0-rc.1` under the dist-tag `next`.
 
 #### A5 `@pithyx/ui` and tokens

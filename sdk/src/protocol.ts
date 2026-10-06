@@ -11,7 +11,7 @@
  * 3. The desktop answers `init` with the {@link AppContext}, or `refuse` with a problem (for example
  *    `sdk.protocol.unsupported`), and closes the port after a refusal.
  * 4. From then on the app sends `request`s and gets one `response` each; the desktop sends `event`s, and `query`s that
- *    the app answers with `reply` (used for `beforeClose` and `beforeLogout`).
+ *    the app answers with `reply` (used for `beforeClose` and `beforeUnload`).
  *
  * Every call that crosses the transport is asynchronous and fails with a problem (RFC 9457 fields `code`, `params`,
  * `detail`, `requestId`). Only local reads (the context, `supports`, the formatters) and listener registration are
@@ -64,18 +64,78 @@ export interface LaunchArgs {
   args: unknown;
   /** A file to open, only of a type the manifest's `fileHandlers` declare. */
   file?: FileRef;
+  /** The user clicked a notification of the app while no window of it was open (see `notificationAction`). */
+  notification?: NotificationActivation;
 }
 
-/** Everything an app needs to start, sent once in `init`. */
+/** One of the user's groups. The built-in group every user belongs to is left out. */
+export interface GroupRef {
+  /** Stable id (the group's Linux gid). */
+  id: number;
+  name: string;
+}
+
+/**
+ * The state of the app's backend: `stopped` (not running, for example an `onDemand` backend without windows),
+ * `starting`, `running`, `updating` (a new version is being installed) or `unavailable` (it failed or its pool is
+ * locked or missing). A request to a `stopped` or `starting` backend wakes it and waits until it runs (at most 30
+ * seconds); while it is `updating` or `unavailable` the proxy answers 503 `app.backend.unavailable`.
+ */
+export type BackendStatus = 'stopped' | 'starting' | 'running' | 'updating' | 'unavailable';
+
+/** The app's backend, as the window sees it. */
+export interface BackendInfo {
+  status: BackendStatus;
+  /** The names of the endpoints the manifest declares under `backend.endpoints`; `api` is the default one. */
+  endpoints: string[];
+}
+
+/**
+ * The state of a storage the manifest requests: `ready` (mapped to a folder that can be reached), `unmapped` (no
+ * administrator assigned a folder yet), `locked` (its pool is encrypted and locked) or `unavailable` (its pool or
+ * folder is missing).
+ */
+export type StorageState = 'ready' | 'unmapped' | 'locked' | 'unavailable';
+
+/** A storage request of the manifest and where it stands. */
+export interface StorageInfo {
+  /** The `id` of the request in the manifest; reach it as `{ storage: id }`. */
+  id: string;
+  state: StorageState;
+  /** What the mapping allows (never more than the manifest requests), or null while it is unmapped. */
+  access: 'read' | 'readWrite' | null;
+}
+
+/** Whether `debug` entries of `app.log` go to the daemon (`debug`) or only to the browser console (`info`). */
+export type AppLogLevel = 'debug' | 'info';
+
+/** Everything an app needs to start, sent once in `init`. No permission is needed for any of it (D304). */
 export interface AppContext {
   app: { id: AppId; version: string };
   /** Id of this window, unique per desktop tab. */
   instance: string;
-  /** The signed-in user, for display. A backend identifies the user only by `X-Pithyx-User` (see `auth.token`). */
-  user: { id: number; name: string; displayName: string | null };
   /**
-   * BCP 47 tag of the user's language, for example `de-DE`. The SDK sets it as `lang` on the app's root element; the
-   * formatters and the optional i18n helper follow it.
+   * The signed-in user, for display and to adapt the interface. A backend identifies the user only by the
+   * `X-Pithyx-User` headers the proxy sets (see `backend.token`), never by anything the window sends.
+   */
+  user: {
+    id: number;
+    /** The user name, lower case. */
+    name: string;
+    /** The name to show, if the user set one. */
+    displayName: string | null;
+    /** The user's groups; listing other users and groups needs `directory.read`. */
+    groups: GroupRef[];
+    /** Whether the user is an administrator. */
+    isAdmin: boolean;
+    /** Whether the user signs in with a second factor. */
+    twoFactor: boolean;
+  };
+  /** The user's language for texts, a BCP 47 language tag such as `de`; `locale` starts with it. */
+  language: string;
+  /**
+   * BCP 47 tag for formats: the user's language with the region of the box's formats, for example `de-AT`. The SDK
+   * sets it as `lang` on the app's root element; the formatters (`app.format`) follow it.
    */
   locale: string;
   /** IANA time zone of the user, for example `Europe/Berlin`. Dates cross the API as UTC. */
@@ -85,11 +145,41 @@ export interface AppContext {
   launch: LaunchArgs;
   /** The state this window saved with `session.save` before a reload or on another device, or null. */
   session: unknown;
-  /** Permissions this app holds now; `permissionRevoked` removes one. */
+  /** Permissions this app holds now; `permissionsChange` replaces the list. */
   permissions: string[];
-  /** Every method name the desktop supports; check before calling one added after 1.0. */
+  /** Every method name the desktop supports; check before calling one (see `supports`). */
   capabilities: string[];
+  /** The box the app runs on: its name (host name) and the Pithyx version. */
+  box: { name: string; version: string };
+  /** Whether the window can be seen (not minimized); `visibilityChange` follows it. */
+  visible: boolean;
+  /** Whether the desktop reaches the box; `connectionChange` follows it. */
+  online: boolean;
+  /** Whether `debug` log entries reach the daemon; `logLevelChange` follows it. */
+  logLevel: AppLogLevel;
+  /** The app's backend, or null for an app without one. `backendStatus` follows its status. */
+  backend: BackendInfo | null;
+  /** The storage requests of the manifest with their state; `storageChange` replaces the list. */
+  storage: StorageInfo[];
   host: { version: string; protocol: number };
+}
+
+/** A button of a notification. */
+export interface NotificationAction {
+  /** Comes back in `notificationAction`; 1 to 64 characters. */
+  id: string;
+  /** Plain text, 1 to 40 characters, translated by the app. */
+  label: string;
+}
+
+/** What the app learns when the user clicks one of its notifications. */
+export interface NotificationActivation {
+  /** The id `notify` resolved with. */
+  notification: string;
+  /** The `id` of the button the user clicked, or null for a click on the notification itself. */
+  action: string | null;
+  /** The `data` the app passed to `notify`, or null. */
+  data: unknown;
 }
 
 /**
@@ -102,7 +192,70 @@ export interface NotificationRequest {
   /** Plain text, at most 1000 characters. */
   body?: string;
   level?: 'info' | 'success' | 'warning' | 'error';
+  /** At most 2 buttons. A click sends `notificationAction`, or starts the app with `launch.notification`. */
+  actions?: NotificationAction[];
+  /** Data that comes back with `notificationAction`, at most 4 KB as JSON. */
+  data?: unknown;
+  /**
+   * Replaces the app's earlier notification with the same tag for this user, for example one per chat. 1 to 64
+   * characters.
+   */
+  tag?: string;
 }
+
+/** A token for the app's backend. */
+export interface BackendToken {
+  token: string;
+  /** ISO 8601 UTC; ask again before then. */
+  expiresAt: string;
+}
+
+/** A one-time ticket for one WebSocket connection to the app's backend, valid 30 seconds. */
+export interface BackendTicket {
+  ticket: string;
+  /** ISO 8601 UTC. */
+  expiresAt: string;
+}
+
+/** A user of the box, as `directory.users` lists it. Deactivated users are left out. */
+export interface DirectoryUser {
+  id: number;
+  name: string;
+  displayName: string | null;
+  /** Ids of the user's groups (see `directory.groups`); the built-in group every user belongs to is left out. */
+  groups: number[];
+}
+
+/** A group of the box, as `directory.groups` lists it. The built-in group every user belongs to is left out. */
+export interface DirectoryGroup {
+  id: number;
+  name: string;
+  /** Free text, may be empty. */
+  description: string;
+}
+
+/** A point in CSS pixels, relative to the top left corner of the app's window content. */
+export interface Point {
+  x: number;
+  y: number;
+}
+
+/** An entry of a context menu the desktop draws for the app; the app translates the labels. */
+export type ContextMenuItem =
+  | {
+      /** Comes back from `contextMenu.show` when the user picks the entry; 1 to 64 characters. */
+      id: string;
+      /** Plain text, 1 to 100 characters. */
+      label: string;
+      disabled?: boolean;
+      /** Shows a check mark. */
+      checked?: boolean;
+      /** Marks a destructive entry, such as Delete. */
+      danger?: boolean;
+      /** A key hint shown next to the label, for example `Ctrl+C`. The app handles the keys itself. */
+      shortcut?: string;
+    }
+  | { separator: true };
 
 /** How serious a log entry is. The Log Center filters by it; `debug` is for details only needed while looking for a fault. */
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
@@ -128,6 +281,16 @@ export interface Methods {
   'window.setTitle': { params: { title: string }; result: undefined };
   /** Closes the window. `beforeClose` is not sent for a close the app asked for. */
   'window.close': { params: Record<string, never>; result: undefined };
+  /**
+   * Marks the window as having unsaved changes or not. Once an app called it, the desktop asks `beforeClose` only
+   * while the window is dirty; an app that never calls it is asked on every close.
+   */
+  'window.setDirty': { params: { dirty: boolean }; result: undefined };
+  /**
+   * Makes the window's taskbar entry pulse until the user looks at it. It never brings the window to the front or
+   * takes the focus.
+   */
+  'window.requestAttention': { params: Record<string, never>; result: undefined };
   /** Asks for a new free size. The desktop may clamp it; the result is the size the window got. */
   'window.setSize': {
     params: { width: number; height: number };
@@ -139,8 +302,10 @@ export interface Methods {
    * daemon keeps each app within a rate limit and drops the rest. No permission needed (D257).
    */
   'log.write': { params: { entries: LogRecord[] }; result: undefined };
-  /** Shows a notification. Needs the `notifications` permission. */
-  notify: { params: NotificationRequest; result: undefined };
+  /** Shows a notification and resolves with its id. Needs the `notifications` permission. */
+  notify: { params: NotificationRequest; result: { id: string } };
+  /** A counter on the app's taskbar entry: a positive integer shows it, 0 or null removes it. */
+  setBadge: { params: { count: number | null }; result: undefined };
   /**
    * Saves small state of this window (the current folder, a scroll position) with the desktop layout, at most 16 KB
    * as JSON. It comes back in the init context after a reload and with "Get desktop from ...".
@@ -156,13 +321,27 @@ export interface Methods {
   'storage.remove': { params: { key: string }; result: undefined };
   'storage.keys': { params: Record<string, never>; result: string[] };
   /**
-   * A token for the app's own backend at `/apps/<id>/api/`, valid 5 minutes. Send it as `Authorization: Bearer`.
-   * Needs the `backend` permission. Ask again for a new one; do not cache it past `expiresAt`.
-   *
-   * The daemon's proxy checks the token and hands the backend the user as `X-Pithyx-User` (and `X-Pithyx-Groups`);
-   * that header is the only identity a backend may trust, never anything the app sends in a request.
+   * A token for the app's backend, valid 5 minutes and for every endpoint of the app. `app.backend.fetch` and
+   * `app.backend.url` send it for the app (as `Authorization: Bearer` or `?pithyx-token=`). The daemon's proxy checks
+   * it and hands the backend the user as `X-Pithyx-User`, `X-Pithyx-User-Id`, `X-Pithyx-Groups` and
+   * `X-Pithyx-Admin`; those headers are the only identity a backend may trust.
    */
-  'auth.token': { params: Record<string, never>; result: { token: string; expiresAt: string } };
+  'backend.token': { params: Record<string, never>; result: BackendToken };
+  /** A one-time ticket for one WebSocket to an endpoint of the app's backend (`app.backend.socket` uses it). */
+  'backend.ticket': { params: { endpoint: string }; result: BackendTicket };
+  /** Every user of the box. Needs `directory.read`. */
+  'directory.users': { params: Record<string, never>; result: DirectoryUser[] };
+  /** Every group of the box. Needs `directory.read`. */
+  'directory.groups': { params: Record<string, never>; result: DirectoryGroup[] };
+  /**
+   * Shows a context menu that the desktop draws at `at` (at most 50 entries) and resolves with the `id` of the entry
+   * the user picked, or null when the menu was dismissed.
+   */
+  'contextMenu.show': { params: { at: Point; items: ContextMenuItem[] }; result: string | null };
+  /** Copies text to the clipboard, at most 1 MB. Call it only for a user action, such as a click on Copy. */
+  'clipboard.writeText': { params: { text: string }; result: undefined };
+  /** Opens an `https:`, `http:` or `mailto:` URL in a new browser tab, without a reference to the desktop. */
+  openUrl: { params: { url: string }; result: undefined };
   /**
    * The file API (served from step 6 on; check `supports`). The only way an app reaches files: sandboxed apps have no
    * file system, and the daemon checks the app's permissions and the user's rights on every call.
@@ -301,20 +480,33 @@ export interface Events {
   minimize: Record<string, never>;
   restore: Record<string, never>;
   themeChange: Theme;
-  localeChange: { locale: string; timeZone: string };
+  localeChange: { language: string; locale: string; timeZone: string };
   sizeClassChange: { sizeClass: SizeClass };
   /** The user opened a file with the app while its window was open. Only types from `fileHandlers`. */
   openFile: { file: FileRef };
   /** A new version of the app is installed; reload to use it (unsaved work first). */
   appUpdated: { version: string };
-  /** The app's backend stopped answering; calls to it fail until `backendRestored`. */
-  backendUnavailable: Record<string, never>;
-  backendRestored: Record<string, never>;
   /**
-   * An administrator revoked a permission of the app. The SDK removes it from `context.permissions`; calls that need
-   * it fail with `app.permission.denied` from now on. Revoking `backend` or access to the app ends its windows.
+   * The window was minimized or shown again. Minimizing does not change the frame's own visibility, so this is the
+   * way to pause work nobody sees. The SDK updates `context.visible`.
    */
-  permissionRevoked: { permission: string };
+  visibilityChange: { visible: boolean };
+  /** The desktop lost or regained the connection to the box, for example while it restarts. Updates `context.online`. */
+  connectionChange: { online: boolean };
+  /** The backend's status changed. The SDK updates `context.backend.status`. */
+  backendStatus: { status: BackendStatus };
+  /**
+   * An administrator granted or revoked permissions of the app; `permissions` is the complete new list. The SDK
+   * replaces `context.permissions`; calls that need a revoked permission fail with `app.permission.denied`. Revoking
+   * access to the app ends its windows.
+   */
+  permissionsChange: { permissions: string[] };
+  /** A storage mapping changed, or its pool was locked or came back. The SDK replaces `context.storage`. */
+  storageChange: { storage: StorageInfo[] };
+  /** The user clicked a notification of the app or one of its buttons while a window of the app was open. */
+  notificationAction: NotificationActivation;
+  /** An administrator switched debug logging for the app on or off. The SDK updates `context.logLevel`. */
+  logLevelChange: { level: AppLogLevel };
   /**
    * The list of shares the user can use may have changed: a share was created, renamed, described or deleted, or the
    * user's access changed. Call `files.shares` again. Sent only to apps that hold `files.shares`; it carries nothing,
@@ -335,19 +527,25 @@ export type EventName = keyof Events;
 export interface Queries {
   /**
    * The user closes the window. Answer `allow: false` to keep it open (for example to ask about unsaved changes).
-   * The desktop waits at most 5 seconds and then offers to close the window anyway.
+   * The desktop waits at most 5 seconds and then offers to close the window anyway. See `window.setDirty`.
    */
   beforeClose: { data: Record<string, never>; answer: { allow: boolean } };
-  /** The user signs out. Save what you can; the desktop waits at most 2 seconds. It cannot be refused. */
-  beforeLogout: { data: Record<string, never>; answer: Record<string, never> };
+  /**
+   * The window is about to go away: the user signs out (`logout`), the box shuts down or restarts, or Pithyx installs
+   * an update. Save what you can; the desktop waits at most 2 seconds. It cannot be refused.
+   */
+  beforeUnload: { data: { reason: UnloadReason }; answer: Record<string, never> };
 }
+
+/** Why `beforeUnload` is asked. */
+export type UnloadReason = 'logout' | 'shutdown' | 'restart' | 'update';
 
 export type QueryName = keyof Queries;
 
 /** The desktop waits this long for an answer to `beforeClose`. */
 export const BEFORE_CLOSE_TIMEOUT = 5000;
-/** The desktop waits this long for an answer to `beforeLogout`. */
-export const BEFORE_LOGOUT_TIMEOUT = 2000;
+/** The desktop waits this long for an answer to `beforeUnload`. */
+export const BEFORE_UNLOAD_TIMEOUT = 2000;
 /**
  * An app waits this long for a response before a call fails with `sdk.request.timeout`. Calls that move a whole file
  * (`files.upload`) take as long as the transfer and have no time limit.
