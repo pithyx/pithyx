@@ -1,6 +1,7 @@
-import type { ContextMenuItem, NotificationAction } from '@pithyx/sdk';
+import type { ContextMenuItem, NotificationAction, NotificationActivation } from '@pithyx/sdk';
 import { create } from 'zustand';
-import { useDesktop } from '../../wm/store';
+import { dispatch, openApp, useDesktop } from '../../wm/store';
+import { emitTo, isReady } from './connections';
 
 /** A context menu an app asked for, at a point of the page. */
 export interface AppMenu {
@@ -133,6 +134,33 @@ export function closeManualCopy(): void {
 
 export function rememberNotification(id: string, notification: AppNotification): void {
   useHost.setState((state) => ({ notifications: { ...state.notifications, [id]: notification } }));
+}
+
+/**
+ * The user clicked an app's notification (`action` null) or one of its buttons. A window of the app on this device
+ * comes to the front, as for any user action, and gets `notificationAction`: the window that sent the notification,
+ * otherwise the top-most one. Without a window that is connected, the app starts (or its `single` window gets) the
+ * activation as `launch.notification`. False if the app cannot be opened.
+ */
+export function activateNotification(id: string, app: string, action: string | null): boolean {
+  const remembered = useHost.getState().notifications[id];
+  const activation: NotificationActivation = {
+    notification: id,
+    action,
+    data: remembered?.app === app ? remembered.data : null,
+  };
+  const { windows, order } = useDesktop.getState();
+  const connected = (windowId: string) => windows[windowId]?.app === app && isReady(windowId);
+  const target =
+    remembered !== undefined && connected(remembered.windowId)
+      ? remembered.windowId
+      : order.findLast(connected);
+  if (target === undefined) {
+    return openApp(app, { args: null, notification: activation });
+  }
+  dispatch({ type: 'focus', id: target });
+  emitTo(target, 'notificationAction', activation);
+  return true;
 }
 
 function kept<T>(record: Record<string, T>, keep: (key: string) => boolean): Record<string, T> {

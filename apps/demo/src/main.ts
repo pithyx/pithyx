@@ -1,6 +1,6 @@
 // A sample third-party app: plain TypeScript, no framework, only @pithyx/sdk. It shows what the desktop hands over,
 // uses the window, notification and storage calls, logs lifecycle events and checks that its sandbox holds.
-import { connect, type PithyxApp } from '@pithyx/sdk';
+import { connect, type NotificationActivation, type PithyxApp } from '@pithyx/sdk';
 import { createI18n, pickLanguage } from '@pithyx/sdk/i18n';
 import de from '../i18n/de.json';
 import en from '../i18n/en.json';
@@ -62,6 +62,11 @@ async function main(root: HTMLElement) {
   const t = (key: string, params?: Record<string, unknown>) => i18n.t(key, params);
   let count = (await app.storage.get<number>('count')) ?? 0;
   let keepOpen = false;
+  let dirty = false;
+  let hang = false;
+  let attention = false;
+  let picked = '';
+  let activation: NotificationActivation | null = app.context.launch.notification ?? null;
   const events: string[] = [];
 
   // A message posted straight to the desktop window is not the app's port; the desktop must ignore it.
@@ -70,6 +75,17 @@ async function main(root: HTMLElement) {
     '*',
   );
   const probes = await probeSandbox();
+
+  function toggle(label: string, checked: boolean, change: (on: boolean) => void) {
+    const wrapper = element('label');
+    const input = element('input', { type: 'checkbox' });
+    input.checked = checked;
+    input.addEventListener('change', () => {
+      change(input.checked);
+    });
+    wrapper.append(input, ` ${label}`);
+    return wrapper;
+  }
 
   function render() {
     const { context } = app;
@@ -84,6 +100,17 @@ async function main(root: HTMLElement) {
       [t('timeZone'), context.timeZone, 'timeZone'],
       [t('theme'), context.theme.scheme, 'theme'],
       [t('sizeClass'), context.sizeClass, 'sizeClass'],
+      [t('online'), context.online ? t('yes') : t('no'), 'online'],
+      [t('visible'), context.visible ? t('yes') : t('no'), 'visible'],
+      [t('launch'), JSON.stringify(context.launch.args), 'launch'],
+      [
+        t('activation'),
+        activation === null
+          ? '-'
+          : `${activation.action ?? t('notificationItself')} ${JSON.stringify(activation.data)}`,
+        'activation',
+      ],
+      [t('picked'), picked === '' ? '-' : picked, 'picked'],
     ] as const) {
       facts.append(element('dt', {}, label), element('dd', { 'data-fact': key }, value));
     }
@@ -105,7 +132,62 @@ async function main(root: HTMLElement) {
       void app.session.save({ count });
       render();
     });
-    actions.append(setTitle, notify, increment);
+    const notifyActions = element('button', { type: 'button' }, t('notifyActions'));
+    notifyActions.addEventListener('click', () => {
+      void app.notify({
+        title: t('notificationTitle'),
+        body: t('notificationBody', { count }),
+        actions: [
+          { id: 'reply', label: t('reply') },
+          { id: 'later', label: t('later') },
+        ],
+        data: { count },
+      });
+    });
+    const badge = element('button', { type: 'button' }, t('badge'));
+    badge.addEventListener('click', () => {
+      void app.setBadge(count);
+    });
+    const menu = element('button', { type: 'button' }, t('menu'));
+    const showMenu = (x: number, y: number) => {
+      void app.contextMenu
+        .show({ x, y }, [
+          { id: 'copy', label: t('menuCopy'), shortcut: 'Ctrl+C' },
+          { id: 'pin', label: t('menuPin'), checked: true },
+          { id: 'disabled', label: t('menuDisabled'), disabled: true },
+          { separator: true },
+          { id: 'delete', label: t('menuDelete'), danger: true },
+        ])
+        .then((id) => {
+          picked = id ?? t('dismissed');
+          render();
+        });
+    };
+    menu.addEventListener('click', () => {
+      const rect = menu.getBoundingClientRect();
+      showMenu(rect.left, rect.bottom);
+    });
+    menu.addEventListener('contextmenu', (event) => {
+      event.preventDefault();
+      showMenu(event.clientX, event.clientY);
+    });
+    const copy = element('button', { type: 'button' }, t('copy'));
+    copy.addEventListener('click', () => {
+      void app.clipboard.writeText(t('copied', { count }));
+    });
+    const website = element('button', { type: 'button' }, t('website'));
+    website.addEventListener('click', () => {
+      // The box itself, so the link works without the internet.
+      void app.openUrl(new URL('/', location.href).href);
+    });
+    const log = element('button', { type: 'button' }, t('log'));
+    log.addEventListener('click', () => {
+      app.log.debug('demo debug entry', { count });
+      app.log.info('demo info entry', { count });
+      app.log.warn('demo warn entry', { count });
+      app.log.error('demo error entry', { count });
+    });
+    actions.append(setTitle, notify, increment, notifyActions, badge, menu, copy, website, log);
     root.append(
       actions,
       element('p', {}, `${t('counter')}: `),
@@ -120,6 +202,18 @@ async function main(root: HTMLElement) {
     });
     keep.append(checkbox, ` ${t('keepOpen')}`);
     root.append(keep);
+    root.append(
+      toggle(t('dirty'), dirty, (on) => {
+        dirty = on;
+        void app.window.setDirty(on);
+      }),
+      toggle(t('hang'), hang, (on) => {
+        hang = on;
+      }),
+      toggle(t('attention'), attention, (on) => {
+        attention = on;
+      }),
+    );
 
     const list = element('ul', { 'aria-label': t('events') });
     for (const name of events) {
@@ -161,7 +255,23 @@ async function main(root: HTMLElement) {
       render();
     });
   }
-  app.answer('beforeClose', () => ({ allow: !keepOpen }));
+  app.on('notificationAction', (data) => {
+    activation = data;
+    render();
+  });
+  app.on('launch', (launch) => {
+    activation = launch.notification ?? activation;
+    render();
+  });
+  // Asks for attention once the user leaves the window, so the taskbar entry pulses while another window has the focus.
+  app.on('blur', () => {
+    if (attention) {
+      void app.window.requestAttention();
+    }
+  });
+  app.answer('beforeClose', () =>
+    hang ? new Promise<never>(() => undefined) : { allow: !keepOpen },
+  );
   app.answer('beforeUnload', async () => {
     await app.storage.set('count', count);
     return {};

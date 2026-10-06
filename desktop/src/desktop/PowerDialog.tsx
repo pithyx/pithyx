@@ -2,6 +2,7 @@ import { unwrap } from '@pithyx/api-client';
 import { useMutation } from '@tanstack/react-query';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
+import { runBeforeUnload } from '../apps/lifecycle';
 import { describeError } from '../errors/describe';
 import { ErrorNotice } from '../errors/ErrorNotice';
 import { Button, Dialog } from '@pithyx/ui';
@@ -13,6 +14,8 @@ export function PowerDialog({ action, onClose }: { action: PowerAction; onClose:
   const { t } = useTranslation();
   const power = useMutation({
     mutationFn: async () => {
+      // Apps get a last chance to save; they cannot stop it.
+      await runBeforeUnload(action);
       unwrap(await api.POST('/api/system/power', { body: { action } }));
     },
   });

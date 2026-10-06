@@ -123,8 +123,13 @@ export function brokerFor(target: BrokerTarget): MethodHandlers {
     openUrl: ({ url }) => {
       openInNewTab(url);
     },
+    // Debug entries reach the daemon only while an administrator switched debug on (D305); until the daemon serves
+    // that switch (A11) the context says `info`, so they stay in the browser console.
     'log.write': ({ entries }) => {
-      writeAppLog(target.app, entries);
+      writeAppLog(
+        target.app,
+        entries.filter((entry) => entry.level !== 'debug'),
+      );
     },
     // The daemon keeps it in the user's history and sends it back on the notifications topic, which shows the toast.
     notify: async ({ title, body, level, actions, data }) => {

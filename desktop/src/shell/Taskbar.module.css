@@ -146,8 +146,12 @@
   pointer-events: none;
 }
 
-/* An app that asks for attention pulses until the user looks at it; never moves when motion is reduced. */
-.app[data-attention] {
+/*
+ * An app that asks for attention pulses until the user looks at it; never moves when motion is reduced. On a phone
+ * the app switcher pulses for it.
+ */
+.app[data-attention],
+.switcher[data-attention] {
   box-shadow: inset 0 0 0 2px var(--color-highlight);
   animation: attention 1.2s var(--ease-standard) infinite alternate;
 }
@@ -163,7 +167,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .app[data-attention] {
+  .app[data-attention],
+  .switcher[data-attention] {
     animation: none;
     background: color-mix(in oklab, var(--color-highlight) 24%, transparent);
   }

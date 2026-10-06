@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { CASCADE_STEP, MIN_VISIBLE_END, MIN_VISIBLE_START, TITLEBAR_HEIGHT } from './geometry';
-import { MAX_WINDOWS, canOpen, initialState, reduce, topVisible, visibleRect } from './state';
+import {
+  MAX_WINDOWS,
+  canOpen,
+  initialState,
+  launchTarget,
+  reduce,
+  topVisible,
+  visibleRect,
+} from './state';
 import type { Action, DesktopState, WindowOptions } from './types';
 
 const workspace = { width: 1440, height: 848 };
@@ -76,6 +84,19 @@ describe('open', () => {
     });
     expect(state.windows.w1?.rect.width).toBe(workspace.width);
     expect(state.windows.w1?.rect.height).toBe(200);
+  });
+
+  it('sends a launch of a single-instance app to its top-most window, of a multi-instance app to a new one', () => {
+    // A restored layout can hold two windows of a single-instance app.
+    const state = run(
+      { type: 'open', app: 'demo', options: multi },
+      { type: 'open', app: 'demo', options: multi },
+      { type: 'focus', id: 'w1' },
+    );
+    expect(launchTarget(state, 'demo', 'single')).toEqual({ kind: 'existing', id: 'w1' });
+    expect(launchTarget(state, 'demo', 'multi')).toEqual({ kind: 'new' });
+    expect(launchTarget(state, 'other', 'single')).toEqual({ kind: 'new' });
+    expect(launchTarget(openMany(MAX_WINDOWS), 'other', 'single')).toEqual({ kind: 'full' });
   });
 
   it('refuses more than the maximum number of windows', () => {

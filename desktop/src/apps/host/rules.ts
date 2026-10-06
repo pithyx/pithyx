@@ -17,7 +17,7 @@ function argsRecord(args: unknown): Record<string, unknown> {
 export function launchOf(args: unknown): LaunchArgs {
   const launch = argsRecord(args).launch;
   return typeof launch === 'object' && launch !== null && 'args' in launch
-    ? (launch as LaunchArgs)
+    ? launch
     : { args: null };
 }
 

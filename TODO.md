@@ -346,14 +346,14 @@ Logs (D305): every level also appears in the browser console. `info`, `warn` and
 
 #### A7 Desktop host v1 (after A4 and A5)
 
-- [ ] Launch arguments and relaunching `single` apps (from 5.3).
-- [ ] `visibilityChange` and `connectionChange`.
-- [ ] The desktop draws app context menus (the 5.3 wish under "Owner feedback on 2026-09-30").
-- [ ] Badge and attention.
-- [ ] `setDirty`, the "not responding, close anyway?" dialog (D62), "Close all", `beforeUnload` (from 5.3).
-- [ ] `openUrl` and the clipboard through `platform/browser.ts`.
-- [ ] Action buttons in notifications, the console mirror of app logs, the default icon (box glyph).
-- [ ] E2E with the label `e2e` and axe.
+- [x] Launch arguments and relaunching `single` apps (from 5.3).
+- [x] `visibilityChange` and `connectionChange`.
+- [x] The desktop draws app context menus (the 5.3 wish under "Owner feedback on 2026-09-30").
+- [x] Badge and attention.
+- [x] `setDirty`, the "not responding, close anyway?" dialog (D62), "Close all", `beforeUnload` (from 5.3).
+- [x] `openUrl` and the clipboard through `platform/browser.ts`.
+- [x] Action buttons in notifications, the console mirror of app logs, the default icon (box glyph).
+- [ ] E2E with the label `e2e` and axe. (`e2e/tests/host.spec.ts` passes locally; the runner run with the label is open.)
 
 #### A8 CLI, docs, rc.2 `[REVIEW]`
 
@@ -859,7 +859,7 @@ Guardrails (set by the owner on 2026-09-27, binding like `CLAUDE.md`; the spec a
 13. Elevated rights are allowed, each named on its own (`docker.socket`, `host.network`, `device:<path>`, ..., `host.full`). They apply to the backend container only. Installing needs plain-language risk text plus password (and TOTP), by administrators only. New rights in an update need a new confirmation. A permanent badge, an audit log entry, revocable. Never sessions, password hashes or recovery keys of other users.
 
 - [x] Write the SDK specification as TypeScript interfaces with TSDoc: transports, handshake, versioning, error model, and the lifecycle below. `[REVIEW]` (Merged with pithyx/pithyx#16, decisions D54 to D66 and the guardrail review D68 to D78 in the PR. The v1 additions and replacements are A4.)
-- [ ] After the spec review: daemon-backed app storage (`/api/apps/{id}/storage`, D61), the "not responding, close anyway?" dialog for `beforeClose` (D62), "Close all" in the app switcher asking guarded windows, relaunch of `single` apps sending `launch`, and the Vite dev server serving `apps/*` (only the production build does today). (App storage: A11, as `/api/app/storage` with an app token. The dialog, "Close all" and the relaunch: A7. The Vite dev server item is struck: `apps/demo` becomes an installed probe app (A10), and apps are developed with `pithyx dev` (A8, D307).)
+- [ ] After the spec review: daemon-backed app storage (`/api/apps/{id}/storage`, D61), the "not responding, close anyway?" dialog for `beforeClose` (D62), "Close all" in the app switcher asking guarded windows, relaunch of `single` apps sending `launch`, and the Vite dev server serving `apps/*` (only the production build does today). (App storage: A11, as `/api/app/storage` with an app token. The dialog, "Close all" and the relaunch: done in A7. The Vite dev server item is struck: `apps/demo` becomes an installed probe app (A10), and apps are developed with `pithyx dev` (A8, D307).)
 - [x] Lifecycle events: `launch` (with arguments, for example a file to open), `focus`, `blur`, `minimize`, `restore`, `beforeClose` (can be vetoed for unsaved changes), `beforeLogout` (last chance to save), `themeChange`, `localeChange`, `openFile` (file handler). (Specified in pithyx/pithyx#16. `beforeLogout` becomes `beforeUnload` with a reason in A4; the launch arguments of `single` apps follow in A7.)
 - [ ] Manifest fields for runtime behavior: `window.instances` (`single` or `multi`), `backend.lifecycle` (`always` or `onDemand`), `backend.idleTimeout`, `backend.resources` (memory, CPU), `backend.schedules`. (In the schema: A2. Enforced: `single` in A7, resources in A6 and A14, lifecycle and schedules in A15.)
 - [ ] Lifecycle events for updates and failures: `appUpdated` (reload required), `backendUnavailable`, `backendRestored`, `permissionRevoked`. (A4: `appUpdated` stays; `backendStatus` replaces `backendUnavailable` and `backendRestored`, `permissionsChange` replaces `permissionRevoked`. Sent by the daemon from A11, A12 and A15.)

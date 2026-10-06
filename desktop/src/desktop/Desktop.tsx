@@ -29,7 +29,7 @@ import { runBeforeUnload } from '../apps/lifecycle';
 import { useAppName } from '../apps/names';
 import { isAppAllowed, setAppPermissions } from '../apps/access';
 import { AppHostLayer } from '../apps/host/AppHostLayer';
-import { useHost } from '../apps/host/store';
+import { resetHost, useHost } from '../apps/host/store';
 import { appsFor, findApp } from '../apps/registry';
 import { initialsOf } from '../auth/parts';
 import { clearSessionHint } from '../auth/sessionHint';
@@ -489,6 +489,7 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
       // desktop; the layout without them is saved before the sign-out, after which a save is refused.
       await runBeforeUnload('logout');
       dispatch({ type: 'closeAll' });
+      resetHost();
       await Promise.all([saveLayoutBeforeSignOut(), settleItemWrites()]);
       unwrap(await api.POST('/api/auth/logout'));
     },
@@ -688,7 +689,12 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
               <AppSwitcher
                 switcherRef={switcher}
                 position={taskbarPosition}
-                cards={running.map((entry) => ({ id: entry.id, app: entry, title: entry.name }))}
+                cards={running.map((entry) => ({
+                  id: entry.id,
+                  app: entry,
+                  title: entry.name,
+                  ...(entry.badge === undefined ? {} : { badge: entry.badge }),
+                }))}
                 onOpen={(id) => {
                   setSwitcherOpen(false);
                   dispatch({ type: 'focus', id });

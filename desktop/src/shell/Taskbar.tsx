@@ -252,10 +252,14 @@ export function Taskbar({
       <AriaButton
         ref={switcherRef}
         className={cx(styles.button, styles.switcher)}
-        aria-label={t('taskbar.switcher', { count: apps.length })}
+        aria-label={t('taskbar.switcher', {
+          count: apps.length,
+          attention: apps.some((app) => app.attention === true) ? 'yes' : 'no',
+        })}
         aria-expanded={switcherOpen}
         onPress={() => onSwitcher?.()}
         data-active={switcherOpen || undefined}
+        data-attention={apps.some((app) => app.attention === true) || undefined}
       >
         <IconLayoutGrid size={22} stroke={1.75} />
         {apps.length > 0 && (

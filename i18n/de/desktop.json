@@ -59,7 +59,7 @@
     "start": "Pithyx-Menü",
     "runningApps": "Laufende Apps",
     "app": "{state, select, minimized {{name}, minimiert} focused {{name}, aktiv} other {{name}}}{count, plural, =0 {} one {, # neu} other {, # neu}}{attention, select, yes {, braucht Aufmerksamkeit} other {}}",
-    "switcher": "{count, plural, one {Apps wechseln, # geöffnet} other {Apps wechseln, # geöffnet}}",
+    "switcher": "{count, plural, one {Apps wechseln, # geöffnet} other {Apps wechseln, # geöffnet}}{attention, select, yes {, braucht Aufmerksamkeit} other {}}",
     "jobs": "{count, plural, one {# laufende Aufgabe} other {# laufende Aufgaben}}",
     "notifications": "{count, plural, =0 {Benachrichtigungen} one {Benachrichtigungen, # ungelesen} other {Benachrichtigungen, # ungelesen}}",
     "position": {
@@ -141,7 +141,7 @@
     "title": "Geöffnete Apps",
     "closeAll": "Alle schließen",
     "close": "{name} schließen",
-    "open": "Zu {name} wechseln",
+    "open": "Zu {name} wechseln{count, plural, =0 {} other {, # neu}}",
     "empty": "Es sind keine Apps geöffnet."
   },
   "items": {
