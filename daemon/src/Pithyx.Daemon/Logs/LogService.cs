@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 using Dapper;
+using Pithyx.Daemon.Apps;
 using Pithyx.Daemon.Apps.Manifest;
 using Pithyx.Daemon.Database;
 using Pithyx.Daemon.Errors;
@@ -99,7 +100,7 @@ public sealed partial class LogService(
     {
         ArgumentNullException.ThrowIfNull(query);
         var settings = await SettingsAsync(cancellationToken);
-        var wanted = query with { Limit = query.Limit + 1 };
+        var wanted = WithLegacySources(query) with { Limit = query.Limit + 1 };
         List<LogEntry> entries;
         long? oldestCurrent;
         await using (var connection = await store.OpenAsync(cancellationToken))
@@ -126,7 +127,34 @@ public sealed partial class LogService(
         await using var connection = await store.OpenAsync(cancellationToken);
         var current = await LogDatabase.SourcesAsync(connection);
         var archived = await archive.SourcesAsync(settings, cancellationToken);
-        return [.. current.Union(archived, StringComparer.Ordinal).Order(StringComparer.Ordinal)];
+        return [.. current.Union(archived, StringComparer.Ordinal).Select(CurrentSource).Distinct(StringComparer.Ordinal).Order(StringComparer.Ordinal)];
+    }
+
+    /// <summary>
+    /// The source a core app writes to now: entries from before migration 0022 keep their short source
+    /// (<c>app/files</c>), and the Log Center lists them under the app's id (<c>app/org.pithyx.files</c>).
+    /// </summary>
+    public static string CurrentSource(string source) =>
+        source.StartsWith(LogSources.AppPrefix, StringComparison.Ordinal)
+        && CoreApps.LegacyIds.TryGetValue(source[LogSources.AppPrefix.Length..], out var id)
+            ? LogSources.AppPrefix + id
+            : source;
+
+    /// <summary>A filter for a core app also finds its entries from before migration 0022, under its short source.</summary>
+    public static LogQuery WithLegacySources(LogQuery query)
+    {
+        ArgumentNullException.ThrowIfNull(query);
+        if (query.Sources is not { Count: > 0 } sources)
+        {
+            return query;
+        }
+        var legacy = sources
+            .Where(source => source.StartsWith(LogSources.AppPrefix, StringComparison.Ordinal))
+            .Select(source => CoreApps.LegacyIdOf(source[LogSources.AppPrefix.Length..]))
+            .OfType<string>()
+            .Select(id => LogSources.AppPrefix + id)
+            .ToList();
+        return legacy.Count == 0 ? query : query with { Sources = sources.Union(legacy, StringComparer.Ordinal).ToHashSet(StringComparer.Ordinal) };
     }
 
     /// <summary>Every matching entry, newest first, as JSON lines or as text, up to <see cref="MaxExportEntries"/>.</summary>
@@ -179,7 +207,7 @@ public sealed partial class LogService(
     public AppLogResult WriteApp(string app, string user, AppLogBatch batch)
     {
         ArgumentNullException.ThrowIfNull(batch);
-        if (!AppId.IsKnownForm(app))
+        if (!AppId.IsValid(app))
         {
             throw new PithyxException(ErrorCodes.LogsAppInvalid, new Dictionary<string, object?> { ["app"] = app });
         }

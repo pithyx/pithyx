@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
+using Pithyx.Daemon.Apps;
 using Pithyx.Daemon.Auth;
 using Pithyx.Daemon.Errors;
 using Pithyx.Daemon.Hosting;
@@ -94,10 +95,10 @@ public static class LogEndpoints
             .WithName("SetLogSettings")
             .WithDescription("Administrators only. Sets the retention. The current logs (system and apps together) stay below maxBytes, at most 4 GB; entries older than retentionDays go. The archive on a pool is optional; archivePool null means the first pool.");
 
-        api.MapPost("/apps/{app}/logs", (string app, AppLogBatch batch, LogService service, Permissions.PermissionService permissions, HttpContext context) =>
+        api.MapPost("/apps/{app}/logs", (string app, AppLogBatch batch, LogService service, Permissions.PermissionService permissions, Apps.AppRegistry registry, HttpContext context) =>
             {
                 // Only an app the user may open writes in the user's name.
-                if (!Permissions.Resources.AllowsApp(permissions.ForUser(context.User), app))
+                if (Apps.Manifest.AppId.IsValid(app) && !(CoreApps.All.Contains(app) ? CoreApps.Allows(permissions.ForUser(context.User), app) : registry.Allows(permissions.ForUser(context.User), app)))
                 {
                     throw new PithyxException(ErrorCodes.AuthPermissionDenied);
                 }

@@ -175,19 +175,26 @@
     "moveCancelled": "Verschieben abgebrochen"
   },
   "apps": {
-    "files": "Dateien",
-    "storage": "Speicher",
-    "logs": "Protokoll-Center",
-    "settings": "Einstellungen",
+    "org": {
+      "pithyx": {
+        "files": "Dateien",
+        "viewer": "Betrachter",
+        "storage": "Speicher",
+        "settings": "Einstellungen",
+        "monitor": "Ressourcenmonitor",
+        "logs": "Protokoll-Center",
+        "about": "Über Pithyx"
+      }
+    },
+    "com": {
+      "example": {
+        "sdk-probe": "SDK-Demo"
+      }
+    },
     "photos": "Fotos",
     "users": "Benutzer",
     "containers": "Container",
-    "terminal": "Terminal",
-    "disks": "Laufwerke",
-    "about": "Über Pithyx",
-    "demo": "SDK-Demo",
-    "monitor": "Ressourcenmonitor",
-    "viewer": "Betrachter"
+    "terminal": "Terminal"
   },
   "roles": {
     "administrator": "Administrator",

@@ -20,15 +20,6 @@ public static partial class AppId
     /// <summary>Whether a valid id lies in the reserved namespace <c>org.pithyx.*</c>.</summary>
     public static bool IsReserved(string id) => id.StartsWith(ReservedPrefix, StringComparison.Ordinal);
 
-    /// <summary>
-    /// Whether the logs and notifications of an app may name <paramref name="id"/>: an id of D302, or one of the short
-    /// system app ids of today (<c>files</c>, <c>viewer</c>, <c>demo</c>) until A3 renames them to <c>org.pithyx.*</c>.
-    /// </summary>
-    public static bool IsKnownForm(string? id) => IsValid(id) || (id is not null && LegacyPattern().IsMatch(id));
-
     [GeneratedRegex(@"^[a-z][a-z0-9-]*(\.[a-z0-9][a-z0-9-]*){2,4}\z", RegexOptions.CultureInvariant)]
     private static partial Regex Pattern();
-
-    [GeneratedRegex(@"^[a-z][a-z0-9-]{0,63}\z", RegexOptions.CultureInvariant)]
-    private static partial Regex LegacyPattern();
 }

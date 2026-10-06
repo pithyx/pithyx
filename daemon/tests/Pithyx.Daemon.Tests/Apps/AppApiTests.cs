@@ -338,6 +338,43 @@ public sealed class AppApiTests : IDisposable
     }
 
     [Fact]
+    public async Task AThirdPartyAppIsGivenOnlyByAGrantAndOnlyWhileInstalled()
+    {
+        await _admin.SetupAdminAsync();
+        var rita = await _factory.InsertUserAsync("rita");
+        object Grants(params string[] resources) => new { grants = resources.Select(resource => new { resource, level = "allow" }) };
+
+        // Not installed yet: no grant names it, and the log endpoint refuses it.
+        using (var early = await _admin.PutAsJsonAsync($"/api/users/{rita}/grants", Grants("right:desktopLogin", "app:" + AppId), Token))
+        {
+            Assert.Equal("permissions.grant.invalid", await early.ErrorCodeAsync());
+        }
+        await InstallAsync(Package(), new { pool = Pool, access = "admins" });
+        using var ritaClient = _factory.ClientWithCookie(await _factory.SessionCookieAsync(rita));
+        using (var refused = await ritaClient.PostAsJsonAsync($"/api/apps/{AppId}/logs", new { entries = Array.Empty<object>() }, Token))
+        {
+            Assert.Equal("auth.permission.denied", await refused.ErrorCodeAsync());
+        }
+
+        using (var granted = await _admin.PutAsJsonAsync($"/api/users/{rita}/grants", Grants("right:desktopLogin", "app:" + AppId), Token))
+        {
+            Assert.Equal(HttpStatusCode.OK, granted.StatusCode);
+            Assert.Contains(AppId, (await granted.JsonAsync()).GetProperty("effective").GetProperty("apps").EnumerateArray().Select(app => app.GetString()));
+        }
+        using (var allowed = await ritaClient.PostAsJsonAsync($"/api/apps/{AppId}/logs", new { entries = Array.Empty<object>() }, Token))
+        {
+            Assert.Equal(HttpStatusCode.OK, allowed.StatusCode);
+        }
+
+        // Removing the app takes its grants along.
+        using (var remove = await _admin.DeleteAsync($"/api/apps/{AppId}?data=delete", Token))
+        {
+            await FinishedAsync(await remove.JsonAsync());
+        }
+        Assert.Equal(0, await _factory.ScalarAsync<long>("SELECT count(*) FROM grants WHERE resource = 'app:' || @AppId", new { AppId }));
+    }
+
+    [Fact]
     public async Task ThePoolIsChosenOnceAndABusyAppTakesNoSecondJob()
     {
         await _admin.SetupAdminAsync();

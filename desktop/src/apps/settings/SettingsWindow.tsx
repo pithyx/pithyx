@@ -1,4 +1,5 @@
 import { useQueryClient } from '@tanstack/react-query';
+import { coreAppIds } from '../ids';
 import type { AppProps } from '../registry';
 import { CoreSdkApp } from '../sdk/CoreSdkApp';
 import { backupHost } from '../sdk/backup';
@@ -13,7 +14,7 @@ export function SettingsWindow({ windowId }: AppProps) {
   return (
     <CoreSdkApp
       windowId={windowId}
-      app="settings"
+      app={coreAppIds.settings}
       permissions={['notifications']}
       internal={(emit) => {
         const storage = adminStorageHost(emit);

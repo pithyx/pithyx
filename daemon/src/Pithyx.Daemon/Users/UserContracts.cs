@@ -33,7 +33,7 @@ public sealed record UserSummary(
 /// <param name="Password">At least 8 characters and not one of the most common passwords.</param>
 /// <param name="DisplayName">Optional, at most 64 characters.</param>
 /// <param name="GroupIds">The groups the user joins, besides the built-in group <c>users</c>.</param>
-/// <param name="Grants">The user's own grants; when left out, the desktop login, SMB and the apps files, viewer and demo.</param>
+/// <param name="Grants">The user's own grants; when left out, the desktop login, SMB and the apps org.pithyx.files, org.pithyx.viewer and org.pithyx.demo.</param>
 public sealed record NewUser(string Username, string Password, string? DisplayName = null, IReadOnlyList<long>? GroupIds = null, IReadOnlyList<Permissions.GrantEntry>? Grants = null);
 
 /// <summary>Fields left out stay as they are.</summary>

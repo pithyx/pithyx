@@ -11,7 +11,7 @@ const created: Notification = {
   code: 'app.message',
   params: {},
   tone: 'info',
-  app: 'demo',
+  app: 'org.pithyx.demo',
   createdAt: '2026-09-29T10:00:00Z',
   readAt: null,
 };
@@ -57,14 +57,16 @@ describe('toasts for notifications', () => {
 
 describe('the app of a notification', () => {
   it('is the sender, or the core app of a job or storage alert', () => {
-    expect(sourceApp(created)).toBe('demo');
+    expect(sourceApp(created)).toBe('org.pithyx.demo');
     expect(sourceApp({ app: null, code: 'jobs.job.failed', params: { kind: 'files.move' } })).toBe(
-      'files',
+      'org.pithyx.files',
     );
     expect(
       sourceApp({ app: null, code: 'jobs.job.succeeded', params: { kind: 'storage.pool.create' } }),
-    ).toBe('storage');
-    expect(sourceApp({ app: null, code: 'storage.alert.resolved', params: {} })).toBe('storage');
+    ).toBe('org.pithyx.storage');
+    expect(sourceApp({ app: null, code: 'storage.alert.resolved', params: {} })).toBe(
+      'org.pithyx.storage',
+    );
     expect(
       sourceApp({ app: null, code: 'jobs.job.succeeded', params: { kind: 'test.work' } }),
     ).toBe(undefined);

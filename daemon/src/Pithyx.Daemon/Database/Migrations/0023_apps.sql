@@ -50,3 +50,7 @@ CREATE TRIGGER apps_grants_delete AFTER DELETE ON apps
 BEGIN
     DELETE FROM grants WHERE resource = 'app:' || old.id;
 END;
+
+-- The SDK demo was a hand-wired app (org.pithyx.demo since 0022); it is the E2E probe now, installed from its package
+-- like any third-party app, so its grants go.
+DELETE FROM grants WHERE resource = 'app:org.pithyx.demo';

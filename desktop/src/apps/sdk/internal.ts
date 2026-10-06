@@ -4,6 +4,7 @@ import { PithyxError, type HostExtensions } from '@pithyx/sdk/host';
 import { api } from '../../api/client';
 import { realtime } from '../../realtime/connection';
 import { openApp } from '../../wm/store';
+import { coreAppIds } from '../ids';
 
 export type StorageDiskList = components['schemas']['StorageDiskList'];
 export type StorageDisk = components['schemas']['StorageDisk'];
@@ -98,7 +99,7 @@ export interface InternalMethods {
 }
 
 /** Administrator apps another core app may open, for example Settings opening Storage. */
-const adminApps = ['storage', 'settings'] as const;
+const adminApps = [coreAppIds.storage, coreAppIds.settings] as const;
 export type AdminApp = (typeof adminApps)[number];
 
 /** Sent to the app when pools or disks changed; the app reads them again. */

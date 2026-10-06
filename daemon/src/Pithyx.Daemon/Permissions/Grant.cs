@@ -1,4 +1,5 @@
 using System.Globalization;
+using Pithyx.Daemon.Apps;
 using Pithyx.Daemon.Shares;
 
 namespace Pithyx.Daemon.Permissions;
@@ -48,24 +49,8 @@ public static class Resources
     /// <summary>The file protocols, in the order the editors show them.</summary>
     public static readonly IReadOnlyList<string> Protocols = [Smb, Sftp, WebDav, Ftp];
 
-    /// <summary>
-    /// The core apps that are given to users. The administration apps (Storage, Settings, Resource Monitor, Log
-    /// Center) belong to the administrator right, and About is for everybody.
-    /// </summary>
-    public static readonly IReadOnlyList<string> Apps = ["files", "viewer", "demo"];
-
-    /// <summary>The core apps that come with the administrator right.</summary>
-    public static readonly IReadOnlyList<string> AdminApps = ["storage", "settings", "monitor", "logs"];
-
-    /// <summary>Whether the rights allow an app: given apps by their grant, administration apps to administrators, every other app to everybody.</summary>
-    public static bool AllowsApp(EffectivePermissions rights, string appId)
-    {
-        ArgumentNullException.ThrowIfNull(rights);
-        return Apps.Contains(appId) ? rights.Has(App(appId)) : !AdminApps.Contains(appId) || rights.IsAdmin;
-    }
-
     /// <summary>What a new user gets unless the administrator chooses otherwise: the desktop, SMB and the apps.</summary>
-    public static readonly IReadOnlyList<string> NewUserDefaults = [DesktopLogin, Smb, .. Apps.Select(App)];
+    public static readonly IReadOnlyList<string> NewUserDefaults = [DesktopLogin, Smb, .. CoreApps.Granted.Select(App)];
 
     public static string Share(long shareId) => SharePrefix + shareId.ToString(CultureInfo.InvariantCulture);
 
@@ -81,5 +66,18 @@ public static class Resources
 
     /// <summary>Whether a resource other than a share is known.</summary>
     public static bool IsKnown(string resource) =>
-        Rights.Contains(resource) || Protocols.Contains(resource) || (resource.StartsWith(AppPrefix, StringComparison.Ordinal) && Apps.Contains(resource[AppPrefix.Length..]));
+        Rights.Contains(resource) || Protocols.Contains(resource) || IsCoreApp(resource);
+
+    /// <summary>Whether a resource names one of the core apps given by a grant.</summary>
+    public static bool IsCoreApp(string resource) =>
+        resource.StartsWith(AppPrefix, StringComparison.Ordinal) && CoreApps.Granted.Contains(resource[AppPrefix.Length..]);
+
+    /// <summary>
+    /// The id of a third-party app a resource names (<c>app:&lt;id&gt;</c> with an id of D302 outside <c>org.pithyx.*</c>),
+    /// or null. Whether it is installed is checked against the registry.
+    /// </summary>
+    public static string? ThirdPartyApp(string resource) =>
+        resource.StartsWith(AppPrefix, StringComparison.Ordinal) && Apps.Manifest.AppId.IsValid(resource[AppPrefix.Length..]) && !Apps.Manifest.AppId.IsReserved(resource[AppPrefix.Length..])
+            ? resource[AppPrefix.Length..]
+            : null;
 }

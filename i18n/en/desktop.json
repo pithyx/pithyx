@@ -175,19 +175,26 @@
     "moveCancelled": "Move cancelled"
   },
   "apps": {
-    "files": "Files",
-    "storage": "Storage",
-    "logs": "Log Center",
-    "settings": "Settings",
+    "org": {
+      "pithyx": {
+        "files": "Files",
+        "viewer": "Viewer",
+        "storage": "Storage",
+        "settings": "Settings",
+        "monitor": "Resource Monitor",
+        "logs": "Log Center",
+        "about": "About Pithyx"
+      }
+    },
+    "com": {
+      "example": {
+        "sdk-probe": "SDK demo"
+      }
+    },
     "photos": "Photos",
     "users": "Users",
     "containers": "Containers",
-    "terminal": "Terminal",
-    "disks": "Disks",
-    "about": "About Pithyx",
-    "demo": "SDK demo",
-    "monitor": "Resource Monitor",
-    "viewer": "Viewer"
+    "terminal": "Terminal"
   },
   "roles": {
     "administrator": "Administrator",

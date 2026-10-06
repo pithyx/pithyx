@@ -1,6 +1,7 @@
 using System.Data.Common;
 using System.Security.Claims;
 using Dapper;
+using Pithyx.Daemon.Apps;
 using Pithyx.Daemon.Auth;
 using Pithyx.Daemon.Database;
 using Pithyx.Daemon.Errors;
@@ -13,7 +14,7 @@ namespace Pithyx.Daemon.Permissions;
 /// </summary>
 public sealed class GrantService(SqliteConnectionFactory connections, PermissionService permissions)
 {
-    public static PermissionCatalog Catalog { get; } = new(Resources.Rights, Resources.Protocols, Resources.Apps);
+    public static PermissionCatalog Catalog { get; } = new(Resources.Rights, Resources.Protocols, CoreApps.Granted);
 
     public async Task<UserGrants> UserGrantsAsync(ClaimsPrincipal caller, long userId, CancellationToken cancellationToken)
     {
@@ -149,7 +150,10 @@ public sealed class GrantService(SqliteConnectionFactory connections, Permission
             effective.IsAdmin,
             [.. Resources.Rights.Where(effective.Has)],
             [.. Resources.Protocols.Where(effective.Has)],
-            [.. Resources.Apps.Where(app => effective.Has(Resources.App(app)))]);
+            [
+                .. CoreApps.Granted.Where(app => effective.Has(Resources.App(app))),
+                .. effective.Allowed.Order(StringComparer.Ordinal).Select(Resources.ThirdPartyApp).OfType<string>(),
+            ]);
     }
 
     /// <summary>Gives a new user its first grants, in the transaction that creates it.</summary>
@@ -173,6 +177,15 @@ public sealed class GrantService(SqliteConnectionFactory connections, Permission
                     throw Invalid(grant.Resource);
                 }
                 await RequireShareAsync(connection, transaction, shareId);
+            }
+            else if (Resources.ThirdPartyApp(grant.Resource) is { } appId)
+            {
+                // A third-party app is given only while it is installed.
+                if (grant.Level != GrantLevel.Allow || kind == SubjectKind.App
+                    || await connection.ExecuteScalarAsync<long>("SELECT count(*) FROM apps WHERE id = @appId", new { appId }, transaction) == 0)
+                {
+                    throw Invalid(grant.Resource);
+                }
             }
             else if (!Resources.IsKnown(grant.Resource) || grant.Level != GrantLevel.Allow || (kind == SubjectKind.App && grant.Resource == Resources.Admin))
             {

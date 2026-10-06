@@ -39,7 +39,7 @@ public sealed class NotificationServiceTests : IAsyncLifetime
     public async Task ANotificationIsStoredWithItsCodeAndParamsAndListedNewestFirstForItsUserOnly()
     {
         var first = await CreateAsync(_bobId, "test.first");
-        var second = await _notifications.CreateAsync(_bobId, Draft("test.second", NotificationTone.Critical) with { App = "demo" }, Token);
+        var second = await _notifications.CreateAsync(_bobId, Draft("test.second", NotificationTone.Critical) with { App = "org.pithyx.demo" }, Token);
         await CreateAsync(_carolId);
 
         var bob = await ListAsync(_bobId);
@@ -47,7 +47,7 @@ public sealed class NotificationServiceTests : IAsyncLifetime
         Assert.Equal([second.Id, first.Id], bob.Select(entry => entry.Id));
         Assert.Equal("test.second", bob[0].Code);
         Assert.Equal(NotificationTone.Critical, bob[0].Tone);
-        Assert.Equal("demo", bob[0].App);
+        Assert.Equal("org.pithyx.demo", bob[0].App);
         Assert.Equal(3, bob[1].Params["count"].GetInt32());
         Assert.Equal("tank", bob[1].Params["name"].GetString());
         Assert.Null(bob[1].App);

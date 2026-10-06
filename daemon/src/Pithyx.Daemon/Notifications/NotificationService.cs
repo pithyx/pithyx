@@ -128,7 +128,7 @@ public sealed partial class NotificationService : IDisposable
     public Task<Notification> CreateFromAppAsync(ClaimsPrincipal user, AppNotificationRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (request.App is null || !AppId.IsKnownForm(request.App))
+        if (request.App is null || !AppId.IsValid(request.App))
         {
             throw Invalid("app", AppId.MaxLength);
         }

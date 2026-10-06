@@ -1,5 +1,6 @@
 import { type Page } from '@playwright/test';
 import { expect, test } from './fixtures';
+import { installProbe } from './probe';
 import {
   appWindow,
   openAccountMenu,
@@ -13,10 +14,14 @@ async function openDemo(page: Page) {
   await openFromStart(page, 'SDK demo');
   const window = appWindow(page, 'SDK demo');
   await expect(window).toBeVisible();
-  const app = page.frameLocator('iframe[src="/apps/demo/index.html"]');
+  const app = page.frameLocator('iframe[src="/apps/com.example.sdk-probe/index.html"]');
   await expect(app.getByRole('heading', { name: 'SDK demo' })).toBeVisible();
   return { window, app };
 }
+
+test.beforeAll(async ({ baseURL }) => {
+  await installProbe(baseURL ?? '');
+});
 
 test.beforeEach(async ({ page }) => {
   await signInAsAdmin(page);
@@ -107,10 +112,9 @@ test('the sandbox keeps the app away from cookies, the desktop page, browser sto
   for (const probe of ['cookie', 'parent', 'storage', 'api']) {
     await expect(app.locator(`[data-probe="${probe}"]`), probe).toHaveText('blocked');
   }
-  await expect(page.locator('iframe[src="/apps/demo/index.html"]')).toHaveAttribute(
-    'sandbox',
-    'allow-scripts allow-forms',
-  );
+  await expect(
+    page.locator('iframe[src="/apps/com.example.sdk-probe/index.html"]'),
+  ).toHaveAttribute('sandbox', 'allow-scripts allow-forms');
 
   await test.step('a request the app posts to the desktop window instead of its port is ignored', async () => {
     // The demo posts a forged window.setTitle('forged') to window.parent at start; the title must not change.
@@ -144,4 +148,23 @@ test('the sandbox keeps the app away from cookies, the desktop page, browser sto
     });
     expect(answered).toBe(false);
   });
+});
+
+test('the probe opened directly in a tab runs sandboxed and cannot use the session', async ({
+  page,
+}) => {
+  const response = await page.goto('/apps/com.example.sdk-probe/index.html');
+  expect(response?.headers()['content-security-policy']).toMatch(
+    /^sandbox allow-scripts allow-forms; default-src 'self';/,
+  );
+  expect(response?.headers()['x-content-type-options']).toBe('nosniff');
+  // An opaque origin: no cookie and no answer from the API to read.
+  expect(await page.evaluate(() => window.origin)).toBe('null');
+  const status = await page.evaluate(() =>
+    fetch('/api/auth/session').then(
+      (answer) => answer.status,
+      () => 'blocked',
+    ),
+  );
+  expect(status).not.toBe(200);
 });

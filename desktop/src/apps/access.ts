@@ -1,10 +1,11 @@
 import type { components } from '@pithyx/api-client';
+import { coreAppIds, probeAppId } from './ids';
 import { findApp } from './registry';
 
 export type SessionPermissions = components['schemas']['SessionPermissions'];
 
 /** The apps given by a grant, as the daemon's permission catalog lists them; the others belong to the administrator right or to everybody. */
-export const grantedApps: readonly string[] = ['files', 'viewer', 'demo'];
+export const grantedApps: readonly string[] = [coreAppIds.files, coreAppIds.viewer, probeAppId];
 
 let current: SessionPermissions | undefined;
 
