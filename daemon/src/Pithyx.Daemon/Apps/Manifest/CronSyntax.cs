@@ -7,12 +7,12 @@ namespace Pithyx.Daemon.Apps.Manifest;
 /// </summary>
 public static class CronSyntax
 {
-    private static readonly (int Min, int Max)[] Fields = [(0, 59), (0, 23), (1, 31), (1, 12), (0, 7)];
+    private static readonly (int Min, int Max)[] _fields = [(0, 59), (0, 23), (1, 31), (1, 12), (0, 7)];
 
     public static bool IsValid(string cron)
     {
         var fields = cron.Split(' ');
-        return fields.Length == Fields.Length && fields.Select((field, index) => IsValidField(field, Fields[index])).All(valid => valid);
+        return fields.Length == _fields.Length && fields.Select((field, index) => IsValidField(field, _fields[index])).All(valid => valid);
     }
 
     private static bool IsValidField(string field, (int Min, int Max) bounds) =>

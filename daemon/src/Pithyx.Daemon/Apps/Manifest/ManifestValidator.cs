@@ -25,12 +25,12 @@ public static class ManifestValidator
     public const int SupportedVersion = 1;
 
     /// <summary>Capabilities that reach the host's secrets (D71); never granted on their own.</summary>
-    private static readonly HashSet<string> BlockedCapabilities =
+    private static readonly HashSet<string> _blockedCapabilities =
         ["ALL", "SYS_ADMIN", "SYS_PTRACE", "SYS_MODULE", "SYS_RAWIO", "DAC_READ_SEARCH", "BPF"];
 
-    private static readonly Lazy<(JsonSchema Schema, JsonNode Document)> Schema = new(LoadSchema);
+    private static readonly Lazy<(JsonSchema Schema, JsonNode Document)> _schema = new(LoadSchema);
 
-    private static readonly EvaluationOptions Evaluation = new() { OutputFormat = OutputFormat.List };
+    private static readonly EvaluationOptions _evaluation = new() { OutputFormat = OutputFormat.List };
 
     /// <summary>
     /// Validates the bytes of <c>pithyx.json</c>. Ids in <c>org.pithyx.*</c> are refused unless
@@ -74,8 +74,8 @@ public static class ManifestValidator
 
     private static List<ValidationIssue> SchemaIssues(JsonElement root)
     {
-        var (schema, schemaDocument) = Schema.Value;
-        var results = schema.Evaluate(root, Evaluation);
+        var (schema, schemaDocument) = _schema.Value;
+        var results = schema.Evaluate(root, _evaluation);
         var violations = new SortedSet<(string Path, string Keyword)>(Comparer<(string Path, string Keyword)>.Create((a, b) =>
             a.Path == b.Path ? string.CompareOrdinal(a.Keyword, b.Keyword) : string.CompareOrdinal(a.Path, b.Path)));
         if (!results.IsValid)
@@ -245,7 +245,7 @@ public static class ManifestValidator
     /// <summary>Whether this version of Pithyx can grant an elevated right the schema accepts (D71, D304).</summary>
     public static bool IsSupportedElevatedRight(string right) =>
         right is not ("docker.socket" or "host.full")
-        && !(right.StartsWith("capability:", StringComparison.Ordinal) && BlockedCapabilities.Contains(right["capability:".Length..]));
+        && !(right.StartsWith("capability:", StringComparison.Ordinal) && _blockedCapabilities.Contains(right["capability:".Length..]));
 
     private static ValidationIssue Duplicate(string path, string value) =>
         new(ErrorCodes.AppManifestDuplicate, ("path", path), ("value", value));

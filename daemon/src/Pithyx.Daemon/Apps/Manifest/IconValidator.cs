@@ -20,12 +20,12 @@ public static partial class IconValidator
 
     private const string SvgNamespace = "http://www.w3.org/2000/svg";
 
-    private static readonly HashSet<string> ForbiddenElements = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> _forbiddenElements = new(StringComparer.OrdinalIgnoreCase)
     {
         "script", "foreignObject", "image", "iframe", "embed", "object", "audio", "video", "canvas",
     };
 
-    private static readonly HashSet<string> AnimationElements = new(StringComparer.OrdinalIgnoreCase) { "set", "animate" };
+    private static readonly HashSet<string> _animationElements = new(StringComparer.OrdinalIgnoreCase) { "set", "animate" };
 
     public static IReadOnlyList<ValidationIssue> Validate(ReadOnlySpan<byte> svg)
     {
@@ -102,7 +102,7 @@ public static partial class IconValidator
     private static void CheckElement(XmlReader reader, List<ValidationIssue> issues)
     {
         var element = reader.LocalName;
-        if (ForbiddenElements.Contains(element))
+        if (_forbiddenElements.Contains(element))
         {
             Add(issues, Issue("element_forbidden", ("element", element)));
         }
@@ -126,7 +126,7 @@ public static partial class IconValidator
             {
                 Add(issues, Issue("external_href"));
             }
-            else if (name == "attributeName" && AnimationElements.Contains(element) && value.Contains("href", StringComparison.OrdinalIgnoreCase))
+            else if (name == "attributeName" && _animationElements.Contains(element) && value.Contains("href", StringComparison.OrdinalIgnoreCase))
             {
                 Add(issues, Issue("external_href"));
             }
