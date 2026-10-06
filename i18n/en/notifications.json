@@ -105,7 +105,8 @@
   "app": {
     "message": {
       "title": "{title}",
-      "body": "{body}"
+      "body": "{body}",
+      "action": "Open"
     }
   },
   "jobs": {

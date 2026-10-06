@@ -117,7 +117,7 @@ export function filesHost(emit: (event: string, data?: unknown) => void): {
       },
       'internal.files.openViewer': {
         validate: isTarget,
-        handle: (params) => openApp(coreAppIds.viewer, { session: params }),
+        handle: (params) => openApp(coreAppIds.viewer, undefined, { session: params }),
       },
     },
     close: () => {

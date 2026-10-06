@@ -25,9 +25,11 @@ import { Header, MenuSection, SubmenuTrigger } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { queryKeys } from '../api/queries';
-import { runBeforeLogout } from '../apps/lifecycle';
+import { runBeforeUnload } from '../apps/lifecycle';
 import { useAppName } from '../apps/names';
 import { isAppAllowed, setAppPermissions } from '../apps/access';
+import { AppHostLayer } from '../apps/host/AppHostLayer';
+import { resetHost, useHost } from '../apps/host/store';
 import { appsFor, findApp } from '../apps/registry';
 import { initialsOf } from '../auth/parts';
 import { clearSessionHint } from '../auth/sessionHint';
@@ -61,7 +63,7 @@ import { dispatch, openApp, useDesktop } from '../wm/store';
 import { useTopic } from '../realtime/useTopic';
 import type { PowerAction } from './PowerDialog';
 import { announce } from '../wm/announce';
-import { requestClose } from '../wm/commands';
+import { requestClose, requestCloseAll } from '../wm/commands';
 import { WindowLayer } from '../wm/WindowLayer';
 import { useMinuteClock } from './clock';
 import styles from './Desktop.module.css';
@@ -356,10 +358,12 @@ function useWorkspaceSize() {
   return workspace;
 }
 
-/** Running windows for the taskbar, in opening order. */
+/** Running windows for the taskbar, in opening order, with the badges and attention of their apps. */
 function useRunningApps(): RunningApp[] {
   const windows = useDesktop((state) => state.windows);
   const focused = useDesktop((state) => state.focused);
+  const badges = useHost((state) => state.badges);
+  const attention = useHost((state) => state.attention);
   const appName = useAppName();
   return Object.values(windows).flatMap((window) => {
     const app = findApp(window.app);
@@ -373,6 +377,8 @@ function useRunningApps(): RunningApp[] {
         icon: app.icon,
         tone: app.tone,
         state: window.minimized ? 'minimized' : window.id === focused ? 'focused' : 'open',
+        badge: badges[window.app] ?? 0,
+        attention: attention[window.id] === true,
       },
     ];
   });
@@ -481,8 +487,9 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
     mutationFn: async () => {
       // Apps may ask first (unsaved changes). Then the windows close, so the next sign-in starts with an empty
       // desktop; the layout without them is saved before the sign-out, after which a save is refused.
-      await runBeforeLogout();
+      await runBeforeUnload('logout');
       dispatch({ type: 'closeAll' });
+      resetHost();
       await Promise.all([saveLayoutBeforeSignOut(), settleItemWrites()]);
       unwrap(await api.POST('/api/auth/logout'));
     },
@@ -667,6 +674,7 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
               <NotificationToasts position={taskbarPosition} locale={locale} />
             </Suspense>
             <PermissionsSync />
+            <AppHostLayer />
             {powerAction !== null && (
               <Suspense>
                 <PowerDialog
@@ -681,7 +689,12 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
               <AppSwitcher
                 switcherRef={switcher}
                 position={taskbarPosition}
-                cards={running.map((entry) => ({ id: entry.id, app: entry, title: entry.name }))}
+                cards={running.map((entry) => ({
+                  id: entry.id,
+                  app: entry,
+                  title: entry.name,
+                  ...(entry.badge === undefined ? {} : { badge: entry.badge }),
+                }))}
                 onOpen={(id) => {
                   setSwitcherOpen(false);
                   dispatch({ type: 'focus', id });
@@ -691,7 +704,7 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
                 }}
                 onCloseAll={() => {
                   setSwitcherOpen(false);
-                  dispatch({ type: 'closeAll' });
+                  void requestCloseAll();
                 }}
               />
             )}

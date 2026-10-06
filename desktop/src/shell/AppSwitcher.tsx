@@ -1,7 +1,9 @@
 import { IconX } from '../ui/icons';
 import type { ReactNode, Ref } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, IconButton } from '@pithyx/ui';
+import { Badge, Button, IconButton } from '@pithyx/ui';
+import { badgeText } from '../apps/host/rules';
+import { useFormatLocale } from '../i18n';
 import { AppIcon } from './AppIcon';
 import styles from './AppSwitcher.module.css';
 import type { AppInfo, TaskbarPosition } from './types';
@@ -12,6 +14,8 @@ export interface SwitcherCard {
   title: string;
   /** Rendered scaled down. Without it the card shows the app icon on the app's color. */
   preview?: ReactNode;
+  /** The app's badge count (`setBadge`); 0 for none. */
+  badge?: number;
 }
 
 /** Compact size class: open apps as cards; tap to switch, close with the button on each card. */
@@ -31,6 +35,7 @@ export function AppSwitcher({
   onCloseAll?: () => void;
 }) {
   const { t } = useTranslation();
+  const locale = useFormatLocale();
   return (
     <section
       ref={switcherRef}
@@ -54,6 +59,11 @@ export function AppSwitcher({
             <div className={styles.cardHeader}>
               <AppIcon app={card.app} size={22} />
               <span className={styles.cardTitle}>{card.title}</span>
+              {badgeText(card.badge, locale) !== null && (
+                <span aria-hidden>
+                  <Badge>{badgeText(card.badge, locale)}</Badge>
+                </span>
+              )}
               <IconButton
                 label={t('switcher.close', { name: card.title })}
                 size="sm"
@@ -76,7 +86,7 @@ export function AppSwitcher({
               <button
                 type="button"
                 className={styles.previewButton}
-                aria-label={t('switcher.open', { name: card.title })}
+                aria-label={t('switcher.open', { name: card.title, count: card.badge ?? 0 })}
                 onClick={() => onOpen?.(card.id)}
               />
             </div>

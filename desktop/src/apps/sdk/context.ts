@@ -4,7 +4,9 @@ import { PROTOCOL_VERSION, SDK_VERSION, type AppContext, type SizeClass } from '
 import i18next from 'i18next';
 import { formatLocale } from '../../i18n';
 import { queryKeys } from '../../api/queries';
+import { useRealtime } from '../../realtime/connection';
 import { useDesktop } from '../../wm/store';
+import { isOnline, isWindowVisible, launchOf, sessionOf } from '../host/rules';
 import { currentTheme } from '../sandbox/theme';
 
 type User = components['schemas']['UserInfo'];
@@ -15,8 +17,8 @@ export const PITHYX_VERSION = __PITHYX_VERSION__;
 
 /**
  * The init context of an app window, the same for sandboxed and core apps. Until the daemon serves the app context
- * (A11), the desktop fills in what it knows: the user's groups are empty, there is no backend and no storage, debug
- * logs stay in the browser console, and the box counts as reachable.
+ * (A11), the desktop fills in what it knows: the user's groups are empty, there is no backend and no storage, and debug
+ * logs stay in the browser console.
  */
 export function appContext(options: {
   client: QueryClient;
@@ -29,7 +31,6 @@ export function appContext(options: {
   const user = client.getQueryData<User>(queryKeys.session);
   const setup = client.getQueryData<Setup>(queryKeys.setup);
   const window = useDesktop.getState().windows[windowId];
-  const args = window?.args as { session?: unknown } | null | undefined;
   return {
     app: options.app,
     instance: windowId,
@@ -46,12 +47,12 @@ export function appContext(options: {
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     theme: currentTheme(),
     sizeClass: options.sizeClass,
-    launch: { args: null },
-    session: args?.session ?? null,
+    launch: launchOf(window?.args),
+    session: sessionOf(window?.args),
     permissions: [...options.permissions],
     box: { name: setup?.hostname ?? location.hostname, version: PITHYX_VERSION },
-    visible: window?.minimized !== true,
-    online: true,
+    visible: isWindowVisible(window?.minimized === true, document.visibilityState === 'hidden'),
+    online: isOnline(useRealtime.getState().status),
     logLevel: 'info',
     backend: null,
     storage: [],
