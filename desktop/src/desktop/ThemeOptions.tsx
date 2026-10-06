@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { setTheme, storedTheme, themeChoices, type ThemeChoice } from '../theme/preference';
-import { Menu, MenuItem } from '../ui/Menu';
+import { Menu, MenuItem } from '@pithyx/ui';
 
 /** System, light and dark, with the current choice checked; the account menu's appearance submenu. */
 export function ThemeOptions() {

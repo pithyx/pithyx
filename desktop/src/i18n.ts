@@ -40,10 +40,14 @@ export type Language = (typeof languages)[number];
 
 // Only the active language is loaded, each namespace when a chunk needs it (i18nNamespaces.ts).
 // Compiled at build time (scripts/compile-messages.ts), formatted by icuFormat.
-const translationFiles = import.meta.glob<object>('../../i18n/*/*.json', {
-  query: '?compiled',
-  import: 'default',
-});
+// The texts of @pithyx/ui (ui.json) come with its components.
+const translationFiles = import.meta.glob<object>(
+  ['../../i18n/*/*.json', '!../../i18n/*/ui.json'],
+  {
+    query: '?compiled',
+    import: 'default',
+  },
+);
 // Namespaces asked for so far; a language switch loads the same ones in the new language.
 const requested = new Set<Namespace>();
 let markReady: () => void = () => undefined;

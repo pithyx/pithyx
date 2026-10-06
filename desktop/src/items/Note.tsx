@@ -8,9 +8,7 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import noteStyles from '../shell/StickyNote.module.css';
-import { Button, IconButton } from '../ui/Button';
-import { cx } from '../ui/cx';
-import { Dialog } from '../ui/Dialog';
+import { Button, cx, Dialog, IconButton } from '@pithyx/ui';
 import { IconGripHorizontal, IconX } from '../ui/icons';
 import { announce } from '../wm/announce';
 import { cellOrigin, nearestCell, placeNote, type Cell, type GridSize } from './grid';

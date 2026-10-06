@@ -14,7 +14,7 @@ import { dirname, join, relative } from 'node:path';
 import { brotliCompressSync, constants, gzipSync } from 'node:zlib';
 import { defaultClientConditions, defaultServerConditions, defineConfig, type Plugin } from 'vite';
 import { compileMessages } from './scripts/compile-messages.ts';
-import { generateAll, writeDeclaration } from './scripts/css-module-types.ts';
+import { generateAll, writeDeclaration } from '../tools/css-module-types.ts';
 import { desktopNamespaces, signInNamespaces } from './src/i18nNamespaces.ts';
 
 const daemonUrl = process.env.PITHYX_DAEMON_URL ?? 'http://localhost:7484';
@@ -226,6 +226,10 @@ function translationChunk(id: string): string | null {
     return null;
   }
   const [, language = '', namespace = ''] = match;
+  // @pithyx/ui bundles its few texts in every language with its components.
+  if (namespace === 'ui') {
+    return null;
+  }
   if (signIn.includes(namespace)) {
     return `i18n-${language}`;
   }
@@ -244,9 +248,9 @@ export default defineConfig({
     bundleGraph(),
     devCompression(),
   ],
-  // Workspace packages (the SDK) are compiled from source.
+  // Workspace packages (the SDK, @pithyx/ui) are compiled from source.
   resolve: { conditions: ['pithyx-source', ...defaultClientConditions] },
-  // Unit tests run through the server resolver; they compile the SDK from source too, so no SDK build is needed.
+  // Unit tests run through the server resolver; they compile the packages from source too, without a package build.
   ssr: { resolve: { conditions: ['pithyx-source', ...defaultServerConditions] } },
   build: {
     rollupOptions: {

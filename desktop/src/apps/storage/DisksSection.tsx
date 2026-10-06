@@ -2,8 +2,7 @@ import type { PithyxApp } from '@pithyx/sdk';
 import { useTranslation } from 'react-i18next';
 import { formatBytes } from '../../desktop/format';
 import { ErrorNotice } from '../../errors/ErrorNotice';
-import { Badge } from '../../ui/Controls';
-import { cx } from '../../ui/cx';
+import { Badge, cx } from '@pithyx/ui';
 import type { SmartReport, StorageDisk } from '../sdk/internal';
 import {
   describeProblem,

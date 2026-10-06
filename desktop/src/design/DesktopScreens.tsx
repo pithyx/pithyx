@@ -19,10 +19,16 @@ import { StickyNote } from '../shell/StickyNote';
 import { Taskbar } from '../shell/Taskbar';
 import type { RunningApp, TaskbarPosition } from '../shell/types';
 import { Window, type WindowProps } from '../shell/Window';
-import { Button } from '../ui/Button';
-import { Dialog } from '../ui/Dialog';
-import { cx } from '../ui/cx';
-import { Menu, MenuItem, MenuPopover, MenuSeparator, MenuTrigger } from '../ui/Menu';
+import {
+  Button,
+  cx,
+  Dialog,
+  Menu,
+  MenuItem,
+  MenuPopover,
+  MenuSeparator,
+  MenuTrigger,
+} from '@pithyx/ui';
 import styles from './DesktopScreens.module.css';
 import { FilesContent, LogsContent, SettingsContent, StorageContent } from './SampleApps';
 import {

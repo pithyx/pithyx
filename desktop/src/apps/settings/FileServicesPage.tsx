@@ -3,9 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ErrorNotice } from '../../errors/ErrorNotice';
-import { Button } from '../../ui/Button';
-import { Switch } from '../../ui/Controls';
-import { TextField } from '../../ui/TextField';
+import { Button, Switch, TextField } from '@pithyx/ui';
 import {
   systemCall,
   type FileServiceSettings,

@@ -1,8 +1,7 @@
 import { IconAlertTriangle } from '../ui/icons';
 import { useTranslation } from 'react-i18next';
-import { Button } from '../ui/Button';
-import { AriaLocale } from '../ui/AriaLocale';
-import { Dialog } from '../ui/Dialog';
+import { Button, Dialog, UiProvider } from '@pithyx/ui';
+import { useFormatLocale } from '../i18n';
 import type { DescribedError } from './describe';
 import { useErrorMessage, useLogRequestId } from './ErrorNotice';
 import { closeError, useErrorStore } from './errorStore';
@@ -17,8 +16,9 @@ function ErrorContent({ error }: { error: DescribedError }) {
 export function ErrorDialog() {
   const { t } = useTranslation();
   const error = useErrorStore((state) => state.current);
+  const locale = useFormatLocale();
   return (
-    <AriaLocale>
+    <UiProvider locale={locale}>
       <Dialog
         isOpen={error !== null}
         onOpenChange={(open) => {
@@ -39,6 +39,6 @@ export function ErrorDialog() {
       >
         {error !== null && <ErrorContent error={error} />}
       </Dialog>
-    </AriaLocale>
+    </UiProvider>
   );
 }

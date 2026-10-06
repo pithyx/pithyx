@@ -1,7 +1,7 @@
 import { IconServer2 } from '../ui/icons';
 import type { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { cx } from '../ui/cx';
+import { cx } from '@pithyx/ui';
 import { Wordmark, type LogoMotion } from '../ui/Logo';
 import styles from './AuthLayout.module.css';
 import { Wallpaper } from './Wallpaper';

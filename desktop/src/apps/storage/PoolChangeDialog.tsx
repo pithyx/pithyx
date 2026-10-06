@@ -4,9 +4,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatBytes } from '../../desktop/format';
 import { ErrorNotice } from '../../errors/ErrorNotice';
-import { Button } from '../../ui/Button';
-import { Dialog } from '../../ui/Dialog';
-import { TextField } from '../../ui/TextField';
+import { Button, Dialog, TextField } from '@pithyx/ui';
 import { internalCall, type Pool, type StorageDisk, type Vdev } from '../sdk/internal';
 import { addLayouts, poolLayout, type AddLayout } from './layouts';
 import {

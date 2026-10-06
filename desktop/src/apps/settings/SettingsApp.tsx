@@ -14,7 +14,7 @@ import {
   IconWorld,
   type TablerIcon,
 } from '../../ui/icons';
-import { SearchField } from '../../ui/TextField';
+import { SearchField } from '@pithyx/ui';
 import type { SdkAppProps } from '../sdk/CoreSdkApp';
 import { onInternal, SHARES_CHANGED, STORAGE_CHANGED } from '../sdk/internal';
 import { GroupsPage } from '../users/GroupsPage';

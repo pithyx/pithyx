@@ -1,16 +1,9 @@
 import type { TFunction } from 'i18next';
-import {
-  Button as AriaButton,
-  Dialog,
-  DialogTrigger,
-  Heading,
-  Popover,
-} from 'react-aria-components';
+import { Button as AriaButton, Dialog, DialogTrigger, Heading } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
 import { formatBytes } from '../desktop/format';
-import { cx } from '../ui/cx';
+import { cx, MenuPopover } from '@pithyx/ui';
 import { IconDownload, IconUpload, IconX } from '../ui/icons';
-import menuStyles from '../ui/Menu.module.css';
 import taskbarStyles from './Taskbar.module.css';
 import {
   cancelTransfer,
@@ -65,7 +58,7 @@ export function TransfersButton({ position }: { position: 'bottom' | 'top' | 'le
           <IconDownload className={styles.icon} size={16} stroke={2} />
         )}
       </AriaButton>
-      <Popover className={cx(menuStyles.popover, styles.popover)} placement={placement[position]}>
+      <MenuPopover className={styles.popover} placement={placement[position]} offset={8}>
         <Dialog className={styles.dialog} aria-labelledby="transfers-title">
           <Heading slot="title" id="transfers-title" className={styles.title}>
             {t('transfers.title')}
@@ -76,7 +69,7 @@ export function TransfersButton({ position }: { position: 'bottom' | 'top' | 'le
             ))}
           </ul>
         </Dialog>
-      </Popover>
+      </MenuPopover>
     </DialogTrigger>
   );
 }

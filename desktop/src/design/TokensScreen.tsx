@@ -9,10 +9,21 @@ import {
   IconTrash,
 } from '../ui/icons';
 import { useState } from 'react';
-import { Button, IconButton } from '../ui/Button';
-import { Badge, Checkbox, ProgressBar, Switch } from '../ui/Controls';
-import { Menu, MenuItem, MenuPopover, MenuTrigger } from '../ui/Menu';
-import { PasswordField, SearchField, TextField } from '../ui/TextField';
+import {
+  Badge,
+  Button,
+  Checkbox,
+  IconButton,
+  Menu,
+  MenuItem,
+  MenuPopover,
+  MenuTrigger,
+  PasswordField,
+  ProgressBar,
+  SearchField,
+  Switch,
+  TextField,
+} from '@pithyx/ui';
 import { labels } from './labels';
 import styles from './TokensScreen.module.css';
 

@@ -23,10 +23,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import { formatBytes } from '../desktop/format';
 import { Wallpaper } from '../shell/Wallpaper';
-import { IconButton } from '../ui/Button';
-import { ProgressBar } from '../ui/Controls';
-import { cx } from '../ui/cx';
-import { SearchField } from '../ui/TextField';
+import { cx, IconButton, ProgressBar, SearchField } from '@pithyx/ui';
 import { accentPresets, filesApp, logLines, storageApp } from './sampleApps';
 import styles from './SampleApps.module.css';
 import { currentFolder } from './sampleData';
