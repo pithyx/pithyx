@@ -1,0 +1,10 @@
+{
+  "invalid/right-other-device.yaml": "elevated.json",
+  "invalid/right-unused.yaml": "elevated.json",
+  "invalid/storage-not-listed.yaml": "storage.json",
+  "invalid/storage-not-mounted.yaml": "storage.json",
+  "invalid/storage-read-write.yaml": "storage.json",
+  "invalid/storage-service-missing.yaml": "storage.json",
+  "valid/elevated.yaml": "elevated.json",
+  "valid/storage.yaml": "storage.json"
+}

@@ -3,6 +3,7 @@
 // commands come with the developer tooling.
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative, sep } from 'node:path';
+import { validateCompose } from './compose';
 import { validateIcon } from './icon';
 import type { Issue } from './issues';
 import { checkLayout, ICON_FILE, MANIFEST_FILE } from './layout';
@@ -26,6 +27,10 @@ function validate(root: string): Issue[] {
       issues.push(
         ...checkLayout(paths, { entry: manifest.entry, compose: manifest.backend?.compose }),
       );
+      const compose = manifest.backend?.compose;
+      if (compose !== undefined && paths.includes(compose)) {
+        issues.push(...validateCompose(readFileSync(join(root, compose)), manifest).issues);
+      }
     }
   } else {
     issues.push({

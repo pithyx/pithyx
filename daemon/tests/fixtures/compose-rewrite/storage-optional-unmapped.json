@@ -1,0 +1,20 @@
+{
+  "compose": "valid/storage.yaml",
+  "manifest": "storage.json",
+  "host": {
+    "uid": 40001,
+    "appDirectory": "/tank/.pithyx/apps/com.example.chat",
+    "bridgeName": "px-1",
+    "imageIds": {
+      "ghcr.io/example/chat-server:1.2.0@sha256:a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5": "sha256:1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c",
+      "docker.io/library/postgres:17@sha256:0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e": "sha256:2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d"
+    },
+    "storage": {
+      "attachments": {
+        "hostPath": "/tank/Family/Chat",
+        "readOnly": true,
+        "gid": null
+      }
+    }
+  }
+}

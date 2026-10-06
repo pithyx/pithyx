@@ -1,6 +1,56 @@
 {
   "$comment": "Golden cases for the two ICU renderers: IcuMessageFormatter (daemon) and intl-messageformat on build-time compiled messages (desktop). Both test suites render every entry and must produce exactly `expected`. Every code in i18n/en/errors.json needs an entry with example params.",
   "errors": {
+    "app.compose.key_unsupported": {
+      "params": {
+        "path": "/services/server/ports",
+        "key": "ports"
+      },
+      "expected": "The app's Compose file uses ports at /services/server/ports, which Pithyx does not allow."
+    },
+    "app.compose.reference_unknown": {
+      "params": {
+        "path": "/services/server/volumes/0",
+        "name": "data"
+      },
+      "expected": "The app's backend refers to data at /services/server/volumes/0, which is not declared."
+    },
+    "app.compose.right_missing": {
+      "params": {
+        "path": "/services/server/cap_add/0",
+        "right": "capability:NET_ADMIN"
+      },
+      "expected": "The app's Compose file needs the right capability:NET_ADMIN at /services/server/cap_add/0, which its manifest does not declare."
+    },
+    "app.compose.right_unused": {
+      "params": {
+        "path": "/backend/elevated/0",
+        "right": "host.pid"
+      },
+      "expected": "The app's manifest declares the right host.pid at /backend/elevated/0, which its Compose file does not use."
+    },
+    "app.compose.storage_mismatch": {
+      "params": {
+        "path": "/services/server/volumes/1",
+        "storage": "library",
+        "reason": "read_only"
+      },
+      "expected": "The storage library does not match the Compose file at /services/server/volumes/1: it is read-only and must be mounted with :ro."
+    },
+    "app.compose.value_invalid": {
+      "params": {
+        "path": "/services/server/image",
+        "reason": "unpinned"
+      },
+      "expected": "The app's Compose file has a value Pithyx refuses at /services/server/image: the image is not pinned with @sha256."
+    },
+    "app.compose.yaml_invalid": {
+      "params": {
+        "reason": "duplicate_key",
+        "path": "/services/server/init"
+      },
+      "expected": "The app's Compose file cannot be read: /services/server/init appears twice."
+    },
     "app.elevated.unsupported": {
       "params": {
         "right": "docker.socket"

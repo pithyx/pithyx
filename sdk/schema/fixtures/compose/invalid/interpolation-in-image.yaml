@@ -1,0 +1,3 @@
+services:
+  server:
+    image: ${REGISTRY}/chat@sha256:a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5

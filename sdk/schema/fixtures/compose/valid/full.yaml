@@ -1,0 +1,68 @@
+---
+# Every key of the allowlist, in the forms Compose accepts.
+services:
+  server:
+    image: ghcr.io/example/chat-server:1.2.0@sha256:a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5
+    command: [node, server.js, --port, '8080']
+    entrypoint: /usr/local/bin/docker-entrypoint.sh
+    environment:
+      NODE_ENV: production
+      WORKERS: 4
+      DEBUG: false
+      PRICE: '1.50'
+      EMPTY: ''
+      PROMPT: 'costs $$5'
+      MOTD: |
+        Hello
+        world
+    working_dir: /app
+    volumes:
+      - data:/app/data
+      - cache:/app/cache:rw
+      - type: volume
+        source: data
+        target: /app/backup
+        read_only: true
+      - type: tmpfs
+        target: /app/tmp
+        tmpfs:
+          size: 64m
+    tmpfs:
+      - /run
+      - /var/cache/app:size=16m,mode=1777
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+        required: true
+    healthcheck:
+      test: [CMD, wget, -q, -O, /dev/null, 'http://127.0.0.1:8080/healthz']
+      interval: 30s
+      timeout: 5s
+      start_period: 1m
+      start_interval: 2s
+      retries: 3
+    expose: [8080, '9090/tcp', 7000-7002]
+    read_only: true
+    init: true
+    stop_signal: SIGTERM
+    stop_grace_period: 1m30s
+    shm_size: 64m
+    labels:
+      - org.opencontainers.image.title=Chat
+      - com.example.tier=web
+    cap_drop: [ALL]
+  db:
+    image: docker.io/library/postgres:17@sha256:0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e
+    environment: { POSTGRES_DB: chat, POSTGRES_PASSWORD_FILE: /run/secrets/pw }
+    volumes: ['db:/var/lib/postgresql/data']
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+    shm_size: 268435456
+    stop_grace_period: 0s
+volumes:
+  data:
+  cache: {}
+  db: ~
+...

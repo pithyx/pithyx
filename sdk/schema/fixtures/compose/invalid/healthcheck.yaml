@@ -1,0 +1,11 @@
+services:
+  server:
+    image: ghcr.io/example/chat-server:1.2.0@sha256:a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5
+    healthcheck:
+      test: [CMD]
+      interval: 500ms
+      timeout: 1.5s
+      retries: 0
+      start_period: 2h
+      disable: 'yes'
+      shell: sh

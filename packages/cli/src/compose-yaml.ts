@@ -267,7 +267,7 @@ function buildMap(pairs: Pair[], path: string, issues: Issue[]): YamlMap {
     if (scalar.value === '<<') {
       issues.push(yamlIssue('merge_key', keyPath));
     } else if (scalarKind(scalar) !== 'string') {
-      issues.push(yamlIssue('key_not_string', keyPath));
+      issues.push(yamlIssue('key_not_string', path));
     } else if (seen.has(scalar.value)) {
       issues.push(yamlIssue('duplicate_key', keyPath));
     } else {

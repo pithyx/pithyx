@@ -1,0 +1,6 @@
+services:
+  server:
+    image: ghcr.io/example/chat-server:1.2.0@sha256:a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5
+    depends_on: [db: x]
+  db:
+    image: docker.io/library/postgres:17@sha256:0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e

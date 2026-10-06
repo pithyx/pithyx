@@ -1,0 +1,5 @@
+services:
+  server:
+    image: ghcr.io/example/chat-server:1.2.0@sha256:a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5
+    cap_add: [CAP_NET_ADMIN, net_admin]
+    cap_drop: [ALL, ALL]

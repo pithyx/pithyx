@@ -1,0 +1,18 @@
+services:
+  server:
+    image: ghcr.io/example/chat-server:1.2.0@sha256:a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5
+    ports: ['8080:8080']
+    build: .
+    user: root
+    restart: always
+    logging: {driver: none}
+    deploy: {resources: {limits: {memory: 1g}}}
+    env_file: .env
+    security_opt: ['seccomp:unconfined']
+    container_name: chat
+    extra_hosts: ['host.docker.internal:host-gateway']
+    networks: [default]
+    sysctls: {net.ipv4.ip_forward: 1}
+    userns_mode: host
+    ipc: host
+    x-note: hi

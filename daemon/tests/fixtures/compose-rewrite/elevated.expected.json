@@ -1,0 +1,73 @@
+{
+  "name": "pithyx-com_example_chat",
+  "services": {
+    "server": {
+      "image": "sha256:1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c",
+      "devices": [
+        "/dev/dri/renderD128:/dev/dri/renderD128:rw"
+      ],
+      "cap_add": [
+        "NET_ADMIN"
+      ],
+      "pid": "host",
+      "pull_policy": "never",
+      "user": "0:0",
+      "networks": [
+        "app"
+      ],
+      "restart": "no",
+      "logging": {
+        "driver": "journald",
+        "options": {
+          "labels": "com.pithyx.app,com.pithyx.service",
+          "tag": "{{.Name}}"
+        }
+      },
+      "pids_limit": 1024,
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "labels": {
+        "com.pithyx.app": "com.example.chat",
+        "com.pithyx.service": "server",
+        "com.pithyx.version": "1.2.0"
+      }
+    },
+    "discovery": {
+      "image": "sha256:1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c",
+      "network_mode": "host",
+      "pull_policy": "never",
+      "user": "0:0",
+      "restart": "no",
+      "logging": {
+        "driver": "journald",
+        "options": {
+          "labels": "com.pithyx.app,com.pithyx.service",
+          "tag": "{{.Name}}"
+        }
+      },
+      "pids_limit": 1024,
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "labels": {
+        "com.pithyx.app": "com.example.chat",
+        "com.pithyx.service": "discovery",
+        "com.pithyx.version": "1.2.0"
+      }
+    }
+  },
+  "networks": {
+    "app": {
+      "name": "pithyx-com_example_chat",
+      "driver": "bridge",
+      "internal": true,
+      "driver_opts": {
+        "com.docker.network.bridge.name": "px-42"
+      },
+      "labels": {
+        "com.pithyx.app": "com.example.chat"
+      }
+    }
+  }
+}

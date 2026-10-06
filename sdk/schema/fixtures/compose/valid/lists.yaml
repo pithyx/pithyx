@@ -1,0 +1,20 @@
+services:
+  server:
+    image: ghcr.io/example/chat-server:1.2.0@sha256:a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5
+    command: node server.js --port 8080
+    environment:
+      - NODE_ENV=production
+      - EMPTY=
+      - EQUALS=a=b
+    labels:
+      com.example.tier: web
+      com.example.replicas: 2
+    depends_on: [worker]
+    healthcheck:
+      test: curl -f http://127.0.0.1:8080/ || exit 1
+  worker:
+    image: ghcr.io/example/chat-server:1.2.0@sha256:a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5
+    entrypoint: []
+    healthcheck:
+      test: [NONE]
+    tmpfs: /tmp

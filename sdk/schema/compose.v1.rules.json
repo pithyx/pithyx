@@ -8,7 +8,8 @@
     "services": 16,
     "volumes": 32,
     "shmSizeBytes": 268435456,
-    "tmpfsSizeBytes": 268435456
+    "tmpfsSizeBytes": 268435456,
+    "imageChars": 512
   },
   "patterns": {
     "serviceName": "^(?:[a-z0-9][a-z0-9_.-]{0,62})$",
@@ -62,6 +63,7 @@
     "network_mode": { "type": "enum", "values": ["host"], "right": "host.network" },
     "pid": { "type": "enum", "values": ["host"], "right": "host.pid" },
     "devices": { "type": "devices", "right": "device:" },
+    "cap_drop": { "type": "capabilities" },
     "cap_add": { "type": "capabilities", "right": "capability:" },
     "privileged": { "type": "bool", "right": "host.full" }
   },
@@ -88,7 +90,8 @@
         "type": "enum",
         "values": ["service_started", "service_healthy", "service_completed_successfully"]
       },
-      "restart": { "type": "bool" }
+      "restart": { "type": "bool" },
+      "required": { "type": "bool" }
     }
   },
   "reservedLabelPrefixes": ["com.pithyx", "com.docker"],
@@ -106,7 +109,6 @@
       "ports": "backends are reached only through the proxy",
       "build": "the box never builds images",
       "networks": "the box attaches the app's network",
-      "network_mode other than host": "only with host.network",
       "links": "service names resolve on the app's network",
       "external_links": "reaches other projects",
       "volumes_from": "can reach another app's volumes",
@@ -117,7 +119,7 @@
       "extends": "reads other files",
       "profiles": "every service runs",
       "container_name": "the box names containers per project",
-      "user": "the box sets the app's uid or root",
+      "user": "the box sets the app uid, or root with backend.root",
       "group_add": "the box adds the share groups of mapped storage",
       "restart": "the box runs the lifecycle",
       "logging": "the box sets journald",
@@ -136,7 +138,6 @@
       "blkio_config": "box policy",
       "oom_kill_disable": "can stall the host",
       "oom_score_adj": "can push the box's own services out first",
-      "cap_drop": "the box drops capabilities itself",
       "security_opt": "could switch off seccomp, AppArmor or no-new-privileges",
       "device_cgroup_rules": "could open every device",
       "gpus": "needs a runtime the box does not ship",

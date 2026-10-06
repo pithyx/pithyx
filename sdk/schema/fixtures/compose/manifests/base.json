@@ -1,0 +1,35 @@
+{
+  "manifestVersion": 1,
+  "id": "com.example.chat",
+  "version": "1.2.0",
+  "name": {
+    "en": "Chat"
+  },
+  "author": {
+    "name": "Example"
+  },
+  "entry": "frontend/index.html",
+  "sdk": "^1.0.0",
+  "permissions": [],
+  "window": {
+    "instances": "single",
+    "defaultSize": {
+      "width": 900,
+      "height": 640
+    },
+    "minSize": {
+      "width": 320,
+      "height": 400
+    }
+  },
+  "backend": {
+    "compose": "backend/compose.yaml",
+    "endpoints": {
+      "api": {
+        "service": "server",
+        "port": 8080
+      }
+    },
+    "lifecycle": "onDemand"
+  }
+}

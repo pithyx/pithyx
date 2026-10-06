@@ -51,6 +51,14 @@ export interface ComposeValidation {
 interface Mount {
   volume: string;
   path: string;
+  readOnly: boolean;
+}
+
+/** A mount as written in the Compose file: a named volume (`volume`) or a tmpfs. */
+interface ParsedMount {
+  target: string;
+  volume?: string;
+  readOnly: boolean;
 }
 
 interface Reference {
@@ -117,6 +125,10 @@ class Checker {
 
   private invalid(path: string, reason: string): void {
     this.add('app.compose.value_invalid', { path, reason });
+  }
+
+  private mismatch(path: string, storage: string, reason: string): void {
+    this.add('app.compose.storage_mismatch', { path, storage, reason });
   }
 
   private unsupported(path: string, key: string): void {
@@ -212,7 +224,7 @@ class Checker {
           this.devices(value, keyPath, rule.right ?? '');
           break;
         case 'capabilities':
-          this.capabilities(value, keyPath, rule.right ?? '');
+          this.capabilities(value, keyPath, rule.right);
           break;
         default:
           if (this.value(value, keyPath, rule) !== undefined && rule.right !== undefined) {
@@ -370,7 +382,7 @@ class Checker {
     }
     if (!patterns.imageDigest.test(text)) {
       this.invalid(path, 'unpinned');
-    } else if (text.length > 512 || !patterns.image.test(text)) {
+    } else if (text.length > rules.limits.imageChars || !patterns.image.test(text)) {
       this.invalid(path, 'format');
     }
   }
@@ -440,16 +452,13 @@ class Checker {
       }
       targets.add(mount.target);
       if (mount.volume !== undefined) {
-        facts.mounts.push({ volume: mount.volume, path: itemPath });
+        facts.mounts.push({ volume: mount.volume, path: itemPath, readOnly: mount.readOnly });
       }
     });
   }
 
   /** `VOLUME:TARGET[:ro|rw]`; returns the mount when it is valid. */
-  private shortMount(
-    node: YamlNode,
-    path: string,
-  ): { target: string; volume?: string } | undefined {
+  private shortMount(node: YamlNode, path: string): ParsedMount | undefined {
     const text = this.text(node, path);
     if (text === undefined) {
       return undefined;
@@ -464,14 +473,15 @@ class Checker {
       this.invalid(path, 'format');
       return undefined;
     }
-    return this.mountSource(source, target, path);
+    return this.mountSource(source, target, mode === 'ro', path);
   }
 
   private mountSource(
     source: string,
     target: string,
+    readOnly: boolean,
     path: string,
-  ): { target: string; volume?: string } | undefined {
+  ): ParsedMount | undefined {
     if (isHostPath(source)) {
       this.hostPath(source, path);
       return undefined;
@@ -487,7 +497,7 @@ class Checker {
       this.add('app.compose.reference_unknown', { path, name: source });
       return undefined;
     }
-    return { target, volume: source };
+    return { target, volume: source, readOnly };
   }
 
   private hostPath(source: string, path: string): void {
@@ -510,7 +520,7 @@ class Checker {
     return true;
   }
 
-  private longMount(node: YamlMap, path: string): { target: string; volume?: string } | undefined {
+  private longMount(node: YamlMap, path: string): ParsedMount | undefined {
     const keys = rules.mount.keys as Record<string, KeyRule>;
     let valid = true;
     const values: Record<string, unknown> = {};
@@ -549,7 +559,7 @@ class Checker {
         this.unsupported(`${path}/source`, 'source');
         return undefined;
       }
-      return this.target(target, path) ? { target } : undefined;
+      return this.target(target, path) ? { target, readOnly: false } : undefined;
     }
     if (entry(node, 'tmpfs') !== undefined) {
       this.unsupported(`${path}/tmpfs`, 'tmpfs');
@@ -559,7 +569,7 @@ class Checker {
       this.invalid(path, 'anonymous');
       return undefined;
     }
-    return this.mountSource(source, target, path);
+    return this.mountSource(source, target, values.read_only === true, path);
   }
 
   private tmpfs(node: YamlNode, path: string, targets: Set<string>): void {
@@ -624,7 +634,7 @@ class Checker {
       }
       for (const { key, value } of node.entries) {
         const itemPath = `${path}/${escapePointer(key)}`;
-        this.object(value, itemPath, rules.dependsOn.keys as Record<string, KeyRule>);
+        this.object(value, itemPath, rules.dependsOn.keys);
         facts.dependsOn.push({ name: key, path: itemPath });
       }
       return;
@@ -762,7 +772,7 @@ class Checker {
     });
   }
 
-  private capabilities(node: YamlNode, path: string, right: string): void {
+  private capabilities(node: YamlNode, path: string, right: string | undefined): void {
     const seen = new Set<string>();
     this.list(node, path)?.forEach((item, index) => {
       const itemPath = `${path}/${String(index)}`;
@@ -779,7 +789,9 @@ class Checker {
         return;
       }
       seen.add(text);
-      this.rights.push({ name: right + text, path: itemPath });
+      if (right !== undefined) {
+        this.rights.push({ name: right + text, path: itemPath });
+      }
     });
   }
 
@@ -823,13 +835,18 @@ class Checker {
         if (service === undefined) {
           this.add('app.compose.reference_unknown', { path, name });
         } else if (!service.mounts.some((mount) => mount.volume === request.id)) {
-          this.add('app.compose.storage_mismatch', { path, storage: request.id });
+          this.mismatch(path, request.id, 'not_mounted');
         }
       });
       for (const service of services) {
         for (const mount of service.mounts) {
-          if (mount.volume === request.id && !listed.includes(service.name)) {
-            this.add('app.compose.storage_mismatch', { path: mount.path, storage: request.id });
+          if (mount.volume !== request.id) {
+            continue;
+          }
+          if (!listed.includes(service.name)) {
+            this.mismatch(mount.path, request.id, 'not_listed');
+          } else if (request.access === 'read' && !mount.readOnly) {
+            this.mismatch(mount.path, request.id, 'read_only');
           }
         }
       }
