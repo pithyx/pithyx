@@ -11,6 +11,13 @@ export interface Issue {
     | 'app.manifest.duplicate'
     | 'app.manifest.reference_unknown'
     | 'app.manifest.cron_invalid'
+    | 'app.compose.yaml_invalid'
+    | 'app.compose.key_unsupported'
+    | 'app.compose.value_invalid'
+    | 'app.compose.reference_unknown'
+    | 'app.compose.storage_mismatch'
+    | 'app.compose.right_missing'
+    | 'app.compose.right_unused'
     | 'app.elevated.unsupported'
     | 'app.icon.invalid'
     | 'app.package.layout_invalid';

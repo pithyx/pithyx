@@ -22,5 +22,6 @@
     <PackageVersion Include="SkiaSharp.NativeAssets.macOS" Version="4.153.0" />
     <PackageVersion Include="SkiaSharp.NativeAssets.Win32" Version="4.153.0" />
     <PackageVersion Include="xunit.v3" Version="4.0.1" />
+    <PackageVersion Include="YamlDotNet" Version="18.1.0" />
   </ItemGroup>
 </Project>

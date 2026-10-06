@@ -125,6 +125,12 @@
         "resolved": "4.153.0",
         "contentHash": "c1glJgnMtRYQE05h71nkotqZAdcmi8+9B9UcTvsQRKSA8G3QEM50lktSR119hJt3JE6KN8lHqihKMsJNbIVWOA=="
       },
+      "YamlDotNet": {
+        "type": "Direct",
+        "requested": "[18.1.0, )",
+        "resolved": "18.1.0",
+        "contentHash": "5K+9KFg2TdTl7VXv88Qzi/0lqK6JFoNP3lRuImPYGRV7K/QYklDyTrj4+A+KAki1JsQi6qKY+hDyY7d6WRqjrw=="
+      },
       "Humanizer.Core": {
         "type": "Transitive",
         "resolved": "3.0.1",
