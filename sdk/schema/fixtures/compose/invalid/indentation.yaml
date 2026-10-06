@@ -1,0 +1,4 @@
+services:
+  server:
+    image: x
+   init: true

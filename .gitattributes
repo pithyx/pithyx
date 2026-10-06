@@ -19,3 +19,6 @@
 
 # Third-party font files and licenses stay byte-identical to their official releases.
 desktop/public/fonts/** -text
+
+# Fixtures whose line endings are part of the test.
+sdk/schema/fixtures/compose/valid/crlf.yaml -text

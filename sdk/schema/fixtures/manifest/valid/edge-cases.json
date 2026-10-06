@@ -95,9 +95,6 @@
       "endpoint": "thumbs-v2",
       "path": "/"
     },
-    "resources": {
-      "cpus": 0.5
-    },
     "schedules": [
       {
         "id": "nightly",

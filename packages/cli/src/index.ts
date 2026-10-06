@@ -3,6 +3,7 @@
  *
  * @packageDocumentation
  */
+export { COMPOSE_RULES, validateCompose, type ComposeValidation } from './compose';
 export { isValidCron } from './cron';
 export { MAX_ICON_BYTES, validateIcon } from './icon';
 export type { Issue } from './issues';

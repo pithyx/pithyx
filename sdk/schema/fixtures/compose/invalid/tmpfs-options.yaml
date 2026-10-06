@@ -1,0 +1,9 @@
+services:
+  server:
+    image: ghcr.io/example/chat-server:1.2.0@sha256:a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5
+    tmpfs:
+      - /a:size=1g
+      - /b:size=0
+      - /c:uid=0
+      - /d:mode=99
+      - /e:size=1m,size=2m

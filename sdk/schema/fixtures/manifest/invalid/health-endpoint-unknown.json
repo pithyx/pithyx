@@ -79,10 +79,6 @@
       "endpoint": "status",
       "path": "/healthz"
     },
-    "resources": {
-      "memory": 512,
-      "cpus": 1
-    },
     "schedules": [
       {
         "id": "cleanup",

@@ -11,8 +11,72 @@ namespace Pithyx.Daemon.Errors;
 public static class ErrorCodes
 {
     /// <summary>
+    /// A key of the app's Compose file is not in the allowlist (<c>sdk/schema/compose.v1.rules.json</c>), either unknown or
+    /// one the box sets itself (<c>ports</c>, <c>networks</c>, <c>user</c>, <c>restart</c>, <c>logging</c>, limits);
+    /// <c>params.path</c> is its JSON Pointer, <c>params.key</c> the key.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppComposeKeyUnsupported = "app.compose.key_unsupported";
+
+    /// <summary>
+    /// A name refers to something that is not declared: a volume missing from the Compose file's top-level
+    /// <c>volumes</c>, a service in <c>depends_on</c>, or a service of the manifest's <c>backend.endpoints</c> or
+    /// <c>storage[].services</c> missing from the Compose file; <c>params.path</c> is the reference (in the Compose file for
+    /// <c>/services/...</c>, in the manifest for <c>/backend/...</c> and <c>/storage/...</c>), <c>params.name</c> the name.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppComposeReferenceUnknown = "app.compose.reference_unknown";
+
+    /// <summary>
+    /// The Compose file uses a key that needs an elevated right the manifest's <c>backend.elevated</c> does not declare
+    /// (<c>devices</c>, <c>cap_add</c>, <c>network_mode: host</c>, <c>pid: host</c>); <c>params.path</c> is the use,
+    /// <c>params.right</c> the right it needs.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppComposeRightMissing = "app.compose.right_missing";
+
+    /// <summary>
+    /// The manifest declares an elevated right the Compose file never uses; <c>params.path</c> is the right in the
+    /// manifest, <c>params.right</c> the right. Rights are checked in both directions, so an app holds no right it does
+    /// not need.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppComposeRightUnused = "app.compose.right_unused";
+
+    /// <summary>
+    /// A storage request of the manifest and the Compose file disagree; <c>params.storage</c> is the storage id,
+    /// <c>params.path</c> the place and <c>params.reason</c> one of <c>not_mounted</c> (a service listed in
+    /// <c>storage[].services</c> does not mount the volume), <c>not_listed</c> (a service mounts it without being listed) or
+    /// <c>read_only</c> (storage with <c>access: read</c> is mounted without <c>:ro</c>).
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppComposeStorageMismatch = "app.compose.storage_mismatch";
+
+    /// <summary>
+    /// A value of the app's Compose file is refused; <c>params.path</c> is its JSON Pointer and <c>params.reason</c> one of
+    /// <c>required</c>, <c>type</c>, <c>format</c>, <c>range</c>, <c>unpinned</c> (an image without <c>@sha256:</c>),
+    /// <c>interpolation</c> (a <c>$</c> that is not <c>$$</c>), <c>no_value</c> (an environment variable without a value,
+    /// which Compose would take from the box), <c>duplicate</c>, <c>reserved</c> (a label under <c>com.pithyx</c> or
+    /// <c>com.docker</c>, or a mount on <c>/</c>, <c>/proc</c>, <c>/sys</c> or <c>/dev</c>), <c>host_path</c> (a bind
+    /// mount of a host path), <c>anonymous</c> (a volume without a name) or <c>cycle</c> (in <c>depends_on</c>).
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppComposeValueInvalid = "app.compose.value_invalid";
+
+    /// <summary>
+    /// The app's Compose file is not YAML the box reads; <c>params.reason</c> says why: <c>too_large</c> (over 64 KB),
+    /// <c>not_utf8</c>, <c>character</c> (a tab, a byte order mark or another character YAML parsers disagree about),
+    /// <c>syntax</c>, <c>documents</c> (not exactly one document), <c>too_deep</c>, <c>directive</c>, <c>anchor</c>
+    /// (anchors and aliases), <c>tag</c>, <c>duplicate_key</c>, <c>merge_key</c> or <c>key_not_string</c>, the last three
+    /// with <c>params.path</c>.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppComposeYamlInvalid = "app.compose.yaml_invalid";
+
+    /// <summary>
     /// The manifest asks for an elevated right this version of Pithyx does not grant: <c>docker.socket</c>, <c>host.full</c>
-    /// or a capability that reaches the host's secrets; <c>params.right</c> names it.
+    /// or a capability that reaches the host's secrets; <c>params.right</c> names it. When the Compose file needs it
+    /// (<c>privileged</c>, a mount of the Docker socket, <c>cap_add</c>), <c>params.path</c> is the use.
     /// </summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string AppElevatedUnsupported = "app.elevated.unsupported";

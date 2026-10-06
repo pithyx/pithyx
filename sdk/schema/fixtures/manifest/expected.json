@@ -359,12 +359,12 @@
       }
     }
   ],
-  "cpus-zero.json": [
+  "resources-removed.json": [
     {
       "code": "app.manifest.schema_violation",
       "params": {
-        "path": "/backend/resources/cpus",
-        "keyword": "exclusiveMinimum"
+        "path": "/backend/resources",
+        "keyword": "additionalProperties"
       }
     }
   ],

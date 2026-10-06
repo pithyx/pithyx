@@ -1,5 +1,14 @@
 {
   "app": {
+    "compose": {
+      "key_unsupported": "Die Compose-Datei der App nutzt {key} unter {path}, was Pithyx nicht erlaubt.",
+      "reference_unknown": "Das Backend der App verweist unter {path} auf {name}, das nicht deklariert ist.",
+      "right_missing": "Die Compose-Datei der App braucht unter {path} das Recht {right}, das ihr Manifest nicht deklariert.",
+      "right_unused": "Das Manifest der App deklariert unter {path} das Recht {right}, das ihre Compose-Datei nicht nutzt.",
+      "storage_mismatch": "Der Speicher {storage} passt nicht zur Compose-Datei unter {path}: {reason, select, not_mounted {der Dienst bindet ihn nicht ein} not_listed {der Dienst bindet ihn ein, ohne im Manifest genannt zu sein} read_only {er ist schreibgeschützt und muss mit :ro eingebunden werden} other {Manifest und Compose-Datei widersprechen sich}}.",
+      "value_invalid": "Die Compose-Datei der App hat unter {path} einen Wert, den Pithyx ablehnt: {reason, select, required {er fehlt} type {er hat den falschen Typ} format {sein Format ist ungültig} range {er liegt außerhalb des erlaubten Bereichs} unpinned {das Image ist nicht mit @sha256 festgelegt} interpolation {er nutzt $ für eine Variable (schreib $$ für ein Dollarzeichen)} no_value {die Variable hat keinen Wert} duplicate {er kommt doppelt vor} reserved {er ist für Pithyx reserviert} host_path {er bindet einen Ordner des Hosts ein} anonymous {das Volume hat keinen Namen} cycle {die Dienste hängen im Kreis voneinander ab} other {er ist ungültig}}.",
+      "yaml_invalid": "Die Compose-Datei der App ist nicht lesbar: {reason, select, too_large {sie ist größer als 64 KB} not_utf8 {sie ist kein UTF-8} character {sie enthält einen Tabulator oder ein anderes nicht erlaubtes Zeichen} syntax {sie ist kein gültiges YAML} documents {sie muss genau ein Dokument enthalten} too_deep {sie ist zu tief verschachtelt} directive {sie enthält eine YAML-Direktive} anchor {sie nutzt Anker oder Aliase} tag {sie nutzt YAML-Tags} duplicate_key {{path} kommt doppelt vor} merge_key {sie nutzt unter {path} einen Merge-Schlüssel} key_not_string {ein Schlüssel unter {path} ist kein Text} other {sie verletzt eine Regel für Compose-Dateien}}."
+    },
     "elevated": {
       "unsupported": "Die App verlangt das Recht {right}, das diese Version von Pithyx nicht vergibt."
     },

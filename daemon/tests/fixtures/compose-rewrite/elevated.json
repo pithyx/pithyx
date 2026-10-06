@@ -1,0 +1,14 @@
+{
+  "compose": "valid/elevated.yaml",
+  "manifest": "elevated.json",
+  "host": {
+    "uid": 40001,
+    "appDirectory": "/tank/.pithyx/apps/com.example.chat",
+    "bridgeName": "px-42",
+    "imageIds": {
+      "ghcr.io/example/chat-server:1.2.0@sha256:a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5": "sha256:1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c",
+      "docker.io/library/postgres:17@sha256:0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e0b9e": "sha256:2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d"
+    },
+    "storage": {}
+  }
+}

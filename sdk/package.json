@@ -45,7 +45,8 @@
       "types": "./dist/i18n.d.ts",
       "import": "./dist/i18n.js"
     },
-    "./schema/manifest.v1.schema.json": "./schema/manifest.v1.schema.json"
+    "./schema/manifest.v1.schema.json": "./schema/manifest.v1.schema.json",
+    "./schema/compose.v1.rules.json": "./schema/compose.v1.rules.json"
   },
   "scripts": {
     "build": "vite build",
@@ -77,7 +78,8 @@
         "types": "./dist/i18n.d.ts",
         "import": "./dist/i18n.js"
       },
-      "./schema/manifest.v1.schema.json": "./schema/manifest.v1.schema.json"
+      "./schema/manifest.v1.schema.json": "./schema/manifest.v1.schema.json",
+      "./schema/compose.v1.rules.json": "./schema/compose.v1.rules.json"
     }
   }
 }

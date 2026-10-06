@@ -2,7 +2,10 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import type { AppManifest } from '@pithyx/sdk';
 import { describe, expect, it } from 'vitest';
+import rules from '@pithyx/sdk/schema/compose.v1.rules.json' with { type: 'json' };
+import { validateCompose } from './compose';
 import { validateIcon } from './icon';
 import type { Issue } from './issues';
 import { checkLayout } from './layout';
@@ -75,6 +78,61 @@ describe('manifest corpus', () => {
     ['host.network', true],
   ] as const)('grants the elevated right %s: %s', (right, supported) => {
     expect(isSupportedElevatedRight(right)).toBe(supported);
+  });
+});
+
+describe('compose corpus', () => {
+  const expected = json('compose', 'expected.json') as Record<string, ExpectedIssue[]>;
+  const manifests = json('compose', 'manifests.json') as Record<string, string>;
+  const manifest = (kind: string, file: string): AppManifest => {
+    const name = manifests[`${kind}/${file}`] ?? 'base.json';
+    const result = validateManifest(read('compose', 'manifests', name));
+    if (result.manifest === undefined) {
+      throw new Error(`compose/manifests/${name} is not a valid manifest`);
+    }
+    return result.manifest;
+  };
+
+  it.each(files('compose', 'valid'))('accepts %s', (file) => {
+    expect(validateCompose(read('compose', 'valid', file), manifest('valid', file)).issues).toEqual(
+      [],
+    );
+  });
+
+  it.each(files('compose', 'invalid'))('refuses %s with the expected codes', (file) => {
+    const issues = expected[file];
+    expect(issues, `compose/expected.json lacks ${file}`).toBeDefined();
+    const result = validateCompose(read('compose', 'invalid', file), manifest('invalid', file));
+    for (const issue of issues ?? []) {
+      expect(
+        result.issues.some((actual) => matches(actual, issue)),
+        `${JSON.stringify(issue)} not in ${JSON.stringify(result.issues)}`,
+      ).toBe(true);
+    }
+    // Every issue is expected, so both validators report exactly the same list.
+    for (const actual of result.issues) {
+      expect(
+        issues?.some((issue) => matches(actual, issue)),
+        `${JSON.stringify(actual)} is not expected`,
+      ).toBe(true);
+    }
+  });
+
+  it('has a fixture for every expectation and every manifest choice', () => {
+    expect(Object.keys(expected).sort()).toEqual(files('compose', 'invalid'));
+    for (const key of Object.keys(manifests)) {
+      const [kind = '', file = ''] = key.split('/');
+      expect(files('compose', kind)).toContain(file);
+    }
+  });
+
+  it('never allows a key it lists as refused', () => {
+    const allowed = { top: rules.top, service: rules.service, volume: {}, mount: rules.mount.keys };
+    for (const [area, keys] of Object.entries(rules.refused)) {
+      for (const key of Object.keys(keys)) {
+        expect(Object.keys(allowed[area as keyof typeof allowed])).not.toContain(key);
+      }
+    }
   });
 });
 

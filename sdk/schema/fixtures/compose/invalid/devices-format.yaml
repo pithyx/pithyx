@@ -1,0 +1,4 @@
+services:
+  server:
+    image: ghcr.io/example/chat-server:1.2.0@sha256:a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5
+    devices: ['/dev/../etc/shadow', '/dev/dri/renderD128:/dev/dri/renderD128:rwm', 'dri']

@@ -1,0 +1,13 @@
+services:
+  server:
+    image: ghcr.io/example/chat-server:1.2.0@sha256:a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5
+    volumes: ['data:/data', 'other:/other', 'named:/named']
+volumes:
+  data:
+    driver: local
+    driver_opts: {type: none, device: /etc, o: bind}
+  other:
+    external: true
+  named:
+    name: another-apps-volume
+  Bad_Name:
