@@ -25,7 +25,7 @@ import { Header, MenuSection, SubmenuTrigger } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { queryKeys } from '../api/queries';
-import { runBeforeLogout } from '../apps/lifecycle';
+import { runBeforeUnload } from '../apps/lifecycle';
 import { useAppName } from '../apps/names';
 import { isAppAllowed, setAppPermissions } from '../apps/access';
 import { appsFor, findApp } from '../apps/registry';
@@ -481,7 +481,7 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
     mutationFn: async () => {
       // Apps may ask first (unsaved changes). Then the windows close, so the next sign-in starts with an empty
       // desktop; the layout without them is saved before the sign-out, after which a save is refused.
-      await runBeforeLogout();
+      await runBeforeUnload('logout');
       dispatch({ type: 'closeAll' });
       await Promise.all([saveLayoutBeforeSignOut(), settleItemWrites()]);
       unwrap(await api.POST('/api/auth/logout'));

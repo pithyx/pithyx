@@ -116,6 +116,12 @@ export default defineConfig(
           property,
           message: 'Needs a secure context; use desktop/src/platform/browser.ts.',
         })),
+        {
+          object: 'window',
+          property: 'open',
+          message:
+            'A new tab must not reach the desktop; use openInNewTab in desktop/src/platform/browser.ts.',
+        },
       ],
       'no-restricted-globals': [
         'error',
@@ -129,6 +135,11 @@ export default defineConfig(
           name,
           message: 'Needs a secure context; use desktop/src/platform/browser.ts.',
         })),
+        {
+          name: 'open',
+          message:
+            'A new tab must not reach the desktop; use openInNewTab in desktop/src/platform/browser.ts.',
+        },
       ],
     },
   },

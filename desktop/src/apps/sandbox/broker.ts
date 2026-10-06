@@ -2,6 +2,16 @@ import { unwrap } from '@pithyx/api-client';
 import { sdkError, PithyxError, type MethodHandlers } from '@pithyx/sdk/host';
 import { writeAppLog } from './appLogs';
 import { api } from '../../api/client';
+import { copyText, openInNewTab } from '../../platform/browser';
+import { pagePoint, withArgs } from '../host/rules';
+import {
+  offerManualCopy,
+  rememberNotification,
+  requestAttention,
+  setBadge,
+  setDirty,
+  showMenu,
+} from '../host/store';
 import { toPithyxError } from '../sdk/daemonError';
 import { dispatch, useDesktop } from '../../wm/store';
 
@@ -38,6 +48,8 @@ export interface BrokerTarget {
   app: string;
   user: number;
   permissions: readonly string[];
+  /** The element that shows the app's content (the iframe, or the root of a core app); menus are placed from it. */
+  content: () => Element | null;
 }
 
 /**
@@ -49,9 +61,9 @@ export interface BrokerTarget {
  * that checks the app's permissions and the user's rights again, and fails with the same codes.
  *
  * Not served yet, so they fail with `sdk.method.unknown` and `supports()` is false for them: `backend.token`,
- * `backend.ticket` and `directory.*` (the daemon's app API, A11), and `setBadge`, `window.requestAttention`,
- * `window.setDirty`, `contextMenu.show`, `clipboard.writeText` and `openUrl` (desktop host v1, A7). `notify` shows
- * the notification without its `actions`, `data` and `tag` until A7 and A11.
+ * `backend.ticket` and `directory.*` (the daemon's app API, A11). The daemon does not keep a notification's `actions`
+ * and `data` yet (A11): this tab remembers them for the toast and the panel until it is reloaded, and `tag` waits for
+ * the daemon too.
  */
 export function brokerFor(target: BrokerTarget): MethodHandlers {
   const store = storeOf(target.user, target.app);
@@ -84,11 +96,38 @@ export function brokerFor(target: BrokerTarget): MethodHandlers {
       const rect = useDesktop.getState().windows[target.windowId]?.rect ?? window.rect;
       return { width: rect.width, height: rect.height };
     },
+    'window.setDirty': ({ dirty }) => {
+      setDirty(target.windowId, dirty);
+    },
+    'window.requestAttention': () => {
+      requestAttention(target.windowId);
+    },
+    setBadge: ({ count }) => {
+      setBadge(target.app, count);
+    },
+    // Guardrail 7: only the window the user works in may open a menu, which takes the keyboard focus.
+    'contextMenu.show': async ({ at, items }) => {
+      const content = target.content();
+      if (content === null || useDesktop.getState().focused !== target.windowId) {
+        return null;
+      }
+      const point = pagePoint(at, content.getBoundingClientRect());
+      return showMenu({ windowId: target.windowId, ...point, items });
+    },
+    // Over plain HTTP the browser may refuse to copy; the desktop then shows the text for the user to copy.
+    'clipboard.writeText': async ({ text }) => {
+      if (!(await copyText(text))) {
+        await offerManualCopy(text);
+      }
+    },
+    openUrl: ({ url }) => {
+      openInNewTab(url);
+    },
     'log.write': ({ entries }) => {
       writeAppLog(target.app, entries);
     },
     // The daemon keeps it in the user's history and sends it back on the notifications topic, which shows the toast.
-    notify: async ({ title, body, level }) => {
+    notify: async ({ title, body, level, actions, data }) => {
       require('notifications');
       try {
         const notification = unwrap(
@@ -101,7 +140,16 @@ export function brokerFor(target: BrokerTarget): MethodHandlers {
             },
           }),
         );
-        return { id: String(notification.id) };
+        const id = String(notification.id);
+        if ((actions !== undefined && actions.length > 0) || data !== undefined) {
+          rememberNotification(id, {
+            app: target.app,
+            windowId: target.windowId,
+            actions: actions ?? [],
+            data: data ?? null,
+          });
+        }
+        return { id };
       } catch (error) {
         throw toPithyxError(error);
       }
@@ -113,7 +161,8 @@ export function brokerFor(target: BrokerTarget): MethodHandlers {
           params: { maxKb: MAX_SESSION / 1024 },
         });
       }
-      dispatch({ type: 'setArgs', id: target.windowId, args: { session: state } });
+      const args = useDesktop.getState().windows[target.windowId]?.args;
+      dispatch({ type: 'setArgs', id: target.windowId, args: withArgs(args, { session: state }) });
     },
     'storage.get': ({ key }) => {
       const value = store.get(key);

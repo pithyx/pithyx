@@ -30,10 +30,26 @@ export function visibleRect(window: Pick<WindowState, 'rect' | 'minSize'>, works
   return clampRect(window.rect, window.minSize, workspace);
 }
 
+/**
+ * Where a launch of an app goes: a `single` app that already has a window on this device goes to that window (the
+ * top-most one, should a restored layout hold several), anything else opens a new window unless the desktop is full.
+ */
+export function launchTarget(
+  state: Pick<DesktopState, 'windows' | 'order'>,
+  app: string,
+  instances: 'single' | 'multi',
+): { kind: 'existing'; id: string } | { kind: 'new' } | { kind: 'full' } {
+  if (instances === 'single') {
+    const id = state.order.findLast((candidate) => state.windows[candidate]?.app === app);
+    if (id !== undefined) {
+      return { kind: 'existing', id };
+    }
+  }
+  return Object.keys(state.windows).length < MAX_WINDOWS ? { kind: 'new' } : { kind: 'full' };
+}
+
 export function canOpen(state: DesktopState, app: string, instances: 'single' | 'multi'): boolean {
-  const existing =
-    instances === 'single' && Object.values(state.windows).some((w) => w.app === app);
-  return existing || Object.keys(state.windows).length < MAX_WINDOWS;
+  return launchTarget(state, app, instances).kind !== 'full';
 }
 
 function update(state: DesktopState, id: string, change: Partial<WindowState>): DesktopState {
@@ -68,16 +84,12 @@ function remove(state: DesktopState, id: string): DesktopState {
 
 function open(state: DesktopState, action: Extract<Action, { type: 'open' }>): DesktopState {
   const { app, options } = action;
-  if (options.instances === 'single') {
-    const existing = Object.values(state.windows).find((w) => w.app === app);
-    if (existing !== undefined) {
-      const raised = raise(state, existing.id);
-      return action.args === undefined
-        ? raised
-        : update(raised, existing.id, { args: action.args });
-    }
+  const target = launchTarget(state, app, options.instances);
+  if (target.kind === 'existing') {
+    const raised = raise(state, target.id);
+    return action.args === undefined ? raised : update(raised, target.id, { args: action.args });
   }
-  if (!canOpen(state, app, options.instances)) {
+  if (target.kind === 'full') {
     return state;
   }
   const size = clampSize(action.size ?? options.defaultSize, options.minSize, state.workspace);

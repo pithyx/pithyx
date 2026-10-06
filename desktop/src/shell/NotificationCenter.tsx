@@ -159,7 +159,7 @@ function useNotificationView() {
       ...(typeof alertKey === 'string'
         ? {
             onAction: () => {
-              openApp('storage', alertSection({ key: alertKey }));
+              openApp('storage', { args: alertSection({ key: alertKey }) });
             },
           }
         : {}),
@@ -283,7 +283,7 @@ export function NotificationCenter({
     tone: alert.severity === 'critical' ? 'danger' : 'warning',
     persistent: true,
     onAction: () => {
-      openApp('storage', alertSection(alert));
+      openApp('storage', { args: alertSection(alert) });
     },
     extraActions: [
       {
