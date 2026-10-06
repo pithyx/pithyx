@@ -43,7 +43,14 @@ export default defineConfig(
   js.configs.recommended,
   ...typescriptConfigs,
   {
-    files: ['*.js', 'tools/**/*.ts', 'desktop/scripts/**/*.ts', '**/vite.config.ts'],
+    files: [
+      '*.js',
+      'tools/**/*.ts',
+      'desktop/scripts/**/*.ts',
+      'sdk/scripts/**/*.ts',
+      'packages/cli/src/**/*.ts',
+      '**/vite.config.ts',
+    ],
     languageOptions: { globals: globals.node },
   },
   {

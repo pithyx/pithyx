@@ -1,8 +1,8 @@
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using Dapper;
+using Pithyx.Daemon.Apps.Manifest;
 using Pithyx.Daemon.Database;
 using Pithyx.Daemon.Errors;
 using Pithyx.Daemon.Storage;
@@ -179,7 +179,7 @@ public sealed partial class LogService(
     public AppLogResult WriteApp(string app, string user, AppLogBatch batch)
     {
         ArgumentNullException.ThrowIfNull(batch);
-        if (!AppIdPattern().IsMatch(app))
+        if (!AppId.IsKnownForm(app))
         {
             throw new PithyxException(ErrorCodes.LogsAppInvalid, new Dictionary<string, object?> { ["app"] = app });
         }
@@ -202,9 +202,6 @@ public sealed partial class LogService(
             : data.Take(MaxDataFields).ToDictionary(pair => Cut(pair.Key, 100), pair => Cut(pair.Value, MaxDataLength), StringComparer.Ordinal);
 
     private static string Cut(string text, int max) => text.Length <= max ? text : text[..max];
-
-    [GeneratedRegex("^[a-z][a-z0-9-]{0,63}$", RegexOptions.CultureInvariant)]
-    private static partial Regex AppIdPattern();
 
     private static class ExportJson
     {

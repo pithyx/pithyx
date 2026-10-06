@@ -10,6 +10,82 @@ namespace Pithyx.Daemon.Errors;
 /// </summary>
 public static class ErrorCodes
 {
+    /// <summary>
+    /// The manifest asks for an elevated right this version of Pithyx does not grant: <c>docker.socket</c>, <c>host.full</c>
+    /// or a capability that reaches the host's secrets; <c>params.right</c> names it.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppElevatedUnsupported = "app.elevated.unsupported";
+
+    /// <summary>
+    /// The app's <c>icon.svg</c> is refused; <c>params.reason</c> says why: <c>too_large</c> (over 64 KB), <c>malformed</c>
+    /// (not UTF-8 or not well-formed XML), <c>not_svg</c>, <c>viewbox</c> (missing or not square), <c>doctype</c>,
+    /// <c>processing_instruction</c>, <c>element_forbidden</c> (with <c>params.element</c>), <c>event_attribute</c> (with
+    /// <c>params.attribute</c>), <c>external_href</c>, <c>style_import</c>, <c>style_url</c> or <c>style_escape</c>.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppIconInvalid = "app.icon.invalid";
+
+    /// <summary>A schedule's <c>cron</c> is not five valid fields; <c>params.path</c> and <c>params.cron</c> name it.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppManifestCronInvalid = "app.manifest.cron_invalid";
+
+    /// <summary>
+    /// A value that must be unique in the manifest appears twice (storage ids, schedule ids, file extensions);
+    /// <c>params.path</c> is the second one, <c>params.value</c> the value.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppManifestDuplicate = "app.manifest.duplicate";
+
+    /// <summary>The manifest's <c>id</c> is not an app id of D302; <c>params.id</c> is the value.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppManifestIdInvalid = "app.manifest.id_invalid";
+
+    /// <summary>The id lies in <c>org.pithyx.*</c>, which only system apps and the official catalog may use; <c>params.id</c> is the value.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppManifestIdReserved = "app.manifest.id_reserved";
+
+    /// <summary><c>pithyx.json</c> is not a JSON document in UTF-8, or an object in it has a key twice.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppManifestInvalidJson = "app.manifest.invalid_json";
+
+    /// <summary>
+    /// A name in the manifest refers to something it does not declare: an endpoint that is not in
+    /// <c>backend.endpoints</c>, or a backend service of a storage request without a <c>backend</c>; <c>params.path</c> is
+    /// the reference, <c>params.name</c> the name.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppManifestReferenceUnknown = "app.manifest.reference_unknown";
+
+    /// <summary>
+    /// The manifest breaks its JSON Schema (<c>sdk/schema/manifest.v1.schema.json</c>); <c>params.path</c> is the JSON
+    /// Pointer of the value (of the missing or unknown field for <c>required</c> and <c>additionalProperties</c>),
+    /// <c>params.keyword</c> the schema keyword it fails.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppManifestSchemaViolation = "app.manifest.schema_violation";
+
+    /// <summary>The manifest's <c>sdk</c> is not a SemVer range; <c>params.sdk</c> is the value.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppManifestSdkInvalid = "app.manifest.sdk_invalid";
+
+    /// <summary>The manifest's <c>manifestVersion</c> is one this version of Pithyx does not know; <c>params.version</c> and <c>params.supported</c>.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppManifestVersionUnsupported = "app.manifest.version_unsupported";
+
+    /// <summary>The window's <c>minSize</c> is larger than its <c>defaultSize</c> in width or height.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppManifestWindowSizeInvalid = "app.manifest.window_size_invalid";
+
+    /// <summary>
+    /// The files of an app package are not laid out as required; <c>params.path</c> names the file and
+    /// <c>params.reason</c> says why: <c>missing</c> (<c>pithyx.json</c>, <c>icon.svg</c>, the entry or the Compose file),
+    /// <c>unsafe</c> (an absolute path, <c>.</c> or <c>..</c> segments, backslashes, empty segments or control characters),
+    /// <c>duplicate</c>, or <c>unexpected</c> (files under <c>backend/</c> without a backend).
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppPackageLayoutInvalid = "app.package.layout_invalid";
+
     /// <summary>The app lacks a permission the call needs, or an administrator revoked it; <c>params.permission</c> names it.</summary>
     [ErrorStatus(HttpStatusCode.Forbidden)]
     public const string AppPermissionDenied = "app.permission.denied";
