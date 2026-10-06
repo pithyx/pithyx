@@ -7,10 +7,7 @@ import { LanguageSelect } from '../auth/controls';
 import { RecoveryKeyValue, WelcomeCard } from '../auth/parts';
 import { PasswordStrengthMeter } from '../auth/password/PasswordStrengthMeter';
 import { AuthHeader, AuthLayout } from '../shell/AuthLayout';
-import { Button } from '../ui/Button';
-import { Checkbox } from '../ui/Controls';
-import { cx } from '../ui/cx';
-import { OtpField, PasswordField, TextField } from '../ui/TextField';
+import { Button, Checkbox, cx, OtpField, PasswordField, TextField } from '@pithyx/ui';
 import { hostname, recoveryKey, user } from './sampleData';
 
 // A medium password, so the gallery shows the meter with a reason.

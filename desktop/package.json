@@ -7,13 +7,14 @@
     "design": "vite --host --port 5174 --strictPort",
     "build": "vite build",
     "preview": "vite preview",
-    "css-types": "node scripts/css-module-types.ts",
-    "typecheck": "node scripts/css-module-types.ts && tsc -p tsconfig.json",
+    "css-types": "node ../tools/css-module-types.ts",
+    "typecheck": "node ../tools/css-module-types.ts && tsc -p tsconfig.json",
     "test": "vitest run"
   },
   "dependencies": {
     "@pithyx/api-client": "workspace:*",
     "@pithyx/sdk": "workspace:*",
+    "@pithyx/ui": "workspace:*",
     "@tabler/icons-react": "^3.48.0",
     "@tanstack/react-query": "^5.103.2",
     "@tanstack/react-virtual": "^3.14.13",

@@ -2,7 +2,7 @@ import type { FileEntry, PithyxApp } from '@pithyx/sdk';
 import { useQuery } from '@tanstack/react-query';
 import { lazy, Suspense, useEffect, useState, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
-import { IconButton } from '../../ui/Button';
+import { IconButton } from '@pithyx/ui';
 import {
   IconArrowLeft,
   IconArrowRight,

@@ -8,8 +8,16 @@ import { queryKeys } from '../api/queries';
 import { isAppAllowed } from '../apps/access';
 import { appsFor } from '../apps/registry';
 import { AppIcon } from '../shell/AppIcon';
-import { Button } from '../ui/Button';
-import { Dialog } from '../ui/Dialog';
+import {
+  Button,
+  ContextMenuPopover,
+  Dialog,
+  Menu,
+  MenuItem,
+  MenuPopover,
+  MenuSeparator,
+  TextField,
+} from '@pithyx/ui';
 import {
   IconArrowsMove,
   IconExternalLink,
@@ -18,10 +26,7 @@ import {
   IconPlus,
   IconTrash,
 } from '../ui/icons';
-import { ContextMenuPopover } from '../ui/ContextMenu';
-import { Menu, MenuItem, MenuPopover, MenuSeparator } from '../ui/Menu';
 import { SubmenuTrigger } from 'react-aria-components';
-import { TextField } from '../ui/TextField';
 
 export type ItemAction = 'open' | 'rename' | 'move' | 'delete' | 'note' | `shortcut:${string}`;
 

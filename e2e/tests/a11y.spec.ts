@@ -11,7 +11,7 @@ import {
   signInAsAdmin,
 } from './session';
 
-// WCAG 2.2 AA (desktop/CLAUDE.md). Contrast of the tokens is checked in desktop/src/theme/contrast.test.ts as well.
+// WCAG 2.2 AA (desktop/CLAUDE.md). Contrast of the tokens is checked in packages/ui/src/contrast.test.ts as well.
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 
 async function violations(page: Page) {

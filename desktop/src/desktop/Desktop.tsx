@@ -40,7 +40,6 @@ import { useRealtime } from '../realtime/connection';
 import { AppSwitcher } from '../shell/AppSwitcher';
 import { DesktopShell } from '../shell/DesktopShell';
 import { itemsQuery, settleItemWrites } from '../items/query';
-import { AriaLocale } from '../ui/AriaLocale';
 import { listenForMetaTap } from '../shell/metaTap';
 import { bannerAlert, useStorageAlerts } from '../shell/storageAlerts';
 import { StartMenu } from '../shell/StartMenu';
@@ -54,8 +53,7 @@ import {
   useUnreadNotifications,
 } from '../shell/notificationFeed';
 import { useDismiss } from '../shell/useDismiss';
-import { cx } from '../ui/cx';
-import { Menu, MenuItem, MenuPopover, MenuTrigger } from '../ui/Menu';
+import { cx, Menu, MenuItem, MenuPopover, MenuTrigger, UiProvider } from '@pithyx/ui';
 import { useBackGesture } from '../wm/backGesture';
 import { applySavedLayout, saveLayoutBeforeSignOut, useLayoutPersistence } from '../wm/persistence';
 import { useSizeClass } from '../wm/sizeClass';
@@ -561,7 +559,7 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
     .map((app) => ({ id: app.id, name: app.name, detail: t('start.appDetail'), app }));
 
   return (
-    <AriaLocale>
+    <UiProvider locale={locale}>
       <DesktopShell
         entering={entering}
         taskbarPosition={taskbarPosition}
@@ -740,6 +738,6 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
         {items !== undefined && <items.ItemsLayer />}
         <WindowLayer />
       </DesktopShell>
-    </AriaLocale>
+    </UiProvider>
   );
 }

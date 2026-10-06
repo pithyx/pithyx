@@ -1,4 +1,3 @@
 @import './fonts.css';
-@import './tokens.css';
-@import './accents.css';
+@import '@pithyx/ui/tokens.css';
 @import './base.css';

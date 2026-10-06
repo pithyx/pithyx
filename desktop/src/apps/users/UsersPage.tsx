@@ -5,10 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { NewPasswordField } from '../../auth/password/NewPasswordField';
 import { useNewPasswordCheck } from '../../auth/password/PasswordStrengthMeter';
 import { ErrorNotice } from '../../errors/ErrorNotice';
-import { Button } from '../../ui/Button';
-import { Badge, Checkbox } from '../../ui/Controls';
+import { Badge, Button, Checkbox, TextField } from '@pithyx/ui';
 import { IconPlus } from '../../ui/icons';
-import { TextField } from '../../ui/TextField';
 import {
   describeProblem,
   usersCall,

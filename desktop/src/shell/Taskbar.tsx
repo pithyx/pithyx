@@ -8,14 +8,19 @@ import {
   IconX,
 } from '../ui/icons';
 import { useState, type Ref } from 'react';
-import { Button as AriaButton, Tooltip, TooltipTrigger } from 'react-aria-components';
+import { Button as AriaButton } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
-import { ContextMenuPopover } from '../ui/ContextMenu';
-import { Badge } from '../ui/Controls';
-import { cx } from '../ui/cx';
+import {
+  Badge,
+  ContextMenuPopover,
+  cx,
+  Menu,
+  MenuItem,
+  MenuSeparator,
+  Tooltip,
+  TooltipTrigger,
+} from '@pithyx/ui';
 import { BrandText, LogoMark } from '../ui/Logo';
-import { Menu, MenuItem, MenuSeparator } from '../ui/Menu';
-import tooltipStyles from '../ui/Tooltip.module.css';
 import { AppIcon } from './AppIcon';
 import { TransfersButton } from './TransfersButton';
 import styles from './Taskbar.module.css';
@@ -151,7 +156,7 @@ export function Taskbar({
         >
           <LogoMark size={38} motion="hover" />
         </AriaButton>
-        <Tooltip className={cx(tooltipStyles.tooltip, styles.brandTooltip)} offset={6}>
+        <Tooltip className={styles.brandTooltip}>
           <span role="img" aria-label={t('brand')}>
             <BrandText text={t('brandMark')} />
           </span>

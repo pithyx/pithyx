@@ -1,5 +1,5 @@
 import { Fragment, useId } from 'react';
-import { cx } from './cx';
+import { cx } from '@pithyx/ui';
 import styles from './Logo.module.css';
 
 /**

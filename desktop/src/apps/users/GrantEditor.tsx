@@ -1,6 +1,6 @@
 import type { components } from '@pithyx/api-client';
 import { useTranslation } from 'react-i18next';
-import { Checkbox } from '../../ui/Controls';
+import { Checkbox } from '@pithyx/ui';
 import { useAppName } from '../names';
 import type { ShareDetails } from '../sdk/internal';
 import type { GrantEntry, PermissionCatalog } from '../sdk/users';

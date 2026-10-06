@@ -1,0 +1,9 @@
+{
+  "password": {
+    "show": "Passwort anzeigen",
+    "hide": "Passwort verbergen"
+  },
+  "search": {
+    "clear": "Suche leeren"
+  }
+}

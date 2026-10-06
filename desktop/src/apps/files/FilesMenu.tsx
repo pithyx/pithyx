@@ -14,8 +14,7 @@ import {
   IconTrashX,
   IconUpload,
 } from '../../ui/icons';
-import { ContextMenuPopover } from '../../ui/ContextMenu';
-import { Menu, MenuItem, MenuSeparator } from '../../ui/Menu';
+import { ContextMenuPopover, Menu, MenuItem, MenuSeparator } from '@pithyx/ui';
 
 export type FilesAction =
   | 'open'

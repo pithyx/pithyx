@@ -54,15 +54,6 @@
   },
   "brand": "Pithyx",
   "brandMark": "PIΘYX",
-  "ui": {
-    "password": {
-      "show": "Passwort anzeigen",
-      "hide": "Passwort verbergen"
-    },
-    "search": {
-      "clear": "Suche leeren"
-    }
-  },
   "taskbar": {
     "label": "Taskleiste",
     "start": "Pithyx-Menü",

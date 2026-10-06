@@ -331,11 +331,11 @@ Logs (D305): every level also appears in the browser console. `info`, `warn` and
 
 #### A5 `@pithyx/ui` and tokens
 
-- [ ] `packages/ui` (MIT) with Button, TextField, SearchField, Controls, Dialog, Menu, ContextMenu and Tooltip, moved from `desktop/src/ui`.
-- [ ] `UiProvider({ locale })` with its own texts in en and de.
-- [ ] `tokens.css` becomes the only token file; the contrast test follows it.
-- [ ] The desktop uses the package through the `pithyx-source` condition (about 76 imports).
-- [ ] The 150 KB desktop budget, the design shots and the label `e2e` stay green.
+- [x] `packages/ui` (MIT) with Button, TextField, SearchField, Controls, Dialog, Menu, ContextMenu and Tooltip, moved from `desktop/src/ui`. `cx` moved with them; `icons.ts` and `Logo` are the desktop's own and stay (the package has its own six icons). `@pithyx/ui/native` holds the class names and texts for native elements without React Aria, which the sign-in screen uses.
+- [x] `UiProvider({ locale })` with its own texts in en and de. They live in `i18n/<lang>/ui.json` like every other translation and are bundled into the package; the provider sets React Aria's locale, and the texts follow its language.
+- [x] `tokens.css` becomes the only token file (`@pithyx/ui/tokens.css`, the accent presets included); the contrast test follows it.
+- [x] The desktop uses the package through the `pithyx-source` condition; 69 files import it (`ui/icons` and `ui/Logo` stay in the desktop).
+- [ ] The 150 KB desktop budget, the design shots and the label `e2e` stay green. Locally: sign-in 138.5 to 138.6 KB, desktop 111.9 to 112.1 KB; the runner's `e2e` run is still open.
 
 #### A6 Compose contract `[REVIEW]` (after A1 and A2)
 
