@@ -1,0 +1,246 @@
+[
+  {
+    "name": "frontend only",
+    "files": [
+      "pithyx.json",
+      "icon.svg",
+      "frontend/index.html",
+      "frontend/assets/app.js",
+      "README.md",
+      "LICENSE"
+    ],
+    "entry": "frontend/index.html",
+    "expected": []
+  },
+  {
+    "name": "with a backend",
+    "files": [
+      "pithyx.json",
+      "icon.svg",
+      "frontend/index.html",
+      "frontend/assets/app.js",
+      "backend/compose.yaml",
+      "backend/images.lock.json",
+      "backend/images/amd64/web.tar"
+    ],
+    "entry": "frontend/index.html",
+    "compose": "backend/compose.yaml",
+    "expected": []
+  },
+  {
+    "name": "manifest missing",
+    "files": [
+      "icon.svg",
+      "frontend/index.html",
+      "frontend/assets/app.js"
+    ],
+    "entry": "frontend/index.html",
+    "expected": [
+      {
+        "path": "pithyx.json",
+        "reason": "missing"
+      }
+    ]
+  },
+  {
+    "name": "icon missing",
+    "files": [
+      "pithyx.json",
+      "frontend/index.html",
+      "frontend/assets/app.js"
+    ],
+    "entry": "frontend/index.html",
+    "expected": [
+      {
+        "path": "icon.svg",
+        "reason": "missing"
+      }
+    ]
+  },
+  {
+    "name": "entry missing",
+    "files": [
+      "pithyx.json",
+      "icon.svg",
+      "frontend/main.html"
+    ],
+    "entry": "frontend/index.html",
+    "expected": [
+      {
+        "path": "frontend/index.html",
+        "reason": "missing"
+      }
+    ]
+  },
+  {
+    "name": "compose missing",
+    "files": [
+      "pithyx.json",
+      "icon.svg",
+      "frontend/index.html",
+      "frontend/assets/app.js",
+      "backend/images.lock.json"
+    ],
+    "entry": "frontend/index.html",
+    "compose": "backend/compose.yaml",
+    "expected": [
+      {
+        "path": "backend/compose.yaml",
+        "reason": "missing"
+      }
+    ]
+  },
+  {
+    "name": "backend files without a backend",
+    "files": [
+      "pithyx.json",
+      "icon.svg",
+      "frontend/index.html",
+      "frontend/assets/app.js",
+      "backend/compose.yaml"
+    ],
+    "entry": "frontend/index.html",
+    "expected": [
+      {
+        "path": "backend/compose.yaml",
+        "reason": "unexpected"
+      }
+    ]
+  },
+  {
+    "name": "absolute path",
+    "files": [
+      "pithyx.json",
+      "icon.svg",
+      "frontend/index.html",
+      "frontend/assets/app.js",
+      "/etc/passwd"
+    ],
+    "entry": "frontend/index.html",
+    "expected": [
+      {
+        "path": "/etc/passwd",
+        "reason": "unsafe"
+      }
+    ]
+  },
+  {
+    "name": "parent segment",
+    "files": [
+      "pithyx.json",
+      "icon.svg",
+      "frontend/index.html",
+      "frontend/assets/app.js",
+      "frontend/../../etc/passwd"
+    ],
+    "entry": "frontend/index.html",
+    "expected": [
+      {
+        "path": "frontend/../../etc/passwd",
+        "reason": "unsafe"
+      }
+    ]
+  },
+  {
+    "name": "dot segment",
+    "files": [
+      "pithyx.json",
+      "icon.svg",
+      "frontend/index.html",
+      "frontend/assets/app.js",
+      "./frontend/x.js"
+    ],
+    "entry": "frontend/index.html",
+    "expected": [
+      {
+        "path": "./frontend/x.js",
+        "reason": "unsafe"
+      }
+    ]
+  },
+  {
+    "name": "empty segment",
+    "files": [
+      "pithyx.json",
+      "icon.svg",
+      "frontend/index.html",
+      "frontend/assets/app.js",
+      "frontend//x.js"
+    ],
+    "entry": "frontend/index.html",
+    "expected": [
+      {
+        "path": "frontend//x.js",
+        "reason": "unsafe"
+      }
+    ]
+  },
+  {
+    "name": "trailing slash",
+    "files": [
+      "pithyx.json",
+      "icon.svg",
+      "frontend/index.html",
+      "frontend/assets/app.js",
+      "frontend/"
+    ],
+    "entry": "frontend/index.html",
+    "expected": [
+      {
+        "path": "frontend/",
+        "reason": "unsafe"
+      }
+    ]
+  },
+  {
+    "name": "backslash",
+    "files": [
+      "pithyx.json",
+      "icon.svg",
+      "frontend/index.html",
+      "frontend/assets/app.js",
+      "frontend\\x.js"
+    ],
+    "entry": "frontend/index.html",
+    "expected": [
+      {
+        "path": "frontend\\x.js",
+        "reason": "unsafe"
+      }
+    ]
+  },
+  {
+    "name": "control character",
+    "files": [
+      "pithyx.json",
+      "icon.svg",
+      "frontend/index.html",
+      "frontend/assets/app.js",
+      "frontend/x\n.js"
+    ],
+    "entry": "frontend/index.html",
+    "expected": [
+      {
+        "path": "frontend/x\n.js",
+        "reason": "unsafe"
+      }
+    ]
+  },
+  {
+    "name": "duplicate",
+    "files": [
+      "pithyx.json",
+      "icon.svg",
+      "frontend/index.html",
+      "frontend/assets/app.js",
+      "frontend/assets/app.js"
+    ],
+    "entry": "frontend/index.html",
+    "expected": [
+      {
+        "path": "frontend/assets/app.js",
+        "reason": "duplicate"
+      }
+    ]
+  }
+]

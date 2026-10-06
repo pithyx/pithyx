@@ -23,6 +23,7 @@
   "type": "module",
   "files": [
     "dist",
+    "schema/*.json",
     "LICENSE",
     "README.md"
   ],
@@ -43,14 +44,17 @@
       "pithyx-source": "./src/i18n.ts",
       "types": "./dist/i18n.d.ts",
       "import": "./dist/i18n.js"
-    }
+    },
+    "./schema/manifest.v1.schema.json": "./schema/manifest.v1.schema.json"
   },
   "scripts": {
     "build": "vite build",
-    "typecheck": "tsc -p tsconfig.json",
-    "test": "vitest run"
+    "typecheck": "tsc -p tsconfig.json && tsc -p scripts/tsconfig.json",
+    "test": "vitest run",
+    "generate": "node scripts/generate-manifest.ts"
   },
   "devDependencies": {
+    "json-schema-to-typescript": "^16.0.0",
     "vite": "^8.3.1",
     "vite-plugin-dts": "^5.1.1",
     "vitest": "^5.0.2"
@@ -72,7 +76,8 @@
       "./i18n": {
         "types": "./dist/i18n.d.ts",
         "import": "./dist/i18n.js"
-      }
+      },
+      "./schema/manifest.v1.schema.json": "./schema/manifest.v1.schema.json"
     }
   }
 }

@@ -126,10 +126,13 @@ jobs:
   # The E2E suite, the performance gate and the design checks take minutes, so they run only when asked (D278): the
   # label e2e on a pull request, a manual run, and every pull request or push to master.
   e2e:
-    needs: changes
+    # It waits for the daemon job, whose tests skew the timing budgets even on pinned cores, and runs whether that job
+    # passed, failed or was skipped (D280).
+    needs: [changes, daemon]
     if: >-
-      needs.changes.outputs.code == 'true' && (github.event_name == 'workflow_dispatch' || github.ref_name == 'master'
-      || github.base_ref == 'master' || contains(github.event.pull_request.labels.*.name, 'e2e'))
+      always() && !cancelled() && needs.changes.result == 'success' && needs.changes.outputs.code == 'true'
+      && (github.event_name == 'workflow_dispatch' || github.ref_name == 'master' || github.base_ref == 'master'
+      || contains(github.event.pull_request.labels.*.name, 'e2e'))
     # Its own runner with pinned cores (label pithyx-e2e), so no other job's build skews the timing budgets (D280).
     runs-on: ${{ vars.CI_RUNNER_E2E || vars.CI_RUNNER || 'ubuntu-latest' }}
     env:
