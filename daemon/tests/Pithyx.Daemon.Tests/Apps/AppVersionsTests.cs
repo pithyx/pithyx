@@ -113,6 +113,8 @@ public sealed class AppVersionsTests : IDisposable
     [InlineData("1.0.0-beta", "1.0.0-alpha", 1)]
     [InlineData("1.0.0-1", "1.0.0-alpha", -1)]
     [InlineData("2.0.0", "2.0.0", 0)]
+    [InlineData("99999999999999999999.0.0", "1.0.0", 1)]
+    [InlineData("1.0.0-99999999999999999999", "1.0.0-100000000000000000000", -1)]
     public void VersionsCompareBySemVer(string left, string right, int expected) =>
         Assert.Equal(expected, Math.Sign(AppService.CompareVersions(left, right)));
 }

@@ -7,7 +7,8 @@ namespace Pithyx.Daemon.Apps;
 /// the registry change (<c>commit</c>) as the last step. An update first takes a held snapshot of the dataset; when any
 /// step fails, the dataset returns to it (or, without a snapshot, the new files go and the old ones come back), the
 /// registry stays as it was, and the snapshot is released and destroyed either way. The frontend is always served
-/// from the version the registry names, so a half-done switch is never visible.
+/// from the version the registry names, so a half-done switch is never visible; <c>published</c> runs after the commit
+/// and before the old versions go, so the served registry never names a deleted folder.
 /// </summary>
 public static class AppVersions
 {
@@ -19,7 +20,8 @@ public static class AppVersions
         string version,
         bool update,
         Func<CancellationToken, Task> commit,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        Func<Task>? published = null)
     {
         ArgumentNullException.ThrowIfNull(storage);
         ArgumentNullException.ThrowIfNull(package);
@@ -62,6 +64,10 @@ public static class AppVersions
             {
                 await storage.ForgetSnapshotAsync(pool, appId, snapshot, CancellationToken.None);
             }
+        }
+        if (published is not null)
+        {
+            await published();
         }
         // Only the installed version stays; the snapshot of the next update covers the way back.
         foreach (var entry in Directory.EnumerateFileSystemEntries(versions).Where(entry => entry != target))

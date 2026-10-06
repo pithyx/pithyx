@@ -122,7 +122,7 @@ public static class BackupDatabase
             {
                 await connection.ExecuteAsync("INSERT OR IGNORE INTO main.id_allocations (id, kind, name, allocated_at) SELECT id, kind, name, allocated_at FROM backup.id_allocations", transaction: transaction);
             }
-            await connection.ExecuteAsync(RebuildGrants, new { users, shares }, transaction);
+            await connection.ExecuteAsync(RebuildGrants, new { users, shares, coreApps = Apps.CoreApps.All.Select(Permissions.Resources.App).ToList() }, transaction);
             if (users)
             {
                 await connection.ExecuteAsync(
@@ -209,7 +209,8 @@ public static class BackupDatabase
     }
 
     // Rights on shared folders come from the side whose shared folders are kept, all other rights from the side whose
-    // users are kept. A right stays when its subject and shared folder have the same id and name as on its side.
+    // users are kept. A right stays when its subject and shared folder have the same id and name as on its side, and a
+    // right on a third-party app only while that app is installed after the restore.
     private const string RebuildGrants =
         """
         DELETE FROM main.grants;
@@ -224,6 +225,9 @@ public static class BackupDatabase
                 OR (g.subject_kind = 'user' AND EXISTS (SELECT 1 FROM main.users u WHERE u.id = g.subject_id AND u.username = g.subject_name))
                 OR (g.subject_kind = 'group' AND EXISTS (SELECT 1 FROM main.groups x WHERE x.id = g.subject_id AND x.name = g.subject_name)))
             AND (g.resource NOT GLOB 'share:*'
-                OR EXISTS (SELECT 1 FROM main.shares s WHERE s.id = CAST(substr(g.resource, 7) AS INTEGER) AND s.name = g.share_name));
+                OR EXISTS (SELECT 1 FROM main.shares s WHERE s.id = CAST(substr(g.resource, 7) AS INTEGER) AND s.name = g.share_name))
+            AND (g.resource NOT GLOB 'app:*'
+                OR g.resource IN @coreApps
+                OR EXISTS (SELECT 1 FROM main.apps a WHERE 'app:' || a.id = g.resource));
         """;
 }

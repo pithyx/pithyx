@@ -142,7 +142,15 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
         typeof(AppList),
         (_, _) => ValueTask.FromResult<object>(List()),
         TopicDefinition.AnyUser,
-        ForUser: (user, data) => data is AppList list ? new AppList([.. list.Apps.Where(app => permissions.ForUser(user).Has(Resources.App(app.Id)))]) : data);
+        ForUser: (user, data) =>
+        {
+            if (data is not AppList list)
+            {
+                return data;
+            }
+            var rights = permissions.ForUser(user);
+            return new AppList([.. list.Apps.Where(app => rights.Has(Resources.App(app.Id)))]);
+        });
 
     public TopicDefinition AdminDefinition() => new(
         AdminTopic,

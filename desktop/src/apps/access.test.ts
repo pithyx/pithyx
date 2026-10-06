@@ -19,7 +19,13 @@ describe('isAppAllowed', () => {
   it('gives granted apps by their grant, and every app to administrators', () => {
     expect(isAppAllowed(coreAppIds.files, user)).toBe(true);
     expect(isAppAllowed(probeAppId, user)).toBe(false);
-    expect(isAppAllowed(probeAppId, admin)).toBe(true);
+    expect(isAppAllowed(coreAppIds.files, admin)).toBe(true);
+  });
+
+  it('shows the probe only while it is installed and granted, also to administrators', () => {
+    expect(isAppAllowed(probeAppId, admin)).toBe(false);
+    expect(isAppAllowed(probeAppId, { ...admin, apps: [probeAppId] })).toBe(true);
+    expect(isAppAllowed(probeAppId, { ...user, apps: [probeAppId] })).toBe(true);
   });
 
   it('gives the rest to everybody and nothing unknown', () => {

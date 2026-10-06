@@ -1,4 +1,5 @@
 using System.Data.Common;
+using System.Numerics;
 using System.Security.Claims;
 using Dapper;
 using Pithyx.Daemon.Apps.Packages;
@@ -36,9 +37,6 @@ public sealed partial class AppService(
     TimeProvider time,
     ILogger<AppService> logger)
 {
-    /// <summary>The built-in group every user belongs to; a grant to it is "Everybody" (D304).</summary>
-    public const long EverybodyGroupId = 100;
-
     public async Task<AppPackagePreview> UploadAsync(ClaimsPrincipal caller, Stream body, CancellationToken cancellationToken)
     {
         RequireAdmin(caller);
@@ -67,15 +65,17 @@ public sealed partial class AppService(
         var userId = CurrentUser.Id(caller);
         var package = packages.Get(userId, packageId);
         var appId = package.AppId;
-        var installed = registry.Find(appId);
         var pool = ChoosePool(request.Pool);
         storage.RequirePool(pool);
         if (!registry.TryBegin(appId))
         {
             throw new PithyxException(ErrorCodes.AppAppBusy, new Dictionary<string, object?> { ["id"] = appId });
         }
+        // Read under the app's lock, so a removal or install that finished meanwhile is seen.
+        InstalledApp? installed;
         try
         {
+            installed = registry.Find(appId);
             package = packages.Take(userId, packageId);
         }
         catch
@@ -92,9 +92,12 @@ public sealed partial class AppService(
                 try
                 {
                     await AppVersions.InstallAsync(storage, pool, appId, package.Package, package.Version, update: installed is not null,
-                        token => CommitAsync(package, pool, access, installed, token), context.Cancellation);
-                    permissions.Invalidate();
-                    await registry.ReloadAsync(CancellationToken.None);
+                        token => CommitAsync(package, pool, access, installed, token), context.Cancellation,
+                        published: async () =>
+                        {
+                            permissions.Invalidate();
+                            await registry.ReloadAsync(CancellationToken.None);
+                        });
                     LogInstalled(appId, package.Version, installed?.Version);
                 }
                 finally
@@ -230,6 +233,13 @@ public sealed partial class AppService(
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
         if (installed is null)
         {
+            // Two first installs may have chosen different pools; the one that commits first fixes the pool.
+            var fixedPool = await connection.ExecuteScalarAsync<string?>(
+                "SELECT value FROM settings WHERE key = @key AND EXISTS (SELECT 1 FROM apps)", new { key = AppRegistry.PoolSetting }, transaction);
+            if (fixedPool is not null && fixedPool != pool)
+            {
+                throw new PithyxException(ErrorCodes.AppPoolFixed, new Dictionary<string, object?> { ["pool"] = fixedPool });
+            }
             var uid = await UidAllocator.AllocateAppAsync(connection, transaction, appId, now);
             await connection.ExecuteAsync(
                 """
@@ -242,7 +252,7 @@ public sealed partial class AppService(
             {
                 await connection.ExecuteAsync(
                     "INSERT OR IGNORE INTO grants (subject_kind, subject_id, resource, level) VALUES ('group', @group, @resource, 'allow')",
-                    new { group = EverybodyGroupId, resource = Resources.App(appId) },
+                    new { group = GroupReconciler.UsersGid, resource = Resources.App(appId) },
                     transaction);
             }
             await connection.ExecuteAsync(
@@ -307,10 +317,10 @@ public sealed partial class AppService(
     {
         ArgumentNullException.ThrowIfNull(left);
         ArgumentNullException.ThrowIfNull(right);
-        static (long[] Core, string[]? Pre) Split(string version)
+        static (BigInteger[] Core, string[]? Pre) Split(string version)
         {
             var dash = version.IndexOf('-', StringComparison.Ordinal);
-            var core = (dash < 0 ? version : version[..dash]).Split('.').Select(part => long.Parse(part, System.Globalization.CultureInfo.InvariantCulture)).ToArray();
+            var core = (dash < 0 ? version : version[..dash]).Split('.').Select(part => BigInteger.Parse(part, System.Globalization.CultureInfo.InvariantCulture)).ToArray();
             return (core, dash < 0 ? null : version[(dash + 1)..].Split('.'));
         }
         var (leftCore, leftPre) = Split(left);
@@ -328,8 +338,8 @@ public sealed partial class AppService(
         }
         for (var index = 0; index < Math.Min(leftPre.Length, rightPre.Length); index++)
         {
-            var leftNumeric = long.TryParse(leftPre[index], System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var leftNumber);
-            var rightNumeric = long.TryParse(rightPre[index], System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var rightNumber);
+            var leftNumeric = BigInteger.TryParse(leftPre[index], System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var leftNumber);
+            var rightNumeric = BigInteger.TryParse(rightPre[index], System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var rightNumber);
             var compared = (leftNumeric, rightNumeric) switch
             {
                 (true, true) => leftNumber.CompareTo(rightNumber),

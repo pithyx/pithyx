@@ -26,6 +26,11 @@ export function isAppAllowed(
   if (app === undefined) {
     return false;
   }
+  // The probe is wired in by id until the topic apps lists installed apps (A12): it shows only while it is installed
+  // and granted, for administrators too.
+  if (id === probeAppId) {
+    return permissions?.apps.includes(id) ?? false;
+  }
   const admin = permissions?.admin === true;
   if (app.adminOnly === true) {
     return admin;
