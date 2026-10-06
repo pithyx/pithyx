@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import type { Page, WebSocketRoute } from '@playwright/test';
 import { expect, test } from './fixtures';
+import { installProbe, probeId } from './probe';
 import { appWindow, openFromDesktop, openFromStart, signInAsAdmin } from './session';
 
 // What the desktop does for app windows (A7): launch arguments, visibility and connection, app menus, badges and
@@ -20,7 +21,11 @@ async function violations(page: Page) {
   );
 }
 
-const FRAME = 'iframe[src="/apps/demo/index.html"]';
+const FRAME = `iframe[src="/apps/${probeId}/index.html"]`;
+
+test.beforeAll(async ({ baseURL }) => {
+  await installProbe(baseURL ?? '');
+});
 
 async function openDemo(page: Page) {
   await openFromStart(page, 'SDK demo');
