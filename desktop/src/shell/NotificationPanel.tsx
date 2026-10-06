@@ -1,6 +1,6 @@
 import type { ReactNode, Ref } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button } from '../ui/Button';
+import { Button } from '@pithyx/ui';
 import { NotificationCard, type NotificationItem } from './Notifications';
 import styles from './Notifications.module.css';
 import type { TaskbarPosition } from './types';

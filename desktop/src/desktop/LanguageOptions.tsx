@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { languageName, languages, setLanguage, storedLanguage, type Language } from '../i18n';
-import { Menu, MenuItem } from '../ui/Menu';
+import { Menu, MenuItem } from '@pithyx/ui';
 
 /** Automatic plus every language, with the current choice checked; the account menu's language submenu. */
 export function LanguageOptions() {

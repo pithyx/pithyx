@@ -4,11 +4,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatBytes } from '../../desktop/format';
 import { ErrorNotice } from '../../errors/ErrorNotice';
-import { Badge } from '../../ui/Controls';
-import { Button } from '../../ui/Button';
-import { cx } from '../../ui/cx';
-import { Dialog } from '../../ui/Dialog';
-import { TextField } from '../../ui/TextField';
+import { Badge, Button, cx, Dialog, TextField } from '@pithyx/ui';
 import { internalCall, type StorageDisk } from '../sdk/internal';
 import {
   layoutOptions,

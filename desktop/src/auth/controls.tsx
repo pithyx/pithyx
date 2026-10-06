@@ -10,9 +10,13 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { languageName, languages, setLanguage, storedLanguage, type Language } from '../i18n';
-import buttonStyles from '../ui/Button.module.css';
-import controlStyles from '../ui/Controls.module.css';
-import { cx } from '../ui/cx';
+import {
+  buttonStyles,
+  controlStyles,
+  cx,
+  textFieldStyles as fieldStyles,
+  uiTexts,
+} from '@pithyx/ui/native';
 import {
   IconCheck,
   IconChevronDown,
@@ -21,11 +25,10 @@ import {
   IconLanguage,
   IconLoader2,
 } from '../ui/icons';
-import fieldStyles from '../ui/TextField.module.css';
 import styles from './Auth.module.css';
 
-// Native form controls for setup and sign-in. They share the design system's styles with the React Aria primitives
-// in ui/, but keep React Aria out of the first chunk: the sign-in screen must load fast on a slow connection.
+// Native form controls for setup and sign-in. They share the styles and texts of @pithyx/ui's React Aria components,
+// but keep React Aria out of the first chunk: the sign-in screen must load fast on a slow connection.
 
 export interface FieldProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'className'> {
   label: string;
@@ -86,7 +89,8 @@ export function Field({
 }
 
 export function PasswordField(props: Omit<FieldProps, 'type' | 'trailing'>) {
-  const { t } = useTranslation();
+  const { i18n } = useTranslation();
+  const texts = uiTexts(i18n.language);
   const [visible, setVisible] = useState(false);
   return (
     <Field
@@ -97,7 +101,7 @@ export function PasswordField(props: Omit<FieldProps, 'type' | 'trailing'>) {
         <button
           type="button"
           className={fieldStyles.reveal}
-          aria-label={visible ? t('ui.password.hide') : t('ui.password.show')}
+          aria-label={visible ? texts.password.hide : texts.password.show}
           aria-pressed={visible}
           onClick={() => {
             setVisible(!visible);

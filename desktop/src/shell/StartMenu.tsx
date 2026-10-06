@@ -19,10 +19,15 @@ import {
   ListBoxSection,
 } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
-import { IconButton } from '../ui/Button';
-import { ContextMenuPopover } from '../ui/ContextMenu';
-import { Menu, MenuItem, MenuPopover, MenuTrigger } from '../ui/Menu';
-import { SearchField } from '../ui/TextField';
+import {
+  ContextMenuPopover,
+  IconButton,
+  Menu,
+  MenuItem,
+  MenuPopover,
+  MenuTrigger,
+  SearchField,
+} from '@pithyx/ui';
 import { AppIcon } from './AppIcon';
 import styles from './StartMenu.module.css';
 import type { AppInfo, TaskbarPosition } from './types';

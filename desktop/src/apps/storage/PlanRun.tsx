@@ -3,8 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ErrorNotice } from '../../errors/ErrorNotice';
-import { Button } from '../../ui/Button';
-import { TextField } from '../../ui/TextField';
+import { Button, TextField } from '@pithyx/ui';
 import {
   internalCall,
   onInternal,

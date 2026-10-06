@@ -2,7 +2,7 @@ import { IconCheck, IconCopy, IconKey, IconPrinter } from '../ui/icons';
 import { useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { copyText } from '../platform/browser';
-import { cx } from '../ui/cx';
+import { cx } from '@pithyx/ui';
 import styles from './Auth.module.css';
 import { Button, Checkbox } from './controls';
 import { RecoveryKeyValue } from './parts';

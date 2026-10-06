@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Button } from '../ui/Button';
-import { cx } from '../ui/cx';
+import { Button, cx } from '@pithyx/ui';
 import { openApp } from '../wm/store';
 import desktopStyles from '../desktop/Desktop.module.css';
 import { useMessages } from './messages';

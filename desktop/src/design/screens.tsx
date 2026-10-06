@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Button } from '../ui/Button';
+import { Button } from '@pithyx/ui';
 import { LoginFlow, SetupAccount, SetupRecovery, type LoginStep } from './AuthScreens';
 import {
   DesktopScene,

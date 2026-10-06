@@ -3,10 +3,16 @@ import { useVirtualizer } from '@tanstack/react-virtual';
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ErrorNotice } from '../../errors/ErrorNotice';
-import { Button, IconButton } from '../../ui/Button';
+import {
+  Button,
+  IconButton,
+  Menu,
+  MenuItem,
+  MenuPopover,
+  MenuTrigger,
+  SearchField,
+} from '@pithyx/ui';
 import { IconDownload, IconFilter, IconRefresh, IconSettings } from '../../ui/icons';
-import { Menu, MenuItem, MenuPopover, MenuTrigger } from '../../ui/Menu';
-import { SearchField } from '../../ui/TextField';
 import { useAppName } from '../names';
 import type { SdkAppProps } from '../sdk/CoreSdkApp';
 import { describeProblem, logsCall, type LogEntry } from '../sdk/logs';
