@@ -11,9 +11,9 @@ import {
   type SearchFieldProps as AriaSearchFieldProps,
   type TextFieldProps as AriaTextFieldProps,
 } from 'react-aria-components';
-import { useTranslation } from 'react-i18next';
 import { cx } from './cx';
 import styles from './TextField.module.css';
+import { useUiTexts } from './UiProvider';
 
 export interface TextFieldProps extends Omit<AriaTextFieldProps, 'className' | 'children'> {
   label: ReactNode;
@@ -65,7 +65,7 @@ export interface PasswordFieldProps extends Omit<TextFieldProps, 'type' | 'trail
 }
 
 export function PasswordField(props: PasswordFieldProps) {
-  const { t } = useTranslation();
+  const texts = useUiTexts();
   const [visible, setVisible] = useState(false);
   return (
     <TextField
@@ -75,7 +75,7 @@ export function PasswordField(props: PasswordFieldProps) {
       trailing={
         <AriaButton
           className={styles.reveal}
-          aria-label={visible ? t('ui.password.hide') : t('ui.password.show')}
+          aria-label={visible ? texts.password.hide : texts.password.show}
           aria-pressed={visible}
           onPress={() => {
             setVisible(!visible);
@@ -109,12 +109,12 @@ export interface SearchFieldProps extends Omit<AriaSearchFieldProps, 'className'
 
 /** A search input whose label is only announced; the placeholder carries the visible hint. */
 export function SearchField({ label, placeholder, className, ...props }: SearchFieldProps) {
-  const { t } = useTranslation();
+  const texts = useUiTexts();
   return (
     <AriaSearchField {...props} aria-label={label} className={cx(styles.search, className)}>
       <IconSearch className={styles.searchIcon} size={18} stroke={1.75} aria-hidden />
       <Input className={styles.searchInput} placeholder={placeholder ?? ''} />
-      <AriaButton className={styles.clear} aria-label={t('ui.search.clear')}>
+      <AriaButton className={styles.clear} aria-label={texts.search.clear}>
         <IconX size={16} stroke={1.75} />
       </AriaButton>
     </AriaSearchField>

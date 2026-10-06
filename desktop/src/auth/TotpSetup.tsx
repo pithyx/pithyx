@@ -10,9 +10,7 @@ import { copyText } from '../platform/browser';
 import { describeError } from '../errors/describe';
 import { ErrorNotice } from '../errors/ErrorNotice';
 import { field } from '../forms';
-import { Button } from '../ui/Button';
-import { Dialog } from '../ui/Dialog';
-import { OtpField, PasswordField } from '../ui/TextField';
+import { Button, Dialog, OtpField, PasswordField } from '@pithyx/ui';
 import styles from './TotpSetup.module.css';
 
 type User = components['schemas']['UserInfo'];

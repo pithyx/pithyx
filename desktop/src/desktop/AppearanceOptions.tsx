@@ -10,7 +10,7 @@ import {
   WALLPAPERS,
   type Appearance,
 } from '../theme/appearance';
-import { Menu, MenuItem } from '../ui/Menu';
+import { Menu, MenuItem } from '@pithyx/ui';
 import styles from './Desktop.module.css';
 
 /** Applies a change at once and saves it for every device; a refused save puts the previous look back. */

@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { Button as AriaButton } from 'react-aria-components';
 import { AppIcon } from '../shell/AppIcon';
 import type { AppInfo } from '../shell/types';
-import { Menu, MenuItem, MenuPopover, MenuSeparator, MenuTrigger } from '../ui/Menu';
+import { Menu, MenuItem, MenuPopover, MenuSeparator, MenuTrigger } from '@pithyx/ui';
 import { runWindowCommand, type WindowCommand } from './commands';
 import type { Placement } from './types';
 import { useWindowUi } from './ui';

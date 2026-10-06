@@ -38,7 +38,7 @@ desktop.ini
 # Claude Code personal settings
 .claude/settings.local.json
 
-# Generated CSS Module declarations (desktop/scripts/css-module-types.ts)
+# Generated CSS Module declarations (tools/css-module-types.ts)
 .css-types/
 
 # Design screenshots (tools/design-shots/render.ts)

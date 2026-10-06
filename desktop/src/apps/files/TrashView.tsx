@@ -3,8 +3,7 @@ import type { JobInfo, TrashEntry, PithyxApp } from '@pithyx/sdk';
 import { useState } from 'react';
 import { ListBox, ListBoxItem, type Selection as AriaSelection } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
-import { Button } from '../../ui/Button';
-import { Dialog } from '../../ui/Dialog';
+import { Button, Dialog } from '@pithyx/ui';
 import { IconFile, IconFolder, IconRestore, IconTrashX } from '../../ui/icons';
 import styles from './FilesApp.module.css';
 

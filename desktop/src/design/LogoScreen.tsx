@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Button } from '../ui/Button';
+import { Button } from '@pithyx/ui';
 import { LogoMark, Wordmark, type LogoMotion } from '../ui/Logo';
 import { labels } from './labels';
 import styles from './LogoScreen.module.css';

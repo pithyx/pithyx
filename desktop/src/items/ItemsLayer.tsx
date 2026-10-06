@@ -14,7 +14,7 @@ import { useAppName } from '../apps/names';
 import { findApp } from '../apps/registry';
 import { DesktopItemFace } from '../shell/DesktopIcon';
 import iconStyles from '../shell/DesktopIcon.module.css';
-import { cx } from '../ui/cx';
+import { cx } from '@pithyx/ui';
 import { announce } from '../wm/announce';
 import { useSizeClass } from '../wm/sizeClass';
 import { openApp, useDesktop } from '../wm/store';

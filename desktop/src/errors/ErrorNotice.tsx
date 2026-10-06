@@ -1,7 +1,7 @@
 import type { TFunction } from 'i18next';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
-import { cx } from '../ui/cx';
+import { cx } from '@pithyx/ui';
 import { IconAlertCircle } from '../ui/icons';
 import type { DescribedError } from './describe';
 import styles from './ErrorNotice.module.css';

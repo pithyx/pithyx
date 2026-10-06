@@ -1,7 +1,6 @@
 import { IconX } from '../ui/icons';
 import { useTranslation } from 'react-i18next';
-import { Button, IconButton } from '../ui/Button';
-import { cx } from '../ui/cx';
+import { Button, cx, IconButton } from '@pithyx/ui';
 import { AppIcon } from './AppIcon';
 import styles from './Notifications.module.css';
 import { useMessages, type Message } from './messages';

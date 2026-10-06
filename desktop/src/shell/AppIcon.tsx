@@ -1,4 +1,4 @@
-import { cx } from '../ui/cx';
+import { cx } from '@pithyx/ui';
 import styles from './AppIcon.module.css';
 import type { AppInfo } from './types';
 

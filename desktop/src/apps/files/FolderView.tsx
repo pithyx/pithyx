@@ -11,7 +11,7 @@ import {
   type MouseEvent,
 } from 'react';
 import { useTranslation } from 'react-i18next';
-import { cx } from '../../ui/cx';
+import { cx } from '@pithyx/ui';
 import { IconArrowDown, IconArrowUp, IconFile, IconFolder, IconLink } from '../../ui/icons';
 import styles from './FilesApp.module.css';
 import {
