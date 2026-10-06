@@ -4,8 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { describeError } from '../errors/describe';
 import { ErrorNotice } from '../errors/ErrorNotice';
-import { Button } from '../ui/Button';
-import { Dialog } from '../ui/Dialog';
+import { Button, Dialog } from '@pithyx/ui';
 
 export type PowerAction = 'restart' | 'shutdown';
 

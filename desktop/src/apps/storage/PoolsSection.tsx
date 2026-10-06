@@ -3,8 +3,7 @@ import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatBytes } from '../../desktop/format';
 import { ErrorNotice } from '../../errors/ErrorNotice';
-import { Button } from '../../ui/Button';
-import { Badge, ProgressBar } from '../../ui/Controls';
+import { Badge, Button, ProgressBar } from '@pithyx/ui';
 import { IconPlus } from '../../ui/icons';
 import {
   onInternal,

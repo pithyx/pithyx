@@ -5,7 +5,7 @@
     "jsx": "react-jsx",
     "types": ["vite/client"],
     "resolveJsonModule": true,
-    "rootDirs": ["src", ".css-types/src"],
+    "rootDirs": ["src", ".css-types/src", "../packages/ui/src", "../packages/ui/.css-types/src"],
     "allowImportingTsExtensions": true
   },
   "include": ["src", ".css-types", "scripts", "vite.config.ts"]

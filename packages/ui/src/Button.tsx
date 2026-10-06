@@ -1,13 +1,8 @@
 import type { ReactNode } from 'react';
-import {
-  Button as AriaButton,
-  Tooltip,
-  TooltipTrigger,
-  type ButtonProps as AriaButtonProps,
-} from 'react-aria-components';
+import { Button as AriaButton, type ButtonProps as AriaButtonProps } from 'react-aria-components';
 import styles from './Button.module.css';
 import { cx } from './cx';
-import tooltipStyles from './Tooltip.module.css';
+import { Tooltip, TooltipTrigger } from './Tooltip';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'quiet' | 'danger';
 
@@ -55,9 +50,7 @@ export function IconButton({
   return (
     <TooltipTrigger delay={600} closeDelay={0}>
       {button}
-      <Tooltip className={tooltipStyles.tooltip} offset={6}>
-        {label}
-      </Tooltip>
+      <Tooltip>{label}</Tooltip>
     </TooltipTrigger>
   );
 }

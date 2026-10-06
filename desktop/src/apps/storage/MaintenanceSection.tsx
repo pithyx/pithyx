@@ -4,8 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ErrorNotice } from '../../errors/ErrorNotice';
 import { useMessages } from '../../shell/messages';
 import { alertMessage } from '../../shell/storageAlerts';
-import { Button } from '../../ui/Button';
-import { Badge } from '../../ui/Controls';
+import { Badge, Button } from '@pithyx/ui';
 import {
   internalCall,
   type Pool,

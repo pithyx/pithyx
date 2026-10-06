@@ -1,7 +1,7 @@
 import { IconX } from '../ui/icons';
 import type { ReactNode, Ref } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Button, IconButton } from '../ui/Button';
+import { Button, IconButton } from '@pithyx/ui';
 import { AppIcon } from './AppIcon';
 import styles from './AppSwitcher.module.css';
 import type { AppInfo, TaskbarPosition } from './types';

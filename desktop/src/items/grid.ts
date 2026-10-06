@@ -1,7 +1,7 @@
 // The desktop's icon grid. Items are stored by cell, so the same arrangement works on every screen of the user; a
 // screen that is too small shows an item in the next free cell without changing where it is stored.
 
-/** Keep in step with --desktop-cell-width, --desktop-cell-height and --desktop-grid-padding in tokens.css. */
+/** Keep in step with --desktop-cell-width, --desktop-cell-height and --desktop-grid-padding in @pithyx/ui's tokens.css. */
 export const CELL_WIDTH = 96;
 export const CELL_HEIGHT = 112;
 export const GRID_PADDING = 12;

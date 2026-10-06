@@ -1,7 +1,7 @@
 import { IconX } from '../ui/icons';
 import type { CSSProperties } from 'react';
 import { useTranslation } from 'react-i18next';
-import { IconButton } from '../ui/Button';
+import { IconButton } from '@pithyx/ui';
 import styles from './StickyNote.module.css';
 
 /** A sticky note widget on the desktop. Position in percent of the workspace. */

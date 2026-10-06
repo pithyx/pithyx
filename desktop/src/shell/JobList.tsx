@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { IconButton } from '../ui/Button';
-import { ProgressBar } from '../ui/Controls';
+import { IconButton, ProgressBar } from '@pithyx/ui';
 import { IconX } from '../ui/icons';
 import type { JobItem } from './Notifications';
 import styles from './Notifications.module.css';

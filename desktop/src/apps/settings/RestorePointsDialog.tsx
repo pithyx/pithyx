@@ -1,6 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Button } from '../../ui/Button';
-import { Dialog } from '../../ui/Dialog';
+import { Button, Dialog } from '@pithyx/ui';
 import { IconRestore } from '../../ui/icons';
 import styles from './Settings.module.css';
 

@@ -14,9 +14,7 @@ import {
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStore } from 'zustand';
-import { Button, IconButton } from '../../ui/Button';
-import { cx } from '../../ui/cx';
-import { Dialog } from '../../ui/Dialog';
+import { Button, cx, Dialog, IconButton } from '@pithyx/ui';
 import {
   IconArrowLeft,
   IconArrowRight,

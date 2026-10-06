@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { formatBytes } from '../../desktop/format';
 import { ErrorNotice } from '../../errors/ErrorNotice';
 import { useFormatLocale } from '../../i18n';
-import { Button } from '../../ui/Button';
+import { Button } from '@pithyx/ui';
 import type { Pool } from '../sdk/internal';
 import { DatasetDialog, type DatasetAction } from './DatasetDialog';
 import { datasetRole } from './datasets';

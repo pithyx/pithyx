@@ -9,8 +9,7 @@ interface Rgba {
   a: number;
 }
 
-const tokensCss = readFileSync(new URL('./tokens.css', import.meta.url), 'utf8');
-const accentsCss = readFileSync(new URL('./accents.css', import.meta.url), 'utf8');
+const tokensCss = readFileSync(new URL('../tokens.css', import.meta.url), 'utf8');
 
 /** Custom properties per selector, ignoring @media overrides (those only swap in the solid fallbacks). */
 function declarations(css: string): Map<string, Map<string, string>> {
@@ -30,15 +29,14 @@ function declarations(css: string): Map<string, Map<string, string>> {
 }
 
 const tokenBlocks = declarations(tokensCss);
-const accentBlocks = declarations(accentsCss);
-const accents = [...accentBlocks.keys()]
+const accents = [...tokenBlocks.keys()]
   .map((selector) => /^\[data-accent='([\w-]+)'\]$/.exec(selector)?.[1])
   .filter((name) => name !== undefined);
 
 function variables(accent: string): Map<string, string> {
   return new Map([
     ...(tokenBlocks.get(':root') ?? []),
-    ...(accentBlocks.get(`[data-accent='${accent}']`) ?? []),
+    ...(tokenBlocks.get(`[data-accent='${accent}']`) ?? []),
   ]);
 }
 

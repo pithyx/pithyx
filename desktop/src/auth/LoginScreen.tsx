@@ -7,9 +7,8 @@ import { describeError } from '../errors/describe';
 import { ErrorNotice } from '../errors/ErrorNotice';
 import { field } from '../forms';
 import { AuthHeader, AuthLayout } from '../shell/AuthLayout';
-import { cx } from '../ui/cx';
+import { cx, textFieldStyles } from '@pithyx/ui/native';
 import { IconArrowLeft } from '../ui/icons';
-import fieldStyles from '../ui/TextField.module.css';
 import styles from './Auth.module.css';
 import { Button, Field, LanguageSelect, PasswordField } from './controls';
 import { useFormErrors } from './formErrors';
@@ -269,7 +268,7 @@ function TotpStep({
           inputMode="numeric"
           autoComplete="one-time-code"
           maxLength={7}
-          inputClassName={fieldStyles.otp}
+          inputClassName={textFieldStyles.otp}
           autoFocus
           required
         />

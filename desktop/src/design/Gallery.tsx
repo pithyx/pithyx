@@ -1,6 +1,5 @@
 import { useState } from 'react';
-import { Checkbox } from '../ui/Controls';
-import { cx } from '../ui/cx';
+import { Checkbox, cx } from '@pithyx/ui';
 import { Wordmark } from '../ui/Logo';
 import type { TaskbarPosition } from '../shell/types';
 import styles from './Gallery.module.css';
