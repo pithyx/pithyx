@@ -27,7 +27,7 @@ public sealed class AppDatasetIntegrationTests
     private static async Task<UnpackedPackage> PackageAsync(string directory, string version, string content)
     {
         var bytes = TarBuilder.MinimalPackage(AppId, version).File("frontend/marker.txt", content).End().Gzip();
-        return await PackageReader.UnpackAsync(new MemoryStream(bytes), Path.Combine(directory, "staging-" + version + "-" + content), PackageLimits.Default, Token);
+        return await PackageReader.UnpackAsync(new MemoryStream(bytes), Path.Combine(directory, "staging-" + version + "-" + content + "-" + Guid.NewGuid().ToString("N")), PackageLimits.Default, Token);
     }
 
     [Fact]
