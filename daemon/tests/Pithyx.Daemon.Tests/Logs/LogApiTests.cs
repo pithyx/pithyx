@@ -46,17 +46,53 @@ public sealed class LogApiTests : IDisposable
     {
         await _admin.SetupAdminAsync();
 
-        using var written = await _admin.PostAsync("/api/apps/files/logs", new { entries = new[] { new { level = "warn", message = "upload retried", data = new Dictionary<string, string> { ["file"] = "a.jpg" } } } });
+        using var written = await _admin.PostAsync("/api/apps/org.pithyx.files/logs", new { entries = new[] { new { level = "warn", message = "upload retried", data = new Dictionary<string, string> { ["file"] = "a.jpg" } } } });
         Assert.Equal(1, (await written.JsonAsync()).GetProperty("accepted").GetInt32());
 
-        var entries = await EntriesAsync(_admin, "source=app/files&level=warn", 1);
+        var entries = await EntriesAsync(_admin, "source=app/org.pithyx.files&level=warn", 1);
         var entry = entries[0];
         Assert.Equal("upload retried", entry.GetProperty("message").GetString());
         Assert.Equal("admin", entry.GetProperty("user").GetString());
         Assert.Equal("a.jpg", entry.GetProperty("data").GetProperty("file").GetString());
-        Assert.Contains("app/files", await _admin.GetFromJsonAsync<string[]>("/api/logs/sources", Token) ?? []);
-        var export = await _admin.GetStringAsync("/api/logs/export?format=text&source=app/files", Token);
-        Assert.Contains("WARN  app/files upload retried", export, StringComparison.Ordinal);
+        Assert.Contains("app/org.pithyx.files", await _admin.GetFromJsonAsync<string[]>("/api/logs/sources", Token) ?? []);
+        var export = await _admin.GetStringAsync("/api/logs/export?format=text&source=app/org.pithyx.files", Token);
+        Assert.Contains("WARN  app/org.pithyx.files upload retried", export, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task ACoreAppsEntriesFromBeforeItsNewIdKeepTheirSourceAndTheFilterFindsBoth()
+    {
+        await _admin.SetupAdminAsync();
+        var store = _factory.Services.GetRequiredService<LogStore>();
+        store.Enqueue(new PendingLogEntry(DateTimeOffset.UtcNow.AddMinutes(-5), LogLevelName.Info, "app/files", "written before the rename", null, "admin", null));
+        store.Enqueue(new PendingLogEntry(DateTimeOffset.UtcNow.AddMinutes(-5), LogLevelName.Info, "app/com.mueller.files", "another app", null, "admin", null));
+        using (var written = await _admin.PostAsync("/api/apps/org.pithyx.files/logs", new { entries = new[] { new { level = "info", message = "written after the rename" } } }))
+        {
+            Assert.Equal(HttpStatusCode.OK, written.StatusCode);
+        }
+
+        var entries = await EntriesAsync(_admin, "source=app/org.pithyx.files", 2);
+        Assert.Equal(
+            [("app/org.pithyx.files", "written after the rename"), ("app/files", "written before the rename")],
+            entries.EnumerateArray().Select(entry => (entry.GetProperty("source").GetString(), entry.GetProperty("message").GetString())));
+        var sources = await _admin.GetFromJsonAsync<string[]>("/api/logs/sources", Token) ?? [];
+        Assert.Contains("app/org.pithyx.files", sources);
+        Assert.DoesNotContain("app/files", sources);
+        Assert.Contains("app/com.mueller.files", sources);
+        var export = await _admin.GetStringAsync("/api/logs/export?format=text&source=app/org.pithyx.files", Token);
+        Assert.Contains("app/files written before the rename", export, StringComparison.Ordinal);
+        // The old name alone still finds only the old entries.
+        Assert.Equal(1, (await EntriesAsync(_admin, "source=app/files", 1)).GetArrayLength());
+    }
+
+    [Fact]
+    public async Task ShortAppIdsAreRefused()
+    {
+        await _admin.SetupAdminAsync();
+
+        using var refused = await _admin.PostAsync("/api/apps/files/logs", new { entries = new[] { new { level = "info", message = "hi" } } });
+
+        Assert.Equal("logs.app.invalid", await refused.ErrorCodeAsync());
     }
 
     [Fact]
@@ -72,18 +108,18 @@ public sealed class LogApiTests : IDisposable
             Assert.Equal("auth.permission.denied", await response.ErrorCodeAsync());
         }
         // An app writes in the user's name only when the user may open it.
-        using (var refused = await rita.PostAsync("/api/apps/files/logs", new { entries = new[] { new { level = "info", message = "hi" } } }))
+        using (var refused = await rita.PostAsync("/api/apps/org.pithyx.files/logs", new { entries = new[] { new { level = "info", message = "hi" } } }))
         {
             Assert.Equal("auth.permission.denied", await refused.ErrorCodeAsync());
         }
         await using (var connection = await _factory.Services.GetRequiredService<Pithyx.Daemon.Database.SqliteConnectionFactory>().OpenAsync(Token))
         {
-            await TestUsers.GrantAsync(connection, userId, "app:files");
+            await TestUsers.GrantAsync(connection, userId, "app:org.pithyx.files");
         }
         _factory.Services.GetRequiredService<Pithyx.Daemon.Permissions.PermissionService>().Invalidate();
-        using var written = await rita.PostAsync("/api/apps/files/logs", new { entries = new[] { new { level = "info", message = "hi" } } });
+        using var written = await rita.PostAsync("/api/apps/org.pithyx.files/logs", new { entries = new[] { new { level = "info", message = "hi" } } });
         Assert.Equal(HttpStatusCode.OK, written.StatusCode);
-        using var admin = await rita.PostAsync("/api/apps/storage/logs", new { entries = new[] { new { level = "info", message = "hi" } } });
+        using var admin = await rita.PostAsync("/api/apps/org.pithyx.storage/logs", new { entries = new[] { new { level = "info", message = "hi" } } });
         Assert.Equal("auth.permission.denied", await admin.ErrorCodeAsync());
     }
 
@@ -92,7 +128,7 @@ public sealed class LogApiTests : IDisposable
     {
         await _admin.SetupAdminAsync();
 
-        using var tooMany = await _admin.PostAsync("/api/apps/files/logs", new { entries = Enumerable.Repeat(new { level = "info", message = "x" }, 101) });
+        using var tooMany = await _admin.PostAsync("/api/apps/org.pithyx.files/logs", new { entries = Enumerable.Repeat(new { level = "info", message = "x" }, 101) });
         Assert.Equal("logs.batch.too_large", await tooMany.ErrorCodeAsync());
         using var badApp = await _admin.PostAsync("/api/apps/Files!/logs", new { entries = Array.Empty<object>() });
         Assert.Equal("logs.app.invalid", await badApp.ErrorCodeAsync());

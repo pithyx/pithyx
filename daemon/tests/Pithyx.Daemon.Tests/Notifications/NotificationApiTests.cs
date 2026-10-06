@@ -120,7 +120,7 @@ public sealed class NotificationApiTests : IAsyncLifetime
         using var anonymous = _factory.CreateApiClient();
 
         using var list = await anonymous.GetAsync("/api/notifications", Token);
-        using var app = await anonymous.PostAsync("/api/notifications/app", new { app = "demo", title = "Hi" });
+        using var app = await anonymous.PostAsync("/api/notifications/app", new { app = "org.pithyx.demo", title = "Hi" });
         using var clear = await anonymous.DeleteAsync("/api/notifications", Token);
 
         Assert.Equal(HttpStatusCode.Unauthorized, list.StatusCode);
@@ -131,12 +131,12 @@ public sealed class NotificationApiTests : IAsyncLifetime
     [Fact]
     public async Task AnAppNotificationIsStoredAsPlainTextWithTheApp()
     {
-        using var response = await _bob.PostAsync("/api/notifications/app", new { app = "demo", title = "  Backup done  ", body = "{count} files", tone = "success" });
+        using var response = await _bob.PostAsync("/api/notifications/app", new { app = "org.pithyx.demo", title = "  Backup done  ", body = "{count} files", tone = "success" });
         var created = await response.JsonAsync();
 
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
         Assert.Equal(NotificationService.AppMessageCode, created.GetProperty("code").GetString());
-        Assert.Equal("demo", created.GetProperty("app").GetString());
+        Assert.Equal("org.pithyx.demo", created.GetProperty("app").GetString());
         Assert.Equal("success", created.GetProperty("tone").GetString());
         Assert.Equal("Backup done", created.GetProperty("params").GetProperty("title").GetString());
         Assert.Equal("{count} files", created.GetProperty("params").GetProperty("body").GetString());
@@ -144,9 +144,10 @@ public sealed class NotificationApiTests : IAsyncLifetime
     }
 
     [Theory]
-    [InlineData("Demo", "Hi", null, "app")]
-    [InlineData("demo", " ", null, "title")]
-    [InlineData("demo", "Hi", 1001, "body")]
+    [InlineData("org.pithyx.Demo", "Hi", null, "app")]
+    [InlineData("demo", "Hi", null, "app")]
+    [InlineData("org.pithyx.demo", " ", null, "title")]
+    [InlineData("org.pithyx.demo", "Hi", 1001, "body")]
     public async Task AnInvalidAppNotificationIsRefusedWithTheField(string app, string title, int? bodyLength, string field)
     {
         using var response = await _bob.PostAsync("/api/notifications/app", new { app, title, body = bodyLength is { } length ? new string('x', length) : null });

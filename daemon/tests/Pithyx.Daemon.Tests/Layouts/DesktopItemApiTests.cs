@@ -67,7 +67,7 @@ public sealed class DesktopItemApiTests : IDisposable
 
         var items = await ListAsync();
 
-        Assert.Equal(["files", "storage", "settings", "about"], items.Select(item => item.GetProperty("app").GetString()));
+        Assert.Equal(["org.pithyx.files", "org.pithyx.storage", "org.pithyx.settings", "org.pithyx.about"], items.Select(item => item.GetProperty("app").GetString()));
         Assert.All(items, item => Assert.Equal("shortcut", item.GetProperty("kind").GetString()));
         Assert.Equal([0, 1, 2, 3], items.Select(item => item.GetProperty("row").GetInt32()));
         Assert.All(items, item => Assert.Equal(0, item.GetProperty("column").GetInt32()));
@@ -179,8 +179,9 @@ public sealed class DesktopItemApiTests : IDisposable
     }
 
     [Theory]
-    [InlineData("""{"kind":"shortcut","app":"disks","text":"no","column":0,"row":0}""")]
+    [InlineData("""{"kind":"shortcut","app":"org.pithyx.files","text":"no","column":0,"row":0}""")]
     [InlineData("""{"kind":"shortcut","app":"../x","column":0,"row":0}""")]
+    [InlineData("""{"kind":"shortcut","app":"files","column":0,"row":0}""")]
     [InlineData("""{"kind":"shortcut","column":0,"row":0}""")]
     [InlineData("""{"kind":"note","app":"disks","text":"","column":0,"row":0}""")]
     [InlineData("""{"kind":"note","column":0,"row":0}""")]
@@ -306,7 +307,7 @@ public sealed class DesktopItemApiTests : IDisposable
                 Assert.Equal(2, await before.ExecuteScalarAsync<long>("SELECT COUNT(*) FROM desktop_items WHERE data = '{\"app\":\"disks\"}'"));
             }
 
-            await runner.RunAsync(Migration.Embedded(), Token);
+            await runner.RunAsync([.. Migration.Embedded().Where(migration => migration.Version < 22)], Token);
 
             await using var check = await connections.OpenAsync(Token);
             var rows = await check.QueryAsync<(string User, string Data, long Row, long Version)>(
