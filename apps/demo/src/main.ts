@@ -148,9 +148,13 @@ async function main(root: HTMLElement) {
     'sizeClassChange',
     'openFile',
     'appUpdated',
-    'backendUnavailable',
-    'backendRestored',
-    'permissionRevoked',
+    'visibilityChange',
+    'connectionChange',
+    'backendStatus',
+    'permissionsChange',
+    'storageChange',
+    'notificationAction',
+    'logLevelChange',
   ] as const) {
     app.on(name, () => {
       events.push(name);
@@ -158,7 +162,7 @@ async function main(root: HTMLElement) {
     });
   }
   app.answer('beforeClose', () => ({ allow: !keepOpen }));
-  app.answer('beforeLogout', async () => {
+  app.answer('beforeUnload', async () => {
     await app.storage.set('count', count);
     return {};
   });

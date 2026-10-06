@@ -1,4 +1,4 @@
-import { BEFORE_CLOSE_TIMEOUT, BEFORE_LOGOUT_TIMEOUT } from '@pithyx/sdk';
+import { BEFORE_CLOSE_TIMEOUT, BEFORE_UNLOAD_TIMEOUT } from '@pithyx/sdk';
 import type { AppConnection } from '@pithyx/sdk/host';
 import i18next from 'i18next';
 import { useEffect, type RefObject } from 'react';
@@ -10,8 +10,9 @@ import { onBeforeLogout } from '../lifecycle';
 import { currentTheme, onThemeChange } from '../sandbox/theme';
 
 /**
- * Sends an app window its lifecycle events (focus, minimize, size class, theme, language) and asks it before the
- * window closes and before sign-out. The same for sandboxed and core apps: only the connection's transport differs.
+ * Sends an app window its lifecycle events (focus, minimize and visibility, size class, theme, language) and asks it
+ * before the window closes and before sign-out (`beforeUnload` with the reason `logout`). The same for sandboxed and
+ * core apps: only the connection's transport differs.
  */
 export function useAppLifecycle(
   windowId: string,
@@ -27,6 +28,7 @@ export function useAppLifecycle(
   }, [connection, focused]);
   useEffect(() => {
     connection.current?.emit(minimized ? 'minimize' : 'restore', {});
+    connection.current?.emit('visibilityChange', { visible: !minimized });
   }, [connection, minimized]);
   useEffect(() => {
     connection.current?.emit('sizeClassChange', { sizeClass });
@@ -35,6 +37,7 @@ export function useAppLifecycle(
     // The locale carries the system region (formatLocale), so a change of either reaches the app.
     const onLocale = () => {
       connection.current?.emit('localeChange', {
+        language: i18next.language,
         locale: formatLocale(),
         timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       });
@@ -50,7 +53,7 @@ export function useAppLifecycle(
       return answer?.allow ?? true;
     });
     const stopLogout = onBeforeLogout(async () =>
-      connection.current?.ask('beforeLogout', {}, BEFORE_LOGOUT_TIMEOUT),
+      connection.current?.ask('beforeUnload', { reason: 'logout' }, BEFORE_UNLOAD_TIMEOUT),
     );
     return () => {
       i18next.off('languageChanged', onLocale);

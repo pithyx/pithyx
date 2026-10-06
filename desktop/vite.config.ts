@@ -19,6 +19,14 @@ import { desktopNamespaces, signInNamespaces } from './src/i18nNamespaces.ts';
 
 const daemonUrl = process.env.PITHYX_DAEMON_URL ?? 'http://localhost:7484';
 
+// The product version has one source, the daemon's build properties; the desktop ships with the daemon.
+const pithyxVersion = /<Version>([^<]+)<\/Version>/.exec(
+  readFileSync(join(import.meta.dirname, '../daemon/Directory.Build.props'), 'utf8'),
+)?.[1];
+if (pithyxVersion === undefined) {
+  throw new Error('daemon/Directory.Build.props has no <Version>');
+}
+
 // Keeps the CSS Module declarations current while the dev server runs.
 function cssModuleTypes(): Plugin {
   return {
@@ -244,6 +252,7 @@ export default defineConfig({
     bundleGraph(),
     devCompression(),
   ],
+  define: { __PITHYX_VERSION__: JSON.stringify(pithyxVersion) },
   // Workspace packages (the SDK) are compiled from source.
   resolve: { conditions: ['pithyx-source', ...defaultClientConditions] },
   // Unit tests run through the server resolver; they compile the SDK from source too, so no SDK build is needed.

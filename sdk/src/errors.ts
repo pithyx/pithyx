@@ -21,6 +21,10 @@ export const sdkErrorCodes = [
   'sdk.protocol.unsupported',
   /** The user cancelled the upload in the taskbar. */
   'sdk.transfer.cancelled',
+  /** The app has no backend, or its backend declares no endpoint of this name (`params.endpoint`). */
+  'sdk.backend.endpoint_unknown',
+  /** A request to the app's backend did not reach the box (`params.endpoint`), for example while it restarts. */
+  'sdk.backend.unreachable',
 ] as const;
 
 export type SdkErrorCode = (typeof sdkErrorCodes)[number];
