@@ -1,0 +1,26 @@
+{
+  "manifestVersion": 1,
+  "id": "com.example.notes",
+  "version": "0.1.0",
+  "name": {
+    "en": "Notes"
+  },
+  "author": {
+    "name": "Example"
+  },
+  "entry": "frontend/index.html",
+  "sdk": "^1.0.0",
+  "permissions": [],
+  "window": {
+    "instances": "single",
+    "defaultSize": {
+      "width": 400,
+      "height": 300
+    },
+    "minSize": {
+      "width": 500,
+      "height": 300
+    }
+  },
+  "color": "red"
+}

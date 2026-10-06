@@ -1,5 +1,26 @@
 {
   "app": {
+    "elevated": {
+      "unsupported": "The app asks for the right {right}, which this version of Pithyx does not grant."
+    },
+    "icon": {
+      "invalid": "The app's icon cannot be used: {reason, select, too_large {it is larger than 64 KB} malformed {it is not a valid SVG file} not_svg {it is not an SVG image} viewbox {its viewBox is missing or not square} doctype {it contains a DOCTYPE} processing_instruction {it contains a processing instruction} element_forbidden {it contains the element {element}} event_attribute {it contains the event attribute {attribute}} external_href {it links to something outside the file} style_import {its styles use @import} style_url {it loads something outside the file with url()} style_escape {its styles contain escapes} other {it breaks a rule for icons}}."
+    },
+    "manifest": {
+      "cron_invalid": "The schedule at {path} is not a valid cron expression: {cron}",
+      "duplicate": "The manifest has {value} twice (at {path}).",
+      "id_invalid": "The app id {id} is not valid. It is the author's domain reversed plus the app name, for example com.example.chat.",
+      "id_reserved": "The app id {id} is reserved for the apps that come with Pithyx.",
+      "invalid_json": "The app's manifest (pithyx.json) is not valid JSON.",
+      "reference_unknown": "The manifest refers to {name} at {path}, which it does not declare.",
+      "schema_violation": "The app's manifest is not valid at {path} ({keyword}).",
+      "sdk_invalid": "The SDK version range {sdk} in the manifest is not valid.",
+      "version_unsupported": "This app needs a newer version of Pithyx (manifest version {version}, this box reads version {supported}).",
+      "window_size_invalid": "The app's smallest window size is larger than its default size."
+    },
+    "package": {
+      "layout_invalid": "The app package is not valid: {reason, select, missing {{path} is missing} unsafe {the path {path} is not allowed} duplicate {{path} is in it twice} unexpected {{path} belongs to a backend the app does not declare} other {{path} is not allowed}}."
+    },
     "permission": {
       "denied": "The app is not allowed to do this ({permission})."
     },

@@ -217,6 +217,21 @@ async function checkGenerated(): Promise<Problem[]> {
   return problems;
 }
 
+// The manifest types are generated from the manifest schema; the committed file must match the schema.
+async function checkManifestTypes(): Promise<Problem[]> {
+  const { generate, generatedPath } = await import('../../sdk/scripts/generate-manifest.ts');
+  const current = existsSync(generatedPath) ? readFileSync(generatedPath, 'utf8') : undefined;
+  return current === (await generate())
+    ? []
+    : [
+        {
+          file: relative(process.cwd(), generatedPath),
+          line: 1,
+          message: 'generated file is out of date, run pnpm --filter @pithyx/sdk generate',
+        },
+      ];
+}
+
 const problems: Problem[] = [];
 for (const file of listFiles()) {
   if (OLD_NAME.test(file.replace(OLD_NAME_ALLOWED, ''))) {
@@ -236,7 +251,7 @@ for (const file of listFiles()) {
     ...checkOldName(file, text),
   );
 }
-problems.push(...(await checkGenerated()));
+problems.push(...(await checkGenerated()), ...(await checkManifestTypes()));
 
 for (const { file, line, message } of problems) {
   console.error(`${file}:${String(line)}: ${message}`);

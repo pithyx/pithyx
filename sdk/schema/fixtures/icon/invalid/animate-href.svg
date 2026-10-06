@@ -1,0 +1,3 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+<a href="#x"><set attributeName="href" to="javascript:alert(1)"/><rect id="x" width="1" height="1"/></a>
+</svg>

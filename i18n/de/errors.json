@@ -1,5 +1,26 @@
 {
   "app": {
+    "elevated": {
+      "unsupported": "Die App verlangt das Recht {right}, das diese Version von Pithyx nicht vergibt."
+    },
+    "icon": {
+      "invalid": "Das Symbol der App ist nicht verwendbar: {reason, select, too_large {es ist größer als 64 KB} malformed {es ist keine gültige SVG-Datei} not_svg {es ist kein SVG-Bild} viewbox {seine viewBox fehlt oder ist nicht quadratisch} doctype {es enthält einen DOCTYPE} processing_instruction {es enthält eine Verarbeitungsanweisung} element_forbidden {es enthält das Element {element}} event_attribute {es enthält das Ereignisattribut {attribute}} external_href {es verweist auf etwas außerhalb der Datei} style_import {seine Styles nutzen @import} style_url {es lädt mit url() etwas außerhalb der Datei} style_escape {seine Styles enthalten Escape-Sequenzen} other {es verletzt eine Regel für Symbole}}."
+    },
+    "manifest": {
+      "cron_invalid": "Der Zeitplan unter {path} ist kein gültiger Cron-Ausdruck: {cron}",
+      "duplicate": "Das Manifest enthält {value} doppelt (unter {path}).",
+      "id_invalid": "Die App-ID {id} ist ungültig. Sie besteht aus der umgekehrten Domain des Autors und dem App-Namen, zum Beispiel com.example.chat.",
+      "id_reserved": "Die App-ID {id} ist für die Apps reserviert, die mit Pithyx kommen.",
+      "invalid_json": "Das Manifest der App (pithyx.json) ist kein gültiges JSON.",
+      "reference_unknown": "Das Manifest verweist unter {path} auf {name}, das es nicht deklariert.",
+      "schema_violation": "Das Manifest der App ist unter {path} ungültig ({keyword}).",
+      "sdk_invalid": "Der SDK-Versionsbereich {sdk} im Manifest ist ungültig.",
+      "version_unsupported": "Diese App braucht eine neuere Version von Pithyx (Manifest-Version {version}, diese Box liest Version {supported}).",
+      "window_size_invalid": "Die kleinste Fenstergröße der App ist größer als ihre Standardgröße."
+    },
+    "package": {
+      "layout_invalid": "Das App-Paket ist ungültig: {reason, select, missing {{path} fehlt} unsafe {der Pfad {path} ist nicht erlaubt} duplicate {{path} ist doppelt enthalten} unexpected {{path} gehört zu einem Backend, das die App nicht deklariert} other {{path} ist nicht erlaubt}}."
+    },
     "permission": {
       "denied": "Die App darf das nicht ({permission})."
     },

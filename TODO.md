@@ -309,11 +309,11 @@ Logs (D305): every level also appears in the browser console. `info`, `warn` and
 
 #### A2 Manifest contract `[REVIEW]`
 
-- [ ] `sdk/schema/manifest.v1.schema.json` is the source; `sdk/src/manifest.generated.ts` is generated from it (never edited by hand), and `sdk/src/manifest.ts` re-exports it.
-- [ ] Daemon, `Apps/Manifest/`: `AppId.cs` (replaces the private regexes in `Logs/LogService.cs` and `Notifications/NotificationService.cs`), `ManifestValidator.cs` with JsonSchema.Net plus the semantic rules, `IconValidator.cs`.
-- [ ] TypeScript: the validator in the scaffold of `packages/cli`.
-- [ ] One shared corpus `sdk/schema/fixtures/manifest/{valid,invalid}` with the expected codes, run by Vitest and xUnit.
-- [ ] Codes `app.manifest.*`, `app.icon.invalid`, `app.package.layout_invalid`, each in en and de.
+- [x] `sdk/schema/manifest.v1.schema.json` is the source; `sdk/src/manifest.generated.ts` is generated from it (never edited by hand), and `sdk/src/manifest.ts` re-exports it.
+- [x] Daemon, `Apps/Manifest/`: `AppId.cs` (replaces the private regexes in `Logs/LogService.cs` and `Notifications/NotificationService.cs`), `ManifestValidator.cs` with JsonSchema.Net plus the semantic rules, `IconValidator.cs`; also `PackageLayout.cs` (the file layout of D301) and `CronSyntax.cs`. Schema validation with JsonSchema.Net 8.0.5, the last release under MIT.
+- [x] TypeScript: the validator in the scaffold of `packages/cli` (Ajv for the schema, saxes for the icon), exported for `pithyx validate` in A8.
+- [x] One shared corpus `sdk/schema/fixtures/manifest/{valid,invalid}` with the expected codes, run by Vitest and xUnit; `fixtures/icon` and `fixtures/layout` likewise.
+- [x] Codes `app.manifest.*`, `app.icon.invalid`, `app.package.layout_invalid`, each in en and de.
 
 #### A3 System app ids `org.pithyx.*` (after A2, before A10)
 

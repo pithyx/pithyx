@@ -11,6 +11,7 @@
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Dapper" />
+    <PackageReference Include="JsonSchema.Net" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
     <PackageReference Include="Microsoft.Data.Sqlite" />
     <PackageReference Include="NSec.Cryptography" />
@@ -37,5 +38,6 @@
     <EmbeddedResource Include="../../../i18n/en/errors.json" LogicalName="i18n/en/errors.json" />
     <EmbeddedResource Include="Database/Migrations/*.sql" LogicalName="migrations/%(Filename)%(Extension)" />
     <EmbeddedResource Include="Auth/common-passwords.txt" LogicalName="auth/common-passwords.txt" />
+    <EmbeddedResource Include="../../../sdk/schema/manifest.v1.schema.json" LogicalName="schema/manifest.v1.schema.json" />
   </ItemGroup>
 </Project>

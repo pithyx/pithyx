@@ -1,10 +1,10 @@
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using Dapper;
 using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Extensions.Options;
+using Pithyx.Daemon.Apps.Manifest;
 using Pithyx.Daemon.Auth;
 using Pithyx.Daemon.Database;
 using Pithyx.Daemon.Errors;
@@ -128,9 +128,9 @@ public sealed partial class NotificationService : IDisposable
     public Task<Notification> CreateFromAppAsync(ClaimsPrincipal user, AppNotificationRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        if (request.App is null || !AppIdPattern().IsMatch(request.App))
+        if (request.App is null || !AppId.IsKnownForm(request.App))
         {
-            throw Invalid("app", 64);
+            throw Invalid("app", AppId.MaxLength);
         }
         var title = request.Title?.Trim() ?? "";
         if (title.Length is 0 or > MaxTitleLength)
@@ -257,9 +257,6 @@ public sealed partial class NotificationService : IDisposable
 
     private static PithyxException Invalid(string field, int maxLength) =>
         new(ErrorCodes.NotificationsMessageInvalid, new Dictionary<string, object?> { ["field"] = field, ["maxLength"] = maxLength });
-
-    [GeneratedRegex("^[a-z][a-z0-9-]{0,63}$", RegexOptions.CultureInvariant)]
-    private static partial Regex AppIdPattern();
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Notification {NotificationId} {Code} created for user {UserId}")]
     private partial void LogCreated(long notificationId, string code, long userId);

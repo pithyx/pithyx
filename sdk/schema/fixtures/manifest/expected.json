@@ -1,0 +1,576 @@
+{
+  "not-json.json": [
+    {
+      "code": "app.manifest.invalid_json"
+    }
+  ],
+  "duplicate-key.json": [
+    {
+      "code": "app.manifest.invalid_json"
+    }
+  ],
+  "not-utf8.json": [
+    {
+      "code": "app.manifest.invalid_json"
+    }
+  ],
+  "not-object.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "",
+        "keyword": "type"
+      }
+    }
+  ],
+  "version-unsupported.json": [
+    {
+      "code": "app.manifest.version_unsupported",
+      "params": {
+        "version": "2",
+        "supported": 1
+      }
+    }
+  ],
+  "version-missing.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/manifestVersion",
+        "keyword": "required"
+      }
+    }
+  ],
+  "window-missing.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/window",
+        "keyword": "required"
+      }
+    }
+  ],
+  "unknown-field.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/icon",
+        "keyword": "additionalProperties"
+      }
+    }
+  ],
+  "unknown-backend-field.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/backend/image",
+        "keyword": "additionalProperties"
+      }
+    }
+  ],
+  "id-uppercase.json": [
+    {
+      "code": "app.manifest.id_invalid",
+      "params": {
+        "id": "com.Example.notes"
+      }
+    }
+  ],
+  "id-two-parts.json": [
+    {
+      "code": "app.manifest.id_invalid",
+      "params": {
+        "id": "example.notes"
+      }
+    }
+  ],
+  "id-six-parts.json": [
+    {
+      "code": "app.manifest.id_invalid",
+      "params": {
+        "id": "a.b.c.d.e.f"
+      }
+    }
+  ],
+  "id-too-long.json": [
+    {
+      "code": "app.manifest.id_invalid",
+      "params": {
+        "id": "com.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.notes"
+      }
+    }
+  ],
+  "id-trailing-newline.json": [
+    {
+      "code": "app.manifest.id_invalid",
+      "params": {
+        "id": "com.example.notes\n"
+      }
+    }
+  ],
+  "id-not-string.json": [
+    {
+      "code": "app.manifest.id_invalid",
+      "params": {
+        "id": "7"
+      }
+    }
+  ],
+  "id-reserved.json": [
+    {
+      "code": "app.manifest.id_reserved",
+      "params": {
+        "id": "org.pithyx.files"
+      }
+    }
+  ],
+  "sdk-word.json": [
+    {
+      "code": "app.manifest.sdk_invalid",
+      "params": {
+        "sdk": "latest"
+      }
+    }
+  ],
+  "sdk-loose.json": [
+    {
+      "code": "app.manifest.sdk_invalid",
+      "params": {
+        "sdk": ">= 1.0.0"
+      }
+    }
+  ],
+  "version-short.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/version",
+        "keyword": "pattern"
+      }
+    }
+  ],
+  "version-build-metadata.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/version",
+        "keyword": "pattern"
+      }
+    }
+  ],
+  "permission-unknown.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/permissions/0",
+        "keyword": "enum"
+      }
+    }
+  ],
+  "permission-duplicate.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/permissions",
+        "keyword": "uniqueItems"
+      }
+    }
+  ],
+  "name-without-en.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/name/en",
+        "keyword": "required"
+      }
+    }
+  ],
+  "name-bad-language.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/name/EN",
+        "keyword": "additionalProperties"
+      }
+    }
+  ],
+  "name-line-break.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/name/en",
+        "keyword": "pattern"
+      }
+    }
+  ],
+  "name-too-long.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/name/en",
+        "keyword": "maxLength"
+      }
+    }
+  ],
+  "author-missing.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/author",
+        "keyword": "required"
+      }
+    }
+  ],
+  "homepage-not-http.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/homepage",
+        "keyword": "pattern"
+      }
+    }
+  ],
+  "entry-traversal.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/entry",
+        "keyword": "pattern"
+      }
+    }
+  ],
+  "entry-outside-frontend.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/entry",
+        "keyword": "pattern"
+      }
+    }
+  ],
+  "entry-hidden.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/entry",
+        "keyword": "pattern"
+      }
+    }
+  ],
+  "compose-outside-backend.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/backend/compose",
+        "keyword": "pattern"
+      }
+    }
+  ],
+  "window-size.json": [
+    {
+      "code": "app.manifest.window_size_invalid"
+    }
+  ],
+  "window-too-small.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/window/defaultSize/width",
+        "keyword": "minimum"
+      }
+    },
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/window/minSize/width",
+        "keyword": "minimum"
+      }
+    }
+  ],
+  "window-fraction.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/window/defaultSize/width",
+        "keyword": "type"
+      }
+    }
+  ],
+  "instances-unknown.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/window/instances",
+        "keyword": "enum"
+      }
+    }
+  ],
+  "endpoint-api-missing.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/backend/endpoints/api",
+        "keyword": "required"
+      }
+    }
+  ],
+  "endpoint-name.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/backend/endpoints/Metrics",
+        "keyword": "additionalProperties"
+      }
+    }
+  ],
+  "endpoint-port.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/backend/endpoints/api/port",
+        "keyword": "maximum"
+      }
+    }
+  ],
+  "endpoint-service-name.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/backend/endpoints/api/service",
+        "keyword": "pattern"
+      }
+    }
+  ],
+  "lifecycle-unknown.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/backend/lifecycle",
+        "keyword": "enum"
+      }
+    }
+  ],
+  "idle-timeout-short.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/backend/idleTimeout",
+        "keyword": "minimum"
+      }
+    }
+  ],
+  "cpus-zero.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/backend/resources/cpus",
+        "keyword": "exclusiveMinimum"
+      }
+    }
+  ],
+  "health-endpoint-unknown.json": [
+    {
+      "code": "app.manifest.reference_unknown",
+      "params": {
+        "path": "/backend/health/endpoint",
+        "name": "status"
+      }
+    }
+  ],
+  "schedule-endpoint-unknown.json": [
+    {
+      "code": "app.manifest.reference_unknown",
+      "params": {
+        "path": "/backend/schedules/0/endpoint",
+        "name": "jobs"
+      }
+    }
+  ],
+  "storage-services-without-backend.json": [
+    {
+      "code": "app.manifest.reference_unknown",
+      "params": {
+        "path": "/storage/0/services/0",
+        "name": "server"
+      }
+    }
+  ],
+  "storage-duplicate.json": [
+    {
+      "code": "app.manifest.duplicate",
+      "params": {
+        "path": "/storage/1/id",
+        "value": "files"
+      }
+    }
+  ],
+  "storage-id-pattern.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/storage/0/id",
+        "keyword": "pattern"
+      }
+    }
+  ],
+  "schedule-duplicate.json": [
+    {
+      "code": "app.manifest.duplicate",
+      "params": {
+        "path": "/backend/schedules/1/id",
+        "value": "cleanup"
+      }
+    }
+  ],
+  "extension-duplicate.json": [
+    {
+      "code": "app.manifest.duplicate",
+      "params": {
+        "path": "/fileHandlers/1/extensions/0",
+        "value": "txt"
+      }
+    }
+  ],
+  "extension-dot.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/fileHandlers/0/extensions/0",
+        "keyword": "pattern"
+      }
+    }
+  ],
+  "cron-four-fields.json": [
+    {
+      "code": "app.manifest.cron_invalid",
+      "params": {
+        "path": "/backend/schedules/0/cron",
+        "cron": "0 3 * *"
+      }
+    }
+  ],
+  "cron-out-of-range.json": [
+    {
+      "code": "app.manifest.cron_invalid",
+      "params": {
+        "path": "/backend/schedules/0/cron",
+        "cron": "60 3 * * *"
+      }
+    }
+  ],
+  "cron-reversed-range.json": [
+    {
+      "code": "app.manifest.cron_invalid",
+      "params": {
+        "path": "/backend/schedules/0/cron",
+        "cron": "0 5-1 * * *"
+      }
+    }
+  ],
+  "cron-names.json": [
+    {
+      "code": "app.manifest.cron_invalid",
+      "params": {
+        "path": "/backend/schedules/0/cron",
+        "cron": "0 3 * * MON"
+      }
+    }
+  ],
+  "cron-double-space.json": [
+    {
+      "code": "app.manifest.cron_invalid",
+      "params": {
+        "path": "/backend/schedules/0/cron",
+        "cron": "0  3 * * *"
+      }
+    }
+  ],
+  "cron-step-on-number.json": [
+    {
+      "code": "app.manifest.cron_invalid",
+      "params": {
+        "path": "/backend/schedules/0/cron",
+        "cron": "5/10 * * * *"
+      }
+    }
+  ],
+  "elevated-docker-socket.json": [
+    {
+      "code": "app.elevated.unsupported",
+      "params": {
+        "right": "docker.socket"
+      }
+    }
+  ],
+  "elevated-host-full.json": [
+    {
+      "code": "app.elevated.unsupported",
+      "params": {
+        "right": "host.full"
+      }
+    }
+  ],
+  "elevated-blocked-capability.json": [
+    {
+      "code": "app.elevated.unsupported",
+      "params": {
+        "right": "capability:SYS_ADMIN"
+      }
+    }
+  ],
+  "elevated-all-capabilities.json": [
+    {
+      "code": "app.elevated.unsupported",
+      "params": {
+        "right": "capability:ALL"
+      }
+    }
+  ],
+  "elevated-cap-prefix.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/backend/elevated/0",
+        "keyword": "pattern"
+      }
+    }
+  ],
+  "elevated-device-traversal.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/backend/elevated/0",
+        "keyword": "pattern"
+      }
+    }
+  ],
+  "elevated-unknown.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/backend/elevated/0",
+        "keyword": "pattern"
+      }
+    }
+  ],
+  "several-issues.json": [
+    {
+      "code": "app.manifest.id_invalid",
+      "params": {
+        "id": "Notes"
+      }
+    },
+    {
+      "code": "app.manifest.window_size_invalid"
+    }
+  ],
+  "schema-stops-semantics.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/color",
+        "keyword": "additionalProperties"
+      }
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+<?xml version="1.0"?>
+<!DOCTYPE svg [<!ENTITY a "aaaaaaaaaa">]>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+<text>&a;</text>
+</svg>

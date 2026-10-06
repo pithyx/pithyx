@@ -1,0 +1,372 @@
+using System.Globalization;
+using System.Text.Json;
+using System.Text.Json.Nodes;
+using System.Text.Unicode;
+using Json.Schema;
+using Pithyx.Daemon.Errors;
+
+namespace Pithyx.Daemon.Apps.Manifest;
+
+/// <summary>The outcome of <see cref="ManifestValidator.Validate"/>.</summary>
+/// <param name="Issues">Empty when the manifest is valid.</param>
+/// <param name="Manifest">The parsed manifest when it is valid.</param>
+public sealed record ManifestValidationResult(IReadOnlyList<ValidationIssue> Issues, JsonElement? Manifest)
+{
+    public bool IsValid => Issues.Count == 0;
+}
+
+/// <summary>
+/// Checks <c>pithyx.json</c> against <c>sdk/schema/manifest.v1.schema.json</c> (embedded at build) and the rules a
+/// schema cannot express. <c>@pithyx/cli</c> runs the same checks; the corpus in <c>sdk/schema/fixtures/manifest</c>
+/// holds both to the same verdicts and codes.
+/// </summary>
+public static class ManifestValidator
+{
+    public const int SupportedVersion = 1;
+
+    /// <summary>Capabilities that reach the host's secrets (D71); never granted on their own.</summary>
+    private static readonly HashSet<string> BlockedCapabilities =
+        ["ALL", "SYS_ADMIN", "SYS_PTRACE", "SYS_MODULE", "SYS_RAWIO", "DAC_READ_SEARCH", "BPF"];
+
+    private static readonly Lazy<(JsonSchema Schema, JsonNode Document)> Schema = new(LoadSchema);
+
+    private static readonly EvaluationOptions Evaluation = new() { OutputFormat = OutputFormat.List };
+
+    /// <summary>
+    /// Validates the bytes of <c>pithyx.json</c>. Ids in <c>org.pithyx.*</c> are refused unless
+    /// <paramref name="allowReservedId"/> is set, which only the system apps and the official catalog may do.
+    /// </summary>
+    public static ManifestValidationResult Validate(ReadOnlyMemory<byte> utf8, bool allowReservedId = false)
+    {
+        if (!Utf8.IsValid(utf8.Span))
+        {
+            return Fail(new ValidationIssue(ErrorCodes.AppManifestInvalidJson));
+        }
+        JsonDocument document;
+        try
+        {
+            document = JsonDocument.Parse(utf8, new JsonDocumentOptions { AllowDuplicateProperties = false });
+        }
+        catch (JsonException)
+        {
+            return Fail(new ValidationIssue(ErrorCodes.AppManifestInvalidJson));
+        }
+        using (document)
+        {
+            var root = document.RootElement;
+            if (root.ValueKind == JsonValueKind.Object
+                && root.TryGetProperty("manifestVersion", out var version)
+                && !(version.ValueKind == JsonValueKind.Number && version.GetDouble() == SupportedVersion))
+            {
+                return Fail(new ValidationIssue(ErrorCodes.AppManifestVersionUnsupported, ("version", Display(version)), ("supported", SupportedVersion)));
+            }
+
+            var issues = SchemaIssues(root);
+            if (!issues.Exists(issue => issue.Code == ErrorCodes.AppManifestSchemaViolation))
+            {
+                issues.AddRange(SemanticIssues(root, allowReservedId, idValid: !issues.Exists(issue => issue.Code == ErrorCodes.AppManifestIdInvalid)));
+            }
+            return new ManifestValidationResult(issues, issues.Count == 0 ? root.Clone() : null);
+        }
+    }
+
+    private static ManifestValidationResult Fail(ValidationIssue issue) => new([issue], null);
+
+    private static List<ValidationIssue> SchemaIssues(JsonElement root)
+    {
+        var (schema, schemaDocument) = Schema.Value;
+        var results = schema.Evaluate(root, Evaluation);
+        var violations = new SortedSet<(string Path, string Keyword)>(Comparer<(string Path, string Keyword)>.Create((a, b) =>
+            a.Path == b.Path ? string.CompareOrdinal(a.Keyword, b.Keyword) : string.CompareOrdinal(a.Path, b.Path)));
+        if (!results.IsValid)
+        {
+            foreach (var detail in results.Details ?? [])
+            {
+                if (detail.Errors is null)
+                {
+                    continue;
+                }
+                var path = detail.InstanceLocation.ToString();
+                foreach (var keyword in detail.Errors.Keys)
+                {
+                    if (keyword == "required")
+                    {
+                        foreach (var missing in MissingProperties(schemaDocument, detail.SchemaLocation, root, path))
+                        {
+                            violations.Add((path + "/" + EscapePointer(missing), "required"));
+                        }
+                    }
+                    else if (keyword.Length == 0)
+                    {
+                        // A false schema fails at the value itself; additionalProperties: false is the only one we use.
+                        violations.Add((path, detail.EvaluationPath.ToString().Split('/')[^1]));
+                    }
+                    else
+                    {
+                        violations.Add((path, keyword));
+                    }
+                }
+            }
+        }
+
+        var issues = new List<ValidationIssue>();
+        foreach (var (path, keyword) in violations)
+        {
+            // A wrong id or sdk range has a code of its own; a missing one is a plain schema violation.
+            if (path == "/id" && keyword != "required")
+            {
+                AddOnce(issues, new ValidationIssue(ErrorCodes.AppManifestIdInvalid, ("id", Display(root.GetProperty("id")))));
+            }
+            else if (path == "/sdk" && keyword != "required")
+            {
+                AddOnce(issues, new ValidationIssue(ErrorCodes.AppManifestSdkInvalid, ("sdk", Display(root.GetProperty("sdk")))));
+            }
+            else
+            {
+                issues.Add(new ValidationIssue(ErrorCodes.AppManifestSchemaViolation, ("path", path), ("keyword", keyword)));
+            }
+        }
+        return issues;
+    }
+
+    private static List<ValidationIssue> SemanticIssues(JsonElement root, bool allowReservedId, bool idValid)
+    {
+        var issues = new List<ValidationIssue>();
+        var id = root.GetProperty("id");
+        if (idValid && !allowReservedId && AppId.IsReserved(id.GetString()!))
+        {
+            issues.Add(new ValidationIssue(ErrorCodes.AppManifestIdReserved, ("id", id.GetString())));
+        }
+
+        var window = root.GetProperty("window");
+        var defaultSize = window.GetProperty("defaultSize");
+        var minSize = window.GetProperty("minSize");
+        if (minSize.GetProperty("width").GetInt32() > defaultSize.GetProperty("width").GetInt32()
+            || minSize.GetProperty("height").GetInt32() > defaultSize.GetProperty("height").GetInt32())
+        {
+            issues.Add(new ValidationIssue(ErrorCodes.AppManifestWindowSizeInvalid));
+        }
+
+        var hasBackend = root.TryGetProperty("backend", out var backend);
+        if (root.TryGetProperty("storage", out var storage))
+        {
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+            var index = 0;
+            foreach (var request in storage.EnumerateArray())
+            {
+                var storageId = request.GetProperty("id").GetString()!;
+                if (!ids.Add(storageId))
+                {
+                    issues.Add(Duplicate($"/storage/{index}/id", storageId));
+                }
+                if (!hasBackend && request.TryGetProperty("services", out var services))
+                {
+                    var serviceIndex = 0;
+                    foreach (var service in services.EnumerateArray())
+                    {
+                        issues.Add(UnknownReference($"/storage/{index}/services/{serviceIndex++}", service.GetString()!));
+                    }
+                }
+                index++;
+            }
+        }
+
+        if (root.TryGetProperty("fileHandlers", out var handlers))
+        {
+            var extensions = new HashSet<string>(StringComparer.Ordinal);
+            var index = 0;
+            foreach (var handler in handlers.EnumerateArray())
+            {
+                var extensionIndex = 0;
+                foreach (var extension in handler.GetProperty("extensions").EnumerateArray())
+                {
+                    if (!extensions.Add(extension.GetString()!))
+                    {
+                        issues.Add(Duplicate($"/fileHandlers/{index}/extensions/{extensionIndex}", extension.GetString()!));
+                    }
+                    extensionIndex++;
+                }
+                index++;
+            }
+        }
+
+        if (hasBackend)
+        {
+            issues.AddRange(BackendIssues(backend));
+        }
+        return issues;
+    }
+
+    private static IEnumerable<ValidationIssue> BackendIssues(JsonElement backend)
+    {
+        var endpoints = backend.GetProperty("endpoints").EnumerateObject().Select(endpoint => endpoint.Name).ToHashSet(StringComparer.Ordinal);
+        if (backend.TryGetProperty("health", out var health) && !endpoints.Contains(health.GetProperty("endpoint").GetString()!))
+        {
+            yield return UnknownReference("/backend/health/endpoint", health.GetProperty("endpoint").GetString()!);
+        }
+
+        if (backend.TryGetProperty("schedules", out var schedules))
+        {
+            var ids = new HashSet<string>(StringComparer.Ordinal);
+            var index = 0;
+            foreach (var schedule in schedules.EnumerateArray())
+            {
+                var scheduleId = schedule.GetProperty("id").GetString()!;
+                if (!ids.Add(scheduleId))
+                {
+                    yield return Duplicate($"/backend/schedules/{index}/id", scheduleId);
+                }
+                var cron = schedule.GetProperty("cron").GetString()!;
+                if (!CronSyntax.IsValid(cron))
+                {
+                    yield return new ValidationIssue(ErrorCodes.AppManifestCronInvalid, ("path", $"/backend/schedules/{index}/cron"), ("cron", cron));
+                }
+                var endpoint = schedule.GetProperty("endpoint").GetString()!;
+                if (!endpoints.Contains(endpoint))
+                {
+                    yield return UnknownReference($"/backend/schedules/{index}/endpoint", endpoint);
+                }
+                index++;
+            }
+        }
+
+        if (backend.TryGetProperty("elevated", out var elevated))
+        {
+            foreach (var right in elevated.EnumerateArray().Select(element => element.GetString()!))
+            {
+                if (!IsSupportedElevatedRight(right))
+                {
+                    yield return new ValidationIssue(ErrorCodes.AppElevatedUnsupported, ("right", right));
+                }
+            }
+        }
+    }
+
+    /// <summary>Whether this version of Pithyx can grant an elevated right the schema accepts (D71, D304).</summary>
+    public static bool IsSupportedElevatedRight(string right) =>
+        right is not ("docker.socket" or "host.full")
+        && !(right.StartsWith("capability:", StringComparison.Ordinal) && BlockedCapabilities.Contains(right["capability:".Length..]));
+
+    private static ValidationIssue Duplicate(string path, string value) =>
+        new(ErrorCodes.AppManifestDuplicate, ("path", path), ("value", value));
+
+    private static ValidationIssue UnknownReference(string path, string name) =>
+        new(ErrorCodes.AppManifestReferenceUnknown, ("path", path), ("name", name));
+
+    private static void AddOnce(List<ValidationIssue> issues, ValidationIssue issue)
+    {
+        if (!issues.Exists(existing => existing.Code == issue.Code))
+        {
+            issues.Add(issue);
+        }
+    }
+
+    /// <summary>A param value as the CLI shows it: strings as they are, everything else as compact JSON.</summary>
+    private static string Display(JsonElement value) => value.ValueKind switch
+    {
+        JsonValueKind.String => value.GetString()!,
+        JsonValueKind.Number => value.GetDouble().ToString("R", CultureInfo.InvariantCulture),
+        _ => JsonSerializer.Serialize(value),
+    };
+
+    private static IEnumerable<string> MissingProperties(JsonNode schemaDocument, Uri schemaLocation, JsonElement root, string instancePath)
+    {
+        var schemaNode = Resolve(schemaDocument, Uri.UnescapeDataString(schemaLocation.Fragment.TrimStart('#')));
+        var instance = Resolve(root, instancePath);
+        if (schemaNode?["required"] is not JsonArray required || instance is not { ValueKind: JsonValueKind.Object } value)
+        {
+            return [];
+        }
+        return required.Select(name => name!.GetValue<string>()).Where(name => !value.TryGetProperty(name, out _));
+    }
+
+    private static JsonNode? Resolve(JsonNode? node, string pointer)
+    {
+        var current = node;
+        foreach (var segment in Segments(pointer))
+        {
+            current = current switch
+            {
+                JsonObject obj => obj[segment],
+                JsonArray array when int.TryParse(segment, CultureInfo.InvariantCulture, out var index) && index < array.Count => array[index],
+                _ => null,
+            };
+        }
+        return current;
+    }
+
+    private static JsonElement? Resolve(JsonElement element, string pointer)
+    {
+        var current = element;
+        foreach (var segment in Segments(pointer))
+        {
+            if (current.ValueKind == JsonValueKind.Object && current.TryGetProperty(segment, out var child))
+            {
+                current = child;
+            }
+            else if (current.ValueKind == JsonValueKind.Array && int.TryParse(segment, CultureInfo.InvariantCulture, out var index) && index < current.GetArrayLength())
+            {
+                current = current[index];
+            }
+            else
+            {
+                return null;
+            }
+        }
+        return current;
+    }
+
+    private static IEnumerable<string> Segments(string pointer) =>
+        pointer.Length == 0 ? [] : pointer[1..].Split('/').Select(segment => segment.Replace("~1", "/", StringComparison.Ordinal).Replace("~0", "~", StringComparison.Ordinal));
+
+    private static string EscapePointer(string name) => name.Replace("~", "~0", StringComparison.Ordinal).Replace("/", "~1", StringComparison.Ordinal);
+
+    private static (JsonSchema, JsonNode) LoadSchema()
+    {
+        using var stream = typeof(ManifestValidator).Assembly.GetManifestResourceStream("schema/manifest.v1.schema.json")
+            ?? throw new InvalidOperationException("The manifest schema is not embedded.");
+        var document = JsonNode.Parse(stream)!;
+        AnchorPatterns(document);
+        return (JsonSchema.FromText(document.ToJsonString()), document);
+    }
+
+    private static string Anchor(string pattern) => pattern.EndsWith('$') ? pattern + "(?!\\n)" : pattern;
+
+    // .NET's $ also matches before a final line break, ECMAScript's only at the end; this keeps both engines alike.
+    private static void AnchorPatterns(JsonNode? node)
+    {
+        switch (node)
+        {
+            case JsonObject obj:
+                foreach (var (name, value) in obj.ToList())
+                {
+                    if (name == "pattern" && value is JsonValue pattern)
+                    {
+                        obj[name] = Anchor(pattern.GetValue<string>());
+                    }
+                    else if (name == "patternProperties" && value is JsonObject patterns)
+                    {
+                        var anchored = new JsonObject();
+                        foreach (var (key, schema) in patterns.ToList())
+                        {
+                            patterns.Remove(key);
+                            AnchorPatterns(schema);
+                            anchored[Anchor(key)] = schema;
+                        }
+                        obj[name] = anchored;
+                    }
+                    else
+                    {
+                        AnchorPatterns(value);
+                    }
+                }
+                break;
+            case JsonArray array:
+                foreach (var item in array)
+                {
+                    AnchorPatterns(item);
+                }
+                break;
+        }
+    }
+}
