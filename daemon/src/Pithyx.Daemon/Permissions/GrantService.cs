@@ -1,6 +1,7 @@
 using System.Data.Common;
 using System.Security.Claims;
 using Dapper;
+using Pithyx.Daemon.Apps;
 using Pithyx.Daemon.Auth;
 using Pithyx.Daemon.Database;
 using Pithyx.Daemon.Errors;
@@ -13,7 +14,7 @@ namespace Pithyx.Daemon.Permissions;
 /// </summary>
 public sealed class GrantService(SqliteConnectionFactory connections, PermissionService permissions)
 {
-    public static PermissionCatalog Catalog { get; } = new(Resources.Rights, Resources.Protocols, Resources.Apps);
+    public static PermissionCatalog Catalog { get; } = new(Resources.Rights, Resources.Protocols, CoreApps.Granted);
 
     public async Task<UserGrants> UserGrantsAsync(ClaimsPrincipal caller, long userId, CancellationToken cancellationToken)
     {
@@ -149,7 +150,7 @@ public sealed class GrantService(SqliteConnectionFactory connections, Permission
             effective.IsAdmin,
             [.. Resources.Rights.Where(effective.Has)],
             [.. Resources.Protocols.Where(effective.Has)],
-            [.. Resources.Apps.Where(app => effective.Has(Resources.App(app)))]);
+            [.. CoreApps.Granted.Where(app => effective.Has(Resources.App(app)))]);
     }
 
     /// <summary>Gives a new user its first grants, in the transaction that creates it.</summary>
