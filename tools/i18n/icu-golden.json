@@ -529,6 +529,18 @@
       "params": {},
       "expected": "This API endpoint does not exist."
     },
+    "sdk.backend.endpoint_unknown": {
+      "params": {
+        "endpoint": "metrics"
+      },
+      "expected": "The app asked for a backend connection it does not have (metrics)."
+    },
+    "sdk.backend.unreachable": {
+      "params": {
+        "endpoint": "api"
+      },
+      "expected": "The app could not reach its backend (api). Check the connection to the box."
+    },
     "sdk.method.unknown": {
       "params": {
         "method": "storage.get"
