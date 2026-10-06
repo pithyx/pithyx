@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ErrorNotice } from '../../errors/ErrorNotice';
 import { Button, Dialog, TextField } from '@pithyx/ui';
+import { coreAppIds } from '../ids';
 import { internalCall } from '../sdk/internal';
 import {
   isFinished,
@@ -106,7 +107,7 @@ export function CreateShareDialog({ app, onClose }: { app: PithyxApp; onClose: (
             <Button
               size="sm"
               onPress={() => {
-                void internalCall(app, 'internal.admin.openApp', { app: 'storage' });
+                void internalCall(app, 'internal.admin.openApp', { app: coreAppIds.storage });
               }}
             >
               {t('shares.createDialog.openStorage')}

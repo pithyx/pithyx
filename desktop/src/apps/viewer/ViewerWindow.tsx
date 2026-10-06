@@ -1,3 +1,4 @@
+import { coreAppIds } from '../ids';
 import type { AppProps } from '../registry';
 import { CoreSdkApp } from '../sdk/CoreSdkApp';
 import { viewerHost } from '../sdk/viewerInternal';
@@ -8,7 +9,7 @@ export function ViewerWindow({ windowId }: AppProps) {
   return (
     <CoreSdkApp
       windowId={windowId}
-      app="viewer"
+      app={coreAppIds.viewer}
       permissions={['files.shares', 'notifications']}
       internal={viewerHost}
       Component={ViewerApp}

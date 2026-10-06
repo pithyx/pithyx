@@ -14,17 +14,18 @@ import {
   IconTerminal2,
   IconUsers,
 } from '../ui/icons';
-import { useTranslation } from 'react-i18next';
+import { coreAppIds } from '../apps/ids';
+import { useAppName } from '../apps/names';
 import type { Language } from '../i18n';
 import type { JobItem, NotificationItem } from '../shell/Notifications';
 import type { StartEntry } from '../shell/StartMenu';
 import type { AppInfo } from '../shell/types';
 
 export const appDefinitions = {
-  files: { id: 'files', icon: IconFolders, tone: 'petrol' },
-  storage: { id: 'storage', icon: IconDatabase, tone: 'ocean' },
-  logs: { id: 'logs', icon: IconListDetails, tone: 'graphite' },
-  settings: { id: 'settings', icon: IconSettings, tone: 'indigo' },
+  files: { id: coreAppIds.files, icon: IconFolders, tone: 'petrol' },
+  storage: { id: coreAppIds.storage, icon: IconDatabase, tone: 'ocean' },
+  logs: { id: coreAppIds.logs, icon: IconListDetails, tone: 'graphite' },
+  settings: { id: coreAppIds.settings, icon: IconSettings, tone: 'indigo' },
   photos: { id: 'photos', icon: IconPhoto, tone: 'rose' },
   users: { id: 'users', icon: IconUsers, tone: 'plum' },
   containers: { id: 'containers', icon: IconBox, tone: 'moss' },
@@ -36,13 +37,13 @@ export type Apps = Record<AppId, AppInfo>;
 
 /** The core apps with their translated names. */
 export function useApps(): Apps {
-  const { t } = useTranslation();
+  const appName = useAppName();
   const apps = {} as Apps;
   for (const [id, definition] of Object.entries(appDefinitions) as [
     AppId,
     Omit<AppInfo, 'name'>,
   ][]) {
-    apps[id] = { ...definition, name: t(`apps.${id}`) };
+    apps[id] = { ...definition, name: appName(definition.id) };
   }
   return apps;
 }

@@ -13,6 +13,7 @@ import { lazy, type ComponentType, type LazyExoticComponent } from 'react';
 import type { AppTone } from '../shell/types';
 import type { WindowOptions } from '../wm/types';
 import { loadTranslations } from '../i18n';
+import { coreAppIds } from './ids';
 
 /** What every app component receives. The SDK replaces this in step 5.3. */
 export interface AppProps {
@@ -34,11 +35,11 @@ export interface CoreApp {
 
 /**
  * The core apps that run in the desktop context. An internal list until the manifest schema and the SDK (step 5.3)
- * replace it; names come from `apps.<id>` in the desktop namespace.
+ * replace it; names come from `apps.<id>` in the desktop namespace (`apps.org.pithyx.files`).
  */
 export const coreApps: readonly CoreApp[] = [
   {
-    id: 'files',
+    id: coreAppIds.files,
     icon: IconFolders,
     tone: 'petrol',
     window: {
@@ -55,7 +56,7 @@ export const coreApps: readonly CoreApp[] = [
     ),
   },
   {
-    id: 'storage',
+    id: coreAppIds.storage,
     icon: IconDatabase,
     tone: 'ocean',
     adminOnly: true,
@@ -71,7 +72,7 @@ export const coreApps: readonly CoreApp[] = [
     ),
   },
   {
-    id: 'settings',
+    id: coreAppIds.settings,
     icon: IconSettings,
     tone: 'graphite',
     adminOnly: true,
@@ -89,7 +90,7 @@ export const coreApps: readonly CoreApp[] = [
     ),
   },
   {
-    id: 'monitor',
+    id: coreAppIds.monitor,
     icon: IconActivity,
     tone: 'moss',
     adminOnly: true,
@@ -105,7 +106,7 @@ export const coreApps: readonly CoreApp[] = [
     ),
   },
   {
-    id: 'logs',
+    id: coreAppIds.logs,
     icon: IconListDetails,
     tone: 'graphite',
     adminOnly: true,
@@ -121,7 +122,7 @@ export const coreApps: readonly CoreApp[] = [
     ),
   },
   {
-    id: 'viewer',
+    id: coreAppIds.viewer,
     icon: IconSearch,
     tone: 'plum',
     launchOnly: true,
@@ -137,7 +138,7 @@ export const coreApps: readonly CoreApp[] = [
     ),
   },
   {
-    id: 'about',
+    id: coreAppIds.about,
     icon: IconInfoCircle,
     tone: 'graphite',
     window: {
@@ -151,7 +152,7 @@ export const coreApps: readonly CoreApp[] = [
   },
   {
     // Prototype for the SDK spec: a third-party app in a sandboxed window (apps/demo), until manifests drive this list.
-    id: 'demo',
+    id: coreAppIds.demo,
     icon: IconApps,
     tone: 'plum',
     window: {
@@ -164,8 +165,8 @@ export const coreApps: readonly CoreApp[] = [
         default: ({ windowId }: AppProps) => (
           <SandboxApp
             windowId={windowId}
-            app="demo"
-            entry="/apps/demo/index.html"
+            app={coreAppIds.demo}
+            entry={`/apps/${coreAppIds.demo}/index.html`}
             permissions={['notifications']}
           />
         ),

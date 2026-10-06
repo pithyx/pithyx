@@ -26,7 +26,7 @@ function say(message: Announcement, id: string) {
   if (target === undefined) {
     return;
   }
-  const title = target.title ?? i18next.t(`apps.${target.app}` as 'apps.disks');
+  const title = target.title ?? i18next.t(`apps.${target.app}` as 'apps.org.pithyx.files');
   announce(i18next.t(`window.announce.${message}`, { title }));
 }
 

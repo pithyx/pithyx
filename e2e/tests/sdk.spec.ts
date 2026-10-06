@@ -13,7 +13,7 @@ async function openDemo(page: Page) {
   await openFromStart(page, 'SDK demo');
   const window = appWindow(page, 'SDK demo');
   await expect(window).toBeVisible();
-  const app = page.frameLocator('iframe[src="/apps/demo/index.html"]');
+  const app = page.frameLocator('iframe[src="/apps/org.pithyx.demo/index.html"]');
   await expect(app.getByRole('heading', { name: 'SDK demo' })).toBeVisible();
   return { window, app };
 }
@@ -107,7 +107,7 @@ test('the sandbox keeps the app away from cookies, the desktop page, browser sto
   for (const probe of ['cookie', 'parent', 'storage', 'api']) {
     await expect(app.locator(`[data-probe="${probe}"]`), probe).toHaveText('blocked');
   }
-  await expect(page.locator('iframe[src="/apps/demo/index.html"]')).toHaveAttribute(
+  await expect(page.locator('iframe[src="/apps/org.pithyx.demo/index.html"]')).toHaveAttribute(
     'sandbox',
     'allow-scripts allow-forms',
   );

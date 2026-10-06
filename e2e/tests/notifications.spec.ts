@@ -33,7 +33,7 @@ test('an app notification is a toast with the app, stays in the panel after a re
   page,
 }) => {
   await openFromStart(page, 'SDK demo');
-  const app = page.frameLocator('iframe[src="/apps/demo/index.html"]');
+  const app = page.frameLocator('iframe[src="/apps/org.pithyx.demo/index.html"]');
   await app.getByRole('button', { name: 'Send notification' }).click();
 
   const toasts = page.getByRole('region', { name: 'New notifications' });
@@ -83,7 +83,7 @@ test('a dismissed notification leaves the panel and the keyboard reaches its but
   page,
 }) => {
   await openFromStart(page, 'SDK demo');
-  const app = page.frameLocator('iframe[src="/apps/demo/index.html"]');
+  const app = page.frameLocator('iframe[src="/apps/org.pithyx.demo/index.html"]');
   await app.getByRole('button', { name: 'Send notification' }).click();
   await expect(
     page.getByRole('region', { name: 'New notifications' }).getByText(MESSAGE),

@@ -96,7 +96,7 @@ test('25 windows restore, stack and close', async ({ page }) => {
   const errors = watchErrors(page);
   const windows = Array.from({ length: 25 }, (_, index) => ({
     id: `w${String(index + 1)}`,
-    app: index % 2 === 0 ? 'storage' : 'about',
+    app: index % 2 === 0 ? 'org.pithyx.storage' : 'org.pithyx.about',
     screen: 1,
     title: null,
     rect: { x: index * 20, y: index * 20, width: 520, height: 360 },

@@ -29,7 +29,7 @@ test('the Log Center shows the daemon and app entries, filters and explains an e
 }) => {
   const logs = await openLogCenter(page);
   // An app's entry through the daemon API, as the SDK's log calls send it.
-  const written = await page.request.post('/api/apps/files/logs', {
+  const written = await page.request.post('/api/apps/org.pithyx.files/logs', {
     headers: { 'X-Pithyx-Request': '1' },
     data: { entries: [{ level: 'warn', message: 'e2e upload retried', data: { file: 'a.jpg' } }] },
   });

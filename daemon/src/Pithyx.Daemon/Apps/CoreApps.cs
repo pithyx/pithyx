@@ -5,7 +5,8 @@ namespace Pithyx.Daemon.Apps;
 
 /// <summary>
 /// The apps that ship with the desktop, under the reserved namespace <c>org.pithyx.*</c> (D302). Until A3 (migration
-/// 0022) they had short ids such as <c>files</c>; <see cref="LegacyIds"/> keeps those for what was stored before.
+/// 0022) they had short ids such as <c>files</c>; <see cref="LegacyIds"/> keeps those for what was stored before. The
+/// desktop has the same list in <c>desktop/src/apps/ids.ts</c>.
 /// </summary>
 public static class CoreApps
 {

@@ -97,7 +97,7 @@ test('two tabs of one browser do not overwrite each other unnoticed', async ({ b
   });
   const secondSaved = layoutSaved(second);
   await openFromDesktop(second, 'About Pithyx');
-  expect(await secondSaved).toContain('"app":"about"');
+  expect(await secondSaved).toContain('"app":"org.pithyx.about"');
   expect(statuses).toEqual([412, 204]);
 
   await first.reload();
