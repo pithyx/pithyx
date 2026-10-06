@@ -96,7 +96,7 @@ export default defineConfig(
       'desktop/src/**/*.{ts,tsx}',
       'sdk/src/**/*.ts',
       'packages/ui/src/**/*.{ts,tsx}',
-      'apps/*/src/**/*.ts',
+      'e2e/apps/*/src/**/*.ts',
     ],
     ignores: ['desktop/src/platform/browser.ts', '**/*.test.{ts,tsx}'],
     rules: {

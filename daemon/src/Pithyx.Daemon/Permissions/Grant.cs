@@ -66,5 +66,18 @@ public static class Resources
 
     /// <summary>Whether a resource other than a share is known.</summary>
     public static bool IsKnown(string resource) =>
-        Rights.Contains(resource) || Protocols.Contains(resource) || (resource.StartsWith(AppPrefix, StringComparison.Ordinal) && CoreApps.Granted.Contains(resource[AppPrefix.Length..]));
+        Rights.Contains(resource) || Protocols.Contains(resource) || IsCoreApp(resource);
+
+    /// <summary>Whether a resource names one of the core apps given by a grant.</summary>
+    public static bool IsCoreApp(string resource) =>
+        resource.StartsWith(AppPrefix, StringComparison.Ordinal) && CoreApps.Granted.Contains(resource[AppPrefix.Length..]);
+
+    /// <summary>
+    /// The id of a third-party app a resource names (<c>app:&lt;id&gt;</c> with an id of D302 outside <c>org.pithyx.*</c>),
+    /// or null. Whether it is installed is checked against the registry.
+    /// </summary>
+    public static string? ThirdPartyApp(string resource) =>
+        resource.StartsWith(AppPrefix, StringComparison.Ordinal) && Apps.Manifest.AppId.IsValid(resource[AppPrefix.Length..]) && !Apps.Manifest.AppId.IsReserved(resource[AppPrefix.Length..])
+            ? resource[AppPrefix.Length..]
+            : null;
 }

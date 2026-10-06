@@ -242,5 +242,209 @@
         "reason": "duplicate"
       }
     ]
+  },
+  {
+    "name": "non-ascii name",
+    "files": [
+      "pithyx.json",
+      "icon.svg",
+      "frontend/index.html",
+      "frontend/assets/app.js",
+      "frontend/café.js"
+    ],
+    "entry": "frontend/index.html",
+    "expected": [
+      {
+        "path": "frontend/café.js",
+        "reason": "unsafe"
+      }
+    ]
+  },
+  {
+    "name": "space in a name",
+    "files": [
+      "pithyx.json",
+      "icon.svg",
+      "frontend/index.html",
+      "frontend/assets/app.js",
+      "frontend/my file.js"
+    ],
+    "entry": "frontend/index.html",
+    "expected": [
+      {
+        "path": "frontend/my file.js",
+        "reason": "unsafe"
+      }
+    ]
+  },
+  {
+    "name": "segment starting with a dot",
+    "files": [
+      "pithyx.json",
+      "icon.svg",
+      "frontend/index.html",
+      "frontend/assets/app.js",
+      "frontend/.env"
+    ],
+    "entry": "frontend/index.html",
+    "expected": [
+      {
+        "path": "frontend/.env",
+        "reason": "unsafe"
+      }
+    ]
+  },
+  {
+    "name": "percent sign",
+    "files": [
+      "pithyx.json",
+      "icon.svg",
+      "frontend/index.html",
+      "frontend/assets/app.js",
+      "frontend/%2e%2e.js"
+    ],
+    "entry": "frontend/index.html",
+    "expected": [
+      {
+        "path": "frontend/%2e%2e.js",
+        "reason": "unsafe"
+      }
+    ]
+  },
+  {
+    "name": "segment too long",
+    "files": [
+      "pithyx.json",
+      "icon.svg",
+      "frontend/index.html",
+      "frontend/assets/app.js",
+      "frontend/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.js"
+    ],
+    "entry": "frontend/index.html",
+    "expected": [
+      {
+        "path": "frontend/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.js",
+        "reason": "unsafe"
+      }
+    ]
+  },
+  {
+    "name": "too deep",
+    "files": [
+      "pithyx.json",
+      "icon.svg",
+      "frontend/index.html",
+      "frontend/assets/app.js",
+      "frontend/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/x.js"
+    ],
+    "entry": "frontend/index.html",
+    "expected": [
+      {
+        "path": "frontend/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/d/x.js",
+        "reason": "unsafe"
+      }
+    ]
+  },
+  {
+    "name": "names differing only in case",
+    "files": [
+      "pithyx.json",
+      "icon.svg",
+      "frontend/index.html",
+      "frontend/assets/app.js",
+      "frontend/assets/App.js"
+    ],
+    "entry": "frontend/index.html",
+    "expected": [
+      {
+        "path": "frontend/assets/App.js",
+        "reason": "duplicate"
+      }
+    ]
+  },
+  {
+    "name": "a file in the way of a folder",
+    "files": [
+      "pithyx.json",
+      "icon.svg",
+      "frontend/index.html",
+      "frontend/assets/app.js",
+      "frontend/assets/app.js/inner.js"
+    ],
+    "entry": "frontend/index.html",
+    "expected": [
+      {
+        "path": "frontend/assets/app.js",
+        "reason": "duplicate"
+      }
+    ]
+  },
+  {
+    "name": "folder outside the layout",
+    "files": [
+      "pithyx.json",
+      "icon.svg",
+      "frontend/index.html",
+      "frontend/assets/app.js",
+      "docs/guide.txt"
+    ],
+    "entry": "frontend/index.html",
+    "expected": [
+      {
+        "path": "docs/guide.txt",
+        "reason": "unexpected"
+      }
+    ]
+  },
+  {
+    "name": "backend paths of the frontend",
+    "files": [
+      "pithyx.json",
+      "icon.svg",
+      "frontend/index.html",
+      "frontend/assets/app.js",
+      "frontend/api/data.json",
+      "frontend/api-metrics/x.json"
+    ],
+    "entry": "frontend/index.html",
+    "expected": [
+      {
+        "path": "frontend/api/data.json",
+        "reason": "reserved"
+      },
+      {
+        "path": "frontend/api-metrics/x.json",
+        "reason": "reserved"
+      }
+    ]
+  },
+  {
+    "name": "a file named api",
+    "files": [
+      "pithyx.json",
+      "icon.svg",
+      "frontend/index.html",
+      "frontend/api"
+    ],
+    "entry": "frontend/index.html",
+    "expected": [
+      {
+        "path": "frontend/api",
+        "reason": "reserved"
+      }
+    ]
+  },
+  {
+    "name": "files at the root",
+    "files": [
+      "pithyx.json",
+      "icon.svg",
+      "frontend/index.html",
+      "frontend/assets/app.js",
+      "CHECKSUMS",
+      "LICENSE.txt"
+    ],
+    "entry": "frontend/index.html",
+    "expected": []
   }
 ]

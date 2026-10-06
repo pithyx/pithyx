@@ -18,20 +18,17 @@ public static class CoreApps
     public const string Logs = "org.pithyx.logs";
     public const string About = "org.pithyx.about";
 
-    /// <summary>The sandboxed SDK demo, wired in by hand until it becomes the E2E probe app (A10).</summary>
-    public const string Demo = "org.pithyx.demo";
-
     /// <summary>
     /// The core apps that are given to users by a grant. The administration apps (Storage, Settings, Resource Monitor,
     /// Log Center) belong to the administrator right, and About is for everybody.
     /// </summary>
-    public static readonly IReadOnlyList<string> Granted = [Files, Viewer, Demo];
+    public static readonly IReadOnlyList<string> Granted = [Files, Viewer];
 
     /// <summary>The core apps that come with the administrator right.</summary>
     public static readonly IReadOnlyList<string> Admin = [Storage, Settings, Monitor, Logs];
 
     /// <summary>Every core app.</summary>
-    public static readonly IReadOnlyList<string> All = [Files, Viewer, Storage, Settings, Monitor, Logs, About, Demo];
+    public static readonly IReadOnlyList<string> All = [Files, Viewer, Storage, Settings, Monitor, Logs, About];
 
     /// <summary>
     /// The short id each core app had before migration 0022, by that id. Log entries written before keep their source
@@ -44,10 +41,18 @@ public static class CoreApps
     public static string? LegacyIdOf(string appId) =>
         All.Contains(appId) ? appId[Manifest.AppId.ReservedPrefix.Length..] : null;
 
-    /// <summary>Whether the rights allow an app: given apps by their grant, administration apps to administrators, every other app to everybody.</summary>
+    /// <summary>
+    /// Whether the rights allow an app: given core apps and every third-party app by their grant, administration apps
+    /// to administrators, the other core apps (About) to everybody. Whether a third-party app is installed and enabled
+    /// is the registry's part (<see cref="AppRegistry.Allows"/>).
+    /// </summary>
     public static bool Allows(EffectivePermissions rights, string appId)
     {
         ArgumentNullException.ThrowIfNull(rights);
-        return Granted.Contains(appId) ? rights.Has(Resources.App(appId)) : !Admin.Contains(appId) || rights.IsAdmin;
+        if (Admin.Contains(appId))
+        {
+            return rights.IsAdmin;
+        }
+        return (All.Contains(appId) && !Granted.Contains(appId)) || rights.Has(Resources.App(appId));
     }
 }

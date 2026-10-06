@@ -26,6 +26,7 @@ const CATEGORIES: readonly BackupCategory[] = [
   'storage',
   'system',
   'certificates',
+  'apps',
 ];
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>

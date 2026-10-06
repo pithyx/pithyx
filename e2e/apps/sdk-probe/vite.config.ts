@@ -1,8 +1,8 @@
 import { defaultClientConditions, defineConfig } from 'vite';
 
 export default defineConfig({
-  // The desktop serves the app under /apps/org.pithyx.demo/; relative asset paths keep it movable.
+  // The box serves the frontend under /apps/<id>/; relative asset paths keep it movable.
   base: './',
   resolve: { conditions: ['pithyx-source', ...defaultClientConditions] },
-  build: { outDir: 'dist', emptyOutDir: true },
+  build: { outDir: 'dist/frontend', emptyOutDir: true },
 });

@@ -150,7 +150,10 @@ public sealed class GrantService(SqliteConnectionFactory connections, Permission
             effective.IsAdmin,
             [.. Resources.Rights.Where(effective.Has)],
             [.. Resources.Protocols.Where(effective.Has)],
-            [.. CoreApps.Granted.Where(app => effective.Has(Resources.App(app)))]);
+            [
+                .. CoreApps.Granted.Where(app => effective.Has(Resources.App(app))),
+                .. effective.Allowed.Order(StringComparer.Ordinal).Select(Resources.ThirdPartyApp).OfType<string>(),
+            ]);
     }
 
     /// <summary>Gives a new user its first grants, in the transaction that creates it.</summary>
@@ -174,6 +177,15 @@ public sealed class GrantService(SqliteConnectionFactory connections, Permission
                     throw Invalid(grant.Resource);
                 }
                 await RequireShareAsync(connection, transaction, shareId);
+            }
+            else if (Resources.ThirdPartyApp(grant.Resource) is { } appId)
+            {
+                // A third-party app is given only while it is installed.
+                if (grant.Level != GrantLevel.Allow || kind == SubjectKind.App
+                    || await connection.ExecuteScalarAsync<long>("SELECT count(*) FROM apps WHERE id = @appId", new { appId }, transaction) == 0)
+                {
+                    throw Invalid(grant.Resource);
+                }
             }
             else if (!Resources.IsKnown(grant.Resource) || grant.Level != GrantLevel.Allow || (kind == SubjectKind.App && grant.Resource == Resources.Admin))
             {

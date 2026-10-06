@@ -371,13 +371,13 @@ Logs (D305): every level also appears in the browser console. `info`, `warn` and
 
 #### A10 Registry and install, frontend only (after A2 and A3)
 
-- [ ] Migration (after A3's): table `apps` with `source` (sideload or catalog), `app_permissions`, `storage_mappings`, the setting `apps.pool`, and a new backup part "Apps".
-- [ ] Third-party apps are allowed only through grants (the CHECK of `grants` already allows dots).
-- [ ] `UidAllocator.AllocateAppAsync`.
-- [ ] Flow: `PUT /api/apps/packages` (streamed), a safe tar reader, a check with preview and diff kept for 15 minutes, the install as a job, the update with snapshot, hold and rollback, `DELETE ?data=keep|delete`. Sideloads under `org.pithyx.*` are refused.
-- [ ] `AppFrontendHosting.cs` serves the frontends with the security headers above; topics `apps` and `apps/admin`.
-- [ ] The demo becomes the E2E probe app `e2e/apps/sdk-probe`; `copySampleApps` goes.
-- [ ] Tests: tar attacks, the state machine with a fake clock, the endpoint matrix and the backup table check, `integration.sh` for the dataset and the rollback.
+- [x] Migration (after A3's): table `apps` with `source` (sideload or catalog), `app_permissions`, `storage_mappings`, the setting `apps.pool`, and a new backup part "Apps". (0023; it also drops the grants of `org.pithyx.demo`.)
+- [x] Third-party apps are allowed only through grants (the CHECK of `grants` already allows dots).
+- [x] `UidAllocator.AllocateAppAsync`.
+- [x] Flow: `PUT /api/apps/packages` (streamed), a safe tar reader, a check with preview and diff kept for 15 minutes, the install as a job, the update with snapshot, hold and rollback, `DELETE ?data=keep|delete`. Sideloads under `org.pithyx.*` are refused.
+- [x] `AppFrontendHosting.cs` serves the frontends with the security headers above; topics `apps` and `apps/admin`. (The files are public like the desktop's: a sandboxed window sends no cookie, so the grant is checked where the app is launched and, from A11, where its tokens come from.)
+- [x] The demo becomes the E2E probe app `e2e/apps/sdk-probe`; `copySampleApps` goes. (Its package is built by `e2e/apps/sdk-probe/pack.ts` until `pithyx pack` exists; the desktop wires it in by id until A12.)
+- [x] Tests: tar attacks, the state machine with a fake clock, the endpoint matrix and the backup table check, `integration.sh` for the dataset and the rollback.
 - [ ] Upgrade proven on 7484.
 
 #### A11 Tokens and checks in the daemon (after A10)

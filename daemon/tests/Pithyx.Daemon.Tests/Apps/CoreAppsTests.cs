@@ -22,7 +22,7 @@ public sealed class CoreAppsTests
     {
         Assert.Equal(CoreApps.Files, CoreApps.LegacyIds["files"]);
         Assert.Equal(CoreApps.Logs, CoreApps.LegacyIds["logs"]);
-        Assert.Equal(CoreApps.Demo, CoreApps.LegacyIds["demo"]);
+        Assert.False(CoreApps.LegacyIds.ContainsKey("demo"));
         Assert.Equal(CoreApps.All.Count, CoreApps.LegacyIds.Count);
         Assert.False(CoreApps.LegacyIds.ContainsKey("disks"));
     }

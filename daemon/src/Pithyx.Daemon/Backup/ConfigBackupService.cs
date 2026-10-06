@@ -114,8 +114,8 @@ public sealed partial class ConfigBackupService(
         var createdAt = time.GetUtcNow();
         var hostName = Environment.MachineName;
         BackupCategory[] categories = entries.Keys.Any(name => name.StartsWith(TlsPrefix, StringComparison.Ordinal) || name.StartsWith(SshPrefix, StringComparison.Ordinal))
-            ? [BackupCategory.Users, BackupCategory.SharedFolders, BackupCategory.Storage, BackupCategory.System, BackupCategory.Certificates]
-            : [BackupCategory.Users, BackupCategory.SharedFolders, BackupCategory.Storage, BackupCategory.System];
+            ? [BackupCategory.Users, BackupCategory.SharedFolders, BackupCategory.Storage, BackupCategory.System, BackupCategory.Certificates, BackupCategory.Apps]
+            : [BackupCategory.Users, BackupCategory.SharedFolders, BackupCategory.Storage, BackupCategory.System, BackupCategory.Apps];
         var manifest = new BackupManifest(1, createdAt, hostName, BuildInfo.Current.Version, schemaVersion, categories);
         entries[ManifestEntry] = JsonSerializer.SerializeToUtf8Bytes(manifest, _json);
 

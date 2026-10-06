@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { isAppAllowed, type SessionPermissions } from './access';
-import { coreAppIds } from './ids';
+import { coreAppIds, probeAppId } from './ids';
 
 const user: SessionPermissions = {
   admin: false,
@@ -18,8 +18,8 @@ describe('isAppAllowed', () => {
 
   it('gives granted apps by their grant, and every app to administrators', () => {
     expect(isAppAllowed(coreAppIds.files, user)).toBe(true);
-    expect(isAppAllowed(coreAppIds.demo, user)).toBe(false);
-    expect(isAppAllowed(coreAppIds.demo, admin)).toBe(true);
+    expect(isAppAllowed(probeAppId, user)).toBe(false);
+    expect(isAppAllowed(probeAppId, admin)).toBe(true);
   });
 
   it('gives the rest to everybody and nothing unknown', () => {

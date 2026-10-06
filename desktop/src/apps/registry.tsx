@@ -12,7 +12,7 @@ import { lazy, type ComponentType, type LazyExoticComponent } from 'react';
 import type { AppTone } from '../shell/types';
 import type { WindowOptions } from '../wm/types';
 import { loadTranslations } from '../i18n';
-import { coreAppIds } from './ids';
+import { coreAppIds, probeAppId } from './ids';
 
 /** What every app component receives. The SDK replaces this in step 5.3. */
 export interface AppProps {
@@ -151,8 +151,8 @@ export const coreApps: readonly CoreApp[] = [
     ),
   },
   {
-    // Prototype for the SDK spec: a third-party app in a sandboxed window (apps/demo), until manifests drive this list.
-    id: coreAppIds.demo,
+    // The E2E probe, a third-party app the daemon serves once it is installed; the topic apps replaces this in A12.
+    id: probeAppId,
     icon: null,
     tone: 'plum',
     window: {
@@ -165,8 +165,8 @@ export const coreApps: readonly CoreApp[] = [
         default: ({ windowId }: AppProps) => (
           <SandboxApp
             windowId={windowId}
-            app={coreAppIds.demo}
-            entry={`/apps/${coreAppIds.demo}/index.html`}
+            app={probeAppId}
+            entry={`/apps/${probeAppId}/index.html`}
             permissions={['notifications']}
           />
         ),

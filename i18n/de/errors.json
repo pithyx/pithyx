@@ -1,5 +1,12 @@
 {
   "app": {
+    "app": {
+      "busy": "Die App {id} wird gerade installiert, aktualisiert oder entfernt. Warte, bis das erledigt ist.",
+      "not_found": "Es ist keine App mit der ID {id} installiert."
+    },
+    "backend": {
+      "unsupported": "Die App hat ein Backend mit Containern. Diese Version von Pithyx installiert nur Apps ohne Backend."
+    },
     "compose": {
       "key_unsupported": "Die Compose-Datei der App nutzt {key} unter {path}, was Pithyx nicht erlaubt.",
       "reference_unknown": "Das Backend der App verweist unter {path} auf {name}, das nicht deklariert ist.",
@@ -28,10 +35,18 @@
       "window_size_invalid": "Die kleinste Fenstergröße der App ist größer als ihre Standardgröße."
     },
     "package": {
-      "layout_invalid": "Das App-Paket ist ungültig: {reason, select, missing {{path} fehlt} unsafe {der Pfad {path} ist nicht erlaubt} duplicate {{path} ist doppelt enthalten} unexpected {{path} gehört zu einem Backend, das die App nicht deklariert} other {{path} ist nicht erlaubt}}."
+      "layout_invalid": "Das App-Paket ist ungültig: {reason, select, missing {{path} fehlt} unsafe {der Pfad {path} ist nicht erlaubt} duplicate {{path} ist doppelt enthalten} unexpected {{path} gehört nicht in ein App-Paket} reserved {{path} nutzt einen Namen, der für das Backend reserviert ist} other {{path} ist nicht erlaubt}}.",
+      "invalid": "Die Datei ist kein gültiges App-Paket: {reason, select, gzip {sie ist nicht mit gzip komprimiert oder beschädigt} format {sie ist kein tar-Archiv, das diese Box liest} checksum {ein Header ist beschädigt} truncated {sie endet zu früh} trailing_data {nach ihrem Ende folgen noch Daten} entry_type {{path} ist ein Link oder eine Spezialdatei} extended_header {sie hat einen erweiterten Header, der nicht erlaubt ist} name_mismatch {der lange Name von {path} passt nicht zu seinem eigenen Namen} other {sie kann nicht gelesen werden}}.",
+      "not_found": "Das geprüfte Paket ist nicht mehr da. Lade die Datei noch einmal hoch.",
+      "too_large": "Das App-Paket ist zu groß: {reason, select, size {die Datei darf höchstens {limit} MB haben} unpacked {ihre Dateien dürfen zusammen höchstens {limit} MB haben} files {es darf höchstens {limit} Dateien enthalten} manifest {pithyx.json darf höchstens {limit} KB haben} other {es überschreitet eine Grenze}}."
     },
     "permission": {
       "denied": "Die App darf das nicht ({permission})."
+    },
+    "pool": {
+      "fixed": "Apps liegen auf dem Pool {pool}. Solange eine App installiert ist, können sie nicht auf einen anderen Pool umziehen.",
+      "required": "Wähle einen Pool für die Daten der Apps.",
+      "unavailable": "Der Pool {pool} kann gerade keine Apps aufnehmen: {reason, select, missing {er ist nicht importiert} offline {er ist nicht online} read_only {er ist schreibgeschützt} locked {er ist gesperrt} not_prepared {er wurde nicht von Pithyx eingerichtet} other {er ist nicht verfügbar}}."
     },
     "storage": {
       "too_large": "Die App wollte mehr speichern, als sie behalten darf. Die Grenze liegt bei {maxKb} KB."
@@ -378,7 +393,7 @@
   },
   "system": {
     "backup": {
-      "category_missing": "Dieses Backup enthält {category, select, users {die Benutzer} sharedFolders {die freigegebenen Ordner} storage {die Speicher-Einstellungen} system {die Systemeinstellungen} certificates {die Zertifikate und Schlüssel} other {{category}}} nicht.",
+      "category_missing": "Dieses Backup enthält {category, select, users {die Benutzer} sharedFolders {die freigegebenen Ordner} storage {die Speicher-Einstellungen} system {die Systemeinstellungen} certificates {die Zertifikate und Schlüssel} apps {die Apps} other {{category}}} nicht.",
       "invalid": "Diese Datei ist kein Pithyx-Konfigurationsbackup oder sie ist beschädigt.",
       "password_wrong": "Das Backup-Passwort ist falsch.",
       "restore_expired": "Das geprüfte Backup ist nicht mehr verfügbar. Wähle die Datei noch einmal aus.",

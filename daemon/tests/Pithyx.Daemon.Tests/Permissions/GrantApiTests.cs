@@ -198,7 +198,7 @@ public sealed class GrantApiTests : IDisposable
     public async Task ARevokedRightIsPushedOverTheWebSocket()
     {
         await _admin.SetupAdminAsync();
-        var rita = await UserAsync("rita", "right:desktopLogin", "app:org.pithyx.files", "app:org.pithyx.demo");
+        var rita = await UserAsync("rita", "right:desktopLogin", "app:org.pithyx.files", "app:org.pithyx.viewer");
         var cookie = await Jobs.JobTestSupport.SessionCookieAsync(_factory, rita);
         var client = _factory.Server.CreateWebSocketClient();
         client.ConfigureRequest = request =>
@@ -210,7 +210,7 @@ public sealed class GrantApiTests : IDisposable
         await socket.SendAsync(Encoding.UTF8.GetBytes("""{"type":"sub","id":"p","topic":"session/permissions"}"""), WebSocketMessageType.Text, endOfMessage: true, Token);
         Assert.Equal("ack", (await ReceiveAsync(socket)).GetProperty("type").GetString());
         var snapshot = await ReceiveAsync(socket);
-        Assert.Equal(["org.pithyx.files", "org.pithyx.demo"], snapshot.GetProperty("data").GetProperty("apps").EnumerateArray().Select(app => app.GetString()));
+        Assert.Equal(["org.pithyx.files", "org.pithyx.viewer"], snapshot.GetProperty("data").GetProperty("apps").EnumerateArray().Select(app => app.GetString()));
 
         using (await _admin.PutAsJsonAsync($"/api/users/{rita}/grants", Grants("right:desktopLogin", "app:org.pithyx.files"), Token))
         {

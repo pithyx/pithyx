@@ -360,6 +360,10 @@
       "certificates": {
         "title": "Certificates and keys",
         "description": "The certificate of this box and its SSH host keys, so clients keep trusting it"
+      },
+      "apps": {
+        "title": "Apps",
+        "description": "Installed apps with their permissions, who may use them and the app pool; the apps' files and data stay on the pool"
       }
     },
     "steps": {

@@ -114,6 +114,24 @@ public static partial class ZfsPlans
     /// <summary>A user's home below the pool's <c>homes</c> (D105), mounted at <c>/&lt;pool&gt;/homes/&lt;user&gt;</c> through it.</summary>
     public static CommandRequest CreateHomeDataset(string pool, string username) => new("zfs", ["create", $"{pool}/pithyx/homes/{username}"]);
 
+    /// <summary>
+    /// An app's dataset (D301) below the pool's <c>apps</c>, mounted at <c>/&lt;pool&gt;/.pithyx/apps/&lt;id&gt;</c> through it.
+    /// The id is checked by <see cref="Apps.Manifest.AppId"/>, so it never names another dataset.
+    /// </summary>
+    public static CommandRequest CreateAppDataset(string pool, string appId) => new("zfs", ["create", AppDataset(pool, appId)]);
+
+    /// <summary>Destroys an app's dataset with its snapshots, when an administrator removes the app with its data.</summary>
+    public static CommandRequest DestroyAppDataset(string pool, string appId) => new("zfs", ["destroy", "-r", AppDataset(pool, appId)], TimeSpan.FromMinutes(10));
+
+    public static string AppDataset(string pool, string appId)
+    {
+        if (!Apps.Manifest.AppId.IsValid(appId) || !DatasetName().IsMatch(pool))
+        {
+            throw new ArgumentException($"Not an app dataset: {pool}/pithyx/apps/{appId}.", nameof(appId));
+        }
+        return $"{pool}/pithyx/apps/{appId}";
+    }
+
     /// <summary>The cache dataset for a pool set up before it existed (<see cref="Files.Thumbnails.ThumbnailCacheProvisioner"/>).</summary>
     public static CommandRequest CreateCacheDataset(string pool) => new("zfs", ["create", .. CacheDataset(pool)]);
 

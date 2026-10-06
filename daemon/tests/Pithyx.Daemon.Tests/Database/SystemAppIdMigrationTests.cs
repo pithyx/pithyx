@@ -25,7 +25,7 @@ public sealed class SystemAppIdMigrationTests : IDisposable
     {
         await LegacyAppIdDatabase.CreateAsync(DatabasePath, Token);
         var connections = new SqliteConnectionFactory(DatabasePath);
-        await new MigrationRunner(connections, TimeProvider.System, NullLogger<MigrationRunner>.Instance).RunAsync(Migration.Embedded(), Token);
+        await new MigrationRunner(connections, TimeProvider.System, NullLogger<MigrationRunner>.Instance).RunAsync([.. Migration.Embedded().Where(migration => migration.Version <= 22)], Token);
         return await connections.OpenAsync(Token);
     }
 
