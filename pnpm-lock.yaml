@@ -200,16 +200,6 @@ importers:
         specifier: ^8.70.1
         version: 8.70.1(eslint@10.11.0(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3)
 
-  apps/demo:
-    dependencies:
-      '@pithyx/sdk':
-        specifier: workspace:*
-        version: link:../../sdk
-    devDependencies:
-      vite:
-        specifier: ^8.3.1
-        version: 8.3.1(@types/node@24.13.6)
-
   desktop:
     dependencies:
       '@pithyx/api-client':
@@ -264,9 +254,6 @@ importers:
       '@formatjs/icu-messageformat-parser':
         specifier: ^3.5.18
         version: 3.5.18
-      '@pithyx/app-demo':
-        specifier: workspace:*
-        version: link:../apps/demo
       '@react-aria/optimize-locales-plugin':
         specifier: ^2.0.2
         version: 2.0.2
@@ -306,6 +293,19 @@ importers:
       '@types/node':
         specifier: ^24.13.6
         version: 24.13.6
+
+  e2e/apps/sdk-probe:
+    dependencies:
+      '@pithyx/sdk':
+        specifier: workspace:*
+        version: link:../../../sdk
+    devDependencies:
+      '@types/node':
+        specifier: ^24.13.6
+        version: 24.13.6
+      vite:
+        specifier: ^8.3.1
+        version: 8.3.1(@types/node@24.13.6)
 
   packages/api-client:
     dependencies:
