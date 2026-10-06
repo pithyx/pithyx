@@ -1,3 +1,4 @@
+import { currentAppId } from '../ids';
 import type { LogFilter, LogLevelName } from '../sdk/logs';
 
 export const LEVELS: readonly LogLevelName[] = ['debug', 'info', 'warn', 'error'];
@@ -48,13 +49,16 @@ export function filterOf(view: LogView, now: number): LogFilter {
 
 export type SourceGroup = 'daemon' | 'system' | 'app';
 
-/** Which group a source belongs to and its name within the group. */
+/**
+ * Which group a source belongs to and its name within the group. A core app's entries from before migration 0022 keep
+ * their short source (`app/files`) and are named after the app's current id.
+ */
 export function describeSource(source: string): { group: SourceGroup; name: string } {
   if (source.startsWith('system/')) {
     return { group: 'system', name: source.slice('system/'.length) };
   }
   if (source.startsWith('app/')) {
-    return { group: 'app', name: source.slice('app/'.length) };
+    return { group: 'app', name: currentAppId(source.slice('app/'.length)) };
   }
   return { group: 'daemon', name: source };
 }

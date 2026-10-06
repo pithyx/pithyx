@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { Button, cx } from '@pithyx/ui';
+import { coreAppIds } from '../apps/ids';
 import { openApp } from '../wm/store';
 import desktopStyles from '../desktop/Desktop.module.css';
 import { useMessages } from './messages';
@@ -20,7 +21,7 @@ export function AlertBanner({ alert }: { alert: StorageAlert }) {
       <Button
         size="sm"
         onPress={() => {
-          openApp('storage', alertSection(alert));
+          openApp(coreAppIds.storage, alertSection(alert));
         }}
       >
         {t('storageAlert.open')}

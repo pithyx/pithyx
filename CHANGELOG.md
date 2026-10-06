@@ -151,6 +151,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- The system apps have ids of D302 in the reserved namespace `org.pithyx.*` (A3, migration 0022): `files` is now `org.pithyx.files`, and so on for Viewer, Storage, Settings, Resource Monitor, Log Center, About and the SDK demo. The migration renames the app grants (`app:files` becomes `app:org.pithyx.files`), window sizes, desktop shortcuts, the windows of saved layouts and the notifications apps sent, so nobody loses a right, a shortcut or a window. Log entries written before keep their source (`app/files`): the Log Center lists both under the app and its filter finds both. The API takes only ids of D302 for app logs (`POST /api/apps/{app}/logs`), app notifications, desktop shortcuts and window preferences; the SDK demo is served at `/apps/org.pithyx.demo/`.
 - CI: the E2E job starts after the daemon job, whose tests skewed the performance budgets even on the E2E runner's own cores.
 - `tools/dev-vm/provision.sh` installs the image build tools (`mmdebstrap`, `uidmap`, `squashfs-tools`, `xorriso`, `mtools`, `dosfstools`, `grub-efi-amd64-bin`) and adds the user to group `kvm` for the QEMU installer test (D296), and leaves Samba and NFS alone once the daemon owns them (before, a second run stopped and disabled `smbd`).
 - Groups have their own page in Settings, next to Users in the category now called "Users and groups"; the Users page lists only the users.

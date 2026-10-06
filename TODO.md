@@ -98,7 +98,7 @@ Owner feedback on 2026-09-30 (the rest is in #56):
 
 Planned with the owner on 2026-10-05 (D300 to D308). The goal is the first SDK release (`@pithyx/sdk` on npm) and the runtime that installs, runs and proxies third-party apps; the system apps run on the same base. Built now, before D (network, step 14.2) and before the updater. It replaces M4 "to be detailed" and the open items of step 5.3 (each one points here).
 
-What exists (since pithyx/pithyx#16, D54 to D78): the SDK protocol, 17 events, `app.log`, a TypeScript manifest, and the core apps on the in-process transport (`CoreSdkApp`, the `internal.*` extensions). What is missing is the runtime: the JSON Schema and the package format, the app registry with install, update and uninstall, tokens (`auth.token` only throws today), the proxy, Docker (not in the image) and backends, the example apps, the developer tooling and the way to npm. The demo app is wired in by hand (`desktop/src/apps/registry.tsx`, `daemon/src/Pithyx.Daemon/Permissions/Grant.cs`), and only the browser checks app permissions (release blocker).
+What exists (since pithyx/pithyx#16, D54 to D78): the SDK protocol, 17 events, `app.log`, a TypeScript manifest, and the core apps on the in-process transport (`CoreSdkApp`, the `internal.*` extensions). What is missing is the runtime: the JSON Schema and the package format, the app registry with install, update and uninstall, tokens (`auth.token` only throws today), the proxy, Docker (not in the image) and backends, the example apps, the developer tooling and the way to npm. The demo app is wired in by hand (`desktop/src/apps/registry.tsx`, `daemon/src/Pithyx.Daemon/Apps/CoreApps.cs`), and only the browser checks app permissions (release blocker).
 
 Working rules for these steps:
 
@@ -318,9 +318,9 @@ Logs (D305): every level also appears in the browser console. `info`, `warn` and
 
 #### A3 System app ids `org.pithyx.*` (after A2, before A10)
 
-- [ ] A migration renames: `grants` (`app:files` becomes `app:org.pithyx.files`), `window_preferences`, `desktop_items`, `notifications.app` and the app ids in `desktop_layouts`. It takes a lower number than A10's migration.
-- [ ] Old entries in `logs.db` keep their source; the Log Center filter knows both names.
-- [ ] Also switched: `Permissions/Grant.cs` (becomes `Apps/CoreApps.cs`), `desktop/src/apps/registry.tsx`, `access.ts`, the i18n keys `apps.*`, the E2E tests.
+- [x] A migration renames: `grants` (`app:files` becomes `app:org.pithyx.files`), `window_preferences`, `desktop_items`, `notifications.app` and the app ids in `desktop_layouts`. It takes a lower number than A10's migration. (Migration 0022; where a row already exists under the new id it wins. Shortcuts and layouts get a new version.)
+- [x] Old entries in `logs.db` keep their source; the Log Center filter knows both names. (The daemon lists a core app's sources once under its new id and a filter on it also finds the short source; the desktop names old entries after the app.)
+- [x] Also switched: `Permissions/Grant.cs` (becomes `Apps/CoreApps.cs`), `desktop/src/apps/registry.tsx`, `access.ts`, the i18n keys `apps.*`, the E2E tests. (The desktop takes the ids from `desktop/src/apps/ids.ts`; the names are `apps.org.pithyx.<name>`; the SDK demo is served at `/apps/org.pithyx.demo/`. The API takes only ids of D302 for app logs, app notifications, shortcuts and window preferences.)
 - [ ] Upgrade proven on 7484.
 
 #### A4 SDK API contract and rc.1 `[REVIEW]`

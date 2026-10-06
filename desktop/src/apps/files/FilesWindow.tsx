@@ -1,3 +1,4 @@
+import { coreAppIds } from '../ids';
 import type { AppProps } from '../registry';
 import { CoreSdkApp } from '../sdk/CoreSdkApp';
 import { filesHost } from '../sdk/filesInternal';
@@ -8,7 +9,7 @@ export function FilesWindow({ windowId }: AppProps) {
   return (
     <CoreSdkApp
       windowId={windowId}
-      app="files"
+      app={coreAppIds.files}
       permissions={['files.shares', 'notifications']}
       internal={filesHost}
       Component={FilesApp}

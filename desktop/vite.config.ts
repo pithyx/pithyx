@@ -161,8 +161,8 @@ function precompress(): Plugin {
   };
 }
 
-// Sample third-party apps (apps/*) are built on their own and served by the daemon under /apps/<id>/.
-const sampleApps = ['demo'];
+// Sample third-party apps (apps/<folder>) are built on their own and served by the daemon under /apps/<id>/.
+const sampleApps = [{ folder: 'demo', id: 'org.pithyx.demo' }];
 
 /** Copies the built sample apps into the desktop build. */
 function copySampleApps(): Plugin {
@@ -174,14 +174,14 @@ function copySampleApps(): Plugin {
       outDir = config.build.outDir;
     },
     closeBundle() {
-      for (const app of sampleApps) {
-        const built = join(import.meta.dirname, '..', 'apps', app, 'dist');
+      for (const { folder, id } of sampleApps) {
+        const built = join(import.meta.dirname, '..', 'apps', folder, 'dist');
         if (!existsSync(join(built, 'index.html'))) {
           throw new Error(
-            `apps/${app} is not built; build it first (pnpm --filter "@pithyx/desktop..." build).`,
+            `apps/${folder} is not built; build it first (pnpm --filter "@pithyx/desktop..." build).`,
           );
         }
-        cpSync(built, join(outDir, 'apps', app), { recursive: true });
+        cpSync(built, join(outDir, 'apps', id), { recursive: true });
       }
     },
   };

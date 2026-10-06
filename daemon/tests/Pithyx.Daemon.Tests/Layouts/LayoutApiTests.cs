@@ -304,15 +304,15 @@ public sealed class LayoutApiTests : IDisposable
     public async Task WindowPreferencesAreSharedAcrossDevices()
     {
         var laptop = await SetupAsync();
-        using var put = await SendAsync(HttpMethod.Put, "/api/desktop/preferences/disks", laptop, new { width = 900, height = 600 });
-        using var again = await SendAsync(HttpMethod.Put, "/api/desktop/preferences/disks", laptop, new { width = 950, height = 610 });
+        using var put = await SendAsync(HttpMethod.Put, "/api/desktop/preferences/org.pithyx.files", laptop, new { width = 900, height = 600 });
+        using var again = await SendAsync(HttpMethod.Put, "/api/desktop/preferences/org.pithyx.files", laptop, new { width = 950, height = 610 });
         var phone = await SecondDeviceAsync();
 
         using var state = await SendAsync(HttpMethod.Get, "/api/desktop", phone);
         var preference = Assert.Single((await state.JsonAsync()).GetProperty("preferences").EnumerateArray());
 
         Assert.Equal(HttpStatusCode.NoContent, put.StatusCode);
-        Assert.Equal("disks", preference.GetProperty("appId").GetString());
+        Assert.Equal("org.pithyx.files", preference.GetProperty("appId").GetString());
         Assert.Equal(950, preference.GetProperty("width").GetInt32());
         Assert.Equal(610, preference.GetProperty("height").GetInt32());
     }
@@ -322,9 +322,11 @@ public sealed class LayoutApiTests : IDisposable
     {
         var cookies = await SetupAsync();
 
-        using var put = await SendAsync(HttpMethod.Put, "/api/desktop/preferences/disks", cookies, new { width = 0, height = 600 });
+        using var put = await SendAsync(HttpMethod.Put, "/api/desktop/preferences/org.pithyx.files", cookies, new { width = 0, height = 600 });
+        using var shortId = await SendAsync(HttpMethod.Put, "/api/desktop/preferences/files", cookies, new { width = 900, height = 600 });
 
         Assert.Equal(HttpStatusCode.BadRequest, put.StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, shortId.StatusCode);
     }
 
     [Fact]

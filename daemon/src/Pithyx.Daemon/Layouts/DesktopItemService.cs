@@ -3,6 +3,8 @@ using System.Data.Common;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using Dapper;
+using Pithyx.Daemon.Apps;
+using Pithyx.Daemon.Apps.Manifest;
 using Pithyx.Daemon.Auth;
 using Pithyx.Daemon.Database;
 using Pithyx.Daemon.Errors;
@@ -20,16 +22,15 @@ public sealed class DesktopItemService(SqliteConnectionFactory connections, Time
     public const int MaxNoteLength = 4000;
     public const int MaxNameLength = 100;
     public const int MaxCell = 255;
-    private const int MaxAppIdLength = 64;
 
     // Stored as written: the default escaping would turn every non-ASCII character of a note into six bytes.
     private static readonly JsonSerializerOptions _dataOptions = new() { Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
 
     /// <summary>The shortcuts every new user starts with, one below the other in the first column.</summary>
-    public static readonly IReadOnlyList<string> DefaultShortcuts = ["files", "about"];
+    public static readonly IReadOnlyList<string> DefaultShortcuts = [CoreApps.Files, CoreApps.About];
 
     /// <summary>New administrators also get Storage and Settings, which only administrators can open.</summary>
-    public static readonly IReadOnlyList<string> DefaultAdminShortcuts = ["files", "storage", "settings", "about"];
+    public static readonly IReadOnlyList<string> DefaultAdminShortcuts = [CoreApps.Files, CoreApps.Storage, CoreApps.Settings, CoreApps.About];
 
     private const string SelectColumns =
         """
@@ -52,7 +53,7 @@ public sealed class DesktopItemService(SqliteConnectionFactory connections, Time
         string data;
         if (item.Kind == DesktopItemKind.Shortcut)
         {
-            if (item.Text is not null || !IsAppId(item.App))
+            if (item.Text is not null || !AppId.IsValid(item.App))
             {
                 throw new PithyxException(ErrorCodes.DesktopItemInvalid);
             }
@@ -176,9 +177,6 @@ public sealed class DesktopItemService(SqliteConnectionFactory connections, Time
             throw new PithyxException(ErrorCodes.DesktopItemInvalid);
         }
     }
-
-    private static bool IsAppId(string? app) =>
-        app is { Length: > 0 and <= MaxAppIdLength } && app.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '.' or '_');
 
     /// <summary>Trims the label; an empty one means the app's own name.</summary>
     private static string? CheckName(string? name)

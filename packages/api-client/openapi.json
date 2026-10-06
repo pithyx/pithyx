@@ -7513,7 +7513,7 @@
             "items": {
               "$ref": "#/components/schemas/GrantEntry"
             },
-            "description": "The user's own grants; when left out, the desktop login, SMB and the apps files, viewer and demo."
+            "description": "The user's own grants; when left out, the desktop login, SMB and the apps org.pithyx.files, org.pithyx.viewer and org.pithyx.demo."
           }
         }
       },

@@ -284,7 +284,7 @@ test('the start menu and the taskbar put apps on the desktop, and the taskbar cl
       }[];
       return items.map((item) => item.app).sort();
     })
-    .toEqual(['about', 'logs', 'monitor', 'storage']);
+    .toEqual(['org.pithyx.about', 'org.pithyx.logs', 'org.pithyx.monitor', 'org.pithyx.storage']);
   expect(await rightClicks(page)).toEqual([true, true, true, true]);
 });
 

@@ -42,11 +42,11 @@ public sealed class PermissionResolverTests
     [Fact]
     public void RightsProtocolsAndAppsComeFromTheUserAndItsGroups()
     {
-        var rights = PermissionResolver.Resolve(Member(Rita, Media), [User(Rita, Resources.Smb), Group(Media, Resources.Sftp), Group(Office, Resources.Ftp), Group(Everybody, Resources.App("files"))]);
+        var rights = PermissionResolver.Resolve(Member(Rita, Media), [User(Rita, Resources.Smb), Group(Media, Resources.Sftp), Group(Office, Resources.Ftp), Group(Everybody, Resources.App("org.pithyx.files"))]);
 
         Assert.True(rights.Has(Resources.Smb));
         Assert.True(rights.Has(Resources.Sftp));
-        Assert.True(rights.Has(Resources.App("files")));
+        Assert.True(rights.Has(Resources.App("org.pithyx.files")));
         Assert.False(rights.Has(Resources.Ftp));
         Assert.False(rights.Has(Resources.Admin));
         Assert.False(rights.IsAdmin);
@@ -80,7 +80,7 @@ public sealed class PermissionResolverTests
         Assert.Equal(ShareAccess.None, PermissionResolver.Resolve(Member(40000), [new Grant(SubjectKind.App, 40000, "share:1", ShareAccess.Read)]).Share(1));
     }
 
-    private static readonly string[] _resources = [Resources.Admin, Resources.DesktopLogin, Resources.SshLogin, Resources.Power, Resources.Smb, Resources.Sftp, Resources.WebDav, Resources.Ftp, "app:files", "share:1", "share:2", "share:3"];
+    private static readonly string[] _resources = [Resources.Admin, Resources.DesktopLogin, Resources.SshLogin, Resources.Power, Resources.Smb, Resources.Sftp, Resources.WebDav, Resources.Ftp, "app:org.pithyx.files", "share:1", "share:2", "share:3"];
 
     private static List<Grant> RandomGrants(Random random, int count) =>
     [

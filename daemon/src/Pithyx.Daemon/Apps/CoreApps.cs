@@ -1,0 +1,53 @@
+using System.Collections.Frozen;
+using Pithyx.Daemon.Permissions;
+
+namespace Pithyx.Daemon.Apps;
+
+/// <summary>
+/// The apps that ship with the desktop, under the reserved namespace <c>org.pithyx.*</c> (D302). Until A3 (migration
+/// 0022) they had short ids such as <c>files</c>; <see cref="LegacyIds"/> keeps those for what was stored before. The
+/// desktop has the same list in <c>desktop/src/apps/ids.ts</c>.
+/// </summary>
+public static class CoreApps
+{
+    public const string Files = "org.pithyx.files";
+    public const string Viewer = "org.pithyx.viewer";
+    public const string Storage = "org.pithyx.storage";
+    public const string Settings = "org.pithyx.settings";
+    public const string Monitor = "org.pithyx.monitor";
+    public const string Logs = "org.pithyx.logs";
+    public const string About = "org.pithyx.about";
+
+    /// <summary>The sandboxed SDK demo, wired in by hand until it becomes the E2E probe app (A10).</summary>
+    public const string Demo = "org.pithyx.demo";
+
+    /// <summary>
+    /// The core apps that are given to users by a grant. The administration apps (Storage, Settings, Resource Monitor,
+    /// Log Center) belong to the administrator right, and About is for everybody.
+    /// </summary>
+    public static readonly IReadOnlyList<string> Granted = [Files, Viewer, Demo];
+
+    /// <summary>The core apps that come with the administrator right.</summary>
+    public static readonly IReadOnlyList<string> Admin = [Storage, Settings, Monitor, Logs];
+
+    /// <summary>Every core app.</summary>
+    public static readonly IReadOnlyList<string> All = [Files, Viewer, Storage, Settings, Monitor, Logs, About, Demo];
+
+    /// <summary>
+    /// The short id each core app had before migration 0022, by that id. Log entries written before keep their source
+    /// (<c>app/files</c>), so the Log Center treats both names as one app.
+    /// </summary>
+    public static readonly FrozenDictionary<string, string> LegacyIds =
+        All.ToFrozenDictionary(id => id[Manifest.AppId.ReservedPrefix.Length..], StringComparer.Ordinal);
+
+    /// <summary>The short id <paramref name="appId"/> had before migration 0022, or null for any other app.</summary>
+    public static string? LegacyIdOf(string appId) =>
+        All.Contains(appId) ? appId[Manifest.AppId.ReservedPrefix.Length..] : null;
+
+    /// <summary>Whether the rights allow an app: given apps by their grant, administration apps to administrators, every other app to everybody.</summary>
+    public static bool Allows(EffectivePermissions rights, string appId)
+    {
+        ArgumentNullException.ThrowIfNull(rights);
+        return Granted.Contains(appId) ? rights.Has(Resources.App(appId)) : !Admin.Contains(appId) || rights.IsAdmin;
+    }
+}
