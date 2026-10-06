@@ -20,7 +20,7 @@ function theme(scheme: 'light' | 'dark'): Theme {
 }
 
 const context: Omit<AppContext, 'capabilities'> = {
-  app: { id: 'demo', version: '1.0.0' },
+  app: { id: 'com.example.demo', version: '1.0.0' },
   instance: 'w1',
   user: {
     id: 1,

@@ -1,3 +1,4 @@
+import { coreAppIds } from '../ids';
 import type { AppProps } from '../registry';
 import { CoreSdkApp } from '../sdk/CoreSdkApp';
 import { monitorHost } from '../sdk/monitor';
@@ -8,7 +9,7 @@ export function MonitorWindow({ windowId }: AppProps) {
   return (
     <CoreSdkApp
       windowId={windowId}
-      app="monitor"
+      app={coreAppIds.monitor}
       permissions={['notifications']}
       internal={monitorHost}
       Component={MonitorApp}

@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Dapper;
+using Pithyx.Daemon.Apps.Manifest;
 using Pithyx.Daemon.Auth;
 using Pithyx.Daemon.Database;
 using Pithyx.Daemon.Errors;
@@ -141,7 +142,7 @@ public sealed class LayoutService(SqliteConnectionFactory connections, TimeProvi
 
     public async Task SetPreferenceAsync(long userId, string appId, int width, int height, CancellationToken cancellationToken)
     {
-        if (appId.Length is 0 or > 64 || width <= 0 || height <= 0)
+        if (!AppId.IsValid(appId) || width <= 0 || height <= 0)
         {
             throw new PithyxException(ErrorCodes.RequestBodyInvalid);
         }

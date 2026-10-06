@@ -1,3 +1,4 @@
+import { coreAppIds } from '../ids';
 import type { AppProps } from '../registry';
 import { CoreSdkApp } from '../sdk/CoreSdkApp';
 import { adminStorageHost } from '../sdk/internal';
@@ -8,7 +9,7 @@ export function StorageWindow({ windowId }: AppProps) {
   return (
     <CoreSdkApp
       windowId={windowId}
-      app="storage"
+      app={coreAppIds.storage}
       permissions={['notifications']}
       internal={adminStorageHost}
       Component={StorageApp}

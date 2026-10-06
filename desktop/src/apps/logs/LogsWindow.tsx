@@ -1,3 +1,4 @@
+import { coreAppIds } from '../ids';
 import type { AppProps } from '../registry';
 import { CoreSdkApp } from '../sdk/CoreSdkApp';
 import { logsHost } from '../sdk/logs';
@@ -8,7 +9,7 @@ export function LogsWindow({ windowId }: AppProps) {
   return (
     <CoreSdkApp
       windowId={windowId}
-      app="logs"
+      app={coreAppIds.logs}
       permissions={[]}
       internal={logsHost}
       Component={LogsApp}

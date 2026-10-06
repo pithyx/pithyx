@@ -2,6 +2,7 @@ import { unwrap, type components, type ErrorCode } from '@pithyx/api-client';
 import { useState, type Ref } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
+import { coreAppIds } from '../apps/ids';
 import { useAppName } from '../apps/names';
 import { findApp } from '../apps/registry';
 import { showError } from '../errors/errorStore';
@@ -53,14 +54,14 @@ export function sourceApp(
     return notification.app;
   }
   if (notification.code.startsWith('storage.')) {
-    return 'storage';
+    return coreAppIds.storage;
   }
   const kind = notification.params.kind;
   if (notification.code.startsWith('jobs.') && typeof kind === 'string') {
     return kind.startsWith('files.')
-      ? 'files'
+      ? coreAppIds.files
       : kind.startsWith('storage.')
-        ? 'storage'
+        ? coreAppIds.storage
         : undefined;
   }
   return undefined;
@@ -159,7 +160,7 @@ function useNotificationView() {
       ...(typeof alertKey === 'string'
         ? {
             onAction: () => {
-              openApp('storage', alertSection({ key: alertKey }));
+              openApp(coreAppIds.storage, alertSection({ key: alertKey }));
             },
           }
         : {}),
@@ -269,7 +270,7 @@ export function NotificationCenter({
   );
   const view = useNotificationView();
   const kindLabel = useKindLabel();
-  const storage = findApp('storage');
+  const storage = findApp(coreAppIds.storage);
   const alertItems = alerts.map((alert): NotificationItem => ({
     id: alert.key,
     app: {
@@ -283,7 +284,7 @@ export function NotificationCenter({
     tone: alert.severity === 'critical' ? 'danger' : 'warning',
     persistent: true,
     onAction: () => {
-      openApp('storage', alertSection(alert));
+      openApp(coreAppIds.storage, alertSection(alert));
     },
     extraActions: [
       {

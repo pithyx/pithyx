@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
+using Pithyx.Daemon.Apps;
 using Pithyx.Daemon.Auth;
 using Pithyx.Daemon.Errors;
 using Pithyx.Daemon.Hosting;
@@ -97,7 +98,7 @@ public static class LogEndpoints
         api.MapPost("/apps/{app}/logs", (string app, AppLogBatch batch, LogService service, Permissions.PermissionService permissions, HttpContext context) =>
             {
                 // Only an app the user may open writes in the user's name.
-                if (!Permissions.Resources.AllowsApp(permissions.ForUser(context.User), app))
+                if (!CoreApps.Allows(permissions.ForUser(context.User), app))
                 {
                     throw new PithyxException(ErrorCodes.AuthPermissionDenied);
                 }

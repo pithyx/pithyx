@@ -37,14 +37,4 @@ public sealed class AppIdTests
     [InlineData("org.pithyxx.files", false)]
     [InlineData("com.pithyx.files", false)]
     public void TheSystemNamespaceIsReserved(string id, bool reserved) => Assert.Equal(reserved, AppId.IsReserved(id));
-
-    [Theory]
-    [InlineData("files", true)]
-    [InlineData("demo", true)]
-    [InlineData("com.mueller.chat", true)]
-    [InlineData("Files", false)]
-    [InlineData("files\n", false)]
-    [InlineData("../files", false)]
-    public void LogsAndNotificationsKeepTheShortSystemIdsUntilTheRename(string id, bool known) =>
-        Assert.Equal(known, AppId.IsKnownForm(id));
 }

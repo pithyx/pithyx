@@ -74,7 +74,7 @@ export async function resetDesktopItems(page: Page) {
   for (const item of items) {
     await page.request.delete(`/api/desktop/items/${String(item.id)}`, { headers });
   }
-  for (const [row, app] of ['storage', 'about'].entries()) {
+  for (const [row, app] of ['org.pithyx.storage', 'org.pithyx.about'].entries()) {
     await page.request.post('/api/desktop/items', {
       headers,
       data: { kind: 'shortcut', app, column: 0, row },

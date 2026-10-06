@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import type { InternalMethods } from './internal';
 
 const context: Omit<AppContext, 'capabilities'> = {
-  app: { id: 'demo', version: '0.0.0' },
+  app: { id: 'org.pithyx.demo', version: '0.0.0' },
   instance: 'w1',
   user: { id: 1, name: 'ada', displayName: null, groups: [], isAdmin: true, twoFactor: false },
   language: 'en',

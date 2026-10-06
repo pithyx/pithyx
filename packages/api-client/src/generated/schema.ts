@@ -2622,7 +2622,7 @@ export type components = {
         NewUser: {
             /** @description Optional, at most 64 characters. */
             displayName?: null | string;
-            /** @description The user's own grants; when left out, the desktop login, SMB and the apps files, viewer and demo. */
+            /** @description The user's own grants; when left out, the desktop login, SMB and the apps org.pithyx.files, org.pithyx.viewer and org.pithyx.demo. */
             grants?: null | components["schemas"]["GrantEntry"][];
             /** @description The groups the user joins, besides the built-in group `users`. */
             groupIds?: null | number[];

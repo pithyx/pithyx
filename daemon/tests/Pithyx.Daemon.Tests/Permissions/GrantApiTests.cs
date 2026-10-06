@@ -98,11 +98,11 @@ public sealed class GrantApiTests : IDisposable
     public async Task WithoutTheDesktopLoginRightTheSessionEndsAndSigningInIsRefused()
     {
         await _admin.SetupAdminAsync();
-        var rita = await UserAsync("rita", "right:desktopLogin", "app:files");
+        var rita = await UserAsync("rita", "right:desktopLogin", "app:org.pithyx.files");
         using var ritaClient = await SignInAsync("rita");
-        Assert.Equal(["files"], (await ritaClient.GetFromJsonAsync<JsonElement>("/api/auth/session", Token)).GetProperty("permissions").GetProperty("apps").EnumerateArray().Select(app => app.GetString()));
+        Assert.Equal(["org.pithyx.files"], (await ritaClient.GetFromJsonAsync<JsonElement>("/api/auth/session", Token)).GetProperty("permissions").GetProperty("apps").EnumerateArray().Select(app => app.GetString()));
 
-        using (await _admin.PutAsJsonAsync($"/api/users/{rita}/grants", Grants("app:files"), Token))
+        using (await _admin.PutAsJsonAsync($"/api/users/{rita}/grants", Grants("app:org.pithyx.files"), Token))
         {
         }
 
@@ -175,7 +175,8 @@ public sealed class GrantApiTests : IDisposable
         foreach (var grant in new object[]
         {
             new { resource = "right:root", level = "allow" },
-            new { resource = "app:storage", level = "allow" },
+            new { resource = "app:org.pithyx.storage", level = "allow" },
+            new { resource = "app:files", level = "allow" },
             new { resource = $"share:{shared}", level = "allow" },
             new { resource = "protocol:smb", level = "read" },
         })
@@ -197,7 +198,7 @@ public sealed class GrantApiTests : IDisposable
     public async Task ARevokedRightIsPushedOverTheWebSocket()
     {
         await _admin.SetupAdminAsync();
-        var rita = await UserAsync("rita", "right:desktopLogin", "app:files", "app:demo");
+        var rita = await UserAsync("rita", "right:desktopLogin", "app:org.pithyx.files", "app:org.pithyx.demo");
         var cookie = await Jobs.JobTestSupport.SessionCookieAsync(_factory, rita);
         var client = _factory.Server.CreateWebSocketClient();
         client.ConfigureRequest = request =>
@@ -209,15 +210,15 @@ public sealed class GrantApiTests : IDisposable
         await socket.SendAsync(Encoding.UTF8.GetBytes("""{"type":"sub","id":"p","topic":"session/permissions"}"""), WebSocketMessageType.Text, endOfMessage: true, Token);
         Assert.Equal("ack", (await ReceiveAsync(socket)).GetProperty("type").GetString());
         var snapshot = await ReceiveAsync(socket);
-        Assert.Equal(["files", "demo"], snapshot.GetProperty("data").GetProperty("apps").EnumerateArray().Select(app => app.GetString()));
+        Assert.Equal(["org.pithyx.files", "org.pithyx.demo"], snapshot.GetProperty("data").GetProperty("apps").EnumerateArray().Select(app => app.GetString()));
 
-        using (await _admin.PutAsJsonAsync($"/api/users/{rita}/grants", Grants("right:desktopLogin", "app:files"), Token))
+        using (await _admin.PutAsJsonAsync($"/api/users/{rita}/grants", Grants("right:desktopLogin", "app:org.pithyx.files"), Token))
         {
         }
 
         var changed = await ReceiveAsync(socket);
         Assert.Equal(("event", "session/permissions"), (changed.GetProperty("type").GetString(), changed.GetProperty("topic").GetString()));
-        Assert.Equal(["files"], changed.GetProperty("data").GetProperty("apps").EnumerateArray().Select(app => app.GetString()));
+        Assert.Equal(["org.pithyx.files"], changed.GetProperty("data").GetProperty("apps").EnumerateArray().Select(app => app.GetString()));
 
         // Without the desktop login the connection ends.
         using (await _admin.PutAsJsonAsync($"/api/users/{rita}/grants", Grants(), Token))

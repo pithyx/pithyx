@@ -4,6 +4,7 @@ import type { HostExtensions } from '@pithyx/sdk/host';
 import { api } from '../../api/client';
 import { realtime } from '../../realtime/connection';
 import { openApp } from '../../wm/store';
+import { coreAppIds } from '../ids';
 
 export type ThumbnailSize = components['schemas']['ThumbnailSize'];
 export type ThumbnailState = components['schemas']['ThumbnailState'];
@@ -116,7 +117,7 @@ export function filesHost(emit: (event: string, data?: unknown) => void): {
       },
       'internal.files.openViewer': {
         validate: isTarget,
-        handle: (params) => openApp('viewer', { session: params }),
+        handle: (params) => openApp(coreAppIds.viewer, { session: params }),
       },
     },
     close: () => {
