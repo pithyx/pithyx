@@ -10,6 +10,21 @@ namespace Pithyx.Daemon.Errors;
 /// </summary>
 public static class ErrorCodes
 {
+    /// <summary>An install, update or removal of the app is running already; <c>params.id</c> names the app.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string AppAppBusy = "app.app.busy";
+
+    /// <summary>No app with this id is installed; <c>params.id</c> is the id asked for.</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string AppAppNotFound = "app.app.not_found";
+
+    /// <summary>
+    /// The package declares a backend (containers). This version of Pithyx installs apps with a frontend only; backends
+    /// arrive with the Docker runtime.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppBackendUnsupported = "app.backend.unsupported";
+
     /// <summary>
     /// The manifest asks for an elevated right this version of Pithyx does not grant: <c>docker.socket</c>, <c>host.full</c>
     /// or a capability that reaches the host's secrets; <c>params.right</c> names it.
@@ -78,17 +93,66 @@ public static class ErrorCodes
     public const string AppManifestWindowSizeInvalid = "app.manifest.window_size_invalid";
 
     /// <summary>
+    /// The uploaded file is not a readable app package (a gzip-compressed tar archive); nothing of it was kept.
+    /// <c>params.reason</c> says why: <c>gzip</c> (not gzip or damaged), <c>format</c> (not a ustar or pax archive, or a
+    /// malformed header field), <c>checksum</c> (a header's checksum is wrong), <c>truncated</c> (the archive ends inside an
+    /// entry or without its end marker), <c>trailing_data</c> (data after the end marker), <c>entry_type</c> (a link, device,
+    /// FIFO or other entry that is not a regular file or folder; <c>params.path</c> names it), <c>extended_header</c> (a pax
+    /// or GNU header that is malformed, global, or sets something other than the name and size) or <c>name_mismatch</c>
+    /// (a long name that does not continue the entry's own name; <c>params.path</c>).
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppPackageInvalid = "app.package.invalid";
+
+    /// <summary>
     /// The files of an app package are not laid out as required; <c>params.path</c> names the file and
     /// <c>params.reason</c> says why: <c>missing</c> (<c>pithyx.json</c>, <c>icon.svg</c>, the entry or the Compose file),
-    /// <c>unsafe</c> (an absolute path, <c>.</c> or <c>..</c> segments, backslashes, empty segments or control characters),
-    /// <c>duplicate</c>, or <c>unexpected</c> (files under <c>backend/</c> without a backend).
+    /// <c>unsafe</c> (an absolute path, empty segments, a segment starting with a dot, a character other than ASCII
+    /// letters, digits and <c>._~@+-</c>, a segment over 255 or a path over 512 bytes, or more than 32 levels),
+    /// <c>duplicate</c> (also when two paths differ only in case, or a file is in the way of a folder), <c>unexpected</c>
+    /// (a folder other than <c>frontend/</c> and <c>backend/</c>, or files under <c>backend/</c> without a backend) or
+    /// <c>reserved</c> (<c>frontend/api</c> and <c>frontend/api-*</c>, whose URLs belong to the backend).
     /// </summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string AppPackageLayoutInvalid = "app.package.layout_invalid";
 
+    /// <summary>
+    /// The checked package is gone: it expired 15 minutes after the upload, it was installed or discarded, another
+    /// administrator uploaded it, or the daemon restarted. Upload the file again.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string AppPackageNotFound = "app.package.not_found";
+
+    /// <summary>
+    /// The package is larger than an app package may be; <c>params.reason</c> says which limit and <c>params.limit</c> what
+    /// it is: <c>size</c> (the file, in MB), <c>unpacked</c> (all files together, in MB), <c>files</c> (the number of entries)
+    /// or <c>manifest</c> (<c>pithyx.json</c>, in KB).
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.RequestEntityTooLarge)]
+    public const string AppPackageTooLarge = "app.package.too_large";
+
     /// <summary>The app lacks a permission the call needs, or an administrator revoked it; <c>params.permission</c> names it.</summary>
     [ErrorStatus(HttpStatusCode.Forbidden)]
     public const string AppPermissionDenied = "app.permission.denied";
+
+    /// <summary>
+    /// Apps live on one pool, chosen at the first install; while an app is installed it cannot move. <c>params.pool</c>
+    /// is the app pool.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string AppPoolFixed = "app.pool.fixed";
+
+    /// <summary>The first app needs a pool for the app data; none was chosen.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppPoolRequired = "app.pool.required";
+
+    /// <summary>
+    /// The app pool cannot take apps now; <c>params.pool</c> names it and <c>params.reason</c> says why: <c>missing</c> (not
+    /// imported), <c>offline</c> (not online), <c>read_only</c>, <c>locked</c> (encrypted and locked) or <c>not_prepared</c>
+    /// (a pool without the Pithyx layout).
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string AppPoolUnavailable = "app.pool.unavailable";
 
     /// <summary>A value an app stores is larger than its limit; <c>params.maxKb</c> is the limit.</summary>
     [ErrorStatus(HttpStatusCode.RequestEntityTooLarge)]

@@ -1,5 +1,12 @@
 {
   "app": {
+    "app": {
+      "busy": "The app {id} is being installed, updated or removed. Wait until that is done.",
+      "not_found": "No app with the id {id} is installed."
+    },
+    "backend": {
+      "unsupported": "The app has a backend with containers. This version of Pithyx installs apps without a backend only."
+    },
     "elevated": {
       "unsupported": "The app asks for the right {right}, which this version of Pithyx does not grant."
     },
@@ -19,10 +26,18 @@
       "window_size_invalid": "The app's smallest window size is larger than its default size."
     },
     "package": {
-      "layout_invalid": "The app package is not valid: {reason, select, missing {{path} is missing} unsafe {the path {path} is not allowed} duplicate {{path} is in it twice} unexpected {{path} belongs to a backend the app does not declare} other {{path} is not allowed}}."
+      "invalid": "The file is not a valid app package: {reason, select, gzip {it is not gzip-compressed or it is damaged} format {it is not a tar archive this box reads} checksum {a header is damaged} truncated {it ends too early} trailing_data {there is data after its end} entry_type {{path} is a link or a special file} extended_header {it has an extended header that is not allowed} name_mismatch {the long name of {path} does not match its own name} other {it cannot be read}}.",
+      "layout_invalid": "The app package is not valid: {reason, select, missing {{path} is missing} unsafe {the path {path} is not allowed} duplicate {{path} is in it twice} unexpected {{path} does not belong in an app package} reserved {{path} uses a name reserved for the backend} other {{path} is not allowed}}.",
+      "not_found": "The checked package is no longer there. Upload the file again.",
+      "too_large": "The app package is too large: {reason, select, size {the file may have at most {limit} MB} unpacked {its files may have at most {limit} MB together} files {it may have at most {limit} files} manifest {pithyx.json may have at most {limit} KB} other {it exceeds a limit}}."
     },
     "permission": {
       "denied": "The app is not allowed to do this ({permission})."
+    },
+    "pool": {
+      "fixed": "Apps live on the pool {pool}. They cannot move to another pool while an app is installed.",
+      "required": "Choose a pool for the app data.",
+      "unavailable": "The pool {pool} cannot hold apps now: {reason, select, missing {it is not imported} offline {it is not online} read_only {it is read-only} locked {it is locked} not_prepared {it was not set up by Pithyx} other {it is not available}}."
     },
     "storage": {
       "too_large": "The app tried to store more than it may keep. The limit is {maxKb} KB."
