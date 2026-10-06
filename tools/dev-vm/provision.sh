@@ -171,10 +171,11 @@ install_packages() {
     *) die "unsupported architecture $arch" ;;
   esac
   echo 'zfs-dkms zfs-dkms/note-incompatible-licenses note true' | debconf-set-selections
-  # smbclient and sshpass are for the SMB and SFTP integration test. mmdebstrap to dosfstools build the ISO (image/build.sh, D296). The font and libraries after git are for headless Chromium (Playwright); without any font, text renders invisible.
+  # docker.io, docker-cli and docker-compose are Debian's Docker for app backends (D309); jq and nftables are for
+  # docker-spike.sh. smbclient and sshpass are for the SMB and SFTP integration test. mmdebstrap to dosfstools build the ISO (image/build.sh, D296). The font and libraries after git are for headless Chromium (Playwright); without any font, text renders invisible.
   apt_install "linux-headers-$(uname -r)" "linux-headers-$arch" dkms zfs-dkms zfsutils-linux \
-    mdadm btrfs-progs smartmontools samba nfs-kernel-server docker.io acl openssh-server "${qemu[@]}" \
-    smbclient sshpass shellcheck git \
+    mdadm btrfs-progs smartmontools samba nfs-kernel-server docker.io docker-cli docker-compose acl openssh-server "${qemu[@]}" \
+    smbclient sshpass shellcheck git jq nftables \
     mmdebstrap uidmap squashfs-tools xorriso mtools dosfstools \
     fonts-dejavu-core libgbm1 libxkbcommon0 libatk1.0-0t64 libatk-bridge2.0-0t64 libatspi2.0-0t64 \
     libxcomposite1 libxdamage1 libxfixes3 libxrandr2
@@ -205,6 +206,21 @@ disable_share_services() {
   [[ ! -e /etc/samba/smb.conf.pre-pithyx ]] || return 0
   local unit
   for unit in smbd nmbd nfs-server; do
+    if systemctl is-enabled --quiet "$unit" 2>/dev/null || systemctl is-active --quiet "$unit"; then
+      log "stopping and disabling $unit"
+      systemctl disable --now "$unit"
+    fi
+  done
+}
+
+# Docker runs only while a backend app is installed (D309); the Debian package enables it on installation, and
+# docker.service pulls in containerd.service when it starts.
+# Once the daemon has written /etc/docker/daemon.json it owns the units, and a later run leaves them alone.
+# tools/dev-vm/docker-spike.sh starts Docker with its own configuration for its run only.
+disable_docker() {
+  [[ ! -e /etc/docker/daemon.json ]] || return 0
+  local unit
+  for unit in docker.socket docker.service containerd.service; do
     if systemctl is-enabled --quiet "$unit" 2>/dev/null || systemctl is-active --quiet "$unit"; then
       log "stopping and disabling $unit"
       systemctl disable --now "$unit"
@@ -285,6 +301,7 @@ add_nodesource_repo
 install_packages
 load_zfs
 disable_share_services
+disable_docker
 set_locale
 add_user_to_kvm
 write_markers
