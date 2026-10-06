@@ -18,6 +18,7 @@ const CATEGORY_ORDER: readonly BackupCategory[] = [
   'storage',
   'system',
   'certificates',
+  'apps',
 ];
 
 /**

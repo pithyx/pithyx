@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Pithyx.Daemon;
+using Pithyx.Daemon.Apps;
 using Pithyx.Daemon.Auth;
 using Pithyx.Daemon.Backup;
 using Pithyx.Daemon.Commands;
@@ -92,6 +93,9 @@ builder.Services.AddPithyxFileServices(new FileServiceOptions(
     TlsDirectory: Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "tls"),
     FtpPort: int.TryParse(builder.Configuration["PITHYX_FTP_PORT"], System.Globalization.CultureInfo.InvariantCulture, out var ftpPort) ? ftpPort : mode == DaemonMode.Real ? 21 : 0));
 builder.Services.AddPithyxFiles();
+builder.Services.AddPithyxApps(mode == DaemonMode.Real
+    ? new AppStorageOptions(UseZfs: true, FolderRoot: "/")
+    : new AppStorageOptions(UseZfs: false, FolderRoot: Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "pools")));
 builder.Services.AddSingleton<TopicRegistry>();
 builder.Services.AddSingleton<TopicHub>();
 builder.Services.AddPithyxMonitoring();
@@ -200,6 +204,11 @@ app.UseExceptionHandler();
 // Only the API answers bare status codes with problem details. Every other path belongs to the desktop,
 // which serves its index.html as the SPA fallback.
 app.UseWhen(context => IsApiRequest(context.Request.Path), api => api.UseStatusCodePages());
+// App frontends are public files with their own sandboxing headers; nothing below may answer for /apps/.
+if (!installer.Active)
+{
+    app.UseMiddleware<AppFrontendHosting>();
+}
 app.UseMiddleware<CsrfMiddleware>();
 app.UseWebSockets(new WebSocketOptions { KeepAliveInterval = TimeSpan.FromSeconds(30), KeepAliveTimeout = TimeSpan.FromSeconds(30) });
 app.UseAuthentication();
@@ -244,6 +253,7 @@ if (!installer.Active)
     api.MapSystemSettingsEndpoints();
     api.MapPowerEndpoint();
     api.MapBackupEndpoints();
+    api.MapAppEndpoints();
     app.MapRealtime();
     app.MapWebDav();
 }

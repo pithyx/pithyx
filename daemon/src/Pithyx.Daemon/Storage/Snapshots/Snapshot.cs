@@ -29,6 +29,9 @@ public static class SnapshotKinds
     /// <summary>Taken by a user; never pruned by a schedule.</summary>
     public const string Manual = "manual";
 
+    /// <summary>Taken before an app update and held until it succeeded or was rolled back; never pruned by a schedule.</summary>
+    public const string Update = "update";
+
     public static readonly IReadOnlyList<string> Scheduled = [Hourly, Daily, Weekly, Monthly];
 
     /// <summary>What a new schedule keeps: a day of hourly, a week of daily, a month of weekly and half a year of monthly snapshots.</summary>
@@ -55,6 +58,6 @@ public static partial class SnapshotNames
     public static string? KindOf(string name) =>
         name is not null && PithyxName().Match(name) is { Success: true } match ? match.Groups["kind"].Value : null;
 
-    [GeneratedRegex("^pithyx-(?<kind>hourly|daily|weekly|monthly|manual)-[0-9]{8}T[0-9]{6}Z$")]
+    [GeneratedRegex("^pithyx-(?<kind>hourly|daily|weekly|monthly|manual|update)-[0-9]{8}T[0-9]{6}Z$")]
     private static partial Regex PithyxName();
 }

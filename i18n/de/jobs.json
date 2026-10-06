@@ -58,6 +58,9 @@
     "storage_snapshot_rollback": "Auf Snapshot zurücksetzen",
     "storage_share_create": "Freigegebenen Ordner erstellen",
     "storage_share_delete": "Freigegebenen Ordner löschen",
+    "apps_install": "App installieren",
+    "apps_update": "App aktualisieren",
+    "apps_uninstall": "App entfernen",
     "unknown": "Aufgabe"
   }
 }

@@ -384,7 +384,7 @@
   },
   "system": {
     "backup": {
-      "category_missing": "This backup does not contain {category, select, users {the users} sharedFolders {the shared folders} storage {the storage settings} system {the system settings} certificates {the certificates and keys} other {{category}}}.",
+      "category_missing": "This backup does not contain {category, select, users {the users} sharedFolders {the shared folders} storage {the storage settings} system {the system settings} certificates {the certificates and keys} apps {the apps} other {{category}}}.",
       "invalid": "This file is not a Pithyx configuration backup, or it is damaged.",
       "password_wrong": "The backup password is wrong.",
       "restore_expired": "The checked backup is no longer available. Choose the file again.",
