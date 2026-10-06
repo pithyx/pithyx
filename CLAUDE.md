@@ -39,7 +39,7 @@ Update in the same PR whenever the state changes. Last updated: 2026-10-06.
 - On 2026-10-05 the owner pulled SDK 1.0 and the app runtime into v0.1, before D (D300): `TODO.md` "Apps v0.1 (SDK and runtime)", steps A0 to A17 in waves W0 to W6, with the architecture, contract drafts and dependencies there. The owner starts each step; parallel agents of a wave work in their own worktrees and merge one after another. A3 merges before A10 (lower migration number, both change `grants`). The owner publishes to npm (D306); nothing is published and no public repository is created without the owner. Wave W1 is merged and deployed (2026-10-06): A1 Docker spike (#87, D309), A4 SDK API v1 (#90, `@pithyx/sdk` at `1.0.0-rc.1`), A2 manifest v1 (#89), A5 `@pithyx/ui` (#88). `1.0.0-rc.1` is not published yet; the owner runs `tools/release/publish-sdk.sh` from a clean checkout of `origin/dev`.
 - Next after D: verify every "Release 0.1" item in `TODO.md` on 7484 in the browser (Playwright and screenshots as `e2e-admin`/`e2e-user`), fix failures, then report: deployed commit and `dev` HEAD, runner status per job, a table (item, status, proof), merged PRs with migration numbers, the rename grep (D279, only `VYXTEST` allowed), open problems with cause and proposal.
 - The web installer, image build and updater are planned (D294 to D297, `TODO.md` "Web installer v0.1" to "Updates v0.1"). The owner asked on 2026-10-04 to build the installer and the image now, before D (D298). `image/build.sh` builds the ISO on dev01 in about 7 minutes (`--reuse-rootfs` about 1), `image/test-boot.sh` boots it in QEMU with KVM, `image/test-install.sh [--mirror]` installs it into a QEMU VM through the installer's API and checks the installed system (D299); a build runner (`pithyx-image`) comes later. dev01 has the image packages (also `qemu-utils`), its user is in group `kvm`, and dev01 has 8 cores and 21 GB since 2026-10-04.
-- Decisions D269 to D291 and D293 to D309 are on `dev`; D292 belongs to `feature/network`; D310 (Compose, A6) and D311 (elevated rights, A16) are reserved; next free number D312. The decision log at the end of `TODO.md` conflicts on every merge; keep all entries in number order.
+- Decisions D269 to D291 and D293 to D309 are on `dev`; D292 belongs to `feature/network`; D312 (docs at the v0.1 release) is on `fix/website-at-release`; D310 (Compose, A6) and D311 (elevated rights, A16) are reserved; next free number D313. The decision log at the end of `TODO.md` conflicts on every merge; keep all entries in number order.
 
 ## Known pitfalls
 
@@ -72,9 +72,9 @@ Update in the same PR whenever the state changes. Last updated: 2026-10-06.
 ## Before you commit
 
 - Build, lint, tests green on the runner; generated clients current.
-- New visible text has `en` and `de` keys; new error codes have translations and a doc entry.
+- New visible text has `en` and `de` keys; new error codes have translations (their website entries come with the docs, D312).
 - `TODO.md` checked off, `CHANGELOG.md` updated.
-- `website/` docs checked: update pages describing changed behavior in the same commit. Add a page when a user or admin would otherwise guess (new feature or setting, changed behavior, new error code, limitation, manual step), not for refactors or developer-only details. If out of scope, add a `TODO.md` item.
+- No `website/` docs until v0.1 is complete (D312): `website/` does not exist yet, and the user, admin and developer docs are written once from the code at the v0.1 release (`TODO.md`, "Scope of v0.1"). Until then commits add no doc pages; `CHANGELOG.md` and the code carry the behavior. After that: update pages describing changed behavior in the same commit, and add a page when a user or admin would otherwise guess (new feature or setting, changed behavior, new error code, limitation, manual step), not for refactors or developer-only details.
 - No em dashes, no non-English text outside translation files.
 
 ## Repository
@@ -87,7 +87,7 @@ packages/ api-client (generated), ui (@pithyx/ui, MIT), cli (@pithyx/cli, MIT, t
 apps/     bundled apps (files, settings, store)
 image/    ISO build (mmdebstrap, squashfs, GRUB, xorriso)
 i18n/     translation files (en is the reference)
-website/  landing page and user docs (Starlight)
+website/  landing page and user docs (Starlight), created at the v0.1 release (D312)
 ```
 
 - One monorepo, one product version (the npm packages have their own, see Workflow). Nested rules: `daemon/CLAUDE.md` (architecture, paths, operations, VMs), `desktop/CLAUDE.md` (responsive, accessibility, performance, layout memory); equally binding.
