@@ -26,7 +26,8 @@
   "dependencies": {
     "@pithyx/sdk": "workspace:*",
     "ajv": "^8.20.0",
-    "saxes": "^6.0.0"
+    "saxes": "^6.0.0",
+    "yaml": "^2.9.1"
   },
   "devDependencies": {
     "@types/node": "^24.13.6",

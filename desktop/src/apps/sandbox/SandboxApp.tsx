@@ -8,6 +8,7 @@ import { useSizeClass } from '../../wm/sizeClass';
 import { useAppName } from '../names';
 import type { AppProps } from '../registry';
 import { brokerFor } from './broker';
+import { setReady } from '../host/connections';
 import styles from './SandboxApp.module.css';
 import { appContext } from '../sdk/context';
 import { useAppLifecycle } from '../sdk/useAppLifecycle';
@@ -37,6 +38,7 @@ export function SandboxApp({
       return;
     }
     connection.current?.close();
+    setReady(windowId, false);
     const channel = new MessageChannel();
     const user = client.getQueryData<User>(queryKeys.session);
     connection.current = serveApp(portEndpoint(channel.port1), {
@@ -52,7 +54,11 @@ export function SandboxApp({
         app,
         user: user?.id ?? 0,
         permissions,
+        content: () => frame.current,
       }),
+      onReady: () => {
+        setReady(windowId, true);
+      },
     });
     // The iframe has an opaque origin, so no target origin can be named; the transferred port carries the trust.
     target.postMessage({ type: 'pithyx:connect' }, '*', [channel.port2]);

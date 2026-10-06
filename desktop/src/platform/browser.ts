@@ -1,7 +1,7 @@
 /**
  * The one place for browser features that exist only in a secure context (HTTPS with a trusted certificate, or
- * localhost). Pithyx must work fully without one: over plain HTTP by IP address and with the self-signed certificate
- * of a fresh install. ESLint refuses these APIs everywhere else.
+ * localhost), and for opening other tabs. Pithyx must work fully without a secure context: over plain HTTP by IP
+ * address and with the self-signed certificate of a fresh install. ESLint refuses these APIs everywhere else.
  */
 
 /** Whether the page runs in a secure context; features that need one (passkeys, service worker) wait for it. */
@@ -74,4 +74,12 @@ export function selectContents(element: HTMLElement): void {
   range.selectNodeContents(element);
   selection.removeAllRanges();
   selection.addRange(range);
+}
+
+/**
+ * Opens a URL in a new browser tab that has no reference back to the desktop (`noopener`) and sends no referrer. Only
+ * for a user action: browsers block tabs opened without one.
+ */
+export function openInNewTab(url: string): void {
+  window.open(url, '_blank', 'noopener,noreferrer');
 }

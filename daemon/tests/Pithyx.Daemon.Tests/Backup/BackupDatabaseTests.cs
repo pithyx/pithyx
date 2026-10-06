@@ -65,6 +65,17 @@ public sealed class BackupDatabaseTests : IAsyncLifetime
         }
     }
 
+    private static async Task AppAsync(SqliteConnection connection, string id, long uid)
+    {
+        await connection.ExecuteAsync("INSERT INTO id_allocations (id, kind, name, allocated_at) VALUES (@uid, 'app', @id, 'x')", new { uid, id });
+        await connection.ExecuteAsync(
+            """
+            INSERT INTO apps (id, version, manifest, source, icon, package_sha256, uid, installed_at, updated_at)
+            VALUES (@id, '1.0.0', '{}', 'sideload', x'3c7376672f3e', @sha, @uid, 'x', 'x')
+            """,
+            new { id, uid, sha = new string('a', 64) });
+    }
+
     private async Task<List<string>> GrantsAsync() =>
         [.. await _live.QueryAsync<string>("SELECT subject_kind || ':' || subject_id || ' ' || resource || ' ' || level FROM grants ORDER BY 1")];
 
@@ -139,6 +150,20 @@ public sealed class BackupDatabaseTests : IAsyncLifetime
         Assert.Equal(["Live"], await _live.QueryAsync<string>("SELECT name FROM shares"));
         Assert.Equal(["user:20000 protocol:sftp allow", "user:20000 right:desktopLogin allow", "user:20000 share:1 read"], await GrantsAsync());
         Assert.Equal([ada], await _live.QueryAsync<long>("SELECT user_id FROM jobs"));
+    }
+
+    [Fact]
+    public async Task RestoringUsersKeepsRightsOnSystemAppsAndOnAppsInstalledAfterTheRestoreOnly()
+    {
+        await GrantAsync(_backup, "group", 100, "app:org.pithyx.files");
+        await GrantAsync(_backup, "group", 100, "app:com.example.gone");
+        await GrantAsync(_backup, "group", 100, "app:com.example.chat");
+        await AppAsync(_live, "com.example.chat", 40000);
+
+        await RestoreAsync(BackupCategory.Users);
+
+        // com.example.gone was uninstalled after the backup; its right must not wait for an app installed later.
+        Assert.Equal(["group:100 app:com.example.chat allow", "group:100 app:org.pithyx.files allow"], await GrantsAsync());
     }
 
     [Fact]

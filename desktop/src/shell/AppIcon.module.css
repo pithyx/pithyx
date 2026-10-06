@@ -58,3 +58,13 @@
   --tone: #3f4a55;
   --tone-bright: #d3dae0;
 }
+
+/* The default icon's tile: neutral, so the colors of the box glyph on it stay the brand's own. */
+.neutral {
+  background: linear-gradient(
+    160deg,
+    light-dark(var(--neutral-25), var(--neutral-800)),
+    light-dark(var(--neutral-100), var(--neutral-900))
+  );
+  box-shadow: inset 0 0 0 1px var(--color-border);
+}

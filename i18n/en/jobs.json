@@ -58,6 +58,9 @@
     "storage_snapshot_rollback": "Rolling back to a snapshot",
     "storage_share_create": "Creating a shared folder",
     "storage_share_delete": "Deleting a shared folder",
+    "apps_install": "Installing an app",
+    "apps_update": "Updating an app",
+    "apps_uninstall": "Removing an app",
     "unknown": "Task"
   }
 }

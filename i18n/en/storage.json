@@ -353,7 +353,8 @@
       "daily": "Daily",
       "weekly": "Weekly",
       "monthly": "Monthly",
-      "manual": "Manual"
+      "manual": "Manual",
+      "update": "Before an app update"
     },
     "schedules": "Schedules",
     "keep": "Keep",

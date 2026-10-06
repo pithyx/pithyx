@@ -360,6 +360,10 @@
       "certificates": {
         "title": "Zertifikate und Schlüssel",
         "description": "Das Zertifikat dieser Box und ihre SSH-Host-Schlüssel, damit Clients ihr weiter vertrauen"
+      },
+      "apps": {
+        "title": "Apps",
+        "description": "Installierte Apps mit ihren Berechtigungen, wer sie nutzen darf, und der App-Pool; Dateien und Daten der Apps bleiben auf dem Pool"
       }
     },
     "steps": {

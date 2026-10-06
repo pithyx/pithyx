@@ -4412,6 +4412,332 @@
           }
         }
       }
+    },
+    "/api/apps": {
+      "get": {
+        "tags": [
+          "Apps"
+        ],
+        "description": "Administrators only. Every installed app with its manifest, permissions, uid and state, and the app pool. The topic apps/admin carries the same and its changes.",
+        "operationId": "ListApps",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminAppList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/apps/packages": {
+      "put": {
+        "tags": [
+          "Apps"
+        ],
+        "description": "Administrators only. Streams an app package (<id>-<version>.pithyxapp, a gzip-compressed tar archive) as the raw body, at most 256 MB with 512 MB of files. Unpacks and checks it (archive, layout, manifest, icon; ids under org.pithyx.* are refused) and keeps it for 15 minutes for its installation by the same administrator. Answers with what installing it would do, including the permission changes of an update.",
+        "operationId": "UploadAppPackage",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppPackagePreview"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/apps/packages/{packageId}": {
+      "get": {
+        "tags": [
+          "Apps"
+        ],
+        "description": "Administrators only. The check result of an uploaded package again, while it is kept (app.package.not_found otherwise).",
+        "operationId": "GetAppPackage",
+        "parameters": [
+          {
+            "name": "packageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppPackagePreview"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Apps"
+        ],
+        "description": "Administrators only. Discards an uploaded package without installing it.",
+        "operationId": "DiscardAppPackage",
+        "parameters": [
+          {
+            "name": "packageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/apps/packages/{packageId}/install": {
+      "post": {
+        "tags": [
+          "Apps"
+        ],
+        "description": "Administrators only. Installs or updates the app from an uploaded package as a job and answers 202 with it. The first app needs pool, the pool for every app's data; access (everybody by default) decides who may use a newly installed app. An update takes a snapshot of the app's dataset first and returns to it when a step fails.",
+        "operationId": "InstallAppPackage",
+        "parameters": [
+          {
+            "name": "packageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InstallAppRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/apps/{appId}": {
+      "patch": {
+        "tags": [
+          "Apps"
+        ],
+        "description": "Administrators only. Enables or disables an app. A disabled app keeps its data and grants, but nobody can open it and its frontend is not served.",
+        "operationId": "UpdateApp",
+        "parameters": [
+          {
+            "name": "appId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAppRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Apps"
+        ],
+        "description": "Administrators only. Removes an app as a job and answers 202 with it: data=keep removes its frontends and keeps its data on the app pool for a later install of the same app, data=delete destroys its dataset with every snapshot. Its grants go either way.",
+        "operationId": "UninstallApp",
+        "parameters": [
+          {
+            "name": "appId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "data",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/apps/{appId}/icon": {
+      "get": {
+        "tags": [
+          "Apps"
+        ],
+        "description": "The icon of an app the user may use (any app for administrators), served with Content-Security-Policy: default-src 'none'; sandbox.",
+        "operationId": "GetAppIcon",
+        "parameters": [
+          {
+            "name": "appId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "image/svg+xml": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -4438,6 +4764,30 @@
           }
         },
         "description": "Confirms a `sub` or `unsub`. For `sub`, the snapshots of matching topics follow."
+      },
+      "AdminAppList": {
+        "required": [
+          "pool",
+          "apps"
+        ],
+        "type": "object",
+        "properties": {
+          "pool": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The app pool, or null before the first install."
+          },
+          "apps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppDetails"
+            },
+            "description": "Sorted by id."
+          }
+        },
+        "description": "Every installed app for administrators: the snapshot and every event of `apps/admin`."
       },
       "ApiProblem": {
         "required": [
@@ -4476,6 +4826,157 @@
           }
         },
         "description": "RFC 9457 problem details as returned by every failing API call. The detail text is an English fallback;\nclients show the translation of the error code instead."
+      },
+      "AppAccess": {
+        "enum": [
+          "everybody",
+          "admins",
+          null
+        ]
+      },
+      "AppDetails": {
+        "required": [
+          "id",
+          "version",
+          "source",
+          "enabled",
+          "manifest",
+          "permissions",
+          "uid",
+          "sha256",
+          "installedAt",
+          "updatedAt",
+          "busy",
+          "available"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The app id."
+          },
+          "version": {
+            "type": "string",
+            "description": "The installed version."
+          },
+          "source": {
+            "type": "string",
+            "description": "`sideload` (a package file) or `catalog`."
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Whether users can open it."
+          },
+          "manifest": {
+            "description": "The installed manifest.",
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppPermissionState"
+            },
+            "description": "Each permission of the manifest with whether it is granted."
+          },
+          "uid": {
+            "type": "integer",
+            "description": "The app's own uid.",
+            "format": "int64"
+          },
+          "sha256": {
+            "type": "string",
+            "description": "SHA-256 of the installed package file."
+          },
+          "installedAt": {
+            "type": "string",
+            "description": "The first install (UTC).",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "The last install or update (UTC).",
+            "format": "date-time"
+          },
+          "busy": {
+            "type": "boolean",
+            "description": "An install, update or removal runs."
+          },
+          "available": {
+            "type": "boolean",
+            "description": "Its data is reachable: the app pool is imported, unlocked and mounted."
+          }
+        },
+        "description": "An installed app for administrators (topic `apps/admin` and `GET /api/apps`)."
+      },
+      "AppList": {
+        "required": [
+          "apps"
+        ],
+        "type": "object",
+        "properties": {
+          "apps": {
+            "type": "array",
+            "items": {
+              "required": [
+                "id",
+                "version",
+                "name",
+                "description",
+                "entry",
+                "icon",
+                "window",
+                "permissions"
+              ],
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The app id."
+                },
+                "version": {
+                  "type": "string",
+                  "description": "The installed version."
+                },
+                "name": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "description": "Names by language (`en` always)."
+                },
+                "description": {
+                  "type": [
+                    "null",
+                    "object"
+                  ],
+                  "additionalProperties": {
+                    "type": "string"
+                  },
+                  "description": "Descriptions by language, if the manifest has one."
+                },
+                "entry": {
+                  "type": "string",
+                  "description": "The URL of the page the desktop loads in the sandboxed window, for example `/apps/com.example.chat/index.html`."
+                },
+                "icon": {
+                  "type": "string",
+                  "description": "The URL of the icon, changing with every version."
+                },
+                "window": { },
+                "permissions": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "The permissions the app holds: those of its manifest that no administrator revoked."
+                }
+              },
+              "description": "An installed app as a user who may use it sees it (topic `apps`)."
+            },
+            "description": "Enabled apps the user has a grant for; every enabled app for administrators."
+          }
+        },
+        "description": "The apps the subscriber may use, sorted by id: the snapshot and every event of `apps`."
       },
       "AppLogBatch": {
         "required": [
@@ -4574,6 +5075,126 @@
         },
         "description": "Body of `POST /api/notifications/app`: a notification an app sends through the SDK."
       },
+      "AppPackageAction": {
+        "enum": [
+          "install",
+          "update",
+          "reinstall",
+          "downgrade"
+        ],
+        "description": "What installing a checked package does."
+      },
+      "AppPackagePreview": {
+        "required": [
+          "packageId",
+          "expiresAt",
+          "id",
+          "version",
+          "manifest",
+          "action",
+          "installedVersion",
+          "addedPermissions",
+          "removedPermissions",
+          "pool",
+          "fileCount",
+          "unpackedBytes",
+          "packageBytes",
+          "sha256"
+        ],
+        "type": "object",
+        "properties": {
+          "packageId": {
+            "type": "string",
+            "description": "Names it for the install."
+          },
+          "expiresAt": {
+            "type": "string",
+            "description": "When it is discarded (UTC).",
+            "format": "date-time"
+          },
+          "id": {
+            "type": "string",
+            "description": "The app id."
+          },
+          "version": {
+            "type": "string",
+            "description": "The version in the package."
+          },
+          "manifest": {
+            "description": "The whole manifest (`pithyx.json`).",
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "action": {
+            "description": "What installing it does.",
+            "$ref": "#/components/schemas/AppPackageAction"
+          },
+          "installedVersion": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The installed version, if the app is installed."
+          },
+          "addedPermissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Permissions the package asks for that the installed version did not (all of them for an install)."
+          },
+          "removedPermissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Permissions the installed version had that the package no longer asks for."
+          },
+          "pool": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The app pool, or null before the first app is installed (the install must name one then)."
+          },
+          "fileCount": {
+            "type": "integer",
+            "description": "Regular files in the package.",
+            "format": "int32"
+          },
+          "unpackedBytes": {
+            "type": "integer",
+            "description": "Their sizes together.",
+            "format": "int64"
+          },
+          "packageBytes": {
+            "type": "integer",
+            "description": "The size of the package file.",
+            "format": "int64"
+          },
+          "sha256": {
+            "type": "string",
+            "description": "SHA-256 of the package file, lowercase hex."
+          }
+        },
+        "description": "A checked package, kept for 15 minutes for its installation by the administrator who uploaded it."
+      },
+      "AppPermissionState": {
+        "required": [
+          "permission",
+          "granted"
+        ],
+        "type": "object",
+        "properties": {
+          "permission": {
+            "type": "string",
+            "description": "For example `notifications`."
+          },
+          "granted": {
+            "type": "boolean",
+            "description": "False after an administrator revoked it."
+          }
+        }
+      },
       "Appearance": {
         "required": [
           "accent",
@@ -4598,7 +5219,8 @@
           "sharedFolders",
           "storage",
           "system",
-          "certificates"
+          "certificates",
+          "apps"
         ],
         "description": "A part of the configuration that can be restored on its own."
       },
@@ -5450,6 +6072,16 @@
       },
       "ErrorCode": {
         "enum": [
+          "app.app.busy",
+          "app.app.not_found",
+          "app.backend.unsupported",
+          "app.compose.key_unsupported",
+          "app.compose.reference_unknown",
+          "app.compose.right_missing",
+          "app.compose.right_unused",
+          "app.compose.storage_mismatch",
+          "app.compose.value_invalid",
+          "app.compose.yaml_invalid",
           "app.elevated.unsupported",
           "app.icon.invalid",
           "app.manifest.cron_invalid",
@@ -5462,8 +6094,14 @@
           "app.manifest.sdk_invalid",
           "app.manifest.version_unsupported",
           "app.manifest.window_size_invalid",
+          "app.package.invalid",
           "app.package.layout_invalid",
+          "app.package.not_found",
+          "app.package.too_large",
           "app.permission.denied",
+          "app.pool.fixed",
+          "app.pool.required",
+          "app.pool.unavailable",
           "app.storage.too_large",
           "auth.account.disabled",
           "auth.challenge.expired",
@@ -6568,6 +7206,29 @@
           "password": {
             "type": "string",
             "description": "The password it was created with."
+          }
+        }
+      },
+      "InstallAppRequest": {
+        "type": "object",
+        "properties": {
+          "pool": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The pool for the app data; required for the first app, and then always the app pool."
+          },
+          "access": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Who may use the app after an install; an update keeps who may use it. Defaults to everybody.",
+                "$ref": "#/components/schemas/AppAccess"
+              }
+            ]
           }
         }
       },
@@ -10498,6 +11159,8 @@
       },
       "TopicEvents": {
         "required": [
+          "apps",
+          "apps/admin",
           "files/+/+",
           "jobs",
           "jobs/+",
@@ -10514,6 +11177,12 @@
         ],
         "type": "object",
         "properties": {
+          "apps": {
+            "$ref": "#/components/schemas/AppList"
+          },
+          "apps/admin": {
+            "$ref": "#/components/schemas/AdminAppList"
+          },
           "files/+/+": {
             "$ref": "#/components/schemas/FolderChanges"
           },
@@ -10557,6 +11226,8 @@
       },
       "TopicSnapshots": {
         "required": [
+          "apps",
+          "apps/admin",
           "files/+/+",
           "jobs",
           "jobs/+",
@@ -10573,6 +11244,12 @@
         ],
         "type": "object",
         "properties": {
+          "apps": {
+            "$ref": "#/components/schemas/AppList"
+          },
+          "apps/admin": {
+            "$ref": "#/components/schemas/AdminAppList"
+          },
           "files/+/+": {
             "$ref": "#/components/schemas/FolderWatchState"
           },
@@ -10825,6 +11502,18 @@
           "reason": {
             "type": "string",
             "description": "Why it stays unmounted: `system_path` (`/` or at or below a system directory), `shadows_mount` (it\nwould hide something mounted there or below), `duplicate_mountpoint` (another dataset of the pool mounts there\nfirst) or `key_unavailable` (encrypted and locked)."
+          }
+        }
+      },
+      "UpdateAppRequest": {
+        "required": [
+          "enabled"
+        ],
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "boolean",
+            "description": "False hides the app from everybody and stops serving its frontend; its data and grants stay."
           }
         }
       },
@@ -11216,6 +11905,9 @@
     },
     {
       "name": "Storage"
+    },
+    {
+      "name": "Apps"
     }
   ]
 }

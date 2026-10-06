@@ -1,8 +1,11 @@
+import type { LaunchArgs } from '@pithyx/sdk';
 import { create } from 'zustand';
 import { isAppAllowed } from '../apps/access';
+import { emitTo } from '../apps/host/connections';
+import { withArgs, type WindowArgs } from '../apps/host/rules';
 import { findApp } from '../apps/registry';
 import { preferredSize } from './preferences';
-import { canOpen, initialState, reduce } from './state';
+import { initialState, launchTarget, reduce } from './state';
 import type { Action, DesktopState } from './types';
 
 /** The window manager state. Components read it with narrow selectors; every change goes through reduce(). */
@@ -13,24 +16,42 @@ export function dispatch(action: Action): void {
 }
 
 /**
- * Opens a window of a core app, or focuses it for single-instance apps. False if the app is unknown, not allowed for
- * the user or full.
+ * Launches an app for a user action: opens a window, or for a `single` app focuses the user's window on this device
+ * and sends it the new launch arguments as `launch` (an open window keeps its saved state). `session` is state for a
+ * new window, as if the app had saved it. False if the app is unknown, not allowed for the user or the desktop is full.
  */
-export function openApp(id: string, args?: unknown): boolean {
+export function openApp(
+  id: string,
+  launch: LaunchArgs = { args: null },
+  options: { session?: unknown } = {},
+): boolean {
   const app = findApp(id);
-  if (
-    app === undefined ||
-    !isAppAllowed(id) ||
-    !canOpen(useDesktop.getState(), id, app.window.instances)
-  ) {
+  if (app === undefined || !isAppAllowed(id)) {
     return false;
   }
+  const state = useDesktop.getState();
+  const target = launchTarget(state, id, app.window.instances);
+  if (target.kind === 'full') {
+    return false;
+  }
+  if (target.kind === 'existing') {
+    dispatch({
+      type: 'setArgs',
+      id: target.id,
+      args: withArgs(state.windows[target.id]?.args, { launch }),
+    });
+    dispatch({ type: 'focus', id: target.id });
+    emitTo(target.id, 'launch', launch);
+    return true;
+  }
   const size = preferredSize(id);
+  const args: WindowArgs =
+    options.session === undefined ? { launch } : { launch, session: options.session };
   dispatch({
     type: 'open',
     app: id,
     options: app.window,
-    ...(args === undefined ? {} : { args }),
+    args,
     ...(size === undefined ? {} : { size }),
   });
   return true;

@@ -358,26 +358,6 @@
         }
       }
     },
-    "BackendResources": {
-      "title": "BackendResources",
-      "description": "Limits for the whole backend.",
-      "type": "object",
-      "additionalProperties": false,
-      "properties": {
-        "memory": {
-          "description": "Memory limit in MiB.",
-          "type": "integer",
-          "minimum": 16,
-          "maximum": 1048576
-        },
-        "cpus": {
-          "description": "CPU limit in cores, for example 0.5.",
-          "type": "number",
-          "exclusiveMinimum": 0,
-          "maximum": 1024
-        }
-      }
-    },
     "BackendSchedule": {
       "title": "BackendSchedule",
       "description": "A recurring backend job. The daemon starts the backend for it even without an open window and calls `POST path` on `endpoint` when it fires.",
@@ -452,9 +432,6 @@
         },
         "health": {
           "$ref": "#/$defs/BackendHealth"
-        },
-        "resources": {
-          "$ref": "#/$defs/BackendResources"
         },
         "schedules": {
           "type": "array",

@@ -20,7 +20,6 @@ export type {
   BackendEndpoint,
   BackendHealth,
   BackendManifest,
-  BackendResources,
   BackendSchedule,
   ElevatedPermission,
   FileHandler,

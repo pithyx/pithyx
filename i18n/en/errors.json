@@ -1,5 +1,21 @@
 {
   "app": {
+    "app": {
+      "busy": "The app {id} is being installed, updated or removed. Wait until that is done.",
+      "not_found": "No app with the id {id} is installed."
+    },
+    "backend": {
+      "unsupported": "The app has a backend with containers. This version of Pithyx installs apps without a backend only."
+    },
+    "compose": {
+      "key_unsupported": "The app's Compose file uses {key} at {path}, which Pithyx does not allow.",
+      "reference_unknown": "The app's backend refers to {name} at {path}, which is not declared.",
+      "right_missing": "The app's Compose file needs the right {right} at {path}, which its manifest does not declare.",
+      "right_unused": "The app's manifest declares the right {right} at {path}, which its Compose file does not use.",
+      "storage_mismatch": "The storage {storage} does not match the Compose file at {path}: {reason, select, not_mounted {the service does not mount it} not_listed {the service mounts it without being listed in the manifest} read_only {it is read-only and must be mounted with :ro} other {the manifest and the Compose file disagree}}.",
+      "value_invalid": "The app's Compose file has a value Pithyx refuses at {path}: {reason, select, required {it is missing} type {it has the wrong type} format {its format is not valid} range {it is out of range} unpinned {the image is not pinned with @sha256} interpolation {it uses $ for a variable (write $$ for a dollar sign)} no_value {the variable has no value} duplicate {it appears twice} reserved {it is reserved for Pithyx} host_path {it mounts a folder of the host} anonymous {the volume has no name} cycle {the services depend on each other in a circle} other {it is not valid}}.",
+      "yaml_invalid": "The app's Compose file cannot be read: {reason, select, too_large {it is larger than 64 KB} not_utf8 {it is not UTF-8} character {it contains a tab or another character that is not allowed} syntax {it is not valid YAML} documents {it must contain exactly one document} too_deep {it is nested too deeply} directive {it contains a YAML directive} anchor {it uses anchors or aliases} tag {it uses YAML tags} duplicate_key {{path} appears twice} merge_key {it uses a merge key at {path}} key_not_string {a key at {path} is not text} other {it breaks a rule for Compose files}}."
+    },
     "elevated": {
       "unsupported": "The app asks for the right {right}, which this version of Pithyx does not grant."
     },
@@ -19,10 +35,18 @@
       "window_size_invalid": "The app's smallest window size is larger than its default size."
     },
     "package": {
-      "layout_invalid": "The app package is not valid: {reason, select, missing {{path} is missing} unsafe {the path {path} is not allowed} duplicate {{path} is in it twice} unexpected {{path} belongs to a backend the app does not declare} other {{path} is not allowed}}."
+      "layout_invalid": "The app package is not valid: {reason, select, missing {{path} is missing} unsafe {the path {path} is not allowed} duplicate {{path} is in it twice} unexpected {{path} does not belong in an app package} reserved {{path} uses a name reserved for the backend} other {{path} is not allowed}}.",
+      "invalid": "The file is not a valid app package: {reason, select, gzip {it is not gzip-compressed or it is damaged} format {it is not a tar archive this box reads} checksum {a header is damaged} truncated {it ends too early} trailing_data {there is data after its end} entry_type {{path} is a link or a special file} extended_header {it has an extended header that is not allowed} name_mismatch {the long name of {path} does not match its own name} other {it cannot be read}}.",
+      "not_found": "The checked package is no longer there. Upload the file again.",
+      "too_large": "The app package is too large: {reason, select, size {the file may have at most {limit} MB} unpacked {its files may have at most {limit} MB together} files {it may have at most {limit} files} manifest {pithyx.json may have at most {limit} KB} other {it exceeds a limit}}."
     },
     "permission": {
       "denied": "The app is not allowed to do this ({permission})."
+    },
+    "pool": {
+      "fixed": "Apps live on the pool {pool}. They cannot move to another pool while an app is installed.",
+      "required": "Choose a pool for the app data.",
+      "unavailable": "The pool {pool} cannot hold apps now: {reason, select, missing {it is not imported} offline {it is not online} read_only {it is read-only} locked {it is locked} not_prepared {it was not set up by Pithyx} other {it is not available}}."
     },
     "storage": {
       "too_large": "The app tried to store more than it may keep. The limit is {maxKb} KB."
@@ -369,7 +393,7 @@
   },
   "system": {
     "backup": {
-      "category_missing": "This backup does not contain {category, select, users {the users} sharedFolders {the shared folders} storage {the storage settings} system {the system settings} certificates {the certificates and keys} other {{category}}}.",
+      "category_missing": "This backup does not contain {category, select, users {the users} sharedFolders {the shared folders} storage {the storage settings} system {the system settings} certificates {the certificates and keys} apps {the apps} other {{category}}}.",
       "invalid": "This file is not a Pithyx configuration backup, or it is damaged.",
       "password_wrong": "The backup password is wrong.",
       "restore_expired": "The checked backup is no longer available. Choose the file again.",

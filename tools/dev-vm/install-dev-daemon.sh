@@ -129,7 +129,6 @@ if [[ "$build" == 1 ]]; then
     as_builder pnpm --dir "$checkout" install --frozen-lockfile
   fi
   as_builder dotnet build "$checkout/daemon/src/Pithyx.Daemon" --configuration Release --nologo --verbosity quiet
-  as_builder env -C "$checkout/apps/demo" pnpm exec vite build --logLevel warn
   as_builder env -C "$checkout/desktop" pnpm exec vite build --logLevel warn
 fi
 [[ -f "$checkout/daemon/src/Pithyx.Daemon/bin/Release/net10.0/pithyxd.dll" ]] || die "no Release build in $checkout; run without --no-build"

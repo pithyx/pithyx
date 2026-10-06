@@ -30,6 +30,8 @@
     <PackageReference Include="SkiaSharp.NativeAssets.Linux.NoDependencies" />
     <PackageReference Include="SkiaSharp.NativeAssets.macOS" ExcludeAssets="all" />
     <PackageReference Include="SkiaSharp.NativeAssets.Win32" ExcludeAssets="all" />
+    <!-- The Compose validator reads the YAML event stream itself (Apps/Compose/ComposeYaml.cs). -->
+    <PackageReference Include="YamlDotNet" />
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="Pithyx.Daemon.Tests" />
@@ -39,5 +41,6 @@
     <EmbeddedResource Include="Database/Migrations/*.sql" LogicalName="migrations/%(Filename)%(Extension)" />
     <EmbeddedResource Include="Auth/common-passwords.txt" LogicalName="auth/common-passwords.txt" />
     <EmbeddedResource Include="../../../sdk/schema/manifest.v1.schema.json" LogicalName="schema/manifest.v1.schema.json" />
+    <EmbeddedResource Include="../../../sdk/schema/compose.v1.rules.json" LogicalName="schema/compose.v1.rules.json" />
   </ItemGroup>
 </Project>

@@ -1,0 +1,10 @@
+services:
+  server:
+    image: ghcr.io/example/chat-server:1.2.0@sha256:a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5
+    environment:
+      RATIO: 1.5
+      MASK: 0x10
+      MODE: 0755
+      BIG: 1e3
+      NAN: .nan
+      OK: 15

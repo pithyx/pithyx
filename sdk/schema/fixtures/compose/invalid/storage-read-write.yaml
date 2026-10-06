@@ -1,0 +1,16 @@
+services:
+  server:
+    image: ghcr.io/example/chat-server:1.2.0@sha256:a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5
+    volumes:
+      - attachments:/a
+      - library:/l
+      - type: volume
+        source: library
+        target: /l2
+        read_only: false
+  worker:
+    image: ghcr.io/example/chat-server:1.2.0@sha256:a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5
+    volumes: ['attachments:/a']
+volumes:
+  attachments:
+  library:

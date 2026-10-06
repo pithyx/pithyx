@@ -58,6 +58,9 @@ export const reducers: { [K in TopicName]: Reducer<K> } = {
   },
   // Every event is the user's whole set of rights.
   'session/permissions': (_, event) => event,
+  // Every event is the whole list of apps the user may use, or of every app for administrators.
+  apps: (_, event) => event,
+  'apps/admin': (_, event) => event,
   // Pools are few; every event is the whole state.
   'storage/pools': (_, event) => event,
   // Alerts and SMART reports are few too; every event is the whole state as this user sees it.

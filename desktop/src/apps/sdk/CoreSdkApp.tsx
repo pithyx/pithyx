@@ -6,6 +6,7 @@ import { useEffect, useEffectEvent, useRef, useState, type ComponentType } from 
 import { queryKeys } from '../../api/queries';
 import { useSizeClass } from '../../wm/sizeClass';
 import type { AppProps } from '../registry';
+import { setReady } from '../host/connections';
 import { brokerFor } from '../sandbox/broker';
 import { appContext, PITHYX_VERSION } from './context';
 import styles from './CoreSdkApp.module.css';
@@ -52,6 +53,7 @@ export function CoreSdkApp({
 
   const open = useEffectEvent(() => {
     const [hostEnd, appEnd] = inProcessPair();
+    setReady(windowId, false);
     const user = client.getQueryData<User>(queryKeys.session);
     const files = fileBrokerFor({
       permissions,
@@ -79,8 +81,12 @@ export function CoreSdkApp({
           app: appId,
           user: user?.id ?? 0,
           permissions,
+          content: () => root.current,
         }),
         ...files.methods,
+      },
+      onReady: () => {
+        setReady(windowId, true);
       },
       ...(host === undefined ? {} : { extensions: host.extensions }),
     });

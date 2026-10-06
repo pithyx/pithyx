@@ -3,6 +3,7 @@ import { useState, type Ref } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { coreAppIds } from '../apps/ids';
+import { activateNotification, useHost } from '../apps/host/store';
 import { useAppName } from '../apps/names';
 import { findApp } from '../apps/registry';
 import { showError } from '../errors/errorStore';
@@ -112,6 +113,7 @@ function useNotificationView() {
   const text = useMessages('notifications');
   const appName = useAppName();
   const kindLabel = useKindLabel();
+  const remembered = useHost((state) => state.notifications);
   return (notification: DaemonNotification, now: Date, unread: boolean): NotificationItem => {
     // Parameters are JSON values of any shape; the generated type cannot say more.
     const raw: Record<string, unknown> = notification.params;
@@ -138,10 +140,15 @@ function useNotificationView() {
     const appId = sourceApp(notification);
     const app = appId === undefined ? undefined : findApp(appId);
     const alertKey = raw.alertKey;
+    const id = String(notification.id);
+    // An app's own notification opens the app; its buttons (kept by this tab, A11) go to the app as well.
+    const sender = notification.code === 'app.message' ? notification.app : null;
+    const buttons = sender === null ? undefined : remembered[id]?.actions;
     return {
-      id: String(notification.id),
+      id,
       app: {
-        icon: app?.icon ?? IconDeviceDesktop,
+        // An app the desktop does not know (any more) shows the default icon; the system its own.
+        icon: app !== undefined ? app.icon : appId === undefined ? IconDeviceDesktop : null,
         tone: app?.tone ?? 'petrol',
         name:
           appId === undefined
@@ -160,10 +167,30 @@ function useNotificationView() {
       ...(typeof alertKey === 'string'
         ? {
             onAction: () => {
-              openApp(coreAppIds.storage, alertSection({ key: alertKey }));
+              openApp(coreAppIds.storage, { args: alertSection({ key: alertKey }) });
             },
           }
         : {}),
+      ...(sender === null
+        ? {}
+        : {
+            onAction: () => {
+              activateNotification(id, sender, null);
+            },
+          }),
+      ...(buttons === undefined || buttons.length === 0
+        ? {}
+        : {
+            extraActions: buttons.map((button, index) => ({
+              id: `app-${String(index)}`,
+              label: button.label,
+              onPress: () => {
+                if (sender !== null) {
+                  activateNotification(id, sender, button.id);
+                }
+              },
+            })),
+          }),
     };
   };
 }
@@ -219,6 +246,33 @@ async function cancelJob(id: number): Promise<void> {
   }
 }
 
+/** A toast goes away once the user pressed one of its buttons. */
+function withDismiss(item: NotificationItem, dismiss: () => void): NotificationItem {
+  const { onAction, extraActions } = item;
+  return {
+    ...item,
+    ...(onAction === undefined
+      ? {}
+      : {
+          onAction: () => {
+            dismiss();
+            onAction();
+          },
+        }),
+    ...(extraActions === undefined
+      ? {}
+      : {
+          extraActions: extraActions.map((extra) => ({
+            ...extra,
+            onPress: () => {
+              dismiss();
+              extra.onPress();
+            },
+          })),
+        }),
+  };
+}
+
 /** The toasts: desktop messages and new notifications of the daemon, which stay in the panel after they go. */
 export function NotificationToasts({
   position,
@@ -239,7 +293,12 @@ export function NotificationToasts({
           message: toast.message,
           minutesAgo: 0,
         }
-      : { ...view(toast.notification, now, false), id: toast.id, minutesAgo: 0 },
+      : withDismiss(
+          { ...view(toast.notification, now, false), id: toast.id, minutesAgo: 0 },
+          () => {
+            dismissToast(toast.id);
+          },
+        ),
   );
   return <ToastStack position={position} locale={locale} items={items} onDismiss={dismissToast} />;
 }
@@ -284,7 +343,7 @@ export function NotificationCenter({
     tone: alert.severity === 'critical' ? 'danger' : 'warning',
     persistent: true,
     onAction: () => {
-      openApp(coreAppIds.storage, alertSection(alert));
+      openApp(coreAppIds.storage, { args: alertSection(alert) });
     },
     extraActions: [
       {

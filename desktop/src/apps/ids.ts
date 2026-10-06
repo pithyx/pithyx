@@ -10,8 +10,13 @@ export const coreAppIds = {
   monitor: 'org.pithyx.monitor',
   logs: 'org.pithyx.logs',
   about: 'org.pithyx.about',
-  demo: 'org.pithyx.demo',
 } as const;
+
+/**
+ * The E2E probe app (`e2e/apps/sdk-probe`), a third-party app installed from its package. Wired in by hand until the
+ * desktop builds its app list from the topic `apps` (A12).
+ */
+export const probeAppId = 'com.example.sdk-probe';
 
 const PREFIX = 'org.pithyx.';
 

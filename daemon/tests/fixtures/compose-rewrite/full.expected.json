@@ -1,0 +1,192 @@
+{
+  "name": "pithyx-com_example_chat",
+  "services": {
+    "server": {
+      "image": "sha256:1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c",
+      "command": [
+        "node",
+        "server.js",
+        "--port",
+        "8080"
+      ],
+      "entrypoint": "/usr/local/bin/docker-entrypoint.sh",
+      "environment": {
+        "NODE_ENV": "production",
+        "WORKERS": 4,
+        "DEBUG": false,
+        "PRICE": "1.50",
+        "EMPTY": "",
+        "PROMPT": "costs $$5",
+        "MOTD": "Hello\nworld\n"
+      },
+      "working_dir": "/app",
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "/tank/.pithyx/apps/com.example.chat/volumes/data",
+          "target": "/app/data",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/tank/.pithyx/apps/com.example.chat/volumes/cache",
+          "target": "/app/cache",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "bind",
+          "source": "/tank/.pithyx/apps/com.example.chat/volumes/data",
+          "target": "/app/backup",
+          "read_only": true,
+          "bind": {
+            "create_host_path": false
+          }
+        },
+        {
+          "type": "tmpfs",
+          "target": "/app/tmp",
+          "tmpfs": {
+            "size": "64m"
+          }
+        }
+      ],
+      "tmpfs": [
+        "/run",
+        "/var/cache/app:size=16m,mode=1777"
+      ],
+      "depends_on": {
+        "db": {
+          "condition": "service_healthy",
+          "restart": true,
+          "required": true
+        }
+      },
+      "healthcheck": {
+        "test": [
+          "CMD",
+          "wget",
+          "-q",
+          "-O",
+          "/dev/null",
+          "http://127.0.0.1:8080/healthz"
+        ],
+        "interval": "30s",
+        "timeout": "5s",
+        "start_period": "1m",
+        "start_interval": "2s",
+        "retries": 3
+      },
+      "expose": [
+        8080,
+        "9090/tcp",
+        "7000-7002"
+      ],
+      "read_only": true,
+      "init": true,
+      "stop_signal": "SIGTERM",
+      "stop_grace_period": "1m30s",
+      "shm_size": "64m",
+      "mem_limit": "512m",
+      "cpus": 1.5,
+      "cap_drop": [
+        "ALL"
+      ],
+      "pull_policy": "never",
+      "user": "40001:40001",
+      "networks": [
+        "app"
+      ],
+      "restart": "no",
+      "logging": {
+        "driver": "journald",
+        "options": {
+          "labels": "com.pithyx.app,com.pithyx.service",
+          "tag": "{{.Name}}"
+        }
+      },
+      "pids_limit": 1024,
+      "oom_score_adj": 500,
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "labels": {
+        "org.opencontainers.image.title": "Chat",
+        "com.example.tier": "web",
+        "com.pithyx.app": "com.example.chat",
+        "com.pithyx.service": "server",
+        "com.pithyx.version": "1.2.0"
+      }
+    },
+    "db": {
+      "image": "sha256:2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d2d",
+      "environment": {
+        "POSTGRES_DB": "chat",
+        "POSTGRES_PASSWORD_FILE": "/run/secrets/pw"
+      },
+      "volumes": [
+        {
+          "type": "bind",
+          "source": "/tank/.pithyx/apps/com.example.chat/volumes/db",
+          "target": "/var/lib/postgresql/data",
+          "read_only": false,
+          "bind": {
+            "create_host_path": false
+          }
+        }
+      ],
+      "healthcheck": {
+        "test": [
+          "CMD-SHELL",
+          "pg_isready -U postgres"
+        ],
+        "interval": "10s"
+      },
+      "shm_size": 268435456,
+      "stop_grace_period": "0s",
+      "mem_limit": "1GB",
+      "cpus": 2,
+      "pull_policy": "never",
+      "user": "40001:40001",
+      "networks": [
+        "app"
+      ],
+      "restart": "no",
+      "logging": {
+        "driver": "journald",
+        "options": {
+          "labels": "com.pithyx.app,com.pithyx.service",
+          "tag": "{{.Name}}"
+        }
+      },
+      "pids_limit": 1024,
+      "oom_score_adj": 500,
+      "security_opt": [
+        "no-new-privileges:true"
+      ],
+      "labels": {
+        "com.pithyx.app": "com.example.chat",
+        "com.pithyx.service": "db",
+        "com.pithyx.version": "1.2.0"
+      }
+    }
+  },
+  "networks": {
+    "app": {
+      "name": "pithyx-com_example_chat",
+      "driver": "bridge",
+      "internal": true,
+      "driver_opts": {
+        "com.docker.network.bridge.name": "px-1"
+      },
+      "labels": {
+        "com.pithyx.app": "com.example.chat"
+      }
+    }
+  }
+}

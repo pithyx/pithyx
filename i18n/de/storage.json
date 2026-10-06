@@ -353,7 +353,8 @@
       "daily": "Täglich",
       "weekly": "Wöchentlich",
       "monthly": "Monatlich",
-      "manual": "Von Hand"
+      "manual": "Von Hand",
+      "update": "Vor einem App-Update"
     },
     "schedules": "Zeitpläne",
     "keep": "Behalten",

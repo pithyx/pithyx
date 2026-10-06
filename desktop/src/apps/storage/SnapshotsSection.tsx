@@ -129,7 +129,7 @@ function DatasetSnapshots({ app, dataset: target }: { app: PithyxApp; dataset: D
                       <Badge tone="neutral">{t('snapshots.foreign')}</Badge>
                     ) : (
                       <Badge tone="accent">
-                        {t(`snapshots.kinds.${snapshot.pithyxKind as Kind | 'manual'}`)}
+                        {t(`snapshots.kinds.${snapshot.pithyxKind as Kind | 'manual' | 'update'}`)}
                       </Badge>
                     )}
                     {snapshot.holds > 0 && <Badge tone="highlight">{t('snapshots.held')}</Badge>}

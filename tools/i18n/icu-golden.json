@@ -1,6 +1,72 @@
 {
   "$comment": "Golden cases for the two ICU renderers: IcuMessageFormatter (daemon) and intl-messageformat on build-time compiled messages (desktop). Both test suites render every entry and must produce exactly `expected`. Every code in i18n/en/errors.json needs an entry with example params.",
   "errors": {
+    "app.app.busy": {
+      "params": {
+        "id": "com.example.chat"
+      },
+      "expected": "The app com.example.chat is being installed, updated or removed. Wait until that is done."
+    },
+    "app.app.not_found": {
+      "params": {
+        "id": "com.example.chat"
+      },
+      "expected": "No app with the id com.example.chat is installed."
+    },
+    "app.backend.unsupported": {
+      "params": {},
+      "expected": "The app has a backend with containers. This version of Pithyx installs apps without a backend only."
+    },
+    "app.compose.key_unsupported": {
+      "params": {
+        "path": "/services/server/ports",
+        "key": "ports"
+      },
+      "expected": "The app's Compose file uses ports at /services/server/ports, which Pithyx does not allow."
+    },
+    "app.compose.reference_unknown": {
+      "params": {
+        "path": "/services/server/volumes/0",
+        "name": "data"
+      },
+      "expected": "The app's backend refers to data at /services/server/volumes/0, which is not declared."
+    },
+    "app.compose.right_missing": {
+      "params": {
+        "path": "/services/server/cap_add/0",
+        "right": "capability:NET_ADMIN"
+      },
+      "expected": "The app's Compose file needs the right capability:NET_ADMIN at /services/server/cap_add/0, which its manifest does not declare."
+    },
+    "app.compose.right_unused": {
+      "params": {
+        "path": "/backend/elevated/0",
+        "right": "host.pid"
+      },
+      "expected": "The app's manifest declares the right host.pid at /backend/elevated/0, which its Compose file does not use."
+    },
+    "app.compose.storage_mismatch": {
+      "params": {
+        "path": "/services/server/volumes/1",
+        "storage": "library",
+        "reason": "read_only"
+      },
+      "expected": "The storage library does not match the Compose file at /services/server/volumes/1: it is read-only and must be mounted with :ro."
+    },
+    "app.compose.value_invalid": {
+      "params": {
+        "path": "/services/server/image",
+        "reason": "unpinned"
+      },
+      "expected": "The app's Compose file has a value Pithyx refuses at /services/server/image: the image is not pinned with @sha256."
+    },
+    "app.compose.yaml_invalid": {
+      "params": {
+        "reason": "duplicate_key",
+        "path": "/services/server/init"
+      },
+      "expected": "The app's Compose file cannot be read: /services/server/init appears twice."
+    },
     "app.elevated.unsupported": {
       "params": {
         "right": "docker.socket"
@@ -75,6 +141,13 @@
       "params": {},
       "expected": "The app's smallest window size is larger than its default size."
     },
+    "app.package.invalid": {
+      "params": {
+        "reason": "entry_type",
+        "path": "frontend/link"
+      },
+      "expected": "The file is not a valid app package: frontend/link is a link or a special file."
+    },
     "app.package.layout_invalid": {
       "params": {
         "path": "icon.svg",
@@ -82,11 +155,39 @@
       },
       "expected": "The app package is not valid: icon.svg is missing."
     },
+    "app.package.not_found": {
+      "params": {},
+      "expected": "The checked package is no longer there. Upload the file again."
+    },
+    "app.package.too_large": {
+      "params": {
+        "reason": "files",
+        "limit": 5000
+      },
+      "expected": "The app package is too large: it may have at most 5000 files."
+    },
     "app.permission.denied": {
       "params": {
         "permission": "notifications"
       },
       "expected": "The app is not allowed to do this (notifications)."
+    },
+    "app.pool.fixed": {
+      "params": {
+        "pool": "tank"
+      },
+      "expected": "Apps live on the pool tank. They cannot move to another pool while an app is installed."
+    },
+    "app.pool.required": {
+      "params": {},
+      "expected": "Choose a pool for the app data."
+    },
+    "app.pool.unavailable": {
+      "params": {
+        "pool": "tank",
+        "reason": "locked"
+      },
+      "expected": "The pool tank cannot hold apps now: it is locked."
     },
     "app.storage.too_large": {
       "params": {

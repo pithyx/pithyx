@@ -200,16 +200,6 @@ importers:
         specifier: ^8.70.1
         version: 8.70.1(eslint@10.11.0(supports-color@10.2.2))(supports-color@10.2.2)(typescript@6.0.3)
 
-  apps/demo:
-    dependencies:
-      '@pithyx/sdk':
-        specifier: workspace:*
-        version: link:../../sdk
-    devDependencies:
-      vite:
-        specifier: ^8.3.1
-        version: 8.3.1(@types/node@24.13.6)
-
   desktop:
     dependencies:
       '@pithyx/api-client':
@@ -264,9 +254,6 @@ importers:
       '@formatjs/icu-messageformat-parser':
         specifier: ^3.5.18
         version: 3.5.18
-      '@pithyx/app-demo':
-        specifier: workspace:*
-        version: link:../apps/demo
       '@react-aria/optimize-locales-plugin':
         specifier: ^2.0.2
         version: 2.0.2
@@ -307,6 +294,19 @@ importers:
         specifier: ^24.13.6
         version: 24.13.6
 
+  e2e/apps/sdk-probe:
+    dependencies:
+      '@pithyx/sdk':
+        specifier: workspace:*
+        version: link:../../../sdk
+    devDependencies:
+      '@types/node':
+        specifier: ^24.13.6
+        version: 24.13.6
+      vite:
+        specifier: ^8.3.1
+        version: 8.3.1(@types/node@24.13.6)
+
   packages/api-client:
     dependencies:
       openapi-fetch:
@@ -334,13 +334,16 @@ importers:
       saxes:
         specifier: ^6.0.0
         version: 6.0.0
+      yaml:
+        specifier: ^2.9.1
+        version: 2.9.1
     devDependencies:
       '@types/node':
         specifier: ^24.13.6
         version: 24.13.6
       vite:
         specifier: ^8.3.1
-        version: 8.3.1(@types/node@24.13.6)
+        version: 8.3.1(@types/node@24.13.6)(yaml@2.9.1)
       vite-plugin-dts:
         specifier: ^5.1.1
         version: 5.1.1(rolldown@1.2.11)(supports-color@10.2.2)(typescript@6.0.3)(vite@8.3.1(@types/node@24.13.6))
@@ -2039,6 +2042,11 @@ packages:
   yaml-ast-parser@0.0.43:
     resolution: {integrity: sha512-2PTINUwsRqSd+s8XxKaJWQlUuEMHJQyEuh2edBbW8KNJz0SJPwUSD2zRWqezFEdN7IzAgeuYHFUCF7o8zRdZ0A==}
 
+  yaml@2.9.1:
+    resolution: {integrity: sha512-3NxN8+78OdzbT7C/WjGsyfPAtJaN3FNDsWxv7Y7mcDsT/oOmgW8BpyQQFFBnvZE3j9Y2Sdz1ULFLezL7Eb2yFw==}
+    engines: {node: '>= 14.6'}
+    hasBin: true
+
   yargs-parser@21.1.1:
     resolution: {integrity: sha512-tVpsJW7DdjecAiFpbIB1e3qxIQsE6NoPc5/eTdrbbIC4h0LVsWhnoa3g+m2HclBIujHzsxZ4VJVA+GUuc2/LBw==}
     engines: {node: '>=12'}
@@ -2696,7 +2704,7 @@ snapshots:
       estree-walker: 3.0.3
       magic-string: 1.4.2
     optionalDependencies:
-      vite: 8.3.1(@types/node@24.13.6)
+      vite: 8.3.1(@types/node@24.13.6)(yaml@2.9.1)
 
   '@vitest/spy@5.0.2': {}
 
@@ -3450,7 +3458,7 @@ snapshots:
       unplugin: 2.3.11
     optionalDependencies:
       rolldown: 1.2.11
-      vite: 8.3.1(@types/node@24.13.6)
+      vite: 8.3.1(@types/node@24.13.6)(yaml@2.9.1)
     transitivePeerDependencies:
       - supports-color
 
@@ -3483,7 +3491,7 @@ snapshots:
     dependencies:
       unplugin-dts: 1.1.1(rolldown@1.2.11)(supports-color@10.2.2)(typescript@6.0.3)(vite@8.3.1(@types/node@24.13.6))
     optionalDependencies:
-      vite: 8.3.1(@types/node@24.13.6)
+      vite: 8.3.1(@types/node@24.13.6)(yaml@2.9.1)
     transitivePeerDependencies:
       - '@rspack/core'
       - '@vue/language-core'
@@ -3504,6 +3512,18 @@ snapshots:
       '@types/node': 24.13.6
       fsevents: 2.3.3
 
+  vite@8.3.1(@types/node@24.13.6)(yaml@2.9.1):
+    dependencies:
+      lightningcss: 1.33.0
+      picomatch: 4.0.7
+      postcss: 8.5.28
+      rolldown: 1.2.11
+      tinyglobby: 0.2.17
+    optionalDependencies:
+      '@types/node': 24.13.6
+      fsevents: 2.3.3
+      yaml: 2.9.1
+
   vitest@5.0.2(@types/node@24.13.6)(vite@8.3.1(@types/node@24.13.6)):
     dependencies:
       '@types/chai': 5.2.3
@@ -3518,7 +3538,7 @@ snapshots:
       tinybench: 6.2.0
       tinyexec: 1.3.1
       tinyglobby: 0.2.17
-      vite: 8.3.1(@types/node@24.13.6)
+      vite: 8.3.1(@types/node@24.13.6)(yaml@2.9.1)
       why-is-node-running: 3.2.2
     optionalDependencies:
       '@types/node': 24.13.6
@@ -3542,6 +3562,8 @@ snapshots:
   yallist@3.1.1: {}
 
   yaml-ast-parser@0.0.43: {}
+
+  yaml@2.9.1: {}
 
   yargs-parser@21.1.1: {}
 

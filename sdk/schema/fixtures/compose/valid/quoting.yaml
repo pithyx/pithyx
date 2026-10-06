@@ -1,0 +1,11 @@
+services:
+  "server":
+    'image': "ghcr.io/example/chat-server:1.2.0@sha256:a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5"
+    environment:
+      "QUOTED": "tab\there"
+      SINGLE: 'it''s'
+      FOLDED: >-
+        one
+        two
+      UNICODE: "Grüße 👋"
+      DOLLAR: $$HOME

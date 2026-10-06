@@ -214,7 +214,6 @@ export interface BackendManifest {
    */
   root?: boolean;
   health?: BackendHealth;
-  resources?: BackendResources;
   /**
    * @maxItems 16
    */
@@ -248,19 +247,6 @@ export interface BackendHealth {
    */
   endpoint: string;
   path: BackendPath;
-}
-/**
- * Limits for the whole backend.
- */
-export interface BackendResources {
-  /**
-   * Memory limit in MiB.
-   */
-  memory?: number;
-  /**
-   * CPU limit in cores, for example 0.5.
-   */
-  cpus?: number;
 }
 /**
  * A recurring backend job. The daemon starts the backend for it even without an open window and calls `POST path` on `endpoint` when it fires.

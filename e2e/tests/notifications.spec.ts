@@ -1,6 +1,7 @@
 import AxeBuilder from '@axe-core/playwright';
 import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures';
+import { installProbe } from './probe';
 import { desktopReady, openFromStart, signInAsAdmin } from './session';
 
 const TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
@@ -23,6 +24,10 @@ function bell(page: Page) {
     .getByRole('button', { name: /^Notifications/ });
 }
 
+test.beforeAll(async ({ baseURL }) => {
+  await installProbe(baseURL ?? '');
+});
+
 test.beforeEach(async ({ page }) => {
   await signInAsAdmin(page);
   // Every spec signs in as the same administrator; this one starts from an empty history.
@@ -33,7 +38,7 @@ test('an app notification is a toast with the app, stays in the panel after a re
   page,
 }) => {
   await openFromStart(page, 'SDK demo');
-  const app = page.frameLocator('iframe[src="/apps/org.pithyx.demo/index.html"]');
+  const app = page.frameLocator('iframe[src="/apps/com.example.sdk-probe/index.html"]');
   await app.getByRole('button', { name: 'Send notification' }).click();
 
   const toasts = page.getByRole('region', { name: 'New notifications' });
@@ -83,7 +88,7 @@ test('a dismissed notification leaves the panel and the keyboard reaches its but
   page,
 }) => {
   await openFromStart(page, 'SDK demo');
-  const app = page.frameLocator('iframe[src="/apps/org.pithyx.demo/index.html"]');
+  const app = page.frameLocator('iframe[src="/apps/com.example.sdk-probe/index.html"]');
   await app.getByRole('button', { name: 'Send notification' }).click();
   await expect(
     page.getByRole('region', { name: 'New notifications' }).getByText(MESSAGE),

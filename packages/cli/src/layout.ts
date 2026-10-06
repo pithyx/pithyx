@@ -3,22 +3,53 @@ import type { Issue } from './issues';
 export const MANIFEST_FILE = 'pithyx.json';
 export const ICON_FILE = 'icon.svg';
 
-/** Whether a package path stays inside the package wherever it is unpacked. */
+const MAX_PATH_LENGTH = 512;
+const MAX_SEGMENT_LENGTH = 255;
+const MAX_DEPTH = 32;
+const SEGMENT = /^[A-Za-z0-9_~@+-][A-Za-z0-9._~@+-]*$/;
+
+/**
+ * Whether a package path stays inside the package wherever it is unpacked and names exactly one file: at most 32
+ * segments of ASCII letters, digits and `._~@+-`, none empty or starting with a dot.
+ */
 export function isSafePath(path: string): boolean {
+  if (path === '' || path.length > MAX_PATH_LENGTH) {
+    return false;
+  }
+  const segments = path.split('/');
   return (
-    path !== '' &&
-    !path.startsWith('/') &&
-    !path.includes('\\') &&
-    // eslint-disable-next-line no-control-regex
-    !/[\u0000-\u001f\u007f]/.test(path) &&
-    path.split('/').every((segment) => segment !== '' && segment !== '.' && segment !== '..')
+    segments.length <= MAX_DEPTH &&
+    segments.every((segment) => segment.length <= MAX_SEGMENT_LENGTH && SEGMENT.test(segment))
   );
 }
 
+/** Whether a path below `frontend/` lies in the URLs of the backend (`api`, `api-<endpoint>`). */
+export function isReservedFrontendPath(relative: string): boolean {
+  const first = relative.split('/')[0] ?? '';
+  return first === 'api' || first.startsWith('api-');
+}
+
+function placementProblem(path: string, hasBackend: boolean): string | null {
+  const slash = path.indexOf('/');
+  if (slash < 0) {
+    return null;
+  }
+  switch (path.slice(0, slash)) {
+    case 'frontend':
+      return isReservedFrontendPath(path.slice(slash + 1)) ? 'reserved' : null;
+    case 'backend':
+      return hasBackend ? null : 'unexpected';
+    default:
+      return 'unexpected';
+  }
+}
+
 /**
- * Checks the file paths of an app package (D301): `pithyx.json` and `icon.svg` at the root, the entry under
- * `frontend/`, files under `backend/` only with a backend, whose Compose file must be there. Paths are relative with
- * `/` as the separator; the list holds the regular files of the package only.
+ * Checks the file paths of an app package (D301): `pithyx.json` and `icon.svg` at the root (next to README, LICENSE
+ * and checksums), the entry under `frontend/`, files under `backend/` only with a backend, whose Compose file must be
+ * there. Paths are relative with `/` as the separator and use ASCII letters, digits and `._~@+-` only, so no two names
+ * can mean the same file on any file system; the list holds the regular files of the package only. `frontend/api`
+ * and `frontend/api-*` are reserved: their URLs belong to the backend (D303).
  */
 export function checkLayout(
   paths: Iterable<string>,
@@ -30,15 +61,32 @@ export function checkLayout(
     params: { path, reason },
   });
   const seen = new Set<string>();
+  // Two names that differ only in case are one file on a case-insensitive client, and a file is in the way of a
+  // folder of the same name.
+  const folded = new Map<string, string>();
+  const files: string[] = [];
   for (const path of paths) {
     if (!isSafePath(path)) {
       issues.push(issue(path, 'unsafe'));
-    } else if (seen.has(path)) {
+    } else if (seen.has(path) || folded.has(path.toLowerCase())) {
       issues.push(issue(path, 'duplicate'));
     } else {
       seen.add(path);
-      if (manifest.compose === undefined && path.startsWith('backend/')) {
-        issues.push(issue(path, 'unexpected'));
+      folded.set(path.toLowerCase(), path);
+      files.push(path);
+      const problem = placementProblem(path, manifest.compose !== undefined);
+      if (problem !== null) {
+        issues.push(issue(path, problem));
+      }
+    }
+  }
+  const inTheWay = new Set<string>();
+  for (const path of files) {
+    for (let slash = path.indexOf('/'); slash > 0; slash = path.indexOf('/', slash + 1)) {
+      const file = folded.get(path.slice(0, slash).toLowerCase());
+      if (file !== undefined && !inTheWay.has(file)) {
+        inTheWay.add(file);
+        issues.push(issue(file, 'duplicate'));
       }
     }
   }

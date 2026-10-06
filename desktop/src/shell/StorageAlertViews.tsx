@@ -21,7 +21,7 @@ export function AlertBanner({ alert }: { alert: StorageAlert }) {
       <Button
         size="sm"
         onPress={() => {
-          openApp(coreAppIds.storage, alertSection(alert));
+          openApp(coreAppIds.storage, { args: alertSection(alert) });
         }}
       >
         {t('storageAlert.open')}

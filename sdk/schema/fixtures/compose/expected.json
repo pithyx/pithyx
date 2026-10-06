@@ -1,0 +1,1380 @@
+{
+  "alias-bomb.yaml": [
+    {
+      "code": "app.compose.yaml_invalid",
+      "params": {
+        "reason": "anchor"
+      }
+    }
+  ],
+  "anchor.yaml": [
+    {
+      "code": "app.compose.yaml_invalid",
+      "params": {
+        "reason": "anchor"
+      }
+    }
+  ],
+  "bom.yaml": [
+    {
+      "code": "app.compose.yaml_invalid",
+      "params": {
+        "reason": "character"
+      }
+    }
+  ],
+  "bool-type.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/read_only",
+        "reason": "type"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/init",
+        "reason": "type"
+      }
+    }
+  ],
+  "capability-blocked.yaml": [
+    {
+      "code": "app.elevated.unsupported",
+      "params": {
+        "right": "capability:SYS_ADMIN",
+        "path": "/services/server/cap_add/0"
+      }
+    },
+    {
+      "code": "app.elevated.unsupported",
+      "params": {
+        "right": "capability:ALL",
+        "path": "/services/server/cap_add/1"
+      }
+    }
+  ],
+  "capability-format.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/cap_add/0",
+        "reason": "format"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/cap_add/1",
+        "reason": "format"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/cap_drop/1",
+        "reason": "duplicate"
+      }
+    }
+  ],
+  "comment-only.yaml": [
+    {
+      "code": "app.compose.yaml_invalid",
+      "params": {
+        "reason": "documents"
+      }
+    }
+  ],
+  "complex-key.yaml": [
+    {
+      "code": "app.compose.yaml_invalid",
+      "params": {
+        "reason": "key_not_string",
+        "path": "/services/server/labels"
+      }
+    }
+  ],
+  "control-character.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/command",
+        "reason": "format"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/working_dir",
+        "reason": "format"
+      }
+    }
+  ],
+  "depends-on.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/depends_on/db/condition",
+        "reason": "format"
+      }
+    },
+    {
+      "code": "app.compose.reference_unknown",
+      "params": {
+        "path": "/services/server/depends_on/cache",
+        "name": "cache"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/depends_on",
+        "reason": "cycle"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/db/depends_on",
+        "reason": "cycle"
+      }
+    }
+  ],
+  "devices-format.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/devices/0",
+        "reason": "format"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/devices/1",
+        "reason": "format"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/devices/2",
+        "reason": "format"
+      }
+    }
+  ],
+  "directive.yaml": [
+    {
+      "code": "app.compose.yaml_invalid",
+      "params": {
+        "reason": "directive"
+      }
+    }
+  ],
+  "docker-socket.yaml": [
+    {
+      "code": "app.elevated.unsupported",
+      "params": {
+        "right": "docker.socket",
+        "path": "/services/server/volumes/0"
+      }
+    },
+    {
+      "code": "app.elevated.unsupported",
+      "params": {
+        "right": "docker.socket",
+        "path": "/services/server/volumes/1"
+      }
+    }
+  ],
+  "duplicate-key.yaml": [
+    {
+      "code": "app.compose.yaml_invalid",
+      "params": {
+        "reason": "duplicate_key",
+        "path": "/services/server/init"
+      }
+    }
+  ],
+  "duplicate-service.yaml": [
+    {
+      "code": "app.compose.yaml_invalid",
+      "params": {
+        "reason": "duplicate_key",
+        "path": "/services/server"
+      }
+    }
+  ],
+  "empty.yaml": [
+    {
+      "code": "app.compose.yaml_invalid",
+      "params": {
+        "reason": "documents"
+      }
+    }
+  ],
+  "endpoint-service-missing.yaml": [
+    {
+      "code": "app.compose.reference_unknown",
+      "params": {
+        "path": "/backend/endpoints/api/service",
+        "name": "server"
+      }
+    }
+  ],
+  "environment-duplicate.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/environment/1",
+        "reason": "duplicate"
+      }
+    }
+  ],
+  "environment-name.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/environment/1ST",
+        "reason": "format"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/environment/A-B",
+        "reason": "format"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/environment/spring.profile",
+        "reason": "format"
+      }
+    }
+  ],
+  "environment-nested.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/environment/A",
+        "reason": "type"
+      }
+    }
+  ],
+  "environment-no-value.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/environment/0",
+        "reason": "no_value"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/worker/environment/SECRET",
+        "reason": "no_value"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/worker/environment/TOKEN",
+        "reason": "no_value"
+      }
+    }
+  ],
+  "environment-number.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/environment/RATIO",
+        "reason": "type"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/environment/MASK",
+        "reason": "type"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/environment/MODE",
+        "reason": "type"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/environment/BIG",
+        "reason": "type"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/environment/NAN",
+        "reason": "type"
+      }
+    }
+  ],
+  "expose.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/expose/0",
+        "reason": "range"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/expose/1",
+        "reason": "format"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/expose/2",
+        "reason": "range"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/expose/3",
+        "reason": "range"
+      }
+    }
+  ],
+  "flow-implicit-null.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/environment/A",
+        "reason": "no_value"
+      }
+    }
+  ],
+  "flow-pair-in-list.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/depends_on/0",
+        "reason": "type"
+      }
+    }
+  ],
+  "healthcheck.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/healthcheck/test",
+        "reason": "format"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/healthcheck/interval",
+        "reason": "range"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/healthcheck/timeout",
+        "reason": "format"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/healthcheck/retries",
+        "reason": "range"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/healthcheck/start_period",
+        "reason": "range"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/healthcheck/disable",
+        "reason": "type"
+      }
+    },
+    {
+      "code": "app.compose.key_unsupported",
+      "params": {
+        "path": "/services/server/healthcheck/shell",
+        "key": "shell"
+      }
+    }
+  ],
+  "image-format.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/image",
+        "reason": "format"
+      }
+    }
+  ],
+  "image-missing.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/image",
+        "reason": "required"
+      }
+    }
+  ],
+  "image-not-string.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/image",
+        "reason": "type"
+      }
+    }
+  ],
+  "image-short-digest.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/image",
+        "reason": "unpinned"
+      }
+    }
+  ],
+  "image-unpinned.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/image",
+        "reason": "unpinned"
+      }
+    }
+  ],
+  "indentation.yaml": [
+    {
+      "code": "app.compose.yaml_invalid",
+      "params": {
+        "reason": "syntax"
+      }
+    }
+  ],
+  "interpolation-in-image.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/image",
+        "reason": "interpolation"
+      }
+    }
+  ],
+  "interpolation.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/command/1",
+        "reason": "interpolation"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/environment/A",
+        "reason": "interpolation"
+      }
+    }
+  ],
+  "key-not-string.yaml": [
+    {
+      "code": "app.compose.yaml_invalid",
+      "params": {
+        "reason": "key_not_string",
+        "path": "/services/server/environment"
+      }
+    }
+  ],
+  "label-key.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/labels/0",
+        "reason": "format"
+      }
+    }
+  ],
+  "label-reserved.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/labels/com.pithyx.app",
+        "reason": "reserved"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/labels/com.docker.compose.project",
+        "reason": "reserved"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/labels/COM.PITHYX.SERVICE",
+        "reason": "reserved"
+      }
+    }
+  ],
+  "limits.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/mem_limit",
+        "reason": "format"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/s0/mem_limit",
+        "reason": "range"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/s1/mem_limit",
+        "reason": "range"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/s2/mem_limit",
+        "reason": "format"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/s3/cpus",
+        "reason": "range"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/s4/cpus",
+        "reason": "format"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/s5/cpus",
+        "reason": "range"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/s6/cpus",
+        "reason": "format"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/s7/cpus",
+        "reason": "type"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/s8/cpus",
+        "reason": "format"
+      }
+    }
+  ],
+  "line-separator.yaml": [
+    {
+      "code": "app.compose.yaml_invalid",
+      "params": {
+        "reason": "character"
+      }
+    }
+  ],
+  "merge-key.yaml": [
+    {
+      "code": "app.compose.yaml_invalid",
+      "params": {
+        "reason": "merge_key",
+        "path": "/services/server/environment/<<"
+      }
+    }
+  ],
+  "network-mode.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/network_mode",
+        "reason": "format"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/worker/network_mode",
+        "reason": "format"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/worker/pid",
+        "reason": "format"
+      }
+    }
+  ],
+  "non-specific-tag.yaml": [
+    {
+      "code": "app.compose.yaml_invalid",
+      "params": {
+        "reason": "tag"
+      }
+    }
+  ],
+  "not-utf8.yaml": [
+    {
+      "code": "app.compose.yaml_invalid",
+      "params": {
+        "reason": "not_utf8"
+      }
+    }
+  ],
+  "privileged.yaml": [
+    {
+      "code": "app.elevated.unsupported",
+      "params": {
+        "right": "host.full",
+        "path": "/services/server/privileged"
+      }
+    },
+    {
+      "code": "app.elevated.unsupported",
+      "params": {
+        "right": "host.full",
+        "path": "/services/worker/privileged"
+      }
+    }
+  ],
+  "refused-service-keys.yaml": [
+    {
+      "code": "app.compose.key_unsupported",
+      "params": {
+        "path": "/services/server/ports",
+        "key": "ports"
+      }
+    },
+    {
+      "code": "app.compose.key_unsupported",
+      "params": {
+        "path": "/services/server/build",
+        "key": "build"
+      }
+    },
+    {
+      "code": "app.compose.key_unsupported",
+      "params": {
+        "path": "/services/server/user",
+        "key": "user"
+      }
+    },
+    {
+      "code": "app.compose.key_unsupported",
+      "params": {
+        "path": "/services/server/restart",
+        "key": "restart"
+      }
+    },
+    {
+      "code": "app.compose.key_unsupported",
+      "params": {
+        "path": "/services/server/logging",
+        "key": "logging"
+      }
+    },
+    {
+      "code": "app.compose.key_unsupported",
+      "params": {
+        "path": "/services/server/deploy",
+        "key": "deploy"
+      }
+    },
+    {
+      "code": "app.compose.key_unsupported",
+      "params": {
+        "path": "/services/server/oom_score_adj",
+        "key": "oom_score_adj"
+      }
+    },
+    {
+      "code": "app.compose.key_unsupported",
+      "params": {
+        "path": "/services/server/pids_limit",
+        "key": "pids_limit"
+      }
+    },
+    {
+      "code": "app.compose.key_unsupported",
+      "params": {
+        "path": "/services/server/env_file",
+        "key": "env_file"
+      }
+    },
+    {
+      "code": "app.compose.key_unsupported",
+      "params": {
+        "path": "/services/server/security_opt",
+        "key": "security_opt"
+      }
+    },
+    {
+      "code": "app.compose.key_unsupported",
+      "params": {
+        "path": "/services/server/container_name",
+        "key": "container_name"
+      }
+    },
+    {
+      "code": "app.compose.key_unsupported",
+      "params": {
+        "path": "/services/server/extra_hosts",
+        "key": "extra_hosts"
+      }
+    },
+    {
+      "code": "app.compose.key_unsupported",
+      "params": {
+        "path": "/services/server/networks",
+        "key": "networks"
+      }
+    },
+    {
+      "code": "app.compose.key_unsupported",
+      "params": {
+        "path": "/services/server/sysctls",
+        "key": "sysctls"
+      }
+    },
+    {
+      "code": "app.compose.key_unsupported",
+      "params": {
+        "path": "/services/server/userns_mode",
+        "key": "userns_mode"
+      }
+    },
+    {
+      "code": "app.compose.key_unsupported",
+      "params": {
+        "path": "/services/server/ipc",
+        "key": "ipc"
+      }
+    },
+    {
+      "code": "app.compose.key_unsupported",
+      "params": {
+        "path": "/services/server/x-note",
+        "key": "x-note"
+      }
+    }
+  ],
+  "right-missing.yaml": [
+    {
+      "code": "app.compose.right_missing",
+      "params": {
+        "path": "/services/server/cap_add/0",
+        "right": "capability:NET_ADMIN"
+      }
+    },
+    {
+      "code": "app.compose.right_missing",
+      "params": {
+        "path": "/services/server/devices/0",
+        "right": "device:/dev/dri/renderD128"
+      }
+    },
+    {
+      "code": "app.compose.right_missing",
+      "params": {
+        "path": "/services/server/pid",
+        "right": "host.pid"
+      }
+    },
+    {
+      "code": "app.compose.right_missing",
+      "params": {
+        "path": "/services/discovery/network_mode",
+        "right": "host.network"
+      }
+    }
+  ],
+  "right-other-device.yaml": [
+    {
+      "code": "app.compose.right_missing",
+      "params": {
+        "path": "/services/server/devices/0",
+        "right": "device:/dev/dri/card0"
+      }
+    },
+    {
+      "code": "app.compose.right_unused",
+      "params": {
+        "path": "/backend/elevated/0",
+        "right": "device:/dev/dri/renderD128"
+      }
+    }
+  ],
+  "right-unused.yaml": [
+    {
+      "code": "app.compose.right_unused",
+      "params": {
+        "path": "/backend/elevated/0",
+        "right": "device:/dev/dri/renderD128"
+      }
+    },
+    {
+      "code": "app.compose.right_unused",
+      "params": {
+        "path": "/backend/elevated/1",
+        "right": "capability:NET_ADMIN"
+      }
+    },
+    {
+      "code": "app.compose.right_unused",
+      "params": {
+        "path": "/backend/elevated/2",
+        "right": "host.network"
+      }
+    },
+    {
+      "code": "app.compose.right_unused",
+      "params": {
+        "path": "/backend/elevated/3",
+        "right": "host.pid"
+      }
+    }
+  ],
+  "root-not-map.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "",
+        "reason": "type"
+      }
+    }
+  ],
+  "service-name.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/Server",
+        "reason": "format"
+      }
+    }
+  ],
+  "service-not-map.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/worker",
+        "reason": "type"
+      }
+    }
+  ],
+  "services-empty.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services",
+        "reason": "range"
+      }
+    }
+  ],
+  "services-missing.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services",
+        "reason": "required"
+      }
+    }
+  ],
+  "shm-size.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/shm_size",
+        "reason": "range"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/worker/shm_size",
+        "reason": "format"
+      }
+    }
+  ],
+  "stop.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/stop_signal",
+        "reason": "format"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/stop_grace_period",
+        "reason": "range"
+      }
+    }
+  ],
+  "storage-not-listed.yaml": [
+    {
+      "code": "app.compose.storage_mismatch",
+      "params": {
+        "path": "/services/worker/volumes/1",
+        "storage": "library",
+        "reason": "not_listed"
+      }
+    },
+    {
+      "code": "app.compose.storage_mismatch",
+      "params": {
+        "path": "/services/worker/volumes/2",
+        "storage": "exports",
+        "reason": "not_listed"
+      }
+    }
+  ],
+  "storage-not-mounted.yaml": [
+    {
+      "code": "app.compose.storage_mismatch",
+      "params": {
+        "path": "/storage/0/services/0",
+        "storage": "attachments",
+        "reason": "not_mounted"
+      }
+    }
+  ],
+  "storage-read-write.yaml": [
+    {
+      "code": "app.compose.storage_mismatch",
+      "params": {
+        "path": "/services/server/volumes/1",
+        "storage": "library",
+        "reason": "read_only"
+      }
+    },
+    {
+      "code": "app.compose.storage_mismatch",
+      "params": {
+        "path": "/services/server/volumes/2",
+        "storage": "library",
+        "reason": "read_only"
+      }
+    }
+  ],
+  "storage-service-missing.yaml": [
+    {
+      "code": "app.compose.reference_unknown",
+      "params": {
+        "path": "/storage/0/services/1",
+        "name": "worker"
+      }
+    },
+    {
+      "code": "app.compose.reference_unknown",
+      "params": {
+        "path": "/backend/endpoints/metrics/service",
+        "name": "worker"
+      }
+    }
+  ],
+  "string-type.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/working_dir",
+        "reason": "type"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/stop_signal",
+        "reason": "type"
+      }
+    }
+  ],
+  "syntax.yaml": [
+    {
+      "code": "app.compose.yaml_invalid",
+      "params": {
+        "reason": "syntax"
+      }
+    }
+  ],
+  "tab-in-block-scalar.yaml": [
+    {
+      "code": "app.compose.yaml_invalid",
+      "params": {
+        "reason": "character"
+      }
+    }
+  ],
+  "tab.yaml": [
+    {
+      "code": "app.compose.yaml_invalid",
+      "params": {
+        "reason": "character"
+      }
+    }
+  ],
+  "tag-directive.yaml": [
+    {
+      "code": "app.compose.yaml_invalid",
+      "params": {
+        "reason": "directive"
+      }
+    }
+  ],
+  "tag-on-collection.yaml": [
+    {
+      "code": "app.compose.yaml_invalid",
+      "params": {
+        "reason": "tag"
+      }
+    }
+  ],
+  "tag.yaml": [
+    {
+      "code": "app.compose.yaml_invalid",
+      "params": {
+        "reason": "tag"
+      }
+    }
+  ],
+  "tmpfs-options.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/tmpfs/0",
+        "reason": "range"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/tmpfs/1",
+        "reason": "range"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/tmpfs/2",
+        "reason": "format"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/tmpfs/3",
+        "reason": "format"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/tmpfs/4",
+        "reason": "format"
+      }
+    }
+  ],
+  "too-deep.yaml": [
+    {
+      "code": "app.compose.yaml_invalid",
+      "params": {
+        "reason": "too_deep"
+      }
+    }
+  ],
+  "too-large.yaml": [
+    {
+      "code": "app.compose.yaml_invalid",
+      "params": {
+        "reason": "too_large"
+      }
+    }
+  ],
+  "too-many-services.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services",
+        "reason": "range"
+      }
+    }
+  ],
+  "top-level-keys.yaml": [
+    {
+      "code": "app.compose.key_unsupported",
+      "params": {
+        "path": "/version",
+        "key": "version"
+      }
+    },
+    {
+      "code": "app.compose.key_unsupported",
+      "params": {
+        "path": "/name",
+        "key": "name"
+      }
+    },
+    {
+      "code": "app.compose.key_unsupported",
+      "params": {
+        "path": "/networks",
+        "key": "networks"
+      }
+    },
+    {
+      "code": "app.compose.key_unsupported",
+      "params": {
+        "path": "/x-common",
+        "key": "x-common"
+      }
+    }
+  ],
+  "two-documents.yaml": [
+    {
+      "code": "app.compose.yaml_invalid",
+      "params": {
+        "reason": "documents"
+      }
+    }
+  ],
+  "volume-anonymous.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/volumes/0",
+        "reason": "anonymous"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/volumes/1",
+        "reason": "anonymous"
+      }
+    }
+  ],
+  "volume-declaration-options.yaml": [
+    {
+      "code": "app.compose.key_unsupported",
+      "params": {
+        "path": "/volumes/data/driver",
+        "key": "driver"
+      }
+    },
+    {
+      "code": "app.compose.key_unsupported",
+      "params": {
+        "path": "/volumes/data/driver_opts",
+        "key": "driver_opts"
+      }
+    },
+    {
+      "code": "app.compose.key_unsupported",
+      "params": {
+        "path": "/volumes/other/external",
+        "key": "external"
+      }
+    },
+    {
+      "code": "app.compose.key_unsupported",
+      "params": {
+        "path": "/volumes/named/name",
+        "key": "name"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/volumes/Bad_Name",
+        "reason": "format"
+      }
+    }
+  ],
+  "volume-duplicate-target.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/volumes/1",
+        "reason": "duplicate"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/tmpfs/0",
+        "reason": "duplicate"
+      }
+    }
+  ],
+  "volume-host-path.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/volumes/0",
+        "reason": "host_path"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/volumes/1",
+        "reason": "host_path"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/volumes/2",
+        "reason": "host_path"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/volumes/3",
+        "reason": "host_path"
+      }
+    }
+  ],
+  "volume-long-options.yaml": [
+    {
+      "code": "app.compose.key_unsupported",
+      "params": {
+        "path": "/services/server/volumes/0/volume",
+        "key": "volume"
+      }
+    },
+    {
+      "code": "app.compose.key_unsupported",
+      "params": {
+        "path": "/services/server/volumes/1/source",
+        "key": "source"
+      }
+    },
+    {
+      "code": "app.compose.key_unsupported",
+      "params": {
+        "path": "/services/server/volumes/2/tmpfs",
+        "key": "tmpfs"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/volumes/3/type",
+        "reason": "format"
+      }
+    }
+  ],
+  "volume-mode.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/volumes/0",
+        "reason": "format"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/volumes/1",
+        "reason": "format"
+      }
+    }
+  ],
+  "volume-target.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/volumes/0",
+        "reason": "reserved"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/volumes/1",
+        "reason": "reserved"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/volumes/2",
+        "reason": "format"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/volumes/3",
+        "reason": "format"
+      }
+    },
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/volumes/4",
+        "reason": "reserved"
+      }
+    }
+  ],
+  "volume-undeclared.yaml": [
+    {
+      "code": "app.compose.reference_unknown",
+      "params": {
+        "path": "/services/server/volumes/0",
+        "name": "data"
+      }
+    }
+  ]
+}

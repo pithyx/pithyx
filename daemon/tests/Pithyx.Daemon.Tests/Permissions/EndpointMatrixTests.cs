@@ -76,6 +76,7 @@ public sealed partial class EndpointMatrixTests : IDisposable
         ["RequestThumbnails"] = Need.AnyUser,
         ["GetThumbnail"] = Need.AnyUser,
         ["RenameFileEntry"] = Need.AnyUser,
+        ["GetAppIcon"] = Need.AnyUser,
 
         ["PowerSystem"] = Need.Power,
 
@@ -136,6 +137,13 @@ public sealed partial class EndpointMatrixTests : IDisposable
         ["CreateConfigBackup"] = Need.Admin,
         ["InspectConfigBackup"] = Need.Admin,
         ["RestoreConfigBackup"] = Need.Admin,
+        ["ListApps"] = Need.Admin,
+        ["UploadAppPackage"] = Need.Admin,
+        ["GetAppPackage"] = Need.Admin,
+        ["DiscardAppPackage"] = Need.Admin,
+        ["InstallAppPackage"] = Need.Admin,
+        ["UpdateApp"] = Need.Admin,
+        ["UninstallApp"] = Need.Admin,
     };
 
     private readonly DaemonFactory _factory = new();

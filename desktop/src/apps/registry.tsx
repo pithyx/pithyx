@@ -1,6 +1,5 @@
 import {
   IconActivity,
-  IconApps,
   IconDatabase,
   IconFolders,
   IconInfoCircle,
@@ -13,7 +12,7 @@ import { lazy, type ComponentType, type LazyExoticComponent } from 'react';
 import type { AppTone } from '../shell/types';
 import type { WindowOptions } from '../wm/types';
 import { loadTranslations } from '../i18n';
-import { coreAppIds } from './ids';
+import { coreAppIds, probeAppId } from './ids';
 
 /** What every app component receives. The SDK replaces this in step 5.3. */
 export interface AppProps {
@@ -22,7 +21,8 @@ export interface AppProps {
 
 export interface CoreApp {
   id: string;
-  icon: TablerIcon;
+  /** Null for an app without an icon of its own: it shows the default icon. */
+  icon: TablerIcon | null;
   tone: AppTone;
   window: WindowOptions;
   /** Loaded when the first window of the app opens, never at sign-in. */
@@ -151,9 +151,9 @@ export const coreApps: readonly CoreApp[] = [
     ),
   },
   {
-    // Prototype for the SDK spec: a third-party app in a sandboxed window (apps/demo), until manifests drive this list.
-    id: coreAppIds.demo,
-    icon: IconApps,
+    // The E2E probe, a third-party app the daemon serves once it is installed; the topic apps replaces this in A12.
+    id: probeAppId,
+    icon: null,
     tone: 'plum',
     window: {
       instances: 'single',
@@ -165,8 +165,8 @@ export const coreApps: readonly CoreApp[] = [
         default: ({ windowId }: AppProps) => (
           <SandboxApp
             windowId={windowId}
-            app={coreAppIds.demo}
-            entry={`/apps/${coreAppIds.demo}/index.html`}
+            app={probeAppId}
+            entry={`/apps/${probeAppId}/index.html`}
             permissions={['notifications']}
           />
         ),

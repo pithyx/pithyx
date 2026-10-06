@@ -11,7 +11,7 @@ export default defineConfig({
       formats: ['es'],
     },
     rollupOptions: {
-      external: [/^node:/, ...builtinModules, 'ajv', /^ajv\//, 'saxes'],
+      external: [/^node:/, ...builtinModules, 'ajv', /^ajv\//, 'saxes', 'yaml'],
     },
   },
 });

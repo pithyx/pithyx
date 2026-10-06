@@ -1,15 +1,7 @@
 import optimizeLocales from '@react-aria/optimize-locales-plugin';
 import babel from '@rolldown/plugin-babel';
 import react, { reactCompilerPreset } from '@vitejs/plugin-react';
-import {
-  cpSync,
-  existsSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  statSync,
-  writeFileSync,
-} from 'node:fs';
+import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { brotliCompressSync, constants, gzipSync } from 'node:zlib';
 import { defaultClientConditions, defaultServerConditions, defineConfig, type Plugin } from 'vite';
@@ -161,32 +153,6 @@ function precompress(): Plugin {
   };
 }
 
-// Sample third-party apps (apps/<folder>) are built on their own and served by the daemon under /apps/<id>/.
-const sampleApps = [{ folder: 'demo', id: 'org.pithyx.demo' }];
-
-/** Copies the built sample apps into the desktop build. */
-function copySampleApps(): Plugin {
-  let outDir = 'dist';
-  return {
-    name: 'pithyx-sample-apps',
-    apply: 'build',
-    configResolved(config) {
-      outDir = config.build.outDir;
-    },
-    closeBundle() {
-      for (const { folder, id } of sampleApps) {
-        const built = join(import.meta.dirname, '..', 'apps', folder, 'dist');
-        if (!existsSync(join(built, 'index.html'))) {
-          throw new Error(
-            `apps/${folder} is not built; build it first (pnpm --filter "@pithyx/desktop..." build).`,
-          );
-        }
-        cpSync(built, join(outDir, 'apps', id), { recursive: true });
-      }
-    },
-  };
-}
-
 // Where the bundle budgets (tools/checks/bundle-budget.ts) find the chunk graph; outside dist, which the daemon serves.
 export const bundleGraphFile = join(
   import.meta.dirname,
@@ -251,7 +217,6 @@ export default defineConfig({
     react(),
     babel({ presets: [reactCompilerPreset()] }),
     cssModuleTypes(),
-    copySampleApps(),
     precompress(),
     bundleGraph(),
     devCompression(),

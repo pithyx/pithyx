@@ -91,7 +91,6 @@ if [[ "$app_build" == 1 ]]; then
     --nologo --verbosity quiet -p:SourceRevisionId="$commit" --output "$work/daemon"
   step "desktop"
   [[ -d "$repo/node_modules" ]] || pnpm --dir "$repo" install --frozen-lockfile
-  env -C "$repo/apps/demo" pnpm exec vite build --logLevel warn
   env -C "$repo/desktop" pnpm exec vite build --logLevel warn
   rm -rf "$work/desktop"
   cp -a "$repo/desktop/dist" "$work/desktop"
