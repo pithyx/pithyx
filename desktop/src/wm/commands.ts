@@ -43,12 +43,34 @@ export function guardClose(id: string, guard: () => Promise<boolean>): () => voi
   };
 }
 
-/** Closes a window unless its app keeps it open. */
-export async function requestClose(id: string): Promise<void> {
-  const guard = closeGuards.get(id);
-  if (guard === undefined || (await guard())) {
-    dispatch({ type: 'close', id });
+const closing = new Map<string, Promise<void>>();
+
+/** Closes a window unless its app keeps it open. A second request while the app is asked waits for the first. */
+export function requestClose(id: string): Promise<void> {
+  const pending = closing.get(id);
+  if (pending !== undefined) {
+    return pending;
   }
+  const run = (async () => {
+    try {
+      const guard = closeGuards.get(id);
+      if (guard === undefined || (await guard())) {
+        dispatch({ type: 'close', id });
+      }
+    } finally {
+      closing.delete(id);
+    }
+  })();
+  closing.set(id, run);
+  return run;
+}
+
+/**
+ * Closes every window the way the user closes one: each app is asked, windows with unsaved changes may stay, and an
+ * app that does not answer gets its own "not responding" question.
+ */
+export async function requestCloseAll(): Promise<void> {
+  await Promise.all(Object.keys(useDesktop.getState().windows).map((id) => requestClose(id)));
 }
 
 /** A window action from the window menu or the keyboard, announced for screen reader users. */

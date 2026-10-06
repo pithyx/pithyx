@@ -21,6 +21,7 @@ import {
   TooltipTrigger,
 } from '@pithyx/ui';
 import { BrandText, LogoMark } from '../ui/Logo';
+import { badgeText } from '../apps/host/rules';
 import { AppIcon } from './AppIcon';
 import { TransfersButton } from './TransfersButton';
 import styles from './Taskbar.module.css';
@@ -169,7 +170,13 @@ export function Taskbar({
             <AriaButton
               className={cx(styles.button, styles.app)}
               data-state={app.state}
-              aria-label={t('taskbar.app', { name: app.name, state: app.state })}
+              data-attention={app.attention === true || undefined}
+              aria-label={t('taskbar.app', {
+                name: app.name,
+                state: app.state,
+                count: app.badge ?? 0,
+                attention: app.attention === true ? 'yes' : 'no',
+              })}
               onPress={() => onApp?.(app.id)}
               onContextMenu={(event) => {
                 if (onAppAction !== undefined) {
@@ -192,6 +199,11 @@ export function Taskbar({
               }}
             >
               <AppIcon app={app} size={26} />
+              {badgeText(app.badge, locale) !== null && (
+                <span className={styles.appBadge} aria-hidden>
+                  <Badge>{badgeText(app.badge, locale)}</Badge>
+                </span>
+              )}
               <span className={styles.appName}>{app.name}</span>
               <span className={styles.indicator} aria-hidden />
             </AriaButton>

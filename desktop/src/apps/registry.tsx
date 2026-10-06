@@ -1,6 +1,5 @@
 import {
   IconActivity,
-  IconApps,
   IconDatabase,
   IconFolders,
   IconInfoCircle,
@@ -21,7 +20,8 @@ export interface AppProps {
 
 export interface CoreApp {
   id: string;
-  icon: TablerIcon;
+  /** Null for an app without an icon of its own: it shows the default icon. */
+  icon: TablerIcon | null;
   tone: AppTone;
   window: WindowOptions;
   /** Loaded when the first window of the app opens, never at sign-in. */
@@ -152,7 +152,7 @@ export const coreApps: readonly CoreApp[] = [
   {
     // Prototype for the SDK spec: a third-party app in a sandboxed window (apps/demo), until manifests drive this list.
     id: 'demo',
-    icon: IconApps,
+    icon: null,
     tone: 'plum',
     window: {
       instances: 'single',

@@ -140,7 +140,7 @@ function useNotificationView() {
     return {
       id: String(notification.id),
       app: {
-        icon: app?.icon ?? IconDeviceDesktop,
+        icon: app === undefined ? IconDeviceDesktop : app.icon,
         tone: app?.tone ?? 'petrol',
         name:
           appId === undefined

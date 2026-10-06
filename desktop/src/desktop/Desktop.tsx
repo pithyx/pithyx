@@ -28,6 +28,8 @@ import { queryKeys } from '../api/queries';
 import { runBeforeUnload } from '../apps/lifecycle';
 import { useAppName } from '../apps/names';
 import { isAppAllowed, setAppPermissions } from '../apps/access';
+import { AppHostLayer } from '../apps/host/AppHostLayer';
+import { useHost } from '../apps/host/store';
 import { appsFor, findApp } from '../apps/registry';
 import { initialsOf } from '../auth/parts';
 import { clearSessionHint } from '../auth/sessionHint';
@@ -61,7 +63,7 @@ import { dispatch, openApp, useDesktop } from '../wm/store';
 import { useTopic } from '../realtime/useTopic';
 import type { PowerAction } from './PowerDialog';
 import { announce } from '../wm/announce';
-import { requestClose } from '../wm/commands';
+import { requestClose, requestCloseAll } from '../wm/commands';
 import { WindowLayer } from '../wm/WindowLayer';
 import { useMinuteClock } from './clock';
 import styles from './Desktop.module.css';
@@ -356,10 +358,12 @@ function useWorkspaceSize() {
   return workspace;
 }
 
-/** Running windows for the taskbar, in opening order. */
+/** Running windows for the taskbar, in opening order, with the badges and attention of their apps. */
 function useRunningApps(): RunningApp[] {
   const windows = useDesktop((state) => state.windows);
   const focused = useDesktop((state) => state.focused);
+  const badges = useHost((state) => state.badges);
+  const attention = useHost((state) => state.attention);
   const appName = useAppName();
   return Object.values(windows).flatMap((window) => {
     const app = findApp(window.app);
@@ -373,6 +377,8 @@ function useRunningApps(): RunningApp[] {
         icon: app.icon,
         tone: app.tone,
         state: window.minimized ? 'minimized' : window.id === focused ? 'focused' : 'open',
+        badge: badges[window.app] ?? 0,
+        attention: attention[window.id] === true,
       },
     ];
   });
@@ -667,6 +673,7 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
               <NotificationToasts position={taskbarPosition} locale={locale} />
             </Suspense>
             <PermissionsSync />
+            <AppHostLayer />
             {powerAction !== null && (
               <Suspense>
                 <PowerDialog
@@ -691,7 +698,7 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
                 }}
                 onCloseAll={() => {
                   setSwitcherOpen(false);
-                  dispatch({ type: 'closeAll' });
+                  void requestCloseAll();
                 }}
               />
             )}

@@ -58,7 +58,7 @@
     "label": "Taskbar",
     "start": "Pithyx menu",
     "runningApps": "Running apps",
-    "app": "{state, select, minimized {{name}, minimized} focused {{name}, active} other {{name}}}",
+    "app": "{state, select, minimized {{name}, minimized} focused {{name}, active} other {{name}}}{count, plural, =0 {} one {, # new} other {, # new}}{attention, select, yes {, needs attention} other {}}",
     "switcher": "{count, plural, one {Switch apps, # open} other {Switch apps, # open}}",
     "jobs": "{count, plural, one {# running task} other {# running tasks}}",
     "notifications": "{count, plural, =0 {Notifications} one {Notifications, # unread} other {Notifications, # unread}}",
@@ -236,6 +236,23 @@
       "intro": "Every user is signed out, and nothing is reachable until someone switches the box on again.",
       "confirm": "Shut down",
       "done": "Pithyx shuts down now."
+    }
+  },
+  "appHost": {
+    "menu": "Menu of {name}",
+    "unresponsive": {
+      "title": "{name} is not responding",
+      "body": "The app did not answer within 5 seconds. If you close it anyway, changes it has not saved are lost.",
+      "wait": "Wait",
+      "close": "Close anyway"
+    },
+    "copy": {
+      "title": "Copy text",
+      "label": "Text from the app",
+      "hint": "The browser did not copy this text by itself. Use Copy, or select it and press Ctrl+C.",
+      "manual": "This browser does not allow copying here. Select the text and press Ctrl+C (Cmd+C on a Mac).",
+      "copy": "Copy",
+      "close": "Close"
     }
   }
 }
