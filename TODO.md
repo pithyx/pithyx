@@ -85,6 +85,7 @@ Owner feedback on 2026-09-30 (the rest is in #56):
 - [x] Users and groups: create, edit, delete, as Linux and Samba accounts; users belong to groups (step 10, extended by the owner on 2026-10-03: groups are part of v0.1). (D289.)
 - [x] Permission model (step 11, extended on 2026-10-03, D290): rights go to users and groups, the effective right is the union, there are no deny rules and administrators have everything. Resources: shared folders (none, read, readWrite), protocols (SMB, SFTP, WebDAV, FTP, SSH login), apps (allowed or not), special rights (administrator, desktop login, SSH login, reboot and shutdown).
 - [x] SMB, SFTP, WebDAV and FTP (step 12 without NFS; WebDAV and FTP added by the owner on 2026-10-03, FTP as a fallback for software without SFTP): Settings > File services, rights per user and group and per shared folder. (Built, D287 and D288: Settings > File services, rights per user and per shared folder, the SMB recycle bin; `integration.sh` passes with a real Samba and sshd. Open: the owner's test on dev01, step 12 is `[REVIEW]`.)
+- [ ] FTP: check the write right before `STOR` answers `150`, so a refused upload gets `550` before any data connection. Today the refusal comes after `150` and the server closes the data connection, which the test client sometimes meets with "Broken pipe" (`ProtocolApiTests`, `dev` run of #89).
 - [ ] Core apps: Files, Storage, Settings, Resource Monitor, Viewer, Log Center, Store (only the tab "Installed" and installing from a file, D308).
 - [ ] Apps (pulled forward by the owner on 2026-10-05, before D): `@pithyx/sdk` 1.0 on npm with `@pithyx/ui` and `@pithyx/cli`, third-party apps as packages with a static frontend and an optional container backend, installed from a file, permissions checked by the daemon, backends behind the proxy. Details under "Apps v0.1 (SDK and runtime)" below (D300 to D308).
 - [ ] Network (step 14.2, added by the owner on 2026-10-03): Settings > Network changes the settings (DHCP or static, IPv4 and IPv6, DNS, host name), not only shows them, each change with the 60 second confirmation timer and automatic rollback (D110).
@@ -335,7 +336,7 @@ Logs (D305): every level also appears in the browser console. `info`, `warn` and
 - [x] `UiProvider({ locale })` with its own texts in en and de. They live in `i18n/<lang>/ui.json` like every other translation and are bundled into the package; the provider sets React Aria's locale, and the texts follow its language.
 - [x] `tokens.css` becomes the only token file (`@pithyx/ui/tokens.css`, the accent presets included); the contrast test follows it.
 - [x] The desktop uses the package through the `pithyx-source` condition; 69 files import it (`ui/icons` and `ui/Logo` stay in the desktop).
-- [ ] The 150 KB desktop budget, the design shots and the label `e2e` stay green. Locally: sign-in 138.5 to 138.6 KB, desktop 111.9 to 112.1 KB; the runner's `e2e` run is still open.
+- [x] The 150 KB desktop budget, the design shots and the label `e2e` stay green: sign-in 138.6 KB, desktop 112.1 KB; the runner's `e2e` run of #88 passed (warm reload 478 ms, cold start to sign-in 1425 ms).
 
 #### A6 Compose contract `[REVIEW]` (after A1 and A2)
 
