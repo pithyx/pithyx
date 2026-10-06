@@ -321,7 +321,7 @@ Logs (D305): every level also appears in the browser console. `info`, `warn` and
 - [x] A migration renames: `grants` (`app:files` becomes `app:org.pithyx.files`), `window_preferences`, `desktop_items`, `notifications.app` and the app ids in `desktop_layouts`. It takes a lower number than A10's migration. (Migration 0022; where a row already exists under the new id it wins. Shortcuts and layouts get a new version.)
 - [x] Old entries in `logs.db` keep their source; the Log Center filter knows both names. (The daemon lists a core app's sources once under its new id and a filter on it also finds the short source; the desktop names old entries after the app.)
 - [x] Also switched: `Permissions/Grant.cs` (becomes `Apps/CoreApps.cs`), `desktop/src/apps/registry.tsx`, `access.ts`, the i18n keys `apps.*`, the E2E tests. (The desktop takes the ids from `desktop/src/apps/ids.ts`; the names are `apps.org.pithyx.<name>`; the SDK demo is served at `/apps/org.pithyx.demo/`. The API takes only ids of D302 for app logs, app notifications, shortcuts and window preferences.)
-- [ ] Upgrade proven on 7484.
+- [x] Upgrade proven on 7484. (2026-10-06: 05ff771 deployed, `pithyx.db.pre-0022-20261006T200814Z.bak` kept, window preferences and the grants of `e2e-user` carry `org.pithyx.*`, the demo answers at `/apps/org.pithyx.demo/`.)
 
 #### A4 SDK API contract and rc.1 `[REVIEW]`
 
