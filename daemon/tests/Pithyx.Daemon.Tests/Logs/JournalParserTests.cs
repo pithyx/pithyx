@@ -71,4 +71,40 @@ public sealed class JournalParserTests
         Assert.Contains("_SYSTEMD_UNIT=smbd.service", next);
         Assert.DoesNotContain(next, argument => argument.Contains("pithyx", StringComparison.Ordinal));
     }
+
+    [Fact]
+    public void AppContainerLinesGoToTheAppWithStdoutAsInfoAndStderrAsWarn()
+    {
+        var entries = Lines("docker-app.jsonl").Select(JournalParser.Parse).ToList();
+
+        Assert.All(entries, entry =>
+        {
+            Assert.Equal("app/org.pithyx.spike", entry!.Source);
+            Assert.Equal("web", entry.Data!["service"]);
+            Assert.Equal("pithyx-org_pithyx_spike-web-1", entry.Data!["container"]);
+            Assert.False(entry.Data.ContainsKey("unit"));
+        });
+        Assert.All(entries.Where(entry => entry!.Message == "to-stderr"), entry => Assert.Equal(LogLevelName.Warn, entry!.Level));
+        Assert.All(entries.Where(entry => entry!.Message == "to-stdout"), entry => Assert.Equal(LogLevelName.Info, entry!.Level));
+    }
+
+    [Theory]
+    [InlineData("6", "{\"level\":\"debug\",\"msg\":\"x\"}", LogLevelName.Debug)]
+    [InlineData("6", "{\"level\":\"ERROR\",\"msg\":\"x\"}", LogLevelName.Error)]
+    [InlineData("3", "{\"level\":\"info\"}", LogLevelName.Info)]
+    [InlineData("3", "{\"level\":\"warning\"}", LogLevelName.Warn)]
+    [InlineData("3", "{\"level\":30}", LogLevelName.Warn)]
+    [InlineData("6", "{\"level\":\"verbose\"}", LogLevelName.Info)]
+    [InlineData("6", "{not json", LogLevelName.Info)]
+    [InlineData("3", "plain", LogLevelName.Warn)]
+    public void AJsonLevelWinsOverTheStream(string priority, string message, LogLevelName expected) =>
+        Assert.Equal(expected, JournalParser.AppLevelOf(priority, message));
+
+    [Fact]
+    public void OnlyDockerLinesWithAValidAppLabelAreAppLines()
+    {
+        var line = Lines("docker-app.jsonl")[0];
+        Assert.Equal("system/docker", JournalParser.Parse(line.Replace("\"org.pithyx.spike\"", "\"../etc\"", StringComparison.Ordinal))!.Source);
+        Assert.Equal("system/smbd", JournalParser.Parse(line.Replace("\"docker.service\"", "\"smbd.service\"", StringComparison.Ordinal))!.Source);
+    }
 }
