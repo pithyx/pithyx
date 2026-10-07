@@ -239,14 +239,14 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
 /// Publishes <c>apps</c>, <c>apps/admin</c> and every app's <c>apps/&lt;id&gt;/context</c> when the registry, the rights
 /// or the pools change.
 /// </summary>
-public sealed class AppChangePublisher(TopicHub hub, AppRegistry registry, AppContexts contexts, PermissionService permissions, PoolInventory pools) : IHostedService
+public sealed class AppChangePublisher(TopicHub hub, AppRegistry registry, AppContexts contexts, PermissionService permissions, PoolInventory pools, Proxy.AppBackends backends) : IHostedService
 {
-
     public Task StartAsync(CancellationToken cancellationToken)
     {
         registry.Changed += Publish;
         permissions.Changed += Publish;
         pools.Changed += Publish;
+        backends.Changed += PublishContext;
         return Task.CompletedTask;
     }
 
@@ -255,8 +255,12 @@ public sealed class AppChangePublisher(TopicHub hub, AppRegistry registry, AppCo
         registry.Changed -= Publish;
         permissions.Changed -= Publish;
         pools.Changed -= Publish;
+        backends.Changed -= PublishContext;
         return Task.CompletedTask;
     }
+
+    // A backend that starts or stops changes only its app's context.
+    private void PublishContext(string appId) => hub.Publish(AppContexts.TopicOf(appId), contexts.SourceOf(appId));
 
     private void Publish()
     {

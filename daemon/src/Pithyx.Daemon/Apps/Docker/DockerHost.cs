@@ -205,8 +205,7 @@ public sealed partial class DockerHost(
         var dataset = Dataset(pool);
         if (!pools.Current.Datasets.Any(candidate => candidate.Name == dataset))
         {
-            // Docker's layers are rebuilt from the packages and registries; snapshots of them would only take space.
-            await RunAsync(new CommandRequest("zfs", ["create", "-p", "-o", $"mountpoint=/{pool}/.pithyx/docker", "-o", "com.sun:auto-snapshot=false", dataset]), cancellationToken);
+            await RunAsync(Storage.Zfs.ZfsPlans.CreateDockerDataset(pool), cancellationToken);
             await state.RefreshPoolsAsync(cancellationToken);
         }
         return pools.Current.Datasets.FirstOrDefault(candidate => candidate.Name == dataset) is { Mounted: true, MountPoint: { } mountPoint }

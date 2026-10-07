@@ -21,6 +21,8 @@ Environment=DOTNET_CLI_TELEMETRY_OPTOUT=1
 ExecStart=/usr/bin/dotnet @REPO@/daemon/src/Pithyx.Daemon/bin/Release/net10.0/pithyxd.dll
 Restart=on-failure
 RestartSec=2
+# App containers get oom_score_adj 500 (D310): when memory runs out, the kernel ends them long before the daemon.
+OOMScoreAdjust=-900
 # 65: a newer daemon wrote the database (DaemonExitCode.DatabaseNewerThanDaemon); restarting cannot fix it.
 RestartPreventExitStatus=65
 

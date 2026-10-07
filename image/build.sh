@@ -104,6 +104,9 @@ packages=(
   intel-microcode amd64-microcode firmware-linux-free firmware-realtek
   # What the daemon needs (TODO.md, Image build v0.1).
   zfs-dkms zfsutils-linux samba openssh-server smartmontools acl
+  # App backends (D309): Debian's Docker, disabled until the daemon starts it for a backend app, and nftables for the
+  # rule that keeps containers away from the host's services.
+  docker.io docker-cli docker-compose nftables
   # Console, region and administration.
   locales console-setup keyboard-configuration kbd tzdata ca-certificates iproute2 iputils-ping qrencode
   inotify-tools less nano procps zstd

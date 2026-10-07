@@ -1945,7 +1945,7 @@ export type components = {
             backend: null | {
                 /** @description The endpoint names of the manifest, sorted. */
                 endpoints: string[];
-                /** @description `stopped` until the Docker runtime (A14) runs backends. */
+                /** @description `running` while the proxy reaches the backend, otherwise `stopped` (A14); the other states of the SDK come with the lifecycle (A15). */
                 status: string;
             };
             /**
