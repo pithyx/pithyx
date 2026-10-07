@@ -1,8 +1,19 @@
 # @pithyx/ui
 
-The React components and design tokens of the [Pithyx](https://github.com/pithyx/pithyx) desktop, for Pithyx apps. The system apps use them, and third-party apps can too, so every app looks and behaves like part of the desktop: keyboard, touch, screen readers and the light and dark themes included.
+[![npm](https://img.shields.io/npm/v/@pithyx/ui/next?label=npm%40next)](https://www.npmjs.com/package/@pithyx/ui)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
 
-> **Release candidate.** `1.0.0-rc.*` versions are published under the dist-tag `next`. The API may still change before `1.0.0`.
+> **Work in progress.** This is a release candidate. The components can still change before `1.0.0`, and the documentation and examples come with the first Pithyx release. Until then this page only says what the package is.
+
+The React components and design tokens of the [Pithyx](https://github.com/pithyx/pithyx) desktop, for Pithyx apps. The system apps use them, and third-party apps can too, so every app looks and behaves like part of the desktop.
+
+## What it covers
+
+- Buttons, text, password, code and search fields, checkboxes, switches, progress bars, badges, dialogs, menus and tooltips
+- Keyboard, touch and screen reader support, built on React Aria Components
+- The light and dark themes and the accent colors of the desktop
+- `tokens.css`, the design tokens, usable without React
+- Texts in English and German
 
 ## Install
 
@@ -10,38 +21,18 @@ The React components and design tokens of the [Pithyx](https://github.com/pithyx
 npm install @pithyx/ui@next react react-dom
 ```
 
-## Use
+`react` and `react-dom` 19 are peer dependencies.
 
-```tsx
-import '@pithyx/ui/tokens.css';
-import type { PithyxApp } from '@pithyx/sdk';
-import { Button, TextField, UiProvider } from '@pithyx/ui';
+## Related packages
 
-export function Rename({ app }: { app: PithyxApp }) {
-  return (
-    <UiProvider locale={app.context.locale}>
-      <TextField label="Name" />
-      <Button variant="primary">Save</Button>
-    </UiProvider>
-  );
-}
-```
-
-`UiProvider` sets the language of the few texts the components show themselves (English and German, English for any other language) and the locale for dates and numbers. The components take their colors, fonts and sizes from `tokens.css`, which follows the system's light or dark theme unless `<html data-theme="light|dark">` overrides it; `<html data-accent="...">` picks one of the accent presets. In a Pithyx app, `@pithyx/sdk` sets the desktop's own values as `--pithyx-*` properties as well.
-
-## Entry points
-
-| Import                  | What it is                                                                                                                                                         |
-| ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `@pithyx/ui`            | Button, IconButton, TextField, PasswordField, OtpField, SearchField, Checkbox, Switch, ProgressBar, Badge, Dialog, Menu, ContextMenuPopover, Tooltip, `UiProvider` |
-| `@pithyx/ui/native`     | The class names and texts for native elements without React Aria, for code that has to stay small                                                                  |
-| `@pithyx/ui/tokens.css` | The design tokens, usable without React                                                                                                                            |
-
-The components are built on [React Aria Components](https://react-spectrum.adobe.com/react-aria/); `react` and `react-dom` 19 are peer dependencies.
+| Package                                                    | What it is                                              |
+| ---------------------------------------------------------- | ------------------------------------------------------- |
+| [`@pithyx/sdk`](https://www.npmjs.com/package/@pithyx/sdk) | The API between an app and the Pithyx desktop           |
+| [`@pithyx/cli`](https://www.npmjs.com/package/@pithyx/cli) | The `pithyx` command: validate, pack and a mock desktop |
 
 ## Versions
 
-`@pithyx/sdk`, `@pithyx/ui` and `@pithyx/cli` share one SemVer line, separate from the Pithyx product version.
+`@pithyx/sdk`, `@pithyx/ui` and `@pithyx/cli` share one version line, separate from the Pithyx product version. Release candidates are published under the dist-tag `next`.
 
 ## License
 
