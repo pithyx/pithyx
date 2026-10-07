@@ -77,6 +77,7 @@ export function StoreApp({ app }: SdkAppProps) {
       />
     );
 
+  // Both views put the uninstall dialog second in a fragment, so it keeps its job when the removed app's page goes.
   if (current !== undefined) {
     return (
       <>
@@ -96,80 +97,82 @@ export function StoreApp({ app }: SdkAppProps) {
   }
 
   return (
-    <div className={styles.app}>
-      {visible.length > 1 && (
-        <div className={styles.tabs} role="tablist" aria-label={t('tabs.label')}>
-          {visible.map((entry) => (
-            <button
-              key={entry.id}
-              type="button"
-              role="tab"
-              className={styles.tab}
-              aria-selected={tab === entry.id}
-              onClick={() => {
-                setTab(entry.id);
+    <>
+      <div className={styles.app}>
+        {visible.length > 1 && (
+          <div className={styles.tabs} role="tablist" aria-label={t('tabs.label')}>
+            {visible.map((entry) => (
+              <button
+                key={entry.id}
+                type="button"
+                role="tab"
+                className={styles.tab}
+                aria-selected={tab === entry.id}
+                onClick={() => {
+                  setTab(entry.id);
+                }}
+              >
+                {t(`tabs.${entry.id}`)}
+              </button>
+            ))}
+          </div>
+        )}
+        <section className={styles.page} aria-labelledby="store-installed">
+          <header className={styles.pageHeader}>
+            <div className={styles.headerText}>
+              <h2 id="store-installed" className={styles.pageTitle}>
+                {t('installed.title')}
+              </h2>
+              <p className={styles.muted}>{t('installed.intro')}</p>
+              {installed.data?.pool != null && (
+                <p className={styles.muted}>{t('installed.pool', { pool: installed.data.pool })}</p>
+              )}
+            </div>
+            <Button
+              variant="primary"
+              onPress={() => {
+                setInstalling(true);
               }}
             >
-              {t(`tabs.${entry.id}`)}
-            </button>
-          ))}
-        </div>
-      )}
-      <section className={styles.page} aria-labelledby="store-installed">
-        <header className={styles.pageHeader}>
-          <div className={styles.headerText}>
-            <h2 id="store-installed" className={styles.pageTitle}>
-              {t('installed.title')}
-            </h2>
-            <p className={styles.muted}>{t('installed.intro')}</p>
-            {installed.data?.pool != null && (
-              <p className={styles.muted}>{t('installed.pool', { pool: installed.data.pool })}</p>
-            )}
-          </div>
-          <Button
-            variant="primary"
-            onPress={() => {
-              setInstalling(true);
+              <IconUpload size={16} stroke={1.75} aria-hidden />
+              {t('installed.installFromFile')}
+            </Button>
+          </header>
+          {installed.isPending && (
+            <p className={styles.loading} role="status">
+              {t('installed.loading')}
+            </p>
+          )}
+          {installed.isError && <ErrorNotice error={describeProblem(installed.error)} />}
+          {installed.data?.apps.length === 0 && (
+            <p className={styles.empty}>{t('installed.empty')}</p>
+          )}
+          {installed.data !== undefined && installed.data.apps.length > 0 && (
+            <ul className={styles.list}>
+              {installed.data.apps.map((entry) => (
+                <li key={entry.id}>
+                  <InstalledTile
+                    details={entry}
+                    onOpen={() => {
+                      setSelected(entry.id);
+                    }}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+        {installing && (
+          <InstallDialog
+            app={app}
+            onClose={() => {
+              setInstalling(false);
             }}
-          >
-            <IconUpload size={16} stroke={1.75} aria-hidden />
-            {t('installed.installFromFile')}
-          </Button>
-        </header>
-        {installed.isPending && (
-          <p className={styles.loading} role="status">
-            {t('installed.loading')}
-          </p>
+          />
         )}
-        {installed.isError && <ErrorNotice error={describeProblem(installed.error)} />}
-        {installed.data?.apps.length === 0 && (
-          <p className={styles.empty}>{t('installed.empty')}</p>
-        )}
-        {installed.data !== undefined && installed.data.apps.length > 0 && (
-          <ul className={styles.list}>
-            {installed.data.apps.map((entry) => (
-              <li key={entry.id}>
-                <InstalledTile
-                  details={entry}
-                  onOpen={() => {
-                    setSelected(entry.id);
-                  }}
-                />
-              </li>
-            ))}
-          </ul>
-        )}
-      </section>
+      </div>
       {uninstall}
-      {installing && (
-        <InstallDialog
-          app={app}
-          onClose={() => {
-            setInstalling(false);
-          }}
-        />
-      )}
-    </div>
+    </>
   );
 }
 
