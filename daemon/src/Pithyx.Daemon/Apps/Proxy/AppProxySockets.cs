@@ -8,9 +8,9 @@ namespace Pithyx.Daemon.Apps.Proxy;
 /// <summary>
 /// The WebSockets the proxy holds open to app backends, and their end when what opened them no longer holds: at once on
 /// a sign-out, a password reset, a deactivation or a deletion of the user (<see cref="TopicHub.CloseSession"/>,
-/// <see cref="TopicHub.CloseUser"/>), when the backend stops, and after every change of rights or apps (a revoked
-/// grant, a disabled or removed app) once <see cref="AppTokenCheck"/> says so; the session's expiry is checked every
-/// minute.
+/// <see cref="TopicHub.CloseUser"/>), and after every change of rights or apps (a revoked
+/// grant, a disabled or removed app) once <see cref="AppTokenCheck"/> says so, and when the backend stops or starts
+/// again at another address; the session's expiry is checked every minute.
 /// </summary>
 public sealed partial class AppProxySockets(
     AppTokenCheck check,
@@ -34,9 +34,14 @@ public sealed partial class AppProxySockets(
 
         public AppTokenGrant Grant { get; } = grant;
 
+        /// <summary>The backend address the socket goes to, once the proxy forwards it.</summary>
+        public Uri? Destination { get; set; }
+
         /// <summary>Cancelled when the socket must end; the forwarder stops copying.</summary>
         public CancellationToken Closing => _closing.Token;
 
+        // Runs inside sign-out and the other endpoints that end sessions: whatever a cancellation callback throws must
+        // not fail them.
         internal void Close()
         {
             try
@@ -46,6 +51,10 @@ public sealed partial class AppProxySockets(
             catch (ObjectDisposedException)
             {
                 return;
+            }
+            catch (AggregateException)
+            {
+                // A callback failed; the socket is aborted below all the same.
             }
             context.Abort();
         }
@@ -115,13 +124,17 @@ public sealed partial class AppProxySockets(
         }
     }
 
+    // One check per session, user and app, however many sockets they hold.
     private async Task CheckAllAsync(CancellationToken cancellationToken)
     {
-        foreach (var socket in _open.Values)
+        foreach (var holders in _open.Values.GroupBy(socket => (socket.Grant.SessionId, socket.Grant.UserId, socket.Grant.AppId)))
         {
-            if (await check.CheckAsync(socket.Grant, withGroups: false, cancellationToken) is null)
+            if (await check.CheckAsync(holders.First().Grant, withGroups: false, cancellationToken) is null)
             {
-                socket.Close();
+                foreach (var socket in holders)
+                {
+                    socket.Close();
+                }
             }
         }
     }
@@ -142,11 +155,16 @@ public sealed partial class AppProxySockets(
 
     private void CloseUser(string userId) => CloseWhere(grant => grant.UserId.ToString(CultureInfo.InvariantCulture) == userId);
 
+    // A stopped backend, or one that started again at another address, ends the sockets to the old one.
     private void CloseStopped(string appId)
     {
-        if (!backends.IsRunning(appId))
+        foreach (var socket in _open.Values.Where(socket => socket.Grant.AppId == appId))
         {
-            CloseWhere(grant => grant.AppId == appId);
+            var current = socket.Grant.Endpoint is { } endpoint ? backends.Find(appId, endpoint) : null;
+            if (current is null || (socket.Destination is { } destination && destination != current))
+            {
+                socket.Close();
+            }
         }
     }
 

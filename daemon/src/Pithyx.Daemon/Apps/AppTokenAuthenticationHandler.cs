@@ -2,7 +2,6 @@ using System.Globalization;
 using System.Security.Claims;
 using System.Text.Encodings.Web;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using Microsoft.Net.Http.Headers;
 using Pithyx.Daemon.Auth;
@@ -35,12 +34,11 @@ public sealed class AppTokenAuthenticationHandler(
 
     protected override async Task<AuthenticateResult> HandleAuthenticateAsync()
     {
-        var header = Request.Headers[HeaderNames.Authorization].ToString();
-        if (!header.StartsWith("Bearer ", StringComparison.Ordinal))
+        if (BearerToken(Request) is not { } token)
         {
             return AuthenticateResult.NoResult();
         }
-        if (tokens.Validate(header["Bearer ".Length..].Trim(), AppTokenKind.Host) is not { } grant)
+        if (tokens.Validate(token, AppTokenKind.Host) is not { } grant)
         {
             return AuthenticateResult.Fail("Unknown or expired app token");
         }
@@ -72,18 +70,17 @@ public sealed class AppTokenAuthenticationHandler(
             : throw new PithyxException(ErrorCodes.AppTokenInvalid);
     }
 
+    /// <summary>The bearer credential of a request, or null.</summary>
+    public static string? BearerToken(HttpRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var header = request.Headers[HeaderNames.Authorization].ToString();
+        return header.StartsWith("Bearer ", StringComparison.Ordinal) ? header["Bearer ".Length..].Trim() : null;
+    }
+
     protected override Task HandleChallengeAsync(AuthenticationProperties properties) =>
-        WriteProblemAsync(ErrorCodes.AppTokenInvalid).AsTask();
+        problemDetails.WriteProblemAsync(Context, ErrorCodes.AppTokenInvalid).AsTask();
 
     protected override Task HandleForbiddenAsync(AuthenticationProperties properties) =>
-        WriteProblemAsync(ErrorCodes.AuthPermissionDenied).AsTask();
-
-    private ValueTask<bool> WriteProblemAsync(string code)
-    {
-        var status = (int)ErrorCodes.StatusOf(code);
-        Response.StatusCode = status;
-        var problem = new ProblemDetails { Status = status };
-        problem.Extensions[ErrorHandling.CodeKey] = code;
-        return problemDetails.TryWriteAsync(new ProblemDetailsContext { HttpContext = Context, ProblemDetails = problem });
-    }
+        problemDetails.WriteProblemAsync(Context, ErrorCodes.AuthPermissionDenied).AsTask();
 }

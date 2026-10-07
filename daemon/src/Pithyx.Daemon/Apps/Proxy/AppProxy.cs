@@ -3,7 +3,6 @@ using System.Globalization;
 using System.Net;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Http.Features;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Net.Http.Headers;
 using Pithyx.Daemon.Errors;
 using Yarp.ReverseProxy.Forwarder;
@@ -20,7 +19,8 @@ namespace Pithyx.Daemon.Apps.Proxy;
 /// <c>pithyx-*</c> parameters, <c>Forwarded</c> and any incoming <c>X-Pithyx-*</c> or <c>X-Forwarded-*</c> header, plus
 /// the checked user (<c>X-Pithyx-User</c>, <c>-User-Id</c>, <c>-Groups</c>, <c>-Admin</c>), <c>traceparent</c> of the
 /// request's activity and where it came from (<c>X-Forwarded-Prefix</c>, <c>-For</c>, <c>-Host</c>, <c>-Proto</c>).
-/// Answers lose <c>Set-Cookie</c>, are readable from any origin, and carry the frontend's sandboxing policy, so a
+/// Answers lose the headers that act on the whole origin (<c>Set-Cookie</c>, <c>Clear-Site-Data</c>, HSTS and the like),
+/// are readable from any origin, and carry the frontend's sandboxing policy, so a
 /// backend page opened in a tab never runs in the desktop's origin. Placed before the frontend hosting, which answers
 /// every other path under <c>/apps/</c>.
 /// </summary>
@@ -69,40 +69,38 @@ public sealed partial class AppProxy(
             return;
         }
         var request = context.Request;
-        Sandbox(context.Response.Headers, registry.Find(match.AppId)?.HasInternet == true);
+        var app = registry.Find(match.AppId);
+        var internet = app?.HasInternet == true;
+        AppFrontendHosting.Sandbox(context.Response.Headers, internet);
         if (HttpMethods.IsOptions(request.Method) && request.Headers.ContainsKey(HeaderNames.AccessControlRequestMethod))
         {
             Preflight(context);
             return;
         }
         var upgrade = IsUpgrade(context);
-        AppTokenGrant? grant;
-        if (upgrade)
+        var grant = upgrade
+            ? tokens.RedeemTicket(request.Query[TicketParameter]) is { } ticket && ticket.Endpoint == match.Endpoint ? ticket : null
+            : tokens.Validate(AppTokenAuthenticationHandler.BearerToken(request) ?? request.Query[TokenParameter].FirstOrDefault(), AppTokenKind.Backend);
+        if (grant is null || grant.AppId != match.AppId)
         {
-            grant = tokens.RedeemTicket(request.Query[TicketParameter]);
-            if (grant?.Endpoint != match.Endpoint)
-            {
-                grant = null;
-            }
-        }
-        else
-        {
-            grant = tokens.Validate(BearerToken(request), AppTokenKind.Backend);
-        }
-        if (grant is null || grant.AppId != match.AppId
-            || await check.CheckAsync(grant, withGroups: true, context.RequestAborted) is not { } caller)
-        {
-            await ProblemAsync(context, ErrorCodes.AppTokenInvalid);
+            await problemDetails.WriteProblemAsync(context, ErrorCodes.AppTokenInvalid);
             return;
         }
-        if (registry.Find(match.AppId) is not { } app || !app.Endpoints.Contains(match.Endpoint))
+        // A socket is tracked before its check, so a sign-out while the check runs closes it as well.
+        using var socket = upgrade ? sockets.Open(grant, context) : null;
+        if (await check.CheckAsync(grant, withGroups: true, context.RequestAborted) is not { } caller || socket?.Closing.IsCancellationRequested == true)
         {
-            await ProblemAsync(context, ErrorCodes.RequestRouteNotFound);
+            await problemDetails.WriteProblemAsync(context, ErrorCodes.AppTokenInvalid);
+            return;
+        }
+        if (app is null || !app.HasEndpoint(match.Endpoint))
+        {
+            await problemDetails.WriteProblemAsync(context, ErrorCodes.RequestRouteNotFound);
             return;
         }
         if (backends.Find(match.AppId, match.Endpoint) is not { } destination)
         {
-            await ProblemAsync(context, ErrorCodes.AppBackendUnavailable);
+            await problemDetails.WriteProblemAsync(context, ErrorCodes.AppBackendUnavailable);
             return;
         }
         // The backend decides how large an upload may be.
@@ -110,22 +108,33 @@ public sealed partial class AppProxy(
         {
             limit.MaxRequestBodySize = null;
         }
-        var transformer = new Transformer(caller, match, app.HasInternet);
+        var transformer = new Transformer(caller, match, internet);
         ForwarderError error;
-        if (upgrade)
+        if (socket is not null)
         {
-            using var socket = sockets.Open(caller.Grant, context);
+            socket.Destination = destination;
             error = await forwarder.SendAsync(context, destination.AbsoluteUri, _client, _sockets, transformer, socket.Closing);
         }
         else
         {
             error = await forwarder.SendAsync(context, destination.AbsoluteUri, _client, _requests, transformer, context.RequestAborted);
         }
-        if (error != ForwarderError.None && !context.Response.HasStarted && !context.RequestAborted.IsCancellationRequested)
+        if (error == ForwarderError.None || context.Response.HasStarted || context.RequestAborted.IsCancellationRequested)
         {
-            context.Response.Clear();
-            Sandbox(context.Response.Headers, app.HasInternet);
-            await ProblemAsync(context, ErrorCodes.AppBackendUnavailable);
+            return;
+        }
+        // YARP answers the client's own failures (a broken body, a cancelled upload) with its status; only a backend that
+        // cannot be reached or does not answer is unavailable.
+        var status = context.Response.StatusCode;
+        context.Response.Clear();
+        AppFrontendHosting.Sandbox(context.Response.Headers, internet);
+        if (error is ForwarderError.Request or ForwarderError.RequestTimedOut or ForwarderError.ResponseHeaders or ForwarderError.UpgradeRequestDestination)
+        {
+            await problemDetails.WriteProblemAsync(context, ErrorCodes.AppBackendUnavailable);
+        }
+        else
+        {
+            context.Response.StatusCode = status;
         }
     }
 
@@ -174,26 +183,9 @@ public sealed partial class AppProxy(
         return kept.Count == 0 ? "" : "?" + string.Join('&', kept);
     }
 
-    /// <summary>
-    /// What every answer under <c>/apps/&lt;id&gt;/</c> carries (D303), the proxy's own included: the frontend's sandboxing
-    /// policy, <c>nosniff</c> and readable from the sandboxed window's opaque origin.
-    /// </summary>
-    private static void Sandbox(IHeaderDictionary headers, bool internet)
-    {
-        headers[HeaderNames.ContentSecurityPolicy] = AppFrontendHosting.ContentSecurityPolicy(internet);
-        headers[HeaderNames.XContentTypeOptions] = "nosniff";
-        headers[HeaderNames.AccessControlAllowOrigin] = "*";
-    }
-
     private static bool IsUpgrade(HttpContext context) =>
         context.Features.Get<IHttpUpgradeFeature>()?.IsUpgradableRequest == true
         || context.Features.Get<IHttpExtendedConnectFeature>()?.IsExtendedConnect == true;
-
-    private static string? BearerToken(HttpRequest request)
-    {
-        var header = request.Headers[HeaderNames.Authorization].ToString();
-        return header.StartsWith("Bearer ", StringComparison.Ordinal) ? header["Bearer ".Length..].Trim() : request.Query[TokenParameter].FirstOrDefault();
-    }
 
     private static void Preflight(HttpContext context)
     {
@@ -208,16 +200,6 @@ public sealed partial class AppProxy(
         headers[HeaderNames.AccessControlAllowMethods] = PreflightMethods;
         headers[HeaderNames.AccessControlAllowHeaders] = context.Request.Headers[HeaderNames.AccessControlRequestHeaders];
         headers[HeaderNames.AccessControlMaxAge] = "600";
-    }
-
-    private ValueTask<bool> ProblemAsync(HttpContext context, string code)
-    {
-        var status = (int)ErrorCodes.StatusOf(code);
-        context.Response.StatusCode = status;
-        context.Response.Headers[HeaderNames.CacheControl] = "no-store";
-        var problem = new ProblemDetails { Status = status };
-        problem.Extensions[ErrorHandling.CodeKey] = code;
-        return problemDetails.TryWriteAsync(new ProblemDetailsContext { HttpContext = context, ProblemDetails = problem });
     }
 
     [GeneratedRegex("^api(?:-(?<name>[a-z][a-z0-9-]{0,31}))?$", RegexOptions.CultureInvariant)]
@@ -255,11 +237,27 @@ public sealed partial class AppProxy(
         {
             var proceed = await base.TransformResponseAsync(httpContext, proxyResponse, cancellationToken);
             var headers = httpContext.Response.Headers;
-            headers.Remove(HeaderNames.SetCookie);
-            Sandbox(headers, internet);
+            foreach (var name in headers.Keys.Where(IsOriginWide).ToList())
+            {
+                headers.Remove(name);
+            }
+            AppFrontendHosting.Sandbox(headers, internet);
             headers[HeaderNames.AccessControlExposeHeaders] = "*";
             return proceed;
         }
+
+        // Answer headers that act on the whole box's origin, not on the one answer: cookies, wiping site data, HSTS (which
+        // would end the click-through on the default self-signed certificate), other protocols and reporting, CORS with
+        // credentials, and a page refresh.
+        private static readonly HashSet<string> _originWide = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Set-Cookie", "Set-Cookie2", "Clear-Site-Data", "Strict-Transport-Security", "Alt-Svc", "Refresh",
+            "Report-To", "Reporting-Endpoints", "NEL", "Public-Key-Pins", "Public-Key-Pins-Report-Only", "Expect-CT",
+            "Content-Security-Policy-Report-Only", "Origin-Agent-Cluster", "Service-Worker-Allowed",
+            "Access-Control-Allow-Credentials", "Access-Control-Allow-Methods", "Access-Control-Allow-Headers", "Access-Control-Max-Age",
+        };
+
+        private static bool IsOriginWide(string name) => _originWide.Contains(name);
 
         private static void Strip(System.Net.Http.Headers.HttpHeaders headers)
         {
@@ -274,6 +272,8 @@ public sealed partial class AppProxy(
             || name.Equals(HeaderNames.Authorization, StringComparison.OrdinalIgnoreCase)
             || name.Equals(HeaderNames.ProxyAuthorization, StringComparison.OrdinalIgnoreCase)
             || name.Equals("Forwarded", StringComparison.OrdinalIgnoreCase)
+            // A referrer may carry ?pithyx-token= of a page opened in a tab.
+            || name.Equals(HeaderNames.Referer, StringComparison.OrdinalIgnoreCase)
             || name.Equals("traceparent", StringComparison.OrdinalIgnoreCase)
             || name.Equals("tracestate", StringComparison.OrdinalIgnoreCase)
             || name.StartsWith("X-Pithyx-", StringComparison.OrdinalIgnoreCase)

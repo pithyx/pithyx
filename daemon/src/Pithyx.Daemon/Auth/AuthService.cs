@@ -152,24 +152,35 @@ public sealed class AuthService(SqliteConnectionFactory connections, PasswordHas
     /// <summary>As <see cref="SignedInAsync(long, CancellationToken)"/>, with the user's groups when <paramref name="withGroups"/> is set.</summary>
     public async Task<(UserInfo User, Permissions.EffectivePermissions Rights)?> SignedInAsync(long userId, bool withGroups, CancellationToken cancellationToken)
     {
-        if (await FindByIdAsync(userId, cancellationToken) is not { } user)
+        UserRow? user;
+        IReadOnlyList<GroupRef> groups = [];
+        await using (var connection = await connections.OpenAsync(cancellationToken))
         {
-            return null;
+            user = await connection.QuerySingleOrDefaultAsync<UserRow>(UserRow.Select + " WHERE id = @userId", new { userId });
+            if (user is null)
+            {
+                return null;
+            }
+            if (withGroups)
+            {
+                groups = await GroupsAsync(connection, userId);
+            }
         }
         var effective = await permissions.ForUserAsync(user.Id, cancellationToken);
-        return (withGroups ? Info(user, effective, await GroupsAsync(user.Id, cancellationToken)) : Info(user, effective, []), effective);
+        return (Info(user, effective, groups), effective);
     }
 
-    private async Task<IReadOnlyList<GroupRef>> GroupsAsync(long userId, CancellationToken cancellationToken)
-    {
-        await using var connection = await connections.OpenAsync(cancellationToken);
-        return [.. await connection.QueryAsync<GroupRef>(
+    private static async Task<IReadOnlyList<GroupRef>> GroupsAsync(System.Data.Common.DbConnection connection, long userId) =>
+        [.. await connection.QueryAsync<GroupRef>(
             "SELECT g.id AS Id, g.name AS Name FROM group_members m JOIN groups g ON g.id = m.group_id WHERE m.user_id = @userId ORDER BY g.name",
             new { userId })];
-    }
 
-    private async Task<UserInfo> InfoAsync(UserRow user, CancellationToken cancellationToken) =>
-        Info(user, await permissions.ForUserAsync(user.Id, cancellationToken), await GroupsAsync(user.Id, cancellationToken));
+    private async Task<UserInfo> InfoAsync(UserRow user, CancellationToken cancellationToken)
+    {
+        var effective = await permissions.ForUserAsync(user.Id, cancellationToken);
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        return Info(user, effective, await GroupsAsync(connection, user.Id));
+    }
 
     private static UserInfo Info(UserRow user, Permissions.EffectivePermissions effective, IReadOnlyList<GroupRef> groups) =>
         new(user.Id, user.Username, user.DisplayName, effective.IsAdmin, user.TotpEnabledAt is not null, Permissions.GrantService.Session(effective), groups);

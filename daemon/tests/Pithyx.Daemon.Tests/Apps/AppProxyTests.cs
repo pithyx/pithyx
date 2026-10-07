@@ -95,6 +95,10 @@ public sealed class AppProxyTests : IAsyncLifetime
             }
             context.Response.Headers.SetCookie = "session=evil; Path=/";
             context.Response.Headers.ContentSecurityPolicy = "default-src *";
+            context.Response.Headers["Clear-Site-Data"] = "\"cookies\", \"storage\"";
+            context.Response.Headers.StrictTransportSecurity = "max-age=31536000";
+            context.Response.Headers.AccessControlAllowCredentials = "true";
+            context.Response.Headers["X-Backend"] = name;
             await context.Response.WriteAsJsonAsync(new
             {
                 backend = name,
@@ -313,6 +317,7 @@ public sealed class AppProxyTests : IAsyncLifetime
             request.Headers.Add("Forwarded", "for=10.0.0.1");
             request.Headers.Add("traceparent", $"00-{trace}-00f067aa0ba902b7-01");
             request.Headers.Add("X-Custom", "kept");
+            request.Headers.Referrer = new Uri($"http://box/apps/{AppA}/api/page?pithyx-token={token}");
         });
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var echo = await response.JsonAsync();
@@ -331,14 +336,20 @@ public sealed class AppProxyTests : IAsyncLifetime
         var traceparent = headers.GetProperty("traceparent").GetString()!;
         Assert.StartsWith($"00-{trace}-", traceparent, StringComparison.Ordinal);
         Assert.DoesNotContain("00f067aa0ba902b7", traceparent, StringComparison.Ordinal);
-        foreach (var name in new[] { "cookie", "authorization", "forwarded" })
+        foreach (var name in new[] { "cookie", "authorization", "forwarded", "referer" })
         {
             Assert.False(headers.TryGetProperty(name, out _), name);
         }
         Assert.Equal(_api.Authority, headers.GetProperty("host").GetString());
 
-        // The answer sets no cookie on the box's origin, is readable by the sandboxed window and stays sandboxed in a tab.
-        Assert.False(response.Headers.Contains("Set-Cookie"));
+        // The answer acts on nothing beyond itself (no cookie, no wiping, no HSTS on the box's origin), is readable by the
+        // sandboxed window and stays sandboxed in a tab.
+        foreach (var name in new[] { "Set-Cookie", "Clear-Site-Data", "Strict-Transport-Security", "Access-Control-Allow-Credentials" })
+        {
+            Assert.False(response.Headers.Contains(name), name);
+        }
+        Assert.Equal("api", response.Headers.GetValues("X-Backend").Single());
+        Assert.Equal("no-referrer", response.Headers.GetValues("Referrer-Policy").Single());
         Assert.Equal("*", response.Headers.GetValues("Access-Control-Allow-Origin").Single());
         Assert.Equal("*", response.Headers.GetValues("Access-Control-Expose-Headers").Single());
         Assert.Equal(AppFrontendHosting.ContentSecurityPolicy(internet: false), response.Headers.GetValues("Content-Security-Policy").Single());
@@ -485,6 +496,14 @@ public sealed class AppProxyTests : IAsyncLifetime
         using (var socket = await OpenAsync(_admin))
         {
             Backends.SetStopped(AppA);
+            Assert.Null(await ReceiveAsync(socket));
+        }
+
+        // The backend starts again at another address.
+        Run(AppA);
+        using (var socket = await OpenAsync(_admin))
+        {
+            Backends.SetRunning(AppA, new Dictionary<string, Uri> { ["api"] = _metrics, ["metrics"] = _metrics });
             Assert.Null(await ReceiveAsync(socket));
         }
 
