@@ -388,6 +388,7 @@ Logs (D305): every level also appears in the browser console. `info`, `warn` and
 - [x] The per-user topic `apps/<id>/context` also serves as the window lease. (D319: `AppLeases.Holders`, `InUse` and `Changed` for A15.)
 - [x] The broker gets and renews tokens; the context grows to the list above. (`desktop/src/apps/sandbox/appApi.ts` and `appBroker.ts`; the user's groups come with `GET /api/auth/session`.)
 - [x] Done when the release blocker "App permissions on the daemon" holds without elevated rights, and D261 is closed.
+- [x] Upgrade proven on 7484. (2026-10-07: 2b135bf deployed, `pithyx.db.pre-0024-20261007T201020Z.bak` kept, migration 24 `app_storage` applied; as `e2e-admin` the probe lists `logLevel` `info`, `POST /api/apps/com.example.sdk-probe/tokens` gives a host token, `/api/app/storage/value` writes, reads and deletes a value with it, and the cookie alone gets 401 there.)
 
 #### A12 Store app and dynamic registry `[REVIEW]` on 7484 (after A10 and A7)
 
