@@ -19,6 +19,17 @@ public static class ErrorCodes
     public const string AppAppNotFound = "app.app.not_found";
 
     /// <summary>
+    /// The app has no backend endpoint of this name in its manifest (<c>backend.endpoints</c>), or no backend at all;
+    /// <c>params.endpoint</c> is the name asked for.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string AppBackendEndpointUnknown = "app.backend.endpoint_unknown";
+
+    /// <summary>The app declares no backend, so there is nothing a backend token could reach.</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string AppBackendMissing = "app.backend.missing";
+
+    /// <summary>
     /// The package declares a backend (containers). This version of Pithyx installs apps with a frontend only; backends
     /// arrive with the Docker runtime.
     /// </summary>
@@ -218,9 +229,27 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string AppPoolUnavailable = "app.pool.unavailable";
 
+    /// <summary>A key of an app's stored values is empty or longer than <c>params.maxLength</c> characters.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppStorageKeyInvalid = "app.storage.key_invalid";
+
+    /// <summary>
+    /// The app's manifest has no storage request of this id, or no administrator assigned a folder to it yet;
+    /// <c>params.storage</c> is the id asked for.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string AppStorageNotFound = "app.storage.not_found";
+
     /// <summary>A value an app stores is larger than its limit; <c>params.maxKb</c> is the limit.</summary>
     [ErrorStatus(HttpStatusCode.RequestEntityTooLarge)]
     public const string AppStorageTooLarge = "app.storage.too_large";
+
+    /// <summary>
+    /// A call of the daemon's API for apps without a valid app token: none, an unknown or expired one, one for something
+    /// else, or one whose session, user or app access ended. The desktop asks for a new token.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Unauthorized)]
+    public const string AppTokenInvalid = "app.token.invalid";
 
     /// <summary>An administrator deactivated the account; the password was right.</summary>
     [ErrorStatus(HttpStatusCode.Forbidden)]

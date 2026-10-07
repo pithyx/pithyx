@@ -254,6 +254,8 @@ if (!installer.Active)
     api.MapPowerEndpoint();
     api.MapBackupEndpoints();
     api.MapAppEndpoints();
+    api.MapAppTokenEndpoint();
+    api.MapAppApi();
     app.MapRealtime();
     app.MapWebDav();
 }

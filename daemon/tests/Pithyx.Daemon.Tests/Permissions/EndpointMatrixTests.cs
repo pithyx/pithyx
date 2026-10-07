@@ -24,6 +24,9 @@ public sealed partial class EndpointMatrixTests : IDisposable
         AnyUser,
         Power,
         Admin,
+
+        /// <summary>The daemon's API for apps: a host token only; a session cookie is refused for every role.</summary>
+        AppToken,
     }
 
     private static readonly Dictionary<string, Need> _table = new(StringComparer.Ordinal)
@@ -77,6 +80,23 @@ public sealed partial class EndpointMatrixTests : IDisposable
         ["GetThumbnail"] = Need.AnyUser,
         ["RenameFileEntry"] = Need.AnyUser,
         ["GetAppIcon"] = Need.AnyUser,
+        ["CreateAppToken"] = Need.AnyUser,
+
+        ["AppWriteLogs"] = Need.AppToken,
+        ["AppNotify"] = Need.AppToken,
+        ["AppListStorageKeys"] = Need.AppToken,
+        ["AppGetStorageValue"] = Need.AppToken,
+        ["AppSetStorageValue"] = Need.AppToken,
+        ["AppDeleteStorageValue"] = Need.AppToken,
+        ["AppListUsers"] = Need.AppToken,
+        ["AppListGroups"] = Need.AppToken,
+        ["AppListShares"] = Need.AppToken,
+        ["AppListFolder"] = Need.AppToken,
+        ["AppGetFileEntry"] = Need.AppToken,
+        ["AppReadFile"] = Need.AppToken,
+        ["AppWriteFile"] = Need.AppToken,
+        ["AppCreateFolder"] = Need.AppToken,
+        ["AppCreateTicket"] = Need.AppToken,
 
         ["PowerSystem"] = Need.Power,
 
@@ -164,6 +184,7 @@ public sealed partial class EndpointMatrixTests : IDisposable
             {
                 var policies = endpoint.Metadata.GetOrderedMetadata<IAuthorizeData>().Select(data => data.Policy).ToList();
                 var declared = endpoint.Metadata.GetMetadata<IAllowAnonymous>() is not null ? Need.Anonymous
+                    : policies.Contains(Pithyx.Daemon.Auth.Policies.AppToken) ? Need.AppToken
                     : policies.Contains(Pithyx.Daemon.Auth.Policies.Admin) ? Need.Admin
                     : policies.Contains(Pithyx.Daemon.Auth.Policies.Power) ? Need.Power
                     : Need.AnyUser;
@@ -205,11 +226,16 @@ public sealed partial class EndpointMatrixTests : IDisposable
             {
                 Expect(problems, name, "anonymous", await SendAsync(anonymous, method, path), HttpStatusCode.Unauthorized);
             }
-            foreach (var (role, userId, allowed) in new[] { ("plain user", plain, need == Need.AnyUser), ("power user", power, need is Need.AnyUser or Need.Power), ("administrator", admin, true) })
+            foreach (var (role, userId, allowed) in new[] { ("plain user", plain, need == Need.AnyUser), ("power user", power, need is Need.AnyUser or Need.Power), ("administrator", admin, need != Need.AppToken) })
             {
                 using var client = _factory.ClientWithCookie(await _factory.SessionCookieAsync(userId));
                 var status = await SendAsync(client, method, path);
-                if (allowed)
+                if (need == Need.AppToken)
+                {
+                    // A session cookie never authenticates the API for apps, not even an administrator's.
+                    Expect(problems, name, role, status, HttpStatusCode.Unauthorized);
+                }
+                else if (allowed)
                 {
                     // The right is there: whatever the answer (not found, a bad body), it is not a refusal of the caller.
                     if (status is HttpStatusCode.Unauthorized || (status == HttpStatusCode.Forbidden && need != Need.AnyUser))

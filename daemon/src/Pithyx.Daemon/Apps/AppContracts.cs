@@ -60,9 +60,6 @@ public sealed record AppPackagePreview(
 /// <param name="Access">Who may use the app after an install; an update keeps who may use it. Defaults to everybody.</param>
 public sealed record InstallAppRequest(string? Pool = null, AppAccess? Access = null);
 
-/// <param name="Enabled">False hides the app from everybody and stops serving its frontend; its data and grants stay.</param>
-public sealed record UpdateAppRequest(bool Enabled);
-
 /// <summary>An installed app as a user who may use it sees it (topic <c>apps</c>).</summary>
 /// <param name="Id">The app id.</param>
 /// <param name="Version">The installed version.</param>
@@ -99,6 +96,7 @@ public sealed record AppList(IReadOnlyList<AppSummary> Apps);
 /// <param name="UpdatedAt">The last install or update (UTC).</param>
 /// <param name="Busy">An install, update or removal runs.</param>
 /// <param name="Available">Its data is reachable: the app pool is imported, unlocked and mounted.</param>
+/// <param name="LogLevel">Whether its debug log entries reach the Log Center.</param>
 public sealed record AppDetails(
     string Id,
     string Version,
@@ -111,7 +109,8 @@ public sealed record AppDetails(
     DateTimeOffset InstalledAt,
     DateTimeOffset UpdatedAt,
     bool Busy,
-    bool Available);
+    bool Available,
+    AppLogLevel LogLevel);
 
 /// <param name="Permission">For example <c>notifications</c>.</param>
 /// <param name="Granted">False after an administrator revoked it.</param>

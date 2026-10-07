@@ -49,7 +49,7 @@ public static class BackupDatabase
         [BackupCategory.Storage] = ["snapshot_schedules", "storage_schedules"],
         [BackupCategory.System] = ["system_region"],
         [BackupCategory.Certificates] = [],
-        [BackupCategory.Apps] = ["apps", "app_permissions", "storage_mappings"],
+        [BackupCategory.Apps] = ["apps", "app_permissions", "storage_mappings", "app_storage"],
     }.ToFrozenDictionary();
 
     /// <summary>Rows of the <c>settings</c> table by category.</summary>
@@ -142,6 +142,19 @@ public static class BackupDatabase
                     DELETE FROM main.trash_items WHERE NOT EXISTS (SELECT 1 FROM main.shares s JOIN temp.restore_shares o ON o.id = s.id AND o.name = s.name WHERE s.id = trash_items.share_id);
                     UPDATE main.shares SET acl = NULL;
                     """,
+                    transaction: transaction);
+            }
+            if (apps)
+            {
+                // What apps stored for a user stays only with a user of the same id and name.
+                await connection.ExecuteAsync(
+                    "DELETE FROM main.app_storage WHERE NOT EXISTS (SELECT 1 FROM main.users u JOIN backup.users b ON b.id = u.id AND b.username = u.username WHERE u.id = app_storage.user_id)",
+                    transaction: transaction);
+            }
+            else if (users)
+            {
+                await connection.ExecuteAsync(
+                    "DELETE FROM main.app_storage WHERE NOT EXISTS (SELECT 1 FROM main.users u JOIN temp.restore_users o ON o.id = u.id AND o.username = u.username WHERE u.id = app_storage.user_id)",
                     transaction: transaction);
             }
             if (shares || apps)

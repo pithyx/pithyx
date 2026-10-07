@@ -20,7 +20,16 @@ public static class AppEndpoints
         services.AddSingleton<AppStorage>();
         services.AddSingleton<AppPackages>();
         services.AddSingleton<AppService>();
+        services.AddSingleton<AppTokens>();
+        services.AddSingleton<AppValueStore>();
+        services.AddSingleton<AppFiles>();
+        services.AddSingleton<AppContexts>();
+        services.AddSingleton(provider => provider.GetRequiredService<AppContexts>().Definition());
+        services.AddSingleton<AppLeases>();
+        services.AddHostedService(provider => provider.GetRequiredService<AppLeases>());
         services.AddHostedService<AppChangePublisher>();
+        services.AddAuthentication()
+            .AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, AppTokenAuthenticationHandler>(AppTokenAuthenticationHandler.SchemeName, null);
         return services;
     }
 
@@ -53,10 +62,10 @@ public static class AppEndpoints
             .WithName("InstallAppPackage")
             .WithDescription("Administrators only. Installs or updates the app from an uploaded package as a job and answers 202 with it. The first app needs pool, the pool for every app's data; access (everybody by default) decides who may use a newly installed app. An update takes a snapshot of the app's dataset first and returns to it when a step fails.");
         apps.MapPatch("/{appId}", async Task<Ok<AppDetails>> (string appId, UpdateAppRequest request, AppService service, HttpContext context, CancellationToken cancellationToken) =>
-                TypedResults.Ok(await service.SetEnabledAsync(context.User, appId, request, cancellationToken)))
+                TypedResults.Ok(await service.UpdateAsync(context.User, appId, request, cancellationToken)))
             .RequireAuthorization(Policies.Admin)
             .WithName("UpdateApp")
-            .WithDescription("Administrators only. Enables or disables an app. A disabled app keeps its data and grants, but nobody can open it and its frontend is not served.");
+            .WithDescription("Administrators only. Enables or disables an app, switches its debug logging (logLevel) and grants or revokes permissions of its manifest (permissions, by name; request.body.invalid for one the manifest does not ask for). Fields left out stay. A disabled app keeps its data and grants, but nobody can open it, its frontend is not served and its tokens end. A revoked permission applies to the app's next call, and its windows learn it from the topic apps/<id>/context.");
         apps.MapDelete("/{appId}", UninstallAsync)
             .RequireAuthorization(Policies.Admin)
             .WithName("UninstallApp")

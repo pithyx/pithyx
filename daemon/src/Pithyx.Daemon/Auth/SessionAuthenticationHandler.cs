@@ -31,7 +31,7 @@ public sealed class SessionAuthenticationHandler(
             return AuthenticateResult.NoResult();
         }
         var userId = await sessions.ValidateAsync(token, Context.RequestAborted);
-        var user = userId is null ? null : await auth.GetUserAsync(userId.Value, Context.RequestAborted);
+        var user = userId is null ? null : (await auth.SignedInAsync(userId.Value, Context.RequestAborted))?.User;
         // Rights are resolved for every request, so a user who lost the desktop login right is out at the next one.
         if (user is null || !user.Permissions.Rights.Contains(Permissions.Resources.DesktopLogin))
         {

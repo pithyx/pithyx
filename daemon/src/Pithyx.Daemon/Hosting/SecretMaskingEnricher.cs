@@ -4,7 +4,11 @@ using Serilog.Events;
 
 namespace Pithyx.Daemon.Hosting;
 
-/// <summary>Replaces the values of log properties whose names look like secrets, at any nesting depth.</summary>
+/// <summary>
+/// Replaces the values of log properties whose names look like secrets, at any nesting depth, and inside any text the
+/// app tokens and tickets of D303 wherever they appear: <c>pithyx-token=</c> and <c>pithyx-ticket=</c> in a URL, and
+/// bearer credentials.
+/// </summary>
 public sealed partial class SecretMaskingEnricher : ILogEventEnricher
 {
     public const string Mask = "***";
@@ -49,11 +53,22 @@ public sealed partial class SecretMaskingEnricher : ILogEventEnricher
                 return items.Zip(sequence.Elements).All(pair => ReferenceEquals(pair.First, pair.Second))
                     ? value
                     : new SequenceValue(items);
+            case ScalarValue { Value: string text } when CarriesCredential(text):
+                return new ScalarValue(MaskCredentials(text));
             default:
                 return value;
         }
     }
 
+    /// <summary>Whether a text holds an app token, a ticket or a bearer credential.</summary>
+    public static bool CarriesCredential(string text) => Credential().IsMatch(text);
+
+    /// <summary>The text with every app token, ticket and bearer credential replaced by <see cref="Mask"/>.</summary>
+    public static string MaskCredentials(string text) => Credential().Replace(text, match => match.Groups["name"].Value + Mask);
+
     [GeneratedRegex("password|passphrase|secret|token|cookie|authorization|recovery_?key|totp", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
     private static partial Regex SensitiveName();
+
+    [GeneratedRegex(@"(?<name>pithyx-(?:token|ticket)=|bearer\s+)[^\s&""',;]+", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex Credential();
 }

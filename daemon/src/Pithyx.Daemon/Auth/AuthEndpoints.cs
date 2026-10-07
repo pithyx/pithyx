@@ -118,12 +118,13 @@ public static class AuthEndpoints
         return TypedResults.Ok(new RecoverResponse(recoveryKey));
     }
 
-    private static async Task<NoContent> LogoutAsync(SessionService sessions, TopicHub hub, HttpContext context, CancellationToken cancellationToken)
+    private static async Task<NoContent> LogoutAsync(SessionService sessions, TopicHub hub, Apps.AppTokens appTokens, HttpContext context, CancellationToken cancellationToken)
     {
         if (context.Request.Cookies.TryGetValue(SessionService.CookieName, out var token) && !string.IsNullOrEmpty(token))
         {
             await sessions.DeleteAsync(token, cancellationToken);
             hub.CloseSession(SessionService.IdOf(token));
+            appTokens.RevokeSession(SessionService.IdOf(token));
         }
         context.Response.Cookies.Delete(SessionService.CookieName, SessionService.CookieOptions(Secure(context), null));
         return TypedResults.NoContent();

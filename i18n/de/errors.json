@@ -5,6 +5,8 @@
       "not_found": "Es ist keine App mit der ID {id} installiert."
     },
     "backend": {
+      "endpoint_unknown": "Die App hat keinen Backend-Endpunkt namens {endpoint}.",
+      "missing": "Die App hat kein Backend.",
       "unsupported": "Die App hat ein Backend mit Containern. Diese Version von Pithyx installiert nur Apps ohne Backend."
     },
     "compose": {
@@ -49,7 +51,12 @@
       "unavailable": "Der Pool {pool} kann gerade keine Apps aufnehmen: {reason, select, missing {er ist nicht importiert} offline {er ist nicht online} read_only {er ist schreibgeschützt} locked {er ist gesperrt} not_prepared {er wurde nicht von Pithyx eingerichtet} other {er ist nicht verfügbar}}."
     },
     "storage": {
+      "key_invalid": "Die App hat einen Schlüssel benutzt, der leer oder länger als {maxLength} Zeichen ist.",
+      "not_found": "Den Speicher {storage} der App gibt es nicht, oder ihm ist noch kein Ordner zugewiesen.",
       "too_large": "Die App wollte mehr speichern, als sie behalten darf. Die Grenze liegt bei {maxKb} KB."
+    },
+    "token": {
+      "invalid": "Der Zugang der App ist abgelaufen. Schließ die App und öffne sie erneut."
     }
   },
   "auth": {

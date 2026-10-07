@@ -17,6 +17,9 @@ namespace Pithyx.Daemon.Realtime;
 /// Turns the shared state into what one user sees (for example with the user's own flags); applied to snapshots and
 /// events. Null skips that user: per-user topics publish one user's change and every other subscriber gets nothing.
 /// </param>
+/// <param name="ExactOnly">
+/// Only a subscription to the concrete topic takes it, never a wildcard, so no pattern lists which topics exist.
+/// </param>
 public sealed record TopicDefinition(
     string Pattern,
     Type SnapshotType,
@@ -25,7 +28,8 @@ public sealed record TopicDefinition(
     Func<ClaimsPrincipal, string, bool> IsAllowed,
     TimeSpan? MinInterval = null,
     Func<IEnumerable<string>>? CurrentTopics = null,
-    Func<ClaimsPrincipal, object, object?>? ForUser = null)
+    Func<ClaimsPrincipal, object, object?>? ForUser = null,
+    bool ExactOnly = false)
 {
     public IEnumerable<string> ExistingTopics() => CurrentTopics?.Invoke() ?? [Pattern];
 
