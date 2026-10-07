@@ -31,7 +31,8 @@ public sealed class ComposeRewriterTests
                 mapping => new StorageMapping(
                     mapping.Value.GetProperty("hostPath").GetString()!,
                     mapping.Value.GetProperty("readOnly").GetBoolean(),
-                    mapping.Value.GetProperty("gid").ValueKind == JsonValueKind.Number ? mapping.Value.GetProperty("gid").GetInt32() : null))));
+                    mapping.Value.GetProperty("gid").ValueKind == JsonValueKind.Number ? mapping.Value.GetProperty("gid").GetInt32() : null)),
+            host.TryGetProperty("internetBridgeName", out var internet) ? internet.GetString() : null));
     }
 
     [Theory]

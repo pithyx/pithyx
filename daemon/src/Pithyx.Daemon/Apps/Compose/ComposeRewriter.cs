@@ -17,12 +17,17 @@ public sealed record StorageMapping(string HostPath, bool ReadOnly, int? Gid);
 /// <param name="BridgeName">The Linux bridge of the app's network, <c>px-&lt;n&gt;</c> (D309).</param>
 /// <param name="ImageIds">Each image reference of the Compose file and the id (<c>sha256:</c> config digest) the box checked against <c>images.lock.json</c>.</param>
 /// <param name="Storage">The mapped storage requests by id; an optional one may be missing.</param>
+/// <param name="InternetBridgeName">
+/// For an app holding <c>network.internet</c>: the bridge of a second network that is not internal (<c>px-i&lt;n&gt;</c>), which
+/// every service on the app's network joins as well; null keeps the backend without a way out.
+/// </param>
 public sealed record ComposeHost(
     int Uid,
     string AppDirectory,
     string BridgeName,
     IReadOnlyDictionary<string, string> ImageIds,
-    IReadOnlyDictionary<string, StorageMapping> Storage);
+    IReadOnlyDictionary<string, StorageMapping> Storage,
+    string? InternetBridgeName = null);
 
 /// <summary>
 /// Turns a Compose file that <see cref="ComposeValidator"/> accepted into the file the box runs (D310), as JSON (which
@@ -38,6 +43,9 @@ public static class ComposeRewriter
 
     /// <summary>The name of the app's internal network inside the file.</summary>
     public const string NetworkKey = "app";
+
+    /// <summary>The name of the network with a way out, for an app holding <c>network.internet</c>.</summary>
+    public const string InternetKey = "internet";
 
     private static readonly JsonWriterOptions _writerOptions = new()
     {
@@ -75,25 +83,34 @@ public static class ComposeRewriter
             {
                 writer.WritePropertyName("networks");
                 writer.WriteStartObject();
-                writer.WritePropertyName(NetworkKey);
-                writer.WriteStartObject();
-                writer.WriteString("name", ProjectName(appId));
-                writer.WriteString("driver", "bridge");
-                writer.WriteBoolean("internal", true);
-                writer.WritePropertyName("driver_opts");
-                writer.WriteStartObject();
-                writer.WriteString("com.docker.network.bridge.name", Escape(host.BridgeName));
-                writer.WriteEndObject();
-                writer.WritePropertyName("labels");
-                writer.WriteStartObject();
-                writer.WriteString("com.pithyx.app", appId);
-                writer.WriteEndObject();
-                writer.WriteEndObject();
+                Network(writer, NetworkKey, ProjectName(appId), host.BridgeName, appId, isInternal: true);
+                if (host.InternetBridgeName is { } internet)
+                {
+                    Network(writer, InternetKey, ProjectName(appId) + "-internet", internet, appId, isInternal: false);
+                }
                 writer.WriteEndObject();
             }
             writer.WriteEndObject();
         }
         return Encoding.UTF8.GetString(buffer.ToArray()) + "\n";
+    }
+
+    private static void Network(Utf8JsonWriter writer, string key, string name, string bridge, string appId, bool isInternal)
+    {
+        writer.WritePropertyName(key);
+        writer.WriteStartObject();
+        writer.WriteString("name", name);
+        writer.WriteString("driver", "bridge");
+        writer.WriteBoolean("internal", isInternal);
+        writer.WritePropertyName("driver_opts");
+        writer.WriteStartObject();
+        writer.WriteString("com.docker.network.bridge.name", Escape(bridge));
+        writer.WriteEndObject();
+        writer.WritePropertyName("labels");
+        writer.WriteStartObject();
+        writer.WriteString("com.pithyx.app", appId);
+        writer.WriteEndObject();
+        writer.WriteEndObject();
     }
 
     private sealed record StorageRequest(bool ReadOnly, StorageMapping? Mapping);
@@ -176,6 +193,10 @@ public static class ComposeRewriter
             writer.WritePropertyName("networks");
             writer.WriteStartArray();
             writer.WriteStringValue(NetworkKey);
+            if (host.InternetBridgeName is not null)
+            {
+                writer.WriteStringValue(InternetKey);
+            }
             writer.WriteEndArray();
         }
         writer.WriteString("restart", "no");

@@ -51,8 +51,8 @@ public static class ErrorCodes
     public const string AppBackendUnavailable = "app.backend.unavailable";
 
     /// <summary>
-    /// The package declares a backend (containers). This version of Pithyx installs apps with a frontend only; backends
-    /// arrive with the Docker runtime.
+    /// The package declares a backend (containers) and this box installs apps with a frontend only. Pithyx 0.1 runs
+    /// backends (A14) and no longer answers with it; the code stays, as every published code does.
     /// </summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string AppBackendUnsupported = "app.backend.unsupported";
