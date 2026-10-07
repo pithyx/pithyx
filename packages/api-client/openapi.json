@@ -4697,6 +4697,304 @@
         }
       }
     },
+    "/api/apps/{appId}/permissions": {
+      "put": {
+        "tags": [
+          "Apps"
+        ],
+        "description": "Administrators only. Grants or revokes permissions the app's manifest asks for (app.permission.not_requested for any other); the listed ones change, the others stay. A revoked permission stays revoked across updates. Users' windows of the app learn it with their next token (A11).",
+        "operationId": "SetAppPermissions",
+        "parameters": [
+          {
+            "name": "appId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppPermissionsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/apps/{appId}/storage/{storageId}": {
+      "put": {
+        "tags": [
+          "Apps"
+        ],
+        "description": "Administrators only. Maps an existing folder of a shared folder to a storage request of the app's manifest, replacing an earlier mapping: read-only, or read and write when the request asks for it (app.mapping.invalid otherwise). The folder keeps its rights, snapshots and backups and survives an uninstall (D314).",
+        "operationId": "MapAppStorage",
+        "parameters": [
+          {
+            "name": "appId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "storageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppStorageMappingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Apps"
+        ],
+        "description": "Administrators only. Removes the folder mapped to a storage request of the app; the folder itself stays.",
+        "operationId": "UnmapAppStorage",
+        "parameters": [
+          {
+            "name": "appId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "storageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/apps/{appId}/log-level": {
+      "put": {
+        "tags": [
+          "Apps"
+        ],
+        "description": "Administrators only. Switches the app's debug log entries on (debug) or off (info, the default); info, warn and error always reach the Log Center (D305). The topic apps carries the level to the app's windows.",
+        "operationId": "SetAppLogLevel",
+        "parameters": [
+          {
+            "name": "appId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppLogLevelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/apps/{appId}/grants": {
+      "get": {
+        "tags": [
+          "Apps"
+        ],
+        "description": "Administrators only. Who may use an installed third-party app: the grants of users and groups on app:<id> (the built-in group users stands for everybody) and every user's result.",
+        "operationId": "GetAppGrants",
+        "parameters": [
+          {
+            "name": "appId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppGrants"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Apps"
+        ],
+        "description": "Administrators only. Replaces the grants of users and groups on the app, each with level allow; without any, only administrators use it. Applies at once and is pushed to the users' desktops.",
+        "operationId": "SetAppGrants",
+        "parameters": [
+          {
+            "name": "appId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppGrantsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppGrants"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/apps/{appId}/icon": {
       "get": {
         "tags": [
@@ -4830,9 +5128,9 @@
       "AppAccess": {
         "enum": [
           "everybody",
-          "admins",
-          null
-        ]
+          "admins"
+        ],
+        "description": "Who may use an app after its first install (D304): everybody (a grant to the built-in group) or administrators only."
       },
       "AppDetails": {
         "required": [
@@ -4847,7 +5145,9 @@
           "installedAt",
           "updatedAt",
           "busy",
-          "available"
+          "available",
+          "logLevel",
+          "storage"
         ],
         "type": "object",
         "properties": {
@@ -4904,9 +5204,59 @@
           "available": {
             "type": "boolean",
             "description": "Its data is reachable: the app pool is imported, unlocked and mounted."
+          },
+          "logLevel": {
+            "description": "Whether its debug log entries reach the daemon.",
+            "$ref": "#/components/schemas/AppLogLevel"
+          },
+          "storage": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppStorageMapping"
+            },
+            "description": "The folders mapped to the storage requests of its manifest; a request without one is not mapped."
           }
         },
         "description": "An installed app for administrators (topic `apps/admin` and `GET /api/apps`)."
+      },
+      "AppGrants": {
+        "required": [
+          "grants",
+          "users"
+        ],
+        "type": "object",
+        "properties": {
+          "grants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubjectGrant"
+            },
+            "description": "The grants of users and groups on it (level `allow`); the editor changes these. The built-in group `users` stands for everybody."
+          },
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppUserAccess"
+            },
+            "description": "Every user with whether it may use the app in the end, administrators and deactivated users included."
+          }
+        },
+        "description": "Who may use an app. Administrators only."
+      },
+      "AppGrantsRequest": {
+        "required": [
+          "grants"
+        ],
+        "type": "object",
+        "properties": {
+          "grants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubjectGrant"
+            },
+            "description": "Every grant on the app the users and groups should have (level `allow`); the others go."
+          }
+        }
       },
       "AppList": {
         "required": [
@@ -4925,7 +5275,8 @@
                 "entry",
                 "icon",
                 "window",
-                "permissions"
+                "permissions",
+                "logLevel"
               ],
               "type": "object",
               "properties": {
@@ -4969,6 +5320,13 @@
                     "type": "string"
                   },
                   "description": "The permissions the app holds: those of its manifest that no administrator revoked."
+                },
+                "logLevel": {
+                  "enum": [
+                    "info",
+                    "debug"
+                  ],
+                  "description": "Whether an app's `debug` log entries reach the daemon (D305); `info`, `warn` and `error` always do."
                 }
               },
               "description": "An installed app as a user who may use it sees it (topic `apps`)."
@@ -5017,6 +5375,25 @@
               "type": "string"
             },
             "description": "At most 20 fields of at most 1000 characters each."
+          }
+        }
+      },
+      "AppLogLevel": {
+        "enum": [
+          "info",
+          "debug"
+        ],
+        "description": "Whether an app's `debug` log entries reach the daemon (D305); `info`, `warn` and `error` always do."
+      },
+      "AppLogLevelRequest": {
+        "required": [
+          "level"
+        ],
+        "type": "object",
+        "properties": {
+          "level": {
+            "description": "Whether the app's debug log entries reach the daemon.",
+            "$ref": "#/components/schemas/AppLogLevel"
           }
         }
       },
@@ -5099,7 +5476,8 @@
           "fileCount",
           "unpackedBytes",
           "packageBytes",
-          "sha256"
+          "sha256",
+          "suggestedAccess"
         ],
         "type": "object",
         "properties": {
@@ -5174,6 +5552,10 @@
           "sha256": {
             "type": "string",
             "description": "SHA-256 of the package file, lowercase hex."
+          },
+          "suggestedAccess": {
+            "description": "Who should use the app after an install (D304): administrators only when it asks for elevated rights, root in a container or `directory.read`, everybody otherwise. An install without access takes it.",
+            "$ref": "#/components/schemas/AppAccess"
           }
         },
         "description": "A checked package, kept for 15 minutes for its installation by the administrator who uploaded it."
@@ -5194,6 +5576,124 @@
             "description": "False after an administrator revoked it."
           }
         }
+      },
+      "AppPermissionsRequest": {
+        "required": [
+          "permissions"
+        ],
+        "type": "object",
+        "properties": {
+          "permissions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppPermissionState"
+            },
+            "description": "Permissions of the app's manifest with whether the app keeps them; the others stay as they are."
+          }
+        }
+      },
+      "AppStorageAccess": {
+        "enum": [
+          "read",
+          "readWrite"
+        ],
+        "description": "How an app may use a folder mapped to one of its storage requests."
+      },
+      "AppStorageMapping": {
+        "required": [
+          "storageId",
+          "shareId",
+          "path",
+          "access"
+        ],
+        "type": "object",
+        "properties": {
+          "storageId": {
+            "type": "string",
+            "description": "The id of the request in the manifest."
+          },
+          "shareId": {
+            "type": "integer",
+            "description": "The shared folder.",
+            "format": "int64"
+          },
+          "path": {
+            "type": "string",
+            "description": "The folder relative to the shared folder's root, empty for the root itself."
+          },
+          "access": {
+            "description": "Read-only, or read and write when the request asks for it.",
+            "$ref": "#/components/schemas/AppStorageAccess"
+          }
+        },
+        "description": "A folder in a shared folder that an administrator mapped to one storage request of an app."
+      },
+      "AppStorageMappingRequest": {
+        "required": [
+          "shareId",
+          "access"
+        ],
+        "type": "object",
+        "properties": {
+          "shareId": {
+            "type": "integer",
+            "description": "The shared folder.",
+            "format": "int64"
+          },
+          "access": {
+            "description": "Read-only, or read and write when the storage request asks for it.",
+            "$ref": "#/components/schemas/AppStorageAccess"
+          },
+          "path": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "An existing folder in it, relative to its root; empty or missing for the root."
+          }
+        }
+      },
+      "AppUserAccess": {
+        "required": [
+          "userId",
+          "username",
+          "displayName",
+          "administrator",
+          "disabled",
+          "allowed"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "description": "The user's id.",
+            "format": "int64"
+          },
+          "username": {
+            "type": "string",
+            "description": "Login name."
+          },
+          "displayName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Name shown, if set."
+          },
+          "administrator": {
+            "type": "boolean",
+            "description": "Administrators use every app."
+          },
+          "disabled": {
+            "type": "boolean",
+            "description": "Deactivated users use none."
+          },
+          "allowed": {
+            "type": "boolean",
+            "description": "Whether the user may use the app: by its own grant, one of its groups', or as an administrator."
+          }
+        },
+        "description": "One user's effective access to an app."
       },
       "Appearance": {
         "required": [
@@ -6094,11 +6594,13 @@
           "app.manifest.sdk_invalid",
           "app.manifest.version_unsupported",
           "app.manifest.window_size_invalid",
+          "app.mapping.invalid",
           "app.package.invalid",
           "app.package.layout_invalid",
           "app.package.not_found",
           "app.package.too_large",
           "app.permission.denied",
+          "app.permission.not_requested",
           "app.pool.fixed",
           "app.pool.required",
           "app.pool.unavailable",
@@ -7225,7 +7727,7 @@
                 "type": "null"
               },
               {
-                "description": "Who may use the app after an install; an update keeps who may use it. Defaults to everybody.",
+                "description": "Who may use the app after an install; an update keeps who may use it. Defaults to the preview's suggested access.",
                 "$ref": "#/components/schemas/AppAccess"
               }
             ]

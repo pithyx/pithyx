@@ -142,6 +142,70 @@ public sealed class GrantService(SqliteConnectionFactory connections, Permission
         return await ShareGrantsAsync(caller, shareId, cancellationToken);
     }
 
+    /// <summary>Who may use a third-party app: the grants of users and groups on <c>app:&lt;id&gt;</c>, and every user's result.</summary>
+    public async Task<AppGrants> AppGrantsAsync(ClaimsPrincipal caller, string appId, CancellationToken cancellationToken)
+    {
+        RequireAdmin(caller);
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        await RequireAppAsync(connection, null, appId);
+        var resource = Resources.App(appId);
+        var grants = await connection.QueryAsync<(string SubjectKind, long SubjectId)>(
+            "SELECT subject_kind, subject_id FROM grants WHERE resource = @resource AND subject_kind <> 'app' ORDER BY subject_kind, subject_id",
+            new { resource });
+        var users = await connection.QueryAsync<(long Id, string Username, string? DisplayName)>("SELECT id, username, display_name FROM users ORDER BY username");
+        var effective = (await PermissionService.AllUsersAsync(connection, null)).ToDictionary(user => user.Id);
+        return new AppGrants(
+            [.. grants.Select(grant => new SubjectGrant(grant.SubjectKind == "group" ? SubjectKind.Group : SubjectKind.User, grant.SubjectId, GrantLevel.Allow))],
+            [.. users.Select(user =>
+            {
+                var rights = effective[user.Id];
+                return new AppUserAccess(user.Id, user.Username, user.DisplayName, rights.Permissions.IsAdmin, rights.Disabled, !rights.Disabled && rights.Permissions.Has(resource));
+            })]);
+    }
+
+    /// <summary>Replaces who may use a third-party app; a grant to the built-in group <c>users</c> gives it to everybody.</summary>
+    public async Task<AppGrants> ReplaceAppGrantsAsync(ClaimsPrincipal caller, string appId, AppGrantsRequest request, CancellationToken cancellationToken)
+    {
+        RequireAdmin(caller);
+        ArgumentNullException.ThrowIfNull(request);
+        var resource = Resources.App(appId);
+        await using (var connection = await connections.OpenAsync(cancellationToken))
+        await using (var transaction = await connection.BeginTransactionAsync(cancellationToken))
+        {
+            await RequireAppAsync(connection, transaction, appId);
+            var seen = new HashSet<(SubjectKind, long)>();
+            foreach (var grant in request.Grants ?? [])
+            {
+                if (grant is null || grant.SubjectKind == SubjectKind.App || grant.Level != GrantLevel.Allow || !seen.Add((grant.SubjectKind, grant.SubjectId)))
+                {
+                    throw Invalid(resource);
+                }
+                if (grant.SubjectKind == SubjectKind.User)
+                {
+                    if (await connection.ExecuteScalarAsync<long>("SELECT count(*) FROM users WHERE id = @id", new { id = grant.SubjectId }, transaction) == 0)
+                    {
+                        throw new PithyxException(ErrorCodes.UsersUserNotFound);
+                    }
+                }
+                else
+                {
+                    await RequireGroupAsync(connection, transaction, grant.SubjectId);
+                }
+            }
+            await connection.ExecuteAsync("DELETE FROM grants WHERE resource = @resource AND subject_kind <> 'app'", new { resource }, transaction);
+            foreach (var grant in request.Grants ?? [])
+            {
+                await connection.ExecuteAsync(
+                    "INSERT INTO grants (subject_kind, subject_id, resource, level) VALUES (@kind, @id, @resource, 'allow')",
+                    new { kind = PermissionService.KindText(grant.SubjectKind), id = grant.SubjectId, resource },
+                    transaction);
+            }
+            await transaction.CommitAsync(cancellationToken);
+        }
+        permissions.Invalidate();
+        return await AppGrantsAsync(caller, appId, cancellationToken);
+    }
+
     /// <summary>The desktop's view of effective rights: which rights, protocols and apps.</summary>
     public static SessionPermissions Session(EffectivePermissions effective)
     {
@@ -217,6 +281,16 @@ public sealed class GrantService(SqliteConnectionFactory connections, Permission
         if (await connection.ExecuteScalarAsync<long>("SELECT count(*) FROM groups WHERE id = @groupId", new { groupId }, transaction) == 0)
         {
             throw new PithyxException(ErrorCodes.UsersGroupNotFound);
+        }
+    }
+
+    /// <summary>Only installed third-party apps have grants of their own here; the core apps' grants belong to the user and group editors.</summary>
+    private static async Task RequireAppAsync(DbConnection connection, DbTransaction? transaction, string appId)
+    {
+        if (Resources.ThirdPartyApp(Resources.App(appId)) is null
+            || await connection.ExecuteScalarAsync<long>("SELECT count(*) FROM apps WHERE id = @appId", new { appId }, transaction) == 0)
+        {
+            throw new PithyxException(ErrorCodes.AppAppNotFound, new Dictionary<string, object?> { ["id"] = appId.Length > 100 ? appId[..100] : appId });
         }
     }
 

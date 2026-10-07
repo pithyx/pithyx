@@ -22,7 +22,9 @@ public sealed record InstalledApp(
     long Uid,
     string Sha256,
     DateTimeOffset InstalledAt,
-    DateTimeOffset UpdatedAt)
+    DateTimeOffset UpdatedAt,
+    AppLogLevel LogLevel,
+    IReadOnlyList<AppStorageMapping> Storage)
 {
     /// <summary>The path of the entry page below <c>/apps/&lt;id&gt;/</c> (the manifest's entry without <c>frontend/</c>).</summary>
     public string EntryPath => Manifest.GetProperty("entry").GetString()![(PackageLayout.FrontendFolder.Length + 1)..];
@@ -118,7 +120,7 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
     public AppDetails Details(InstalledApp app)
     {
         ArgumentNullException.ThrowIfNull(app);
-        return new(app.Id, app.Version, app.Source, app.Enabled, app.Manifest, app.Permissions, app.Uid, app.Sha256, app.InstalledAt, app.UpdatedAt, IsBusy(app.Id), IsAvailable(app.Id));
+        return new(app.Id, app.Version, app.Source, app.Enabled, app.Manifest, app.Permissions, app.Uid, app.Sha256, app.InstalledAt, app.UpdatedAt, IsBusy(app.Id), IsAvailable(app.Id), app.LogLevel, app.Storage);
     }
 
     public static AppSummary Summary(InstalledApp app)
@@ -133,7 +135,8 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
             $"/apps/{app.Id}/{app.EntryPath}",
             $"/api/apps/{app.Id}/icon?v={app.Sha256[..12]}",
             manifest.GetProperty("window").Clone(),
-            app.Granted);
+            app.Granted,
+            app.LogLevel);
     }
 
     public TopicDefinition Definition() => new(
@@ -179,9 +182,12 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
 
     private static async Task<(IReadOnlyDictionary<string, InstalledApp>, string?)> LoadAsync(System.Data.Common.DbConnection connection)
     {
-        var rows = await connection.QueryAsync<(string Id, string Version, string Source, long Enabled, string Manifest, long Uid, string Sha256, string InstalledAt, string UpdatedAt)>(
-            "SELECT id, version, source, enabled, manifest, uid, package_sha256, installed_at, updated_at FROM apps ORDER BY id");
+        var rows = await connection.QueryAsync<(string Id, string Version, string Source, long Enabled, string Manifest, long Uid, string Sha256, string InstalledAt, string UpdatedAt, string LogLevel)>(
+            "SELECT id, version, source, enabled, manifest, uid, package_sha256, installed_at, updated_at, log_level FROM apps ORDER BY id");
         var granted = (await connection.QueryAsync<(string AppId, string Permission, long Granted)>("SELECT app_id, permission, granted FROM app_permissions ORDER BY permission"))
+            .ToLookup(row => row.AppId, StringComparer.Ordinal);
+        var mappings = (await connection.QueryAsync<(string AppId, string StorageId, long ShareId, string Path, string Access)>(
+                "SELECT app_id, storage_id, share_id, path, access FROM storage_mappings ORDER BY storage_id"))
             .ToLookup(row => row.AppId, StringComparer.Ordinal);
         var pool = await connection.ExecuteScalarAsync<string?>("SELECT value FROM settings WHERE key = @key", new { key = PoolSetting });
         var apps = new SortedDictionary<string, InstalledApp>(StringComparer.Ordinal);
@@ -198,7 +204,10 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
                 row.Uid,
                 row.Sha256,
                 DateTimeOffset.Parse(row.InstalledAt, CultureInfo.InvariantCulture),
-                DateTimeOffset.Parse(row.UpdatedAt, CultureInfo.InvariantCulture));
+                DateTimeOffset.Parse(row.UpdatedAt, CultureInfo.InvariantCulture),
+                row.LogLevel == "debug" ? AppLogLevel.Debug : AppLogLevel.Info,
+                [.. mappings[row.Id].Select(mapping => new AppStorageMapping(
+                    mapping.StorageId, mapping.ShareId, mapping.Path, mapping.Access == "read" ? AppStorageAccess.Read : AppStorageAccess.ReadWrite))]);
         }
         return (apps, pool);
     }

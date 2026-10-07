@@ -17,18 +17,20 @@ public static class CoreApps
     public const string Monitor = "org.pithyx.monitor";
     public const string Logs = "org.pithyx.logs";
     public const string About = "org.pithyx.about";
+    public const string Store = "org.pithyx.store";
 
     /// <summary>
     /// The core apps that are given to users by a grant. The administration apps (Storage, Settings, Resource Monitor,
-    /// Log Center) belong to the administrator right, and About is for everybody.
+    /// Log Center, Store) belong to the administrator right, and About is for everybody.
     /// </summary>
     public static readonly IReadOnlyList<string> Granted = [Files, Viewer];
 
     /// <summary>The core apps that come with the administrator right.</summary>
-    public static readonly IReadOnlyList<string> Admin = [Storage, Settings, Monitor, Logs];
+    /// <remarks>The Store manages apps for everybody and is for administrators only (D320); users find their apps in the menu.</remarks>
+    public static readonly IReadOnlyList<string> Admin = [Storage, Settings, Monitor, Logs, Store];
 
     /// <summary>Every core app.</summary>
-    public static readonly IReadOnlyList<string> All = [Files, Viewer, Storage, Settings, Monitor, Logs, About];
+    public static readonly IReadOnlyList<string> All = [Files, Viewer, Storage, Settings, Monitor, Logs, About, Store];
 
     /// <summary>
     /// The short id each core app had before migration 0022, by that id. Log entries written before keep their source
