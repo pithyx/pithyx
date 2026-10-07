@@ -3,7 +3,15 @@
 // typo is a type error. Runs before typecheck and lint, and inside the desktop's Vite dev server on every change.
 //
 //   node tools/css-module-types.ts [<package> ...]   every package below when none is given
-import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  existsSync,
+  mkdirSync,
+  readFileSync,
+  readdirSync,
+  renameSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { dirname, join, relative, sep } from 'node:path';
 
 const repoRoot = join(import.meta.dirname, '..');
@@ -47,7 +55,7 @@ function modules(directory: string): string[] {
   });
 }
 
-export function writeDeclaration(file: string) {
+export function writeDeclaration(file: string): string {
   const root = cssModulePackages
     .map((name) => join(repoRoot, name))
     .find((packageRoot) => file.startsWith(join(packageRoot, 'src') + sep));
@@ -56,15 +64,32 @@ export function writeDeclaration(file: string) {
   }
   const target = join(root, '.css-types', `${relative(root, file)}.d.ts`);
   mkdirSync(dirname(target), { recursive: true });
-  writeFileSync(target, declaration(file, readFileSync(file, 'utf8')));
+  // The type checks of the packages run in parallel and read each other's declarations: a reader sees the old file or
+  // the new one, never none or half of one.
+  const temporary = `${target}.${String(process.pid)}.tmp`;
+  writeFileSync(temporary, declaration(file, readFileSync(file, 'utf8')));
+  renameSync(temporary, target);
+  return target;
+}
+
+function files(directory: string): string[] {
+  if (!existsSync(directory)) {
+    return [];
+  }
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) =>
+    entry.isDirectory() ? files(join(directory, entry.name)) : [join(directory, entry.name)],
+  );
 }
 
 export function generateAll(packages: readonly string[] = cssModulePackages) {
   for (const name of packages) {
     const root = join(repoRoot, name);
-    rmSync(join(root, '.css-types'), { recursive: true, force: true });
-    for (const file of modules(join(root, 'src'))) {
-      writeDeclaration(file);
+    const written = new Set(modules(join(root, 'src')).map(writeDeclaration));
+    // Only declarations of removed modules go; another process's temporary file is left to its rename.
+    for (const stale of files(join(root, '.css-types'))) {
+      if (!written.has(stale) && !stale.endsWith('.tmp')) {
+        rmSync(stale);
+      }
     }
   }
 }
