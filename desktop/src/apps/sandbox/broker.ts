@@ -56,14 +56,11 @@ export interface BrokerTarget {
  * What an app window may do, bound to that window. The connection an app talks through decides the window and app
  * here; nothing in a message can point a call at another window or app. Window calls act on this window only.
  *
- * The permission checks here only answer early. The daemon is the authority: once apps are installed on the daemon
- * (A10, A11), every call that reaches data (storage, files, notifications, backend tokens) goes through an endpoint
- * that checks the app's permissions and the user's rights again, and fails with the same codes.
- *
- * Not served yet, so they fail with `sdk.method.unknown` and `supports()` is false for them: `backend.token`,
- * `backend.ticket` and `directory.*` (the daemon's app API, A11). The daemon does not keep a notification's `actions`
- * and `data` yet (A11): this tab remembers them for the toast and the panel until it is reloaded, and `tag` waits for
- * the daemon too.
+ * These are the methods of the core apps, and the window methods every app shares. For a third-party app,
+ * `appBrokerFor` replaces every method that reaches data (logs, notifications, storage, directory, files, backend
+ * tokens) with a call of the daemon's API for apps, where the daemon checks the app's permissions and the user's rights
+ * (A11). The permission checks here only answer early. A core app's notification keeps its buttons and data in this
+ * tab until it is reloaded.
  */
 export function brokerFor(target: BrokerTarget): MethodHandlers {
   const store = storeOf(target.user, target.app);

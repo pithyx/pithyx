@@ -1,6 +1,12 @@
 import type { QueryClient } from '@tanstack/react-query';
 import type { components } from '@pithyx/api-client';
-import { PROTOCOL_VERSION, SDK_VERSION, type AppContext, type SizeClass } from '@pithyx/sdk';
+import {
+  PROTOCOL_VERSION,
+  SDK_VERSION,
+  type AppContext,
+  type BackendStatus,
+  type SizeClass,
+} from '@pithyx/sdk';
 import i18next from 'i18next';
 import { formatLocale } from '../../i18n';
 import { queryKeys } from '../../api/queries';
@@ -11,14 +17,27 @@ import { currentTheme } from '../sandbox/theme';
 
 type User = components['schemas']['UserInfo'];
 type Setup = components['schemas']['SetupStatus'];
+/** What the daemon decides about a third-party app for this user (topic `apps/<id>/context`). */
+export type DaemonAppContext = components['schemas']['AppContextState'];
 
 /** The Pithyx version this desktop was built with (daemon/Directory.Build.props). */
 export const PITHYX_VERSION = __PITHYX_VERSION__;
 
+/** The storage requests as the SDK names their states and access. */
+export function storageOf(daemon: DaemonAppContext): AppContext['storage'] {
+  return daemon.storage.map((storage) => ({
+    id: storage.id,
+    state: storage.state,
+    access:
+      storage.access === 'readWrite' ? 'readWrite' : storage.access === 'read' ? 'read' : null,
+  }));
+}
+
 /**
- * The init context of an app window, the same for sandboxed and core apps. Until the daemon serves the app context
- * (A11), the desktop fills in what it knows: the user's groups are empty, there is no backend and no storage, and debug
- * logs stay in the browser console.
+ * The init context of an app window, the same for sandboxed and core apps. The desktop fills in what is its own (the
+ * device's language, formats, time zone and theme, the window) and the user from the session; for a third-party app
+ * the daemon's context (A11) brings its permissions, log level, backend and storage. Core apps have no backend or
+ * storage, and their debug logs stay in the browser console.
  */
 export function appContext(options: {
   client: QueryClient;
@@ -26,6 +45,7 @@ export function appContext(options: {
   app: { id: string; version: string };
   permissions: readonly string[];
   sizeClass: SizeClass;
+  daemon?: DaemonAppContext;
 }): Omit<AppContext, 'capabilities'> {
   const { client, windowId } = options;
   const user = client.getQueryData<User>(queryKeys.session);
@@ -38,7 +58,7 @@ export function appContext(options: {
       id: user?.id ?? 0,
       name: user?.username ?? '',
       displayName: user?.displayName ?? null,
-      groups: [],
+      groups: (user?.groups ?? []).map((group) => ({ id: group.id, name: group.name })),
       isAdmin: user?.isAdmin ?? false,
       twoFactor: user?.totpEnabled ?? false,
     },
@@ -49,13 +69,19 @@ export function appContext(options: {
     sizeClass: options.sizeClass,
     launch: launchOf(window?.args),
     session: sessionOf(window?.args),
-    permissions: [...options.permissions],
+    permissions: [...(options.daemon?.permissions ?? options.permissions)],
     box: { name: setup?.hostname ?? location.hostname, version: PITHYX_VERSION },
     visible: isWindowVisible(window?.minimized === true, document.visibilityState === 'hidden'),
     online: isOnline(useRealtime.getState().status),
-    logLevel: 'info',
-    backend: null,
-    storage: [],
+    logLevel: options.daemon?.logLevel ?? 'info',
+    backend:
+      options.daemon?.backend == null
+        ? null
+        : {
+            status: options.daemon.backend.status as BackendStatus,
+            endpoints: [...options.daemon.backend.endpoints],
+          },
+    storage: options.daemon === undefined ? [] : storageOf(options.daemon),
     host: { version: SDK_VERSION, protocol: PROTOCOL_VERSION },
   };
 }

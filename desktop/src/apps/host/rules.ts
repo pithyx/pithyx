@@ -1,4 +1,4 @@
-import type { LaunchArgs, Point } from '@pithyx/sdk';
+import type { EventName, LaunchArgs, Point, StorageInfo } from '@pithyx/sdk';
 import type { RealtimeStatus } from '../../realtime/connection';
 
 /** What a window keeps in its `args`: the arguments it was launched with and the state the app saved. */
@@ -101,4 +101,39 @@ export function answerStep(answer: { allow: boolean } | undefined): 'close' | 'k
     return 'offer';
   }
   return answer.allow ? 'close' : 'keep';
+}
+
+/** The parts of the daemon's app context (`apps/<id>/context`) that reach a running app as events. */
+export interface ContextState {
+  permissions: readonly string[];
+  logLevel: 'debug' | 'info';
+  storage: readonly StorageInfo[];
+}
+
+/**
+ * What a change of the daemon's context means for a running window: `permissionsChange`, `logLevelChange` and
+ * `storageChange` for what differs, in that order. Unchanged parts send nothing.
+ */
+export function contextChanges(
+  previous: ContextState,
+  next: ContextState,
+): { permissions?: string[]; events: { event: EventName; data: unknown }[] } {
+  const events: { event: EventName; data: unknown }[] = [];
+  const permissions = [...next.permissions];
+  const permissionsChanged =
+    previous.permissions.length !== permissions.length ||
+    previous.permissions.some((permission) => !permissions.includes(permission));
+  if (permissionsChanged) {
+    events.push({ event: 'permissionsChange', data: { permissions } });
+  }
+  if (previous.logLevel !== next.logLevel) {
+    events.push({ event: 'logLevelChange', data: { level: next.logLevel } });
+  }
+  if (JSON.stringify(previous.storage) !== JSON.stringify(next.storage)) {
+    events.push({
+      event: 'storageChange',
+      data: { storage: next.storage.map((storage) => ({ ...storage })) },
+    });
+  }
+  return permissionsChanged ? { permissions, events } : { events };
 }

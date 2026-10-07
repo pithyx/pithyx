@@ -167,7 +167,6 @@ export const coreApps: readonly CoreApp[] = [
             windowId={windowId}
             app={probeAppId}
             entry={`/apps/${probeAppId}/index.html`}
-            permissions={['notifications']}
           />
         ),
       })),

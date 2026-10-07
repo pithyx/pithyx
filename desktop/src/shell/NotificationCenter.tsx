@@ -107,6 +107,19 @@ function useKindLabel(): (kind: unknown) => string {
   };
 }
 
+/** The buttons an app's notification carries in its params, or undefined when it has none there. */
+function appActions(value: unknown): { id: string; label: string }[] | undefined {
+  return Array.isArray(value)
+    ? value.filter(
+        (action): action is { id: string; label: string } =>
+          typeof action === 'object' &&
+          action !== null &&
+          typeof (action as Record<string, unknown>).id === 'string' &&
+          typeof (action as Record<string, unknown>).label === 'string',
+      )
+    : undefined;
+}
+
 /** Turns a daemon notification into a card: its app, its translated message and, for storage, a way there. */
 function useNotificationView() {
   const { t, i18n } = useTranslation();
@@ -141,9 +154,12 @@ function useNotificationView() {
     const app = appId === undefined ? undefined : findApp(appId);
     const alertKey = raw.alertKey;
     const id = String(notification.id);
-    // An app's own notification opens the app; its buttons (kept by this tab, A11) go to the app as well.
+    // An app's own notification opens the app; its buttons and data come from the daemon (A11), or from this tab for
+    // a core app's notification, and go to the app as well.
     const sender = notification.code === 'app.message' ? notification.app : null;
-    const buttons = sender === null ? undefined : remembered[id]?.actions;
+    const buttons =
+      sender === null ? undefined : (appActions(raw.actions) ?? remembered[id]?.actions);
+    const data = 'data' in raw ? raw.data : undefined;
     return {
       id,
       app: {
@@ -175,7 +191,7 @@ function useNotificationView() {
         ? {}
         : {
             onAction: () => {
-              activateNotification(id, sender, null);
+              activateNotification(id, sender, null, data);
             },
           }),
       ...(buttons === undefined || buttons.length === 0
@@ -186,7 +202,7 @@ function useNotificationView() {
               label: button.label,
               onPress: () => {
                 if (sender !== null) {
-                  activateNotification(id, sender, button.id);
+                  activateNotification(id, sender, button.id, data);
                 }
               },
             })),

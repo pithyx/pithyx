@@ -3,6 +3,7 @@ import {
   answerStep,
   badgeText,
   closeStep,
+  contextChanges,
   isOnline,
   isWindowVisible,
   launchOf,
@@ -88,5 +89,38 @@ describe('closing', () => {
     expect(answerStep({ allow: true })).toBe('close');
     expect(answerStep({ allow: false })).toBe('keep');
     expect(answerStep(undefined)).toBe('offer');
+  });
+});
+
+describe('daemon context changes', () => {
+  const base = {
+    permissions: ['notifications', 'files.read'],
+    logLevel: 'info' as const,
+    storage: [{ id: 'inbox', state: 'unmapped' as const, access: null }],
+  };
+
+  it('sends nothing while nothing changed, whatever the order of the permissions', () => {
+    expect(contextChanges(base, { ...base, permissions: ['files.read', 'notifications'] })).toEqual(
+      { events: [] },
+    );
+  });
+
+  it('sends each changed part as its event', () => {
+    const next = {
+      permissions: ['files.read'],
+      logLevel: 'debug' as const,
+      storage: [{ id: 'inbox', state: 'ready' as const, access: 'read' as const }],
+    };
+    expect(contextChanges(base, next)).toEqual({
+      permissions: ['files.read'],
+      events: [
+        { event: 'permissionsChange', data: { permissions: ['files.read'] } },
+        { event: 'logLevelChange', data: { level: 'debug' } },
+        {
+          event: 'storageChange',
+          data: { storage: [{ id: 'inbox', state: 'ready', access: 'read' }] },
+        },
+      ],
+    });
   });
 });
