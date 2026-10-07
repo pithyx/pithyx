@@ -68,3 +68,15 @@
   );
   box-shadow: inset 0 0 0 1px var(--color-border);
 }
+
+/* An installed app's own icon fills the tile; the tile rounds its corners (D307: what matters is in the inner 80 percent). */
+.image {
+  overflow: hidden;
+  background: none;
+}
+
+.picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}

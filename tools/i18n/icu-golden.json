@@ -141,6 +141,13 @@
       "params": {},
       "expected": "The app's smallest window size is larger than its default size."
     },
+    "app.mapping.invalid": {
+      "params": {
+        "storage": "media",
+        "reason": "access"
+      },
+      "expected": "The folder cannot be used for the storage media: the app asks to read it only, so it cannot get read and write access."
+    },
     "app.package.invalid": {
       "params": {
         "reason": "entry_type",
@@ -171,6 +178,12 @@
         "permission": "notifications"
       },
       "expected": "The app is not allowed to do this (notifications)."
+    },
+    "app.permission.not_requested": {
+      "params": {
+        "permission": "directory.read"
+      },
+      "expected": "The app does not ask for the permission directory.read."
     },
     "app.pool.fixed": {
       "params": {
