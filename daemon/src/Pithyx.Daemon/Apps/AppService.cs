@@ -34,6 +34,7 @@ public sealed partial class AppService(
     JobService jobs,
     SqliteConnectionFactory connections,
     PermissionService permissions,
+    AppTokens tokens,
     TimeProvider time,
     ILogger<AppService> logger)
 {
@@ -115,17 +116,47 @@ public sealed partial class AppService(
         }
     }
 
-    public async Task<AppDetails> SetEnabledAsync(ClaimsPrincipal caller, string appId, UpdateAppRequest request, CancellationToken cancellationToken)
+    /// <summary>
+    /// Enables or disables an app, switches its debug logging and grants or revokes permissions of its manifest. A
+    /// disabled app loses its tokens at once; a revoked permission fails the app's next call that needs it, and the
+    /// context topic tells its windows.
+    /// </summary>
+    public async Task<AppDetails> UpdateAsync(ClaimsPrincipal caller, string appId, UpdateAppRequest request, CancellationToken cancellationToken)
     {
         RequireAdmin(caller);
         ArgumentNullException.ThrowIfNull(request);
-        RequireInstalled(appId);
+        var app = RequireInstalled(appId);
+        var changes = request.Permissions ?? new Dictionary<string, bool>();
+        if (changes.Keys.Any(permission => !app.Permissions.Any(state => state.Permission == permission)))
+        {
+            throw new PithyxException(ErrorCodes.RequestBodyInvalid);
+        }
         await using (var connection = await connections.OpenAsync(cancellationToken))
         {
-            await connection.ExecuteAsync("UPDATE apps SET enabled = @enabled WHERE id = @appId", new { enabled = request.Enabled ? 1 : 0, appId });
+            await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+            if (request.Enabled is { } enabled)
+            {
+                await connection.ExecuteAsync("UPDATE apps SET enabled = @enabled WHERE id = @appId", new { enabled = enabled ? 1 : 0, appId }, transaction);
+            }
+            if (request.LogLevel is { } level)
+            {
+                await connection.ExecuteAsync("UPDATE apps SET log_level = @level WHERE id = @appId", new { level = level == AppLogLevel.Debug ? "debug" : "info", appId }, transaction);
+            }
+            foreach (var (permission, granted) in changes)
+            {
+                await connection.ExecuteAsync(
+                    "UPDATE app_permissions SET granted = @granted WHERE app_id = @appId AND permission = @permission",
+                    new { granted = granted ? 1 : 0, appId, permission },
+                    transaction);
+            }
+            await transaction.CommitAsync(cancellationToken);
+        }
+        if (request.Enabled == false)
+        {
+            tokens.RevokeApp(appId);
         }
         await registry.ReloadAsync(cancellationToken);
-        LogEnabled(appId, request.Enabled);
+        LogUpdated(appId, request.Enabled, request.LogLevel, request.Permissions);
         return registry.Details(RequireInstalled(appId));
     }
 
@@ -148,7 +179,13 @@ public sealed partial class AppService(
                     await using (var connection = await connections.OpenAsync(context.Cancellation))
                     {
                         await connection.ExecuteAsync("DELETE FROM apps WHERE id = @appId", new { appId });
+                        // What the app stored for its users is its data, too.
+                        if (data == AppDataChoice.Delete)
+                        {
+                            await connection.ExecuteAsync("DELETE FROM app_storage WHERE app_id = @appId", new { appId });
+                        }
                     }
+                    tokens.RevokeApp(appId);
                     permissions.Invalidate();
                     await registry.ReloadAsync(CancellationToken.None);
                     if (pool is not null)
@@ -369,8 +406,8 @@ public sealed partial class AppService(
     [LoggerMessage(Level = LogLevel.Information, Message = "Installed app {AppId} {Version} (before: {Previous})")]
     private partial void LogInstalled(string appId, string version, string? previous);
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "App {AppId} enabled: {Enabled}")]
-    private partial void LogEnabled(string appId, bool enabled);
+    [LoggerMessage(Level = LogLevel.Information, Message = "App {AppId} changed: enabled {Enabled}, log level {AppLogLevel}, permissions {PermissionChanges}")]
+    private partial void LogUpdated(string appId, bool? enabled, AppLogLevel? appLogLevel, IReadOnlyDictionary<string, bool>? permissionChanges);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Removed app {AppId}, data: {Data}")]
     private partial void LogRemoved(string appId, AppDataChoice data);

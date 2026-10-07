@@ -7,7 +7,13 @@ namespace Pithyx.Daemon.Auth;
 /// <param name="IsAdmin">Whether the user has the administrator right, its own or through a group.</param>
 /// <param name="TotpEnabled">Whether the user signs in with a second factor.</param>
 /// <param name="Permissions">What the user may do; the topic <c>session/permissions</c> sends changes.</param>
-public sealed record UserInfo(long Id, string Username, string? DisplayName, bool IsAdmin, bool TotpEnabled, Permissions.SessionPermissions Permissions);
+/// <param name="Groups">The user's groups by name, without the built-in group every user is in; apps get them in their context.</param>
+public sealed record UserInfo(long Id, string Username, string? DisplayName, bool IsAdmin, bool TotpEnabled, Permissions.SessionPermissions Permissions, IReadOnlyList<GroupRef> Groups);
+
+/// <summary>A group a user is in.</summary>
+/// <param name="Id">Stable id (the group's Linux gid).</param>
+/// <param name="Name">The group name.</param>
+public sealed record GroupRef(long Id, string Name);
 
 /// <param name="Required">True until the first administrator exists.</param>
 /// <param name="Hostname">Shown on the setup and sign-in screens, so users with several servers know where they sign in.</param>

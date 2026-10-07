@@ -95,18 +95,19 @@ public static class LogEndpoints
             .WithName("SetLogSettings")
             .WithDescription("Administrators only. Sets the retention. The current logs (system and apps together) stay below maxBytes, at most 4 GB; entries older than retentionDays go. The archive on a pool is optional; archivePool null means the first pool.");
 
-        api.MapPost("/apps/{app}/logs", (string app, AppLogBatch batch, LogService service, Permissions.PermissionService permissions, Apps.AppRegistry registry, HttpContext context) =>
+        api.MapPost("/apps/{app}/logs", (string app, AppLogBatch batch, LogService service, Permissions.PermissionService permissions, HttpContext context) =>
             {
-                // Only an app the user may open writes in the user's name.
-                if (Apps.Manifest.AppId.IsValid(app) && !(CoreApps.All.Contains(app) ? CoreApps.Allows(permissions.ForUser(context.User), app) : registry.Allows(permissions.ForUser(context.User), app)))
+                // The core apps run in the desktop, which names them here. Third-party apps write through /api/app/logs,
+                // where their identity comes from their token (D305, ends D261).
+                if (Apps.Manifest.AppId.IsValid(app) && !(CoreApps.All.Contains(app) && CoreApps.Allows(permissions.ForUser(context.User), app)))
                 {
                     throw new PithyxException(ErrorCodes.AuthPermissionDenied);
                 }
-                return TypedResults.Ok(service.WriteApp(app, context.User.FindFirstValue(ClaimTypes.Name) ?? "", batch));
+                return TypedResults.Ok(service.WriteApp(app, context.User.FindFirstValue(ClaimTypes.Name) ?? "", batch, debug: false));
             })
             .WithName("WriteAppLogs")
             .WithTags("Logs")
-            .WithDescription("Stores log entries an app wrote through the SDK for the signed-in user, as source app/<app>; only for an app the user may open (auth.permission.denied otherwise). At most 100 entries per request; each app may write bursts of 200 and then 20 entries a second, the rest is dropped and counted.");
+            .WithDescription("Stores log entries a core app wrote through the SDK for the signed-in user, as source app/<app>; only for a core app the user may open (auth.permission.denied otherwise; third-party apps write through /api/app/logs). Debug entries are left out. At most 100 entries per request; each app may write bursts of 200 and then 20 entries a second, the rest is dropped and counted.");
     }
 
     private static LogQuery Query(DateTimeOffset? from, DateTimeOffset? to, string[]? levels, string[]? sources, string? search, string? cursor, int limit)

@@ -144,7 +144,11 @@ public sealed class AuthService(SqliteConnectionFactory connections, PasswordHas
     private async Task<UserInfo> InfoAsync(UserRow user, CancellationToken cancellationToken)
     {
         var effective = await permissions.ForUserAsync(user.Id, cancellationToken);
-        return new UserInfo(user.Id, user.Username, user.DisplayName, effective.IsAdmin, user.TotpEnabledAt is not null, Permissions.GrantService.Session(effective));
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        var groups = await connection.QueryAsync<GroupRef>(
+            "SELECT g.id AS Id, g.name AS Name FROM group_members m JOIN groups g ON g.id = m.group_id WHERE m.user_id = @Id ORDER BY g.name",
+            new { user.Id });
+        return new UserInfo(user.Id, user.Username, user.DisplayName, effective.IsAdmin, user.TotpEnabledAt is not null, Permissions.GrantService.Session(effective), [.. groups]);
     }
 
     /// <summary>Starts TOTP enrollment with a new secret. TOTP stays off until a code is confirmed.</summary>

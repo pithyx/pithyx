@@ -57,6 +57,15 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
             }
         }
 
+        /// <summary>The topics and patterns this connection is subscribed to.</summary>
+        public IReadOnlyList<string> Patterns()
+        {
+            lock (_lock)
+            {
+                return [.. _patterns];
+            }
+        }
+
         internal bool IsSubscribed(string topic)
         {
             lock (_lock)
@@ -84,11 +93,25 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
         ArgumentNullException.ThrowIfNull(connection);
         _connections.TryRemove(connection.Id, out _);
         connection.Outbox.Writer.TryComplete();
+        Disconnected?.Invoke(connection);
         SubscribersRemoved?.Invoke();
     }
 
     /// <summary>Raised after a subscription or a connection ended, for publishers that stop work nobody watches.</summary>
     public event Action? SubscribersRemoved;
+
+    /// <summary>Raised after a subscription was added and its snapshots were sent.</summary>
+    public event Action? SubscribersAdded;
+
+    /// <summary>Raised after a connection ended, with the subscriptions it had.</summary>
+    public event Action<Connection>? Disconnected;
+
+    /// <summary>The connections subscribed to a concrete topic that may see it.</summary>
+    public IReadOnlyList<Connection> Subscribers(string topic)
+    {
+        var definition = _registry.Find(topic);
+        return [.. _connections.Values.Where(c => c.IsSubscribed(topic) && (definition is null || definition.IsAllowed(c.User, topic)))];
+    }
 
     /// <summary>Closes every connection of a session, for example after logout.</summary>
     public void CloseSession(string sessionId)
@@ -203,6 +226,7 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
             connection.RemovePattern(pattern);
             throw;
         }
+        SubscribersAdded?.Invoke();
     }
 
     private bool Allowed(ClaimsPrincipal user, string topic) => _registry.Find(topic)?.IsAllowed(user, topic) ?? true;

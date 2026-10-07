@@ -51,8 +51,8 @@ public static class NotificationEndpoints
             })
             .WithName("CreateAppNotification")
             .WithDescription(
-                "What an app's SDK notify call becomes: a notification for the signed-in user with the app's plain text, "
-                + "stored as app.message. The desktop sends it for the app after checking the app's notifications "
-                + "permission. Invalid fields answer 400 notifications.message.invalid.");
+                "What a core app's SDK notify call becomes: a notification for the signed-in user with the app's plain text, "
+                + "stored as app.message. Only for core apps (org.pithyx.*, auth.permission.denied otherwise); third-party apps "
+                + "send theirs to /api/app/notifications with their token. Invalid fields answer 400 notifications.message.invalid.");
     }
 }

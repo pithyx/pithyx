@@ -344,16 +344,16 @@ public sealed class AppApiTests : IDisposable
         var rita = await _factory.InsertUserAsync("rita");
         object Grants(params string[] resources) => new { grants = resources.Select(resource => new { resource, level = "allow" }) };
 
-        // Not installed yet: no grant names it, and the log endpoint refuses it.
+        // Not installed yet: no grant names it, and no token is given for it.
         using (var early = await _admin.PutAsJsonAsync($"/api/users/{rita}/grants", Grants("right:desktopLogin", "app:" + AppId), Token))
         {
             Assert.Equal("permissions.grant.invalid", await early.ErrorCodeAsync());
         }
         await InstallAsync(Package(), new { pool = Pool, access = "admins" });
         using var ritaClient = _factory.ClientWithCookie(await _factory.SessionCookieAsync(rita));
-        using (var refused = await ritaClient.PostAsJsonAsync($"/api/apps/{AppId}/logs", new { entries = Array.Empty<object>() }, Token))
+        using (var refused = await ritaClient.PostAsJsonAsync($"/api/apps/{AppId}/tokens", new { kind = "host", instance = "w1" }, Token))
         {
-            Assert.Equal("auth.permission.denied", await refused.ErrorCodeAsync());
+            Assert.Equal("app.app.not_found", await refused.ErrorCodeAsync());
         }
 
         using (var granted = await _admin.PutAsJsonAsync($"/api/users/{rita}/grants", Grants("right:desktopLogin", "app:" + AppId), Token))
@@ -361,7 +361,7 @@ public sealed class AppApiTests : IDisposable
             Assert.Equal(HttpStatusCode.OK, granted.StatusCode);
             Assert.Contains(AppId, (await granted.JsonAsync()).GetProperty("effective").GetProperty("apps").EnumerateArray().Select(app => app.GetString()));
         }
-        using (var allowed = await ritaClient.PostAsJsonAsync($"/api/apps/{AppId}/logs", new { entries = Array.Empty<object>() }, Token))
+        using (var allowed = await ritaClient.PostAsJsonAsync($"/api/apps/{AppId}/tokens", new { kind = "host", instance = "w1" }, Token))
         {
             Assert.Equal(HttpStatusCode.OK, allowed.StatusCode);
         }

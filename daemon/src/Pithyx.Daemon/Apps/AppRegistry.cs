@@ -22,7 +22,9 @@ public sealed record InstalledApp(
     long Uid,
     string Sha256,
     DateTimeOffset InstalledAt,
-    DateTimeOffset UpdatedAt)
+    DateTimeOffset UpdatedAt,
+    AppLogLevel LogLevel = AppLogLevel.Info,
+    IReadOnlyList<StorageMapping>? Mappings = null)
 {
     /// <summary>The path of the entry page below <c>/apps/&lt;id&gt;/</c> (the manifest's entry without <c>frontend/</c>).</summary>
     public string EntryPath => Manifest.GetProperty("entry").GetString()![(PackageLayout.FrontendFolder.Length + 1)..];
@@ -31,7 +33,36 @@ public sealed record InstalledApp(
     public bool HasInternet => Permissions.Any(permission => permission.Granted && permission.Permission == "network.internet");
 
     public IReadOnlyList<string> Granted => [.. Permissions.Where(permission => permission.Granted).Select(permission => permission.Permission)];
+
+    /// <summary>Whether the app holds a permission of its manifest that no administrator revoked.</summary>
+    public bool Holds(string permission) => Permissions.Any(state => state.Granted && state.Permission == permission);
+
+    /// <summary>The endpoint names of the manifest's backend; empty for an app without one.</summary>
+    public IReadOnlyList<string> Endpoints =>
+        Manifest.TryGetProperty("backend", out var backend) && backend.TryGetProperty("endpoints", out var endpoints)
+            ? [.. endpoints.EnumerateObject().Select(endpoint => endpoint.Name).Order(StringComparer.Ordinal)]
+            : [];
+
+    /// <summary>The storage requests of the manifest: id and the access asked for.</summary>
+    public IReadOnlyList<(string Id, string Access)> StorageRequests =>
+        Manifest.TryGetProperty("storage", out var storage)
+            ? [.. storage.EnumerateArray().Select(request => (request.GetProperty("id").GetString()!, request.GetProperty("access").GetString()!))]
+            : [];
 }
+
+/// <summary>Whether debug entries of an app's log reach the Log Center (D305).</summary>
+public enum AppLogLevel
+{
+    Info,
+    Debug,
+}
+
+/// <summary>The folder an administrator assigned to a storage request of an app's manifest.</summary>
+/// <param name="StorageId">The request's id.</param>
+/// <param name="ShareId">The shared folder.</param>
+/// <param name="Path">Relative to the shared folder's root; empty for the root.</param>
+/// <param name="Access"><c>read</c> or <c>readWrite</c>.</param>
+public sealed record StorageMapping(string StorageId, long ShareId, string Path, string Access);
 
 /// <summary>
 /// The installed third-party apps (A10), read from <c>pithyx.db</c> and kept in memory, plus the setting
@@ -118,7 +149,7 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
     public AppDetails Details(InstalledApp app)
     {
         ArgumentNullException.ThrowIfNull(app);
-        return new(app.Id, app.Version, app.Source, app.Enabled, app.Manifest, app.Permissions, app.Uid, app.Sha256, app.InstalledAt, app.UpdatedAt, IsBusy(app.Id), IsAvailable(app.Id));
+        return new(app.Id, app.Version, app.Source, app.Enabled, app.Manifest, app.Permissions, app.Uid, app.Sha256, app.InstalledAt, app.UpdatedAt, IsBusy(app.Id), IsAvailable(app.Id), app.LogLevel);
     }
 
     public static AppSummary Summary(InstalledApp app)
@@ -179,8 +210,11 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
 
     private static async Task<(IReadOnlyDictionary<string, InstalledApp>, string?)> LoadAsync(System.Data.Common.DbConnection connection)
     {
-        var rows = await connection.QueryAsync<(string Id, string Version, string Source, long Enabled, string Manifest, long Uid, string Sha256, string InstalledAt, string UpdatedAt)>(
-            "SELECT id, version, source, enabled, manifest, uid, package_sha256, installed_at, updated_at FROM apps ORDER BY id");
+        var rows = await connection.QueryAsync<(string Id, string Version, string Source, long Enabled, string Manifest, long Uid, string Sha256, string InstalledAt, string UpdatedAt, string LogLevel)>(
+            "SELECT id, version, source, enabled, manifest, uid, package_sha256, installed_at, updated_at, log_level FROM apps ORDER BY id");
+        var mappings = (await connection.QueryAsync<(string AppId, string StorageId, long ShareId, string Path, string Access)>(
+                "SELECT app_id, storage_id, share_id, path, access FROM storage_mappings ORDER BY storage_id"))
+            .ToLookup(row => row.AppId, row => new StorageMapping(row.StorageId, row.ShareId, row.Path, row.Access), StringComparer.Ordinal);
         var granted = (await connection.QueryAsync<(string AppId, string Permission, long Granted)>("SELECT app_id, permission, granted FROM app_permissions ORDER BY permission"))
             .ToLookup(row => row.AppId, StringComparer.Ordinal);
         var pool = await connection.ExecuteScalarAsync<string?>("SELECT value FROM settings WHERE key = @key", new { key = PoolSetting });
@@ -198,7 +232,9 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
                 row.Uid,
                 row.Sha256,
                 DateTimeOffset.Parse(row.InstalledAt, CultureInfo.InvariantCulture),
-                DateTimeOffset.Parse(row.UpdatedAt, CultureInfo.InvariantCulture));
+                DateTimeOffset.Parse(row.UpdatedAt, CultureInfo.InvariantCulture),
+                row.LogLevel == "debug" ? AppLogLevel.Debug : AppLogLevel.Info,
+                [.. mappings[row.Id]]);
         }
         return (apps, pool);
     }
@@ -207,9 +243,15 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
         texts.EnumerateObject().ToDictionary(text => text.Name, text => text.Value.GetString()!, StringComparer.Ordinal);
 }
 
-/// <summary>Publishes <c>apps</c> and <c>apps/admin</c> when the registry, the rights or the pools change.</summary>
-public sealed class AppChangePublisher(TopicHub hub, AppRegistry registry, PermissionService permissions, PoolInventory pools) : IHostedService
+/// <summary>
+/// Publishes <c>apps</c>, <c>apps/admin</c> and every app's <c>apps/&lt;id&gt;/context</c> when the registry, the rights
+/// or the pools change; the context of a removed app once more, so its windows close.
+/// </summary>
+public sealed class AppChangePublisher(TopicHub hub, AppRegistry registry, AppContexts contexts, PermissionService permissions, PoolInventory pools) : IHostedService
 {
+    private readonly Lock _lock = new();
+    private HashSet<string> _published = new(StringComparer.Ordinal);
+
     public Task StartAsync(CancellationToken cancellationToken)
     {
         registry.Changed += Publish;
@@ -230,5 +272,14 @@ public sealed class AppChangePublisher(TopicHub hub, AppRegistry registry, Permi
     {
         hub.Publish(AppRegistry.Topic, registry.List());
         hub.Publish(AppRegistry.AdminTopic, registry.AdminList());
+        lock (_lock)
+        {
+            var current = registry.Apps.Keys.ToHashSet(StringComparer.Ordinal);
+            foreach (var appId in current.Union(_published))
+            {
+                hub.Publish(AppContexts.TopicOf(appId), contexts.SourceOf(appId));
+            }
+            _published = current;
+        }
     }
 }

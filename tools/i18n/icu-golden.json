@@ -13,6 +13,16 @@
       },
       "expected": "No app with the id com.example.chat is installed."
     },
+    "app.backend.endpoint_unknown": {
+      "params": {
+        "endpoint": "metrics"
+      },
+      "expected": "The app has no backend endpoint named metrics."
+    },
+    "app.backend.missing": {
+      "params": {},
+      "expected": "The app has no backend."
+    },
     "app.backend.unsupported": {
       "params": {},
       "expected": "The app has a backend with containers. This version of Pithyx installs apps without a backend only."
@@ -189,11 +199,27 @@
       },
       "expected": "The pool tank cannot hold apps now: it is locked."
     },
+    "app.storage.key_invalid": {
+      "params": {
+        "maxLength": 128
+      },
+      "expected": "The app used a key that is empty or longer than 128 characters."
+    },
+    "app.storage.not_found": {
+      "params": {
+        "storage": "attachments"
+      },
+      "expected": "The app's storage attachments does not exist or no folder is assigned to it yet."
+    },
     "app.storage.too_large": {
       "params": {
         "maxKb": 64
       },
       "expected": "The app tried to store more than it may keep. The limit is 64 KB."
+    },
+    "app.token.invalid": {
+      "params": {},
+      "expected": "The app's access expired. Close the app and open it again."
     },
     "auth.account.disabled": {
       "params": {},
