@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pithyx.org/schema/images-lock.v1.schema.json",
+  "title": "Pithyx images lock v1",
+  "description": "backend/images.lock.json of an app package (D315): for every image reference of the Compose file, the platform manifest and the config digest (the image id) per architecture. `pithyx lock` writes it from the registry; the box checks every image it loads or pulls against it.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["lockVersion", "images"],
+  "properties": {
+    "lockVersion": {
+      "description": "The version of this format.",
+      "const": 1
+    },
+    "images": {
+      "description": "One entry per image reference, exactly as the Compose file writes it.",
+      "type": "object",
+      "minProperties": 1,
+      "maxProperties": 16,
+      "propertyNames": {
+        "maxLength": 512,
+        "pattern": "^\\S+@sha256:[a-f0-9]{64}$"
+      },
+      "additionalProperties": {
+        "description": "The image per architecture of Pithyx: amd64 (x86-64) and arm64.",
+        "type": "object",
+        "additionalProperties": false,
+        "minProperties": 1,
+        "properties": {
+          "amd64": { "$ref": "#/$defs/platform" },
+          "arm64": { "$ref": "#/$defs/platform" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "platform": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["manifest", "config"],
+      "properties": {
+        "manifest": {
+          "description": "The digest of the image manifest for this architecture (the reference's own digest for a single-platform image).",
+          "$ref": "#/$defs/digest"
+        },
+        "config": {
+          "description": "The digest of the image config, which Docker shows as the image id.",
+          "$ref": "#/$defs/digest"
+        }
+      }
+    }
+  }
+}

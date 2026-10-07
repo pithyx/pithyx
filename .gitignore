@@ -1,5 +1,7 @@
 # .NET
 bin/
+# The installed command of @pithyx/cli.
+!packages/cli/bin/
 obj/
 *.user
 TestResults/
@@ -8,6 +10,8 @@ TestResults/
 node_modules/
 dist/
 coverage/
+# Generated API references (pnpm docs).
+api-docs/
 
 # Playwright
 e2e/test-results/

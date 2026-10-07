@@ -13,6 +13,7 @@ export interface Formatters {
   dateTime(value: string | Date, options?: Intl.DateTimeFormatOptions): string;
   /** How long ago or how far ahead, for example "5 minutes ago". */
   relative(value: string | Date, now?: Date): string;
+  /** A number with the user's separators, for example "1,234.5". */
   number(value: number, options?: Intl.NumberFormatOptions): string;
   /** A byte count with decimal units, as the desktop shows sizes (10 GB, 4 TB). */
   bytes(value: number): string;
@@ -53,6 +54,7 @@ function toDate(value: string | Date): Date {
   return typeof value === 'string' ? new Date(value) : value;
 }
 
+/** Formatters that follow the locale and time zone `current` returns at each call. */
 export function createFormatters(current: () => { locale: string; timeZone: string }): Formatters {
   const dateTime = (value: string | Date, options: Intl.DateTimeFormatOptions) => {
     const { locale, timeZone } = current();

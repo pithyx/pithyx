@@ -38,8 +38,10 @@ export const themeTokenNames = [
   '--pithyx-control-height',
 ] as const;
 
+/** One of the public token names in {@link themeTokenNames}. */
 export type ThemeTokenName = (typeof themeTokenNames)[number];
 
+/** The desktop's look as an app gets it, in the context and with `themeChange`. */
 export interface Theme {
   scheme: 'light' | 'dark';
   /** `compact` shrinks `--pithyx-space` and `--pithyx-control-height`; the values already reflect it. */

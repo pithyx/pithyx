@@ -1,0 +1,56 @@
+{
+  "dev": {
+    "title": "{app} in the Pithyx mock desktop",
+    "notification": {
+      "open": "Open",
+      "dismiss": "Dismiss"
+    },
+    "log": {
+      "connected": "The app connected (SDK {sdk}).",
+      "userChanged": "Signed in as {user}; the window opens again."
+    },
+    "window": {
+      "reopen": "Open the app again",
+      "notResponding": "The app does not answer. Close it anyway?",
+      "dirty": "Unsaved changes",
+      "close": "Close",
+      "reload": "Reload",
+      "openFile": "Open a file with the app",
+      "minimize": "Minimize"
+    },
+    "events": {
+      "invalidJson": "The data of {event} is not valid JSON.",
+      "send": "Send {event}"
+    },
+    "panel": {
+      "desktop": "Desktop",
+      "user": "User",
+      "admin": "administrator",
+      "theme": "Theme",
+      "scheme": {
+        "light": "Light",
+        "dark": "Dark"
+      },
+      "accent": "Accent color",
+      "locale": "Language and formats",
+      "timeZone": "Time zone",
+      "sizeClass": "Size class",
+      "size": {
+        "compact": "Compact (phone)",
+        "medium": "Medium (tablet)",
+        "expanded": "Expanded (free window)"
+      },
+      "online": "The box is reachable",
+      "debugLog": "Debug log switched on",
+      "backend": "Backend status",
+      "permissions": "Permissions",
+      "storage": "Storage {id}",
+      "window": "Window",
+      "events": "Events",
+      "log": "Calls, events and logs"
+    },
+    "taskbar": {
+      "hint": "Local mock desktop: nothing here reaches a box."
+    }
+  }
+}

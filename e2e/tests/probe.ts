@@ -13,7 +13,7 @@ const packagePath = join(probeDirectory, 'dist', 'sdk-probe.pithyxapp');
 /** The probe's package file, built first when it is missing. */
 export function probePackage(): string {
   if (!existsSync(packagePath)) {
-    execFileSync('pnpm', ['--filter', '@pithyx/e2e-sdk-probe', 'build'], { stdio: 'inherit' });
+    execFileSync('pnpm', ['--filter', '@pithyx/e2e-sdk-probe...', 'build'], { stdio: 'inherit' });
   }
   return packagePath;
 }

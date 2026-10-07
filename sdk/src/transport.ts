@@ -5,9 +5,11 @@
 
 /** One end of a connection. */
 export interface Endpoint {
+  /** Sends a message to the other end. */
   post(message: unknown): void;
   /** Registers the single message handler of this end. */
   listen(handler: (message: unknown) => void): void;
+  /** Closes this end; nothing is sent or received after it. */
   close(): void;
 }
 
