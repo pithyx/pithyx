@@ -89,6 +89,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
       - run: pnpm typecheck
+      # TypeDoc for @pithyx/sdk and @pithyx/ui: an export without documentation fails the job.
+      - run: pnpm check:docs
       - run: pnpm test
       - run: pnpm build
       - run: pnpm check:bundle

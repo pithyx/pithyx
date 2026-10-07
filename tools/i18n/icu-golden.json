@@ -13,6 +13,16 @@
       },
       "expected": "No app with the id com.example.chat is installed."
     },
+    "app.backend.endpoint_unknown": {
+      "params": {
+        "endpoint": "metrics"
+      },
+      "expected": "The app has no backend endpoint named metrics."
+    },
+    "app.backend.missing": {
+      "params": {},
+      "expected": "The app has no backend."
+    },
     "app.backend.unsupported": {
       "params": {},
       "expected": "The app has a backend with containers. This version of Pithyx installs apps without a backend only."
@@ -141,6 +151,13 @@
       "params": {},
       "expected": "The app's smallest window size is larger than its default size."
     },
+    "app.mapping.invalid": {
+      "params": {
+        "storage": "media",
+        "reason": "access"
+      },
+      "expected": "The folder cannot be used for the storage media: the app asks to read it only, so it cannot get read and write access."
+    },
     "app.package.invalid": {
       "params": {
         "reason": "entry_type",
@@ -172,6 +189,12 @@
       },
       "expected": "The app is not allowed to do this (notifications)."
     },
+    "app.permission.not_requested": {
+      "params": {
+        "permission": "directory.read"
+      },
+      "expected": "The app does not ask for the permission directory.read."
+    },
     "app.pool.fixed": {
       "params": {
         "pool": "tank"
@@ -189,11 +212,27 @@
       },
       "expected": "The pool tank cannot hold apps now: it is locked."
     },
+    "app.storage.key_invalid": {
+      "params": {
+        "maxLength": 128
+      },
+      "expected": "The app used a key that is empty or longer than 128 characters."
+    },
+    "app.storage.not_found": {
+      "params": {
+        "storage": "attachments"
+      },
+      "expected": "The app's storage attachments does not exist or no folder is assigned to it yet."
+    },
     "app.storage.too_large": {
       "params": {
         "maxKb": 64
       },
       "expected": "The app tried to store more than it may keep. The limit is 64 KB."
+    },
+    "app.token.invalid": {
+      "params": {},
+      "expected": "The app's access expired. Close the app and open it again."
     },
     "auth.account.disabled": {
       "params": {},

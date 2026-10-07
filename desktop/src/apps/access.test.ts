@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { isAppAllowed, type SessionPermissions } from './access';
-import { coreAppIds, probeAppId } from './ids';
+import { coreAppIds } from './ids';
+import { setInstalledApps, type InstalledApp } from './installed';
 
 const user: SessionPermissions = {
   admin: false,
@@ -10,22 +11,48 @@ const user: SessionPermissions = {
 };
 const admin: SessionPermissions = { admin: true, rights: [], protocols: [], apps: [] };
 
+const chat: InstalledApp = {
+  id: 'com.example.chat',
+  version: '1.0.0',
+  name: { en: 'Chat' },
+  description: null,
+  entry: '/apps/com.example.chat/index.html',
+  icon: '/api/apps/com.example.chat/icon?v=0123456789ab',
+  window: {
+    instances: 'single',
+    defaultSize: { width: 800, height: 600 },
+    minSize: { width: 320, height: 240 },
+  },
+  permissions: [],
+  logLevel: 'info',
+};
+
+afterEach(() => {
+  setInstalledApps(undefined);
+});
+
 describe('isAppAllowed', () => {
   it('gives administration apps to administrators only', () => {
     expect(isAppAllowed(coreAppIds.storage, user)).toBe(false);
     expect(isAppAllowed(coreAppIds.settings, admin)).toBe(true);
+    expect(isAppAllowed(coreAppIds.store, user)).toBe(false);
+    expect(isAppAllowed(coreAppIds.store, admin)).toBe(true);
   });
 
-  it('gives granted apps by their grant, and every app to administrators', () => {
+  it('gives granted core apps by their grant, and every app to administrators', () => {
     expect(isAppAllowed(coreAppIds.files, user)).toBe(true);
-    expect(isAppAllowed(probeAppId, user)).toBe(false);
+    expect(isAppAllowed(coreAppIds.viewer, user)).toBe(false);
     expect(isAppAllowed(coreAppIds.files, admin)).toBe(true);
   });
 
-  it('shows the probe only while it is installed and granted, also to administrators', () => {
-    expect(isAppAllowed(probeAppId, admin)).toBe(false);
-    expect(isAppAllowed(probeAppId, { ...admin, apps: [probeAppId] })).toBe(true);
-    expect(isAppAllowed(probeAppId, { ...user, apps: [probeAppId] })).toBe(true);
+  it('gives an installed app while the topic apps lists it for the user', () => {
+    expect(isAppAllowed(chat.id, admin)).toBe(false);
+    setInstalledApps([chat]);
+    expect(isAppAllowed(chat.id, user)).toBe(true);
+    expect(isAppAllowed(chat.id, admin)).toBe(true);
+    expect(isAppAllowed(chat.id, undefined)).toBe(false);
+    setInstalledApps([]);
+    expect(isAppAllowed(chat.id, admin)).toBe(false);
   });
 
   it('gives the rest to everybody and nothing unknown', () => {

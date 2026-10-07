@@ -4,8 +4,10 @@ import styles from './Button.module.css';
 import { cx } from './cx';
 import { Tooltip, TooltipTrigger } from './Tooltip';
 
+/** How much a button stands out: `primary` for the main action, `danger` for a destructive one. */
 export type ButtonVariant = 'primary' | 'secondary' | 'quiet' | 'danger';
 
+/** The props of {@link Button}: React Aria's button props plus the look. */
 export interface ButtonProps extends Omit<AriaButtonProps, 'className' | 'children'> {
   variant?: ButtonVariant;
   size?: 'md' | 'sm';
@@ -13,6 +15,7 @@ export interface ButtonProps extends Omit<AriaButtonProps, 'className' | 'childr
   children?: ReactNode;
 }
 
+/** A button in the desktop's look. */
 export function Button({ variant = 'secondary', size = 'md', className, ...props }: ButtonProps) {
   return (
     <AriaButton
@@ -22,6 +25,7 @@ export function Button({ variant = 'secondary', size = 'md', className, ...props
   );
 }
 
+/** The props of {@link IconButton}. */
 export interface IconButtonProps extends Omit<ButtonProps, 'aria-label'> {
   /** Accessible name, also shown as tooltip. */
   label: string;
@@ -29,6 +33,7 @@ export interface IconButtonProps extends Omit<ButtonProps, 'aria-label'> {
   tooltip?: boolean;
 }
 
+/** A button that shows only an icon; its label is announced and shown as a tooltip. */
 export function IconButton({
   label,
   tooltip = true,

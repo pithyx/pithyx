@@ -3,6 +3,7 @@ import { unwrap } from '@pithyx/api-client';
 import { useEffect, useLayoutEffect } from 'react';
 import { api } from '../api/client';
 import { isAppAllowed } from '../apps/access';
+import { useInstalledApps } from '../apps/installed';
 import { findApp } from '../apps/registry';
 import { describeError, isSessionExpired } from '../errors/describe';
 import { clearToasts, notify } from '../shell/toasts';
@@ -33,6 +34,24 @@ let failureShown = false;
 function appOptions(app: string): WindowOptions | undefined {
   // A window of an app the user may no longer open is skipped like one of an app that is gone.
   return isAppAllowed(app) ? findApp(app)?.window : undefined;
+}
+
+/** Whether a saved layout has a window of an app the registry does not know (yet): an installed app. */
+function namesUnknownApp(layout: unknown): boolean {
+  const windows =
+    typeof layout === 'object' && layout !== null
+      ? (layout as { windows?: unknown }).windows
+      : undefined;
+  return (
+    Array.isArray(windows) &&
+    windows.some(
+      (window: unknown) =>
+        typeof window === 'object' &&
+        window !== null &&
+        typeof (window as { app?: unknown }).app === 'string' &&
+        findApp((window as { app: string }).app) === undefined,
+    )
+  );
 }
 
 /** Only the tab the user works in saves: the tabs of one browser share its layout. */
@@ -185,6 +204,7 @@ export function useLayoutPersistence() {
     saving = false;
   }, []);
 
+  const appsKnown = useInstalledApps((state) => state.apps !== undefined);
   const desktop = useQuery({
     queryKey: ['desktop'],
     queryFn: async ({ signal }) => unwrap(await api.GET('/api/desktop', { signal })),
@@ -211,6 +231,10 @@ export function useLayoutPersistence() {
     for (const preference of desktop.data.preferences) {
       setPreferredSize(preference.appId, { width: preference.width, height: preference.height });
     }
+    // A window of an installed app waits for the topic apps, which says whether the app is still there for the user.
+    if (!appsKnown && namesUnknownApp(desktop.data.layout)) {
+      return;
+    }
     // Windows the user opened while the layout was loading win over the saved ones.
     if (desktop.data.layout !== null && Object.keys(useDesktop.getState().windows).length === 0) {
       const skipped = applyLayout(desktop.data.layout);
@@ -219,7 +243,7 @@ export function useLayoutPersistence() {
       }
     }
     saving = true;
-  }, [desktop.data]);
+  }, [desktop.data, appsKnown]);
 
   useEffect(() => {
     const unsubscribe = useDesktop.subscribe((next, previous) => {

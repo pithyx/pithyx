@@ -203,8 +203,11 @@ public sealed partial class LogService(
         return line.ToString();
     }
 
-    /// <summary>Stores what an app logs for a user, within the app's rate limit; long texts are cut, not refused.</summary>
-    public AppLogResult WriteApp(string app, string user, AppLogBatch batch)
+    /// <summary>
+    /// Stores what an app logs for a user, within the app's rate limit; long texts are cut, not refused. Debug entries
+    /// are left out unless an administrator switched debug logging on for the app (<paramref name="debug"/>, D305).
+    /// </summary>
+    public AppLogResult WriteApp(string app, string user, AppLogBatch batch, bool debug)
     {
         ArgumentNullException.ThrowIfNull(batch);
         if (!AppId.IsValid(app))
@@ -215,13 +218,14 @@ public sealed partial class LogService(
         {
             throw new PithyxException(ErrorCodes.LogsBatchTooLarge, new Dictionary<string, object?> { ["max"] = MaxBatch });
         }
-        var allowed = limiter.Take(app, batch.Entries.Count);
+        var entries = debug ? batch.Entries : [.. batch.Entries.Where(entry => entry.Level != LogLevelName.Debug)];
+        var allowed = limiter.Take(app, entries.Count);
         var now = time.GetUtcNow();
-        foreach (var entry in batch.Entries.Take(allowed))
+        foreach (var entry in entries.Take(allowed))
         {
             store.Enqueue(new PendingLogEntry(now, entry.Level, $"app/{app}", Cut(entry.Message, MaxMessageLength), System.Diagnostics.Activity.Current?.TraceId.ToString(), user, Fields(entry.Data)));
         }
-        return new AppLogResult(allowed, batch.Entries.Count - allowed);
+        return new AppLogResult(allowed, entries.Count - allowed);
     }
 
     private static Dictionary<string, string>? Fields(IReadOnlyDictionary<string, string>? data) =>

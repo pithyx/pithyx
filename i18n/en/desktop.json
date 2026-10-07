@@ -183,12 +183,8 @@
         "settings": "Settings",
         "monitor": "Resource Monitor",
         "logs": "Log Center",
-        "about": "About Pithyx"
-      }
-    },
-    "com": {
-      "example": {
-        "sdk-probe": "SDK demo"
+        "about": "About Pithyx",
+        "store": "Store"
       }
     },
     "photos": "Photos",

@@ -62,8 +62,8 @@ public sealed record NotificationEvent(NotificationChange Change, Notification? 
 /// <param name="Ids">The notifications to mark as read; null or missing marks every unread one.</param>
 public sealed record MarkNotificationsReadRequest(IReadOnlyList<long>? Ids = null);
 
-/// <summary>Body of <c>POST /api/notifications/app</c>: a notification an app sends through the SDK.</summary>
-/// <param name="App">Id of the app: lowercase letters, digits and dashes, starting with a letter, at most 64 characters.</param>
+/// <summary>Body of <c>POST /api/notifications/app</c>: a notification a core app sends through the SDK.</summary>
+/// <param name="App">Id of the core app (<c>org.pithyx.*</c>); third-party apps send theirs to <c>/api/app/notifications</c>.</param>
 /// <param name="Title">Plain text from the app, at most 200 characters.</param>
 /// <param name="Body">Plain text from the app, at most 1000 characters.</param>
 /// <param name="Tone">Defaults to <c>info</c>.</param>
@@ -71,3 +71,32 @@ public sealed record AppNotificationRequest(string App, string Title, string? Bo
 
 /// <summary>A notification to create: message code, parameters, tone and the app that sent it (null for the system).</summary>
 public sealed record NotificationDraft(string Code, IReadOnlyDictionary<string, object?> Params, NotificationTone Tone, string? App = null);
+
+/// <summary>How serious an app's notification is; <c>error</c> shows as critical.</summary>
+public enum AppNotificationLevel
+{
+    Info,
+    Success,
+    Warning,
+    Error,
+}
+
+/// <summary>A button of an app's notification.</summary>
+/// <param name="Id">Comes back to the app when the user clicks it; 1 to 64 characters, unique in the notification.</param>
+/// <param name="Label">Plain text from the app, 1 to 40 characters.</param>
+public sealed record AppNotificationAction(string Id, string Label);
+
+/// <summary>Body of <c>POST /api/app/notifications</c>: the SDK's <c>notify</c> of a third-party app.</summary>
+/// <param name="Title">Plain text, 1 to 200 characters.</param>
+/// <param name="Body">Plain text, at most 1000 characters.</param>
+/// <param name="Level">Defaults to <c>info</c>.</param>
+/// <param name="Actions">At most 2 buttons.</param>
+/// <param name="Data">Any JSON the app gets back with a click, at most 4096 characters.</param>
+/// <param name="Tag">Replaces the app's earlier notification with the same tag for this user; 1 to 64 characters.</param>
+public sealed record AppNotifyRequest(
+    string Title,
+    string? Body = null,
+    AppNotificationLevel? Level = null,
+    IReadOnlyList<AppNotificationAction>? Actions = null,
+    JsonElement? Data = null,
+    string? Tag = null);

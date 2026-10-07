@@ -19,6 +19,17 @@ public static class ErrorCodes
     public const string AppAppNotFound = "app.app.not_found";
 
     /// <summary>
+    /// The app has no backend endpoint of this name in its manifest (<c>backend.endpoints</c>), or no backend at all;
+    /// <c>params.endpoint</c> is the name asked for.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string AppBackendEndpointUnknown = "app.backend.endpoint_unknown";
+
+    /// <summary>The app declares no backend, so there is nothing a backend token could reach.</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string AppBackendMissing = "app.backend.missing";
+
+    /// <summary>
     /// The package declares a backend (containers). This version of Pithyx installs apps with a frontend only; backends
     /// arrive with the Docker runtime.
     /// </summary>
@@ -157,6 +168,14 @@ public static class ErrorCodes
     public const string AppManifestWindowSizeInvalid = "app.manifest.window_size_invalid";
 
     /// <summary>
+    /// A folder cannot be mapped to a storage request of the app; <c>params.storage</c> names the request and
+    /// <c>params.reason</c> says why: <c>unknown</c> (the app's manifest has no such request) or <c>access</c> (read and
+    /// write for a request that asks for reading only).
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppMappingInvalid = "app.mapping.invalid";
+
+    /// <summary>
     /// The uploaded file is not a readable app package (a gzip-compressed tar archive); nothing of it was kept.
     /// <c>params.reason</c> says why: <c>gzip</c> (not gzip or damaged), <c>format</c> (not a ustar or pax archive, or a
     /// malformed header field), <c>checksum</c> (a header's checksum is wrong), <c>truncated</c> (the archive ends inside an
@@ -199,6 +218,10 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.Forbidden)]
     public const string AppPermissionDenied = "app.permission.denied";
 
+    /// <summary>The app's manifest does not ask for the permission an administrator tried to grant or revoke; <c>params.permission</c> names it.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppPermissionNotRequested = "app.permission.not_requested";
+
     /// <summary>
     /// Apps live on one pool, chosen at the first install; while an app is installed it cannot move. <c>params.pool</c>
     /// is the app pool.
@@ -218,9 +241,27 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string AppPoolUnavailable = "app.pool.unavailable";
 
+    /// <summary>A key of an app's stored values is empty or longer than <c>params.maxLength</c> characters.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppStorageKeyInvalid = "app.storage.key_invalid";
+
+    /// <summary>
+    /// The app's manifest has no storage request of this id, or no administrator assigned a folder to it yet;
+    /// <c>params.storage</c> is the id asked for.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string AppStorageNotFound = "app.storage.not_found";
+
     /// <summary>A value an app stores is larger than its limit; <c>params.maxKb</c> is the limit.</summary>
     [ErrorStatus(HttpStatusCode.RequestEntityTooLarge)]
     public const string AppStorageTooLarge = "app.storage.too_large";
+
+    /// <summary>
+    /// A call of the daemon's API for apps without a valid app token: none, an unknown or expired one, one for something
+    /// else, or one whose session, user or app access ended. The desktop asks for a new token.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Unauthorized)]
+    public const string AppTokenInvalid = "app.token.invalid";
 
     /// <summary>An administrator deactivated the account; the password was right.</summary>
     [ErrorStatus(HttpStatusCode.Forbidden)]

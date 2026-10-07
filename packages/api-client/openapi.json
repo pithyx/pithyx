@@ -442,7 +442,7 @@
         "tags": [
           "Logs"
         ],
-        "description": "Stores log entries an app wrote through the SDK for the signed-in user, as source app/<app>; only for an app the user may open (auth.permission.denied otherwise). At most 100 entries per request; each app may write bursts of 200 and then 20 entries a second, the rest is dropped and counted.",
+        "description": "Stores log entries a core app wrote through the SDK for the signed-in user, as source app/<app>; only for a core app the user may open (auth.permission.denied otherwise; third-party apps write through /api/app/logs). Debug entries are left out. At most 100 entries per request; each app may write bursts of 200 and then 20 entries a second, the rest is dropped and counted.",
         "operationId": "WriteAppLogs",
         "parameters": [
           {
@@ -508,6 +508,57 @@
         "responses": {
           "202": {
             "description": "Accepted"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/apps/{appId}/tokens": {
+      "post": {
+        "tags": [
+          "Apps"
+        ],
+        "description": "A token for an app the signed-in user may use (any app for administrators; app.app.not_found otherwise), bound to the user, this session, the app and the window instance, valid 5 minutes. kind host is for the daemon's API for apps (/api/app/**) and stays in the desktop; kind backend is for the app's backend (app.backend.missing without one). Needs the session cookie and the CSRF header; ask again before expiresAt.",
+        "operationId": "CreateAppToken",
+        "parameters": [
+          {
+            "name": "appId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppToken"
+                }
+              }
+            }
           },
           "default": {
             "description": "Problem details with a stable error code.",
@@ -1576,7 +1627,7 @@
         "tags": [
           "Notifications"
         ],
-        "description": "What an app's SDK notify call becomes: a notification for the signed-in user with the app's plain text, stored as app.message. The desktop sends it for the app after checking the app's notifications permission. Invalid fields answer 400 notifications.message.invalid.",
+        "description": "What a core app's SDK notify call becomes: a notification for the signed-in user with the app's plain text, stored as app.message. Only for core apps (org.pithyx.*, auth.permission.denied otherwise); third-party apps send theirs to /api/app/notifications with their token. Invalid fields answer 400 notifications.message.invalid.",
         "operationId": "CreateAppNotification",
         "requestBody": {
           "content": {
@@ -4604,7 +4655,7 @@
         "tags": [
           "Apps"
         ],
-        "description": "Administrators only. Enables or disables an app. A disabled app keeps its data and grants, but nobody can open it and its frontend is not served.",
+        "description": "Administrators only. Enables or disables an app. A disabled app keeps its data and grants, but nobody can open it, its frontend is not served and its tokens end.",
         "operationId": "UpdateApp",
         "parameters": [
           {
@@ -4697,6 +4748,304 @@
         }
       }
     },
+    "/api/apps/{appId}/permissions": {
+      "put": {
+        "tags": [
+          "Apps"
+        ],
+        "description": "Administrators only. Grants or revokes permissions the app's manifest asks for (app.permission.not_requested for any other); the listed ones change, the others stay. A revoked permission stays revoked across updates. Users' windows of the app learn it with their next token (A11).",
+        "operationId": "SetAppPermissions",
+        "parameters": [
+          {
+            "name": "appId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppPermissionsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/apps/{appId}/storage/{storageId}": {
+      "put": {
+        "tags": [
+          "Apps"
+        ],
+        "description": "Administrators only. Maps an existing folder of a shared folder to a storage request of the app's manifest, replacing an earlier mapping: read-only, or read and write when the request asks for it (app.mapping.invalid otherwise). The folder keeps its rights, snapshots and backups and survives an uninstall (D314).",
+        "operationId": "MapAppStorage",
+        "parameters": [
+          {
+            "name": "appId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "storageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppStorageMappingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Apps"
+        ],
+        "description": "Administrators only. Removes the folder mapped to a storage request of the app; the folder itself stays.",
+        "operationId": "UnmapAppStorage",
+        "parameters": [
+          {
+            "name": "appId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "storageId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/apps/{appId}/log-level": {
+      "put": {
+        "tags": [
+          "Apps"
+        ],
+        "description": "Administrators only. Switches the app's debug log entries on (debug) or off (info, the default); info, warn and error always reach the Log Center (D305). The topic apps carries the level to the app's windows.",
+        "operationId": "SetAppLogLevel",
+        "parameters": [
+          {
+            "name": "appId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppLogLevelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/apps/{appId}/grants": {
+      "get": {
+        "tags": [
+          "Apps"
+        ],
+        "description": "Administrators only. Who may use an installed third-party app: the grants of users and groups on app:<id> (the built-in group users stands for everybody) and every user's result.",
+        "operationId": "GetAppGrants",
+        "parameters": [
+          {
+            "name": "appId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppGrants"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Apps"
+        ],
+        "description": "Administrators only. Replaces the grants of users and groups on the app, each with level allow; without any, only administrators use it. Applies at once and is pushed to the users' desktops.",
+        "operationId": "SetAppGrants",
+        "parameters": [
+          {
+            "name": "appId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppGrantsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppGrants"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/apps/{appId}/icon": {
       "get": {
         "tags": [
@@ -4722,6 +5071,671 @@
                 "schema": {
                   "type": "string",
                   "format": "byte"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/app/logs": {
+      "post": {
+        "tags": [
+          "App API"
+        ],
+        "description": "Stores log entries of the token's app for its user, as source app/<id>. Debug entries only while an administrator switched debug logging on for the app; at most 100 entries per request within the app's rate limit.",
+        "operationId": "AppWriteLogs",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppLogBatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppLogResult"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/app/notifications": {
+      "post": {
+        "tags": [
+          "App API"
+        ],
+        "description": "A notification of the token's app for its user, with at most two buttons, data that comes back with a click and a tag that replaces the app's earlier notification with the same tag. Needs the permission notifications.",
+        "operationId": "AppNotify",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppNotifyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Notification"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/app/storage": {
+      "get": {
+        "tags": [
+          "App API"
+        ],
+        "description": "The keys the token's app stored for its user.",
+        "operationId": "AppListStorageKeys",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppStorageKeys"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/app/storage/value": {
+      "get": {
+        "tags": [
+          "App API"
+        ],
+        "description": "A value the token's app stored for its user under key, or null.",
+        "operationId": "AppGetStorageValue",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppStorageValue"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "App API"
+        ],
+        "description": "Stores a value of the token's app for its user: keys of 1 to 128 characters, values of at most 64 KB of JSON, at most 1 MB per app and user (app.storage.too_large).",
+        "operationId": "AppSetStorageValue",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppStorageValue"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "App API"
+        ],
+        "description": "Removes a value of the token's app for its user; a missing one is no error.",
+        "operationId": "AppDeleteStorageValue",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/app/directory/users": {
+      "get": {
+        "tags": [
+          "App API"
+        ],
+        "description": "Every active user of the box with its groups. Needs the permission directory.read.",
+        "operationId": "AppListUsers",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DirectoryUser"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/app/directory/groups": {
+      "get": {
+        "tags": [
+          "App API"
+        ],
+        "description": "Every group of the box but the built-in one. Needs the permission directory.read.",
+        "operationId": "AppListGroups",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DirectoryGroup"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/app/files/shares": {
+      "get": {
+        "tags": [
+          "App API"
+        ],
+        "description": "The shared folders the user can use, without their place on the host. Needs the permission files.shares.",
+        "operationId": "AppListShares",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AppShareInfo"
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/app/files/list": {
+      "get": {
+        "tags": [
+          "App API"
+        ],
+        "description": "One page of a folder in a shared folder (share, needs files.shares) or a storage request of the manifest (storage), as the user and with the user's rights. Parameters as for GET /api/files/{shareId}/list.",
+        "operationId": "AppListFolder",
+        "parameters": [
+          {
+            "name": "share",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "storage",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sort",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppFolderPage"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/app/files/entry": {
+      "get": {
+        "tags": [
+          "App API"
+        ],
+        "description": "A file or folder in a location, with whether the app may write it.",
+        "operationId": "AppGetFileEntry",
+        "parameters": [
+          {
+            "name": "share",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "storage",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppFileEntry"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/app/files/content": {
+      "get": {
+        "tags": [
+          "App API"
+        ],
+        "description": "The content of a file in a location, with range requests. A shared folder needs files.shares and files.read.",
+        "operationId": "AppReadFile",
+        "parameters": [
+          {
+            "name": "share",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "storage",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "App API"
+        ],
+        "description": "Streams the body into the file at path (fs.entry.exists unless overwrite=true). A shared folder needs files.shares and files.write, a storage request a mapping for reading and writing; the user needs write access either way.",
+        "operationId": "AppWriteFile",
+        "parameters": [
+          {
+            "name": "share",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "storage",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "overwrite",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppFileEntry"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/app/files/folders": {
+      "post": {
+        "tags": [
+          "App API"
+        ],
+        "description": "Creates a folder in a location, with the same rules as writing a file.",
+        "operationId": "AppCreateFolder",
+        "parameters": [
+          {
+            "name": "share",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "storage",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppFileEntry"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/app/tickets": {
+      "post": {
+        "tags": [
+          "App API"
+        ],
+        "description": "A one-time ticket for one WebSocket to an endpoint of the app's backend (app.backend.endpoint_unknown for a name the manifest does not declare), valid 30 seconds, bound to what the host token is bound to.",
+        "operationId": "AppCreateTicket",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppTicketRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppTicket"
                 }
               }
             }
@@ -4830,9 +5844,105 @@
       "AppAccess": {
         "enum": [
           "everybody",
-          "admins",
-          null
-        ]
+          "admins"
+        ],
+        "description": "Who may use an app after its first install (D304): everybody (a grant to the built-in group) or administrators only."
+      },
+      "AppContextState": {
+        "required": [
+          "version",
+          "permissions",
+          "logLevel",
+          "backend",
+          "storage"
+        ],
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "description": "The installed version."
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The permissions of the manifest that no administrator revoked; the app sees them as `permissionsChange`."
+          },
+          "logLevel": {
+            "enum": [
+              "info",
+              "debug"
+            ],
+            "description": "Whether an app's `debug` log entries reach the daemon (D305); `info`, `warn` and `error` always do."
+          },
+          "backend": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "required": [
+                  "status",
+                  "endpoints"
+                ],
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "description": "`stopped` until the Docker runtime (A14) runs backends."
+                  },
+                  "endpoints": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "The endpoint names of the manifest, sorted."
+                  }
+                },
+                "description": "The app's backend: the state of its containers and the names of its endpoints."
+              }
+            ],
+            "description": "The app's backend: the state of its containers and the names of its endpoints."
+          },
+          "storage": {
+            "type": "array",
+            "items": {
+              "required": [
+                "id",
+                "state",
+                "access"
+              ],
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "description": "The request's id; reach it as `{ storage: id }`."
+                },
+                "state": {
+                  "enum": [
+                    "ready",
+                    "unmapped",
+                    "locked",
+                    "unavailable"
+                  ],
+                  "description": "The state of a storage request of the manifest for the user."
+                },
+                "access": {
+                  "enum": [
+                    "none",
+                    "read",
+                    "readWrite",
+                    null
+                  ]
+                }
+              },
+              "description": "A storage request of the manifest and where it stands for the user."
+            },
+            "description": "The storage requests of the manifest with their state for the user (`storageChange`)."
+          }
+        },
+        "description": "The per-user topic `apps/&lt;id&gt;/context`: what the daemon decides about an app for the subscriber, who may\nuse the app (only such a user can subscribe). Its subscription is also the window lease (A15): while a desktop of the\nuser is subscribed, the app is in use."
       },
       "AppDetails": {
         "required": [
@@ -4847,7 +5957,9 @@
           "installedAt",
           "updatedAt",
           "busy",
-          "available"
+          "available",
+          "logLevel",
+          "storage"
         ],
         "type": "object",
         "properties": {
@@ -4904,9 +6016,134 @@
           "available": {
             "type": "boolean",
             "description": "Its data is reachable: the app pool is imported, unlocked and mounted."
+          },
+          "logLevel": {
+            "description": "Whether its debug log entries reach the daemon.",
+            "$ref": "#/components/schemas/AppLogLevel"
+          },
+          "storage": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppStorageMapping"
+            },
+            "description": "The folders mapped to the storage requests of its manifest; a request without one is not mapped."
           }
         },
         "description": "An installed app for administrators (topic `apps/admin` and `GET /api/apps`)."
+      },
+      "AppFileEntry": {
+        "required": [
+          "name",
+          "kind",
+          "size",
+          "modified",
+          "writable"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Name within its folder."
+          },
+          "kind": {
+            "description": "File, folder, symlink or another kind.",
+            "$ref": "#/components/schemas/FileKind"
+          },
+          "size": {
+            "type": "integer",
+            "description": "Bytes for files, 0 for folders.",
+            "format": "int64"
+          },
+          "modified": {
+            "type": "string",
+            "description": "Last change of the content, UTC.",
+            "format": "date-time"
+          },
+          "writable": {
+            "type": "boolean",
+            "description": "The app holds `files.write` (or the storage is mapped read and write) and the user may write there."
+          }
+        },
+        "description": "A file or folder an app reaches, with whether the app may write it."
+      },
+      "AppFolderPage": {
+        "required": [
+          "path",
+          "folderId",
+          "total",
+          "entries",
+          "nextCursor"
+        ],
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The folder (\"\" for the location's root)."
+          },
+          "folderId": {
+            "type": "string",
+            "description": "Stable id of the folder, also after a rename."
+          },
+          "total": {
+            "type": "integer",
+            "description": "Entries in the folder when the page was read.",
+            "format": "int32"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FileEntry"
+            },
+            "description": "This page, in the requested order."
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Pass as `cursor` for the next page; null on the last page."
+          }
+        },
+        "description": "One page of a folder, relative to its location."
+      },
+      "AppGrants": {
+        "required": [
+          "grants",
+          "users"
+        ],
+        "type": "object",
+        "properties": {
+          "grants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubjectGrant"
+            },
+            "description": "The grants of users and groups on it (level `allow`); the editor changes these. The built-in group `users` stands for everybody."
+          },
+          "users": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppUserAccess"
+            },
+            "description": "Every user with whether it may use the app in the end, administrators and deactivated users included."
+          }
+        },
+        "description": "Who may use an app. Administrators only."
+      },
+      "AppGrantsRequest": {
+        "required": [
+          "grants"
+        ],
+        "type": "object",
+        "properties": {
+          "grants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SubjectGrant"
+            },
+            "description": "Every grant on the app the users and groups should have (level `allow`); the others go."
+          }
+        }
       },
       "AppList": {
         "required": [
@@ -4925,7 +6162,8 @@
                 "entry",
                 "icon",
                 "window",
-                "permissions"
+                "permissions",
+                "logLevel"
               ],
               "type": "object",
               "properties": {
@@ -4969,6 +6207,13 @@
                     "type": "string"
                   },
                   "description": "The permissions the app holds: those of its manifest that no administrator revoked."
+                },
+                "logLevel": {
+                  "enum": [
+                    "info",
+                    "debug"
+                  ],
+                  "description": "Whether an app's `debug` log entries reach the daemon (D305); `info`, `warn` and `error` always do."
                 }
               },
               "description": "An installed app as a user who may use it sees it (topic `apps`)."
@@ -5020,6 +6265,25 @@
           }
         }
       },
+      "AppLogLevel": {
+        "enum": [
+          "info",
+          "debug"
+        ],
+        "description": "Whether an app's `debug` log entries reach the daemon (D305); `info`, `warn` and `error` always do."
+      },
+      "AppLogLevelRequest": {
+        "required": [
+          "level"
+        ],
+        "type": "object",
+        "properties": {
+          "level": {
+            "description": "Whether the app's debug log entries reach the daemon.",
+            "$ref": "#/components/schemas/AppLogLevel"
+          }
+        }
+      },
       "AppLogResult": {
         "required": [
           "accepted",
@@ -5039,6 +6303,33 @@
           }
         }
       },
+      "AppNotificationAction": {
+        "required": [
+          "id",
+          "label"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Comes back to the app when the user clicks it; 1 to 64 characters, unique in the notification."
+          },
+          "label": {
+            "type": "string",
+            "description": "Plain text from the app, 1 to 40 characters."
+          }
+        },
+        "description": "A button of an app's notification."
+      },
+      "AppNotificationLevel": {
+        "enum": [
+          "info",
+          "success",
+          "warning",
+          "error",
+          null
+        ]
+      },
       "AppNotificationRequest": {
         "required": [
           "app",
@@ -5048,7 +6339,7 @@
         "properties": {
           "app": {
             "type": "string",
-            "description": "Id of the app: lowercase letters, digits and dashes, starting with a letter, at most 64 characters."
+            "description": "Id of the core app (`org.pithyx.*`); third-party apps send theirs to `/api/app/notifications`."
           },
           "title": {
             "type": "string",
@@ -5073,7 +6364,58 @@
             ]
           }
         },
-        "description": "Body of `POST /api/notifications/app`: a notification an app sends through the SDK."
+        "description": "Body of `POST /api/notifications/app`: a notification a core app sends through the SDK."
+      },
+      "AppNotifyRequest": {
+        "required": [
+          "title"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Plain text, 1 to 200 characters."
+          },
+          "body": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Plain text, at most 1000 characters."
+          },
+          "level": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Defaults to `info`.",
+                "$ref": "#/components/schemas/AppNotificationLevel"
+              }
+            ]
+          },
+          "actions": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/AppNotificationAction"
+            },
+            "description": "At most 2 buttons."
+          },
+          "data": {
+            "description": "Any JSON the app gets back with a click, at most 4096 characters."
+          },
+          "tag": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Replaces the app's earlier notification with the same tag for this user; 1 to 64 characters."
+          }
+        },
+        "description": "Body of `POST /api/app/notifications`: the SDK's `notify` of a third-party app."
       },
       "AppPackageAction": {
         "enum": [
@@ -5099,7 +6441,8 @@
           "fileCount",
           "unpackedBytes",
           "packageBytes",
-          "sha256"
+          "sha256",
+          "suggestedAccess"
         ],
         "type": "object",
         "properties": {
@@ -5174,6 +6517,10 @@
           "sha256": {
             "type": "string",
             "description": "SHA-256 of the package file, lowercase hex."
+          },
+          "suggestedAccess": {
+            "description": "Who should use the app after an install (D304): administrators only when it asks for elevated rights, root in a container or `directory.read`, everybody otherwise. An install without access takes it.",
+            "$ref": "#/components/schemas/AppAccess"
           }
         },
         "description": "A checked package, kept for 15 minutes for its installation by the administrator who uploaded it."
@@ -5194,6 +6541,261 @@
             "description": "False after an administrator revoked it."
           }
         }
+      },
+      "AppPermissionsRequest": {
+        "required": [
+          "permissions"
+        ],
+        "type": "object",
+        "properties": {
+          "permissions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppPermissionState"
+            },
+            "description": "Permissions of the app's manifest with whether the app keeps them; the others stay as they are."
+          }
+        }
+      },
+      "AppShareInfo": {
+        "required": [
+          "id",
+          "name",
+          "access",
+          "unavailable"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The location `{ share: id }`."
+          },
+          "name": {
+            "type": "string",
+            "description": "Name shown to users."
+          },
+          "access": {
+            "description": "The user's access: `read` or `readWrite`.",
+            "$ref": "#/components/schemas/ShareAccess"
+          },
+          "unavailable": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Why its files cannot be reached now (`poolMissing`, `poolUnavailable`, `notMounted`), or null."
+          }
+        },
+        "description": "A shared folder the user can use, as an app with `files.shares` sees it: never its place on the host."
+      },
+      "AppStorageAccess": {
+        "enum": [
+          "read",
+          "readWrite"
+        ],
+        "description": "How an app may use a folder mapped to one of its storage requests."
+      },
+      "AppStorageKeys": {
+        "required": [
+          "keys"
+        ],
+        "type": "object",
+        "properties": {
+          "keys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Sorted."
+          }
+        },
+        "description": "The keys an app stored for the user."
+      },
+      "AppStorageMapping": {
+        "required": [
+          "storageId",
+          "shareId",
+          "path",
+          "access"
+        ],
+        "type": "object",
+        "properties": {
+          "storageId": {
+            "type": "string",
+            "description": "The id of the request in the manifest."
+          },
+          "shareId": {
+            "type": "integer",
+            "description": "The shared folder.",
+            "format": "int64"
+          },
+          "path": {
+            "type": "string",
+            "description": "The folder relative to the shared folder's root, empty for the root itself."
+          },
+          "access": {
+            "description": "Read-only, or read and write when the request asks for it.",
+            "$ref": "#/components/schemas/AppStorageAccess"
+          }
+        },
+        "description": "A folder in a shared folder that an administrator mapped to one storage request of an app."
+      },
+      "AppStorageMappingRequest": {
+        "required": [
+          "shareId",
+          "access"
+        ],
+        "type": "object",
+        "properties": {
+          "shareId": {
+            "type": "integer",
+            "description": "The shared folder.",
+            "format": "int64"
+          },
+          "access": {
+            "description": "Read-only, or read and write when the storage request asks for it.",
+            "$ref": "#/components/schemas/AppStorageAccess"
+          },
+          "path": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "An existing folder in it, relative to its root; empty or missing for the root."
+          }
+        }
+      },
+      "AppStorageValue": {
+        "required": [
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "value": {
+            "description": "Any JSON, at most 64 KB.",
+            "$ref": "#/components/schemas/JsonElement"
+          }
+        },
+        "description": "A value an app stores for the user; JSON null when there is none."
+      },
+      "AppTicket": {
+        "required": [
+          "ticket",
+          "expiresAt"
+        ],
+        "type": "object",
+        "properties": {
+          "ticket": {
+            "type": "string",
+            "description": "Works once, within 30 seconds."
+          },
+          "expiresAt": {
+            "type": "string",
+            "description": "When it stops working (UTC).",
+            "format": "date-time"
+          }
+        },
+        "description": "A one-time ticket for one WebSocket to the app's backend, as `?pithyx-ticket=`."
+      },
+      "AppTicketRequest": {
+        "required": [
+          "endpoint"
+        ],
+        "type": "object",
+        "properties": {
+          "endpoint": {
+            "type": "string",
+            "description": "A backend endpoint of the app's manifest, for example `api`."
+          }
+        },
+        "description": "Body of `POST /api/app/tickets`."
+      },
+      "AppToken": {
+        "required": [
+          "token",
+          "expiresAt"
+        ],
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "description": "Send as `Authorization: Bearer`; never log or store it."
+          },
+          "expiresAt": {
+            "type": "string",
+            "description": "When it stops working (UTC); ask for a new one before.",
+            "format": "date-time"
+          }
+        },
+        "description": "A token for one app, user, session and window."
+      },
+      "AppTokenKind": {
+        "enum": [
+          "host",
+          "backend",
+          "ticket"
+        ],
+        "description": "What a token is for (D303)."
+      },
+      "AppTokenRequest": {
+        "required": [
+          "kind",
+          "instance"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "description": "`host` for the daemon's API for apps (kept by the desktop), `backend` for the app's backend.",
+            "$ref": "#/components/schemas/AppTokenKind"
+          },
+          "instance": {
+            "type": "string",
+            "description": "The window instance: 1 to 64 letters, digits, dashes and underscores."
+          }
+        },
+        "description": "Body of `POST /api/apps/{appId}/tokens`."
+      },
+      "AppUserAccess": {
+        "required": [
+          "userId",
+          "username",
+          "displayName",
+          "administrator",
+          "disabled",
+          "allowed"
+        ],
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "integer",
+            "description": "The user's id.",
+            "format": "int64"
+          },
+          "username": {
+            "type": "string",
+            "description": "Login name."
+          },
+          "displayName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Name shown, if set."
+          },
+          "administrator": {
+            "type": "boolean",
+            "description": "Administrators use every app."
+          },
+          "disabled": {
+            "type": "boolean",
+            "description": "Deactivated users use none."
+          },
+          "allowed": {
+            "type": "boolean",
+            "description": "Whether the user may use the app: by its own grant, one of its groups', or as an administrator."
+          }
+        },
+        "description": "One user's effective access to an app."
       },
       "Appearance": {
         "required": [
@@ -5678,6 +7280,66 @@
         },
         "description": "Another device of the user with a saved layout."
       },
+      "DirectoryGroup": {
+        "required": [
+          "id",
+          "name",
+          "description"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Stable id (the group's Linux gid).",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "description": "The group name."
+          },
+          "description": {
+            "type": "string",
+            "description": "Free text, may be empty."
+          }
+        },
+        "description": "A group of the box, for an app with `directory.read`. The built-in group is left out."
+      },
+      "DirectoryUser": {
+        "required": [
+          "id",
+          "name",
+          "displayName",
+          "groups"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Stable id.",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "description": "The user name."
+          },
+          "displayName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The name to show, if set."
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "Ids of the user's groups, without the built-in group every user is in."
+          }
+        },
+        "description": "A user of the box, for an app with `directory.read`. Deactivated users are left out."
+      },
       "Disk": {
         "required": [
           "id",
@@ -6074,6 +7736,8 @@
         "enum": [
           "app.app.busy",
           "app.app.not_found",
+          "app.backend.endpoint_unknown",
+          "app.backend.missing",
           "app.backend.unsupported",
           "app.compose.key_unsupported",
           "app.compose.reference_unknown",
@@ -6094,15 +7758,20 @@
           "app.manifest.sdk_invalid",
           "app.manifest.version_unsupported",
           "app.manifest.window_size_invalid",
+          "app.mapping.invalid",
           "app.package.invalid",
           "app.package.layout_invalid",
           "app.package.not_found",
           "app.package.too_large",
           "app.permission.denied",
+          "app.permission.not_requested",
           "app.pool.fixed",
           "app.pool.required",
           "app.pool.unavailable",
+          "app.storage.key_invalid",
+          "app.storage.not_found",
           "app.storage.too_large",
+          "app.token.invalid",
           "auth.account.disabled",
           "auth.challenge.expired",
           "auth.credentials.invalid",
@@ -6879,6 +8548,25 @@
         },
         "description": "The grants of a group. Administrators only."
       },
+      "GroupRef": {
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Stable id (the group's Linux gid).",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "description": "The group name."
+          }
+        },
+        "description": "A group a user is in."
+      },
       "GroupSummary": {
         "required": [
           "id",
@@ -7225,7 +8913,7 @@
                 "type": "null"
               },
               {
-                "description": "Who may use the app after an install; an update keeps who may use it. Defaults to everybody.",
+                "description": "Who may use the app after an install; an update keeps who may use it. Defaults to the preview's suggested access.",
                 "$ref": "#/components/schemas/AppAccess"
               }
             ]
@@ -11160,6 +12848,7 @@
       "TopicEvents": {
         "required": [
           "apps",
+          "apps/+/context",
           "apps/admin",
           "files/+/+",
           "jobs",
@@ -11179,6 +12868,9 @@
         "properties": {
           "apps": {
             "$ref": "#/components/schemas/AppList"
+          },
+          "apps/+/context": {
+            "$ref": "#/components/schemas/AppContextState"
           },
           "apps/admin": {
             "$ref": "#/components/schemas/AdminAppList"
@@ -11227,6 +12919,7 @@
       "TopicSnapshots": {
         "required": [
           "apps",
+          "apps/+/context",
           "apps/admin",
           "files/+/+",
           "jobs",
@@ -11246,6 +12939,9 @@
         "properties": {
           "apps": {
             "$ref": "#/components/schemas/AppList"
+          },
+          "apps/+/context": {
+            "$ref": "#/components/schemas/AppContextState"
           },
           "apps/admin": {
             "$ref": "#/components/schemas/AdminAppList"
@@ -11553,7 +13249,8 @@
           "displayName",
           "isAdmin",
           "totpEnabled",
-          "permissions"
+          "permissions",
+          "groups"
         ],
         "type": "object",
         "properties": {
@@ -11584,6 +13281,13 @@
           "permissions": {
             "description": "What the user may do; the topic `session/permissions` sends changes.",
             "$ref": "#/components/schemas/SessionPermissions"
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/GroupRef"
+            },
+            "description": "The user's groups by name, without the built-in group every user is in; apps get them in their context."
           }
         },
         "description": "The signed-in user."
@@ -11886,6 +13590,9 @@
       "name": "Logs"
     },
     {
+      "name": "Apps"
+    },
+    {
       "name": "Auth"
     },
     {
@@ -11907,7 +13614,7 @@
       "name": "Storage"
     },
     {
-      "name": "Apps"
+      "name": "App API"
     }
   ]
 }

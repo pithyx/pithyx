@@ -56,8 +56,8 @@ test('a single app gets new launch arguments in its open window instead of a sec
   await expect(page.locator(FRAME)).toHaveCount(1);
   await expect(taskbarEntry(page)).toHaveAccessibleName(/active/);
   await expect(
-    taskbarEntry(page).locator('[data-default-icon]'),
-    'an app without an icon gets the default icon',
+    taskbarEntry(page).locator('img[src^="/api/apps/com.example.sdk-probe/icon"]'),
+    'an installed app shows the icon of its package',
   ).toHaveCount(1);
 });
 
@@ -204,6 +204,8 @@ test('notification buttons reach the open app, or start it with the activation',
   await signInAsAdmin(page);
   await page.request.delete('/api/notifications', { headers: { 'X-Pithyx-Request': '1' } });
   const { window, app } = await openDemo(page);
+  // The counter lives in the daemon's app storage, so it starts where earlier specs left it.
+  const count = Number(await app.locator('output').textContent()) + 1;
   await app.getByRole('button', { name: 'Count', exact: true }).click();
   await app.getByRole('button', { name: 'Notify with buttons' }).click();
 
@@ -215,7 +217,9 @@ test('notification buttons reach the open app, or start it with the activation',
   expect(await violations(page)).toEqual([]);
   await toast.getByRole('button', { name: 'Reply' }).click();
   await expect(toast).toBeHidden();
-  await expect(app.locator('[data-fact="activation"]')).toHaveText('reply {"count":1}');
+  await expect(app.locator('[data-fact="activation"]')).toHaveText(
+    `reply {"count":${String(count)}}`,
+  );
   await expect(app.getByRole('list', { name: 'Events' })).toContainText('notificationAction');
 
   await window.getByRole('button', { name: 'Close' }).click();
@@ -227,7 +231,9 @@ test('notification buttons reach the open app, or start it with the activation',
   const panel = page.getByRole('dialog', { name: 'Notifications' });
   await panel.getByRole('button', { name: 'Later' }).click();
   const reopened = page.frameLocator(FRAME);
-  await expect(reopened.locator('[data-fact="activation"]')).toHaveText('later {"count":1}');
+  await expect(reopened.locator('[data-fact="activation"]')).toHaveText(
+    `later {"count":${String(count)}}`,
+  );
 });
 
 test.describe('clipboard and new tabs', () => {
@@ -236,10 +242,11 @@ test.describe('clipboard and new tabs', () => {
   test('an app copies text and opens a tab without a way back to the desktop', async ({ page }) => {
     await signInAsAdmin(page);
     const { app } = await openDemo(page);
+    const count = await app.locator('output').textContent();
     await app.getByRole('button', { name: 'Copy text' }).click();
     await expect
       .poll(() => page.evaluate(() => navigator.clipboard.readText()))
-      .toBe('Counter of the SDK demo: 0');
+      .toBe(`Counter of the SDK demo: ${count ?? ''}`);
 
     const popup = page.waitForEvent('popup');
     await app.getByRole('button', { name: 'Open the box in a tab' }).click();

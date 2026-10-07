@@ -38,6 +38,11 @@ export default defineConfig(
     '**/.css-types/',
     'daemon/',
     '**/node_modules/',
+    '**/api-docs/',
+    // Two lines that load the built command.
+    'packages/cli/bin/',
+    // Fixture data of the shared corpus, not code.
+    'sdk/schema/fixtures/',
     '.worktrees/',
   ]),
   js.configs.recommended,
@@ -50,8 +55,14 @@ export default defineConfig(
       'sdk/scripts/**/*.ts',
       'packages/cli/src/**/*.ts',
       '**/vite.config.ts',
+      '**/vite.*.config.ts',
     ],
     languageOptions: { globals: globals.node },
+  },
+  {
+    // The mock desktop of `pithyx dev`, a page on the developer's machine.
+    files: ['packages/cli/shell/**/*.ts'],
+    languageOptions: { globals: globals.browser },
   },
   {
     files: ['desktop/src/**/*.{ts,tsx}', 'packages/ui/src/**/*.{ts,tsx}'],

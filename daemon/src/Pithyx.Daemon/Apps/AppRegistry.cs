@@ -22,7 +22,9 @@ public sealed record InstalledApp(
     long Uid,
     string Sha256,
     DateTimeOffset InstalledAt,
-    DateTimeOffset UpdatedAt)
+    DateTimeOffset UpdatedAt,
+    AppLogLevel LogLevel,
+    IReadOnlyList<AppStorageMapping> Storage)
 {
     /// <summary>The path of the entry page below <c>/apps/&lt;id&gt;/</c> (the manifest's entry without <c>frontend/</c>).</summary>
     public string EntryPath => Manifest.GetProperty("entry").GetString()![(PackageLayout.FrontendFolder.Length + 1)..];
@@ -31,6 +33,21 @@ public sealed record InstalledApp(
     public bool HasInternet => Permissions.Any(permission => permission.Granted && permission.Permission == "network.internet");
 
     public IReadOnlyList<string> Granted => [.. Permissions.Where(permission => permission.Granted).Select(permission => permission.Permission)];
+
+    /// <summary>Whether the app holds a permission of its manifest that no administrator revoked.</summary>
+    public bool Holds(string permission) => Permissions.Any(state => state.Granted && state.Permission == permission);
+
+    /// <summary>The endpoint names of the manifest's backend; empty for an app without one.</summary>
+    public IReadOnlyList<string> Endpoints =>
+        Manifest.TryGetProperty("backend", out var backend) && backend.TryGetProperty("endpoints", out var endpoints)
+            ? [.. endpoints.EnumerateObject().Select(endpoint => endpoint.Name).Order(StringComparer.Ordinal)]
+            : [];
+
+    /// <summary>The storage requests of the manifest: id and the access asked for.</summary>
+    public IReadOnlyList<(string Id, string Access)> StorageRequests =>
+        Manifest.TryGetProperty("storage", out var storage)
+            ? [.. storage.EnumerateArray().Select(request => (request.GetProperty("id").GetString()!, request.GetProperty("access").GetString()!))]
+            : [];
 }
 
 /// <summary>
@@ -118,7 +135,7 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
     public AppDetails Details(InstalledApp app)
     {
         ArgumentNullException.ThrowIfNull(app);
-        return new(app.Id, app.Version, app.Source, app.Enabled, app.Manifest, app.Permissions, app.Uid, app.Sha256, app.InstalledAt, app.UpdatedAt, IsBusy(app.Id), IsAvailable(app.Id));
+        return new(app.Id, app.Version, app.Source, app.Enabled, app.Manifest, app.Permissions, app.Uid, app.Sha256, app.InstalledAt, app.UpdatedAt, IsBusy(app.Id), IsAvailable(app.Id), app.LogLevel, app.Storage);
     }
 
     public static AppSummary Summary(InstalledApp app)
@@ -133,7 +150,8 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
             $"/apps/{app.Id}/{app.EntryPath}",
             $"/api/apps/{app.Id}/icon?v={app.Sha256[..12]}",
             manifest.GetProperty("window").Clone(),
-            app.Granted);
+            app.Granted,
+            app.LogLevel);
     }
 
     public TopicDefinition Definition() => new(
@@ -179,9 +197,12 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
 
     private static async Task<(IReadOnlyDictionary<string, InstalledApp>, string?)> LoadAsync(System.Data.Common.DbConnection connection)
     {
-        var rows = await connection.QueryAsync<(string Id, string Version, string Source, long Enabled, string Manifest, long Uid, string Sha256, string InstalledAt, string UpdatedAt)>(
-            "SELECT id, version, source, enabled, manifest, uid, package_sha256, installed_at, updated_at FROM apps ORDER BY id");
+        var rows = await connection.QueryAsync<(string Id, string Version, string Source, long Enabled, string Manifest, long Uid, string Sha256, string InstalledAt, string UpdatedAt, string LogLevel)>(
+            "SELECT id, version, source, enabled, manifest, uid, package_sha256, installed_at, updated_at, log_level FROM apps ORDER BY id");
         var granted = (await connection.QueryAsync<(string AppId, string Permission, long Granted)>("SELECT app_id, permission, granted FROM app_permissions ORDER BY permission"))
+            .ToLookup(row => row.AppId, StringComparer.Ordinal);
+        var mappings = (await connection.QueryAsync<(string AppId, string StorageId, long ShareId, string Path, string Access)>(
+                "SELECT app_id, storage_id, share_id, path, access FROM storage_mappings ORDER BY storage_id"))
             .ToLookup(row => row.AppId, StringComparer.Ordinal);
         var pool = await connection.ExecuteScalarAsync<string?>("SELECT value FROM settings WHERE key = @key", new { key = PoolSetting });
         var apps = new SortedDictionary<string, InstalledApp>(StringComparer.Ordinal);
@@ -198,7 +219,10 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
                 row.Uid,
                 row.Sha256,
                 DateTimeOffset.Parse(row.InstalledAt, CultureInfo.InvariantCulture),
-                DateTimeOffset.Parse(row.UpdatedAt, CultureInfo.InvariantCulture));
+                DateTimeOffset.Parse(row.UpdatedAt, CultureInfo.InvariantCulture),
+                row.LogLevel == "debug" ? AppLogLevel.Debug : AppLogLevel.Info,
+                [.. mappings[row.Id].Select(mapping => new AppStorageMapping(
+                    mapping.StorageId, mapping.ShareId, mapping.Path, mapping.Access == "read" ? AppStorageAccess.Read : AppStorageAccess.ReadWrite))]);
         }
         return (apps, pool);
     }
@@ -207,9 +231,13 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
         texts.EnumerateObject().ToDictionary(text => text.Name, text => text.Value.GetString()!, StringComparer.Ordinal);
 }
 
-/// <summary>Publishes <c>apps</c> and <c>apps/admin</c> when the registry, the rights or the pools change.</summary>
-public sealed class AppChangePublisher(TopicHub hub, AppRegistry registry, PermissionService permissions, PoolInventory pools) : IHostedService
+/// <summary>
+/// Publishes <c>apps</c>, <c>apps/admin</c> and every app's <c>apps/&lt;id&gt;/context</c> when the registry, the rights
+/// or the pools change.
+/// </summary>
+public sealed class AppChangePublisher(TopicHub hub, AppRegistry registry, AppContexts contexts, PermissionService permissions, PoolInventory pools) : IHostedService
 {
+
     public Task StartAsync(CancellationToken cancellationToken)
     {
         registry.Changed += Publish;
@@ -230,5 +258,9 @@ public sealed class AppChangePublisher(TopicHub hub, AppRegistry registry, Permi
     {
         hub.Publish(AppRegistry.Topic, registry.List());
         hub.Publish(AppRegistry.AdminTopic, registry.AdminList());
+        foreach (var appId in registry.Apps.Keys)
+        {
+            hub.Publish(AppContexts.TopicOf(appId), contexts.SourceOf(appId));
+        }
     }
 }

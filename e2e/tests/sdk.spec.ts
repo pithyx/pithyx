@@ -35,24 +35,29 @@ test('a sandboxed app gets its context and uses the window, notification and sto
   await expect(app.locator('[data-fact="locale"]')).toHaveText(/^en/);
   await expect(app.locator('[data-fact="sizeClass"]')).toHaveText('expanded');
 
+  // The counter lives in the daemon's app storage, so it starts where earlier specs left it.
+  const start = Number(await app.locator('output').textContent());
+  const count = String(start + 2);
   await app.getByRole('button', { name: 'Count' }).click();
   await app.getByRole('button', { name: 'Count' }).click();
-  await expect(app.locator('output')).toHaveText('2');
+  await expect(app.locator('output')).toHaveText(count);
 
   await app.getByRole('button', { name: 'Set window title' }).click();
-  await expect(appWindow(page, 'SDK demo: 2')).toBeVisible();
+  await expect(appWindow(page, `SDK demo: ${count}`)).toBeVisible();
   await expect(
-    page.getByRole('navigation', { name: 'Taskbar' }).getByRole('button', { name: /SDK demo: 2/ }),
+    page
+      .getByRole('navigation', { name: 'Taskbar' })
+      .getByRole('button', { name: new RegExp(`SDK demo: ${count}`) }),
   ).toBeVisible();
 
   await app.getByRole('button', { name: 'Send notification' }).click();
-  await expect(page.getByText('Hello from the SDK demo')).toBeVisible();
-  await expect(page.getByText('The counter is at 2.')).toBeVisible();
+  await expect(page.getByText('Hello from the SDK demo').first()).toBeVisible();
+  await expect(page.getByText(`The counter is at ${count}.`)).toBeVisible();
 
   await test.step('stored values come back in a new window', async () => {
-    await appWindow(page, 'SDK demo: 2').getByRole('button', { name: 'Close' }).click();
+    await appWindow(page, `SDK demo: ${count}`).getByRole('button', { name: 'Close' }).click();
     const again = await openDemo(page);
-    await expect(again.app.locator('output')).toHaveText('2');
+    await expect(again.app.locator('output')).toHaveText(count);
   });
 });
 

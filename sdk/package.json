@@ -1,6 +1,6 @@
 {
   "name": "@pithyx/sdk",
-  "version": "1.0.0-rc.1",
+  "version": "1.0.0-rc.2",
   "description": "SDK for building Pithyx apps: the API between an app and the Pithyx desktop",
   "keywords": [
     "pithyx",
@@ -46,16 +46,20 @@
       "import": "./dist/i18n.js"
     },
     "./schema/manifest.v1.schema.json": "./schema/manifest.v1.schema.json",
-    "./schema/compose.v1.rules.json": "./schema/compose.v1.rules.json"
+    "./schema/compose.v1.rules.json": "./schema/compose.v1.rules.json",
+    "./schema/images-lock.v1.schema.json": "./schema/images-lock.v1.schema.json"
   },
   "scripts": {
     "build": "vite build",
     "typecheck": "tsc -p tsconfig.json && tsc -p scripts/tsconfig.json",
     "test": "vitest run",
-    "generate": "node scripts/generate-manifest.ts"
+    "generate": "node scripts/generate-manifest.ts",
+    "docs": "typedoc",
+    "docs:check": "typedoc --emit none"
   },
   "devDependencies": {
     "json-schema-to-typescript": "^16.0.0",
+    "typedoc": "^0.28.20",
     "vite": "^8.3.1",
     "vite-plugin-dts": "^5.1.1",
     "vitest": "^5.0.2"
@@ -79,7 +83,8 @@
         "import": "./dist/i18n.js"
       },
       "./schema/manifest.v1.schema.json": "./schema/manifest.v1.schema.json",
-      "./schema/compose.v1.rules.json": "./schema/compose.v1.rules.json"
+      "./schema/compose.v1.rules.json": "./schema/compose.v1.rules.json",
+      "./schema/images-lock.v1.schema.json": "./schema/images-lock.v1.schema.json"
     }
   }
 }

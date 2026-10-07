@@ -35,6 +35,24 @@ public sealed class SecretMaskingEnricherTests
     }
 
     [Fact]
+    public void MasksAppTokensTicketsAndBearerCredentialsInsideTexts()
+    {
+        var logEvent = Log(logger => logger.Information(
+            "Proxied {Url} with {Header} and {Nested}",
+            "/apps/com.example.chat/api/live?a=1&pithyx-ticket=t1cket&b=2",
+            "Bearer s3cr3t-T0ken",
+            new List<string> { "/apps/x/api/a.png?PITHYX-TOKEN=abc.def" }));
+
+        var rendered = logEvent.RenderMessage();
+        foreach (var secret in new[] { "t1cket", "s3cr3t-T0ken", "abc.def" })
+        {
+            Assert.DoesNotContain(secret, rendered, StringComparison.Ordinal);
+        }
+        Assert.Contains("a=1&pithyx-ticket=***&b=2", rendered, StringComparison.Ordinal);
+        Assert.Contains("Bearer ***", rendered, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void MasksNestedPropertiesOfDestructuredObjects()
     {
         var logEvent = Log(logger => logger.Information("Request {@Body}", new { Username = "admin", SessionToken = "abc", Items = new[] { new { ApiSecret = "x" } } }));

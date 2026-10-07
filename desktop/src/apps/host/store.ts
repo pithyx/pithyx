@@ -142,12 +142,18 @@ export function rememberNotification(id: string, notification: AppNotification):
  * otherwise the top-most one. Without a window that is connected, the app starts (or its `single` window gets) the
  * activation as `launch.notification`. False if the app cannot be opened.
  */
-export function activateNotification(id: string, app: string, action: string | null): boolean {
+export function activateNotification(
+  id: string,
+  app: string,
+  action: string | null,
+  /** The data the daemon kept with the notification; undefined for one it keeps none for. */
+  data?: unknown,
+): boolean {
   const remembered = useHost.getState().notifications[id];
   const activation: NotificationActivation = {
     notification: id,
     action,
-    data: remembered?.app === app ? remembered.data : null,
+    data: data !== undefined ? data : remembered?.app === app ? remembered.data : null,
   };
   const { windows, order } = useDesktop.getState();
   const connected = (windowId: string) => windows[windowId]?.app === app && isReady(windowId);

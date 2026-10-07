@@ -138,14 +138,36 @@ public sealed class AuthService(SqliteConnectionFactory connections, PasswordHas
         return info;
     }
 
+    /// <summary>The user as the desktop sees it, with its groups.</summary>
     public async Task<UserInfo?> GetUserAsync(long userId, CancellationToken cancellationToken) =>
         await FindByIdAsync(userId, cancellationToken) is { } user ? await InfoAsync(user, cancellationToken) : null;
+
+    /// <summary>
+    /// The user and its rights for authenticating one request, without the group lookup (<see cref="UserInfo.Groups"/>
+    /// is empty): every request asks this.
+    /// </summary>
+    public async Task<(UserInfo User, Permissions.EffectivePermissions Rights)?> SignedInAsync(long userId, CancellationToken cancellationToken)
+    {
+        if (await FindByIdAsync(userId, cancellationToken) is not { } user)
+        {
+            return null;
+        }
+        var effective = await permissions.ForUserAsync(user.Id, cancellationToken);
+        return (Info(user, effective, []), effective);
+    }
 
     private async Task<UserInfo> InfoAsync(UserRow user, CancellationToken cancellationToken)
     {
         var effective = await permissions.ForUserAsync(user.Id, cancellationToken);
-        return new UserInfo(user.Id, user.Username, user.DisplayName, effective.IsAdmin, user.TotpEnabledAt is not null, Permissions.GrantService.Session(effective));
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        var groups = await connection.QueryAsync<GroupRef>(
+            "SELECT g.id AS Id, g.name AS Name FROM group_members m JOIN groups g ON g.id = m.group_id WHERE m.user_id = @Id ORDER BY g.name",
+            new { user.Id });
+        return Info(user, effective, [.. groups]);
     }
+
+    private static UserInfo Info(UserRow user, Permissions.EffectivePermissions effective, IReadOnlyList<GroupRef> groups) =>
+        new(user.Id, user.Username, user.DisplayName, effective.IsAdmin, user.TotpEnabledAt is not null, Permissions.GrantService.Session(effective), groups);
 
     /// <summary>Starts TOTP enrollment with a new secret. TOTP stays off until a code is confirmed.</summary>
     public async Task<TotpEnrollment> EnrollTotpAsync(long userId, string hostName, CancellationToken cancellationToken)

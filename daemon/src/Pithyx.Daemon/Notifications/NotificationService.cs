@@ -27,6 +27,11 @@ public sealed partial class NotificationService : IDisposable
 
     public const int MaxTitleLength = 200;
     public const int MaxBodyLength = 1000;
+    public const int MaxActions = 2;
+    public const int MaxActionIdLength = 64;
+    public const int MaxActionLabelLength = 40;
+    public const int MaxDataLength = 4096;
+    public const int MaxTagLength = 64;
 
     /// <summary>The code of a notification an app sent, with its plain text in <c>title</c> and <c>body</c>.</summary>
     public const string AppMessageCode = "app.message";
@@ -53,7 +58,14 @@ public sealed partial class NotificationService : IDisposable
     }
 
     /// <summary>Creates a notification for one user and publishes it to them.</summary>
-    public async Task<Notification> CreateAsync(long userId, NotificationDraft draft, CancellationToken cancellationToken)
+    public Task<Notification> CreateAsync(long userId, NotificationDraft draft, CancellationToken cancellationToken) =>
+        CreateAsync(userId, draft, null, cancellationToken);
+
+    /// <summary>
+    /// Creates a notification and, in the same write, deletes the user's notifications <paramref name="replaces"/>
+    /// picks, so two writers never both keep theirs.
+    /// </summary>
+    private async Task<Notification> CreateAsync(long userId, NotificationDraft draft, Func<Notification, bool>? replaces, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(draft);
         ArgumentException.ThrowIfNullOrEmpty(draft.Code);
@@ -64,11 +76,16 @@ public sealed partial class NotificationService : IDisposable
         {
             var now = _time.GetUtcNow();
             long id;
+            List<long> replaced = replaces is null ? [] : [.. _store.Of(userId).Where(replaces).Select(entry => entry.Id)];
             List<long> dropped;
             // One transaction: a failed trim must not leave a row that memory and the topic never saw.
             await using (var connection = await _connections.OpenAsync(cancellationToken))
             {
                 await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+                if (replaced.Count > 0)
+                {
+                    await connection.ExecuteAsync("DELETE FROM notifications WHERE user_id = @userId AND id IN @replaced", new { userId, replaced }, transaction);
+                }
                 id = await connection.ExecuteScalarAsync<long>(
                     """
                     INSERT INTO notifications (user_id, code, params, tone, app, created_at)
@@ -87,6 +104,7 @@ public sealed partial class NotificationService : IDisposable
                     transaction)];
                 await transaction.CommitAsync(cancellationToken);
             }
+            dropped = [.. replaced, .. dropped];
             var notification = NotificationStore.ToNotification(new NotificationStore.NotificationRow
             {
                 Id = id,
@@ -124,7 +142,10 @@ public sealed partial class NotificationService : IDisposable
         return administrators.Count;
     }
 
-    /// <summary>What an app sends through the SDK: its own plain text, stored as <see cref="AppMessageCode"/>.</summary>
+    /// <summary>
+    /// What a core app sends through the SDK: its own plain text, stored as <see cref="AppMessageCode"/>. The desktop names
+    /// the core app; third-party apps go through <see cref="CreateForAppAsync"/>, where the app comes from its token.
+    /// </summary>
     public Task<Notification> CreateFromAppAsync(ClaimsPrincipal user, AppNotificationRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -132,18 +153,83 @@ public sealed partial class NotificationService : IDisposable
         {
             throw Invalid("app", AppId.MaxLength);
         }
-        var title = request.Title?.Trim() ?? "";
+        if (!Apps.CoreApps.All.Contains(request.App))
+        {
+            throw new PithyxException(ErrorCodes.AuthPermissionDenied);
+        }
+        var (title, body) = Texts(request.Title, request.Body);
+        var parameters = new Dictionary<string, object?>(StringComparer.Ordinal) { ["title"] = title, ["body"] = body };
+        return CreateAsync(CurrentUser.Id(user), new NotificationDraft(AppMessageCode, parameters, request.Tone ?? NotificationTone.Info, request.App), cancellationToken);
+    }
+
+    /// <summary>
+    /// What a third-party app sends through the SDK for the user its token names: plain text, at most two buttons, data
+    /// that comes back with a click, and a tag that replaces the app's earlier notification with the same tag. All of
+    /// it is kept in the params of <see cref="AppMessageCode"/> (<c>title</c>, <c>body</c>, <c>actions</c>, <c>data</c>,
+    /// <c>tag</c>).
+    /// </summary>
+    public async Task<Notification> CreateForAppAsync(long userId, string appId, AppNotifyRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var (title, body) = Texts(request.Title, request.Body);
+        var actions = request.Actions ?? [];
+        if (actions.Count > MaxActions)
+        {
+            throw Invalid("actions", MaxActions);
+        }
+        foreach (var action in actions)
+        {
+            if (action?.Id is not { Length: > 0 and <= MaxActionIdLength } || action.Label?.Trim() is not { Length: > 0 and <= MaxActionLabelLength })
+            {
+                throw Invalid("actions", MaxActionLabelLength);
+            }
+        }
+        if (actions.Select(action => action.Id).Distinct(StringComparer.Ordinal).Count() != actions.Count)
+        {
+            throw Invalid("actions", MaxActions);
+        }
+        if (request.Data is { } data && data.GetRawText().Length > MaxDataLength)
+        {
+            throw Invalid("data", MaxDataLength);
+        }
+        if (request.Tag is { } tag && tag.Length is 0 or > MaxTagLength)
+        {
+            throw Invalid("tag", MaxTagLength);
+        }
+        var parameters = new Dictionary<string, object?>(StringComparer.Ordinal)
+        {
+            ["title"] = title,
+            ["body"] = body,
+            ["actions"] = actions.Select(action => new Dictionary<string, string>(StringComparer.Ordinal) { ["id"] = action.Id, ["label"] = action.Label.Trim() }).ToList(),
+            ["data"] = request.Data is { ValueKind: not JsonValueKind.Null } given ? given : null,
+            ["tag"] = request.Tag,
+        };
+        var tone = request.Level switch
+        {
+            AppNotificationLevel.Success => NotificationTone.Success,
+            AppNotificationLevel.Warning => NotificationTone.Warning,
+            AppNotificationLevel.Error => NotificationTone.Critical,
+            _ => NotificationTone.Info,
+        };
+        Func<Notification, bool>? sameTag = request.Tag is not { } tagged
+            ? null
+            : entry => entry.App == appId && entry.Code == AppMessageCode && entry.Params.TryGetValue("tag", out var value) && value.ValueKind == JsonValueKind.String && value.GetString() == tagged;
+        return await CreateAsync(userId, new NotificationDraft(AppMessageCode, parameters, tone, appId), sameTag, cancellationToken);
+    }
+
+    private static (string Title, string Body) Texts(string? requestTitle, string? requestBody)
+    {
+        var title = requestTitle?.Trim() ?? "";
         if (title.Length is 0 or > MaxTitleLength)
         {
             throw Invalid("title", MaxTitleLength);
         }
-        var body = request.Body?.Trim() ?? "";
+        var body = requestBody?.Trim() ?? "";
         if (body.Length > MaxBodyLength)
         {
             throw Invalid("body", MaxBodyLength);
         }
-        var parameters = new Dictionary<string, object?>(StringComparer.Ordinal) { ["title"] = title, ["body"] = body };
-        return CreateAsync(CurrentUser.Id(user), new NotificationDraft(AppMessageCode, parameters, request.Tone ?? NotificationTone.Info, request.App), cancellationToken);
+        return (title, body);
     }
 
     /// <summary>The signed-in user's notifications, newest first.</summary>

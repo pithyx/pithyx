@@ -27,6 +27,7 @@ export const sdkErrorCodes = [
   'sdk.backend.unreachable',
 ] as const;
 
+/** A code of the SDK's own transport errors, translated under `errors.sdk.*`. */
 export type SdkErrorCode = (typeof sdkErrorCodes)[number];
 
 /** A problem as it travels between desktop and app: RFC 9457 fields the Pithyx API uses. */
@@ -71,6 +72,7 @@ export class PithyxError extends Error implements Problem {
   }
 }
 
+/** A {@link PithyxError} with one of the SDK's own transport codes. */
 export function sdkError(
   code: SdkErrorCode,
   params: Record<string, unknown> = {},
@@ -94,6 +96,7 @@ export function toProblem(error: unknown): Problem {
   };
 }
 
+/** Whether a value has the shape of a problem (RFC 9457 fields `code` and `params`). */
 export function isProblem(value: unknown): value is Problem {
   return (
     typeof value === 'object' &&

@@ -1,0 +1,192 @@
+{
+  "tabs": {
+    "label": "Bereiche des Stores",
+    "installed": "Installiert",
+    "official": "Offiziell",
+    "community": "Community",
+    "own": "Eigene"
+  },
+  "installed": {
+    "title": "Installierte Apps",
+    "intro": "Auf dieser Box installierte Apps. Alle finden die Apps, die sie nutzen dürfen, in ihrem Pithyx-Menü.",
+    "empty": "Noch keine Apps installiert. Installiere eine aus ihrer Paketdatei (.pithyxapp).",
+    "loading": "Apps werden geladen",
+    "pool": "App-Daten liegen auf dem Pool {pool}.",
+    "installFromFile": "Aus Datei installieren",
+    "version": "Version {version}",
+    "disabled": "Deaktiviert",
+    "busy": "In Arbeit",
+    "unavailable": "Pool nicht verfügbar",
+    "unverified": "Nicht geprüft"
+  },
+  "detail": {
+    "back": "Installierte Apps",
+    "open": "Öffnen",
+    "update": "Aus Datei aktualisieren",
+    "uninstall": "Deinstallieren",
+    "enabled": "Nutzer können die App öffnen",
+    "enabledHint": "Eine deaktivierte App behält ihre Daten und wer sie nutzen darf, aber niemand kann sie öffnen.",
+    "source": {
+      "sideload": "Aus einer Datei installiert, nicht geprüft",
+      "catalog": "Aus einem Katalog installiert"
+    },
+    "unavailable": "Der Pool mit den Daten der App ist nicht verfügbar. Niemand kann die App öffnen, bis er wieder da ist.",
+    "facts": {
+      "title": "Details",
+      "version": "Version",
+      "author": "Entwickler",
+      "license": "Lizenz",
+      "homepage": "Website",
+      "installedAt": "Installiert",
+      "updatedAt": "Zuletzt installiert oder aktualisiert",
+      "uid": "Benutzer-ID der App",
+      "sha256": "Prüfsumme des Pakets (SHA-256)"
+    },
+    "permissions": {
+      "title": "Berechtigungen",
+      "intro": "Schalte eine Berechtigung aus, um sie der App zu nehmen. Sie bleibt auch nach Updates aus. Offene Fenster der App bekommen die Änderung innerhalb weniger Minuten.",
+      "none": "Die App fragt nach keinen Berechtigungen."
+    },
+    "storage": {
+      "title": "Ordner",
+      "intro": "Die App fragt nach diesen Ordnern. Ordne jeden einem Ordner in einem freigegebenen Ordner zu; er behält seine Rechte, Snapshots und Backups und bleibt, wenn die App entfernt wird.",
+      "required": "Erforderlich",
+      "optional": "Optional",
+      "asks": {
+        "read": "Will lesen",
+        "readWrite": "Will lesen und schreiben"
+      },
+      "notMapped": "Nicht zugeordnet",
+      "requiredMissing": "Noch nicht zugeordnet. Die App braucht diesen Ordner, um ihren Hintergrunddienst zu starten.",
+      "mapped": "{share}, {path}",
+      "root": "der ganze freigegebene Ordner",
+      "access": {
+        "read": "Nur lesen",
+        "readWrite": "Lesen und schreiben"
+      },
+      "map": "Ordner für {storage} wählen",
+      "change": "Ordner für {storage} ändern",
+      "unmap": "Ordner von {storage} entfernen",
+      "dialogTitle": "Ordner für {storage}",
+      "share": "Freigegebener Ordner",
+      "path": "Ordner darin",
+      "pathHint": "Lass das Feld leer für den freigegebenen Ordner selbst. Der Ordner muss existieren.",
+      "accessLabel": "Zugriff",
+      "save": "Speichern",
+      "cancel": "Abbrechen",
+      "noShares": "Es gibt noch keine freigegebenen Ordner. Lege zuerst einen in den Einstellungen an."
+    },
+    "access": {
+      "title": "Wer sie nutzen darf",
+      "intro": "Administratoren dürfen jede App nutzen.",
+      "label": "Wer die App nutzen darf",
+      "everybody": "Alle",
+      "admins": "Nur Administratoren",
+      "some": "Ausgewählte Gruppen und Nutzer",
+      "groups": "Gruppen",
+      "users": "Nutzer",
+      "administrator": "Administrator",
+      "deactivated": "Deaktiviert",
+      "viaGroup": "Über eine Gruppe",
+      "loading": "Wird geladen, wer die App nutzen darf"
+    },
+    "logs": {
+      "title": "Protokolle",
+      "debug": "Debug-Meldungen an das Protokoll-Center senden",
+      "hint": "Schalte das nur ein, um ein Problem zu finden: Manche Apps schreiben viele Debug-Meldungen. Informationen, Warnungen und Fehler kommen immer im Protokoll-Center an."
+    }
+  },
+  "permission": {
+    "unknown": "Eine Berechtigung, die diese Pithyx-Version nicht erklärt.",
+    "files": {
+      "read": {
+        "title": "Dateien lesen",
+        "description": "Liest Dateien in den freigegebenen Ordnern des Nutzers, der sie verwendet."
+      },
+      "write": {
+        "title": "Dateien ändern",
+        "description": "Legt Dateien in den freigegebenen Ordnern an, in die der Nutzer schreiben darf, ändert und löscht sie."
+      },
+      "shares": {
+        "title": "Freigegebene Ordner sehen",
+        "description": "Sieht, welche freigegebenen Ordner der Nutzer verwenden darf."
+      }
+    },
+    "notifications": {
+      "title": "Benachrichtigungen",
+      "description": "Zeigt dem Nutzer, der sie verwendet, Benachrichtigungen."
+    },
+    "directory": {
+      "read": {
+        "title": "Alle Nutzer und Gruppen sehen",
+        "description": "Sieht die Namen aller Nutzer und Gruppen dieser Box, nicht nur den Nutzer, der sie verwendet."
+      }
+    },
+    "network": {
+      "internet": {
+        "title": "Internet",
+        "description": "Verbindet sich mit Servern im Internet. Ohne diese Berechtigung bleibt die App auf dieser Box."
+      }
+    }
+  },
+  "install": {
+    "title": "App installieren",
+    "updateTitle": "{name} aktualisieren",
+    "file": "Paketdatei",
+    "chooseFile": "Datei wählen",
+    "noFile": "Keine Datei gewählt",
+    "checking": "Das Paket wird geprüft",
+    "action": {
+      "install": "Version {version}",
+      "update": "Update von Version {installed} auf {version}",
+      "reinstall": "Version {version} ist schon installiert. Erneutes Installieren ersetzt ihre Dateien.",
+      "downgrade": "Version {version} ist älter als die installierte Version {installed}. Ihre Daten passen vielleicht nicht."
+    },
+    "by": "von {author}",
+    "size": "{files, plural, one {# Datei} other {# Dateien}}, {size}",
+    "unverified": "Dieses Paket stammt aus einer Datei und ist nicht geprüft. Installiere nur Apps von Entwicklern, denen du vertraust.",
+    "permissions": "Berechtigungen, nach denen sie fragt",
+    "noPermissions": "Die App fragt nach keinen Berechtigungen.",
+    "newPermission": "Neu",
+    "dropped": "Nicht mehr gefragt: {permissions}",
+    "storage": "Ordner, nach denen sie fragt",
+    "storageHint": "Ordne sie nach der Installation Ordnern zu.",
+    "backend": {
+      "yes": "Bringt einen eigenen Hintergrunddienst in Containern mit.",
+      "no": "Läuft nur im Browser, ohne Hintergrunddienst."
+    },
+    "root": "Ein Container dieser App läuft als root. Pithyx lässt ihm auf der Box selbst keine Rechte, aber installiere sie nur, wenn du dem Entwickler vertraust.",
+    "elevated": "Sie fragt nach besonderen Rechten: {rights}",
+    "access": "Wer sie nutzen darf",
+    "accessSuggested": "Für diese App empfohlen: nur Administratoren, weil sie alle Nutzer sehen kann, in einem Container als root läuft oder nach besonderen Rechten fragt.",
+    "pool": "Pool für App-Daten",
+    "poolHint": "Alle Apps speichern ihre Daten auf diesem Pool. Er lässt sich nicht ändern, solange eine App installiert ist.",
+    "noPools": "Es gibt keinen Pool, der Apps aufnehmen kann. Lege zuerst einen in Speicher an.",
+    "loadingPools": "Pools werden geladen",
+    "install": "Installieren",
+    "update": "Aktualisieren",
+    "cancel": "Abbrechen",
+    "close": "Schließen",
+    "openApp": "App öffnen",
+    "running": "{name} wird installiert",
+    "updating": "{name} wird aktualisiert",
+    "installed": "{name} ist installiert.",
+    "updated": "{name} ist aktualisiert.",
+    "stopped": "Die Installation wurde abgebrochen."
+  },
+  "uninstall": {
+    "title": "{name} deinstallieren?",
+    "data": "Die Daten der App",
+    "keep": "Daten behalten",
+    "keepHint": "Ihre Dateien bleiben auf dem App-Pool. Wird die App wieder installiert, findet sie sie.",
+    "delete": "Daten löschen",
+    "deleteHint": "Ihre Datenbanken, Einstellungen und anderen Dateien auf dem App-Pool werden mit allen Snapshots gelöscht. Das lässt sich nicht rückgängig machen.",
+    "mapped": "Der App zugeordnete Ordner bleiben in jedem Fall in ihren freigegebenen Ordnern.",
+    "confirm": "Deinstallieren",
+    "cancel": "Abbrechen",
+    "close": "Schließen",
+    "running": "{name} wird entfernt",
+    "done": "{name} ist entfernt.",
+    "stopped": "Das Entfernen wurde abgebrochen."
+  }
+}

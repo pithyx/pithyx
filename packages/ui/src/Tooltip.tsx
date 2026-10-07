@@ -7,6 +7,7 @@ import styles from './Tooltip.module.css';
 
 export { TooltipTrigger } from 'react-aria-components';
 
+/** The props of {@link Tooltip}. */
 export interface TooltipProps extends Omit<AriaTooltipProps, 'className'> {
   className?: string;
 }

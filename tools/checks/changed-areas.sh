@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Decides which CI jobs a pull request needs, from the files it changes, and writes the answers to $GITHUB_OUTPUT:
 #   code      anything besides Markdown and website/ changed (E2E runs)
-#   daemon    the daemon, its translations, the OpenAPI document or the CI setup changed
+#   daemon    the daemon, its translations, the OpenAPI document, the shared schemas or the CI setup changed
 #   frontend  anything besides docs and daemon/ changed
 # Pushes to dev and master run everything; so does a range git cannot resolve.
 set -euo pipefail
@@ -23,7 +23,8 @@ while IFS= read -r file; do
   esac
   code=true
   case "$file" in
-    daemon/* | i18n/* | tools/i18n/* | global.json | .github/* | packages/api-client/*) daemon=true ;;
+    # sdk/schema holds the contracts and fixture corpora that the daemon's tests read as well.
+    daemon/* | i18n/* | tools/i18n/* | global.json | .github/* | packages/api-client/* | sdk/schema/*) daemon=true ;;
   esac
   case "$file" in
     daemon/*) ;;

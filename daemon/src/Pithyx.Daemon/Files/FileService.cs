@@ -27,15 +27,17 @@ public sealed class FileService(ShareService shares, FolderCache cache, TimeProv
         SortOrder order,
         int? limit,
         string? cursor,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string within = "")
     {
         var share = await shares.ResolveAsync(user, shareId, write: false, cancellationToken);
         var normalized = FsPath.Normalize(path);
+        var inShare = FsPath.Join(within, normalized);
         var size = Math.Clamp(limit ?? DefaultPageSize, 1, MaxPageSize);
-        using var root = OpenRoot(share);
+        using var root = OpenRoot(share, within);
         using var folder = Open(root, normalized, LinuxFs.ReadOnly | LinuxFs.Directory);
         var folderStat = Stat(folder, "");
-        var snapshot = Snapshot(share.Id, normalized, folder, folderStat, sort);
+        var snapshot = Snapshot(share.Id, inShare, folder, folderStat, sort);
 
         var (after, afterValue) = cursor is null ? (null, 0L) : FolderCursor.Decode(cursor, sort, order);
         var entries = new List<FileEntry>(size);
@@ -58,26 +60,26 @@ public sealed class FileService(ShareService shares, FolderCache cache, TimeProv
             }
         }
         var next = more && lastKey is not null ? FolderCursor.Encode(sort, order, lastKey, lastValue) : null;
-        cache.Register(share.Id, share.Path, snapshot.FolderId, normalized);
+        cache.Register(share.Id, share.Path, snapshot.FolderId, inShare);
         return new FolderPage(normalized, snapshot.FolderId, snapshot.Count, entries, next, TopicOf(share.Id, snapshot.FolderId));
     }
 
-    public async Task<FileEntry> StatAsync(ClaimsPrincipal user, long shareId, string? path, CancellationToken cancellationToken)
+    public async Task<FileEntry> StatAsync(ClaimsPrincipal user, long shareId, string? path, CancellationToken cancellationToken, string within = "")
     {
         var share = await shares.ResolveAsync(user, shareId, write: false, cancellationToken);
         var normalized = NonRoot(path);
         var (parent, name) = FsPath.Split(normalized);
-        using var root = OpenRoot(share);
+        using var root = OpenRoot(share, within);
         using var folder = Open(root, parent, LinuxFs.Path | LinuxFs.Directory);
         return ToEntry(name, Stat(folder, name));
     }
 
     /// <summary>Opens a file for reading; the caller owns the stream.</summary>
-    public async Task<(FileStream Stream, FsStat Stat, string Name)> OpenReadAsync(ClaimsPrincipal user, long shareId, string? path, CancellationToken cancellationToken)
+    public async Task<(FileStream Stream, FsStat Stat, string Name)> OpenReadAsync(ClaimsPrincipal user, long shareId, string? path, CancellationToken cancellationToken, string within = "")
     {
         var share = await shares.ResolveAsync(user, shareId, write: false, cancellationToken);
         var normalized = NonRoot(path);
-        using var root = OpenRoot(share);
+        using var root = OpenRoot(share, within);
         var handle = Open(root, normalized, LinuxFs.ReadOnly);
         try
         {
@@ -110,7 +112,8 @@ public sealed class FileService(ShareService shares, FolderCache cache, TimeProv
         Stream body,
         long? expectedLength,
         bool overwrite,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string within = "")
     {
         ArgumentNullException.ThrowIfNull(body);
         var share = await shares.ResolveAsync(user, shareId, write: true, cancellationToken);
@@ -118,7 +121,7 @@ public sealed class FileService(ShareService shares, FolderCache cache, TimeProv
         var normalized = NonRoot(path);
         var (parent, name) = FsPath.Split(normalized);
         FsPath.CheckName(name);
-        using var root = OpenRoot(share);
+        using var root = OpenRoot(share, within);
         using var folder = Open(root, parent, LinuxFs.Path | LinuxFs.Directory);
         var temporary = $"{FsPath.UploadPrefix}{Guid.NewGuid():N}";
         var written = 0L;
@@ -157,14 +160,14 @@ public sealed class FileService(ShareService shares, FolderCache cache, TimeProv
         return ToEntry(name, Stat(folder, name));
     }
 
-    public async Task<FileEntry> CreateFolderAsync(ClaimsPrincipal user, long shareId, string? path, CancellationToken cancellationToken)
+    public async Task<FileEntry> CreateFolderAsync(ClaimsPrincipal user, long shareId, string? path, CancellationToken cancellationToken, string within = "")
     {
         var share = await shares.ResolveAsync(user, shareId, write: true, cancellationToken);
         var owner = await owners.ForAsync(user, cancellationToken);
         var normalized = NonRoot(path);
         var (parent, name) = FsPath.Split(normalized);
         FsPath.CheckName(name);
-        using var root = OpenRoot(share);
+        using var root = OpenRoot(share, within);
         using var folder = Open(root, parent, LinuxFs.Path | LinuxFs.Directory);
         try
         {
@@ -204,6 +207,23 @@ public sealed class FileService(ShareService shares, FolderCache cache, TimeProv
         {
             // The share's folder is gone (for example a pool that is not imported).
             throw new PithyxException(ErrorCodes.FsShareNotFound, null, error);
+        }
+    }
+
+    /// <summary>
+    /// The share's root, or the folder <paramref name="within"/> it (normalized, "" for the root) as the root of every
+    /// path that follows: nothing below, no symlink either, leads out of it.
+    /// </summary>
+    internal static SafeFileHandle OpenRoot(ResolvedShare share, string within)
+    {
+        var root = OpenRoot(share);
+        if (within.Length == 0)
+        {
+            return root;
+        }
+        using (root)
+        {
+            return Open(root, within, LinuxFs.Path | LinuxFs.Directory);
         }
     }
 
