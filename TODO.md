@@ -368,6 +368,7 @@ Logs (D305): every level also appears in the browser console. `info`, `warn` and
 - [ ] `pithyx/app-showcase`: every SDK method, every event, every component.
 - [ ] In all three: `npm test` runs `pithyx validate` and Vitest, `npm run pack`, marked as GitHub templates, CI through a reusable workflow in `pithyx/.github` on GitHub-hosted runners, releases attach the `.pithyxapp`.
 - [ ] A script raises the SDK version in all three on every SDK release.
+- [ ] Done when blank and showcase, installed from their released `.pithyxapp`, run on 7484 (moved from A12).
 
 #### A10 Registry and install, frontend only (after A2 and A3)
 
@@ -390,10 +391,10 @@ Logs (D305): every level also appears in the browser console. `info`, `warn` and
 
 #### A12 Store app and dynamic registry `[REVIEW]` on 7484 (after A10 and A7)
 
-- [ ] `org.pithyx.store`: the tab "Installed"; "Install from file" with preview and the prefilled access (D304: "Everybody", or "Administrators only" for elevated rights, root or `directory.read`); the pool choice; updates with a diff; revoking permissions and mapping folders; who may use the app; uninstall with or without data; the log level. The tabs Official, Community and Own are prepared and hidden.
+- [x] `org.pithyx.store`: the tab "Installed"; "Install from file" with preview and the prefilled access (D304: "Everybody", or "Administrators only" for elevated rights, root or `directory.read`); the pool choice; updates with a diff; revoking permissions and mapping folders; who may use the app; uninstall with or without data; the log level. The tabs Official, Community and Own are prepared and hidden.
 - [x] `registry.tsx` merges the core apps with the topic `apps`; `grantedApps` goes. (Installed apps come from `desktop/src/apps/installed.ts` and open in one shared `ThirdPartyWindow`; a core app given by a grant is marked `granted`. A saved layout with a window of an app the desktop does not know yet waits for the topic, D322.)
 - [x] Icons in the Pithyx menu, on the desktop and in notifications. (`AppIcon` takes the icon URL of the topic and falls back to the box glyph.)
-- [ ] Done when blank and showcase run installed on 7484.
+- [ ] Done when the E2E probe installs, opens and uninstalls through the Store on 7484. (Blank and showcase are no part of the box or the monorepo: they live only in their template repositories, so their run on 7484 moved to A9, by the owner on 2026-10-07.)
 
 #### A13 Proxy without Docker (after A11)
 
@@ -882,7 +883,7 @@ Guardrails (set by the owner on 2026-09-27, binding like `CLAUDE.md`; the spec a
 - [x] Accessibility checks (axe) in CI; keyboard-only walkthrough of login and desktop. axe (WCAG 2.2 AA) runs in E2E for sign-in, reset, desktop, start menu, window and account menus and the phone switcher; `e2e/tests/keyboard.spec.ts` signs in, opens an app, closes it and signs out with the keyboard only.
 - [x] Performance budgets as CI tests: initial desktop bundle under 200 KB gzip, desktop usable after login under 1 s on repeat visit. The bundle budget runs in CI (`pnpm check:bundle`); it is split into sign-in and desktop since the #13 review. Sign-in keeps its 5 percent tolerance against `tools/checks/bundle-budget.json`; the desktop has a fixed limit of 150 KB gzip since 2026-09-29 (owner's decision: the timing budgets decide). `e2e/tests/budgets.spec.ts` holds the timing budgets against the production build on Fast 4G with 4x CPU slowdown: sign-in usable under 1.5 s cold, click feedback under 100 ms, desktop under 1 s after the click without Argon2, reload under 500 ms.
 
-**Done when:** the plain TypeScript sample app opens in a window, sets its title, sends a notification and restores its state after a reload, and the owner confirms the desktop feels right. `[REVIEW]` (Since D300: met by A12, `app-blank` installed on 7484, and A17.)
+**Done when:** the plain TypeScript sample app opens in a window, sets its title, sends a notification and restores its state after a reload, and the owner confirms the desktop feels right. `[REVIEW]` (Since D300: met by A9, `app-blank` installed on 7484, and A17.)
 
 ---
 
