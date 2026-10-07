@@ -131,6 +131,15 @@
         "resolved": "18.1.0",
         "contentHash": "5K+9KFg2TdTl7VXv88Qzi/0lqK6JFoNP3lRuImPYGRV7K/QYklDyTrj4+A+KAki1JsQi6qKY+hDyY7d6WRqjrw=="
       },
+      "Yarp.ReverseProxy": {
+        "type": "Direct",
+        "requested": "[2.3.0, )",
+        "resolved": "2.3.0",
+        "contentHash": "gxtkN3a+9biu9V9Zd5NaTO6VZWXAnS2mhQ0R/VXmSPoTuiQNZsakKikrKpDtKxrL5nUYzbRsHtl40WNq+ZBKKg==",
+        "dependencies": {
+          "System.IO.Hashing": "8.0.0"
+        }
+      },
       "Humanizer.Core": {
         "type": "Transitive",
         "resolved": "3.0.1",
@@ -246,6 +255,11 @@
         "dependencies": {
           "SQLitePCLRaw.core": "2.1.12"
         }
+      },
+      "System.IO.Hashing": {
+        "type": "Transitive",
+        "resolved": "8.0.0",
+        "contentHash": "ne1843evDugl0md7Fjzy6QjJrzsjh46ZKbhf8GwBXb5f/gw97J4bxMs0NQKifDuThh/f0bZ0e62NPl1jzTuRqA=="
       }
     },
     "net10.0/linux-arm64": {

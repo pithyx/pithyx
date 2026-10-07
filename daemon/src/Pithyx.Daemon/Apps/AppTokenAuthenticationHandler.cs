@@ -13,9 +13,7 @@ namespace Pithyx.Daemon.Apps;
 
 /// <summary>
 /// Authenticates <c>/api/app/**</c> by a host token in <c>Authorization: Bearer</c> (D303); a session cookie alone is
-/// never enough there. Every request checks again what the token was issued for: the session still exists (sign-out,
-/// a revoked session, a deactivated user and a password reset all end it), the user may still sign in to the desktop,
-/// and the app is still installed, enabled and granted to the user (administrators have every app). The principal is
+/// never enough there. Every request checks again what the token was issued for (<see cref="AppTokenCheck"/>). The principal is
 /// the user, as the session handler builds it, plus the app; the app's identity comes from the token alone.
 /// </summary>
 public sealed class AppTokenAuthenticationHandler(
@@ -23,9 +21,7 @@ public sealed class AppTokenAuthenticationHandler(
     ILoggerFactory logger,
     UrlEncoder encoder,
     AppTokens tokens,
-    SessionService sessions,
-    AuthService auth,
-    AppRegistry registry,
+    AppTokenCheck check,
     IProblemDetailsService problemDetails)
     : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
 {
@@ -48,18 +44,9 @@ public sealed class AppTokenAuthenticationHandler(
         {
             return AuthenticateResult.Fail("Unknown or expired app token");
         }
-        if (await sessions.TouchAsync(grant.SessionId, Context.RequestAborted) is null)
+        if (await check.CheckAsync(grant, withGroups: false, Context.RequestAborted) is not { User: var user })
         {
-            tokens.RevokeSession(grant.SessionId);
-            return AuthenticateResult.Fail("Session ended");
-        }
-        if (await auth.SignedInAsync(grant.UserId, Context.RequestAborted) is not var (user, rights) || !rights.Has(Resources.DesktopLogin))
-        {
-            return AuthenticateResult.Fail("User may no longer sign in");
-        }
-        if (!registry.Allows(rights, grant.AppId))
-        {
-            return AuthenticateResult.Fail("App no longer available to the user");
+            return AuthenticateResult.Fail("Session, user or app no longer valid");
         }
         Context.Items[typeof(AppTokenGrant)] = grant;
         var identity = new ClaimsIdentity(

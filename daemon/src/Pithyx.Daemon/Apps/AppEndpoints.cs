@@ -22,6 +22,11 @@ public static class AppEndpoints
         services.AddSingleton<AppPackages>();
         services.AddSingleton<AppService>();
         services.AddSingleton<AppTokens>();
+        services.AddSingleton<AppTokenCheck>();
+        services.AddSingleton<Proxy.AppBackends>();
+        services.AddSingleton<Proxy.AppProxySockets>();
+        services.AddHostedService(provider => provider.GetRequiredService<Proxy.AppProxySockets>());
+        services.AddHttpForwarder();
         services.AddSingleton<AppValueStore>();
         services.AddSingleton<AppFiles>();
         services.AddSingleton<AppContexts>();
