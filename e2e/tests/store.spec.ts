@@ -55,6 +55,11 @@ test('an administrator installs an app from its file in the Store, opens it and 
   });
 
   await test.step('its page manages it, and uninstalling closes its window', async () => {
+    // The app's window opened above the Store; its taskbar entry brings the Store back to the front.
+    await page
+      .getByRole('navigation', { name: 'Taskbar' })
+      .getByRole('button', { name: /^Store/ })
+      .click();
     await store.getByRole('button', { name: /SDK demo/ }).click();
     await expect(store.getByRole('heading', { name: 'SDK demo', level: 2 })).toBeVisible();
     await expect(store.getByRole('radio', { name: 'Everybody' })).toBeChecked();
