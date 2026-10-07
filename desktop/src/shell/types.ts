@@ -3,11 +3,13 @@ import type { TablerIcon } from '../ui/icons';
 export type AppTone =
   'petrol' | 'ocean' | 'indigo' | 'plum' | 'rose' | 'moss' | 'amber' | 'graphite';
 
+/** An app's glyph: a Tabler icon for a core app, the icon URL of an installed app, or null for the default icon (D307). */
+export type AppGlyph = TablerIcon | string | null;
+
 export interface AppInfo {
   id: string;
   name: string;
-  /** The app's glyph; null for an app without an icon of its own, which shows the default icon (D307). */
-  icon: TablerIcon | null;
+  icon: AppGlyph;
   tone: AppTone;
 }
 

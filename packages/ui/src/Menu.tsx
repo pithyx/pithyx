@@ -15,6 +15,7 @@ import styles from './Menu.module.css';
 
 export { MenuTrigger } from 'react-aria-components';
 
+/** The popover a {@link Menu} opens in, next to its trigger inside a `MenuTrigger`. */
 export function MenuPopover({
   className,
   ...props
@@ -22,6 +23,7 @@ export function MenuPopover({
   return <Popover offset={6} {...props} className={cx(styles.popover, className)} />;
 }
 
+/** A menu of {@link MenuItem}s and {@link MenuSeparator}s, with keyboard and touch handling. */
 export function Menu<T extends object>({
   className,
   ...props
@@ -29,6 +31,7 @@ export function Menu<T extends object>({
   return <AriaMenu {...props} className={cx(styles.menu, className)} />;
 }
 
+/** The props of {@link MenuItem}. */
 export interface MenuItemProps extends Omit<AriaMenuItemProps, 'className' | 'children'> {
   icon?: ReactNode;
   children: ReactNode;
@@ -37,6 +40,7 @@ export interface MenuItemProps extends Omit<AriaMenuItemProps, 'className' | 'ch
   shortcut?: string;
 }
 
+/** One entry of a menu, with an optional icon and key hint. */
 export function MenuItem({ icon, children, tone = 'default', shortcut, ...props }: MenuItemProps) {
   const textValue = typeof children === 'string' ? children : props.textValue;
   return (
@@ -66,6 +70,7 @@ export function MenuItem({ icon, children, tone = 'default', shortcut, ...props 
   );
 }
 
+/** A line between groups of menu entries. */
 export function MenuSeparator() {
   return <Separator className={styles.separator} />;
 }
@@ -79,11 +84,14 @@ export function MenuSeparator() {
 export function useDeliberatePress() {
   const armed = useRef(false);
   return {
+    /** Spread on the destructive item. */
     pressProps: {
+      /** Arms the item when a press starts on it. */
       onPressStart: () => {
         armed.current = true;
       },
     },
+    /** Whether the action comes from a press that started on the item; disarms it. */
     confirm: () => {
       const deliberate = armed.current;
       armed.current = false;

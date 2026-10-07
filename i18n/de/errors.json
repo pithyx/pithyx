@@ -36,6 +36,9 @@
       "version_unsupported": "Diese App braucht eine neuere Version von Pithyx (Manifest-Version {version}, diese Box liest Version {supported}).",
       "window_size_invalid": "Die kleinste Fenstergröße der App ist größer als ihre Standardgröße."
     },
+    "mapping": {
+      "invalid": "Der Ordner kann nicht für den Speicher {storage} verwendet werden: {reason, select, unknown {die App fragt nicht nach diesem Speicher} access {die App will ihn nur lesen, darum kann sie keinen Schreibzugriff bekommen} other {die Anfrage ist ungültig}}."
+    },
     "package": {
       "layout_invalid": "Das App-Paket ist ungültig: {reason, select, missing {{path} fehlt} unsafe {der Pfad {path} ist nicht erlaubt} duplicate {{path} ist doppelt enthalten} unexpected {{path} gehört nicht in ein App-Paket} reserved {{path} nutzt einen Namen, der für das Backend reserviert ist} other {{path} ist nicht erlaubt}}.",
       "invalid": "Die Datei ist kein gültiges App-Paket: {reason, select, gzip {sie ist nicht mit gzip komprimiert oder beschädigt} format {sie ist kein tar-Archiv, das diese Box liest} checksum {ein Header ist beschädigt} truncated {sie endet zu früh} trailing_data {nach ihrem Ende folgen noch Daten} entry_type {{path} ist ein Link oder eine Spezialdatei} extended_header {sie hat einen erweiterten Header, der nicht erlaubt ist} name_mismatch {der lange Name von {path} passt nicht zu seinem eigenen Namen} other {sie kann nicht gelesen werden}}.",
@@ -43,7 +46,8 @@
       "too_large": "Das App-Paket ist zu groß: {reason, select, size {die Datei darf höchstens {limit} MB haben} unpacked {ihre Dateien dürfen zusammen höchstens {limit} MB haben} files {es darf höchstens {limit} Dateien enthalten} manifest {pithyx.json darf höchstens {limit} KB haben} other {es überschreitet eine Grenze}}."
     },
     "permission": {
-      "denied": "Die App darf das nicht ({permission})."
+      "denied": "Die App darf das nicht ({permission}).",
+      "not_requested": "Die App fragt nicht nach der Berechtigung {permission}."
     },
     "pool": {
       "fixed": "Apps liegen auf dem Pool {pool}. Solange eine App installiert ist, können sie nicht auf einen anderen Pool umziehen.",

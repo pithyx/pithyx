@@ -164,6 +164,12 @@ public sealed partial class EndpointMatrixTests : IDisposable
         ["InstallAppPackage"] = Need.Admin,
         ["UpdateApp"] = Need.Admin,
         ["UninstallApp"] = Need.Admin,
+        ["SetAppPermissions"] = Need.Admin,
+        ["MapAppStorage"] = Need.Admin,
+        ["UnmapAppStorage"] = Need.Admin,
+        ["SetAppLogLevel"] = Need.Admin,
+        ["GetAppGrants"] = Need.Admin,
+        ["SetAppGrants"] = Need.Admin,
     };
 
     private readonly DaemonFactory _factory = new();

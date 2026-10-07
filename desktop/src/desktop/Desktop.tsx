@@ -28,6 +28,7 @@ import { queryKeys } from '../api/queries';
 import { runBeforeUnload } from '../apps/lifecycle';
 import { useAppName } from '../apps/names';
 import { isAppAllowed, setAppPermissions } from '../apps/access';
+import { setInstalledApps, useInstalledApps } from '../apps/installed';
 import { AppHostLayer } from '../apps/host/AppHostLayer';
 import { resetHost, useHost } from '../apps/host/store';
 import { appsFor, findApp } from '../apps/registry';
@@ -404,6 +405,26 @@ function PermissionsSync() {
   return null;
 }
 
+/**
+ * Puts the apps the daemon lists for the user on `apps` into the registry's store, which the menu, the window manager
+ * and the layout restore read outside React too. Its own component for the same reason as PermissionsSync.
+ */
+function InstalledAppsSync() {
+  const apps = useTopic('apps');
+  useLayoutEffect(() => {
+    if (apps !== undefined) {
+      setInstalledApps(apps.apps);
+    }
+  }, [apps]);
+  useLayoutEffect(
+    () => () => {
+      setInstalledApps(undefined);
+    },
+    [],
+  );
+  return null;
+}
+
 /** The desktop after sign-in: wallpaper, app shortcuts, windows and the taskbar with start menu and status area. */
 export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   const { t, i18n } = useTranslation();
@@ -435,16 +456,19 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   const switcherButton = useRef<HTMLButtonElement>(null);
   const switcher = useRef<HTMLElement>(null);
   const workspace = useWorkspaceSize();
-  // Before the layout is restored: windows of apps the user may not open are skipped, and a right taken away closes
-  // the app's windows and leaves the start menu at once.
+  // Before the layout is restored: windows of apps the user may not open are skipped, and a right taken away (or an
+  // app uninstalled, disabled or no longer granted) closes the app's windows and leaves the start menu at once.
+  const installed = useInstalledApps((state) => state.apps);
   useLayoutEffect(() => {
     setAppPermissions(permissions);
     for (const window of Object.values(useDesktop.getState().windows)) {
-      if (!isAppAllowed(window.app, permissions)) {
+      // Until the topic's first snapshot, an installed app is not known yet rather than gone.
+      const unknown = installed === undefined && findApp(window.app) === undefined;
+      if (!unknown && !isAppAllowed(window.app, permissions)) {
         dispatch({ type: 'close', id: window.id });
       }
     }
-  }, [permissions]);
+  }, [permissions, installed]);
   useLayoutPersistence();
   useQuery(itemsQuery);
   const items = useItemsModule();
@@ -674,6 +698,7 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
               <NotificationToasts position={taskbarPosition} locale={locale} />
             </Suspense>
             <PermissionsSync />
+            <InstalledAppsSync />
             <AppHostLayer />
             {powerAction !== null && (
               <Suspense>

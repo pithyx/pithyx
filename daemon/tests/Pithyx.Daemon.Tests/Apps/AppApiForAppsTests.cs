@@ -325,7 +325,7 @@ public sealed class AppApiForAppsTests : IAsyncLifetime
             Assert.Equal(HttpStatusCode.Created, notify.StatusCode);
         }
 
-        using (var revoke = await _admin.PatchAsJsonAsync($"/api/apps/{AppA}", new { permissions = new Dictionary<string, bool> { ["notifications"] = false } }, Token))
+        using (var revoke = await _admin.PutAsJsonAsync($"/api/apps/{AppA}/permissions", new { permissions = new[] { new { permission = "notifications", granted = false } } }, Token))
         {
             var details = await revoke.JsonAsync();
             Assert.Contains(details.GetProperty("permissions").EnumerateArray(), state => state.GetProperty("permission").GetString() == "notifications" && !state.GetProperty("granted").GetBoolean());
@@ -338,8 +338,8 @@ public sealed class AppApiForAppsTests : IAsyncLifetime
         {
             Assert.Equal(HttpStatusCode.OK, users.StatusCode);
         }
-        using var unknown = await _admin.PatchAsJsonAsync($"/api/apps/{AppA}", new { permissions = new Dictionary<string, bool> { ["files.write"] = true } }, Token);
-        Assert.Equal("request.body.invalid", await ErrorAsync(unknown));
+        using var unknown = await _admin.PutAsJsonAsync($"/api/apps/{AppA}/permissions", new { permissions = new[] { new { permission = "files.write", granted = true } } }, Token);
+        Assert.Equal("app.permission.not_requested", await ErrorAsync(unknown));
     }
 
     [Fact]
@@ -431,7 +431,7 @@ public sealed class AppApiForAppsTests : IAsyncLifetime
         Assert.Equal(["info off"], entries.Select(entry => entry.GetProperty("message").GetString()));
         Assert.Equal("admin", entries[0].GetProperty("user").GetString());
 
-        using (var on = await _admin.PatchAsJsonAsync($"/api/apps/{AppA}", new { logLevel = "debug" }, Token))
+        using (var on = await _admin.PutAsJsonAsync($"/api/apps/{AppA}/log-level", new { level = "debug" }, Token))
         {
             Assert.Equal("debug", (await on.JsonAsync()).GetProperty("logLevel").GetString());
         }
@@ -554,13 +554,17 @@ public sealed class AppApiForAppsTests : IAsyncLifetime
         Assert.Equal(("inbox", "unmapped"), (storage.GetProperty("id").GetString(), storage.GetProperty("state").GetString()));
         Assert.Equal(new Dictionary<long, int> { [ritaId] = 1 }, leases.Holders(AppA));
 
-        using (var revoke = await _admin.PatchAsJsonAsync($"/api/apps/{AppA}", new { permissions = new Dictionary<string, bool> { ["notifications"] = false }, logLevel = "debug" }, Token))
+        using (var revoke = await _admin.PutAsJsonAsync($"/api/apps/{AppA}/permissions", new { permissions = new[] { new { permission = "notifications", granted = false } } }, Token))
         {
             Assert.Equal(HttpStatusCode.OK, revoke.StatusCode);
         }
         var changed = await NextContextAsync(socket, topic);
         Assert.Equal(["files.read"], changed.GetProperty("permissions").EnumerateArray().Select(value => value.GetString()));
-        Assert.Equal("debug", changed.GetProperty("logLevel").GetString());
+        using (var debug = await _admin.PutAsJsonAsync($"/api/apps/{AppA}/log-level", new { level = "debug" }, Token))
+        {
+            Assert.Equal(HttpStatusCode.OK, debug.StatusCode);
+        }
+        Assert.Equal("debug", (await NextContextAsync(socket, topic)).GetProperty("logLevel").GetString());
 
         // Losing the app ends the lease at once; the app leaves the user's topic apps, which closes its windows.
         using (var grants = await _admin.PutAsJsonAsync($"/api/users/{ritaId}/grants", new { grants = new[] { new { resource = "right:desktopLogin", level = "allow" } } }, Token))
@@ -652,7 +656,7 @@ public sealed class AppApiForAppsTests : IAsyncLifetime
         Assert.Equal("fs.operation.invalid", await ErrorAsync(await reader.GetAsync($"/api/app/files/list?{share}&storage=inbox", Token)));
 
         // Without files.shares a shared folder is closed; the mapped storage needs no files.* permission.
-        await _admin.PatchAsJsonAsync($"/api/apps/{AppA}", new { permissions = new Dictionary<string, bool> { ["files.shares"] = false } }, Token);
+        await _admin.PutAsJsonAsync($"/api/apps/{AppA}/permissions", new { permissions = new[] { new { permission = "files.shares", granted = false } } }, Token);
         Assert.Equal("app.permission.denied", await ErrorAsync(await reader.GetAsync("/api/app/files/shares", Token)));
         Assert.Equal("app.storage.not_found", await ErrorAsync(await reader.GetAsync("/api/app/files/list?storage=inbox", Token)));
         await _factory.ScalarAsync<long>(

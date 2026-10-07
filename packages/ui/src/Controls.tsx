@@ -14,6 +14,7 @@ import {
 import styles from './Controls.module.css';
 import { cx } from './cx';
 
+/** A checkbox with its label. */
 export function Checkbox({
   children,
   ...props
@@ -30,6 +31,7 @@ export function Checkbox({
   );
 }
 
+/** An on and off switch with its label, for settings that apply at once. */
 export function Switch({
   children,
   ...props
@@ -46,6 +48,7 @@ export function Switch({
   );
 }
 
+/** A labelled progress bar that shows its value as text unless `showValue` is false. */
 export function ProgressBar({
   label,
   showValue = true,
@@ -71,6 +74,7 @@ export function ProgressBar({
   );
 }
 
+/** A small count or status next to an item, for example in a list or on a tab. */
 export function Badge({
   children,
   tone = 'highlight',

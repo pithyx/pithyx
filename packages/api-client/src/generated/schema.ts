@@ -256,8 +256,26 @@ export type paths = {
         delete: operations["UninstallApp"];
         options?: never;
         head?: never;
-        /** @description Administrators only. Enables or disables an app, switches its debug logging (logLevel) and grants or revokes permissions of its manifest (permissions, by name; request.body.invalid for one the manifest does not ask for). Fields left out stay. A disabled app keeps its data and grants, but nobody can open it, its frontend is not served and its tokens end. A revoked permission applies to the app's next call, and its windows learn it from the topic apps/<id>/context. */
+        /** @description Administrators only. Enables or disables an app. A disabled app keeps its data and grants, but nobody can open it, its frontend is not served and its tokens end. */
         patch: operations["UpdateApp"];
+        trace?: never;
+    };
+    "/api/apps/{appId}/grants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. Who may use an installed third-party app: the grants of users and groups on app:<id> (the built-in group users stands for everybody) and every user's result. */
+        get: operations["GetAppGrants"];
+        /** @description Administrators only. Replaces the grants of users and groups on the app, each with level allow; without any, only administrators use it. Applies at once and is pushed to the users' desktops. */
+        put: operations["SetAppGrants"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/apps/{appId}/icon": {
@@ -272,6 +290,58 @@ export type paths = {
         put?: never;
         post?: never;
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/apps/{appId}/log-level": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description Administrators only. Switches the app's debug log entries on (debug) or off (info, the default); info, warn and error always reach the Log Center (D305). The topic apps carries the level to the app's windows. */
+        put: operations["SetAppLogLevel"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/apps/{appId}/permissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description Administrators only. Grants or revokes permissions the app's manifest asks for (app.permission.not_requested for any other); the listed ones change, the others stay. A revoked permission stays revoked across updates. Users' windows of the app learn it with their next token (A11). */
+        put: operations["SetAppPermissions"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/apps/{appId}/storage/{storageId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description Administrators only. Maps an existing folder of a shared folder to a storage request of the app's manifest, replacing an earlier mapping: read-only, or read and write when the request asks for it (app.mapping.invalid otherwise). The folder keeps its rights, snapshots and backups and survives an uninstall (D314). */
+        put: operations["MapAppStorage"];
+        post?: never;
+        /** @description Administrators only. Removes the folder mapped to a storage request of the app; the folder itself stays. */
+        delete: operations["UnmapAppStorage"];
         options?: never;
         head?: never;
         patch?: never;
@@ -1860,8 +1930,11 @@ export type components = {
             title: string;
             type: string;
         };
-        /** @enum {unknown} */
-        AppAccess: "everybody" | "admins" | null;
+        /**
+         * @description Who may use an app after its first install (D304): everybody (a grant to the built-in group) or administrators only.
+         * @enum {unknown}
+         */
+        AppAccess: "everybody" | "admins";
         /**
          * @description The per-user topic `apps/&lt;id&gt;/context`: what the daemon decides about an app for the subscriber, who may
          *     use the app (only such a user can subscribe). Its subscription is also the window lease (A15): while a desktop of the
@@ -1876,7 +1949,7 @@ export type components = {
                 status: string;
             };
             /**
-             * @description Whether debug entries of an app's log reach the Log Center (D305).
+             * @description Whether an app's `debug` log entries reach the daemon (D305); `info`, `warn` and `error` always do.
              * @enum {unknown}
              */
             logLevel: "info" | "debug";
@@ -1912,7 +1985,7 @@ export type components = {
              * @description The first install (UTC).
              */
             installedAt: string;
-            /** @description Whether its debug log entries reach the Log Center. */
+            /** @description Whether its debug log entries reach the daemon. */
             logLevel: components["schemas"]["AppLogLevel"];
             /** @description The installed manifest. */
             manifest: components["schemas"]["JsonElement"];
@@ -1922,6 +1995,8 @@ export type components = {
             sha256: string;
             /** @description `sideload` (a package file) or `catalog`. */
             source: string;
+            /** @description The folders mapped to the storage requests of its manifest; a request without one is not mapped. */
+            storage: components["schemas"]["AppStorageMapping"][];
             /**
              * Format: int64
              * @description The app's own uid.
@@ -1977,6 +2052,17 @@ export type components = {
              */
             total: number;
         };
+        /** @description Who may use an app. Administrators only. */
+        AppGrants: {
+            /** @description The grants of users and groups on it (level `allow`); the editor changes these. The built-in group `users` stands for everybody. */
+            grants: components["schemas"]["SubjectGrant"][];
+            /** @description Every user with whether it may use the app in the end, administrators and deactivated users included. */
+            users: components["schemas"]["AppUserAccess"][];
+        };
+        AppGrantsRequest: {
+            /** @description Every grant on the app the users and groups should have (level `allow`); the others go. */
+            grants: components["schemas"]["SubjectGrant"][];
+        };
         /** @description The apps the subscriber may use, sorted by id: the snapshot and every event of `apps`. */
         AppList: {
             /** @description Enabled apps the user has a grant for; every enabled app for administrators. */
@@ -1991,6 +2077,11 @@ export type components = {
                 icon: string;
                 /** @description The app id. */
                 id: string;
+                /**
+                 * @description Whether an app's `debug` log entries reach the daemon (D305); `info`, `warn` and `error` always do.
+                 * @enum {unknown}
+                 */
+                logLevel: "info" | "debug";
                 /** @description Names by language (`en` always). */
                 name: {
                     [key: string]: string;
@@ -2017,10 +2108,14 @@ export type components = {
             message: string;
         };
         /**
-         * @description Whether debug entries of an app's log reach the Log Center (D305).
+         * @description Whether an app's `debug` log entries reach the daemon (D305); `info`, `warn` and `error` always do.
          * @enum {unknown}
          */
         AppLogLevel: "info" | "debug";
+        AppLogLevelRequest: {
+            /** @description Whether the app's debug log entries reach the daemon. */
+            level: components["schemas"]["AppLogLevel"];
+        };
         AppLogResult: {
             /**
              * Format: int32
@@ -2106,6 +2201,8 @@ export type components = {
             removedPermissions: string[];
             /** @description SHA-256 of the package file, lowercase hex. */
             sha256: string;
+            /** @description Who should use the app after an install (D304): administrators only when it asks for elevated rights, root in a container or `directory.read`, everybody otherwise. An install without access takes it. */
+            suggestedAccess: components["schemas"]["AppAccess"];
             /**
              * Format: int64
              * @description Their sizes together.
@@ -2113,6 +2210,10 @@ export type components = {
             unpackedBytes: number;
             /** @description The version in the package. */
             version: string;
+        };
+        AppPermissionsRequest: {
+            /** @description Permissions of the app's manifest with whether the app keeps them; the others stay as they are. */
+            permissions: components["schemas"]["AppPermissionState"][];
         };
         AppPermissionState: {
             /** @description False after an administrator revoked it. */
@@ -2131,10 +2232,40 @@ export type components = {
             /** @description Why its files cannot be reached now (`poolMissing`, `poolUnavailable`, `notMounted`), or null. */
             unavailable: null | string;
         };
+        /**
+         * @description How an app may use a folder mapped to one of its storage requests.
+         * @enum {unknown}
+         */
+        AppStorageAccess: "read" | "readWrite";
         /** @description The keys an app stored for the user. */
         AppStorageKeys: {
             /** @description Sorted. */
             keys: string[];
+        };
+        /** @description A folder in a shared folder that an administrator mapped to one storage request of an app. */
+        AppStorageMapping: {
+            /** @description Read-only, or read and write when the request asks for it. */
+            access: components["schemas"]["AppStorageAccess"];
+            /** @description The folder relative to the shared folder's root, empty for the root itself. */
+            path: string;
+            /**
+             * Format: int64
+             * @description The shared folder.
+             */
+            shareId: number;
+            /** @description The id of the request in the manifest. */
+            storageId: string;
+        };
+        AppStorageMappingRequest: {
+            /** @description Read-only, or read and write when the storage request asks for it. */
+            access: components["schemas"]["AppStorageAccess"];
+            /** @description An existing folder in it, relative to its root; empty or missing for the root. */
+            path?: null | string;
+            /**
+             * Format: int64
+             * @description The shared folder.
+             */
+            shareId: number;
         };
         /** @description A value an app stores for the user; JSON null when there is none. */
         AppStorageValue: {
@@ -2177,6 +2308,24 @@ export type components = {
             instance: string;
             /** @description `host` for the daemon's API for apps (kept by the desktop), `backend` for the app's backend. */
             kind: components["schemas"]["AppTokenKind"];
+        };
+        /** @description One user's effective access to an app. */
+        AppUserAccess: {
+            /** @description Administrators use every app. */
+            administrator: boolean;
+            /** @description Whether the user may use the app: by its own grant, one of its groups', or as an administrator. */
+            allowed: boolean;
+            /** @description Deactivated users use none. */
+            disabled: boolean;
+            /** @description Name shown, if set. */
+            displayName: null | string;
+            /**
+             * Format: int64
+             * @description The user's id.
+             */
+            userId: number;
+            /** @description Login name. */
+            username: string;
         };
         /**
          * @description A part of the configuration that can be restored on its own.
@@ -2549,7 +2698,7 @@ export type components = {
             }[];
         };
         /** @enum {string} */
-        ErrorCode: "app.app.busy" | "app.app.not_found" | "app.backend.endpoint_unknown" | "app.backend.missing" | "app.backend.unsupported" | "app.compose.key_unsupported" | "app.compose.reference_unknown" | "app.compose.right_missing" | "app.compose.right_unused" | "app.compose.storage_mismatch" | "app.compose.value_invalid" | "app.compose.yaml_invalid" | "app.elevated.unsupported" | "app.icon.invalid" | "app.manifest.cron_invalid" | "app.manifest.duplicate" | "app.manifest.id_invalid" | "app.manifest.id_reserved" | "app.manifest.invalid_json" | "app.manifest.reference_unknown" | "app.manifest.schema_violation" | "app.manifest.sdk_invalid" | "app.manifest.version_unsupported" | "app.manifest.window_size_invalid" | "app.package.invalid" | "app.package.layout_invalid" | "app.package.not_found" | "app.package.too_large" | "app.permission.denied" | "app.pool.fixed" | "app.pool.required" | "app.pool.unavailable" | "app.storage.key_invalid" | "app.storage.not_found" | "app.storage.too_large" | "app.token.invalid" | "auth.account.disabled" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.desktop.not_allowed" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fileservices.service.unavailable" | "fileservices.workgroup.invalid" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.share.unavailable" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "installer.check.failed" | "installer.claim.required" | "installer.claim.taken" | "installer.disk.count" | "installer.disk.unsuitable" | "installer.erase.not_confirmed" | "installer.hostname.invalid" | "installer.install.failed" | "installer.install.running" | "installer.keyboard.invalid" | "installer.reboot.not_ready" | "jobs.job.not_found" | "logs.app.invalid" | "logs.archive.pool_unavailable" | "logs.batch.too_large" | "logs.query.invalid" | "logs.settings.invalid" | "notifications.message.invalid" | "notifications.notification.not_found" | "permissions.grant.invalid" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.command.timed_out" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.disks_missing" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.pool.suspended" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "storage.zfs.unavailable" | "system.backup.category_missing" | "system.backup.invalid" | "system.backup.password_wrong" | "system.backup.restore_expired" | "system.backup.restore_failed" | "system.backup.restore_running" | "system.backup.too_large" | "system.backup.too_new" | "system.internal.unexpected" | "system.origin.forbidden" | "system.time.apply_failed" | "system.time.server_invalid" | "system.time.servers_too_many" | "system.time.zone_invalid" | "users.account.refused" | "users.gid.exhausted" | "users.group.builtin" | "users.group.description_invalid" | "users.group.exists" | "users.group.name_invalid" | "users.group.name_reserved" | "users.group.not_found" | "users.group.refused" | "users.uid.exhausted" | "users.user.exists" | "users.user.last_admin" | "users.user.not_found" | "users.user.self";
+        ErrorCode: "app.app.busy" | "app.app.not_found" | "app.backend.endpoint_unknown" | "app.backend.missing" | "app.backend.unsupported" | "app.compose.key_unsupported" | "app.compose.reference_unknown" | "app.compose.right_missing" | "app.compose.right_unused" | "app.compose.storage_mismatch" | "app.compose.value_invalid" | "app.compose.yaml_invalid" | "app.elevated.unsupported" | "app.icon.invalid" | "app.manifest.cron_invalid" | "app.manifest.duplicate" | "app.manifest.id_invalid" | "app.manifest.id_reserved" | "app.manifest.invalid_json" | "app.manifest.reference_unknown" | "app.manifest.schema_violation" | "app.manifest.sdk_invalid" | "app.manifest.version_unsupported" | "app.manifest.window_size_invalid" | "app.mapping.invalid" | "app.package.invalid" | "app.package.layout_invalid" | "app.package.not_found" | "app.package.too_large" | "app.permission.denied" | "app.permission.not_requested" | "app.pool.fixed" | "app.pool.required" | "app.pool.unavailable" | "app.storage.key_invalid" | "app.storage.not_found" | "app.storage.too_large" | "app.token.invalid" | "auth.account.disabled" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.desktop.not_allowed" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fileservices.service.unavailable" | "fileservices.workgroup.invalid" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.share.unavailable" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "installer.check.failed" | "installer.claim.required" | "installer.claim.taken" | "installer.disk.count" | "installer.disk.unsuitable" | "installer.erase.not_confirmed" | "installer.hostname.invalid" | "installer.install.failed" | "installer.install.running" | "installer.keyboard.invalid" | "installer.reboot.not_ready" | "jobs.job.not_found" | "logs.app.invalid" | "logs.archive.pool_unavailable" | "logs.batch.too_large" | "logs.query.invalid" | "logs.settings.invalid" | "notifications.message.invalid" | "notifications.notification.not_found" | "permissions.grant.invalid" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.command.timed_out" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.disks_missing" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.pool.suspended" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "storage.zfs.unavailable" | "system.backup.category_missing" | "system.backup.invalid" | "system.backup.password_wrong" | "system.backup.restore_expired" | "system.backup.restore_failed" | "system.backup.restore_running" | "system.backup.too_large" | "system.backup.too_new" | "system.internal.unexpected" | "system.origin.forbidden" | "system.time.apply_failed" | "system.time.server_invalid" | "system.time.servers_too_many" | "system.time.zone_invalid" | "users.account.refused" | "users.gid.exhausted" | "users.group.builtin" | "users.group.description_invalid" | "users.group.exists" | "users.group.name_invalid" | "users.group.name_reserved" | "users.group.not_found" | "users.group.refused" | "users.uid.exhausted" | "users.user.exists" | "users.user.last_admin" | "users.user.not_found" | "users.user.self";
         /** @description A failed client message. `id` is empty when the message could not be parsed. */
         ErrorMessage: {
             code: components["schemas"]["ErrorCode"];
@@ -4725,12 +4874,7 @@ export type components = {
         };
         UpdateAppRequest: {
             /** @description False hides the app from everybody and stops serving its frontend; its data and grants stay. */
-            enabled?: null | boolean;
-            logLevel?: null | components["schemas"]["AppLogLevel"];
-            /** @description Grants (true) or revokes (false) permissions of the app's manifest; others stay as they are. */
-            permissions?: null | {
-                [key: string]: boolean;
-            };
+            enabled: boolean;
         };
         /** @description The rights of a user for the editor. Administrators only. */
         UserGrants: {
@@ -5490,6 +5634,72 @@ export interface operations {
             };
         };
     };
+    GetAppGrants: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                appId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppGrants"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SetAppGrants: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                appId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppGrantsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppGrants"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
     GetAppIcon: {
         parameters: {
             query?: never;
@@ -5508,6 +5718,144 @@ export interface operations {
                 };
                 content: {
                     "image/svg+xml": string;
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SetAppLogLevel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                appId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppLogLevelRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppDetails"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SetAppPermissions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                appId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppPermissionsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppDetails"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    MapAppStorage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                appId: string;
+                storageId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppStorageMappingRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppDetails"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    UnmapAppStorage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                appId: string;
+                storageId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppDetails"];
                 };
             };
             /** @description Problem details with a stable error code. */

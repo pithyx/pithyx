@@ -1,0 +1,192 @@
+{
+  "tabs": {
+    "label": "Store sections",
+    "installed": "Installed",
+    "official": "Official",
+    "community": "Community",
+    "own": "Own"
+  },
+  "installed": {
+    "title": "Installed apps",
+    "intro": "Apps installed on this box. Everyone finds the apps they may use in their Pithyx menu.",
+    "empty": "No apps are installed yet. Install one from its package file (.pithyxapp).",
+    "loading": "Loading the apps",
+    "pool": "App data lives on the pool {pool}.",
+    "installFromFile": "Install from file",
+    "version": "Version {version}",
+    "disabled": "Disabled",
+    "busy": "In progress",
+    "unavailable": "Pool not available",
+    "unverified": "Unverified"
+  },
+  "detail": {
+    "back": "Installed apps",
+    "open": "Open",
+    "update": "Update from file",
+    "uninstall": "Uninstall",
+    "enabled": "Users can open the app",
+    "enabledHint": "A disabled app keeps its data and who may use it, but nobody can open it.",
+    "source": {
+      "sideload": "Installed from a file, not verified",
+      "catalog": "Installed from a catalog"
+    },
+    "unavailable": "The pool with the app's data is not available. Nobody can open the app until it is back.",
+    "facts": {
+      "title": "Details",
+      "version": "Version",
+      "author": "Developer",
+      "license": "License",
+      "homepage": "Website",
+      "installedAt": "Installed",
+      "updatedAt": "Last installed or updated",
+      "uid": "User id of the app",
+      "sha256": "Package checksum (SHA-256)"
+    },
+    "permissions": {
+      "title": "Permissions",
+      "intro": "Turn a permission off to take it from the app. It stays off after updates. Open windows of the app get the change within a few minutes.",
+      "none": "The app asks for no permissions."
+    },
+    "storage": {
+      "title": "Folders",
+      "intro": "The app asks for these folders. Map each one to a folder in a shared folder; it keeps its rights, snapshots and backups and stays when the app is removed.",
+      "required": "Required",
+      "optional": "Optional",
+      "asks": {
+        "read": "Asks to read",
+        "readWrite": "Asks to read and write"
+      },
+      "notMapped": "Not mapped",
+      "requiredMissing": "Not mapped yet. The app needs this folder to start its background service.",
+      "mapped": "{share}, {path}",
+      "root": "the whole shared folder",
+      "access": {
+        "read": "Read only",
+        "readWrite": "Read and write"
+      },
+      "map": "Choose folder for {storage}",
+      "change": "Change folder for {storage}",
+      "unmap": "Remove folder of {storage}",
+      "dialogTitle": "Folder for {storage}",
+      "share": "Shared folder",
+      "path": "Folder in it",
+      "pathHint": "Leave it empty for the shared folder itself. The folder must exist.",
+      "accessLabel": "Access",
+      "save": "Save",
+      "cancel": "Cancel",
+      "noShares": "There are no shared folders yet. Create one in Settings first."
+    },
+    "access": {
+      "title": "Who may use it",
+      "intro": "Administrators may use every app.",
+      "label": "Who may use the app",
+      "everybody": "Everybody",
+      "admins": "Administrators only",
+      "some": "Selected groups and users",
+      "groups": "Groups",
+      "users": "Users",
+      "administrator": "Administrator",
+      "deactivated": "Deactivated",
+      "viaGroup": "Through a group",
+      "loading": "Loading who may use the app"
+    },
+    "logs": {
+      "title": "Logging",
+      "debug": "Send debug messages to the Log Center",
+      "hint": "Switch this on only to find a problem: some apps write many debug messages. Information, warnings and errors always reach the Log Center."
+    }
+  },
+  "permission": {
+    "unknown": "A permission this version of Pithyx does not explain.",
+    "files": {
+      "read": {
+        "title": "Read files",
+        "description": "Reads files in the shared folders of the user who uses it."
+      },
+      "write": {
+        "title": "Change files",
+        "description": "Creates, changes and deletes files in the shared folders the user may write to."
+      },
+      "shares": {
+        "title": "See shared folders",
+        "description": "Sees which shared folders the user may use."
+      }
+    },
+    "notifications": {
+      "title": "Notifications",
+      "description": "Shows notifications to the user who uses it."
+    },
+    "directory": {
+      "read": {
+        "title": "See all users and groups",
+        "description": "Sees the names of every user and group on this box, not only the user who uses it."
+      }
+    },
+    "network": {
+      "internet": {
+        "title": "Internet",
+        "description": "Connects to servers on the internet. Without it, the app stays on this box."
+      }
+    }
+  },
+  "install": {
+    "title": "Install an app",
+    "updateTitle": "Update {name}",
+    "file": "Package file",
+    "chooseFile": "Choose file",
+    "noFile": "No file chosen",
+    "checking": "Checking the package",
+    "action": {
+      "install": "Version {version}",
+      "update": "Update from version {installed} to {version}",
+      "reinstall": "Version {version} is installed already. Installing it again replaces its files.",
+      "downgrade": "Version {version} is older than the installed version {installed}. Its data may not fit."
+    },
+    "by": "by {author}",
+    "size": "{files, plural, one {# file} other {# files}}, {size}",
+    "unverified": "This package comes from a file and is not verified. Install only apps from developers you trust.",
+    "permissions": "Permissions it asks for",
+    "noPermissions": "The app asks for no permissions.",
+    "newPermission": "New",
+    "dropped": "No longer asked for: {permissions}",
+    "storage": "Folders it asks for",
+    "storageHint": "Map them to folders after the install.",
+    "backend": {
+      "yes": "Brings its own background service in containers.",
+      "no": "Runs in the browser only, without a background service."
+    },
+    "root": "A container of this app runs as root. Pithyx keeps it without rights on the box itself, but install it only if you trust the developer.",
+    "elevated": "It asks for special rights: {rights}",
+    "access": "Who may use it",
+    "accessSuggested": "Suggested for this app: administrators only, because it may see every user, runs as root in a container or asks for special rights.",
+    "pool": "Pool for app data",
+    "poolHint": "Every app keeps its data on this pool. It cannot change while an app is installed.",
+    "noPools": "There is no pool that can hold apps. Create one in Storage first.",
+    "loadingPools": "Loading the pools",
+    "install": "Install",
+    "update": "Update",
+    "cancel": "Cancel",
+    "close": "Close",
+    "openApp": "Open app",
+    "running": "Installing {name}",
+    "updating": "Updating {name}",
+    "installed": "{name} is installed.",
+    "updated": "{name} is updated.",
+    "stopped": "The installation stopped."
+  },
+  "uninstall": {
+    "title": "Uninstall {name}?",
+    "data": "The app's data",
+    "keep": "Keep the data",
+    "keepHint": "Its files stay on the app pool. Installing the app again finds them.",
+    "delete": "Delete the data",
+    "deleteHint": "Its databases, settings and other files on the app pool are deleted with every snapshot. This cannot be undone.",
+    "mapped": "Folders mapped to the app stay in their shared folders either way.",
+    "confirm": "Uninstall",
+    "cancel": "Cancel",
+    "close": "Close",
+    "running": "Removing {name}",
+    "done": "{name} is removed.",
+    "stopped": "The removal stopped."
+  }
+}

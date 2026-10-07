@@ -4,13 +4,14 @@
   "description": "The E2E probe app: plain TypeScript on @pithyx/sdk, installed on the box from its package like any third-party app",
   "type": "module",
   "scripts": {
-    "build": "vite build && node pack.ts",
+    "build": "vite build && pithyx pack --frontend dist/frontend --out dist/sdk-probe.pithyxapp",
     "typecheck": "tsc -p tsconfig.json"
   },
   "dependencies": {
     "@pithyx/sdk": "workspace:*"
   },
   "devDependencies": {
+    "@pithyx/cli": "workspace:*",
     "vite": "^8.3.1",
     "@types/node": "^24.13.6"
   }

@@ -20,6 +20,7 @@ export interface Issue {
     | 'app.compose.right_unused'
     | 'app.elevated.unsupported'
     | 'app.icon.invalid'
+    | 'app.package.invalid'
     | 'app.package.layout_invalid';
   params: Record<string, string | number>;
 }

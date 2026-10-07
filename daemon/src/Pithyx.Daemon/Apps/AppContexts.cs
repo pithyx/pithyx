@@ -57,7 +57,7 @@ public sealed class AppContexts(AppRegistry registry, PermissionService permissi
     public Source SourceOf(string appId)
     {
         var app = registry.Find(appId);
-        var shares = app?.Mappings is { Count: > 0 } mappings ? Datasets([.. mappings.Select(mapping => mapping.ShareId)]) : [];
+        var shares = app?.Storage is { Count: > 0 } mappings ? Datasets([.. mappings.Select(mapping => mapping.ShareId)]) : [];
         var unavailable = shares.ToDictionary(
             share => share.Key,
             share => share.Value.Found ? ReasonOf(share.Value.Dataset, pools.Current, pools.Available) : ShareAvailability.PoolMissing);
@@ -99,7 +99,7 @@ public sealed class AppContexts(AppRegistry registry, PermissionService permissi
 
     private static AppStorageInfo Storage(InstalledApp app, (string Id, string Access) request, EffectivePermissions rights, IReadOnlyDictionary<long, string?> shareUnavailable)
     {
-        var mapping = app.Mappings?.FirstOrDefault(candidate => candidate.StorageId == request.Id);
+        var mapping = app.Storage.FirstOrDefault(candidate => candidate.StorageId == request.Id);
         if (mapping is null)
         {
             return new AppStorageInfo(request.Id, AppStorageState.Unmapped, null);
@@ -114,7 +114,7 @@ public sealed class AppContexts(AppRegistry registry, PermissionService permissi
         {
             return new AppStorageInfo(request.Id, AppStorageState.Unavailable, null);
         }
-        var access = request.Access == "readWrite" && mapping.Access == "readWrite" && userAccess == ShareAccess.ReadWrite ? ShareAccess.ReadWrite : ShareAccess.Read;
+        var access = request.Access == "readWrite" && mapping.Access == AppStorageAccess.ReadWrite && userAccess == ShareAccess.ReadWrite ? ShareAccess.ReadWrite : ShareAccess.Read;
         return new AppStorageInfo(request.Id, AppStorageState.Ready, access);
     }
 

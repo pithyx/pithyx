@@ -9,6 +9,20 @@ public enum AppAccess
     Admins,
 }
 
+/// <summary>Whether an app's <c>debug</c> log entries reach the daemon (D305); <c>info</c>, <c>warn</c> and <c>error</c> always do.</summary>
+public enum AppLogLevel
+{
+    Info,
+    Debug,
+}
+
+/// <summary>How an app may use a folder mapped to one of its storage requests.</summary>
+public enum AppStorageAccess
+{
+    Read,
+    ReadWrite,
+}
+
 /// <summary>What installing a checked package does.</summary>
 public enum AppPackageAction
 {
@@ -40,6 +54,7 @@ public enum AppPackageAction
 /// <param name="UnpackedBytes">Their sizes together.</param>
 /// <param name="PackageBytes">The size of the package file.</param>
 /// <param name="Sha256">SHA-256 of the package file, lowercase hex.</param>
+/// <param name="SuggestedAccess">Who should use the app after an install (D304): administrators only when it asks for elevated rights, root in a container or <c>directory.read</c>, everybody otherwise. An install without access takes it.</param>
 public sealed record AppPackagePreview(
     string PackageId,
     DateTimeOffset ExpiresAt,
@@ -54,11 +69,15 @@ public sealed record AppPackagePreview(
     int FileCount,
     long UnpackedBytes,
     long PackageBytes,
-    string Sha256);
+    string Sha256,
+    AppAccess SuggestedAccess);
 
 /// <param name="Pool">The pool for the app data; required for the first app, and then always the app pool.</param>
-/// <param name="Access">Who may use the app after an install; an update keeps who may use it. Defaults to everybody.</param>
+/// <param name="Access">Who may use the app after an install; an update keeps who may use it. Defaults to the preview's suggested access.</param>
 public sealed record InstallAppRequest(string? Pool = null, AppAccess? Access = null);
+
+/// <param name="Enabled">False hides the app from everybody and stops serving its frontend; its data and grants stay.</param>
+public sealed record UpdateAppRequest(bool Enabled);
 
 /// <summary>An installed app as a user who may use it sees it (topic <c>apps</c>).</summary>
 /// <param name="Id">The app id.</param>
@@ -69,6 +88,7 @@ public sealed record InstallAppRequest(string? Pool = null, AppAccess? Access = 
 /// <param name="Icon">The URL of the icon, changing with every version.</param>
 /// <param name="Window">The window settings of the manifest.</param>
 /// <param name="Permissions">The permissions the app holds: those of its manifest that no administrator revoked.</param>
+/// <param name="LogLevel">Whether its debug log entries reach the daemon.</param>
 public sealed record AppSummary(
     string Id,
     string Version,
@@ -77,7 +97,8 @@ public sealed record AppSummary(
     string Entry,
     string Icon,
     JsonElement Window,
-    IReadOnlyList<string> Permissions);
+    IReadOnlyList<string> Permissions,
+    AppLogLevel LogLevel);
 
 /// <summary>The apps the subscriber may use, sorted by id: the snapshot and every event of <c>apps</c>.</summary>
 /// <param name="Apps">Enabled apps the user has a grant for; every enabled app for administrators.</param>
@@ -96,7 +117,8 @@ public sealed record AppList(IReadOnlyList<AppSummary> Apps);
 /// <param name="UpdatedAt">The last install or update (UTC).</param>
 /// <param name="Busy">An install, update or removal runs.</param>
 /// <param name="Available">Its data is reachable: the app pool is imported, unlocked and mounted.</param>
-/// <param name="LogLevel">Whether its debug log entries reach the Log Center.</param>
+/// <param name="LogLevel">Whether its debug log entries reach the daemon.</param>
+/// <param name="Storage">The folders mapped to the storage requests of its manifest; a request without one is not mapped.</param>
 public sealed record AppDetails(
     string Id,
     string Version,
@@ -110,7 +132,43 @@ public sealed record AppDetails(
     DateTimeOffset UpdatedAt,
     bool Busy,
     bool Available,
-    AppLogLevel LogLevel);
+    AppLogLevel LogLevel,
+    IReadOnlyList<AppStorageMapping> Storage);
+
+/// <summary>A folder in a shared folder that an administrator mapped to one storage request of an app.</summary>
+/// <param name="StorageId">The id of the request in the manifest.</param>
+/// <param name="ShareId">The shared folder.</param>
+/// <param name="Path">The folder relative to the shared folder's root, empty for the root itself.</param>
+/// <param name="Access">Read-only, or read and write when the request asks for it.</param>
+public sealed record AppStorageMapping(string StorageId, long ShareId, string Path, AppStorageAccess Access);
+
+/// <param name="Permissions">Permissions of the app's manifest with whether the app keeps them; the others stay as they are.</param>
+public sealed record AppPermissionsRequest(IReadOnlyList<AppPermissionState> Permissions);
+
+/// <param name="ShareId">The shared folder.</param>
+/// <param name="Access">Read-only, or read and write when the storage request asks for it.</param>
+/// <param name="Path">An existing folder in it, relative to its root; empty or missing for the root.</param>
+public sealed record AppStorageMappingRequest(long ShareId, AppStorageAccess Access, string? Path = null);
+
+/// <param name="Level">Whether the app's debug log entries reach the daemon.</param>
+public sealed record AppLogLevelRequest(AppLogLevel Level);
+
+/// <summary>Who may use an app. Administrators only.</summary>
+/// <param name="Grants">The grants of users and groups on it (level <c>allow</c>); the editor changes these. The built-in group <c>users</c> stands for everybody.</param>
+/// <param name="Users">Every user with whether it may use the app in the end, administrators and deactivated users included.</param>
+public sealed record AppGrants(IReadOnlyList<Permissions.SubjectGrant> Grants, IReadOnlyList<AppUserAccess> Users);
+
+/// <param name="Grants">Every grant on the app the users and groups should have (level <c>allow</c>); the others go.</param>
+public sealed record AppGrantsRequest(IReadOnlyList<Permissions.SubjectGrant> Grants);
+
+/// <summary>One user's effective access to an app.</summary>
+/// <param name="UserId">The user's id.</param>
+/// <param name="Username">Login name.</param>
+/// <param name="DisplayName">Name shown, if set.</param>
+/// <param name="Administrator">Administrators use every app.</param>
+/// <param name="Disabled">Deactivated users use none.</param>
+/// <param name="Allowed">Whether the user may use the app: by its own grant, one of its groups', or as an administrator.</param>
+public sealed record AppUserAccess(long UserId, string Username, string? DisplayName, bool Administrator, bool Disabled, bool Allowed);
 
 /// <param name="Permission">For example <c>notifications</c>.</param>
 /// <param name="Granted">False after an administrator revoked it.</param>

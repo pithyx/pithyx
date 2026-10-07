@@ -1,0 +1,21 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "name": "@pithyx/ui",
+  "entryPoints": ["src/index.ts", "src/native.ts"],
+  "tsconfig": "tsconfig.json",
+  "out": "api-docs",
+  "readme": "README.md",
+  "excludePrivate": true,
+  "excludeExternals": true,
+  "validation": { "notExported": true, "invalidLink": true, "notDocumented": true },
+  "requiredToBeDocumented": [
+    "Enum",
+    "Variable",
+    "Function",
+    "Class",
+    "Interface",
+    "TypeAlias",
+    "Namespace"
+  ],
+  "treatWarningsAsErrors": true
+}

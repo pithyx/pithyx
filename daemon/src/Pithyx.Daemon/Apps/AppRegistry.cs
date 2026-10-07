@@ -23,8 +23,8 @@ public sealed record InstalledApp(
     string Sha256,
     DateTimeOffset InstalledAt,
     DateTimeOffset UpdatedAt,
-    AppLogLevel LogLevel = AppLogLevel.Info,
-    IReadOnlyList<StorageMapping>? Mappings = null)
+    AppLogLevel LogLevel,
+    IReadOnlyList<AppStorageMapping> Storage)
 {
     /// <summary>The path of the entry page below <c>/apps/&lt;id&gt;/</c> (the manifest's entry without <c>frontend/</c>).</summary>
     public string EntryPath => Manifest.GetProperty("entry").GetString()![(PackageLayout.FrontendFolder.Length + 1)..];
@@ -49,20 +49,6 @@ public sealed record InstalledApp(
             ? [.. storage.EnumerateArray().Select(request => (request.GetProperty("id").GetString()!, request.GetProperty("access").GetString()!))]
             : [];
 }
-
-/// <summary>Whether debug entries of an app's log reach the Log Center (D305).</summary>
-public enum AppLogLevel
-{
-    Info,
-    Debug,
-}
-
-/// <summary>The folder an administrator assigned to a storage request of an app's manifest.</summary>
-/// <param name="StorageId">The request's id.</param>
-/// <param name="ShareId">The shared folder.</param>
-/// <param name="Path">Relative to the shared folder's root; empty for the root.</param>
-/// <param name="Access"><c>read</c> or <c>readWrite</c>.</param>
-public sealed record StorageMapping(string StorageId, long ShareId, string Path, string Access);
 
 /// <summary>
 /// The installed third-party apps (A10), read from <c>pithyx.db</c> and kept in memory, plus the setting
@@ -149,7 +135,7 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
     public AppDetails Details(InstalledApp app)
     {
         ArgumentNullException.ThrowIfNull(app);
-        return new(app.Id, app.Version, app.Source, app.Enabled, app.Manifest, app.Permissions, app.Uid, app.Sha256, app.InstalledAt, app.UpdatedAt, IsBusy(app.Id), IsAvailable(app.Id), app.LogLevel);
+        return new(app.Id, app.Version, app.Source, app.Enabled, app.Manifest, app.Permissions, app.Uid, app.Sha256, app.InstalledAt, app.UpdatedAt, IsBusy(app.Id), IsAvailable(app.Id), app.LogLevel, app.Storage);
     }
 
     public static AppSummary Summary(InstalledApp app)
@@ -164,7 +150,8 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
             $"/apps/{app.Id}/{app.EntryPath}",
             $"/api/apps/{app.Id}/icon?v={app.Sha256[..12]}",
             manifest.GetProperty("window").Clone(),
-            app.Granted);
+            app.Granted,
+            app.LogLevel);
     }
 
     public TopicDefinition Definition() => new(
@@ -212,10 +199,10 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
     {
         var rows = await connection.QueryAsync<(string Id, string Version, string Source, long Enabled, string Manifest, long Uid, string Sha256, string InstalledAt, string UpdatedAt, string LogLevel)>(
             "SELECT id, version, source, enabled, manifest, uid, package_sha256, installed_at, updated_at, log_level FROM apps ORDER BY id");
+        var granted = (await connection.QueryAsync<(string AppId, string Permission, long Granted)>("SELECT app_id, permission, granted FROM app_permissions ORDER BY permission"))
+            .ToLookup(row => row.AppId, StringComparer.Ordinal);
         var mappings = (await connection.QueryAsync<(string AppId, string StorageId, long ShareId, string Path, string Access)>(
                 "SELECT app_id, storage_id, share_id, path, access FROM storage_mappings ORDER BY storage_id"))
-            .ToLookup(row => row.AppId, row => new StorageMapping(row.StorageId, row.ShareId, row.Path, row.Access), StringComparer.Ordinal);
-        var granted = (await connection.QueryAsync<(string AppId, string Permission, long Granted)>("SELECT app_id, permission, granted FROM app_permissions ORDER BY permission"))
             .ToLookup(row => row.AppId, StringComparer.Ordinal);
         var pool = await connection.ExecuteScalarAsync<string?>("SELECT value FROM settings WHERE key = @key", new { key = PoolSetting });
         var apps = new SortedDictionary<string, InstalledApp>(StringComparer.Ordinal);
@@ -234,7 +221,8 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
                 DateTimeOffset.Parse(row.InstalledAt, CultureInfo.InvariantCulture),
                 DateTimeOffset.Parse(row.UpdatedAt, CultureInfo.InvariantCulture),
                 row.LogLevel == "debug" ? AppLogLevel.Debug : AppLogLevel.Info,
-                [.. mappings[row.Id]]);
+                [.. mappings[row.Id].Select(mapping => new AppStorageMapping(
+                    mapping.StorageId, mapping.ShareId, mapping.Path, mapping.Access == "read" ? AppStorageAccess.Read : AppStorageAccess.ReadWrite))]);
         }
         return (apps, pool);
     }

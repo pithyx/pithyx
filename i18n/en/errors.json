@@ -36,6 +36,9 @@
       "version_unsupported": "This app needs a newer version of Pithyx (manifest version {version}, this box reads version {supported}).",
       "window_size_invalid": "The app's smallest window size is larger than its default size."
     },
+    "mapping": {
+      "invalid": "The folder cannot be used for the storage {storage}: {reason, select, unknown {the app does not ask for this storage} access {the app asks to read it only, so it cannot get read and write access} other {the request is not valid}}."
+    },
     "package": {
       "layout_invalid": "The app package is not valid: {reason, select, missing {{path} is missing} unsafe {the path {path} is not allowed} duplicate {{path} is in it twice} unexpected {{path} does not belong in an app package} reserved {{path} uses a name reserved for the backend} other {{path} is not allowed}}.",
       "invalid": "The file is not a valid app package: {reason, select, gzip {it is not gzip-compressed or it is damaged} format {it is not a tar archive this box reads} checksum {a header is damaged} truncated {it ends too early} trailing_data {there is data after its end} entry_type {{path} is a link or a special file} extended_header {it has an extended header that is not allowed} name_mismatch {the long name of {path} does not match its own name} other {it cannot be read}}.",
@@ -43,7 +46,8 @@
       "too_large": "The app package is too large: {reason, select, size {the file may have at most {limit} MB} unpacked {its files may have at most {limit} MB together} files {it may have at most {limit} files} manifest {pithyx.json may have at most {limit} KB} other {it exceeds a limit}}."
     },
     "permission": {
-      "denied": "The app is not allowed to do this ({permission})."
+      "denied": "The app is not allowed to do this ({permission}).",
+      "not_requested": "The app does not ask for the permission {permission}."
     },
     "pool": {
       "fixed": "Apps live on the pool {pool}. They cannot move to another pool while an app is installed.",

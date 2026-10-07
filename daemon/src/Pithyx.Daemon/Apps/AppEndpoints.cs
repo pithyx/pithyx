@@ -5,6 +5,7 @@ using Microsoft.Net.Http.Headers;
 using Pithyx.Daemon.Apps.Packages;
 using Pithyx.Daemon.Auth;
 using Pithyx.Daemon.Jobs;
+using Pithyx.Daemon.Permissions;
 
 namespace Pithyx.Daemon.Apps;
 
@@ -62,10 +63,40 @@ public static class AppEndpoints
             .WithName("InstallAppPackage")
             .WithDescription("Administrators only. Installs or updates the app from an uploaded package as a job and answers 202 with it. The first app needs pool, the pool for every app's data; access (everybody by default) decides who may use a newly installed app. An update takes a snapshot of the app's dataset first and returns to it when a step fails.");
         apps.MapPatch("/{appId}", async Task<Ok<AppDetails>> (string appId, UpdateAppRequest request, AppService service, HttpContext context, CancellationToken cancellationToken) =>
-                TypedResults.Ok(await service.UpdateAsync(context.User, appId, request, cancellationToken)))
+                TypedResults.Ok(await service.SetEnabledAsync(context.User, appId, request, cancellationToken)))
             .RequireAuthorization(Policies.Admin)
             .WithName("UpdateApp")
-            .WithDescription("Administrators only. Enables or disables an app, switches its debug logging (logLevel) and grants or revokes permissions of its manifest (permissions, by name; request.body.invalid for one the manifest does not ask for). Fields left out stay. A disabled app keeps its data and grants, but nobody can open it, its frontend is not served and its tokens end. A revoked permission applies to the app's next call, and its windows learn it from the topic apps/<id>/context.");
+            .WithDescription("Administrators only. Enables or disables an app. A disabled app keeps its data and grants, but nobody can open it, its frontend is not served and its tokens end.");
+        apps.MapPut("/{appId}/permissions", async Task<Ok<AppDetails>> (string appId, AppPermissionsRequest request, AppService service, HttpContext context, CancellationToken cancellationToken) =>
+                TypedResults.Ok(await service.SetPermissionsAsync(context.User, appId, request, cancellationToken)))
+            .RequireAuthorization(Policies.Admin)
+            .WithName("SetAppPermissions")
+            .WithDescription("Administrators only. Grants or revokes permissions the app's manifest asks for (app.permission.not_requested for any other); the listed ones change, the others stay. A revoked permission stays revoked across updates. Users' windows of the app learn it with their next token (A11).");
+        apps.MapPut("/{appId}/storage/{storageId}", async Task<Ok<AppDetails>> (string appId, string storageId, AppStorageMappingRequest request, AppService service, HttpContext context, CancellationToken cancellationToken) =>
+                TypedResults.Ok(await service.MapStorageAsync(context.User, appId, storageId, request, cancellationToken)))
+            .RequireAuthorization(Policies.Admin)
+            .WithName("MapAppStorage")
+            .WithDescription("Administrators only. Maps an existing folder of a shared folder to a storage request of the app's manifest, replacing an earlier mapping: read-only, or read and write when the request asks for it (app.mapping.invalid otherwise). The folder keeps its rights, snapshots and backups and survives an uninstall (D314).");
+        apps.MapDelete("/{appId}/storage/{storageId}", async Task<Ok<AppDetails>> (string appId, string storageId, AppService service, HttpContext context, CancellationToken cancellationToken) =>
+                TypedResults.Ok(await service.UnmapStorageAsync(context.User, appId, storageId, cancellationToken)))
+            .RequireAuthorization(Policies.Admin)
+            .WithName("UnmapAppStorage")
+            .WithDescription("Administrators only. Removes the folder mapped to a storage request of the app; the folder itself stays.");
+        apps.MapPut("/{appId}/log-level", async Task<Ok<AppDetails>> (string appId, AppLogLevelRequest request, AppService service, HttpContext context, CancellationToken cancellationToken) =>
+                TypedResults.Ok(await service.SetLogLevelAsync(context.User, appId, request, cancellationToken)))
+            .RequireAuthorization(Policies.Admin)
+            .WithName("SetAppLogLevel")
+            .WithDescription("Administrators only. Switches the app's debug log entries on (debug) or off (info, the default); info, warn and error always reach the Log Center (D305). The topic apps carries the level to the app's windows.");
+        apps.MapGet("/{appId}/grants", async Task<Ok<AppGrants>> (string appId, GrantService grants, HttpContext context, CancellationToken cancellationToken) =>
+                TypedResults.Ok(await grants.AppGrantsAsync(context.User, appId, cancellationToken)))
+            .RequireAuthorization(Policies.Admin)
+            .WithName("GetAppGrants")
+            .WithDescription("Administrators only. Who may use an installed third-party app: the grants of users and groups on app:<id> (the built-in group users stands for everybody) and every user's result.");
+        apps.MapPut("/{appId}/grants", async Task<Ok<AppGrants>> (string appId, AppGrantsRequest request, GrantService grants, HttpContext context, CancellationToken cancellationToken) =>
+                TypedResults.Ok(await grants.ReplaceAppGrantsAsync(context.User, appId, request, cancellationToken)))
+            .RequireAuthorization(Policies.Admin)
+            .WithName("SetAppGrants")
+            .WithDescription("Administrators only. Replaces the grants of users and groups on the app, each with level allow; without any, only administrators use it. Applies at once and is pushed to the users' desktops.");
         apps.MapDelete("/{appId}", UninstallAsync)
             .RequireAuthorization(Policies.Admin)
             .WithName("UninstallApp")

@@ -115,7 +115,7 @@ public sealed class AppLeasesTests : IAsyncLifetime
 
         using var manifest = JsonDocument.Parse("""{ "storage": [{ "id": "inbox", "access": "readWrite" }, { "id": "photos", "access": "read" }, { "id": "notes", "access": "readWrite" }] }""");
         var app = new InstalledApp(AppId, "1.0.0", "sideload", true, manifest.RootElement.Clone(), [], 40000, new string('0', 64), DateTimeOffset.UnixEpoch, DateTimeOffset.UnixEpoch, AppLogLevel.Info,
-            [new StorageMapping("inbox", 1, "inbox", "readWrite"), new StorageMapping("photos", 2, "", "readWrite")]);
+            [new AppStorageMapping("inbox", 1, "inbox", AppStorageAccess.ReadWrite), new AppStorageMapping("photos", 2, "", AppStorageAccess.ReadWrite)]);
         var rights = new EffectivePermissions(false, new Dictionary<long, ShareAccess> { [1] = ShareAccess.ReadWrite, [2] = ShareAccess.ReadWrite }, new HashSet<string>());
         var states = AppContexts.StorageStates(app, rights, new Dictionary<long, string?> { [1] = AppContexts.Locked, [2] = null });
         Assert.Equal(

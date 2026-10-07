@@ -109,7 +109,3 @@ public sealed record AppContextState(
     AppBackendInfo? Backend,
     IReadOnlyList<AppStorageInfo> Storage);
 
-/// <param name="Enabled">False hides the app from everybody and stops serving its frontend; its data and grants stay.</param>
-/// <param name="LogLevel"><c>debug</c> lets the app's debug log entries into the Log Center (D305); <c>info</c> keeps them in the browser console.</param>
-/// <param name="Permissions">Grants (true) or revokes (false) permissions of the app's manifest; others stay as they are.</param>
-public sealed record UpdateAppRequest(bool? Enabled = null, AppLogLevel? LogLevel = null, IReadOnlyDictionary<string, bool>? Permissions = null);

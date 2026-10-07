@@ -168,6 +168,14 @@ public static class ErrorCodes
     public const string AppManifestWindowSizeInvalid = "app.manifest.window_size_invalid";
 
     /// <summary>
+    /// A folder cannot be mapped to a storage request of the app; <c>params.storage</c> names the request and
+    /// <c>params.reason</c> says why: <c>unknown</c> (the app's manifest has no such request) or <c>access</c> (read and
+    /// write for a request that asks for reading only).
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppMappingInvalid = "app.mapping.invalid";
+
+    /// <summary>
     /// The uploaded file is not a readable app package (a gzip-compressed tar archive); nothing of it was kept.
     /// <c>params.reason</c> says why: <c>gzip</c> (not gzip or damaged), <c>format</c> (not a ustar or pax archive, or a
     /// malformed header field), <c>checksum</c> (a header's checksum is wrong), <c>truncated</c> (the archive ends inside an
@@ -209,6 +217,10 @@ public static class ErrorCodes
     /// <summary>The app lacks a permission the call needs, or an administrator revoked it; <c>params.permission</c> names it.</summary>
     [ErrorStatus(HttpStatusCode.Forbidden)]
     public const string AppPermissionDenied = "app.permission.denied";
+
+    /// <summary>The app's manifest does not ask for the permission an administrator tried to grant or revoke; <c>params.permission</c> names it.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppPermissionNotRequested = "app.permission.not_requested";
 
     /// <summary>
     /// Apps live on one pool, chosen at the first install; while an app is installed it cannot move. <c>params.pool</c>

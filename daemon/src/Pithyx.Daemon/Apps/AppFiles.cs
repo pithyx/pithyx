@@ -99,12 +99,12 @@ public sealed class AppFiles(FileService files, ShareService shares)
         }
         var storage = location.Storage!;
         var request = app.StorageRequests.FirstOrDefault(candidate => candidate.Id == storage);
-        var mapping = app.Mappings?.FirstOrDefault(candidate => candidate.StorageId == storage);
+        var mapping = app.Storage.FirstOrDefault(candidate => candidate.StorageId == storage);
         if (request.Id is null || mapping is null)
         {
             throw new PithyxException(ErrorCodes.AppStorageNotFound, new Dictionary<string, object?> { ["storage"] = storage.Length > 64 ? storage[..64] : storage });
         }
-        var mayWrite = request.Access == "readWrite" && mapping.Access == "readWrite";
+        var mayWrite = request.Access == "readWrite" && mapping.Access == AppStorageAccess.ReadWrite;
         if (write && !mayWrite)
         {
             throw new PithyxException(ErrorCodes.FsShareReadOnly);

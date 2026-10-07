@@ -18,6 +18,7 @@ import {
 import type { Endpoint } from './transport';
 import { isProtocolSupported, MIN_PROTOCOL_VERSION, PROTOCOL_VERSION } from './version';
 
+/** The host's handler per protocol method; a method without a handler is not in `capabilities`. */
 export type MethodHandlers = {
   [M in MethodName]?: (
     params: Methods[M]['params'],
@@ -30,9 +31,15 @@ export type MethodHandlers = {
  */
 export type HostExtensions = Record<
   string,
-  { validate(params: unknown): boolean; handle(params: unknown): unknown }
+  {
+    /** Whether the parameters are acceptable; a call that fails never reaches `handle`. */
+    validate(params: unknown): boolean;
+    /** Serves the call; the result or a thrown problem goes back to the app. */
+    handle(params: unknown): unknown;
+  }
 >;
 
+/** What {@link serveApp} serves an app window with. */
 export interface ServeOptions {
   /** The init context; `capabilities` is filled in from the handlers. */
   context: Omit<AppContext, 'capabilities'>;
@@ -43,6 +50,7 @@ export interface ServeOptions {
   onReady?: (hello: { protocol: number; sdk: string }) => void;
 }
 
+/** The host's side of one app window's connection. */
 export interface AppConnection {
   /**
    * Sends an event; an event that needs a permission the app does not hold (`sharesChanged`) is dropped.
@@ -55,6 +63,7 @@ export interface AppConnection {
     data: Queries[Q]['data'],
     timeout: number,
   ): Promise<Queries[Q]['answer'] | undefined>;
+  /** Ends the connection; questions still waiting resolve undefined. */
   close(): void;
 }
 

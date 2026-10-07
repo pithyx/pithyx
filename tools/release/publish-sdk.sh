@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Publishes the npm packages of Pithyx (@pithyx/sdk; later @pithyx/ui and @pithyx/cli) at their shared version (D306).
+# Publishes the npm packages of Pithyx (@pithyx/sdk, @pithyx/ui and @pithyx/cli) at their shared version (D306).
 #
 #   tools/release/publish-sdk.sh [--tag <dist-tag>] [--latest] [--otp <code>] [--yes] [--dry-run]
 #
@@ -15,8 +15,9 @@
 # --dry-run builds, packs and runs `npm publish --dry-run`, and only warns about the git checks.
 set -euo pipefail
 
-# Every package of the shared version line, relative to the repository root. @pithyx/ui and @pithyx/cli join here (A8).
-readonly PACKAGES=(sdk)
+# Every package of the shared version line, relative to the repository root, in publishing order: the SDK first,
+# because @pithyx/cli depends on it (tools/checks/repo-check.ts keeps their versions equal).
+readonly PACKAGES=(sdk packages/ui packages/cli)
 
 die() {
   echo "publish-sdk: $*" >&2

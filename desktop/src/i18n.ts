@@ -14,6 +14,7 @@ import type monitor from '../../i18n/en/monitor.json';
 import type notifications from '../../i18n/en/notifications.json';
 import type settings from '../../i18n/en/settings.json';
 import type storage from '../../i18n/en/storage.json';
+import type store from '../../i18n/en/store.json';
 import type users from '../../i18n/en/users.json';
 import type viewer from '../../i18n/en/viewer.json';
 
@@ -25,6 +26,7 @@ export interface Resources {
   files: typeof files;
   installer: typeof installer;
   storage: typeof storage;
+  store: typeof store;
   settings: typeof settings;
   notifications: typeof notifications;
   jobs: typeof jobs;
@@ -40,9 +42,10 @@ export type Language = (typeof languages)[number];
 
 // Only the active language is loaded, each namespace when a chunk needs it (i18nNamespaces.ts).
 // Compiled at build time (scripts/compile-messages.ts), formatted by icuFormat.
-// The texts of @pithyx/ui (ui.json) come with its components.
+// The texts of @pithyx/ui (ui.json) come with its components, those of the mock desktop of `pithyx dev` (cli.json)
+// with @pithyx/cli.
 const translationFiles = import.meta.glob<object>(
-  ['../../i18n/*/*.json', '!../../i18n/*/ui.json'],
+  ['../../i18n/*/*.json', '!../../i18n/*/ui.json', '!../../i18n/*/cli.json'],
   {
     query: '?compiled',
     import: 'default',

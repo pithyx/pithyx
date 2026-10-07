@@ -40,6 +40,7 @@ import type {
 import type { AppId } from './manifest';
 import type { Theme } from './theme';
 
+/** The size class of the app's window: compact below 600 px, medium up to 1023 px, expanded above (see the desktop). */
 export type SizeClass = 'compact' | 'medium' | 'expanded';
 
 /**
@@ -59,6 +60,7 @@ export interface FileRef {
   writable: boolean;
 }
 
+/** Why and with what the app's window was opened, in the context and with `launch`. */
 export interface LaunchArgs {
   /** App-defined arguments, for example a view to show. */
   args: unknown;
@@ -467,6 +469,7 @@ export interface Methods {
   'ui.showError': { params: { problem: Problem }; result: undefined };
 }
 
+/** The name of a method an app can call. */
 export type MethodName = keyof Methods;
 
 /**
@@ -521,6 +524,7 @@ export interface Events {
   jobChanged: JobInfo;
 }
 
+/** The name of an event the desktop sends. */
 export type EventName = keyof Events;
 
 /** Questions the desktop asks and waits for, each with the answer it expects. */
@@ -540,6 +544,7 @@ export interface Queries {
 /** Why `beforeUnload` is asked. */
 export type UnloadReason = 'logout' | 'shutdown' | 'restart' | 'update';
 
+/** The name of a question the desktop asks. */
 export type QueryName = keyof Queries;
 
 /** The desktop waits this long for an answer to `beforeClose`. */
@@ -560,11 +565,13 @@ export interface ConnectMessage {
   type: 'pithyx:connect';
 }
 
+/** A message from the app to the desktop. */
 export type AppMessage =
   | { type: 'hello'; protocol: number; sdk: string }
   | { type: 'request'; id: number; method: string; params: unknown }
   | { type: 'reply'; id: number; answer: unknown };
 
+/** A message from the desktop to the app. */
 export type HostMessage =
   | { type: 'init'; protocol: number; context: AppContext }
   | { type: 'refuse'; problem: Problem }

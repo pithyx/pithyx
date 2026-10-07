@@ -1,11 +1,7 @@
 import type { components } from '@pithyx/api-client';
-import { coreAppIds, probeAppId } from './ids';
 import { findApp } from './registry';
 
 export type SessionPermissions = components['schemas']['SessionPermissions'];
-
-/** The apps given by a grant, as the daemon's permission catalog lists them; the others belong to the administrator right or to everybody. */
-export const grantedApps: readonly string[] = [coreAppIds.files, coreAppIds.viewer, probeAppId];
 
 let current: SessionPermissions | undefined;
 
@@ -15,8 +11,9 @@ export function setAppPermissions(permissions: SessionPermissions | undefined): 
 }
 
 /**
- * Whether the user may open an app: administration apps for administrators, given apps by their grant, the rest for
- * everybody. Without known rights only the apps for everybody.
+ * Whether the user may open an app: administration apps for administrators, given core apps by their grant, the
+ * installed apps the topic `apps` lists for the user (the daemon checked the grant), the rest for everybody. Without
+ * known rights only the apps for everybody.
  */
 export function isAppAllowed(
   id: string,
@@ -26,14 +23,12 @@ export function isAppAllowed(
   if (app === undefined) {
     return false;
   }
-  // The probe is wired in by id until the topic apps lists installed apps (A12): it shows only while it is installed
-  // and granted, for administrators too.
-  if (id === probeAppId) {
-    return permissions?.apps.includes(id) ?? false;
+  if (app.thirdParty === true) {
+    return permissions !== undefined;
   }
   const admin = permissions?.admin === true;
   if (app.adminOnly === true) {
     return admin;
   }
-  return !grantedApps.includes(id) || admin || (permissions?.apps.includes(id) ?? false);
+  return app.granted !== true || admin || (permissions?.apps.includes(id) ?? false);
 }

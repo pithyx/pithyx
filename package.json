@@ -17,11 +17,13 @@
     "test": "pnpm -r test",
     "e2e": "pnpm --filter @pithyx/e2e e2e",
     "build": "pnpm -r build",
+    "docs:api": "pnpm --filter @pithyx/sdk --filter @pithyx/ui run docs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "generate": "dotnet build daemon/Pithyx.slnx && pnpm --filter @pithyx/api-client generate && pnpm --filter @pithyx/sdk generate",
     "check:repo": "node tools/checks/repo-check.ts",
     "check:bundle": "node tools/checks/bundle-budget.ts",
+    "check:docs": "pnpm --filter @pithyx/sdk --filter @pithyx/ui run docs:check",
     "check:commits": "node tools/checks/commit-msg.ts --range",
     "check:dco": "node tools/checks/dco.ts"
   },

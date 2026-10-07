@@ -1,13 +1,16 @@
 using System.Data.Common;
 using System.Numerics;
 using System.Security.Claims;
+using System.Text.Json;
 using Dapper;
 using Pithyx.Daemon.Apps.Packages;
 using Pithyx.Daemon.Auth;
 using Pithyx.Daemon.Database;
 using Pithyx.Daemon.Errors;
+using Pithyx.Daemon.Files;
 using Pithyx.Daemon.Jobs;
 using Pithyx.Daemon.Permissions;
+using Pithyx.Daemon.Shares;
 using Pithyx.Daemon.Users;
 
 namespace Pithyx.Daemon.Apps;
@@ -35,6 +38,7 @@ public sealed partial class AppService(
     SqliteConnectionFactory connections,
     PermissionService permissions,
     AppTokens tokens,
+    ShareService shares,
     TimeProvider time,
     ILogger<AppService> logger)
 {
@@ -84,7 +88,7 @@ public sealed partial class AppService(
             registry.End(appId);
             throw;
         }
-        var access = request.Access ?? AppAccess.Everybody;
+        var access = request.Access ?? SuggestedAccess(package.Manifest);
         var kind = installed is null ? "apps.install" : "apps.update";
         try
         {
@@ -116,47 +120,118 @@ public sealed partial class AppService(
         }
     }
 
-    /// <summary>
-    /// Enables or disables an app, switches its debug logging and grants or revokes permissions of its manifest. A
-    /// disabled app loses its tokens at once; a revoked permission fails the app's next call that needs it, and the
-    /// context topic tells its windows.
-    /// </summary>
-    public async Task<AppDetails> UpdateAsync(ClaimsPrincipal caller, string appId, UpdateAppRequest request, CancellationToken cancellationToken)
+    /// <summary>Enables or disables an app; a disabled app loses its tokens at once.</summary>
+    public async Task<AppDetails> SetEnabledAsync(ClaimsPrincipal caller, string appId, UpdateAppRequest request, CancellationToken cancellationToken)
     {
         RequireAdmin(caller);
         ArgumentNullException.ThrowIfNull(request);
-        var app = RequireInstalled(appId);
-        var changes = request.Permissions ?? new Dictionary<string, bool>();
-        if (changes.Keys.Any(permission => !app.Permissions.Any(state => state.Permission == permission)))
-        {
-            throw new PithyxException(ErrorCodes.RequestBodyInvalid);
-        }
+        RequireInstalled(appId);
         await using (var connection = await connections.OpenAsync(cancellationToken))
         {
-            await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
-            if (request.Enabled is { } enabled)
-            {
-                await connection.ExecuteAsync("UPDATE apps SET enabled = @enabled WHERE id = @appId", new { enabled = enabled ? 1 : 0, appId }, transaction);
-            }
-            if (request.LogLevel is { } level)
-            {
-                await connection.ExecuteAsync("UPDATE apps SET log_level = @level WHERE id = @appId", new { level = level == AppLogLevel.Debug ? "debug" : "info", appId }, transaction);
-            }
-            foreach (var (permission, granted) in changes)
-            {
-                await connection.ExecuteAsync(
-                    "UPDATE app_permissions SET granted = @granted WHERE app_id = @appId AND permission = @permission",
-                    new { granted = granted ? 1 : 0, appId, permission },
-                    transaction);
-            }
-            await transaction.CommitAsync(cancellationToken);
+            await connection.ExecuteAsync("UPDATE apps SET enabled = @enabled WHERE id = @appId", new { enabled = request.Enabled ? 1 : 0, appId });
         }
-        if (request.Enabled == false)
+        if (!request.Enabled)
         {
             tokens.RevokeApp(appId);
         }
         await registry.ReloadAsync(cancellationToken);
-        LogUpdated(appId, request.Enabled, request.LogLevel, request.Permissions);
+        LogEnabled(appId, request.Enabled);
+        return registry.Details(RequireInstalled(appId));
+    }
+
+    /// <summary>Grants or revokes permissions of the app's manifest; an update keeps a revoked one revoked.</summary>
+    public async Task<AppDetails> SetPermissionsAsync(ClaimsPrincipal caller, string appId, AppPermissionsRequest request, CancellationToken cancellationToken)
+    {
+        RequireAdmin(caller);
+        ArgumentNullException.ThrowIfNull(request);
+        var requested = RequireInstalled(appId).Permissions.Select(permission => permission.Permission).ToHashSet(StringComparer.Ordinal);
+        foreach (var change in request.Permissions ?? [])
+        {
+            if (change?.Permission is null || !requested.Contains(change.Permission))
+            {
+                throw new PithyxException(ErrorCodes.AppPermissionNotRequested, new Dictionary<string, object?> { ["permission"] = Shorten(change?.Permission ?? "") });
+            }
+        }
+        await using (var connection = await connections.OpenAsync(cancellationToken))
+        await using (var transaction = await connection.BeginTransactionAsync(cancellationToken))
+        {
+            foreach (var change in request.Permissions ?? [])
+            {
+                await connection.ExecuteAsync(
+                    "UPDATE app_permissions SET granted = @granted WHERE app_id = @appId AND permission = @permission",
+                    new { granted = change.Granted ? 1 : 0, appId, permission = change.Permission },
+                    transaction);
+            }
+            await transaction.CommitAsync(cancellationToken);
+        }
+        await registry.ReloadAsync(cancellationToken);
+        LogPermissions(appId);
+        return registry.Details(RequireInstalled(appId));
+    }
+
+    /// <summary>
+    /// Maps an existing folder in a shared folder to one storage request of the app's manifest, read-only or (when the
+    /// request asks for it) read-write. The app's backend gets it mounted at its next start (A14).
+    /// </summary>
+    public async Task<AppDetails> MapStorageAsync(ClaimsPrincipal caller, string appId, string storageId, AppStorageMappingRequest request, CancellationToken cancellationToken)
+    {
+        RequireAdmin(caller);
+        ArgumentNullException.ThrowIfNull(request);
+        var app = RequireInstalled(appId);
+        var wanted = StorageRequestAccess(app.Manifest, storageId) ?? throw MappingInvalid(storageId, "unknown");
+        if (request.Access == AppStorageAccess.ReadWrite && wanted != AppStorageAccess.ReadWrite)
+        {
+            throw MappingInvalid(storageId, "access");
+        }
+        var path = FsPath.Normalize(request.Path);
+        var share = await shares.ResolveAsync(caller, request.ShareId, write: false, cancellationToken);
+        RequireFolder(share.Path, path);
+        await using (var connection = await connections.OpenAsync(cancellationToken))
+        {
+            await connection.ExecuteAsync(
+                """
+                INSERT INTO storage_mappings (app_id, storage_id, share_id, path, access) VALUES (@appId, @storageId, @shareId, @path, @access)
+                ON CONFLICT (app_id, storage_id) DO UPDATE SET share_id = excluded.share_id, path = excluded.path, access = excluded.access
+                """,
+                new { appId, storageId, shareId = share.Id, path, access = request.Access == AppStorageAccess.Read ? "read" : "readWrite" });
+        }
+        await registry.ReloadAsync(cancellationToken);
+        LogMapped(appId, storageId, share.Id, path, request.Access);
+        return registry.Details(RequireInstalled(appId));
+    }
+
+    /// <summary>Removes the folder mapped to a storage request; the request is not mapped any more.</summary>
+    public async Task<AppDetails> UnmapStorageAsync(ClaimsPrincipal caller, string appId, string storageId, CancellationToken cancellationToken)
+    {
+        RequireAdmin(caller);
+        var app = RequireInstalled(appId);
+        if (StorageRequestAccess(app.Manifest, storageId) is null)
+        {
+            throw MappingInvalid(storageId, "unknown");
+        }
+        await using (var connection = await connections.OpenAsync(cancellationToken))
+        {
+            await connection.ExecuteAsync("DELETE FROM storage_mappings WHERE app_id = @appId AND storage_id = @storageId", new { appId, storageId });
+        }
+        await registry.ReloadAsync(cancellationToken);
+        LogUnmapped(appId, storageId);
+        return registry.Details(RequireInstalled(appId));
+    }
+
+    /// <summary>Switches the app's debug log entries on or off (D305).</summary>
+    public async Task<AppDetails> SetLogLevelAsync(ClaimsPrincipal caller, string appId, AppLogLevelRequest request, CancellationToken cancellationToken)
+    {
+        RequireAdmin(caller);
+        ArgumentNullException.ThrowIfNull(request);
+        RequireInstalled(appId);
+        await using (var connection = await connections.OpenAsync(cancellationToken))
+        {
+            await connection.ExecuteAsync(
+                "UPDATE apps SET log_level = @level WHERE id = @appId",
+                new { level = request.Level == AppLogLevel.Debug ? "debug" : "info", appId });
+        }
+        await registry.ReloadAsync(cancellationToken);
+        LogLevelSet(appId, request.Level);
         return registry.Details(RequireInstalled(appId));
     }
 
@@ -257,7 +332,8 @@ public sealed partial class AppService(
             package.Package.Files.Count,
             package.Package.UnpackedBytes,
             package.Package.CompressedBytes,
-            package.Package.Sha256);
+            package.Package.Sha256,
+            SuggestedAccess(package.Manifest));
     }
 
     /// <summary>The registry change of an install or update, in one transaction: the last step of <see cref="AppVersions"/>.</summary>
@@ -325,6 +401,56 @@ public sealed partial class AppService(
             : [];
         await connection.ExecuteAsync("DELETE FROM storage_mappings WHERE app_id = @appId AND storage_id NOT IN @storageIds", new { appId, storageIds }, transaction);
     }
+
+    /// <summary>
+    /// Who should use an app after its install (D304): administrators only when it asks for elevated rights, root in a
+    /// container or the user directory (<c>directory.read</c>), everybody otherwise.
+    /// </summary>
+    public static AppAccess SuggestedAccess(JsonElement manifest)
+    {
+        var directory = manifest.TryGetProperty("permissions", out var permissions)
+            && permissions.EnumerateArray().Any(permission => permission.GetString() == "directory.read");
+        var backend = manifest.TryGetProperty("backend", out var declared) ? declared : default;
+        var root = backend.ValueKind == JsonValueKind.Object && backend.TryGetProperty("root", out var flag) && flag.ValueKind == JsonValueKind.True;
+        var elevated = backend.ValueKind == JsonValueKind.Object && backend.TryGetProperty("elevated", out var rights) && rights.GetArrayLength() > 0;
+        return directory || root || elevated ? AppAccess.Admins : AppAccess.Everybody;
+    }
+
+    /// <summary>The access a storage request of the manifest asks for, or null when the manifest has no such request.</summary>
+    private static AppStorageAccess? StorageRequestAccess(JsonElement manifest, string storageId)
+    {
+        if (!manifest.TryGetProperty("storage", out var storage))
+        {
+            return null;
+        }
+        foreach (var request in storage.EnumerateArray())
+        {
+            if (request.GetProperty("id").GetString() == storageId)
+            {
+                return request.GetProperty("access").GetString() == "readWrite" ? AppStorageAccess.ReadWrite : AppStorageAccess.Read;
+            }
+        }
+        return null;
+    }
+
+    /// <summary>Checks that the folder exists below the shared folder's root, without following links out of it.</summary>
+    private static void RequireFolder(string shareRoot, string path)
+    {
+        try
+        {
+            using var root = LinuxFs.OpenRoot(shareRoot);
+            using var folder = LinuxFs.OpenBeneath(root, FsPath.ForOpen(path), LinuxFs.Path | LinuxFs.Directory);
+        }
+        catch (FsError error)
+        {
+            throw FsErrors.From(error);
+        }
+    }
+
+    private static PithyxException MappingInvalid(string storageId, string reason) =>
+        new(ErrorCodes.AppMappingInvalid, new Dictionary<string, object?> { ["storage"] = Shorten(storageId), ["reason"] = reason });
+
+    private static string Shorten(string value) => value.Length > 100 ? value[..100] : value;
 
     private string ChoosePool(string? requested)
     {
@@ -406,8 +532,20 @@ public sealed partial class AppService(
     [LoggerMessage(Level = LogLevel.Information, Message = "Installed app {AppId} {Version} (before: {Previous})")]
     private partial void LogInstalled(string appId, string version, string? previous);
 
-    [LoggerMessage(Level = LogLevel.Information, Message = "App {AppId} changed: enabled {Enabled}, log level {AppLogLevel}, permissions {PermissionChanges}")]
-    private partial void LogUpdated(string appId, bool? enabled, AppLogLevel? appLogLevel, IReadOnlyDictionary<string, bool>? permissionChanges);
+    [LoggerMessage(Level = LogLevel.Information, Message = "App {AppId} enabled: {Enabled}")]
+    private partial void LogEnabled(string appId, bool enabled);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Permissions of app {AppId} changed")]
+    private partial void LogPermissions(string appId);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Mapped storage {StorageId} of app {AppId} to share {ShareId} folder {Path} ({Access})")]
+    private partial void LogMapped(string appId, string storageId, long shareId, string path, AppStorageAccess access);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Unmapped storage {StorageId} of app {AppId}")]
+    private partial void LogUnmapped(string appId, string storageId);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Log level of app {AppId} set to {Level}")]
+    private partial void LogLevelSet(string appId, AppLogLevel level);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Removed app {AppId}, data: {Data}")]
     private partial void LogRemoved(string appId, AppDataChoice data);
