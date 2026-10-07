@@ -66,6 +66,22 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
             }
         }
 
+        /// <summary>
+        /// Whether the connection takes the topic: through any matching pattern, or only through the topic itself for
+        /// a definition that refuses wildcards (<see cref="TopicDefinition.ExactOnly"/>).
+        /// </summary>
+        internal bool Takes(TopicDefinition? definition, string topic)
+        {
+            if (definition is { ExactOnly: true })
+            {
+                lock (_lock)
+                {
+                    return _patterns.Contains(topic);
+                }
+            }
+            return IsSubscribed(topic);
+        }
+
         internal bool IsSubscribed(string topic)
         {
             lock (_lock)
@@ -110,7 +126,7 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
     public IReadOnlyList<Connection> Subscribers(string topic)
     {
         var definition = _registry.Find(topic);
-        return [.. _connections.Values.Where(c => c.IsSubscribed(topic) && (definition is null || definition.IsAllowed(c.User, topic)))];
+        return [.. _connections.Values.Where(c => c.Takes(definition, topic) && (definition is null || definition.IsAllowed(c.User, topic)))];
     }
 
     /// <summary>Closes every connection of a session, for example after logout.</summary>
@@ -168,7 +184,7 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
     public bool HasSubscribers(string topic)
     {
         var definition = _registry.Find(topic);
-        return _connections.Values.Any(c => c.IsSubscribed(topic) && (definition is null || definition.IsAllowed(c.User, topic)));
+        return _connections.Values.Any(c => c.Takes(definition, topic) && (definition is null || definition.IsAllowed(c.User, topic)));
     }
 
     /// <summary>Completes when at least one connection that may see the topic subscribes to a pattern matching it.</summary>
@@ -205,7 +221,10 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
         {
             foreach (var definition in _registry.All)
             {
-                foreach (var topic in definition.ExistingTopics().Where(t => TopicPattern.Matches(pattern, t) && definition.IsAllowed(connection.User, t)))
+                // A definition that refuses wildcards answers only a subscription to one of its concrete topics.
+                var matches = !definition.ExactOnly ? definition.ExistingTopics()
+                    : TopicPattern.HasWildcards(pattern) || !TopicPattern.Matches(definition.Pattern, pattern) ? Enumerable.Empty<string>() : [pattern];
+                foreach (var topic in matches.Where(t => TopicPattern.Matches(pattern, t) && definition.IsAllowed(connection.User, t)))
                 {
                     var data = await definition.Snapshot(topic, cancellationToken);
                     if (definition.ForUser is { } forUser)
@@ -270,7 +289,7 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
         ReadOnlyMemory<byte>? payload = null;
         foreach (var connection in _connections.Values)
         {
-            if (connection.IsSubscribed(topic) && definition.IsAllowed(connection.User, topic))
+            if (connection.Takes(definition, topic) && definition.IsAllowed(connection.User, topic))
             {
                 if (definition.ForUser is { } forUser)
                 {

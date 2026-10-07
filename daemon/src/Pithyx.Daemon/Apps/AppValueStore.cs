@@ -11,14 +11,11 @@ namespace Pithyx.Daemon.Apps;
 /// The values an app keeps per user (D61, the SDK's <c>storage.*</c>; sandboxed apps have no browser storage): keys of
 /// 1 to 128 characters, values of at most 64 KB of JSON, and at most 1 MB of keys and values per app and user.
 /// </summary>
-public sealed class AppValueStore(SqliteConnectionFactory connections, TimeProvider time) : IDisposable
+public sealed class AppValueStore(SqliteConnectionFactory connections, TimeProvider time)
 {
     public const int MaxKeyLength = 128;
     public const int MaxValueBytes = 64 * 1024;
     public const int MaxTotalBytes = 1024 * 1024;
-
-    // One writer at a time, so two writes cannot both stay below the total and pass it together.
-    private readonly SemaphoreSlim _writes = new(1, 1);
 
     public async Task<IReadOnlyList<string>> KeysAsync(string appId, long userId, CancellationToken cancellationToken)
     {
@@ -49,27 +46,20 @@ public sealed class AppValueStore(SqliteConnectionFactory connections, TimeProvi
         {
             throw TooLarge(MaxValueBytes);
         }
-        await _writes.WaitAsync(cancellationToken);
-        try
+        // One statement checks the total and writes, so two writes of the same app and user cannot pass it together.
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        var written = await connection.ExecuteAsync(
+            """
+            INSERT INTO app_storage (app_id, user_id, key, value, updated_at)
+            SELECT @appId, @userId, @key, @json, @now
+            WHERE (SELECT coalesce(sum(length(CAST(key AS BLOB)) + length(CAST(value AS BLOB))), 0)
+                   FROM app_storage WHERE app_id = @appId AND user_id = @userId AND key <> @key) + @total <= @max
+            ON CONFLICT (app_id, user_id, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
+            """,
+            new { appId, userId, key, json, now = SessionService.Format(time.GetUtcNow()), total = Encoding.UTF8.GetByteCount(key!) + size, max = MaxTotalBytes });
+        if (written == 0)
         {
-            await using var connection = await connections.OpenAsync(cancellationToken);
-            var others = await connection.ExecuteScalarAsync<long>(
-                "SELECT coalesce(sum(length(CAST(key AS BLOB)) + length(CAST(value AS BLOB))), 0) FROM app_storage WHERE app_id = @appId AND user_id = @userId AND key <> @key",
-                new { appId, userId, key });
-            if (others + Encoding.UTF8.GetByteCount(key!) + size > MaxTotalBytes)
-            {
-                throw TooLarge(MaxTotalBytes);
-            }
-            await connection.ExecuteAsync(
-                """
-                INSERT INTO app_storage (app_id, user_id, key, value, updated_at) VALUES (@appId, @userId, @key, @json, @now)
-                ON CONFLICT (app_id, user_id, key) DO UPDATE SET value = excluded.value, updated_at = excluded.updated_at
-                """,
-                new { appId, userId, key, json, now = SessionService.Format(time.GetUtcNow()) });
-        }
-        finally
-        {
-            _writes.Release();
+            throw TooLarge(MaxTotalBytes);
         }
     }
 
@@ -79,8 +69,6 @@ public sealed class AppValueStore(SqliteConnectionFactory connections, TimeProvi
         await using var connection = await connections.OpenAsync(cancellationToken);
         await connection.ExecuteAsync("DELETE FROM app_storage WHERE app_id = @appId AND user_id = @userId AND key = @key", new { appId, userId, key });
     }
-
-    public void Dispose() => _writes.Dispose();
 
     private static void CheckKey(string? key)
     {

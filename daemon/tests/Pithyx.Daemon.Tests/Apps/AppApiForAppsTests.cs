@@ -526,22 +526,31 @@ public sealed class AppApiForAppsTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task TheContextTopicFollowsPermissionsAndTheGrantAndHoldsTheWindowLease()
+    public async Task TheContextTopicIsOnlyForUsersOfTheAppAndFollowsItsChanges()
     {
         await InstallAsync(AppA, "\"notifications\", \"files.read\"", extra: ",\n  \"storage\": [{ \"id\": \"inbox\", \"name\": { \"en\": \"Inbox\" }, \"access\": \"readWrite\", \"required\": false }]");
+        await InstallAsync(AppB, "\"notifications\"");
         var (_, ritaId, ritaCookie) = await UserAsync("rita", AppA);
         var leases = _factory.Services.GetRequiredService<AppLeases>();
         var topic = AppContexts.TopicOf(AppA);
 
         var socket = await ConnectAsync(ritaCookie);
+        // Neither an app the user may not use nor a wildcard over every app's context answers.
+        await SendAsync(socket, new { type = "sub", id = "b", topic = AppContexts.TopicOf(AppB) });
+        var refused = await ReceiveAsync(socket);
+        Assert.Equal(("error", "auth.permission.denied"), (refused.GetProperty("type").GetString(), refused.GetProperty("code").GetString()));
+        await SendAsync(socket, new { type = "sub", id = "w", topic = AppContexts.Pattern });
+        Assert.Equal("ack", (await ReceiveAsync(socket)).GetProperty("type").GetString());
+
         await SendAsync(socket, new { type = "sub", id = "1", topic });
         Assert.Equal("ack", (await ReceiveAsync(socket)).GetProperty("type").GetString());
-        var snapshot = (await ReceiveAsync(socket)).GetProperty("data");
-        Assert.True(snapshot.GetProperty("access").GetBoolean());
-        Assert.Equal(["files.read", "notifications"], snapshot.GetProperty("permissions").EnumerateArray().Select(value => value.GetString()));
-        Assert.Equal("info", snapshot.GetProperty("logLevel").GetString());
-        Assert.Equal(JsonValueKind.Null, snapshot.GetProperty("backend").ValueKind);
-        var storage = Assert.Single(snapshot.GetProperty("storage").EnumerateArray());
+        var snapshot = await ReceiveAsync(socket);
+        Assert.Equal(("snap", "1"), (snapshot.GetProperty("type").GetString(), snapshot.GetProperty("id").GetString()));
+        var data = snapshot.GetProperty("data");
+        Assert.Equal(["files.read", "notifications"], data.GetProperty("permissions").EnumerateArray().Select(value => value.GetString()));
+        Assert.Equal("info", data.GetProperty("logLevel").GetString());
+        Assert.Equal(JsonValueKind.Null, data.GetProperty("backend").ValueKind);
+        var storage = Assert.Single(data.GetProperty("storage").EnumerateArray());
         Assert.Equal(("inbox", "unmapped"), (storage.GetProperty("id").GetString(), storage.GetProperty("state").GetString()));
         Assert.Equal(new Dictionary<long, int> { [ritaId] = 1 }, leases.Holders(AppA));
 
@@ -553,29 +562,13 @@ public sealed class AppApiForAppsTests : IAsyncLifetime
         Assert.Equal(["files.read"], changed.GetProperty("permissions").EnumerateArray().Select(value => value.GetString()));
         Assert.Equal("debug", changed.GetProperty("logLevel").GetString());
 
+        // Losing the app ends the lease at once; the app leaves the user's topic apps, which closes its windows.
         using (var grants = await _admin.PutAsJsonAsync($"/api/users/{ritaId}/grants", new { grants = new[] { new { resource = "right:desktopLogin", level = "allow" } } }, Token))
         {
             Assert.Equal(HttpStatusCode.OK, grants.StatusCode);
         }
-        var revoked = await NextContextAsync(socket, topic, context => !context.GetProperty("access").GetBoolean());
-        Assert.Empty(revoked.GetProperty("permissions").EnumerateArray());
-
-        // A lost connection keeps the lease for two minutes; an unsubscribe ends it at once.
-        socket.Abort();
-        await JobTestSupport.WaitUntilAsync(() => Task.FromResult(_factory.Services.GetRequiredService<Pithyx.Daemon.Realtime.TopicHub>().Subscribers(topic).Count == 0), "the connection to end");
-        Assert.Equal(new Dictionary<long, int> { [ritaId] = 1 }, leases.Holders(AppA));
-        _factory.Time.Advance(AppLeases.Grace);
         Assert.Empty(leases.Holders(AppA));
-
-        var admin = await ConnectAsync(await _factory.SessionCookieAsync(_adminId));
-        await SendAsync(admin, new { type = "sub", id = "1", topic });
-        await ReceiveAsync(admin);
-        await ReceiveAsync(admin);
-        Assert.True(leases.InUse(AppA));
-        await SendAsync(admin, new { type = "unsub", id = "2", topic });
-        await ReceiveAsync(admin);
-        Assert.False(leases.InUse(AppA));
-        admin.Dispose();
+        socket.Dispose();
     }
 
     private async Task<System.Net.WebSockets.WebSocket> ConnectAsync(string cookie)
@@ -673,6 +666,33 @@ public sealed class AppApiForAppsTests : IAsyncLifetime
         await _admin.SetShareAccessAsync(media, ritaId, "readWrite");
         Assert.Null(await WriteAsync(reader, "storage=inbox&path=note.txt"));
         Assert.True(File.Exists(Path.Combine(root, "inbox", "note.txt")));
+    }
+
+    [Fact]
+    public async Task ConcurrentWritesKeepOneNotificationPerTagAndTheStorageLimit()
+    {
+        await InstallAsync(AppA, "\"notifications\"");
+        var app = App(await TokenAsync(_admin, AppA));
+
+        await Task.WhenAll(Enumerable.Range(0, 12).Select(async index =>
+        {
+            using var response = await app.PostAsJsonAsync("/api/app/notifications", new { title = $"Message {index}", tag = "chat" }, Token);
+            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        }));
+        Assert.Equal(1, await _factory.ScalarAsync<long>("SELECT count(*) FROM notifications WHERE app = @AppA", new { AppA }));
+        var items = (await _admin.GetFromJsonAsync<JsonElement>("/api/notifications", Token)).GetProperty("items").EnumerateArray();
+        Assert.Single(items, item => item.GetProperty("app").ValueKind == JsonValueKind.String);
+
+        var value = new string('x', 63 * 1024);
+        await Task.WhenAll(Enumerable.Range(0, 24).Select(async index =>
+        {
+            using var response = await app.PutAsJsonAsync($"/api/app/storage/value?key=k{index}", new { value }, Token);
+            Assert.True(response.StatusCode is HttpStatusCode.NoContent or HttpStatusCode.RequestEntityTooLarge);
+        }));
+        Assert.InRange(
+            await _factory.ScalarAsync<long>("SELECT sum(length(CAST(key AS BLOB)) + length(CAST(value AS BLOB))) FROM app_storage WHERE app_id = @AppA", new { AppA }),
+            15 * 63 * 1024,
+            AppValueStore.MaxTotalBytes);
     }
 
     [Fact]

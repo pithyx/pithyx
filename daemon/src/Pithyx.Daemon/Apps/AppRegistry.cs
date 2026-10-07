@@ -245,12 +245,10 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
 
 /// <summary>
 /// Publishes <c>apps</c>, <c>apps/admin</c> and every app's <c>apps/&lt;id&gt;/context</c> when the registry, the rights
-/// or the pools change; the context of a removed app once more, so its windows close.
+/// or the pools change.
 /// </summary>
 public sealed class AppChangePublisher(TopicHub hub, AppRegistry registry, AppContexts contexts, PermissionService permissions, PoolInventory pools) : IHostedService
 {
-    private readonly Lock _lock = new();
-    private HashSet<string> _published = new(StringComparer.Ordinal);
 
     public Task StartAsync(CancellationToken cancellationToken)
     {
@@ -272,14 +270,9 @@ public sealed class AppChangePublisher(TopicHub hub, AppRegistry registry, AppCo
     {
         hub.Publish(AppRegistry.Topic, registry.List());
         hub.Publish(AppRegistry.AdminTopic, registry.AdminList());
-        lock (_lock)
+        foreach (var appId in registry.Apps.Keys)
         {
-            var current = registry.Apps.Keys.ToHashSet(StringComparer.Ordinal);
-            foreach (var appId in current.Union(_published))
-            {
-                hub.Publish(AppContexts.TopicOf(appId), contexts.SourceOf(appId));
-            }
-            _published = current;
+            hub.Publish(AppContexts.TopicOf(appId), contexts.SourceOf(appId));
         }
     }
 }

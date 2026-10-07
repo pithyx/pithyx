@@ -25,7 +25,6 @@ public sealed class AppTokenAuthenticationHandler(
     AppTokens tokens,
     SessionService sessions,
     AuthService auth,
-    PermissionService permissions,
     AppRegistry registry,
     IProblemDetailsService problemDetails)
     : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
@@ -54,12 +53,11 @@ public sealed class AppTokenAuthenticationHandler(
             tokens.RevokeSession(grant.SessionId);
             return AuthenticateResult.Fail("Session ended");
         }
-        var user = await auth.GetUserAsync(grant.UserId, Context.RequestAborted);
-        if (user is null || !user.Permissions.Rights.Contains(Resources.DesktopLogin))
+        if (await auth.SignedInAsync(grant.UserId, Context.RequestAborted) is not var (user, rights) || !rights.Has(Resources.DesktopLogin))
         {
             return AuthenticateResult.Fail("User may no longer sign in");
         }
-        if (!registry.Allows(await permissions.ForUserAsync(grant.UserId, Context.RequestAborted), grant.AppId))
+        if (!registry.Allows(rights, grant.AppId))
         {
             return AuthenticateResult.Fail("App no longer available to the user");
         }

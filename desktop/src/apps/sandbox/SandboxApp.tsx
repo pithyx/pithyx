@@ -6,7 +6,6 @@ import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { queryKeys } from '../../api/queries';
 import { realtime } from '../../realtime/connection';
 import { useSizeClass } from '../../wm/sizeClass';
-import { dispatch } from '../../wm/store';
 import { useAppName } from '../names';
 import type { AppProps } from '../registry';
 import { brokerFor } from './broker';
@@ -28,8 +27,8 @@ type User = components['schemas']['UserInfo'];
  *
  * The daemon decides what the app may do (A11). The window follows the app's context topic `apps/<id>/context`, which
  * is also the window lease: the connection starts once its first state is there, a change reaches the app as
- * `permissionsChange`, `logLevelChange` or `storageChange`, and when the user loses the app (a revoked grant, a disabled
- * or removed app) the window closes. Calls that reach data go to `/api/app/**` with this window's host token.
+ * `permissionsChange`, `logLevelChange` or `storageChange`. When the user loses the app (a revoked grant, a disabled or
+ * removed app) its events stop and the app leaves the topic `apps`, which closes the window. Calls that reach data go to `/api/app/**` with this window's host token.
  */
 export function SandboxApp({ windowId, app, entry }: AppProps & { app: string; entry: string }) {
   const frame = useRef<HTMLIFrameElement>(null);
@@ -61,7 +60,7 @@ export function SandboxApp({ windowId, app, entry }: AppProps & { app: string; e
       context: appContext({
         client,
         windowId,
-        app: { id: app, version: context.version ?? '' },
+        app: { id: app, version: context.version },
         permissions: context.permissions,
         sizeClass,
         daemon: context,
@@ -93,10 +92,6 @@ export function SandboxApp({ windowId, app, entry }: AppProps & { app: string; e
     const next = data as DaemonAppContext;
     const previous = daemonContext.current;
     daemonContext.current = next;
-    if (!next.access) {
-      dispatch({ type: 'close', id: windowId });
-      return;
-    }
     if (previous === undefined) {
       if (waiting.current) {
         connect();

@@ -1863,15 +1863,11 @@ export type components = {
         /** @enum {unknown} */
         AppAccess: "everybody" | "admins" | null;
         /**
-         * @description The per-user topic `apps/&lt;id&gt;/context`: what the daemon decides about an app for the subscriber. Its
-         *     subscription is also the window lease (A15): while a desktop of the user is subscribed, the app is in use.
+         * @description The per-user topic `apps/&lt;id&gt;/context`: what the daemon decides about an app for the subscriber, who may
+         *     use the app (only such a user can subscribe). Its subscription is also the window lease (A15): while a desktop of the
+         *     user is subscribed, the app is in use.
          */
         AppContextState: {
-            /**
-             * @description Whether the user may use the app: installed, enabled and granted (administrators have every app). False after a
-             *     revoke or a removal; the desktop then closes the app's windows. Everything else is empty then.
-             */
-            access: boolean;
             /** @description The app's backend: the state of its containers and the names of its endpoints. */
             backend: null | {
                 /** @description The endpoint names of the manifest, sorted. */
@@ -1899,7 +1895,7 @@ export type components = {
                 state: "ready" | "unmapped" | "locked" | "unavailable";
             }[];
             /** @description The installed version. */
-            version: null | string;
+            version: string;
         };
         /** @description An installed app for administrators (topic `apps/admin` and `GET /api/apps`). */
         AppDetails: {

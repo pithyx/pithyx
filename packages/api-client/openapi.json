@@ -5552,7 +5552,6 @@
       },
       "AppContextState": {
         "required": [
-          "access",
           "version",
           "permissions",
           "logLevel",
@@ -5561,15 +5560,8 @@
         ],
         "type": "object",
         "properties": {
-          "access": {
-            "type": "boolean",
-            "description": "Whether the user may use the app: installed, enabled and granted (administrators have every app). False after a\nrevoke or a removal; the desktop then closes the app's windows. Everything else is empty then."
-          },
           "version": {
-            "type": [
-              "null",
-              "string"
-            ],
+            "type": "string",
             "description": "The installed version."
           },
           "permissions": {
@@ -5652,7 +5644,7 @@
             "description": "The storage requests of the manifest with their state for the user (`storageChange`)."
           }
         },
-        "description": "The per-user topic `apps/&lt;id&gt;/context`: what the daemon decides about an app for the subscriber. Its\nsubscription is also the window lease (A15): while a desktop of the user is subscribed, the app is in use."
+        "description": "The per-user topic `apps/&lt;id&gt;/context`: what the daemon decides about an app for the subscriber, who may\nuse the app (only such a user can subscribe). Its subscription is also the window lease (A15): while a desktop of the\nuser is subscribed, the app is in use."
       },
       "AppDetails": {
         "required": [

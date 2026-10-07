@@ -93,21 +93,17 @@ public sealed record AppStorageInfo(string Id, AppStorageState State, Shares.Sha
 public sealed record AppBackendInfo(string Status, IReadOnlyList<string> Endpoints);
 
 /// <summary>
-/// The per-user topic <c>apps/&lt;id&gt;/context</c>: what the daemon decides about an app for the subscriber. Its
-/// subscription is also the window lease (A15): while a desktop of the user is subscribed, the app is in use.
+/// The per-user topic <c>apps/&lt;id&gt;/context</c>: what the daemon decides about an app for the subscriber, who may
+/// use the app (only such a user can subscribe). Its subscription is also the window lease (A15): while a desktop of the
+/// user is subscribed, the app is in use.
 /// </summary>
-/// <param name="Access">
-/// Whether the user may use the app: installed, enabled and granted (administrators have every app). False after a
-/// revoke or a removal; the desktop then closes the app's windows. Everything else is empty then.
-/// </param>
 /// <param name="Version">The installed version.</param>
 /// <param name="Permissions">The permissions of the manifest that no administrator revoked; the app sees them as <c>permissionsChange</c>.</param>
 /// <param name="LogLevel">Whether debug log entries reach the daemon (<c>logLevelChange</c>).</param>
 /// <param name="Backend">The backend, or null for an app without one.</param>
 /// <param name="Storage">The storage requests of the manifest with their state for the user (<c>storageChange</c>).</param>
 public sealed record AppContextState(
-    bool Access,
-    string? Version,
+    string Version,
     IReadOnlyList<string> Permissions,
     AppLogLevel LogLevel,
     AppBackendInfo? Backend,

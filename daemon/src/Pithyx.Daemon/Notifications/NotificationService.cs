@@ -58,7 +58,14 @@ public sealed partial class NotificationService : IDisposable
     }
 
     /// <summary>Creates a notification for one user and publishes it to them.</summary>
-    public async Task<Notification> CreateAsync(long userId, NotificationDraft draft, CancellationToken cancellationToken)
+    public Task<Notification> CreateAsync(long userId, NotificationDraft draft, CancellationToken cancellationToken) =>
+        CreateAsync(userId, draft, null, cancellationToken);
+
+    /// <summary>
+    /// Creates a notification and, in the same write, deletes the user's notifications <paramref name="replaces"/>
+    /// picks, so two writers never both keep theirs.
+    /// </summary>
+    private async Task<Notification> CreateAsync(long userId, NotificationDraft draft, Func<Notification, bool>? replaces, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(draft);
         ArgumentException.ThrowIfNullOrEmpty(draft.Code);
@@ -69,11 +76,16 @@ public sealed partial class NotificationService : IDisposable
         {
             var now = _time.GetUtcNow();
             long id;
+            List<long> replaced = replaces is null ? [] : [.. _store.Of(userId).Where(replaces).Select(entry => entry.Id)];
             List<long> dropped;
             // One transaction: a failed trim must not leave a row that memory and the topic never saw.
             await using (var connection = await _connections.OpenAsync(cancellationToken))
             {
                 await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+                if (replaced.Count > 0)
+                {
+                    await connection.ExecuteAsync("DELETE FROM notifications WHERE user_id = @userId AND id IN @replaced", new { userId, replaced }, transaction);
+                }
                 id = await connection.ExecuteScalarAsync<long>(
                     """
                     INSERT INTO notifications (user_id, code, params, tone, app, created_at)
@@ -92,6 +104,7 @@ public sealed partial class NotificationService : IDisposable
                     transaction)];
                 await transaction.CommitAsync(cancellationToken);
             }
+            dropped = [.. replaced, .. dropped];
             var notification = NotificationStore.ToNotification(new NotificationStore.NotificationRow
             {
                 Id = id,
@@ -191,14 +204,6 @@ public sealed partial class NotificationService : IDisposable
             ["data"] = request.Data is { ValueKind: not JsonValueKind.Null } given ? given : null,
             ["tag"] = request.Tag,
         };
-        if (request.Tag is { } replaced)
-        {
-            await _store.LoadAsync(cancellationToken);
-            List<long> earlier = [.. _store.Of(userId)
-                .Where(entry => entry.App == appId && entry.Code == AppMessageCode && entry.Params.TryGetValue("tag", out var value) && value.ValueKind == JsonValueKind.String && value.GetString() == replaced)
-                .Select(entry => entry.Id)];
-            await RemoveAsync(userId, earlier, cancellationToken);
-        }
         var tone = request.Level switch
         {
             AppNotificationLevel.Success => NotificationTone.Success,
@@ -206,7 +211,10 @@ public sealed partial class NotificationService : IDisposable
             AppNotificationLevel.Error => NotificationTone.Critical,
             _ => NotificationTone.Info,
         };
-        return await CreateAsync(userId, new NotificationDraft(AppMessageCode, parameters, tone, appId), cancellationToken);
+        Func<Notification, bool>? sameTag = request.Tag is not { } tagged
+            ? null
+            : entry => entry.App == appId && entry.Code == AppMessageCode && entry.Params.TryGetValue("tag", out var value) && value.ValueKind == JsonValueKind.String && value.GetString() == tagged;
+        return await CreateAsync(userId, new NotificationDraft(AppMessageCode, parameters, tone, appId), sameTag, cancellationToken);
     }
 
     private static (string Title, string Body) Texts(string? requestTitle, string? requestBody)
