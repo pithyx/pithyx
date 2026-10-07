@@ -89,7 +89,7 @@ public sealed class DockerRuntimeTests
     [Fact]
     public void DockerIsConfiguredAsD309Chose()
     {
-        using var config = JsonDocument.Parse(DockerHost.DaemonJson("tank"));
+        using var config = JsonDocument.Parse(DockerHost.DaemonJson("/tank/.pithyx/docker"));
         var root = config.RootElement;
         Assert.Equal("/tank/.pithyx/docker", root.GetProperty("data-root").GetString());
         Assert.Equal("overlay2", root.GetProperty("storage-driver").GetString());
@@ -100,7 +100,7 @@ public sealed class DockerRuntimeTests
         Assert.Equal("journald", root.GetProperty("log-driver").GetString());
         Assert.Equal("com.pithyx.app,com.pithyx.service", root.GetProperty("log-opts").GetProperty("labels").GetString());
         Assert.True(root.GetProperty("no-new-privileges").GetBoolean());
-        Assert.Contains("RequiresMountsFor=/tank/.pithyx/docker", DockerHost.DropIn("tank"), StringComparison.Ordinal);
+        Assert.Contains("RequiresMountsFor=/tank/.pithyx/docker", DockerHost.DropIn("/tank/.pithyx/docker"), StringComparison.Ordinal);
         Assert.Contains("iifname \"px-*\" ct state new drop", DockerHost.NftRules, StringComparison.Ordinal);
     }
 

@@ -38,8 +38,8 @@ public sealed partial class DockerHost(
     /// <summary>Raised after Docker answered following a start, so the events can be followed.</summary>
     public event Action? Started;
 
-    /// <summary>Docker's data root on an app pool.</summary>
-    public static string DataRoot(string pool) => $"/{pool}/.pithyx/docker";
+    /// <summary>Docker's dataset on an app pool, mounted at <c>/&lt;pool&gt;/.pithyx/docker</c>.</summary>
+    public static string Dataset(string pool) => $"{pool}/pithyx/docker";
 
     /// <summary>The subordinate uid lines of the remap user: the identity window for app uids 40000 to 49999.</summary>
     public static IReadOnlyList<string> SubuidLines =>
@@ -49,14 +49,14 @@ public sealed partial class DockerHost(
     public static IReadOnlyList<string> SubgidLines =>
         [$"{RemapUser}:{RemapBase}:30000", $"{RemapUser}:30000:20000", $"{RemapUser}:{RemapBase + 50000}:15536"];
 
-    /// <summary>Docker's <c>daemon.json</c> (D309).</summary>
-    public static string DaemonJson(string pool)
+    /// <summary>Docker's <c>daemon.json</c> (D309) with its data root, the mount point of <see cref="Dataset"/>.</summary>
+    public static string DaemonJson(string dataRoot)
     {
         using var buffer = new MemoryStream();
         using (var writer = new Utf8JsonWriter(buffer, new JsonWriterOptions { Indented = true }))
         {
             writer.WriteStartObject();
-            writer.WriteString("data-root", DataRoot(pool));
+            writer.WriteString("data-root", dataRoot);
             writer.WriteString("storage-driver", "overlay2");
             writer.WriteString("userns-remap", RemapUser);
             // No docker0: it would masquerade to the LAN, and every app has its own network.
@@ -81,11 +81,11 @@ public sealed partial class DockerHost(
     }
 
     /// <summary>The drop-in of <c>docker.service</c>: Docker never starts without its data root mounted.</summary>
-    public static string DropIn(string pool) =>
+    public static string DropIn(string dataRoot) =>
         $"""
         # Managed by pithyx. Docker's data lives on the app pool; it never starts without it.
         [Unit]
-        RequiresMountsFor={DataRoot(pool)}
+        RequiresMountsFor={dataRoot}
 
         """;
 
@@ -129,7 +129,7 @@ public sealed partial class DockerHost(
         await _lock.WaitAsync(cancellationToken);
         try
         {
-            await EnsureDatasetAsync(pool, cancellationToken);
+            var dataRoot = await EnsureDatasetAsync(pool, cancellationToken);
             if ((await commands.RunAsync(new CommandRequest("getent", ["passwd", RemapUser]), cancellationToken)).ExitCode != 0)
             {
                 await RunAsync(new CommandRequest("useradd", ["--system", "--user-group", "--no-create-home", "--home-dir", "/nonexistent", "--shell", "/usr/sbin/nologin", RemapUser]), cancellationToken);
@@ -137,8 +137,8 @@ public sealed partial class DockerHost(
             var changed = false;
             changed |= await WriteAsync(options.SubuidPath, SubIds(Read(options.SubuidPath), SubuidLines), cancellationToken);
             changed |= await WriteAsync(options.SubgidPath, SubIds(Read(options.SubgidPath), SubgidLines), cancellationToken);
-            changed |= await WriteAsync(options.ConfigPath, DaemonJson(pool), cancellationToken);
-            if (await WriteAsync(options.DropInPath, DropIn(pool), cancellationToken))
+            changed |= await WriteAsync(options.ConfigPath, DaemonJson(dataRoot), cancellationToken);
+            if (await WriteAsync(options.DropInPath, DropIn(dataRoot), cancellationToken))
             {
                 changed = true;
                 await RunAsync(new CommandRequest("systemctl", ["daemon-reload"]), cancellationToken);
@@ -153,6 +153,8 @@ public sealed partial class DockerHost(
             else if (!active)
             {
                 LogStarting(pool);
+                // A unit that failed before (a pool that was missing) would refuse to start again for a while.
+                await commands.RunAsync(new CommandRequest("systemctl", ["reset-failed", "docker.service", "containerd.service"]), cancellationToken);
                 await RunAsync(new CommandRequest("systemctl", ["start", "docker.service"], TimeSpan.FromMinutes(2)), cancellationToken);
             }
             else if (await engine.PingAsync(cancellationToken))
@@ -197,19 +199,19 @@ public sealed partial class DockerHost(
 
     public void Dispose() => _lock.Dispose();
 
-    private async Task EnsureDatasetAsync(string pool, CancellationToken cancellationToken)
+    /// <summary>Creates Docker's dataset unless it exists and returns where it is mounted.</summary>
+    private async Task<string> EnsureDatasetAsync(string pool, CancellationToken cancellationToken)
     {
-        var dataset = $"{pool}/pithyx/docker";
+        var dataset = Dataset(pool);
         if (!pools.Current.Datasets.Any(candidate => candidate.Name == dataset))
         {
             // Docker's layers are rebuilt from the packages and registries; snapshots of them would only take space.
-            await RunAsync(new CommandRequest("zfs", ["create", "-p", "-o", $"mountpoint={DataRoot(pool)}", "-o", "com.sun:auto-snapshot=false", dataset]), cancellationToken);
+            await RunAsync(new CommandRequest("zfs", ["create", "-p", "-o", $"mountpoint=/{pool}/.pithyx/docker", "-o", "com.sun:auto-snapshot=false", dataset]), cancellationToken);
             await state.RefreshPoolsAsync(cancellationToken);
         }
-        if (pools.Current.Datasets.FirstOrDefault(candidate => candidate.Name == dataset) is not { Mounted: true })
-        {
-            throw new PithyxException(ErrorCodes.AppPoolUnavailable, new Dictionary<string, object?> { ["pool"] = pool, ["reason"] = "locked" });
-        }
+        return pools.Current.Datasets.FirstOrDefault(candidate => candidate.Name == dataset) is { Mounted: true, MountPoint: { } mountPoint }
+            ? mountPoint
+            : throw new PithyxException(ErrorCodes.AppPoolUnavailable, new Dictionary<string, object?> { ["pool"] = pool, ["reason"] = "locked" });
     }
 
     private static string Read(string path) => File.Exists(path) ? File.ReadAllText(path) : "";
