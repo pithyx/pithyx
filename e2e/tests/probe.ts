@@ -16,7 +16,7 @@ const packagePath = join(probeDirectory, 'dist', 'sdk-probe.pithyxapp');
  */
 export async function installProbe(baseURL: string) {
   if (!existsSync(packagePath)) {
-    execFileSync('pnpm', ['--filter', '@pithyx/e2e-sdk-probe', 'build'], { stdio: 'inherit' });
+    execFileSync('pnpm', ['--filter', '@pithyx/e2e-sdk-probe...', 'build'], { stdio: 'inherit' });
   }
   const api = await request.newContext({ baseURL, extraHTTPHeaders: { 'X-Pithyx-Request': '1' } });
   try {

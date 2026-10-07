@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { I18nProvider, useLocale } from 'react-aria-components';
 import { uiTexts, type UiTexts } from './texts';
 
+/** The props of {@link UiProvider}. */
 export interface UiProviderProps {
   /** A BCP 47 tag such as `de-AT`. Dates and numbers follow it; the texts follow its language. */
   locale: string;

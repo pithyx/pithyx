@@ -25,7 +25,13 @@ import { sdkError } from './errors';
 import type { ConnectMessage } from './protocol';
 import { portEndpoint } from './transport';
 
-export { createApp, type CreateAppOptions, type PithyxApp } from './app';
+export {
+  createApp,
+  type CreateAppOptions,
+  type EventHandler,
+  type PithyxApp,
+  type QueryHandler,
+} from './app';
 export { isProblem, sdkErrorCodes, PithyxError, type Problem, type SdkErrorCode } from './errors';
 export { createFormatters, type Formatters } from './format';
 export type * from './files';

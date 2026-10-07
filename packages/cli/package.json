@@ -1,38 +1,93 @@
 {
   "name": "@pithyx/cli",
-  "version": "0.0.0",
-  "description": "The pithyx command for building Pithyx apps",
+  "version": "1.0.0-rc.2",
+  "description": "The pithyx command for Pithyx apps: validate, pack, a mock desktop for development, and a Vite plugin",
+  "keywords": [
+    "pithyx",
+    "cli",
+    "nas",
+    "self-hosted",
+    "apps",
+    "vite-plugin"
+  ],
+  "homepage": "https://github.com/pithyx/pithyx/tree/dev/packages/cli#readme",
+  "bugs": {
+    "url": "https://github.com/pithyx/pithyx/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/pithyx/pithyx.git",
+    "directory": "packages/cli"
+  },
   "license": "MIT",
   "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
   "files": [
+    "bin",
     "dist",
-    "LICENSE"
+    "template-icon.svg",
+    "LICENSE",
+    "README.md"
   ],
   "bin": {
-    "pithyx": "./dist/cli.js"
+    "pithyx": "./bin/pithyx.js"
   },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "pithyx-source": "./src/index.ts",
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
-    }
+    },
+    "./vite": {
+      "pithyx-source": "./src/vite.ts",
+      "types": "./dist/vite.d.ts",
+      "import": "./dist/vite.js"
+    },
+    "./template-icon.svg": "./template-icon.svg"
   },
   "scripts": {
-    "build": "vite build",
-    "typecheck": "tsc -p tsconfig.json",
+    "build": "vite build && vite build --config vite.shell.config.ts",
+    "typecheck": "tsc -p tsconfig.json && tsc -p shell/tsconfig.json",
     "test": "vitest run"
   },
   "dependencies": {
     "@pithyx/sdk": "workspace:*",
     "ajv": "^8.20.0",
+    "intl-messageformat": "^11.2.15",
     "saxes": "^6.0.0",
     "yaml": "^2.9.1"
   },
+  "peerDependencies": {
+    "vite": ">=7"
+  },
+  "peerDependenciesMeta": {
+    "vite": {
+      "optional": true
+    }
+  },
   "devDependencies": {
+    "@pithyx/ui": "workspace:*",
     "@types/node": "^24.13.6",
     "vite": "^8.3.1",
     "vite-plugin-dts": "^5.1.1",
     "vitest": "^5.0.2"
+  },
+  "publishConfig": {
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/index.d.ts",
+        "import": "./dist/index.js"
+      },
+      "./vite": {
+        "types": "./dist/vite.d.ts",
+        "import": "./dist/vite.js"
+      },
+      "./template-icon.svg": "./template-icon.svg"
+    }
   }
 }

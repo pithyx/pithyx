@@ -1,8 +1,9 @@
+import pithyx from '@pithyx/cli/vite';
 import { defaultClientConditions, defineConfig } from 'vite';
 
+// `vite` runs the probe in the mock desktop of pithyx dev; `vite build` validates the build as a package.
 export default defineConfig({
-  // The box serves the frontend under /apps/<id>/; relative asset paths keep it movable.
-  base: './',
+  plugins: [pithyx()],
   resolve: { conditions: ['pithyx-source', ...defaultClientConditions] },
   build: { outDir: 'dist/frontend', emptyOutDir: true },
 });

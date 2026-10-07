@@ -232,6 +232,25 @@ async function checkManifestTypes(): Promise<Problem[]> {
       ];
 }
 
+// The npm packages share one SemVer line (D306): sdk, ui and cli are published together at the same version.
+const NPM_PACKAGES = ['sdk', 'packages/ui', 'packages/cli'];
+
+function checkPackageVersions(): Problem[] {
+  const versions = NPM_PACKAGES.map((folder) => {
+    const file = `${folder}/package.json`;
+    const { version } = JSON.parse(readFileSync(file, 'utf8')) as { version?: string };
+    return { file, version: version ?? '' };
+  });
+  const first = versions[0]?.version;
+  return versions
+    .filter(({ version }) => version !== first)
+    .map(({ file, version }) => ({
+      file,
+      line: 1,
+      message: `version ${version} differs from ${String(first)} in sdk/package.json; the npm packages share one version`,
+    }));
+}
+
 const problems: Problem[] = [];
 for (const file of listFiles()) {
   if (OLD_NAME.test(file.replace(OLD_NAME_ALLOWED, ''))) {
@@ -251,7 +270,11 @@ for (const file of listFiles()) {
     ...checkOldName(file, text),
   );
 }
-problems.push(...(await checkGenerated()), ...(await checkManifestTypes()));
+problems.push(
+  ...(await checkGenerated()),
+  ...(await checkManifestTypes()),
+  ...checkPackageVersions(),
+);
 
 for (const { file, line, message } of problems) {
   console.error(`${file}:${String(line)}: ${message}`);

@@ -1,0 +1,56 @@
+{
+  "dev": {
+    "title": "{app} im Pithyx-Test-Desktop",
+    "notification": {
+      "open": "Öffnen",
+      "dismiss": "Schließen"
+    },
+    "log": {
+      "connected": "Die App hat sich verbunden (SDK {sdk}).",
+      "userChanged": "Angemeldet als {user}; das Fenster öffnet sich neu."
+    },
+    "window": {
+      "reopen": "App wieder öffnen",
+      "notResponding": "Die App antwortet nicht. Trotzdem schließen?",
+      "dirty": "Ungespeicherte Änderungen",
+      "close": "Schließen",
+      "reload": "Neu laden",
+      "openFile": "Eine Datei mit der App öffnen",
+      "minimize": "Minimieren"
+    },
+    "events": {
+      "invalidJson": "Die Daten von {event} sind kein gültiges JSON.",
+      "send": "{event} senden"
+    },
+    "panel": {
+      "desktop": "Desktop",
+      "user": "Benutzer",
+      "admin": "Administrator",
+      "theme": "Design",
+      "scheme": {
+        "light": "Hell",
+        "dark": "Dunkel"
+      },
+      "accent": "Akzentfarbe",
+      "locale": "Sprache und Formate",
+      "timeZone": "Zeitzone",
+      "sizeClass": "Größenklasse",
+      "size": {
+        "compact": "Kompakt (Smartphone)",
+        "medium": "Mittel (Tablet)",
+        "expanded": "Groß (freies Fenster)"
+      },
+      "online": "Die Box ist erreichbar",
+      "debugLog": "Debug-Protokoll eingeschaltet",
+      "backend": "Status des Backends",
+      "permissions": "Berechtigungen",
+      "storage": "Speicher {id}",
+      "window": "Fenster",
+      "events": "Ereignisse",
+      "log": "Aufrufe, Ereignisse und Protokolle"
+    },
+    "taskbar": {
+      "hint": "Lokaler Test-Desktop: Nichts hier erreicht eine Box."
+    }
+  }
+}

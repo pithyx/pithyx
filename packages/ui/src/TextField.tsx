@@ -15,6 +15,7 @@ import { cx } from './cx';
 import styles from './TextField.module.css';
 import { useUiTexts } from './UiProvider';
 
+/** The props of {@link TextField}: React Aria's text field props plus label, hints and an error. */
 export interface TextFieldProps extends Omit<AriaTextFieldProps, 'className' | 'children'> {
   label: ReactNode;
   description?: ReactNode;
@@ -28,6 +29,7 @@ export interface TextFieldProps extends Omit<AriaTextFieldProps, 'className' | '
   trailing?: ReactNode;
 }
 
+/** A labelled text input with an optional description and error message. */
 export function TextField({
   label,
   description,
@@ -60,10 +62,12 @@ export function TextField({
   );
 }
 
+/** The props of {@link PasswordField}; `autoComplete` tells password managers what to do. */
 export interface PasswordFieldProps extends Omit<TextFieldProps, 'type' | 'trailing'> {
   autoComplete: 'current-password' | 'new-password';
 }
 
+/** A password input with a button that shows or hides the password. */
 export function PasswordField(props: PasswordFieldProps) {
   const texts = useUiTexts();
   const [visible, setVisible] = useState(false);
@@ -101,6 +105,7 @@ export function OtpField(props: Omit<TextFieldProps, 'type' | 'inputMode' | 'aut
   );
 }
 
+/** The props of {@link SearchField}; `label` is announced, not shown. */
 export interface SearchFieldProps extends Omit<AriaSearchFieldProps, 'className' | 'children'> {
   label: string;
   placeholder?: string;

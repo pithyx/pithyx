@@ -21,6 +21,7 @@ export interface Messages {
   [key: string]: string | Messages;
 }
 
+/** Texts in the app's current language, from {@link createI18n}. */
 export interface I18n {
   /** The language whose texts are in use: the user's, or its base language, or `en`. */
   readonly language: string;

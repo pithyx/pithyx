@@ -40,9 +40,10 @@ export type Language = (typeof languages)[number];
 
 // Only the active language is loaded, each namespace when a chunk needs it (i18nNamespaces.ts).
 // Compiled at build time (scripts/compile-messages.ts), formatted by icuFormat.
-// The texts of @pithyx/ui (ui.json) come with its components.
+// The texts of @pithyx/ui (ui.json) come with its components, those of the mock desktop of `pithyx dev` (cli.json)
+// with @pithyx/cli.
 const translationFiles = import.meta.glob<object>(
-  ['../../i18n/*/*.json', '!../../i18n/*/ui.json'],
+  ['../../i18n/*/*.json', '!../../i18n/*/ui.json', '!../../i18n/*/cli.json'],
   {
     query: '?compiled',
     import: 'default',

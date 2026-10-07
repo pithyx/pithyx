@@ -130,8 +130,11 @@ function updatedContext(context: AppContext, event: string, data: unknown): AppC
   }
 }
 
-type EventHandler<E extends EventName> = (data: Events[E]) => void;
-type QueryHandler<Q extends QueryName> = (
+/** A listener for one event of the desktop, registered with `app.on`. */
+export type EventHandler<E extends EventName> = (data: Events[E]) => void;
+
+/** Answers one question of the desktop, registered with `app.answer`; may answer asynchronously. */
+export type QueryHandler<Q extends QueryName> = (
   data: Queries[Q]['data'],
 ) => Queries[Q]['answer'] | Promise<Queries[Q]['answer']>;
 
@@ -147,9 +150,13 @@ export interface PithyxApp {
   readonly context: AppContext;
   /** Dates, numbers, sizes and lists in the user's language and time zone. */
   readonly format: Formatters;
+  /** The app's own window; every call acts on the window that makes it. */
   readonly window: {
+    /** Sets the title in the title bar and the taskbar, at most 200 characters. */
     setTitle(title: string): Promise<void>;
+    /** Closes the window without asking `beforeClose`. */
     close(): Promise<void>;
+    /** Asks for a new free size; resolves with the size the desktop gave the window. */
     setSize(size: { width: number; height: number }): Promise<{ width: number; height: number }>;
     /**
      * Marks the window as having unsaved changes or not. Once called, `beforeClose` is asked only while the window is
@@ -180,22 +187,36 @@ export interface PithyxApp {
    * ```
    */
   readonly log: {
+    /** Details only needed while looking for a fault; reaches the daemon only while debug logging is on. */
     debug(message: string, data?: LogData): void;
+    /** Something worth knowing happened. */
     info(message: string, data?: LogData): void;
+    /** Something went wrong but the app carries on. */
     warn(message: string, data?: LogData): void;
+    /** Something failed. */
     error(message: string, data?: LogData): void;
     /** The same as `info`, for code written against `console.log`. */
     log(message: string, data?: LogData): void;
   };
+  /** Small state of this window that survives a reload and moves with "Get desktop from ...". */
   readonly session: {
+    /** Saves the window's state with the desktop layout, at most 16 KB as JSON. */
     save(state: unknown): Promise<void>;
     /** The state saved before the last reload or on another device, or null. */
     restore(): Promise<unknown>;
   };
+  /**
+   * Values the app keeps per user on the box; sandboxed apps have no `localStorage`. Keys have at most 128 characters,
+   * values at most 64 KB as JSON, and an app keeps at most 1 MB per user.
+   */
   readonly storage: {
+    /** The value stored under `key`, or null. */
     get<T = unknown>(key: string): Promise<T | null>;
+    /** Stores a value under `key`, replacing an earlier one. */
     set(key: string, value: unknown): Promise<void>;
+    /** Removes the value under `key`, if there is one. */
     remove(key: string): Promise<void>;
+    /** Every key the app stored for this user. */
     keys(): Promise<string[]>;
   };
   /**
@@ -236,7 +257,9 @@ export interface PithyxApp {
   };
   /** The users and groups of the box. Needs `directory.read`; the app's own user is in `context.user` without it. */
   readonly directory: {
+    /** Every active user of the box. */
     users(): Promise<DirectoryUser[]>;
+    /** Every group of the box, without the built-in group of all users. */
     groups(): Promise<DirectoryGroup[]>;
   };
   readonly contextMenu: {
@@ -383,6 +406,7 @@ export interface PithyxApp {
   ): Promise<Methods[M]['result']>;
 }
 
+/** How {@link createApp} and `connect` set up the app. */
 export interface CreateAppOptions {
   /** Where the theme tokens go; the SDK sets them on `document.documentElement` by default. Null to skip. */
   themeRoot?: HTMLElement | null;

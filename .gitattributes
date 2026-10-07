@@ -16,6 +16,7 @@
 *.gz binary
 *.iso binary
 *.img binary
+*.pithyxapp binary
 
 # Third-party font files and licenses stay byte-identical to their official releases.
 desktop/public/fonts/** -text

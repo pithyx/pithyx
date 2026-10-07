@@ -9,6 +9,7 @@ import {
 import { cx } from './cx';
 import styles from './Dialog.module.css';
 
+/** The props of {@link Dialog}: React Aria's modal props plus title, content and actions. */
 export interface DialogProps extends Omit<ModalOverlayProps, 'className' | 'children'> {
   title: ReactNode;
   icon?: ReactNode;
