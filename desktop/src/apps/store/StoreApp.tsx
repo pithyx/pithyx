@@ -11,6 +11,7 @@ import { APPS_CHANGED, onStore, storeCall, type AdminAppList, type AppDetails } 
 import { describeProblem } from '../storage/shared';
 import { AppPage } from './AppPage';
 import { InstallDialog } from './InstallDialog';
+import { UninstallDialog } from './UninstallDialog';
 import { iconUrl, manifestFacts } from './model';
 import styles from './Store.module.css';
 
@@ -55,6 +56,7 @@ export function StoreApp({ app }: SdkAppProps) {
   const [tab, setTab] = useState<Tab>('installed');
   const [selected, setSelected] = useState<string | null>(null);
   const [installing, setInstalling] = useState(false);
+  const [uninstalling, setUninstalling] = useState<{ appId: string; name: string } | null>(null);
   const installed = useInstalled(app);
   const visible = TABS.filter((entry) => entry.visible);
   const current = installed.data?.apps.find((entry) => entry.id === selected);
@@ -63,15 +65,33 @@ export function StoreApp({ app }: SdkAppProps) {
     setSelected(null);
   }
 
-  if (current !== undefined) {
-    return (
-      <AppPage
+  const uninstall =
+    uninstalling === null ? null : (
+      <UninstallDialog
         app={app}
-        details={current}
-        onBack={() => {
-          setSelected(null);
+        appId={uninstalling.appId}
+        name={uninstalling.name}
+        onClose={() => {
+          setUninstalling(null);
         }}
       />
+    );
+
+  if (current !== undefined) {
+    return (
+      <>
+        <AppPage
+          app={app}
+          details={current}
+          onBack={() => {
+            setSelected(null);
+          }}
+          onUninstall={(name) => {
+            setUninstalling({ appId: current.id, name });
+          }}
+        />
+        {uninstall}
+      </>
     );
   }
 
@@ -140,6 +160,7 @@ export function StoreApp({ app }: SdkAppProps) {
           </ul>
         )}
       </section>
+      {uninstall}
       {installing && (
         <InstallDialog
           app={app}

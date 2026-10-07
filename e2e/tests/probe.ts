@@ -10,26 +10,63 @@ export const probeId = 'com.example.sdk-probe';
 const probeDirectory = join(import.meta.dirname, '..', 'apps', 'sdk-probe');
 const packagePath = join(probeDirectory, 'dist', 'sdk-probe.pithyxapp');
 
+/** The probe's package file, built first when it is missing. */
+export function probePackage(): string {
+  if (!existsSync(packagePath)) {
+    execFileSync('pnpm', ['--filter', '@pithyx/e2e-sdk-probe', 'build'], { stdio: 'inherit' });
+  }
+  return packagePath;
+}
+
+/** An API client signed in as the administrator, with the CSRF header; dispose it when done. */
+async function adminApi(baseURL: string) {
+  const api = await request.newContext({ baseURL, extraHTTPHeaders: { 'X-Pithyx-Request': '1' } });
+  const login = await api.post('/api/auth/login', {
+    data: { username: admin.username, password: admin.password },
+  });
+  expect(login.ok()).toBe(true);
+  return api;
+}
+
+async function finished(api: Awaited<ReturnType<typeof adminApi>>, id: number) {
+  await expect
+    .poll(
+      async () =>
+        ((await (await api.get(`/api/jobs/${String(id)}`)).json()) as { state: string }).state,
+    )
+    .toBe('succeeded');
+}
+
+/** Removes the probe with its data, so a spec can install it through the Store. Does nothing when it is not installed. */
+export async function uninstallProbe(baseURL: string) {
+  const api = await adminApi(baseURL);
+  try {
+    const installed = (await (await api.get('/api/apps')).json()) as { apps: { id: string }[] };
+    if (!installed.apps.some((app) => app.id === probeId)) {
+      return;
+    }
+    const remove = await api.delete(`/api/apps/${probeId}?data=delete`);
+    expect(remove.status(), await remove.text()).toBe(202);
+    await finished(api, ((await remove.json()) as { id: number }).id);
+  } finally {
+    await api.dispose();
+  }
+}
+
 /**
  * Installs the probe on the test daemon like an administrator installs any app from a file: upload, check, install
  * job. Builds the package first when it is missing. Does nothing when the probe is installed already.
  */
 export async function installProbe(baseURL: string) {
-  if (!existsSync(packagePath)) {
-    execFileSync('pnpm', ['--filter', '@pithyx/e2e-sdk-probe', 'build'], { stdio: 'inherit' });
-  }
-  const api = await request.newContext({ baseURL, extraHTTPHeaders: { 'X-Pithyx-Request': '1' } });
+  const file = probePackage();
+  const api = await adminApi(baseURL);
   try {
-    const login = await api.post('/api/auth/login', {
-      data: { username: admin.username, password: admin.password },
-    });
-    expect(login.ok()).toBe(true);
     const installed = (await (await api.get('/api/apps')).json()) as { apps: { id: string }[] };
     if (installed.apps.some((app) => app.id === probeId)) {
       return;
     }
     const upload = await api.put('/api/apps/packages', {
-      data: readFileSync(packagePath),
+      data: readFileSync(file),
       headers: { 'Content-Type': 'application/gzip' },
     });
     expect(upload.status(), await upload.text()).toBe(200);
@@ -38,13 +75,7 @@ export async function installProbe(baseURL: string) {
       data: { pool: 'pithyxtestm', access: 'everybody' },
     });
     expect(install.status(), await install.text()).toBe(202);
-    const { id } = (await install.json()) as { id: number };
-    await expect
-      .poll(
-        async () =>
-          ((await (await api.get(`/api/jobs/${String(id)}`)).json()) as { state: string }).state,
-      )
-      .toBe('succeeded');
+    await finished(api, ((await install.json()) as { id: number }).id);
   } finally {
     await api.dispose();
   }

@@ -15,14 +15,11 @@ export function UninstallDialog({
   appId,
   name,
   onClose,
-  onRemoved,
 }: {
   app: PithyxApp;
   appId: string;
   name: string;
   onClose: () => void;
-  /** After the removal succeeded and the dialog closes: the app's page is gone. */
-  onRemoved: () => void;
 }) {
   const { t } = useTranslation('store');
   const ids = useId();
@@ -32,12 +29,7 @@ export function UninstallDialog({
     mutationFn: () => storeCall(app, 'internal.admin.apps.uninstall', { appId, data }),
     onSuccess: start,
   });
-  const close = () => {
-    if (job?.state === 'succeeded') {
-      onRemoved();
-    }
-    onClose();
-  };
+  const close = onClose;
 
   return (
     <Dialog

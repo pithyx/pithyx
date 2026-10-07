@@ -18,7 +18,6 @@ import { PermissionText } from './PermissionText';
 import { StorageSection } from './StorageSection';
 import { appsKey } from './StoreApp';
 import styles from './Store.module.css';
-import { UninstallDialog } from './UninstallDialog';
 
 /**
  * A change of one installed app, applied at once and optimistically: `optimistic` changes the cached app, the daemon's
@@ -61,14 +60,17 @@ export function AppPage({
   app,
   details,
   onBack,
+  onUninstall,
 }: {
   app: PithyxApp;
   details: AppDetails;
   onBack: () => void;
+  /** Opens the removal, which outlives this page: the page goes when the app does. */
+  onUninstall: (name: string) => void;
 }) {
   const { t, i18n } = useTranslation('store');
   const locale = useFormatLocale();
-  const [dialog, setDialog] = useState<'update' | 'uninstall' | null>(null);
+  const [updating, setUpdating] = useState(false);
   const facts = manifestFacts(details.manifest);
   const name = manifestText(facts.name, i18n.language);
   const description =
@@ -137,7 +139,7 @@ export function AppPage({
             <Button
               isDisabled={details.busy}
               onPress={() => {
-                setDialog('update');
+                setUpdating(true);
               }}
             >
               <IconUpload size={16} stroke={1.75} aria-hidden />
@@ -147,7 +149,7 @@ export function AppPage({
               variant="danger"
               isDisabled={details.busy}
               onPress={() => {
-                setDialog('uninstall');
+                onUninstall(name);
               }}
             >
               <IconTrash size={16} stroke={1.75} aria-hidden />
@@ -262,24 +264,13 @@ export function AppPage({
           </dl>
         </section>
       </article>
-      {dialog === 'update' && (
+      {updating && (
         <InstallDialog
           app={app}
           updating={name}
           onClose={() => {
-            setDialog(null);
+            setUpdating(false);
           }}
-        />
-      )}
-      {dialog === 'uninstall' && (
-        <UninstallDialog
-          app={app}
-          appId={appId}
-          name={name}
-          onClose={() => {
-            setDialog(null);
-          }}
-          onRemoved={onBack}
         />
       )}
     </div>
