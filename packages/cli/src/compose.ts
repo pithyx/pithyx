@@ -75,14 +75,25 @@ interface ServiceFacts {
 /**
  * Checks the bytes of a backend's Compose file against the allowlist and against the manifest it belongs to, with the
  * same verdicts and codes as the box (the corpus in `@pithyx/sdk/schema/fixtures/compose` holds both alike). The
- * manifest must already be valid.
+ * manifest must already be valid. With `dev` the file is `backend/compose.dev.yaml`, the source form of `pithyx build`,
+ * where a service has `build` instead of `image` (`dev` in the rules).
  */
-export function validateCompose(bytes: Uint8Array, manifest: AppManifest): ComposeValidation {
+export function validateCompose(
+  bytes: Uint8Array,
+  manifest: AppManifest,
+  options: { dev?: boolean } = {},
+): ComposeValidation {
   const yaml = readComposeYaml(bytes, rules.limits);
   if (yaml.root === undefined) {
     return { issues: yaml.issues };
   }
-  return { issues: new Checker(manifest).check(yaml.root) };
+  return { issues: new Checker(manifest, options.dev ?? false).check(yaml.root) };
+}
+
+/** The path of the source form next to a manifest's `backend.compose`: `backend/compose.yaml` gives `backend/compose.dev.yaml`. */
+export function devComposePath(compose: string): string {
+  const dot = compose.lastIndexOf('.');
+  return `${compose.slice(0, dot)}.dev${compose.slice(dot)}`;
 }
 
 class Checker {
@@ -90,7 +101,14 @@ class Checker {
   private readonly rights: Reference[] = [];
   private declaredVolumes = new Set<string>();
 
-  constructor(private readonly manifest: AppManifest) {}
+  private readonly serviceRules: Record<string, KeyRule>;
+
+  constructor(
+    private readonly manifest: AppManifest,
+    private readonly dev: boolean,
+  ) {
+    this.serviceRules = dev ? { ...rules.service, ...rules.dev.service } : rules.service;
+  }
 
   check(root: YamlNode): Issue[] {
     if (root.kind !== 'map') {
@@ -186,7 +204,7 @@ class Checker {
   }
 
   private service(node: YamlMap, path: string, facts: ServiceFacts): void {
-    const serviceRules = rules.service as Record<string, KeyRule>;
+    const serviceRules = this.serviceRules;
     const targets = new Set<string>();
     for (const { key, value } of node.entries) {
       const rule = serviceRules[key];
@@ -198,6 +216,9 @@ class Checker {
       switch (rule.type) {
         case 'image':
           this.image(value, keyPath);
+          break;
+        case 'build':
+          this.build(value, keyPath);
           break;
         case 'command':
           this.command(value, keyPath);
@@ -232,7 +253,22 @@ class Checker {
           }
       }
     }
-    this.required(node, path, serviceRules);
+    if (this.dev && entry(node, 'build') !== undefined) {
+      if (entry(node, 'image') !== undefined) {
+        this.invalid(`${path}/build`, 'image_and_build');
+      }
+    } else {
+      this.required(node, path, serviceRules);
+    }
+  }
+
+  /** `build` of the source form: a folder next to the file, or `context` with options. */
+  private build(node: YamlNode, path: string): void {
+    if (node.kind === 'map') {
+      this.object(node, path, rules.dev.build.keys);
+    } else {
+      this.value(node, path, rules.dev.build.keys.context);
+    }
   }
 
   private required(node: YamlMap, path: string, keys: Record<string, KeyRule>): void {
@@ -296,6 +332,9 @@ class Checker {
         return this.object(node, path, rule.keys ?? {});
       case 'healthTest':
         return this.healthTest(node, path);
+      case 'buildArgs':
+        this.keyValues(node, path, true);
+        return node;
       default:
         throw new Error(`unknown rule type ${rule.type}`);
     }

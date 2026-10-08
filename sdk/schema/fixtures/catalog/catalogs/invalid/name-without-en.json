@@ -1,0 +1,13 @@
+{
+  "catalogVersion": 1,
+  "id": "org.pithyx.official",
+  "name": {
+    "de": "Pithyx"
+  },
+  "description": {
+    "en": "Apps reviewed and built by the Pithyx project.",
+    "de": "Apps, die das Pithyx-Projekt pr\u00fcft und baut."
+  },
+  "homepage": "https://github.com/pithyx/apps-official",
+  "images": "ghcr.io/pithyx/apps"
+}

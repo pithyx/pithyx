@@ -1,0 +1,381 @@
+{
+  "not-json.json": [
+    {
+      "code": "store.catalog.invalid_json",
+      "params": {
+        "file": "index.json"
+      }
+    }
+  ],
+  "duplicate-key.json": [
+    {
+      "code": "store.catalog.invalid_json",
+      "params": {
+        "file": "index.json"
+      }
+    }
+  ],
+  "not-utf8.json": [
+    {
+      "code": "store.catalog.invalid_json",
+      "params": {
+        "file": "index.json"
+      }
+    }
+  ],
+  "not-object.json": [
+    {
+      "code": "store.catalog.schema_violation",
+      "params": {
+        "file": "index.json",
+        "path": "",
+        "keyword": "type"
+      }
+    }
+  ],
+  "version-unsupported.json": [
+    {
+      "code": "store.catalog.version_unsupported",
+      "params": {
+        "file": "index.json",
+        "version": "2",
+        "supported": 1
+      }
+    }
+  ],
+  "sequence-missing.json": [
+    {
+      "code": "store.catalog.schema_violation",
+      "params": {
+        "file": "index.json",
+        "path": "/sequence",
+        "keyword": "required"
+      }
+    }
+  ],
+  "sequence-zero.json": [
+    {
+      "code": "store.catalog.schema_violation",
+      "params": {
+        "file": "index.json",
+        "path": "/sequence",
+        "keyword": "minimum"
+      }
+    }
+  ],
+  "sequence-fraction.json": [
+    {
+      "code": "store.catalog.schema_violation",
+      "params": {
+        "file": "index.json",
+        "path": "/sequence",
+        "keyword": "type"
+      }
+    }
+  ],
+  "channel-unknown.json": [
+    {
+      "code": "store.catalog.schema_violation",
+      "params": {
+        "file": "index.json",
+        "path": "/channel",
+        "keyword": "enum"
+      }
+    }
+  ],
+  "published-at-local.json": [
+    {
+      "code": "store.catalog.schema_violation",
+      "params": {
+        "file": "index.json",
+        "path": "/publishedAt",
+        "keyword": "pattern"
+      }
+    }
+  ],
+  "app-id-invalid.json": [
+    {
+      "code": "store.catalog.schema_violation",
+      "params": {
+        "file": "index.json",
+        "path": "/apps/Com.Example.chat",
+        "keyword": "additionalProperties"
+      }
+    }
+  ],
+  "version-key-invalid.json": [
+    {
+      "code": "store.catalog.schema_violation",
+      "params": {
+        "file": "index.json",
+        "path": "/apps/com.example.notes/versions/0.9",
+        "keyword": "additionalProperties"
+      }
+    }
+  ],
+  "versions-empty.json": [
+    {
+      "code": "store.catalog.schema_violation",
+      "params": {
+        "file": "index.json",
+        "path": "/apps/com.example.notes/versions",
+        "keyword": "minProperties"
+      }
+    }
+  ],
+  "sha256-uppercase.json": [
+    {
+      "code": "store.catalog.schema_violation",
+      "params": {
+        "file": "index.json",
+        "path": "/apps/com.example.chat/versions/1.1.0/package/sha256",
+        "keyword": "pattern"
+      }
+    }
+  ],
+  "package-missing.json": [
+    {
+      "code": "store.catalog.schema_violation",
+      "params": {
+        "file": "index.json",
+        "path": "/apps/com.example.chat/versions/1.1.0/package",
+        "keyword": "required"
+      }
+    }
+  ],
+  "pithyx-missing.json": [
+    {
+      "code": "store.catalog.schema_violation",
+      "params": {
+        "file": "index.json",
+        "path": "/apps/com.example.chat/versions/1.1.0/pithyx",
+        "keyword": "required"
+      }
+    }
+  ],
+  "pithyx-invalid.json": [
+    {
+      "code": "store.catalog.schema_violation",
+      "params": {
+        "file": "index.json",
+        "path": "/apps/com.example.chat/versions/1.1.0/pithyx",
+        "keyword": "pattern"
+      }
+    }
+  ],
+  "image-unpinned.json": [
+    {
+      "code": "store.catalog.schema_violation",
+      "params": {
+        "file": "index.json",
+        "path": "/apps/com.example.chat/versions/1.1.0/images/postgres:17.6",
+        "keyword": "additionalProperties"
+      }
+    }
+  ],
+  "screenshot-type.json": [
+    {
+      "code": "store.catalog.schema_violation",
+      "params": {
+        "file": "index.json",
+        "path": "/apps/com.example.chat/versions/1.1.0/screenshots/1/name",
+        "keyword": "pattern"
+      }
+    }
+  ],
+  "screenshot-too-large.json": [
+    {
+      "code": "store.catalog.schema_violation",
+      "params": {
+        "file": "index.json",
+        "path": "/apps/com.example.chat/versions/1.1.0/screenshots/0/size",
+        "keyword": "maximum"
+      }
+    }
+  ],
+  "commit-short.json": [
+    {
+      "code": "store.catalog.schema_violation",
+      "params": {
+        "file": "index.json",
+        "path": "/apps/com.example.chat/versions/1.1.0/source/commit",
+        "keyword": "pattern"
+      }
+    }
+  ],
+  "source-not-https.json": [
+    {
+      "code": "store.catalog.schema_violation",
+      "params": {
+        "file": "index.json",
+        "path": "/apps/com.example.chat/versions/1.1.0/source/repository",
+        "keyword": "pattern"
+      }
+    }
+  ],
+  "architectures-empty.json": [
+    {
+      "code": "store.catalog.schema_violation",
+      "params": {
+        "file": "index.json",
+        "path": "/apps/com.example.chat/versions/1.1.0/architectures",
+        "keyword": "minItems"
+      }
+    }
+  ],
+  "data-version-zero.json": [
+    {
+      "code": "store.catalog.schema_violation",
+      "params": {
+        "file": "index.json",
+        "path": "/apps/com.example.chat/versions/1.1.0/dataVersion",
+        "keyword": "minimum"
+      }
+    }
+  ],
+  "catalog-mismatch.json": [
+    {
+      "code": "store.catalog.mismatch",
+      "params": {
+        "path": "/catalog",
+        "value": "org.pithyx.community",
+        "expected": "org.pithyx.official"
+      }
+    }
+  ],
+  "channel-mismatch.json": [
+    {
+      "code": "store.catalog.mismatch",
+      "params": {
+        "path": "/channel",
+        "value": "beta",
+        "expected": "stable"
+      }
+    }
+  ],
+  "sequence-old.json": [
+    {
+      "code": "store.catalog.sequence_old",
+      "params": {
+        "sequence": 7,
+        "known": 8
+      }
+    }
+  ],
+  "id-reserved.json": [
+    {
+      "code": "store.catalog.id_reserved",
+      "params": {
+        "path": "/apps/org.pithyx.example",
+        "id": "org.pithyx.example"
+      }
+    }
+  ],
+  "source-path-mismatch.json": [
+    {
+      "code": "store.catalog.mismatch",
+      "params": {
+        "path": "/apps/com.example.chat/versions/1.1.0/source/path",
+        "value": "apps/com.example.notes",
+        "expected": "apps/com.example.chat"
+      }
+    }
+  ],
+  "architecture-missing.json": [
+    {
+      "code": "store.catalog.architecture_missing",
+      "params": {
+        "path": "/apps/com.example.chat/versions/1.1.0/images/postgres:17.6@sha256:fdbac611613685acd4e790862554446b7d2e3a86f2894a8e241163956764d746",
+        "architecture": "arm64"
+      }
+    }
+  ],
+  "architecture-missing-escaped.json": [
+    {
+      "code": "store.catalog.architecture_missing",
+      "params": {
+        "path": "/apps/com.example.chat/versions/1.1.0/images/ghcr.io~1pithyx~1apps~1com.example.chat~1server:1.1.0@sha256:8ba36e23bfbca2c23c269ea454e669eb2c629aaaf3d081eb28dc40a80d004356",
+        "architecture": "amd64"
+      }
+    }
+  ],
+  "data-version-decreased.json": [
+    {
+      "code": "store.catalog.data_version_decreased",
+      "params": {
+        "path": "/apps/com.example.chat/versions/1.1.0/dataVersion",
+        "dataVersion": 2,
+        "previous": 3
+      }
+    }
+  ],
+  "data-version-after-prerelease.json": [
+    {
+      "code": "store.catalog.data_version_decreased",
+      "params": {
+        "path": "/apps/com.example.chat/versions/1.1.0/dataVersion",
+        "dataVersion": 2,
+        "previous": 4
+      }
+    }
+  ],
+  "schema-stops-semantics.json": [
+    {
+      "code": "store.catalog.schema_violation",
+      "params": {
+        "file": "index.json",
+        "path": "/sequence",
+        "keyword": "minimum"
+      }
+    }
+  ],
+  "several-issues.json": [
+    {
+      "code": "store.catalog.mismatch",
+      "params": {
+        "path": "/catalog",
+        "value": "com.mueller.apps",
+        "expected": "org.pithyx.official"
+      }
+    },
+    {
+      "code": "store.catalog.mismatch",
+      "params": {
+        "path": "/channel",
+        "value": "beta",
+        "expected": "stable"
+      }
+    },
+    {
+      "code": "store.catalog.sequence_old",
+      "params": {
+        "sequence": 7,
+        "known": 9
+      }
+    }
+  ],
+  "byte-order-mark.json": [
+    {
+      "code": "store.catalog.invalid_json",
+      "params": {
+        "file": "index.json"
+      }
+    }
+  ],
+  "architecture-prototype.json": [
+    {
+      "code": "store.catalog.architecture_missing",
+      "params": {
+        "path": "/apps/com.example.chat/versions/1.1.0/images/ghcr.io~1pithyx~1apps~1com.example.chat~1server:1.1.0@sha256:8ba36e23bfbca2c23c269ea454e669eb2c629aaaf3d081eb28dc40a80d004356",
+        "architecture": "constructor"
+      }
+    },
+    {
+      "code": "store.catalog.architecture_missing",
+      "params": {
+        "path": "/apps/com.example.chat/versions/1.1.0/images/postgres:17.6@sha256:fdbac611613685acd4e790862554446b7d2e3a86f2894a8e241163956764d746",
+        "architecture": "constructor"
+      }
+    }
+  ]
+}

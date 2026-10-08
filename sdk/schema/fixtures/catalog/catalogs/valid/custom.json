@@ -1,0 +1,9 @@
+{
+  "$schema": "https://pithyx.org/schema/catalog.v1.schema.json",
+  "catalogVersion": 1,
+  "id": "com.mueller.apps",
+  "name": {
+    "en": "Mueller apps"
+  },
+  "images": "registry.mueller.com:5000/apps"
+}

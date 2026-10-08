@@ -1,0 +1,11 @@
+{
+  "name": "notes",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@pithyx/sdk": "^1.0.0"
+  }
+}

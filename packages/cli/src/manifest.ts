@@ -1,8 +1,8 @@
 import type { AppManifest } from '@pithyx/sdk';
 import schema from '@pithyx/sdk/schema/manifest.v1.schema.json' with { type: 'json' };
-import { Ajv2020, type ErrorObject } from 'ajv/dist/2020.js';
 import { isValidCron } from './cron';
 import type { Issue } from './issues';
+import { compileSchema, display, isObject, parseStrictJson, schemaViolations } from './json-schema';
 
 export const SUPPORTED_MANIFEST_VERSION = 1;
 
@@ -20,10 +20,7 @@ const BLOCKED_CAPABILITIES = new Set([
   'BPF',
 ]);
 
-const ajv = new Ajv2020({ allErrors: true, strict: true, allowMatchingProperties: true });
-// json-schema-to-typescript reads tsType; for validation it is an annotation.
-ajv.addVocabulary(['tsType']);
-const validateSchema = ajv.compile(schema);
+const validateSchema = compileSchema(schema);
 
 export interface ManifestValidation {
   /** Empty when the manifest is valid. */
@@ -52,16 +49,11 @@ export function validateManifest(
   bytes: Uint8Array,
   options: { allowReservedId?: boolean } = {},
 ): ManifestValidation {
-  let root: unknown;
-  try {
-    const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
-    root = JSON.parse(text);
-    if (hasDuplicateKeys(text)) {
-      return fail({ code: 'app.manifest.invalid_json', params: {} });
-    }
-  } catch {
+  const parsed = parseStrictJson(bytes);
+  if (parsed === undefined) {
     return fail({ code: 'app.manifest.invalid_json', params: {} });
   }
+  const root = parsed.value;
 
   if (
     isObject(root) &&
@@ -86,63 +78,26 @@ function fail(issue: Issue): ManifestValidation {
   return { issues: [issue] };
 }
 
-function isObject(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-/** A param value as the box shows it: strings as they are, everything else as compact JSON. */
-function display(value: unknown): string {
-  return typeof value === 'string' ? value : JSON.stringify(value);
-}
-
-function escapePointer(name: string): string {
-  return name.replaceAll('~', '~0').replaceAll('/', '~1');
-}
-
-function violation(error: ErrorObject): [string, string] {
-  if (error.keyword === 'required') {
-    const { missingProperty } = error.params as { missingProperty: string };
-    return [`${error.instancePath}/${escapePointer(missingProperty)}`, 'required'];
-  }
-  if (error.keyword === 'additionalProperties') {
-    const { additionalProperty } = error.params as { additionalProperty: string };
-    return [`${error.instancePath}/${escapePointer(additionalProperty)}`, 'additionalProperties'];
-  }
-  return [error.instancePath, error.keyword];
-}
-
 function schemaIssues(root: unknown): Issue[] {
-  if (validateSchema(root)) {
-    return [];
-  }
-  const seen = new Set<string>();
-  const violations: [string, string][] = [];
-  for (const error of validateSchema.errors ?? []) {
-    const [path, keyword] = violation(error);
-    if (!seen.has(`${path}\0${keyword}`)) {
-      seen.add(`${path}\0${keyword}`);
-      violations.push([path, keyword]);
-    }
-  }
-  violations.sort(([a, x], [b, y]) => (a === b ? compare(x, y) : compare(a, b)));
-
+  const violations = schemaViolations(validateSchema, root);
   const issues: Issue[] = [];
   const record = root as Record<string, unknown>;
   for (const [path, keyword] of violations) {
-    // A wrong id or sdk range has a code of its own; a missing one is a plain schema violation.
+    // A wrong id, sdk range or pithyx range has a code of its own; a missing one is a plain schema violation.
     if (path === '/id' && keyword !== 'required') {
       addOnce(issues, { code: 'app.manifest.id_invalid', params: { id: display(record.id) } });
     } else if (path === '/sdk' && keyword !== 'required') {
       addOnce(issues, { code: 'app.manifest.sdk_invalid', params: { sdk: display(record.sdk) } });
+    } else if (path === '/pithyx' && keyword !== 'required') {
+      addOnce(issues, {
+        code: 'app.manifest.pithyx_invalid',
+        params: { pithyx: display(record.pithyx) },
+      });
     } else {
       issues.push({ code: 'app.manifest.schema_violation', params: { path, keyword } });
     }
   }
   return issues;
-}
-
-function compare(a: string, b: string): number {
-  return a < b ? -1 : a > b ? 1 : 0;
 }
 
 function addOnce(issues: Issue[], issue: Issue): void {
@@ -235,40 +190,4 @@ function semanticIssues(
     }
   }
   return issues;
-}
-
-/** JSON.parse keeps the last of two equal keys; the box refuses them, so the CLI does too. */
-function hasDuplicateKeys(text: string): boolean {
-  const stack: { keys: Set<string> | undefined; expectKey: boolean }[] = [];
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    if (char === '"') {
-      let end = i + 1;
-      while (text[end] !== '"') {
-        end += text[end] === '\\' ? 2 : 1;
-      }
-      const top = stack.at(-1);
-      if (top?.keys !== undefined && top.expectKey) {
-        const key = JSON.parse(text.slice(i, end + 1)) as string;
-        if (top.keys.has(key)) {
-          return true;
-        }
-        top.keys.add(key);
-        top.expectKey = false;
-      }
-      i = end;
-    } else if (char === '{') {
-      stack.push({ keys: new Set(), expectKey: true });
-    } else if (char === '[') {
-      stack.push({ keys: undefined, expectKey: false });
-    } else if (char === '}' || char === ']') {
-      stack.pop();
-    } else if (char === ',') {
-      const top = stack.at(-1);
-      if (top?.keys !== undefined) {
-        top.expectKey = true;
-      }
-    }
-  }
-  return false;
 }

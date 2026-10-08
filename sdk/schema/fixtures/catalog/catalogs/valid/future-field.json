@@ -1,0 +1,9 @@
+{
+  "catalogVersion": 1,
+  "id": "com.mueller.apps",
+  "name": {
+    "en": "Mueller apps"
+  },
+  "images": "ghcr.io/mueller/apps",
+  "contact": "apps@mueller.com"
+}

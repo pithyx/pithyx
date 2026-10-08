@@ -1,0 +1,230 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pithyx.org/schema/index.v1.schema.json",
+  "title": "Pithyx catalog index v1",
+  "description": "`index.json` at the root of a catalog's branch `catalog` (channel `stable`) or `catalog-next` (channel `beta`), written only by the catalog's CI (D328). It lists every published version of every app with the SHA-256 of each file the box reads, so the signature over this file (`index.json.sig`, `index-signature.v1.schema.json`) covers them all. The files of a version lie in `apps/<id>/<version>/`: `pithyx.json` (`manifest`), `icon.svg` (`icon`), `screenshots/<name>` and the package `<id>-<version>.pithyxapp` without image tarballs (`package`); its images are linked by digest. A published version is never changed or removed. Readers ignore fields they do not know, so a new optional field is a minor change; anything else raises `indexVersion`, which a box refuses when it does not know it.",
+  "type": "object",
+  "required": ["indexVersion", "catalog", "channel", "sequence", "publishedAt", "apps"],
+  "properties": {
+    "indexVersion": {
+      "description": "The version of this format.",
+      "const": 1
+    },
+    "catalog": {
+      "description": "The `id` of the catalog's `catalog.json`. A box refuses an index of another catalog, so a signed index cannot be passed off as another catalog's.",
+      "type": "string",
+      "maxLength": 100,
+      "pattern": "^[a-z][a-z0-9-]*(\\.[a-z0-9][a-z0-9-]*){2,4}$"
+    },
+    "channel": {
+      "description": "`stable` for the branch `catalog`, `beta` for `catalog-next`. A box refuses an index of a channel other than its own, and trusts a signing key only for the channels it is built in for.",
+      "type": "string",
+      "enum": ["stable", "beta"]
+    },
+    "sequence": {
+      "description": "Raised by one with every publish of this catalog and channel. A box remembers the highest sequence it verified per catalog and channel and refuses a lower one, so an old index cannot be replayed.",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "publishedAt": {
+      "$ref": "#/$defs/Timestamp",
+      "description": "When CI wrote this index."
+    },
+    "apps": {
+      "description": "Every app of the catalog by id.",
+      "type": "object",
+      "maxProperties": 10000,
+      "patternProperties": {
+        "^[a-z][a-z0-9-]*(\\.[a-z0-9][a-z0-9-]*){2,4}$": {
+          "$ref": "#/$defs/App"
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "$defs": {
+    "Timestamp": {
+      "description": "A time in UTC as ISO 8601 with seconds, for example `2026-10-08T19:00:00Z`.",
+      "type": "string",
+      "pattern": "^[0-9]{4}-(0[1-9]|1[0-2])-(0[1-9]|[12][0-9]|3[01])T([01][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]Z$"
+    },
+    "Sha256": {
+      "description": "A SHA-256 as 64 lowercase hex digits.",
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "File": {
+      "description": "A file of the version, by the SHA-256 and the size of its exact bytes. A box refuses a file that differs.",
+      "type": "object",
+      "required": ["sha256", "size"],
+      "properties": {
+        "sha256": { "$ref": "#/$defs/Sha256" },
+        "size": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 1073741824
+        }
+      }
+    },
+    "Screenshot": {
+      "description": "A screenshot in `apps/<id>/<version>/screenshots/<name>`, shown in the order of the list. The extension gives the media type: `png` image/png, `jpg` image/jpeg, `webp` image/webp.",
+      "type": "object",
+      "required": ["name", "sha256", "size"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9_-]{0,62}\\.(png|jpg|webp)$"
+        },
+        "sha256": { "$ref": "#/$defs/Sha256" },
+        "size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 1048576
+        }
+      }
+    },
+    "Digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "Platform": {
+      "description": "An image for one architecture, as in `backend/images.lock.json`.",
+      "type": "object",
+      "required": ["manifest", "config"],
+      "properties": {
+        "manifest": {
+          "$ref": "#/$defs/Digest",
+          "description": "The digest of the image manifest for this architecture."
+        },
+        "config": {
+          "$ref": "#/$defs/Digest",
+          "description": "The digest of the image config, which Docker shows as the image id."
+        }
+      }
+    },
+    "Version": {
+      "description": "A published version of an app.",
+      "type": "object",
+      "required": [
+        "publishedAt",
+        "package",
+        "manifest",
+        "icon",
+        "architectures",
+        "pithyx",
+        "license",
+        "source"
+      ],
+      "properties": {
+        "publishedAt": {
+          "$ref": "#/$defs/Timestamp",
+          "description": "When CI published this version."
+        },
+        "package": {
+          "$ref": "#/$defs/File",
+          "description": "`apps/<id>/<version>/<id>-<version>.pithyxapp`, without image tarballs."
+        },
+        "manifest": {
+          "$ref": "#/$defs/File",
+          "description": "`apps/<id>/<version>/pithyx.json`, the same bytes as in the package."
+        },
+        "icon": {
+          "$ref": "#/$defs/File",
+          "description": "`apps/<id>/<version>/icon.svg`, the same bytes as in the package."
+        },
+        "screenshots": {
+          "type": "array",
+          "maxItems": 8,
+          "items": { "$ref": "#/$defs/Screenshot" }
+        },
+        "images": {
+          "description": "The backend's images as `backend/images.lock.json` of the package lists them: one entry per image reference of its Compose file, pinned by digest, with the platform manifest and config digest per architecture. Absent for an app without a backend.",
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 16,
+          "patternProperties": {
+            "^[!-~]{1,440}@sha256:[a-f0-9]{64}$": {
+              "type": "object",
+              "minProperties": 1,
+              "patternProperties": {
+                "^[a-z][a-z0-9]{0,15}$": { "$ref": "#/$defs/Platform" }
+              },
+              "additionalProperties": false
+            }
+          },
+          "additionalProperties": false
+        },
+        "architectures": {
+          "description": "The architectures the version runs on, `amd64` and `arm64`; every image must have each of them. A box ignores names it does not know and lists the version only when its own architecture is here.",
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9]{0,15}$"
+          }
+        },
+        "pithyx": {
+          "description": "The manifest's `pithyx` range, or `*` when the manifest has none, in the same syntax. A box lists the version only when its own version is in the range, so it never has to read a manifest it is too old for.",
+          "type": "string",
+          "maxLength": 100,
+          "pattern": "^(([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?)?)? - ([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?)?)?|([~^]|[<>]=?|=)?([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?)?)?( ([~^]|[<>]=?|=)?([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?)?)?)*)( \\|\\| (([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?)?)? - ([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?)?)?|([~^]|[<>]=?|=)?([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?)?)?( ([~^]|[<>]=?|=)?([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?)?)?)*))*$"
+        },
+        "dataVersion": {
+          "description": "The manifest's `dataVersion`, absent when it has none. It never goes down from one version to the next.",
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 2147483647
+        },
+        "license": {
+          "description": "The manifest's `license`, an SPDX expression.",
+          "type": "string",
+          "maxLength": 100,
+          "pattern": "^[!-~]+( [!-~]+)*$"
+        },
+        "source": {
+          "description": "Where the source of this version is: the catalog repository, the commit of `master` that CI built, and the app's folder `apps/<id>`. The Store links to it.",
+          "type": "object",
+          "required": ["repository", "commit", "path"],
+          "properties": {
+            "repository": {
+              "type": "string",
+              "maxLength": 500,
+              "pattern": "^https://[!-~]+$"
+            },
+            "commit": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{40}([a-f0-9]{24})?$"
+            },
+            "path": {
+              "type": "string",
+              "maxLength": 110,
+              "pattern": "^apps/[a-z0-9.-]+$"
+            }
+          }
+        }
+      }
+    },
+    "App": {
+      "description": "An app of the catalog.",
+      "type": "object",
+      "required": ["versions"],
+      "properties": {
+        "versions": {
+          "description": "Every published version by its SemVer version.",
+          "type": "object",
+          "minProperties": 1,
+          "maxProperties": 1000,
+          "patternProperties": {
+            "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?$": {
+              "$ref": "#/$defs/Version"
+            }
+          },
+          "additionalProperties": false
+        }
+      }
+    }
+  }
+}

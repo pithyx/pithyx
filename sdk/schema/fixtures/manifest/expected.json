@@ -9,6 +9,11 @@
       "code": "app.manifest.invalid_json"
     }
   ],
+  "byte-order-mark.json": [
+    {
+      "code": "app.manifest.invalid_json"
+    }
+  ],
   "not-utf8.json": [
     {
       "code": "app.manifest.invalid_json"
@@ -137,6 +142,49 @@
       "code": "app.manifest.sdk_invalid",
       "params": {
         "sdk": ">= 1.0.0"
+      }
+    }
+  ],
+  "pithyx-word.json": [
+    {
+      "code": "app.manifest.pithyx_invalid",
+      "params": {
+        "pithyx": "stable"
+      }
+    }
+  ],
+  "pithyx-not-string.json": [
+    {
+      "code": "app.manifest.pithyx_invalid",
+      "params": {
+        "pithyx": "1"
+      }
+    }
+  ],
+  "data-version-zero.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/dataVersion",
+        "keyword": "minimum"
+      }
+    }
+  ],
+  "data-version-fraction.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/dataVersion",
+        "keyword": "type"
+      }
+    }
+  ],
+  "data-version-string.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/dataVersion",
+        "keyword": "type"
       }
     }
   ],

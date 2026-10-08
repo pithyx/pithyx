@@ -1,0 +1,28 @@
+{
+  "$comment": "Test keys of the catalog corpus, derived from the seed sha256(\"pithyx catalog corpus test key <keyId>\") by tools/fixtures/catalog-signatures.ts. They sign fixtures only and are never trusted by a box. The keyring of the corpus holds every key with its channels; test-rogue is trusted on no channel.",
+  "keys": [
+    {
+      "keyId": "test-stable",
+      "seed": "d08dd193f98cb602dd7e050d4b955851e43fccab2f6872932362749b0e7339ad",
+      "publicKey": "NDpOeo6N8kVloTqh6M6K1GXor4swFpYt31lhqKrSpPQ=",
+      "channels": [
+        "stable",
+        "beta"
+      ]
+    },
+    {
+      "keyId": "test-beta",
+      "seed": "015f4229bc0390735e032c56374a745fa056cf430e657f05e205834837a2a267",
+      "publicKey": "3NgZYToGYqZ0pkUGbQFVD+L8YIO8YqY9LTthl4R8OkU=",
+      "channels": [
+        "beta"
+      ]
+    },
+    {
+      "keyId": "test-rogue",
+      "seed": "c09f8f78dcb382737e741a7dc82095be7bbfc99e2c73e46e3a4f1b25338085b6",
+      "publicKey": "8YIog6t2QKSQFasNAgGx4Ksp/da9geZT+QKV2GViOUg=",
+      "channels": []
+    }
+  ]
+}

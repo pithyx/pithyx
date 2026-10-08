@@ -1,0 +1,5 @@
+{
+  "name": "notes-server",
+  "private": true,
+  "type": "module"
+}

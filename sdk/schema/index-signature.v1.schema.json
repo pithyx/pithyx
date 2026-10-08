@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pithyx.org/schema/index-signature.v1.schema.json",
+  "title": "Pithyx catalog index signature v1",
+  "description": "`index.json.sig` next to `index.json` of a catalog's branch (D328): Ed25519 signatures (RFC 8032, pure, no prehash) over the exact bytes of `index.json`, without any canonical form, so the box verifies the bytes it read before it parses them. A box accepts the index when at least one signature is by a key it trusts for the index's channel and every signature by such a key verifies; signatures by keys it does not know are ignored, so CI can sign with an old and a new key while boxes move to the new one. Custom catalogs are never signed. Readers ignore fields they do not know.",
+  "type": "object",
+  "required": ["signatureVersion", "signatures"],
+  "properties": {
+    "signatureVersion": {
+      "description": "The version of this format.",
+      "const": 1
+    },
+    "signatures": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "required": ["keyId", "signature"],
+        "properties": {
+          "keyId": {
+            "description": "The name of the key, as the box knows it, for example `pithyx-catalog-2026`.",
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]{0,63}$"
+          },
+          "signature": {
+            "description": "The 64 bytes of the signature in base64 with padding (RFC 4648, section 4).",
+            "type": "string",
+            "pattern": "^[A-Za-z0-9+/]{85}[AQgw]==$"
+          }
+        }
+      }
+    }
+  }
+}

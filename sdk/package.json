@@ -47,7 +47,12 @@
     },
     "./schema/manifest.v1.schema.json": "./schema/manifest.v1.schema.json",
     "./schema/compose.v1.rules.json": "./schema/compose.v1.rules.json",
-    "./schema/images-lock.v1.schema.json": "./schema/images-lock.v1.schema.json"
+    "./schema/images-lock.v1.schema.json": "./schema/images-lock.v1.schema.json",
+    "./schema/catalog.v1.schema.json": "./schema/catalog.v1.schema.json",
+    "./schema/catalog.v1.rules.json": "./schema/catalog.v1.rules.json",
+    "./schema/index.v1.schema.json": "./schema/index.v1.schema.json",
+    "./schema/index-signature.v1.schema.json": "./schema/index-signature.v1.schema.json",
+    "./schema/maintainers.v1.schema.json": "./schema/maintainers.v1.schema.json"
   },
   "scripts": {
     "build": "vite build",
@@ -84,7 +89,12 @@
       },
       "./schema/manifest.v1.schema.json": "./schema/manifest.v1.schema.json",
       "./schema/compose.v1.rules.json": "./schema/compose.v1.rules.json",
-      "./schema/images-lock.v1.schema.json": "./schema/images-lock.v1.schema.json"
+      "./schema/images-lock.v1.schema.json": "./schema/images-lock.v1.schema.json",
+      "./schema/catalog.v1.schema.json": "./schema/catalog.v1.schema.json",
+      "./schema/catalog.v1.rules.json": "./schema/catalog.v1.rules.json",
+      "./schema/index.v1.schema.json": "./schema/index.v1.schema.json",
+      "./schema/index-signature.v1.schema.json": "./schema/index-signature.v1.schema.json",
+      "./schema/maintainers.v1.schema.json": "./schema/maintainers.v1.schema.json"
     }
   }
 }

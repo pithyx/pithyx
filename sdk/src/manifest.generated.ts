@@ -77,9 +77,17 @@ export interface AppManifest {
    */
   entry: string;
   /**
-   * SemVer range of `@pithyx/sdk` the app was built against, for example `^1.0.0`. The npm range syntax without the loose forms: comparators (`^`, `~`, `>`, `>=`, `<`, `<=`, `=`), `x` and `*` wildcards, hyphen ranges with spaces around the dash, sets joined by ` || `.
+   * SemVer range of `@pithyx/sdk` the app was built against, for example `^1.0.0`.
    */
   sdk: string;
+  /**
+   * SemVer range of the Pithyx versions the app runs on, for example `>=0.1.0`. Optional; without it the app claims to run on every version. A box installs a version only when its own version is in the range, and lists a catalog version only then. Unlike npm, a box running a prerelease matches by plain SemVer precedence, so `>=0.1.0` includes `0.2.0-beta.1`, while `^0.1.0` does not (it ends below `0.2.0-0`). Catalogs require it.
+   */
+  pithyx?: string;
+  /**
+   * The version of the format of the app's stored data (volumes, its stored values and the files of its storage requests), an integer from 1. Optional. Raise it with every release that converts data in a way the previous version cannot read. A box goes back to an older version from a catalog only when both declare the same `dataVersion`; going back to the version before an update with its snapshot works without it.
+   */
+  dataVersion?: number;
   /**
    * The permissions the app asks for. Each one appears in the install dialog and can be revoked later.
    */

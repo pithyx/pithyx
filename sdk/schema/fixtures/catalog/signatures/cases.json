@@ -1,0 +1,275 @@
+[
+  {
+    "catalog": "org.pithyx.official",
+    "name": "valid stable",
+    "index": "stable.json",
+    "signature": "stable.sig",
+    "channel": "stable",
+    "expected": []
+  },
+  {
+    "catalog": "org.pithyx.official",
+    "name": "same sequence again",
+    "index": "stable.json",
+    "signature": "stable.sig",
+    "channel": "stable",
+    "knownSequence": 7,
+    "expected": []
+  },
+  {
+    "catalog": "org.pithyx.official",
+    "name": "older sequence",
+    "index": "stable.json",
+    "signature": "stable.sig",
+    "channel": "stable",
+    "knownSequence": 8,
+    "expected": [
+      {
+        "code": "store.catalog.sequence_old",
+        "params": {
+          "sequence": 7,
+          "known": 8
+        }
+      }
+    ]
+  },
+  {
+    "catalog": "org.pithyx.official",
+    "name": "valid beta",
+    "index": "beta.json",
+    "signature": "beta.sig",
+    "channel": "beta",
+    "knownSequence": 30,
+    "expected": []
+  },
+  {
+    "catalog": "org.pithyx.official",
+    "name": "stable key on beta",
+    "index": "beta.json",
+    "signature": "beta-by-stable-key.sig",
+    "channel": "beta",
+    "expected": []
+  },
+  {
+    "catalog": "org.pithyx.official",
+    "name": "beta key on stable",
+    "index": "stable.json",
+    "signature": "stable-by-beta-key.sig",
+    "channel": "stable",
+    "expected": [
+      {
+        "code": "store.catalog.signature_invalid",
+        "params": {
+          "reason": "untrusted"
+        }
+      }
+    ]
+  },
+  {
+    "catalog": "org.pithyx.official",
+    "name": "unknown key",
+    "index": "stable.json",
+    "signature": "stable-by-rogue-key.sig",
+    "channel": "stable",
+    "expected": [
+      {
+        "code": "store.catalog.signature_invalid",
+        "params": {
+          "reason": "untrusted"
+        }
+      }
+    ]
+  },
+  {
+    "catalog": "org.pithyx.official",
+    "name": "wrong key",
+    "index": "stable.json",
+    "signature": "stable-by-rogue-key-as-stable.sig",
+    "channel": "stable",
+    "expected": [
+      {
+        "code": "store.catalog.signature_invalid",
+        "params": {
+          "reason": "mismatch"
+        }
+      }
+    ]
+  },
+  {
+    "catalog": "org.pithyx.official",
+    "name": "tampered",
+    "index": "stable-tampered.json",
+    "signature": "stable.sig",
+    "channel": "stable",
+    "expected": [
+      {
+        "code": "store.catalog.signature_invalid",
+        "params": {
+          "reason": "mismatch"
+        }
+      }
+    ]
+  },
+  {
+    "catalog": "org.pithyx.official",
+    "name": "one byte more",
+    "index": "stable-trailing-space.json",
+    "signature": "stable.sig",
+    "channel": "stable",
+    "expected": [
+      {
+        "code": "store.catalog.signature_invalid",
+        "params": {
+          "reason": "mismatch"
+        }
+      }
+    ]
+  },
+  {
+    "catalog": "org.pithyx.official",
+    "name": "rotation with an unknown key",
+    "index": "stable.json",
+    "signature": "stable-rotation.sig",
+    "channel": "stable",
+    "expected": []
+  },
+  {
+    "catalog": "org.pithyx.official",
+    "name": "one bad signature of a trusted key",
+    "index": "beta.json",
+    "signature": "beta-one-bad.sig",
+    "channel": "beta",
+    "expected": [
+      {
+        "code": "store.catalog.signature_invalid",
+        "params": {
+          "reason": "mismatch"
+        }
+      }
+    ]
+  },
+  {
+    "catalog": "org.pithyx.official",
+    "name": "missing",
+    "index": "stable.json",
+    "signature": null,
+    "channel": "stable",
+    "expected": [
+      {
+        "code": "store.catalog.signature_invalid",
+        "params": {
+          "reason": "missing"
+        }
+      }
+    ]
+  },
+  {
+    "catalog": "org.pithyx.official",
+    "name": "not json",
+    "index": "stable.json",
+    "signature": "malformed-json.sig",
+    "channel": "stable",
+    "expected": [
+      {
+        "code": "store.catalog.signature_invalid",
+        "params": {
+          "reason": "malformed"
+        }
+      }
+    ]
+  },
+  {
+    "catalog": "org.pithyx.official",
+    "name": "not base64",
+    "index": "stable.json",
+    "signature": "malformed-base64.sig",
+    "channel": "stable",
+    "expected": [
+      {
+        "code": "store.catalog.signature_invalid",
+        "params": {
+          "reason": "malformed"
+        }
+      }
+    ]
+  },
+  {
+    "catalog": "org.pithyx.official",
+    "name": "short signature",
+    "index": "stable.json",
+    "signature": "malformed-short.sig",
+    "channel": "stable",
+    "expected": [
+      {
+        "code": "store.catalog.signature_invalid",
+        "params": {
+          "reason": "malformed"
+        }
+      }
+    ]
+  },
+  {
+    "catalog": "org.pithyx.official",
+    "name": "no signatures",
+    "index": "stable.json",
+    "signature": "malformed-empty.sig",
+    "channel": "stable",
+    "expected": [
+      {
+        "code": "store.catalog.signature_invalid",
+        "params": {
+          "reason": "malformed"
+        }
+      }
+    ]
+  },
+  {
+    "catalog": "org.pithyx.official",
+    "name": "unknown format",
+    "index": "stable.json",
+    "signature": "malformed-version.sig",
+    "channel": "stable",
+    "expected": [
+      {
+        "code": "store.catalog.signature_invalid",
+        "params": {
+          "reason": "malformed"
+        }
+      }
+    ]
+  },
+  {
+    "catalog": "org.pithyx.official",
+    "name": "signed for beta, read on stable",
+    "index": "beta.json",
+    "signature": "beta-by-stable-key.sig",
+    "channel": "stable",
+    "expected": [
+      {
+        "code": "store.catalog.mismatch",
+        "params": {
+          "path": "/channel",
+          "value": "beta",
+          "expected": "stable"
+        }
+      }
+    ]
+  },
+  {
+    "catalog": "org.pithyx.official",
+    "name": "another catalog",
+    "index": "community.json",
+    "signature": "community.sig",
+    "channel": "stable",
+    "expected": [
+      {
+        "code": "store.catalog.mismatch",
+        "params": {
+          "path": "/catalog",
+          "value": "org.pithyx.community",
+          "expected": "org.pithyx.official"
+        }
+      }
+    ]
+  }
+]

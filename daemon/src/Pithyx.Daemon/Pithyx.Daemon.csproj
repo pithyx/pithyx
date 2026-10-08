@@ -43,5 +43,10 @@
     <EmbeddedResource Include="Auth/common-passwords.txt" LogicalName="auth/common-passwords.txt" />
     <EmbeddedResource Include="../../../sdk/schema/manifest.v1.schema.json" LogicalName="schema/manifest.v1.schema.json" />
     <EmbeddedResource Include="../../../sdk/schema/compose.v1.rules.json" LogicalName="schema/compose.v1.rules.json" />
+    <EmbeddedResource Include="../../../sdk/schema/catalog.v1.schema.json" LogicalName="schema/catalog.v1.schema.json" />
+    <EmbeddedResource Include="../../../sdk/schema/catalog.v1.rules.json" LogicalName="schema/catalog.v1.rules.json" />
+    <EmbeddedResource Include="../../../sdk/schema/index.v1.schema.json" LogicalName="schema/index.v1.schema.json" />
+    <EmbeddedResource Include="../../../sdk/schema/index-signature.v1.schema.json" LogicalName="schema/index-signature.v1.schema.json" />
+    <EmbeddedResource Include="../../../sdk/schema/maintainers.v1.schema.json" LogicalName="schema/maintainers.v1.schema.json" />
   </ItemGroup>
 </Project>

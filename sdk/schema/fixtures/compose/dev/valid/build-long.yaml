@@ -1,0 +1,19 @@
+services:
+  server:
+    build:
+      context: server
+      dockerfile: docker/Dockerfile.prod
+      target: runtime
+      args:
+        NODE_ENV: production
+        PORT: 8080
+    environment:
+      DATABASE_HOST: db
+    depends_on:
+      - db
+  db:
+    image: postgres:17.6@sha256:a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5
+    volumes:
+      - data:/var/lib/postgresql/data
+volumes:
+  data:

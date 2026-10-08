@@ -18,7 +18,7 @@
       "right_missing": "Die Compose-Datei der App braucht unter {path} das Recht {right}, das ihr Manifest nicht deklariert.",
       "right_unused": "Das Manifest der App deklariert unter {path} das Recht {right}, das ihre Compose-Datei nicht nutzt.",
       "storage_mismatch": "Der Speicher {storage} passt nicht zur Compose-Datei unter {path}: {reason, select, not_mounted {der Dienst bindet ihn nicht ein} not_listed {der Dienst bindet ihn ein, ohne im Manifest genannt zu sein} read_only {er ist schreibgeschützt und muss mit :ro eingebunden werden} other {Manifest und Compose-Datei widersprechen sich}}.",
-      "value_invalid": "Die Compose-Datei der App hat unter {path} einen Wert, den Pithyx ablehnt: {reason, select, required {er fehlt} type {er hat den falschen Typ} format {sein Format ist ungültig} range {er liegt außerhalb des erlaubten Bereichs} unpinned {das Image ist nicht mit @sha256 festgelegt} interpolation {er nutzt $ für eine Variable (schreib $$ für ein Dollarzeichen)} no_value {die Variable hat keinen Wert} duplicate {er kommt doppelt vor} reserved {er ist für Pithyx reserviert} host_path {er bindet einen Ordner des Hosts ein} anonymous {das Volume hat keinen Namen} cycle {die Dienste hängen im Kreis voneinander ab} other {er ist ungültig}}.",
+      "value_invalid": "Die Compose-Datei der App hat unter {path} einen Wert, den Pithyx ablehnt: {reason, select, required {er fehlt} type {er hat den falschen Typ} format {sein Format ist ungültig} range {er liegt außerhalb des erlaubten Bereichs} unpinned {das Image ist nicht mit @sha256 festgelegt} interpolation {er nutzt $ für eine Variable (schreib $$ für ein Dollarzeichen)} no_value {die Variable hat keinen Wert} duplicate {er kommt doppelt vor} reserved {er ist für Pithyx reserviert} host_path {er bindet einen Ordner des Hosts ein} anonymous {das Volume hat keinen Namen} cycle {die Dienste hängen im Kreis voneinander ab} image_and_build {der Dienst hat image und build, nutze nur eins davon} other {er ist ungültig}}.",
       "yaml_invalid": "Die Compose-Datei der App ist nicht lesbar: {reason, select, too_large {sie ist größer als 64 KB} not_utf8 {sie ist kein UTF-8} character {sie enthält einen Tabulator oder ein anderes nicht erlaubtes Zeichen} syntax {sie ist kein gültiges YAML} documents {sie muss genau ein Dokument enthalten} too_deep {sie ist zu tief verschachtelt} directive {sie enthält eine YAML-Direktive} anchor {sie nutzt Anker oder Aliase} tag {sie nutzt YAML-Tags} duplicate_key {{path} kommt doppelt vor} merge_key {sie nutzt unter {path} einen Merge-Schlüssel} key_not_string {ein Schlüssel unter {path} ist kein Text} other {sie verletzt eine Regel für Compose-Dateien}}."
     },
     "docker": {
@@ -40,6 +40,7 @@
       "id_invalid": "Die App-ID {id} ist ungültig. Sie besteht aus der umgekehrten Domain des Autors und dem App-Namen, zum Beispiel com.example.chat.",
       "id_reserved": "Die App-ID {id} ist für die Apps reserviert, die mit Pithyx kommen.",
       "invalid_json": "Das Manifest der App (pithyx.json) ist kein gültiges JSON.",
+      "pithyx_invalid": "Der Pithyx-Versionsbereich {pithyx} im Manifest ist ungültig.",
       "reference_unknown": "Das Manifest verweist unter {path} auf {name}, das es nicht deklariert.",
       "schema_violation": "Das Manifest der App ist unter {path} ungültig ({keyword}).",
       "sdk_invalid": "Der SDK-Versionsbereich {sdk} im Manifest ist ungültig.",
@@ -411,6 +412,20 @@
     },
     "zfs": {
       "unavailable": "ZFS hat nicht rechtzeitig geantwortet oder einen Fehler gemeldet, deshalb kann Pithyx nicht zeigen, was sich ändern würde. Versuch es gleich noch einmal. Wenn es so bleibt, wartet vielleicht ein Pool auf Platten, die fehlen: sieh im Speicher nach."
+    }
+  },
+  "store": {
+    "catalog": {
+      "architecture_missing": "Der Katalog führt unter {path} ein Image ohne die Architektur {architecture}.",
+      "data_version_decreased": "Der Katalog senkt unter {path} die Datenversion auf {dataVersion}, nach {previous} in einer älteren Version.",
+      "id_reserved": "Der Katalog nutzt unter {path} die ID {id}, die nur der offizielle Pithyx-Katalog nutzen darf.",
+      "invalid_json": "Die Datei {file} des Katalogs ist kein gültiges JSON.",
+      "mismatch": "Der Index des Katalogs hat unter {path} den Wert {value}, diese Box erwartet aber {expected}.",
+      "rule_violation": "Der Pull Request verletzt eine Regel des Katalogs: {rule, select, one_app {{path} liegt außerhalb des einen App-Ordners, den ein Pull Request ändern darf} required_file {{path} fehlt} file_type {{path} ist eine Dateiart, die ein Katalog nicht annimmt} binary {{path} ist binär oder kein UTF-8} minified {{path} sieht minifiziert oder generiert aus} media {{path} ist nicht das Bild oder die Schrift, die der Name angibt} unpinned {Zeile {line} von {path} nutzt das Image {image}, das nicht mit @sha256 festgelegt ist} screenshot {{path} ist kein Screenshot direkt in screenshots/ als PNG-, JPEG- oder WebP-Datei mit kleingeschriebenem Namen und höchstens 1 MB} screenshots {{path} enthält mehr als {limit} Screenshots} app_size {{path} ist größer als {limit} Byte} folder_id {der Ordner von {path} muss wie die ID der App heißen: {id}} manifest_field {das Manifest {path} braucht das Feld {field}} license {{license} in {path} ist keine von der OSI anerkannte Lizenz} version_not_higher {Version {version} in {path} ist nicht höher als die veröffentlichte {published}} maintainer {{author} gehört nicht zu den Maintainern der App} maintainers_invalid {{path} ist keine gültige Liste von Maintainern} other {{path} verletzt eine Regel}}.",
+      "schema_violation": "Die Datei {file} des Katalogs ist unter {path} ungültig ({keyword}).",
+      "sequence_old": "Der Index des Katalogs ist älter (Sequenz {sequence}) als einer, den diese Box schon geprüft hat ({known}). Die Box behält ihre Kopie.",
+      "signature_invalid": "Der Index des Katalogs ist nicht korrekt signiert ({reason, select, missing {die Signatur fehlt} malformed {die Signaturdatei ist ungültig} untrusted {keine Signatur stammt von einem Schlüssel, dem diese Box für ihren Kanal vertraut} mismatch {eine Signatur passt nicht zum Index} other {die Signatur belegt ihn nicht}}). Die Box behält ihre zuletzt geprüfte Kopie.",
+      "version_unsupported": "Die Datei {file} des Katalogs hat die Formatversion {version}, diese Box liest Version {supported}. Aktualisiere Pithyx, um diesen Katalog zu nutzen."
     }
   },
   "system": {
