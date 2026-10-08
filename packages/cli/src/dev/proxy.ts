@@ -8,6 +8,7 @@ import {
 } from 'node:http';
 import { request as httpsRequest } from 'node:https';
 import type { Duplex } from 'node:stream';
+import { frontendHeaders } from './frontend';
 import type { Holder, TokenStore } from './tokens';
 
 /** The query parameter with a backend token, and the one with a WebSocket ticket (as in `@pithyx/sdk`). */
@@ -82,6 +83,37 @@ const DROPPED = new Set([
   'forwarded',
   'traceparent',
   'tracestate',
+  // A referrer may carry ?pithyx-token= of a page opened in a tab.
+  'referer',
+]);
+
+/**
+ * Answer headers that act on the whole box's origin rather than on the one answer (D323): cookies, wiping site data,
+ * HSTS (which would end the click-through on the box's self-signed certificate), other protocols, reporting, a page
+ * refresh and the backend's own CORS answers. The box drops them, and so does the mock.
+ */
+const ORIGIN_WIDE = new Set([
+  'set-cookie',
+  'set-cookie2',
+  'clear-site-data',
+  'strict-transport-security',
+  'alt-svc',
+  'refresh',
+  'report-to',
+  'reporting-endpoints',
+  'nel',
+  'public-key-pins',
+  'public-key-pins-report-only',
+  'expect-ct',
+  'content-security-policy',
+  'content-security-policy-report-only',
+  'origin-agent-cluster',
+  'service-worker-allowed',
+  'access-control-allow-origin',
+  'access-control-allow-credentials',
+  'access-control-allow-methods',
+  'access-control-allow-headers',
+  'access-control-max-age',
 ]);
 
 const TRACEPARENT = /^00-([0-9a-f]{32})-[0-9a-f]{16}-[0-9a-f]{2}$/;
@@ -136,17 +168,29 @@ export function backendHeaders(
   return headers;
 }
 
-/** The headers of a backend's answer for the app: without cookies and hop-by-hop headers, readable from any origin. */
-export function answerHeaders(incoming: IncomingHttpHeaders): OutgoingHttpHeaders {
+/**
+ * The headers of a backend's answer for the app, as the box sends them (D323): without hop-by-hop headers and the ones
+ * that act on the whole origin, readable from any origin, and with the frontend's sandboxing policy, so a backend's page
+ * opened in a tab never runs in the box's origin.
+ */
+export function answerHeaders(
+  incoming: IncomingHttpHeaders,
+  internet = false,
+): OutgoingHttpHeaders {
   const headers: OutgoingHttpHeaders = {};
   for (const [name, value] of Object.entries(incoming)) {
     const lower = name.toLowerCase();
-    if (value === undefined || DROPPED.has(lower) || lower === 'set-cookie') {
+    if (value === undefined || DROPPED.has(lower) || ORIGIN_WIDE.has(lower)) {
       continue;
     }
     headers[lower] = value;
   }
-  headers['access-control-allow-origin'] = '*';
+  // The backend decides how its answers are cached; the rest of the frontend's headers apply.
+  for (const [name, value] of Object.entries(frontendHeaders(internet))) {
+    if (name !== 'cache-control') {
+      headers[name] = value;
+    }
+  }
   headers['access-control-expose-headers'] = '*';
   return headers;
 }
@@ -170,8 +214,8 @@ export function sendProblem(
   params: Record<string, string> = {},
 ): void {
   res.writeHead(status, {
+    ...frontendHeaders(false),
     'content-type': 'application/problem+json',
-    'access-control-allow-origin': '*',
     'cache-control': 'no-store',
   });
   res.end(
@@ -184,6 +228,8 @@ export interface ProxyOptions {
   tokens: TokenStore;
   /** The base URL of every endpoint the backend serves, by name. */
   endpoints: () => ReadonlyMap<string, URL>;
+  /** Whether the app holds `network.internet`, which widens the answers' `connect-src` as on the box. */
+  internet?: boolean;
 }
 
 function clientOf(req: IncomingMessage) {
@@ -254,7 +300,10 @@ export function proxyRequest(
     headers: backendHeaders(req.headers, holder, match, clientOf(req)),
   });
   outgoing.on('response', (answer) => {
-    res.writeHead(answer.statusCode ?? 502, answerHeaders(answer.headers));
+    res.writeHead(
+      answer.statusCode ?? 502,
+      answerHeaders(answer.headers, options.internet === true),
+    );
     answer.pipe(res);
   });
   outgoing.on('error', () => {

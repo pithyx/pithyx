@@ -94,7 +94,7 @@ export function createDevServer(options: DevServerOptions): DevServer {
   const shellFolder = options.shellFolder ?? SHELL_FOLDER;
   const internet = manifest.permissions.includes('network.internet');
   const appPrefix = `/apps/${manifest.id}/`;
-  const proxy = { appId: manifest.id, tokens, endpoints: options.endpoints };
+  const proxy = { appId: manifest.id, tokens, endpoints: options.endpoints, internet };
 
   function serveShell(res: ServerResponse, path: string) {
     const file = join(shellFolder, ...(path === '' ? ['index.html'] : path.split('/')));
