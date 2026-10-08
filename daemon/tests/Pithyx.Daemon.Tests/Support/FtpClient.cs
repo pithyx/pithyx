@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Authentication;
 using System.Text;
 
 namespace Pithyx.Daemon.Tests.Support;
@@ -100,13 +101,19 @@ internal sealed class FtpClient : IAsyncDisposable
         {
             return preliminary;
         }
-        await using (var stream = await SecureAsync(data))
+        try
         {
+            await using var stream = await SecureAsync(data);
             await stream.WriteAsync(Encoding.UTF8.GetBytes(content), Token);
             if (stream is SslStream tls)
             {
                 await tls.ShutdownAsync();
             }
+        }
+        catch (Exception exception) when (exception is IOException or AuthenticationException)
+        {
+            // The server answers 150 before it checks the right and closes the data connection when it refuses;
+            // its reply on the control connection still says why.
         }
         return await ReadReplyAsync();
     }
