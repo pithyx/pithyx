@@ -417,6 +417,7 @@ Logs (D305): every level also appears in the browser console. `info`, `warn` and
 - [x] Update with snapshot, `up --wait` and rollback.
 - [x] `Category=DockerIntegration` runs through `integration.sh` with a locally imported image. (`tools/dev-vm/integration.sh --docker`, `DockerIntegrationTests`: an image of the host's busybox, saved into the package and loaded from it.)
 - [x] `pithyx.service` gets a negative `OOMScoreAdjust` (the rewriter gives every container `oom_score_adj` 500, D310), so the kernel ends app containers before the daemon. Compose runs without a project `.env`. (`OOMScoreAdjust=-900`, also in the dev unit; `--env-file /dev/null`.)
+- [x] Proven on 7484. (2026-10-08: b90fc03 deployed, no migration; as `e2e-admin` the probe's `/apps/<id>/api/x` answers 401 `app.token.invalid` with the sandbox CSP and `no-referrer`, a backend token for it `app.backend.missing`; the app-chat template, built locally and packed with its image, installed onto `pithyxtestfs` (Docker started by the daemon with its data on `pithyxtestfs/pithyx/docker`, container healthy, volume owned by uid 40001), a message posted through the proxy as `e2e-admin` and one as `e2e-user` arrived on a WebSocket opened with a ticket, a second use of the ticket got 401; disabling stopped the container, enabling started it with the messages kept, removing it with its data stopped Docker. Found: the backend's first output was missing from the Log Center, fixed in the PR after #98.)
 
 #### A15 Lifecycle, schedules, chat (after A13 and A14)
 
