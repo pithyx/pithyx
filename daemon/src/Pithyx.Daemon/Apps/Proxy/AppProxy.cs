@@ -32,6 +32,7 @@ public sealed partial class AppProxy(
     AppTokenCheck check,
     AppBackends backends,
     AppProxySockets sockets,
+    Docker.AppBackendSupervisor supervisor,
     IProblemDetailsService problemDetails)
 {
     public const string TokenParameter = "pithyx-token";
@@ -98,7 +99,13 @@ public sealed partial class AppProxy(
             await problemDetails.WriteProblemAsync(context, ErrorCodes.RequestRouteNotFound);
             return;
         }
-        if (backends.Find(match.AppId, match.Endpoint) is not { } destination)
+        var destination = backends.Find(match.AppId, match.Endpoint);
+        // A stopped onDemand backend starts for the request, which waits up to 30 seconds for it.
+        if (destination is null && await supervisor.WakeAsync(match.AppId, context.RequestAborted))
+        {
+            destination = backends.Find(match.AppId, match.Endpoint);
+        }
+        if (destination is null)
         {
             await problemDetails.WriteProblemAsync(context, ErrorCodes.AppBackendUnavailable);
             return;

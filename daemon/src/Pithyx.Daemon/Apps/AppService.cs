@@ -40,6 +40,7 @@ public sealed partial class AppService(
     AppTokens tokens,
     ShareService shares,
     Docker.AppBackendRuntime backends,
+    Proxy.AppBackends backendStates,
     TimeProvider time,
     ILogger<AppService> logger)
 {
@@ -106,6 +107,7 @@ public sealed partial class AppService(
                         if (previous?.HasBackend == true)
                         {
                             await backends.StopAsync(appId, pool, context.Cancellation);
+                            backendStates.SetStatus(appId, Proxy.AppBackends.Updating);
                         }
                         await AppVersions.InstallAsync(storage, pool, appId, package.Package, package.Version, update: installed is not null,
                             async token =>

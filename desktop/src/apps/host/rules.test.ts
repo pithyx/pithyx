@@ -123,4 +123,15 @@ describe('daemon context changes', () => {
       ],
     });
   });
+
+  it('tells the app when its backend starts, runs or stops', () => {
+    const stopped = { ...base, backend: { status: 'stopped' } };
+    expect(contextChanges(stopped, { ...base, backend: { status: 'starting' } })).toEqual({
+      events: [{ event: 'backendStatus', data: { status: 'starting' } }],
+    });
+    expect(contextChanges(stopped, stopped)).toEqual({ events: [] });
+    expect(contextChanges({ ...base, backend: null }, { ...base, backend: null })).toEqual({
+      events: [],
+    });
+  });
 });
