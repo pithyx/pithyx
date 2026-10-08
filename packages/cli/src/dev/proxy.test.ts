@@ -63,6 +63,10 @@ beforeAll(async () => {
     res.writeHead(200, {
       'content-type': 'application/json',
       'set-cookie': 'session=evil; Path=/',
+      'clear-site-data': '"cookies", "storage"',
+      'strict-transport-security': 'max-age=31536000',
+      'content-security-policy': 'default-src *',
+      'x-backend': 'echo',
     });
     res.end(JSON.stringify({ method: req.method, url: req.url, headers: req.headers }));
   });
@@ -178,6 +182,7 @@ describe('the proxy of pithyx dev', () => {
           'X-Pithyx-User': 'alice',
           'X-Pithyx-Admin': 'true',
           'X-Forwarded-Prefix': '/elsewhere',
+          Referer: 'http://box/apps/com.example.chat/api/page?pithyx-token=secret',
           Accept: 'application/json',
         },
       },
@@ -195,9 +200,16 @@ describe('the proxy of pithyx dev', () => {
     expect(body.headers.cookie).toBeUndefined();
     expect(body.headers.authorization).toBeUndefined();
     expect(body.headers.traceparent).toMatch(/^00-[0-9a-f]{32}-[0-9a-f]{16}-01$/);
-    // The backend's cookie never reaches the box's origin; any origin may read the answer.
-    expect(response.headers.get('set-cookie')).toBeNull();
+    // Nothing of the answer acts on the box's origin; any origin may read it, and a tab shows it sandboxed (D323).
+    expect(body.headers.referer).toBeUndefined();
+    for (const name of ['set-cookie', 'clear-site-data', 'strict-transport-security']) {
+      expect(response.headers.get(name)).toBeNull();
+    }
+    expect(response.headers.get('x-backend')).toBe('echo');
     expect(response.headers.get('access-control-allow-origin')).toBe('*');
+    expect(response.headers.get('content-security-policy')).toBe(contentSecurityPolicy(false));
+    expect(response.headers.get('x-content-type-options')).toBe('nosniff');
+    expect(response.headers.get('referrer-policy')).toBe('no-referrer');
   });
 
   it('takes the token from ?pithyx-token= for URLs without headers', async () => {
