@@ -108,11 +108,13 @@ export interface ContextState {
   permissions: readonly string[];
   logLevel: 'debug' | 'info';
   storage: readonly StorageInfo[];
+  /** The backend's status, or null for an app without a backend. */
+  backend?: { status: string } | null;
 }
 
 /**
- * What a change of the daemon's context means for a running window: `permissionsChange`, `logLevelChange` and
- * `storageChange` for what differs, in that order. Unchanged parts send nothing.
+ * What a change of the daemon's context means for a running window: `permissionsChange`, `logLevelChange`,
+ * `storageChange` and `backendStatus` for what differs, in that order. Unchanged parts send nothing.
  */
 export function contextChanges(
   previous: ContextState,
@@ -134,6 +136,10 @@ export function contextChanges(
       event: 'storageChange',
       data: { storage: next.storage.map((storage) => ({ ...storage })) },
     });
+  }
+  const status = next.backend?.status;
+  if (status !== undefined && status !== previous.backend?.status) {
+    events.push({ event: 'backendStatus', data: { status } });
   }
   return permissionsChanged ? { permissions, events } : { events };
 }

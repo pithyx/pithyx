@@ -88,7 +88,7 @@ public enum AppStorageState
 public sealed record AppStorageInfo(string Id, AppStorageState State, Shares.ShareAccess? Access);
 
 /// <summary>The app's backend: the state of its containers and the names of its endpoints.</summary>
-/// <param name="Status"><c>running</c> while the proxy reaches the backend, otherwise <c>stopped</c> (A14); the other states of the SDK come with the lifecycle (A15).</param>
+/// <param name="Status"><c>stopped</c>, <c>starting</c>, <c>running</c>, <c>updating</c> or <c>unavailable</c> (a start failed, or a container is unhealthy or ended); the proxy reaches the backend while it is <c>running</c> or <c>unavailable</c> after a health check.</param>
 /// <param name="Endpoints">The endpoint names of the manifest, sorted.</param>
 public sealed record AppBackendInfo(string Status, IReadOnlyList<string> Endpoints);
 

@@ -10,7 +10,14 @@ namespace Pithyx.Daemon.Apps.Proxy;
 /// </summary>
 public sealed class AppBackends
 {
+    public const string Stopped = "stopped";
+    public const string Starting = "starting";
+    public const string Running = "running";
+    public const string Updating = "updating";
+    public const string Unavailable = "unavailable";
+
     private readonly ConcurrentDictionary<string, IReadOnlyDictionary<string, Uri>> _running = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, string> _status = new(StringComparer.Ordinal);
 
     /// <summary>Raised with the app's id after it started or stopped.</summary>
     public event Action<string>? Changed;
@@ -24,17 +31,40 @@ public sealed class AppBackends
             throw new ArgumentException("Endpoints need absolute http or https addresses.", nameof(endpoints));
         }
         _running[appId] = new Dictionary<string, Uri>(endpoints, StringComparer.Ordinal);
+        _status[appId] = Running;
         Changed?.Invoke(appId);
     }
 
     /// <summary>The app's backend no longer answers.</summary>
     public void SetStopped(string appId)
     {
-        if (_running.TryRemove(appId, out _))
+        var removed = _running.TryRemove(appId, out _);
+        if ((_status.TryRemove(appId, out var status) && status != Stopped) || removed)
         {
             Changed?.Invoke(appId);
         }
     }
+
+    /// <summary>
+    /// Marks a backend that is on its way or in trouble (<see cref="Starting"/>, <see cref="Updating"/>,
+    /// <see cref="Unavailable"/>), or healthy again (<see cref="Running"/>, only while it runs); the proxy's addresses stay
+    /// as they are.
+    /// </summary>
+    public void SetStatus(string appId, string status)
+    {
+        if (status == Running && !_running.ContainsKey(appId))
+        {
+            return;
+        }
+        if (_status.GetValueOrDefault(appId, Stopped) != status)
+        {
+            _status[appId] = status;
+            Changed?.Invoke(appId);
+        }
+    }
+
+    /// <summary>The status the SDK shows the app (<c>context.backend.status</c>, <c>backendStatus</c>).</summary>
+    public string StatusOf(string appId) => _status.GetValueOrDefault(appId, Stopped);
 
     public bool IsRunning(string appId) => _running.ContainsKey(appId);
 

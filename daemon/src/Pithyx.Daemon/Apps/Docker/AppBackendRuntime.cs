@@ -56,6 +56,14 @@ public sealed partial class AppBackendRuntime(
     /// <summary>How long Compose may take to start every service and see it healthy.</summary>
     public static readonly TimeSpan StartTimeout = TimeSpan.FromMinutes(10);
 
+    /// <summary>How long the manifest's health check may take after Compose reported the services healthy.</summary>
+    public static readonly TimeSpan HealthTimeout = TimeSpan.FromSeconds(60);
+
+    private static readonly HttpClient _healthClient = new(new SocketsHttpHandler { UseProxy = false, AllowAutoRedirect = false })
+    {
+        Timeout = TimeSpan.FromSeconds(5),
+    };
+
     /// <summary>How long a service gets to stop before it is killed.</summary>
     public const int StopSeconds = 30;
 
@@ -79,6 +87,7 @@ public sealed partial class AppBackendRuntime(
         var root = storage.RootOf(pool, app.AppId) ?? throw new PithyxException(
             ErrorCodes.AppPoolUnavailable, new Dictionary<string, object?> { ["pool"] = pool, ["reason"] = "locked" });
         var mappings = await MappingsAsync(app, cancellationToken);
+        backends.SetStatus(app.AppId, AppBackends.Starting);
         progress?.Invoke(new Jobs.JobProgress(0, 3, 0, 0, "docker"));
         await host.EnsureRunningAsync(pool, cancellationToken);
 
@@ -118,9 +127,82 @@ public sealed partial class AppBackendRuntime(
             throw new PithyxException(ErrorCodes.AppBackendStartFailed, new Dictionary<string, object?> { ["exitCode"] = up.ExitCode });
         }
         var endpoints = Endpoints(app.Manifest, project, await engine.ContainersAsync(app.AppId, cancellationToken));
+        await HealthyAsync(app, endpoints, cancellationToken);
         backends.SetRunning(app.AppId, endpoints);
         progress?.Invoke(new Jobs.JobProgress(3, 3, 0, 0, null));
         LogStarted(app.AppId, app.Version, endpoints.Count);
+    }
+
+    /// <summary>
+    /// Takes over a backend whose containers still run (after a daemon restart): when every service of the Compose project
+    /// runs and every endpoint has an address, the proxy reaches it again without a new start.
+    /// </summary>
+    public async Task<bool> AdoptAsync(BackendApp app, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(app);
+        if (!app.HasBackend || !options.Apply)
+        {
+            return false;
+        }
+        var containers = await engine.ContainersAsync(app.AppId, cancellationToken);
+        if (containers.Count == 0 || containers.Any(container => container.State != "running"))
+        {
+            return false;
+        }
+        var endpoints = Endpoints(app.Manifest, ComposeRewriter.ProjectName(app.AppId), containers);
+        if (endpoints.Count != app.Manifest.GetProperty("backend").GetProperty("endpoints").EnumerateObject().Count())
+        {
+            return false;
+        }
+        backends.SetRunning(app.AppId, endpoints);
+        return true;
+    }
+
+    /// <summary>
+    /// The manifest's <c>health</c> (D327): <c>GET path</c> on its endpoint must answer 2xx within
+    /// <see cref="HealthTimeout"/> before the backend counts as running; Compose's healthchecks have passed already.
+    /// </summary>
+    private static async Task HealthyAsync(BackendApp app, IReadOnlyDictionary<string, Uri> endpoints, CancellationToken cancellationToken)
+    {
+        if (!app.Manifest.GetProperty("backend").TryGetProperty("health", out var health))
+        {
+            return;
+        }
+        var endpoint = health.GetProperty("endpoint").GetString()!;
+        if (!endpoints.TryGetValue(endpoint, out var address))
+        {
+            throw new PithyxException(ErrorCodes.AppBackendStartFailed, new Dictionary<string, object?> { ["exitCode"] = 0 });
+        }
+        var url = new Uri(address, health.GetProperty("path").GetString()!.TrimStart('/'));
+        using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        deadline.CancelAfter(HealthTimeout);
+        while (true)
+        {
+            try
+            {
+                using var answer = await _healthClient.GetAsync(url, deadline.Token);
+                if (answer.IsSuccessStatusCode)
+                {
+                    return;
+                }
+            }
+            catch (HttpRequestException)
+            {
+                // Not listening yet.
+            }
+            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                throw new PithyxException(ErrorCodes.AppBackendStartFailed, new Dictionary<string, object?> { ["exitCode"] = 0 });
+            }
+            try
+            {
+                await Task.Delay(TimeSpan.FromMilliseconds(500), deadline.Token);
+            }
+            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                throw new PithyxException(ErrorCodes.AppBackendStartFailed, new Dictionary<string, object?> { ["exitCode"] = 0 });
+            }
+        }
     }
 
     /// <summary>

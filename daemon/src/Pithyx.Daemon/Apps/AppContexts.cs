@@ -84,7 +84,7 @@ public sealed class AppContexts(AppRegistry registry, PermissionService permissi
         {
             return null;
         }
-        var backend = app.Manifest.TryGetProperty("backend", out _) ? new AppBackendInfo(backends.IsRunning(app.Id) ? "running" : "stopped", app.Endpoints) : null;
+        var backend = app.Manifest.TryGetProperty("backend", out _) ? new AppBackendInfo(backends.StatusOf(app.Id), app.Endpoints) : null;
         return new AppContextState(app.Version, app.Granted, app.LogLevel, backend, StorageStates(app, rights, source.ShareUnavailable));
     }
 

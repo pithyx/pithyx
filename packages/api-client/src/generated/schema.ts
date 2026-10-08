@@ -1945,7 +1945,7 @@ export type components = {
             backend: null | {
                 /** @description The endpoint names of the manifest, sorted. */
                 endpoints: string[];
-                /** @description `running` while the proxy reaches the backend, otherwise `stopped` (A14); the other states of the SDK come with the lifecycle (A15). */
+                /** @description `stopped`, `starting`, `running`, `updating` or `unavailable` (a start failed, or a container is unhealthy or ended); the proxy reaches the backend while it is `running` or `unavailable` after a health check. */
                 status: string;
             };
             /**

@@ -19,7 +19,8 @@ public static class AppEndpoints
         services.AddSingleton<Docker.DockerEngine>();
         services.AddSingleton<Docker.DockerHost>();
         services.AddSingleton<Docker.AppBackendRuntime>();
-        services.AddHostedService<Docker.AppBackendSupervisor>();
+        services.AddSingleton<Docker.AppBackendSupervisor>();
+        services.AddHostedService(provider => provider.GetRequiredService<Docker.AppBackendSupervisor>());
         services.AddSingleton<AppRegistry>();
         services.AddSingleton(provider => provider.GetRequiredService<AppRegistry>().Definition());
         services.AddSingleton(provider => provider.GetRequiredService<AppRegistry>().AdminDefinition());
