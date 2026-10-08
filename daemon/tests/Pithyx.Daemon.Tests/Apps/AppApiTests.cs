@@ -199,13 +199,43 @@ public sealed class AppApiTests : IDisposable
     }
 
     [Fact]
+    public async Task APackageWithABackendIsCheckedAndInstalls()
+    {
+        await _admin.SetupAdminAsync();
+        using var response = await UploadAsync(TarBuilder.BackendPackage(AppId).End().Gzip());
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var preview = await response.JsonAsync();
+        Assert.Equal("web", preview.GetProperty("manifest").GetProperty("backend").GetProperty("endpoints").GetProperty("api").GetProperty("service").GetString());
+        // In simulation nothing runs: the install and an update succeed, and the backend never becomes reachable.
+        await InstallAsync(TarBuilder.BackendPackage(AppId).End().Gzip());
+        await InstallAsync(TarBuilder.BackendPackage(AppId, "1.1.0").End().Gzip());
+        Assert.True(File.Exists(Path.Combine(AppFolder, "versions", "1.1.0", "backend", "images.lock.json")));
+        Assert.False(_factory.Services.GetRequiredService<Pithyx.Daemon.Apps.Proxy.AppBackends>().IsRunning(AppId));
+
+        // A lock without this box's architecture cannot run here.
+        var architecture = Pithyx.Daemon.Apps.Docker.ImagesLock.HostArchitecture;
+        var other = architecture == "amd64" ? "arm64" : "amd64";
+        var oneArchitecture = $$"""
+            { "lockVersion": 1, "images": { "{{TarBuilder.BackendImage}}": { "{{other}}": { "manifest": "sha256:{{new string('b', 64)}}", "config": "sha256:{{new string('c', 64)}}" } } } }
+            """;
+        using var refused = await UploadAsync(TarBuilder.BackendPackage("com.example.other", lockJson: oneArchitecture).End().Gzip());
+        var problem = await refused.JsonAsync();
+        Assert.Equal("app.package.lock_invalid", problem.GetProperty("code").GetString());
+        Assert.Equal("platform", problem.GetProperty("params").GetProperty("reason").GetString());
+    }
+
+    [Fact]
     public async Task PackagesThatFailTheirChecksAreRefused()
     {
         await _admin.SetupAdminAsync();
         var backend = TarBuilder.Manifest(extra: ",\n  \"backend\": { \"compose\": \"backend/compose.yaml\", \"endpoints\": { \"api\": { \"service\": \"web\", \"port\": 8080 } }, \"lifecycle\": \"onDemand\" }");
         var cases = new (byte[] Package, string Code)[]
         {
-            (TarBuilder.MinimalPackage(manifest: backend).File("backend/compose.yaml", "services: {}").End().Gzip(), "app.backend.unsupported"),
+            (TarBuilder.MinimalPackage(manifest: backend).File("backend/compose.yaml", "services: {}").End().Gzip(), "app.compose.value_invalid"),
+            (TarBuilder.MinimalPackage(manifest: backend).End().Gzip(), "app.package.layout_invalid"),
+            (TarBuilder.BackendPackage(withLock: false).End().Gzip(), "app.package.lock_invalid"),
+            (TarBuilder.BackendPackage(lockJson: "{ \"lockVersion\": 2, \"images\": {} }").End().Gzip(), "app.package.lock_invalid"),
+            (TarBuilder.BackendPackage(lockJson: TarBuilder.BackendLock("ghcr.io/example/other:1@sha256:" + new string('f', 64))).End().Gzip(), "app.package.lock_invalid"),
             (new TarBuilder().File("pithyx.json", TarBuilder.Manifest()).File("icon.svg", TarBuilder.Icon).End().Gzip(), "app.package.layout_invalid"),
             (TarBuilder.MinimalPackage().File("docs/readme.txt", "x").End().Gzip(), "app.package.layout_invalid"),
             (TarBuilder.MinimalPackage().File("frontend/api/data.json", "{}").End().Gzip(), "app.package.layout_invalid"),

@@ -1,5 +1,7 @@
 using System.Security.Cryptography;
 using System.Text.Json;
+using Pithyx.Daemon.Apps.Compose;
+using Pithyx.Daemon.Apps.Docker;
 using Pithyx.Daemon.Apps.Manifest;
 using Pithyx.Daemon.Errors;
 using Pithyx.Daemon.Hosting;
@@ -121,8 +123,8 @@ public sealed class AppPackages
     }
 
     /// <summary>
-    /// The checks of a sideload: the manifest (never <c>org.pithyx.*</c>), no backend yet, the icon and the layout. The
-    /// first problem is thrown.
+    /// The checks of a sideload: the manifest (never <c>org.pithyx.*</c>), the icon, the layout, and for a backend its
+    /// Compose file and images lock. The first problem is thrown.
     /// </summary>
     public static (JsonElement Manifest, byte[] Icon) Check(UnpackedPackage package)
     {
@@ -138,14 +140,15 @@ public sealed class AppPackages
             throw validation.Issues[0].ToException();
         }
         var manifest = validation.Manifest!.Value;
-        if (manifest.TryGetProperty("backend", out _))
-        {
-            throw new PithyxException(ErrorCodes.AppBackendUnsupported);
-        }
-        var layout = PackageLayout.Check(paths, manifest.GetProperty("entry").GetString()!, compose: null);
+        var compose = manifest.TryGetProperty("backend", out var backend) ? backend.GetProperty("compose").GetString() : null;
+        var layout = PackageLayout.Check(paths, manifest.GetProperty("entry").GetString()!, compose);
         if (layout.Count > 0)
         {
             throw layout[0].ToException();
+        }
+        if (compose is not null)
+        {
+            CheckBackend(package, manifest, compose, paths);
         }
         var icon = File.ReadAllBytes(Path.Combine(package.Directory, PackageLayout.IconFile));
         if (IconValidator.Validate(icon) is [var problem, ..])
@@ -153,6 +156,36 @@ public sealed class AppPackages
             throw problem.ToException();
         }
         return (manifest, icon);
+    }
+
+    /// <summary>
+    /// The Compose file against the allowlist and the manifest (D310), and the images lock (D315): it lists exactly the
+    /// file's images, each with an image for this box's architecture.
+    /// </summary>
+    private static void CheckBackend(UnpackedPackage package, JsonElement manifest, string compose, List<string> paths)
+    {
+        var validation = ComposeValidator.Validate(File.ReadAllBytes(Path.Combine(package.Directory, compose)), manifest);
+        if (!validation.IsValid)
+        {
+            throw validation.Issues[0].ToException();
+        }
+        if (!paths.Contains(ImagesLock.FileName))
+        {
+            throw ImagesLock.Invalid("missing");
+        }
+        var lockFile = ImagesLock.Parse(File.ReadAllBytes(Path.Combine(package.Directory, ImagesLock.FileName))) ?? throw ImagesLock.Invalid("invalid");
+        var images = ((ComposeMap)validation.Document!.Get("services")!).Entries
+            .Select(service => ((ComposeScalar)((ComposeMap)service.Value).Get("image")!).Value)
+            .ToHashSet(StringComparer.Ordinal);
+        if (!images.SetEquals(lockFile.Images.Keys))
+        {
+            throw ImagesLock.Invalid("stale");
+        }
+        var architecture = ImagesLock.HostArchitecture ?? "";
+        if (lockFile.Images.Values.Any(platforms => !platforms.ContainsKey(architecture)))
+        {
+            throw ImagesLock.Invalid("platform");
+        }
     }
 
     // Callers hold _lock.

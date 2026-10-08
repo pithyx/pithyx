@@ -16,6 +16,8 @@ Environment=DOTNET_gcServer=0
 ExecStart=/usr/lib/pithyx/daemon/pithyxd
 Restart=on-failure
 RestartSec=2
+# App containers get oom_score_adj 500 (D310): when memory runs out, the kernel ends them long before the daemon.
+OOMScoreAdjust=-900
 # 65: a newer daemon wrote the database; 78: a second installation. Restarting cannot fix either. 75 (restart
 # requested after a restore) is not listed, so systemd starts the daemon again.
 RestartPreventExitStatus=65 78

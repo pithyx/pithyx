@@ -37,6 +37,8 @@ passwd --lock root >/dev/null
 # The daemon decides which services run: SSH is off by default and Samba starts once a share needs it.
 systemctl disable ssh.service smbd.service nmbd.service samba-ad-dc.service 2>/dev/null || true
 systemctl mask samba-ad-dc.service
+# Docker runs only while a backend app is installed and its pool is mounted; the daemon starts and stops it (D309).
+systemctl disable docker.socket docker.service containerd.service 2>/dev/null || true
 systemctl enable systemd-networkd.service systemd-resolved.service systemd-timesyncd.service \
   pithyx.service pithyx-issue.service
 

@@ -93,9 +93,11 @@ builder.Services.AddPithyxFileServices(new FileServiceOptions(
     TlsDirectory: Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "tls"),
     FtpPort: int.TryParse(builder.Configuration["PITHYX_FTP_PORT"], System.Globalization.CultureInfo.InvariantCulture, out var ftpPort) ? ftpPort : mode == DaemonMode.Real ? 21 : 0));
 builder.Services.AddPithyxFiles();
-builder.Services.AddPithyxApps(mode == DaemonMode.Real
-    ? new AppStorageOptions(UseZfs: true, FolderRoot: "/")
-    : new AppStorageOptions(UseZfs: false, FolderRoot: Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "pools")));
+builder.Services.AddPithyxApps(
+    mode == DaemonMode.Real
+        ? new AppStorageOptions(UseZfs: true, FolderRoot: "/")
+        : new AppStorageOptions(UseZfs: false, FolderRoot: Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "pools")),
+    new Pithyx.Daemon.Apps.Docker.DockerOptions(Apply: mode == DaemonMode.Real));
 builder.Services.AddSingleton<TopicRegistry>();
 builder.Services.AddSingleton<TopicHub>();
 builder.Services.AddPithyxMonitoring();

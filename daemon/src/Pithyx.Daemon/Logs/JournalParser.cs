@@ -56,6 +56,24 @@ public static class JournalParser
                 return (null, null);
             }
             var data = new Dictionary<string, string>(StringComparer.Ordinal);
+            if (AppOf(root) is { } app)
+            {
+                if (Text(root, "COM_PITHYX_SERVICE") is { } service)
+                {
+                    data["service"] = service;
+                }
+                if (Text(root, "CONTAINER_NAME") is { } container)
+                {
+                    data["container"] = container;
+                }
+                return (new PendingLogEntry(
+                    DateTimeOffset.UnixEpoch.AddTicks(micros * 10),
+                    AppLevelOf(Text(root, "PRIORITY"), message),
+                    LogSources.AppPrefix + app,
+                    message.TrimEnd(),
+                    Data: data.Count == 0 ? null : data,
+                    JournalCursor: Text(root, "__CURSOR")), Text(root, "SYSLOG_IDENTIFIER"));
+            }
             if (Text(root, "_PID") is { } pid)
             {
                 data["pid"] = pid;
@@ -82,6 +100,48 @@ public static class JournalParser
         "7" => LogLevelName.Debug,
         _ => LogLevelName.Info,
     };
+
+    /// <summary>
+    /// The level of an app container's line (D305, A14): stdout (priority 6) is info, stderr (priority 3) warn, and a
+    /// JSON object line with a string <c>level</c> (<c>debug</c>, <c>info</c>, <c>warn</c> or <c>warning</c>,
+    /// <c>error</c>) wins, so structured loggers keep their levels.
+    /// </summary>
+    public static LogLevelName AppLevelOf(string? priority, string message)
+    {
+        ArgumentNullException.ThrowIfNull(message);
+        if (message.StartsWith('{') && message.Length <= 64 * 1024)
+        {
+            try
+            {
+                using var line = JsonDocument.Parse(message);
+                if (line.RootElement.ValueKind == JsonValueKind.Object
+                    && line.RootElement.TryGetProperty("level", out var level) && level.ValueKind == JsonValueKind.String)
+                {
+                    switch (level.GetString()?.ToLowerInvariant())
+                    {
+                        case "debug" or "trace":
+                            return LogLevelName.Debug;
+                        case "info" or "information":
+                            return LogLevelName.Info;
+                        case "warn" or "warning":
+                            return LogLevelName.Warn;
+                        case "error" or "fatal" or "critical":
+                            return LogLevelName.Error;
+                    }
+                }
+            }
+            catch (JsonException)
+            {
+                // Not JSON after all: the stream decides.
+            }
+        }
+        return priority is "0" or "1" or "2" or "3" ? LogLevelName.Warn : LogLevelName.Info;
+    }
+
+    // The app of a container line: Docker's journald driver writes the label com.pithyx.app as COM_PITHYX_APP (D309).
+    // Only the daemon sets that label (the Compose rewriter refuses it from developers), but the id is checked anyway.
+    private static string? AppOf(JsonElement root) =>
+        Text(root, "_SYSTEMD_UNIT") == "docker.service" && Text(root, "COM_PITHYX_APP") is { } app && Apps.Manifest.AppId.IsValid(app) ? app : null;
 
     private static string SourceOf(JsonElement root)
     {

@@ -46,7 +46,7 @@
     "./tokens.css": "./tokens.css"
   },
   "scripts": {
-    "build": "vite build",
+    "build": "node ../../tools/css-module-types.ts packages/ui && vite build",
     "css-types": "node ../../tools/css-module-types.ts packages/ui",
     "typecheck": "node ../../tools/css-module-types.ts packages/ui && tsc -p tsconfig.json",
     "test": "vitest run",

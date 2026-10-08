@@ -30,6 +30,20 @@ public static class ErrorCodes
     public const string AppBackendMissing = "app.backend.missing";
 
     /// <summary>
+    /// The app's backend did not start: <c>docker compose up --wait</c> failed or a service did not become healthy in time.
+    /// <c>params.exitCode</c> is Compose's exit code; the app's log has the containers' output.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string AppBackendStartFailed = "app.backend.start_failed";
+
+    /// <summary>
+    /// A storage request the backend needs is not ready: <c>params.storage</c> names it, <c>params.reason</c> is
+    /// <c>unmapped</c> (a required request has no folder) or <c>unavailable</c> (its shared folder's pool is missing or locked).
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string AppBackendStorageUnavailable = "app.backend.storage_unavailable";
+
+    /// <summary>
     /// The app's backend is not running or does not answer, so the proxy has nowhere to send the request; the app may
     /// try again later.
     /// </summary>
@@ -37,8 +51,8 @@ public static class ErrorCodes
     public const string AppBackendUnavailable = "app.backend.unavailable";
 
     /// <summary>
-    /// The package declares a backend (containers). This version of Pithyx installs apps with a frontend only; backends
-    /// arrive with the Docker runtime.
+    /// The package declares a backend (containers) and this box installs apps with a frontend only. Pithyx 0.1 runs
+    /// backends (A14) and no longer answers with it; the code stays, as every published code does.
     /// </summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string AppBackendUnsupported = "app.backend.unsupported";
@@ -114,6 +128,10 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string AppElevatedUnsupported = "app.elevated.unsupported";
 
+    /// <summary>Docker did not start or does not answer, so no app backend can run now.</summary>
+    [ErrorStatus(HttpStatusCode.ServiceUnavailable)]
+    public const string AppDockerUnavailable = "app.docker.unavailable";
+
     /// <summary>
     /// The app's <c>icon.svg</c> is refused; <c>params.reason</c> says why: <c>too_large</c> (over 64 KB), <c>malformed</c>
     /// (not UTF-8 or not well-formed XML), <c>not_svg</c>, <c>viewbox</c> (missing or not square), <c>doctype</c>,
@@ -122,6 +140,20 @@ public static class ErrorCodes
     /// </summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string AppIconInvalid = "app.icon.invalid";
+
+    /// <summary>
+    /// An image of the backend could not be loaded from the package or pulled by its digest; <c>params.image</c> is the
+    /// reference of the Compose file.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string AppImageUnavailable = "app.image.unavailable";
+
+    /// <summary>
+    /// An image the box loaded or pulled has another id than <c>backend/images.lock.json</c> names; <c>params.image</c> is
+    /// the reference. The box refuses to run it.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppImageMismatch = "app.image.mismatch";
 
     /// <summary>A schedule's <c>cron</c> is not five valid fields; <c>params.path</c> and <c>params.cron</c> name it.</summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
@@ -205,6 +237,14 @@ public static class ErrorCodes
     /// </summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string AppPackageLayoutInvalid = "app.package.layout_invalid";
+
+    /// <summary>
+    /// <c>backend/images.lock.json</c> does not fit: <c>params.reason</c> is <c>missing</c> (no lock), <c>invalid</c> (not a
+    /// lock of version 1), <c>stale</c> (it does not list exactly the Compose file's images) or <c>platform</c> (an image
+    /// has nothing for this box's architecture, <c>params.architecture</c>).
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppPackageLockInvalid = "app.package.lock_invalid";
 
     /// <summary>
     /// The checked package is gone: it expired 15 minutes after the upload, it was installed or discarded, another
