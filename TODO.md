@@ -576,7 +576,8 @@ Updates and settings (D329):
 #### S4 Catalog template and the project's catalogs (W5b, W5c)
 
 - [ ] `pithyx/catalog-template` (private, like D326): an English README (what a catalog is, layout and branches, submitting an app, what CI does and why build and publish are separate, promote and signing, making an own catalog, adding it to a box, private catalogs with a deploy key, the channels), `CONTRIBUTING.md`, a pull request template, `catalog.json`, an example app, and the workflows check, publish and promote with actions pinned by SHA.
-- [ ] `pithyx/apps-official` and `pithyx/apps-community` from the template, after the owner's go; the first entry chosen by the owner.
+- [ ] `pithyx/apps-official` and `pithyx/apps-community` from the template, after the owner's go; both start empty. The templates (blank, showcase, chat), the E2E probe and the SDK demo are examples and tests, never catalog entries: they stay sideloads.
+- [ ] A private test catalog `pithyx/catalog-test` from the template, with the chat template as its app, for the proof and the deploy key path.
 - [ ] Owner: the Ed25519 keys `catalog` and `next` in the environments (public keys into the daemon), `catalog-release` with a required review, the GHCR packages public.
 
 #### S5 Store app (W5c)
@@ -586,7 +587,7 @@ Updates and settings (D329):
 #### S6 Templates and proof (W5c)
 
 - [ ] The templates' READMEs describe both ways (a catalog pull request, the project builds; a sideload with `pithyx build` and `pack --images`); app-chat drops "publish-image" and `scripts/pin-image.ts`, its `FROM` is pinned by digest and its CI turns green.
-- [ ] Done when on 7484 (beta channel) `e2e-admin` installs an app from `apps-official`, `e2e-user` uses it, a newer version installs automatically at the set check time, the rollback restores the previous version with its data, and a private catalog with a deploy key syncs; E2E covers the tabs, the settings and a catalog install against a local test catalog; `CHANGELOG.md` updated.
+- [ ] Done when on 7484 `e2e-admin` adds the private test catalog with its deploy key, installs the chat from it, `e2e-user` uses it, a newer version installs automatically at the set check time, the rollback restores the previous version with its data, and a signed `catalog-next` of `apps-official` syncs on the beta channel (empty is fine); E2E covers the tabs, the settings and a catalog install against a local test catalog; `CHANGELOG.md` updated.
 
 ---
 
