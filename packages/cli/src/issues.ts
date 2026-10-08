@@ -23,6 +23,7 @@ export interface Issue {
     | 'app.icon.invalid'
     | 'app.package.invalid'
     | 'app.package.layout_invalid'
+    | 'store.package.hash_mismatch'
     | 'store.catalog.invalid_json'
     | 'store.catalog.version_unsupported'
     | 'store.catalog.schema_violation'

@@ -5,7 +5,7 @@ import type { AppManifest } from '@pithyx/sdk';
 import { stringify } from 'yaml';
 import { run } from '../docker';
 
-/** A Compose file next to the app's own that `pithyx dev` adds when it exists, for `build:` and the like. */
+/** The backend's source form with `build:` (D330); `pithyx dev` runs it instead of the pinned file when it exists. */
 export const DEV_COMPOSE_FILE = 'backend/compose.dev.yaml';
 
 /** The Compose project of an app under `pithyx dev`; the box names its own `pithyx-<id with _>`. */
@@ -38,8 +38,8 @@ export interface DevBackend {
 }
 
 /**
- * Starts the backend with `docker compose up --wait` (the app's Compose file, `backend/compose.dev.yaml` when it
- * exists, and the port override), and finds the published port of every endpoint. `stop` runs `docker compose down`
+ * Starts the backend with `docker compose up --wait --build` (the source form `backend/compose.dev.yaml` when it
+ * exists, else the app's pinned Compose file, plus the port override), and finds the published port of every endpoint. `stop` runs `docker compose down`
  * and keeps the volumes.
  */
 export async function startBackend(root: string, manifest: AppManifest): Promise<DevBackend> {
@@ -50,11 +50,12 @@ export async function startBackend(root: string, manifest: AppManifest): Promise
   const folder = mkdtempSync(join(tmpdir(), 'pithyx-dev-'));
   const override = join(folder, 'compose.ports.yaml');
   writeFileSync(override, endpointOverride(backend.endpoints));
-  const files = [join(root, backend.compose)];
-  if (existsSync(join(root, DEV_COMPOSE_FILE))) {
-    files.push(join(root, DEV_COMPOSE_FILE));
-  }
-  files.push(override);
+  const files = [
+    existsSync(join(root, DEV_COMPOSE_FILE))
+      ? join(root, DEV_COMPOSE_FILE)
+      : join(root, backend.compose),
+    override,
+  ];
   const compose = [
     'compose',
     '--project-name',

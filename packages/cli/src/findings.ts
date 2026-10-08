@@ -1,4 +1,4 @@
-import { app as boxTexts } from '../../../i18n/en/errors.json' with { type: 'json' };
+import { app, store } from '../../../i18n/en/errors.json' with { type: 'json' };
 import { IntlMessageFormat } from 'intl-messageformat';
 import type { Issue } from './issues';
 
@@ -50,7 +50,7 @@ export function describe(finding: Pick<Finding, 'code' | 'params'>): string {
   const text =
     finding.code in cliTexts
       ? cliTexts[finding.code as CliCode]
-      : lookup(boxTexts, finding.code.split('.').slice(1));
+      : lookup({ app, store }, finding.code.split('.'));
   if (text === undefined) {
     return `${finding.code} ${JSON.stringify(finding.params)}`;
   }
