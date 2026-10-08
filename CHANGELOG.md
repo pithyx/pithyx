@@ -197,6 +197,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- `@pithyx/ui` builds its CSS module types before its declarations, so `pnpm --filter @pithyx/ui build` from a fresh checkout no longer reports TS2375 errors (the generic `*.module.css` type gave `string | undefined` class names).
 - The parallel type check no longer fails at random: `tools/css-module-types.ts` replaces each CSS Module declaration atomically instead of deleting the folder first, so one package never reads the other's declarations while they are missing.
 - Signing in over plain HTTP works with the production build: the session cookie is `Secure` only on HTTPS requests.
 - Checkboxes on a long, scrolled settings page no longer scroll the whole window out of sight when they get the focus (the backup page went white after unchecking a part). The backup file is chosen with a Pithyx button that shows the file name instead of the browser's file field.
