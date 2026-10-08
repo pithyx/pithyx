@@ -1,0 +1,1185 @@
+{
+  "$comment": "Pull request cases for catalog.v1.rules.json. Each case starts from the app in base/ in the folder apps/<folder>/ (default com.example.notes) of a catalog (default org.pithyx.community), by the author jan-dev (default). `manifest` sets top-level fields of base/pithyx.json (null removes one) and writes it with two spaces of indent. `files` replaces files of the folder (null removes one) with `text`, `base64`, `fixture` (a path under sdk/schema/fixtures), `lines` (count lines of width times the letter a, each ending in a line feed) or `bytes` (the hex, then zeros up to size). `changed` is every file of the folder unless the case names it; `alsoChanged` adds paths. `published` and `maintainers` are the catalog's published versions and the app's maintainers.json before the pull request (absent: a new app). `expected` lists every issue, in any order.",
+  "cases": [
+    {
+      "name": "a new app",
+      "expected": []
+    },
+    {
+      "name": "an update by a maintainer",
+      "published": [
+        "1.0.0"
+      ],
+      "maintainers": [
+        "Jan-Dev"
+      ],
+      "expected": []
+    },
+    {
+      "name": "the official catalog may use org.pithyx",
+      "catalog": "org.pithyx.official",
+      "folder": "org.pithyx.notes",
+      "manifest": {
+        "id": "org.pithyx.notes"
+      },
+      "expected": []
+    },
+    {
+      "name": "org.pithyx in the community catalog",
+      "folder": "org.pithyx.notes",
+      "manifest": {
+        "id": "org.pithyx.notes"
+      },
+      "expected": [
+        {
+          "code": "app.manifest.id_reserved",
+          "params": {
+            "id": "org.pithyx.notes"
+          }
+        }
+      ]
+    },
+    {
+      "name": "two apps",
+      "alsoChanged": [
+        "apps/com.example.chat/pithyx.json"
+      ],
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "one_app",
+            "path": "apps/com.example.chat"
+          }
+        },
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "one_app",
+            "path": "apps/com.example.notes"
+          }
+        }
+      ]
+    },
+    {
+      "name": "a file outside apps",
+      "alsoChanged": [
+        "README.md",
+        "apps/README.md"
+      ],
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "one_app",
+            "path": "README.md"
+          }
+        },
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "one_app",
+            "path": "apps/README.md"
+          }
+        }
+      ]
+    },
+    {
+      "name": "nothing in apps",
+      "changed": [
+        ".github/workflows/check.yml"
+      ],
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "one_app",
+            "path": ".github/workflows/check.yml"
+          }
+        }
+      ]
+    },
+    {
+      "name": "a deleted file",
+      "alsoChanged": [
+        "apps/com.example.notes/old-notes.md"
+      ],
+      "expected": []
+    },
+    {
+      "name": "folder differs from the id",
+      "folder": "com.example.notepad",
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "folder_id",
+            "path": "apps/com.example.notepad/pithyx.json",
+            "id": "com.example.notes"
+          }
+        }
+      ]
+    },
+    {
+      "name": "no license in the manifest",
+      "manifest": {
+        "license": null
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "manifest_field",
+            "path": "apps/com.example.notes/pithyx.json",
+            "field": "license"
+          }
+        }
+      ]
+    },
+    {
+      "name": "no pithyx range",
+      "manifest": {
+        "pithyx": null
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "manifest_field",
+            "path": "apps/com.example.notes/pithyx.json",
+            "field": "pithyx"
+          }
+        }
+      ]
+    },
+    {
+      "name": "a license that is not OSI approved",
+      "manifest": {
+        "license": "BUSL-1.1"
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "license",
+            "path": "apps/com.example.notes/pithyx.json",
+            "license": "BUSL-1.1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "a license expression",
+      "manifest": {
+        "license": "(MIT OR Apache-2.0) AND GPL-2.0-or-later WITH Classpath-exception-2.0"
+      },
+      "expected": []
+    },
+    {
+      "name": "license ids ignore case",
+      "manifest": {
+        "license": "mit OR apache-2.0"
+      },
+      "expected": []
+    },
+    {
+      "name": "a license reference",
+      "manifest": {
+        "license": "LicenseRef-Proprietary"
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "license",
+            "path": "apps/com.example.notes/pithyx.json",
+            "license": "LicenseRef-Proprietary"
+          }
+        }
+      ]
+    },
+    {
+      "name": "an incomplete license expression",
+      "manifest": {
+        "license": "MIT OR"
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "license",
+            "path": "apps/com.example.notes/pithyx.json",
+            "license": "MIT OR"
+          }
+        }
+      ]
+    },
+    {
+      "name": "a lower case operator",
+      "manifest": {
+        "license": "MIT or Apache-2.0"
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "license",
+            "path": "apps/com.example.notes/pithyx.json",
+            "license": "MIT or Apache-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "name": "an unknown exception",
+      "manifest": {
+        "license": "GPL-2.0-only WITH Custom-exception"
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "license",
+            "path": "apps/com.example.notes/pithyx.json",
+            "license": "GPL-2.0-only WITH Custom-exception"
+          }
+        }
+      ]
+    },
+    {
+      "name": "an unbalanced parenthesis",
+      "manifest": {
+        "license": "(MIT OR Apache-2.0"
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "license",
+            "path": "apps/com.example.notes/pithyx.json",
+            "license": "(MIT OR Apache-2.0"
+          }
+        }
+      ]
+    },
+    {
+      "name": "a version already published",
+      "published": [
+        "1.0.0",
+        "1.1.0"
+      ],
+      "maintainers": [
+        "jan-dev"
+      ],
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "version_not_higher",
+            "path": "apps/com.example.notes/pithyx.json",
+            "version": "1.1.0",
+            "published": "1.1.0"
+          }
+        }
+      ]
+    },
+    {
+      "name": "a release after its prerelease",
+      "published": [
+        "1.1.0-rc.1"
+      ],
+      "maintainers": [
+        "jan-dev"
+      ],
+      "expected": []
+    },
+    {
+      "name": "below a published prerelease",
+      "published": [
+        "1.0.0",
+        "1.2.0-beta.1"
+      ],
+      "maintainers": [
+        "jan-dev"
+      ],
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "version_not_higher",
+            "path": "apps/com.example.notes/pithyx.json",
+            "version": "1.1.0",
+            "published": "1.2.0-beta.1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "numeric order of versions",
+      "published": [
+        "1.0.10",
+        "1.0.9"
+      ],
+      "maintainers": [
+        "jan-dev"
+      ],
+      "manifest": {
+        "version": "1.0.11"
+      },
+      "expected": []
+    },
+    {
+      "name": "not a maintainer",
+      "published": [
+        "1.0.0"
+      ],
+      "maintainers": [
+        "someone-else"
+      ],
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "maintainer",
+            "author": "jan-dev"
+          }
+        }
+      ]
+    },
+    {
+      "name": "a new app that does not name its author",
+      "files": {
+        "maintainers.json": {
+          "text": "{\n  \"maintainers\": [\"someone-else\"]\n}\n"
+        }
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "maintainer",
+            "author": "jan-dev"
+          }
+        }
+      ]
+    },
+    {
+      "name": "an invalid maintainers file",
+      "files": {
+        "maintainers.json": {
+          "text": "{\n  \"maintainers\": \"jan-dev\"\n}\n"
+        }
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "maintainers_invalid",
+            "path": "apps/com.example.notes/maintainers.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "a maintainer may fix the file",
+      "published": [
+        "1.0.0"
+      ],
+      "maintainers": [
+        "jan-dev"
+      ],
+      "files": {
+        "maintainers.json": {
+          "text": "{ \"maintainers\": [] }\n"
+        }
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "maintainers_invalid",
+            "path": "apps/com.example.notes/maintainers.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "required files missing",
+      "files": {
+        "LICENSE": null,
+        "icon.svg": null,
+        "maintainers.json": null
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "required_file",
+            "path": "apps/com.example.notes/icon.svg"
+          }
+        },
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "required_file",
+            "path": "apps/com.example.notes/maintainers.json"
+          }
+        },
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "required_file",
+            "path": "apps/com.example.notes/LICENSE"
+          }
+        }
+      ]
+    },
+    {
+      "name": "LICENSE.md is a license file",
+      "files": {
+        "LICENSE": null,
+        "LICENSE.md": {
+          "text": "# MIT License\n"
+        }
+      },
+      "expected": []
+    },
+    {
+      "name": "no manifest",
+      "files": {
+        "pithyx.json": null
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "required_file",
+            "path": "apps/com.example.notes/pithyx.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "an invalid manifest",
+      "manifest": {
+        "color": "red",
+        "license": "BUSL-1.1"
+      },
+      "expected": [
+        {
+          "code": "app.manifest.schema_violation",
+          "params": {
+            "path": "/color",
+            "keyword": "additionalProperties"
+          }
+        }
+      ]
+    },
+    {
+      "name": "a frontend only app",
+      "manifest": {
+        "backend": null
+      },
+      "files": {
+        "backend/compose.dev.yaml": null,
+        "backend/server/Dockerfile": null,
+        "backend/server/package.json": null,
+        "backend/server/index.js": null
+      },
+      "expected": []
+    },
+    {
+      "name": "no compose.dev.yaml",
+      "files": {
+        "backend/compose.dev.yaml": null
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "required_file",
+            "path": "apps/com.example.notes/backend/compose.dev.yaml"
+          }
+        }
+      ]
+    },
+    {
+      "name": "the pinned compose.yaml only",
+      "files": {
+        "backend/compose.dev.yaml": null,
+        "backend/compose.yaml": {
+          "text": "services:\n  server:\n    image: ghcr.io/example/notes:1.1.0@sha256:3fab5c181bd28a09b64397df76ae2bfaf1eac182979b5fdb7a342858004f36af\n"
+        }
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "required_file",
+            "path": "apps/com.example.notes/backend/compose.dev.yaml"
+          }
+        }
+      ]
+    },
+    {
+      "name": "the source form follows backend.compose",
+      "manifest": {
+        "backend": {
+          "compose": "backend/app.yml",
+          "endpoints": {
+            "api": {
+              "service": "server",
+              "port": 8080
+            }
+          },
+          "lifecycle": "always"
+        }
+      },
+      "files": {
+        "backend/compose.dev.yaml": null,
+        "backend/app.dev.yml": {
+          "text": "services:\n  server:\n    build: ./server\n"
+        }
+      },
+      "expected": []
+    },
+    {
+      "name": "an invalid compose.dev.yaml",
+      "files": {
+        "backend/compose.dev.yaml": {
+          "text": "services:\n  server:\n    build: ./server\n    ports:\n      - 8080:8080\n"
+        }
+      },
+      "expected": [
+        {
+          "code": "app.compose.key_unsupported",
+          "params": {
+            "path": "/services/server/ports",
+            "key": "ports"
+          }
+        }
+      ]
+    },
+    {
+      "name": "an unpinned FROM",
+      "files": {
+        "backend/server/Dockerfile": {
+          "text": "FROM node:24-alpine AS build\nCOPY . .\n"
+        }
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "unpinned",
+            "path": "apps/com.example.notes/backend/server/Dockerfile",
+            "line": 1,
+            "image": "node:24-alpine"
+          }
+        }
+      ]
+    },
+    {
+      "name": "a FROM with a variable",
+      "files": {
+        "backend/server/Dockerfile": {
+          "text": "ARG NODE=24\nFROM node:${NODE}@sha256:3fab5c181bd28a09b64397df76ae2bfaf1eac182979b5fdb7a342858004f36af\n"
+        }
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "unpinned",
+            "path": "apps/com.example.notes/backend/server/Dockerfile",
+            "line": 2,
+            "image": "node:${NODE}@sha256:3fab5c181bd28a09b64397df76ae2bfaf1eac182979b5fdb7a342858004f36af"
+          }
+        }
+      ]
+    },
+    {
+      "name": "COPY from an image",
+      "files": {
+        "backend/server/Dockerfile": {
+          "text": "FROM node:24@sha256:3fab5c181bd28a09b64397df76ae2bfaf1eac182979b5fdb7a342858004f36af AS build\nCOPY --chown=1000 --from=nginx:1.27 /etc/nginx/nginx.conf /etc/nginx/\nCOPY --from=build /app /app\n"
+        }
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "unpinned",
+            "path": "apps/com.example.notes/backend/server/Dockerfile",
+            "line": 2,
+            "image": "nginx:1.27"
+          }
+        }
+      ]
+    },
+    {
+      "name": "a FROM over two lines",
+      "files": {
+        "backend/server/Dockerfile": {
+          "text": "# a comment\n\nFROM --platform=$BUILDPLATFORM \\\n  # comments do not end it\n  node:24 AS build\n"
+        }
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "unpinned",
+            "path": "apps/com.example.notes/backend/server/Dockerfile",
+            "line": 3,
+            "image": "node:24"
+          }
+        }
+      ]
+    },
+    {
+      "name": "stages and scratch",
+      "files": {
+        "backend/server/Dockerfile": {
+          "text": "FROM node:24@sha256:3fab5c181bd28a09b64397df76ae2bfaf1eac182979b5fdb7a342858004f36af AS Build\nRUN echo build\nfrom scratch\nCOPY --from=0 /app /app\nCOPY --from=build /app /app2\nFROM BUILD\n"
+        }
+      },
+      "expected": []
+    },
+    {
+      "name": "COPY from a later stage number",
+      "files": {
+        "backend/server/Dockerfile": {
+          "text": "FROM node:24@sha256:3fab5c181bd28a09b64397df76ae2bfaf1eac182979b5fdb7a342858004f36af\nCOPY --from=1 /app /app\n"
+        }
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "unpinned",
+            "path": "apps/com.example.notes/backend/server/Dockerfile",
+            "line": 2,
+            "image": "1"
+          }
+        }
+      ]
+    },
+    {
+      "name": "the escape directive",
+      "files": {
+        "backend/server/Dockerfile": {
+          "text": "# escape=`\nFROM node:24 `\n  AS build\n"
+        }
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "unpinned",
+            "path": "apps/com.example.notes/backend/server/Dockerfile",
+            "line": 2,
+            "image": "node:24"
+          }
+        }
+      ]
+    },
+    {
+      "name": "line breaks of another system",
+      "files": {
+        "backend/server/Dockerfile.prod": {
+          "text": "FROM node:24\r\nCMD [\"node\"]\r\n"
+        }
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "unpinned",
+            "path": "apps/com.example.notes/backend/server/Dockerfile.prod",
+            "line": 1,
+            "image": "node:24"
+          }
+        }
+      ]
+    },
+    {
+      "name": "a FROM without image",
+      "files": {
+        "backend/server/worker.Dockerfile": {
+          "text": "FROM\n"
+        }
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "unpinned",
+            "path": "apps/com.example.notes/backend/server/worker.Dockerfile",
+            "line": 1,
+            "image": ""
+          }
+        }
+      ]
+    },
+    {
+      "name": "a binary file",
+      "files": {
+        "src/data.json": {
+          "base64": "eyJhIjoAfQ=="
+        }
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "binary",
+            "path": "apps/com.example.notes/src/data.json"
+          }
+        }
+      ]
+    },
+    {
+      "name": "text that is not UTF-8",
+      "files": {
+        "src/notes.txt": {
+          "base64": "R3L832UK"
+        }
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "binary",
+            "path": "apps/com.example.notes/src/notes.txt"
+          }
+        }
+      ]
+    },
+    {
+      "name": "minified by name",
+      "files": {
+        "src/vendor.min.js": {
+          "text": "var a=1;\n"
+        }
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "minified",
+            "path": "apps/com.example.notes/src/vendor.min.js"
+          }
+        }
+      ]
+    },
+    {
+      "name": "a long line",
+      "files": {
+        "src/bundle.js": {
+          "lines": {
+            "count": 3,
+            "width": 1001
+          }
+        }
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "minified",
+            "path": "apps/com.example.notes/src/bundle.js",
+            "line": 1
+          }
+        }
+      ]
+    },
+    {
+      "name": "a line at the limit",
+      "files": {
+        "src/table.ts": {
+          "lines": {
+            "count": 2,
+            "width": 1000
+          }
+        }
+      },
+      "expected": []
+    },
+    {
+      "name": "long lines in SVG",
+      "files": {
+        "assets/logo.svg": {
+          "lines": {
+            "count": 1,
+            "width": 4000
+          }
+        }
+      },
+      "expected": []
+    },
+    {
+      "name": "an unknown file type",
+      "files": {
+        "bin/tool.exe": {
+          "base64": "TVqQAA=="
+        },
+        "assets/font.ttf": {
+          "text": "font"
+        }
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "file_type",
+            "path": "apps/com.example.notes/assets/font.ttf"
+          }
+        },
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "file_type",
+            "path": "apps/com.example.notes/bin/tool.exe"
+          }
+        }
+      ]
+    },
+    {
+      "name": "a file without extension",
+      "files": {
+        "scripts/run": {
+          "text": "#!/bin/sh\n"
+        }
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "file_type",
+            "path": "apps/com.example.notes/scripts/run"
+          }
+        }
+      ]
+    },
+    {
+      "name": "hidden files",
+      "files": {
+        ".env": {
+          "text": "TOKEN=x\n"
+        },
+        ".github/workflows/build.yml": {
+          "text": "on: push\n"
+        }
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "file_type",
+            "path": "apps/com.example.notes/.env"
+          }
+        },
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "file_type",
+            "path": "apps/com.example.notes/.github/workflows/build.yml"
+          }
+        }
+      ]
+    },
+    {
+      "name": "allowed hidden names",
+      "files": {
+        "backend/server/.dockerignore": {
+          "text": "node_modules\n"
+        },
+        ".editorconfig": {
+          "text": "root = true\n"
+        }
+      },
+      "expected": []
+    },
+    {
+      "name": "media that is not what it says",
+      "files": {
+        "screenshots/main.png": {
+          "text": "not a png\n"
+        }
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "media",
+            "path": "apps/com.example.notes/screenshots/main.png"
+          }
+        }
+      ]
+    },
+    {
+      "name": "media in the frontend",
+      "files": {
+        "public/logo.webp": {
+          "bytes": {
+            "hex": "524946460000000057454250",
+            "size": 64
+          }
+        },
+        "public/font.woff2": {
+          "bytes": {
+            "hex": "774f4632",
+            "size": 32
+          }
+        },
+        "public/photo.jpeg": {
+          "bytes": {
+            "hex": "ffd8ffe0",
+            "size": 16
+          }
+        },
+        "public/anim.gif": {
+          "base64": "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
+        }
+      },
+      "expected": []
+    },
+    {
+      "name": "a screenshot of another type",
+      "files": {
+        "screenshots/notes.gif": {
+          "base64": "R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAICRAEAOw=="
+        }
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "screenshot",
+            "path": "apps/com.example.notes/screenshots/notes.gif"
+          }
+        }
+      ]
+    },
+    {
+      "name": "a screenshot with upper case",
+      "files": {
+        "screenshots/Main.png": {
+          "base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+        }
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "screenshot",
+            "path": "apps/com.example.notes/screenshots/Main.png"
+          }
+        }
+      ]
+    },
+    {
+      "name": "a screenshot in a folder",
+      "files": {
+        "screenshots/dark/main.png": {
+          "base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+        }
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "screenshot",
+            "path": "apps/com.example.notes/screenshots/dark/main.png"
+          }
+        }
+      ]
+    },
+    {
+      "name": "a screenshot too large",
+      "files": {
+        "screenshots/big.png": {
+          "bytes": {
+            "hex": "89504e470d0a1a0a",
+            "size": 1048577
+          }
+        }
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "screenshot",
+            "path": "apps/com.example.notes/screenshots/big.png"
+          }
+        }
+      ]
+    },
+    {
+      "name": "a screenshot at the limit",
+      "files": {
+        "screenshots/big.png": {
+          "bytes": {
+            "hex": "89504e470d0a1a0a",
+            "size": 1048576
+          }
+        }
+      },
+      "expected": []
+    },
+    {
+      "name": "too many screenshots",
+      "files": {
+        "screenshots/1.png": {
+          "base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+        },
+        "screenshots/2.png": {
+          "base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+        },
+        "screenshots/3.png": {
+          "base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+        },
+        "screenshots/4.png": {
+          "base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+        },
+        "screenshots/5.png": {
+          "base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+        },
+        "screenshots/6.png": {
+          "base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+        },
+        "screenshots/7.png": {
+          "base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+        },
+        "screenshots/8.png": {
+          "base64": "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+        }
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "screenshots",
+            "path": "apps/com.example.notes/screenshots",
+            "limit": 8
+          }
+        }
+      ]
+    },
+    {
+      "name": "an app too large",
+      "files": {
+        "assets/data.txt": {
+          "lines": {
+            "count": 70000,
+            "width": 79
+          }
+        }
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "app_size",
+            "path": "apps/com.example.notes",
+            "limit": 5242880
+          }
+        }
+      ]
+    },
+    {
+      "name": "an invalid icon",
+      "files": {
+        "icon.svg": {
+          "fixture": "icon/invalid/script.svg"
+        }
+      },
+      "expected": [
+        {
+          "code": "app.icon.invalid",
+          "params": {
+            "reason": "element_forbidden",
+            "element": "script"
+          }
+        }
+      ]
+    },
+    {
+      "name": "several rules at once",
+      "folder": "com.example.notepad",
+      "published": [
+        "2.0.0"
+      ],
+      "maintainers": [
+        "someone-else"
+      ],
+      "manifest": {
+        "license": "Proprietary"
+      },
+      "alsoChanged": [
+        "catalog.json"
+      ],
+      "files": {
+        "LICENSE": null,
+        "notes.docx": {
+          "text": "x"
+        }
+      },
+      "expected": [
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "one_app",
+            "path": "catalog.json"
+          }
+        },
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "required_file",
+            "path": "apps/com.example.notepad/LICENSE"
+          }
+        },
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "file_type",
+            "path": "apps/com.example.notepad/notes.docx"
+          }
+        },
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "folder_id",
+            "path": "apps/com.example.notepad/pithyx.json",
+            "id": "com.example.notes"
+          }
+        },
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "license",
+            "path": "apps/com.example.notepad/pithyx.json",
+            "license": "Proprietary"
+          }
+        },
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "version_not_higher",
+            "path": "apps/com.example.notepad/pithyx.json",
+            "version": "1.1.0",
+            "published": "2.0.0"
+          }
+        },
+        {
+          "code": "store.catalog.rule_violation",
+          "params": {
+            "rule": "maintainer",
+            "author": "jan-dev"
+          }
+        }
+      ]
+    }
+  ]
+}

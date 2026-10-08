@@ -1,0 +1,8 @@
+{
+  "invalid/id-reserved.json": {
+    "allowReservedId": false
+  },
+  "valid/official.json": {
+    "allowReservedId": true
+  }
+}

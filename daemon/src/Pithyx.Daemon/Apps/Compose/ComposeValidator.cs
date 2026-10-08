@@ -25,8 +25,12 @@ public static partial class ComposeValidator
 
     internal static ComposeRules Rules => _rules.Value;
 
-    /// <summary>Validates the bytes of a Compose file for a manifest that <see cref="ManifestValidator"/> accepted.</summary>
-    public static ComposeValidationResult Validate(ReadOnlySpan<byte> utf8, JsonElement manifest)
+    /// <summary>
+    /// Validates the bytes of a Compose file for a manifest that <see cref="ManifestValidator"/> accepted. With
+    /// <paramref name="dev"/> the file is the source form <c>backend/compose.dev.yaml</c> of <c>pithyx build</c>, where a
+    /// service has <c>build</c> instead of <c>image</c> (<c>dev</c> in the rules); the box itself never reads that form.
+    /// </summary>
+    public static ComposeValidationResult Validate(ReadOnlySpan<byte> utf8, JsonElement manifest, bool dev = false)
     {
         var rules = _rules.Value;
         var (root, yamlIssues) = ComposeYaml.Read(utf8, (int)rules.Limit("fileBytes"), (int)rules.Limit("depth"));
@@ -34,8 +38,15 @@ public static partial class ComposeValidator
         {
             return new ComposeValidationResult(yamlIssues, null);
         }
-        var issues = new Checker(rules, manifest).Check(root);
+        var issues = new Checker(rules, manifest, dev).Check(root);
         return new ComposeValidationResult(issues, issues.Count == 0 ? (ComposeMap)root : null);
+    }
+
+    /// <summary>The source form next to a manifest's <c>backend.compose</c>: <c>backend/compose.yaml</c> gives <c>backend/compose.dev.yaml</c>.</summary>
+    public static string DevComposePath(string compose)
+    {
+        var dot = compose.LastIndexOf('.');
+        return $"{compose[..dot]}.dev{compose[dot..]}";
     }
 
     private sealed record Reference(string Name, string Path);
@@ -54,8 +65,9 @@ public static partial class ComposeValidator
         public List<Reference> DependsOn { get; } = [];
     }
 
-    private sealed class Checker(ComposeRules rules, JsonElement manifest)
+    private sealed class Checker(ComposeRules rules, JsonElement manifest, bool dev)
     {
+        private readonly IReadOnlyDictionary<string, KeyRule> _serviceRules = dev ? rules.DevService : rules.Service;
         private readonly List<ValidationIssue> _issues = [];
         private readonly List<Reference> _rights = [];
         private readonly HashSet<string> _declaredVolumes = new(StringComparer.Ordinal);
@@ -176,7 +188,7 @@ public static partial class ComposeValidator
             foreach (var (key, value) in node.Entries)
             {
                 var keyPath = Child(path, key);
-                if (!rules.Service.TryGetValue(key, out var rule))
+                if (!_serviceRules.TryGetValue(key, out var rule))
                 {
                     Unsupported(keyPath, key);
                     continue;
@@ -185,6 +197,9 @@ public static partial class ComposeValidator
                 {
                     case "image":
                         Image(value, keyPath);
+                        break;
+                    case "build":
+                        Build(value, keyPath);
                         break;
                     case "command":
                         Command(value, keyPath);
@@ -221,7 +236,30 @@ public static partial class ComposeValidator
                         break;
                 }
             }
-            Required(node, path, rules.Service);
+            if (dev && node.Get("build") is not null)
+            {
+                if (node.Get("image") is not null)
+                {
+                    Invalid(Child(path, "build"), "image_and_build");
+                }
+            }
+            else
+            {
+                Required(node, path, _serviceRules);
+            }
+        }
+
+        /// <summary><c>build</c> of the source form: a folder next to the file, or <c>context</c> with options.</summary>
+        private void Build(ComposeNode node, string path)
+        {
+            if (node is ComposeMap)
+            {
+                Object(node, path, rules.DevBuildKeys);
+            }
+            else
+            {
+                Value(node, path, rules.DevBuildKeys["context"]);
+            }
         }
 
         private bool Required(ComposeMap node, string path, IReadOnlyDictionary<string, KeyRule> keys)
@@ -303,6 +341,9 @@ public static partial class ComposeValidator
                     return Object(node, path, rule.Keys ?? new Dictionary<string, KeyRule>());
                 case "healthTest":
                     return HealthTest(node, path);
+                case "buildArgs":
+                    KeyValues(node, path, environment: true);
+                    return node;
                 default:
                     throw new InvalidOperationException($"Unknown rule type {rule.Type}.");
             }
@@ -1126,6 +1167,14 @@ internal sealed class ComposeRules
             StringComparer.Ordinal);
         Top = KeyRules(root.GetProperty("top"));
         Service = KeyRules(root.GetProperty("service"));
+        var dev = root.GetProperty("dev");
+        var devService = new Dictionary<string, KeyRule>(Service, StringComparer.Ordinal);
+        foreach (var (key, rule) in KeyRules(dev.GetProperty("service")))
+        {
+            devService[key] = rule;
+        }
+        DevService = devService;
+        DevBuildKeys = KeyRules(dev.GetProperty("build").GetProperty("keys"));
         var mount = root.GetProperty("mount");
         MountKeys = KeyRules(mount.GetProperty("keys"));
         ReservedTargets = Strings(mount.GetProperty("reservedTargets"));
@@ -1141,6 +1190,11 @@ internal sealed class ComposeRules
     public IReadOnlyDictionary<string, KeyRule> Top { get; }
 
     public IReadOnlyDictionary<string, KeyRule> Service { get; }
+
+    /// <summary>The service keys of the source form <c>compose.dev.yaml</c>: <see cref="Service"/> plus <c>build</c>.</summary>
+    public IReadOnlyDictionary<string, KeyRule> DevService { get; }
+
+    public IReadOnlyDictionary<string, KeyRule> DevBuildKeys { get; }
 
     public IReadOnlyDictionary<string, KeyRule> MountKeys { get; }
 

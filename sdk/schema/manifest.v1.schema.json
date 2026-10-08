@@ -61,10 +61,18 @@
       "pattern": "^frontend/([A-Za-z0-9_][A-Za-z0-9._-]*/)*[A-Za-z0-9_][A-Za-z0-9._-]*\\.html$"
     },
     "sdk": {
-      "description": "SemVer range of `@pithyx/sdk` the app was built against, for example `^1.0.0`. The npm range syntax without the loose forms: comparators (`^`, `~`, `>`, `>=`, `<`, `<=`, `=`), `x` and `*` wildcards, hyphen ranges with spaces around the dash, sets joined by ` || `.",
-      "type": "string",
-      "maxLength": 100,
-      "pattern": "^(([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?)?)? - ([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?)?)?|([~^]|[<>]=?|=)?([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?)?)?( ([~^]|[<>]=?|=)?([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?)?)?)*)( \\|\\| (([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?)?)? - ([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?)?)?|([~^]|[<>]=?|=)?([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?)?)?( ([~^]|[<>]=?|=)?([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?)?)?)*))*$"
+      "$ref": "#/$defs/VersionRange",
+      "description": "SemVer range of `@pithyx/sdk` the app was built against, for example `^1.0.0`."
+    },
+    "pithyx": {
+      "$ref": "#/$defs/VersionRange",
+      "description": "SemVer range of the Pithyx versions the app runs on, for example `>=0.1.0`. Optional; without it the app claims to run on every version. A box installs a version only when its own version is in the range, and lists a catalog version only then. Unlike npm, a box running a prerelease matches by plain SemVer precedence, so `>=0.1.0` includes `0.2.0-beta.1`, while `^0.1.0` does not (it ends below `0.2.0-0`). Catalogs require it."
+    },
+    "dataVersion": {
+      "description": "The version of the format of the app's stored data (volumes, its stored values and the files of its storage requests), an integer from 1. Optional. Raise it with every release that converts data in a way the previous version cannot read. A box goes back to an older version from a catalog only when both declare the same `dataVersion`; going back to the version before an update with its snapshot works without it.",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 2147483647
     },
     "permissions": {
       "description": "The permissions the app asks for. Each one appears in the install dialog and can be revoked later.",
@@ -98,6 +106,12 @@
     }
   },
   "$defs": {
+    "VersionRange": {
+      "description": "A SemVer range in the npm range syntax without the loose forms: comparators (`^`, `~`, `>`, `>=`, `<`, `<=`, `=`), `x` and `*` wildcards, hyphen ranges with spaces around the dash, sets joined by ` || `.",
+      "type": "string",
+      "maxLength": 100,
+      "pattern": "^(([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?)?)? - ([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?)?)?|([~^]|[<>]=?|=)?([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?)?)?( ([~^]|[<>]=?|=)?([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?)?)?)*)( \\|\\| (([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?)?)? - ([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?)?)?|([~^]|[<>]=?|=)?([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?)?)?( ([~^]|[<>]=?|=)?([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(\\.([xX*]|0|[1-9][0-9]*)(-(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*)(\\.(0|[1-9][0-9]*|[0-9]*[A-Za-z-][0-9A-Za-z-]*))*)?)?)?)*))*$"
+    },
     "AppId": {
       "title": "AppId",
       "description": "The author's domain reversed plus the app name: 3 to 5 parts of lowercase letters, digits and dashes, at most 100 characters, for example `com.mueller.chat` or `io.github.jan.chat` (D302). Unique per box. `org.pithyx.*` is reserved for the system apps and the official catalog.",

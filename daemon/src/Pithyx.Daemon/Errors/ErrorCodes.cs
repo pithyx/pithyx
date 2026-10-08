@@ -194,6 +194,10 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string AppManifestSchemaViolation = "app.manifest.schema_violation";
 
+    /// <summary>The manifest's <c>pithyx</c> is not a SemVer range; <c>params.pithyx</c> is the value.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppManifestPithyxInvalid = "app.manifest.pithyx_invalid";
+
     /// <summary>The manifest's <c>sdk</c> is not a SemVer range; <c>params.sdk</c> is the value.</summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string AppManifestSdkInvalid = "app.manifest.sdk_invalid";
@@ -868,6 +872,79 @@ public static class ErrorCodes
     /// <summary>Only a raidz vdev can be expanded by a disk; <c>params.vdev</c> is the vdev's name.</summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string StorageVdevNotRaidz = "storage.vdev.not_raidz";
+
+    /// <summary>
+    /// An image of a catalog version lacks one of the version's <c>architectures</c>; <c>params.path</c> is the JSON Pointer
+    /// of the image in <c>index.json</c>, <c>params.architecture</c> the missing one.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string StoreCatalogArchitectureMissing = "store.catalog.architecture_missing";
+
+    /// <summary>
+    /// A version of an app in <c>index.json</c> has a lower <c>dataVersion</c> than an older version; <c>params.path</c>
+    /// is its JSON Pointer, <c>params.dataVersion</c> its value and <c>params.previous</c> the older one.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string StoreCatalogDataVersionDecreased = "store.catalog.data_version_decreased";
+
+    /// <summary>
+    /// The catalog lists an app in <c>org.pithyx.*</c>, or calls itself so, without being the official catalog;
+    /// <c>params.path</c> is the JSON Pointer, <c>params.id</c> the id.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string StoreCatalogIdReserved = "store.catalog.id_reserved";
+
+    /// <summary>
+    /// A file of the catalog (<c>params.file</c>: <c>catalog.json</c> or <c>index.json</c>) is not a JSON document in
+    /// UTF-8, or an object in it has a key twice.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string StoreCatalogInvalidJson = "store.catalog.invalid_json";
+
+    /// <summary>
+    /// A value of <c>index.json</c> is not what the box expects: another catalog (<c>/catalog</c>), another channel
+    /// (<c>/channel</c>) or another app's source folder; <c>params.path</c> is its JSON Pointer, <c>params.value</c> and
+    /// <c>params.expected</c> the values.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string StoreCatalogMismatch = "store.catalog.mismatch";
+
+    /// <summary>
+    /// A pull request to a catalog breaks a rule of <c>catalog.v1.rules.json</c>; <c>params.rule</c> names it,
+    /// <c>params.path</c> the file or folder where it applies, and the other params depend on the rule.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string StoreCatalogRuleViolation = "store.catalog.rule_violation";
+
+    /// <summary>
+    /// A file of the catalog (<c>params.file</c>) breaks its JSON Schema in <c>sdk/schema</c>; <c>params.path</c> is the
+    /// JSON Pointer of the value (of the missing or unknown field for <c>required</c> and <c>additionalProperties</c>),
+    /// <c>params.keyword</c> the schema keyword it fails.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string StoreCatalogSchemaViolation = "store.catalog.schema_violation";
+
+    /// <summary>
+    /// The catalog's <c>index.json</c> is older than one the box verified before (<c>params.sequence</c> below
+    /// <c>params.known</c>), so it could be a replay; the box keeps its last verified copy.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string StoreCatalogSequenceOld = "store.catalog.sequence_old";
+
+    /// <summary>
+    /// The signature <c>index.json.sig</c> does not prove the index; <c>params.reason</c> is <c>missing</c>,
+    /// <c>malformed</c>, <c>untrusted</c> (no signature by a key the box trusts for its channel) or <c>mismatch</c> (a
+    /// trusted key's signature does not match the bytes). The box keeps its last verified copy.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string StoreCatalogSignatureInvalid = "store.catalog.signature_invalid";
+
+    /// <summary>
+    /// A file of the catalog (<c>params.file</c>) has a format version this box does not read (<c>params.version</c>,
+    /// <c>params.supported</c>).
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string StoreCatalogVersionUnsupported = "store.catalog.version_unsupported";
 
     /// <summary>The backup does not hold a part that should be restored; <c>params.category</c> names it.</summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]

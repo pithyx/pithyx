@@ -1,0 +1,97 @@
+{
+  "not-json.json": [
+    {
+      "code": "store.catalog.invalid_json",
+      "params": {
+        "file": "catalog.json"
+      }
+    }
+  ],
+  "duplicate-key.json": [
+    {
+      "code": "store.catalog.invalid_json",
+      "params": {
+        "file": "catalog.json"
+      }
+    }
+  ],
+  "version-unsupported.json": [
+    {
+      "code": "store.catalog.version_unsupported",
+      "params": {
+        "file": "catalog.json",
+        "version": "2",
+        "supported": 1
+      }
+    }
+  ],
+  "id-reserved.json": [
+    {
+      "code": "store.catalog.id_reserved",
+      "params": {
+        "path": "/id",
+        "id": "org.pithyx.mine"
+      }
+    }
+  ],
+  "id-invalid.json": [
+    {
+      "code": "store.catalog.schema_violation",
+      "params": {
+        "file": "catalog.json",
+        "path": "/id",
+        "keyword": "pattern"
+      }
+    }
+  ],
+  "images-tag.json": [
+    {
+      "code": "store.catalog.schema_violation",
+      "params": {
+        "file": "catalog.json",
+        "path": "/images",
+        "keyword": "pattern"
+      }
+    }
+  ],
+  "images-missing.json": [
+    {
+      "code": "store.catalog.schema_violation",
+      "params": {
+        "file": "catalog.json",
+        "path": "/images",
+        "keyword": "required"
+      }
+    }
+  ],
+  "homepage-http.json": [
+    {
+      "code": "store.catalog.schema_violation",
+      "params": {
+        "file": "catalog.json",
+        "path": "/homepage",
+        "keyword": "pattern"
+      }
+    }
+  ],
+  "name-without-en.json": [
+    {
+      "code": "store.catalog.schema_violation",
+      "params": {
+        "file": "catalog.json",
+        "path": "/name/en",
+        "keyword": "required"
+      }
+    }
+  ],
+  "name-unknown-language.json": [
+    {
+      "code": "store.catalog.schema_violation",
+      "params": {
+        "file": "catalog.json",
+        "path": "/name/EN",
+        "keyword": "additionalProperties"
+      }
+    }
+  ]
+}

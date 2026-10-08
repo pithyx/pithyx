@@ -1,0 +1,7 @@
+{
+  "catalogVersion": 1,
+  "id": "com.mueller.apps",
+  "id": "org.pithyx.official",
+  "name": { "en": "Apps" },
+  "images": "ghcr.io/mueller/apps"
+}

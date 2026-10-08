@@ -1,0 +1,20 @@
+{
+  "invalid/id-reserved.json": {
+    "catalog": "org.pithyx.community"
+  },
+  "invalid/sequence-old.json": {
+    "knownSequence": 8
+  },
+  "invalid/several-issues.json": {
+    "knownSequence": 9
+  },
+  "valid/beta.json": {
+    "channel": "beta"
+  },
+  "valid/custom.json": {
+    "catalog": "com.mueller.apps"
+  },
+  "valid/full.json": {
+    "knownSequence": 7
+  }
+}

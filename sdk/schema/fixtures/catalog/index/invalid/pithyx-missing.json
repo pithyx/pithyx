@@ -1,0 +1,181 @@
+{
+  "indexVersion": 1,
+  "catalog": "org.pithyx.official",
+  "channel": "stable",
+  "sequence": 7,
+  "publishedAt": "2026-10-08T19:00:00Z",
+  "apps": {
+    "com.example.chat": {
+      "versions": {
+        "1.0.0": {
+          "publishedAt": "2026-09-30T08:15:00Z",
+          "package": {
+            "sha256": "729e14eb32a66d3a9ae3b21e1bf4a734f43b9639b6351a83343a26f74016cef2",
+            "size": 48213
+          },
+          "manifest": {
+            "sha256": "e43ee56e7597da8548c3206f1f088fb14c354b28fd1c3f95299397a33e00cd6e",
+            "size": 1312
+          },
+          "icon": {
+            "sha256": "d8b1eef86f252c822f0b5733741ef0802cdda37ba0ba44a7dd8725a4311e1a19",
+            "size": 911
+          },
+          "architectures": [
+            "amd64",
+            "arm64"
+          ],
+          "pithyx": ">=0.1.0",
+          "license": "MIT",
+          "source": {
+            "repository": "https://github.com/pithyx/apps-official",
+            "commit": "9505cacb7c710ed17125fcc6cb3669e8ddca6c8c",
+            "path": "apps/com.example.chat"
+          },
+          "dataVersion": 1,
+          "images": {
+            "ghcr.io/pithyx/apps/com.example.chat/server:1.0.0@sha256:763244834a77299b585b801d70897b773f26ee9bc0f46c3c063904d9089b0925": {
+              "amd64": {
+                "manifest": "sha256:3bf150bcafdb0789ca42970dd01c3dc83683831478cedaba8af052340a96cd69",
+                "config": "sha256:f6e6f571e066e51dfe70c787e4628673521354399fb856412d35fb71b14941cb"
+              },
+              "arm64": {
+                "manifest": "sha256:66a96e6a3117a7d6da130d1622dec93ba90247b637cf3d3c17c5c66c6cd51348",
+                "config": "sha256:9bd76865295ff1dc90802c74d3a97e8985f3e034ace84e2da20f0b4d585b0792"
+              }
+            },
+            "postgres:17.6@sha256:fdbac611613685acd4e790862554446b7d2e3a86f2894a8e241163956764d746": {
+              "amd64": {
+                "manifest": "sha256:0484fb8572ac2f6c246a4ab43f642840dc822a0a59e480ead76f2a0128b86e3d",
+                "config": "sha256:65a17675998922ebb7d7299cea476ae5310907abcb781fd662b23909e96c2856"
+              },
+              "arm64": {
+                "manifest": "sha256:bafbaeecacf0d910d585de6f2c15ae13c731393d5d750dc105e4182e0c9ec888",
+                "config": "sha256:875ead652f92eec5e1e0c60ca3bd4590c9df1c719170633d9db736f66cdd73dd"
+              }
+            }
+          }
+        },
+        "1.1.0": {
+          "publishedAt": "2026-10-08T19:00:00Z",
+          "package": {
+            "sha256": "46dda2fb9f875bdde0f4d6fedbc8db86fda62ab59d9aa443a48f0d91930e29f0",
+            "size": 48213
+          },
+          "manifest": {
+            "sha256": "df1cca142d881b5edfd026039edce10173d3f319878ed1a53a64301190b16be2",
+            "size": 1312
+          },
+          "icon": {
+            "sha256": "3fa0cfa0e8f3821f1a28f02251ccfcfb5bc50e76bceea67a00c737fe2e1a425f",
+            "size": 911
+          },
+          "architectures": [
+            "amd64",
+            "arm64"
+          ],
+          "license": "AGPL-3.0-only",
+          "source": {
+            "repository": "https://github.com/pithyx/apps-official",
+            "commit": "9505cacb7c710ed17125fcc6cb3669e8ddca6c8c",
+            "path": "apps/com.example.chat"
+          },
+          "dataVersion": 2,
+          "screenshots": [
+            {
+              "name": "conversation.png",
+              "sha256": "55876e316eab4b5a0b5b3cbcebfb0bfefc3c82a87abf007c9db55c9c4d25510a",
+              "size": 183220
+            },
+            {
+              "name": "settings.webp",
+              "sha256": "9fdfb62359af014a0d6b3c570a0ae1ba569cb593ca355d4ac03632c9c734acd3",
+              "size": 90211
+            }
+          ],
+          "images": {
+            "ghcr.io/pithyx/apps/com.example.chat/server:1.1.0@sha256:8ba36e23bfbca2c23c269ea454e669eb2c629aaaf3d081eb28dc40a80d004356": {
+              "amd64": {
+                "manifest": "sha256:b83e9552eec9097ae8f9b021f5785f0482284786c98293c4ebedf21abda4a27f",
+                "config": "sha256:b0322d16132631d2fe33d07914534b994e7fd9a5dd3e219703458e61ffaf7e68"
+              },
+              "arm64": {
+                "manifest": "sha256:6fc2e5ceb500a674a7692d0a7df02f1d230baf80231480761f3e946690708d95",
+                "config": "sha256:e7be7eb04d23963ccdfc6530f876303cc346610dd8c342a6c57de530895b017b"
+              }
+            },
+            "postgres:17.6@sha256:fdbac611613685acd4e790862554446b7d2e3a86f2894a8e241163956764d746": {
+              "amd64": {
+                "manifest": "sha256:0484fb8572ac2f6c246a4ab43f642840dc822a0a59e480ead76f2a0128b86e3d",
+                "config": "sha256:65a17675998922ebb7d7299cea476ae5310907abcb781fd662b23909e96c2856"
+              },
+              "arm64": {
+                "manifest": "sha256:bafbaeecacf0d910d585de6f2c15ae13c731393d5d750dc105e4182e0c9ec888",
+                "config": "sha256:875ead652f92eec5e1e0c60ca3bd4590c9df1c719170633d9db736f66cdd73dd"
+              }
+            }
+          }
+        }
+      }
+    },
+    "com.example.notes": {
+      "versions": {
+        "0.9.0-beta.1": {
+          "publishedAt": "2026-09-01T10:00:00Z",
+          "package": {
+            "sha256": "7d3fbe335acefa43dc11215afe247ebcb6ebb62830a76e17b05b551ad390bd41",
+            "size": 48213
+          },
+          "manifest": {
+            "sha256": "36d21d233c852cafeeedf0052d8ce197bbef81f558b21dc782906b6d0dfda0ea",
+            "size": 1312
+          },
+          "icon": {
+            "sha256": "ca6fa0250aa19331c7a0752b47f4e2f0c48646f87e94bf424b9354030bc6dc23",
+            "size": 911
+          },
+          "architectures": [
+            "amd64",
+            "arm64"
+          ],
+          "pithyx": "*",
+          "license": "MIT",
+          "source": {
+            "repository": "https://github.com/pithyx/apps-official",
+            "commit": "9505cacb7c710ed17125fcc6cb3669e8ddca6c8c",
+            "path": "apps/com.example.notes"
+          }
+        }
+      }
+    },
+    "org.pithyx.example": {
+      "versions": {
+        "1.0.0": {
+          "publishedAt": "2026-10-01T00:00:00Z",
+          "package": {
+            "sha256": "f0deefef61b67e4855adf05319b9bc4139a58a031ca766495d2b4f080943cf76",
+            "size": 48213
+          },
+          "manifest": {
+            "sha256": "957d1e1fc0ff7f8bbe379c5b84f9fa76b0e9b7fac76fff2878e572fe1db747dd",
+            "size": 1312
+          },
+          "icon": {
+            "sha256": "41ea5081c3b59d6eb654a9f4cb22f79c49badffbaed837faa6341850de8e99cf",
+            "size": 911
+          },
+          "architectures": [
+            "amd64"
+          ],
+          "pithyx": ">=0.1.0",
+          "license": "Apache-2.0 OR MIT",
+          "source": {
+            "repository": "https://github.com/pithyx/apps-official",
+            "commit": "9505cacb7c710ed17125fcc6cb3669e8ddca6c8c",
+            "path": "apps/org.pithyx.example"
+          }
+        }
+      }
+    }
+  }
+}

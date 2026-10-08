@@ -153,6 +153,12 @@
       "params": {},
       "expected": "The app's manifest (pithyx.json) is not valid JSON."
     },
+    "app.manifest.pithyx_invalid": {
+      "params": {
+        "pithyx": "stable"
+      },
+      "expected": "The Pithyx version range stable in the manifest is not valid."
+    },
     "app.manifest.reference_unknown": {
       "params": {
         "path": "/backend/health/endpoint",
@@ -1094,6 +1100,80 @@
     "storage.zfs.unavailable": {
       "params": {},
       "expected": "ZFS did not answer in time or reported an error, so Pithyx cannot show what this would change. Try again in a moment. If it keeps happening, a pool may be waiting for disks that are gone: see Storage."
+    },
+    "store.catalog.architecture_missing": {
+      "params": {
+        "path": "/apps/com.example.chat/versions/1.1.0/images/postgres:17.6",
+        "architecture": "arm64"
+      },
+      "expected": "The catalog lists an image at /apps/com.example.chat/versions/1.1.0/images/postgres:17.6 without the architecture arm64."
+    },
+    "store.catalog.data_version_decreased": {
+      "params": {
+        "path": "/apps/com.example.chat/versions/1.1.0/dataVersion",
+        "dataVersion": 2,
+        "previous": 3
+      },
+      "expected": "The catalog lowers the data version at /apps/com.example.chat/versions/1.1.0/dataVersion to 2, after 3 in an older version."
+    },
+    "store.catalog.id_reserved": {
+      "params": {
+        "path": "/apps/org.pithyx.notes",
+        "id": "org.pithyx.notes"
+      },
+      "expected": "The catalog uses the id org.pithyx.notes at /apps/org.pithyx.notes, which only the official Pithyx catalog may use."
+    },
+    "store.catalog.invalid_json": {
+      "params": {
+        "file": "index.json"
+      },
+      "expected": "The catalog's file index.json cannot be read as JSON."
+    },
+    "store.catalog.mismatch": {
+      "params": {
+        "path": "/channel",
+        "value": "beta",
+        "expected": "stable"
+      },
+      "expected": "The catalog's index has beta at /channel, but this box expects stable."
+    },
+    "store.catalog.rule_violation": {
+      "params": {
+        "rule": "unpinned",
+        "path": "apps/com.example.notes/backend/server/Dockerfile",
+        "line": 2,
+        "image": "node:24"
+      },
+      "expected": "The pull request breaks a catalog rule: line 2 of apps/com.example.notes/backend/server/Dockerfile uses the image node:24, which is not pinned with @sha256."
+    },
+    "store.catalog.schema_violation": {
+      "params": {
+        "file": "index.json",
+        "path": "/sequence",
+        "keyword": "minimum"
+      },
+      "expected": "The catalog's file index.json is not valid at /sequence (minimum)."
+    },
+    "store.catalog.sequence_old": {
+      "params": {
+        "sequence": 7,
+        "known": 8
+      },
+      "expected": "The catalog's index is older (sequence 7) than one this box already checked (8), so the box keeps its copy."
+    },
+    "store.catalog.signature_invalid": {
+      "params": {
+        "reason": "untrusted"
+      },
+      "expected": "The catalog's index is not signed correctly (no signature is by a key this box trusts for its channel), so the box keeps its last checked copy."
+    },
+    "store.catalog.version_unsupported": {
+      "params": {
+        "file": "index.json",
+        "version": "2",
+        "supported": 1
+      },
+      "expected": "The catalog's file index.json has format version 2, this box reads version 1. Update Pithyx to use this catalog."
     },
     "system.backup.category_missing": {
       "params": {

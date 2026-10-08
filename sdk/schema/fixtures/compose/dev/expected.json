@@ -1,0 +1,119 @@
+{
+  "build-and-image.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/build",
+        "reason": "image_and_build"
+      }
+    }
+  ],
+  "build-parent.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/build",
+        "reason": "format"
+      }
+    }
+  ],
+  "build-absolute.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/build",
+        "reason": "format"
+      }
+    }
+  ],
+  "build-url.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/build",
+        "reason": "format"
+      }
+    }
+  ],
+  "build-unknown-key.yaml": [
+    {
+      "code": "app.compose.key_unsupported",
+      "params": {
+        "path": "/services/server/build/platforms",
+        "key": "platforms"
+      }
+    }
+  ],
+  "build-no-context.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/build/context",
+        "reason": "required"
+      }
+    }
+  ],
+  "build-dockerfile-parent.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/build/dockerfile",
+        "reason": "format"
+      }
+    }
+  ],
+  "build-arg-without-value.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/build/args/0",
+        "reason": "no_value"
+      }
+    }
+  ],
+  "build-arg-interpolation.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/build/args/HOME_DIR",
+        "reason": "interpolation"
+      }
+    }
+  ],
+  "build-missing.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/image",
+        "reason": "required"
+      }
+    }
+  ],
+  "image-unpinned.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/db/image",
+        "reason": "unpinned"
+      }
+    }
+  ],
+  "build-number.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/build",
+        "reason": "type"
+      }
+    }
+  ],
+  "build-dockerfile-name.yaml": [
+    {
+      "code": "app.compose.value_invalid",
+      "params": {
+        "path": "/services/server/build/dockerfile",
+        "reason": "format"
+      }
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+services:
+  server:
+    build: ./server
+  db:
+    image: postgres:17.6

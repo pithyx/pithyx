@@ -1,4 +1,4 @@
-/** One problem with an app package: an error code of the box with its params, as the daemon reports it. */
+/** One problem with an app package or a catalog: an error code of the box with its params, as the daemon reports it. */
 export interface Issue {
   code:
     | 'app.manifest.invalid_json'
@@ -7,6 +7,7 @@ export interface Issue {
     | 'app.manifest.id_invalid'
     | 'app.manifest.id_reserved'
     | 'app.manifest.sdk_invalid'
+    | 'app.manifest.pithyx_invalid'
     | 'app.manifest.window_size_invalid'
     | 'app.manifest.duplicate'
     | 'app.manifest.reference_unknown'
@@ -21,6 +22,16 @@ export interface Issue {
     | 'app.elevated.unsupported'
     | 'app.icon.invalid'
     | 'app.package.invalid'
-    | 'app.package.layout_invalid';
+    | 'app.package.layout_invalid'
+    | 'store.catalog.invalid_json'
+    | 'store.catalog.version_unsupported'
+    | 'store.catalog.schema_violation'
+    | 'store.catalog.id_reserved'
+    | 'store.catalog.mismatch'
+    | 'store.catalog.sequence_old'
+    | 'store.catalog.architecture_missing'
+    | 'store.catalog.data_version_decreased'
+    | 'store.catalog.signature_invalid'
+    | 'store.catalog.rule_violation';
   params: Record<string, string | number>;
 }

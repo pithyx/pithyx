@@ -1,0 +1,46 @@
+{
+  "$schema": "https://pithyx.org/schema/manifest.v1.schema.json",
+  "manifestVersion": 1,
+  "id": "com.example.notes",
+  "version": "1.1.0",
+  "name": {
+    "en": "Notes",
+    "de": "Notizen"
+  },
+  "description": {
+    "en": "Notes for everyone on the box.",
+    "de": "Notizen f\u00fcr alle auf der Box."
+  },
+  "author": {
+    "name": "Jan Example",
+    "url": "https://example.com"
+  },
+  "license": "MIT",
+  "homepage": "https://example.com/notes",
+  "entry": "frontend/index.html",
+  "sdk": "^1.0.0",
+  "pithyx": ">=0.1.0",
+  "dataVersion": 1,
+  "permissions": [],
+  "window": {
+    "instances": "multi",
+    "defaultSize": {
+      "width": 800,
+      "height": 600
+    },
+    "minSize": {
+      "width": 400,
+      "height": 300
+    }
+  },
+  "backend": {
+    "compose": "backend/compose.yaml",
+    "endpoints": {
+      "api": {
+        "service": "server",
+        "port": 8080
+      }
+    },
+    "lifecycle": "onDemand"
+  }
+}

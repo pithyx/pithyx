@@ -1,0 +1,272 @@
+{
+  "$comment": "The rules a pull request to a catalog repository must pass (D328), as data. `pithyx catalog check` applies them in the catalog's CI on the app folder after the pull request, and the box reads the same file, so both judge alike (the corpus in fixtures/catalog/rules). The owner still reviews every pull request; these rules only catch what a machine can. Paths are relative to the app folder `apps/<id>/` unless named otherwise. A file is text when its name is in `text.names`, matches `dockerfile`, or its extension (after the last dot, lowercase) is in `text.extensions`; text must be UTF-8 without NUL and without a line longer than `limits.lineChars` (except `text.longLines`), and a name matching `minified` is refused. A file whose extension is in `media` must start with its magic bytes. Every other file is refused, as are folders and files starting with a dot other than the listed names. Every FROM of a Dockerfile, and every `--from` of COPY and ADD that is not an earlier stage, names an image pinned with @sha256 or `scratch`. Licenses are SPDX expressions whose every license and exception is listed; `LicenseRef-` is refused. This file is a stable contract: loosening a rule or adding a license is a minor change, anything else a major one.",
+  "rulesVersion": 1,
+  "appsFolder": "apps",
+  "reservedIds": {
+    "prefix": "org.pithyx.",
+    "catalogs": ["org.pithyx.official"]
+  },
+  "limits": {
+    "appBytes": 5242880,
+    "lineChars": 1000,
+    "screenshots": 8,
+    "screenshotBytes": 1048576
+  },
+  "requiredFiles": [
+    ["pithyx.json"],
+    ["icon.svg"],
+    ["maintainers.json"],
+    ["LICENSE", "LICENSE.md", "LICENSE.txt"]
+  ],
+  "manifestFields": ["license", "pithyx"],
+  "text": {
+    "names": [
+      ".dockerignore",
+      ".editorconfig",
+      ".gitignore",
+      ".npmrc",
+      ".nvmrc",
+      ".prettierignore",
+      ".prettierrc",
+      "LICENSE",
+      "Makefile",
+      "NOTICE"
+    ],
+    "extensions": [
+      "c",
+      "cjs",
+      "conf",
+      "cs",
+      "csproj",
+      "css",
+      "cts",
+      "go",
+      "gradle",
+      "graphql",
+      "h",
+      "html",
+      "ini",
+      "java",
+      "js",
+      "json",
+      "jsonc",
+      "jsx",
+      "kt",
+      "lock",
+      "md",
+      "mjs",
+      "mod",
+      "mts",
+      "po",
+      "properties",
+      "proto",
+      "py",
+      "rb",
+      "rs",
+      "scss",
+      "sh",
+      "slnx",
+      "sql",
+      "sum",
+      "svelte",
+      "svg",
+      "toml",
+      "ts",
+      "tsx",
+      "txt",
+      "vue",
+      "xml",
+      "yaml",
+      "yml"
+    ],
+    "longLines": ["svg"]
+  },
+  "dockerfile": "^(?:(?:Dockerfile|Containerfile)(?:\\.[A-Za-z0-9_-]{1,64})?|[A-Za-z0-9_][A-Za-z0-9_-]{0,63}\\.(?:Dockerfile|Containerfile))$",
+  "minified": "\\.min\\.(?:js|mjs|cjs|css)$",
+  "media": {
+    "gif": {
+      "type": "image/gif",
+      "magic": [
+        {
+          "offset": 0,
+          "hex": "47494638"
+        }
+      ]
+    },
+    "jpeg": {
+      "type": "image/jpeg",
+      "magic": [
+        {
+          "offset": 0,
+          "hex": "ffd8ff"
+        }
+      ]
+    },
+    "jpg": {
+      "type": "image/jpeg",
+      "magic": [
+        {
+          "offset": 0,
+          "hex": "ffd8ff"
+        }
+      ]
+    },
+    "png": {
+      "type": "image/png",
+      "magic": [
+        {
+          "offset": 0,
+          "hex": "89504e470d0a1a0a"
+        }
+      ]
+    },
+    "webp": {
+      "type": "image/webp",
+      "magic": [
+        {
+          "offset": 0,
+          "hex": "52494646"
+        },
+        {
+          "offset": 8,
+          "hex": "57454250"
+        }
+      ]
+    },
+    "woff2": {
+      "type": "font/woff2",
+      "magic": [
+        {
+          "offset": 0,
+          "hex": "774f4632"
+        }
+      ]
+    }
+  },
+  "screenshots": {
+    "folder": "screenshots",
+    "name": "^[a-z0-9][a-z0-9_-]{0,62}\\.(?:png|jpg|webp)$"
+  },
+  "licenses": {
+    "osi": [
+      "0BSD",
+      "AAL",
+      "AFL-3.0",
+      "AGPL-3.0-only",
+      "AGPL-3.0-or-later",
+      "Apache-1.1",
+      "Apache-2.0",
+      "APL-1.0",
+      "APSL-2.0",
+      "Artistic-2.0",
+      "BlueOak-1.0.0",
+      "BSD-1-Clause",
+      "BSD-2-Clause",
+      "BSD-2-Clause-Patent",
+      "BSD-3-Clause",
+      "BSD-3-Clause-LBNL",
+      "BSL-1.0",
+      "CAL-1.0",
+      "CATOSL-1.1",
+      "CDDL-1.0",
+      "CECILL-2.1",
+      "CNRI-Python",
+      "CPAL-1.0",
+      "CUA-OPL-1.0",
+      "ECL-1.0",
+      "ECL-2.0",
+      "EFL-2.0",
+      "Entessa",
+      "EPL-1.0",
+      "EPL-2.0",
+      "EUDatagrid",
+      "EUPL-1.1",
+      "EUPL-1.2",
+      "Fair",
+      "Frameworx-1.0",
+      "GPL-2.0-only",
+      "GPL-2.0-or-later",
+      "GPL-3.0-only",
+      "GPL-3.0-or-later",
+      "HPND",
+      "IPA",
+      "IPL-1.0",
+      "ISC",
+      "LGPL-2.0-only",
+      "LGPL-2.0-or-later",
+      "LGPL-2.1-only",
+      "LGPL-2.1-or-later",
+      "LGPL-3.0-only",
+      "LGPL-3.0-or-later",
+      "LiLiQ-P-1.1",
+      "LiLiQ-R-1.1",
+      "LiLiQ-Rplus-1.1",
+      "LPL-1.0",
+      "LPL-1.02",
+      "LPPL-1.3c",
+      "MirOS",
+      "MIT",
+      "MIT-0",
+      "Motosoto",
+      "MPL-1.0",
+      "MPL-1.1",
+      "MPL-2.0",
+      "MPL-2.0-no-copyleft-exception",
+      "MS-PL",
+      "MS-RL",
+      "MulanPSL-2.0",
+      "Multics",
+      "NASA-1.3",
+      "Naumen",
+      "NCSA",
+      "NGPL",
+      "Nokia",
+      "NPOSL-3.0",
+      "NTP",
+      "OCLC-2.0",
+      "OFL-1.1",
+      "OGTSL",
+      "OLDAP-2.8",
+      "OSET-PL-2.1",
+      "OSL-1.0",
+      "OSL-2.0",
+      "OSL-2.1",
+      "OSL-3.0",
+      "PHP-3.0",
+      "PHP-3.01",
+      "PostgreSQL",
+      "Python-2.0",
+      "QPL-1.0",
+      "RPL-1.1",
+      "RPL-1.5",
+      "RPSL-1.0",
+      "RSCPL",
+      "SimPL-2.0",
+      "SISSL",
+      "Sleepycat",
+      "SPL-1.0",
+      "UCL-1.0",
+      "Unicode-DFS-2016",
+      "Unlicense",
+      "UPL-1.0",
+      "VSL-1.0",
+      "W3C",
+      "Watcom-1.0",
+      "Xnet",
+      "Zlib",
+      "ZPL-2.0",
+      "ZPL-2.1"
+    ],
+    "exceptions": [
+      "Autoconf-exception-3.0",
+      "Bison-exception-2.2",
+      "Classpath-exception-2.0",
+      "GCC-exception-3.1",
+      "LLVM-exception",
+      "OpenJDK-assembly-exception-1.0",
+      "openvpn-openssl-exception",
+      "Qt-LGPL-exception-1.1",
+      "Universal-FOSS-exception-1.0"
+    ]
+  }
+}

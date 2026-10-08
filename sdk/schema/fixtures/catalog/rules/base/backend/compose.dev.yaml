@@ -1,0 +1,13 @@
+services:
+  server:
+    build: ./server
+    environment:
+      DATABASE_HOST: db
+    depends_on:
+      - db
+  db:
+    image: postgres:17.6@sha256:a942b37ccfaf5a813b1432caa209a43b9d144e47ad0de1549c289c253e556cd5
+    volumes:
+      - data:/var/lib/postgresql/data
+volumes:
+  data:

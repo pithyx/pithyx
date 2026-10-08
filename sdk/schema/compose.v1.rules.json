@@ -31,7 +31,10 @@
     "port": "^(?:[0-9]{1,5}(?:-[0-9]{1,5})?(?:/(?:tcp|udp))?)$",
     "memorySize": "^(?:[0-9]{1,12}(?:[bBkKmMgG]|[kKmMgG][bB]))$",
     "cpus": "^(?:(?:0|[1-9][0-9]{0,2})(?:\\.[0-9]{1,3})?)$",
-    "tmpfsMode": "^(?:[0-7]{3,4})$"
+    "tmpfsMode": "^(?:[0-7]{3,4})$",
+    "buildPath": "^(?:\\.|(?:\\./)?[A-Za-z0-9_][A-Za-z0-9._-]{0,127}(?:/[A-Za-z0-9_][A-Za-z0-9._-]{0,127}){0,15})$",
+    "buildTarget": "^(?:[A-Za-z0-9][A-Za-z0-9_.-]{0,62})$",
+    "dockerfilePath": "^(?:(?:[A-Za-z0-9_][A-Za-z0-9._-]{0,127}/){0,15}(?:(?:Dockerfile|Containerfile)(?:\\.[A-Za-z0-9_-]{1,64})?|[A-Za-z0-9_][A-Za-z0-9_-]{0,63}\\.(?:Dockerfile|Containerfile)))$"
   },
   "top": {
     "services": { "type": "services", "required": true },
@@ -104,6 +107,20 @@
       },
       "restart": { "type": "bool" },
       "required": { "type": "bool" }
+    }
+  },
+  "dev": {
+    "$comment": "backend/compose.dev.yaml, the source form that `pithyx build` reads; the box never reads it. It sits next to the manifest's backend.compose with `.dev` before the extension (backend/compose.yaml and backend/compose.dev.yaml). Every rule of this file applies, plus `build`, and each service has exactly one of `image` and `build`. `build` is a folder relative to the file, as a string or as `context`, with an optional `dockerfile` relative to it (default Dockerfile; its name is a Dockerfile name of catalog.v1.rules.json), a `target` stage and `args` with values. pithyx build builds those services, tags them as <prefix>/<id>/<service>:<version>, and writes backend/compose.yaml with each `build` replaced by the image pinned by digest, plus backend/images.lock.json; services with `image` are copied as they are. A catalog builds from this file and every FROM of its Dockerfiles must be pinned by digest.",
+    "service": {
+      "build": { "type": "build" }
+    },
+    "build": {
+      "keys": {
+        "context": { "type": "string", "pattern": "buildPath", "required": true },
+        "dockerfile": { "type": "string", "pattern": "dockerfilePath" },
+        "target": { "type": "string", "pattern": "buildTarget" },
+        "args": { "type": "buildArgs" }
+      }
     }
   },
   "reservedLabelPrefixes": ["com.pithyx", "com.docker"],

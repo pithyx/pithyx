@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Pithyx.Daemon.Apps.Compose;
 using Pithyx.Daemon.Apps.Manifest;
+using Pithyx.Daemon.Errors;
 using Pithyx.Daemon.Tests.Apps.Manifest;
 
 namespace Pithyx.Daemon.Tests.Apps.Compose;
@@ -12,6 +13,10 @@ public sealed class ComposeValidatorTests
     public static TheoryData<string> Invalid => Corpus.Files("compose", "invalid");
 
     public static TheoryData<string> Manifests => Corpus.Files("compose", "manifests");
+
+    public static TheoryData<string> DevValid => Corpus.Files("compose", "dev", "valid");
+
+    public static TheoryData<string> DevInvalid => Corpus.Files("compose", "dev", "invalid");
 
     internal static JsonElement Manifest(string name)
     {
@@ -72,6 +77,48 @@ public sealed class ComposeValidatorTests
             Assert.True(File.Exists(Corpus.Directory("compose", "manifests", choice.Value.GetString()!)), choice.Value.GetString());
         });
     }
+
+    [Theory]
+    [MemberData(nameof(DevValid))]
+    public void ValidSourceFormsPass(string file)
+    {
+        var result = ComposeValidator.Validate(Corpus.Read("compose", "dev", "valid", file), ManifestFor("valid", "minimal.yaml"), dev: true);
+
+        Assert.Empty(Describe(result.Issues));
+    }
+
+    [Theory]
+    [MemberData(nameof(DevInvalid))]
+    public void InvalidSourceFormsFailWithExactlyTheExpectedIssues(string file)
+    {
+        var expected = Corpus.Json("compose", "dev", "expected.json");
+        Assert.True(expected.TryGetProperty(file, out var issues), $"compose/dev/expected.json lacks {file}");
+
+        var result = ComposeValidator.Validate(Corpus.Read("compose", "dev", "invalid", file), ManifestFor("valid", "minimal.yaml"), dev: true);
+
+        Corpus.AssertExactly(result.Issues, issues.EnumerateArray());
+    }
+
+    [Fact]
+    public void EverySourceFormExpectationHasAFixture() =>
+        Assert.Equal(
+            DevInvalid.Select(row => row.Data),
+            Corpus.Json("compose", "dev", "expected.json").EnumerateObject().Select(entry => entry.Name).Order(StringComparer.Ordinal));
+
+    [Fact]
+    public void TheFormTheBoxReadsRefusesBuild()
+    {
+        var result = ComposeValidator.Validate(Corpus.Read("compose", "dev", "valid", "build-short.yaml"), ManifestFor("valid", "minimal.yaml"));
+
+        Assert.Contains(result.Issues, issue => issue.Code == ErrorCodes.AppComposeKeyUnsupported);
+    }
+
+    [Theory]
+    [InlineData("backend/compose.yaml", "backend/compose.dev.yaml")]
+    [InlineData("backend/app.yml", "backend/app.dev.yml")]
+    [InlineData("backend/v1.2/stack.yaml", "backend/v1.2/stack.dev.yaml")]
+    public void TheSourceFormSitsNextToTheComposeFile(string compose, string dev) =>
+        Assert.Equal(dev, ComposeValidator.DevComposePath(compose));
 
     [Fact]
     public void TheRulesNeverAllowAKeyTheyListAsRefused()

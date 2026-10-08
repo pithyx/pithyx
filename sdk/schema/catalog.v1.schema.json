@@ -1,0 +1,75 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pithyx.org/schema/catalog.v1.schema.json",
+  "title": "Pithyx catalog v1",
+  "description": "`catalog.json` at the root of a catalog repository (D328), on `master` and copied unchanged to the branches `catalog-next` and `catalog`. It names the catalog; the apps are in `index.json` of those branches (`index.v1.schema.json`). Readers ignore fields they do not know, so a new optional field is a minor change; anything else raises `catalogVersion`, which a box refuses when it does not know it.",
+  "type": "object",
+  "required": ["catalogVersion", "id", "name", "images"],
+  "properties": {
+    "$schema": {
+      "description": "Path or URL of this schema, for editors. Ignored by the box.",
+      "type": "string",
+      "maxLength": 500
+    },
+    "catalogVersion": {
+      "description": "The version of this format.",
+      "const": 1
+    },
+    "id": {
+      "description": "The catalog's id: its owner's domain reversed plus a name, 3 to 5 parts like an app id (D302), for example `com.mueller.apps`. A box keeps the catalog in `/var/lib/pithyx/catalogs/<id>/`. `org.pithyx.*` is reserved for the project's catalogs `org.pithyx.official` and `org.pithyx.community`.",
+      "type": "string",
+      "maxLength": 100,
+      "pattern": "^[a-z][a-z0-9-]*(\\.[a-z0-9][a-z0-9-]*){2,4}$"
+    },
+    "name": {
+      "description": "The catalog's name in the Store, keyed by BCP 47 language tag; `en` is required.",
+      "type": "object",
+      "required": ["en"],
+      "properties": {
+        "en": { "$ref": "#/$defs/NameText" }
+      },
+      "patternProperties": {
+        "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$": { "$ref": "#/$defs/NameText" }
+      },
+      "additionalProperties": false
+    },
+    "description": {
+      "description": "One or two sentences about the catalog, keyed by BCP 47 language tag; `en` is required.",
+      "type": "object",
+      "required": ["en"],
+      "properties": {
+        "en": { "$ref": "#/$defs/LongText" }
+      },
+      "patternProperties": {
+        "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$": { "$ref": "#/$defs/LongText" }
+      },
+      "additionalProperties": false
+    },
+    "homepage": {
+      "description": "The catalog's repository or website, shown in the Store's settings.",
+      "type": "string",
+      "maxLength": 500,
+      "pattern": "^https://[!-~]+$"
+    },
+    "images": {
+      "description": "Where the catalog's CI pushes the images it builds: a registry and a path without a tag, for example `ghcr.io/pithyx/apps`. An app's service `<service>` of version `<version>` is pushed as `<images>/<id>/<service>:<version>` and linked only by digest.",
+      "type": "string",
+      "maxLength": 200,
+      "pattern": "^[a-z0-9]+([.-][a-z0-9]+)*(:[0-9]{1,5})?(/[a-z0-9]+([._-][a-z0-9]+)*)+$"
+    }
+  },
+  "$defs": {
+    "NameText": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 60,
+      "pattern": "^[^\\u0000-\\u001f\\u007f]+$"
+    },
+    "LongText": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500,
+      "pattern": "^[^\\u0000-\\u0009\\u000b-\\u001f\\u007f]+$"
+    }
+  }
+}

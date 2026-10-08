@@ -1,8 +1,4 @@
-using System.Globalization;
 using System.Text.Json;
-using System.Text.Json.Nodes;
-using System.Text.Unicode;
-using Json.Schema;
 using Pithyx.Daemon.Errors;
 
 namespace Pithyx.Daemon.Apps.Manifest;
@@ -28,9 +24,7 @@ public static class ManifestValidator
     private static readonly HashSet<string> _blockedCapabilities =
         ["ALL", "SYS_ADMIN", "SYS_PTRACE", "SYS_MODULE", "SYS_RAWIO", "DAC_READ_SEARCH", "BPF"];
 
-    private static readonly Lazy<(JsonSchema Schema, JsonNode Document)> _schema = new(LoadSchema);
-
-    private static readonly EvaluationOptions _evaluation = new() { OutputFormat = OutputFormat.List };
+    private static readonly Lazy<JsonSchemaCheck> _schema = new(() => JsonSchemaCheck.Load("manifest.v1.schema.json"));
 
     /// <summary>
     /// Validates the bytes of <c>pithyx.json</c>. Ids in <c>org.pithyx.*</c> are refused unless
@@ -38,16 +32,7 @@ public static class ManifestValidator
     /// </summary>
     public static ManifestValidationResult Validate(ReadOnlyMemory<byte> utf8, bool allowReservedId = false)
     {
-        if (!Utf8.IsValid(utf8.Span))
-        {
-            return Fail(new ValidationIssue(ErrorCodes.AppManifestInvalidJson));
-        }
-        JsonDocument document;
-        try
-        {
-            document = JsonDocument.Parse(utf8, new JsonDocumentOptions { AllowDuplicateProperties = false });
-        }
-        catch (JsonException)
+        if (JsonSchemaCheck.ParseStrict(utf8) is not { } document)
         {
             return Fail(new ValidationIssue(ErrorCodes.AppManifestInvalidJson));
         }
@@ -58,7 +43,7 @@ public static class ManifestValidator
                 && root.TryGetProperty("manifestVersion", out var version)
                 && !(version.ValueKind == JsonValueKind.Number && version.GetDouble() == SupportedVersion))
             {
-                return Fail(new ValidationIssue(ErrorCodes.AppManifestVersionUnsupported, ("version", Display(version)), ("supported", SupportedVersion)));
+                return Fail(new ValidationIssue(ErrorCodes.AppManifestVersionUnsupported, ("version", JsonSchemaCheck.Display(version)), ("supported", SupportedVersion)));
             }
 
             var issues = SchemaIssues(root);
@@ -74,52 +59,21 @@ public static class ManifestValidator
 
     private static List<ValidationIssue> SchemaIssues(JsonElement root)
     {
-        var (schema, schemaDocument) = _schema.Value;
-        var results = schema.Evaluate(root, _evaluation);
-        var violations = new SortedSet<(string Path, string Keyword)>(Comparer<(string Path, string Keyword)>.Create((a, b) =>
-            a.Path == b.Path ? string.CompareOrdinal(a.Keyword, b.Keyword) : string.CompareOrdinal(a.Path, b.Path)));
-        if (!results.IsValid)
-        {
-            foreach (var detail in results.Details ?? [])
-            {
-                if (detail.Errors is null)
-                {
-                    continue;
-                }
-                var path = detail.InstanceLocation.ToString();
-                foreach (var keyword in detail.Errors.Keys)
-                {
-                    if (keyword == "required")
-                    {
-                        foreach (var missing in MissingProperties(schemaDocument, detail.SchemaLocation, root, path))
-                        {
-                            violations.Add((path + "/" + EscapePointer(missing), "required"));
-                        }
-                    }
-                    else if (keyword.Length == 0)
-                    {
-                        // A false schema fails at the value itself; additionalProperties: false is the only one we use.
-                        violations.Add((path, detail.EvaluationPath.ToString().Split('/')[^1]));
-                    }
-                    else
-                    {
-                        violations.Add((path, keyword));
-                    }
-                }
-            }
-        }
-
         var issues = new List<ValidationIssue>();
-        foreach (var (path, keyword) in violations)
+        foreach (var (path, keyword) in _schema.Value.Violations(root))
         {
-            // A wrong id or sdk range has a code of its own; a missing one is a plain schema violation.
+            // A wrong id, sdk range or pithyx range has a code of its own; a missing one is a plain schema violation.
             if (path == "/id" && keyword != "required")
             {
-                AddOnce(issues, new ValidationIssue(ErrorCodes.AppManifestIdInvalid, ("id", Display(root.GetProperty("id")))));
+                AddOnce(issues, new ValidationIssue(ErrorCodes.AppManifestIdInvalid, ("id", JsonSchemaCheck.Display(root.GetProperty("id")))));
             }
             else if (path == "/sdk" && keyword != "required")
             {
-                AddOnce(issues, new ValidationIssue(ErrorCodes.AppManifestSdkInvalid, ("sdk", Display(root.GetProperty("sdk")))));
+                AddOnce(issues, new ValidationIssue(ErrorCodes.AppManifestSdkInvalid, ("sdk", JsonSchemaCheck.Display(root.GetProperty("sdk")))));
+            }
+            else if (path == "/pithyx" && keyword != "required")
+            {
+                AddOnce(issues, new ValidationIssue(ErrorCodes.AppManifestPithyxInvalid, ("pithyx", JsonSchemaCheck.Display(root.GetProperty("pithyx")))));
             }
             else
             {
@@ -258,115 +212,6 @@ public static class ManifestValidator
         if (!issues.Exists(existing => existing.Code == issue.Code))
         {
             issues.Add(issue);
-        }
-    }
-
-    /// <summary>A param value as the CLI shows it: strings as they are, everything else as compact JSON.</summary>
-    private static string Display(JsonElement value) => value.ValueKind switch
-    {
-        JsonValueKind.String => value.GetString()!,
-        JsonValueKind.Number => value.GetDouble().ToString("R", CultureInfo.InvariantCulture),
-        _ => JsonSerializer.Serialize(value),
-    };
-
-    private static IEnumerable<string> MissingProperties(JsonNode schemaDocument, Uri schemaLocation, JsonElement root, string instancePath)
-    {
-        var schemaNode = Resolve(schemaDocument, Uri.UnescapeDataString(schemaLocation.Fragment.TrimStart('#')));
-        var instance = Resolve(root, instancePath);
-        if (schemaNode?["required"] is not JsonArray required || instance is not { ValueKind: JsonValueKind.Object } value)
-        {
-            return [];
-        }
-        return required.Select(name => name!.GetValue<string>()).Where(name => !value.TryGetProperty(name, out _));
-    }
-
-    private static JsonNode? Resolve(JsonNode? node, string pointer)
-    {
-        var current = node;
-        foreach (var segment in Segments(pointer))
-        {
-            current = current switch
-            {
-                JsonObject obj => obj[segment],
-                JsonArray array when int.TryParse(segment, CultureInfo.InvariantCulture, out var index) && index < array.Count => array[index],
-                _ => null,
-            };
-        }
-        return current;
-    }
-
-    private static JsonElement? Resolve(JsonElement element, string pointer)
-    {
-        var current = element;
-        foreach (var segment in Segments(pointer))
-        {
-            if (current.ValueKind == JsonValueKind.Object && current.TryGetProperty(segment, out var child))
-            {
-                current = child;
-            }
-            else if (current.ValueKind == JsonValueKind.Array && int.TryParse(segment, CultureInfo.InvariantCulture, out var index) && index < current.GetArrayLength())
-            {
-                current = current[index];
-            }
-            else
-            {
-                return null;
-            }
-        }
-        return current;
-    }
-
-    private static IEnumerable<string> Segments(string pointer) =>
-        pointer.Length == 0 ? [] : pointer[1..].Split('/').Select(segment => segment.Replace("~1", "/", StringComparison.Ordinal).Replace("~0", "~", StringComparison.Ordinal));
-
-    private static string EscapePointer(string name) => name.Replace("~", "~0", StringComparison.Ordinal).Replace("/", "~1", StringComparison.Ordinal);
-
-    private static (JsonSchema, JsonNode) LoadSchema()
-    {
-        using var stream = typeof(ManifestValidator).Assembly.GetManifestResourceStream("schema/manifest.v1.schema.json")
-            ?? throw new InvalidOperationException("The manifest schema is not embedded.");
-        var document = JsonNode.Parse(stream)!;
-        AnchorPatterns(document);
-        return (JsonSchema.FromText(document.ToJsonString()), document);
-    }
-
-    private static string Anchor(string pattern) => pattern.EndsWith('$') ? pattern + "(?!\\n)" : pattern;
-
-    // .NET's $ also matches before a final line break, ECMAScript's only at the end; this keeps both engines alike.
-    private static void AnchorPatterns(JsonNode? node)
-    {
-        switch (node)
-        {
-            case JsonObject obj:
-                foreach (var (name, value) in obj.ToList())
-                {
-                    if (name == "pattern" && value is JsonValue pattern)
-                    {
-                        obj[name] = Anchor(pattern.GetValue<string>());
-                    }
-                    else if (name == "patternProperties" && value is JsonObject patterns)
-                    {
-                        var anchored = new JsonObject();
-                        foreach (var (key, schema) in patterns.ToList())
-                        {
-                            patterns.Remove(key);
-                            AnchorPatterns(schema);
-                            anchored[Anchor(key)] = schema;
-                        }
-                        obj[name] = anchored;
-                    }
-                    else
-                    {
-                        AnchorPatterns(value);
-                    }
-                }
-                break;
-            case JsonArray array:
-                foreach (var item in array)
-                {
-                    AnchorPatterns(item);
-                }
-                break;
         }
     }
 }

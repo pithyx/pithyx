@@ -1,0 +1,6 @@
+services:
+  server:
+    build:
+      context: .
+      args:
+        HOME_DIR: $HOME
