@@ -7,6 +7,7 @@
     "backend": {
       "endpoint_unknown": "Die App hat keinen Backend-Endpunkt namens {endpoint}.",
       "missing": "Die App hat kein Backend.",
+      "unavailable": "Das Backend der App läuft nicht oder antwortet nicht. Versuch es gleich noch einmal.",
       "unsupported": "Die App hat ein Backend mit Containern. Diese Version von Pithyx installiert nur Apps ohne Backend."
     },
     "compose": {

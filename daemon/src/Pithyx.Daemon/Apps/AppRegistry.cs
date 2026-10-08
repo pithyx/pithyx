@@ -43,6 +43,10 @@ public sealed record InstalledApp(
             ? [.. endpoints.EnumerateObject().Select(endpoint => endpoint.Name).Order(StringComparer.Ordinal)]
             : [];
 
+    /// <summary>Whether the manifest's backend declares the endpoint.</summary>
+    public bool HasEndpoint(string name) =>
+        Manifest.TryGetProperty("backend", out var backend) && backend.TryGetProperty("endpoints", out var endpoints) && endpoints.TryGetProperty(name, out _);
+
     /// <summary>The storage requests of the manifest: id and the access asked for.</summary>
     public IReadOnlyList<(string Id, string Access)> StorageRequests =>
         Manifest.TryGetProperty("storage", out var storage)

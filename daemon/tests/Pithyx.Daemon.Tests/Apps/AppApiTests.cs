@@ -247,8 +247,9 @@ public sealed class AppApiTests : IDisposable
             [$"/apps/{AppId}/..%5c..%5csecret.txt"] = HttpStatusCode.NotFound,
             [$"/apps/{AppId}/%2e%2e%2fpithyx.json.bak"] = HttpStatusCode.NotFound,
             [$"/apps/{AppId}/INDEX.html"] = HttpStatusCode.NotFound,
-            [$"/apps/{AppId}/api/x"] = HttpStatusCode.NotFound,
-            [$"/apps/{AppId}/api-metrics/x"] = HttpStatusCode.NotFound,
+            // The backend's URLs belong to the proxy, which wants a token.
+            [$"/apps/{AppId}/api/x"] = HttpStatusCode.Unauthorized,
+            [$"/apps/{AppId}/api-metrics/x"] = HttpStatusCode.Unauthorized,
             ["/apps/com.example.other/index.html"] = HttpStatusCode.NotFound,
             ["/apps/..%2f..%2fetc/passwd"] = HttpStatusCode.NotFound,
         };

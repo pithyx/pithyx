@@ -5,6 +5,7 @@ export const errorCodes = [
   'app.app.not_found',
   'app.backend.endpoint_unknown',
   'app.backend.missing',
+  'app.backend.unavailable',
   'app.backend.unsupported',
   'app.compose.key_unsupported',
   'app.compose.reference_unknown',

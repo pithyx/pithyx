@@ -30,6 +30,13 @@ public static class ErrorCodes
     public const string AppBackendMissing = "app.backend.missing";
 
     /// <summary>
+    /// The app's backend is not running or does not answer, so the proxy has nowhere to send the request; the app may
+    /// try again later.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.ServiceUnavailable)]
+    public const string AppBackendUnavailable = "app.backend.unavailable";
+
+    /// <summary>
     /// The package declares a backend (containers). This version of Pithyx installs apps with a frontend only; backends
     /// arrive with the Docker runtime.
     /// </summary>

@@ -204,9 +204,11 @@ app.UseExceptionHandler();
 // Only the API answers bare status codes with problem details. Every other path belongs to the desktop,
 // which serves its index.html as the SPA fallback.
 app.UseWhen(context => IsApiRequest(context.Request.Path), api => api.UseStatusCodePages());
-// App frontends are public files with their own sandboxing headers; nothing below may answer for /apps/.
+// App backends behind the proxy, then the frontends as public files with their own sandboxing headers; nothing below
+// may answer for /apps/. The proxy takes WebSocket upgrades itself, so it comes before UseWebSockets.
 if (!installer.Active)
 {
+    app.UseMiddleware<Pithyx.Daemon.Apps.Proxy.AppProxy>();
     app.UseMiddleware<AppFrontendHosting>();
 }
 app.UseMiddleware<CsrfMiddleware>();

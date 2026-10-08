@@ -18,6 +18,18 @@ public static partial class ErrorHandling
         return services;
     }
 
+    /// <summary>Answers with the problem of a code outside the exception flow (authentication handlers, middleware).</summary>
+    public static ValueTask<bool> WriteProblemAsync(this IProblemDetailsService problemDetails, HttpContext context, string code)
+    {
+        ArgumentNullException.ThrowIfNull(problemDetails);
+        ArgumentNullException.ThrowIfNull(context);
+        var status = (int)ErrorCodes.StatusOf(code);
+        context.Response.StatusCode = status;
+        var problem = new ProblemDetails { Status = status };
+        problem.Extensions[CodeKey] = code;
+        return problemDetails.TryWriteAsync(new ProblemDetailsContext { HttpContext = context, ProblemDetails = problem });
+    }
+
     private static void Customize(ProblemDetailsContext context)
     {
         var problem = context.ProblemDetails;
