@@ -1,14 +1,16 @@
 using Pithyx.Daemon.Apps.Proxy;
-using Pithyx.Daemon.Errors;
 using Pithyx.Daemon.Storage;
 
 namespace Pithyx.Daemon.Apps.Docker;
 
 /// <summary>
-/// Keeps the proxy's view of the backends true (A14, D324). At the daemon's start, once the pools are read, it starts
-/// the backend of every enabled app whose pool is reachable (A15 replaces this with the lifecycle of the manifest);
-/// while Docker runs it follows the Engine's events of app containers, never polling, and takes an app out of the
-/// proxy when one of its containers dies or runs out of memory, with a warning in the app's log source.
+/// Keeps the backends in line with the app pool and the proxy's view of them true (A14, D324). Once the pools are read,
+/// and again whenever the app pool becomes reachable (unlocked, imported), it starts the backend of every enabled app
+/// that is not running and has its required folders (A15 replaces this with the lifecycle of the manifest); when the app
+/// pool goes (locked, exported, missing) it takes every backend out of the proxy and stops Docker, whose data root is
+/// gone. While Docker runs it follows the Engine's events of app containers, never polling: a container's <c>die</c> or
+/// <c>oom</c> takes its app out of the proxy. When the stream ends, the apps the proxy still reaches are checked against
+/// the containers that run, and the stream is followed again, later each time it ends quickly.
 /// </summary>
 public sealed partial class AppBackendSupervisor(
     DockerOptions options,
@@ -18,25 +20,34 @@ public sealed partial class AppBackendSupervisor(
     AppRegistry registry,
     AppBackends backends,
     PoolInventory pools,
+    TimeProvider time,
     ILogger<AppBackendSupervisor> logger) : BackgroundService
 {
-    private readonly SemaphoreSlim _started = new(0, 1);
+    private static readonly TimeSpan _minDelay = TimeSpan.FromSeconds(2);
+    private static readonly TimeSpan _maxDelay = TimeSpan.FromMinutes(1);
+
+    private readonly SemaphoreSlim _dockerStarted = new(0, 1);
+    private readonly SemaphoreSlim _poolsChanged = new(0, 1);
+    private bool? _poolReachable;
 
     public override Task StartAsync(CancellationToken cancellationToken)
     {
-        host.Started += Signal;
+        host.Started += OnDockerStarted;
+        pools.Changed += OnPoolsChanged;
         return base.StartAsync(cancellationToken);
     }
 
     public override Task StopAsync(CancellationToken cancellationToken)
     {
-        host.Started -= Signal;
+        host.Started -= OnDockerStarted;
+        pools.Changed -= OnPoolsChanged;
         return base.StopAsync(cancellationToken);
     }
 
     public override void Dispose()
     {
-        _started.Dispose();
+        _dockerStarted.Dispose();
+        _poolsChanged.Dispose();
         base.Dispose();
     }
 
@@ -46,20 +57,11 @@ public sealed partial class AppBackendSupervisor(
         {
             return;
         }
+        // The first reading of the pools may have come before this service listened.
+        OnPoolsChanged();
         try
         {
-            await WhenPoolsReadAsync(stoppingToken);
-            await StartInstalledAsync(stoppingToken);
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                if (!await engine.PingAsync(stoppingToken))
-                {
-                    // Docker is off until a start of DockerHost says otherwise.
-                    await _started.WaitAsync(stoppingToken);
-                    continue;
-                }
-                await FollowAsync(stoppingToken);
-            }
+            await Task.WhenAll(WatchPoolAsync(stoppingToken), FollowEventsAsync(stoppingToken));
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
         {
@@ -67,35 +69,55 @@ public sealed partial class AppBackendSupervisor(
         }
     }
 
-    private async Task FollowAsync(CancellationToken stoppingToken)
+    /// <summary>Acts on the app pool's reachability when it changes, the first reading after the start included.</summary>
+    private async Task WatchPoolAsync(CancellationToken stoppingToken)
     {
-        try
+        while (!stoppingToken.IsCancellationRequested)
         {
-            await foreach (var item in engine.EventsAsync(stoppingToken))
+            await _poolsChanged.WaitAsync(stoppingToken);
+            if (!pools.Available || registry.Pool is not { } pool)
             {
-                if (item.Action is "die" or "oom" && backends.IsRunning(item.App))
+                continue;
+            }
+            var withBackend = registry.Apps.Values.Where(app => BackendApp.Of(app).HasBackend).Select(app => app.Id).ToList();
+            if (withBackend.Count == 0)
+            {
+                continue;
+            }
+            var reachable = withBackend.Any(registry.IsAvailable);
+            if (reachable == _poolReachable)
+            {
+                continue;
+            }
+            _poolReachable = reachable;
+            try
+            {
+                if (reachable)
                 {
-                    backends.SetStopped(item.App);
-                    LogContainerEnded(item.App, item.Service, item.Action, item.ExitCode);
+                    await StartAllAsync(pool, stoppingToken);
+                }
+                else
+                {
+                    await StopAllAsync(stoppingToken);
                 }
             }
-        }
-        catch (Exception exception) when (exception is HttpRequestException or IOException or DockerEngineException)
-        {
-            // Docker stopped or restarted; the loop asks it again.
-            LogEventsEnded(exception);
+#pragma warning disable CA1031 // The watch must go on whatever one round met.
+            catch (Exception exception) when (exception is not OperationCanceledException)
+#pragma warning restore CA1031
+            {
+                LogRoundFailed(exception);
+            }
         }
     }
 
-    private async Task StartInstalledAsync(CancellationToken stoppingToken)
+    private async Task StartAllAsync(string pool, CancellationToken stoppingToken)
     {
-        if (registry.Pool is not { } pool)
+        var apps = registry.Apps.Values.Where(app => app.Enabled).Select(BackendApp.Of)
+            .Where(app => app.HasBackend && !backends.IsRunning(app.AppId) && AppBackendRuntime.UnmappedRequired(app).Count == 0)
+            .ToList();
+        foreach (var app in apps)
         {
-            return;
-        }
-        foreach (var app in registry.Apps.Values.Where(app => app.Enabled).Select(BackendApp.Of).Where(app => app.HasBackend))
-        {
-            if (!registry.IsAvailable(app.AppId) || !registry.TryBegin(app.AppId))
+            if (!registry.TryBegin(app.AppId))
             {
                 continue;
             }
@@ -103,9 +125,11 @@ public sealed partial class AppBackendSupervisor(
             {
                 await runtime.StartAsync(pool, app, null, stoppingToken);
             }
-            catch (PithyxException exception)
+#pragma warning disable CA1031 // One app's backend that does not start must not keep the others or the daemon down.
+            catch (Exception exception) when (exception is not OperationCanceledException)
+#pragma warning restore CA1031
             {
-                LogStartFailed(app.AppId, exception.Code);
+                LogStartFailed(exception, app.AppId);
             }
             finally
             {
@@ -114,37 +138,97 @@ public sealed partial class AppBackendSupervisor(
         }
     }
 
-    private async Task WhenPoolsReadAsync(CancellationToken stoppingToken)
+    /// <summary>The app pool is gone: no backend is reachable, and Docker stops before its data root disappears for good.</summary>
+    private async Task StopAllAsync(CancellationToken stoppingToken)
     {
-        var read = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        void OnChanged()
+        foreach (var appId in registry.Apps.Keys.Where(backends.IsRunning))
         {
-            if (pools.Available)
-            {
-                read.TrySetResult();
-            }
+            backends.SetStopped(appId);
         }
-        pools.Changed += OnChanged;
-        try
+        if (await engine.PingAsync(stoppingToken))
         {
-            OnChanged();
-            await read.Task.WaitAsync(stoppingToken);
-        }
-        finally
-        {
-            pools.Changed -= OnChanged;
+            LogPoolGone();
+            await host.StopAsync(stoppingToken);
         }
     }
 
-    private void Signal()
+    private async Task FollowEventsAsync(CancellationToken stoppingToken)
+    {
+        var delay = _minDelay;
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            if (!await engine.PingAsync(stoppingToken))
+            {
+                // Docker is off: with restart "no" no container survived, and it runs again only through DockerHost.
+                foreach (var appId in registry.Apps.Keys.Where(backends.IsRunning))
+                {
+                    backends.SetStopped(appId);
+                }
+                await _dockerStarted.WaitAsync(stoppingToken);
+                delay = _minDelay;
+                continue;
+            }
+            var started = time.GetUtcNow();
+            try
+            {
+                await foreach (var item in engine.EventsAsync(stoppingToken))
+                {
+                    if (item.Action is "die" or "oom" && backends.IsRunning(item.App))
+                    {
+                        backends.SetStopped(item.App);
+                        LogContainerEnded(item.App, item.Service, item.Action, item.ExitCode);
+                    }
+                }
+            }
+#pragma warning disable CA1031 // Docker stopped, restarted or refused; the loop asks it again.
+            catch (Exception exception) when (exception is not OperationCanceledException)
+#pragma warning restore CA1031
+            {
+                LogEventsEnded(exception);
+            }
+            await CheckRunningAsync(stoppingToken);
+            delay = time.GetUtcNow() - started > _maxDelay ? _minDelay : TimeSpan.FromTicks(Math.Min(delay.Ticks * 2, _maxDelay.Ticks));
+            await Task.Delay(delay, time, stoppingToken);
+        }
+    }
+
+    /// <summary>After the event stream broke: an app the proxy still reaches keeps that only while all its containers run.</summary>
+    private async Task CheckRunningAsync(CancellationToken stoppingToken)
+    {
+        foreach (var appId in registry.Apps.Keys.Where(backends.IsRunning))
+        {
+            try
+            {
+                var containers = await engine.ContainersAsync(appId, stoppingToken);
+                if (containers.Count == 0 || containers.Any(container => container.State != "running"))
+                {
+                    backends.SetStopped(appId);
+                    LogContainerEnded(appId, null, "missing", null);
+                }
+            }
+#pragma warning disable CA1031 // Docker is gone; the next round marks everything stopped.
+            catch (Exception exception) when (exception is not OperationCanceledException)
+#pragma warning restore CA1031
+            {
+                LogEventsEnded(exception);
+                return;
+            }
+        }
+    }
+
+    private void OnDockerStarted() => Release(_dockerStarted);
+
+    private void OnPoolsChanged() => Release(_poolsChanged);
+
+    private static void Release(SemaphoreSlim signal)
     {
         try
         {
-            _started.Release();
+            signal.Release();
         }
         catch (SemaphoreFullException)
         {
-            // A start is pending already.
+            // A signal is pending already.
         }
     }
 
@@ -154,6 +238,12 @@ public sealed partial class AppBackendSupervisor(
     [LoggerMessage(Level = LogLevel.Information, Message = "Following Docker's events ended")]
     private partial void LogEventsEnded(Exception exception);
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "The backend of app {AppId} did not start with the daemon: {Code}")]
-    private partial void LogStartFailed(string appId, string code);
+    [LoggerMessage(Level = LogLevel.Warning, Message = "The backend of app {AppId} did not start")]
+    private partial void LogStartFailed(Exception exception, string appId);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Starting or stopping the app backends after a change of the app pool failed")]
+    private partial void LogRoundFailed(Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "The app pool is not reachable any more; stopping Docker")]
+    private partial void LogPoolGone();
 }

@@ -151,4 +151,19 @@ public sealed class DockerRuntimeTests
         Assert.Equal("px-7", AppBackendRuntime.BridgeName(40007));
         Assert.Equal("px-i9999", AppBackendRuntime.InternetBridgeName(49999));
     }
+
+    [Fact]
+    public void ABackendWaitsOnlyForRequiredFoldersThatItsServicesMount()
+    {
+        using var manifest = JsonDocument.Parse("""
+            { "backend": {}, "storage": [
+              { "id": "media", "access": "read", "required": true, "services": ["web"] },
+              { "id": "frontend-only", "access": "read", "required": true },
+              { "id": "extra", "access": "read", "required": false, "services": ["web"] } ] }
+            """);
+        var app = new BackendApp("com.example.chat", "1.0.0", manifest.RootElement.Clone(), 40001, false, []);
+
+        Assert.Equal(["media"], AppBackendRuntime.UnmappedRequired(app));
+        Assert.Empty(AppBackendRuntime.UnmappedRequired(app with { Storage = [new("media", 1, "/", Pithyx.Daemon.Apps.AppStorageAccess.Read)] }));
+    }
 }

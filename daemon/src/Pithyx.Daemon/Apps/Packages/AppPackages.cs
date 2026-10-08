@@ -171,25 +171,22 @@ public sealed class AppPackages
         }
         if (!paths.Contains(ImagesLock.FileName))
         {
-            throw LockInvalid("missing");
+            throw ImagesLock.Invalid("missing");
         }
-        var lockFile = ImagesLock.Parse(File.ReadAllBytes(Path.Combine(package.Directory, ImagesLock.FileName))) ?? throw LockInvalid("invalid");
+        var lockFile = ImagesLock.Parse(File.ReadAllBytes(Path.Combine(package.Directory, ImagesLock.FileName))) ?? throw ImagesLock.Invalid("invalid");
         var images = ((ComposeMap)validation.Document!.Get("services")!).Entries
             .Select(service => ((ComposeScalar)((ComposeMap)service.Value).Get("image")!).Value)
             .ToHashSet(StringComparer.Ordinal);
         if (!images.SetEquals(lockFile.Images.Keys))
         {
-            throw LockInvalid("stale");
+            throw ImagesLock.Invalid("stale");
         }
         var architecture = ImagesLock.HostArchitecture ?? "";
         if (lockFile.Images.Values.Any(platforms => !platforms.ContainsKey(architecture)))
         {
-            throw LockInvalid("platform");
+            throw ImagesLock.Invalid("platform");
         }
     }
-
-    private static PithyxException LockInvalid(string reason) =>
-        new(ErrorCodes.AppPackageLockInvalid, new Dictionary<string, object?> { ["reason"] = reason, ["architecture"] = ImagesLock.HostArchitecture ?? "" });
 
     // Callers hold _lock.
     private List<CheckedPackage> Expired()

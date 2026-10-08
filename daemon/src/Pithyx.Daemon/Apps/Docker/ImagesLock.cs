@@ -90,6 +90,16 @@ public sealed partial class ImagesLock
         return $"{name}@{image.Manifest}";
     }
 
+    /// <summary>The problem of a lock that does not fit: <c>missing</c>, <c>invalid</c>, <c>stale</c> or <c>platform</c>.</summary>
+    public static Errors.PithyxException Invalid(string reason) =>
+        new(Errors.ErrorCodes.AppPackageLockInvalid, new Dictionary<string, object?> { ["reason"] = reason, ["architecture"] = HostArchitecture ?? "" });
+
+    /// <summary>The image ids (config digests) a lock names for this box's architecture; empty for bytes that are no lock.</summary>
+    public static IReadOnlySet<string> HostImages(byte[]? utf8) =>
+        utf8 is not null && Parse(utf8) is { } parsed && HostArchitecture is { } architecture
+            ? parsed.Images.Values.Where(platforms => platforms.ContainsKey(architecture)).Select(platforms => platforms[architecture].Config).ToHashSet(StringComparer.Ordinal)
+            : new HashSet<string>(StringComparer.Ordinal);
+
     private static bool OnlyKeys(JsonElement element, params string[] allowed) =>
         element.EnumerateObject().All(property => allowed.Contains(property.Name, StringComparer.Ordinal));
 

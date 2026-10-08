@@ -95,39 +95,59 @@ public sealed partial class AppService(
         {
             return await jobs.StartAsync(userId, kind, new { id = appId, version = package.Version, from = installed?.Version }, async context =>
             {
-                // The running version's backend stops before the snapshot, so its volumes are still; a failed update
-                // rolls the dataset back and starts it again.
-                var previous = installed is not null && installed.Enabled ? Docker.BackendApp.Of(installed) : null;
-                var started = false;
                 try
                 {
-                    if (previous?.HasBackend == true)
+                    // The running version's backend stops before the snapshot, so its volumes are still; a failed update
+                    // rolls the dataset back and starts it again. Its lock names the images the update may remove afterwards.
+                    var previous = installed is not null && installed.Enabled ? Docker.BackendApp.Of(installed) : null;
+                    var previousImages = previous?.HasBackend == true ? Docker.ImagesLock.HostImages(LockOf(pool, installed!)) : new HashSet<string>();
+                    try
                     {
-                        await backends.StopAsync(appId, context.Cancellation);
-                    }
-                    await AppVersions.InstallAsync(storage, pool, appId, package.Package, package.Version, update: installed is not null,
-                        async token =>
+                        if (previous?.HasBackend == true)
                         {
-                            var next = await NextBackendAsync(package, installed, token);
-                            if (next.HasBackend && installed?.Enabled != false)
+                            await backends.StopAsync(appId, pool, context.Cancellation);
+                        }
+                        await AppVersions.InstallAsync(storage, pool, appId, package.Package, package.Version, update: installed is not null,
+                            async token =>
                             {
-                                started = true;
-                                await backends.StartAsync(pool, next, null, token);
-                            }
-                            await CommitAsync(package, pool, access, installed, token);
-                        },
-                        context.Cancellation,
-                        published: async () =>
-                        {
-                            permissions.Invalidate();
-                            await registry.ReloadAsync(CancellationToken.None);
-                        });
-                    LogInstalled(appId, package.Version, installed?.Version);
-                }
-                catch
-                {
-                    await RecoverBackendAsync(pool, appId, started, previous);
-                    throw;
+                                var next = await NextBackendAsync(package, installed, token);
+                                // A required folder can only be mapped once the app is installed; its backend starts then.
+                                var start = next.HasBackend && installed?.Enabled != false && Docker.AppBackendRuntime.UnmappedRequired(next).Count == 0;
+                                try
+                                {
+                                    if (start)
+                                    {
+                                        await backends.StartAsync(pool, next, context.Report, token);
+                                    }
+                                    await CommitAsync(package, pool, access, installed, token);
+                                }
+                                catch
+                                {
+                                    // Before the dataset rolls back: the new containers must not write into the volumes it restores.
+                                    if (start)
+                                    {
+                                        await StopQuietlyAsync(appId, pool);
+                                    }
+                                    throw;
+                                }
+                            },
+                            context.Cancellation,
+                            published: async () =>
+                            {
+                                permissions.Invalidate();
+                                await registry.ReloadAsync(CancellationToken.None);
+                            });
+                        LogInstalled(appId, package.Version, installed?.Version);
+                    }
+                    catch
+                    {
+                        await RecoverBackendAsync(pool, appId, previous);
+                        throw;
+                    }
+                    if (previousImages.Count > 0)
+                    {
+                        await ForgetImagesAsync(previousImages, lastBackend: false);
+                    }
                 }
                 finally
                 {
@@ -145,56 +165,59 @@ public sealed partial class AppService(
     }
 
     /// <summary>
-    /// Enables or disables an app; a disabled app loses its tokens at once and its backend stops, an enabled one's
-    /// backend starts as a job.
+    /// Enables or disables an app; a disabled app loses its tokens at once. A backend stops, or starts, in a job that
+    /// holds the app like an install does.
     /// </summary>
     public async Task<AppDetails> SetEnabledAsync(ClaimsPrincipal caller, string appId, UpdateAppRequest request, CancellationToken cancellationToken)
     {
         RequireAdmin(caller);
         ArgumentNullException.ThrowIfNull(request);
         var app = RequireInstalled(appId);
-        await using (var connection = await connections.OpenAsync(cancellationToken))
+        var backend = Docker.BackendApp.Of(app).HasBackend && app.Enabled != request.Enabled;
+        await ChangeAsync(appId, backend, async () =>
         {
-            await connection.ExecuteAsync("UPDATE apps SET enabled = @enabled WHERE id = @appId", new { enabled = request.Enabled ? 1 : 0, appId });
-        }
-        if (!request.Enabled)
-        {
-            tokens.RevokeApp(appId);
-        }
-        await registry.ReloadAsync(cancellationToken);
-        LogEnabled(appId, request.Enabled);
-        if (Docker.BackendApp.Of(app).HasBackend && app.Enabled != request.Enabled)
-        {
-            if (request.Enabled)
+            await using (var connection = await connections.OpenAsync(cancellationToken))
             {
-                await StartBackendJobAsync(caller, appId, cancellationToken);
+                await connection.ExecuteAsync("UPDATE apps SET enabled = @enabled WHERE id = @appId", new { enabled = request.Enabled ? 1 : 0, appId });
             }
-            else
+            if (!request.Enabled)
             {
-                await backends.StopAsync(appId, cancellationToken);
+                tokens.RevokeApp(appId);
             }
-        }
+            await registry.ReloadAsync(cancellationToken);
+            LogEnabled(appId, request.Enabled);
+        }, CurrentUser.Id(caller), request.Enabled ? "apps.backend.start" : "apps.backend.stop", cancellationToken);
         return registry.Details(RequireInstalled(appId));
     }
 
-    /// <summary>Starts an installed app's backend as a job (the app must be enabled and its pool reachable).</summary>
-    public async Task<Job> StartBackendJobAsync(ClaimsPrincipal caller, string appId, CancellationToken cancellationToken)
+    /// <summary>
+    /// Runs a change of an app and, when its running backend must follow, a job that stops it and starts it again as the
+    /// registry now says (a disabled app stays stopped, one with an unmapped required folder too). The app is held from
+    /// before the change until the job ends, so no install, removal or other backend job runs in between.
+    /// </summary>
+    private async Task ChangeAsync(string appId, bool backend, Func<Task> change, long userId, string kind, CancellationToken cancellationToken)
     {
-        RequireAdmin(caller);
-        var pool = registry.Pool ?? throw new PithyxException(ErrorCodes.AppPoolRequired);
+        if (!backend || registry.Pool is not { } pool)
+        {
+            await change();
+            return;
+        }
         if (!registry.TryBegin(appId))
         {
             throw new PithyxException(ErrorCodes.AppAppBusy, new Dictionary<string, object?> { ["id"] = appId });
         }
         try
         {
-            return await jobs.StartAsync(CurrentUser.Id(caller), "apps.backend.start", new { id = appId }, async context =>
+            await change();
+            await jobs.StartAsync(userId, kind, new { id = appId }, async context =>
             {
                 try
                 {
-                    if (registry.Find(appId) is { Enabled: true } app)
+                    await backends.StopAsync(appId, pool, context.Cancellation);
+                    if (registry.Find(appId) is { Enabled: true } app && Docker.BackendApp.Of(app) is var next
+                        && Docker.AppBackendRuntime.UnmappedRequired(next).Count == 0)
                     {
-                        await backends.StartAsync(pool, Docker.BackendApp.Of(app), null, context.Cancellation);
+                        await backends.StartAsync(pool, next, context.Report, context.Cancellation);
                     }
                 }
                 finally
@@ -223,20 +246,26 @@ public sealed partial class AppService(
                 throw new PithyxException(ErrorCodes.AppPermissionNotRequested, new Dictionary<string, object?> { ["permission"] = Shorten(change?.Permission ?? "") });
             }
         }
-        await using (var connection = await connections.OpenAsync(cancellationToken))
-        await using (var transaction = await connection.BeginTransactionAsync(cancellationToken))
+        // Only the internet decides how a backend runs: its second network comes or goes with a restart.
+        var app = RequireInstalled(appId);
+        var internet = (request.Permissions ?? []).FirstOrDefault(change => change?.Permission == "network.internet") is { } wanted && wanted.Granted != app.HasInternet;
+        await ChangeAsync(appId, internet && RunsBackend(app), async () =>
         {
-            foreach (var change in request.Permissions ?? [])
+            await using (var connection = await connections.OpenAsync(cancellationToken))
+            await using (var transaction = await connection.BeginTransactionAsync(cancellationToken))
             {
-                await connection.ExecuteAsync(
-                    "UPDATE app_permissions SET granted = @granted WHERE app_id = @appId AND permission = @permission",
-                    new { granted = change.Granted ? 1 : 0, appId, permission = change.Permission },
-                    transaction);
+                foreach (var change in request.Permissions ?? [])
+                {
+                    await connection.ExecuteAsync(
+                        "UPDATE app_permissions SET granted = @granted WHERE app_id = @appId AND permission = @permission",
+                        new { granted = change.Granted ? 1 : 0, appId, permission = change.Permission },
+                        transaction);
+                }
+                await transaction.CommitAsync(cancellationToken);
             }
-            await transaction.CommitAsync(cancellationToken);
-        }
-        await registry.ReloadAsync(cancellationToken);
-        LogPermissions(appId);
+            await registry.ReloadAsync(cancellationToken);
+            LogPermissions(appId);
+        }, CurrentUser.Id(caller), "apps.backend.restart", cancellationToken);
         return registry.Details(RequireInstalled(appId));
     }
 
@@ -257,17 +286,21 @@ public sealed partial class AppService(
         var path = FsPath.Normalize(request.Path);
         var share = await shares.ResolveAsync(caller, request.ShareId, write: false, cancellationToken);
         RequireFolder(share.Path, path);
-        await using (var connection = await connections.OpenAsync(cancellationToken))
+        // The backend mounts its folders when it starts: a running one restarts, and one waiting for a required folder starts.
+        await ChangeAsync(appId, app.Enabled && Docker.BackendApp.Of(app).HasBackend, async () =>
         {
-            await connection.ExecuteAsync(
-                """
-                INSERT INTO storage_mappings (app_id, storage_id, share_id, path, access) VALUES (@appId, @storageId, @shareId, @path, @access)
-                ON CONFLICT (app_id, storage_id) DO UPDATE SET share_id = excluded.share_id, path = excluded.path, access = excluded.access
-                """,
-                new { appId, storageId, shareId = share.Id, path, access = request.Access == AppStorageAccess.Read ? "read" : "readWrite" });
-        }
-        await registry.ReloadAsync(cancellationToken);
-        LogMapped(appId, storageId, share.Id, path, request.Access);
+            await using (var connection = await connections.OpenAsync(cancellationToken))
+            {
+                await connection.ExecuteAsync(
+                    """
+                    INSERT INTO storage_mappings (app_id, storage_id, share_id, path, access) VALUES (@appId, @storageId, @shareId, @path, @access)
+                    ON CONFLICT (app_id, storage_id) DO UPDATE SET share_id = excluded.share_id, path = excluded.path, access = excluded.access
+                    """,
+                    new { appId, storageId, shareId = share.Id, path, access = request.Access == AppStorageAccess.Read ? "read" : "readWrite" });
+            }
+            await registry.ReloadAsync(cancellationToken);
+            LogMapped(appId, storageId, share.Id, path, request.Access);
+        }, CurrentUser.Id(caller), "apps.backend.restart", cancellationToken);
         return registry.Details(RequireInstalled(appId));
     }
 
@@ -280,12 +313,15 @@ public sealed partial class AppService(
         {
             throw MappingInvalid(storageId, "unknown");
         }
-        await using (var connection = await connections.OpenAsync(cancellationToken))
+        await ChangeAsync(appId, RunsBackend(app), async () =>
         {
-            await connection.ExecuteAsync("DELETE FROM storage_mappings WHERE app_id = @appId AND storage_id = @storageId", new { appId, storageId });
-        }
-        await registry.ReloadAsync(cancellationToken);
-        LogUnmapped(appId, storageId);
+            await using (var connection = await connections.OpenAsync(cancellationToken))
+            {
+                await connection.ExecuteAsync("DELETE FROM storage_mappings WHERE app_id = @appId AND storage_id = @storageId", new { appId, storageId });
+            }
+            await registry.ReloadAsync(cancellationToken);
+            LogUnmapped(appId, storageId);
+        }, CurrentUser.Id(caller), "apps.backend.restart", cancellationToken);
         return registry.Details(RequireInstalled(appId));
     }
 
@@ -325,15 +361,10 @@ public sealed partial class AppService(
                     var removed = registry.Find(appId);
                     var hadBackend = removed is not null && Docker.BackendApp.Of(removed).HasBackend;
                     // The lock names the images to remove afterwards; it goes with the files.
-                    byte[]? lockFile = null;
-                    if (hadBackend && pool is not null && storage.RootOf(pool, appId) is { } appRoot
-                        && Path.Combine(appRoot, AppStorage.VersionsFolder, removed!.Version, Docker.ImagesLock.FileName) is var lockPath && File.Exists(lockPath))
-                    {
-                        lockFile = await File.ReadAllBytesAsync(lockPath, context.Cancellation);
-                    }
+                    var images = hadBackend && pool is not null ? Docker.ImagesLock.HostImages(LockOf(pool, removed!)) : new HashSet<string>();
                     if (hadBackend)
                     {
-                        await backends.StopAsync(appId, context.Cancellation);
+                        await backends.StopAsync(appId, pool, context.Cancellation);
                     }
                     await using (var connection = await connections.OpenAsync(context.Cancellation))
                     {
@@ -360,8 +391,7 @@ public sealed partial class AppService(
                     }
                     if (hadBackend)
                     {
-                        var lastBackend = !registry.Apps.Values.Any(app => Docker.BackendApp.Of(app).HasBackend);
-                        await backends.ForgetAsync(lockFile, lastBackend, CancellationToken.None);
+                        await ForgetImagesAsync(images, lastBackend: !registry.Apps.Values.Any(app => Docker.BackendApp.Of(app).HasBackend));
                     }
                     LogRemoved(appId, data);
                 }
@@ -449,27 +479,72 @@ public sealed partial class AppService(
     }
 
     /// <summary>
-    /// After a failed install or update: the new version's containers go, and the version that ran before starts again
+    /// After a failed install or update, whose new containers are gone already: the version that ran before starts again
     /// from the rolled-back dataset. A failure here is logged; the install's own error is what the job reports.
     /// </summary>
-    private async Task RecoverBackendAsync(string pool, string appId, bool started, Docker.BackendApp? previous)
+    private async Task RecoverBackendAsync(string pool, string appId, Docker.BackendApp? previous)
+    {
+        if (previous?.HasBackend != true || Docker.AppBackendRuntime.UnmappedRequired(previous).Count > 0)
+        {
+            return;
+        }
+        try
+        {
+            await backends.StartAsync(pool, previous, null, CancellationToken.None);
+        }
+#pragma warning disable CA1031 // Whatever failed, the job reports the install's error.
+        catch (Exception exception)
+#pragma warning restore CA1031
+        {
+            LogRecoveryFailed(exception, appId);
+        }
+    }
+
+    private async Task StopQuietlyAsync(string appId, string pool)
     {
         try
         {
-            if (started)
-            {
-                await backends.StopAsync(appId, CancellationToken.None);
-            }
-            if (previous?.HasBackend == true)
-            {
-                await backends.StartAsync(pool, previous, null, CancellationToken.None);
-            }
+            await backends.StopAsync(appId, pool, CancellationToken.None);
         }
-        catch (PithyxException exception)
+#pragma warning disable CA1031 // The failure being handled is the one to report.
+        catch (Exception exception)
+#pragma warning restore CA1031
         {
-            LogRecoveryFailed(exception, appId, exception.Code);
+            LogRecoveryFailed(exception, appId);
         }
     }
+
+    /// <summary>Removes images unless the lock of an installed app's version still names them; a failure is only logged.</summary>
+    private async Task ForgetImagesAsync(IReadOnlySet<string> images, bool lastBackend)
+    {
+        var kept = new HashSet<string>(StringComparer.Ordinal);
+        if (registry.Pool is { } pool)
+        {
+            foreach (var app in registry.Apps.Values)
+            {
+                kept.UnionWith(Docker.ImagesLock.HostImages(LockOf(pool, app)));
+            }
+        }
+        try
+        {
+            await backends.ForgetAsync(images, kept, lastBackend, CancellationToken.None);
+        }
+#pragma warning disable CA1031 // Leftover images take space but break nothing.
+        catch (Exception exception)
+#pragma warning restore CA1031
+        {
+            LogForgetFailed(exception);
+        }
+    }
+
+    /// <summary>The images lock of an installed version, or null.</summary>
+    private byte[]? LockOf(string pool, InstalledApp app)
+    {
+        var path = storage.RootOf(pool, app.Id) is { } root ? Path.Combine(root, AppStorage.VersionsFolder, app.Version, Docker.ImagesLock.FileName) : null;
+        return path is not null && File.Exists(path) ? File.ReadAllBytes(path) : null;
+    }
+
+    private static bool RunsBackend(InstalledApp app) => app.Enabled && Docker.BackendApp.Of(app).HasBackend;
 
     /// <summary>The registry change of an install or update, in one transaction: the last step of <see cref="AppVersions"/>.</summary>
     private async Task CommitAsync(CheckedPackage package, string pool, AppAccess access, InstalledApp? installed, CancellationToken cancellationToken)
@@ -682,8 +757,11 @@ public sealed partial class AppService(
     [LoggerMessage(Level = LogLevel.Information, Message = "Log level of app {AppId} set to {Level}")]
     private partial void LogLevelSet(string appId, AppLogLevel level);
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "Starting the earlier backend of app {AppId} after a failed install failed: {Code}")]
-    private partial void LogRecoveryFailed(Exception exception, string appId, string code);
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Cleaning up the backend of app {AppId} after a failed install failed")]
+    private partial void LogRecoveryFailed(Exception exception, string appId);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Removing images that no app needs any more failed")]
+    private partial void LogForgetFailed(Exception exception);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Removed app {AppId}, data: {Data}")]
     private partial void LogRemoved(string appId, AppDataChoice data);

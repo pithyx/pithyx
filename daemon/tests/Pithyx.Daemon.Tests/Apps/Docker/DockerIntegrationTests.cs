@@ -115,13 +115,13 @@ public sealed class DockerIntegrationTests
             Assert.Equal(LogLevelName.Info, entry.Level);
 
             // Version 2 never becomes healthy: the update fails, the dataset returns to its snapshot, and version 1 runs again.
-            await runtime.StopAsync(AppId, Token);
+            await runtime.StopAsync(AppId, pool, Token);
             Assert.Null(backends.Find(AppId, "api"));
             Assert.Empty(await engine.ContainersAsync(AppId, Token));
             var failed = await Assert.ThrowsAsync<PithyxException>(() =>
                 InstallAsync(storage, runtime, pool, staging, imageId, imageBytes, "2.0.0", "two", update: true, healthy: false));
             Assert.Equal(ErrorCodes.AppBackendStartFailed, failed.Code);
-            await runtime.StopAsync(AppId, Token);
+            Assert.Empty(await engine.ContainersAsync(AppId, Token));
             await runtime.StartAsync(pool, one, null, Token);
             Assert.Equal(["1.0.0"], Directory.GetFileSystemEntries(Path.Combine(root, "versions")).Select(Path.GetFileName));
             Assert.Equal("one\n", await http.GetStringAsync(new Uri(backends.Find(AppId, "api")!, "hello.txt"), Token));
@@ -143,8 +143,12 @@ public sealed class DockerIntegrationTests
             await events.DisposeAsync();
             Assert.Equal("web", died!.Service);
 
-            await runtime.StopAsync(AppId, Token);
-            await runtime.ForgetAsync(Encoding.UTF8.GetBytes(Lock(imageId)), lastBackend: true, Token);
+            await runtime.StopAsync(AppId, pool, Token);
+            await runtime.ForgetAsync(ImagesLock.HostImages(Encoding.UTF8.GetBytes(Lock(imageId))), new HashSet<string>(), lastBackend: true, Token);
+            Assert.False(await engine.PingAsync(Token));
+            await host.EnsureRunningAsync(pool, Token);
+            Assert.Null(await engine.ImageIdAsync(imageId, Token));
+            await host.StopAsync(Token);
             Assert.False(await engine.PingAsync(Token));
         }
         finally
@@ -192,7 +196,19 @@ public sealed class DockerIntegrationTests
         var package = await PackageReader.UnpackAsync(new MemoryStream(bytes), Path.Combine(staging, "package-" + version + "-" + Guid.NewGuid().ToString("N")), PackageLimits.Default, Token);
         var (checkedManifest, _) = AppPackages.Check(package);
         var app = new BackendApp(AppId, version, checkedManifest, Uid, false, []);
-        await AppVersions.InstallAsync(storage, pool, AppId, package, version, update, token => runtime.StartAsync(pool, app, null, token), Token);
+        // As AppService does it: a backend that fails goes before the dataset rolls back.
+        await AppVersions.InstallAsync(storage, pool, AppId, package, version, update, async token =>
+        {
+            try
+            {
+                await runtime.StartAsync(pool, app, null, token);
+            }
+            catch
+            {
+                await runtime.StopAsync(AppId, pool, CancellationToken.None);
+                throw;
+            }
+        }, Token);
         return app;
     }
 

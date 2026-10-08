@@ -69,7 +69,7 @@ public sealed partial class AppBackendRuntime(
     /// Starts the backend of an installed version and makes it reachable through the proxy. Throws when something it
     /// needs is missing, when an image cannot be brought in or does not match the lock, or when Compose fails.
     /// </summary>
-    public async Task StartAsync(string pool, BackendApp app, Action<string>? progress, CancellationToken cancellationToken)
+    public async Task StartAsync(string pool, BackendApp app, Action<Jobs.JobProgress>? progress, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(app);
         if (!app.HasBackend || !options.Apply)
@@ -79,7 +79,7 @@ public sealed partial class AppBackendRuntime(
         var root = storage.RootOf(pool, app.AppId) ?? throw new PithyxException(
             ErrorCodes.AppPoolUnavailable, new Dictionary<string, object?> { ["pool"] = pool, ["reason"] = "locked" });
         var mappings = await MappingsAsync(app, cancellationToken);
-        progress?.Invoke("docker");
+        progress?.Invoke(new Jobs.JobProgress(0, 3, 0, 0, "docker"));
         await host.EnsureRunningAsync(pool, cancellationToken);
 
         var version = Path.Combine(root, AppStorage.VersionsFolder, app.Version);
@@ -90,8 +90,8 @@ public sealed partial class AppBackendRuntime(
             throw validation.Issues[0].ToException();
         }
         var lockFile = ImagesLock.Parse(await File.ReadAllBytesAsync(Path.Combine(version, ImagesLock.FileName), cancellationToken))
-            ?? throw LockInvalid("invalid");
-        progress?.Invoke("images");
+            ?? throw ImagesLock.Invalid("invalid");
+        progress?.Invoke(new Jobs.JobProgress(1, 3, 0, 0, "images"));
         var images = await ImagesAsync(version, lockFile, cancellationToken);
 
         var composeHost = new ComposeHost(
@@ -107,7 +107,7 @@ public sealed partial class AppBackendRuntime(
         await File.WriteAllTextAsync(Path.Combine(run, ComposeFile), rewritten, cancellationToken);
         await VolumesAsync(root, validation.Document!, app, mappings, cancellationToken);
 
-        progress?.Invoke("start");
+        progress?.Invoke(new Jobs.JobProgress(2, 3, 0, 0, "start"));
         var project = ComposeRewriter.ProjectName(app.AppId);
         var up = await commands.RunAsync(
             new CommandRequest("docker", Compose(project, run, "up", "--detach", "--wait", "--remove-orphans"), StartTimeout + TimeSpan.FromMinutes(1)),
@@ -119,11 +119,15 @@ public sealed partial class AppBackendRuntime(
         }
         var endpoints = Endpoints(app.Manifest, project, await engine.ContainersAsync(app.AppId, cancellationToken));
         backends.SetRunning(app.AppId, endpoints);
+        progress?.Invoke(new Jobs.JobProgress(3, 3, 0, 0, null));
         LogStarted(app.AppId, app.Version, endpoints.Count);
     }
 
-    /// <summary>Takes the backend out of the proxy and removes its containers; volumes and images stay.</summary>
-    public async Task StopAsync(string appId, CancellationToken cancellationToken)
+    /// <summary>
+    /// Takes the backend out of the proxy and removes its containers; volumes and images stay. With the app's pool, Compose
+    /// reads the rewritten file as for the start; without it (the pool is gone), it finds the containers by project name.
+    /// </summary>
+    public async Task StopAsync(string appId, string? pool, CancellationToken cancellationToken)
     {
         backends.SetStopped(appId);
         if (!options.Apply || !await engine.PingAsync(cancellationToken))
@@ -131,9 +135,12 @@ public sealed partial class AppBackendRuntime(
             return;
         }
         var project = ComposeRewriter.ProjectName(appId);
-        var down = await commands.RunAsync(
-            new CommandRequest("docker", ["compose", "--project-name", project, "down", "--timeout", StopSeconds.ToString(CultureInfo.InvariantCulture), "--remove-orphans"], TimeSpan.FromMinutes(3)),
-            cancellationToken);
+        var run = pool is null ? null : storage.RootOf(pool, appId) is { } root ? Path.Combine(root, AppStorage.RunFolder) : null;
+        var stop = new[] { "down", "--timeout", StopSeconds.ToString(CultureInfo.InvariantCulture), "--remove-orphans" };
+        var arguments = run is not null && File.Exists(Path.Combine(run, ComposeFile))
+            ? Compose(project, run, stop)
+            : ["compose", "--project-name", project, "--env-file", "/dev/null", .. stop];
+        var down = await commands.RunAsync(new CommandRequest("docker", arguments, TimeSpan.FromMinutes(3)), cancellationToken);
         if (down.ExitCode != 0)
         {
             LogStopFailed(appId, down.ExitCode);
@@ -143,29 +150,42 @@ public sealed partial class AppBackendRuntime(
     }
 
     /// <summary>
-    /// After an uninstall: removes the images of the app's lock that no container uses, and stops Docker when no backend
-    /// app is left.
+    /// Removes images an app no longer needs (after an uninstall, or the old version's after an update) unless another
+    /// lock still names them; Docker refuses to remove one a container uses. Stops Docker when no backend app is left.
     /// </summary>
-    public async Task ForgetAsync(byte[]? lockBytes, bool lastBackend, CancellationToken cancellationToken)
+    public async Task ForgetAsync(IReadOnlySet<string> images, IReadOnlySet<string> kept, bool lastBackend, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(images);
+        ArgumentNullException.ThrowIfNull(kept);
         if (!options.Apply || !await engine.PingAsync(cancellationToken))
         {
             return;
         }
-        if (lockBytes is not null && ImagesLock.Parse(lockBytes) is { } lockFile && ImagesLock.HostArchitecture is { } architecture)
+        foreach (var image in images.Where(image => !kept.Contains(image)).Order(StringComparer.Ordinal))
         {
-            foreach (var platforms in lockFile.Images.Values)
-            {
-                if (platforms.TryGetValue(architecture, out var image))
-                {
-                    await engine.RemoveImageAsync(image.Config, cancellationToken);
-                }
-            }
+            await engine.RemoveImageAsync(image, cancellationToken);
         }
         if (lastBackend)
         {
             await host.StopAsync(cancellationToken);
         }
+    }
+
+    /// <summary>
+    /// The storage requests a backend service must have that are not mapped yet; the backend cannot start before an
+    /// administrator maps them (after the install, which is why an install does not try then).
+    /// </summary>
+    public static IReadOnlyList<string> UnmappedRequired(BackendApp app)
+    {
+        ArgumentNullException.ThrowIfNull(app);
+        if (!app.Manifest.TryGetProperty("storage", out var requests))
+        {
+            return [];
+        }
+        return [.. requests.EnumerateArray()
+            .Where(request => request.GetProperty("required").GetBoolean() && request.TryGetProperty("services", out _))
+            .Select(request => request.GetProperty("id").GetString()!)
+            .Where(id => app.Storage.All(mapping => mapping.StorageId != id))];
     }
 
     /// <summary>The arguments of a Compose call on the rewritten file, without a project <c>.env</c> (D310).</summary>
@@ -237,13 +257,13 @@ public sealed partial class AppBackendRuntime(
     /// <summary>Brings every image of the lock in by its digest and returns each reference with its checked id.</summary>
     private async Task<IReadOnlyDictionary<string, string>> ImagesAsync(string version, ImagesLock lockFile, CancellationToken cancellationToken)
     {
-        var architecture = ImagesLock.HostArchitecture ?? throw LockInvalid("platform");
+        var architecture = ImagesLock.HostArchitecture ?? throw ImagesLock.Invalid("platform");
         var ids = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (var (reference, platforms) in lockFile.Images)
         {
             if (!platforms.TryGetValue(architecture, out var image))
             {
-                throw new PithyxException(ErrorCodes.AppPackageLockInvalid, new Dictionary<string, object?> { ["reason"] = "platform", ["architecture"] = architecture });
+                throw ImagesLock.Invalid("platform");
             }
             if (await engine.ImageIdAsync(image.Config, cancellationToken) is null)
             {
@@ -317,9 +337,6 @@ public sealed partial class AppBackendRuntime(
 
     private static PithyxException StorageUnavailable(string storageId, string reason) =>
         new(ErrorCodes.AppBackendStorageUnavailable, new Dictionary<string, object?> { ["storage"] = storageId, ["reason"] = reason });
-
-    private static PithyxException LockInvalid(string reason) =>
-        new(ErrorCodes.AppPackageLockInvalid, new Dictionary<string, object?> { ["reason"] = reason, ["architecture"] = ImagesLock.HostArchitecture ?? "" });
 
     private static string Shorten(string value) => value.Length > 200 ? value[..200] : value;
 

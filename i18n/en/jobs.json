@@ -61,6 +61,9 @@
     "apps_install": "Installing an app",
     "apps_update": "Updating an app",
     "apps_uninstall": "Removing an app",
+    "apps_backend_start": "Starting an app backend",
+    "apps_backend_stop": "Stopping an app backend",
+    "apps_backend_restart": "Restarting an app backend",
     "unknown": "Task"
   }
 }
