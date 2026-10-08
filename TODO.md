@@ -423,7 +423,7 @@ Logs (D305): every level also appears in the browser console. `info`, `warn` and
 
 - [x] `BackendLifecycle` as a pure state machine: the lease through the context topic, 2 minutes of grace, then `idleTimeout`; a request wakes the backend and the proxy holds it up to 30 seconds; `always` backends start at boot; a locked pool stops the app. (D327: `BackendLifecycle.Decide`, run by `AppBackendSupervisor` on every change; a failed start waits a minute unless a request or a newly opened window asks; running containers are taken over after a daemon restart.)
 - [x] Cron schedules with `X-Pithyx-Schedule`; the healthcheck feeds `backendStatus`. (`CronSchedule` in the box's time zone; the manifest's `health` gates `running` after a start, Docker's `health_status` switches between `running` and `unavailable`; the desktop passes the status to the app as `backendStatus`.)
-- [ ] Done when the chat runs on 7484 between `e2e-admin` and `e2e-user`, stops when idle and wakes when opened.
+- [x] Done when the chat runs on 7484 between `e2e-admin` and `e2e-user`, stops when idle and wakes when opened. (2026-10-08: a5e79b8 deployed, no migration; the daemon took over the running chat backend at its start and stopped it 10 minutes later (`idleTimeout` 600); a message posted through the proxy as `e2e-user` woke it, answered 201 after 2.4 seconds and was read as `e2e-admin`; 10 minutes later it stopped again, and opening Chat from the start menu as `e2e-admin` started it and showed the messages 3.5 seconds after the click.)
 
 #### A15b The special folder "Apps" (after A15, D314)
 
