@@ -37,8 +37,8 @@ public sealed record LifecycleDecision(LifecycleAction Action, DateTimeOffset? R
 /// gone, a required folder unmapped) stops. An <c>always</c> backend starts whenever it can. An <c>onDemand</c> backend
 /// starts while a user has a window of the app open (the window lease) or a request or schedule holds it, and stops once
 /// <see cref="LifecycleInput.IdleTimeout"/> has passed since the last of them. A failed start waits
-/// <see cref="RetryAfter"/> before the next try on its own, so a broken backend does not restart in a loop; a request or
-/// a newly opened window tries again at once.
+/// <see cref="RetryAfter"/> before the next try, also for requests, so a broken backend does not restart in a loop; the
+/// supervisor forgets the failure when a window opens, which tries again at once.
 /// </summary>
 public static class BackendLifecycle
 {
@@ -69,8 +69,9 @@ public static class BackendLifecycle
         {
             return new(LifecycleAction.None, null);
         }
-        // A request or a lease that came after the failure tries again; otherwise the backend waits out the pause.
-        if (input.FailedAt is { } failed && !input.Held && failed + RetryAfter > input.Now)
+        // Requests do not shorten the pause, or a crashing backend would restart on every request; a newly opened window
+        // clears the failure in the supervisor and tries at once.
+        if (input.FailedAt is { } failed && failed + RetryAfter > input.Now)
         {
             return new(LifecycleAction.None, failed + RetryAfter);
         }

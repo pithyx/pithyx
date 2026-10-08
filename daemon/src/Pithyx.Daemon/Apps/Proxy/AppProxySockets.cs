@@ -158,10 +158,11 @@ public sealed partial class AppProxySockets(
     // A stopped backend, or one that started again at another address, ends the sockets to the old one.
     private void CloseStopped(string appId)
     {
-        foreach (var socket in _open.Values.Where(socket => socket.Grant.AppId == appId))
+        // A socket without a destination is still waiting for its backend to start (the proxy woke it); it stays.
+        foreach (var socket in _open.Values.Where(socket => socket.Grant.AppId == appId && socket.Destination is not null))
         {
             var current = socket.Grant.Endpoint is { } endpoint ? backends.Find(appId, endpoint) : null;
-            if (current is null || (socket.Destination is { } destination && destination != current))
+            if (current is null || socket.Destination != current)
             {
                 socket.Close();
             }

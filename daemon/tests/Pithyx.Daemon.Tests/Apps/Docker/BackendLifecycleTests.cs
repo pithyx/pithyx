@@ -46,10 +46,10 @@ public sealed class BackendLifecycleTests
     }
 
     [Fact]
-    public void AFailedStartWaitsUnlessARequestAsks()
+    public void AFailedStartWaitsItsPauseEvenForRequests()
     {
         Assert.Equal(new LifecycleDecision(LifecycleAction.None, _now + TimeSpan.FromSeconds(30)), BackendLifecycle.Decide(Input(inUse: true, failedAgo: TimeSpan.FromSeconds(30))));
         Assert.Equal(LifecycleAction.Start, BackendLifecycle.Decide(Input(inUse: true, failedAgo: BackendLifecycle.RetryAfter)).Action);
-        Assert.Equal(LifecycleAction.Start, BackendLifecycle.Decide(Input(held: true, failedAgo: TimeSpan.FromSeconds(5))).Action);
+        Assert.Equal(new LifecycleDecision(LifecycleAction.None, _now + TimeSpan.FromSeconds(55)), BackendLifecycle.Decide(Input(held: true, failedAgo: TimeSpan.FromSeconds(5))));
     }
 }

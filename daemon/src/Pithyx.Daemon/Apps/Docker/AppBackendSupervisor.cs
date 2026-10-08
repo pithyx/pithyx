@@ -60,14 +60,20 @@ public sealed partial class AppBackendSupervisor(
         public DateTimeOffset? IdleSince;
         public DateTimeOffset? FailedAt;
         public bool WasInUse;
-        public DateTimeOffset? HeldUntil;
+        public bool WasRunning;
+        /// <summary>Who holds the backend up (a waiting request, a running schedule) and until when.</summary>
+        public readonly Dictionary<Guid, DateTimeOffset> Holds = [];
         public readonly List<TaskCompletionSource<bool>> Waiters = [];
+        public string? ScheduleVersion;
         public readonly Dictionary<string, DateTimeOffset> NextRuns = new(StringComparer.Ordinal);
     }
 
+    private static readonly ConcurrentDictionary<string, CronSchedule> _crons = new(StringComparer.Ordinal);
+
     /// <summary>
     /// Wakes an app's backend for a request: it starts when it may run, and the call returns once it runs (true), when
-    /// it cannot start, or after <see cref="WakeTimeout"/> (false). In simulation nothing runs, so it returns false at once.
+    /// it cannot start, or after <see cref="WakeTimeout"/> (false). During the pause after a failed start, and in
+    /// simulation, it returns false at once.
     /// </summary>
     public async Task<bool> WakeAsync(string appId, CancellationToken cancellationToken)
     {
@@ -75,16 +81,20 @@ public sealed partial class AppBackendSupervisor(
         {
             return true;
         }
-        if (!options.Apply || registry.Find(appId) is not { Enabled: true } app || !BackendApp.Of(app).HasBackend
-            || !registry.IsAvailable(appId) || AppBackendRuntime.UnmappedRequired(BackendApp.Of(app)).Count > 0)
+        if (!options.Apply || registry.Find(appId) is not { } app || !BackendApp.Of(app).HasBackend || !IsRunnable(app))
         {
             return false;
         }
-        var waiter = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         var state = StateOf(appId);
+        var hold = Guid.NewGuid();
+        var waiter = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
         lock (state)
         {
-            state.HeldUntil = Max(state.HeldUntil, time.GetUtcNow() + WakeTimeout);
+            if (state.FailedAt is { } failed && failed + BackendLifecycle.RetryAfter > time.GetUtcNow())
+            {
+                return false;
+            }
+            state.Holds[hold] = time.GetUtcNow() + WakeTimeout;
             state.Waiters.Add(waiter);
         }
         Signal();
@@ -95,6 +105,14 @@ public sealed partial class AppBackendSupervisor(
         catch (TimeoutException)
         {
             return backends.IsRunning(appId);
+        }
+        finally
+        {
+            lock (state)
+            {
+                state.Holds.Remove(hold);
+                state.Waiters.Remove(waiter);
+            }
         }
     }
 
@@ -190,20 +208,26 @@ public sealed partial class AppBackendSupervisor(
             {
                 continue;
             }
-            var next = await DecideAsync(app, now, stoppingToken);
+            var next = Decide(app, now, stoppingToken);
             recheck = Min(recheck, next);
         }
         SetTimer(recheck, now);
     }
 
-    private async Task<DateTimeOffset?> DecideAsync(InstalledApp installed, DateTimeOffset now, CancellationToken stoppingToken)
+    private DateTimeOffset? Decide(InstalledApp installed, DateTimeOffset now, CancellationToken stoppingToken)
     {
         var app = BackendApp.Of(installed);
         var state = StateOf(app.AppId);
         var inUse = leases.InUse(app.AppId);
         var running = backends.IsRunning(app.AppId);
+        if (!running && backends.StatusOf(app.AppId) is AppBackends.Starting or AppBackends.Updating)
+        {
+            // Left over by a job that ended without a start: the backend is simply stopped.
+            backends.SetStopped(app.AppId);
+        }
         var dueSchedules = DueSchedules(installed, state, now, out var nextSchedule);
         bool held;
+        DateTimeOffset? holdEnds;
         lock (state)
         {
             if (inUse && !state.WasInUse)
@@ -211,16 +235,24 @@ public sealed partial class AppBackendSupervisor(
                 // A window opened: whatever failed before is worth another try now.
                 state.FailedAt = null;
             }
-            held = state.HeldUntil > now;
-            if (inUse || held || (state.WasInUse && !inUse) || (running && state.IdleSince is null))
+            foreach (var expired in state.Holds.Where(entry => entry.Value <= now).Select(entry => entry.Key).ToList())
+            {
+                state.IdleSince = Max(state.IdleSince, state.Holds[expired]);
+                state.Holds.Remove(expired);
+            }
+            held = state.Holds.Count > 0;
+            holdEnds = held ? state.Holds.Values.Min() : null;
+            // The idle countdown starts anew whenever the backend was used, held, or (re)started.
+            if (inUse || held || (state.WasInUse && !inUse) || (running && !state.WasRunning))
             {
                 state.IdleSince = now;
             }
-            else if (state.HeldUntil is { } heldUntil && heldUntil > (state.IdleSince ?? DateTimeOffset.MinValue))
+            if (!running)
             {
-                state.IdleSince = heldUntil;
+                state.IdleSince = null;
             }
             state.WasInUse = inUse;
+            state.WasRunning = running;
         }
         foreach (var schedule in dueSchedules)
         {
@@ -229,7 +261,7 @@ public sealed partial class AppBackendSupervisor(
         var input = new LifecycleInput(
             Always: installed.Manifest.GetProperty("backend").GetProperty("lifecycle").GetString() == "always",
             IdleTimeout: IdleTimeoutOf(installed),
-            Runnable: installed.Enabled && registry.IsAvailable(app.AppId) && AppBackendRuntime.UnmappedRequired(app).Count == 0,
+            Runnable: IsRunnable(installed),
             Running: running,
             InUse: inUse,
             Held: held,
@@ -237,36 +269,36 @@ public sealed partial class AppBackendSupervisor(
             FailedAt: state.FailedAt,
             Now: now);
         var decision = BackendLifecycle.Decide(input);
-        switch (decision.Action)
+        // A start or stop runs beside the decisions, holding the app, so a slow start does not delay the other apps.
+        if (decision.Action != LifecycleAction.None && registry.TryBegin(app.AppId))
         {
-            case LifecycleAction.Start:
-                await StartAsync(app, state, stoppingToken);
-                break;
-            case LifecycleAction.Stop:
-                await StopAsync(app.AppId, stoppingToken);
-                break;
+            _ = decision.Action == LifecycleAction.Start ? StartAsync(app, state, stoppingToken) : StopAsync(app.AppId, stoppingToken);
         }
-        if (decision.Action == LifecycleAction.None && !input.Runnable)
+        else if (decision.Action == LifecycleAction.None && (!input.Runnable || (input.FailedAt is not null && !running)))
         {
             Complete(state, false);
         }
-        return Min(Min(decision.RecheckAt, held ? state.HeldUntil : null), nextSchedule);
+        return Min(Min(decision.RecheckAt, holdEnds), nextSchedule);
     }
 
+    /// <summary>Whether the app may run now: enabled, its pool reachable, its required folders mapped.</summary>
+    private bool IsRunnable(InstalledApp app) =>
+        app.Enabled && registry.IsAvailable(app.Id) && AppBackendRuntime.UnmappedRequired(BackendApp.Of(app)).Count == 0;
+
+    /// <summary>Starts a backend the caller holds with <see cref="AppRegistry.TryBegin"/>.</summary>
     private async Task StartAsync(BackendApp app, AppState state, CancellationToken stoppingToken)
     {
-        if (registry.Pool is not { } pool || !registry.TryBegin(app.AppId))
-        {
-            return;
-        }
         try
         {
-            backends.SetStatus(app.AppId, AppBackends.Starting);
+            if (registry.Pool is not { } pool)
+            {
+                Complete(state, false);
+                return;
+            }
             await runtime.StartAsync(pool, app, null, stoppingToken);
             lock (state)
             {
                 state.FailedAt = null;
-                state.IdleSince = time.GetUtcNow();
             }
             LogStarted(app.AppId);
             Complete(state, true);
@@ -281,7 +313,6 @@ public sealed partial class AppBackendSupervisor(
             lock (state)
             {
                 state.FailedAt = time.GetUtcNow();
-                state.HeldUntil = null;
             }
             Complete(state, false);
         }
@@ -291,12 +322,9 @@ public sealed partial class AppBackendSupervisor(
         }
     }
 
+    /// <summary>Stops a backend the caller holds with <see cref="AppRegistry.TryBegin"/>.</summary>
     private async Task StopAsync(string appId, CancellationToken stoppingToken)
     {
-        if (!registry.TryBegin(appId))
-        {
-            return;
-        }
         try
         {
             LogIdleStop(appId);
@@ -333,10 +361,16 @@ public sealed partial class AppBackendSupervisor(
         }
         lock (state)
         {
+            // An update may change or drop schedules: their times are computed again from the new manifest.
+            if (state.ScheduleVersion != app.Version)
+            {
+                state.NextRuns.Clear();
+                state.ScheduleVersion = app.Version;
+            }
             foreach (var schedule in schedules.EnumerateArray())
             {
                 var id = schedule.GetProperty("id").GetString()!;
-                var cron = CronSchedule.Parse(schedule.GetProperty("cron").GetString()!);
+                var cron = _crons.GetOrAdd(schedule.GetProperty("cron").GetString()!, CronSchedule.Parse);
                 if (!state.NextRuns.TryGetValue(id, out var at))
                 {
                     at = cron.Next(now, TimeZoneInfo.Local) ?? DateTimeOffset.MaxValue;
@@ -358,9 +392,10 @@ public sealed partial class AppBackendSupervisor(
     private async Task RunScheduleAsync(InstalledApp app, (string Id, string Endpoint, string Path) schedule, CancellationToken stoppingToken)
     {
         var state = StateOf(app.Id);
+        var hold = Guid.NewGuid();
         lock (state)
         {
-            state.HeldUntil = Max(state.HeldUntil, time.GetUtcNow() + ScheduleTimeout);
+            state.Holds[hold] = time.GetUtcNow() + ScheduleTimeout;
         }
         try
         {
@@ -384,7 +419,7 @@ public sealed partial class AppBackendSupervisor(
         {
             lock (state)
             {
-                state.HeldUntil = null;
+                state.Holds.Remove(hold);
                 state.IdleSince = time.GetUtcNow();
             }
             Signal();
@@ -584,7 +619,7 @@ public sealed partial class AppBackendSupervisor(
 
     private static DateTimeOffset? Min(DateTimeOffset? a, DateTimeOffset? b) => a is null ? b : b is null ? a : a < b ? a : b;
 
-    private static DateTimeOffset? Max(DateTimeOffset? a, DateTimeOffset b) => a is { } value && value > b ? value : b;
+    private static DateTimeOffset Max(DateTimeOffset? a, DateTimeOffset b) => a is { } value && value > b ? value : b;
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Started the backend of app {AppId} for its lifecycle")]
     private partial void LogStarted(string appId);

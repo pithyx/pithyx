@@ -84,6 +84,20 @@ public sealed partial class AppBackendRuntime(
         {
             return;
         }
+        try
+        {
+            await StartCoreAsync(pool, app, progress, cancellationToken);
+        }
+        catch when (!backends.IsRunning(app.AppId))
+        {
+            // Never left as "starting": the caller stops what came up, and the app sees that its backend failed.
+            backends.SetStatus(app.AppId, AppBackends.Unavailable);
+            throw;
+        }
+    }
+
+    private async Task StartCoreAsync(string pool, BackendApp app, Action<Jobs.JobProgress>? progress, CancellationToken cancellationToken)
+    {
         var root = storage.RootOf(pool, app.AppId) ?? throw new PithyxException(
             ErrorCodes.AppPoolUnavailable, new Dictionary<string, object?> { ["pool"] = pool, ["reason"] = "locked" });
         var mappings = await MappingsAsync(app, cancellationToken);
@@ -176,32 +190,28 @@ public sealed partial class AppBackendRuntime(
         var url = new Uri(address, health.GetProperty("path").GetString()!.TrimStart('/'));
         using var deadline = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         deadline.CancelAfter(HealthTimeout);
-        while (true)
+        try
         {
-            try
+            while (true)
             {
-                using var answer = await _healthClient.GetAsync(url, deadline.Token);
-                if (answer.IsSuccessStatusCode)
+                try
                 {
-                    return;
+                    using var answer = await _healthClient.GetAsync(url, deadline.Token);
+                    if (answer.IsSuccessStatusCode)
+                    {
+                        return;
+                    }
                 }
-            }
-            catch (HttpRequestException)
-            {
-                // Not listening yet.
-            }
-            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-            {
-                throw new PithyxException(ErrorCodes.AppBackendStartFailed, new Dictionary<string, object?> { ["exitCode"] = 0 });
-            }
-            try
-            {
+                catch (Exception exception) when (exception is HttpRequestException or TaskCanceledException && !deadline.IsCancellationRequested)
+                {
+                    // Not listening yet, or a single slow answer: the next try decides.
+                }
                 await Task.Delay(TimeSpan.FromMilliseconds(500), deadline.Token);
             }
-            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-            {
-                throw new PithyxException(ErrorCodes.AppBackendStartFailed, new Dictionary<string, object?> { ["exitCode"] = 0 });
-            }
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new PithyxException(ErrorCodes.AppBackendStartFailed, new Dictionary<string, object?> { ["exitCode"] = 0 });
         }
     }
 
