@@ -7,8 +7,7 @@ namespace Pithyx.Daemon.Logs;
 /// one long-running <c>journalctl --follow</c>, never a process per request. After a restart it continues at the
 /// cursor stored with the last written batch, the first time with the current boot. Real mode only.
 /// SMB and SFTP activity is handed to <see cref="FileServices.FileServiceActivity"/> on the way. App containers' output
-/// (source <c>app/&lt;id&gt;</c>) is kept only for installed apps, its debug lines only while the app's debug switch is on
-/// (D305), and it shares the app's rate limit with the SDK's logs.
+/// (source <c>app/&lt;id&gt;</c>) follows <see cref="Keeps(PendingLogEntry, Apps.AppRegistry?, AppLogLimiter?)"/>.
 /// </summary>
 public sealed partial class JournalReader(
     ICommandRunner commands,
@@ -56,14 +55,28 @@ public sealed partial class JournalReader(
         }
     }
 
-    private bool Keeps(PendingLogEntry entry)
+    private bool Keeps(PendingLogEntry entry) => Keeps(entry, apps, limiter);
+
+    /// <summary>
+    /// Whether an entry goes to the Log Center: every entry that is not an app's; an app's only while the app is
+    /// installed or being installed (its backend starts before the registry names it, and that output is what an
+    /// administrator needs when the install fails), its debug lines only while the app's debug switch is on, and all of
+    /// it within the app's rate limit.
+    /// </summary>
+    internal static bool Keeps(PendingLogEntry entry, Apps.AppRegistry? apps, AppLogLimiter? limiter)
     {
+        ArgumentNullException.ThrowIfNull(entry);
         if (!entry.Source.StartsWith(LogSources.AppPrefix, StringComparison.Ordinal))
         {
             return true;
         }
         var appId = entry.Source[LogSources.AppPrefix.Length..];
-        if (apps?.Find(appId) is not { } app || (entry.Level == LogLevelName.Debug && app.LogLevel != Apps.AppLogLevel.Debug))
+        var app = apps?.Find(appId);
+        if (app is null && apps?.IsBusy(appId) != true)
+        {
+            return false;
+        }
+        if (entry.Level == LogLevelName.Debug && app?.LogLevel != Apps.AppLogLevel.Debug)
         {
             return false;
         }

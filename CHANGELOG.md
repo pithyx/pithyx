@@ -198,6 +198,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- The Log Center keeps what an app's backend writes while the app is being installed; the output of a first start (and of a start that fails) was dropped because the app was not in the registry yet.
 - `@pithyx/ui` builds its CSS module types before its declarations, so `pnpm --filter @pithyx/ui build` from a fresh checkout no longer reports TS2375 errors (the generic `*.module.css` type gave `string | undefined` class names).
 - The parallel type check no longer fails at random: `tools/css-module-types.ts` replaces each CSS Module declaration atomically instead of deleting the folder first, so one package never reads the other's declarations while they are missing.
 - Signing in over plain HTTP works with the production build: the session cookie is `Secure` only on HTTPS requests.
