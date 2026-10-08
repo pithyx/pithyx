@@ -23,6 +23,23 @@
       "params": {},
       "expected": "The app has no backend."
     },
+    "app.backend.start_failed": {
+      "params": {
+        "exitCode": 1
+      },
+      "expected": "The app's backend did not start. The app's log shows what its containers wrote."
+    },
+    "app.backend.storage_unavailable": {
+      "params": {
+        "storage": "attachments",
+        "reason": "unmapped"
+      },
+      "expected": "The app's backend needs the folder for attachments, which is not ready (no folder is assigned)."
+    },
+    "app.backend.unavailable": {
+      "params": {},
+      "expected": "The app's backend is not running or does not answer. Try again in a moment."
+    },
     "app.backend.unsupported": {
       "params": {},
       "expected": "The app has a backend with containers. This version of Pithyx installs apps without a backend only."
@@ -77,6 +94,10 @@
       },
       "expected": "The app's Compose file cannot be read: /services/server/init appears twice."
     },
+    "app.docker.unavailable": {
+      "params": {},
+      "expected": "The container service does not answer, so app backends cannot run right now."
+    },
     "app.elevated.unsupported": {
       "params": {
         "right": "docker.socket"
@@ -89,6 +110,18 @@
         "element": "script"
       },
       "expected": "The app's icon cannot be used: it contains the element script."
+    },
+    "app.image.mismatch": {
+      "params": {
+        "image": "ghcr.io/example/web:1.0.0"
+      },
+      "expected": "The image ghcr.io/example/web:1.0.0 is not the one the app's package names. Pithyx does not run it."
+    },
+    "app.image.unavailable": {
+      "params": {
+        "image": "ghcr.io/example/web:1.0.0"
+      },
+      "expected": "The image ghcr.io/example/web:1.0.0 of the app's backend could not be loaded or downloaded."
     },
     "app.manifest.cron_invalid": {
       "params": {
@@ -171,6 +204,13 @@
         "reason": "missing"
       },
       "expected": "The app package is not valid: icon.svg is missing."
+    },
+    "app.package.lock_invalid": {
+      "params": {
+        "reason": "platform",
+        "architecture": "arm64"
+      },
+      "expected": "The app's list of backend images does not fit (nothing for arm64)."
     },
     "app.package.not_found": {
       "params": {},

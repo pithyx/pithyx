@@ -29,6 +29,19 @@ public sealed class AppFrontendHosting(RequestDelegate next, AppRegistry registr
     /// <summary>The policy of an app's frontend; <c>connect-src https:</c> only with <c>network.internet</c>.</summary>
     public static string ContentSecurityPolicy(bool internet) => internet ? Policy + " https:" : Policy;
 
+    /// <summary>
+    /// What every answer under <c>/apps/&lt;id&gt;/</c> carries, the proxy's included: the sandboxing policy, <c>nosniff</c>,
+    /// no referrer (a URL may carry <c>?pithyx-token=</c>), and readable from the sandboxed window's opaque origin.
+    /// </summary>
+    public static void Sandbox(IHeaderDictionary headers, bool internet)
+    {
+        ArgumentNullException.ThrowIfNull(headers);
+        headers[HeaderNames.ContentSecurityPolicy] = ContentSecurityPolicy(internet);
+        headers[HeaderNames.XContentTypeOptions] = "nosniff";
+        headers[HeaderNames.AccessControlAllowOrigin] = "*";
+        headers["Referrer-Policy"] = "no-referrer";
+    }
+
     public async Task InvokeAsync(HttpContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
@@ -40,11 +53,8 @@ public sealed class AppFrontendHosting(RequestDelegate next, AppRegistry registr
         var headers = context.Response.Headers;
         var segments = (rest.Value ?? "").TrimStart('/').Split('/', 2);
         var app = segments.Length == 2 ? registry.Find(segments[0]) : null;
-        headers[HeaderNames.ContentSecurityPolicy] = ContentSecurityPolicy(app?.HasInternet == true);
-        headers[HeaderNames.XContentTypeOptions] = "nosniff";
-        headers[HeaderNames.AccessControlAllowOrigin] = "*";
+        Sandbox(headers, app?.HasInternet == true);
         headers[HeaderNames.CacheControl] = "no-cache";
-        headers["Referrer-Policy"] = "no-referrer";
 
         if (!(HttpMethods.IsGet(context.Request.Method) || HttpMethods.IsHead(context.Request.Method)))
         {

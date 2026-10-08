@@ -129,6 +129,12 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
         return [.. _connections.Values.Where(c => c.Takes(definition, topic) && (definition is null || definition.IsAllowed(c.User, topic)))];
     }
 
+    /// <summary>Raised by <see cref="CloseSession"/> with the session id, so the session's other sockets (the app proxy's) end too.</summary>
+    public event Action<string>? SessionClosed;
+
+    /// <summary>Raised by <see cref="CloseUser"/> with the user id, so the user's other sockets (the app proxy's) end too.</summary>
+    public event Action<string>? UserClosed;
+
     /// <summary>Closes every connection of a session, for example after logout.</summary>
     public void CloseSession(string sessionId)
     {
@@ -136,6 +142,7 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
         {
             connection.Close(WebSocketCloseCode.SessionEnded);
         }
+        SessionClosed?.Invoke(sessionId);
     }
 
     /// <summary>Closes every connection of a user, for example after a password reset.</summary>
@@ -145,6 +152,7 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
         {
             connection.Close(WebSocketCloseCode.SessionEnded);
         }
+        UserClosed?.Invoke(userId);
     }
 
     /// <summary>

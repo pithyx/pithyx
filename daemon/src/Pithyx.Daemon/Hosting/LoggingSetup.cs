@@ -22,6 +22,8 @@ public static class LoggingSetup
                 .MinimumLevel.Information()
                 .MinimumLevel.Override("Microsoft.AspNetCore", LogEventLevel.Warning)
                 .MinimumLevel.Override("Microsoft.Hosting.Lifetime", LogEventLevel.Information)
+                // The request log already has every proxied request; YARP's own lines would repeat it.
+                .MinimumLevel.Override("Yarp", LogEventLevel.Warning)
                 .Enrich.FromLogContext()
                 .Enrich.With<RequestIdEnricher>()
                 .Enrich.With<SecretMaskingEnricher>()

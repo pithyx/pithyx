@@ -7,6 +7,9 @@
     "backend": {
       "endpoint_unknown": "Die App hat keinen Backend-Endpunkt namens {endpoint}.",
       "missing": "Die App hat kein Backend.",
+      "start_failed": "Das Backend der App ist nicht gestartet. Das Protokoll der App zeigt, was ihre Container geschrieben haben.",
+      "storage_unavailable": "Das Backend der App braucht den Ordner für {storage}, der nicht bereit ist ({reason, select, unmapped {kein Ordner zugeordnet} other {sein Pool fehlt oder ist gesperrt}}).",
+      "unavailable": "Das Backend der App läuft nicht oder antwortet nicht. Versuch es gleich noch einmal.",
       "unsupported": "Die App hat ein Backend mit Containern. Diese Version von Pithyx installiert nur Apps ohne Backend."
     },
     "compose": {
@@ -18,11 +21,18 @@
       "value_invalid": "Die Compose-Datei der App hat unter {path} einen Wert, den Pithyx ablehnt: {reason, select, required {er fehlt} type {er hat den falschen Typ} format {sein Format ist ungültig} range {er liegt außerhalb des erlaubten Bereichs} unpinned {das Image ist nicht mit @sha256 festgelegt} interpolation {er nutzt $ für eine Variable (schreib $$ für ein Dollarzeichen)} no_value {die Variable hat keinen Wert} duplicate {er kommt doppelt vor} reserved {er ist für Pithyx reserviert} host_path {er bindet einen Ordner des Hosts ein} anonymous {das Volume hat keinen Namen} cycle {die Dienste hängen im Kreis voneinander ab} other {er ist ungültig}}.",
       "yaml_invalid": "Die Compose-Datei der App ist nicht lesbar: {reason, select, too_large {sie ist größer als 64 KB} not_utf8 {sie ist kein UTF-8} character {sie enthält einen Tabulator oder ein anderes nicht erlaubtes Zeichen} syntax {sie ist kein gültiges YAML} documents {sie muss genau ein Dokument enthalten} too_deep {sie ist zu tief verschachtelt} directive {sie enthält eine YAML-Direktive} anchor {sie nutzt Anker oder Aliase} tag {sie nutzt YAML-Tags} duplicate_key {{path} kommt doppelt vor} merge_key {sie nutzt unter {path} einen Merge-Schlüssel} key_not_string {ein Schlüssel unter {path} ist kein Text} other {sie verletzt eine Regel für Compose-Dateien}}."
     },
+    "docker": {
+      "unavailable": "Der Container-Dienst antwortet nicht, deshalb können App-Backends gerade nicht laufen."
+    },
     "elevated": {
       "unsupported": "Die App verlangt das Recht {right}, das diese Version von Pithyx nicht vergibt."
     },
     "icon": {
       "invalid": "Das Symbol der App ist nicht verwendbar: {reason, select, too_large {es ist größer als 64 KB} malformed {es ist keine gültige SVG-Datei} not_svg {es ist kein SVG-Bild} viewbox {seine viewBox fehlt oder ist nicht quadratisch} doctype {es enthält einen DOCTYPE} processing_instruction {es enthält eine Verarbeitungsanweisung} element_forbidden {es enthält das Element {element}} event_attribute {es enthält das Ereignisattribut {attribute}} external_href {es verweist auf etwas außerhalb der Datei} style_import {seine Styles nutzen @import} style_url {es lädt mit url() etwas außerhalb der Datei} style_escape {seine Styles enthalten Escape-Sequenzen} other {es verletzt eine Regel für Symbole}}."
+    },
+    "image": {
+      "mismatch": "Das Image {image} ist nicht das, das im Paket der App steht. Pithyx führt es nicht aus.",
+      "unavailable": "Das Image {image} des App-Backends konnte nicht geladen oder heruntergeladen werden."
     },
     "manifest": {
       "cron_invalid": "Der Zeitplan unter {path} ist kein gültiger Cron-Ausdruck: {cron}",
@@ -40,8 +50,9 @@
       "invalid": "Der Ordner kann nicht für den Speicher {storage} verwendet werden: {reason, select, unknown {die App fragt nicht nach diesem Speicher} access {die App will ihn nur lesen, darum kann sie keinen Schreibzugriff bekommen} other {die Anfrage ist ungültig}}."
     },
     "package": {
-      "layout_invalid": "Das App-Paket ist ungültig: {reason, select, missing {{path} fehlt} unsafe {der Pfad {path} ist nicht erlaubt} duplicate {{path} ist doppelt enthalten} unexpected {{path} gehört nicht in ein App-Paket} reserved {{path} nutzt einen Namen, der für das Backend reserviert ist} other {{path} ist nicht erlaubt}}.",
       "invalid": "Die Datei ist kein gültiges App-Paket: {reason, select, gzip {sie ist nicht mit gzip komprimiert oder beschädigt} format {sie ist kein tar-Archiv, das diese Box liest} checksum {ein Header ist beschädigt} truncated {sie endet zu früh} trailing_data {nach ihrem Ende folgen noch Daten} entry_type {{path} ist ein Link oder eine Spezialdatei} extended_header {sie hat einen erweiterten Header, der nicht erlaubt ist} name_mismatch {der lange Name von {path} passt nicht zu seinem eigenen Namen} other {sie kann nicht gelesen werden}}.",
+      "layout_invalid": "Das App-Paket ist ungültig: {reason, select, missing {{path} fehlt} unsafe {der Pfad {path} ist nicht erlaubt} duplicate {{path} ist doppelt enthalten} unexpected {{path} gehört nicht in ein App-Paket} reserved {{path} nutzt einen Namen, der für das Backend reserviert ist} other {{path} ist nicht erlaubt}}.",
+      "lock_invalid": "Die Liste der Backend-Images der App passt nicht ({reason, select, missing {sie fehlt} invalid {sie ist ungültig} stale {sie passt nicht zum Backend} other {nichts für {architecture}}}).",
       "not_found": "Das geprüfte Paket ist nicht mehr da. Lade die Datei noch einmal hoch.",
       "too_large": "Das App-Paket ist zu groß: {reason, select, size {die Datei darf höchstens {limit} MB haben} unpacked {ihre Dateien dürfen zusammen höchstens {limit} MB haben} files {es darf höchstens {limit} Dateien enthalten} manifest {pithyx.json darf höchstens {limit} KB haben} other {es überschreitet eine Grenze}}."
     },

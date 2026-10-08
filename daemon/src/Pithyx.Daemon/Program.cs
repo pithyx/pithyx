@@ -93,9 +93,11 @@ builder.Services.AddPithyxFileServices(new FileServiceOptions(
     TlsDirectory: Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "tls"),
     FtpPort: int.TryParse(builder.Configuration["PITHYX_FTP_PORT"], System.Globalization.CultureInfo.InvariantCulture, out var ftpPort) ? ftpPort : mode == DaemonMode.Real ? 21 : 0));
 builder.Services.AddPithyxFiles();
-builder.Services.AddPithyxApps(mode == DaemonMode.Real
-    ? new AppStorageOptions(UseZfs: true, FolderRoot: "/")
-    : new AppStorageOptions(UseZfs: false, FolderRoot: Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "pools")));
+builder.Services.AddPithyxApps(
+    mode == DaemonMode.Real
+        ? new AppStorageOptions(UseZfs: true, FolderRoot: "/")
+        : new AppStorageOptions(UseZfs: false, FolderRoot: Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "pools")),
+    new Pithyx.Daemon.Apps.Docker.DockerOptions(Apply: mode == DaemonMode.Real));
 builder.Services.AddSingleton<TopicRegistry>();
 builder.Services.AddSingleton<TopicHub>();
 builder.Services.AddPithyxMonitoring();
@@ -204,9 +206,11 @@ app.UseExceptionHandler();
 // Only the API answers bare status codes with problem details. Every other path belongs to the desktop,
 // which serves its index.html as the SPA fallback.
 app.UseWhen(context => IsApiRequest(context.Request.Path), api => api.UseStatusCodePages());
-// App frontends are public files with their own sandboxing headers; nothing below may answer for /apps/.
+// App backends behind the proxy, then the frontends as public files with their own sandboxing headers; nothing below
+// may answer for /apps/. The proxy takes WebSocket upgrades itself, so it comes before UseWebSockets.
 if (!installer.Active)
 {
+    app.UseMiddleware<Pithyx.Daemon.Apps.Proxy.AppProxy>();
     app.UseMiddleware<AppFrontendHosting>();
 }
 app.UseMiddleware<CsrfMiddleware>();

@@ -149,6 +149,36 @@ internal sealed class TarBuilder
 
     public const string Icon = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 24 24\"><rect width=\"24\" height=\"24\" fill=\"#08f\"/></svg>";
 
+    /// <summary>A backend's image reference as the test packages write it.</summary>
+    public const string BackendImage = "ghcr.io/example/web:1.0.0@sha256:a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5";
+
+    /// <summary>The manifest part of a backend with the endpoint api on the service web.</summary>
+    public const string BackendManifest = ",\n  \"backend\": { \"compose\": \"backend/compose.yaml\", \"endpoints\": { \"api\": { \"service\": \"web\", \"port\": 8080 } }, \"lifecycle\": \"onDemand\" }";
+
+    /// <summary>A Compose file with the one service web.</summary>
+    public const string BackendCompose = "services:\n  web:\n    image: " + BackendImage + "\n";
+
+    /// <summary>An images lock for <see cref="BackendImage"/> on both architectures.</summary>
+    public static string BackendLock(string image = BackendImage) =>
+        $$"""
+        {
+          "lockVersion": 1,
+          "images": {
+            "{{image}}": {
+              "amd64": { "manifest": "sha256:{{new string('b', 64)}}", "config": "sha256:{{new string('c', 64)}}" },
+              "arm64": { "manifest": "sha256:{{new string('d', 64)}}", "config": "sha256:{{new string('e', 64)}}" }
+            }
+          }
+        }
+        """;
+
+    /// <summary>A package with a backend: the manifest, the Compose file and, unless left out, the lock.</summary>
+    public static TarBuilder BackendPackage(string id = "com.example.probe", string version = "1.0.0", string? lockJson = null, bool withLock = true)
+    {
+        var builder = MinimalPackage(id, version, Manifest(id, version, extra: BackendManifest)).File("backend/compose.yaml", BackendCompose);
+        return withLock ? builder.File("backend/images.lock.json", lockJson ?? BackendLock()) : builder;
+    }
+
     public static string Manifest(string id = "com.example.probe", string version = "1.0.0", string permissions = "\"notifications\"", string extra = "") =>
         $$"""
         {

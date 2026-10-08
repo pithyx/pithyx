@@ -120,6 +120,19 @@ public static partial class ZfsPlans
     /// </summary>
     public static CommandRequest CreateAppDataset(string pool, string appId) => new("zfs", ["create", AppDataset(pool, appId)]);
 
+    /// <summary>
+    /// Docker's data root on the app pool (D309, D324): mounted at <c>/&lt;pool&gt;/.pithyx/docker</c>, without automatic
+    /// snapshots, since its layers come again from the packages and registries.
+    /// </summary>
+    public static CommandRequest CreateDockerDataset(string pool)
+    {
+        if (!DatasetName().IsMatch(pool))
+        {
+            throw new ArgumentException($"Not a pool name: {pool}.", nameof(pool));
+        }
+        return new("zfs", ["create", "-p", "-o", $"mountpoint=/{pool}/.pithyx/docker", "-o", "com.sun:auto-snapshot=false", $"{pool}/pithyx/docker"]);
+    }
+
     /// <summary>Destroys an app's dataset with its snapshots, when an administrator removes the app with its data.</summary>
     public static CommandRequest DestroyAppDataset(string pool, string appId) => new("zfs", ["destroy", "-r", AppDataset(pool, appId)], TimeSpan.FromMinutes(10));
 

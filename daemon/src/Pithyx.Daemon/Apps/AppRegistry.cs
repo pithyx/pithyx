@@ -43,6 +43,10 @@ public sealed record InstalledApp(
             ? [.. endpoints.EnumerateObject().Select(endpoint => endpoint.Name).Order(StringComparer.Ordinal)]
             : [];
 
+    /// <summary>Whether the manifest's backend declares the endpoint.</summary>
+    public bool HasEndpoint(string name) =>
+        Manifest.TryGetProperty("backend", out var backend) && backend.TryGetProperty("endpoints", out var endpoints) && endpoints.TryGetProperty(name, out _);
+
     /// <summary>The storage requests of the manifest: id and the access asked for.</summary>
     public IReadOnlyList<(string Id, string Access)> StorageRequests =>
         Manifest.TryGetProperty("storage", out var storage)
@@ -235,14 +239,14 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
 /// Publishes <c>apps</c>, <c>apps/admin</c> and every app's <c>apps/&lt;id&gt;/context</c> when the registry, the rights
 /// or the pools change.
 /// </summary>
-public sealed class AppChangePublisher(TopicHub hub, AppRegistry registry, AppContexts contexts, PermissionService permissions, PoolInventory pools) : IHostedService
+public sealed class AppChangePublisher(TopicHub hub, AppRegistry registry, AppContexts contexts, PermissionService permissions, PoolInventory pools, Proxy.AppBackends backends) : IHostedService
 {
-
     public Task StartAsync(CancellationToken cancellationToken)
     {
         registry.Changed += Publish;
         permissions.Changed += Publish;
         pools.Changed += Publish;
+        backends.Changed += PublishContext;
         return Task.CompletedTask;
     }
 
@@ -251,8 +255,12 @@ public sealed class AppChangePublisher(TopicHub hub, AppRegistry registry, AppCo
         registry.Changed -= Publish;
         permissions.Changed -= Publish;
         pools.Changed -= Publish;
+        backends.Changed -= PublishContext;
         return Task.CompletedTask;
     }
+
+    // A backend that starts or stops changes only its app's context.
+    private void PublishContext(string appId) => hub.Publish(AppContexts.TopicOf(appId), contexts.SourceOf(appId));
 
     private void Publish()
     {

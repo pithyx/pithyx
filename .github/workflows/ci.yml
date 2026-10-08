@@ -72,7 +72,7 @@ jobs:
       # The timing budgets run in the E2E job, where no parallel build skews them (D280).
       - run: >-
           dotnet test --solution daemon/Pithyx.slnx --configuration Release --no-build
-          --filter-not-trait "Category=StorageIntegration" --filter-not-trait "Category=TimingBudget"
+          --filter-not-trait "Category=StorageIntegration" --filter-not-trait "Category=DockerIntegration" --filter-not-trait "Category=TimingBudget"
       - run: dotnet format daemon/Pithyx.slnx --verify-no-changes --no-restore
 
   frontend:

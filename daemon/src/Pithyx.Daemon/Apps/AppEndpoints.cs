@@ -12,9 +12,14 @@ namespace Pithyx.Daemon.Apps;
 /// <summary>The app registry (A10): installing apps from a package file, updating, disabling and removing them.</summary>
 public static class AppEndpoints
 {
-    public static IServiceCollection AddPithyxApps(this IServiceCollection services, AppStorageOptions options)
+    public static IServiceCollection AddPithyxApps(this IServiceCollection services, AppStorageOptions options, Docker.DockerOptions? docker = null)
     {
         services.AddSingleton(options);
+        services.AddSingleton(docker ?? new Docker.DockerOptions(Apply: false));
+        services.AddSingleton<Docker.DockerEngine>();
+        services.AddSingleton<Docker.DockerHost>();
+        services.AddSingleton<Docker.AppBackendRuntime>();
+        services.AddHostedService<Docker.AppBackendSupervisor>();
         services.AddSingleton<AppRegistry>();
         services.AddSingleton(provider => provider.GetRequiredService<AppRegistry>().Definition());
         services.AddSingleton(provider => provider.GetRequiredService<AppRegistry>().AdminDefinition());
@@ -22,6 +27,11 @@ public static class AppEndpoints
         services.AddSingleton<AppPackages>();
         services.AddSingleton<AppService>();
         services.AddSingleton<AppTokens>();
+        services.AddSingleton<AppTokenCheck>();
+        services.AddSingleton<Proxy.AppBackends>();
+        services.AddSingleton<Proxy.AppProxySockets>();
+        services.AddHostedService(provider => provider.GetRequiredService<Proxy.AppProxySockets>());
+        services.AddHttpForwarder();
         services.AddSingleton<AppValueStore>();
         services.AddSingleton<AppFiles>();
         services.AddSingleton<AppContexts>();
