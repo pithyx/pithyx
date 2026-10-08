@@ -367,7 +367,7 @@ Logs (D305): every level also appears in the browser console. `info`, `warn` and
 - [ ] `pithyx/app-chat`: React with `@pithyx/ui`, a Node backend with WebSocket and SQLite in a volume; uses `directory.read`, notifications with an action and the badge.
 - [ ] `pithyx/app-showcase`: every SDK method, every event, every component.
 - [ ] In all three: `npm test` runs `pithyx validate` and Vitest, `npm run pack`, marked as GitHub templates, CI through a reusable workflow in `pithyx/.github` on GitHub-hosted runners, releases attach the `.pithyxapp`.
-- [ ] A script raises the SDK version in all three on every SDK release.
+- [x] A script raises the SDK version in all three on every SDK release. (`node tools/release/bump-templates.ts <folder with the clones> <version> [--install]`: every `@pithyx/*` dependency to the version, the manifest's `sdk` to `^<version>`.)
 - [ ] Done when blank and showcase, installed from their released `.pithyxapp`, run on 7484 (moved from A12).
 
 #### A10 Registry and install, frontend only (after A2 and A3)
