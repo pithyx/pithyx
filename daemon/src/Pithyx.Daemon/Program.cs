@@ -97,7 +97,12 @@ builder.Services.AddPithyxApps(
     mode == DaemonMode.Real
         ? new AppStorageOptions(UseZfs: true, FolderRoot: "/")
         : new AppStorageOptions(UseZfs: false, FolderRoot: Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "pools")),
-    new Pithyx.Daemon.Apps.Docker.DockerOptions(Apply: mode == DaemonMode.Real));
+    new Pithyx.Daemon.Apps.Docker.DockerOptions(Apply: mode == DaemonMode.Real),
+    new Pithyx.Daemon.Apps.Catalog.StoreOptions(
+        Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "catalogs"),
+        Pithyx.Daemon.Apps.Catalog.StoreOptions.ProjectKeys,
+        AllowFile: mode == DaemonMode.Simulated,
+        Pithyx.Daemon.SystemSettings.BuildInfo.Current.Version));
 builder.Services.AddSingleton<TopicRegistry>();
 builder.Services.AddSingleton<TopicHub>();
 builder.Services.AddPithyxMonitoring();
@@ -258,6 +263,7 @@ if (!installer.Active)
     api.MapPowerEndpoint();
     api.MapBackupEndpoints();
     api.MapAppEndpoints();
+    Pithyx.Daemon.Apps.Catalog.StoreEndpoints.MapStoreEndpoints(api);
     api.MapAppTokenEndpoint();
     api.MapAppApi();
     app.MapRealtime();

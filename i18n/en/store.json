@@ -4,7 +4,9 @@
     "installed": "Installed",
     "official": "Official",
     "community": "Community",
-    "own": "Own"
+    "own": "Own",
+    "updates": "Updates",
+    "updatesCount": "Updates ({count})"
   },
   "installed": {
     "title": "Installed apps",
@@ -28,7 +30,8 @@
     "enabledHint": "A disabled app keeps its data and who may use it, but nobody can open it.",
     "source": {
       "sideload": "Installed from a file, not verified",
-      "catalog": "Installed from a catalog"
+      "catalog": "Installed from a catalog",
+      "fromCatalog": "Installed from the catalog {catalog}"
     },
     "unavailable": "The pool with the app's data is not available. Nobody can open the app until it is back.",
     "facts": {
@@ -94,6 +97,20 @@
       "title": "Logging",
       "debug": "Send debug messages to the Log Center",
       "hint": "Switch this on only to find a problem: some apps write many debug messages. Information, warnings and errors always reach the Log Center."
+    },
+    "policy": {
+      "title": "Updates",
+      "label": "When a catalog has a newer version",
+      "box": "As set in the Store's settings",
+      "hint": "An update that asks for new permissions or special rights never installs on its own."
+    },
+    "rollback": {
+      "button": "Back to {version}",
+      "title": "Back to the previous version of {name}",
+      "warning": "{version} returns with the app's data as it was before the update. Changes since the update and snapshots of the app taken since are lost.",
+      "confirm": "Back to {version}",
+      "running": "Going back with {name}",
+      "done": "{name} runs version {version} again."
     }
   },
   "permission": {
@@ -172,7 +189,9 @@
     "updating": "Updating {name}",
     "installed": "{name} is installed.",
     "updated": "{name} is updated.",
-    "stopped": "The installation stopped."
+    "stopped": "The installation stopped.",
+    "fromCatalog": "From the catalog {catalog}, checked against its signature.",
+    "fromCustomCatalog": "From the catalog {catalog}, which is not verified: only install apps from catalogs you trust."
   },
   "uninstall": {
     "title": "Uninstall {name}?",
@@ -188,5 +207,131 @@
     "running": "Removing {name}",
     "done": "{name} is removed.",
     "stopped": "The removal stopped."
+  },
+  "catalog": {
+    "official": {
+      "title": "Official apps",
+      "intro": "Apps of the Pithyx project, reviewed, built and signed by the project."
+    },
+    "community": {
+      "title": "Community apps",
+      "intro": "Apps from developers outside the project, reviewed by the project before they are published."
+    },
+    "own": {
+      "title": "Your catalogs",
+      "intro": "Apps of the catalogs you added. They are not verified by the Pithyx project."
+    },
+    "search": "Search apps",
+    "searchPlaceholder": "Name, description or developer",
+    "loading": "Loading the apps",
+    "empty": "This catalog has no apps for this box yet.",
+    "noMatch": "No app matches “{query}”.",
+    "apps": "Apps",
+    "newNotice": "{name} has not been fetched yet.",
+    "failedNotice": "The last fetch of {name} failed; the apps shown come from its last checked copy. The Store's settings say why.",
+    "updateAvailable": "Update available",
+    "installed": "Installed",
+    "installedVersion": "Version {version} installed",
+    "badge": {
+      "official": "Pithyx",
+      "community": "Community",
+      "custom": "Unverified"
+    },
+    "install": "Install",
+    "update": "Update to {version}",
+    "unverified": "This catalog is not verified by the Pithyx project. Only install apps from catalogs you trust.",
+    "loadingApp": "Loading the app",
+    "screenshots": "Screenshots",
+    "screenshot": "Screenshot {number} of {name}",
+    "catalog": "Catalog",
+    "source": "Source",
+    "sourceLink": "Source of this version in the catalog",
+    "versions": "Versions",
+    "needs": "needs Pithyx {range}"
+  },
+  "updates": {
+    "title": "Updates",
+    "intro": "Newer versions of installed apps. The Store's settings decide what the box does with them on its own.",
+    "versions": "{from} to {to}",
+    "newPermissions": "{count, plural, one {Asks for # new permission} other {Asks for # new permissions}}",
+    "elevated": "Asks for special rights",
+    "automatic": "Installs on its own at the next check",
+    "policy": {
+      "automatic": "Waits for you: it asks for more",
+      "notify": "Waits for you",
+      "none": "Waits for you"
+    },
+    "update": "Update"
+  },
+  "settings": {
+    "open": "Store settings",
+    "back": "Store",
+    "title": "Store settings",
+    "save": "Save",
+    "updates": {
+      "title": "Updates",
+      "policy": "When a catalog has a newer version",
+      "policies": {
+        "automatic": "Install it",
+        "notify": "Tell administrators",
+        "none": "Do nothing"
+      },
+      "policyHints": {
+        "automatic": "Updates that ask for new permissions or special rights still wait for you.",
+        "notify": "A notification on the desktops of administrators.",
+        "none": "Updates only appear in the tab Updates."
+      },
+      "time": "Daily check time",
+      "timeHint": "HH:MM in the box's time zone. Each box adds its own delay of up to an hour.",
+      "timeInvalid": "Enter a time like 03:00.",
+      "next": "Next check: {time}",
+      "last": "last check: {time}",
+      "checkNow": "Check now",
+      "checking": "Checking every catalog now.",
+      "notifications": "Administrators get desktop notifications about updates and catalogs that cannot be fetched."
+    },
+    "channel": {
+      "title": "Channel",
+      "stable": "Stable",
+      "stableHint": "Versions the catalogs' owners released.",
+      "beta": "Beta",
+      "betaHint": "Every new version as soon as a catalog publishes it, before its release."
+    },
+    "catalogs": {
+      "title": "Catalogs",
+      "add": "Add catalog",
+      "signed": "Signed",
+      "enable": "Use {name}",
+      "status": {
+        "off": "Off",
+        "new": "Not fetched yet",
+        "ok": "Up to date",
+        "failed": "Fetch failed",
+        "busy": "Fetching"
+      },
+      "never": "Never fetched.",
+      "verified": "Checked {time}, {count, plural, one {# app} other {# apps}}.",
+      "deployKey": "Deploy key",
+      "deployKeyHint": "This catalog is private: its repository must have this key as a read-only deploy key.",
+      "deployKeyNext": "Add this key to the repository as a deploy key without write access, then fetch the catalog in the Store's settings.",
+      "hostKey": "Server key pinned at the first connection: {key}",
+      "sync": "Fetch now",
+      "remove": "Remove",
+      "addTitle": "Add a catalog",
+      "addButton": "Add",
+      "url": "Repository URL",
+      "urlHint": "https://… for a public catalog, git@host:owner/repository.git for a private one.",
+      "addWarning": "Apps of your own catalogs are not checked by the Pithyx project. Add only catalogs you trust.",
+      "added": "The catalog is being fetched."
+    },
+    "community": {
+      "title": "Use the community catalog?",
+      "warning": "Community apps come from developers outside the Pithyx project. The project reviews them before they are published, but cannot vouch for them as for its own apps.",
+      "confirm": "Use it"
+    },
+    "file": {
+      "title": "Install from a file",
+      "intro": "Install an app from its package file (.pithyxapp). Such apps are not verified."
+    }
   }
 }

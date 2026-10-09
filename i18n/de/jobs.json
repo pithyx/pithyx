@@ -64,6 +64,9 @@
     "apps_backend_start": "App-Backend starten",
     "apps_backend_stop": "App-Backend stoppen",
     "apps_backend_restart": "App-Backend neu starten",
+    "apps_rollback": "Zurück zur vorigen Version einer App",
+    "store_check": "Kataloge werden geprüft",
+    "store_sync": "Katalog wird abgerufen",
     "unknown": "Aufgabe"
   }
 }

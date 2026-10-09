@@ -1,4 +1,5 @@
 import { expect, test } from './fixtures';
+import { createTestCatalog } from './catalog';
 import { installProbe, probeId, probePackage, uninstallProbe } from './probe';
 import { appWindow, openFromStart, signInAsAdmin } from './session';
 
@@ -71,5 +72,70 @@ test('an administrator installs an app from its file in the Store, opens it and 
     await expect(appWindow(page, 'SDK demo')).toHaveCount(0);
     await dialog.getByRole('button', { name: 'Close' }).click();
     await expect(store.getByText('No apps are installed yet.')).toBeVisible();
+  });
+});
+
+test('an administrator adds a catalog in the Store settings and installs an app from it', async ({
+  page,
+}) => {
+  const url = createTestCatalog();
+  await openFromStart(page, 'Store');
+  const store = appWindow(page, 'Store');
+  await expect(store.getByRole('tab', { name: 'Installed' })).toBeVisible();
+  // The official catalog is on and has not been fetched in the test; the community catalog is off.
+  await expect(store.getByRole('tab', { name: 'Official' })).toBeVisible();
+  await expect(store.getByRole('tab', { name: 'Community' })).toHaveCount(0);
+
+  await test.step('the gear opens the settings with the policy, the check time, the channel and the catalogs', async () => {
+    await store.getByRole('button', { name: 'Store settings' }).click();
+    await expect(store.getByRole('heading', { name: 'Store settings' })).toBeVisible();
+    await expect(store.getByRole('radio', { name: /Tell administrators/ })).toBeChecked();
+    await expect(store.getByRole('textbox', { name: 'Daily check time' })).toHaveValue('03:00');
+    await expect(store.getByRole('radio', { name: /Stable/ })).toBeChecked();
+    await expect(store.getByText('https://github.com/pithyx/apps-community.git')).toBeVisible();
+    await store.getByRole('button', { name: 'Add catalog' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Add a catalog' });
+    await dialog.getByRole('textbox', { name: 'Repository URL' }).fill(url);
+    await dialog.getByRole('button', { name: 'Add', exact: true }).click();
+    await expect(dialog.getByText('The catalog is being fetched.')).toBeVisible();
+    await dialog.getByRole('button', { name: 'Close' }).click();
+    await expect(store.getByText('E2E catalog', { exact: true })).toBeVisible();
+    await expect(store.getByText('Up to date', { exact: true })).toBeVisible();
+    await store.getByRole('button', { name: 'Store', exact: true }).click();
+  });
+
+  await test.step('the tab Own lists the catalog app, and its page installs it', async () => {
+    await store.getByRole('tab', { name: 'Own' }).click();
+    await store.getByRole('searchbox', { name: 'Search apps' }).fill('demo');
+    await store.getByRole('button', { name: /SDK demo/ }).click();
+    await expect(store.getByRole('heading', { name: 'SDK demo', level: 2 })).toBeVisible();
+    await expect(store.getByText('not verified by the Pithyx project')).toBeVisible();
+    await expect(
+      store.getByRole('link', { name: 'Source of this version in the catalog' }),
+    ).toHaveAttribute(
+      'href',
+      `https://example.com/e2e-catalog/tree/${'a'.repeat(40)}/apps/${probeId}`,
+    );
+    await store.getByRole('button', { name: 'Install', exact: true }).click();
+    const dialog = page.getByRole('dialog', { name: 'Install an app' });
+    await expect(dialog.getByText('From the catalog com.example.e2e')).toBeVisible();
+    const pool = dialog.getByRole('combobox', { name: 'Pool for app data' });
+    if (await pool.isVisible()) {
+      await pool.selectOption('pithyxtestm');
+    }
+    await dialog.getByRole('button', { name: 'Install', exact: true }).click();
+    await expect(dialog.getByText('SDK demo is installed.')).toBeVisible();
+    await dialog.getByRole('button', { name: 'Close' }).click();
+    await expect(store.getByText('Version 1.0.0 installed')).toBeVisible();
+  });
+
+  await test.step('the installed app names its catalog and follows the update policy of the box', async () => {
+    await store.getByRole('button', { name: 'Own' }).click();
+    await store.getByRole('tab', { name: 'Installed' }).click();
+    await store.getByRole('button', { name: /SDK demo/ }).click();
+    await expect(store.getByText('Installed from the catalog com.example.e2e')).toBeVisible();
+    await expect(
+      store.getByRole('combobox', { name: 'When a catalog has a newer version' }),
+    ).toHaveValue('box');
   });
 });

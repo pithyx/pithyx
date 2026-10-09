@@ -12,9 +12,22 @@ namespace Pithyx.Daemon.Apps;
 /// <summary>The app registry (A10): installing apps from a package file, updating, disabling and removing them.</summary>
 public static class AppEndpoints
 {
-    public static IServiceCollection AddPithyxApps(this IServiceCollection services, AppStorageOptions options, Docker.DockerOptions? docker = null)
+    public static IServiceCollection AddPithyxApps(this IServiceCollection services, AppStorageOptions options, Docker.DockerOptions? docker = null, Catalog.StoreOptions? store = null)
     {
         services.AddSingleton(options);
+        var storeOptions = store ?? new Catalog.StoreOptions(Path.Combine(Path.GetTempPath(), "pithyx-catalogs"), Catalog.StoreOptions.ProjectKeys, AllowFile: true, "0.0.0");
+        services.AddSingleton(storeOptions);
+        // In simulation and tests git runs for real against local folders; everything else there is a fixture.
+        services.AddSingleton(provider => new Catalog.CatalogGit(
+            storeOptions.AllowFile ? ActivatorUtilities.CreateInstance<Commands.ProcessCommandRunner>(provider) : provider.GetRequiredService<Commands.ICommandRunner>(),
+            storeOptions.AllowFile));
+        services.AddSingleton<Catalog.StoreService>();
+        // The build-time OpenAPI run must not read a database or schedule a check.
+        if (!Hosting.BuildTimeDocument.IsGenerating)
+        {
+            services.AddHostedService(provider => provider.GetRequiredService<Catalog.StoreService>());
+        }
+        services.AddSingleton(provider => Catalog.StoreService.AdminDefinition(provider.GetRequiredService<Catalog.StoreService>));
         services.AddSingleton(docker ?? new Docker.DockerOptions(Apply: false));
         services.AddSingleton<Docker.DockerEngine>();
         services.AddSingleton<Docker.DockerHost>();

@@ -100,7 +100,10 @@ export default function pithyx(options: PithyxPluginOptions = {}): Plugin {
         return;
       }
       const outDir = resolve(config.root, config.build.outDir);
-      const result = readProject(project, { frontend: relative(project, outDir) });
+      const result = readProject(project, {
+        frontend: relative(project, outDir),
+        allowUnbuiltBackend: true,
+      });
       for (const finding of result.findings) {
         const line = `${finding.level} ${finding.code}: ${describe(finding)}`;
         if (finding.level === 'error') {

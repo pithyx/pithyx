@@ -39,7 +39,7 @@ public sealed class AppVersionsTests : IDisposable
     }
 
     private Task InstallAsync(UnpackedPackage package, string version, bool update, Func<CancellationToken, Task>? commit = null) =>
-        AppVersions.InstallAsync(_storage, Pool, AppId, package, version, update, commit ?? (_ => Task.CompletedTask), Token);
+        AppVersions.InstallAsync(_storage, Pool, AppId, package, version, update, (_, token) => commit?.Invoke(token) ?? Task.CompletedTask, Token);
 
     private string Marker(string version) => File.ReadAllText(Path.Combine(App, "versions", version, "frontend", "marker.txt"));
 
@@ -84,7 +84,7 @@ public sealed class AppVersionsTests : IDisposable
     }
 
     [Fact]
-    public async Task ASuccessfulUpdateKeepsOnlyTheNewVersionAndTheVolumes()
+    public async Task ASuccessfulUpdateKeepsTheNewVersionThePreviousOneAndTheVolumes()
     {
         await InstallAsync(await PackageAsync("1.0.0", "one"), "1.0.0", update: false);
         await File.WriteAllTextAsync(Path.Combine(App, "volumes", "data.txt"), "kept", Token);
@@ -99,7 +99,8 @@ public sealed class AppVersionsTests : IDisposable
         });
 
         Assert.True(committed);
-        Assert.Equal(["1.1.0"], Directory.GetFileSystemEntries(Path.Combine(App, "versions")).Select(Path.GetFileName));
+        // The previous version stays for a rollback until the next update (D329).
+        Assert.Equal(["1.0.0", "1.1.0"], Directory.GetFileSystemEntries(Path.Combine(App, "versions")).Select(Path.GetFileName).Order(StringComparer.Ordinal));
         Assert.Equal("versions/1.1.0", new FileInfo(Path.Combine(App, "current")).LinkTarget);
         Assert.Equal("kept", await File.ReadAllTextAsync(Path.Combine(App, "volumes", "data.txt"), Token));
     }

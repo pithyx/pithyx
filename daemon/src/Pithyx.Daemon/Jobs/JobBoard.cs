@@ -38,7 +38,7 @@ public sealed class JobBoard(TimeProvider time)
 
     /// <summary>
     /// The per-user topic of the jobs a user has queued or running: its snapshot lists them, and every change of one
-    /// of them reaches its owner alone, the final one included. Administrators get only their own jobs here.
+    /// of them reaches its owner alone, the final one included. Administrators get their own jobs and the box's own here.
     /// </summary>
     public TopicDefinition ActiveDefinition() => new(
         ActiveTopic,
@@ -49,10 +49,13 @@ public sealed class JobBoard(TimeProvider time)
         ForUser: (user, data) =>
         {
             var userId = long.TryParse(user.FindFirstValue(ClaimTypes.NameIdentifier), NumberStyles.None, CultureInfo.InvariantCulture, out var id) ? id : -1;
+            // The box's own jobs (automatic updates) reach every administrator.
+            var admin = user.IsInRole(SessionAuthenticationHandler.AdminRole);
+            bool Mine(long owner) => owner == userId || (owner == JobService.Box && admin);
             return data switch
             {
-                OwnedJobs all => new JobList([.. all.Jobs.Where(job => job.UserId == userId && !JobEntry.IsFinal(job.Job.State)).Select(job => job.Job).OrderBy(job => job.Id)]),
-                OwnedJob change when change.UserId == userId => change.Job,
+                OwnedJobs all => new JobList([.. all.Jobs.Where(job => Mine(job.UserId) && !JobEntry.IsFinal(job.Job.State)).Select(job => job.Job).OrderBy(job => job.Id)]),
+                OwnedJob change when Mine(change.UserId) => change.Job,
                 _ => null,
             };
         });

@@ -5088,6 +5088,653 @@
         }
       }
     },
+    "/api/store": {
+      "get": {
+        "tags": [
+          "Store"
+        ],
+        "description": "Administrators only. The Store's settings with the next check time, every catalog with its status, and the newer versions of installed apps. The topic store/admin carries the same and its changes.",
+        "operationId": "GetStore",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreState"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/store/settings": {
+      "put": {
+        "tags": [
+          "Store"
+        ],
+        "description": "Administrators only. Sets the update policy (automatic, notify, none), the daily check time (HH:mm in the box's time zone; the box adds its own delay of up to an hour) and the channel (stable reads each catalog's branch catalog, beta its branch catalog-next). A new channel fetches every catalog at once.",
+        "operationId": "SetStoreSettings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoreSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreSettings"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/store/check": {
+      "post": {
+        "tags": [
+          "Store"
+        ],
+        "description": "Administrators only. Checks now as a job: fetches every enabled catalog, then installs automatic updates and announces the others, as the daily check does.",
+        "operationId": "CheckStore",
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/store/catalogs": {
+      "post": {
+        "tags": [
+          "Store"
+        ],
+        "description": "Administrators only. Adds a custom catalog (unsigned, shown as unverified) by its repository URL: https:// for a public one, which is fetched at once as a job, or SSH (git@host:owner/repository.git) for a private one, for which the box makes a deploy key; add its public key to the repository and fetch the catalog then.",
+        "operationId": "AddCatalog",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddCatalogRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogInfo"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/store/catalogs/{key}": {
+      "patch": {
+        "tags": [
+          "Store"
+        ],
+        "description": "Administrators only. Switches a catalog on (it is fetched at once) or off, or sets (user:token) or removes (empty) the read token for its private images.",
+        "operationId": "UpdateCatalog",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCatalogRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CatalogInfo"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Store"
+        ],
+        "description": "Administrators only. Removes a custom catalog and its copy; apps installed from it stay and get no more updates from it. The project's catalogs can only be switched off (store.catalog.built_in).",
+        "operationId": "RemoveCatalog",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/store/catalogs/{key}/sync": {
+      "post": {
+        "tags": [
+          "Store"
+        ],
+        "description": "Administrators only. Fetches one catalog now as a job. A failure keeps the last verified copy and is shown with the catalog.",
+        "operationId": "SyncCatalog",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/store/apps": {
+      "get": {
+        "tags": [
+          "Store"
+        ],
+        "description": "Administrators only. The apps of the enabled catalogs (or of one, by its id) at the newest version this box can run, whose id, name, description or author contains q.",
+        "operationId": "SearchStoreApps",
+        "parameters": [
+          {
+            "name": "catalog",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreAppList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/store/catalogs/{catalog}/apps/{appId}": {
+      "get": {
+        "tags": [
+          "Store"
+        ],
+        "description": "Administrators only. A catalog app's detail page: its newest version for this box with the manifest, screenshots, homepage, the link to its source in the catalog, and every published version.",
+        "operationId": "GetStoreApp",
+        "parameters": [
+          {
+            "name": "catalog",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "appId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoreAppDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/store/catalogs/{catalog}/apps/{appId}/{version}/icon": {
+      "get": {
+        "tags": [
+          "Store"
+        ],
+        "description": "Administrators only. The icon of a catalog app's version, checked against the index, with Content-Security-Policy: default-src 'none'; sandbox and nosniff.",
+        "operationId": "GetStoreAppIcon",
+        "parameters": [
+          {
+            "name": "catalog",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "appId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "image/svg+xml": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/store/catalogs/{catalog}/apps/{appId}/{version}/screenshots/{name}": {
+      "get": {
+        "tags": [
+          "Store"
+        ],
+        "description": "Administrators only. A screenshot of a catalog app's version (PNG, JPEG or WebP), checked against the index, with Content-Security-Policy: default-src 'none'; sandbox and nosniff.",
+        "operationId": "GetStoreAppScreenshot",
+        "parameters": [
+          {
+            "name": "catalog",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "appId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/store/catalogs/{catalog}/apps/{appId}/{version}/package": {
+      "post": {
+        "tags": [
+          "Store"
+        ],
+        "description": "Administrators only. Takes a catalog app's version from the box's verified copy, checks it like an uploaded package plus the index's hashes and images (store.package.hash_mismatch), the box's version (app.package.box_too_old) and, for an older version, the same dataVersion (app.package.downgrade_unsupported), and keeps it for 15 minutes. Install it with POST /api/apps/packages/{packageId}/install.",
+        "operationId": "StageStoreApp",
+        "parameters": [
+          {
+            "name": "catalog",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "appId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppPackagePreview"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/apps/{appId}/rollback": {
+      "post": {
+        "tags": [
+          "Apps"
+        ],
+        "description": "Administrators only. Goes back to the version before the app's last update as a job: the app's dataset returns to the snapshot of that update, so its data goes back too, and the previous version runs again (app.app.no_previous without one).",
+        "operationId": "RollbackApp",
+        "parameters": [
+          {
+            "name": "appId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/apps/{appId}/update-policy": {
+      "put": {
+        "tags": [
+          "Apps"
+        ],
+        "description": "Administrators only. The app's own update policy (automatic, notify, none), or null to follow the box's.",
+        "operationId": "SetAppUpdatePolicy",
+        "parameters": [
+          {
+            "name": "appId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppUpdatePolicyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppDetails"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/app/logs": {
       "post": {
         "tags": [
@@ -5779,6 +6426,18 @@
         },
         "description": "Confirms a `sub` or `unsub`. For `sub`, the snapshots of matching topics follow."
       },
+      "AddCatalogRequest": {
+        "required": [
+          "url"
+        ],
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "https://host/owner/repository.git, or for a private catalog git@host:owner/repository.git."
+          }
+        }
+      },
       "AdminAppList": {
         "required": [
           "pool",
@@ -5959,7 +6618,10 @@
           "busy",
           "available",
           "logLevel",
-          "storage"
+          "storage",
+          "catalog",
+          "updatePolicy",
+          "previousVersion"
         ],
         "type": "object",
         "properties": {
@@ -6027,6 +6689,31 @@
               "$ref": "#/components/schemas/AppStorageMapping"
             },
             "description": "The folders mapped to the storage requests of its manifest; a request without one is not mapped."
+          },
+          "catalog": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The catalog it was installed or last updated from; null for a sideload."
+          },
+          "updatePolicy": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Its own update policy; null follows the box's.",
+                "$ref": "#/components/schemas/UpdatePolicy"
+              }
+            ]
+          },
+          "previousVersion": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The version before its last update, which a rollback restores with its data; null when there is none."
           }
         },
         "description": "An installed app for administrators (topic `apps/admin` and `GET /api/apps`)."
@@ -6521,6 +7208,13 @@
           "suggestedAccess": {
             "description": "Who should use the app after an install (D304): administrators only when it asks for elevated rights, root in a container or `directory.read`, everybody otherwise. An install without access takes it.",
             "$ref": "#/components/schemas/AppAccess"
+          },
+          "catalog": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The catalog the package comes from; null for an uploaded file (a sideload, unverified)."
           }
         },
         "description": "A checked package, kept for 15 minutes for its installation by the administrator who uploaded it."
@@ -6755,6 +7449,76 @@
         },
         "description": "Body of `POST /api/apps/{appId}/tokens`."
       },
+      "AppUpdate": {
+        "required": [
+          "id",
+          "installedVersion",
+          "version",
+          "catalog",
+          "addedPermissions",
+          "elevated",
+          "policy",
+          "automatic"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The app."
+          },
+          "installedVersion": {
+            "type": "string",
+            "description": "The installed version."
+          },
+          "version": {
+            "type": "string",
+            "description": "The newest version for this box."
+          },
+          "catalog": {
+            "type": "string",
+            "description": "The catalog that offers it."
+          },
+          "addedPermissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Permissions the new version asks for that the installed one did not."
+          },
+          "elevated": {
+            "type": "boolean",
+            "description": "It asks for root in a container or elevated rights it did not have."
+          },
+          "policy": {
+            "description": "The app's own policy, or the box's.",
+            "$ref": "#/components/schemas/UpdatePolicy"
+          },
+          "automatic": {
+            "type": "boolean",
+            "description": "The next check installs it on its own: the policy is automatic and nothing new is asked for."
+          }
+        },
+        "description": "A newer version of an installed app that a catalog offers."
+      },
+      "AppUpdatePolicyRequest": {
+        "required": [
+          "policy"
+        ],
+        "type": "object",
+        "properties": {
+          "policy": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "The app's own update policy; null follows the box's.",
+                "$ref": "#/components/schemas/UpdatePolicy"
+              }
+            ]
+          }
+        }
+      },
       "AppUserAccess": {
         "required": [
           "userId",
@@ -6880,6 +7644,187 @@
           }
         },
         "description": "A backup the daemon decrypted and checked, kept for a restore for 15 minutes."
+      },
+      "CatalogInfo": {
+        "required": [
+          "key",
+          "id",
+          "kind",
+          "url",
+          "enabled",
+          "verified",
+          "name",
+          "description",
+          "homepage",
+          "sshPublicKey",
+          "hostKey",
+          "hasRegistryToken",
+          "status",
+          "checkedAt",
+          "verifiedAt",
+          "commit",
+          "sequence",
+          "appCount",
+          "errorCode",
+          "errorParams",
+          "busy"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "integer",
+            "description": "The box's number for it, which the catalog endpoints take.",
+            "format": "int64"
+          },
+          "id": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The id from its `catalog.json`, or null before a custom catalog's first fetch."
+          },
+          "kind": {
+            "description": "The project's official or community catalog, or a custom one.",
+            "$ref": "#/components/schemas/CatalogKind"
+          },
+          "url": {
+            "type": "string",
+            "description": "The repository."
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Switched on."
+          },
+          "verified": {
+            "type": "boolean",
+            "description": "Its index must carry a signature by a key built into the box (the project's catalogs)."
+          },
+          "name": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Its name by language from `catalog.json`, once fetched."
+          },
+          "description": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Its description by language, if it has one."
+          },
+          "homepage": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Its homepage, if it names one."
+          },
+          "sshPublicKey": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The deploy key the box made for an SSH URL; add it to the repository with read access."
+          },
+          "hostKey": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The server's host key the box pinned (for hosts other than GitHub, whose keys are built in)."
+          },
+          "hasRegistryToken": {
+            "type": "boolean",
+            "description": "A read token for its private images is set (never sent back)."
+          },
+          "status": {
+            "description": "Off, new, ok or failed.",
+            "$ref": "#/components/schemas/CatalogStatus"
+          },
+          "checkedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the last fetch ended.",
+            "format": "date-time"
+          },
+          "verifiedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When a fetch last verified the copy.",
+            "format": "date-time"
+          },
+          "commit": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The commit of the verified copy."
+          },
+          "sequence": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The verified index's sequence on the box's channel.",
+            "format": "int64"
+          },
+          "appCount": {
+            "type": "integer",
+            "description": "How many apps the verified copy lists.",
+            "format": "int32"
+          },
+          "errorCode": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Why the last fetch failed."
+          },
+          "errorParams": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "The error's params.",
+                "$ref": "#/components/schemas/JsonElement"
+              }
+            ]
+          },
+          "busy": {
+            "type": "boolean",
+            "description": "A fetch runs."
+          }
+        },
+        "description": "A catalog of the box."
+      },
+      "CatalogKind": {
+        "enum": [
+          "official",
+          "community",
+          "custom"
+        ],
+        "description": "Whose catalog it is: the project's two (signed, keys built in) or one an administrator added (unverified)."
+      },
+      "CatalogStatus": {
+        "enum": [
+          "off",
+          "new",
+          "ok",
+          "failed"
+        ],
+        "description": "A catalog's state for the Store's settings."
       },
       "ClientMessage": {
         "required": [
@@ -7735,6 +8680,7 @@
       "ErrorCode": {
         "enum": [
           "app.app.busy",
+          "app.app.no_previous",
           "app.app.not_found",
           "app.backend.endpoint_unknown",
           "app.backend.missing",
@@ -7766,6 +8712,8 @@
           "app.manifest.version_unsupported",
           "app.manifest.window_size_invalid",
           "app.mapping.invalid",
+          "app.package.box_too_old",
+          "app.package.downgrade_unsupported",
           "app.package.invalid",
           "app.package.layout_invalid",
           "app.package.lock_invalid",
@@ -7929,16 +8877,24 @@
           "storage.volume.size_invalid",
           "storage.volume.too_large",
           "storage.zfs.unavailable",
+          "store.app.not_found",
           "store.catalog.architecture_missing",
+          "store.catalog.built_in",
+          "store.catalog.busy",
           "store.catalog.data_version_decreased",
+          "store.catalog.exists",
           "store.catalog.id_reserved",
           "store.catalog.invalid_json",
           "store.catalog.mismatch",
+          "store.catalog.not_found",
           "store.catalog.rule_violation",
           "store.catalog.schema_violation",
           "store.catalog.sequence_old",
           "store.catalog.signature_invalid",
+          "store.catalog.unreachable",
+          "store.catalog.url_invalid",
           "store.catalog.version_unsupported",
+          "store.package.hash_mismatch",
           "system.backup.category_missing",
           "system.backup.invalid",
           "system.backup.password_wrong",
@@ -12487,6 +13443,280 @@
         },
         "description": "Body of `PUT /api/storage/schedules`."
       },
+      "StoreApp": {
+        "required": [
+          "catalog",
+          "kind",
+          "id",
+          "version",
+          "name",
+          "description",
+          "author",
+          "license",
+          "icon",
+          "installedVersion",
+          "update"
+        ],
+        "type": "object",
+        "properties": {
+          "catalog": {
+            "type": "string",
+            "description": "The catalog's id."
+          },
+          "kind": {
+            "description": "The catalog's kind; custom ones are unverified.",
+            "$ref": "#/components/schemas/CatalogKind"
+          },
+          "id": {
+            "type": "string",
+            "description": "The app id."
+          },
+          "version": {
+            "type": "string",
+            "description": "The newest version for this box."
+          },
+          "name": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Names by language."
+          },
+          "description": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Descriptions by language, if any."
+          },
+          "author": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The author's name, if the manifest has one."
+          },
+          "license": {
+            "type": "string",
+            "description": "The SPDX license."
+          },
+          "icon": {
+            "type": "string",
+            "description": "The icon's URL."
+          },
+          "installedVersion": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The installed version, if the app is installed."
+          },
+          "update": {
+            "type": "boolean",
+            "description": "The installed app is older than Version."
+          }
+        },
+        "description": "An app of a catalog, at the newest version this box can run."
+      },
+      "StoreAppDetails": {
+        "required": [
+          "app",
+          "manifest",
+          "screenshots",
+          "homepage",
+          "source",
+          "versions"
+        ],
+        "type": "object",
+        "properties": {
+          "app": {
+            "description": "The app at its newest fitting version.",
+            "$ref": "#/components/schemas/StoreApp"
+          },
+          "manifest": {
+            "description": "That version's manifest.",
+            "$ref": "#/components/schemas/JsonElement"
+          },
+          "screenshots": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "URLs of its screenshots, in order."
+          },
+          "homepage": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The manifest's homepage, if any."
+          },
+          "source": {
+            "type": "string",
+            "description": "Where its source is: the catalog repository at the commit CI built, in the app's folder."
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoreAppVersion"
+            },
+            "description": "Every published version, newest first."
+          }
+        },
+        "description": "The detail page of a catalog app."
+      },
+      "StoreAppList": {
+        "required": [
+          "apps"
+        ],
+        "type": "object",
+        "properties": {
+          "apps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/StoreApp"
+            }
+          }
+        },
+        "description": "Apps of the enabled catalogs, sorted by name."
+      },
+      "StoreAppVersion": {
+        "required": [
+          "version",
+          "publishedAt",
+          "pithyx",
+          "fits",
+          "dataVersion"
+        ],
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string",
+            "description": "The version."
+          },
+          "publishedAt": {
+            "type": "string",
+            "description": "When the catalog published it.",
+            "format": "date-time"
+          },
+          "pithyx": {
+            "type": "string",
+            "description": "The range of Pithyx versions it runs on."
+          },
+          "fits": {
+            "type": "boolean",
+            "description": "This box can install it (its version and architecture)."
+          },
+          "dataVersion": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Its data version, if it declares one.",
+            "format": "int32"
+          }
+        },
+        "description": "A published version of a catalog app."
+      },
+      "StoreChannel": {
+        "enum": [
+          "stable",
+          "beta"
+        ],
+        "description": "Which branch of every catalog the box reads: `catalog` (stable) or `catalog-next` (beta)."
+      },
+      "StoreSettings": {
+        "required": [
+          "policy",
+          "time",
+          "channel",
+          "nextCheckAt",
+          "lastCheckAt"
+        ],
+        "type": "object",
+        "properties": {
+          "policy": {
+            "description": "What a check does with newer versions; each app may override it.",
+            "$ref": "#/components/schemas/UpdatePolicy"
+          },
+          "time": {
+            "type": "string",
+            "description": "The daily check time as HH:mm in the box's time zone; the box adds its own delay of up to an hour."
+          },
+          "channel": {
+            "description": "The branch every catalog is read from.",
+            "$ref": "#/components/schemas/StoreChannel"
+          },
+          "nextCheckAt": {
+            "type": "string",
+            "description": "When the next check runs (UTC), the box's delay included.",
+            "format": "date-time"
+          },
+          "lastCheckAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the last check ran (UTC), if one did.",
+            "format": "date-time"
+          }
+        },
+        "description": "The Store's settings (D329)."
+      },
+      "StoreSettingsRequest": {
+        "required": [
+          "policy",
+          "time",
+          "channel"
+        ],
+        "type": "object",
+        "properties": {
+          "policy": {
+            "description": "What a check does with newer versions.",
+            "$ref": "#/components/schemas/UpdatePolicy"
+          },
+          "time": {
+            "type": "string",
+            "description": "HH:mm in the box's time zone."
+          },
+          "channel": {
+            "description": "stable or beta.",
+            "$ref": "#/components/schemas/StoreChannel"
+          }
+        }
+      },
+      "StoreState": {
+        "required": [
+          "settings",
+          "catalogs",
+          "updates"
+        ],
+        "type": "object",
+        "properties": {
+          "settings": {
+            "description": "The settings with the next check.",
+            "$ref": "#/components/schemas/StoreSettings"
+          },
+          "catalogs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CatalogInfo"
+            },
+            "description": "Every catalog, the project's first."
+          },
+          "updates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AppUpdate"
+            },
+            "description": "Newer versions of installed apps, by app id."
+          }
+        },
+        "description": "The Store for administrators: the snapshot and every event of the topic `store/admin`."
+      },
       "SubjectGrant": {
         "required": [
           "subjectKind",
@@ -12877,6 +14107,7 @@
           "storage/alerts",
           "storage/disks",
           "storage/pools",
+          "store/admin",
           "system/info",
           "system/processes",
           "system/resources",
@@ -12920,6 +14151,9 @@
           "storage/pools": {
             "$ref": "#/components/schemas/PoolList"
           },
+          "store/admin": {
+            "$ref": "#/components/schemas/StoreState"
+          },
           "system/info": {
             "$ref": "#/components/schemas/SystemInfo"
           },
@@ -12948,6 +14182,7 @@
           "storage/alerts",
           "storage/disks",
           "storage/pools",
+          "store/admin",
           "system/info",
           "system/processes",
           "system/resources",
@@ -12990,6 +14225,9 @@
           },
           "storage/pools": {
             "$ref": "#/components/schemas/PoolList"
+          },
+          "store/admin": {
+            "$ref": "#/components/schemas/StoreState"
           },
           "system/info": {
             "$ref": "#/components/schemas/SystemInfo"
@@ -13230,6 +14468,33 @@
             "description": "False hides the app from everybody and stops serving its frontend; its data and grants stay."
           }
         }
+      },
+      "UpdateCatalogRequest": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Switches the catalog on or off; null leaves it."
+          },
+          "registryToken": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "user:token to pull the catalog's private images; empty removes it, null leaves it."
+          }
+        }
+      },
+      "UpdatePolicy": {
+        "enum": [
+          "automatic",
+          "notify",
+          "none",
+          null
+        ]
       },
       "UserGrants": {
         "required": [
@@ -13630,6 +14895,9 @@
     },
     {
       "name": "Storage"
+    },
+    {
+      "name": "Store"
     },
     {
       "name": "App API"

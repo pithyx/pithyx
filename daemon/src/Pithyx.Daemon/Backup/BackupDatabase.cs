@@ -49,7 +49,7 @@ public static class BackupDatabase
         [BackupCategory.Storage] = ["snapshot_schedules", "storage_schedules"],
         [BackupCategory.System] = ["system_region"],
         [BackupCategory.Certificates] = [],
-        [BackupCategory.Apps] = ["apps", "app_permissions", "storage_mappings", "app_storage"],
+        [BackupCategory.Apps] = ["apps", "app_permissions", "storage_mappings", "app_storage", "catalogs"],
     }.ToFrozenDictionary();
 
     /// <summary>Rows of the <c>settings</c> table by category.</summary>
@@ -57,7 +57,7 @@ public static class BackupDatabase
     {
         [BackupCategory.Users] = [Auth.AuthService.RecoveryKeySetting],
         [BackupCategory.System] = [Logs.LogService.SettingsKey],
-        [BackupCategory.Apps] = [Apps.AppRegistry.PoolSetting],
+        [BackupCategory.Apps] = [Apps.AppRegistry.PoolSetting, .. Apps.Catalog.StoreService.BackupSettings],
     }.ToFrozenDictionary();
 
     /// <summary>Tables a restore handles on their own: rights are rebuilt, allocations merged, settings go by key.</summary>

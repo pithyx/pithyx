@@ -125,9 +125,12 @@ public sealed class AppStorage(ICommandRunner commands, PoolInventory pools, Sys
         return name;
     }
 
-    /// <summary>Returns the dataset to the snapshot of a failed update; the snapshot is the newest, so nothing else goes.</summary>
-    public async Task RollbackAsync(string pool, string appId, string snapshot, CancellationToken cancellationToken) =>
-        await RunAsync(SnapshotPlans.Rollback(ZfsPlans.AppDataset(pool, appId), snapshot, discardNewer: false), cancellationToken);
+    /// <summary>
+    /// Returns the dataset to an update's snapshot: after a failed update it is the newest, so nothing else goes; a
+    /// rollback days later (<paramref name="discardNewer"/>) also destroys the snapshots taken since.
+    /// </summary>
+    public async Task RollbackAsync(string pool, string appId, string snapshot, CancellationToken cancellationToken, bool discardNewer = false) =>
+        await RunAsync(SnapshotPlans.Rollback(ZfsPlans.AppDataset(pool, appId), snapshot, discardNewer), cancellationToken);
 
     /// <summary>Releases the hold of an update's snapshot and destroys it.</summary>
     public async Task ForgetSnapshotAsync(string pool, string appId, string snapshot, CancellationToken cancellationToken)

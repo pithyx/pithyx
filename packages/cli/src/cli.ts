@@ -1,13 +1,25 @@
 #!/usr/bin/env node
-// The pithyx command: validate, lock, pack and dev for an app project.
+// The pithyx command: validate, lock, build, pack and dev for an app project, and the CI of catalog repositories.
 import { mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { version } from '../package.json' with { type: 'json' };
+import { build } from './build';
+import type { CatalogChannel, TrustedKey } from './catalog';
+import {
+  checkPullRequest,
+  IssuesError,
+  pendingVersions,
+  readCatalog,
+  signIndex,
+  signingKey,
+  verifyBranch,
+  writeIndex,
+} from './catalog-tools';
 import { runDev } from './dev/start';
 import { dockerCredentials, saveImages } from './docker';
-import { describe, type Finding } from './findings';
+import { describe, error, type Finding } from './findings';
 import {
   composeImages,
   formatLock,
@@ -31,15 +43,35 @@ Commands:
              backend/images.lock.json (the platform manifest and image id for amd64 and
              arm64). Needs the network; registries are asked anonymously or with the
              credentials stored in ~/.docker/config.json (not with credential helpers).
+  build      Build the services of backend/compose.dev.yaml that have build: with the local
+             Docker for this machine, tag them pithyx.local/<id>/<service>:<version> and pin
+             backend/compose.yaml and backend/images.lock.json to them (for pack --images).
+             --oci-out builds reproducibly for amd64 and arm64 with buildx into OCI archives
+             and pushes nothing; --pin then pins to those archives as pushed to a registry.
   pack       Validate, then write <id>-<version>.pithyxapp: a deterministic tar.gz with
              pithyx.json, icon.svg, frontend/, the backend's compose.yaml and lock, README
              and LICENSE when they exist, and CHECKSUMS. The same files give the same bytes.
   dev        Run the mock desktop with the app in the box's sandbox and a proxy to the
-             backend, which runs with docker compose (plus backend/compose.dev.yaml when it
-             exists). With Vite, use the plugin @pithyx/cli/vite and run vite instead.
+             backend, which runs with docker compose (backend/compose.dev.yaml instead of
+             the pinned file when it exists). With Vite, use the plugin @pithyx/cli/vite and run vite instead.
+  catalog    The CI of a catalog repository (run in its root):
+               catalog check --base <commit> --author <login> [--index <file>]
+                 the pull request rules on the changes since the base commit
+               catalog pending [--index <file>]
+                 the app versions of apps/ that catalog-next does not list yet, as JSON
+               catalog index <branch folder> --channel stable|beta (--add <package>...
+                 --source <checkout> --repository <url> --commit <sha> | --promote <folder>)
+                 adds built packages or the versions of another branch, writes index.json
+               catalog sign <branch folder> --key-id <id> [--append]
+                 signs index.json with the Ed25519 key (PEM) in $PITHYX_SIGNING_KEY
+               catalog verify <branch folder> --channel stable|beta [--key <id>=<base64>]...
+                 checks the signature (with keys), the index and every file as a box does
 
 Options:
   --frontend <folder>   The built frontend (default: dist)
+  --oci-out <folder>    build: write OCI archives <service>.tar for amd64 and arm64 there
+  --pin <prefix>        build: pin to the archives of --oci-out as <prefix>/<id>/<service>:<version>
+  --catalog <file>      catalog: the catalog.json (default: catalog.json)
   --out <path>          pack: the package file, or a folder for it (default: the project)
   --images              pack: add backend/images/<arch>/<id>.tar for offline installs, saved
                         with the local docker (pull and save per architecture of the lock).
@@ -94,6 +126,22 @@ async function main(): Promise<number> {
       host: { type: 'string' },
       endpoint: { type: 'string', multiple: true },
       'no-docker': { type: 'boolean' },
+      'oci-out': { type: 'string' },
+      pin: { type: 'string' },
+      catalog: { type: 'string' },
+      base: { type: 'string' },
+      author: { type: 'string' },
+      index: { type: 'string' },
+      'allow-reserved-id': { type: 'boolean' },
+      channel: { type: 'string' },
+      add: { type: 'string', multiple: true },
+      source: { type: 'string' },
+      repository: { type: 'string' },
+      commit: { type: 'string' },
+      promote: { type: 'string' },
+      'key-id': { type: 'string' },
+      append: { type: 'boolean' },
+      key: { type: 'string', multiple: true },
       help: { type: 'boolean', short: 'h' },
       version: { type: 'boolean', short: 'v' },
     },
@@ -106,6 +154,9 @@ async function main(): Promise<number> {
   if (values.help === true || command === undefined || command === 'help') {
     console.log(HELP);
     return command === undefined && values.help !== true ? 2 : 0;
+  }
+  if (command === 'catalog') {
+    return catalog(folder, rest, values);
   }
   if (rest.length > 0) {
     console.error(`pithyx ${command} takes one project folder, not: ${rest.join(' ')}`);
@@ -144,6 +195,12 @@ async function main(): Promise<number> {
       } else {
         writeFileSync(file, text);
         console.log(`Wrote ${LOCK_FILE} for ${String(images.length)} image(s).`);
+      }
+      return 0;
+    }
+    case 'build': {
+      for (const line of await build(folder, { ociOut: values['oci-out'], pin: values.pin })) {
+        console.log(line);
       }
       return 0;
     }
@@ -210,6 +267,135 @@ async function main(): Promise<number> {
     default:
       console.error(`Unknown command ${command}. Run pithyx --help.`);
       return 2;
+  }
+}
+
+function channelOf(value: string | undefined): CatalogChannel {
+  if (value !== 'stable' && value !== 'beta') {
+    throw new Error('--channel must be stable or beta');
+  }
+  return value;
+}
+
+function keyOf(value: string, channel: CatalogChannel): TrustedKey {
+  const equals = value.indexOf('=');
+  if (equals <= 0) {
+    throw new Error(`--key ${value}: write it as id=<base64 public key>`);
+  }
+  return { keyId: value.slice(0, equals), publicKey: value.slice(equals + 1), channels: [channel] };
+}
+
+/** The `catalog` subcommands, run in the root of a catalog repository. */
+function catalog(
+  subcommand: string,
+  rest: readonly string[],
+  values: Record<string, string | boolean | string[] | undefined>,
+): number {
+  const text = (name: string) => {
+    const value = values[name];
+    return typeof value === 'string' ? value : undefined;
+  };
+  const list = (name: string) => {
+    const value = values[name];
+    return Array.isArray(value) ? value : [];
+  };
+  const [branch, ...extra] = rest;
+  const catalogFile = text('catalog') ?? 'catalog.json';
+  try {
+    switch (subcommand) {
+      case 'check': {
+        const base = text('base');
+        const author = text('author');
+        if (base === undefined || author === undefined) {
+          console.error('pithyx catalog check needs --base <commit> and --author <login>.');
+          return 2;
+        }
+        const issues = checkPullRequest({
+          root: '.',
+          base,
+          author,
+          index: text('index'),
+          allowReservedId: values['allow-reserved-id'] === true,
+        });
+        print(issues.map(error));
+        if (issues.length > 0) {
+          return 1;
+        }
+        console.log('The pull request passes the catalog rules.');
+        return 0;
+      }
+      case 'pending':
+        console.log(JSON.stringify(pendingVersions('.', text('index'))));
+        return 0;
+      case 'index': {
+        if (branch === undefined || extra.length > 0) {
+          console.error('pithyx catalog index takes one branch folder.');
+          return 2;
+        }
+        const added = writeIndex({
+          branch,
+          catalog: readCatalog(catalogFile, { allowReservedId: true }),
+          channel: channelOf(text('channel')),
+          add: list('add'),
+          source: text('source'),
+          repository: text('repository'),
+          commit: text('commit'),
+          promote: text('promote'),
+        });
+        console.log(
+          added.length === 0
+            ? 'Nothing new; the index has a new sequence.'
+            : `Added ${added.join(', ')}.`,
+        );
+        return 0;
+      }
+      case 'sign': {
+        const keyId = text('key-id');
+        const pem = process.env.PITHYX_SIGNING_KEY;
+        if (branch === undefined || keyId === undefined || pem === undefined || pem === '') {
+          console.error(
+            'pithyx catalog sign <branch folder> --key-id <id> needs the key in PITHYX_SIGNING_KEY.',
+          );
+          return 2;
+        }
+        signIndex(branch, keyId, signingKey(pem), values.append === true);
+        console.log(`Signed ${branch}/index.json with ${keyId}.`);
+        return 0;
+      }
+      case 'verify': {
+        if (branch === undefined) {
+          console.error('pithyx catalog verify takes one branch folder.');
+          return 2;
+        }
+        const channel = channelOf(text('channel'));
+        const keys = list('key').map((key) => keyOf(key, channel));
+        const issues = verifyBranch(branch, {
+          catalog: readCatalog(catalogFile, { allowReservedId: true }).id,
+          channel,
+          keys,
+        });
+        print(issues.map(error));
+        if (issues.length > 0) {
+          return 1;
+        }
+        console.log(
+          keys.length === 0
+            ? `${branch} is valid (signature not checked).`
+            : `${branch} is valid and signed.`,
+        );
+        return 0;
+      }
+      default:
+        console.error(`Unknown catalog command ${subcommand}. Run pithyx --help.`);
+        return 2;
+    }
+  } catch (failure) {
+    if (failure instanceof IssuesError) {
+      console.error(failure.message);
+      print(failure.issues.map(error));
+      return 1;
+    }
+    throw failure;
   }
 }
 

@@ -118,7 +118,7 @@ public sealed class BackupDatabaseTests : IAsyncLifetime
         Assert.Equal(["group:30000 share:1 read", "user:20000 right:desktopLogin allow", "user:20000 share:1 readWrite"], await GrantsAsync());
         Assert.Equal("HOME", await _live.ExecuteScalarAsync<string>("SELECT smb_workgroup FROM file_services"));
         Assert.Equal("AT", await _live.ExecuteScalarAsync<string>("SELECT region FROM system_region"));
-        Assert.Equal(["logs.settings={}", "other=kept", "recovery_key_hash=backup"], await _live.QueryAsync<string>("SELECT key || '=' || value FROM settings ORDER BY key"));
+        Assert.Equal(["logs.settings={}", "other=kept", "recovery_key_hash=backup", "store.channel=stable", "store.updates.policy=notify", "store.updates.time=03:00"], await _live.QueryAsync<string>("SELECT key || '=' || value FROM settings ORDER BY key"));
         Assert.Equal(0, await _live.ExecuteScalarAsync<int>("SELECT count(*) FROM sessions"));
         Assert.Equal(0, await _live.ExecuteScalarAsync<int>("SELECT count(*) FROM notifications"));
         // Numbers are never given out twice: bob's uid stays allocated although bob is gone.

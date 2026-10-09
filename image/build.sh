@@ -107,6 +107,8 @@ packages=(
   # App backends (D309): Debian's Docker, disabled until the daemon starts it for a backend app, and nftables for the
   # rule that keeps containers away from the host's services.
   docker.io docker-cli docker-compose nftables
+  # Store catalogs (D328): git fetches them, openssh-client reaches private ones with their deploy key.
+  git openssh-client
   # Console, region and administration.
   locales console-setup keyboard-configuration kbd tzdata ca-certificates iproute2 iputils-ping qrencode
   inotify-tools less nano procps zstd

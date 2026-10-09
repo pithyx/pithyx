@@ -1,4 +1,4 @@
-import { app as boxTexts } from '../../../i18n/en/errors.json' with { type: 'json' };
+import { app, store } from '../../../i18n/en/errors.json' with { type: 'json' };
 import { IntlMessageFormat } from 'intl-messageformat';
 import type { Issue } from './issues';
 
@@ -10,7 +10,8 @@ export type CliCode =
   | 'cli.lock.missing'
   | 'cli.lock.invalid'
   | 'cli.lock.stale'
-  | 'cli.lock.platform_missing';
+  | 'cli.lock.platform_missing'
+  | 'cli.backend.unbuilt';
 
 /** What `pithyx validate` reports: an error stops `pithyx pack`, a warning does not. */
 export interface Finding {
@@ -32,6 +33,8 @@ const cliTexts: Record<CliCode, string> = {
     '{path} does not match the Compose file ({reason, select, missing {{image} is not locked} unused {{image} is not used} other {{image} differs}}). Run pithyx lock.',
   'cli.lock.platform_missing':
     '{image} has no image for {arch}; the app will not install on {arch} boxes.',
+  'cli.backend.unbuilt':
+    '{path} is not built yet: run pithyx build, or let the catalog build it from the source form.',
 };
 
 function lookup(texts: unknown, path: readonly string[]): string | undefined {
@@ -50,7 +53,7 @@ export function describe(finding: Pick<Finding, 'code' | 'params'>): string {
   const text =
     finding.code in cliTexts
       ? cliTexts[finding.code as CliCode]
-      : lookup(boxTexts, finding.code.split('.').slice(1));
+      : lookup({ app, store }, finding.code.split('.'));
   if (text === undefined) {
     return `${finding.code} ${JSON.stringify(finding.params)}`;
   }

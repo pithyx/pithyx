@@ -128,5 +128,19 @@
         "body": "Das System wurde neu gestartet, während die Aufgabe lief. Starte sie erneut, wenn du sie noch brauchst."
       }
     }
+  },
+  "store": {
+    "updates": {
+      "available": {
+        "title": "App-Updates",
+        "body": "{count, plural, one {Eine neuere Version ist bereit: {apps}.} other {# neuere Versionen sind bereit: {apps}.}}"
+      }
+    },
+    "catalog": {
+      "failed": {
+        "title": "Katalog nicht abgerufen",
+        "body": "{catalog}: {error}"
+      }
+    }
   }
 }

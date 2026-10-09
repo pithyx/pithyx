@@ -11,6 +11,20 @@ using PackageLayout = Pithyx.Daemon.Apps.Manifest.PackageLayout;
 
 namespace Pithyx.Daemon.Apps;
 
+/// <summary>
+/// The version an app ran before its last update, kept with the update's snapshot until the next update so the app can
+/// go back to it with its data (D329); stored as JSON in <c>apps.previous</c>.
+/// </summary>
+/// <param name="Version">The version.</param>
+/// <param name="Manifest">Its manifest as the registry held it.</param>
+/// <param name="Icon">Its icon in base64.</param>
+/// <param name="Sha256">The SHA-256 of its package.</param>
+/// <param name="Source">sideload or catalog.</param>
+/// <param name="CatalogId">The catalog it came from, if any.</param>
+/// <param name="Snapshot">The snapshot of the app's dataset taken before the update; null in simulation.</param>
+/// <param name="UpdatedAt">When the update replaced it.</param>
+public sealed record AppPrevious(string Version, JsonElement Manifest, string Icon, string Sha256, string Source, string? CatalogId, string? Snapshot, DateTimeOffset UpdatedAt);
+
 /// <summary>An installed third-party app, as the registry keeps it in memory.</summary>
 public sealed record InstalledApp(
     string Id,
@@ -24,7 +38,10 @@ public sealed record InstalledApp(
     DateTimeOffset InstalledAt,
     DateTimeOffset UpdatedAt,
     AppLogLevel LogLevel,
-    IReadOnlyList<AppStorageMapping> Storage)
+    IReadOnlyList<AppStorageMapping> Storage,
+    string? CatalogId = null,
+    Catalog.UpdatePolicy? UpdatePolicy = null,
+    AppPrevious? Previous = null)
 {
     /// <summary>The path of the entry page below <c>/apps/&lt;id&gt;/</c> (the manifest's entry without <c>frontend/</c>).</summary>
     public string EntryPath => Manifest.GetProperty("entry").GetString()![(PackageLayout.FrontendFolder.Length + 1)..];
@@ -139,7 +156,7 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
     public AppDetails Details(InstalledApp app)
     {
         ArgumentNullException.ThrowIfNull(app);
-        return new(app.Id, app.Version, app.Source, app.Enabled, app.Manifest, app.Permissions, app.Uid, app.Sha256, app.InstalledAt, app.UpdatedAt, IsBusy(app.Id), IsAvailable(app.Id), app.LogLevel, app.Storage);
+        return new(app.Id, app.Version, app.Source, app.Enabled, app.Manifest, app.Permissions, app.Uid, app.Sha256, app.InstalledAt, app.UpdatedAt, IsBusy(app.Id), IsAvailable(app.Id), app.LogLevel, app.Storage, app.CatalogId, app.UpdatePolicy, app.Previous?.Version);
     }
 
     public static AppSummary Summary(InstalledApp app)
@@ -201,8 +218,13 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
 
     private static async Task<(IReadOnlyDictionary<string, InstalledApp>, string?)> LoadAsync(System.Data.Common.DbConnection connection)
     {
-        var rows = await connection.QueryAsync<(string Id, string Version, string Source, long Enabled, string Manifest, long Uid, string Sha256, string InstalledAt, string UpdatedAt, string LogLevel)>(
-            "SELECT id, version, source, enabled, manifest, uid, package_sha256, installed_at, updated_at, log_level FROM apps ORDER BY id");
+        var rows = await connection.QueryAsync<AppRow>(
+            """
+            SELECT id AS Id, version AS Version, source AS Source, enabled AS Enabled, manifest AS Manifest, uid AS Uid, package_sha256 AS Sha256,
+                installed_at AS InstalledAt, updated_at AS UpdatedAt, log_level AS LogLevel, catalog_id AS CatalogId, update_policy AS UpdatePolicy,
+                previous AS Previous
+            FROM apps ORDER BY id
+            """);
         var granted = (await connection.QueryAsync<(string AppId, string Permission, long Granted)>("SELECT app_id, permission, granted FROM app_permissions ORDER BY permission"))
             .ToLookup(row => row.AppId, StringComparer.Ordinal);
         var mappings = (await connection.QueryAsync<(string AppId, string StorageId, long ShareId, string Path, string Access)>(
@@ -226,9 +248,33 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
                 DateTimeOffset.Parse(row.UpdatedAt, CultureInfo.InvariantCulture),
                 row.LogLevel == "debug" ? AppLogLevel.Debug : AppLogLevel.Info,
                 [.. mappings[row.Id].Select(mapping => new AppStorageMapping(
-                    mapping.StorageId, mapping.ShareId, mapping.Path, mapping.Access == "read" ? AppStorageAccess.Read : AppStorageAccess.ReadWrite))]);
+                    mapping.StorageId, mapping.ShareId, mapping.Path, mapping.Access == "read" ? AppStorageAccess.Read : AppStorageAccess.ReadWrite))],
+                row.CatalogId,
+                row.UpdatePolicy is { } policy ? Enum.Parse<Catalog.UpdatePolicy>(policy, ignoreCase: true) : null,
+                row.Previous is { } previous ? JsonSerializer.Deserialize<AppPrevious>(previous, PreviousJson) : null);
         }
         return (apps, pool);
+    }
+
+    /// <summary>How <c>apps.previous</c> is written and read.</summary>
+    public static readonly JsonSerializerOptions PreviousJson = new(JsonSerializerDefaults.Web);
+
+    // Properties instead of a constructor: Dapper cannot map a constructor when a nullable column is NULL in every row.
+    private sealed class AppRow
+    {
+        public string Id { get; init; } = "";
+        public string Version { get; init; } = "";
+        public string Source { get; init; } = "";
+        public long Enabled { get; init; }
+        public string Manifest { get; init; } = "";
+        public long Uid { get; init; }
+        public string Sha256 { get; init; } = "";
+        public string InstalledAt { get; init; } = "";
+        public string UpdatedAt { get; init; } = "";
+        public string LogLevel { get; init; } = "";
+        public string? CatalogId { get; init; }
+        public string? UpdatePolicy { get; init; }
+        public string? Previous { get; init; }
     }
 
     private static Dictionary<string, string> Texts(JsonElement texts) =>
@@ -239,7 +285,7 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
 /// Publishes <c>apps</c>, <c>apps/admin</c> and every app's <c>apps/&lt;id&gt;/context</c> when the registry, the rights
 /// or the pools change.
 /// </summary>
-public sealed class AppChangePublisher(TopicHub hub, AppRegistry registry, AppContexts contexts, PermissionService permissions, PoolInventory pools, Proxy.AppBackends backends) : IHostedService
+public sealed partial class AppChangePublisher(TopicHub hub, AppRegistry registry, AppContexts contexts, PermissionService permissions, PoolInventory pools, Proxy.AppBackends backends, Catalog.StoreService store, ILogger<AppChangePublisher> logger) : IHostedService
 {
     public Task StartAsync(CancellationToken cancellationToken)
     {
@@ -247,6 +293,7 @@ public sealed class AppChangePublisher(TopicHub hub, AppRegistry registry, AppCo
         permissions.Changed += Publish;
         pools.Changed += Publish;
         backends.Changed += PublishContext;
+        store.Changed += PublishStore;
         return Task.CompletedTask;
     }
 
@@ -256,8 +303,27 @@ public sealed class AppChangePublisher(TopicHub hub, AppRegistry registry, AppCo
         permissions.Changed -= Publish;
         pools.Changed -= Publish;
         backends.Changed -= PublishContext;
+        store.Changed -= PublishStore;
         return Task.CompletedTask;
     }
+
+    // The Store's state reads the database; it is published off the caller's thread.
+    private void PublishStore() => _ = Task.Run(async () =>
+    {
+        try
+        {
+            hub.Publish(Catalog.StoreService.Topic, await store.StateAsync(CancellationToken.None));
+        }
+#pragma warning disable CA1031 // A lost event is repaired by the next one; subscribers get a snapshot on subscribe.
+        catch (Exception exception)
+#pragma warning restore CA1031
+        {
+            LogStorePublishFailed(exception);
+        }
+    });
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Publishing the Store's state failed")]
+    private partial void LogStorePublishFailed(Exception exception);
 
     // A backend that starts or stops changes only its app's context.
     private void PublishContext(string appId) => hub.Publish(AppContexts.TopicOf(appId), contexts.SourceOf(appId));

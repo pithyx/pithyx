@@ -2,7 +2,8 @@
   "app": {
     "app": {
       "busy": "Die App {id} wird gerade installiert, aktualisiert oder entfernt. Warte, bis das erledigt ist.",
-      "not_found": "Es ist keine App mit der ID {id} installiert."
+      "not_found": "Es ist keine App mit der ID {id} installiert.",
+      "no_previous": "{id} hat keine Version vor dem letzten Update, zu der es zurückgehen kann."
     },
     "backend": {
       "endpoint_unknown": "Die App hat keinen Backend-Endpunkt namens {endpoint}.",
@@ -55,7 +56,9 @@
       "layout_invalid": "Das App-Paket ist ungültig: {reason, select, missing {{path} fehlt} unsafe {der Pfad {path} ist nicht erlaubt} duplicate {{path} ist doppelt enthalten} unexpected {{path} gehört nicht in ein App-Paket} reserved {{path} nutzt einen Namen, der für das Backend reserviert ist} other {{path} ist nicht erlaubt}}.",
       "lock_invalid": "Die Liste der Backend-Images der App passt nicht ({reason, select, missing {sie fehlt} invalid {sie ist ungültig} stale {sie passt nicht zum Backend} other {nichts für {architecture}}}).",
       "not_found": "Das geprüfte Paket ist nicht mehr da. Lade die Datei noch einmal hoch.",
-      "too_large": "Das App-Paket ist zu groß: {reason, select, size {die Datei darf höchstens {limit} MB haben} unpacked {ihre Dateien dürfen zusammen höchstens {limit} MB haben} files {es darf höchstens {limit} Dateien enthalten} manifest {pithyx.json darf höchstens {limit} KB haben} other {es überschreitet eine Grenze}}."
+      "too_large": "Das App-Paket ist zu groß: {reason, select, size {die Datei darf höchstens {limit} MB haben} unpacked {ihre Dateien dürfen zusammen höchstens {limit} MB haben} files {es darf höchstens {limit} Dateien enthalten} manifest {pithyx.json darf höchstens {limit} KB haben} other {es überschreitet eine Grenze}}.",
+      "box_too_old": "Diese Version braucht Pithyx {range}; diese Box hat {version}. Aktualisiere zuerst Pithyx.",
+      "downgrade_unsupported": "Diese ältere Version kann die Daten der App nicht lesen (installiert Datenversion {installed}, in dieser Version {target}). Nutze nach einem Update stattdessen „Zurück zur vorigen Version“."
     },
     "permission": {
       "denied": "Die App darf das nicht ({permission}).",
@@ -425,7 +428,19 @@
       "schema_violation": "Die Datei {file} des Katalogs ist unter {path} ungültig ({keyword}).",
       "sequence_old": "Der Index des Katalogs ist älter (Sequenz {sequence}) als einer, den diese Box schon geprüft hat ({known}). Die Box behält ihre Kopie.",
       "signature_invalid": "Der Index des Katalogs ist nicht korrekt signiert ({reason, select, missing {die Signatur fehlt} malformed {die Signaturdatei ist ungültig} untrusted {keine Signatur stammt von einem Schlüssel, dem diese Box für ihren Kanal vertraut} mismatch {eine Signatur passt nicht zum Index} other {die Signatur belegt ihn nicht}}). Die Box behält ihre zuletzt geprüfte Kopie.",
-      "version_unsupported": "Die Datei {file} des Katalogs hat die Formatversion {version}, diese Box liest Version {supported}. Aktualisiere Pithyx, um diesen Katalog zu nutzen."
+      "version_unsupported": "Die Datei {file} des Katalogs hat die Formatversion {version}, diese Box liest Version {supported}. Aktualisiere Pithyx, um diesen Katalog zu nutzen.",
+      "busy": "Der Katalog {catalog} wird schon geprüft.",
+      "built_in": "Die Kataloge des Pithyx-Projekts lassen sich nicht entfernen, nur ausschalten.",
+      "exists": "Diese Box hat den Katalog {catalog} schon.",
+      "not_found": "Diese Box hat keinen Katalog {catalog}, oder er ist ausgeschaltet.",
+      "unreachable": "Der Katalog lässt sich nicht abrufen: {reason, select, timeout {der Server hat nicht rechtzeitig geantwortet} auth {das Repository hat den Zugriff verweigert; prüfe die URL und den Deploy-Key} host_key {der Schlüssel des Servers ist ein anderer als der, den diese Box gespeichert hat} branch {er hat für diesen Kanal noch nichts veröffentlicht} other {der Abruf ist fehlgeschlagen}}. Die Box behält ihre letzte geprüfte Kopie.",
+      "url_invalid": "Das ist keine Katalog-URL, die die Box abruft: {reason, select, scheme {nutze https:// oder SSH (git@host:besitzer/repository.git)} host {der Host fehlt oder ist nicht erlaubt} other {der Pfad ist nicht erlaubt}}."
+    },
+    "app": {
+      "not_found": "Der Katalog hat keine App {id} {version} für diese Box."
+    },
+    "package": {
+      "hash_mismatch": "Eine Datei des Katalogs passt nicht zu seinem Index ({path}). Die Box installiert sie nicht."
     }
   },
   "system": {

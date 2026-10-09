@@ -87,8 +87,23 @@ export async function saveImages(lock: ImagesLock, folder: string): Promise<Pack
       }
       const pinned = `${name}@${platform.manifest}`;
       console.log(`Saving ${pinned} for ${arch}`);
-      await run('docker', ['pull', '--quiet', '--platform', `linux/${arch}`, pinned]);
-      const id = (await run('docker', ['image', 'inspect', '--format', '{{.Id}}', pinned])).trim();
+      // An image pithyx build made for this machine is only in the local Docker; any other is pulled unless present.
+      const present = await run('docker', [
+        'image',
+        'inspect',
+        '--format',
+        '{{.Id}}',
+        platform.config,
+      ]).then(
+        (id) => id.trim() === platform.config,
+        () => false,
+      );
+      if (!present) {
+        await run('docker', ['pull', '--quiet', '--platform', `linux/${arch}`, pinned]);
+      }
+      const id = present
+        ? platform.config
+        : (await run('docker', ['image', 'inspect', '--format', '{{.Id}}', pinned])).trim();
       if (id !== platform.config) {
         throw new Error(`${pinned} has the image id ${id}, but the lock says ${platform.config}`);
       }

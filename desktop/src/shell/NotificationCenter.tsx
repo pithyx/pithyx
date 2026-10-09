@@ -57,13 +57,18 @@ export function sourceApp(
   if (notification.code.startsWith('storage.')) {
     return coreAppIds.storage;
   }
+  if (notification.code.startsWith('store.')) {
+    return coreAppIds.store;
+  }
   const kind = notification.params.kind;
   if (notification.code.startsWith('jobs.') && typeof kind === 'string') {
     return kind.startsWith('files.')
       ? coreAppIds.files
       : kind.startsWith('storage.')
         ? coreAppIds.storage
-        : undefined;
+        : kind.startsWith('apps.') || kind.startsWith('store.')
+          ? coreAppIds.store
+          : undefined;
   }
   return undefined;
 }
@@ -133,18 +138,19 @@ function useNotificationView() {
     const params = messageParams(raw);
     if (notification.code.startsWith('jobs.job.')) {
       params.kind = kindLabel(raw.kind);
-      const errorCode = raw.errorCode;
-      if (typeof errorCode === 'string') {
-        const errorParams = raw.errorParams;
-        params.error = translateError(t, {
-          code: errorCode as ErrorCode,
-          params:
-            typeof errorParams === 'object' && errorParams !== null
-              ? (errorParams as Record<string, unknown>)
-              : {},
-          requestId: '',
-        });
-      }
+    }
+    // A failed job and a catalog that could not be fetched carry the daemon's error.
+    const errorCode = raw.errorCode;
+    if (typeof errorCode === 'string') {
+      const errorParams = raw.errorParams;
+      params.error = translateError(t, {
+        code: errorCode as ErrorCode,
+        params:
+          typeof errorParams === 'object' && errorParams !== null
+            ? (errorParams as Record<string, unknown>)
+            : {},
+        requestId: '',
+      });
     }
     const alertCode = raw.alert;
     if (notification.code === 'storage.alert.resolved' && typeof alertCode === 'string') {
