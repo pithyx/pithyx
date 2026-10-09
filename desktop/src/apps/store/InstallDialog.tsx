@@ -15,8 +15,18 @@ import { appPools, manifestFacts } from './model';
 import { PermissionText } from './PermissionText';
 import styles from './Store.module.css';
 
+/** A version of a catalog app to install instead of a package file. */
+export interface CatalogVersion {
+  catalog: string;
+  appId: string;
+  version: string;
+  /** The catalog is one of the project's, signed with a key built into the box. */
+  verified: boolean;
+}
+
 /**
- * Installs an app from its package file, or updates an installed one: the daemon checks the upload and answers what
+ * Installs an app from its package file or a catalog, or updates an installed one: the daemon checks the upload (or
+ * the catalog's package) and answers what
  * installing does; the dialog shows it (permissions with their meaning, folders, background service, root, special
  * rights), asks who may use a new app (prefilled after D304) and, for the first app, the pool for app data. The
  * install or update runs as a job.
@@ -24,11 +34,14 @@ import styles from './Store.module.css';
 export function InstallDialog({
   app,
   updating,
+  catalog,
   onClose,
 }: {
   app: PithyxApp;
   /** The name of the app being updated, for the title. */
   updating?: string;
+  /** Installs this catalog version instead of asking for a file. */
+  catalog?: CatalogVersion;
   onClose: () => void;
 }) {
   const { t, i18n } = useTranslation('store');
@@ -42,7 +55,21 @@ export function InstallDialog({
     mutationFn: (chosen: File) =>
       storeCall(app, 'internal.admin.apps.upload', { file: chosen, name: chosen.name }),
   });
-  const preview = upload.data;
+  const staged = useQuery({
+    queryKey: ['store', 'stage', catalog?.catalog, catalog?.appId, catalog?.version],
+    queryFn: () =>
+      storeCall(app, 'internal.admin.store.stage', {
+        catalog: catalog?.catalog ?? '',
+        appId: catalog?.appId ?? '',
+        version: catalog?.version ?? '',
+      }),
+    enabled: catalog !== undefined,
+    // A staged package is the daemon's for 15 minutes; it is fetched once per dialog.
+    staleTime: Infinity,
+    gcTime: 0,
+    retry: false,
+  });
+  const preview = catalog === undefined ? upload.data : staged.data;
   const needsPool = preview?.pool === null;
   const pools = useQuery({
     queryKey: ['store', 'pools'],
@@ -121,7 +148,7 @@ export function InstallDialog({
       actions={actions}
     >
       <div className={styles.form}>
-        {job === null && (
+        {job === null && catalog === undefined && (
           <div className={styles.field}>
             <span id={`${ids}-file`} className={styles.fieldLabel}>
               {t('install.file')}
@@ -165,14 +192,15 @@ export function InstallDialog({
             </div>
           </div>
         )}
-        {upload.isPending && (
+        {(upload.isPending || (catalog !== undefined && staged.isPending)) && (
           <p className={styles.loading} role="status">
             {t('install.checking')}
           </p>
         )}
         {upload.isError && <ErrorNotice error={describeProblem(upload.error)} />}
+        {staged.isError && <ErrorNotice error={describeProblem(staged.error)} />}
         {preview !== undefined && (
-          <Preview preview={preview}>
+          <Preview preview={preview} verified={catalog?.verified ?? false}>
             {job === null && preview.action === 'install' && (
               <fieldset className={styles.choices}>
                 <legend className={styles.fieldLabel}>{t('install.access')}</legend>
@@ -247,7 +275,15 @@ export function InstallDialog({
 }
 
 /** What installing the checked package does: the app, its permissions and folders, and what deserves a warning. */
-function Preview({ preview, children }: { preview: AppPackagePreview; children: ReactNode }) {
+function Preview({
+  preview,
+  verified,
+  children,
+}: {
+  preview: AppPackagePreview;
+  verified: boolean;
+  children: ReactNode;
+}) {
   const { t, i18n } = useTranslation('store');
   const locale = useFormatLocale();
   const facts = manifestFacts(preview.manifest);
@@ -278,7 +314,13 @@ function Preview({ preview, children }: { preview: AppPackagePreview; children: 
         </div>
       </div>
       {description !== null && description !== '' && <p>{description}</p>}
-      <p className={styles.notice}>{t('install.unverified')}</p>
+      <p className={styles.notice}>
+        {preview.catalog == null
+          ? t('install.unverified')
+          : verified
+            ? t('install.fromCatalog', { catalog: preview.catalog })
+            : t('install.fromCustomCatalog', { catalog: preview.catalog })}
+      </p>
       {facts.root && <p className={styles.warning}>{t('install.root')}</p>}
       {facts.elevated.length > 0 && (
         <p className={styles.warning}>

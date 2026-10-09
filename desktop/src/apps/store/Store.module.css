@@ -399,3 +399,95 @@
     min-height: 44px;
   }
 }
+
+.tabBar {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-2);
+  padding-inline-end: var(--space-2);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.tabBar .tabs {
+  flex: 1;
+  border-bottom: 0;
+}
+
+.tabBar > :last-child {
+  margin-block-end: var(--space-1);
+}
+
+.screenshots {
+  display: flex;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0 0 var(--space-2);
+  overflow-x: auto;
+  list-style: none;
+  scroll-snap-type: x mandatory;
+}
+
+.screenshots li {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+}
+
+.screenshot {
+  display: block;
+  width: auto;
+  max-width: min(32rem, 85cqi);
+  height: 16rem;
+  object-fit: contain;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-2);
+}
+
+.updates,
+.catalogs {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.update {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.update .tileText {
+  flex: 1 1 12rem;
+}
+
+.catalog {
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.inline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-2);
+}
+
+.key {
+  display: block;
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-2);
+  font-family: var(--font-mono);
+  font-size: var(--font-size-xs);
+  overflow-wrap: anywhere;
+  user-select: all;
+}

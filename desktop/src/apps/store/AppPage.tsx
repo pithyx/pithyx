@@ -1,18 +1,26 @@
 import type { PithyxApp } from '@pithyx/sdk';
-import { Badge, Button, Switch } from '@pithyx/ui';
+import { Badge, Button, Dialog, Switch } from '@pithyx/ui';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ErrorNotice } from '../../errors/ErrorNotice';
 import { useFormatLocale } from '../../i18n';
 import { AppIcon } from '../../shell/AppIcon';
-import { IconArrowLeft, IconExternalLink, IconTrash, IconUpload } from '../../ui/icons';
+import {
+  IconArrowLeft,
+  IconDownload,
+  IconExternalLink,
+  IconHistory,
+  IconTrash,
+  IconUpload,
+} from '../../ui/icons';
 import { manifestText } from '../installed';
-import type { AdminAppList, AppDetails } from '../sdk/store';
+import type { AdminAppList, AppDetails, AppUpdate, CatalogInfo, UpdatePolicy } from '../sdk/store';
 import { storeCall } from '../sdk/store';
 import { describeProblem, formatDate } from '../storage/shared';
 import { AccessSection } from './AccessSection';
 import { InstallDialog } from './InstallDialog';
+import { JobProgress, useAppJob } from './jobs';
 import { iconUrl, manifestFacts } from './model';
 import { PermissionText } from './PermissionText';
 import { StorageSection } from './StorageSection';
@@ -59,18 +67,24 @@ export function useAppChange<T>(
 export function AppPage({
   app,
   details,
+  update,
+  catalogs,
   onBack,
   onUninstall,
 }: {
   app: PithyxApp;
   details: AppDetails;
+  /** A newer version a catalog offers, if any. */
+  update: AppUpdate | undefined;
+  catalogs: readonly CatalogInfo[];
   onBack: () => void;
   /** Opens the removal, which outlives this page: the page goes when the app does. */
   onUninstall: (name: string) => void;
 }) {
   const { t, i18n } = useTranslation('store');
   const locale = useFormatLocale();
-  const [updating, setUpdating] = useState(false);
+  const [updating, setUpdating] = useState<'file' | 'catalog' | null>(null);
+  const [rollingBack, setRollingBack] = useState(false);
   const facts = manifestFacts(details.manifest);
   const name = manifestText(facts.name, i18n.language);
   const description =
@@ -98,6 +112,12 @@ export function AppPage({
       storeCall(app, 'internal.admin.apps.setLogLevel', { appId, level: debug ? 'debug' : 'info' }),
     (current, debug) => ({ ...current, logLevel: debug ? 'debug' : 'info' }),
   );
+  const policy = useAppChange(
+    appId,
+    (value: UpdatePolicy | null) =>
+      storeCall(app, 'internal.admin.apps.setUpdatePolicy', { appId, policy: value }),
+    (current, value) => ({ ...current, updatePolicy: value }),
+  );
 
   return (
     <div className={styles.app}>
@@ -120,7 +140,9 @@ export function AppPage({
             </p>
             <span className={styles.badges}>
               <Badge tone="neutral">
-                {t(`detail.source.${details.source === 'catalog' ? 'catalog' : 'sideload'}`)}
+                {details.source === 'catalog' && details.catalog !== null
+                  ? t('detail.source.fromCatalog', { catalog: details.catalog })
+                  : t('detail.source.sideload')}
               </Badge>
               {details.busy && <Badge tone="accent">{t('installed.busy')}</Badge>}
             </span>
@@ -136,15 +158,38 @@ export function AppPage({
               <IconExternalLink size={16} stroke={1.75} aria-hidden />
               {t('detail.open')}
             </Button>
+            {update !== undefined && (
+              <Button
+                variant="primary"
+                isDisabled={details.busy}
+                onPress={() => {
+                  setUpdating('catalog');
+                }}
+              >
+                <IconDownload size={16} stroke={1.75} aria-hidden />
+                {t('catalog.update', { version: update.version })}
+              </Button>
+            )}
             <Button
               isDisabled={details.busy}
               onPress={() => {
-                setUpdating(true);
+                setUpdating('file');
               }}
             >
               <IconUpload size={16} stroke={1.75} aria-hidden />
               {t('detail.update')}
             </Button>
+            {details.previousVersion !== null && (
+              <Button
+                isDisabled={details.busy}
+                onPress={() => {
+                  setRollingBack(true);
+                }}
+              >
+                <IconHistory size={16} stroke={1.75} aria-hidden />
+                {t('detail.rollback.button', { version: details.previousVersion })}
+              </Button>
+            )}
             <Button
               variant="danger"
               isDisabled={details.busy}
@@ -212,6 +257,33 @@ export function AppPage({
 
         <AccessSection app={app} appId={appId} />
 
+        <section className={styles.group} aria-labelledby="store-policy">
+          <h3 id="store-policy" className={styles.sectionTitle}>
+            {t('detail.policy.title')}
+          </h3>
+          <label className={styles.fieldLabel} htmlFor="store-policy-select">
+            {t('detail.policy.label')}
+          </label>
+          <select
+            id="store-policy-select"
+            className={styles.select}
+            value={details.updatePolicy ?? 'box'}
+            onChange={(event) => {
+              const value = event.target.value;
+              policy.mutate(value === 'box' ? null : (value as UpdatePolicy));
+            }}
+          >
+            <option value="box">{t('detail.policy.box')}</option>
+            {(['automatic', 'notify', 'none'] as const).map((choice) => (
+              <option key={choice} value={choice}>
+                {t(`settings.updates.policies.${choice}`)}
+              </option>
+            ))}
+          </select>
+          <p className={styles.muted}>{t('detail.policy.hint')}</p>
+          {policy.isError && <ErrorNotice error={describeProblem(policy.error)} />}
+        </section>
+
         <section className={styles.group} aria-labelledby="store-logs">
           <h3 id="store-logs" className={styles.sectionTitle}>
             {t('detail.logs.title')}
@@ -264,15 +336,105 @@ export function AppPage({
           </dl>
         </section>
       </article>
-      {updating && (
+      {updating === 'file' && (
         <InstallDialog
           app={app}
           updating={name}
           onClose={() => {
-            setUpdating(false);
+            setUpdating(null);
+          }}
+        />
+      )}
+      {updating === 'catalog' && update !== undefined && (
+        <InstallDialog
+          app={app}
+          updating={name}
+          catalog={{
+            catalog: update.catalog,
+            appId,
+            version: update.version,
+            verified: catalogs.some((catalog) => catalog.id === update.catalog && catalog.verified),
+          }}
+          onClose={() => {
+            setUpdating(null);
+          }}
+        />
+      )}
+      {rollingBack && details.previousVersion !== null && (
+        <RollbackDialog
+          app={app}
+          appId={appId}
+          name={name}
+          version={details.previousVersion}
+          onClose={() => {
+            setRollingBack(false);
           }}
         />
       )}
     </div>
+  );
+}
+
+/** Goes back to the version before the last update, with the app's data as it was then. */
+function RollbackDialog({
+  app,
+  appId,
+  name,
+  version,
+  onClose,
+}: {
+  app: PithyxApp;
+  appId: string;
+  name: string;
+  version: string;
+  onClose: () => void;
+}) {
+  const { t } = useTranslation('store');
+  const { job, start } = useAppJob(app);
+  const rollback = useMutation({
+    mutationFn: () => storeCall(app, 'internal.admin.apps.rollback', { appId }),
+    onSuccess: start,
+  });
+  return (
+    <Dialog
+      isOpen
+      onOpenChange={(open) => {
+        if (!open) {
+          onClose();
+        }
+      }}
+      title={t('detail.rollback.title', { name })}
+      actions={
+        <>
+          <Button onPress={onClose}>
+            {job === null ? t('install.cancel') : t('install.close')}
+          </Button>
+          {job === null && (
+            <Button
+              variant="danger"
+              isDisabled={rollback.isPending}
+              onPress={() => {
+                rollback.mutate();
+              }}
+            >
+              {t('detail.rollback.confirm', { version })}
+            </Button>
+          )}
+        </>
+      }
+    >
+      <div className={styles.form}>
+        <p className={styles.warning}>{t('detail.rollback.warning', { version })}</p>
+        {rollback.isError && <ErrorNotice error={describeProblem(rollback.error)} />}
+        {job !== null && (
+          <JobProgress
+            job={job}
+            running={t('detail.rollback.running', { name })}
+            succeeded={t('detail.rollback.done', { name, version })}
+            stopped={t('install.stopped')}
+          />
+        )}
+      </div>
+    </Dialog>
   );
 }

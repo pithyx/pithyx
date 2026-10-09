@@ -4,7 +4,9 @@
     "installed": "Installiert",
     "official": "Offiziell",
     "community": "Community",
-    "own": "Eigene"
+    "own": "Eigene",
+    "updates": "Updates",
+    "updatesCount": "Updates ({count})"
   },
   "installed": {
     "title": "Installierte Apps",
@@ -28,7 +30,8 @@
     "enabledHint": "Eine deaktivierte App behält ihre Daten und wer sie nutzen darf, aber niemand kann sie öffnen.",
     "source": {
       "sideload": "Aus einer Datei installiert, nicht geprüft",
-      "catalog": "Aus einem Katalog installiert"
+      "catalog": "Aus einem Katalog installiert",
+      "fromCatalog": "Aus dem Katalog {catalog} installiert"
     },
     "unavailable": "Der Pool mit den Daten der App ist nicht verfügbar. Niemand kann die App öffnen, bis er wieder da ist.",
     "facts": {
@@ -94,6 +97,20 @@
       "title": "Protokolle",
       "debug": "Debug-Meldungen an das Protokoll-Center senden",
       "hint": "Schalte das nur ein, um ein Problem zu finden: Manche Apps schreiben viele Debug-Meldungen. Informationen, Warnungen und Fehler kommen immer im Protokoll-Center an."
+    },
+    "policy": {
+      "title": "Updates",
+      "label": "Wenn ein Katalog eine neuere Version hat",
+      "box": "Wie in den Store-Einstellungen",
+      "hint": "Ein Update, das neue Berechtigungen oder Sonderrechte verlangt, installiert sich nie von selbst."
+    },
+    "rollback": {
+      "button": "Zurück zu {version}",
+      "title": "Zurück zur vorigen Version von {name}",
+      "warning": "{version} kommt mit den Daten der App zurück, wie sie vor dem Update waren. Änderungen seit dem Update gehen verloren.",
+      "confirm": "Zurück zu {version}",
+      "running": "{name} geht zurück",
+      "done": "{name} läuft wieder in Version {version}."
     }
   },
   "permission": {
@@ -172,7 +189,9 @@
     "updating": "{name} wird aktualisiert",
     "installed": "{name} ist installiert.",
     "updated": "{name} ist aktualisiert.",
-    "stopped": "Die Installation wurde abgebrochen."
+    "stopped": "Die Installation wurde abgebrochen.",
+    "fromCatalog": "Aus dem Katalog {catalog}, gegen seine Signatur geprüft.",
+    "fromCustomCatalog": "Aus dem Katalog {catalog}, der nicht geprüft ist: Installiere nur Apps aus Katalogen, denen du vertraust."
   },
   "uninstall": {
     "title": "{name} deinstallieren?",
@@ -188,5 +207,131 @@
     "running": "{name} wird entfernt",
     "done": "{name} ist entfernt.",
     "stopped": "Das Entfernen wurde abgebrochen."
+  },
+  "catalog": {
+    "official": {
+      "title": "Offizielle Apps",
+      "intro": "Apps des Pithyx-Projekts, vom Projekt geprüft, gebaut und signiert."
+    },
+    "community": {
+      "title": "Community-Apps",
+      "intro": "Apps von Entwicklern außerhalb des Projekts, vom Projekt vor der Veröffentlichung geprüft."
+    },
+    "own": {
+      "title": "Deine Kataloge",
+      "intro": "Apps aus den Katalogen, die du hinzugefügt hast. Das Pithyx-Projekt prüft sie nicht."
+    },
+    "search": "Apps suchen",
+    "searchPlaceholder": "Name, Beschreibung oder Entwickler",
+    "loading": "Apps werden geladen",
+    "empty": "Dieser Katalog hat noch keine Apps für diese Box.",
+    "noMatch": "Keine App passt zu „{query}“.",
+    "apps": "Apps",
+    "newNotice": "{name} wurde noch nicht abgerufen.",
+    "failedNotice": "Der letzte Abruf von {name} ist fehlgeschlagen; die Apps stammen aus seiner letzten geprüften Kopie. Die Store-Einstellungen nennen den Grund.",
+    "updateAvailable": "Update verfügbar",
+    "installed": "Installiert",
+    "installedVersion": "Version {version} installiert",
+    "badge": {
+      "official": "Pithyx",
+      "community": "Community",
+      "custom": "Nicht geprüft"
+    },
+    "install": "Installieren",
+    "update": "Auf {version} aktualisieren",
+    "unverified": "Dieser Katalog ist nicht vom Pithyx-Projekt geprüft. Installiere nur Apps aus Katalogen, denen du vertraust.",
+    "loadingApp": "App wird geladen",
+    "screenshots": "Bildschirmfotos",
+    "screenshot": "Bildschirmfoto {number} von {name}",
+    "catalog": "Katalog",
+    "source": "Quellcode",
+    "sourceLink": "Quellcode dieser Version im Katalog",
+    "versions": "Versionen",
+    "needs": "braucht Pithyx {range}"
+  },
+  "updates": {
+    "title": "Updates",
+    "intro": "Neuere Versionen installierter Apps. Die Store-Einstellungen legen fest, was die Box damit von selbst tut.",
+    "versions": "{from} auf {to}",
+    "newPermissions": "{count, plural, one {Verlangt # neue Berechtigung} other {Verlangt # neue Berechtigungen}}",
+    "elevated": "Verlangt Sonderrechte",
+    "automatic": "Installiert sich bei der nächsten Prüfung",
+    "policy": {
+      "automatic": "Wartet auf dich: es verlangt mehr",
+      "notify": "Wartet auf dich",
+      "none": "Wartet auf dich"
+    },
+    "update": "Aktualisieren"
+  },
+  "settings": {
+    "open": "Store-Einstellungen",
+    "back": "Store",
+    "title": "Store-Einstellungen",
+    "save": "Speichern",
+    "updates": {
+      "title": "Updates",
+      "policy": "Wenn ein Katalog eine neuere Version hat",
+      "policies": {
+        "automatic": "Installieren",
+        "notify": "Administratoren benachrichtigen",
+        "none": "Nichts tun"
+      },
+      "policyHints": {
+        "automatic": "Updates, die neue Berechtigungen oder Sonderrechte verlangen, warten trotzdem auf dich.",
+        "notify": "Eine Benachrichtigung auf den Desktops der Administratoren.",
+        "none": "Updates erscheinen nur im Reiter Updates."
+      },
+      "time": "Tägliche Prüfzeit",
+      "timeHint": "HH:MM in der Zeitzone der Box. Jede Box wartet zusätzlich bis zu einer Stunde.",
+      "timeInvalid": "Gib eine Uhrzeit wie 03:00 ein.",
+      "next": "Nächste Prüfung: {time}",
+      "last": "letzte Prüfung: {time}",
+      "checkNow": "Jetzt prüfen",
+      "checking": "Alle Kataloge werden jetzt geprüft.",
+      "notifications": "Administratoren bekommen Desktop-Benachrichtigungen zu Updates und zu Katalogen, die sich nicht abrufen lassen."
+    },
+    "channel": {
+      "title": "Kanal",
+      "stable": "Stabil",
+      "stableHint": "Versionen, die die Besitzer der Kataloge freigegeben haben.",
+      "beta": "Beta",
+      "betaHint": "Jede neue Version, sobald ein Katalog sie veröffentlicht, vor ihrer Freigabe."
+    },
+    "catalogs": {
+      "title": "Kataloge",
+      "add": "Katalog hinzufügen",
+      "signed": "Signiert",
+      "enable": "{name} nutzen",
+      "status": {
+        "off": "Aus",
+        "new": "Noch nicht abgerufen",
+        "ok": "Aktuell",
+        "failed": "Abruf fehlgeschlagen",
+        "busy": "Wird abgerufen"
+      },
+      "never": "Noch nie abgerufen.",
+      "verified": "Geprüft {time}, {count, plural, one {# App} other {# Apps}}.",
+      "deployKey": "Deploy-Key",
+      "deployKeyHint": "Dieser Katalog ist privat: Sein Repository braucht diesen Schlüssel als Deploy-Key nur zum Lesen.",
+      "deployKeyNext": "Füge diesen Schlüssel dem Repository als Deploy-Key ohne Schreibzugriff hinzu und rufe den Katalog dann in den Store-Einstellungen ab.",
+      "hostKey": "Beim ersten Verbinden gespeicherter Serverschlüssel: {key}",
+      "sync": "Jetzt abrufen",
+      "remove": "Entfernen",
+      "addTitle": "Katalog hinzufügen",
+      "addButton": "Hinzufügen",
+      "url": "URL des Repositorys",
+      "urlHint": "https://… für einen öffentlichen Katalog, git@host:besitzer/repository.git für einen privaten.",
+      "addWarning": "Apps aus deinen eigenen Katalogen prüft das Pithyx-Projekt nicht. Füge nur Kataloge hinzu, denen du vertraust.",
+      "added": "Der Katalog wird abgerufen."
+    },
+    "community": {
+      "title": "Community-Katalog nutzen?",
+      "warning": "Community-Apps stammen von Entwicklern außerhalb des Pithyx-Projekts. Das Projekt prüft sie vor der Veröffentlichung, kann aber nicht wie für eigene Apps für sie einstehen.",
+      "confirm": "Nutzen"
+    },
+    "file": {
+      "title": "Aus einer Datei installieren",
+      "intro": "Installiere eine App aus ihrer Paketdatei (.pithyxapp). Solche Apps sind nicht geprüft."
+    }
   }
 }

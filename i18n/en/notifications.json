@@ -128,5 +128,19 @@
         "body": "The system restarted while the task ran. Start it again if it is still needed."
       }
     }
+  },
+  "store": {
+    "updates": {
+      "available": {
+        "title": "App updates",
+        "body": "{count, plural, one {A newer version is ready: {apps}.} other {# newer versions are ready: {apps}.}}"
+      }
+    },
+    "catalog": {
+      "failed": {
+        "title": "Catalog not fetched",
+        "body": "{catalog}: {error}"
+      }
+    }
   }
 }
