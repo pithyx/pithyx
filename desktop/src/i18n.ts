@@ -11,6 +11,7 @@ import type installer from '../../i18n/en/installer.json';
 import type jobs from '../../i18n/en/jobs.json';
 import type logs from '../../i18n/en/logs.json';
 import type monitor from '../../i18n/en/monitor.json';
+import type network from '../../i18n/en/network.json';
 import type notifications from '../../i18n/en/notifications.json';
 import type settings from '../../i18n/en/settings.json';
 import type storage from '../../i18n/en/storage.json';
@@ -32,6 +33,7 @@ export interface Resources {
   jobs: typeof jobs;
   logs: typeof logs;
   monitor: typeof monitor;
+  network: typeof network;
   viewer: typeof viewer;
   users: typeof users;
 }

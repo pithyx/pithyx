@@ -773,26 +773,59 @@ export const sampleSystemOverview = {
   uptimeSeconds: 3 * 86_400 + 5 * 3600 + 17 * 60,
 };
 
-export const sampleNetwork = [
-  {
-    name: 'enp1s0',
-    macAddress: '02:00:00:12:34:56',
-    up: true,
-    method: 'dhcp',
-    addresses: ['192.168.1.20/24', 'fd00::20/64'],
-    gateways: ['192.168.1.1'],
-    dnsServers: ['192.168.1.1'],
+export const sampleNetwork = {
+  config: {
+    interfaces: [],
+    global: { hostName: 'pithyx', dnsServers: [], searchDomains: [], defaultInterface: null },
   },
-  {
-    name: 'enp2s0',
-    macAddress: '02:00:00:12:34:57',
-    up: false,
-    method: 'static',
-    addresses: [],
-    gateways: [],
-    dnsServers: [],
-  },
-];
+  links: [
+    {
+      name: 'enp1s0',
+      kind: 'ethernet',
+      macAddress: '02:00:00:12:34:56',
+      up: true,
+      carrier: true,
+      speedMbps: 1000,
+      duplex: 'full',
+      mtu: 1500,
+      addresses: ['192.168.1.20/24', 'fd00::20/64'],
+      gateways: ['192.168.1.1'],
+      dnsServers: ['192.168.1.1'],
+      defaultRoute: true,
+      master: null,
+      vlanParent: null,
+      vlanId: null,
+      method: 'dhcp',
+      configured: false,
+      changeable: true,
+    },
+    {
+      name: 'enp2s0',
+      kind: 'ethernet',
+      macAddress: '02:00:00:12:34:57',
+      up: false,
+      carrier: false,
+      speedMbps: null,
+      duplex: null,
+      mtu: 1500,
+      addresses: [],
+      gateways: [],
+      dnsServers: [],
+      defaultRoute: false,
+      master: null,
+      vlanParent: null,
+      vlanId: null,
+      method: 'dhcp',
+      configured: false,
+      changeable: true,
+    },
+  ],
+  hostName: 'pithyx',
+  globalChangeable: true,
+  pending: null,
+  confirmSeconds: 60,
+  connectionInterface: 'enp1s0',
+};
 
 export const sampleTime = {
   timeZone: 'Europe/Berlin',
@@ -924,7 +957,7 @@ function answer(method: string, params: unknown, extra: ExtraAnswers): unknown {
       return sampleSharePlan(params as SharePlanRequest);
     case 'internal.admin.system.overview':
       return sampleSystemOverview;
-    case 'internal.admin.system.network':
+    case 'internal.admin.network.get':
       return sampleNetwork;
     case 'internal.admin.system.time':
       return sampleTime;

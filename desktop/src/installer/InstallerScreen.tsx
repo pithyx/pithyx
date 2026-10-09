@@ -17,6 +17,17 @@ import { languageName, languages, setLanguage, useFormatLocale, type Language } 
 import { REGIONS } from '../regions';
 import { AuthHeader, AuthLayout } from '../shell/AuthLayout';
 import { IconAlertTriangle, IconAlertCircle, IconCheck, IconLoader2 } from '../ui/icons';
+import { IpFields } from '../network/IpFields';
+import {
+  defaultInterface,
+  hostAfterChange,
+  ipFormOf,
+  splitList,
+  withInterface,
+  withIp,
+  withoutInterface,
+  type NetworkConfig,
+} from '../network/model';
 import own from './Installer.module.css';
 
 type Status = components['schemas']['InstallerStatus'];
@@ -24,6 +35,7 @@ type Options = components['schemas']['InstallerOptions'];
 type OfferedDisk = components['schemas']['InstallerDisk'];
 
 const statusKey = ['installer', 'status'] as const;
+const networkTestKey = ['installer', 'network', 'test'] as const;
 const STEPS = 5;
 
 interface Choices {
@@ -39,6 +51,8 @@ interface Choices {
   username: string;
   displayName: string;
   password: string;
+  /** The network of step 2; null keeps the live system's settings (DHCP, or what the console set). */
+  network: NetworkConfig | null;
 }
 
 // The console keyboard follows the region, else the language; the user can change it.
@@ -130,6 +144,7 @@ export function InstallerScreen() {
       username: '',
       displayName: '',
       password: '',
+      network: null,
     };
   });
 
@@ -148,6 +163,11 @@ export function InstallerScreen() {
     content = (
       <Installation
         status={status.data}
+        host={hostAfterChange(
+          options.data.network,
+          choices.network ?? options.data.networkConfig,
+          location.hostname,
+        )}
         onChange={() => {
           setEditing(true);
           setStep(5);
@@ -183,6 +203,10 @@ export function InstallerScreen() {
       <NetworkStep
         key="network"
         options={offered}
+        config={choices.network ?? offered.networkConfig}
+        onChange={(network) => {
+          update({ network });
+        }}
         onBack={() => {
           setStep(1);
         }}
@@ -518,14 +542,35 @@ function RegionStep({
 
 function NetworkStep({
   options,
+  config,
+  onChange,
   onBack,
   onNext,
 }: {
   options: Options;
+  config: NetworkConfig;
+  onChange: (next: NetworkConfig) => void;
   onBack: () => void;
   onNext: () => void;
 }) {
   const { t } = useTranslation('installer');
+  const queryClient = useQueryClient();
+  const cards = options.network.filter((link) => link.kind === 'ethernet');
+  const start = useMutation({
+    mutationFn: async () => unwrap(await api.POST('/api/installer/network/test', { body: config })),
+    onSuccess: (result) => {
+      queryClient.setQueryData(networkTestKey, result);
+    },
+  });
+  // The page may lose its connection while the live system tries the settings; it asks again until the test ends.
+  const test = useQuery({
+    queryKey: networkTestKey,
+    queryFn: async ({ signal }) => unwrap(await api.GET('/api/installer/network/test', { signal })),
+    enabled: start.isSuccess,
+    refetchInterval: (query) => (query.state.data?.running === false ? false : 2000),
+    retry: true,
+  });
+  const result = start.isSuccess ? test.data : undefined;
   return (
     <StepForm
       index={2}
@@ -534,20 +579,103 @@ function NetworkStep({
       onBack={onBack}
       onSubmit={onNext}
     >
-      {options.network.length === 0 ? (
+      {cards.length === 0 ? (
         <p className={styles.intro}>{t('network.none')}</p>
       ) : (
         <ul className={own.list}>
-          {options.network.map((nic) => (
-            <li key={nic.name} className={own.item}>
-              <span className={own.itemTitle}>
-                <span className={styles.mono}>{nic.name}</span>
-                <span className={own.badge} data-ok={nic.up}>
-                  {nic.up ? t('network.connected') : t('network.disconnected')}
+          {cards.map((nic) => {
+            const item = config.interfaces.find((candidate) => candidate.name === nic.name);
+            return (
+              <li key={nic.name} className={own.item}>
+                <span className={own.itemTitle}>
+                  <span className={styles.mono}>{nic.name}</span>
+                  <span className={own.badge} data-ok={nic.carrier}>
+                    {nic.carrier ? t('network.connected') : t('network.disconnected')}
+                  </span>
                 </span>
-              </span>
-              <span className={own.itemDetail}>
-                {nic.addresses.length === 0 ? t('network.noAddress') : nic.addresses.join(', ')}
+                <span className={own.itemDetail}>
+                  {nic.addresses.length === 0 ? t('network.noAddress') : nic.addresses.join(', ')}
+                </span>
+                <details className={own.details} open={item !== undefined}>
+                  <summary>{t('network.configure', { name: nic.name })}</summary>
+                  <IpFields
+                    form={ipFormOf(item)}
+                    onChange={(form) => {
+                      const next = withIp(item ?? defaultInterface(nic.name), form);
+                      // DHCP and automatic IPv6 is what a card without settings gets; it keeps no settings then.
+                      onChange(
+                        next.ipv4 === 'dhcp' && next.ipv6 === 'auto' && (next.mtu ?? null) === null
+                          ? withoutInterface(config, nic.name)
+                          : withInterface(config, next),
+                      );
+                      start.reset();
+                    }}
+                  />
+                </details>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+      <Field
+        label={t('network.dns')}
+        description={t('network.dnsHint')}
+        name="dns"
+        value={config.global.dnsServers.join(' ')}
+        autoCapitalize="none"
+        autoComplete="off"
+        spellCheck={false}
+        onChange={(event) => {
+          onChange({
+            ...config,
+            global: { ...config.global, dnsServers: splitList(event.target.value) },
+          });
+          start.reset();
+        }}
+      />
+      <div>
+        <Button
+          type="button"
+          variant="secondary"
+          pending={start.isPending || result?.running === true}
+          onClick={() => {
+            start.mutate();
+          }}
+        >
+          {t('network.test')}
+        </Button>
+      </div>
+      {(start.isPending || result?.running === true) && (
+        <p className={styles.intro} role="status">
+          {t('network.testing')}
+        </p>
+      )}
+      {start.isError && <ErrorNotice error={describeError(start.error)} />}
+      {result !== undefined && !result.running && result.errorCode !== null && (
+        <ErrorNotice
+          error={describeError({ code: result.errorCode, params: result.errorParams })}
+        />
+      )}
+      {result !== undefined && !result.running && (
+        <ul className={own.list} aria-live="polite">
+          {result.interfaces.map((tested) => (
+            <li key={tested.name} className={own.check}>
+              {tested.addresses.length > 0 && tested.gatewayReachable !== false ? (
+                <IconCheck size={18} stroke={2} aria-hidden className={own.ok} />
+              ) : (
+                <IconAlertTriangle size={18} stroke={2} aria-hidden className={own.bad} />
+              )}
+              <span>
+                {tested.addresses.length === 0
+                  ? t('network.testNoAddress', { name: tested.name })
+                  : t('network.testOk', {
+                      name: tested.name,
+                      addresses: tested.addresses.join(', '),
+                    })}{' '}
+                {tested.gatewayReachable === true &&
+                  t('network.testGateway', { gateway: tested.gateways[0] ?? '' })}
+                {tested.gatewayReachable === false &&
+                  t('network.testNoGateway', { gateway: tested.gateways[0] ?? '' })}
               </span>
             </li>
           ))}
@@ -804,6 +932,9 @@ function stepOf(code: string): number | undefined {
   if (code.startsWith('installer.disk.')) {
     return 3;
   }
+  if (code.startsWith('network.')) {
+    return 2;
+  }
   if (
     code === 'installer.hostname.invalid' ||
     code.startsWith('system.time.') ||
@@ -855,6 +986,7 @@ function Summary({
             password: choices.password,
             displayName: choices.displayName === '' ? null : choices.displayName,
             eraseConfirmed: confirmed,
+            network: choices.network ?? options.networkConfig,
           },
         }),
       ),
@@ -932,9 +1064,9 @@ function Summary({
 }
 
 /** The install id the box at this address answers on port 80, or null while it does not answer yet. */
-async function probeInstalledSystem(signal: AbortSignal): Promise<string | null> {
+async function probeInstalledSystem(host: string, signal: AbortSignal): Promise<string | null> {
   try {
-    const response = await fetch(`http://${location.hostname}/api/install-id`, {
+    const response = await fetch(`http://${host}/api/install-id`, {
       signal,
       cache: 'no-store',
     });
@@ -948,7 +1080,15 @@ async function probeInstalledSystem(signal: AbortSignal): Promise<string | null>
   }
 }
 
-function Installation({ status, onChange }: { status: Status; onChange: () => void }) {
+function Installation({
+  status,
+  host,
+  onChange,
+}: {
+  status: Status;
+  host: string;
+  onChange: () => void;
+}) {
   const { t } = useTranslation('installer');
   const [stage, setStage] = useState<'key' | 'stick'>('key');
   const reboot = useMutation({
@@ -959,13 +1099,13 @@ function Installation({ status, onChange }: { status: Status; onChange: () => vo
   const rebooting = status.phase === 'rebooting' || reboot.isSuccess;
   const probe = useQuery({
     queryKey: ['installer', 'probe'],
-    queryFn: ({ signal }) => probeInstalledSystem(signal),
+    queryFn: ({ signal }) => probeInstalledSystem(host, signal),
     enabled: rebooting,
     refetchInterval: 3000,
     retry: false,
   });
   const installed = rebooting && probe.data != null && probe.data === status.installId;
-  const target = `http://${location.hostname}:7484/`;
+  const target = `http://${host}:7484/`;
 
   // Leaving the page for the installed system is a side effect of the probe's answer.
   useEffect(() => {

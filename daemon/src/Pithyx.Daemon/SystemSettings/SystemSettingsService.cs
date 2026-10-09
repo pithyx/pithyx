@@ -1,6 +1,3 @@
-using System.Globalization;
-using System.Net.NetworkInformation;
-using System.Net.Sockets;
 using Dapper;
 using Pithyx.Daemon.Auth;
 using Pithyx.Daemon.Commands;
@@ -11,7 +8,7 @@ using Pithyx.Daemon.Monitoring;
 namespace Pithyx.Daemon.SystemSettings;
 
 /// <summary>
-/// System facts for the Info Center and the network page, and the regional settings of the box. Reads come from files
+/// System facts for the Info Center and the regional settings of the box. Reads come from files
 /// only (no process for a read request). A time change runs <c>timedatectl</c> and writes a timesyncd drop-in in real
 /// mode; simulation keeps it in memory. The system language and region live in SQLite.
 /// </summary>
@@ -69,34 +66,6 @@ public sealed class SystemSettingsService(
             memory is null ? 0 : ProcParsers.ParseMemInfo(memory).TotalBytes,
             Environment.MachineName,
             uptime is null ? 0 : ProcParsers.ParseUptime(uptime));
-    }
-
-    public IReadOnlyList<NetworkInterfaceInfo> Network()
-    {
-        var methods = HostParsers.ParseInterfacesFile(ReadInterfacesFiles());
-        return [.. NetworkInterface.GetAllNetworkInterfaces()
-            .Where(nic => nic.NetworkInterfaceType != NetworkInterfaceType.Loopback && ResourceParsers.IsShownInterface(nic.Name))
-            .OrderBy(nic => nic.Name, StringComparer.Ordinal)
-            .Select(nic =>
-            {
-                var properties = nic.GetIPProperties();
-                var mac = nic.GetPhysicalAddress().GetAddressBytes();
-                return new NetworkInterfaceInfo(
-                    nic.Name,
-                    mac.Length == 0 ? null : string.Join(':', mac.Select(part => part.ToString("x2", CultureInfo.InvariantCulture))),
-                    nic.OperationalStatus == OperationalStatus.Up,
-                    methods.GetValueOrDefault(nic.Name) switch
-                    {
-                        "dhcp" => "dhcp",
-                        "static" => "static",
-                        _ => "unknown",
-                    },
-                    [.. properties.UnicastAddresses
-                        .Where(address => address.Address.AddressFamily == AddressFamily.InterNetwork || !address.Address.IsIPv6LinkLocal)
-                        .Select(address => $"{address.Address}/{address.PrefixLength}")],
-                    [.. properties.GatewayAddresses.Select(gateway => gateway.Address.ToString())],
-                    [.. properties.DnsAddresses.Select(dns => dns.ToString())]);
-            })];
     }
 
     public TimeSettings Time()
@@ -208,16 +177,6 @@ public sealed class SystemSettingsService(
         {
             throw new PithyxException(ErrorCodes.SystemTimeApplyFailed, new Dictionary<string, object?> { ["command"] = command.FileName, ["exitCode"] = result.ExitCode });
         }
-    }
-
-    private static string ReadInterfacesFiles()
-    {
-        var text = Read("/etc/network/interfaces") ?? "";
-        if (Directory.Exists("/etc/network/interfaces.d"))
-        {
-            text += string.Concat(Directory.EnumerateFiles("/etc/network/interfaces.d").Order(StringComparer.Ordinal).Select(file => "\n" + (Read(file) ?? "")));
-        }
-        return text;
     }
 
     private static string? Read(string path)

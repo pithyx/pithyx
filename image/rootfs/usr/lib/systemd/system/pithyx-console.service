@@ -1,0 +1,22 @@
+# Managed by pithyx: shipped in the image (image/rootfs). The console menu on tty1 (D337): the greeting with the
+# addresses, a static address and "Reset the network to DHCP" without a password. The login prompt is on tty2.
+[Unit]
+Description=Pithyx console menu on tty1
+After=pithyx-issue.service systemd-user-sessions.service
+Conflicts=getty@tty1.service
+Before=getty.target
+
+[Service]
+Type=simple
+ExecStart=/usr/lib/pithyx/console.sh
+StandardInput=tty
+StandardOutput=tty
+StandardError=journal
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+Restart=always
+RestartSec=1
+
+[Install]
+WantedBy=multi-user.target

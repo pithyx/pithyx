@@ -1,0 +1,53 @@
+==> /etc/systemd/network/10-pithyx-bond0.netdev
+# Managed by pithyx. Pithyx writes this file again on every change of the network in Settings.
+
+[NetDev]
+Name=bond0
+Kind=bond
+
+[Bond]
+Mode=802.3ad
+MIIMonitorSec=100ms
+LACPTransmitRate=fast
+TransmitHashPolicy=layer3+4
+
+==> /etc/systemd/network/10-pithyx-bond0.network
+# Managed by pithyx. Pithyx writes this file again on every change of the network in Settings.
+
+[Match]
+Name=bond0
+
+[Network]
+DHCP=ipv4
+IPv6AcceptRA=yes
+LinkLocalAddressing=ipv6
+
+[DHCPv4]
+ClientIdentifier=mac
+UseHostname=no
+RouteMetric=1024
+
+[IPv6AcceptRA]
+RouteMetric=1024
+
+[DHCPv6]
+UseHostname=no
+
+==> /etc/systemd/network/10-pithyx-enp1s0.network
+# Managed by pithyx. Pithyx writes this file again on every change of the network in Settings.
+
+[Match]
+Name=enp1s0
+
+[Network]
+Bond=bond0
+
+==> /etc/systemd/network/10-pithyx-enp2s0.network
+# Managed by pithyx. Pithyx writes this file again on every change of the network in Settings.
+
+[Match]
+Name=enp2s0
+
+[Network]
+Bond=bond0
+

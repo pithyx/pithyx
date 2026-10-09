@@ -144,8 +144,8 @@
     },
     "network": {
       "title": "Netzwerk",
-      "description": "Adressen, DHCP oder statisch, Gateway und Nameserver",
-      "keywords": "ip adresse dhcp statisch gateway dns lan ethernet netzwerkkarte schnittstelle"
+      "description": "Netzwerkkarten, Bonds, VLANs, Adressen und Hostname",
+      "keywords": "ip adresse dhcp statisch gateway dns lan ethernet schnittstelle bond lacp vlan mtu hostname"
     },
     "regional": {
       "title": "Regionale Einstellungen",
@@ -245,22 +245,124 @@
     }
   },
   "network": {
-    "intro": "Wie diese Box mit deinem Netzwerk verbunden ist.",
-    "changesLater": "Änderungen folgen",
-    "changesExplain": "Die Adresse zu ändern kommt mit einem Sicherheitstimer: Eine neue Adresse musst du innerhalb von 60 Sekunden bestätigen, sonst kehrt die Box zur alten zurück. So kann dich eine falsche Adresse nicht aussperren. Bis dahin zeigt diese Seite die Einstellungen nur an.",
-    "up": "verbunden",
-    "down": "nicht verbunden",
-    "method": "Adresse",
+    "intro": "So ist diese Box verbunden: ihre Netzwerkkarten, Bonds und VLANs. Jede Änderung wartet 60 Sekunden auf deine Bestätigung und wird ohne sie von selbst zurückgenommen, damit dich eine falsche Adresse nicht aussperrt.",
+    "up": "Verbunden",
+    "down": "Kein Kabel",
+    "off": "Aus",
+    "kinds": {
+      "ethernet": "Netzwerkkarte",
+      "bond": "Bond",
+      "vlan": "VLAN"
+    },
+    "method": "IPv4",
     "methods": {
       "dhcp": "Automatisch (DHCP)",
       "static": "Statisch",
+      "off": "Aus",
       "unknown": "Außerhalb von Pithyx eingestellt"
     },
     "addresses": "IP-Adressen",
     "gateway": "Gateway",
     "dns": "Nameserver",
-    "mac": "Hardware-Adresse",
-    "none": "Keine"
+    "mac": "Hardwareadresse",
+    "mtu": "MTU",
+    "speed": "Geschwindigkeit",
+    "speedValue": "{mbps, number} Mbit/s",
+    "duplex": {
+      "full": "Vollduplex",
+      "half": "Halbduplex"
+    },
+    "bond": "Im Bond",
+    "vlan": "VLAN",
+    "vlanOn": "ID {id} auf {parent}",
+    "none": "Keine",
+    "thisConnection": "Diese Verbindung",
+    "defaultRoute": "Standardroute",
+    "changed": "Geändert, nicht angewendet",
+    "planned": "Neu, nicht angewendet",
+    "notChangeable": "Pithyx ändert diese Schnittstelle auf diesem Rechner nicht.",
+    "edit": "Bearbeiten",
+    "editLabel": "{name} bearbeiten",
+    "remove": "Entfernen",
+    "removeLabel": "Einstellungen von {name} entfernen",
+    "useDhcp": "Zurück zu DHCP",
+    "addBond": "Bond hinzufügen",
+    "addVlan": "VLAN hinzufügen",
+    "bondModes": {
+      "activeBackup": "Active-Backup",
+      "lacp": "LACP (802.3ad)",
+      "balanceAlb": "Adaptiver Lastausgleich"
+    },
+    "bondModeHints": {
+      "activeBackup": "Eine Karte trägt den Verkehr; fällt ihr Kabel aus, übernimmt eine andere. Funktioniert mit jedem Switch.",
+      "lacp": "Alle Karten gemeinsam. Die Switch-Ports müssen eine LACP-Gruppe bilden.",
+      "balanceAlb": "Alle Karten senden und empfangen, ohne Hilfe des Switches."
+    },
+    "draft": {
+      "label": "Noch nicht angewendete Änderungen",
+      "text": "Du hast die Netzwerkeinstellungen geändert. Erst „Anwenden“ übernimmt sie, und zwar alle zusammen.",
+      "apply": "Anwenden …",
+      "discard": "Änderungen verwerfen",
+      "waiting": "Behalte die wartende Änderung oder mach sie zuerst rückgängig."
+    },
+    "pending": {
+      "label": "Netzwerkänderung wartet auf Bestätigung",
+      "title": "Noch {seconds, plural, one {# Sekunde} other {# Sekunden}}, um die neuen Netzwerkeinstellungen zu behalten",
+      "text": "Die neuen Einstellungen sind aktiv. Behalte sie, sonst kehrt die Box von selbst zu den vorherigen zurück.",
+      "fromConsole": "Jemand an der Konsole der Box hat das Netzwerk geändert. Behalte die Änderung hier oder an der Konsole, sonst kehrt die Box von selbst zurück.",
+      "openNew": "Antwortet diese Seite nicht mehr, öffne die Box unter ihrer neuen Adresse und behalte die Änderung dort:",
+      "keep": "Behalten",
+      "undo": "Jetzt rückgängig machen"
+    },
+    "global": {
+      "title": "Hostname und Nameserver",
+      "hostName": "Hostname",
+      "hostNameHint": "Buchstaben, Ziffern und Bindestriche. Windows-Netzwerke sehen die ersten 15 Zeichen.",
+      "dns": "Nameserver",
+      "dnsHint": "Bis zu vier Adressen, durch Leerzeichen getrennt. Leer nimmt die per DHCP verteilten; eingetragene ersetzen sie.",
+      "searchDomains": "Suchdomains",
+      "searchDomainsHint": "Werden für kurze Namen probiert, durch Leerzeichen getrennt.",
+      "defaultRoute": "Standardroute über",
+      "defaultRouteHint": "Haben mehrere Schnittstellen ein Gateway, trägt diese den Verkehr in andere Netze.",
+      "automatic": "Automatisch",
+      "fromDhcp": "Per DHCP",
+      "edit": "Bearbeiten",
+      "notChangeable": "Pithyx ändert Hostname und Nameserver eines Entwicklungsrechners nicht."
+    },
+    "dialog": {
+      "edit": "{name} bearbeiten",
+      "newBond": "Neuer Bond",
+      "newVlan": "Neues VLAN",
+      "cancel": "Abbrechen",
+      "done": "Fertig",
+      "name": "Name",
+      "nameHint": "Bis zu 15 Kleinbuchstaben, Ziffern, Punkte und Bindestriche.",
+      "members": "Netzwerkkarten",
+      "noCards": "Keine freie Netzwerkkarte. Eine Karte mit eigenen Einstellungen muss zuerst zurück zu DHCP.",
+      "thisConnection": "(diese Verbindung)",
+      "mode": "Modus",
+      "primary": "Primäre Karte",
+      "noPrimary": "Keine",
+      "lacpRate": "LACP-Rate",
+      "lacpSlow": "Langsam (alle 30 Sekunden)",
+      "lacpFast": "Schnell (jede Sekunde)",
+      "parent": "Übergeordnet",
+      "vlanId": "VLAN-ID",
+      "vlanIdHint": "1 bis 4094, so wie der Switch-Port markiert.",
+      "enabled": "Schnittstelle an",
+      "mtu": "MTU",
+      "mtuHint": "Leer behält den Standard (1500). Jumbo-Frames brauchen die Zustimmung jedes Geräts auf dem Weg, bis 9000.",
+      "connectionWarning": "Dieser Browser erreicht die Box über diese Schnittstelle. Ein Fehler hier unterbricht die Verbindung, bis die Änderung nach 60 Sekunden zurückgenommen wird."
+    },
+    "apply": {
+      "title": "Netzwerkeinstellungen anwenden",
+      "text": "Die neuen Einstellungen gelten sofort. Danach hast du {seconds} Sekunden, um sie zu behalten; sonst kehrt die Box von selbst zu den vorherigen zurück.",
+      "interfaces": "Geändert wird: {names}.",
+      "hostName": "Der Hostname wird zu {name}.",
+      "connectionWarning": "Dieser Browser erreicht die Box über {name}, und das ändert sich. Die Seite antwortet vielleicht nicht mehr; öffne die neue Adresse oder warte 60 Sekunden, bis die alten Einstellungen zurück sind.",
+      "addresses": "Die Box antwortet dann auch unter:",
+      "confirm": "Anwenden"
+    }
   },
   "regional": {
     "intro": "Sprache, Formate und Uhrzeit der Box. Deine eigene Sprache wählst du weiterhin im Benutzermenü.",

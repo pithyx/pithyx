@@ -172,10 +172,11 @@ install_packages() {
   esac
   echo 'zfs-dkms zfs-dkms/note-incompatible-licenses note true' | debconf-set-selections
   # docker.io, docker-cli and docker-compose are Debian's Docker for app backends (D309); jq and nftables are for
-  # docker-spike.sh. smbclient and sshpass are for the SMB and SFTP integration test. mmdebstrap to dosfstools build the ISO (image/build.sh, D296). The font and libraries after git are for headless Chromium (Playwright); without any font, text renders invisible.
+  # docker-spike.sh. smbclient and sshpass are for the SMB and SFTP integration test. dnsmasq-base serves DHCP and
+  # router advertisements inside the network test's namespace (integration.sh --network, D337); it runs no service. mmdebstrap to dosfstools build the ISO (image/build.sh, D296). The font and libraries after git are for headless Chromium (Playwright); without any font, text renders invisible.
   apt_install "linux-headers-$(uname -r)" "linux-headers-$arch" dkms zfs-dkms zfsutils-linux \
     mdadm btrfs-progs smartmontools samba nfs-kernel-server docker.io docker-cli docker-compose acl openssh-server "${qemu[@]}" \
-    smbclient sshpass shellcheck git jq nftables \
+    smbclient sshpass shellcheck git jq nftables dnsmasq-base \
     mmdebstrap uidmap squashfs-tools xorriso mtools dosfstools \
     fonts-dejavu-core libgbm1 libxkbcommon0 libatk1.0-0t64 libatk-bridge2.0-0t64 libatspi2.0-0t64 \
     libxcomposite1 libxdamage1 libxfixes3 libxrandr2
@@ -276,6 +277,8 @@ write_markers() {
   done < <(lsblk -dn -o NAME,SERIAL,TYPE)
   [[ ${#serials[@]} -gt 0 ]] || die "no disks match the test disk pattern $test_disk_pattern"
   write_if_changed "$PITHYX_ETC_DIR/test-disks" "$(printf '%s\n' "${serials[@]}" | sort)"
+  # The veth ends of integration.sh --network; they exist only while it runs. The management card is never listed (D337).
+  write_if_changed "$PITHYX_ETC_DIR/test-nics" "$(printf '%s\n' ptest0 ptest1 ptest2)"
 }
 
 while [[ $# -gt 0 ]]; do

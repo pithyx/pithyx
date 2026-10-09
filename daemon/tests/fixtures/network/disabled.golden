@@ -1,0 +1,14 @@
+==> /etc/systemd/network/10-pithyx-enp3s0.network
+# Managed by pithyx. Pithyx writes this file again on every change of the network in Settings.
+
+[Match]
+Name=enp3s0
+
+[Link]
+ActivationPolicy=down
+
+[Network]
+DHCP=no
+IPv6AcceptRA=no
+LinkLocalAddressing=no
+

@@ -29,6 +29,7 @@ public sealed class FileServiceChanges
 /// <param name="SshUsers">The users who sign in over SSH with a shell.</param>
 /// <param name="SftpEntries">The shares in the SFTP views.</param>
 /// <param name="SharePaths">Every available dataset share by id, for the recycle bin.</param>
+/// <param name="NetbiosName">The NetBIOS name from the host name; a new host name writes <c>smb.conf</c> again.</param>
 public sealed record FileServicePlan(
     bool SmbEnabled,
     string Workgroup,
@@ -39,7 +40,8 @@ public sealed record FileServicePlan(
     IReadOnlyList<string> SftpUsers,
     IReadOnlyList<string> SshUsers,
     IReadOnlyList<SftpViewEntry> SftpEntries,
-    IReadOnlyDictionary<long, string> SharePaths);
+    IReadOnlyDictionary<long, string> SharePaths,
+    string NetbiosName = "");
 
 /// <summary>
 /// Brings SMB and SFTP in line with SQLite (D287, D288): the groups sshd matches on, the Samba accounts, the bin
@@ -83,7 +85,10 @@ public sealed partial class FileServiceSync(
         var users = await PermissionService.AllUsersAsync(connection, null);
         var shares = (await connection.QueryAsync<(long Id, string Name, string Path, string Dataset, long Smb, long Sftp, long Encrypt)>(
             "SELECT id, name, path, dataset, smb, sftp, smb_encrypt FROM shares WHERE dataset IS NOT NULL ORDER BY id")).ToList();
-        return Plan(settings.Smb == 1, settings.Workgroup, settings.Sftp == 1, settings.Ssh == 1, users, shares, pools.Current, pools.Available);
+        return Plan(settings.Smb == 1, settings.Workgroup, settings.Sftp == 1, settings.Ssh == 1, users, shares, pools.Current, pools.Available) with
+        {
+            NetbiosName = SmbConfig.NetbiosName(Environment.MachineName),
+        };
     }
 
     /// <summary>
@@ -228,7 +233,7 @@ public sealed partial class FileServiceSync(
         {
             await File.WriteAllTextAsync(options.SmbLocalInclude, "# Your own Samba settings. Pithyx includes this file and never writes it.\n", cancellationToken);
         }
-        var content = SmbConfig.Render(plan.Workgroup, plan.SmbShares);
+        var content = SmbConfig.Render(plan.Workgroup, plan.SmbShares, plan.NetbiosName);
         var current = File.Exists(options.SmbConfigPath) ? await File.ReadAllTextAsync(options.SmbConfigPath, cancellationToken) : null;
         var changed = current != content;
         if (changed)

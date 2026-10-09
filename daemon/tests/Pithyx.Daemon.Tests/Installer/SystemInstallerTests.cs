@@ -1,10 +1,16 @@
 using Dapper;
+using Microsoft.AspNetCore.Http.Json;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Pithyx.Daemon.Auth;
 using Pithyx.Daemon.Commands;
 using Pithyx.Daemon.Database;
 using Pithyx.Daemon.Errors;
+using Pithyx.Daemon.FileServices;
+using Pithyx.Daemon.Hosting;
 using Pithyx.Daemon.Installer;
+using Pithyx.Daemon.Network;
+using Pithyx.Daemon.Realtime;
 using Pithyx.Daemon.Storage;
 using Pithyx.Daemon.SystemSettings;
 using Pithyx.Daemon.Tests.Support;
@@ -12,7 +18,7 @@ using Pithyx.Daemon.Tests.Support;
 namespace Pithyx.Daemon.Tests.Installer;
 
 /// <summary>The installation in real mode against scripted commands: the order of the commands and the files on the target.</summary>
-public sealed class SystemInstallerTests : IDisposable
+public sealed class SystemInstallerTests : IAsyncLifetime
 {
     private const long Gb = 1_000_000_000;
 
@@ -22,6 +28,9 @@ public sealed class SystemInstallerTests : IDisposable
     private readonly SystemSettingsService _system;
     private readonly PasswordHasher _hasher = new();
     private readonly SystemInstaller _installer;
+    private readonly SqliteConnectionFactory _live;
+    private readonly NetworkConfirmation _confirmation = new(TimeProvider.System);
+    private readonly NetworkService _network;
 
     public SystemInstallerTests()
     {
@@ -43,20 +52,36 @@ public sealed class SystemInstallerTests : IDisposable
             _ => new CommandResult(0, "", "", TimeSpan.Zero),
         };
         var environment = new InstallerEnvironment(true, true, Path.Combine(_root, "work"), "/run/live/medium/live/filesystem.squashfs", Path.Combine(_root, "console", "installer"), firmware, proc);
-        _system = new SystemSettingsService(_commands, DaemonMode.Real, new SqliteConnectionFactory(Path.Combine(_root, "live.db")), TimeProvider.System);
-        _installer = new SystemInstaller(environment, _commands, _inventory, _system, _hasher, TimeProvider.System, NullLogger<SystemInstaller>.Instance);
+        _live = new SqliteConnectionFactory(Path.Combine(_root, "live.db"));
+        _system = new SystemSettingsService(_commands, DaemonMode.Real, _live, TimeProvider.System);
+        // The live system's network is simulated: three cards, nothing on the host changes.
+        var hub = new TopicHub(new TopicRegistry([NetworkService.Definition(() => _network!)]), TimeProvider.System, Options.Create(new JsonOptions()), NullLogger<TopicHub>.Instance);
+        var host = new NetworkHost(_commands, DaemonMode.Simulated, DeploymentEnvironment.Prod, NullLogger<NetworkHost>.Instance);
+        _network = new NetworkService(_live, host, _confirmation, hub, new FileServiceChanges(), TimeProvider.System, NullLogger<NetworkService>.Instance);
+        _installer = new SystemInstaller(environment, _commands, _inventory, _system, _network, _hasher, TimeProvider.System, NullLogger<SystemInstaller>.Instance);
     }
 
-    public void Dispose()
+    public async ValueTask InitializeAsync() =>
+        await new MigrationRunner(_live, TimeProvider.System, NullLogger<MigrationRunner>.Instance).RunAsync(Migration.Embedded(), CancellationToken.None);
+
+    public ValueTask DisposeAsync()
     {
+        _network.Dispose();
+        _confirmation.Dispose();
         _system.Dispose();
         _hasher.Dispose();
         Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
         Directory.Delete(_root, recursive: true);
+        return ValueTask.CompletedTask;
     }
 
     private static InstallRequest Request(params string[] diskIds) =>
         new("nas", "de", "DE", "Europe/Berlin", ["ptbtime1.ptb.de"], "de", diskIds, "admin", "correct horse battery staple", "Admin", EraseConfirmed: true);
+
+    /// <summary>Step 2: a static address on the second card, DHCP on the first; the host name comes from step 1.</summary>
+    private static NetworkConfig TwoCards() => new(
+        [new InterfaceConfig("enp2s0", InterfaceKind.Ethernet, Ipv4: Ipv4Mode.Static, Ipv4Address: "10.0.0.5/24", Ipv4Gateway: "10.0.0.1", Ipv6: Ipv6Mode.Off)],
+        new GlobalNetworkConfig("ignored", ["10.0.0.1"], []));
 
     private string Target(string path) => Path.Combine(_root, "work", "target", path);
 
@@ -88,15 +113,17 @@ public sealed class SystemInstallerTests : IDisposable
     }
 
     [Fact]
-    public void TheStickAndUnknownDisksAreRefused()
+    public async Task TheStickUnknownDisksAndBadSettingsAreRefused()
     {
-        var exception = Assert.Throws<PithyxException>(() => _installer.Start(Request("serial-S")));
+        var exception = await Assert.ThrowsAsync<PithyxException>(() => _installer.StartAsync(Request("serial-S"), CancellationToken.None));
         Assert.Equal(ErrorCodes.InstallerDiskUnsuitable, exception.Code);
         Assert.Equal("usb", exception.Parameters["reason"]);
-        Assert.Equal(ErrorCodes.InstallerDiskCount, Assert.Throws<PithyxException>(() => _installer.Start(Request())).Code);
-        Assert.Equal(ErrorCodes.InstallerDiskCount, Assert.Throws<PithyxException>(() => _installer.Start(Request("serial-A", "serial-A"))).Code);
-        Assert.Equal(ErrorCodes.InstallerEraseNotConfirmed, Assert.Throws<PithyxException>(() => _installer.Start(Request("serial-A") with { EraseConfirmed = false })).Code);
-        Assert.Equal(ErrorCodes.InstallerHostnameInvalid, Assert.Throws<PithyxException>(() => _installer.Start(Request("serial-A") with { Hostname = "My NAS" })).Code);
+        Assert.Equal(ErrorCodes.InstallerDiskCount, (await Assert.ThrowsAsync<PithyxException>(() => _installer.StartAsync(Request(), CancellationToken.None))).Code);
+        Assert.Equal(ErrorCodes.InstallerDiskCount, (await Assert.ThrowsAsync<PithyxException>(() => _installer.StartAsync(Request("serial-A", "serial-A"), CancellationToken.None))).Code);
+        Assert.Equal(ErrorCodes.InstallerEraseNotConfirmed, (await Assert.ThrowsAsync<PithyxException>(() => _installer.StartAsync(Request("serial-A") with { EraseConfirmed = false }, CancellationToken.None))).Code);
+        Assert.Equal(ErrorCodes.InstallerHostnameInvalid, (await Assert.ThrowsAsync<PithyxException>(() => _installer.StartAsync(Request("serial-A") with { Hostname = "My NAS" }, CancellationToken.None))).Code);
+        var wrongGateway = TwoCards() with { Interfaces = [new InterfaceConfig("enp2s0", InterfaceKind.Ethernet, Ipv4: Ipv4Mode.Static, Ipv4Address: "10.0.0.5/24", Ipv4Gateway: "10.9.9.9")] };
+        Assert.Equal(ErrorCodes.NetworkGatewayInvalid, (await Assert.ThrowsAsync<PithyxException>(() => _installer.StartAsync(Request("serial-A") with { Network = wrongGateway }, CancellationToken.None))).Code);
         Assert.Empty(_commands.Calls);
     }
 
@@ -104,7 +131,7 @@ public sealed class SystemInstallerTests : IDisposable
     public async Task AMirrorInstallPartitionsBothDisksAndBootsFromEither()
     {
         var token = _installer.Claim(null, "192.0.2.10")!;
-        _installer.Start(Request("serial-A", "serial-B"));
+        await _installer.StartAsync(Request("serial-A", "serial-B") with { Network = TwoCards() }, CancellationToken.None);
         var status = await WaitAsync(token);
 
         Assert.Equal(InstallerPhase.Installed, status.Phase);
@@ -134,13 +161,21 @@ public sealed class SystemInstallerTests : IDisposable
         await using var connection = await database.OpenAsync(CancellationToken.None);
         Assert.Equal("admin", await connection.ExecuteScalarAsync<string>("SELECT username FROM users"));
         Assert.Equal(("de", "DE"), await connection.QuerySingleAsync<(string, string)>("SELECT language, region FROM system_region"));
+
+        // The network of step 2: the same files Settings writes, and the settings in the new database.
+        Assert.Contains("Address=10.0.0.5/24", File.ReadAllText(Target("etc/systemd/network/10-pithyx-enp2s0.network")), StringComparison.Ordinal);
+        Assert.Contains("DNS=10.0.0.1", File.ReadAllText(Target("etc/systemd/resolved.conf.d/pithyx.conf")), StringComparison.Ordinal);
+        Assert.False(File.Exists(Target("etc/systemd/network/10-pithyx-enp1s0.network")));
+        var network = NetworkJson.Deserialize<NetworkConfig>(await connection.ExecuteScalarAsync<string>("SELECT config FROM network_config") ?? "");
+        Assert.Equal("nas", network.Global.HostName);
+        Assert.Equal("enp2s0", Assert.Single(network.Interfaces).Name);
     }
 
     [Fact]
     public async Task ASingleDiskIsAMirrorWithOneMember()
     {
         var token = _installer.Claim(null, "192.0.2.10")!;
-        _installer.Start(Request("serial-B"));
+        await _installer.StartAsync(Request("serial-B"), CancellationToken.None);
         Assert.Equal(InstallerPhase.Installed, (await WaitAsync(token)).Phase);
 
         var calls = _commands.Calls.Select(call => $"{call.FileName} {string.Join(' ', call.Arguments)}").ToList();
@@ -155,7 +190,7 @@ public sealed class SystemInstallerTests : IDisposable
         var token = _installer.Claim(null, "192.0.2.10")!;
         var handler = _commands.Handler!;
         _commands.Handler = request => request.FileName == "mkfs.btrfs" ? new CommandResult(1, "", "device busy", TimeSpan.Zero) : handler(request);
-        _installer.Start(Request("serial-B"));
+        await _installer.StartAsync(Request("serial-B"), CancellationToken.None);
         var failed = await WaitAsync(token);
 
         Assert.Equal(InstallerPhase.Failed, failed.Phase);
@@ -165,7 +200,7 @@ public sealed class SystemInstallerTests : IDisposable
         Assert.Throws<PithyxException>(_installer.Reboot);
 
         _commands.Handler = handler;
-        _installer.Start(Request("serial-B"));
+        await _installer.StartAsync(Request("serial-B"), CancellationToken.None);
         Assert.Equal(InstallerPhase.Installed, (await WaitAsync(token)).Phase);
     }
 }

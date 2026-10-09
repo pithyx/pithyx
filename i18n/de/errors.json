@@ -269,6 +269,62 @@
       "invalid": "{field} muss zwischen {min} und {max} liegen."
     }
   },
+  "network": {
+    "address": {
+      "invalid": "Die {field, select, ipv6Address {IPv6-Adresse} other {IPv4-Adresse}} von {name} ist ungültig. Gib sie mit Präfixlänge ein, zum Beispiel {field, select, ipv6Address {2001:db8::10/64} other {192.168.1.10/24}}."
+    },
+    "apply": {
+      "failed": "Die Netzwerkänderung konnte nicht angewendet werden ({command} ist fehlgeschlagen) und wurde zurückgenommen. Details stehen im Protokollcenter."
+    },
+    "bond": {
+      "member_invalid": "{member} kann dem Bond {name} nicht beitreten: {reason, select, not_card {sie ist keine Netzwerkkarte} configured {sie hat eigene Einstellungen; entferne sie zuerst} other_bond {sie gehört zu einem anderen Bond} vlan_parent {sie trägt ein VLAN} other {sie ist nicht verfügbar}}.",
+      "members_missing": "Der Bond {name} braucht mindestens eine Netzwerkkarte.",
+      "primary_invalid": "Die primäre Karte des Bonds {name} muss eine seiner Karten sein."
+    },
+    "change": {
+      "empty": "Das sind schon die Einstellungen der Box.",
+      "not_found": "Diese Änderung wartet nicht mehr auf eine Bestätigung: Sie wurde behalten, rückgängig gemacht oder zurückgenommen.",
+      "pending": "Eine andere Netzwerkänderung wartet auf ihre Bestätigung. Behalte sie oder mach sie zuerst rückgängig."
+    },
+    "config": {
+      "unreachable": "Nach dieser Änderung hätte keine Schnittstelle eine Adresse, und niemand könnte die Box mehr erreichen."
+    },
+    "default_interface": {
+      "invalid": "{name} kann die Standardroute nicht tragen: Die Schnittstelle braucht eigene Einstellungen, muss eingeschaltet sein und ein Gateway bekommen."
+    },
+    "dns": {
+      "invalid": "„{server}“ ist keine IPv4- oder IPv6-Adresse.",
+      "too_many": "Gib höchstens {max} Nameserver ein."
+    },
+    "gateway": {
+      "invalid": "Das {field, select, ipv6Gateway {IPv6} other {IPv4}}-Gateway von {name} muss eine Adresse in seinem Netz sein."
+    },
+    "global": {
+      "not_changeable": "Auf einem Entwicklungsrechner ändert Pithyx weder Hostnamen noch Nameserver oder Standardroute."
+    },
+    "host_name": {
+      "invalid": "Ein Hostname hat 1 bis 63 Buchstaben, Ziffern und Bindestriche und beginnt und endet nicht mit einem Bindestrich."
+    },
+    "interface": {
+      "duplicate": "Der Name {name} ist schon vergeben.",
+      "kind_invalid": "Die Einstellungen passen nicht zu {name}.",
+      "name_invalid": "„{name}“ kann kein Name eines Bonds oder VLANs sein: Nimm 1 bis 15 Kleinbuchstaben, Ziffern, Punkte, Binde- oder Unterstriche, beginnend mit einem Buchstaben.",
+      "not_changeable": "Pithyx darf {name} auf diesem Rechner nicht ändern.",
+      "unknown": "Diese Box hat keine Netzwerkkarte {name}."
+    },
+    "mtu": {
+      "invalid": "Die MTU von {name} muss zwischen {min} und {max} Bytes liegen."
+    },
+    "search_domain": {
+      "invalid": "„{domain}“ ist kein gültiger Domainname.",
+      "too_many": "Gib höchstens {max} Suchdomains ein."
+    },
+    "vlan": {
+      "duplicate": "{parent} hat schon ein VLAN mit der ID {id}.",
+      "id_invalid": "Die VLAN-ID von {name} muss zwischen 1 und 4094 liegen.",
+      "parent_invalid": "{parent} kann das VLAN {name} nicht tragen: Wähle eine Netzwerkkarte oder einen Bond."
+    }
+  },
   "notifications": {
     "message": {
       "invalid": "Die Benachrichtigung wurde nicht gesendet: {field, select, app {die App-ID ist ungültig} title {der Titel ist leer oder länger als {maxLength} Zeichen} other {der Text ist länger als {maxLength} Zeichen}}."

@@ -45,7 +45,15 @@ public static class SmbConfig
         && workgroup.All(c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_' or '.')
         && char.IsAsciiLetterOrDigit(workgroup[0]);
 
-    public static string Render(string workgroup, IReadOnlyList<SmbShare> shares)
+    /// <summary>The NetBIOS name Samba announces: the host name in upper case, at most 15 characters (D337).</summary>
+    public static string NetbiosName(string hostName)
+    {
+        ArgumentNullException.ThrowIfNull(hostName);
+        var name = hostName.Split('.')[0].ToUpperInvariant();
+        return name.Length > MaxWorkgroupLength ? name[..MaxWorkgroupLength].TrimEnd('-') : name;
+    }
+
+    public static string Render(string workgroup, IReadOnlyList<SmbShare> shares, string? netbiosName = null)
     {
         ArgumentNullException.ThrowIfNull(shares);
         if (!IsValidWorkgroup(workgroup))
@@ -58,6 +66,10 @@ public static class SmbConfig
         text.AppendLine("[global]");
         Line(text, "server role", "standalone server");
         Line(text, "workgroup", workgroup);
+        if (!string.IsNullOrEmpty(netbiosName))
+        {
+            Line(text, "netbios name", netbiosName);
+        }
         Line(text, "server string", "Pithyx");
         Line(text, "server min protocol", "SMB3");
         Line(text, "server signing", "mandatory");

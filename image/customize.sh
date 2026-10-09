@@ -16,7 +16,7 @@ cp -r --no-preserve=ownership "$staged/rootfs/." /
 mkdir -p /usr/lib/pithyx
 cp -r --no-preserve=ownership "$staged/daemon" /usr/lib/pithyx/daemon
 cp -r --no-preserve=ownership "$staged/desktop" /usr/lib/pithyx/desktop
-chmod 0755 /usr/lib/pithyx/daemon/pithyxd /usr/lib/pithyx/issue.sh
+chmod 0755 /usr/lib/pithyx/daemon/pithyxd /usr/lib/pithyx/issue.sh /usr/lib/pithyx/console.sh
 printf 'PITHYX_VERSION=%s\nPITHYX_COMMIT=%s\n' "$version" "$commit" >/usr/lib/pithyx/release
 rm -rf "$staged"
 
@@ -40,7 +40,9 @@ systemctl mask samba-ad-dc.service
 # Docker runs only while a backend app is installed and its pool is mounted; the daemon starts and stops it (D309).
 systemctl disable docker.socket docker.service containerd.service 2>/dev/null || true
 systemctl enable systemd-networkd.service systemd-resolved.service systemd-timesyncd.service \
-  pithyx.service pithyx-issue.service
+  pithyx.service pithyx-issue.service pithyx-console.service
+# tty1 belongs to the console menu (D337); the login prompt is on tty2 and further, where logind starts it on Alt+F2.
+systemctl mask getty@tty1.service autovt@tty1.service
 
 # Generated per machine: the live system creates them at boot, the installer for the installed system.
 rm -f /etc/ssh/ssh_host_* /var/lib/dbus/machine-id

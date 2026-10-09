@@ -7,7 +7,6 @@ import { applySystemRegion } from '../../i18n';
 import type { QueryClient } from '@tanstack/react-query';
 
 export type SystemOverview = components['schemas']['SystemOverview'];
-export type NetworkInterfaceInfo = components['schemas']['NetworkInterfaceInfo'];
 export type TimeSettings = components['schemas']['TimeSettings'];
 export type TimeSettingsRequest = components['schemas']['TimeSettingsRequest'];
 export type SystemRegion = components['schemas']['SystemRegion'];
@@ -17,10 +16,6 @@ export type FileServiceSettingsRequest = components['schemas']['FileServiceSetti
 /** System settings for administrators, outside the public SDK; the daemon checks the right on every request. */
 interface SystemMethods {
   'internal.admin.system.overview': { params: Record<string, never>; result: SystemOverview };
-  'internal.admin.system.network': {
-    params: Record<string, never>;
-    result: NetworkInterfaceInfo[];
-  };
   'internal.admin.system.time': { params: Record<string, never>; result: TimeSettings };
   'internal.admin.system.setTime': { params: TimeSettingsRequest; result: TimeSettings };
   'internal.admin.system.region': { params: Record<string, never>; result: SystemRegion };
@@ -54,7 +49,7 @@ async function daemon<T>(call: () => Promise<T>): Promise<T> {
 }
 
 /**
- * The host side of the Info Center, Network and Regional settings pages of the Settings app. A saved region applies
+ * The host side of the Info Center and Regional settings pages of the Settings app. A saved region applies
  * to this desktop at once; other desktops pick it up on their next load.
  */
 export function systemHost(queryClient: QueryClient): HostExtensions {
@@ -62,10 +57,6 @@ export function systemHost(queryClient: QueryClient): HostExtensions {
     'internal.admin.system.overview': {
       validate: isRecord,
       handle: () => daemon(async () => unwrap(await api.GET('/api/system/overview'))),
-    },
-    'internal.admin.system.network': {
-      validate: isRecord,
-      handle: () => daemon(async () => unwrap(await api.GET('/api/system/network'))),
     },
     'internal.admin.system.time': {
       validate: isRecord,

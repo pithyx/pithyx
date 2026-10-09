@@ -9,13 +9,14 @@ public enum DeploymentKind
 /// <summary>
 /// What kind of machine this is, from <c>/etc/pithyx/environment</c> (<c>dev</c> or <c>prod</c>; missing or unknown
 /// means <c>prod</c>), and on a dev machine which disks tests may write to (<c>/etc/pithyx/test-disks</c>, one serial per
-/// line).
+/// line), and which network cards Pithyx may change there (<c>/etc/pithyx/test-nics</c>, one name per line; none without
+/// the file, D292, D337).
 /// </summary>
-public sealed record DeploymentEnvironment(DeploymentKind Kind, IReadOnlySet<string> TestDiskSerials)
+public sealed record DeploymentEnvironment(DeploymentKind Kind, IReadOnlySet<string> TestDiskSerials, IReadOnlySet<string> TestNics)
 {
     public const string DefaultDirectory = "/etc/pithyx";
 
-    public static DeploymentEnvironment Prod { get; } = new(DeploymentKind.Prod, new HashSet<string>());
+    public static DeploymentEnvironment Prod { get; } = new(DeploymentKind.Prod, new HashSet<string>(), new HashSet<string>());
 
     public static DeploymentEnvironment Load(string directory)
     {
@@ -23,7 +24,10 @@ public sealed record DeploymentEnvironment(DeploymentKind Kind, IReadOnlySet<str
         var serials = kind == DeploymentKind.Dev
             ? ReadLines(Path.Combine(directory, "test-disks")).Where(line => !line.StartsWith('#')).ToHashSet(StringComparer.Ordinal)
             : [];
-        return new DeploymentEnvironment(kind, serials);
+        var nics = kind == DeploymentKind.Dev
+            ? ReadLines(Path.Combine(directory, "test-nics")).Where(line => !line.StartsWith('#')).ToHashSet(StringComparer.Ordinal)
+            : [];
+        return new DeploymentEnvironment(kind, serials, nics);
     }
 
     private static List<string> ReadLines(string path)

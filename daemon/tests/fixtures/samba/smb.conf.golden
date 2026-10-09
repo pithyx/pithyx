@@ -3,6 +3,7 @@
 [global]
    server role = standalone server
    workgroup = WORKGROUP
+   netbios name = NAS-IN-THE-BASE
    server string = Pithyx
    server min protocol = SMB3
    server signing = mandatory

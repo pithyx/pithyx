@@ -91,7 +91,7 @@ export const coreApps: readonly AppEntry[] = [
       // Settings runs plans with the Storage app's plan dialogs, and their texts; Users is one of its pages.
       Promise.all([
         import('./settings/SettingsWindow'),
-        loadTranslations('settings', 'storage', 'users'),
+        loadTranslations('settings', 'storage', 'users', 'network'),
       ]).then(([{ SettingsWindow }]) => ({ default: SettingsWindow })),
     ),
   },

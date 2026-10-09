@@ -269,6 +269,62 @@
       "invalid": "{field} must be between {min} and {max}."
     }
   },
+  "network": {
+    "address": {
+      "invalid": "The {field, select, ipv6Address {IPv6} other {IPv4}} address of {name} is not valid. Enter it with its prefix length, for example {field, select, ipv6Address {2001:db8::10/64} other {192.168.1.10/24}}."
+    },
+    "apply": {
+      "failed": "The network change could not be applied ({command} failed) and was rolled back. The Log Center has the details."
+    },
+    "bond": {
+      "member_invalid": "{member} cannot join the bond {name}: {reason, select, not_card {it is not a network card} configured {it has settings of its own; remove them first} other_bond {it is in another bond} vlan_parent {it carries a VLAN} other {it is not available}}.",
+      "members_missing": "The bond {name} needs at least one network card.",
+      "primary_invalid": "The primary card of the bond {name} must be one of its cards."
+    },
+    "change": {
+      "empty": "These are the settings the box has already.",
+      "not_found": "This change no longer waits for a confirmation: it was kept, undone or rolled back.",
+      "pending": "Another network change waits for its confirmation. Keep or undo it first."
+    },
+    "config": {
+      "unreachable": "After this change no interface would have an address, so nobody could reach the box."
+    },
+    "default_interface": {
+      "invalid": "{name} cannot carry the default route: it needs its own settings, must be on and must get a gateway."
+    },
+    "dns": {
+      "invalid": "“{server}” is not an IPv4 or IPv6 address.",
+      "too_many": "Enter at most {max} name servers."
+    },
+    "gateway": {
+      "invalid": "The {field, select, ipv6Gateway {IPv6} other {IPv4}} gateway of {name} must be an address in its network."
+    },
+    "global": {
+      "not_changeable": "Pithyx does not change the host name, name servers or default route of a development machine."
+    },
+    "host_name": {
+      "invalid": "A host name has 1 to 63 letters, digits and hyphens and does not start or end with a hyphen."
+    },
+    "interface": {
+      "duplicate": "The name {name} is already taken.",
+      "kind_invalid": "The settings do not fit {name}.",
+      "name_invalid": "“{name}” cannot be the name of a bond or VLAN: use 1 to 15 lower-case letters, digits, dots, hyphens or underscores, starting with a letter.",
+      "not_changeable": "Pithyx may not change {name} on this machine.",
+      "unknown": "This box has no network card {name}."
+    },
+    "mtu": {
+      "invalid": "The MTU of {name} must be between {min} and {max} bytes."
+    },
+    "search_domain": {
+      "invalid": "“{domain}” is not a valid domain name.",
+      "too_many": "Enter at most {max} search domains."
+    },
+    "vlan": {
+      "duplicate": "{parent} has a VLAN with the id {id} already.",
+      "id_invalid": "The VLAN id of {name} must be between 1 and 4094.",
+      "parent_invalid": "{parent} cannot carry the VLAN {name}: choose a network card or a bond."
+    }
+  },
   "notifications": {
     "message": {
       "invalid": "The notification was not sent: its {field, select, app {app id is not valid} title {title is empty or longer than {maxLength} characters} other {text is longer than {maxLength} characters}}."

@@ -16,6 +16,7 @@ using Pithyx.Daemon.Jobs;
 using Pithyx.Daemon.Layouts;
 using Pithyx.Daemon.Logs;
 using Pithyx.Daemon.Monitoring;
+using Pithyx.Daemon.Network;
 using Pithyx.Daemon.Notifications;
 using Pithyx.Daemon.Permissions;
 using Pithyx.Daemon.Realtime;
@@ -107,6 +108,7 @@ builder.Services.AddSingleton<TopicRegistry>();
 builder.Services.AddSingleton<TopicHub>();
 builder.Services.AddPithyxMonitoring();
 builder.Services.AddPithyxSystemSettings(mode);
+builder.Services.AddPithyxNetwork(mode);
 builder.Services.AddSingleton(services => new DaemonRestart(services.GetRequiredService<IHostApplicationLifetime>(), mode, services.GetRequiredService<TimeProvider>()));
 builder.Services.AddPithyxInstaller(installer);
 builder.Services.AddPithyxBackup(mode == DaemonMode.Real
@@ -260,6 +262,7 @@ if (!installer.Active)
     api.MapStorageHealthEndpoints();
     api.MapLogEndpoints();
     api.MapSystemSettingsEndpoints();
+    api.MapNetworkEndpoints();
     api.MapPowerEndpoint();
     api.MapBackupEndpoints();
     api.MapAppEndpoints();
