@@ -259,7 +259,7 @@ function CatalogRow({
   });
   const name = catalogName(catalog, i18n.language);
   return (
-    <li className={styles.catalog} aria-labelledby={`${ids}-name`}>
+    <li className={styles.catalog}>
       <div className={styles.pageHeader}>
         <div className={styles.headerText}>
           <span id={`${ids}-name`} className={styles.tileTitle}>

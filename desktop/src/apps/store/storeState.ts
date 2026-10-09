@@ -20,8 +20,9 @@ export function useStoreState(app: PithyxApp) {
     () =>
       onStore(app, STORE_CHANGED, (data) => {
         queryClient.setQueryData<StoreState>(storeKey, data as StoreState);
-        // Fetched catalogs change what the tabs list.
+        // Fetched catalogs and installed apps change what the tabs and app pages show.
         void queryClient.invalidateQueries({ queryKey: ['store', 'search'] });
+        void queryClient.invalidateQueries({ queryKey: ['store', 'details'] });
       }),
     [app, queryClient],
   );
