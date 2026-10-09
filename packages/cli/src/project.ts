@@ -3,7 +3,7 @@ import { existsSync, lstatSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { AppManifest } from '@pithyx/sdk';
-import { validateCompose } from './compose';
+import { devComposePath, validateCompose } from './compose';
 import { error, type Finding } from './findings';
 import { validateIcon } from './icon';
 import { checkLayout, ICON_FILE, MANIFEST_FILE } from './layout';
@@ -41,6 +41,11 @@ export interface Project {
 export interface ProjectOptions {
   /** The built frontend, relative to the project root; default `dist`. */
   frontend?: string | undefined;
+  /**
+   * A backend that has only its source form `compose.dev.yaml` yet is a warning instead of an error: `vite build` of
+   * an app in a catalog runs before the catalog builds the images and writes `compose.yaml` (D330).
+   */
+  allowUnbuiltBackend?: boolean | undefined;
 }
 
 /** The regular files below a folder; hidden ones go to `skipped`, links and special files to `refused`. */
@@ -161,7 +166,16 @@ export function readProject(root: string, options: ProjectOptions = {}): Project
     });
   }
 
-  const compose = manifest?.backend?.compose;
+  const declared = manifest?.backend?.compose;
+  const unbuilt =
+    options.allowUnbuiltBackend === true &&
+    declared !== undefined &&
+    !existsSync(at(declared)) &&
+    existsSync(at(devComposePath(declared)));
+  if (unbuilt) {
+    findings.push({ level: 'warning', code: 'cli.backend.unbuilt', params: { path: declared } });
+  }
+  const compose = unbuilt ? undefined : declared;
   if (compose !== undefined) {
     for (const path of [compose, LOCK_FILE]) {
       if (existsSync(at(path)) && lstatSync(at(path)).isFile()) {

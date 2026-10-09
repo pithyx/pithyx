@@ -314,7 +314,9 @@ function addPackage(
   const screenshots = filesBelow(screenshotFolder)
     .filter((name) => !name.includes('/'))
     .map((name) => ({ name, bytes: readFileSync(join(screenshotFolder, name)) }));
-  mkdirSync(join(folder, rules.screenshots.folder), { recursive: true });
+  mkdirSync(screenshots.length > 0 ? join(folder, rules.screenshots.folder) : folder, {
+    recursive: true,
+  });
   writeFileSync(join(folder, packageName(manifest)), packageBytes);
   writeFileSync(join(folder, 'pithyx.json'), manifestBytes);
   writeFileSync(join(folder, 'icon.svg'), icon);

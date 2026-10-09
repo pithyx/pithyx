@@ -234,3 +234,29 @@ describe('pithyx validate', () => {
     });
   });
 });
+
+describe('a backend in its source form', () => {
+  it('is a warning for vite build and an error for pack', () => {
+    const root = copyProject('unbuilt');
+    const manifest = JSON.parse(readFileSync(join(root, 'pithyx.json'), 'utf8')) as Record<
+      string,
+      unknown
+    >;
+    manifest.backend = {
+      compose: 'backend/compose.yaml',
+      endpoints: { api: { service: 'server', port: 8080 } },
+      lifecycle: 'always',
+    };
+    writeFileSync(join(root, 'pithyx.json'), JSON.stringify(manifest));
+    mkdirSync(join(root, 'backend'), { recursive: true });
+    writeFileSync(
+      join(root, 'backend', 'compose.dev.yaml'),
+      'services:\n  server:\n    build: ./server\n',
+    );
+    const relaxed = readProject(root, { frontend: 'build', allowUnbuiltBackend: true });
+    expect(relaxed.findings.filter((finding) => finding.level === 'error')).toEqual([]);
+    expect(relaxed.findings.map((finding) => finding.code)).toContain('cli.backend.unbuilt');
+    const strict = readProject(root, { frontend: 'build' });
+    expect(strict.findings.some((finding) => finding.level === 'error')).toBe(true);
+  });
+});
