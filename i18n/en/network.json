@@ -1,0 +1,21 @@
+{
+  "ip": {
+    "ipv4": "IPv4",
+    "ipv6": "IPv6",
+    "mode": "Address",
+    "ipv4Modes": {
+      "dhcp": "Automatic (DHCP)",
+      "static": "Static",
+      "off": "Off"
+    },
+    "ipv6Modes": {
+      "auto": "Automatic (router and DHCPv6)",
+      "static": "Static",
+      "off": "Off"
+    },
+    "address": "Address with prefix length",
+    "gateway": "Gateway (optional)",
+    "ipv4AddressHint": "For example 192.168.1.10/24",
+    "ipv6AddressHint": "For example 2001:db8::10/64"
+  }
+}

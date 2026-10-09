@@ -1,0 +1,55 @@
+==> /etc/systemd/network/10-pithyx-enp1s0.7.netdev
+# Managed by pithyx. Pithyx writes this file again on every change of the network in Settings.
+
+[NetDev]
+Name=enp1s0.7
+Kind=vlan
+
+[VLAN]
+Id=7
+
+==> /etc/systemd/network/10-pithyx-enp1s0.7.network
+# Managed by pithyx. Pithyx writes this file again on every change of the network in Settings.
+
+[Match]
+Name=enp1s0.7
+
+[Network]
+DHCP=ipv4
+IPv6AcceptRA=yes
+LinkLocalAddressing=ipv6
+
+[DHCPv4]
+ClientIdentifier=mac
+UseHostname=no
+RouteMetric=1024
+
+[IPv6AcceptRA]
+RouteMetric=1024
+
+[DHCPv6]
+UseHostname=no
+
+==> /etc/systemd/network/10-pithyx-enp1s0.network
+# Managed by pithyx. Pithyx writes this file again on every change of the network in Settings.
+
+[Match]
+Name=enp1s0
+
+[Network]
+DHCP=ipv4
+IPv6AcceptRA=yes
+LinkLocalAddressing=ipv6
+VLAN=enp1s0.7
+
+[DHCPv4]
+ClientIdentifier=mac
+UseHostname=no
+RouteMetric=1024
+
+[IPv6AcceptRA]
+RouteMetric=1024
+
+[DHCPv6]
+UseHostname=no
+

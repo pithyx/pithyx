@@ -1,0 +1,63 @@
+==> /etc/systemd/network/10-pithyx-bond0.netdev
+# Managed by pithyx. Pithyx writes this file again on every change of the network in Settings.
+
+[NetDev]
+Name=bond0
+Kind=bond
+
+[Bond]
+Mode=active-backup
+MIIMonitorSec=100ms
+
+==> /etc/systemd/network/10-pithyx-bond0.network
+# Managed by pithyx. Pithyx writes this file again on every change of the network in Settings.
+
+[Match]
+Name=bond0
+
+[Network]
+DHCP=no
+IPv6AcceptRA=no
+LinkLocalAddressing=no
+VLAN=vlan42
+
+==> /etc/systemd/network/10-pithyx-enp1s0.network
+# Managed by pithyx. Pithyx writes this file again on every change of the network in Settings.
+
+[Match]
+Name=enp1s0
+
+[Network]
+Bond=bond0
+
+==> /etc/systemd/network/10-pithyx-enp2s0.network
+# Managed by pithyx. Pithyx writes this file again on every change of the network in Settings.
+
+[Match]
+Name=enp2s0
+
+[Network]
+Bond=bond0
+
+==> /etc/systemd/network/10-pithyx-vlan42.netdev
+# Managed by pithyx. Pithyx writes this file again on every change of the network in Settings.
+
+[NetDev]
+Name=vlan42
+Kind=vlan
+
+[VLAN]
+Id=42
+
+==> /etc/systemd/network/10-pithyx-vlan42.network
+# Managed by pithyx. Pithyx writes this file again on every change of the network in Settings.
+
+[Match]
+Name=vlan42
+
+[Network]
+DHCP=no
+IPv6AcceptRA=no
+LinkLocalAddressing=no
+Address=10.42.0.10/24
+

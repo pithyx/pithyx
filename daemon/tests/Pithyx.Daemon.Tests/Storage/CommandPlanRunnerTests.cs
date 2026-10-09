@@ -33,7 +33,7 @@ public sealed class CommandPlanRunnerTests : IDisposable
     {
         File.WriteAllText(Path.Combine(_proc, "mountinfo"), Proc("mountinfo"));
         File.WriteAllText(Path.Combine(_proc, "swaps"), Proc("swaps"));
-        var environment = new DeploymentEnvironment(DeploymentKind.Dev, new HashSet<string> { "VYXTEST02", "VYXTEST03" });
+        var environment = new DeploymentEnvironment(DeploymentKind.Dev, new HashSet<string> { "VYXTEST02", "VYXTEST03" }, new HashSet<string>());
         _facts = new StorageFacts(_disks, _pools, environment, new SystemFiles(Path.Combine(_proc, "mountinfo"), Path.Combine(_proc, "swaps")));
         var hub = new TopicHub(new TopicRegistry([_disks.Definition(), _pools.Definition()]), _time, Options.Create(new JsonOptions()), NullLogger<TopicHub>.Instance);
         _state = new SystemStateService(_commands, _disks, _pools, new ZfsBackend(_commands), new DiskProbe(_commands), _facts, hub, _time, NullLogger<SystemStateService>.Instance);

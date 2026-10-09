@@ -39,7 +39,7 @@ public sealed class PoolOperationPlannerTests : IDisposable
     {
         File.WriteAllText(Path.Combine(_proc, "mountinfo"), Proc("mountinfo"));
         File.WriteAllText(Path.Combine(_proc, "swaps"), Proc("swaps"));
-        var environment = new DeploymentEnvironment(DeploymentKind.Dev, new HashSet<string> { "VYXTEST01", "VYXTEST02", "VYXTEST03", "VYXTEST04" });
+        var environment = new DeploymentEnvironment(DeploymentKind.Dev, new HashSet<string> { "VYXTEST01", "VYXTEST02", "VYXTEST03", "VYXTEST04" }, new HashSet<string>());
         _facts = new StorageFacts(_disks, _pools, environment, new SystemFiles(Path.Combine(_proc, "mountinfo"), Path.Combine(_proc, "swaps")));
         var hub = new TopicHub(new TopicRegistry([_disks.Definition(), _pools.Definition()]), _time, Options.Create(new JsonOptions()), NullLogger<TopicHub>.Instance);
         _state = new SystemStateService(_commands, _disks, _pools, new ZfsBackend(_commands), new DiskProbe(_commands), _facts, hub, _time, NullLogger<SystemStateService>.Instance);
@@ -161,7 +161,7 @@ public sealed class PoolOperationPlannerTests : IDisposable
     [Fact]
     public async Task AReadOnlyImportOnADiskThatIsNoTestDiskHasNoPlan()
     {
-        var environment = new DeploymentEnvironment(DeploymentKind.Dev, new HashSet<string> { "VYXTEST02" });
+        var environment = new DeploymentEnvironment(DeploymentKind.Dev, new HashSet<string> { "VYXTEST02" }, new HashSet<string>());
         var facts = new StorageFacts(_disks, _pools, environment, new SystemFiles(Path.Combine(_proc, "mountinfo"), Path.Combine(_proc, "swaps")));
         var planner = new StoragePlanner(_state, facts, _pools, new PoolImportScanner(_commands, _state, facts, _pools), Datasets(), _commands, _time);
 

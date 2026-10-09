@@ -39,11 +39,22 @@
   },
   "network": {
     "title": "Netzwerk",
-    "intro": "Pithyx bezieht seine Adresse per DHCP auf jeder verbundenen Netzwerkkarte. Eine feste Adresse kannst du nach der Installation unter Einstellungen > Netzwerk festlegen.",
+    "intro": "Pithyx bekommt seine Adresse per DHCP auf jeder verbundenen Netzwerkkarte. Eine Karte kann stattdessen eine feste Adresse haben; Bonds, VLANs und mehr gibt es nach der Installation unter Einstellungen > Netzwerk.",
     "connected": "Verbunden",
     "disconnected": "Kein Kabel",
     "noAddress": "Noch keine Adresse",
-    "none": "Es wurde keine Netzwerkkarte gefunden."
+    "none": "Es wurde keine Netzwerkkarte gefunden.",
+    "configure": "Einstellungen von {name}",
+    "fixed": "Feste Adresse",
+    "test": "Verbindung testen",
+    "testing": "Test läuft … Die Seite kann für ein paar Sekunden die Verbindung verlieren.",
+    "testOk": "{name} funktioniert: {addresses}.",
+    "testGateway": "Das Gateway {gateway} antwortet.",
+    "testNoGateway": "Das Gateway {gateway} antwortet nicht.",
+    "testNoAddress": "{name} hat keine Adresse bekommen.",
+    "dns": "Nameserver (optional)",
+    "dnsHint": "Durch Leerzeichen getrennt. Leer nimmt die per DHCP verteilten.",
+    "after": "Nach der Installation antwortet die Box unter {address}."
   },
   "disks": {
     "title": "Systemfestplatte",

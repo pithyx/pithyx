@@ -39,11 +39,22 @@
   },
   "network": {
     "title": "Network",
-    "intro": "Pithyx gets its address by DHCP on every connected network card. A fixed address can be set in Settings > Network after the installation.",
+    "intro": "Pithyx gets its address by DHCP on every connected network card. A card can have a fixed address instead; Settings > Network has bonds, VLANs and more after the installation.",
     "connected": "Connected",
     "disconnected": "No cable",
     "noAddress": "No address yet",
-    "none": "No network card was found."
+    "none": "No network card was found.",
+    "configure": "Settings of {name}",
+    "fixed": "Fixed address",
+    "test": "Test connection",
+    "testing": "Testing… The page may lose its connection for a few seconds.",
+    "testOk": "{name} works: {addresses}.",
+    "testGateway": "The gateway {gateway} answers.",
+    "testNoGateway": "The gateway {gateway} does not answer.",
+    "testNoAddress": "{name} got no address.",
+    "dns": "Name servers (optional)",
+    "dnsHint": "Separated by spaces. Empty uses those DHCP announces.",
+    "after": "After the installation the box answers at {address}."
   },
   "disks": {
     "title": "System disk",

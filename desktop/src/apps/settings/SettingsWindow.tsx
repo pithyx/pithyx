@@ -4,6 +4,7 @@ import type { AppProps } from '../registry';
 import { CoreSdkApp } from '../sdk/CoreSdkApp';
 import { backupHost } from '../sdk/backup';
 import { adminStorageHost } from '../sdk/internal';
+import { networkHost } from '../sdk/network';
 import { systemHost } from '../sdk/system';
 import { usersHost } from '../sdk/users';
 import { SettingsApp } from './SettingsApp';
@@ -18,14 +19,19 @@ export function SettingsWindow({ windowId }: AppProps) {
       permissions={['notifications']}
       internal={(emit) => {
         const storage = adminStorageHost(emit);
+        const network = networkHost(emit);
         return {
           extensions: {
             ...storage.extensions,
+            ...network.extensions,
             ...usersHost(),
             ...systemHost(queryClient),
             ...backupHost(),
           },
-          close: storage.close,
+          close: () => {
+            storage.close();
+            network.close();
+          },
         };
       }}
       Component={SettingsApp}

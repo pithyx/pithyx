@@ -69,6 +69,8 @@ export const reducers: { [K in TopicName]: Reducer<K> } = {
   // Alerts and SMART reports are few too; every event is the whole state as this user sees it.
   'storage/alerts': (_, event) => event,
   'system/info': (_, event) => event,
+  // Every event is the whole state of the network.
+  'system/network': (_, event) => event,
   // Only a revision: listeners read the share list again when it changes.
   'shares/list': (_, event) => event,
   // Thumbnail events are handed to the Files app as they come; the store only says the topic is followed.

@@ -1,0 +1,16 @@
+==> /etc/systemd/network/10-pithyx-enp1s0.network
+# Managed by pithyx. Pithyx writes this file again on every change of the network in Settings.
+
+[Match]
+Name=enp1s0
+
+[Network]
+DHCP=no
+IPv6AcceptRA=no
+LinkLocalAddressing=ipv6
+Address=2001:db8:1::5/64
+
+[Route]
+Gateway=2001:db8:1::1
+Metric=1024
+

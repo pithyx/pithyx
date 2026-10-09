@@ -49,7 +49,7 @@ public sealed class SystemSettingsApiTests : IAsyncLifetime
         Assert.True(overview.GetProperty("cpuCores").GetInt32() >= 1);
         Assert.True(overview.GetProperty("memoryTotalBytes").GetInt64() > 0);
         Assert.False(string.IsNullOrEmpty(overview.GetProperty("kernel").GetString()));
-        Assert.Equal(JsonValueKind.Array, (await GetAsync("/api/system/network")).ValueKind);
+        Assert.Equal(JsonValueKind.Object, (await GetAsync("/api/system/network")).ValueKind);
     }
 
     [Fact]

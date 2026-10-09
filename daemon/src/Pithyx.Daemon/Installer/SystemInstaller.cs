@@ -61,6 +61,7 @@ public sealed partial class SystemInstaller(
     ICommandRunner commands,
     DiskInventory inventory,
     SystemSettingsService system,
+    Network.NetworkService network,
     PasswordHasher hasher,
     TimeProvider time,
     ILogger<SystemInstaller> logger)
@@ -136,11 +137,14 @@ public sealed partial class SystemInstaller(
         }
     }
 
-    public InstallerOptions Options() =>
-        new(Disks(), system.Network(), system.Time().TimeZones, KeyboardLayouts, InstallerFacts.MinDiskBytes);
+    public async Task<InstallerOptions> OptionsAsync(CancellationToken cancellationToken)
+    {
+        var state = await network.StateAsync(null, cancellationToken);
+        return new(Disks(), state.Links, state.Config, system.Time().TimeZones, KeyboardLayouts, InstallerFacts.MinDiskBytes);
+    }
 
     /// <summary>Checks the request and starts the installation in the background; <see cref="Status"/> follows it.</summary>
-    public void Start(InstallRequest request)
+    public async Task StartAsync(InstallRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
         // The endpoints exist only on the live system; this keeps any other caller off the disks as well.
@@ -149,6 +153,7 @@ public sealed partial class SystemInstaller(
             throw new InvalidOperationException("The installer only runs on the live system.");
         }
         var disks = Validate(request);
+        var networkConfig = await NetworkConfigAsync(request, cancellationToken);
         lock (_lock)
         {
             if (_phase is not (InstallerPhase.Ready or InstallerPhase.Failed))
@@ -160,7 +165,20 @@ public sealed partial class SystemInstaller(
             _errorCode = null;
             _errorParams = new Dictionary<string, object?>();
         }
-        _ = Task.Run(() => InstallAsync(request, disks));
+        _ = Task.Run(() => InstallAsync(request, disks, networkConfig), CancellationToken.None);
+    }
+
+    /// <summary>
+    /// The network of the installed system: the settings of step 2, checked by the same rules as in Settings against
+    /// the cards of this box (they keep their names after the installation), with the host name of step 1.
+    /// </summary>
+    private async Task<Network.NetworkConfig> NetworkConfigAsync(InstallRequest request, CancellationToken cancellationToken)
+    {
+        var state = await network.StateAsync(null, cancellationToken);
+        var requested = request.Network ?? new Network.NetworkConfig([], new Network.GlobalNetworkConfig(request.Hostname, [], []));
+        requested = requested with { Global = (requested.Global ?? new Network.GlobalNetworkConfig(request.Hostname, [], [])) with { HostName = request.Hostname } };
+        var current = state.Config with { Global = state.Config.Global with { HostName = request.Hostname } };
+        return Network.NetworkValidator.Validate(requested, state.Links, current, Network.NetworkPolicy.Everything);
     }
 
     /// <summary>Restarts the box into the installed system a moment after the answer went out.</summary>
@@ -263,7 +281,7 @@ public sealed partial class SystemInstaller(
         return chosen;
     }
 
-    private async Task InstallAsync(InstallRequest request, List<Disk> disks)
+    private async Task InstallAsync(InstallRequest request, List<Disk> disks, Network.NetworkConfig networkConfig)
     {
         var cancellationToken = CancellationToken.None;
         try
@@ -274,7 +292,7 @@ public sealed partial class SystemInstaller(
             string recoveryKey;
             if (environment.Apply)
             {
-                recoveryKey = await InstallOntoDisksAsync(request, disks, installId, cancellationToken);
+                recoveryKey = await InstallOntoDisksAsync(request, disks, networkConfig, installId, cancellationToken);
             }
             else
             {
@@ -283,7 +301,7 @@ public sealed partial class SystemInstaller(
                     SetStep(index);
                     await Task.Delay(TimeSpan.FromMilliseconds(300), TimeProvider.System, cancellationToken);
                 }
-                recoveryKey = await PrepareDatabaseAsync(request, cancellationToken);
+                recoveryKey = await PrepareDatabaseAsync(request, networkConfig, cancellationToken);
             }
             lock (_lock)
             {
@@ -312,7 +330,7 @@ public sealed partial class SystemInstaller(
         }
     }
 
-    private async Task<string> InstallOntoDisksAsync(InstallRequest request, List<Disk> disks, string installId, CancellationToken cancellationToken)
+    private async Task<string> InstallOntoDisksAsync(InstallRequest request, List<Disk> disks, Network.NetworkConfig networkConfig, string installId, CancellationToken cancellationToken)
     {
         var esps = InstallPlans.Partitions(disks, 1);
 
@@ -365,7 +383,12 @@ public sealed partial class SystemInstaller(
         {
             await WriteTargetAsync(SystemSettingsService.TimesyncdDropIn.TrimStart('/'), HostParsers.RenderTimesyncdDropIn(servers), cancellationToken);
         }
-        var recoveryKey = await PrepareDatabaseAsync(request, cancellationToken);
+        // The same files Settings > Network writes; cards without settings keep the image's DHCP file.
+        foreach (var (path, content) in Network.NetworkdConfig.Render(networkConfig))
+        {
+            await WriteTargetAsync(path.TrimStart('/'), content, cancellationToken);
+        }
+        var recoveryKey = await PrepareDatabaseAsync(request, networkConfig, cancellationToken);
         var dataDirectory = Path.Combine(Target, "var/lib/pithyx");
         Directory.CreateDirectory(dataDirectory);
         if (OperatingSystem.IsLinux())
@@ -419,9 +442,9 @@ public sealed partial class SystemInstaller(
 
     /// <summary>
     /// Creates the database of the installed system next to the target: the migrations, the administrator with its
-    /// recovery key (the same code as the first setup) and the regional settings. Returns the recovery key.
+    /// recovery key (the same code as the first setup), the regional settings and the network. Returns the recovery key.
     /// </summary>
-    private async Task<string> PrepareDatabaseAsync(InstallRequest request, CancellationToken cancellationToken)
+    private async Task<string> PrepareDatabaseAsync(InstallRequest request, Network.NetworkConfig networkConfig, CancellationToken cancellationToken)
     {
         Directory.CreateDirectory(environment.WorkDirectory);
         var path = Path.Combine(environment.WorkDirectory, "pithyx.db");
@@ -439,6 +462,9 @@ public sealed partial class SystemInstaller(
             await connection.ExecuteAsync(
                 "INSERT INTO system_region (id, language, region, updated_at) VALUES (1, @Language, @Region, @now)",
                 new { request.Language, request.Region, now = SessionService.Format(time.GetUtcNow()) });
+            await connection.ExecuteAsync(
+                "INSERT INTO network_config (id, config, updated_at) VALUES (1, @config, @now)",
+                new { config = Network.NetworkJson.Serialize(networkConfig), now = SessionService.Format(time.GetUtcNow()) });
         }
         return recoveryKey;
     }

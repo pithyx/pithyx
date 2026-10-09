@@ -52,12 +52,14 @@ public sealed record InstallerDisk(Storage.Disk Disk, bool Suitable, string? Rea
 /// <summary>Response of <c>GET /api/installer/options</c>: what the steps offer.</summary>
 /// <param name="Disks">Every disk, suitable or not.</param>
 /// <param name="Network">The network cards with their state and addresses.</param>
+/// <param name="NetworkConfig">The network settings of the live system (set on the console, for example), the start of step 2.</param>
 /// <param name="TimeZones">IANA time zone names.</param>
 /// <param name="KeyboardLayouts">XKB layout codes for the console keyboard.</param>
 /// <param name="MinDiskBytes">The smallest disk the system fits on.</param>
 public sealed record InstallerOptions(
     IReadOnlyList<InstallerDisk> Disks,
-    IReadOnlyList<SystemSettings.NetworkInterfaceInfo> Network,
+    IReadOnlyList<Network.NetworkLink> Network,
+    Network.NetworkConfig NetworkConfig,
     IReadOnlyList<string> TimeZones,
     IReadOnlyList<string> KeyboardLayouts,
     long MinDiskBytes);
@@ -74,6 +76,7 @@ public sealed record InstallerOptions(
 /// <param name="Password">The administrator's password.</param>
 /// <param name="DisplayName">The administrator's display name.</param>
 /// <param name="EraseConfirmed">The user confirmed that every listed disk is erased.</param>
+/// <param name="Network">The network of the installed system (step 2), checked like Settings > Network; its host name is <paramref name="Hostname"/>. Null keeps DHCP on every card.</param>
 public sealed record InstallRequest(
     string Hostname,
     string Language,
@@ -85,7 +88,8 @@ public sealed record InstallRequest(
     string Username,
     string Password,
     string? DisplayName,
-    bool EraseConfirmed);
+    bool EraseConfirmed,
+    Network.NetworkConfig? Network = null);
 
 /// <summary>Response of <c>GET /api/install-id</c> on an installed box.</summary>
 public sealed record InstallIdResponse(string InstallId);

@@ -1,0 +1,65 @@
+==> /etc/systemd/network/10-pithyx-enp1s0.network
+# Managed by pithyx. Pithyx writes this file again on every change of the network in Settings.
+
+[Match]
+Name=enp1s0
+
+[Network]
+DHCP=no
+IPv6AcceptRA=no
+LinkLocalAddressing=ipv6
+Address=192.168.1.10/24
+Address=2001:db8::10/64
+
+[Route]
+Gateway=192.168.1.1
+Metric=1024
+
+[Route]
+Gateway=fe80::1
+Metric=1024
+
+==> /etc/systemd/network/10-pithyx-enp2s0.network
+# Managed by pithyx. Pithyx writes this file again on every change of the network in Settings.
+
+[Match]
+Name=enp2s0
+
+[Network]
+DHCP=ipv4
+IPv6AcceptRA=yes
+LinkLocalAddressing=ipv6
+
+[DHCPv4]
+ClientIdentifier=mac
+UseHostname=no
+UseDNS=no
+RouteMetric=100
+
+[IPv6AcceptRA]
+UseDNS=no
+RouteMetric=100
+
+[DHCPv6]
+UseHostname=no
+UseDNS=no
+
+==> /etc/systemd/network/80-pithyx-ethernet.network.d/10-pithyx-dns.conf
+# Managed by pithyx. Pithyx writes this file again on every change of the network in Settings.
+
+[DHCPv4]
+UseDNS=no
+
+[IPv6AcceptRA]
+UseDNS=no
+
+[DHCPv6]
+UseDNS=no
+
+==> /etc/systemd/resolved.conf.d/pithyx.conf
+# Managed by pithyx. Pithyx writes this file again on every change of the network in Settings.
+
+[Resolve]
+DNS=9.9.9.9 2620:fe::fe
+Domains=home.arpa
+

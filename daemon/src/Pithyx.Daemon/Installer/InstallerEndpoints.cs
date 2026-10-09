@@ -25,6 +25,8 @@ public static class InstallerEndpoints
         installer.MapGet("/options", GetOptions).WithName("GetInstallerOptions");
         installer.MapPost("/install", Install).WithName("Install");
         installer.MapPost("/reboot", Reboot).WithName("RebootInstaller");
+        installer.MapGet("/network/test", GetNetworkTest).WithName("GetInstallerNetworkTest");
+        installer.MapPost("/network/test", StartNetworkTest).WithName("StartInstallerNetworkTest");
     }
 
     /// <summary>
@@ -63,17 +65,37 @@ public static class InstallerEndpoints
         return TypedResults.Ok(installer.Status(token));
     }
 
-    private static Ok<InstallerOptions> GetOptions(SystemInstaller installer, HttpContext context)
+    private static async Task<Ok<InstallerOptions>> GetOptions(SystemInstaller installer, HttpContext context)
     {
         RequireOwner(installer, context);
-        return TypedResults.Ok(installer.Options());
+        return TypedResults.Ok(await installer.OptionsAsync(context.RequestAborted));
     }
 
-    private static Accepted<InstallerStatus> Install(InstallRequest request, SystemInstaller installer, HttpContext context)
+    private static async Task<Accepted<InstallerStatus>> Install(InstallRequest request, SystemInstaller installer, HttpContext context)
     {
         RequireOwner(installer, context);
-        installer.Start(request);
+        await installer.StartAsync(request, context.RequestAborted);
         return TypedResults.Accepted("/api/installer", installer.Status(Token(context)));
+    }
+
+    /// <summary>The result of the last connection test of step 2.</summary>
+    private static Ok<Network.NetworkTestStatus> GetNetworkTest(SystemInstaller installer, Network.NetworkService network, HttpContext context)
+    {
+        RequireOwner(installer, context);
+        return TypedResults.Ok(network.Test);
+    }
+
+    /// <summary>
+    /// Applies the network settings of step 2 to the live system for a moment, checks that every interface gets its
+    /// address and that its gateway answers, and rolls them back (the timer of Settings > Network). The page may lose its
+    /// connection meanwhile and asks for the result afterwards.
+    /// </summary>
+    private static async Task<Accepted<Network.NetworkTestStatus>> StartNetworkTest(Network.NetworkConfig config, SystemInstaller installer, Network.NetworkService network, HttpContext context)
+    {
+        RequireOwner(installer, context);
+        var live = await network.ConfigAsync(context.RequestAborted);
+        network.StartTest(config with { Global = live.Global });
+        return TypedResults.Accepted("/api/installer/network/test", network.Test);
     }
 
     private static NoContent Reboot(SystemInstaller installer, HttpContext context)

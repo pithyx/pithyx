@@ -72,9 +72,11 @@ public sealed class FileServiceConfigTests
             new SmbShare("Media", "/tank/pithyx/shares/media", ["tom"], ["ada", "rita"], Encrypt: false),
             new SmbShare("Private Files", "/tank/pithyx/shares/private_files", [], [], Encrypt: true),
             new SmbShare("homes", "/tank/pithyx/shares/homes", [], ["ada"], Encrypt: false),
-        ]);
+        ], SmbConfig.NetbiosName("nas-in-the-basement"));
 
         Assert.StartsWith(SmbConfig.Header, config, StringComparison.Ordinal);
+        Assert.Equal("NAS-IN-THE-BASE", SmbConfig.NetbiosName("nas-in-the-basement"));
+        Assert.Equal("NAS-01", SmbConfig.NetbiosName("nas-01"));
         Assert.DoesNotContain("[homes]", config, StringComparison.Ordinal);
         AssertGolden(config, "samba", "smb.conf.golden");
     }

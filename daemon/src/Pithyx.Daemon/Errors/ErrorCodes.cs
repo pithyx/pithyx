@@ -614,6 +614,110 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string LogsSettingsInvalid = "logs.settings.invalid";
 
+    /// <summary>A static address is not valid: it needs a prefix length and must be a usable address of its family; <c>params.name</c> is the interface, <c>params.field</c> <c>ipv4Address</c> or <c>ipv6Address</c>.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string NetworkAddressInvalid = "network.address.invalid";
+
+    /// <summary>Applying the network change failed and it was rolled back; <c>params.command</c> names what failed.</summary>
+    [ErrorStatus(HttpStatusCode.InternalServerError)]
+    public const string NetworkApplyFailed = "network.apply.failed";
+
+    /// <summary>A card cannot join the bond; <c>params.name</c> is the bond, <c>params.member</c> the card, <c>params.reason</c> <c>not_card</c>, <c>configured</c> (it has settings of its own), <c>other_bond</c> or <c>vlan_parent</c>.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string NetworkBondMemberInvalid = "network.bond.member_invalid";
+
+    /// <summary>A bond needs at least one card; <c>params.name</c> is the bond.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string NetworkBondMembersMissing = "network.bond.members_missing";
+
+    /// <summary>The primary card of an active-backup bond must be one of its cards; <c>params.name</c> is the bond.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string NetworkBondPrimaryInvalid = "network.bond.primary_invalid";
+
+    /// <summary>The settings are the ones the box has already; nothing to change.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string NetworkChangeEmpty = "network.change.empty";
+
+    /// <summary>No change with this id waits for its confirmation; it was confirmed, reverted or rolled back.</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string NetworkChangeNotFound = "network.change.not_found";
+
+    /// <summary>Another change of the network waits for its confirmation; keep or undo it first.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string NetworkChangePending = "network.change.pending";
+
+    /// <summary>After the change no interface would have an address, so nobody could reach the box.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string NetworkConfigUnreachable = "network.config.unreachable";
+
+    /// <summary>The interface chosen for the default route has no settings, is off or gets no gateway; <c>params.name</c> names it.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string NetworkDefaultInterfaceInvalid = "network.default_interface.invalid";
+
+    /// <summary>A name server is not an IPv4 or IPv6 address; <c>params.server</c> is what was entered.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string NetworkDnsInvalid = "network.dns.invalid";
+
+    /// <summary>At most <c>params.max</c> name servers.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string NetworkDnsTooMany = "network.dns.too_many";
+
+    /// <summary>A gateway is not an address inside the interface's network (or, for IPv6, link-local); <c>params.name</c> is the interface, <c>params.field</c> <c>ipv4Gateway</c> or <c>ipv6Gateway</c>.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string NetworkGatewayInvalid = "network.gateway.invalid";
+
+    /// <summary>Pithyx may not change the host name, name servers, search domains or default route here: on a development machine it never does.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string NetworkGlobalNotChangeable = "network.global.not_changeable";
+
+    /// <summary>A host name is one label of letters, digits and hyphens, 1 to 63 characters, not starting or ending with a hyphen.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string NetworkHostNameInvalid = "network.host_name.invalid";
+
+    /// <summary>Two interfaces have the same name, or a bond or VLAN takes the name of another interface; <c>params.name</c> names it.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string NetworkInterfaceDuplicate = "network.interface.duplicate";
+
+    /// <summary>The settings do not fit the interface: card settings for a bond or VLAN, or a bond or VLAN without its part; <c>params.name</c> names it.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string NetworkInterfaceKindInvalid = "network.interface.kind_invalid";
+
+    /// <summary>A bond or VLAN name is 1 to 15 lower-case letters, digits, dots, hyphens or underscores, starts with a letter and does not start with a name Docker, the apps or systemd use; <c>params.name</c> is the name.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string NetworkInterfaceNameInvalid = "network.interface.name_invalid";
+
+    /// <summary>Pithyx may not change this interface here; on a development machine only the cards in /etc/pithyx/test-nics change. <c>params.name</c> names it.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string NetworkInterfaceNotChangeable = "network.interface.not_changeable";
+
+    /// <summary>The system has no card with this name; <c>params.name</c> names it.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string NetworkInterfaceUnknown = "network.interface.unknown";
+
+    /// <summary>The MTU must be between <c>params.min</c> and <c>params.max</c> bytes (IPv6 needs 1280); <c>params.name</c> is the interface.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string NetworkMtuInvalid = "network.mtu.invalid";
+
+    /// <summary>A search domain is not a valid domain name; <c>params.domain</c> is what was entered.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string NetworkSearchDomainInvalid = "network.search_domain.invalid";
+
+    /// <summary>At most <c>params.max</c> search domains.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string NetworkSearchDomainTooMany = "network.search_domain.too_many";
+
+    /// <summary>The parent has a VLAN with this id already; <c>params.parent</c> and <c>params.id</c> name it.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string NetworkVlanDuplicate = "network.vlan.duplicate";
+
+    /// <summary>A VLAN id is 1 to 4094; <c>params.name</c> is the VLAN.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string NetworkVlanIdInvalid = "network.vlan.id_invalid";
+
+    /// <summary>A VLAN needs a card or a bond as its parent, not a card in a bond; <c>params.name</c> is the VLAN, <c>params.parent</c> the parent.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string NetworkVlanParentInvalid = "network.vlan.parent_invalid";
+
     /// <summary>An app notification is invalid; <c>params.field</c> names the field (app, title, body), <c>params.maxLength</c> its limit.</summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string NotificationsMessageInvalid = "notifications.message.invalid";

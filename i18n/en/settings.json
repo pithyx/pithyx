@@ -144,8 +144,8 @@
     },
     "network": {
       "title": "Network",
-      "description": "Addresses, DHCP or static, gateway and name servers",
-      "keywords": "ip address dhcp static gateway dns lan ethernet interface"
+      "description": "Network cards, bonds, VLANs, addresses and host name",
+      "keywords": "ip address dhcp static gateway dns lan ethernet interface bond lacp vlan mtu host name"
     },
     "regional": {
       "title": "Regional settings",
@@ -245,22 +245,124 @@
     }
   },
   "network": {
-    "intro": "How this box is connected to your network.",
-    "changesLater": "Changes follow",
-    "changesExplain": "Changing the address comes with a safety timer: a new address must be confirmed within 60 seconds, or the box goes back to the old one, so a wrong address cannot lock you out. Until then this page only shows the settings.",
-    "up": "connected",
-    "down": "not connected",
-    "method": "Address",
+    "intro": "How this box is connected: its network cards, bonds and VLANs. Every change waits 60 seconds for your confirmation and goes back on its own without it, so a wrong address cannot lock you out.",
+    "up": "Connected",
+    "down": "No cable",
+    "off": "Off",
+    "kinds": {
+      "ethernet": "Network card",
+      "bond": "Bond",
+      "vlan": "VLAN"
+    },
+    "method": "IPv4",
     "methods": {
       "dhcp": "Automatic (DHCP)",
       "static": "Static",
+      "off": "Off",
       "unknown": "Set outside Pithyx"
     },
     "addresses": "IP addresses",
     "gateway": "Gateway",
     "dns": "Name servers",
     "mac": "Hardware address",
-    "none": "None"
+    "mtu": "MTU",
+    "speed": "Speed",
+    "speedValue": "{mbps, number} Mbit/s",
+    "duplex": {
+      "full": "full duplex",
+      "half": "half duplex"
+    },
+    "bond": "In bond",
+    "vlan": "VLAN",
+    "vlanOn": "ID {id} on {parent}",
+    "none": "None",
+    "thisConnection": "This connection",
+    "defaultRoute": "Default route",
+    "changed": "Changed, not applied",
+    "planned": "New, not applied",
+    "notChangeable": "Pithyx does not change this interface on this machine.",
+    "edit": "Edit",
+    "editLabel": "Edit {name}",
+    "remove": "Remove",
+    "removeLabel": "Remove the settings of {name}",
+    "useDhcp": "Back to DHCP",
+    "addBond": "Add bond",
+    "addVlan": "Add VLAN",
+    "bondModes": {
+      "activeBackup": "Active-backup",
+      "lacp": "LACP (802.3ad)",
+      "balanceAlb": "Adaptive load balancing"
+    },
+    "bondModeHints": {
+      "activeBackup": "One card carries the traffic; another takes over when its cable fails. Works with every switch.",
+      "lacp": "All cards together. The switch ports must form an LACP group.",
+      "balanceAlb": "All cards send and receive without help from the switch."
+    },
+    "draft": {
+      "label": "Changes not applied yet",
+      "text": "You changed the network settings. Nothing is applied until you press Apply; all changes then apply together.",
+      "apply": "Apply…",
+      "discard": "Discard changes",
+      "waiting": "Keep or undo the waiting change first."
+    },
+    "pending": {
+      "label": "Network change waiting for confirmation",
+      "title": "{seconds, plural, one {# second} other {# seconds}} left to keep the new network settings",
+      "text": "The new settings are active. Keep them, or the box goes back to the previous ones on its own.",
+      "fromConsole": "Someone at the box's console changed the network. Keep the change here or on the console, or the box goes back on its own.",
+      "openNew": "If this page stops answering, open the box at its new address and keep the change there:",
+      "keep": "Keep",
+      "undo": "Undo now"
+    },
+    "global": {
+      "title": "Host name and name servers",
+      "hostName": "Host name",
+      "hostNameHint": "Letters, digits and hyphens. Windows networks see its first 15 characters.",
+      "dns": "Name servers",
+      "dnsHint": "Up to four addresses, separated by spaces. Empty uses those DHCP announces; set ones replace them.",
+      "searchDomains": "Search domains",
+      "searchDomainsHint": "Tried for short names, separated by spaces.",
+      "defaultRoute": "Default route via",
+      "defaultRouteHint": "When several interfaces have a gateway, this one carries the traffic to other networks.",
+      "automatic": "Automatic",
+      "fromDhcp": "From DHCP",
+      "edit": "Edit",
+      "notChangeable": "Pithyx does not change the host name and name servers of a development machine."
+    },
+    "dialog": {
+      "edit": "Edit {name}",
+      "newBond": "New bond",
+      "newVlan": "New VLAN",
+      "cancel": "Cancel",
+      "done": "Done",
+      "name": "Name",
+      "nameHint": "Up to 15 lower-case letters, digits, dots and hyphens.",
+      "members": "Network cards",
+      "noCards": "No free network card. A card with its own settings must go back to DHCP first.",
+      "thisConnection": "(this connection)",
+      "mode": "Mode",
+      "primary": "Primary card",
+      "noPrimary": "None",
+      "lacpRate": "LACP rate",
+      "lacpSlow": "Slow (every 30 seconds)",
+      "lacpFast": "Fast (every second)",
+      "parent": "Parent",
+      "vlanId": "VLAN ID",
+      "vlanIdHint": "1 to 4094, as the switch port tags it.",
+      "enabled": "Interface on",
+      "mtu": "MTU",
+      "mtuHint": "Empty keeps the default (1500). Jumbo frames need every device on the way to agree, up to 9000.",
+      "connectionWarning": "This browser reaches the box through this interface. A mistake here interrupts the connection until the change goes back after 60 seconds."
+    },
+    "apply": {
+      "title": "Apply network settings",
+      "text": "The new settings apply at once. You then have {seconds} seconds to keep them; otherwise the box goes back to the previous settings on its own.",
+      "interfaces": "Changes: {names}.",
+      "hostName": "The host name becomes {name}.",
+      "connectionWarning": "This browser reaches the box through {name}, which changes. The page may stop answering; open the new address or wait 60 seconds for the old settings to come back.",
+      "addresses": "The box will also answer at:",
+      "confirm": "Apply"
+    }
   },
   "regional": {
     "intro": "Language, formats and time of the box. Everyone can still choose their own language in the user menu.",

@@ -682,6 +682,158 @@
       },
       "expected": "maxBytes must be between 67108864 and 4294967296."
     },
+    "network.address.invalid": {
+      "params": {
+        "name": "enp1s0",
+        "field": "ipv4Address"
+      },
+      "expected": "The IPv4 address of enp1s0 is not valid. Enter it with its prefix length, for example 192.168.1.10/24."
+    },
+    "network.apply.failed": {
+      "params": {
+        "command": "networkctl"
+      },
+      "expected": "The network change could not be applied (networkctl failed) and was rolled back. The Log Center has the details."
+    },
+    "network.bond.member_invalid": {
+      "params": {
+        "name": "bond0",
+        "member": "enp2s0",
+        "reason": "configured"
+      },
+      "expected": "enp2s0 cannot join the bond bond0: it has settings of its own; remove them first."
+    },
+    "network.bond.members_missing": {
+      "params": {
+        "name": "bond0"
+      },
+      "expected": "The bond bond0 needs at least one network card."
+    },
+    "network.bond.primary_invalid": {
+      "params": {
+        "name": "bond0"
+      },
+      "expected": "The primary card of the bond bond0 must be one of its cards."
+    },
+    "network.change.empty": {
+      "params": {},
+      "expected": "These are the settings the box has already."
+    },
+    "network.change.not_found": {
+      "params": {},
+      "expected": "This change no longer waits for a confirmation: it was kept, undone or rolled back."
+    },
+    "network.change.pending": {
+      "params": {},
+      "expected": "Another network change waits for its confirmation. Keep or undo it first."
+    },
+    "network.config.unreachable": {
+      "params": {},
+      "expected": "After this change no interface would have an address, so nobody could reach the box."
+    },
+    "network.default_interface.invalid": {
+      "params": {
+        "name": "enp2s0"
+      },
+      "expected": "enp2s0 cannot carry the default route: it needs its own settings, must be on and must get a gateway."
+    },
+    "network.dns.invalid": {
+      "params": {
+        "server": "dns.example"
+      },
+      "expected": "“dns.example” is not an IPv4 or IPv6 address."
+    },
+    "network.dns.too_many": {
+      "params": {
+        "max": 4
+      },
+      "expected": "Enter at most 4 name servers."
+    },
+    "network.gateway.invalid": {
+      "params": {
+        "name": "enp1s0",
+        "field": "ipv6Gateway"
+      },
+      "expected": "The IPv6 gateway of enp1s0 must be an address in its network."
+    },
+    "network.global.not_changeable": {
+      "params": {},
+      "expected": "Pithyx does not change the host name, name servers or default route of a development machine."
+    },
+    "network.host_name.invalid": {
+      "params": {},
+      "expected": "A host name has 1 to 63 letters, digits and hyphens and does not start or end with a hyphen."
+    },
+    "network.interface.duplicate": {
+      "params": {
+        "name": "bond0"
+      },
+      "expected": "The name bond0 is already taken."
+    },
+    "network.interface.kind_invalid": {
+      "params": {
+        "name": "bond0"
+      },
+      "expected": "The settings do not fit bond0."
+    },
+    "network.interface.name_invalid": {
+      "params": {
+        "name": "px-1"
+      },
+      "expected": "“px-1” cannot be the name of a bond or VLAN: use 1 to 15 lower-case letters, digits, dots, hyphens or underscores, starting with a letter."
+    },
+    "network.interface.not_changeable": {
+      "params": {
+        "name": "ens18"
+      },
+      "expected": "Pithyx may not change ens18 on this machine."
+    },
+    "network.interface.unknown": {
+      "params": {
+        "name": "enp9s0"
+      },
+      "expected": "This box has no network card enp9s0."
+    },
+    "network.mtu.invalid": {
+      "params": {
+        "name": "enp1s0",
+        "min": 1280,
+        "max": 9000
+      },
+      "expected": "The MTU of enp1s0 must be between 1280 and 9000 bytes."
+    },
+    "network.search_domain.invalid": {
+      "params": {
+        "domain": "bad_domain"
+      },
+      "expected": "“bad_domain” is not a valid domain name."
+    },
+    "network.search_domain.too_many": {
+      "params": {
+        "max": 6
+      },
+      "expected": "Enter at most 6 search domains."
+    },
+    "network.vlan.duplicate": {
+      "params": {
+        "parent": "bond0",
+        "id": 42
+      },
+      "expected": "bond0 has a VLAN with the id 42 already."
+    },
+    "network.vlan.id_invalid": {
+      "params": {
+        "name": "vlan0"
+      },
+      "expected": "The VLAN id of vlan0 must be between 1 and 4094."
+    },
+    "network.vlan.parent_invalid": {
+      "params": {
+        "name": "vlan7",
+        "parent": "enp2s0"
+      },
+      "expected": "enp2s0 cannot carry the VLAN vlan7: choose a network card or a bond."
+    },
     "notifications.message.invalid": {
       "params": {
         "field": "title",

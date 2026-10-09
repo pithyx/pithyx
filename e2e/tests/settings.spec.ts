@@ -73,7 +73,7 @@ test('the Info Center, Network, File services and Users pages open from their ti
   await settings.getByRole('button', { name: 'All settings' }).click();
 
   await settings.getByRole('button', { name: /^Network/ }).click();
-  await expect(settings.getByText('Changes follow')).toBeVisible();
+  await expect(settings.getByRole('heading', { name: 'Host name and name servers' })).toBeVisible();
   await expect(settings.getByRole('heading', { name: 'Network', level: 2 })).toBeVisible();
   expect(await violations(page)).toEqual([]);
   await settings.getByRole('button', { name: 'All settings' }).click();

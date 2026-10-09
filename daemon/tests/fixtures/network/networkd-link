@@ -1,0 +1,24 @@
+# This is private data. Do not parse.
+ADMIN_STATE=configured
+OPER_STATE=routable
+CARRIER_STATE=carrier
+ADDRESS_STATE=routable
+IPV4_ADDRESS_STATE=routable
+IPV6_ADDRESS_STATE=degraded
+ONLINE_STATE=online
+REQUIRED_FOR_ONLINE=yes
+REQUIRED_OPER_STATE_FOR_ONLINE=degraded:routable
+REQUIRED_FAMILY_FOR_ONLINE=any
+ACTIVATION_POLICY=up
+NETWORK_FILE=/etc/systemd/network/10-pithyx-ptest0.network
+NETWORK_FILE_DROPINS=""
+DNS=10.77.0.1
+NTP=
+SIP=
+DOMAINS=
+ROUTE_DOMAINS=
+LLMNR=yes
+MDNS=no
+DHCP_LEASE=/run/systemd/netif/leases/123
+DHCP6_CLIENT_IAID=0x6f0dbdf
+DHCP6_CLIENT_DUID=DUID-EN/Vendor:0000ab11a3c9ec9c99cc9d93

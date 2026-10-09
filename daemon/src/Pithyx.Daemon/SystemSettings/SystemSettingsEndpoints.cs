@@ -7,7 +7,7 @@ using Pithyx.Daemon.Errors;
 
 namespace Pithyx.Daemon.SystemSettings;
 
-/// <summary>The Info Center, the network overview and the regional settings of the Settings app. Administrators only.</summary>
+/// <summary>The Info Center and the regional settings of the Settings app. Administrators only.</summary>
 public static class SystemSettingsEndpoints
 {
     public static IServiceCollection AddPithyxSystemSettings(this IServiceCollection services, DaemonMode mode) =>
@@ -28,14 +28,6 @@ public static class SystemSettingsEndpoints
             .RequireAuthorization(Policies.Admin)
             .WithName("GetSystemOverview")
             .WithDescription("Administrators only. Version and commit, operating system, kernel, machine, processor, memory, host name and uptime.");
-        system.MapGet("/network", (SystemSettingsService settings, HttpContext context) =>
-            {
-                RequireAdmin(context.User);
-                return TypedResults.Ok(settings.Network());
-            })
-            .RequireAuthorization(Policies.Admin)
-            .WithName("GetSystemNetwork")
-            .WithDescription("Administrators only. The network interfaces with their addresses, gateways, name servers and whether they use DHCP. Read only until host network changes come with their confirmation timer.");
         system.MapGet("/time", (SystemSettingsService settings, HttpContext context) =>
             {
                 RequireAdmin(context.User);

@@ -63,10 +63,14 @@ public static class BackupDatabase
     /// <summary>Tables a restore handles on their own: rights are rebuilt, allocations merged, settings go by key.</summary>
     public static readonly FrozenSet<string> Special = new[] { "grants", "id_allocations", "settings", "schema_version" }.ToFrozenSet();
 
-    /// <summary>Runtime state: emptied in the backup's copy and never restored.</summary>
+    /// <summary>
+    /// Runtime state: emptied in the backup's copy and never restored. The network settings belong here too (D337): a
+    /// restore would change the network without the confirmation timer, and another box has other card names.
+    /// </summary>
     public static readonly FrozenSet<string> NotBackedUp = new[]
     {
         "sessions", "jobs", "notifications", "storage_alert_notices", "storage_schedule_runs", "trash_items",
+        "network_config", "network_pending",
     }.ToFrozenSet();
 
     /// <summary>Copies the live database to <paramref name="path"/> without its runtime state.</summary>

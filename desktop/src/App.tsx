@@ -58,9 +58,10 @@ function useDesktopModule(): DesktopModule | undefined {
 
 // Only the live system of the ISO shows the installer; its code and texts stay out of the sign-in chunk.
 const InstallerScreen = lazy(() =>
-  Promise.all([import('./installer/InstallerScreen'), loadTranslations('installer')]).then(
-    ([{ InstallerScreen }]) => ({ default: InstallerScreen }),
-  ),
+  Promise.all([
+    import('./installer/InstallerScreen'),
+    loadTranslations('installer', 'network'),
+  ]).then(([{ InstallerScreen }]) => ({ default: InstallerScreen })),
 );
 
 const ErrorDialog = lazy(() =>

@@ -39,22 +39,6 @@ public sealed record SystemOverview(
     string Hostname,
     double UptimeSeconds);
 
-/// <param name="Name">The interface, for example <c>ens18</c>.</param>
-/// <param name="MacAddress">Its hardware address, if it has one.</param>
-/// <param name="Up">Whether the link is up.</param>
-/// <param name="Method"><c>dhcp</c>, <c>static</c> or <c>unknown</c> when the configuration is not one Pithyx reads.</param>
-/// <param name="Addresses">IPv4 and IPv6 addresses with prefix length, for example <c>192.168.1.20/24</c>.</param>
-/// <param name="Gateways">Default gateways of the interface.</param>
-/// <param name="DnsServers">Name servers the interface uses.</param>
-public sealed record NetworkInterfaceInfo(
-    string Name,
-    string? MacAddress,
-    bool Up,
-    string Method,
-    IReadOnlyList<string> Addresses,
-    IReadOnlyList<string> Gateways,
-    IReadOnlyList<string> DnsServers);
-
 /// <param name="TimeZone">IANA name of the system time zone.</param>
 /// <param name="Synchronized">Whether the clock is synchronized with a time server.</param>
 /// <param name="NtpServers">Time servers Pithyx configured; empty means the distribution's defaults.</param>

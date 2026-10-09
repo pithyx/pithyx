@@ -1100,6 +1100,22 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/installer/network/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["GetInstallerNetworkTest"];
+        put?: never;
+        post: operations["StartInstallerNetworkTest"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/installer/options": {
         parameters: {
             query?: never;
@@ -1964,10 +1980,62 @@ export type paths = {
             path?: never;
             cookie?: never;
         };
-        /** @description Administrators only. The network interfaces with their addresses, gateways, name servers and whether they use DHCP. Read only until host network changes come with their confirmation timer. */
+        /** @description Administrators only. What Pithyx configured, every card, bond and VLAN with link, speed, addresses, gateways and name servers, whether Pithyx may change it here, the interface this connection comes in on and the change that waits for its confirmation. The topic system/network sends the same without the connection's interface. */
         get: operations["GetSystemNetwork"];
-        put?: never;
+        /** @description Administrators only. Applies new settings as one change (systemd-networkd and resolved files, host name). The change is rolled back after 60 seconds unless confirmed; open one of the answer's addresses to confirm when the old address went away. */
+        put: operations["SetNetworkConfig"];
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/network/changes/{changeId}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Keeps the change that waits for its confirmation. */
+        post: operations["ConfirmNetworkChange"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/network/changes/{changeId}/revert": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Rolls the change that waits for its confirmation back at once. */
+        post: operations["RevertNetworkChange"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/network/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Checks new settings without applying them: the stored form, the interfaces that change, whether the host name changes, whether this connection's interface changes, and the static addresses to open afterwards. */
+        post: operations["CheckNetworkConfig"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2618,6 +2686,21 @@ export type components = {
             /** @description The Pithyx version that created it. */
             version: string;
         };
+        /**
+         * @description How a bond uses its cards.
+         * @enum {unknown}
+         */
+        BondMode: "activeBackup" | "lacp" | "balanceAlb";
+        BondSettings: {
+            /** @description For LACP: how often the partners exchange their state. */
+            lacpRate?: components["schemas"]["LacpRate"];
+            /** @description The network cards in the bond, at least one; none of them has its own configuration. */
+            members: string[];
+            /** @description How the bond uses its cards. */
+            mode: components["schemas"]["BondMode"];
+            /** @description For active-backup: the card that carries the traffic while its link is up. */
+            primary?: null | string;
+        };
         /** @description A catalog of the box. */
         CatalogInfo: {
             /**
@@ -3026,7 +3109,7 @@ export type components = {
             }[];
         };
         /** @enum {string} */
-        ErrorCode: "app.app.busy" | "app.app.no_previous" | "app.app.not_found" | "app.backend.endpoint_unknown" | "app.backend.missing" | "app.backend.start_failed" | "app.backend.storage_unavailable" | "app.backend.unavailable" | "app.backend.unsupported" | "app.compose.key_unsupported" | "app.compose.reference_unknown" | "app.compose.right_missing" | "app.compose.right_unused" | "app.compose.storage_mismatch" | "app.compose.value_invalid" | "app.compose.yaml_invalid" | "app.docker.unavailable" | "app.elevated.unsupported" | "app.icon.invalid" | "app.image.mismatch" | "app.image.unavailable" | "app.manifest.cron_invalid" | "app.manifest.duplicate" | "app.manifest.id_invalid" | "app.manifest.id_reserved" | "app.manifest.invalid_json" | "app.manifest.pithyx_invalid" | "app.manifest.reference_unknown" | "app.manifest.schema_violation" | "app.manifest.sdk_invalid" | "app.manifest.version_unsupported" | "app.manifest.window_size_invalid" | "app.mapping.invalid" | "app.package.box_too_old" | "app.package.downgrade_unsupported" | "app.package.invalid" | "app.package.layout_invalid" | "app.package.lock_invalid" | "app.package.not_found" | "app.package.too_large" | "app.permission.denied" | "app.permission.not_requested" | "app.pool.fixed" | "app.pool.required" | "app.pool.unavailable" | "app.storage.key_invalid" | "app.storage.not_found" | "app.storage.too_large" | "app.token.invalid" | "auth.account.disabled" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.desktop.not_allowed" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fileservices.service.unavailable" | "fileservices.workgroup.invalid" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.share.unavailable" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "installer.check.failed" | "installer.claim.required" | "installer.claim.taken" | "installer.disk.count" | "installer.disk.unsuitable" | "installer.erase.not_confirmed" | "installer.hostname.invalid" | "installer.install.failed" | "installer.install.running" | "installer.keyboard.invalid" | "installer.reboot.not_ready" | "jobs.job.not_found" | "logs.app.invalid" | "logs.archive.pool_unavailable" | "logs.batch.too_large" | "logs.query.invalid" | "logs.settings.invalid" | "notifications.message.invalid" | "notifications.notification.not_found" | "permissions.grant.invalid" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.command.timed_out" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.disks_missing" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.pool.suspended" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "storage.zfs.unavailable" | "store.app.not_found" | "store.catalog.architecture_missing" | "store.catalog.built_in" | "store.catalog.busy" | "store.catalog.data_version_decreased" | "store.catalog.exists" | "store.catalog.id_reserved" | "store.catalog.invalid_json" | "store.catalog.mismatch" | "store.catalog.not_found" | "store.catalog.rule_violation" | "store.catalog.schema_violation" | "store.catalog.sequence_old" | "store.catalog.signature_invalid" | "store.catalog.unreachable" | "store.catalog.url_invalid" | "store.catalog.version_unsupported" | "store.package.hash_mismatch" | "system.backup.category_missing" | "system.backup.invalid" | "system.backup.password_wrong" | "system.backup.restore_expired" | "system.backup.restore_failed" | "system.backup.restore_running" | "system.backup.too_large" | "system.backup.too_new" | "system.internal.unexpected" | "system.origin.forbidden" | "system.time.apply_failed" | "system.time.server_invalid" | "system.time.servers_too_many" | "system.time.zone_invalid" | "users.account.refused" | "users.gid.exhausted" | "users.group.builtin" | "users.group.description_invalid" | "users.group.exists" | "users.group.name_invalid" | "users.group.name_reserved" | "users.group.not_found" | "users.group.refused" | "users.uid.exhausted" | "users.user.exists" | "users.user.last_admin" | "users.user.not_found" | "users.user.self";
+        ErrorCode: "app.app.busy" | "app.app.no_previous" | "app.app.not_found" | "app.backend.endpoint_unknown" | "app.backend.missing" | "app.backend.start_failed" | "app.backend.storage_unavailable" | "app.backend.unavailable" | "app.backend.unsupported" | "app.compose.key_unsupported" | "app.compose.reference_unknown" | "app.compose.right_missing" | "app.compose.right_unused" | "app.compose.storage_mismatch" | "app.compose.value_invalid" | "app.compose.yaml_invalid" | "app.docker.unavailable" | "app.elevated.unsupported" | "app.icon.invalid" | "app.image.mismatch" | "app.image.unavailable" | "app.manifest.cron_invalid" | "app.manifest.duplicate" | "app.manifest.id_invalid" | "app.manifest.id_reserved" | "app.manifest.invalid_json" | "app.manifest.pithyx_invalid" | "app.manifest.reference_unknown" | "app.manifest.schema_violation" | "app.manifest.sdk_invalid" | "app.manifest.version_unsupported" | "app.manifest.window_size_invalid" | "app.mapping.invalid" | "app.package.box_too_old" | "app.package.downgrade_unsupported" | "app.package.invalid" | "app.package.layout_invalid" | "app.package.lock_invalid" | "app.package.not_found" | "app.package.too_large" | "app.permission.denied" | "app.permission.not_requested" | "app.pool.fixed" | "app.pool.required" | "app.pool.unavailable" | "app.storage.key_invalid" | "app.storage.not_found" | "app.storage.too_large" | "app.token.invalid" | "auth.account.disabled" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.desktop.not_allowed" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fileservices.service.unavailable" | "fileservices.workgroup.invalid" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.share.unavailable" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "installer.check.failed" | "installer.claim.required" | "installer.claim.taken" | "installer.disk.count" | "installer.disk.unsuitable" | "installer.erase.not_confirmed" | "installer.hostname.invalid" | "installer.install.failed" | "installer.install.running" | "installer.keyboard.invalid" | "installer.reboot.not_ready" | "jobs.job.not_found" | "logs.app.invalid" | "logs.archive.pool_unavailable" | "logs.batch.too_large" | "logs.query.invalid" | "logs.settings.invalid" | "network.address.invalid" | "network.apply.failed" | "network.bond.member_invalid" | "network.bond.members_missing" | "network.bond.primary_invalid" | "network.change.empty" | "network.change.not_found" | "network.change.pending" | "network.config.unreachable" | "network.default_interface.invalid" | "network.dns.invalid" | "network.dns.too_many" | "network.gateway.invalid" | "network.global.not_changeable" | "network.host_name.invalid" | "network.interface.duplicate" | "network.interface.kind_invalid" | "network.interface.name_invalid" | "network.interface.not_changeable" | "network.interface.unknown" | "network.mtu.invalid" | "network.search_domain.invalid" | "network.search_domain.too_many" | "network.vlan.duplicate" | "network.vlan.id_invalid" | "network.vlan.parent_invalid" | "notifications.message.invalid" | "notifications.notification.not_found" | "permissions.grant.invalid" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.command.timed_out" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.disks_missing" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.pool.suspended" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "storage.zfs.unavailable" | "store.app.not_found" | "store.catalog.architecture_missing" | "store.catalog.built_in" | "store.catalog.busy" | "store.catalog.data_version_decreased" | "store.catalog.exists" | "store.catalog.id_reserved" | "store.catalog.invalid_json" | "store.catalog.mismatch" | "store.catalog.not_found" | "store.catalog.rule_violation" | "store.catalog.schema_violation" | "store.catalog.sequence_old" | "store.catalog.signature_invalid" | "store.catalog.unreachable" | "store.catalog.url_invalid" | "store.catalog.version_unsupported" | "store.package.hash_mismatch" | "system.backup.category_missing" | "system.backup.invalid" | "system.backup.password_wrong" | "system.backup.restore_expired" | "system.backup.restore_failed" | "system.backup.restore_running" | "system.backup.too_large" | "system.backup.too_new" | "system.internal.unexpected" | "system.origin.forbidden" | "system.time.apply_failed" | "system.time.server_invalid" | "system.time.servers_too_many" | "system.time.zone_invalid" | "users.account.refused" | "users.gid.exhausted" | "users.group.builtin" | "users.group.description_invalid" | "users.group.exists" | "users.group.name_invalid" | "users.group.name_reserved" | "users.group.not_found" | "users.group.refused" | "users.uid.exhausted" | "users.user.exists" | "users.user.last_admin" | "users.user.not_found" | "users.user.self";
         /** @description A failed client message. `id` is empty when the message could not be parsed. */
         ErrorMessage: {
             code: components["schemas"]["ErrorCode"];
@@ -3244,6 +3327,17 @@ export type components = {
             /** @description Whether changes are being delivered. */
             watching: boolean;
         };
+        /** @description Settings of the whole box. */
+        GlobalNetworkConfig: {
+            /** @description The interface whose gateway carries the default route when several have one; null leaves it to the metrics. */
+            defaultInterface?: null | string;
+            /** @description Name servers, at most four; when set they replace those DHCP and router advertisements announce. */
+            dnsServers: string[];
+            /** @description The host name: letters, digits and hyphens, 1 to 63 characters. Samba uses its first 15 as the NetBIOS name. */
+            hostName: string;
+            /** @description Domains tried for short names, at most six. */
+            searchDomains: string[];
+        };
         /** @description One grant of a user or a group. */
         GrantEntry: {
             /** @description `read` or `readWrite` for a shared folder, `allow` for everything else. */
@@ -3431,7 +3525,9 @@ export type components = {
              */
             minDiskBytes: number;
             /** @description The network cards with their state and addresses. */
-            network: components["schemas"]["NetworkInterfaceInfo"][];
+            network: components["schemas"]["NetworkLink"][];
+            /** @description The network settings of the live system (set on the console, for example), the start of step 2. */
+            networkConfig: components["schemas"]["NetworkConfig"];
             /** @description IANA time zone names. */
             timeZones: string[];
         };
@@ -3488,6 +3584,8 @@ export type components = {
             keyboardLayout: string;
             /** @description System language. */
             language: string;
+            /** @description Everything Pithyx configures in the network. Cards that are not listed get their address by DHCP. */
+            network?: null | components["schemas"]["NetworkConfig"];
             /** @description Time servers; empty for the defaults. */
             ntpServers: string[];
             /** @description The administrator's password. */
@@ -3499,6 +3597,54 @@ export type components = {
             /** @description The administrator. */
             username: string;
         };
+        /** @description The settings Pithyx keeps for one interface. A network card without them gets its address by DHCP. */
+        InterfaceConfig: {
+            bond?: null | components["schemas"]["BondSettings"];
+            /**
+             * @description False keeps the link down.
+             * @default true
+             */
+            enabled: boolean;
+            /** @description DHCP, static or off. */
+            ipv4?: components["schemas"]["Ipv4Mode"];
+            /** @description For static: the address with prefix length, for example `192.168.1.10/24`. */
+            ipv4Address?: null | string;
+            /** @description For static: the gateway, optional, inside the address's network. */
+            ipv4Gateway?: null | string;
+            /** @description Auto (router advertisements and DHCPv6), static or off. */
+            ipv6?: components["schemas"]["Ipv6Mode"];
+            /** @description For static: the address with prefix length, for example `2001:db8::10/64`. */
+            ipv6Address?: null | string;
+            /** @description For static: the gateway, optional, inside the address's network or link-local. */
+            ipv6Gateway?: null | string;
+            /** @description Card, bond or VLAN. */
+            kind: components["schemas"]["InterfaceKind"];
+            /**
+             * Format: int32
+             * @description The MTU in bytes, 1280 to 9000 (576 without IPv6); null keeps the default.
+             */
+            mtu?: null | number;
+            /** @description The interface: the kernel's name of a card, or the name of a bond or VLAN (1 to 15 characters). */
+            name: string;
+            vlan?: null | components["schemas"]["VlanSettings"];
+        };
+        /**
+         * @description What an interface is: a network card, a bond of cards or a VLAN on a card or bond.
+         * @enum {unknown}
+         */
+        InterfaceKind: "ethernet" | "bond" | "vlan";
+        /**
+         * @description How an interface gets its IPv4 address.
+         * @default dhcp
+         * @enum {unknown}
+         */
+        Ipv4Mode: "dhcp" | "static" | "off";
+        /**
+         * @description How an interface gets its IPv6 address: automatically (router advertisements and DHCPv6), static or none.
+         * @default auto
+         * @enum {unknown}
+         */
+        Ipv6Mode: "auto" | "static" | "off";
         /** @description A long operation of a user, such as copying files. Also the data of the `jobs/{id}` topics. */
         Job: {
             /**
@@ -3573,6 +3719,12 @@ export type components = {
          */
         JobState: "queued" | "running" | "succeeded" | "failed" | "cancelled" | "interrupted";
         JsonElement: unknown;
+        /**
+         * @description How often LACP partners exchange their state: every 30 seconds or every second.
+         * @default slow
+         * @enum {unknown}
+         */
+        LacpRate: "slow" | "fast";
         /** @enum {unknown} */
         LogArchiveState: "off" | "ready" | "unavailable";
         /** @description One log entry of the daemon, a system service or an app. */
@@ -3693,21 +3845,122 @@ export type components = {
             /** @description The notifications to mark as read; null or missing marks every unread one. */
             ids?: null | number[];
         };
-        NetworkInterfaceInfo: {
-            /** @description IPv4 and IPv6 addresses with prefix length, for example `192.168.1.20/24`. */
+        /**
+         * @description Where a change of the network came from.
+         * @enum {unknown}
+         */
+        NetworkChangeOrigin: "web" | "console";
+        /** @description What a change would do, before it is applied. */
+        NetworkCheck: {
+            /** @description Static addresses (without prefix) of the changed interfaces, to open after the change. */
             addresses: string[];
-            /** @description Name servers the interface uses. */
+            /** @description The settings as they would be stored (canonical form). */
+            config: components["schemas"]["NetworkConfig"];
+            /** @description Whether the interface this browser's connection comes in on changes; the page warns. */
+            connectionAffected: boolean;
+            /** @description Whether the host name changes. */
+            hostNameChanged: boolean;
+            /** @description The interfaces whose configuration changes. */
+            interfaces: string[];
+        };
+        /** @description Everything Pithyx configures in the network. Cards that are not listed get their address by DHCP. */
+        NetworkConfig: {
+            /** @description Host name, name servers, search domains, default route. */
+            global: components["schemas"]["GlobalNetworkConfig"];
+            /** @description Cards with their own settings, bonds and VLANs. */
+            interfaces: components["schemas"]["InterfaceConfig"][];
+        };
+        /** @description An interface as the system has it now. */
+        NetworkLink: {
+            /** @description IPv4 and global IPv6 addresses with prefix length. */
+            addresses: string[];
+            /** @description Whether a cable (or the other end) is connected. */
+            carrier: boolean;
+            /** @description Whether Pithyx may change it here; on a development machine only the interfaces in `/etc/pithyx/test-nics`. */
+            changeable: boolean;
+            /** @description Whether Pithyx keeps settings for it (otherwise a card gets DHCP). */
+            configured: boolean;
+            /** @description Whether this interface carries the default route (the lowest metric). */
+            defaultRoute: boolean;
+            /** @description The name servers this interface announced or was given. */
             dnsServers: string[];
-            /** @description Default gateways of the interface. */
+            /** @description `full` or `half`, when the driver reports it. */
+            duplex: null | string;
+            /** @description The default gateways reached through this interface. */
             gateways: string[];
-            /** @description Its hardware address, if it has one. */
+            /** @description Card, bond or VLAN. */
+            kind: components["schemas"]["InterfaceKind"];
+            /** @description The hardware address. */
             macAddress: null | string;
-            /** @description `dhcp`, `static` or `unknown` when the configuration is not one Pithyx reads. */
+            /** @description The bond this card belongs to. */
+            master: null | string;
+            /** @description `dhcp`, `static`, `off` or `unknown`: how its IPv4 address comes. */
             method: string;
-            /** @description The interface, for example `ens18`. */
+            /**
+             * Format: int32
+             * @description The MTU in bytes.
+             */
+            mtu: number;
+            /** @description The kernel's name, for example `enp1s0`. */
             name: string;
-            /** @description Whether the link is up. */
+            /**
+             * Format: int32
+             * @description The link speed in Mbit/s, when the driver reports it.
+             */
+            speedMbps: null | number;
+            /** @description Whether the interface is up and its link works. */
             up: boolean;
+            /**
+             * Format: int32
+             * @description For a VLAN: its id.
+             */
+            vlanId: null | number;
+            /** @description For a VLAN: the interface that carries it. */
+            vlanParent: null | string;
+        };
+        /** @description The network of the box. Administrators only. */
+        NetworkState: {
+            /** @description What Pithyx configured. */
+            config: components["schemas"]["NetworkConfig"];
+            /**
+             * Format: int32
+             * @description How long a change waits for its confirmation before it is rolled back.
+             */
+            confirmSeconds: number;
+            /** @description The interface this browser's connection comes in on, if known; empty in the live topic. */
+            connectionInterface: null | string;
+            /** @description Whether Pithyx may change host name, name servers and the default route here; not on a development machine. */
+            globalChangeable: boolean;
+            /** @description The host name the system has now. */
+            hostName: string;
+            /** @description Every card, bond and VLAN; container bridges and virtual cables are left out. */
+            links: components["schemas"]["NetworkLink"][];
+            /** @description A change of the network waiting for its confirmation. */
+            pending: null | components["schemas"]["PendingNetworkChange"];
+        };
+        /** @description One interface after a connection test of the installer. */
+        NetworkTestInterface: {
+            /** @description The addresses it got. */
+            addresses: string[];
+            /** @description Whether the first gateway answered a ping; null without a gateway. */
+            gatewayReachable: null | boolean;
+            /** @description Its gateways. */
+            gateways: string[];
+            /** @description The interface. */
+            name: string;
+            /** @description Whether its link came up. */
+            up: boolean;
+        };
+        /** @description The connection test of the installer: the settings are applied, checked and rolled back. */
+        NetworkTestStatus: {
+            /** @description Why the test could not run. */
+            errorCode: null | string;
+            /** @description Values for its text. */
+            errorParams: Record<string, never>;
+            /** @description What each tested interface got. */
+            interfaces: components["schemas"]["NetworkTestInterface"][];
+            /** @description Whether the test still runs; the page may lose its connection meanwhile. */
+            running: boolean;
         };
         NewDesktopItem: {
             /** @description Shortcuts: the id of the app to open. Required for shortcuts, not allowed for notes. */
@@ -3871,6 +4124,27 @@ export type components = {
         PasswordReset: {
             /** @description The new password, with the same rules as everywhere. */
             password: string;
+        };
+        /** @description A change of the network waiting for its confirmation. */
+        PendingNetworkChange: {
+            /** @description Static addresses (without prefix) it set; open one of them when the old address went away. */
+            addresses: string[];
+            /**
+             * Format: date-time
+             * @description When it is rolled back unless confirmed, UTC.
+             */
+            deadline: string;
+            /** @description The new host name, when it changed. */
+            hostName: null | string;
+            /**
+             * Format: uuid
+             * @description Pass to confirm or revert it.
+             */
+            id: string;
+            /** @description The interfaces it changed. */
+            interfaces: string[];
+            /** @description Settings in a browser or the menu on the console. */
+            origin: components["schemas"]["NetworkChangeOrigin"];
         };
         /** @description Every resource besides shared folders a grant can name, in the order the editors show them. */
         PermissionCatalog: {
@@ -5201,6 +5475,7 @@ export type components = {
             "storage/pools": components["schemas"]["PoolList"];
             "store/admin": components["schemas"]["StoreState"];
             "system/info": components["schemas"]["SystemInfo"];
+            "system/network": components["schemas"]["NetworkState"];
             "system/processes": components["schemas"]["ProcessList"];
             "system/resources": components["schemas"]["ResourceSample"];
             "thumbnails/+/+": components["schemas"]["ThumbnailsReady"];
@@ -5220,6 +5495,7 @@ export type components = {
             "storage/pools": components["schemas"]["PoolList"];
             "store/admin": components["schemas"]["StoreState"];
             "system/info": components["schemas"]["SystemInfo"];
+            "system/network": components["schemas"]["NetworkState"];
             "system/processes": components["schemas"]["ProcessList"];
             "system/resources": components["schemas"]["ResourceSnapshot"];
             "thumbnails/+/+": components["schemas"]["ThumbnailWatch"];
@@ -5440,6 +5716,15 @@ export type components = {
              * @description Write errors since import or the last clear.
              */
             writeErrors: number;
+        };
+        VlanSettings: {
+            /**
+             * Format: int32
+             * @description The 802.1Q VLAN id, 1 to 4094.
+             */
+            id: number;
+            /** @description The network card or bond that carries the VLAN's tagged frames. */
+            parent: string;
         };
         /** @enum {integer} */
         WebSocketCloseCode: 1000 | 1001 | 1008 | 1009 | 4401 | 4403;
@@ -8024,6 +8309,68 @@ export interface operations {
             };
         };
     };
+    GetInstallerNetworkTest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkTestStatus"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    StartInstallerNetworkTest: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NetworkConfig"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkTestStatus"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
     GetInstallerOptions: {
         parameters: {
             query?: never;
@@ -9942,7 +10289,131 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["NetworkInterfaceInfo"][];
+                    "application/json": components["schemas"]["NetworkState"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SetNetworkConfig: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NetworkConfig"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PendingNetworkChange"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    ConfirmNetworkChange: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                changeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    RevertNetworkChange: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                changeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    CheckNetworkConfig: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NetworkConfig"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NetworkCheck"];
                 };
             };
             /** @description Problem details with a stable error code. */

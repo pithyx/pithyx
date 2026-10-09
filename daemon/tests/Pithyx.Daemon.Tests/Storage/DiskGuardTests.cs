@@ -6,7 +6,7 @@ namespace Pithyx.Daemon.Tests.Storage;
 public sealed class DiskGuardTests
 {
     private static readonly MountEntry _root = new("8:3", "/", "ext4", "/dev/sda3");
-    private static readonly DeploymentEnvironment _dev = new(DeploymentKind.Dev, new HashSet<string> { "VYXTEST01", "VYXTEST02", "VYXTEST03" });
+    private static readonly DeploymentEnvironment _dev = new(DeploymentKind.Dev, new HashSet<string> { "VYXTEST01", "VYXTEST02", "VYXTEST03" }, new HashSet<string>());
 
     private static BlockDevice Device(string name, string majorMinor, string type = "part", string? fileSystem = null, string[]? mountPoints = null, params BlockDevice[] children) =>
         new(name, name.StartsWith('/') ? name : $"/dev/{name}", $"id-{name}", majorMinor, type, fileSystem, mountPoints ?? [], children);

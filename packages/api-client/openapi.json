@@ -726,6 +726,74 @@
         }
       }
     },
+    "/api/installer/network/test": {
+      "get": {
+        "tags": [
+          "Installer"
+        ],
+        "operationId": "GetInstallerNetworkTest",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkTestStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Installer"
+        ],
+        "operationId": "StartInstallerNetworkTest",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NetworkConfig"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkTestStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/auth/login": {
       "post": {
         "tags": [
@@ -4166,40 +4234,6 @@
         }
       }
     },
-    "/api/system/network": {
-      "get": {
-        "tags": [
-          "System"
-        ],
-        "description": "Administrators only. The network interfaces with their addresses, gateways, name servers and whether they use DHCP. Read only until host network changes come with their confirmation timer.",
-        "operationId": "GetSystemNetwork",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/NetworkInterfaceInfo"
-                  }
-                }
-              }
-            }
-          },
-          "default": {
-            "description": "Problem details with a stable error code.",
-            "content": {
-              "application/problem+json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ApiProblem"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/system/time": {
       "get": {
         "tags": [
@@ -4326,6 +4360,187 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/network": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. What Pithyx configured, every card, bond and VLAN with link, speed, addresses, gateways and name servers, whether Pithyx may change it here, the interface this connection comes in on and the change that waits for its confirmation. The topic system/network sends the same without the connection's interface.",
+        "operationId": "GetSystemNetwork",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkState"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Applies new settings as one change (systemd-networkd and resolved files, host name). The change is rolled back after 60 seconds unless confirmed; open one of the answer's addresses to confirm when the old address went away.",
+        "operationId": "SetNetworkConfig",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NetworkConfig"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PendingNetworkChange"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/network/check": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Checks new settings without applying them: the stored form, the interfaces that change, whether the host name changes, whether this connection's interface changes, and the static addresses to open afterwards.",
+        "operationId": "CheckNetworkConfig",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NetworkConfig"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NetworkCheck"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/network/changes/{changeId}/confirm": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Keeps the change that waits for its confirmation.",
+        "operationId": "ConfirmNetworkChange",
+        "parameters": [
+          {
+            "name": "changeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/network/changes/{changeId}/revert": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Rolls the change that waits for its confirmation back at once.",
+        "operationId": "RevertNetworkChange",
+        "parameters": [
+          {
+            "name": "changeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
           },
           "default": {
             "description": "Problem details with a stable error code.",
@@ -7645,6 +7860,45 @@
         },
         "description": "A backup the daemon decrypted and checked, kept for a restore for 15 minutes."
       },
+      "BondMode": {
+        "enum": [
+          "activeBackup",
+          "lacp",
+          "balanceAlb"
+        ],
+        "description": "How a bond uses its cards."
+      },
+      "BondSettings": {
+        "required": [
+          "members",
+          "mode"
+        ],
+        "type": "object",
+        "properties": {
+          "members": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The network cards in the bond, at least one; none of them has its own configuration."
+          },
+          "mode": {
+            "description": "How the bond uses its cards.",
+            "$ref": "#/components/schemas/BondMode"
+          },
+          "primary": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "For active-backup: the card that carries the traffic while its link is up."
+          },
+          "lacpRate": {
+            "description": "For LACP: how often the partners exchange their state.",
+            "$ref": "#/components/schemas/LacpRate"
+          }
+        }
+      },
       "CatalogInfo": {
         "required": [
           "key",
@@ -8809,6 +9063,32 @@
           "logs.batch.too_large",
           "logs.query.invalid",
           "logs.settings.invalid",
+          "network.address.invalid",
+          "network.apply.failed",
+          "network.bond.member_invalid",
+          "network.bond.members_missing",
+          "network.bond.primary_invalid",
+          "network.change.empty",
+          "network.change.not_found",
+          "network.change.pending",
+          "network.config.unreachable",
+          "network.default_interface.invalid",
+          "network.dns.invalid",
+          "network.dns.too_many",
+          "network.gateway.invalid",
+          "network.global.not_changeable",
+          "network.host_name.invalid",
+          "network.interface.duplicate",
+          "network.interface.kind_invalid",
+          "network.interface.name_invalid",
+          "network.interface.not_changeable",
+          "network.interface.unknown",
+          "network.mtu.invalid",
+          "network.search_domain.invalid",
+          "network.search_domain.too_many",
+          "network.vlan.duplicate",
+          "network.vlan.id_invalid",
+          "network.vlan.parent_invalid",
           "notifications.message.invalid",
           "notifications.notification.not_found",
           "permissions.grant.invalid",
@@ -9465,6 +9745,42 @@
         },
         "description": "The snapshot of a folder topic: the folder as the watch sees it."
       },
+      "GlobalNetworkConfig": {
+        "required": [
+          "hostName",
+          "dnsServers",
+          "searchDomains"
+        ],
+        "type": "object",
+        "properties": {
+          "hostName": {
+            "type": "string",
+            "description": "The host name: letters, digits and hyphens, 1 to 63 characters. Samba uses its first 15 as the NetBIOS name."
+          },
+          "dnsServers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Name servers, at most four; when set they replace those DHCP and router advertisements announce."
+          },
+          "searchDomains": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Domains tried for short names, at most six."
+          },
+          "defaultInterface": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The interface whose gateway carries the default route when several have one; null leaves it to the metrics."
+          }
+        },
+        "description": "Settings of the whole box."
+      },
       "GrantEntry": {
         "required": [
           "resource",
@@ -9977,6 +10293,18 @@
           "eraseConfirmed": {
             "type": "boolean",
             "description": "The user confirmed that every listed disk is erased."
+          },
+          "network": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "The network of the installed system (step 2), checked like Settings &gt; Network; its host name is Hostname. Null keeps DHCP on every card.",
+                "$ref": "#/components/schemas/NetworkConfig"
+              }
+            ],
+            "description": "Everything Pithyx configures in the network. Cards that are not listed get their address by DHCP."
           }
         },
         "description": "Body of `POST /api/installer/install`."
@@ -10039,6 +10367,7 @@
         "required": [
           "disks",
           "network",
+          "networkConfig",
           "timeZones",
           "keyboardLayouts",
           "minDiskBytes"
@@ -10055,9 +10384,13 @@
           "network": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/NetworkInterfaceInfo"
+              "$ref": "#/components/schemas/NetworkLink"
             },
             "description": "The network cards with their state and addresses."
+          },
+          "networkConfig": {
+            "description": "The network settings of the live system (set on the console, for example), the start of step 2.",
+            "$ref": "#/components/schemas/NetworkConfig"
           },
           "timeZones": {
             "type": "array",
@@ -10174,6 +10507,122 @@
           }
         },
         "description": "Response of `GET /api/installer`."
+      },
+      "InterfaceConfig": {
+        "required": [
+          "name",
+          "kind",
+          "hasAddress"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The interface: the kernel's name of a card, or the name of a bond or VLAN (1 to 15 characters)."
+          },
+          "kind": {
+            "description": "Card, bond or VLAN.",
+            "$ref": "#/components/schemas/InterfaceKind"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "False keeps the link down.",
+            "default": true
+          },
+          "ipv4": {
+            "description": "DHCP, static or off.",
+            "$ref": "#/components/schemas/Ipv4Mode"
+          },
+          "ipv4Address": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "For static: the address with prefix length, for example `192.168.1.10/24`."
+          },
+          "ipv4Gateway": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "For static: the gateway, optional, inside the address's network."
+          },
+          "ipv6": {
+            "description": "Auto (router advertisements and DHCPv6), static or off.",
+            "$ref": "#/components/schemas/Ipv6Mode"
+          },
+          "ipv6Address": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "For static: the address with prefix length, for example `2001:db8::10/64`."
+          },
+          "ipv6Gateway": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "For static: the gateway, optional, inside the address's network or link-local."
+          },
+          "mtu": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The MTU in bytes, 1280 to 9000 (576 without IPv6); null keeps the default.",
+            "format": "int32"
+          },
+          "bond": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "For a bond: its cards and mode.",
+                "$ref": "#/components/schemas/BondSettings"
+              }
+            ]
+          },
+          "vlan": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "For a VLAN: its parent and id.",
+                "$ref": "#/components/schemas/VlanSettings"
+              }
+            ]
+          }
+        },
+        "description": "The settings Pithyx keeps for one interface. A network card without them gets its address by DHCP."
+      },
+      "InterfaceKind": {
+        "enum": [
+          "ethernet",
+          "bond",
+          "vlan"
+        ],
+        "description": "What an interface is: a network card, a bond of cards or a VLAN on a card or bond."
+      },
+      "Ipv4Mode": {
+        "enum": [
+          "dhcp",
+          "static",
+          "off"
+        ],
+        "description": "How an interface gets its IPv4 address.",
+        "default": "dhcp"
+      },
+      "Ipv6Mode": {
+        "enum": [
+          "auto",
+          "static",
+          "off"
+        ],
+        "description": "How an interface gets its IPv6 address: automatically (router advertisements and DHCPv6), static or none.",
+        "default": "auto"
       },
       "Job": {
         "required": [
@@ -10345,6 +10794,14 @@
         "description": "Where a job is in its life. The last four are final and never change again."
       },
       "JsonElement": { },
+      "LacpRate": {
+        "enum": [
+          "slow",
+          "fast"
+        ],
+        "description": "How often LACP partners exchange their state: every 30 seconds or every second.",
+        "default": "slow"
+      },
       "LogArchiveState": {
         "enum": [
           "off",
@@ -10637,59 +11094,334 @@
         },
         "description": "Body of `POST /api/notifications/read`."
       },
-      "NetworkInterfaceInfo": {
+      "NetworkChangeOrigin": {
+        "enum": [
+          "web",
+          "console"
+        ],
+        "description": "Where a change of the network came from."
+      },
+      "NetworkCheck": {
         "required": [
-          "name",
-          "macAddress",
-          "up",
-          "method",
-          "addresses",
-          "gateways",
-          "dnsServers"
+          "config",
+          "interfaces",
+          "hostNameChanged",
+          "connectionAffected",
+          "addresses"
         ],
         "type": "object",
         "properties": {
-          "name": {
-            "type": "string",
-            "description": "The interface, for example `ens18`."
+          "config": {
+            "description": "The settings as they would be stored (canonical form).",
+            "$ref": "#/components/schemas/NetworkConfig"
           },
-          "macAddress": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "description": "Its hardware address, if it has one."
+          "interfaces": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The interfaces whose configuration changes."
           },
-          "up": {
+          "hostNameChanged": {
             "type": "boolean",
-            "description": "Whether the link is up."
+            "description": "Whether the host name changes."
           },
-          "method": {
-            "type": "string",
-            "description": "`dhcp`, `static` or `unknown` when the configuration is not one Pithyx reads."
+          "connectionAffected": {
+            "type": "boolean",
+            "description": "Whether the interface this browser's connection comes in on changes; the page warns."
           },
           "addresses": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "IPv4 and IPv6 addresses with prefix length, for example `192.168.1.20/24`."
+            "description": "Static addresses (without prefix) of the changed interfaces, to open after the change."
+          }
+        },
+        "description": "What a change would do, before it is applied."
+      },
+      "NetworkConfig": {
+        "required": [
+          "interfaces",
+          "global"
+        ],
+        "type": "object",
+        "properties": {
+          "interfaces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InterfaceConfig"
+            },
+            "description": "Cards with their own settings, bonds and VLANs."
+          },
+          "global": {
+            "description": "Host name, name servers, search domains, default route.",
+            "$ref": "#/components/schemas/GlobalNetworkConfig"
+          }
+        },
+        "description": "Everything Pithyx configures in the network. Cards that are not listed get their address by DHCP."
+      },
+      "NetworkLink": {
+        "required": [
+          "name",
+          "kind",
+          "macAddress",
+          "up",
+          "carrier",
+          "speedMbps",
+          "duplex",
+          "mtu",
+          "addresses",
+          "gateways",
+          "dnsServers",
+          "defaultRoute",
+          "master",
+          "vlanParent",
+          "vlanId",
+          "method",
+          "configured",
+          "changeable"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The kernel's name, for example `enp1s0`."
+          },
+          "kind": {
+            "description": "Card, bond or VLAN.",
+            "$ref": "#/components/schemas/InterfaceKind"
+          },
+          "macAddress": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The hardware address."
+          },
+          "up": {
+            "type": "boolean",
+            "description": "Whether the interface is up and its link works."
+          },
+          "carrier": {
+            "type": "boolean",
+            "description": "Whether a cable (or the other end) is connected."
+          },
+          "speedMbps": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The link speed in Mbit/s, when the driver reports it.",
+            "format": "int32"
+          },
+          "duplex": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "`full` or `half`, when the driver reports it."
+          },
+          "mtu": {
+            "type": "integer",
+            "description": "The MTU in bytes.",
+            "format": "int32"
+          },
+          "addresses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "IPv4 and global IPv6 addresses with prefix length."
           },
           "gateways": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "Default gateways of the interface."
+            "description": "The default gateways reached through this interface."
           },
           "dnsServers": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "Name servers the interface uses."
+            "description": "The name servers this interface announced or was given."
+          },
+          "defaultRoute": {
+            "type": "boolean",
+            "description": "Whether this interface carries the default route (the lowest metric)."
+          },
+          "master": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The bond this card belongs to."
+          },
+          "vlanParent": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "For a VLAN: the interface that carries it."
+          },
+          "vlanId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "For a VLAN: its id.",
+            "format": "int32"
+          },
+          "method": {
+            "type": "string",
+            "description": "`dhcp`, `static`, `off` or `unknown`: how its IPv4 address comes."
+          },
+          "configured": {
+            "type": "boolean",
+            "description": "Whether Pithyx keeps settings for it (otherwise a card gets DHCP)."
+          },
+          "changeable": {
+            "type": "boolean",
+            "description": "Whether Pithyx may change it here; on a development machine only the interfaces in `/etc/pithyx/test-nics`."
           }
-        }
+        },
+        "description": "An interface as the system has it now."
+      },
+      "NetworkState": {
+        "required": [
+          "config",
+          "links",
+          "hostName",
+          "globalChangeable",
+          "pending",
+          "confirmSeconds",
+          "connectionInterface"
+        ],
+        "type": "object",
+        "properties": {
+          "config": {
+            "description": "What Pithyx configured.",
+            "$ref": "#/components/schemas/NetworkConfig"
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NetworkLink"
+            },
+            "description": "Every card, bond and VLAN; container bridges and virtual cables are left out."
+          },
+          "hostName": {
+            "type": "string",
+            "description": "The host name the system has now."
+          },
+          "globalChangeable": {
+            "type": "boolean",
+            "description": "Whether Pithyx may change host name, name servers and the default route here; not on a development machine."
+          },
+          "pending": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "The change waiting for its confirmation.",
+                "$ref": "#/components/schemas/PendingNetworkChange"
+              }
+            ],
+            "description": "A change of the network waiting for its confirmation."
+          },
+          "confirmSeconds": {
+            "type": "integer",
+            "description": "How long a change waits for its confirmation before it is rolled back.",
+            "format": "int32"
+          },
+          "connectionInterface": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The interface this browser's connection comes in on, if known; empty in the live topic."
+          }
+        },
+        "description": "The network of the box. Administrators only."
+      },
+      "NetworkTestInterface": {
+        "required": [
+          "name",
+          "up",
+          "addresses",
+          "gateways",
+          "gatewayReachable"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The interface."
+          },
+          "up": {
+            "type": "boolean",
+            "description": "Whether its link came up."
+          },
+          "addresses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The addresses it got."
+          },
+          "gateways": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Its gateways."
+          },
+          "gatewayReachable": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Whether the first gateway answered a ping; null without a gateway."
+          }
+        },
+        "description": "One interface after a connection test of the installer."
+      },
+      "NetworkTestStatus": {
+        "required": [
+          "running",
+          "interfaces",
+          "errorCode",
+          "errorParams"
+        ],
+        "type": "object",
+        "properties": {
+          "running": {
+            "type": "boolean",
+            "description": "Whether the test still runs; the page may lose its connection meanwhile."
+          },
+          "interfaces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NetworkTestInterface"
+            },
+            "description": "What each tested interface got."
+          },
+          "errorCode": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Why the test could not run."
+          },
+          "errorParams": {
+            "type": "object",
+            "description": "Values for its text."
+          }
+        },
+        "description": "The connection test of the installer: the settings are applied, checked and rolled back."
       },
       "NewDesktopItem": {
         "required": [
@@ -11076,6 +11808,55 @@
             "description": "The new password, with the same rules as everywhere."
           }
         }
+      },
+      "PendingNetworkChange": {
+        "required": [
+          "id",
+          "deadline",
+          "interfaces",
+          "addresses",
+          "hostName",
+          "origin"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Pass to confirm or revert it.",
+            "format": "uuid"
+          },
+          "deadline": {
+            "type": "string",
+            "description": "When it is rolled back unless confirmed, UTC.",
+            "format": "date-time"
+          },
+          "interfaces": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The interfaces it changed."
+          },
+          "addresses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Static addresses (without prefix) it set; open one of them when the old address went away."
+          },
+          "hostName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The new host name, when it changed."
+          },
+          "origin": {
+            "description": "Settings in a browser or the menu on the console.",
+            "$ref": "#/components/schemas/NetworkChangeOrigin"
+          }
+        },
+        "description": "A change of the network waiting for its confirmation."
       },
       "PermissionCatalog": {
         "required": [
@@ -14109,6 +14890,7 @@
           "storage/pools",
           "store/admin",
           "system/info",
+          "system/network",
           "system/processes",
           "system/resources",
           "thumbnails/+/+"
@@ -14157,6 +14939,9 @@
           "system/info": {
             "$ref": "#/components/schemas/SystemInfo"
           },
+          "system/network": {
+            "$ref": "#/components/schemas/NetworkState"
+          },
           "system/processes": {
             "$ref": "#/components/schemas/ProcessList"
           },
@@ -14184,6 +14969,7 @@
           "storage/pools",
           "store/admin",
           "system/info",
+          "system/network",
           "system/processes",
           "system/resources",
           "thumbnails/+/+"
@@ -14231,6 +15017,9 @@
           },
           "system/info": {
             "$ref": "#/components/schemas/SystemInfo"
+          },
+          "system/network": {
+            "$ref": "#/components/schemas/NetworkState"
           },
           "system/processes": {
             "$ref": "#/components/schemas/ProcessList"
@@ -14785,6 +15574,24 @@
               "string"
             ],
             "description": "Serial of the disk a leaf is on, as last seen connected, if known."
+          }
+        }
+      },
+      "VlanSettings": {
+        "required": [
+          "parent",
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "parent": {
+            "type": "string",
+            "description": "The network card or bond that carries the VLAN's tagged frames."
+          },
+          "id": {
+            "type": "integer",
+            "description": "The 802.1Q VLAN id, 1 to 4094.",
+            "format": "int32"
           }
         }
       },
