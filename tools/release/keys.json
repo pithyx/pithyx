@@ -1,0 +1,10 @@
+{
+  "$comment": "The public halves of the keys that sign update files and channels (D338), with the channels a box trusts each for. UpdateKeys in the daemon builds in the same keys; a test compares them. pithyx-release-1 (stable and beta) is the owner's and joins once the owner created it with tools/release/create-key.sh.",
+  "keys": [
+    {
+      "keyId": "pithyx-beta-1",
+      "publicKey": "GUjkHR+XBQRaeqK47HMYVuhXwbXEb64gUPs7pGYL/9k=",
+      "channels": ["beta"]
+    }
+  ]
+}

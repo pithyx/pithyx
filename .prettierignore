@@ -5,3 +5,4 @@ packages/api-client/openapi.json
 daemon/
 LICENSE
 sdk/schema/fixtures/
+tools/release/fixtures/

@@ -1,0 +1,79 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pithyx.org/schema/update-channel.v1.schema.json",
+  "title": "Pithyx update channel v1",
+  "description": "`channel.json` of a channel (D338): the newest update file of the channel. The box reads it once a day from its update source, checks `channel.json.sig` (the format of `index-signature.v1.schema.json`) over the exact bytes before it parses it, refuses a lower `sequence` than it saw before, and downloads the file only when the administrator installs it. Readers ignore fields they do not know.",
+  "type": "object",
+  "required": [
+    "channelVersion",
+    "channel",
+    "sequence",
+    "publishedAt",
+    "version",
+    "minimumVersion",
+    "changelog",
+    "file"
+  ],
+  "properties": {
+    "channelVersion": {
+      "description": "The version of this format.",
+      "const": 1
+    },
+    "channel": {
+      "enum": ["stable", "beta"]
+    },
+    "sequence": {
+      "description": "Raised by one with every publish of the channel; a box refuses a lower one, so an old channel cannot be replayed.",
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 9007199254740991
+    },
+    "publishedAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    },
+    "version": {
+      "$ref": "#/$defs/version"
+    },
+    "minimumVersion": {
+      "$ref": "#/$defs/version"
+    },
+    "changelog": {
+      "type": "string",
+      "maxLength": 262144
+    },
+    "file": {
+      "type": "object",
+      "required": ["name", "url", "size", "sha256"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "pattern": "^pithyx-[0-9A-Za-z.-]{5,64}-(amd64|arm64)\\.pithyxupdate$"
+        },
+        "url": {
+          "description": "Where the file is, relative to `channel.json` (for example `../beta-0.2.0/pithyx-0.2.0-amd64.pithyxupdate` next to the release `channel-beta`) or absolute with https.",
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 1024
+        },
+        "size": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 17179869184
+        },
+        "sha256": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{64}$"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "version": {
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(-[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*)?$",
+      "maxLength": 64
+    }
+  }
+}

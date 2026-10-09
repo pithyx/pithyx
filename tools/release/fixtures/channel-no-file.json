@@ -1,0 +1,9 @@
+{
+  "channelVersion": 1,
+  "channel": "stable",
+  "sequence": 12,
+  "publishedAt": "2026-10-09T21:05:00Z",
+  "version": "0.2.0",
+  "minimumVersion": "0.1.0",
+  "changelog": "### Added\n\n- Updates with rollback."
+}

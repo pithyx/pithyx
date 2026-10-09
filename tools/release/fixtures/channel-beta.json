@@ -1,0 +1,15 @@
+{
+  "channelVersion": 1,
+  "channel": "beta",
+  "sequence": 40,
+  "publishedAt": "2026-10-09T21:05:00Z",
+  "version": "0.2.0-beta.3",
+  "minimumVersion": "0.1.0",
+  "changelog": "### Added\n\n- Updates with rollback.",
+  "file": {
+    "name": "pithyx-0.2.0-beta.3-amd64.pithyxupdate",
+    "url": "../beta-0.2.0-beta.3/pithyx-0.2.0-beta.3-amd64.pithyxupdate",
+    "size": 48146112,
+    "sha256": "6c2b3db4662011602543dd15528ae4773de7d8474ca655bdfac59f84b201339d"
+  }
+}

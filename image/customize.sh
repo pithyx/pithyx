@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Runs inside the root file system at the end of image/build.sh (mmdebstrap customize hook, as root in the user
-# namespace). Everything here is the same for the live system and the installed system; only the kernel command line
-# (pithyx.installer) tells them apart.
+# namespace), after the Pithyx packages are installed. Only what belongs to the image goes here; what an update must
+# bring as well lives in the packages (image/deb, tools/release/build-debs.sh). Everything here is the same for the
+# live system and the installed system; only the kernel command line (pithyx.installer) tells them apart.
 #
 #   customize.sh <version> <commit>
 set -euo pipefail
@@ -11,13 +12,13 @@ version="$1"
 commit="$2"
 staged=/tmp/pithyx
 
-# Copied without the build user's ownership.
-cp -r --no-preserve=ownership "$staged/rootfs/." /
-mkdir -p /usr/lib/pithyx
-cp -r --no-preserve=ownership "$staged/daemon" /usr/lib/pithyx/daemon
-cp -r --no-preserve=ownership "$staged/desktop" /usr/lib/pithyx/desktop
-chmod 0755 /usr/lib/pithyx/daemon/pithyxd /usr/lib/pithyx/issue.sh /usr/lib/pithyx/console.sh
-printf 'PITHYX_VERSION=%s\nPITHYX_COMMIT=%s\n' "$version" "$commit" >/usr/lib/pithyx/release
+# The files of image/rootfs that no package owns: /etc/issue belongs to base-files, the console font setting to
+# console-setup, and the environment says this is a box (prod). Copied without the build user's ownership.
+for file in etc/issue etc/default/console-setup etc/pithyx/environment; do
+  install -D --mode=0644 "$staged/rootfs/$file" "/$file"
+done
+grep -qx "PITHYX_VERSION=$version" /usr/lib/pithyx/release || { echo "the pithyx package is not $version" >&2; exit 1; }
+grep -qx "PITHYX_COMMIT=$commit" /usr/lib/pithyx/release || { echo "the pithyx package is not from commit $commit" >&2; exit 1; }
 rm -rf "$staged"
 
 # Linux accounts outside Pithyx stay below its uid and gid range 20000 to 49999 (step 10, Users/LoginDefs.cs).

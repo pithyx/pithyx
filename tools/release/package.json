@@ -1,0 +1,16 @@
+{
+  "name": "@pithyx/release-tools",
+  "private": true,
+  "type": "module",
+  "description": "The release scripts' checks of update files and channels, run against the corpus the daemon runs as well",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "ajv": "^8.20.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.13.6",
+    "vitest": "^5.0.2"
+  }
+}

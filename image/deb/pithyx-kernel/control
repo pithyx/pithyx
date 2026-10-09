@@ -1,0 +1,12 @@
+Package: pithyx-kernel
+Version: @VERSION@
+Architecture: amd64
+Maintainer: Pithyx <https://github.com/pithyx/pithyx>
+Section: kernel
+Priority: optional
+Depends: linux-image-@KVER@ (= @KERNEL_VERSION@), pithyx-zfs-modules-@KVER@ (= @ZFS_VERSION@), zfsutils-linux (= @ZFS_VERSION@)
+Conflicts: zfs-dkms, linux-image-amd64, linux-headers-amd64
+Replaces: zfs-dkms
+Description: The kernel and ZFS module pair of a Pithyx release
+ Pins the kernel and a ZFS module built for exactly that kernel, so they only change together through a Pithyx
+ update and a kernel from Debian can never leave the box without its pools (D297, D338). No dkms on the box.

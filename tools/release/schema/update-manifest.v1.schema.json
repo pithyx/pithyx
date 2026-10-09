@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pithyx.org/schema/update-manifest.v1.schema.json",
+  "title": "Pithyx update file manifest v1",
+  "description": "`manifest.json` at the root of a `.pithyxupdate` (D338): what the file installs and the SHA-256 of every other file in it. `manifest.json.sig` next to it signs its exact bytes (the format of `index-signature.v1.schema.json`); the box checks the signature before it parses the manifest and the hashes before it unpacks anything. Readers ignore fields they do not know.",
+  "type": "object",
+  "required": [
+    "updateVersion",
+    "version",
+    "channel",
+    "minimumVersion",
+    "architecture",
+    "commit",
+    "publishedAt",
+    "kernel",
+    "files",
+    "packages",
+    "changelog"
+  ],
+  "properties": {
+    "updateVersion": {
+      "description": "The version of this format.",
+      "const": 1
+    },
+    "version": {
+      "description": "The Pithyx version the file installs (SemVer).",
+      "$ref": "#/$defs/version"
+    },
+    "channel": {
+      "description": "`stable` for releases on `master`, `beta` for `dev`. A box on the stable channel accepts only stable files.",
+      "enum": ["stable", "beta"]
+    },
+    "minimumVersion": {
+      "description": "The oldest installed version the file can update: every package it leaves out is at least as new on a box of that version.",
+      "$ref": "#/$defs/version"
+    },
+    "architecture": {
+      "enum": ["amd64", "arm64"]
+    },
+    "commit": {
+      "description": "The commit of pithyx/pithyx the packages were built from.",
+      "type": "string",
+      "pattern": "^[0-9a-f]{7,40}$"
+    },
+    "publishedAt": {
+      "type": "string",
+      "format": "date-time",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}Z$"
+    },
+    "kernel": {
+      "description": "The kernel and ZFS module pair of pithyx-kernel.",
+      "type": "object",
+      "required": ["release", "zfs"],
+      "properties": {
+        "release": {
+          "description": "The kernel release, as `uname -r` shows it.",
+          "type": "string",
+          "pattern": "^[0-9][0-9A-Za-z.+~_-]{0,63}$"
+        },
+        "zfs": {
+          "description": "The Debian version of zfsutils-linux and the module.",
+          "$ref": "#/$defs/debianVersion"
+        }
+      }
+    },
+    "files": {
+      "description": "Every file of the update besides `manifest.json` and its signature, in path order. A file the list does not name is refused.",
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 4000,
+      "items": {
+        "type": "object",
+        "required": ["path", "sha256", "size"],
+        "properties": {
+          "path": {
+            "type": "string",
+            "pattern": "^debs/(Packages|Release|[a-z0-9][a-z0-9.+-]{0,127}_[0-9A-Za-z.+~%-]{1,72}_(amd64|arm64|all)\\.deb)$"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967296
+          }
+        }
+      }
+    },
+    "packages": {
+      "description": "The Debian packages in `debs/`, for the history and the dialog. `pithyx` and `pithyx-kernel` are always there.",
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 4000,
+      "items": {
+        "type": "object",
+        "required": ["name", "version", "path"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9.+-]{0,127}$"
+          },
+          "version": {
+            "$ref": "#/$defs/debianVersion"
+          },
+          "path": {
+            "type": "string",
+            "pattern": "^debs/[^/]+\\.deb$"
+          }
+        }
+      }
+    },
+    "changelog": {
+      "description": "The section of CHANGELOG.md for this version, as Markdown.",
+      "type": "string",
+      "maxLength": 262144
+    }
+  },
+  "$defs": {
+    "version": {
+      "type": "string",
+      "pattern": "^(0|[1-9]\\d*)\\.(0|[1-9]\\d*)\\.(0|[1-9]\\d*)(-[0-9A-Za-z-]+(\\.[0-9A-Za-z-]+)*)?$",
+      "maxLength": 64
+    },
+    "debianVersion": {
+      "type": "string",
+      "pattern": "^[0-9A-Za-z.+~:-]{1,64}$"
+    }
+  }
+}

@@ -1,0 +1,409 @@
+[
+  {
+    "name": "stable file on a stable box",
+    "kind": "manifest",
+    "document": "manifest-stable.json",
+    "signature": "manifest-stable.sig",
+    "boxChannel": "stable",
+    "expected": []
+  },
+  {
+    "name": "stable file on a beta box",
+    "kind": "manifest",
+    "document": "manifest-stable.json",
+    "signature": "manifest-stable.sig",
+    "boxChannel": "beta",
+    "expected": []
+  },
+  {
+    "name": "beta file on a beta box",
+    "kind": "manifest",
+    "document": "manifest-beta.json",
+    "signature": "manifest-beta.sig",
+    "boxChannel": "beta",
+    "expected": []
+  },
+  {
+    "name": "beta file by the release key",
+    "kind": "manifest",
+    "document": "manifest-beta.json",
+    "signature": "manifest-beta-by-release-key.sig",
+    "boxChannel": "beta",
+    "expected": []
+  },
+  {
+    "name": "beta file by the release key on a stable box",
+    "kind": "manifest",
+    "document": "manifest-beta.json",
+    "signature": "manifest-beta-by-release-key.sig",
+    "boxChannel": "stable",
+    "expected": [
+      {
+        "code": "update.file.channel",
+        "params": {
+          "channel": "beta",
+          "boxChannel": "stable"
+        }
+      }
+    ]
+  },
+  {
+    "name": "beta key on a stable box",
+    "kind": "manifest",
+    "document": "manifest-stable.json",
+    "signature": "manifest-stable-by-beta-key.sig",
+    "boxChannel": "stable",
+    "expected": [
+      {
+        "code": "update.file.signature_invalid",
+        "params": {
+          "reason": "untrusted"
+        }
+      }
+    ]
+  },
+  {
+    "name": "beta key signs a stable file for a beta box",
+    "kind": "manifest",
+    "document": "manifest-stable.json",
+    "signature": "manifest-stable-by-beta-key.sig",
+    "boxChannel": "beta",
+    "expected": []
+  },
+  {
+    "name": "unknown key",
+    "kind": "manifest",
+    "document": "manifest-stable.json",
+    "signature": "manifest-stable-by-rogue-key.sig",
+    "boxChannel": "stable",
+    "expected": [
+      {
+        "code": "update.file.signature_invalid",
+        "params": {
+          "reason": "untrusted"
+        }
+      }
+    ]
+  },
+  {
+    "name": "wrong key under the release key id",
+    "kind": "manifest",
+    "document": "manifest-stable.json",
+    "signature": "manifest-stable-by-rogue-as-release.sig",
+    "boxChannel": "stable",
+    "expected": [
+      {
+        "code": "update.file.signature_invalid",
+        "params": {
+          "reason": "mismatch"
+        }
+      }
+    ]
+  },
+  {
+    "name": "rotation with an unknown key",
+    "kind": "manifest",
+    "document": "manifest-stable.json",
+    "signature": "manifest-stable-rotation.sig",
+    "boxChannel": "stable",
+    "expected": []
+  },
+  {
+    "name": "tampered manifest",
+    "kind": "manifest",
+    "document": "manifest-stable-tampered.json",
+    "signature": "manifest-stable.sig",
+    "boxChannel": "stable",
+    "expected": [
+      {
+        "code": "update.file.signature_invalid",
+        "params": {
+          "reason": "mismatch"
+        }
+      }
+    ]
+  },
+  {
+    "name": "unsigned",
+    "kind": "manifest",
+    "document": "manifest-stable.json",
+    "signature": null,
+    "boxChannel": "stable",
+    "expected": [
+      {
+        "code": "update.file.signature_invalid",
+        "params": {
+          "reason": "missing"
+        }
+      }
+    ]
+  },
+  {
+    "name": "unsigned on a development box",
+    "kind": "manifest",
+    "document": "manifest-stable.json",
+    "signature": null,
+    "boxChannel": "stable",
+    "allowUnsigned": true,
+    "expected": []
+  },
+  {
+    "name": "a bad signature on a development box",
+    "kind": "manifest",
+    "document": "manifest-stable-tampered.json",
+    "signature": "manifest-stable.sig",
+    "boxChannel": "stable",
+    "allowUnsigned": true,
+    "expected": [
+      {
+        "code": "update.file.signature_invalid",
+        "params": {
+          "reason": "mismatch"
+        }
+      }
+    ]
+  },
+  {
+    "name": "signature not json",
+    "kind": "manifest",
+    "document": "manifest-stable.json",
+    "signature": "malformed-json.sig",
+    "boxChannel": "stable",
+    "expected": [
+      {
+        "code": "update.file.signature_invalid",
+        "params": {
+          "reason": "malformed"
+        }
+      }
+    ]
+  },
+  {
+    "name": "short signature",
+    "kind": "manifest",
+    "document": "manifest-stable.json",
+    "signature": "malformed-short.sig",
+    "boxChannel": "stable",
+    "expected": [
+      {
+        "code": "update.file.signature_invalid",
+        "params": {
+          "reason": "malformed"
+        }
+      }
+    ]
+  },
+  {
+    "name": "no signatures",
+    "kind": "manifest",
+    "document": "manifest-stable.json",
+    "signature": "malformed-empty.sig",
+    "boxChannel": "stable",
+    "expected": [
+      {
+        "code": "update.file.signature_invalid",
+        "params": {
+          "reason": "malformed"
+        }
+      }
+    ]
+  },
+  {
+    "name": "unknown field",
+    "kind": "manifest",
+    "document": "manifest-unknown-field.json",
+    "signature": "manifest-unknown-field.sig",
+    "boxChannel": "stable",
+    "expected": []
+  },
+  {
+    "name": "bad hash and too few files",
+    "kind": "manifest",
+    "document": "manifest-bad-hash.json",
+    "signature": "manifest-bad-hash.sig",
+    "boxChannel": "stable",
+    "expected": [
+      {
+        "code": "update.file.invalid",
+        "params": {}
+      }
+    ]
+  },
+  {
+    "name": "path outside debs",
+    "kind": "manifest",
+    "document": "manifest-path-escape.json",
+    "signature": "manifest-path-escape.sig",
+    "boxChannel": "stable",
+    "expected": [
+      {
+        "code": "update.file.invalid",
+        "params": {}
+      }
+    ]
+  },
+  {
+    "name": "newer format",
+    "kind": "manifest",
+    "document": "manifest-version-2.json",
+    "signature": "manifest-version-2.sig",
+    "boxChannel": "stable",
+    "expected": [
+      {
+        "code": "update.file.invalid",
+        "params": {}
+      }
+    ]
+  },
+  {
+    "name": "a key twice",
+    "kind": "manifest",
+    "document": "manifest-duplicate-key.json",
+    "signature": "manifest-duplicate-key.sig",
+    "boxChannel": "stable",
+    "expected": [
+      {
+        "code": "update.file.invalid",
+        "params": {}
+      }
+    ]
+  },
+  {
+    "name": "stable channel",
+    "kind": "channel",
+    "document": "channel-stable.json",
+    "signature": "channel-stable.sig",
+    "boxChannel": "stable",
+    "expected": []
+  },
+  {
+    "name": "same sequence again",
+    "kind": "channel",
+    "document": "channel-stable.json",
+    "signature": "channel-stable.sig",
+    "boxChannel": "stable",
+    "knownSequence": 12,
+    "expected": []
+  },
+  {
+    "name": "older sequence",
+    "kind": "channel",
+    "document": "channel-stable.json",
+    "signature": "channel-stable.sig",
+    "boxChannel": "stable",
+    "knownSequence": 13,
+    "expected": [
+      {
+        "code": "update.channel.sequence_old",
+        "params": {
+          "sequence": 12,
+          "known": 13
+        }
+      }
+    ]
+  },
+  {
+    "name": "beta channel",
+    "kind": "channel",
+    "document": "channel-beta.json",
+    "signature": "channel-beta.sig",
+    "boxChannel": "beta",
+    "knownSequence": 39,
+    "expected": []
+  },
+  {
+    "name": "beta channel by the release key",
+    "kind": "channel",
+    "document": "channel-beta.json",
+    "signature": "channel-beta-by-release-key.sig",
+    "boxChannel": "beta",
+    "expected": []
+  },
+  {
+    "name": "beta key for the stable channel",
+    "kind": "channel",
+    "document": "channel-stable.json",
+    "signature": "channel-stable-by-beta-key.sig",
+    "boxChannel": "stable",
+    "expected": [
+      {
+        "code": "update.channel.signature_invalid",
+        "params": {
+          "reason": "untrusted"
+        }
+      }
+    ]
+  },
+  {
+    "name": "stable channel read as beta",
+    "kind": "channel",
+    "document": "channel-stable.json",
+    "signature": "channel-stable.sig",
+    "boxChannel": "beta",
+    "expected": [
+      {
+        "code": "update.channel.mismatch",
+        "params": {
+          "channel": "stable",
+          "expected": "beta"
+        }
+      }
+    ]
+  },
+  {
+    "name": "one byte more",
+    "kind": "channel",
+    "document": "channel-stable-trailing-space.json",
+    "signature": "channel-stable.sig",
+    "boxChannel": "stable",
+    "expected": [
+      {
+        "code": "update.channel.signature_invalid",
+        "params": {
+          "reason": "mismatch"
+        }
+      }
+    ]
+  },
+  {
+    "name": "unsigned channel",
+    "kind": "channel",
+    "document": "channel-stable.json",
+    "signature": null,
+    "boxChannel": "stable",
+    "expected": [
+      {
+        "code": "update.channel.signature_invalid",
+        "params": {
+          "reason": "missing"
+        }
+      }
+    ]
+  },
+  {
+    "name": "no file",
+    "kind": "channel",
+    "document": "channel-no-file.json",
+    "signature": "channel-no-file.sig",
+    "boxChannel": "stable",
+    "expected": [
+      {
+        "code": "update.channel.invalid",
+        "params": {}
+      }
+    ]
+  },
+  {
+    "name": "file name with a path",
+    "kind": "channel",
+    "document": "channel-bad-name.json",
+    "signature": "channel-bad-name.sig",
+    "boxChannel": "stable",
+    "expected": [
+      {
+        "code": "update.channel.invalid",
+        "params": {}
+      }
+    ]
+  }
+]

@@ -1,0 +1,16 @@
+{
+  "channelVersion": 1,
+  "channel": "stable",
+  "sequence": 12,
+  "publishedAt": "2026-10-09T21:05:00Z",
+  "version": "0.2.0",
+  "minimumVersion": "0.1.0",
+  "changelog": "### Added\n\n- Updates with rollback.",
+  "file": {
+    "name": "pithyx-0.2.0-amd64.pithyxupdate",
+    "url": "../stable-0.2.0/pithyx-0.2.0-amd64.pithyxupdate",
+    "size": 48146112,
+    "sha256": "59d5a38b4eb03e13a0b73d7699a15b2add7361a9b5b1fead3a02d94e27b4569b"
+  }
+}
+ 

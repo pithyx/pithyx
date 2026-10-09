@@ -1,4 +1,4 @@
-# Managed by pithyx: shipped in the image (image/rootfs).
+# Managed by pithyx: shipped by the package pithyx (image/rootfs).
 [Unit]
 Description=Pithyx console greeting with the addresses of this box
 After=systemd-networkd.service
