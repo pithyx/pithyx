@@ -99,8 +99,8 @@ test('an administrator adds a catalog in the Store settings and installs an app 
     await dialog.getByRole('button', { name: 'Add', exact: true }).click();
     await expect(dialog.getByText('The catalog is being fetched.')).toBeVisible();
     await dialog.getByRole('button', { name: 'Close' }).click();
-    await expect(store.getByText('E2E catalog')).toBeVisible();
-    await expect(store.getByText('Up to date')).toBeVisible();
+    await expect(store.getByText('E2E catalog', { exact: true })).toBeVisible();
+    await expect(store.getByText('Up to date', { exact: true })).toBeVisible();
     await store.getByRole('button', { name: 'Store', exact: true }).click();
   });
 
