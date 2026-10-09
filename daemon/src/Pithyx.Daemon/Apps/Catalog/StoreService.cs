@@ -624,6 +624,16 @@ public sealed partial class StoreService(
             {
                 Directory.Delete(old, recursive: true);
             }
+            // The copy is in memory before the row says ok, so nobody sees an ok catalog without its apps.
+            var copy = ReadCopy(copyFolder, catalogId, row.CatalogKind);
+            var stillThere = (await RowsAsync(cancellationToken)).Any(candidate => candidate.Id == row.Id);
+            lock (_lock)
+            {
+                if (stillThere)
+                {
+                    _copies = new Dictionary<long, CatalogCopy>(_copies) { [row.Id] = copy };
+                }
+            }
             var now = SessionService.Format(time.GetUtcNow());
             await using (var connection = await connections.OpenAsync(cancellationToken))
             {
@@ -634,15 +644,6 @@ public sealed partial class StoreService(
                     WHERE id = @id
                     """,
                     new { catalogId, sequence, now, commit, id = row.Id });
-            }
-            var copy = ReadCopy(copyFolder, catalogId, row.CatalogKind);
-            var stillThere = (await RowsAsync(cancellationToken)).Any(candidate => candidate.Id == row.Id);
-            lock (_lock)
-            {
-                if (stillThere)
-                {
-                    _copies = new Dictionary<long, CatalogCopy>(_copies) { [row.Id] = copy };
-                }
             }
             LogFetched(catalogId, channel, sequence, commit);
         }
