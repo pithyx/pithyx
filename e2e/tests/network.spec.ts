@@ -20,7 +20,7 @@ function card(settings: Locator, name: string) {
 
 async function apply(page: Page, settings: Locator) {
   await settings.getByRole('button', { name: 'Apply…' }).click();
-  const dialog = page.getByRole('dialog', { name: 'Apply network settings' });
+  const dialog = page.getByRole('alertdialog', { name: 'Apply network settings' });
   await expect(dialog).toBeVisible();
   return dialog;
 }
