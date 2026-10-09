@@ -107,7 +107,7 @@
     "rollback": {
       "button": "Back to {version}",
       "title": "Back to the previous version of {name}",
-      "warning": "{version} returns with the app's data as it was before the update. Changes since the update are lost.",
+      "warning": "{version} returns with the app's data as it was before the update. Changes since the update and snapshots of the app taken since are lost.",
       "confirm": "Back to {version}",
       "running": "Going back with {name}",
       "done": "{name} runs version {version} again."

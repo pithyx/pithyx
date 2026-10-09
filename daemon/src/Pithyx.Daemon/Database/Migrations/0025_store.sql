@@ -18,6 +18,8 @@ CREATE TABLE catalogs (
     host_key TEXT,
     -- An optional token to pull the catalog's private images, as user:token.
     registry_token TEXT,
+    -- The registry the token is for: the host of catalog.json's images; other registries never see the token.
+    registry_host TEXT,
     -- The highest sequence verified per channel; a lower one is refused as a replay.
     sequence_stable INTEGER,
     sequence_beta INTEGER,
@@ -69,7 +71,13 @@ CREATE TABLE jobs_new (
     finished_at TEXT
 ) STRICT;
 
+-- Job ids name realtime topics and are never reused: the counter of AUTOINCREMENT moves to the new table.
+CREATE TEMP TABLE jobs_sequence AS SELECT seq FROM sqlite_sequence WHERE name = 'jobs';
 INSERT INTO jobs_new SELECT * FROM jobs;
 DROP TABLE jobs;
 ALTER TABLE jobs_new RENAME TO jobs;
+UPDATE sqlite_sequence SET seq = max(seq, (SELECT seq FROM temp.jobs_sequence)) WHERE name = 'jobs' AND EXISTS (SELECT 1 FROM temp.jobs_sequence);
+INSERT INTO sqlite_sequence (name, seq)
+SELECT 'jobs', seq FROM temp.jobs_sequence WHERE NOT EXISTS (SELECT 1 FROM sqlite_sequence WHERE name = 'jobs');
+DROP TABLE temp.jobs_sequence;
 CREATE INDEX jobs_user_id_created_at ON jobs (user_id, created_at);

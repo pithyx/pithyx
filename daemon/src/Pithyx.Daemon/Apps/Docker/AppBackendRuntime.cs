@@ -351,11 +351,11 @@ public sealed partial class AppBackendRuntime(
     {
         var architecture = ImagesLock.HostArchitecture ?? throw ImagesLock.Invalid("platform");
         // A private catalog's images come with its read token (D328); everything else is pulled anonymously.
-        string? token;
+        (string? Token, string? Host) credentials;
         await using (var connection = await connections.OpenAsync(cancellationToken))
         {
-            token = await connection.ExecuteScalarAsync<string?>(
-                "SELECT c.registry_token FROM apps a JOIN catalogs c ON c.catalog_id = a.catalog_id WHERE a.id = @appId",
+            credentials = await connection.QuerySingleOrDefaultAsync<(string?, string?)>(
+                "SELECT c.registry_token, c.registry_host FROM apps a JOIN catalogs c ON c.catalog_id = a.catalog_id WHERE a.id = @appId",
                 new { appId });
         }
         var ids = new Dictionary<string, string>(StringComparer.Ordinal);
@@ -384,6 +384,8 @@ public sealed partial class AppBackendRuntime(
                     }
                     else
                     {
+                        // The token only goes to the registry it was given for.
+                        var token = credentials.Host is { } host && reference.StartsWith(host + "/", StringComparison.Ordinal) ? credentials.Token : null;
                         await engine.PullAsync(ImagesLock.PullReference(reference, image), architecture, cancellationToken, token);
                     }
                 }

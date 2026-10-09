@@ -309,20 +309,6 @@ function addPackage(
   ) {
     throw new Error('--add needs --source, --repository and --commit');
   }
-  const packageBytes = readFileSync(packagePath);
-  const screenshotFolder = join(request.source, rules.appsFolder, id, rules.screenshots.folder);
-  const screenshots = filesBelow(screenshotFolder)
-    .filter((name) => !name.includes('/'))
-    .map((name) => ({ name, bytes: readFileSync(join(screenshotFolder, name)) }));
-  mkdirSync(screenshots.length > 0 ? join(folder, rules.screenshots.folder) : folder, {
-    recursive: true,
-  });
-  writeFileSync(join(folder, packageName(manifest)), packageBytes);
-  writeFileSync(join(folder, 'pithyx.json'), manifestBytes);
-  writeFileSync(join(folder, 'icon.svg'), icon);
-  for (const shot of screenshots) {
-    writeFileSync(join(folder, rules.screenshots.folder, shot.name), shot.bytes);
-  }
   const lockBytes = files.get(LOCK_FILE);
   const lock = lockBytes === undefined ? null : parseLock(lockBytes);
   if (lockBytes !== undefined && lock === null) {
@@ -336,6 +322,20 @@ function addPackage(
         );
   if (architectures.length === 0) {
     throw new Error(`${packagePath}: no architecture has every image`);
+  }
+  const packageBytes = readFileSync(packagePath);
+  const screenshotFolder = join(request.source, rules.appsFolder, id, rules.screenshots.folder);
+  const screenshots = filesBelow(screenshotFolder)
+    .filter((name) => !name.includes('/'))
+    .map((name) => ({ name, bytes: readFileSync(join(screenshotFolder, name)) }));
+  mkdirSync(screenshots.length > 0 ? join(folder, rules.screenshots.folder) : folder, {
+    recursive: true,
+  });
+  writeFileSync(join(folder, packageName(manifest)), packageBytes);
+  writeFileSync(join(folder, 'pithyx.json'), manifestBytes);
+  writeFileSync(join(folder, 'icon.svg'), icon);
+  for (const shot of screenshots) {
+    writeFileSync(join(folder, rules.screenshots.folder, shot.name), shot.bytes);
   }
   const entry: VersionEntry = {
     publishedAt: timestamp(now),

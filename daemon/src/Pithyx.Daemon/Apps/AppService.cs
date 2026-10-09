@@ -458,18 +458,12 @@ public sealed partial class AppService(
                     {
                         await backends.StopAsync(appId, pool, context.Cancellation);
                     }
-                    if (previous.Snapshot is { } snapshot)
+                    // The registry change waits in its transaction until the files are back, so a failed rollback leaves
+                    // both as they were and the current version starts again.
+                    try
                     {
-                        await storage.RollbackAsync(pool, appId, snapshot, context.Cancellation, discardNewer: true);
-                        await ForgetSnapshotQuietlyAsync(pool, appId, snapshot);
-                    }
-                    else if (storage.RootOf(pool, appId) is { } root)
-                    {
-                        AppVersions.PointBack(root, previous.Version, current.Version);
-                    }
-                    await using (var connection = await connections.OpenAsync(context.Cancellation))
-                    await using (var transaction = await connection.BeginTransactionAsync(context.Cancellation))
-                    {
+                        await using var connection = await connections.OpenAsync(context.Cancellation);
+                        await using var transaction = await connection.BeginTransactionAsync(context.Cancellation);
                         await connection.ExecuteAsync(
                             """
                             UPDATE apps SET version = @version, manifest = @manifest, icon = @icon, package_sha256 = @sha256, source = @source,
@@ -490,7 +484,27 @@ public sealed partial class AppService(
                             transaction);
                         var wanted = previous.Manifest.GetProperty("permissions").EnumerateArray().Select(permission => permission.GetString()!).ToList();
                         await SyncPermissionsAsync(connection, transaction, appId, wanted, previous.Manifest);
-                        await transaction.CommitAsync(context.Cancellation);
+                        if (previous.Snapshot is { } snapshot)
+                        {
+                            await storage.RollbackAsync(pool, appId, snapshot, context.Cancellation, discardNewer: true);
+                        }
+                        else if (storage.RootOf(pool, appId) is { } root)
+                        {
+                            AppVersions.PointBack(root, previous.Version, current.Version);
+                        }
+                        await transaction.CommitAsync(CancellationToken.None);
+                    }
+                    catch
+                    {
+                        if (current.Enabled)
+                        {
+                            await RecoverBackendAsync(pool, appId, Docker.BackendApp.Of(current));
+                        }
+                        throw;
+                    }
+                    if (previous.Snapshot is { } done)
+                    {
+                        await ForgetSnapshotQuietlyAsync(pool, appId, done);
                     }
                     permissions.Invalidate();
                     await registry.ReloadAsync(CancellationToken.None);

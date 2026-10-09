@@ -108,7 +108,7 @@ public sealed partial class StoreService(
         await EnsureDelayAsync(stoppingToken);
         await LoadCopiesAsync(stoppingToken);
         RefreshUpdates();
-        registry.Changed += RefreshUpdates;
+        registry.Changed += RefreshUpdatesLater;
         try
         {
             while (!stoppingToken.IsCancellationRequested)
@@ -133,7 +133,16 @@ public sealed partial class StoreService(
                     // The settings changed; the next check time is worked out again.
                     continue;
                 }
-                await RunCheckAsync(scheduled: true, stoppingToken);
+                try
+                {
+                    await RunCheckAsync(scheduled: true, stoppingToken);
+                }
+#pragma warning disable CA1031 // A failed check is logged; the next one comes tomorrow.
+                catch (Exception exception) when (exception is not OperationCanceledException)
+#pragma warning restore CA1031
+                {
+                    LogCheckFailed(exception);
+                }
             }
         }
         catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
@@ -142,7 +151,7 @@ public sealed partial class StoreService(
         }
         finally
         {
-            registry.Changed -= RefreshUpdates;
+            registry.Changed -= RefreshUpdatesLater;
         }
     }
 
@@ -389,20 +398,38 @@ public sealed partial class StoreService(
         RequireAdmin(caller);
         ArgumentNullException.ThrowIfNull(request);
         var row = await RowAsync(key, cancellationToken);
+        if (request.RegistryToken is { Length: > 0 } candidate
+            && (candidate.Length > 1000 || !candidate.Contains(':', StringComparison.Ordinal) || candidate.Any(char.IsControl)))
+        {
+            throw new PithyxException(ErrorCodes.RequestBodyInvalid);
+        }
+        // The token goes only to the registry the catalog's CI pushes to (catalog.json's images), never to others.
+        string? registryHost = null;
+        if (request.RegistryToken is { Length: > 0 })
+        {
+            Dictionary<long, CatalogCopy> known;
+            lock (_lock)
+            {
+                known = _copies;
+            }
+            registryHost = known.GetValueOrDefault(key)?.Catalog.GetProperty("images").GetString()?.Split('/')[0]
+                ?? throw new PithyxException(ErrorCodes.StoreCatalogNotFound, new Dictionary<string, object?> { ["catalog"] = row.CatalogId ?? row.Url });
+        }
         await using (var connection = await connections.OpenAsync(cancellationToken))
+        await using (var transaction = await connection.BeginTransactionAsync(cancellationToken))
         {
             if (request.Enabled is { } enabled)
             {
-                await connection.ExecuteAsync("UPDATE catalogs SET enabled = @enabled WHERE id = @key", new { enabled = enabled ? 1 : 0, key });
+                await connection.ExecuteAsync("UPDATE catalogs SET enabled = @enabled WHERE id = @key", new { enabled = enabled ? 1 : 0, key }, transaction);
             }
             if (request.RegistryToken is { } token)
             {
-                if (token.Length > 0 && (token.Length > 1000 || !token.Contains(':', StringComparison.Ordinal) || token.Any(char.IsControl)))
-                {
-                    throw new PithyxException(ErrorCodes.RequestBodyInvalid);
-                }
-                await connection.ExecuteAsync("UPDATE catalogs SET registry_token = @token WHERE id = @key", new { token = token.Length == 0 ? null : token, key });
+                await connection.ExecuteAsync(
+                    "UPDATE catalogs SET registry_token = @token, registry_host = @registryHost WHERE id = @key",
+                    new { token = token.Length == 0 ? null : token, registryHost, key },
+                    transaction);
             }
+            await transaction.CommitAsync(cancellationToken);
         }
         if (request.Enabled == true && row.Enabled == 0)
         {
@@ -494,9 +521,14 @@ public sealed partial class StoreService(
         try
         {
             var channel = (await SettingsAsync(cancellationToken)).Channel;
-            foreach (var row in (await RowsAsync(cancellationToken)).Where(row => row.Enabled == 1))
+            foreach (var key in (await RowsAsync(cancellationToken)).Select(row => row.Id))
             {
-                await FetchAsync(row, channel, notify: scheduled, rethrow: false, cancellationToken);
+                // Read again just before its fetch: a sync, a removal or a switch may have changed it meanwhile.
+                var row = (await RowsAsync(cancellationToken)).FirstOrDefault(candidate => candidate.Id == key);
+                if (row is { Enabled: 1 })
+                {
+                    await FetchAsync(row, channel, notify: scheduled, rethrow: false, cancellationToken);
+                }
             }
             await using (var connection = await connections.OpenAsync(cancellationToken))
             {
@@ -553,6 +585,19 @@ public sealed partial class StoreService(
                 known = [pinned];
             }
             var commit = await git.FetchAsync(url, Branch(channel), Path.Combine(root, "repo.git"), row.SshPrivateKey, known, cancellationToken);
+            bool unchanged;
+            lock (_lock)
+            {
+                unchanged = commit == row.VerifiedCommit && row.ErrorCode is null && _copies.TryGetValue(row.Id, out var held)
+                    && held.Folder == Path.Combine(options.Root, row.CatalogId ?? "", ChannelName(channel));
+            }
+            if (unchanged)
+            {
+                // The verified copy is this commit already; nothing to check again.
+                await using var connection = await connections.OpenAsync(cancellationToken);
+                await connection.ExecuteAsync("UPDATE catalogs SET checked_at = @now WHERE id = @id", new { now = SessionService.Format(time.GetUtcNow()), id = row.Id });
+                return;
+            }
             staging = Path.Combine(root, ".staging-" + Guid.NewGuid().ToString("N"));
             await git.CheckoutAsync(Path.Combine(root, "repo.git"), commit, staging, cancellationToken);
             var (catalogId, sequence) = await VerifyAsync(row, channel, staging, cancellationToken);
@@ -591,9 +636,13 @@ public sealed partial class StoreService(
                     new { catalogId, sequence, now, commit, id = row.Id });
             }
             var copy = ReadCopy(copyFolder, catalogId, row.CatalogKind);
+            var stillThere = (await RowsAsync(cancellationToken)).Any(candidate => candidate.Id == row.Id);
             lock (_lock)
             {
-                _copies = new Dictionary<long, CatalogCopy>(_copies) { [row.Id] = copy };
+                if (stillThere)
+                {
+                    _copies = new Dictionary<long, CatalogCopy>(_copies) { [row.Id] = copy };
+                }
             }
             LogFetched(catalogId, channel, sequence, commit);
         }
@@ -700,12 +749,17 @@ public sealed partial class StoreService(
         {
             var path = Path.Combine(folder, name);
             var info = new FileInfo(path);
-            if (!info.Exists || info.LinkTarget is not null || info.Length != file.GetProperty("size").GetInt64()
-                || Convert.ToHexStringLower(SHA256.HashData(File.ReadAllBytes(path))) != file.GetProperty("sha256").GetString())
+            if (!info.Exists || info.LinkTarget is not null || info.Length != file.GetProperty("size").GetInt64() || Sha256Of(path) != file.GetProperty("sha256").GetString())
             {
                 throw new PithyxException(ErrorCodes.StorePackageHashMismatch, new Dictionary<string, object?> { ["path"] = $"apps/{appId}/{version}/{name}" });
             }
         }
+    }
+
+    private static string Sha256Of(string path)
+    {
+        using var stream = File.OpenRead(path);
+        return Convert.ToHexStringLower(SHA256.HashData(stream));
     }
 
     private static CatalogCopy ReadCopy(string folder, string catalogId, CatalogKind kind)
@@ -979,6 +1033,9 @@ public sealed partial class StoreService(
 
     public IReadOnlyList<AppUpdate> Updates => _updates;
 
+    // The registry changes inside install jobs and requests; the updates are worked out after them, never in them.
+    private void RefreshUpdatesLater() => _ = Task.Run(RefreshUpdates);
+
     /// <summary>
     /// Works out the newer versions of installed apps: from the catalog an app came from, or for a sideload from any
     /// enabled catalog that has its id (D308), the official one first; <c>org.pithyx.*</c> only from the official one.
@@ -986,11 +1043,11 @@ public sealed partial class StoreService(
     private void RefreshUpdates()
     {
         List<CatalogCopy> copies;
-        Task<StoreSettings> settingsTask;
+        UpdatePolicy policy;
         try
         {
             copies = EnabledCopies();
-            settingsTask = SettingsAsync(CancellationToken.None);
+            policy = SettingsAsync(CancellationToken.None).GetAwaiter().GetResult().Policy;
         }
 #pragma warning disable CA1031 // A failed refresh keeps the last list; the next change tries again.
         catch (Exception exception)
@@ -999,7 +1056,6 @@ public sealed partial class StoreService(
             LogUpdatesFailed(exception);
             return;
         }
-        var policy = settingsTask.GetAwaiter().GetResult().Policy;
         var updates = new List<AppUpdate>();
         foreach (var app in registry.Apps.Values.OrderBy(app => app.Id, StringComparer.Ordinal))
         {
@@ -1053,7 +1109,9 @@ public sealed partial class StoreService(
                     await apps.StartInstallAsync(JobService.Box, package.Id, new InstallAppRequest(), cancellationToken);
                     LogAutomatic(update.Id, update.Version);
                 }
-                catch (PithyxException problem)
+#pragma warning disable CA1031 // One update that cannot start must not keep the others from starting.
+                catch (Exception problem) when (problem is not OperationCanceledException)
+#pragma warning restore CA1031
                 {
                     LogAutomaticFailed(problem, update.Id, update.Version);
                 }
@@ -1111,6 +1169,9 @@ public sealed partial class StoreService(
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "The copy of catalog {CatalogId} cannot be read")]
     private partial void LogCopyUnreadable(Exception exception, string catalogId);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "The Store's check failed")]
+    private partial void LogCheckFailed(Exception exception);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Working out the app updates failed")]
     private partial void LogUpdatesFailed(Exception exception);
