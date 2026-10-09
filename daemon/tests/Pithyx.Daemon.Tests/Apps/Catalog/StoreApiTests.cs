@@ -317,6 +317,9 @@ public sealed class StoreApiTests : IDisposable
             Assert.Equal("store.catalog.signature_invalid", job.ErrorCode);
         }
         Assert.Empty((await _admin.GetFromJsonAsync<JsonElement>("/api/store/apps", Token)).GetProperty("apps").EnumerateArray());
+        var community = (await _admin.GetFromJsonAsync<JsonElement>("/api/store", Token)).GetProperty("catalogs").EnumerateArray().Single(catalog => catalog.GetProperty("kind").GetString() == "community");
+        // Off and never fetched, it still has its name.
+        Assert.Equal("Community", community.GetProperty("name").GetProperty("en").GetString());
         using var remove = await _admin.DeleteAsync($"/api/store/catalogs/{key}", Token);
         Assert.Equal("store.catalog.built_in", await remove.ErrorCodeAsync());
     }
