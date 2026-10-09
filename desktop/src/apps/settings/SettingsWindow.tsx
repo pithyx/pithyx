@@ -6,6 +6,7 @@ import { backupHost } from '../sdk/backup';
 import { adminStorageHost } from '../sdk/internal';
 import { networkHost } from '../sdk/network';
 import { systemHost } from '../sdk/system';
+import { updatesHost } from '../sdk/updates';
 import { usersHost } from '../sdk/users';
 import { SettingsApp } from './SettingsApp';
 
@@ -20,10 +21,12 @@ export function SettingsWindow({ windowId }: AppProps) {
       internal={(emit) => {
         const storage = adminStorageHost(emit);
         const network = networkHost(emit);
+        const updates = updatesHost(emit);
         return {
           extensions: {
             ...storage.extensions,
             ...network.extensions,
+            ...updates.extensions,
             ...usersHost(),
             ...systemHost(queryClient),
             ...backupHost(),
@@ -31,6 +34,7 @@ export function SettingsWindow({ windowId }: AppProps) {
           close: () => {
             storage.close();
             network.close();
+            updates.close();
           },
         };
       }}

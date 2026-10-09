@@ -1,0 +1,3 @@
+// Managed by pithyx (D295, D338): after every dpkg run, GRUB goes onto every ESP again when its package changed, so a
+// mirror's second disk boots the same GRUB. Kernels need nothing here: they and grub.cfg live on the mirrored system.
+DPkg::Post-Invoke { "if [ -x /usr/lib/pithyx/daemon/pithyxd ] && [ -d /run/systemd/system ]; then /usr/lib/pithyx/daemon/pithyxd esp-sync --if-changed || true; fi"; };

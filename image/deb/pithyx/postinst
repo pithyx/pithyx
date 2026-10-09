@@ -4,7 +4,7 @@
 set -e
 
 if [ "$1" = configure ]; then
-  systemctl enable pithyx.service pithyx-issue.service pithyx-console.service >/dev/null 2>&1 || true
+  systemctl enable pithyx.service pithyx-issue.service pithyx-console.service pithyx-update-health.service >/dev/null 2>&1 || true
   # tty1 belongs to the console menu (D337); the login prompt is on tty2.
   systemctl mask getty@tty1.service autovt@tty1.service >/dev/null 2>&1 || true
   if [ -d /run/systemd/system ]; then

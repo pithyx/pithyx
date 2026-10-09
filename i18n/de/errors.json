@@ -548,5 +548,51 @@
       "not_found": "Der Benutzer wurde nicht gefunden. Vielleicht hat ihn jemand gelöscht.",
       "self": "Du kannst dein eigenes Konto nicht löschen."
     }
+  },
+  "update": {
+    "apply": {
+      "failed": "Das Update ist {step, select, snapshot {beim Snapshot} install {beim Installieren der Pakete} debian {bei den Debian-Updates} bootloader {beim Schreiben von GRUB auf die Platten} health {bei der Prüfung der neuen Version} other {bei {step}}} fehlgeschlagen ({command}, Exit-Code {exitCode}). Kam es über den Snapshot hinaus, ist die Box zur vorherigen Version zurückgekehrt.",
+      "running": "Ein Update oder ein Rollback läuft bereits. Warte, bis die Box neu gestartet ist."
+    },
+    "channel": {
+      "invalid": "Die Datei des Update-Kanals lässt sich nicht lesen; die Box behält, was sie kannte.",
+      "mismatch": "Die Update-Quelle antwortet mit dem Kanal {channel}, diese Box folgt aber {expected}.",
+      "sequence_old": "Die Update-Quelle hat eine ältere Kanaldatei ({sequence}) geschickt, als die Box schon kannte ({known}). Sie wurde ignoriert.",
+      "signature_invalid": "Die Signatur des Update-Kanals ist {reason, select, missing {nicht vorhanden} malformed {beschädigt} untrusted {von einem Schlüssel, dem diese Box nicht vertraut} other {falsch}}. Die Box ignoriert ihn."
+    },
+    "download": {
+      "mismatch": "Die heruntergeladene Update-Datei ist nicht die, die der Kanal nennt. Nichts wurde installiert; versuche es später noch einmal."
+    },
+    "file": {
+      "architecture": "Diese Update-Datei ist für {architecture}, diese Box ist aber {box}.",
+      "channel": "Das ist eine Update-Datei für {channel}, diese Box folgt aber dem Kanal {boxChannel}. Stell den Kanal unter Einstellungen > Updates um, um sie zu installieren.",
+      "hash_mismatch": "Die Update-Datei ist beschädigt: {path} passt nicht zu ihrem Manifest. Lade sie neu herunter.",
+      "invalid": "Das ist keine Pithyx-Update-Datei, oder sie ist beschädigt.",
+      "minimum": "Dieses Update braucht mindestens Pithyx {minimum}; diese Box hat {installed}. Installiere zuerst eine Version dazwischen.",
+      "missing_entry": "Die Update-Datei ist unvollständig: {path} fehlt.",
+      "not_found": "Es gibt keine hochgeladene Update-Datei mehr. Lade sie noch einmal hoch.",
+      "older": "Diese Update-Datei bringt Pithyx {version}, die Box hat aber schon {installed}. Eine ältere Version kommt nur über ein Rollback zurück.",
+      "signature_invalid": "Die Signatur der Update-Datei ist {reason, select, missing {nicht vorhanden} malformed {beschädigt} untrusted {von einem Schlüssel, dem diese Box nicht vertraut} other {falsch}}. Nichts wurde geändert.",
+      "too_large": "Die Update-Datei ist größer als {limit, number} Bytes.",
+      "unexpected_entry": "Die Update-Datei enthält {path}, das ihr Manifest nicht nennt. Nichts wurde geändert."
+    },
+    "none": {
+      "available": "Auf diesem Kanal gibt es keine neuere Version."
+    },
+    "rollback": {
+      "unconfirmed": "Die eingegebene Version passt nicht zu {version}. Nichts wurde geändert."
+    },
+    "snapshot": {
+      "not_found": "Den Snapshot {snapshot} gibt es nicht mehr."
+    },
+    "source": {
+      "unreachable": "Die Update-Quelle ist nicht erreichbar ({reason, select, network {keine Verbindung} timeout {keine Antwort in der Zeit} status {Antwort {status}} missing {der Kanal hat noch kein Release} scheme {nur https ist erlaubt} other {{reason}}}). Die Box versucht es morgen wieder; du kannst stattdessen eine Update-Datei hochladen."
+    },
+    "space": {
+      "insufficient": "Die Systemplatte hat {free, number} Bytes frei, das Update braucht {needed, number}."
+    },
+    "system": {
+      "unsupported": "Updates gelten nur für eine Box, die mit dem Pithyx-Installer installiert wurde. Diese Maschine ist anders aufgebaut ({reason})."
+    }
   }
 }

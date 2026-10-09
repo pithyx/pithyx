@@ -4,6 +4,7 @@ import { useEffect, useState, type ComponentType } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   IconArrowLeft,
+  IconCloudDownload,
   IconFolders,
   IconInfoCircle,
   IconNetwork,
@@ -27,9 +28,18 @@ import { RegionalPage } from './RegionalPage';
 import styles from './Settings.module.css';
 import { sharesKey } from './shares';
 import { SharesPage } from './SharesPage';
+import { UpdatesPage } from './UpdatesPage';
 
 type PageId =
-  'info' | 'network' | 'regional' | 'backup' | 'shares' | 'fileServices' | 'users' | 'groups';
+  | 'info'
+  | 'network'
+  | 'regional'
+  | 'updates'
+  | 'backup'
+  | 'shares'
+  | 'fileServices'
+  | 'users'
+  | 'groups';
 
 interface SettingsPage {
   id: PageId;
@@ -43,6 +53,7 @@ const PAGES: readonly SettingsPage[] = [
   { id: 'info', category: 'system', icon: IconInfoCircle, Component: InfoCenterPage },
   { id: 'network', category: 'system', icon: IconNetwork, Component: NetworkPage },
   { id: 'regional', category: 'system', icon: IconWorld, Component: RegionalPage },
+  { id: 'updates', category: 'system', icon: IconCloudDownload, Component: UpdatesPage },
   { id: 'backup', category: 'system', icon: IconRestore, Component: BackupPage },
   { id: 'shares', category: 'sharing', icon: IconFolders, Component: SharesPage },
   { id: 'fileServices', category: 'sharing', icon: IconServer2, Component: FileServicesPage },

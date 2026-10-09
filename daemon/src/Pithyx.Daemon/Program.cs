@@ -26,11 +26,18 @@ using Pithyx.Daemon.Storage.Health;
 using Pithyx.Daemon.Storage.Snapshots;
 using Pithyx.Daemon.Storage.Zfs;
 using Pithyx.Daemon.SystemSettings;
+using Pithyx.Daemon.Updates;
 using Pithyx.Daemon.Users;
 using Scalar.AspNetCore;
 using Serilog;
 
 const int HttpPort = 7484;
+
+// The updater's verbs (update-apply, update-health, esp-sync, recovery) run without the web host (D338).
+if (args.Length > 0 && UpdateCommands.Verbs.Contains(args[0]))
+{
+    return await UpdateCommands.RunAsync(args);
+}
 
 Tracing.EnsureActivities();
 
@@ -171,6 +178,7 @@ else
     builder.Services.AddSingleton(SystemFiles.Host);
 }
 builder.Services.AddSingleton(DeploymentEnvironment.Load(etcDirectory));
+builder.Services.AddPithyxUpdates(mode, Path.GetDirectoryName(paths.DatabasePath) ?? ".", etcDirectory);
 
 var app = builder.Build();
 
@@ -263,6 +271,7 @@ if (!installer.Active)
     api.MapLogEndpoints();
     api.MapSystemSettingsEndpoints();
     api.MapNetworkEndpoints();
+    api.MapUpdateEndpoints();
     api.MapPowerEndpoint();
     api.MapBackupEndpoints();
     api.MapAppEndpoints();
