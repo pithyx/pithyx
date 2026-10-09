@@ -1,27 +1,30 @@
 #!/usr/bin/env bash
 # Builds the Pithyx installation ISO (D294, D296) without root and without Docker.
 #
-#   image/build.sh [--out <dir>] [--work <dir>] [--mirror <url>] [--no-app-build] [--reuse-rootfs]
+#   image/build.sh [--version <version>] [--out <dir>] [--work <dir>] [--mirror <url>] [--no-app-build] [--reuse-rootfs]
 #
 # The root file system comes from mmdebstrap in unshare mode (subuid and subgid ranges for the user are needed), from
-# Debian 13 pinned to one snapshot.debian.org date, so a build is reproducible. It is packed as a squashfs that the
-# live system boots and the installer later unpacks onto the system disks. The ISO is UEFI only: a FAT image with a
-# standalone GRUB is appended as an EFI system partition, so the same file works on a USB stick and as a virtual CD.
+# Debian 13 pinned to the snapshot.debian.org date of image/debian.env, so a build is reproducible. Pithyx itself comes
+# from the packages of tools/release/build-debs.sh (pithyx, pithyx-kernel and the ZFS module), which this script builds
+# first, so the image and an update file (tools/release/build-update.sh) install the same thing. The root file system
+# is packed as a squashfs that the live system boots and the installer later unpacks onto the system disks. The ISO is
+# UEFI only: a FAT image with a standalone GRUB is appended as an EFI system partition, so the same file works on a USB
+# stick and as a virtual CD. Next to the ISO it writes pithyx-<version>-amd64.packages (every installed package with
+# its version, the base an update file is built against) and keeps the downloaded Debian packages in <work>/archives.
 #
-# --mirror replaces the snapshot with another Debian mirror (for example http://deb.debian.org/debian), which is faster
-# but no longer reproducible. --no-app-build packs the daemon and desktop already built by an earlier run, and
-# --reuse-rootfs packs the root file system of an earlier run again (for work on the boot steps only).
-# Packages needed on the build host: mmdebstrap uidmap squashfs-tools xorriso mtools dosfstools grub-efi-amd64-bin,
-# plus the .NET SDK and pnpm for the daemon and desktop (tools/dev-vm/provision.sh installs them on dev01).
+# --version overrides the version of daemon/Directory.Build.props (see build-debs.sh). --mirror replaces the snapshot
+# with another Debian mirror (for example http://deb.debian.org/debian), which is faster but no longer reproducible.
+# --no-app-build packs the daemon and desktop already built by an earlier run, and --reuse-rootfs packs the root file
+# system of an earlier run again (for work on the boot steps only).
+# Packages needed on the build host: mmdebstrap uidmap squashfs-tools xorriso mtools dosfstools grub-efi-amd64-bin
+# dpkg-dev, plus the .NET SDK and pnpm for the daemon and desktop (tools/dev-vm/provision.sh installs them on dev01).
 set -euo pipefail
 export LC_ALL=C.UTF-8
 
-readonly SNAPSHOT=20261001T000000Z
-readonly SUITE=trixie
-readonly ARCH=amd64
-readonly DOTNET_RID=linux-x64
-
 repo="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=/dev/null
+source "$repo/image/debian.env"
+version=""
 out="$repo/image/out"
 work=""
 mirror=""
@@ -41,10 +44,11 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --out) out="$(realpath -m "$2")"; shift 2 ;;
     --work) work="$(realpath -m "$2")"; shift 2 ;;
+    --version) version="$2"; shift 2 ;;
     --mirror) mirror="$2"; shift 2 ;;
     --no-app-build) app_build=0; shift ;;
     --reuse-rootfs) rootfs_build=0; app_build=0; shift ;;
-    -h | --help) sed -n '2,15p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h | --help) sed -n '2,21p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) die "unknown argument $1" ;;
   esac
 done
@@ -55,11 +59,9 @@ for tool in mmdebstrap newuidmap sqfstar xorriso mcopy mmd grub-mkstandalone; do
 done
 mkfs_fat="$(command -v mkfs.fat || echo /usr/sbin/mkfs.fat)"
 [[ -x "$mkfs_fat" ]] || die "mkfs.fat not found; install dosfstools"
-grep -q "^$(id -un):" /etc/subuid || die "no subuid range for $(id -un); # $1 in the single-quoted hooks is the root directory; mmdebstrap expands it, not this shell.
-# shellcheck disable=SC2016
-mmdebstrap --mode=unshare needs one (usermod --add-subuids)"
+grep -q "^$(id -un):" /etc/subuid || die "no subuid range for $(id -un); mmdebstrap --mode=unshare needs one (usermod --add-subuids)"
 
-version="$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' "$repo/daemon/Directory.Build.props")"
+version="${version:-$(sed -n 's:.*<Version>\(.*\)</Version>.*:\1:p' "$repo/daemon/Directory.Build.props")}"
 [[ -n "$version" ]] || die "no <Version> in daemon/Directory.Build.props"
 commit="$(git -C "$repo" rev-parse --short=12 HEAD)"
 # The commit time makes every timestamp in the image the same for the same commit.
@@ -84,55 +86,41 @@ if [[ "$rootfs_build" == 1 ]]; then
   rm -f "$work/rootfs.tar"
 fi
 
-if [[ "$app_build" == 1 ]]; then
-  step "daemon $version ($commit)"
-  rm -rf "$work/daemon"
-  dotnet publish "$repo/daemon/src/Pithyx.Daemon" --configuration Release --runtime "$DOTNET_RID" --self-contained \
-    --nologo --verbosity quiet -p:SourceRevisionId="$commit" --output "$work/daemon"
-  step "desktop"
-  [[ -d "$repo/node_modules" ]] || pnpm --dir "$repo" install --frozen-lockfile
-  env -C "$repo/desktop" pnpm exec vite build --logLevel warn
-  rm -rf "$work/desktop"
-  cp -a "$repo/desktop/dist" "$work/desktop"
-fi
-[[ -x "$work/daemon/pithyxd" && -f "$work/desktop/index.html" ]] || die "no daemon or desktop build in $work; run without --no-app-build"
-
-packages=(
-  # Boot, live system and the tools the installer uses on the target disks.
-  linux-image-amd64 linux-headers-amd64 initramfs-tools live-boot systemd-sysv systemd-resolved systemd-timesyncd
-  dbus udev kmod grub-efi-amd64 efibootmgr gdisk dosfstools mdadm btrfs-progs squashfs-tools
-  intel-microcode amd64-microcode firmware-linux-free firmware-realtek
-  # What the daemon needs (TODO.md, Image build v0.1).
-  zfs-dkms zfsutils-linux samba openssh-server smartmontools acl
-  # App backends (D309): Debian's Docker, disabled until the daemon starts it for a backend app, and nftables for the
-  # rule that keeps containers away from the host's services.
-  docker.io docker-cli docker-compose nftables
-  # Store catalogs (D328): git fetches them, openssh-client reaches private ones with their deploy key.
-  git openssh-client
-  # Console, region and administration.
-  locales console-setup keyboard-configuration kbd tzdata ca-certificates iproute2 iputils-ping qrencode
-  inotify-tools less nano procps zstd
-)
-
 if [[ "$rootfs_build" == 1 ]]; then
+  debs_options=(--version "$version" --out "$out" --work "$work")
+  [[ "$app_build" == 1 ]] || debs_options+=(--no-app-build)
+  "$repo/tools/release/build-debs.sh" "${debs_options[@]}"
+  debs_version="$(sed -n 's/^VERSION=//p' "$out/debs/debs.env")"
+  kver="$(sed -n 's/^KVER=//p' "$out/debs/debs.env")"
+  [[ "$debs_version" == "$version" && -n "$kver" ]] || die "the packages in $out/debs are not $version"
+  # The packages pithyx depends on and its kernel come in with mmdebstrap; the three Pithyx packages are local files,
+  # installed by apt inside the root file system once it exists.
+  packages="$(grep -v '^\s*#' "$repo/image/deb/pithyx/depends" | tr -s ' \n' ',' | sed 's/^,//; s/,$//'),linux-image-$kver"
+  rm -rf "$work/archives" "$work/manifest"
   step "root file system ($SUITE, ${mirror:-snapshot $SNAPSHOT})"
-  # $1 in the single-quoted hooks is the root directory; mmdebstrap expands it, not this shell.
+  # $1 in the single-quoted hooks is the root directory; mmdebstrap expands it, not this shell. The Debian packages
+  # stay in apt's cache until the cleanup (essential/unlink skipped), so the hooks can copy them out for update files.
   # shellcheck disable=SC2016
   mmdebstrap --mode=unshare --variant=apt --architectures="$ARCH" \
     --components="main contrib non-free-firmware" \
-    --include="$(IFS=,; echo "${packages[*]}")" \
+    --include="$packages" \
+    --skip=essential/unlink \
     --aptopt='Acquire::Check-Valid-Until "false"' \
     --aptopt='Acquire::Retries "5"' \
-    --customize-hook='mkdir -p "$1/tmp/pithyx/rootfs" "$1/tmp/pithyx/daemon" "$1/tmp/pithyx/desktop"' \
+    --customize-hook='mkdir -p "$1/tmp/pithyx/rootfs" "$1/tmp/pithyx/debs" "$1/tmp/pithyx-out"' \
     --customize-hook="sync-in '$repo/image/rootfs' /tmp/pithyx/rootfs" \
-    --customize-hook="sync-in '$work/daemon' /tmp/pithyx/daemon" \
-    --customize-hook="sync-in '$work/desktop' /tmp/pithyx/desktop" \
+    --customize-hook="sync-in '$out/debs' /tmp/pithyx/debs" \
+    --customize-hook='chroot "$1" sh -c "DEBIAN_FRONTEND=noninteractive apt-get install --yes --no-install-recommends /tmp/pithyx/debs/*.deb"' \
+    --customize-hook='chroot "$1" dpkg-query --show --showformat="\${Package}\t\${Version}\t\${Architecture}\n" >"$1/tmp/pithyx-out/packages"' \
+    --customize-hook="sync-out /tmp/pithyx-out '$work/manifest'" \
+    --customize-hook="sync-out /var/cache/apt/archives '$work/archives'" \
     --customize-hook="copy-in '$repo/image/customize.sh' /tmp/pithyx" \
     --customize-hook="chroot \"\$1\" /bin/bash /tmp/pithyx/customize.sh '$version' '$commit'" \
     "$SUITE" "$work/rootfs.tar" \
     "deb $debian $SUITE main contrib non-free-firmware" \
     "deb $debian $SUITE-updates main contrib non-free-firmware" \
     "deb $security $SUITE-security main contrib non-free-firmware"
+  LC_ALL=C sort "$work/manifest/packages" >"$out/pithyx-$version-$ARCH.packages"
 fi
 [[ -f "$work/rootfs.tar" ]] || die "no root file system in $work; run without --reuse-rootfs"
 
@@ -148,8 +136,8 @@ kernel="$(grep -E '^\./boot/vmlinuz-' "$work/rootfs.list" | sort -V | tail -n1)"
 kernel_version="${kernel#./boot/vmlinuz-}"
 tar -xOf "$work/rootfs.tar" "$kernel" >"$work/staging/live/vmlinuz"
 tar -xOf "$work/rootfs.tar" "./boot/initrd.img-$kernel_version" >"$work/staging/live/initrd.img"
-grep -qF "./usr/lib/modules/$kernel_version/updates/dkms/zfs.ko" "$work/rootfs.list" \
-  || die "the ZFS module was not built for $kernel_version"
+grep -qF "./usr/lib/modules/$kernel_version/updates/zfs/zfs.ko" "$work/rootfs.list" \
+  || die "no ZFS module for $kernel_version in the root file system"
 
 step "EFI boot image"
 marker="pithyx-$version-$commit"

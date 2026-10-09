@@ -1,0 +1,33 @@
+{
+  "updateVersion": 1,
+  "version": "0.2.0",
+  "channel": "stable",
+  "minimumVersion": "0.1.0",
+  "architecture": "amd64",
+  "commit": "c2e871a0f3b1",
+  "publishedAt": "2026-10-09T21:00:00Z",
+  "kernel": {
+    "release": "6.12.111+deb13-amd64",
+    "zfs": "2.3.9-0+deb13u1"
+  },
+  "files": [
+    {
+      "path": "debs/Packages",
+      "sha256": "abc",
+      "size": 1
+    }
+  ],
+  "packages": [
+    {
+      "name": "pithyx",
+      "version": "0.2.0",
+      "path": "debs/pithyx_0.2.0_amd64.deb"
+    },
+    {
+      "name": "pithyx-kernel",
+      "version": "0.2.0",
+      "path": "debs/pithyx-kernel_0.2.0_amd64.deb"
+    }
+  ],
+  "changelog": "### Added\n\n- Updates with rollback."
+}

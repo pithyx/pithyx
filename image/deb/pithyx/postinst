@@ -1,0 +1,14 @@
+#!/bin/sh
+# Managed by pithyx (image/deb/pithyx). Enables the units of the box. Nothing restarts here: an update reboots into the
+# new version after its snapshot, and the running daemon must not stop in the middle of its own update.
+set -e
+
+if [ "$1" = configure ]; then
+  systemctl enable pithyx.service pithyx-issue.service pithyx-console.service >/dev/null 2>&1 || true
+  # tty1 belongs to the console menu (D337); the login prompt is on tty2.
+  systemctl mask getty@tty1.service autovt@tty1.service >/dev/null 2>&1 || true
+  if [ -d /run/systemd/system ]; then
+    systemctl daemon-reload >/dev/null 2>&1 || true
+  fi
+fi
+exit 0

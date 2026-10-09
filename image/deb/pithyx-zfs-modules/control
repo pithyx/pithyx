@@ -1,0 +1,12 @@
+Package: pithyx-zfs-modules-@KVER@
+Version: @ZFS_VERSION@
+Architecture: amd64
+Maintainer: Pithyx <https://github.com/pithyx/pithyx>
+Section: kernel
+Priority: optional
+Depends: linux-image-@KVER@ (= @KERNEL_VERSION@)
+Provides: zfs-modules
+Conflicts: zfs-dkms
+Description: ZFS modules built for linux-image-@KVER@
+ OpenZFS @ZFS_VERSION@ built by zfs-dkms from the same Debian snapshot as the kernel, packed so the box needs no
+ compiler and no dkms.

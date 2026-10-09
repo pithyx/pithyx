@@ -1,0 +1,15 @@
+{
+  "channelVersion": 1,
+  "channel": "stable",
+  "sequence": 12,
+  "publishedAt": "2026-10-09T21:05:00Z",
+  "version": "0.2.0",
+  "minimumVersion": "0.1.0",
+  "changelog": "### Added\n\n- Updates with rollback.",
+  "file": {
+    "name": "../../evil.pithyxupdate",
+    "url": "x",
+    "size": 1,
+    "sha256": "2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881"
+  }
+}

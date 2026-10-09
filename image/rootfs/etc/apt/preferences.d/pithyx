@@ -1,0 +1,12 @@
+# Managed by pithyx (D297, D338): the kernel and the ZFS packages change only together, through a Pithyx update file
+# that brings a tested pair. A kernel or ZFS update from Debian alone could leave the box without its pools, so apt
+# never takes them from Debian.
+Explanation: kernel and ZFS only through Pithyx updates
+Package: linux-image-* linux-headers-* linux-kbuild-* zfs* libzfs* libzpool* libnvpair* libuutil* spl*
+Pin: release o=Debian
+Pin-Priority: -1
+
+Explanation: the Pithyx packages never come from Debian
+Package: pithyx pithyx-*
+Pin: release o=Debian
+Pin-Priority: -1

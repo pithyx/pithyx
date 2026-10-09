@@ -1,0 +1,28 @@
+{
+  "$comment": "Test keys of the update corpus, derived from the seed sha256(\"pithyx update corpus test key <keyId>\") by tools/fixtures/update-signatures.ts. They sign fixtures only and are never trusted by a box. test-release signs for stable and beta like pithyx-release-1, test-beta for beta like pithyx-beta-1, test-rogue for nothing.",
+  "keys": [
+    {
+      "keyId": "test-release",
+      "seed": "9dc9b26ac7ec1a8b13510e70cece22de55d5c0311b4f9fc4f83b20fe9c641f08",
+      "publicKey": "sixNtoP5AFf5nH7eNZ5NerpiyWVk5qSoPb6wT5gO64M=",
+      "channels": [
+        "stable",
+        "beta"
+      ]
+    },
+    {
+      "keyId": "test-beta",
+      "seed": "f8a900f945ddb5ff3898181beb09be55e1c2212e36d7d4328b3a002d9ea481e4",
+      "publicKey": "JCPDBkCN3VyeHAQXe90zc3jpeo9omqqTJen8tZKaF9c=",
+      "channels": [
+        "beta"
+      ]
+    },
+    {
+      "keyId": "test-rogue",
+      "seed": "01581daa16471c5ea6707c6af08401ee5b9c5324c849b2e7745aa46341f0a44f",
+      "publicKey": "EQE2mLuDsNnUk2NW2qIO1vJzzII/sWK4sKheI+i9I3Q=",
+      "channels": []
+    }
+  ]
+}

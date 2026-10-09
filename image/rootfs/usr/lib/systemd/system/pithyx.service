@@ -1,4 +1,4 @@
-# Managed by pithyx: shipped in the image (image/rootfs). The same unit runs the installer on the live system, where
+# Managed by pithyx: shipped by the package pithyx (image/rootfs). The same unit runs the installer on the live system, where
 # the kernel command line carries pithyx.installer, and the NAS on the installed system.
 [Unit]
 Description=Pithyx daemon

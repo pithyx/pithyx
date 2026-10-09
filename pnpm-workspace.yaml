@@ -4,6 +4,7 @@ packages:
   - sdk
   - packages/*
   - e2e
+  - tools/release
 
 # pnpm 12 refuses packages published less than a day ago (supply-chain policy). If an install fails with
 # ERR_PNPM_MINIMUM_RELEASE_AGE_VIOLATION, pin the newest older version instead of adding exclusions.

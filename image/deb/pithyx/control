@@ -1,0 +1,11 @@
+Package: pithyx
+Version: @VERSION@
+Architecture: amd64
+Maintainer: Pithyx <https://github.com/pithyx/pithyx>
+Section: admin
+Priority: optional
+Depends: pithyx-kernel (= @VERSION@), @DEPENDS@
+Homepage: https://github.com/pithyx/pithyx
+Description: Pithyx, a self-hosted NAS and server system with a web desktop
+ The daemon, the desktop, the console menu, the systemd units and the update keys of a Pithyx box. Installed by the
+ image and replaced by update files; the kernel and the ZFS module come with pithyx-kernel.

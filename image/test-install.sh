@@ -256,6 +256,12 @@ admin() {
   printf '%s' "$answer"
 }
 
+# The kernel and the ZFS module come as a pair from pithyx-kernel (D338): zpool loads the module on its first call, and
+# a module built for another kernel would fail here.
+step "checking that the ZFS module loads"
+admin /storage/import/scan -X POST -o /dev/null || die "zpool cannot run on the installed system; serial logs in $vm"
+echo "zpool answers: the ZFS module fits the kernel"
+
 # Waits until a Python expression over GET /api/system/network is true.
 wait_network() {
   local expression="$1" seconds="$2" via=("${@:3}") deadline=$((SECONDS + $2)) state=""

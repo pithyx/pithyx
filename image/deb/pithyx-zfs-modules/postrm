@@ -1,0 +1,7 @@
+#!/bin/sh
+# Managed by pithyx (image/deb/pithyx-zfs-modules).
+set -e
+if [ -d /usr/lib/modules/@KVER@ ]; then
+  depmod -a @KVER@
+fi
+exit 0
