@@ -33,7 +33,8 @@ export function CatalogAppPage({
 }) {
   const { t, i18n } = useTranslation('store');
   const locale = useFormatLocale();
-  const [installing, setInstalling] = useState(false);
+  // Whether the dialog updates is fixed when it opens: the page learns of the install before the dialog closes.
+  const [installing, setInstalling] = useState<{ update: boolean } | null>(null);
   const details = useQuery({
     queryKey: ['store', 'details', entry.catalog, entry.id],
     queryFn: () =>
@@ -79,7 +80,7 @@ export function CatalogAppPage({
               <Button
                 variant="primary"
                 onPress={() => {
-                  setInstalling(true);
+                  setInstalling({ update: installed });
                 }}
               >
                 <IconDownload size={16} stroke={1.75} aria-hidden />
@@ -204,10 +205,10 @@ export function CatalogAppPage({
           </>
         )}
       </article>
-      {installing && (
+      {installing !== null && (
         <InstallDialog
           app={app}
-          {...(installed ? { updating: name } : {})}
+          {...(installing.update ? { updating: name } : {})}
           catalog={{
             catalog: summary.catalog,
             appId: summary.id,
@@ -215,7 +216,7 @@ export function CatalogAppPage({
             verified: summary.kind !== 'custom',
           }}
           onClose={() => {
-            setInstalling(false);
+            setInstalling(null);
           }}
         />
       )}
