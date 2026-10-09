@@ -26,6 +26,7 @@ public static class AppEndpoints
         if (!Hosting.BuildTimeDocument.IsGenerating)
         {
             services.AddHostedService(provider => provider.GetRequiredService<Catalog.StoreService>());
+            services.AddHostedService<Catalog.StoreChangePublisher>();
         }
         services.AddSingleton(provider => Catalog.StoreService.AdminDefinition(provider.GetRequiredService<Catalog.StoreService>));
         services.AddSingleton(docker ?? new Docker.DockerOptions(Apply: false));

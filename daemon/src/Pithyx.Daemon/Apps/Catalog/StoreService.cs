@@ -188,7 +188,7 @@ public sealed partial class StoreService(
         var channel = values.TryGetValue(ChannelSetting, out var c) && c == "beta" ? StoreChannel.Beta : StoreChannel.Stable;
         var delay = values.TryGetValue(DelaySetting, out var d) && int.TryParse(d, NumberStyles.None, CultureInfo.InvariantCulture, out var seconds) ? seconds : 0;
         DateTimeOffset? last = values.TryGetValue(LastCheckSetting, out var l) ? DateTimeOffset.Parse(l, CultureInfo.InvariantCulture) : null;
-        return new StoreSettings(policy, checkTime, channel, NextCheck(checkTime, delay, time.GetUtcNow(), TimeZoneInfo.Local), last);
+        return new StoreSettings(policy, checkTime, channel, NextCheck(checkTime, delay, time.GetUtcNow(), TimeZoneInfo.Local).ToUniversalTime(), last?.ToUniversalTime());
     }
 
     public async Task<StoreSettings> SetSettingsAsync(ClaimsPrincipal caller, StoreSettingsRequest request, CancellationToken cancellationToken)
@@ -1181,4 +1181,38 @@ public sealed partial class StoreService(
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "The automatic update of {AppId} to {Version} could not start")]
     private partial void LogAutomaticFailed(Exception exception, string appId, string version);
+}
+
+/// <summary>Publishes <c>store/admin</c> when the Store's catalogs, updates or settings change.</summary>
+public sealed partial class StoreChangePublisher(TopicHub hub, StoreService store, ILogger<StoreChangePublisher> logger) : IHostedService
+{
+    public Task StartAsync(CancellationToken cancellationToken)
+    {
+        store.Changed += Publish;
+        return Task.CompletedTask;
+    }
+
+    public Task StopAsync(CancellationToken cancellationToken)
+    {
+        store.Changed -= Publish;
+        return Task.CompletedTask;
+    }
+
+    // The state reads the database; it is published off the caller's thread.
+    private void Publish() => _ = Task.Run(async () =>
+    {
+        try
+        {
+            hub.Publish(StoreService.Topic, await store.StateAsync(CancellationToken.None));
+        }
+#pragma warning disable CA1031 // A lost event is repaired by the next one; subscribers get a snapshot on subscribe.
+        catch (Exception exception)
+#pragma warning restore CA1031
+        {
+            LogPublishFailed(exception);
+        }
+    });
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Publishing the Store's state failed")]
+    private partial void LogPublishFailed(Exception exception);
 }

@@ -458,6 +458,9 @@ public sealed partial class AppService(
                     {
                         await backends.StopAsync(appId, pool, context.Cancellation);
                     }
+                    // A box that installs updates on its own would bring the version just left back at its next check:
+                    // the app announces them from now on (D336).
+                    var automatic = (current.UpdatePolicy ?? await BoxUpdatePolicyAsync(context.Cancellation)) == Catalog.UpdatePolicy.Automatic;
                     // The registry change waits in its transaction until the files are back, so a failed rollback leaves
                     // both as they were and the current version starts again.
                     try
@@ -467,7 +470,8 @@ public sealed partial class AppService(
                         await connection.ExecuteAsync(
                             """
                             UPDATE apps SET version = @version, manifest = @manifest, icon = @icon, package_sha256 = @sha256, source = @source,
-                                catalog_id = @catalogId, previous = NULL, updated_at = @now
+                                catalog_id = @catalogId, previous = NULL, updated_at = @now,
+                                update_policy = CASE WHEN @automatic THEN 'notify' ELSE update_policy END
                             WHERE id = @appId
                             """,
                             new
@@ -480,6 +484,7 @@ public sealed partial class AppService(
                                 source = previous.Source,
                                 catalogId = previous.CatalogId,
                                 now = SessionService.Format(time.GetUtcNow()),
+                                automatic,
                             },
                             transaction);
                         var wanted = previous.Manifest.GetProperty("permissions").EnumerateArray().Select(permission => permission.GetString()!).ToList();
@@ -530,6 +535,13 @@ public sealed partial class AppService(
             registry.End(appId);
             throw;
         }
+    }
+
+    private async Task<Catalog.UpdatePolicy> BoxUpdatePolicyAsync(CancellationToken cancellationToken)
+    {
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        var value = await connection.ExecuteScalarAsync<string?>("SELECT value FROM settings WHERE key = @key", new { key = Catalog.StoreService.PolicySetting });
+        return Enum.TryParse<Catalog.UpdatePolicy>(value, ignoreCase: true, out var policy) ? policy : Catalog.UpdatePolicy.Notify;
     }
 
     /// <summary>Sets the app's own update policy (D329); null follows the box's.</summary>

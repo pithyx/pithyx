@@ -84,7 +84,8 @@ export function AppPage({
   const { t, i18n } = useTranslation('store');
   const locale = useFormatLocale();
   const [updating, setUpdating] = useState<'file' | 'catalog' | null>(null);
-  const [rollingBack, setRollingBack] = useState(false);
+  // The version is kept while the dialog is open: the rollback clears it on the app before the dialog closes.
+  const [rollingBack, setRollingBack] = useState<string | null>(null);
   const facts = manifestFacts(details.manifest);
   const name = manifestText(facts.name, i18n.language);
   const description =
@@ -183,7 +184,7 @@ export function AppPage({
               <Button
                 isDisabled={details.busy}
                 onPress={() => {
-                  setRollingBack(true);
+                  setRollingBack(details.previousVersion);
                 }}
               >
                 <IconHistory size={16} stroke={1.75} aria-hidden />
@@ -360,14 +361,14 @@ export function AppPage({
           }}
         />
       )}
-      {rollingBack && details.previousVersion !== null && (
+      {rollingBack !== null && (
         <RollbackDialog
           app={app}
           appId={appId}
           name={name}
-          version={details.previousVersion}
+          version={rollingBack}
           onClose={() => {
-            setRollingBack(false);
+            setRollingBack(null);
           }}
         />
       )}

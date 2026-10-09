@@ -238,6 +238,10 @@ public sealed class StoreApiTests : IDisposable
         app = await AppAsync();
         Assert.Equal("1.0.0", app.GetProperty("version").GetString());
         Assert.Equal(JsonValueKind.Null, app.GetProperty("previousVersion").ValueKind);
+        // Under the automatic policy the next check would bring 1.1.0 back: the app announces updates from now on.
+        Assert.Equal("notify", app.GetProperty("updatePolicy").GetString());
+        await CheckAsync();
+        Assert.Equal("1.0.0", (await AppAsync()).GetProperty("version").GetString());
         using (var again = await _admin.PostAsync($"/api/apps/{AppId}/rollback", null, Token))
         {
             Assert.Equal("app.app.no_previous", await again.ErrorCodeAsync());
