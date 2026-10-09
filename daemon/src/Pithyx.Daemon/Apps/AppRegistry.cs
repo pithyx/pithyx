@@ -285,7 +285,7 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
 /// Publishes <c>apps</c>, <c>apps/admin</c> and every app's <c>apps/&lt;id&gt;/context</c> when the registry, the rights
 /// or the pools change.
 /// </summary>
-public sealed partial class AppChangePublisher(TopicHub hub, AppRegistry registry, AppContexts contexts, PermissionService permissions, PoolInventory pools, Proxy.AppBackends backends, Catalog.StoreService store, ILogger<AppChangePublisher> logger) : IHostedService
+public sealed class AppChangePublisher(TopicHub hub, AppRegistry registry, AppContexts contexts, PermissionService permissions, PoolInventory pools, Proxy.AppBackends backends) : IHostedService
 {
     public Task StartAsync(CancellationToken cancellationToken)
     {
@@ -293,7 +293,6 @@ public sealed partial class AppChangePublisher(TopicHub hub, AppRegistry registr
         permissions.Changed += Publish;
         pools.Changed += Publish;
         backends.Changed += PublishContext;
-        store.Changed += PublishStore;
         return Task.CompletedTask;
     }
 
@@ -303,27 +302,8 @@ public sealed partial class AppChangePublisher(TopicHub hub, AppRegistry registr
         permissions.Changed -= Publish;
         pools.Changed -= Publish;
         backends.Changed -= PublishContext;
-        store.Changed -= PublishStore;
         return Task.CompletedTask;
     }
-
-    // The Store's state reads the database; it is published off the caller's thread.
-    private void PublishStore() => _ = Task.Run(async () =>
-    {
-        try
-        {
-            hub.Publish(Catalog.StoreService.Topic, await store.StateAsync(CancellationToken.None));
-        }
-#pragma warning disable CA1031 // A lost event is repaired by the next one; subscribers get a snapshot on subscribe.
-        catch (Exception exception)
-#pragma warning restore CA1031
-        {
-            LogStorePublishFailed(exception);
-        }
-    });
-
-    [LoggerMessage(Level = LogLevel.Warning, Message = "Publishing the Store's state failed")]
-    private partial void LogStorePublishFailed(Exception exception);
 
     // A backend that starts or stops changes only its app's context.
     private void PublishContext(string appId) => hub.Publish(AppContexts.TopicOf(appId), contexts.SourceOf(appId));

@@ -1,6 +1,6 @@
 import type { PithyxApp } from '@pithyx/sdk';
 import { Badge, Button, Dialog, Switch, TextField } from '@pithyx/ui';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ErrorNotice } from '../../errors/ErrorNotice';
@@ -15,7 +15,7 @@ import {
 } from '../sdk/store';
 import { describeProblem, formatDate } from '../storage/shared';
 import { InstallDialog } from './InstallDialog';
-import { catalogName } from './storeState';
+import { catalogName, storeKey } from './storeState';
 import styles from './Store.module.css';
 
 const POLICIES: readonly UpdatePolicy[] = ['automatic', 'notify', 'none'];
@@ -37,7 +37,10 @@ export function StoreSettings({
   const { t } = useTranslation('store');
   const locale = useFormatLocale();
   const ids = useId();
-  const settings = state.settings;
+  const queryClient = useQueryClient();
+  // Choices show at once; the daemon's answer and the topic replace them, an error drops them (optimistic).
+  const [pending, setPending] = useState<{ policy?: UpdatePolicy; channel?: StoreChannel }>({});
+  const settings = { ...state.settings, ...pending };
   const [time, setTime] = useState(settings.time);
   const [adding, setAdding] = useState(false);
   const [installing, setInstalling] = useState(false);
@@ -49,6 +52,21 @@ export function StoreSettings({
         time: change.time ?? settings.time,
         channel: change.channel ?? settings.channel,
       }),
+    onMutate: (change) => {
+      setPending((current) => ({
+        ...current,
+        ...(change.policy === undefined ? {} : { policy: change.policy }),
+        ...(change.channel === undefined ? {} : { channel: change.channel }),
+      }));
+    },
+    onSuccess: (saved) => {
+      queryClient.setQueryData<StoreState>(storeKey, (current) =>
+        current === undefined ? current : { ...current, settings: saved },
+      );
+    },
+    onSettled: () => {
+      setPending({});
+    },
   });
   const check = useMutation({
     mutationFn: () => storeCall(app, 'internal.admin.store.check', {}),
