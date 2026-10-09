@@ -117,11 +117,26 @@ public sealed class DockerEngine(DockerOptions options) : IDisposable
         return DockerResponses.LoadedImages(await response.Content.ReadAsStringAsync(cancellationToken));
     }
 
-    /// <summary>Pulls an image by its platform manifest's digest (<c>name@sha256:...</c>) for one architecture.</summary>
-    public async Task PullAsync(string reference, string architecture, CancellationToken cancellationToken)
+    /// <summary>
+    /// Pulls an image by its platform manifest's digest (<c>name@sha256:...</c>) for one architecture, with
+    /// <paramref name="credentials"/> (<c>user:token</c>) for a private registry.
+    /// </summary>
+    public async Task PullAsync(string reference, string architecture, CancellationToken cancellationToken, string? credentials = null)
     {
         var query = $"images/create?fromImage={Uri.EscapeDataString(reference)}&platform={Uri.EscapeDataString("linux/" + architecture)}";
-        using var response = await _client.PostAsync(query, null, cancellationToken);
+        using var request = new HttpRequestMessage(HttpMethod.Post, query);
+        if (credentials is not null && credentials.IndexOf(':', StringComparison.Ordinal) is var colon and > 0)
+        {
+            var registry = reference[..Math.Max(reference.IndexOf('/', StringComparison.Ordinal), 0)];
+            var auth = JsonSerializer.SerializeToUtf8Bytes(new Dictionary<string, string>
+            {
+                ["username"] = credentials[..colon],
+                ["password"] = credentials[(colon + 1)..],
+                ["serveraddress"] = registry,
+            });
+            request.Headers.Add("X-Registry-Auth", Convert.ToBase64String(auth).Replace('+', '-').Replace('/', '_'));
+        }
+        using var response = await _client.SendAsync(request, cancellationToken);
         await RequireSuccessAsync(response, cancellationToken);
         // The answer is a stream of progress lines; an error arrives as a line, with status 200.
         if (DockerResponses.StreamError(await response.Content.ReadAsStringAsync(cancellationToken)) is { } error)

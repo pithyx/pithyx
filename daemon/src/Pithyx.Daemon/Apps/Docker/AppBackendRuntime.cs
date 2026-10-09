@@ -115,7 +115,7 @@ public sealed partial class AppBackendRuntime(
         var lockFile = ImagesLock.Parse(await File.ReadAllBytesAsync(Path.Combine(version, ImagesLock.FileName), cancellationToken))
             ?? throw ImagesLock.Invalid("invalid");
         progress?.Invoke(new Jobs.JobProgress(1, 3, 0, 0, "images"));
-        var images = await ImagesAsync(version, lockFile, cancellationToken);
+        var images = await ImagesAsync(app.AppId, version, lockFile, cancellationToken);
 
         var composeHost = new ComposeHost(
             (int)app.Uid,
@@ -347,9 +347,17 @@ public sealed partial class AppBackendRuntime(
     }
 
     /// <summary>Brings every image of the lock in by its digest and returns each reference with its checked id.</summary>
-    private async Task<IReadOnlyDictionary<string, string>> ImagesAsync(string version, ImagesLock lockFile, CancellationToken cancellationToken)
+    private async Task<IReadOnlyDictionary<string, string>> ImagesAsync(string appId, string version, ImagesLock lockFile, CancellationToken cancellationToken)
     {
         var architecture = ImagesLock.HostArchitecture ?? throw ImagesLock.Invalid("platform");
+        // A private catalog's images come with its read token (D328); everything else is pulled anonymously.
+        string? token;
+        await using (var connection = await connections.OpenAsync(cancellationToken))
+        {
+            token = await connection.ExecuteScalarAsync<string?>(
+                "SELECT c.registry_token FROM apps a JOIN catalogs c ON c.catalog_id = a.catalog_id WHERE a.id = @appId",
+                new { appId });
+        }
         var ids = new Dictionary<string, string>(StringComparer.Ordinal);
         foreach (var (reference, platforms) in lockFile.Images)
         {
@@ -376,7 +384,7 @@ public sealed partial class AppBackendRuntime(
                     }
                     else
                     {
-                        await engine.PullAsync(ImagesLock.PullReference(reference, image), architecture, cancellationToken);
+                        await engine.PullAsync(ImagesLock.PullReference(reference, image), architecture, cancellationToken, token);
                     }
                 }
                 catch (DockerEngineException exception)
