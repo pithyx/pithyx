@@ -206,6 +206,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- The Store's settings name the project's catalogs (Pithyx, Community) before a box has fetched them, instead of showing their ids.
 - The Store after its proof on 7484 (D336): the rollback dialog stays open until the rollback ends, the settings' choices show at once, the next and last check times are sent in UTC, a rollback under the automatic policy makes the app announce updates instead of installing the version it left again, and the build-time OpenAPI run no longer builds the Store's services.
 - The Log Center keeps what an app's backend writes while the app is being installed; the output of a first start (and of a start that fails) was dropped because the app was not in the registry yet.
 - `@pithyx/ui` builds its CSS module types before its declarations, so `pnpm --filter @pithyx/ui build` from a fresh checkout no longer reports TS2375 errors (the generic `*.module.css` type gave `string | undefined` class names).

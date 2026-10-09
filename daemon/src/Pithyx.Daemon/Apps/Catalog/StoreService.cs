@@ -337,7 +337,7 @@ public sealed partial class StoreService(
             row.Url,
             row.Enabled == 1,
             row.CatalogKind != CatalogKind.Custom,
-            copy is null ? null : Texts(copy.Catalog, "name"),
+            copy is null ? _projectNames.GetValueOrDefault(row.CatalogKind) : Texts(copy.Catalog, "name"),
             copy is null ? null : Texts(copy.Catalog, "description"),
             copy is not null && copy.Catalog.TryGetProperty("homepage", out var homepage) ? homepage.GetString() : null,
             row.SshPublicKey,
@@ -1133,6 +1133,16 @@ public sealed partial class StoreService(
         element.TryGetProperty(property, out var texts) && texts.ValueKind == JsonValueKind.Object
             ? texts.EnumerateObject().Where(text => text.Value.ValueKind == JsonValueKind.String).ToDictionary(text => text.Name, text => text.Value.GetString()!, StringComparer.Ordinal)
             : null;
+
+    /// <summary>
+    /// The names the project's catalogs give themselves in their catalog.json, shown until a box has fetched them once
+    /// (the community catalog stays unfetched while it is off).
+    /// </summary>
+    private static readonly Dictionary<CatalogKind, IReadOnlyDictionary<string, string>> _projectNames = new()
+    {
+        [CatalogKind.Official] = new Dictionary<string, string> { ["en"] = "Pithyx", ["de"] = "Pithyx" },
+        [CatalogKind.Community] = new Dictionary<string, string> { ["en"] = "Community", ["de"] = "Community" },
+    };
 
     private static DateTimeOffset? Time(string? value) => value is null ? null : DateTimeOffset.Parse(value, CultureInfo.InvariantCulture);
 
