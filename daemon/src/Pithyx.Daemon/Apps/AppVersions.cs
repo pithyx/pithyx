@@ -6,9 +6,11 @@ namespace Pithyx.Daemon.Apps;
 /// Puts a checked package into an app's dataset as <c>versions/&lt;version&gt;</c> and points <c>current</c> at it, with
 /// the registry change (<c>commit</c>) as the last step. An update first takes a held snapshot of the dataset; when any
 /// step fails, the dataset returns to it (or, without a snapshot, the new files go and the old ones come back), the
-/// registry stays as it was, and the snapshot is released and destroyed either way. The frontend is always served
-/// from the version the registry names, so a half-done switch is never visible; <c>published</c> runs after the commit
-/// and before the old versions go, so the served registry never names a deleted folder.
+/// registry stays as it was, and the snapshot is released and destroyed. After a successful update the snapshot and the
+/// previous version's folder stay for a rollback (D329) until the next update; <c>commit</c> gets the snapshot's name to
+/// record it. The frontend is always served from the version the registry names, so a half-done switch is never
+/// visible; <c>published</c> runs after the commit and before older versions go, so the served registry never names a
+/// deleted folder.
 /// </summary>
 public static class AppVersions
 {
@@ -19,7 +21,7 @@ public static class AppVersions
         UnpackedPackage package,
         string version,
         bool update,
-        Func<CancellationToken, Task> commit,
+        Func<string?, CancellationToken, Task> commit,
         CancellationToken cancellationToken,
         Func<Task>? published = null)
     {
@@ -32,7 +34,10 @@ public static class AppVersions
         var current = Path.Combine(root, AppStorage.CurrentLink);
         var previousLink = new FileInfo(current).LinkTarget;
         var target = Path.Combine(versions, version);
+        // The version that ran before stays next to the new one for a rollback, unless it is the same version again.
+        var kept = previousLink is null ? null : Path.GetFullPath(Path.Combine(root, previousLink));
         string? replaced = null;
+        var succeeded = false;
         try
         {
             var incoming = Path.Combine(versions, ".incoming-" + Guid.NewGuid().ToString("N"));
@@ -44,7 +49,8 @@ public static class AppVersions
             }
             Directory.Move(incoming, target);
             PointCurrent(current, Path.Combine(AppStorage.VersionsFolder, version));
-            await commit(cancellationToken);
+            await commit(snapshot, cancellationToken);
+            succeeded = true;
         }
         catch
         {
@@ -60,7 +66,7 @@ public static class AppVersions
         }
         finally
         {
-            if (snapshot is not null)
+            if (snapshot is not null && !succeeded)
             {
                 await storage.ForgetSnapshotAsync(pool, appId, snapshot, CancellationToken.None);
             }
@@ -69,10 +75,23 @@ public static class AppVersions
         {
             await published();
         }
-        // Only the installed version stays; the snapshot of the next update covers the way back.
-        foreach (var entry in Directory.EnumerateFileSystemEntries(versions).Where(entry => entry != target))
+        // The installed version and, after an update, the one before it stay; the snapshot covers its data.
+        foreach (var entry in Directory.EnumerateFileSystemEntries(versions).Where(entry => entry != target && !(update && Path.GetFullPath(entry) == kept)))
         {
             Delete(entry);
+        }
+    }
+
+    /// <summary>
+    /// Goes back to the version before the last update without a snapshot (simulation): <c>current</c> points at its
+    /// kept folder again and the newer version's folder goes. With ZFS the rollback of the snapshot does this.
+    /// </summary>
+    public static void PointBack(string root, string previousVersion, string currentVersion)
+    {
+        PointCurrent(Path.Combine(root, AppStorage.CurrentLink), Path.Combine(AppStorage.VersionsFolder, previousVersion));
+        if (previousVersion != currentVersion)
+        {
+            Delete(Path.Combine(root, AppStorage.VersionsFolder, currentVersion));
         }
     }
 

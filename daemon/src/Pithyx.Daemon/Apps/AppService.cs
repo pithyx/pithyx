@@ -69,7 +69,16 @@ public sealed partial class AppService(
     {
         RequireAdmin(caller);
         ArgumentNullException.ThrowIfNull(request);
-        var userId = CurrentUser.Id(caller);
+        return await StartInstallAsync(CurrentUser.Id(caller), packageId, request, cancellationToken);
+    }
+
+    /// <summary>
+    /// The install or update of a package that <paramref name="userId"/> staged, as a job of that user, or of the box
+    /// (<see cref="JobService.Box"/>) for an automatic update.
+    /// </summary>
+    public async Task<Job> StartInstallAsync(long userId, string packageId, InstallAppRequest request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
         var package = packages.Get(userId, packageId);
         var appId = package.AppId;
         var pool = ChoosePool(request.Pool);
@@ -110,7 +119,7 @@ public sealed partial class AppService(
                             backendStates.SetStatus(appId, Proxy.AppBackends.Updating);
                         }
                         await AppVersions.InstallAsync(storage, pool, appId, package.Package, package.Version, update: installed is not null,
-                            async token =>
+                            async (snapshot, token) =>
                             {
                                 var next = await NextBackendAsync(package, installed, token);
                                 // A required folder can only be mapped once the app is installed; its backend starts then.
@@ -121,7 +130,7 @@ public sealed partial class AppService(
                                     {
                                         await backends.StartAsync(pool, next, context.Report, token);
                                     }
-                                    await CommitAsync(package, pool, access, installed, token);
+                                    await CommitAsync(package, pool, access, installed, snapshot, token);
                                 }
                                 catch
                                 {
@@ -145,6 +154,11 @@ public sealed partial class AppService(
                     {
                         await RecoverBackendAsync(pool, appId, previous);
                         throw;
+                    }
+                    // The snapshot of the update before this one is not needed any more: one way back is kept.
+                    if (installed?.Previous?.Snapshot is { } older)
+                    {
+                        await ForgetSnapshotQuietlyAsync(pool, appId, older);
                     }
                     if (previousImages.Count > 0)
                     {
@@ -368,6 +382,11 @@ public sealed partial class AppService(
                     {
                         await backends.StopAsync(appId, pool, context.Cancellation);
                     }
+                    // The held snapshot of the last update would keep the dataset from going; without the app it has no use.
+                    if (pool is not null && removed?.Previous?.Snapshot is { } snapshot)
+                    {
+                        await ForgetSnapshotQuietlyAsync(pool, appId, snapshot);
+                    }
                     await using (var connection = await connections.OpenAsync(context.Cancellation))
                     {
                         await connection.ExecuteAsync("DELETE FROM apps WHERE id = @appId", new { appId });
@@ -408,6 +427,111 @@ public sealed partial class AppService(
             registry.End(appId);
             throw;
         }
+    }
+
+    /// <summary>
+    /// Goes back to the version before the last update as a job (D329): its backend stops, the app's dataset returns to
+    /// the update's snapshot (its data with it; in simulation only the kept folder), the registry names the previous
+    /// version, manifest and permissions again, and its backend starts from the images kept for it.
+    /// </summary>
+    public async Task<Job> RollbackAsync(ClaimsPrincipal caller, string appId, CancellationToken cancellationToken)
+    {
+        RequireAdmin(caller);
+        var app = RequireInstalled(appId);
+        var previous = app.Previous ?? throw new PithyxException(ErrorCodes.AppAppNoPrevious, new Dictionary<string, object?> { ["id"] = appId });
+        var pool = registry.Pool ?? throw new PithyxException(ErrorCodes.AppAppNoPrevious, new Dictionary<string, object?> { ["id"] = appId });
+        storage.RequirePool(pool);
+        if (!registry.TryBegin(appId))
+        {
+            throw new PithyxException(ErrorCodes.AppAppBusy, new Dictionary<string, object?> { ["id"] = appId });
+        }
+        try
+        {
+            return await jobs.StartAsync(CurrentUser.Id(caller), "apps.rollback", new { id = appId, version = previous.Version, from = app.Version }, async context =>
+            {
+                try
+                {
+                    var current = registry.Find(appId) ?? throw NotFound(appId);
+                    var hadBackend = Docker.BackendApp.Of(current).HasBackend;
+                    var images = hadBackend ? Docker.ImagesLock.HostImages(LockOf(pool, current)) : new HashSet<string>();
+                    if (hadBackend)
+                    {
+                        await backends.StopAsync(appId, pool, context.Cancellation);
+                    }
+                    if (previous.Snapshot is { } snapshot)
+                    {
+                        await storage.RollbackAsync(pool, appId, snapshot, context.Cancellation, discardNewer: true);
+                        await ForgetSnapshotQuietlyAsync(pool, appId, snapshot);
+                    }
+                    else if (storage.RootOf(pool, appId) is { } root)
+                    {
+                        AppVersions.PointBack(root, previous.Version, current.Version);
+                    }
+                    await using (var connection = await connections.OpenAsync(context.Cancellation))
+                    await using (var transaction = await connection.BeginTransactionAsync(context.Cancellation))
+                    {
+                        await connection.ExecuteAsync(
+                            """
+                            UPDATE apps SET version = @version, manifest = @manifest, icon = @icon, package_sha256 = @sha256, source = @source,
+                                catalog_id = @catalogId, previous = NULL, updated_at = @now
+                            WHERE id = @appId
+                            """,
+                            new
+                            {
+                                appId,
+                                version = previous.Version,
+                                manifest = previous.Manifest.GetRawText(),
+                                icon = Convert.FromBase64String(previous.Icon),
+                                sha256 = previous.Sha256,
+                                source = previous.Source,
+                                catalogId = previous.CatalogId,
+                                now = SessionService.Format(time.GetUtcNow()),
+                            },
+                            transaction);
+                        var wanted = previous.Manifest.GetProperty("permissions").EnumerateArray().Select(permission => permission.GetString()!).ToList();
+                        await SyncPermissionsAsync(connection, transaction, appId, wanted, previous.Manifest);
+                        await transaction.CommitAsync(context.Cancellation);
+                    }
+                    permissions.Invalidate();
+                    await registry.ReloadAsync(CancellationToken.None);
+                    if (registry.Find(appId) is { Enabled: true } restored && Docker.BackendApp.Of(restored) is { HasBackend: true } next
+                        && Docker.AppBackendRuntime.UnmappedRequired(next).Count == 0)
+                    {
+                        await backends.StartAsync(pool, next, context.Report, context.Cancellation);
+                    }
+                    if (images.Count > 0)
+                    {
+                        await ForgetImagesAsync(images, lastBackend: false);
+                    }
+                    LogRolledBack(appId, previous.Version, current.Version);
+                }
+                finally
+                {
+                    registry.End(appId);
+                }
+            }, cancellationToken);
+        }
+        catch
+        {
+            registry.End(appId);
+            throw;
+        }
+    }
+
+    /// <summary>Sets the app's own update policy (D329); null follows the box's.</summary>
+    public async Task<AppDetails> SetUpdatePolicyAsync(ClaimsPrincipal caller, string appId, Catalog.AppUpdatePolicyRequest request, CancellationToken cancellationToken)
+    {
+        RequireAdmin(caller);
+        ArgumentNullException.ThrowIfNull(request);
+        RequireInstalled(appId);
+        await using (var connection = await connections.OpenAsync(cancellationToken))
+        {
+            await connection.ExecuteAsync(
+                "UPDATE apps SET update_policy = @policy WHERE id = @appId",
+                new { policy = request.Policy?.ToString().ToLowerInvariant(), appId });
+        }
+        await registry.ReloadAsync(cancellationToken);
+        return registry.Details(RequireInstalled(appId));
     }
 
     /// <summary>The icon of an app the caller may use (or any app for administrators).</summary>
@@ -454,7 +578,8 @@ public sealed partial class AppService(
             package.Package.UnpackedBytes,
             package.Package.CompressedBytes,
             package.Package.Sha256,
-            SuggestedAccess(package.Manifest));
+            SuggestedAccess(package.Manifest),
+            package.Origin?.Catalog);
     }
 
     /// <summary>
@@ -525,6 +650,10 @@ public sealed partial class AppService(
             foreach (var app in registry.Apps.Values)
             {
                 kept.UnionWith(Docker.ImagesLock.HostImages(LockOf(pool, app)));
+                if (app.Previous is { } previous)
+                {
+                    kept.UnionWith(Docker.ImagesLock.HostImages(LockOf(pool, app.Id, previous.Version)));
+                }
             }
         }
         try
@@ -540,20 +669,38 @@ public sealed partial class AppService(
     }
 
     /// <summary>The images lock of an installed version, or null.</summary>
-    private byte[]? LockOf(string pool, InstalledApp app)
+    private byte[]? LockOf(string pool, InstalledApp app) => LockOf(pool, app.Id, app.Version);
+
+    private byte[]? LockOf(string pool, string appId, string version)
     {
-        var path = storage.RootOf(pool, app.Id) is { } root ? Path.Combine(root, AppStorage.VersionsFolder, app.Version, Docker.ImagesLock.FileName) : null;
+        var path = storage.RootOf(pool, appId) is { } root ? Path.Combine(root, AppStorage.VersionsFolder, version, Docker.ImagesLock.FileName) : null;
         return path is not null && File.Exists(path) ? File.ReadAllBytes(path) : null;
+    }
+
+    private async Task ForgetSnapshotQuietlyAsync(string pool, string appId, string snapshot)
+    {
+        try
+        {
+            await storage.ForgetSnapshotAsync(pool, appId, snapshot, CancellationToken.None);
+        }
+#pragma warning disable CA1031 // A snapshot left behind takes space but breaks nothing.
+        catch (Exception exception)
+#pragma warning restore CA1031
+        {
+            LogSnapshotForgetFailed(exception, appId, snapshot);
+        }
     }
 
     private static bool RunsBackend(InstalledApp app) => app.Enabled && Docker.BackendApp.Of(app).HasBackend;
 
     /// <summary>The registry change of an install or update, in one transaction: the last step of <see cref="AppVersions"/>.</summary>
-    private async Task CommitAsync(CheckedPackage package, string pool, AppAccess access, InstalledApp? installed, CancellationToken cancellationToken)
+    private async Task CommitAsync(CheckedPackage package, string pool, AppAccess access, InstalledApp? installed, string? snapshot, CancellationToken cancellationToken)
     {
         var appId = package.AppId;
         var now = SessionService.Format(time.GetUtcNow());
         var manifest = package.Manifest.GetRawText();
+        var source = package.Origin is null ? "sideload" : "catalog";
+        var catalogId = package.Origin?.Catalog;
         await using var connection = await connections.OpenAsync(cancellationToken);
         await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
         if (installed is null)
@@ -568,10 +715,10 @@ public sealed partial class AppService(
             var uid = await UidAllocator.AllocateAppAsync(connection, transaction, appId, now);
             await connection.ExecuteAsync(
                 """
-                INSERT INTO apps (id, version, manifest, source, icon, package_sha256, uid, enabled, installed_at, updated_at)
-                VALUES (@appId, @version, @manifest, 'sideload', @icon, @sha256, @uid, 1, @now, @now)
+                INSERT INTO apps (id, version, manifest, source, catalog_id, icon, package_sha256, uid, enabled, installed_at, updated_at)
+                VALUES (@appId, @version, @manifest, @source, @catalogId, @icon, @sha256, @uid, 1, @now, @now)
                 """,
-                new { appId, version = package.Version, manifest, icon = package.Icon, sha256 = package.Package.Sha256, uid, now },
+                new { appId, version = package.Version, manifest, source, catalogId, icon = package.Icon, sha256 = package.Package.Sha256, uid, now },
                 transaction);
             if (access == AppAccess.Everybody)
             {
@@ -587,19 +734,27 @@ public sealed partial class AppService(
         }
         else
         {
+            var oldIcon = await connection.ExecuteScalarAsync<byte[]>("SELECT icon FROM apps WHERE id = @appId", new { appId }, transaction);
+            // The version that ran until now, for "back to version x" with the snapshot (D329).
+            var previous = JsonSerializer.Serialize(
+                new AppPrevious(installed.Version, installed.Manifest, Convert.ToBase64String(oldIcon ?? []), installed.Sha256, installed.Source, installed.CatalogId, snapshot, time.GetUtcNow()),
+                AppRegistry.PreviousJson);
             await connection.ExecuteAsync(
-                "UPDATE apps SET version = @version, manifest = @manifest, icon = @icon, package_sha256 = @sha256, updated_at = @now WHERE id = @appId",
-                new { appId, version = package.Version, manifest, icon = package.Icon, sha256 = package.Package.Sha256, now },
+                """
+                UPDATE apps SET version = @version, manifest = @manifest, icon = @icon, package_sha256 = @sha256, source = @source, catalog_id = @catalogId,
+                    previous = @previous, updated_at = @now
+                WHERE id = @appId
+                """,
+                new { appId, version = package.Version, manifest, icon = package.Icon, sha256 = package.Package.Sha256, source, catalogId, previous, now },
                 transaction);
         }
-        await SyncPermissionsAsync(connection, transaction, appId, package);
+        await SyncPermissionsAsync(connection, transaction, appId, package.Permissions, package.Manifest);
         await transaction.CommitAsync(cancellationToken);
     }
 
     /// <summary>New permissions of the manifest are granted, dropped ones go, revoked ones stay revoked; so do storage mappings.</summary>
-    private static async Task SyncPermissionsAsync(DbConnection connection, DbTransaction transaction, string appId, CheckedPackage package)
+    private static async Task SyncPermissionsAsync(DbConnection connection, DbTransaction transaction, string appId, IReadOnlyList<string> permissions, JsonElement manifest)
     {
-        var permissions = package.Permissions;
         await connection.ExecuteAsync("DELETE FROM app_permissions WHERE app_id = @appId AND permission NOT IN @permissions", new { appId, permissions }, transaction);
         foreach (var permission in permissions)
         {
@@ -608,7 +763,7 @@ public sealed partial class AppService(
                 new { appId, permission },
                 transaction);
         }
-        var storageIds = package.Manifest.TryGetProperty("storage", out var storage)
+        var storageIds = manifest.TryGetProperty("storage", out var storage)
             ? storage.EnumerateArray().Select(request => request.GetProperty("id").GetString()!).ToList()
             : [];
         await connection.ExecuteAsync("DELETE FROM storage_mappings WHERE app_id = @appId AND storage_id NOT IN @storageIds", new { appId, storageIds }, transaction);
@@ -764,6 +919,12 @@ public sealed partial class AppService(
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Removing images that no app needs any more failed")]
     private partial void LogForgetFailed(Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Rolled app {AppId} back to {Version} (from {From})")]
+    private partial void LogRolledBack(string appId, string version, string from);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Destroying snapshot {Snapshot} of app {AppId} failed")]
+    private partial void LogSnapshotForgetFailed(Exception exception, string appId, string snapshot);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Removed app {AppId}, data: {Data}")]
     private partial void LogRemoved(string appId, AppDataChoice data);

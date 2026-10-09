@@ -61,6 +61,7 @@ export const reducers: { [K in TopicName]: Reducer<K> } = {
   // Every event is the whole list of apps the user may use, or of every app for administrators.
   apps: (_, event) => event,
   'apps/admin': (_, event) => event,
+  'store/admin': (_, event) => event,
   // Every event is the app's whole context for this user; app windows follow it with their own listener.
   'apps/+/context': (_, event) => event,
   // Pools are few; every event is the whole state.

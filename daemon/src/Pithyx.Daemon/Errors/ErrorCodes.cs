@@ -18,6 +18,10 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.NotFound)]
     public const string AppAppNotFound = "app.app.not_found";
 
+    /// <summary>The app has no version before its last update to go back to; <c>params.id</c> names the app.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string AppAppNoPrevious = "app.app.no_previous";
+
     /// <summary>
     /// The app has no backend endpoint of this name in its manifest (<c>backend.endpoints</c>), or no backend at all;
     /// <c>params.endpoint</c> is the name asked for.
@@ -256,6 +260,20 @@ public static class ErrorCodes
     /// </summary>
     [ErrorStatus(HttpStatusCode.NotFound)]
     public const string AppPackageNotFound = "app.package.not_found";
+
+    /// <summary>
+    /// The version needs a newer Pithyx: <c>params.range</c> is the manifest's <c>pithyx</c>, <c>params.version</c> the
+    /// box's version.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string AppPackageBoxTooOld = "app.package.box_too_old";
+
+    /// <summary>
+    /// A catalog cannot install an older version over a newer one whose stored data differs (<c>params.installed</c> and
+    /// <c>params.target</c> are the <c>dataVersion</c>s, 0 for none); the rollback after an update can.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string AppPackageDowngradeUnsupported = "app.package.downgrade_unsupported";
 
     /// <summary>
     /// The package is larger than an app package may be; <c>params.reason</c> says which limit and <c>params.limit</c> what
@@ -945,6 +963,48 @@ public static class ErrorCodes
     /// </summary>
     [ErrorStatus(HttpStatusCode.BadGateway)]
     public const string StoreCatalogVersionUnsupported = "store.catalog.version_unsupported";
+
+    /// <summary>A sync of the catalog runs already; <c>params.catalog</c> names it.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StoreCatalogBusy = "store.catalog.busy";
+
+    /// <summary>The project's catalogs (official and community) cannot be removed, only switched off.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StoreCatalogBuiltIn = "store.catalog.built_in";
+
+    /// <summary>A catalog with this URL or id is there already; <c>params.catalog</c> names it.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StoreCatalogExists = "store.catalog.exists";
+
+    /// <summary>No catalog of the box has this id (or it is switched off); <c>params.catalog</c> names it.</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string StoreCatalogNotFound = "store.catalog.not_found";
+
+    /// <summary>
+    /// The box could not fetch the catalog; <c>params.reason</c> is <c>timeout</c>, <c>auth</c> (the repository or the
+    /// deploy key was refused), <c>host_key</c> (the server's key differs from the pinned one), <c>branch</c> (the branch
+    /// of the channel does not exist yet) or <c>failed</c>. The box keeps its last verified copy.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string StoreCatalogUnreachable = "store.catalog.unreachable";
+
+    /// <summary>
+    /// The catalog URL is not one the box fetches: <c>params.reason</c> is <c>scheme</c> (only https:// and SSH as
+    /// git@host:path or ssh://), <c>host</c> or <c>path</c>.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string StoreCatalogUrlInvalid = "store.catalog.url_invalid";
+
+    /// <summary>The catalog has no such app or version for this box; <c>params.id</c> and <c>params.version</c> name it.</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string StoreAppNotFound = "store.app.not_found";
+
+    /// <summary>
+    /// A file of the catalog's copy does not match the SHA-256 or size its index names (<c>params.path</c>), or a
+    /// package does not hold what the index says about it.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string StorePackageHashMismatch = "store.package.hash_mismatch";
 
     /// <summary>The backup does not hold a part that should be restored; <c>params.category</c> names it.</summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]

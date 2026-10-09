@@ -7,6 +7,12 @@
       },
       "expected": "The app com.example.chat is being installed, updated or removed. Wait until that is done."
     },
+    "app.app.no_previous": {
+      "params": {
+        "id": "com.example.chat"
+      },
+      "expected": "com.example.chat has no version before its last update to go back to."
+    },
     "app.app.not_found": {
       "params": {
         "id": "com.example.chat"
@@ -196,6 +202,20 @@
         "reason": "access"
       },
       "expected": "The folder cannot be used for the storage media: the app asks to read it only, so it cannot get read and write access."
+    },
+    "app.package.box_too_old": {
+      "params": {
+        "range": ">=0.2.0",
+        "version": "0.1.0"
+      },
+      "expected": "This version needs Pithyx >=0.2.0; this box runs 0.1.0. Update Pithyx first."
+    },
+    "app.package.downgrade_unsupported": {
+      "params": {
+        "installed": 2,
+        "target": 1
+      },
+      "expected": "This older version cannot read the app's data (data version 2 installed, 1 in this version). Use \"Back to the previous version\" after an update instead."
     },
     "app.package.invalid": {
       "params": {
@@ -1101,12 +1121,29 @@
       "params": {},
       "expected": "ZFS did not answer in time or reported an error, so Pithyx cannot show what this would change. Try again in a moment. If it keeps happening, a pool may be waiting for disks that are gone: see Storage."
     },
+    "store.app.not_found": {
+      "params": {
+        "id": "com.example.chat",
+        "version": "1.2.0"
+      },
+      "expected": "The catalog has no app com.example.chat 1.2.0 for this box."
+    },
     "store.catalog.architecture_missing": {
       "params": {
         "path": "/apps/com.example.chat/versions/1.1.0/images/postgres:17.6",
         "architecture": "arm64"
       },
       "expected": "The catalog lists an image at /apps/com.example.chat/versions/1.1.0/images/postgres:17.6 without the architecture arm64."
+    },
+    "store.catalog.built_in": {
+      "params": {},
+      "expected": "The catalogs of the Pithyx project cannot be removed, only switched off."
+    },
+    "store.catalog.busy": {
+      "params": {
+        "catalog": "com.example.apps"
+      },
+      "expected": "The catalog com.example.apps is being checked already."
     },
     "store.catalog.data_version_decreased": {
       "params": {
@@ -1115,6 +1152,12 @@
         "previous": 3
       },
       "expected": "The catalog lowers the data version at /apps/com.example.chat/versions/1.1.0/dataVersion to 2, after 3 in an older version."
+    },
+    "store.catalog.exists": {
+      "params": {
+        "catalog": "com.example.apps"
+      },
+      "expected": "This box has the catalog com.example.apps already."
     },
     "store.catalog.id_reserved": {
       "params": {
@@ -1136,6 +1179,12 @@
         "expected": "stable"
       },
       "expected": "The catalog's index has beta at /channel, but this box expects stable."
+    },
+    "store.catalog.not_found": {
+      "params": {
+        "catalog": "com.example.apps"
+      },
+      "expected": "This box has no catalog com.example.apps, or it is switched off."
     },
     "store.catalog.rule_violation": {
       "params": {
@@ -1167,6 +1216,18 @@
       },
       "expected": "The catalog's index is not signed correctly (no signature is by a key this box trusts for its channel), so the box keeps its last checked copy."
     },
+    "store.catalog.unreachable": {
+      "params": {
+        "reason": "auth"
+      },
+      "expected": "The catalog cannot be fetched: the repository refused access; check the URL and the deploy key. The box keeps its last verified copy."
+    },
+    "store.catalog.url_invalid": {
+      "params": {
+        "reason": "scheme"
+      },
+      "expected": "This is not a catalog URL the box fetches: use https:// or SSH (git@host:owner/repository.git)."
+    },
     "store.catalog.version_unsupported": {
       "params": {
         "file": "index.json",
@@ -1174,6 +1235,12 @@
         "supported": 1
       },
       "expected": "The catalog's file index.json has format version 2, this box reads version 1. Update Pithyx to use this catalog."
+    },
+    "store.package.hash_mismatch": {
+      "params": {
+        "path": "apps/com.example.chat/1.2.0/icon.svg"
+      },
+      "expected": "A file of the catalog does not match its index (apps/com.example.chat/1.2.0/icon.svg). The box does not install it."
     },
     "system.backup.category_missing": {
       "params": {

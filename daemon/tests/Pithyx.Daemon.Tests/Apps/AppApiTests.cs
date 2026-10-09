@@ -154,7 +154,7 @@ public sealed class AppApiTests : IDisposable
             [("directory.read", true), ("files.read", false)],
             app.GetProperty("permissions").EnumerateArray().Select(permission => (permission.GetProperty("permission").GetString(), permission.GetProperty("granted").GetBoolean())));
         // Only the installed version stays.
-        Assert.Equal(["1.1.0"], Directory.GetDirectories(Path.Combine(AppFolder, "versions")).Select(Path.GetFileName));
+        Assert.Equal(["1.0.0", "1.1.0"], Directory.GetDirectories(Path.Combine(AppFolder, "versions")).Select(Path.GetFileName).Order(StringComparer.Ordinal));
 
         using var older = await UploadAsync(Package("0.9.0"));
         Assert.Equal("downgrade", (await older.JsonAsync()).GetProperty("action").GetString());

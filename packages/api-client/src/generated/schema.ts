@@ -329,6 +329,23 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/apps/{appId}/rollback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Goes back to the version before the app's last update as a job: the app's dataset returns to the snapshot of that update, so its data goes back too, and the previous version runs again (app.app.no_previous without one). */
+        post: operations["RollbackApp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/apps/{appId}/storage/{storageId}": {
         parameters: {
             query?: never;
@@ -358,6 +375,23 @@ export type paths = {
         put?: never;
         /** @description A token for an app the signed-in user may use (any app for administrators; app.app.not_found otherwise), bound to the user, this session, the app and the window instance, valid 5 minutes. kind host is for the daemon's API for apps (/api/app/**) and stays in the desktop; kind backend is for the app's backend (app.backend.missing without one). Needs the session cookie and the CSRF header; ask again before expiresAt. */
         post: operations["CreateAppToken"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/apps/{appId}/update-policy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description Administrators only. The app's own update policy (automatic, notify, none), or null to follow the box's. */
+        put: operations["SetAppUpdatePolicy"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1684,6 +1718,194 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/store": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. The Store's settings with the next check time, every catalog with its status, and the newer versions of installed apps. The topic store/admin carries the same and its changes. */
+        get: operations["GetStore"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/store/apps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. The apps of the enabled catalogs (or of one, by its id) at the newest version this box can run, whose id, name, description or author contains q. */
+        get: operations["SearchStoreApps"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/store/catalogs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Adds a custom catalog (unsigned, shown as unverified) by its repository URL: https:// for a public one, which is fetched at once as a job, or SSH (git@host:owner/repository.git) for a private one, for which the box makes a deploy key; add its public key to the repository and fetch the catalog then. */
+        post: operations["AddCatalog"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/store/catalogs/{catalog}/apps/{appId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. A catalog app's detail page: its newest version for this box with the manifest, screenshots, homepage, the link to its source in the catalog, and every published version. */
+        get: operations["GetStoreApp"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/store/catalogs/{catalog}/apps/{appId}/{version}/icon": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. The icon of a catalog app's version, checked against the index, with Content-Security-Policy: default-src 'none'; sandbox and nosniff. */
+        get: operations["GetStoreAppIcon"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/store/catalogs/{catalog}/apps/{appId}/{version}/package": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Takes a catalog app's version from the box's verified copy, checks it like an uploaded package plus the index's hashes and images (store.package.hash_mismatch), the box's version (app.package.box_too_old) and, for an older version, the same dataVersion (app.package.downgrade_unsupported), and keeps it for 15 minutes. Install it with POST /api/apps/packages/{packageId}/install. */
+        post: operations["StageStoreApp"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/store/catalogs/{catalog}/apps/{appId}/{version}/screenshots/{name}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. A screenshot of a catalog app's version (PNG, JPEG or WebP), checked against the index, with Content-Security-Policy: default-src 'none'; sandbox and nosniff. */
+        get: operations["GetStoreAppScreenshot"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/store/catalogs/{key}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description Administrators only. Removes a custom catalog and its copy; apps installed from it stay and get no more updates from it. The project's catalogs can only be switched off (store.catalog.built_in). */
+        delete: operations["RemoveCatalog"];
+        options?: never;
+        head?: never;
+        /** @description Administrators only. Switches a catalog on (it is fetched at once) or off, or sets (user:token) or removes (empty) the read token for its private images. */
+        patch: operations["UpdateCatalog"];
+        trace?: never;
+    };
+    "/api/store/catalogs/{key}/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Fetches one catalog now as a job. A failure keeps the last verified copy and is shown with the catalog. */
+        post: operations["SyncCatalog"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/store/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Checks now as a job: fetches every enabled catalog, then installs automatic updates and announces the others, as the daily check does. */
+        post: operations["CheckStore"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/store/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description Administrators only. Sets the update policy (automatic, notify, none), the daily check time (HH:mm in the box's time zone; the box adds its own delay of up to an hour) and the channel (stable reads each catalog's branch catalog, beta its branch catalog-next). A new channel fetches every catalog at once. */
+        put: operations["SetStoreSettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/system/backup": {
         parameters: {
             query?: never;
@@ -1907,6 +2129,10 @@ export type components = {
              */
             type: "ack";
         };
+        AddCatalogRequest: {
+            /** @description https://host/owner/repository.git, or for a private catalog git@host:owner/repository.git. */
+            url: string;
+        };
         /** @description Every installed app for administrators: the snapshot and every event of `apps/admin`. */
         AdminAppList: {
             /** @description Sorted by id. */
@@ -1976,6 +2202,8 @@ export type components = {
             available: boolean;
             /** @description An install, update or removal runs. */
             busy: boolean;
+            /** @description The catalog it was installed or last updated from; null for a sideload. */
+            catalog: null | string;
             /** @description Whether users can open it. */
             enabled: boolean;
             /** @description The app id. */
@@ -1991,6 +2219,8 @@ export type components = {
             manifest: components["schemas"]["JsonElement"];
             /** @description Each permission of the manifest with whether it is granted. */
             permissions: components["schemas"]["AppPermissionState"][];
+            /** @description The version before its last update, which a rollback restores with its data; null when there is none. */
+            previousVersion: null | string;
             /** @description SHA-256 of the installed package file. */
             sha256: string;
             /** @description `sideload` (a package file) or `catalog`. */
@@ -2007,6 +2237,7 @@ export type components = {
              * @description The last install or update (UTC).
              */
             updatedAt: string;
+            updatePolicy: null | components["schemas"]["UpdatePolicy"];
             /** @description The installed version. */
             version: string;
         };
@@ -2172,6 +2403,8 @@ export type components = {
             action: components["schemas"]["AppPackageAction"];
             /** @description Permissions the package asks for that the installed version did not (all of them for an install). */
             addedPermissions: string[];
+            /** @description The catalog the package comes from; null for an uploaded file (a sideload, unverified). */
+            catalog?: null | string;
             /**
              * Format: date-time
              * @description When it is discarded (UTC).
@@ -2309,6 +2542,28 @@ export type components = {
             /** @description `host` for the daemon's API for apps (kept by the desktop), `backend` for the app's backend. */
             kind: components["schemas"]["AppTokenKind"];
         };
+        /** @description A newer version of an installed app that a catalog offers. */
+        AppUpdate: {
+            /** @description Permissions the new version asks for that the installed one did not. */
+            addedPermissions: string[];
+            /** @description The next check installs it on its own: the policy is automatic and nothing new is asked for. */
+            automatic: boolean;
+            /** @description The catalog that offers it. */
+            catalog: string;
+            /** @description It asks for root in a container or elevated rights it did not have. */
+            elevated: boolean;
+            /** @description The app. */
+            id: string;
+            /** @description The installed version. */
+            installedVersion: string;
+            /** @description The app's own policy, or the box's. */
+            policy: components["schemas"]["UpdatePolicy"];
+            /** @description The newest version for this box. */
+            version: string;
+        };
+        AppUpdatePolicyRequest: {
+            policy: null | components["schemas"]["UpdatePolicy"];
+        };
         /** @description One user's effective access to an app. */
         AppUserAccess: {
             /** @description Administrators use every app. */
@@ -2363,6 +2618,79 @@ export type components = {
             /** @description The Pithyx version that created it. */
             version: string;
         };
+        /** @description A catalog of the box. */
+        CatalogInfo: {
+            /**
+             * Format: int32
+             * @description How many apps the verified copy lists.
+             */
+            appCount: number;
+            /** @description A fetch runs. */
+            busy: boolean;
+            /**
+             * Format: date-time
+             * @description When the last fetch ended.
+             */
+            checkedAt: null | string;
+            /** @description The commit of the verified copy. */
+            commit: null | string;
+            /** @description Its description by language, if it has one. */
+            description: null | {
+                [key: string]: string;
+            };
+            /** @description Switched on. */
+            enabled: boolean;
+            /** @description Why the last fetch failed. */
+            errorCode: null | string;
+            errorParams: null | components["schemas"]["JsonElement"];
+            /** @description A read token for its private images is set (never sent back). */
+            hasRegistryToken: boolean;
+            /** @description Its homepage, if it names one. */
+            homepage: null | string;
+            /** @description The server's host key the box pinned (for hosts other than GitHub, whose keys are built in). */
+            hostKey: null | string;
+            /** @description The id from its `catalog.json`, or null before a custom catalog's first fetch. */
+            id: null | string;
+            /**
+             * Format: int64
+             * @description The box's number for it, which the catalog endpoints take.
+             */
+            key: number;
+            /** @description The project's official or community catalog, or a custom one. */
+            kind: components["schemas"]["CatalogKind"];
+            /** @description Its name by language from `catalog.json`, once fetched. */
+            name: null | {
+                [key: string]: string;
+            };
+            /**
+             * Format: int64
+             * @description The verified index's sequence on the box's channel.
+             */
+            sequence: null | number;
+            /** @description The deploy key the box made for an SSH URL; add it to the repository with read access. */
+            sshPublicKey: null | string;
+            /** @description Off, new, ok or failed. */
+            status: components["schemas"]["CatalogStatus"];
+            /** @description The repository. */
+            url: string;
+            /** @description Its index must carry a signature by a key built into the box (the project's catalogs). */
+            verified: boolean;
+            /**
+             * Format: date-time
+             * @description When a fetch last verified the copy.
+             */
+            verifiedAt: null | string;
+        };
+        /**
+         * @description Whose catalog it is: the project's two (signed, keys built in) or one an administrator added (unverified).
+         * @enum {unknown}
+         */
+        CatalogKind: "official" | "community" | "custom";
+        /**
+         * @description A catalog's state for the Store's settings.
+         * @enum {unknown}
+         */
+        CatalogStatus: "off" | "new" | "ok" | "failed";
         /** @description A message from the client: `sub` or `unsub` for a topic or pattern. */
         ClientMessage: {
             /** @description Chosen by the client; echoed in the ack, snapshots and errors that answer this message. */
@@ -2698,7 +3026,7 @@ export type components = {
             }[];
         };
         /** @enum {string} */
-        ErrorCode: "app.app.busy" | "app.app.not_found" | "app.backend.endpoint_unknown" | "app.backend.missing" | "app.backend.start_failed" | "app.backend.storage_unavailable" | "app.backend.unavailable" | "app.backend.unsupported" | "app.compose.key_unsupported" | "app.compose.reference_unknown" | "app.compose.right_missing" | "app.compose.right_unused" | "app.compose.storage_mismatch" | "app.compose.value_invalid" | "app.compose.yaml_invalid" | "app.docker.unavailable" | "app.elevated.unsupported" | "app.icon.invalid" | "app.image.mismatch" | "app.image.unavailable" | "app.manifest.cron_invalid" | "app.manifest.duplicate" | "app.manifest.id_invalid" | "app.manifest.id_reserved" | "app.manifest.invalid_json" | "app.manifest.pithyx_invalid" | "app.manifest.reference_unknown" | "app.manifest.schema_violation" | "app.manifest.sdk_invalid" | "app.manifest.version_unsupported" | "app.manifest.window_size_invalid" | "app.mapping.invalid" | "app.package.invalid" | "app.package.layout_invalid" | "app.package.lock_invalid" | "app.package.not_found" | "app.package.too_large" | "app.permission.denied" | "app.permission.not_requested" | "app.pool.fixed" | "app.pool.required" | "app.pool.unavailable" | "app.storage.key_invalid" | "app.storage.not_found" | "app.storage.too_large" | "app.token.invalid" | "auth.account.disabled" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.desktop.not_allowed" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fileservices.service.unavailable" | "fileservices.workgroup.invalid" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.share.unavailable" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "installer.check.failed" | "installer.claim.required" | "installer.claim.taken" | "installer.disk.count" | "installer.disk.unsuitable" | "installer.erase.not_confirmed" | "installer.hostname.invalid" | "installer.install.failed" | "installer.install.running" | "installer.keyboard.invalid" | "installer.reboot.not_ready" | "jobs.job.not_found" | "logs.app.invalid" | "logs.archive.pool_unavailable" | "logs.batch.too_large" | "logs.query.invalid" | "logs.settings.invalid" | "notifications.message.invalid" | "notifications.notification.not_found" | "permissions.grant.invalid" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.command.timed_out" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.disks_missing" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.pool.suspended" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "storage.zfs.unavailable" | "store.catalog.architecture_missing" | "store.catalog.data_version_decreased" | "store.catalog.id_reserved" | "store.catalog.invalid_json" | "store.catalog.mismatch" | "store.catalog.rule_violation" | "store.catalog.schema_violation" | "store.catalog.sequence_old" | "store.catalog.signature_invalid" | "store.catalog.version_unsupported" | "system.backup.category_missing" | "system.backup.invalid" | "system.backup.password_wrong" | "system.backup.restore_expired" | "system.backup.restore_failed" | "system.backup.restore_running" | "system.backup.too_large" | "system.backup.too_new" | "system.internal.unexpected" | "system.origin.forbidden" | "system.time.apply_failed" | "system.time.server_invalid" | "system.time.servers_too_many" | "system.time.zone_invalid" | "users.account.refused" | "users.gid.exhausted" | "users.group.builtin" | "users.group.description_invalid" | "users.group.exists" | "users.group.name_invalid" | "users.group.name_reserved" | "users.group.not_found" | "users.group.refused" | "users.uid.exhausted" | "users.user.exists" | "users.user.last_admin" | "users.user.not_found" | "users.user.self";
+        ErrorCode: "app.app.busy" | "app.app.no_previous" | "app.app.not_found" | "app.backend.endpoint_unknown" | "app.backend.missing" | "app.backend.start_failed" | "app.backend.storage_unavailable" | "app.backend.unavailable" | "app.backend.unsupported" | "app.compose.key_unsupported" | "app.compose.reference_unknown" | "app.compose.right_missing" | "app.compose.right_unused" | "app.compose.storage_mismatch" | "app.compose.value_invalid" | "app.compose.yaml_invalid" | "app.docker.unavailable" | "app.elevated.unsupported" | "app.icon.invalid" | "app.image.mismatch" | "app.image.unavailable" | "app.manifest.cron_invalid" | "app.manifest.duplicate" | "app.manifest.id_invalid" | "app.manifest.id_reserved" | "app.manifest.invalid_json" | "app.manifest.pithyx_invalid" | "app.manifest.reference_unknown" | "app.manifest.schema_violation" | "app.manifest.sdk_invalid" | "app.manifest.version_unsupported" | "app.manifest.window_size_invalid" | "app.mapping.invalid" | "app.package.box_too_old" | "app.package.downgrade_unsupported" | "app.package.invalid" | "app.package.layout_invalid" | "app.package.lock_invalid" | "app.package.not_found" | "app.package.too_large" | "app.permission.denied" | "app.permission.not_requested" | "app.pool.fixed" | "app.pool.required" | "app.pool.unavailable" | "app.storage.key_invalid" | "app.storage.not_found" | "app.storage.too_large" | "app.token.invalid" | "auth.account.disabled" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.desktop.not_allowed" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fileservices.service.unavailable" | "fileservices.workgroup.invalid" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.share.unavailable" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "installer.check.failed" | "installer.claim.required" | "installer.claim.taken" | "installer.disk.count" | "installer.disk.unsuitable" | "installer.erase.not_confirmed" | "installer.hostname.invalid" | "installer.install.failed" | "installer.install.running" | "installer.keyboard.invalid" | "installer.reboot.not_ready" | "jobs.job.not_found" | "logs.app.invalid" | "logs.archive.pool_unavailable" | "logs.batch.too_large" | "logs.query.invalid" | "logs.settings.invalid" | "notifications.message.invalid" | "notifications.notification.not_found" | "permissions.grant.invalid" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.command.timed_out" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.disks_missing" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.pool.suspended" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "storage.zfs.unavailable" | "store.app.not_found" | "store.catalog.architecture_missing" | "store.catalog.built_in" | "store.catalog.busy" | "store.catalog.data_version_decreased" | "store.catalog.exists" | "store.catalog.id_reserved" | "store.catalog.invalid_json" | "store.catalog.mismatch" | "store.catalog.not_found" | "store.catalog.rule_violation" | "store.catalog.schema_violation" | "store.catalog.sequence_old" | "store.catalog.signature_invalid" | "store.catalog.unreachable" | "store.catalog.url_invalid" | "store.catalog.version_unsupported" | "store.package.hash_mismatch" | "system.backup.category_missing" | "system.backup.invalid" | "system.backup.password_wrong" | "system.backup.restore_expired" | "system.backup.restore_failed" | "system.backup.restore_running" | "system.backup.too_large" | "system.backup.too_new" | "system.internal.unexpected" | "system.origin.forbidden" | "system.time.apply_failed" | "system.time.server_invalid" | "system.time.servers_too_many" | "system.time.zone_invalid" | "users.account.refused" | "users.gid.exhausted" | "users.group.builtin" | "users.group.description_invalid" | "users.group.exists" | "users.group.name_invalid" | "users.group.name_reserved" | "users.group.not_found" | "users.group.refused" | "users.uid.exhausted" | "users.user.exists" | "users.user.last_admin" | "users.user.not_found" | "users.user.self";
         /** @description A failed client message. `id` is empty when the message could not be parsed. */
         ErrorMessage: {
             code: components["schemas"]["ErrorCode"];
@@ -4588,6 +4916,114 @@ export type components = {
             /** @description The pool name for scrubs; empty for self-tests. */
             target: string;
         };
+        /** @description An app of a catalog, at the newest version this box can run. */
+        StoreApp: {
+            /** @description The author's name, if the manifest has one. */
+            author: null | string;
+            /** @description The catalog's id. */
+            catalog: string;
+            /** @description Descriptions by language, if any. */
+            description: null | {
+                [key: string]: string;
+            };
+            /** @description The icon's URL. */
+            icon: string;
+            /** @description The app id. */
+            id: string;
+            /** @description The installed version, if the app is installed. */
+            installedVersion: null | string;
+            /** @description The catalog's kind; custom ones are unverified. */
+            kind: components["schemas"]["CatalogKind"];
+            /** @description The SPDX license. */
+            license: string;
+            /** @description Names by language. */
+            name: {
+                [key: string]: string;
+            };
+            /** @description The installed app is older than Version. */
+            update: boolean;
+            /** @description The newest version for this box. */
+            version: string;
+        };
+        /** @description The detail page of a catalog app. */
+        StoreAppDetails: {
+            /** @description The app at its newest fitting version. */
+            app: components["schemas"]["StoreApp"];
+            /** @description The manifest's homepage, if any. */
+            homepage: null | string;
+            /** @description That version's manifest. */
+            manifest: components["schemas"]["JsonElement"];
+            /** @description URLs of its screenshots, in order. */
+            screenshots: string[];
+            /** @description Where its source is: the catalog repository at the commit CI built, in the app's folder. */
+            source: string;
+            /** @description Every published version, newest first. */
+            versions: components["schemas"]["StoreAppVersion"][];
+        };
+        /** @description Apps of the enabled catalogs, sorted by name. */
+        StoreAppList: {
+            apps: components["schemas"]["StoreApp"][];
+        };
+        /** @description A published version of a catalog app. */
+        StoreAppVersion: {
+            /**
+             * Format: int32
+             * @description Its data version, if it declares one.
+             */
+            dataVersion: null | number;
+            /** @description This box can install it (its version and architecture). */
+            fits: boolean;
+            /** @description The range of Pithyx versions it runs on. */
+            pithyx: string;
+            /**
+             * Format: date-time
+             * @description When the catalog published it.
+             */
+            publishedAt: string;
+            /** @description The version. */
+            version: string;
+        };
+        /**
+         * @description Which branch of every catalog the box reads: `catalog` (stable) or `catalog-next` (beta).
+         * @enum {unknown}
+         */
+        StoreChannel: "stable" | "beta";
+        /** @description The Store's settings (D329). */
+        StoreSettings: {
+            /** @description The branch every catalog is read from. */
+            channel: components["schemas"]["StoreChannel"];
+            /**
+             * Format: date-time
+             * @description When the last check ran (UTC), if one did.
+             */
+            lastCheckAt: null | string;
+            /**
+             * Format: date-time
+             * @description When the next check runs (UTC), the box's delay included.
+             */
+            nextCheckAt: string;
+            /** @description What a check does with newer versions; each app may override it. */
+            policy: components["schemas"]["UpdatePolicy"];
+            /** @description The daily check time as HH:mm in the box's time zone; the box adds its own delay of up to an hour. */
+            time: string;
+        };
+        StoreSettingsRequest: {
+            /** @description stable or beta. */
+            channel: components["schemas"]["StoreChannel"];
+            /** @description What a check does with newer versions. */
+            policy: components["schemas"]["UpdatePolicy"];
+            /** @description HH:mm in the box's time zone. */
+            time: string;
+        };
+        /** @description The Store for administrators: the snapshot and every event of the topic `store/admin`. */
+        StoreState: {
+            /** @description Every catalog, the project's first. */
+            catalogs: components["schemas"]["CatalogInfo"][];
+            /** @description The settings with the next check. */
+            settings: components["schemas"]["StoreSettings"];
+            /** @description Newer versions of installed apps, by app id. */
+            updates: components["schemas"]["AppUpdate"][];
+        };
         /** @description A user's or a group's access to one shared folder. */
         SubjectGrant: {
             /** @description `read` or `readWrite`. */
@@ -4763,6 +5199,7 @@ export type components = {
             "storage/alerts": components["schemas"]["StorageHealth"];
             "storage/disks": components["schemas"]["DisksChanged"];
             "storage/pools": components["schemas"]["PoolList"];
+            "store/admin": components["schemas"]["StoreState"];
             "system/info": components["schemas"]["SystemInfo"];
             "system/processes": components["schemas"]["ProcessList"];
             "system/resources": components["schemas"]["ResourceSample"];
@@ -4781,6 +5218,7 @@ export type components = {
             "storage/alerts": components["schemas"]["StorageHealth"];
             "storage/disks": components["schemas"]["DiskList"];
             "storage/pools": components["schemas"]["PoolList"];
+            "store/admin": components["schemas"]["StoreState"];
             "system/info": components["schemas"]["SystemInfo"];
             "system/processes": components["schemas"]["ProcessList"];
             "system/resources": components["schemas"]["ResourceSnapshot"];
@@ -4876,6 +5314,14 @@ export type components = {
             /** @description False hides the app from everybody and stops serving its frontend; its data and grants stay. */
             enabled: boolean;
         };
+        UpdateCatalogRequest: {
+            /** @description Switches the catalog on or off; null leaves it. */
+            enabled?: null | boolean;
+            /** @description user:token to pull the catalog's private images; empty removes it, null leaves it. */
+            registryToken?: null | string;
+        };
+        /** @enum {unknown} */
+        UpdatePolicy: "automatic" | "notify" | "none" | null;
         /** @description The rights of a user for the editor. Administrators only. */
         UserGrants: {
             /** @description What the user may do: the union of both, or everything for an administrator. */
@@ -5801,6 +6247,37 @@ export interface operations {
             };
         };
     };
+    RollbackApp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                appId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
     MapAppStorage: {
         parameters: {
             query?: never;
@@ -5891,6 +6368,41 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["AppToken"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SetAppUpdatePolicy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                appId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AppUpdatePolicyRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppDetails"];
                 };
             };
             /** @description Problem details with a stable error code. */
@@ -8918,6 +9430,391 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["SnapshotScheduleList"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetStore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreState"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SearchStoreApps: {
+        parameters: {
+            query?: {
+                catalog?: string;
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreAppList"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    AddCatalog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AddCatalogRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogInfo"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetStoreApp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                appId: string;
+                catalog: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreAppDetails"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetStoreAppIcon: {
+        parameters: {
+            query?: {
+                name?: string;
+            };
+            header?: never;
+            path: {
+                appId: string;
+                catalog: string;
+                version: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/svg+xml": string;
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    StageStoreApp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                appId: string;
+                catalog: string;
+                version: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AppPackagePreview"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetStoreAppScreenshot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                appId: string;
+                catalog: string;
+                name: string;
+                version: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/png": string;
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    RemoveCatalog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    UpdateCatalog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateCatalogRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogInfo"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SyncCatalog: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                key: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    CheckStore: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SetStoreSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoreSettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoreSettings"];
                 };
             };
             /** @description Problem details with a stable error code. */

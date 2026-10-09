@@ -18,6 +18,15 @@ export type SubjectGrant = components['schemas']['SubjectGrant'];
 export type Job = components['schemas']['Job'];
 export type PoolList = components['schemas']['PoolList'];
 export type ShareDetails = components['schemas']['ShareDetails'];
+export type StoreState = components['schemas']['StoreState'];
+export type StoreSettings = components['schemas']['StoreSettings'];
+export type CatalogInfo = components['schemas']['CatalogInfo'];
+export type CatalogKind = components['schemas']['CatalogKind'];
+export type StoreAppSummary = components['schemas']['StoreApp'];
+export type StoreAppDetails = components['schemas']['StoreAppDetails'];
+export type AppUpdate = components['schemas']['AppUpdate'];
+export type UpdatePolicy = NonNullable<components['schemas']['UpdatePolicy']>;
+export type StoreChannel = components['schemas']['StoreChannel'];
 
 /** The Store's calls, outside the public SDK; the daemon checks the administrator right on every request behind them. */
 interface StoreMethods {
@@ -68,6 +77,37 @@ interface StoreMethods {
   'internal.admin.apps.shares': { params: Record<string, never>; result: ShareDetails[] };
   /** Opens an installed app for the administrator, as the menu would. */
   'internal.admin.apps.open': { params: { appId: string }; result: boolean };
+  'internal.admin.apps.rollback': { params: { appId: string }; result: Job };
+  'internal.admin.apps.setUpdatePolicy': {
+    params: { appId: string; policy: UpdatePolicy | null };
+    result: AppDetails;
+  };
+  'internal.admin.store.state': { params: Record<string, never>; result: StoreState };
+  'internal.admin.store.setSettings': {
+    params: { policy: UpdatePolicy; time: string; channel: StoreChannel };
+    result: StoreSettings;
+  };
+  'internal.admin.store.check': { params: Record<string, never>; result: Job };
+  'internal.admin.store.addCatalog': { params: { url: string }; result: CatalogInfo };
+  'internal.admin.store.updateCatalog': {
+    params: { key: number; enabled?: boolean; registryToken?: string };
+    result: CatalogInfo;
+  };
+  'internal.admin.store.removeCatalog': { params: { key: number }; result: null };
+  'internal.admin.store.syncCatalog': { params: { key: number }; result: Job };
+  'internal.admin.store.search': {
+    params: { catalog?: string; query?: string };
+    result: { apps: StoreAppSummary[] };
+  };
+  'internal.admin.store.details': {
+    params: { catalog: string; appId: string };
+    result: StoreAppDetails;
+  };
+  /** Takes a catalog's version for the install dialog; it answers like an upload. */
+  'internal.admin.store.stage': {
+    params: { catalog: string; appId: string; version: string };
+    result: AppPackagePreview;
+  };
 }
 
 /** Sent with the whole list whenever an app, its state or the app pool changes (the topic `apps/admin`). */
@@ -75,6 +115,9 @@ export const APPS_CHANGED = 'internal.admin.apps.changed';
 
 /** Sent with every change of a job the Store started (install, update, removal). */
 export const APPS_JOB = 'internal.admin.apps.job';
+
+/** Sent with the Store's whole state whenever catalogs, updates or settings change (the topic `store/admin`). */
+export const STORE_CHANGED = 'internal.admin.store.changed';
 
 type StoreName = keyof StoreMethods;
 
@@ -160,6 +203,9 @@ export function storeHost(emit: (event: string, data?: unknown) => void): {
   const stops = [
     realtime.listen('apps/admin', (data) => {
       emit(APPS_CHANGED, data);
+    }),
+    realtime.listen('store/admin', (data) => {
+      emit(STORE_CHANGED, data);
     }),
   ];
   const follow = (job: Job) => {
@@ -341,6 +387,163 @@ export function storeHost(emit: (event: string, data?: unknown) => void): {
       validate: hasApp,
       handle: (params) => Promise.resolve(openApp((params as { appId: string }).appId)),
     },
+    'internal.admin.apps.rollback': {
+      validate: hasApp,
+      handle: (params) =>
+        daemon(async () =>
+          follow(
+            unwrap(
+              await api.POST(
+                '/api/apps/{appId}/rollback',
+                appPath((params as { appId: string }).appId),
+              ),
+            ),
+          ),
+        ),
+    },
+    'internal.admin.apps.setUpdatePolicy': {
+      validate: (value) =>
+        hasApp(value) &&
+        (value.policy === null || ['automatic', 'notify', 'none'].includes(value.policy as string)),
+      handle: (params) =>
+        daemon(async () => {
+          const { appId, policy } =
+            params as StoreMethods['internal.admin.apps.setUpdatePolicy']['params'];
+          return unwrap(
+            await api.PUT('/api/apps/{appId}/update-policy', {
+              ...appPath(appId),
+              body: { policy },
+            }),
+          );
+        }),
+    },
+    'internal.admin.store.state': {
+      validate: isRecord,
+      handle: () => daemon(async () => unwrap(await api.GET('/api/store'))),
+    },
+    'internal.admin.store.setSettings': {
+      validate: (value) =>
+        isRecord(value) &&
+        ['automatic', 'notify', 'none'].includes(value.policy as string) &&
+        typeof value.time === 'string' &&
+        (value.channel === 'stable' || value.channel === 'beta'),
+      handle: (params) =>
+        daemon(async () =>
+          unwrap(
+            await api.PUT('/api/store/settings', {
+              body: params as StoreMethods['internal.admin.store.setSettings']['params'],
+            }),
+          ),
+        ),
+    },
+    'internal.admin.store.check': {
+      validate: isRecord,
+      handle: () => daemon(async () => follow(unwrap(await api.POST('/api/store/check')))),
+    },
+    'internal.admin.store.addCatalog': {
+      validate: (value) => isRecord(value) && hasText(value, 'url'),
+      handle: (params) =>
+        daemon(async () =>
+          unwrap(
+            await api.POST('/api/store/catalogs', {
+              body: { url: (params as { url: string }).url },
+            }),
+          ),
+        ),
+    },
+    'internal.admin.store.updateCatalog': {
+      validate: (value) =>
+        isRecord(value) &&
+        Number.isSafeInteger(value.key) &&
+        (value.enabled === undefined || typeof value.enabled === 'boolean') &&
+        (value.registryToken === undefined || typeof value.registryToken === 'string'),
+      handle: (params) =>
+        daemon(async () => {
+          const { key, enabled, registryToken } =
+            params as StoreMethods['internal.admin.store.updateCatalog']['params'];
+          return unwrap(
+            await api.PATCH('/api/store/catalogs/{key}', {
+              params: { path: { key } },
+              body: {
+                ...(enabled === undefined ? {} : { enabled }),
+                ...(registryToken === undefined ? {} : { registryToken }),
+              },
+            }),
+          );
+        }),
+    },
+    'internal.admin.store.removeCatalog': {
+      validate: (value) => isRecord(value) && Number.isSafeInteger(value.key),
+      handle: (params) =>
+        daemon(async () => {
+          unwrap(
+            await api.DELETE('/api/store/catalogs/{key}', {
+              params: { path: { key: (params as { key: number }).key } },
+            }),
+          );
+          return null;
+        }),
+    },
+    'internal.admin.store.syncCatalog': {
+      validate: (value) => isRecord(value) && Number.isSafeInteger(value.key),
+      handle: (params) =>
+        daemon(async () =>
+          follow(
+            unwrap(
+              await api.POST('/api/store/catalogs/{key}/sync', {
+                params: { path: { key: (params as { key: number }).key } },
+              }),
+            ),
+          ),
+        ),
+    },
+    'internal.admin.store.search': {
+      validate: (value) =>
+        isRecord(value) &&
+        (value.catalog === undefined || typeof value.catalog === 'string') &&
+        (value.query === undefined || typeof value.query === 'string'),
+      handle: (params) =>
+        daemon(async () => {
+          const { catalog, query } =
+            params as StoreMethods['internal.admin.store.search']['params'];
+          return unwrap(
+            await api.GET('/api/store/apps', {
+              params: {
+                query: {
+                  ...(catalog === undefined ? {} : { catalog }),
+                  ...(query === undefined || query === '' ? {} : { q: query }),
+                },
+              },
+            }),
+          );
+        }),
+    },
+    'internal.admin.store.details': {
+      validate: (value) => hasApp(value) && hasText(value, 'catalog'),
+      handle: (params) =>
+        daemon(async () => {
+          const { catalog, appId } =
+            params as StoreMethods['internal.admin.store.details']['params'];
+          return unwrap(
+            await api.GET('/api/store/catalogs/{catalog}/apps/{appId}', {
+              params: { path: { catalog, appId } },
+            }),
+          );
+        }),
+    },
+    'internal.admin.store.stage': {
+      validate: (value) => hasApp(value) && hasText(value, 'catalog') && hasText(value, 'version'),
+      handle: (params) =>
+        daemon(async () => {
+          const { catalog, appId, version } =
+            params as StoreMethods['internal.admin.store.stage']['params'];
+          return unwrap(
+            await api.POST('/api/store/catalogs/{catalog}/apps/{appId}/{version}/package', {
+              params: { path: { catalog, appId, version } },
+            }),
+          );
+        }),
+    },
   };
   return {
     extensions,
@@ -368,7 +571,7 @@ export async function storeCall<M extends StoreName>(
 /** Listens for one of the Store's events; returns the function that stops listening. */
 export function onStore(
   app: PithyxApp,
-  event: typeof APPS_CHANGED | typeof APPS_JOB,
+  event: typeof APPS_CHANGED | typeof APPS_JOB | typeof STORE_CHANGED,
   handler: (data: unknown) => void,
 ): () => void {
   return app.on(event as unknown as EventName, handler);

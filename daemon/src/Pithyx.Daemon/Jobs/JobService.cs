@@ -35,6 +35,9 @@ public sealed partial class JobService
     /// <summary>Notification codes of a job that ended; <c>params.kind</c> is the job's kind, <c>params.jobId</c> its id.</summary>
     public const string JobSucceededCode = "jobs.job.succeeded";
 
+    /// <summary>The owner of a job of the box itself, such as an automatic update: no user, visible to administrators.</summary>
+    public const long Box = 0;
+
     /// <summary>Also carries <c>params.errorCode</c> and <c>params.errorParams</c> (an object) of the error.</summary>
     public const string JobFailedCode = "jobs.job.failed";
 
@@ -45,7 +48,7 @@ public sealed partial class JobService
 
     private const string SelectColumns =
         """
-        SELECT id AS Id, user_id AS UserId, kind AS Kind, state AS State, params AS Params, result AS Result,
+        SELECT id AS Id, COALESCE(user_id, 0) AS UserId, kind AS Kind, state AS State, params AS Params, result AS Result,
             error_code AS ErrorCode, error_params AS ErrorParams, items_done AS ItemsDone, items_total AS ItemsTotal,
             bytes_done AS BytesDone, bytes_total AS BytesTotal, current_item AS CurrentItem, request_id AS RequestId,
             created_at AS CreatedAt, started_at AS StartedAt, finished_at AS FinishedAt
@@ -104,7 +107,7 @@ public sealed partial class JobService
             id = await connection.ExecuteScalarAsync<long>(
                 """
                 INSERT INTO jobs (user_id, kind, state, params, request_id, created_at)
-                VALUES (@userId, @kind, 'queued', @parametersJson, @requestId, @createdAt)
+                VALUES (NULLIF(@userId, 0), @kind, 'queued', @parametersJson, @requestId, @createdAt)
                 RETURNING id
                 """,
                 new { userId, kind, parametersJson, requestId, createdAt = SessionService.Format(now) });
@@ -124,16 +127,17 @@ public sealed partial class JobService
     public async Task<Job> GetAsync(ClaimsPrincipal user, long jobId, CancellationToken cancellationToken) =>
         (await FindVisibleAsync(user, jobId, cancellationToken)).Job;
 
-    /// <summary>The user's <see cref="ListLimit"/> most recent jobs, newest first.</summary>
+    /// <summary>The user's <see cref="ListLimit"/> most recent jobs, newest first; administrators also get the box's own.</summary>
     public async Task<IReadOnlyList<Job>> ListAsync(ClaimsPrincipal user, CancellationToken cancellationToken)
     {
         var userId = CurrentUser.Id(user);
+        var admin = user.IsInRole(SessionAuthenticationHandler.AdminRole);
         IEnumerable<JobRow> rows;
         await using (var connection = await _connections.OpenAsync(cancellationToken))
         {
             rows = await connection.QueryAsync<JobRow>(
-                SelectColumns + " WHERE user_id = @userId ORDER BY created_at DESC, id DESC LIMIT @limit",
-                new { userId, limit = ListLimit });
+                SelectColumns + " WHERE user_id = @userId OR (@admin AND user_id IS NULL) ORDER BY created_at DESC, id DESC LIMIT @limit",
+                new { userId, admin, limit = ListLimit });
         }
         // Jobs in memory have fresher progress than their row.
         return [.. rows.Select(row => _board.Find(row.Id)?.Snapshot() ?? ToJob(row))];
@@ -217,7 +221,7 @@ public sealed partial class JobService
         await using (var connection = await _connections.OpenAsync(cancellationToken))
         {
             interrupted = [.. await connection.QueryAsync<(long Id, long UserId, string Kind)>(
-                "UPDATE jobs SET state = 'interrupted', finished_at = @now WHERE state IN ('queued', 'running') RETURNING id, user_id, kind",
+                "UPDATE jobs SET state = 'interrupted', finished_at = @now WHERE state IN ('queued', 'running') RETURNING id, COALESCE(user_id, 0), kind",
                 new { now = SessionService.Format(_time.GetUtcNow()) })];
         }
         if (interrupted.Count > 0)
@@ -496,7 +500,15 @@ public sealed partial class JobService
         }
         try
         {
-            await _notifications.CreateAsync(userId, new NotificationDraft(code, parameters, tone), CancellationToken.None);
+            var draft = new NotificationDraft(code, parameters, tone);
+            if (userId == Box)
+            {
+                await _notifications.CreateForAdministratorsAsync(draft, CancellationToken.None);
+            }
+            else
+            {
+                await _notifications.CreateAsync(userId, draft, CancellationToken.None);
+            }
         }
         catch (Exception exception)
         {

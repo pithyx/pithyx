@@ -47,7 +47,7 @@ public sealed class AppDatasetIntegrationTests
         var staging = Directory.CreateTempSubdirectory("pithyxci-app-").FullName;
         try
         {
-            await AppVersions.InstallAsync(storage, pool, AppId, await PackageAsync(staging, "1.0.0", "one"), "1.0.0", update: false, _ => Task.CompletedTask, Token);
+            await AppVersions.InstallAsync(storage, pool, AppId, await PackageAsync(staging, "1.0.0", "one"), "1.0.0", update: false, (_, _) => Task.CompletedTask, Token);
             var dataset = pools.Current.Datasets.Single(candidate => candidate.Name == ZfsPlans.AppDataset(pool, AppId));
             Assert.Equal(Path.Combine(vdevs.AltRoot, pool, ".pithyx", "apps", AppId), dataset.MountPoint);
             var root = storage.RootOf(pool, AppId)!;
@@ -56,7 +56,7 @@ public sealed class AppDatasetIntegrationTests
 
             // The update changes the volumes too, then its registry commit fails: everything returns to the snapshot.
             var next = await PackageAsync(staging, "2.0.0", "two");
-            await Assert.ThrowsAsync<PithyxException>(() => AppVersions.InstallAsync(storage, pool, AppId, next, "2.0.0", update: true, async _ =>
+            await Assert.ThrowsAsync<PithyxException>(() => AppVersions.InstallAsync(storage, pool, AppId, next, "2.0.0", update: true, async (_, _) =>
             {
                 await File.WriteAllTextAsync(Path.Combine(root, "volumes", "data.txt"), "migrated", Token);
                 Assert.Contains("@pithyx-update-", await vdevs.RunAsync("zfs", ["list", "-H", "-t", "snapshot", "-o", "name,userrefs", "-r", ZfsPlans.AppDataset(pool, AppId)]), StringComparison.Ordinal);
@@ -67,8 +67,21 @@ public sealed class AppDatasetIntegrationTests
             Assert.Equal("before", await File.ReadAllTextAsync(Path.Combine(root, "volumes", "data.txt"), Token));
             Assert.Equal("", (await vdevs.RunAsync("zfs", ["list", "-H", "-t", "snapshot", "-o", "name", "-r", ZfsPlans.AppDataset(pool, AppId)])).Trim());
 
-            await AppVersions.InstallAsync(storage, pool, AppId, await PackageAsync(staging, "2.0.0", "two"), "2.0.0", update: true, _ => Task.CompletedTask, Token);
-            Assert.Equal(["2.0.0"], Directory.GetFileSystemEntries(Path.Combine(root, "versions")).Select(Path.GetFileName));
+            // A successful update keeps its snapshot and the previous version for a rollback (D329).
+            string? kept = null;
+            await AppVersions.InstallAsync(storage, pool, AppId, await PackageAsync(staging, "2.0.0", "two"), "2.0.0", update: true, (snapshot, _) =>
+            {
+                kept = snapshot;
+                return Task.CompletedTask;
+            }, Token);
+            Assert.Equal(["1.0.0", "2.0.0"], Directory.GetFileSystemEntries(Path.Combine(root, "versions")).Select(Path.GetFileName).Order(StringComparer.Ordinal));
+            Assert.NotNull(kept);
+            Assert.Contains(kept, await vdevs.RunAsync("zfs", ["list", "-H", "-t", "snapshot", "-o", "name", "-r", ZfsPlans.AppDataset(pool, AppId)]), StringComparison.Ordinal);
+            await File.WriteAllTextAsync(Path.Combine(root, "volumes", "data.txt"), "after", Token);
+            await storage.RollbackAsync(pool, AppId, kept, Token, discardNewer: true);
+            Assert.Equal("before", await File.ReadAllTextAsync(Path.Combine(root, "volumes", "data.txt"), Token));
+            Assert.Equal("versions/1.0.0", new FileInfo(Path.Combine(root, "current")).LinkTarget);
+            await storage.ForgetSnapshotAsync(pool, AppId, kept, Token);
             Assert.Equal("", (await vdevs.RunAsync("zfs", ["list", "-H", "-t", "snapshot", "-o", "name", "-r", ZfsPlans.AppDataset(pool, AppId)])).Trim());
 
             await storage.DestroyAsync(pool, AppId, Token);

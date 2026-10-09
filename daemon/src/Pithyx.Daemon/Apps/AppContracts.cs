@@ -55,6 +55,7 @@ public enum AppPackageAction
 /// <param name="PackageBytes">The size of the package file.</param>
 /// <param name="Sha256">SHA-256 of the package file, lowercase hex.</param>
 /// <param name="SuggestedAccess">Who should use the app after an install (D304): administrators only when it asks for elevated rights, root in a container or <c>directory.read</c>, everybody otherwise. An install without access takes it.</param>
+/// <param name="Catalog">The catalog the package comes from; null for an uploaded file (a sideload, unverified).</param>
 public sealed record AppPackagePreview(
     string PackageId,
     DateTimeOffset ExpiresAt,
@@ -70,7 +71,8 @@ public sealed record AppPackagePreview(
     long UnpackedBytes,
     long PackageBytes,
     string Sha256,
-    AppAccess SuggestedAccess);
+    AppAccess SuggestedAccess,
+    string? Catalog = null);
 
 /// <param name="Pool">The pool for the app data; required for the first app, and then always the app pool.</param>
 /// <param name="Access">Who may use the app after an install; an update keeps who may use it. Defaults to the preview's suggested access.</param>
@@ -119,6 +121,9 @@ public sealed record AppList(IReadOnlyList<AppSummary> Apps);
 /// <param name="Available">Its data is reachable: the app pool is imported, unlocked and mounted.</param>
 /// <param name="LogLevel">Whether its debug log entries reach the daemon.</param>
 /// <param name="Storage">The folders mapped to the storage requests of its manifest; a request without one is not mapped.</param>
+/// <param name="Catalog">The catalog it was installed or last updated from; null for a sideload.</param>
+/// <param name="UpdatePolicy">Its own update policy; null follows the box's.</param>
+/// <param name="PreviousVersion">The version before its last update, which a rollback restores with its data; null when there is none.</param>
 public sealed record AppDetails(
     string Id,
     string Version,
@@ -133,7 +138,10 @@ public sealed record AppDetails(
     bool Busy,
     bool Available,
     AppLogLevel LogLevel,
-    IReadOnlyList<AppStorageMapping> Storage);
+    IReadOnlyList<AppStorageMapping> Storage,
+    string? Catalog,
+    Catalog.UpdatePolicy? UpdatePolicy,
+    string? PreviousVersion);
 
 /// <summary>A folder in a shared folder that an administrator mapped to one storage request of an app.</summary>
 /// <param name="StorageId">The id of the request in the manifest.</param>
