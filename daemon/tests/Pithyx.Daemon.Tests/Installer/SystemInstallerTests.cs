@@ -1,7 +1,7 @@
 using Dapper;
 using Microsoft.AspNetCore.Http.Json;
-using Microsoft.Extensions.Options;
 using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using Pithyx.Daemon.Auth;
 using Pithyx.Daemon.Commands;
 using Pithyx.Daemon.Database;

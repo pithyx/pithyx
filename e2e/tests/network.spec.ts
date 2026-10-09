@@ -14,7 +14,8 @@ async function openNetwork(page: Page) {
 }
 
 function card(settings: Locator, name: string) {
-  return settings.getByRole('region', { name: new RegExp(`^${name.replace('.', '\\.')}\\b`) });
+  // The heading names the interface, then its badges: "bond0 Bond Connected" but not "bond0.20 VLAN".
+  return settings.getByRole('region', { name: new RegExp(`^${name.replace('.', '\\.')}\\s`) });
 }
 
 async function apply(page: Page, settings: Locator) {
@@ -36,7 +37,7 @@ test('a static address waits for its confirmation and Undo brings DHCP back', as
   await settings.getByRole('button', { name: 'Edit enp2s0' }).click();
   const dialog = page.getByRole('dialog', { name: 'Edit enp2s0' });
   const ipv4 = dialog.getByRole('group', { name: 'IPv4' });
-  await ipv4.getByLabel('Address', { exact: true }).selectOption('static');
+  await ipv4.getByRole('combobox', { name: 'Address' }).selectOption('static');
   await ipv4.getByLabel('Address with prefix length').fill('192.168.50.10/24');
   await ipv4.getByLabel('Gateway (optional)').fill('192.168.60.1');
   await dialog.getByRole('button', { name: 'Done' }).click();
@@ -76,22 +77,22 @@ test('a bond with a VLAN on it is kept and removed again', async ({ page }) => {
   const bond = page.getByRole('dialog', { name: 'New bond' });
   await bond.getByText('enp2s0').click();
   await bond.getByText('enp3s0').click();
-  await bond.getByLabel('Mode').selectOption('activeBackup');
-  await bond.getByLabel('Primary card').selectOption('enp2s0');
+  await bond.getByRole('combobox', { name: 'Mode' }).selectOption('activeBackup');
+  await bond.getByRole('combobox', { name: 'Primary card' }).selectOption('enp2s0');
   await bond.getByLabel('MTU').fill('9000');
   await bond.getByRole('button', { name: 'Done' }).click();
   await expect(card(settings, 'bond0').getByText('New, not applied')).toBeVisible();
 
   await settings.getByRole('button', { name: 'Add VLAN' }).click();
   const vlan = page.getByRole('dialog', { name: 'New VLAN' });
-  await vlan.getByLabel('Parent').selectOption('bond0');
+  await vlan.getByRole('combobox', { name: 'Parent' }).selectOption('bond0');
   await vlan.getByLabel('VLAN ID').fill('20');
   const ipv4 = vlan.getByRole('group', { name: 'IPv4' });
-  await ipv4.getByLabel('Address', { exact: true }).selectOption('static');
+  await ipv4.getByRole('combobox', { name: 'Address' }).selectOption('static');
   await ipv4.getByLabel('Address with prefix length').fill('10.20.0.5/24');
   await vlan
     .getByRole('group', { name: 'IPv6' })
-    .getByLabel('Address', { exact: true })
+    .getByRole('combobox', { name: 'Address' })
     .selectOption('off');
   await vlan.getByRole('button', { name: 'Done' }).click();
 

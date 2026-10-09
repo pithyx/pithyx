@@ -143,13 +143,13 @@ public sealed partial class NetworkHost(ICommandRunner commands, DaemonMode mode
         {
             return "hostnamectl";
         }
-        const string hosts = "/etc/hosts";
-        var content = File.Exists(hosts) ? await File.ReadAllTextAsync(hosts, cancellationToken) : "127.0.0.1\tlocalhost\n";
+        const string HostsFile = "/etc/hosts";
+        var content = File.Exists(HostsFile) ? await File.ReadAllTextAsync(HostsFile, cancellationToken) : "127.0.0.1\tlocalhost\n";
         var updated = NetworkParsers.HostsWithName(content, hostName);
         if (updated != content)
         {
-            await File.WriteAllTextAsync(hosts + ".pithyx-new", updated, cancellationToken);
-            File.Move(hosts + ".pithyx-new", hosts, overwrite: true);
+            await File.WriteAllTextAsync(HostsFile + ".pithyx-new", updated, cancellationToken);
+            File.Move(HostsFile + ".pithyx-new", HostsFile, overwrite: true);
         }
         return null;
     }
