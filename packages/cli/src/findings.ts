@@ -4,6 +4,7 @@ import type { Issue } from './issues';
 
 /** Problems only the CLI reports: the box sees a package, not the project it was built from. */
 export type CliCode =
+  | 'cli.manifest.missing'
   | 'cli.frontend.missing'
   | 'cli.frontend.skipped'
   | 'cli.icon.template'
@@ -21,6 +22,8 @@ export interface Finding {
 }
 
 const cliTexts: Record<CliCode, string> = {
+  'cli.manifest.missing':
+    'pithyx.json does not exist in {folder}. Run the command in the project folder of an app, or name that folder.',
   'cli.frontend.missing':
     'The frontend build {folder} does not exist. Build the app first, or name the folder with --frontend.',
   'cli.frontend.skipped':

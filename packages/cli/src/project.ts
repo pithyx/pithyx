@@ -125,6 +125,12 @@ export function readProject(root: string, options: ProjectOptions = {}): Project
     const validation = validateManifest(bytes(manifestEntry));
     findings.push(...validation.issues.map(error));
     manifest = validation.manifest;
+  } else {
+    findings.push({
+      level: 'error',
+      code: 'cli.manifest.missing',
+      params: { folder: projectRoot },
+    });
   }
 
   const iconEntry = entries.find((entry) => entry.path === ICON_FILE);
@@ -198,6 +204,20 @@ export function readProject(root: string, options: ProjectOptions = {}): Project
     findings.push(...checkBackend(manifest, compose, entries));
   }
   return { root: projectRoot, frontend, entries, findings, ...(manifest && { manifest }) };
+}
+
+/** What `pithyx lock` finds in a project: an invalid manifest (with the errors), no backend, or the Compose file to lock. */
+export function lockTarget(
+  project: Project,
+): { kind: 'invalid'; findings: Finding[] } | { kind: 'none' } | { kind: 'compose'; path: string } {
+  if (project.manifest === undefined) {
+    return {
+      kind: 'invalid',
+      findings: project.findings.filter((finding) => finding.level === 'error'),
+    };
+  }
+  const path = project.manifest.backend?.compose;
+  return path === undefined ? { kind: 'none' } : { kind: 'compose', path };
 }
 
 function checkBackend(manifest: AppManifest, compose: string, entries: PackageEntry[]): Finding[] {
