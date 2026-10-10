@@ -11,13 +11,13 @@ Pithyx wird offen auf GitHub entwickelt, unter `pithyx/pithyx`. Pull Requests ge
 
 ## Fehler melden
 
-Eröffne ein Issue im Repository. Beschreibe, was du getan hast, was du erwartet hast und was passiert ist, und gib die Pithyx-Version oder den Commit an. Melde Sicherheitsprobleme nicht öffentlich: siehe [Sicherheitslücke melden](/de/docs/project/security/).
+Eröffne ein Issue im Repository und wähle **Bug report** oder **Feature request**; leere Issues sind abgeschaltet, und die Auswahl verlinkt diese Dokumentation. Das Fehlerformular fragt, was passiert ist, die Schritte, die Pithyx-Version, den Bereich, Hardware und Browser sowie den Fehlercode mit Logzeilen (ohne Geheimnisse). Melde Sicherheitsprobleme nicht öffentlich: siehe [Sicherheitslücke melden](/de/docs/project/security/).
 
 ## Pull Requests
 
 1. Richte den Build ein, wie in [Am Daemon entwickeln](/de/docs/developers/daemon/development/) beschrieben. `pnpm install` installiert auch die Git-Hooks.
 2. Zweige von `dev` ab, als `feature/<name>`, `fix/<name>` oder `hotfix/<name>`. `master` ist stabil und bekommt nur Release-Pull-Requests und Hotfixes. Pushe nie direkt auf `master` oder `dev`; der Pre-Push-Hook verweigert es.
-3. Eröffne den Pull Request gegen `dev`. Sein Titel folgt dem Commit-Format unten.
+3. Eröffne den Pull Request gegen `dev`. Sein Titel folgt dem Commit-Format unten. Die Vorlage für Pull Requests fragt nach einer Zusammenfassung, wie getestet wurde, und nach der Checkliste unten.
 
 Checkliste:
 
@@ -28,6 +28,8 @@ Checkliste:
 - Die Dokumentation unter `website/` wurde geprüft und, wo die Änderung sie berührt, auf Englisch und Deutsch aktualisiert.
 - Keine Em-Dashes und kein nicht englischer Text außerhalb von Übersetzungsdateien.
 - Jeder Commit hat ein Sign-off.
+
+YAML-Dateien im Repository enden auf `.yaml`; der Repo-Check verweigert `.yml`.
 
 Code-Stil: kurze englische Kommentare nur dort, wo die Logik nicht offensichtlich ist, Warnungen sind in C# und TypeScript Fehler, und keine Abstraktion ohne eine zweite echte Implementierung.
 

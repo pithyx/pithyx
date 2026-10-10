@@ -1,0 +1,65 @@
+name: Bug report
+description: Something in Pithyx does not work as described.
+title: '[Bug]: '
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report a problem. Security issues go to the security policy, never into a public issue.
+        Leave out passwords, recovery keys, tokens and anything else private, also in logs and screenshots.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open ...
+        2. Click ...
+        3. See ...
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Pithyx version
+      description: Settings > Updates or the About Pithyx app shows it.
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Installer or image
+        - Desktop or sign-in
+        - Storage (disks, pools, snapshots)
+        - Files and shared folders
+        - File services (SMB, SFTP, WebDAV, FTP)
+        - Users, groups and permissions
+        - Network
+        - Store and apps
+        - System updates
+        - SDK or CLI (app development)
+        - Website or docs
+        - Something else
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Hardware and browser
+      description: The machine or virtual machine, the disks involved, and the browser with its version.
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs and error codes
+      description: The error code from the message (for example `fs.file.not_found`) and matching lines from the Log Center, without secrets.
+      render: text
