@@ -1,0 +1,28 @@
+NOTE: This is only a simulation!
+      apt-get needs root privileges for real execution.
+      Keep also in mind that locking is deactivated,
+      so don't depend on the relevance to the real current situation!
+Reading package lists...
+Building dependency tree...
+Reading state information...
+Calculating upgrade...
+The following packages have been kept back:
+  linux-headers-amd64 linux-image-amd64
+The following packages will be upgraded:
+  gh libpcre2-8-0 libpng16-16t64 libssl3t64 linux-libc-dev openssl
+  openssl-provider-legacy
+7 upgraded, 0 newly installed, 0 to remove and 2 not upgraded.
+Inst libpcre2-8-0 [10.46-1~deb13u2] (10.46-1~deb13u3 Debian-Security:13/stable-security [amd64])
+Conf libpcre2-8-0 (10.46-1~deb13u3 Debian-Security:13/stable-security [amd64])
+Inst openssl-provider-legacy [3.5.7-1~deb13u2] (3.5.7-1~deb13u3 Debian-Security:13/stable-security [amd64])
+Conf openssl-provider-legacy (3.5.7-1~deb13u3 Debian-Security:13/stable-security [amd64])
+Inst libssl3t64 [3.5.7-1~deb13u2] (3.5.7-1~deb13u3 Debian-Security:13/stable-security [amd64])
+Conf libssl3t64 (3.5.7-1~deb13u3 Debian-Security:13/stable-security [amd64])
+Inst gh [2.101.0] (2.102.0 gh:cli.github.com [amd64])
+Inst libpng16-16t64 [1.6.48-1+deb13u5] (1.6.48-1+deb13u6 Debian-Security:13/stable-security [amd64])
+Inst linux-libc-dev [6.12.107-1] (6.12.111-1 Debian-Security:13/stable-security [all])
+Inst openssl [3.5.7-1~deb13u2] (3.5.7-1~deb13u3 Debian-Security:13/stable-security [amd64])
+Conf gh (2.102.0 gh:cli.github.com [amd64])
+Conf libpng16-16t64 (1.6.48-1+deb13u6 Debian-Security:13/stable-security [amd64])
+Conf linux-libc-dev (6.12.111-1 Debian-Security:13/stable-security [all])
+Conf openssl (3.5.7-1~deb13u3 Debian-Security:13/stable-security [amd64])

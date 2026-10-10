@@ -13,6 +13,7 @@ import type {
   StoragePlanRequest,
   Vdev,
 } from '../apps/sdk/internal';
+import type { UpdateStatus } from '../apps/sdk/updates';
 
 const TB = 1_000_000_000_000;
 const GB = 1_000_000_000;
@@ -773,6 +774,54 @@ export const sampleSystemOverview = {
   uptimeSeconds: 3 * 86_400 + 5 * 3600 + 17 * 60,
 };
 
+export const sampleUpdates: UpdateStatus = {
+  installedVersion: '0.1.0',
+  channel: 'stable',
+  checkEnabled: true,
+  lastCheckAt: '2026-10-09T03:12:00Z',
+  nextCheckAt: '2026-10-10T03:12:00Z',
+  checking: false,
+  available: {
+    version: '0.2.0',
+    minimumVersion: '0.1.0',
+    changelog:
+      '### Added\n\n- Updates with a snapshot before and a health check after the restart.',
+    size: 48_146_112,
+    publishedAt: '2026-10-08T18:00:00Z',
+    installable: true,
+  },
+  debian: { count: 7, security: 6, packages: [] },
+  problem: null,
+  supported: true,
+  unsupportedReason: null,
+  staged: null,
+  runningJobId: null,
+  history: [
+    {
+      id: 1,
+      kind: 'update',
+      source: 'online',
+      fromVersion: '0.1.0-rc.2',
+      toVersion: '0.1.0',
+      snapshot: '20261001T030500Z',
+      state: 'succeeded',
+      errorCode: null,
+      errorParams: null,
+      startedAt: '2026-10-01T03:05:00Z',
+      finishedAt: '2026-10-01T03:09:00Z',
+    },
+  ],
+  snapshots: [
+    {
+      name: '20261001T030500Z',
+      version: '0.1.0-rc.2',
+      createdAt: '2026-10-01T03:05:00Z',
+      kernel: '6.12.111+deb13-amd64',
+      reason: 'update to 0.1.0',
+    },
+  ],
+};
+
 export const sampleNetwork = {
   config: {
     interfaces: [],
@@ -959,6 +1008,8 @@ function answer(method: string, params: unknown, extra: ExtraAnswers): unknown {
       return sampleSystemOverview;
     case 'internal.admin.network.get':
       return sampleNetwork;
+    case 'internal.admin.updates.get':
+      return sampleUpdates;
     case 'internal.admin.system.time':
       return sampleTime;
     case 'internal.admin.system.region':

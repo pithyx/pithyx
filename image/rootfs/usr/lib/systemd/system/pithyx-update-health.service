@@ -1,0 +1,21 @@
+# Managed by pithyx: shipped by the package pithyx (image/rootfs). The health check after an update's restart (D338):
+# the daemon runs, the migrations ran, the API and the desktop answer and the pools are back, within five minutes.
+# A failed check rolls back to the snapshot taken before the update and restarts. A health check that cannot even run
+# (a broken new daemon) restarts the box as well, and GRUB then starts the automatic rollback.
+[Unit]
+Description=Pithyx health check after an update
+After=pithyx.service
+ConditionPathExists=/var/lib/pithyx/update/trial.json
+
+[Service]
+Type=oneshot
+ExecStart=/usr/lib/pithyx/daemon/pithyxd update-health
+TimeoutStartSec=10min
+FailureAction=reboot
+Environment=DOTNET_CLI_TELEMETRY_OPTOUT=1
+# A snapshot starts read-only: nothing of .NET may need to write outside /run.
+Environment=DOTNET_EnableDiagnostics=0
+Environment=TMPDIR=/run
+
+[Install]
+WantedBy=multi-user.target

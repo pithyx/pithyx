@@ -167,6 +167,11 @@
       "description": "Accounts, passwords and administrators",
       "keywords": "user account password administrator login people"
     },
+    "updates": {
+      "title": "Updates",
+      "description": "Pithyx and Debian updates, the update channel, rollback to a snapshot",
+      "keywords": "update upgrade version release channel beta stable debian security rollback snapshot restore"
+    },
     "backup": {
       "title": "Backup and restore",
       "description": "Save the configuration of this box and restore it",
@@ -475,6 +480,100 @@
       "time": "Time zone and time servers",
       "tls": "Certificates",
       "sshKeys": "SSH host keys"
+    }
+  },
+  "updates": {
+    "intro": "Pithyx checks once a day whether a newer version is available and tells you; it never installs by itself. Before every update the box takes a snapshot of the system and checks the new version after the restart. If that check fails, it goes back to the snapshot by itself.",
+    "unsupported": "Updates apply only to a box installed with the Pithyx installer. This machine is laid out differently ({reason}), so you can check for updates but not install them or roll back here.",
+    "pithyx": "Pithyx",
+    "installed": "Installed version",
+    "channel": "Channel",
+    "channels": {
+      "stable": "Stable",
+      "beta": "Beta"
+    },
+    "lastCheck": "Last check",
+    "nextCheck": "Next check",
+    "checkOff": "Off",
+    "never": "Never",
+    "checking": "Checking…",
+    "upToDate": "Pithyx is up to date.",
+    "newVersion": "Pithyx {version} is available",
+    "needsMinimum": "This version needs at least Pithyx {minimum}. Install a version in between from an update file first.",
+    "changelog": "What changes",
+    "debian": "{count, plural, =0 {No Debian updates.} one {# Debian update} other {# Debian updates}}{count, plural, =0 {} other {, {security, plural, =0 {none of them a security fix} one {# of them a security fix} other {# of them security fixes}}.}}",
+    "checkNow": "Check now",
+    "install": "Install {version}",
+    "cancel": "Cancel",
+    "progress": {
+      "title": "Update in progress",
+      "rollbackTitle": "Rollback in progress",
+      "running": "Working. Do not switch the box off.",
+      "restarting": "The box restarts now and checks the new version. This page reconnects by itself; the history then shows the result.",
+      "done": "Done."
+    },
+    "steps": {
+      "download": "Download",
+      "snapshot": "Snapshot",
+      "install": "Install",
+      "debian": "Debian updates",
+      "bootloader": "Boot loader",
+      "restart": "Restart and check"
+    },
+    "upload": {
+      "title": "Install from a file",
+      "intro": "Upload a .pithyxupdate file, for example on a box without internet. The box checks its signature and every package before anything changes.",
+      "choose": "Upload update file",
+      "checking": "Checking…",
+      "checked": "Update file for Pithyx {version} checked",
+      "signed": "Signed by a key this box trusts.",
+      "unsigned": "Not signed: a development file, accepted only on a development machine.",
+      "details": "Channel {channel}, {packages, plural, one {# package} other {# packages}}, kernel {kernel}.",
+      "discard": "Discard"
+    },
+    "snapshots": {
+      "title": "Snapshots",
+      "intro": "A snapshot of the system is taken before every update; the last three are kept. Going back restores the system and its settings as they were then. Pools and their files are not touched.",
+      "none": "No snapshot yet.",
+      "entry": "Pithyx {version} from {date}",
+      "rollback": "Back to this version"
+    },
+    "history": {
+      "title": "History",
+      "none": "No update or rollback yet.",
+      "date": "Date",
+      "change": "Change",
+      "result": "Result",
+      "update": "Update {from} → {to} ({source, select, online {online} file {from a file} recovery {recovery menu} other {{source}}})",
+      "rollback": "Back from {from} to {to} ({source, select, manual {Settings} recovery {recovery menu} other {{source}}})",
+      "states": {
+        "running": "Running",
+        "restarting": "Restarting",
+        "succeeded": "Succeeded",
+        "failed": "Failed, nothing changed",
+        "rolled_back": "Failed, previous version restored"
+      }
+    },
+    "settings": {
+      "title": "Settings",
+      "check": "Check for updates daily",
+      "checkHint": "The check only reads a small file from the update source and notifies administrators. Nothing installs by itself.",
+      "channelHint": "Stable gets releases only. Beta gets new versions earlier, for testing; a beta box also installs stable versions."
+    },
+    "installDialog": {
+      "title": "Install Pithyx {version}?",
+      "change": "Pithyx goes from {from} to {to}.",
+      "snapshot": "First the box takes a snapshot of the system, so you can always go back to the current version.",
+      "restart": "Then it installs the update and restarts. Afterwards it checks the new version for up to five minutes and goes back to the snapshot by itself if the check fails. The box is not reachable during the restart.",
+      "debian": "Also install {count, plural, one {the Debian update} other {the # Debian updates}}",
+      "confirm": "Install and restart"
+    },
+    "rollbackDialog": {
+      "title": "Go back to Pithyx {version}?",
+      "what": "The system goes back to the snapshot of Pithyx {version} from {date} and restarts.",
+      "lost": "Settings changed since then are lost (users, shared folders, apps settings). Pools and their files stay as they are.",
+      "type": "Type {version} to confirm",
+      "confirm": "Go back and restart"
     }
   }
 }

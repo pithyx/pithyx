@@ -1,0 +1,25 @@
+# Managed by pithyx: shipped by the package pithyx (image/rootfs). The recovery menu on tty1 (D338), without a
+# password: whoever has the console controls the box anyway; the menu says to secure the console and a BMC.
+[Unit]
+Description=Pithyx recovery menu on tty1
+DefaultDependencies=no
+Requires=sysinit.target
+After=sysinit.target
+Conflicts=getty@tty1.service shutdown.target
+Before=shutdown.target
+
+[Service]
+Type=simple
+ExecStart=/usr/lib/pithyx/daemon/pithyxd recovery
+StandardInput=tty
+StandardOutput=tty
+StandardError=journal
+TTYPath=/dev/tty1
+TTYReset=yes
+TTYVHangup=yes
+Restart=always
+RestartSec=1
+Environment=DOTNET_CLI_TELEMETRY_OPTOUT=1
+# A snapshot starts read-only: nothing of .NET may need to write outside /run.
+Environment=DOTNET_EnableDiagnostics=0
+Environment=TMPDIR=/run

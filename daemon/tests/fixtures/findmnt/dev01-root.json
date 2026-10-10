@@ -1,0 +1,10 @@
+{
+   "filesystems": [
+      {
+         "source": "/dev/sda3",
+         "fstype": "ext4",
+         "options": "rw,relatime,discard,errors=remount-ro",
+         "uuid": "49af89bf-864c-4468-99b9-8c7f80dd05ea"
+      }
+   ]
+}

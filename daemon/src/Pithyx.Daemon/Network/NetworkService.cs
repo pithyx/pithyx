@@ -235,6 +235,25 @@ public sealed partial class NetworkService(
     }
 
     /// <summary>
+    /// The reset itself, without the running daemon's state: Pithyx's settings and files go, the cards return to the
+    /// image's DHCP file. The recovery menu calls it while the daemon does not run (D338); networkd then applies it at the
+    /// next start. Returns the command that failed to apply it now, if any.
+    /// </summary>
+    public static async Task<string?> ResetStoredAsync(SqliteConnectionFactory connections, NetworkHost host, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(connections);
+        ArgumentNullException.ThrowIfNull(host);
+        var config = new NetworkConfig([], new GlobalNetworkConfig(host.HostName, [], []));
+        var plan = NetworkdConfig.Plan(host.OwnedFiles(), NetworkdConfig.Render(config));
+        await using (var connection = await connections.OpenAsync(cancellationToken))
+        {
+            await connection.ExecuteAsync("DELETE FROM network_pending WHERE id = 1");
+            await connection.ExecuteAsync("DELETE FROM network_config WHERE id = 1");
+        }
+        return await host.ApplyAsync(plan, config, cancellationToken);
+    }
+
+    /// <summary>
     /// The console's "Reset network to DHCP": every card back on the image's DHCP file, no bonds, VLANs, name servers,
     /// search domains or default route; the host name stays. It has no timer: it restores the state the box ships with,
     /// and a rollback would bring back what locked the owner out (D337). A waiting change is dropped first.
@@ -248,18 +267,11 @@ public sealed partial class NetworkService(
             {
                 confirmation.Confirm(waiting.Id);
             }
-            var config = new NetworkConfig([], new GlobalNetworkConfig(host.HostName, [], []));
-            var plan = NetworkdConfig.Plan(host.OwnedFiles(), NetworkdConfig.Render(config));
-            await using (var connection = await connections.OpenAsync(cancellationToken))
-            {
-                await connection.ExecuteAsync("DELETE FROM network_pending WHERE id = 1");
-                await connection.ExecuteAsync("DELETE FROM network_config WHERE id = 1");
-            }
             lock (_lock)
             {
                 _pending = null;
             }
-            var failed = await host.ApplyAsync(plan, config, cancellationToken);
+            var failed = await ResetStoredAsync(connections, host, cancellationToken);
             LogReset(failed ?? "");
             await PublishAsync(cancellationToken);
             if (failed is not null)

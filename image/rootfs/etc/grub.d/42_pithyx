@@ -1,0 +1,24 @@
+#!/bin/sh
+# Managed by pithyx (D338): the entry "Pithyx recovery" (key r), which starts the recovery menu on tty1 (roll back to a
+# snapshot, install an update file from a USB stick, reset the network to DHCP, restart), and one entry per kept
+# snapshot from /@snapshots/menu.cfg (keys 1 to 3, the newest first). That file lies beside @ at the top of the btrfs,
+# so it is current whichever snapshot is @; the updater writes it whenever the snapshots change.
+set -e
+# shellcheck source=/dev/null
+. /usr/share/grub/grub-mkconfig_lib
+kernel="$(find /boot -maxdepth 1 -name 'vmlinuz-*' | sort -V | tail -n1)"
+[ -n "$kernel" ] || exit 0
+release="${kernel#/boot/vmlinuz-}"
+device="$(grub-probe --target=device /)"
+uuid="$(grub-probe --target=fs_uuid /)"
+echo "menuentry 'Pithyx recovery' --id pithyx-recovery --hotkey=r {"
+prepare_grub_to_access_device "$device" | sed 's/^/  /'
+echo "  linux $(make_system_path_relative_to_its_root "$kernel") root=UUID=$uuid ro rootflags=subvol=@ systemd.unit=pithyx-recovery.target"
+echo "  initrd $(make_system_path_relative_to_its_root "/boot/initrd.img-$release")"
+echo "}"
+cat <<GRUB
+search --no-floppy --fs-uuid --set=root $uuid
+if [ -f /@snapshots/menu.cfg ]; then
+  source /@snapshots/menu.cfg
+fi
+GRUB

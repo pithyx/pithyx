@@ -1,0 +1,3 @@
+#!/bin/sh
+# Managed by pithyx (D338): the recovery menu of the GRUB entry "Pithyx recovery", also usable from a root shell.
+exec /usr/lib/pithyx/daemon/pithyxd recovery "$@"

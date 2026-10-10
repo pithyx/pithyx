@@ -1,0 +1,9 @@
+Personalities : [raid0] [raid1] [raid6] [raid5] [raid4] [raid10] 
+md126 : active raid1 loop2[0]
+      306176 blocks super 1.2 [1/1] [U]
+      
+md127 : active raid1 loop1[1] loop0[0]
+      306176 blocks super 1.2 [2/2] [UU]
+      [===>.................]  resync = 19.3% (59584/306176) finish=0.0min speed=59584K/sec
+      
+unused devices: <none>
