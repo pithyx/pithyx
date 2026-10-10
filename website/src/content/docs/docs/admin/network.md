@@ -15,7 +15,7 @@ The page lists network cards, bonds and VLANs with their state (Connected, No ca
 
 Per interface you can switch it on or off, choose IPv4 DHCP, static or off, and IPv6 automatic (router and DHCPv6), static or off. A static address is written with its prefix length, for example `192.168.1.10/24` or `2001:db8::10/64`; the gateway is optional and must be inside the network. The MTU is 1280 to 9000 (576 to 9000 with IPv6 off); empty means 1500. **Back to DHCP** removes a card's own settings.
 
-Changes are collected as a draft ("Changes not applied yet") and applied together with **Apply…**, or dropped with **Discard changes**. Pithyx refuses a change that would leave the box without any interface that has an address ([`network.config.unreachable`](/docs/reference/errors/#network.config.unreachable)). Pithyx writes systemd-networkd and systemd-resolved files for this; there is no Wi-Fi, bridge or firewall setting.
+Changes are collected as a draft ("Changes not applied yet") and applied together with **Apply…**, or dropped with **Discard changes**. Pithyx refuses a change that would leave the box without any interface that has an address ([`network.config.unreachable`](/docs/reference/errors/#network.config.unreachable)). Pithyx writes systemd-networkd and systemd-resolved files for this; there is no Wi-Fi or bridge setting. The firewall is set with the file services (see [Security](/docs/admin/security/#open-ports)).
 
 ## Bonds
 
