@@ -54,7 +54,9 @@ async function expectGrabbable(page: Page, window: Locator) {
   expect(inside).toBeGreaterThanOrEqual(48 - 0.5);
 }
 
-test('windows stay reachable after the screen gets smaller', async ({ page }) => {
+test('windows stay inside the viewport when the screen gets smaller or zooms in', async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 1600, height: 1000 });
   await signInAsAdmin(page);
   // Before sign-in the session probe answers 401, which the browser logs; watch from here on.
@@ -64,29 +66,43 @@ test('windows stay reachable after the screen gets smaller', async ({ page }) =>
   const title = await box(about.getByRole('heading', { name: 'About Pithyx', exact: true }));
   await page.mouse.move(title.x + 20, title.y + 10);
   await page.mouse.down();
-  await page.mouse.move(1560, 960, { steps: 10 });
+  await page.mouse.move(1590, 990, { steps: 10 });
   await page.mouse.up();
 
-  const checkReachable = async () => {
+  const checkInside = async () => {
     const workspace = await box(page.getByRole('main', { name: 'Desktop' }));
     const rect = await box(about);
     await expectGrabbable(page, about);
+    expect(rect.x).toBeGreaterThanOrEqual(workspace.x - 0.5);
     expect(rect.y).toBeGreaterThanOrEqual(workspace.y - 0.5);
-    expect(rect.y + 40).toBeLessThanOrEqual(workspace.y + workspace.height + 0.5);
-    expect(rect.width).toBeLessThanOrEqual(workspace.width);
+    expect(rect.x + rect.width).toBeLessThanOrEqual(workspace.x + workspace.width + 0.5);
+    expect(rect.y + rect.height).toBeLessThanOrEqual(workspace.y + workspace.height + 0.5);
+    const overflow = await page.evaluate(() => {
+      const root = document.documentElement;
+      return root.scrollWidth - root.clientWidth + (root.scrollHeight - root.clientHeight);
+    });
+    expect(overflow).toBe(0);
   };
-  await checkReachable();
+  await checkInside();
 
-  await page.setViewportSize({ width: 1100, height: 700 });
-  await expect(checkReachable).toPass();
+  // Browser zoom from 90 to 125 percent on a 1536 px screen, and smaller laptops.
+  for (const [width, height] of [
+    [1536, 864],
+    [1366, 768],
+    [1229, 691],
+    [1100, 700],
+  ] as const) {
+    await page.setViewportSize({ width, height });
+    await expect(checkInside).toPass();
+  }
 
-  // Pull it back into view with the keyboard, then check a restored layout is clamped the same way.
-  await page.keyboard.press('Alt+Shift+ArrowUp');
-  await page.keyboard.press('Alt+Shift+ArrowDown');
+  // A layout saved on the larger screen is shown inside the smaller one after a reload.
   await page.setViewportSize({ width: 1600, height: 1000 });
+  await expect(checkInside).toPass();
+  await page.setViewportSize({ width: 1100, height: 700 });
   await page.reload();
   await expect(about).toBeVisible();
-  await checkReachable();
+  await expect(checkInside).toPass();
   expect(errors).toEqual([]);
 });
 

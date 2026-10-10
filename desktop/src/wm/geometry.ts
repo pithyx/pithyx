@@ -4,18 +4,6 @@ import type { Point, Rect, Size, SnapZone } from './types';
 export const TITLEBAR_HEIGHT = 40;
 /** Offset between windows opened one after another. */
 export const CASCADE_STEP = 32;
-/** How much free title bar (no buttons) stays inside the workspace, so a window can always be grabbed and dragged back. */
-export const MIN_GRAB = 48;
-/**
- * Title bar width taken by the window menu at the start and by the window buttons at the end, with touch-sized
- * targets (the larger case): padding, 44 px buttons and gaps as in Window.module.css.
- */
-export const TITLEBAR_START = 64;
-export const TITLEBAR_END = 148;
-/** A window past the right edge keeps its title bar start visible: the window menu plus room to grab. */
-export const MIN_VISIBLE_START = TITLEBAR_START + MIN_GRAB;
-/** A window past the left edge keeps its title bar end visible: the window buttons plus room to grab. */
-export const MIN_VISIBLE_END = TITLEBAR_END + MIN_GRAB;
 /** Distance from a workspace edge that triggers a snap zone while dragging. */
 export const SNAP_EDGE = 12;
 /** Workspaces at least this wide offer thirds instead of halves. */
@@ -39,17 +27,12 @@ export function clampSize(size: Size, min: Size, workspace: Size): Size {
   };
 }
 
-/**
- * Keeps a window reachable: the size fits the workspace, the title bar stays fully inside vertically, and
- * horizontally enough of it stays inside to show its buttons on that side and MIN_GRAB pixels to drag it by.
- */
+/** Keeps a window fully inside the workspace: the size fits it and the window is moved in from every edge. */
 export function clampRect(rect: Rect, min: Size, workspace: Size): Rect {
   const size = clampSize(rect, min, workspace);
-  const start = Math.min(MIN_VISIBLE_START, size.width);
-  const end = Math.min(MIN_VISIBLE_END, size.width);
   return {
-    x: Math.round(clamp(rect.x, end - size.width, workspace.width - start)),
-    y: Math.round(clamp(rect.y, 0, workspace.height - TITLEBAR_HEIGHT)),
+    x: Math.round(clamp(rect.x, 0, workspace.width - size.width)),
+    y: Math.round(clamp(rect.y, 0, workspace.height - size.height)),
     ...size,
   };
 }
@@ -73,7 +56,7 @@ export function cascade(previous: Rect | null, size: Size, workspace: Size): Rec
   return next;
 }
 
-/** The rect of a window moved by `delta` from where the drag started, kept reachable. */
+/** The rect of a window moved by `delta` from where the drag started, kept inside the workspace. */
 export function dragRect(start: Rect, delta: Point, min: Size, workspace: Size): Rect {
   return clampRect({ ...start, x: start.x + delta.x, y: start.y + delta.y }, min, workspace);
 }
@@ -89,7 +72,7 @@ export function resizeRect(
   let { x, y, width, height } = start;
   const right = start.x + start.width;
   const bottom = start.y + start.height;
-  // A window may already reach past an edge (only its title bar must stay reachable); resizing never pulls it in.
+  // A rect from an older layout may still reach past an edge; resizing never pulls it in.
   if (edge.includes('e')) {
     width = clamp(
       start.width + delta.x,
