@@ -179,6 +179,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- The READMEs of `@pithyx/sdk`, `@pithyx/ui` and `@pithyx/cli` on npm lose the empty usage section and gain the entry points and links to the docs site.
 - Attribution (D344): `NOTICE` names Schecher1 as the original author of Pithyx and asks under section 7(b) of the AGPL that forks and redistributions keep "Based on Pithyx, originally created by Schecher1" in their source, About page and docs; a fork may rename its product but states that it is based on Pithyx by Schecher1. The About app, README, CONTRIBUTING and the license docs page say so. The npm packages stay MIT without additional terms.
 - The community catalog `pithyx/apps-community` is on by default, like the official one (D343, the owner's wish): a new box fetches both; the tab Community says that its apps come from outside the project and can be switched off in the Store settings. Boxes set up before keep their setting.
 - The console's ASCII logo (`/usr/lib/pithyx/logo.txt`) is redrawn: the isometric box with its lid shut next to the word mark PITHYX, 72 columns and 12 lines. SSH sign-ins greet with it, the version and a warning that the shell is not managed by Pithyx (`/etc/update-motd.d/10-pithyx`) instead of Debian's text.
