@@ -1137,7 +1137,7 @@ public sealed partial class StoreService(
 
     /// <summary>
     /// The names the project's catalogs give themselves in their catalog.json, shown until a box has fetched them once
-    /// (the community catalog stays unfetched while it is off).
+    /// (a catalog switched off stays unfetched).
     /// </summary>
     private static readonly Dictionary<CatalogKind, IReadOnlyDictionary<string, string>> _projectNames = new()
     {

@@ -1,6 +1,6 @@
 -- The Store's catalogs and updates (S3, D328, D329). A catalog is a Git repository whose branch catalog (channel
 -- stable) or catalog-next (channel beta) the box fetches into /var/lib/pithyx/catalogs/<id>/ and verifies. The two
--- catalogs of the project are seeded, the community catalog off; administrators add custom ones. Everything here is in
+-- catalogs of the project are seeded, both on (the community catalog since D343); administrators add custom ones. Everything here is in
 -- the backup part "Apps".
 CREATE TABLE catalogs (
     id INTEGER PRIMARY KEY,
@@ -34,7 +34,7 @@ CREATE TABLE catalogs (
 
 INSERT INTO catalogs (catalog_id, kind, url, enabled, added_at) VALUES
     ('org.pithyx.official', 'official', 'https://github.com/pithyx/apps-official.git', 1, strftime('%Y-%m-%dT%H:%M:%SZ', 'now')),
-    ('org.pithyx.community', 'community', 'https://github.com/pithyx/apps-community.git', 0, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));
+    ('org.pithyx.community', 'community', 'https://github.com/pithyx/apps-community.git', 1, strftime('%Y-%m-%dT%H:%M:%SZ', 'now'));
 
 -- The catalog an app came from (its catalog_id; null for a sideload), the update policy that overrides the box's
 -- (null follows it), and the version before the last update with its snapshot, for "back to version x" (JSON).

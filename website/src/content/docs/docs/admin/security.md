@@ -51,7 +51,7 @@ First setup shows the recovery key once (`PTHX-` followed by 26 characters). It 
 The box sends no data to the Pithyx project. These are the outbound connections Pithyx itself makes:
 
 - **System updates**: once a day at a random time chosen by each box (switch it off with **Check for updates daily** in Settings > **Updates**), and on **Check now**, the box reads the channel file of its update source (by default the project's releases on GitHub) and Debian's package lists from `deb.debian.org`. An update you install downloads its file from the same source. See [System updates](/docs/install/updates/).
-- **App catalogs**: git over HTTPS or SSH to each enabled catalog repository (the official catalog is on and fetched from GitHub by default; the community catalog is off), once a day at the set time with a random delay of up to an hour, when you add a catalog, and on **Check now**. Switch a catalog off to stop it.
+- **App catalogs**: git over HTTPS or SSH to each enabled catalog repository (the official and the community catalog are on and fetched from GitHub by default), once a day at the set time with a random delay of up to an hour, when you add a catalog, and on **Check now**. Switch a catalog off to stop it.
 - **Container images** of catalog apps from the registry the catalog names, unless the package carries them.
 - **Time**: with **Time servers** in Settings > **Regional settings** empty, the box uses the Debian defaults through systemd-timesyncd, which contacts public time servers.
 - **Apps** that you allow the permission "Internet" get a second network with outbound access; other apps have none.

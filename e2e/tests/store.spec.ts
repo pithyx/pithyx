@@ -82,9 +82,9 @@ test('an administrator adds a catalog in the Store settings and installs an app 
   await openFromStart(page, 'Store');
   const store = appWindow(page, 'Store');
   await expect(store.getByRole('tab', { name: 'Installed' })).toBeVisible();
-  // The official catalog is on and has not been fetched in the test; the community catalog is off.
+  // Both project catalogs are on (the community one since D343) and have not been fetched in the test.
   await expect(store.getByRole('tab', { name: 'Official' })).toBeVisible();
-  await expect(store.getByRole('tab', { name: 'Community' })).toHaveCount(0);
+  await expect(store.getByRole('tab', { name: 'Community' })).toBeVisible();
 
   await test.step('the gear opens the settings with the policy, the check time, the channel and the catalogs', async () => {
     await store.getByRole('button', { name: 'Store settings' }).click();

@@ -215,7 +215,7 @@
     },
     "community": {
       "title": "Community apps",
-      "intro": "Apps from developers outside the project, reviewed by the project before they are published."
+      "intro": "Apps from developers outside the project. The project reviews them before they are published, but cannot vouch for them as for its own apps. You can switch this catalog off in the Store settings."
     },
     "own": {
       "title": "Your catalogs",

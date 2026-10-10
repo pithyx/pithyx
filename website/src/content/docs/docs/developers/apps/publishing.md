@@ -11,7 +11,7 @@ A catalog is a Git repository that lists apps for the Store. Pithyx has two proj
 
 ## Catalogs
 
-- **Official** (`pithyx/apps-official`) is the only source of `org.pithyx.*` apps besides the system image. **Community** (`pithyx/apps-community`) is off by default. An administrator can add **Own** catalogs.
+- **Official** (`pithyx/apps-official`) is the only source of `org.pithyx.*` apps besides the system image. **Community** (`pithyx/apps-community`) is on by default too (D343); an administrator can switch it off. An administrator can add **Own** catalogs.
 - **Source.** Each app lives in `apps/<id>/` on the `master` branch. CI builds the frontend and the images, pushes the images to `ghcr.io/<owner>/apps/<id>/<service>:<version>` (never overwritten, linked by digest), and writes two CI-only branches: `catalog-next` (the beta channel) and `catalog` (the stable channel). The stable branch is updated only after a manual approval.
 - **Files.** `catalog.json` at the root names the catalog. Each branch holds `index.json` and, for project catalogs, `index.json.sig`. Per version, the index lists hashes and sizes of the package, manifest, icon and screenshots, the images, the architectures, the `pithyx` range, the `dataVersion`, the license and the source commit. The files are at `apps/<id>/<version>/`: `<id>-<version>.pithyxapp`, `pithyx.json`, `icon.svg` and `screenshots/`.
 - **Sequence.** Each publish raises the index `sequence` by one. The box refuses a lower number ([`store.catalog.sequence_old`](/docs/reference/errors/#store.catalog.sequence_old)).

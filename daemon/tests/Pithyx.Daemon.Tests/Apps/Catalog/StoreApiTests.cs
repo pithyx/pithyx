@@ -318,7 +318,8 @@ public sealed class StoreApiTests : IDisposable
         }
         Assert.Empty((await _admin.GetFromJsonAsync<JsonElement>("/api/store/apps", Token)).GetProperty("apps").EnumerateArray());
         var community = (await _admin.GetFromJsonAsync<JsonElement>("/api/store", Token)).GetProperty("catalogs").EnumerateArray().Single(catalog => catalog.GetProperty("kind").GetString() == "community");
-        // Off and never fetched, it still has its name.
+        // On by default (D343) and never fetched, it still has its name.
+        Assert.True(community.GetProperty("enabled").GetBoolean());
         Assert.Equal("Community", community.GetProperty("name").GetProperty("en").GetString());
         using var remove = await _admin.DeleteAsync($"/api/store/catalogs/{key}", Token);
         Assert.Equal("store.catalog.built_in", await remove.ErrorCodeAsync());

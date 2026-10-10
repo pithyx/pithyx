@@ -11,7 +11,7 @@ Ein Katalog ist ein Git-Repository, das Apps für den Store auflistet. Pithyx ha
 
 ## Kataloge
 
-- **Offiziell** (`pithyx/apps-official`) ist neben dem System-Image die einzige Quelle für `org.pithyx.*`-Apps. **Community** (`pithyx/apps-community`) ist standardmäßig aus. Ein Administrator kann **Eigene** Kataloge hinzufügen.
+- **Offiziell** (`pithyx/apps-official`) ist neben dem System-Image die einzige Quelle für `org.pithyx.*`-Apps. **Community** (`pithyx/apps-community`) ist standardmäßig ebenfalls an (D343); ein Administrator kann ihn ausschalten. Ein Administrator kann **Eigene** Kataloge hinzufügen.
 - **Quelle.** Jede App liegt in `apps/<id>/` auf dem Branch `master`. Die CI baut das Frontend und die Images, schiebt die Images nach `ghcr.io/<owner>/apps/<id>/<service>:<version>` (nie überschrieben, per Digest verknüpft) und schreibt zwei Branches, die nur die CI beschreibt: `catalog-next` (der Beta-Kanal) und `catalog` (der Stable-Kanal). Der Stable-Branch wird erst nach einer manuellen Freigabe aktualisiert.
 - **Dateien.** `catalog.json` im Wurzelverzeichnis benennt den Katalog. Jeder Branch enthält `index.json` und, bei Projektkatalogen, `index.json.sig`. Der Index listet pro Version Hashes und Größen von Paket, Manifest, Icon und Screenshots, die Images, die Architekturen, den Bereich `pithyx`, die `dataVersion`, die Lizenz und den Quell-Commit auf. Die Dateien liegen in `apps/<id>/<version>/`: `<id>-<version>.pithyxapp`, `pithyx.json`, `icon.svg` und `screenshots/`.
 - **Sequenz.** Jede Veröffentlichung erhöht die `sequence` des Index um eins. Die Box lehnt eine niedrigere Nummer ab ([`store.catalog.sequence_old`](/de/docs/reference/errors/#store.catalog.sequence_old)).

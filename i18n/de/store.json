@@ -215,7 +215,7 @@
     },
     "community": {
       "title": "Community-Apps",
-      "intro": "Apps von Entwicklern außerhalb des Projekts, vom Projekt vor der Veröffentlichung geprüft."
+      "intro": "Apps von Entwicklern außerhalb des Projekts. Das Projekt prüft sie vor der Veröffentlichung, kann aber nicht wie für eigene Apps für sie einstehen. Du kannst diesen Katalog in den Store-Einstellungen ausschalten."
     },
     "own": {
       "title": "Deine Kataloge",
