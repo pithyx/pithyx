@@ -20,6 +20,29 @@ export interface AppNotification {
   data: unknown;
 }
 
+/** What an app asked a file dialog for. `save` names the proposed file; `pick` the extensions on offer. */
+export interface FileDialogRequest {
+  kind: 'pick' | 'save';
+  windowId: string;
+  multiple: boolean;
+  /** Extensions without the dot; every file when empty. */
+  extensions: readonly string[];
+  suggestedName: string;
+}
+
+/** A file the user chose in a dialog: a path in a shared folder, with what the dialog knew about it. */
+export interface ChosenFile {
+  share: number;
+  path: string;
+  name: string;
+  size: number;
+  modified: string;
+  /** The user's access to the shared folder. */
+  access: 'read' | 'readWrite';
+  /** For `save`: the user confirmed replacing an existing file. */
+  overwrite: boolean;
+}
+
 /**
  * What the desktop draws for app windows and keeps outside the window manager: badges, attention, unsaved changes,
  * the open app menu, the dialogs for an app that does not answer and for a copy the browser refused, and the actions
@@ -37,6 +60,8 @@ interface HostState {
   unresponsive: string[];
   /** Text the browser refused to copy, shown for the user to copy by hand. */
   copy: string | null;
+  /** The file dialog an app asked for, open while the user answers it. */
+  fileDialog: FileDialogRequest | null;
   notifications: Record<string, AppNotification>;
 }
 
@@ -47,6 +72,7 @@ const empty: HostState = {
   menu: null,
   unresponsive: [],
   copy: null,
+  fileDialog: null,
   notifications: {},
 };
 
@@ -55,6 +81,7 @@ export const useHost = create<HostState>(() => empty);
 let menuAnswer: ((id: string | null) => void) | undefined;
 const unresponsiveAnswers = new Map<string, (close: boolean) => void>();
 let copyDone: (() => void) | undefined;
+let fileDialogAnswer: ((chosen: ChosenFile[] | null) => void) | undefined;
 
 export function setBadge(app: string, count: number | null): void {
   useHost.setState((state) => ({
@@ -132,6 +159,27 @@ export function closeManualCopy(): void {
   done?.();
 }
 
+/**
+ * Shows the file dialog of an app's window and resolves with what the user chose, or null when the dialog was
+ * cancelled, replaced by another one or its window closed.
+ */
+export function offerFileDialog(request: FileDialogRequest): Promise<ChosenFile[] | null> {
+  answerFileDialog(null);
+  useHost.setState({ fileDialog: request });
+  return new Promise((resolve) => {
+    fileDialogAnswer = resolve;
+  });
+}
+
+export function answerFileDialog(chosen: ChosenFile[] | null): void {
+  const answer = fileDialogAnswer;
+  fileDialogAnswer = undefined;
+  if (useHost.getState().fileDialog !== null) {
+    useHost.setState({ fileDialog: null });
+  }
+  answer?.(chosen);
+}
+
 export function rememberNotification(id: string, notification: AppNotification): void {
   useHost.setState((state) => ({ notifications: { ...state.notifications, [id]: notification } }));
 }
@@ -189,6 +237,10 @@ useDesktop.subscribe((next, previous) => {
   if (menu !== null && !open(menu.windowId)) {
     closeMenu(null);
   }
+  const dialog = useHost.getState().fileDialog;
+  if (dialog !== null && !open(dialog.windowId)) {
+    answerFileDialog(null);
+  }
   const apps = new Set(Object.values(next.windows).map((window) => window.app));
   const looked =
     next.focused !== null && next.windows[next.focused]?.minimized === false ? next.focused : null;
@@ -215,6 +267,7 @@ useDesktop.subscribe((next, previous) => {
 export function resetHost(): void {
   closeMenu(null);
   closeManualCopy();
+  answerFileDialog(null);
   for (const answer of unresponsiveAnswers.values()) {
     answer(true);
   }

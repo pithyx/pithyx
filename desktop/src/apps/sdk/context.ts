@@ -46,6 +46,8 @@ export function appContext(options: {
   permissions: readonly string[];
   sizeClass: SizeClass;
   daemon?: DaemonAppContext;
+  /** The launch arguments, when the window made a handle for the file it was launched with. */
+  launch?: AppContext['launch'];
 }): Omit<AppContext, 'capabilities'> {
   const { client, windowId } = options;
   const user = client.getQueryData<User>(queryKeys.session);
@@ -67,7 +69,7 @@ export function appContext(options: {
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     theme: currentTheme(),
     sizeClass: options.sizeClass,
-    launch: launchOf(window?.args),
+    launch: options.launch ?? launchOf(window?.args),
     session: sessionOf(window?.args),
     permissions: [...(options.daemon?.permissions ?? options.permissions)],
     box: { name: setup?.hostname ?? location.hostname, version: PITHYX_VERSION },

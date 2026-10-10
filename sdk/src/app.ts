@@ -57,6 +57,20 @@ const LOG_FIELD = 1000;
 /** A cached backend token is used until this long before it expires. */
 const TOKEN_MARGIN = 30_000;
 
+/** Whether a request body can be sent a second time: a stream is used up by the first try. */
+function replayable(body: BodyInit | null | undefined): boolean {
+  return !(typeof ReadableStream !== 'undefined' && body instanceof ReadableStream);
+}
+
+/** Whether a response is the proxy's `app.token.invalid`, and not the answer of the backend itself. */
+async function refusedToken(response: Response): Promise<boolean> {
+  try {
+    return ((await response.clone().json()) as { code?: unknown }).code === 'app.token.invalid';
+  } catch {
+    return false;
+  }
+}
+
 /** Cuts a log entry to the limits the desktop and the daemon accept; values become text. */
 export function logRecord(level: LogLevel, message: string, data?: LogData): LogRecord {
   // Plain JavaScript callers may pass anything; logging never throws.
@@ -466,13 +480,15 @@ export interface PithyxApp {
    * content also `files.read` or `files.write`, and changes need write access to the share (`fs.share.read_only`
    * otherwise). Common failures: `app.permission.denied`, `fs.share.not_found`, `fs.share.unavailable` (its pool is
    * missing or locked), `app.storage.not_found` (no such storage request or not mapped), `fs.path.invalid`,
-   * `fs.entry.not_found` and `fs.entry.access_denied`. Third-party apps get a subset of these methods so far; check
+   * `fs.entry.not_found` and `fs.entry.access_denied`. A desktop may lack a method; check
    * {@link PithyxApp.supports}.
    */
   readonly files: {
     /**
      * Lets the user pick files in the desktop's file dialog. Resolves with an empty list when the user cancels.
-     * Needs `files.read`; must follow a user action in the window.
+     *  Needs `files.read`; must follow a user action in the window
+     * (otherwise it resolves with an empty list). The app can read the chosen files, and write them with
+     * `files.write`, without `files.shares`.
      *
      * @param options - Whether several files may be picked and which extensions are offered.
      * @returns The picked files, empty when the user cancelled.
@@ -486,7 +502,8 @@ export interface PithyxApp {
     }): Promise<FileRef[]>;
     /**
      * Lets the user choose where to save `data` in the desktop's save dialog. Resolves with null when the user
-     * cancels. Needs `files.write`; must follow a user action in the window.
+     * cancels. Needs `files.write`; must follow a user action in the window
+     * (otherwise it resolves with null).
      *
      * @param suggestedName - The name the dialog proposes.
      * @param data - The content to save.
@@ -976,9 +993,9 @@ export function createApp(endpoint: Endpoint, options: CreateAppOptions = {}): P
 
     // One token for all endpoints, shared by concurrent calls and kept until shortly before it expires.
     let backendToken: Promise<BackendToken> | undefined;
-    function token(): Promise<BackendToken> {
-      const current = backendToken;
-      backendToken = (current ?? typed('backend.token', {})).then((value) =>
+    function token(renew = false): Promise<BackendToken> {
+      const current = renew ? undefined : backendToken;
+      backendToken = (current ?? typed('backend.token', renew ? { renew } : {})).then((value) =>
         Date.parse(value.expiresAt) - Date.now() > TOKEN_MARGIN
           ? value
           : typed('backend.token', {}),
@@ -1076,17 +1093,31 @@ export function createApp(endpoint: Endpoint, options: CreateAppOptions = {}): P
         fetch: async (path, init = {}) => {
           const { endpoint, ...request } = init;
           const url = endpointUrl(path, endpoint);
-          const headers = new Headers(request.headers);
-          headers.set('Authorization', `Bearer ${(await token()).token}`);
-          try {
-            return await fetch(url, { ...request, headers, credentials: 'omit' });
-          } catch (error) {
-            // fetch fails with a TypeError when the request never got an answer; an abort stays an abort.
-            if (error instanceof TypeError) {
-              throw sdkError('sdk.backend.unreachable', { endpoint: endpoint ?? DEFAULT_ENDPOINT });
+          const send = async (renew: boolean) => {
+            const headers = new Headers(request.headers);
+            headers.set('Authorization', `Bearer ${(await token(renew)).token}`);
+            try {
+              return await fetch(url, { ...request, headers, credentials: 'omit' });
+            } catch (error) {
+              // fetch fails with a TypeError when the request never got an answer; an abort stays an abort.
+              if (error instanceof TypeError) {
+                throw sdkError('sdk.backend.unreachable', {
+                  endpoint: endpoint ?? DEFAULT_ENDPOINT,
+                });
+              }
+              throw error;
             }
-            throw error;
+          };
+          const response = await send(false);
+          // The proxy forgot the token (the box restarted, or the session changed): get a new one, once.
+          if (
+            response.status === 401 &&
+            replayable(request.body) &&
+            (await refusedToken(response))
+          ) {
+            return send(true);
           }
+          return response;
         },
         socket: async (path, { endpoint = DEFAULT_ENDPOINT, protocols } = {}) => {
           const url = socketUrl(endpointUrl(path, endpoint));

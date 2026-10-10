@@ -281,6 +281,7 @@ if (!installer.Active)
     Pithyx.Daemon.Apps.Catalog.StoreEndpoints.MapStoreEndpoints(api);
     api.MapAppTokenEndpoint();
     api.MapAppApi();
+    api.MapAppFileUrl();
     app.MapRealtime();
     app.MapWebDav();
 }

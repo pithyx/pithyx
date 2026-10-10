@@ -1,6 +1,8 @@
 import { CSRF_HEADER, PithyxApiError, unwrap, type components } from '@pithyx/api-client';
 import type { BackendToken, FileLocation } from '@pithyx/sdk';
+import { PithyxError } from '@pithyx/sdk/host';
 import { api } from '../../api/client';
+import { putFile } from '../sdk/fileMapping';
 
 type AppToken = components['schemas']['AppToken'];
 type TokenKind = 'host' | 'backend';
@@ -93,11 +95,35 @@ export function appApiFor(app: string, instance: string) {
     return response;
   }
 
+  /** Uploads a file with progress; a token the daemon no longer takes is renewed once. */
+  async function upload(
+    path: string,
+    name: string,
+    data: Blob,
+    onProgress: (loaded: number) => void,
+  ): Promise<components['schemas']['AppFileEntry']> {
+    const send = async (fresh: boolean) =>
+      putFile<components['schemas']['AppFileEntry']>(path, name, data, onProgress, {
+        Authorization: `Bearer ${(await host.get(fresh)).token}`,
+        [CSRF_HEADER]: '1',
+      });
+    try {
+      return await send(false);
+    } catch (error) {
+      if (error instanceof PithyxError && error.code === 'app.token.invalid') {
+        return send(true);
+      }
+      throw error;
+    }
+  }
+
   return {
     call,
     raw,
-    async backendToken(): Promise<BackendToken> {
-      const token = await backend.get();
+    upload,
+    /** The backend token; `renew` drops the cached one first, after the proxy refused it. */
+    async backendToken(renew = false): Promise<BackendToken> {
+      const token = await backend.get(renew);
       return { token: token.token, expiresAt: token.expiresAt };
     },
     /** Forgets the tokens, for example after the app's permissions changed. */

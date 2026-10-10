@@ -4,7 +4,9 @@ import type { HostExtensions } from '@pithyx/sdk/host';
 import { api } from '../../api/client';
 import { realtime } from '../../realtime/connection';
 import { openApp } from '../../wm/store';
+import { appsFor } from '../files/defaultAction';
 import { coreAppIds } from '../ids';
+import { installedApp } from '../installed';
 
 export type ThumbnailSize = components['schemas']['ThumbnailSize'];
 export type ThumbnailState = components['schemas']['ThumbnailState'];
@@ -26,12 +28,21 @@ export interface ViewerTarget {
   name: string;
 }
 
+/** A file to open with an installed app, with what the Files app knows about it. */
+export interface AppTarget extends ViewerTarget {
+  app: string;
+  size: number;
+  modified: string;
+  writable: boolean;
+}
+
 interface InternalFilesMethods {
   'internal.files.thumbnails': {
     params: { share: string; folder: string; names: string[]; size: ThumbnailSize };
     result: ThumbnailState[];
   };
   'internal.files.openViewer': { params: ViewerTarget; result: boolean };
+  'internal.files.openWithApp': { params: AppTarget; result: boolean };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -44,6 +55,16 @@ function isTarget(value: unknown): value is ViewerTarget {
     typeof value.share === 'string' &&
     typeof value.folder === 'string' &&
     typeof value.name === 'string'
+  );
+}
+
+function isAppTarget(value: unknown): value is AppTarget {
+  return (
+    isTarget(value) &&
+    typeof (value as Partial<AppTarget>).app === 'string' &&
+    Number.isFinite((value as Partial<AppTarget>).size) &&
+    typeof (value as Partial<AppTarget>).modified === 'string' &&
+    typeof (value as Partial<AppTarget>).writable === 'boolean'
   );
 }
 
@@ -118,6 +139,33 @@ export function filesHost(emit: (event: string, data?: unknown) => void): {
       'internal.files.openViewer': {
         validate: isTarget,
         handle: (params) => openApp(coreAppIds.viewer, undefined, { session: params }),
+      },
+      'internal.files.openWithApp': {
+        validate: isAppTarget,
+        handle: (params) => {
+          const target = params as AppTarget;
+          const app = installedApp(target.app);
+          // Only an installed app, and only for a file its manifest says it opens.
+          if (
+            app === undefined ||
+            appsFor(
+              { name: target.name, kind: 'file', size: target.size, modified: target.modified },
+              [app],
+            ).length === 0
+          ) {
+            return false;
+          }
+          return openApp(target.app, {
+            args: null,
+            pendingFile: {
+              share: target.share,
+              path: target.folder === '' ? target.name : `${target.folder}/${target.name}`,
+              size: target.size,
+              modified: target.modified,
+              writable: target.writable,
+            },
+          });
+        },
       },
     },
     close: () => {

@@ -57,8 +57,8 @@ console.log(app.context.user.displayName);
 
 **Ordner** (`FileLocation` ist `{ storage: id }` für eine Speicheranforderung im Manifest oder `{ share: id }` für einen freigegebenen Ordner, was `files.shares` braucht): `shares()`, `list(location, path, { cursor, limit, sort, order })` (standardmäßig 100 Einträge, höchstens 1000), `watch`, `upload`, `download`, `createFolder`, `rename`, `run(operation)` für Kopieren, Verschieben und Löschen als Job (Löschen geht in den Papierkorb, außer bei `permanent`), `versions` und `restoreVersion`. Hochladen über einen vorhandenen Namen schlägt mit `fs.entry.exists` fehl. `app.trash` listet den Papierkorb, stellt wieder her, löscht und leert ihn, und `app.jobs.cancel(id)` bricht einen Job ab.
 
-:::caution[Für Apps von Drittanbietern noch nicht bedient]
-Eine App aus einem Paket oder einem Katalog läuft in der Sandbox, und der Desktop bedient ihr heute nur `files.shares`, `list`, `open`, `read`, `write`, `upload` und `createFolder`. `pick`, `saveAs`, `url`, `watch`, `rename`, `run`, `versions`, `restoreVersion`, `app.trash`, `app.jobs.cancel` und `app.ui.showError` funktionieren nur in den eingebauten Apps; eine App von Drittanbietern bekommt [`sdk.method.unknown`](/de/docs/reference/errors/#sdk.method.unknown). `files.read` und `files.write` brechen nach 15 Sekunden ab ([`sdk.request.timeout`](/de/docs/reference/errors/#sdk.request.timeout)), große Dateien gehen deshalb über `upload`. Die [Leitfäden](/de/docs/sdk/guides/files-and-storage/) zeigen, was funktioniert.
+:::note[Dateien in der Sandbox]
+Eine App aus einem Paket oder einem Katalog bekommt jeden Dateiaufruf des SDK. `pick` und `saveAs` öffnen den Dateidialog des Desktops und brauchen eine Benutzeraktion im Fenster; eine Datei, die der Benutzer auswählt oder mit der App öffnet, lässt sich ohne `files.shares` lesen. `read`, `write` und `upload` haben keine Zeitgrenze. Der [Leitfaden](/de/docs/sdk/guides/files-and-storage/) hat die Einzelheiten.
 :::
 
 ## Backend

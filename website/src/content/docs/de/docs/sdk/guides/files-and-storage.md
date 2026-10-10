@@ -165,9 +165,9 @@ Eine Speicheranfrage benennt einen Ort, den die App braucht. Bei der Installatio
 
 `app.files.shares()` listet die freigegebenen Ordner, die der Benutzer nutzen darf, mit seinem `access` und, solange der Pool nicht erreichbar ist, `unavailable`. Einen freigegebenen Ordner zu listen braucht `files.shares`; den Inhalt einer Datei zu lesen zusätzlich `files.read`, zu schreiben zusätzlich `files.write`. Ein freigegebener Ordner ohne Zugriff des Benutzers scheitert mit [`fs.share.not_found`](/de/docs/reference/errors/#fs.share.not_found).
 
-## Aufrufe, die ein Drittanbieter-Fenster machen kann
+## Dateiaufrufe eines Sandbox-Fensters
 
-Auf der Box bekommt eine App in der Sandbox diese Dateiaufrufe:
+Eine App in der Sandbox bekommt jeden Dateiaufruf des SDK. Der Daemon prüft bei jedem die Berechtigungen der App und die eigenen Rechte des Benutzers. Die meisten Aufrufe nennen einen Ort (`{ storage: id }` oder `{ share: id }`):
 
 | Aufruf                                          | Was er tut                                                                                                 |
 | ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
@@ -177,15 +177,23 @@ Auf der Box bekommt eine App in der Sandbox diese Dateiaufrufe:
 | `files.read(ref)`, `files.write(ref, blob)`     | der Inhalt einer geöffneten Datei; `write` ersetzt ihn immer                                               |
 | `files.upload(location, folder, name, blob, o)` | eine neue Datei; ein vorhandener Name scheitert mit `fs.entry.exists`, außer mit `overwrite: true`         |
 | `files.createFolder(location, path)`            | ein Ordner; sein Elternordner muss existieren                                                              |
+| `files.rename(location, path, name)`            | benennt im Ordner um; ein vorhandener Name wird nie ersetzt                                                |
+| `files.url(ref)`                                | eine URL für `<img>`, `<video>` oder `fetch` mit Range-Anfragen, 5 Minuten gültig, eine Datei              |
+| `files.download(location, path)`                | ein Download durch den Browser, mit Fortschritt in der Taskleiste                                          |
+| `files.watch(location, path)` und `unwatch`     | `folderChanged`-Ereignisse, solange ein Ordner zu sehen ist                                                |
 
-Die übrigen Dateiaufrufe des SDK (`pick`, `saveAs`, `url`, `watch`, `unwatch`, `download`, `rename`, `run`, `versions`, `restoreVersion`, `trash.*`, `jobs.cancel`) bekommen Drittanbieter-Apps noch nicht; sie scheitern mit [`sdk.method.unknown`](/de/docs/reference/errors/#sdk.method.unknown). Prüfe mit `app.supports(method)`, bevor du eine Funktion anbietest.
+**Dialoge.** `files.pick({ multiple, extensions })` (braucht `files.read`) und `files.saveAs(suggestedName, blob)` (braucht `files.write`) öffnen den Dateidialog des Desktops. Rufe sie aus einem Klick- oder Tasten-Handler auf: Der Dialog öffnet sich nur für das Fenster, in dem der Benutzer gerade arbeitet; sonst liefert `pick` `[]` und `saveAs` `null`. Der Dialog zeigt die Freigaben des Benutzers; die App erfährt nur die Dateien, die der Benutzer wählt, und kann genau diese ohne `files.shares` lesen (und mit `files.write` schreiben). Dasselbe gilt für die Datei, die ein Benutzer in der Dateien-App mit der App öffnet (`launch.file`, `openFile`).
+
+**Die Dateiverwaltungs-Aufrufe** brauchen `files.shares` und arbeiten auf Freigaben: `files.run(operation)` für Kopieren, Verschieben und Löschen als Auftrag (`files.read` und `files.write` für Kopieren und Verschieben, `files.write` für Löschen), `files.versions` und `files.restoreVersion` (`files.read`, Wiederherstellen auch `files.write`), `trash.list` (`files.read`) sowie `trash.restore`, `trash.delete` und `trash.empty` (`files.write`). `jobChanged`-Ereignisse begleiten einen Auftrag; `jobs.cancel(id)` bricht nur einen Auftrag ab, den diese App für den Benutzer gestartet hat. `app.ui.showError(error)` zeigt den Fehlerdialog des Desktops. `sharesChanged` bekommt eine App mit `files.shares`.
+
+Prüfe mit `app.supports(method)`, bevor du eine Funktion anbietest, die dem Desktop fehlen kann: Der Mock-Desktop von `pithyx dev` bedient weniger Aufrufe als die Box.
 
 ## Sonderfälle
 
 - **Pfade** sind relativ zum Ort, mit `/` zwischen den Namen und `""` für die Wurzel. Ein führender oder doppelter Schrägstrich, `.`, `..` oder ein Pfad über 4096 Zeichen wird mit `sdk.request.invalid` abgelehnt. Ein Name hat 1 bis 255 Zeichen und kein `/`.
 - **Datei-Handles** gehören dem Fenster, das sie geöffnet hat, und enden mit ihm. Speichere Pfade, nie eine `FileRef`; eine veraltete scheitert mit `sdk.request.invalid`.
-- **Zeitgrenzen.** Jeder Aufruf außer `files.upload` scheitert nach 15 Sekunden mit `sdk.request.timeout`, auch `files.read` und `files.write`. Schreibe große Dateien mit `files.upload`, das keine Zeitgrenze hat.
-- **Upload-Fortschritt.** Ereignisse `uploadProgress` bekommen Drittanbieter-Apps nicht.
+- **Zeitgrenzen.** Jeder Aufruf scheitert nach 15 Sekunden mit `sdk.request.timeout`, außer denen, die so lange dauern wie eine Übertragung oder der Benutzer: `files.upload`, `files.read`, `files.write`, `files.pick` und `files.saveAs`.
+- **Upload-Fortschritt.** Mit einer `upload`-ID sendet `files.upload` Ereignisse `uploadProgress` mit den gesendeten Bytes, und der Upload erscheint mit einem Abbrechen-Knopf in der Taskleiste.
 - **Seiten.** Ein `limit` über 1000 wird auf 1000 gekürzt. Gib `nextCursor` als `cursor` für die nächste Seite mit; er bleibt gültig, während sich der Ordner ändert. Symbolische Links werden als `symlink` gelistet und nie verfolgt.
 - **Mock-Desktop.** `pithyx dev` bedient nur `files.pick`, `files.saveAs`, `files.read` und `files.write` (für ausgewählte Dateien) und hält `app.storage` im Browser des Mock-Desktops. Siehe [Testen](/de/docs/sdk/guides/testing/).
 

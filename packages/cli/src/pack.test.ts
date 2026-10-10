@@ -165,10 +165,11 @@ describe('pithyx validate', () => {
   it('tells pithyx lock apart: invalid manifest, no backend, a backend', () => {
     const empty = join(scratch, 'empty');
     mkdirSync(empty);
-    expect(lockTarget(readProject(empty))).toMatchObject({
-      kind: 'invalid',
-      findings: expect.arrayContaining([expect.objectContaining({ code: 'cli.manifest.missing' })]),
-    });
+    const missing = lockTarget(readProject(empty));
+    expect(missing.kind).toBe('invalid');
+    expect(missing.kind === 'invalid' && missing.findings.map((finding) => finding.code)).toContain(
+      'cli.manifest.missing',
+    );
     const broken = copyProject('broken-lock');
     writeFileSync(join(broken, 'pithyx.json'), '{"manifestVersion": 1}');
     expect(lockTarget(readProject(broken, { frontend: 'build' })).kind).toBe('invalid');

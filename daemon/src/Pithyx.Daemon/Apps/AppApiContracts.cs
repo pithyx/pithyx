@@ -55,7 +55,45 @@ public sealed record AppShareInfo(string Id, string Name, Shares.ShareAccess Acc
 /// <param name="Total">Entries in the folder when the page was read.</param>
 /// <param name="Entries">This page, in the requested order.</param>
 /// <param name="NextCursor">Pass as <c>cursor</c> for the next page; null on the last page.</param>
-public sealed record AppFolderPage(string Path, string FolderId, int Total, IReadOnlyList<Files.FileEntry> Entries, string? NextCursor);
+/// <param name="Topic">WebSocket topic with live changes of this folder, for the desktop's <c>files.watch</c>; never sent to the app.</param>
+public sealed record AppFolderPage(string Path, string FolderId, int Total, IReadOnlyList<Files.FileEntry> Entries, string? NextCursor, string Topic);
+
+/// <summary>Body of <c>POST /api/app/files/rename</c>.</summary>
+/// <param name="Path">The entry to rename.</param>
+/// <param name="Name">The new name in the same folder.</param>
+/// <param name="Share">The shared folder's id, or null.</param>
+/// <param name="Storage">The id of a storage request, or null.</param>
+public sealed record AppRenameRequest(string Path, string Name, string? Share = null, string? Storage = null);
+
+/// <summary>Body of <c>POST /api/app/files/versions/restore</c>.</summary>
+/// <param name="Share">The shared folder's id.</param>
+/// <param name="Path">The file or folder to bring back.</param>
+/// <param name="Snapshot">The version's snapshot, as listed.</param>
+/// <param name="Overwrite">Replace the current entry instead of restoring next to it.</param>
+public sealed record AppVersionRestoreRequest(string Share, string Path, string Snapshot, bool Overwrite = false);
+
+/// <summary>Body of the recycle bin calls of <c>/api/app/files/trash</c>.</summary>
+/// <param name="Share">The shared folder's id.</param>
+/// <param name="Ids">The items; all items of the bin for <c>empty</c>.</param>
+/// <param name="OnConflict">For restore; rename when left out.</param>
+public sealed record AppTrashRequest(string Share, IReadOnlyList<long>? Ids = null, Files.ConflictPolicy? OnConflict = null);
+
+/// <summary>Body of <c>POST /api/app/files/handles</c>: a file the user handed to the window in a dialog.</summary>
+/// <param name="Share">The shared folder's id.</param>
+/// <param name="Path">The one file; the window may read it (needs <c>files.read</c>), or also write it.</param>
+/// <param name="Write">Whether the window may write it (needs <c>files.write</c>).</param>
+public sealed record AppHandleRequest(string Share, string Path, bool Write = false);
+
+/// <summary>Body of <c>POST /api/app/files/url</c>.</summary>
+/// <param name="Path">The file.</param>
+/// <param name="Share">The shared folder's id, or null.</param>
+/// <param name="Storage">The id of a storage request, or null.</param>
+public sealed record AppFileUrlRequest(string Path, string? Share = null, string? Storage = null);
+
+/// <summary>A short-lived address of one file, usable without the desktop's session.</summary>
+/// <param name="Url">Path on the box with <c>?pithyx-token=</c>; supports range requests.</param>
+/// <param name="ExpiresAt">When it stops working (UTC).</param>
+public sealed record AppFileUrl(string Url, DateTimeOffset ExpiresAt);
 
 /// <summary>A file or folder an app reaches, with whether the app may write it.</summary>
 /// <param name="Name">Name within its folder.</param>

@@ -33,6 +33,8 @@ import { randomId } from '../../platform/browser';
 import { setClipboard, useFilesClipboard } from './clipboard';
 import { filesCall, onThumbnails, thumbnailUrl } from '../sdk/filesInternal';
 import { defaultAction, openWithChoices, type OpenWith } from './defaultAction';
+import { useInstalledApps } from '../installed';
+import { useAppName } from '../names';
 import styles from './FilesApp.module.css';
 import { FilesMenu, type FilesAction } from './FilesMenu';
 import { FolderView } from './FolderView';
@@ -129,6 +131,8 @@ export function FilesApp({ app }: { app: PithyxApp }) {
   );
   const thumbnailStates = useStore(thumbnails.store, (state) => state.byKey);
   const [openWith, setOpenWith] = useState<FileEntry | null>(null);
+  const installed = useInstalledApps((state) => state.apps);
+  const appName = useAppName();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [menu, setMenu] = useState<{ x: number; y: number; entry: FileEntry | null } | null>(null);
   const [confirmPermanent, setConfirmPermanent] = useState<FileItems | null>(null);
@@ -470,6 +474,16 @@ export function FilesApp({ app }: { app: PithyxApp }) {
         share: shareId,
         folder: path,
         name: entry.name,
+      }).catch(report);
+    } else if (how.startsWith('app:') && shareId !== null) {
+      await filesCall(app, 'internal.files.openWithApp', {
+        share: shareId,
+        folder: path,
+        name: entry.name,
+        app: how.slice('app:'.length),
+        size: entry.size,
+        modified: entry.modified,
+        writable,
       }).catch(report);
     } else {
       await app.files.download(location, joinPath(path, entry.name)).catch(report);
@@ -906,7 +920,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
       >
         <div className={styles.openWith}>
           {openWith !== null &&
-            openWithChoices(openWith).map((choice) => (
+            openWithChoices(openWith, installed ?? []).map((choice) => (
               <Button
                 key={choice}
                 onPress={() => {
@@ -915,7 +929,9 @@ export function FilesApp({ app }: { app: PithyxApp }) {
                   void openIn(entry, choice);
                 }}
               >
-                {t(`openWith.${choice}`)}
+                {choice === 'viewer' || choice === 'download'
+                  ? t(`openWith.${choice}`)
+                  : appName(choice.slice('app:'.length))}
               </Button>
             ))}
         </div>

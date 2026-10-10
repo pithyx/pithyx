@@ -91,6 +91,7 @@ public sealed record UpdateAppRequest(bool Enabled);
 /// <param name="Window">The window settings of the manifest.</param>
 /// <param name="Permissions">The permissions the app holds: those of its manifest that no administrator revoked.</param>
 /// <param name="LogLevel">Whether its debug log entries reach the daemon.</param>
+/// <param name="FileHandlers">The files the app opens, for "Open with".</param>
 public sealed record AppSummary(
     string Id,
     string Version,
@@ -100,7 +101,13 @@ public sealed record AppSummary(
     string Icon,
     JsonElement Window,
     IReadOnlyList<string> Permissions,
-    AppLogLevel LogLevel);
+    AppLogLevel LogLevel,
+    IReadOnlyList<AppFileHandler> FileHandlers);
+
+/// <summary>The kinds of files an app opens (<c>fileHandlers</c> of its manifest).</summary>
+/// <param name="Extensions">Lowercase extensions without the dot, for example <c>png</c> or <c>tar.gz</c>.</param>
+/// <param name="IsDefault">Whether the app is the default for these files when it is the only handler.</param>
+public sealed record AppFileHandler(IReadOnlyList<string> Extensions, bool IsDefault);
 
 /// <summary>The apps the subscriber may use, sorted by id: the snapshot and every event of <c>apps</c>.</summary>
 /// <param name="Apps">Enabled apps the user has a grant for; every enabled app for administrators.</param>

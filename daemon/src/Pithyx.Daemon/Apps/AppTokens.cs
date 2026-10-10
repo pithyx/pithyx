@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using Pithyx.Daemon.Auth;
 using Pithyx.Daemon.Errors;
@@ -16,7 +17,16 @@ public enum AppTokenKind
 
     /// <summary>One WebSocket to one endpoint of the backend, once, within 30 seconds (<c>?pithyx-ticket=</c>).</summary>
     Ticket,
+
+    /// <summary>One file of a window (<c>files.url</c>), read through <c>GET /app-files</c> with <c>?pithyx-token=</c> and no session cookie.</summary>
+    File,
 }
+
+/// <summary>The one file a file token reads.</summary>
+/// <param name="Share">The shared folder's id, or null for a storage request.</param>
+/// <param name="Storage">The id of a storage request, or null for a shared folder.</param>
+/// <param name="Path">The file, relative to the location.</param>
+public sealed record AppFileResource(string? Share, string? Storage, string Path);
 
 /// <summary>Whom a token or ticket was issued to. Every use checks again that this still holds.</summary>
 /// <param name="Kind">What it is for.</param>
@@ -26,7 +36,8 @@ public enum AppTokenKind
 /// <param name="Instance">The window instance the desktop asked for.</param>
 /// <param name="ExpiresAt">When it stops working (UTC).</param>
 /// <param name="Endpoint">For a ticket: the backend endpoint it opens.</param>
-public sealed record AppTokenGrant(AppTokenKind Kind, long UserId, string SessionId, string AppId, string Instance, DateTimeOffset ExpiresAt, string? Endpoint = null);
+/// <param name="Resource">For a file token: the one file it reads, as <see cref="AppFileResource"/> in JSON.</param>
+public sealed record AppTokenGrant(AppTokenKind Kind, long UserId, string SessionId, string AppId, string Instance, DateTimeOffset ExpiresAt, string? Endpoint = null, string? Resource = null);
 
 /// <summary>A token or ticket as it is handed out, once.</summary>
 /// <param name="Token">256 random bits, URL-safe.</param>
@@ -63,9 +74,9 @@ public sealed partial class AppTokens(TimeProvider time)
     /// <summary>A new host or backend token. Callers have checked the session, the user and the grant.</summary>
     public IssuedAppToken Issue(AppTokenKind kind, long userId, string sessionId, string appId, string instance)
     {
-        if (kind == AppTokenKind.Ticket)
+        if (kind is AppTokenKind.Ticket or AppTokenKind.File)
         {
-            throw new ArgumentOutOfRangeException(nameof(kind), "Tickets come from IssueTicket.");
+            throw new ArgumentOutOfRangeException(nameof(kind), "Tickets come from IssueTicket and file tokens from IssueFile.");
         }
         return Add(new AppTokenGrant(kind, userId, sessionId, appId, instance, time.GetUtcNow() + TokenLifetime));
     }
@@ -79,6 +90,17 @@ public sealed partial class AppTokens(TimeProvider time)
             throw new ArgumentException("Tickets are issued for a host token.", nameof(host));
         }
         return Add(host with { Kind = AppTokenKind.Ticket, ExpiresAt = time.GetUtcNow() + TicketLifetime, Endpoint = endpoint });
+    }
+
+    /// <summary>A token that reads one file for five minutes, bound to what the host token is bound to.</summary>
+    public IssuedAppToken IssueFile(AppTokenGrant host, AppFileResource file)
+    {
+        ArgumentNullException.ThrowIfNull(host);
+        if (host.Kind != AppTokenKind.Host)
+        {
+            throw new ArgumentException("File tokens are issued for a host token.", nameof(host));
+        }
+        return Add(host with { Kind = AppTokenKind.File, ExpiresAt = time.GetUtcNow() + TokenLifetime, Resource = JsonSerializer.Serialize(file) });
     }
 
     /// <summary>The grant of a token of the given kind while it lives, or null. A ticket is never found here.</summary>

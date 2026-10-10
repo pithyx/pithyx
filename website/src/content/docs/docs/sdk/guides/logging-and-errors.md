@@ -139,18 +139,18 @@ export async function loadDashboard(app: PithyxApp, show: (text: string) => void
 
 ## Retry or not
 
-| Code                                                                         | Meaning                                                         | Retry                                         |
-| ---------------------------------------------------------------------------- | --------------------------------------------------------------- | --------------------------------------------- |
-| [`sdk.request.timeout`](/docs/reference/errors/#sdk.request.timeout)         | the desktop did not answer within 15 seconds                    | a few times, with a growing pause             |
-| [`sdk.backend.unreachable`](/docs/reference/errors/#sdk.backend.unreachable) | the request did not reach the box                               | after `connectionChange` with `online: true`  |
-| [`app.backend.unavailable`](/docs/reference/errors/#app.backend.unavailable) | the backend is updating, failed, or did not start in 30 s       | when `backendStatus` says `running`, or later |
-| [`auth.rate.limited`](/docs/reference/errors/#auth.rate.limited)             | too many tokens at once                                         | after `params.retryAfterSeconds`              |
-| [`app.token.invalid`](/docs/reference/errors/#app.token.invalid)             | session ended or access to the app gone                         | no; the user reopens the window               |
-| [`app.permission.denied`](/docs/reference/errors/#app.permission.denied)     | the app lacks `params.permission`                               | no; wait for `permissionsChange`              |
-| [`sdk.transport.closed`](/docs/reference/errors/#sdk.transport.closed)       | no desktop connected, or the connection to it is gone           | no                                            |
-| [`sdk.method.unknown`](/docs/reference/errors/#sdk.method.unknown)           | the desktop does not serve this call                            | no; check `app.supports` first                |
-| [`sdk.request.invalid`](/docs/reference/errors/#sdk.request.invalid)         | the parameters are wrong, for example a key over 128 characters | no; a bug in the app                          |
-| `fs.*`, `app.storage.*`                                                      | the request itself is refused                                   | no; tell the user                             |
+| Code                                                                         | Meaning                                                                          | Retry                                         |
+| ---------------------------------------------------------------------------- | -------------------------------------------------------------------------------- | --------------------------------------------- |
+| [`sdk.request.timeout`](/docs/reference/errors/#sdk.request.timeout)         | the desktop did not answer within 15 seconds (not for transfers and dialogs)     | a few times, with a growing pause             |
+| [`sdk.backend.unreachable`](/docs/reference/errors/#sdk.backend.unreachable) | the request did not reach the box                                                | after `connectionChange` with `online: true`  |
+| [`app.backend.unavailable`](/docs/reference/errors/#app.backend.unavailable) | the backend is updating, failed, or did not start in 30 s                        | when `backendStatus` says `running`, or later |
+| [`auth.rate.limited`](/docs/reference/errors/#auth.rate.limited)             | too many tokens at once                                                          | after `params.retryAfterSeconds`              |
+| [`app.token.invalid`](/docs/reference/errors/#app.token.invalid)             | session ended or access to the app gone (the SDK already tried a new token once) | no; the user reopens the window               |
+| [`app.permission.denied`](/docs/reference/errors/#app.permission.denied)     | the app lacks `params.permission`                                                | no; wait for `permissionsChange`              |
+| [`sdk.transport.closed`](/docs/reference/errors/#sdk.transport.closed)       | no desktop connected, or the connection to it is gone                            | no                                            |
+| [`sdk.method.unknown`](/docs/reference/errors/#sdk.method.unknown)           | the desktop does not serve this call                                             | no; check `app.supports` first                |
+| [`sdk.request.invalid`](/docs/reference/errors/#sdk.request.invalid)         | the parameters are wrong, for example a key over 128 characters                  | no; a bug in the app                          |
+| `fs.*`, `app.storage.*`                                                      | the request itself is refused                                                    | no; tell the user                             |
 
 A timed-out call may still have happened on the box. Retry only calls that are safe to repeat, such as reads and `upload` with `overwrite`.
 
@@ -158,7 +158,7 @@ A timed-out call may still have happened on the box. Retry only calls that are s
 
 The app translates the codes it expects with its own texts, using `params` for the placeholders, and falls back to a general message. `detail` is English and meant for logs. Log the `requestId` instead of showing it: it lets an administrator find the request in the Log Center.
 
-`app.ui.showError(error)` shows the desktop's own error dialog with the translated text. The desktop serves it to its own apps only; a third-party app gets [`sdk.method.unknown`](/docs/reference/errors/#sdk.method.unknown), so check `app.supports('ui.showError')` as the example does. The mock desktop of `pithyx dev` serves it and writes the code to its log.
+`app.ui.showError(error)` shows the desktop's own error dialog with the translated text. Check `app.supports('ui.showError')` as the example does: an older desktop may not serve it and answers [`sdk.method.unknown`](/docs/reference/errors/#sdk.method.unknown). The mock desktop of `pithyx dev` serves it and writes the code to its log.
 
 ## Edge cases
 

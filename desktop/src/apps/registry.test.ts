@@ -18,6 +18,7 @@ function installed(id: string, name: Record<string, string> = { en: id }): Insta
     },
     permissions: ['notifications'],
     logLevel: 'info',
+    fileHandlers: [],
   };
 }
 

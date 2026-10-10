@@ -573,6 +573,39 @@
         }
       }
     },
+    "/api/app-files/content": {
+      "get": {
+        "tags": [
+          "App API"
+        ],
+        "description": "The file of a file token from POST /api/app/files/url, with range requests, for 5 minutes; inline for images, audio, video and PDF, an attachment with download=true. Needs no session cookie and no Authorization header: the token is the query parameter pithyx-token.",
+        "operationId": "AppReadFileByToken",
+        "parameters": [
+          {
+            "name": "download",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/installer": {
       "get": {
         "tags": [
@@ -6879,6 +6912,464 @@
         }
       }
     },
+    "/api/app/files/rename": {
+      "post": {
+        "tags": [
+          "App API"
+        ],
+        "description": "Renames a file or folder within its folder; an existing name is never replaced. Needs the permissions of writing: files.shares and files.write for a shared folder.",
+        "operationId": "AppRenameFileEntry",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppRenameRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppFileEntry"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/app/files/operations": {
+      "post": {
+        "tags": [
+          "App API"
+        ],
+        "description": "As POST /api/files/operations, for shared folders. Needs files.shares and files.write, and files.read for copy and move. Follow the job on jobs/<id>.",
+        "operationId": "AppStartFileOperation",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FileOperationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/app/files/versions": {
+      "get": {
+        "tags": [
+          "App API"
+        ],
+        "description": "Earlier versions of a file or folder of a shared folder, as GET /api/files/{shareId}/versions. Needs files.shares and files.read.",
+        "operationId": "AppListFileVersions",
+        "parameters": [
+          {
+            "name": "share",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/FileVersionList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/app/files/versions/restore": {
+      "post": {
+        "tags": [
+          "App API"
+        ],
+        "description": "Starts a job that copies a version back, as POST /api/files/{shareId}/versions/restore. Needs files.shares, files.read and files.write.",
+        "operationId": "AppRestoreFileVersion",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppVersionRestoreRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/app/files/trash": {
+      "get": {
+        "tags": [
+          "App API"
+        ],
+        "description": "The recycle bin of a shared folder, as GET /api/files/{shareId}/trash. Needs files.shares and files.read.",
+        "operationId": "AppListTrash",
+        "parameters": [
+          {
+            "name": "share",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TrashPage"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/app/files/trash/restore": {
+      "post": {
+        "tags": [
+          "App API"
+        ],
+        "description": "Starts a job that puts recycle bin items back. Needs files.shares and files.write.",
+        "operationId": "AppRestoreTrash",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppTrashRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/app/files/trash/delete": {
+      "post": {
+        "tags": [
+          "App API"
+        ],
+        "description": "Starts a job that deletes recycle bin items for good. Needs files.shares and files.write.",
+        "operationId": "AppDeleteTrashItems",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppTrashRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/app/files/trash/empty": {
+      "post": {
+        "tags": [
+          "App API"
+        ],
+        "description": "Starts a job that deletes everything in the recycle bin for good. Needs files.shares and files.write.",
+        "operationId": "AppEmptyTrash",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppTrashRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/app/files/handles": {
+      "post": {
+        "tags": [
+          "App API"
+        ],
+        "description": "The desktop tells the daemon that the user handed one file of a shared folder to this window (a pick, a save dialog or Open with). The window may then read it with files.read, or also write it with files.write, without files.shares; only this exact path, and the user's own rights still apply. Only the desktop calls this, after a dialog the user answered.",
+        "operationId": "AppHandFile",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppHandleRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/app/files/url": {
+      "post": {
+        "tags": [
+          "App API"
+        ],
+        "description": "A URL that reads one file with range requests for 5 minutes, without the desktop session. Needs the permissions of reading the file.",
+        "operationId": "AppCreateFileUrl",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AppFileUrlRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AppFileUrl"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/app/jobs/{id}/cancel": {
+      "post": {
+        "tags": [
+          "App API"
+        ],
+        "description": "Cancels a job the token's app started for the user; any other job is jobs.job.not_found.",
+        "operationId": "AppCancelJob",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/app/tickets": {
       "post": {
         "tags": [
@@ -7273,13 +7764,60 @@
         },
         "description": "A file or folder an app reaches, with whether the app may write it."
       },
+      "AppFileUrl": {
+        "required": [
+          "url",
+          "expiresAt"
+        ],
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "Path on the box with `?pithyx-token=`; supports range requests."
+          },
+          "expiresAt": {
+            "type": "string",
+            "description": "When it stops working (UTC).",
+            "format": "date-time"
+          }
+        },
+        "description": "A short-lived address of one file, usable without the desktop's session."
+      },
+      "AppFileUrlRequest": {
+        "required": [
+          "path"
+        ],
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The file."
+          },
+          "share": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The shared folder's id, or null."
+          },
+          "storage": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The id of a storage request, or null."
+          }
+        },
+        "description": "Body of `POST /api/app/files/url`."
+      },
       "AppFolderPage": {
         "required": [
           "path",
           "folderId",
           "total",
           "entries",
-          "nextCursor"
+          "nextCursor",
+          "topic"
         ],
         "type": "object",
         "properties": {
@@ -7309,6 +7847,10 @@
               "string"
             ],
             "description": "Pass as `cursor` for the next page; null on the last page."
+          },
+          "topic": {
+            "type": "string",
+            "description": "WebSocket topic with live changes of this folder, for the desktop's `files.watch`; never sent to the app."
           }
         },
         "description": "One page of a folder, relative to its location."
@@ -7352,6 +7894,29 @@
           }
         }
       },
+      "AppHandleRequest": {
+        "required": [
+          "share",
+          "path"
+        ],
+        "type": "object",
+        "properties": {
+          "share": {
+            "type": "string",
+            "description": "The shared folder's id."
+          },
+          "path": {
+            "type": "string",
+            "description": "The one file; the window may read it (needs `files.read`), or also write it."
+          },
+          "write": {
+            "type": "boolean",
+            "description": "Whether the window may write it (needs `files.write`).",
+            "default": false
+          }
+        },
+        "description": "Body of `POST /api/app/files/handles`: a file the user handed to the window in a dialog."
+      },
       "AppList": {
         "required": [
           "apps"
@@ -7370,7 +7935,8 @@
                 "icon",
                 "window",
                 "permissions",
-                "logLevel"
+                "logLevel",
+                "fileHandlers"
               ],
               "type": "object",
               "properties": {
@@ -7421,6 +7987,31 @@
                     "debug"
                   ],
                   "description": "Whether an app's `debug` log entries reach the daemon (D305); `info`, `warn` and `error` always do."
+                },
+                "fileHandlers": {
+                  "type": "array",
+                  "items": {
+                    "required": [
+                      "extensions",
+                      "isDefault"
+                    ],
+                    "type": "object",
+                    "properties": {
+                      "extensions": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "Lowercase extensions without the dot, for example `png` or `tar.gz`."
+                      },
+                      "isDefault": {
+                        "type": "boolean",
+                        "description": "Whether the app is the default for these files when it is the only handler."
+                      }
+                    },
+                    "description": "The kinds of files an app opens (`fileHandlers` of its manifest)."
+                  },
+                  "description": "The files the app opens, for \"Open with\"."
                 }
               },
               "description": "An installed app as a user who may use it sees it (topic `apps`)."
@@ -7771,6 +8362,38 @@
           }
         }
       },
+      "AppRenameRequest": {
+        "required": [
+          "path",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string",
+            "description": "The entry to rename."
+          },
+          "name": {
+            "type": "string",
+            "description": "The new name in the same folder."
+          },
+          "share": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The shared folder's id, or null."
+          },
+          "storage": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The id of a storage request, or null."
+          }
+        },
+        "description": "Body of `POST /api/app/files/rename`."
+      },
       "AppShareInfo": {
         "required": [
           "id",
@@ -7947,7 +8570,8 @@
         "enum": [
           "host",
           "backend",
-          "ticket"
+          "ticket",
+          "file"
         ],
         "description": "What a token is for (D303)."
       },
@@ -7968,6 +8592,41 @@
           }
         },
         "description": "Body of `POST /api/apps/{appId}/tokens`."
+      },
+      "AppTrashRequest": {
+        "required": [
+          "share"
+        ],
+        "type": "object",
+        "properties": {
+          "share": {
+            "type": "string",
+            "description": "The shared folder's id."
+          },
+          "ids": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "integer",
+              "format": "int64"
+            },
+            "description": "The items; all items of the bin for `empty`."
+          },
+          "onConflict": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "For restore; rename when left out.",
+                "$ref": "#/components/schemas/ConflictPolicy"
+              }
+            ]
+          }
+        },
+        "description": "Body of the recycle bin calls of `/api/app/files/trash`."
       },
       "AppUpdate": {
         "required": [
@@ -8080,6 +8739,34 @@
           }
         },
         "description": "One user's effective access to an app."
+      },
+      "AppVersionRestoreRequest": {
+        "required": [
+          "share",
+          "path",
+          "snapshot"
+        ],
+        "type": "object",
+        "properties": {
+          "share": {
+            "type": "string",
+            "description": "The shared folder's id."
+          },
+          "path": {
+            "type": "string",
+            "description": "The file or folder to bring back."
+          },
+          "snapshot": {
+            "type": "string",
+            "description": "The version's snapshot, as listed."
+          },
+          "overwrite": {
+            "type": "boolean",
+            "description": "Replace the current entry instead of restoring next to it.",
+            "default": false
+          }
+        },
+        "description": "Body of `POST /api/app/files/versions/restore`."
       },
       "Appearance": {
         "required": [
@@ -16563,6 +17250,9 @@
       "name": "Apps"
     },
     {
+      "name": "App API"
+    },
+    {
       "name": "Auth"
     },
     {
@@ -16585,9 +17275,6 @@
     },
     {
       "name": "Store"
-    },
-    {
-      "name": "App API"
     }
   ]
 }

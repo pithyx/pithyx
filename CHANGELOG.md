@@ -179,6 +179,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - `ICommandRunner` can stream the lines of long-running commands such as `udevadm monitor`; simulation replays recorded streams.
 - `tools/fixtures/record.sh` replaces serial numbers and WWNs in recorded JSON with stable pseudonyms.
 - The generated client includes the WebSocket message types and the data type of every topic.
+- Third-party apps in the sandbox get the whole file API of the SDK: `files.pick` and `files.saveAs` open a file dialog of the desktop (only for the window the user works in), `files.url`, `files.download`, `files.watch` and `files.unwatch`, `files.rename`, `files.run`, `files.versions` and `files.restoreVersion`, `app.trash.*`, `jobs.cancel` and `ui.showError`, with `folderChanged`, `jobChanged`, `sharesChanged` and `uploadProgress` events. A file the user picks, saves to or opens with an app can be read, and with `files.write` written, without `files.shares`. "Open with" in the Files app offers the installed apps whose `fileHandlers` name the file's extension and sends `launch.file` to a new window and `openFile` to an open `single` window. New daemon API under `/api/app/files/` (`rename`, `operations`, `versions`, `versions/restore`, `trash`, `trash/restore|delete|empty`, `handles`, `url`), `POST /api/app/jobs/{id}/cancel` and `GET /api/app-files/content?pithyx-token=`; `fileHandlers` in the app list.
 
 ### Changed
 
@@ -231,6 +232,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- Files for third-party apps: `files.read`, `files.write`, `files.pick` and `files.saveAs` no longer fail after 15 seconds (`sdk.request.timeout`); `files.upload` sends `uploadProgress` events.
+- After a restart of the box, `app.backend.fetch` got `app.token.invalid` for minutes: when the proxy refuses the backend token, the SDK now drops it, gets a new one and repeats the request once.
+- `pithyx validate` on a folder without `pithyx.json` now fails with the finding `cli.manifest.missing` and exit code 1, and `pithyx lock` reports an invalid manifest instead of "The app has no backend".
 - SFTP and SSH start on a box installed from the ISO: sshd never ran there, so its privilege separation directory `/run/sshd` was missing, `sshd -t` refused the generated drop-in and SFTP showed as failed. The daemon now creates the directory before the check, and `image/test-install.sh` signs in over SFTP and SSH on every test install.
 - Windows always stay fully inside the browser window: after zooming in, resizing or restoring a layout from a larger screen they move in and shrink to fit instead of being cut off on the right or bottom; dragging also stops at the edge.
 - A backend endpoint name is at most 32 characters everywhere, as the manifest schema says: the SDK's `backend.ticket` and the daemon's `app.backend.endpoint_unknown` used 63. The text of `app.backend.unsupported`, which Pithyx 0.1 no longer returns, says so. The `@pithyx/cli` README lists `pithyx build` and `pithyx catalog`, and NOTICE names `@pithyx/ui` and `@pithyx/cli` as MIT next to `@pithyx/sdk`.

@@ -116,6 +116,7 @@ Nur die CLI meldet diese. `cli.backend.unbuilt` kommt vom Vite-Plugin nach `vite
   - `reason` = `missing`: {image} is not locked
   - `reason` = `unused`: {image} is not used
   - `reason` = `other`: {image} differs
+- `cli.manifest.missing` (Fehler): pithyx.json does not exist in {folder}. Run the command in the project folder of an app, or name that folder.
 
 <!-- /generated -->
 

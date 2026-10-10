@@ -172,8 +172,16 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
             $"/api/apps/{app.Id}/icon?v={app.Sha256[..12]}",
             manifest.GetProperty("window").Clone(),
             app.Granted,
-            app.LogLevel);
+            app.LogLevel,
+            FileHandlers(manifest));
     }
+
+    private static List<AppFileHandler> FileHandlers(JsonElement manifest) =>
+        manifest.TryGetProperty("fileHandlers", out var handlers)
+            ? [.. handlers.EnumerateArray().Select(handler => new AppFileHandler(
+                [.. handler.GetProperty("extensions").EnumerateArray().Select(extension => extension.GetString()!)],
+                handler.TryGetProperty("isDefault", out var isDefault) && isDefault.GetBoolean()))]
+            : [];
 
     public TopicDefinition Definition() => new(
         Topic,

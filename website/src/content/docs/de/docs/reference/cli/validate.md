@@ -56,13 +56,11 @@ Der Lock wird nur geprüft, wenn die Compose-Datei besteht. Warnungen ändern de
 | 1    | Mindestens ein Fehler.                                                |
 | 2    | Mehr als ein Projektordner.                                           |
 
-:::caution
-Ein Ordner ohne `pithyx.json`, aber mit gebautem Frontend, besteht derzeit mit leerem Namen (` is valid.`). `pack` lehnt denselben Ordner ab.
-:::
+Ein Ordner ohne `pithyx.json` scheitert mit dem Fehler `cli.manifest.missing` und Exit-Code 1, auch wenn er ein gebautes Frontend hat; `pack` und `lock` lehnen ihn genauso ab.
 
 ## Befunde
 
-Fehler mit den Codes der Box `app.manifest.*`, `app.icon.invalid`, `app.package.invalid`, `app.package.layout_invalid`, `app.compose.*` und `app.elevated.unsupported`, dazu die eigenen der CLI `cli.frontend.*`, `cli.icon.template` und `cli.lock.*`. Jeder mit seiner Meldung steht unter [Befunde](/de/docs/reference/cli/findings/).
+Fehler mit den Codes der Box `app.manifest.*`, `app.icon.invalid`, `app.package.invalid`, `app.package.layout_invalid`, `app.compose.*` und `app.elevated.unsupported`, dazu die eigenen der CLI `cli.manifest.missing`, `cli.frontend.*`, `cli.icon.template` und `cli.lock.*`. Jeder mit seiner Meldung steht unter [Befunde](/de/docs/reference/cli/findings/).
 
 ## Beispiele
 

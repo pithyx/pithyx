@@ -49,11 +49,11 @@ pithyx lock [project folder] [--frontend <folder>]
 
 ## Exit codes
 
-| Code | When                                                                                                                                                         |
-| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 0    | The lock is written or up to date. Also when the app has no backend: `The app has no backend; there is nothing to lock.`                                     |
-| 1    | `pithyx.json` is missing or invalid (it prints the same "no backend" line), a registry fails or refuses access, or an image has no amd64 and no arm64 image. |
-| 2    | More than one project folder.                                                                                                                                |
+| Code | When                                                                                                                                                                                                   |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 0    | The lock is written or up to date. Also when the app has no backend: `The app has no backend; there is nothing to lock.`                                                                               |
+| 1    | `pithyx.json` is missing or invalid (it prints the errors and `The project is not valid; there is nothing to lock.`), a registry fails or refuses access, or an image has no amd64 and no arm64 image. |
+| 2    | More than one project folder.                                                                                                                                                                          |
 
 ## Findings
 
