@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CASCADE_STEP, MIN_VISIBLE_END, MIN_VISIBLE_START, TITLEBAR_HEIGHT } from './geometry';
+import { CASCADE_STEP } from './geometry';
 import {
   MAX_WINDOWS,
   canOpen,
@@ -209,13 +209,13 @@ describe('move', () => {
     expect(state.windows.w1?.rect).toEqual({ x: 10, y: 20, width: 600, height: 400 });
   });
 
-  it('keeps the title bar reachable', () => {
+  it('keeps the window inside the workspace', () => {
     const state = run(
       { type: 'open', app: 'a', options: multi },
       { type: 'move', id: 'w1', rect: { x: -5000, y: -50, width: 600, height: 400 } },
     );
     expect(state.windows.w1?.rect).toEqual({
-      x: MIN_VISIBLE_END - 600,
+      x: 0,
       y: 0,
       width: 600,
       height: 400,
@@ -242,11 +242,11 @@ describe('setGeometry', () => {
 });
 
 describe('workspace changes', () => {
-  it('shows windows reachable in a smaller workspace without changing where they belong', () => {
+  it('shows windows fully inside a smaller workspace without changing where they belong', () => {
     const wide = run(
       { type: 'setWorkspace', size: { width: 3440, height: 1388 } },
       { type: 'open', app: 'a', options: multi },
-      { type: 'move', id: 'w1', rect: { x: 2800, y: 1200, width: 600, height: 400 } },
+      { type: 'move', id: 'w1', rect: { x: 2800, y: 900, width: 600, height: 400 } },
     );
     const small = reduce(wide, { type: 'setWorkspace', size: { width: 1280, height: 668 } });
     const window = small.windows.w1;
@@ -254,12 +254,12 @@ describe('workspace changes', () => {
       throw new Error('window missing');
     }
     expect(visibleRect(window, small.workspace)).toEqual({
-      x: 1280 - MIN_VISIBLE_START,
-      y: 668 - TITLEBAR_HEIGHT,
+      x: 1280 - 600,
+      y: 668 - 400,
       width: 600,
       height: 400,
     });
-    expect(window.rect).toEqual({ x: 2800, y: 1200, width: 600, height: 400 });
+    expect(window.rect).toEqual({ x: 2800, y: 900, width: 600, height: 400 });
     const again = reduce(small, { type: 'setWorkspace', size: { width: 3440, height: 1388 } });
     expect(again.windows.w1).toBe(window);
   });
