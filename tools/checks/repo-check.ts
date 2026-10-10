@@ -43,7 +43,6 @@ const COMMENT_SYNTAX: Record<string, CommentSyntax> = {
   '.cs': 'c',
   '.css': 'c',
   '.jsonc': 'c',
-  '.yml': 'hash',
   '.yaml': 'hash',
   '.sh': 'hash',
   '.toml': 'hash',
@@ -253,6 +252,10 @@ function checkPackageVersions(): Problem[] {
 
 const problems: Problem[] = [];
 for (const file of listFiles()) {
+  // YAML files use the extension .yaml everywhere (the owner's wish of 2026-10-10).
+  if (extname(file).toLowerCase() === '.yml') {
+    problems.push({ file, line: 1, message: 'YAML files end in .yaml, not .yml' });
+  }
   if (OLD_NAME.test(file.replace(OLD_NAME_ALLOWED, ''))) {
     problems.push({
       file,

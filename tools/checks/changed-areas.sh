@@ -24,7 +24,7 @@ while IFS= read -r file; do
     website/* | i18n/* | packages/ui/tokens.css | pnpm-lock.yaml | .github/workflows/*) website=true ;;
   esac
   case "$file" in
-    *.md | website/*) continue ;;
+    *.md | website/* | .github/ISSUE_TEMPLATE/*) continue ;;
   esac
   code=true
   case "$file" in

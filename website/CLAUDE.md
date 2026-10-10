@@ -1,13 +1,13 @@
 # Website
 
-The landing page and the docs at https://pithyx.org (D340): Astro with Starlight, React for the landing page sections, built to static files and published with GitHub Pages (`.github/workflows/pages.yml`). Everything a reader sees is content in Markdown or YAML; components only arrange it. The root `CLAUDE.md` stays binding.
+The landing page and the docs at https://pithyx.org (D340): Astro with Starlight, React for the landing page sections, built to static files and published with GitHub Pages (`.github/workflows/pages.yaml`). Everything a reader sees is content in Markdown or YAML; components only arrange it. The root `CLAUDE.md` stays binding.
 
 ## Commands
 
 - `pnpm --filter @pithyx/website dev`: dev server on http://localhost:4321 (search works only after a build).
 - `pnpm --filter @pithyx/website build:site`: build to `website/dist/`, then `scripts/check-build.ts` (every docs page has a Markdown twin, the llms files exist, no MDX component left in a twin, every link in `llms.txt` is built). It prints how many pages are still placeholders.
 - `pnpm --filter @pithyx/website check`: `astro check` (types of the content schemas and components).
-- CI: the `website` job in `ci.yml` runs both on every change under `website/`, `i18n/`, the tokens or the lockfile.
+- CI: the `website` job in `ci.yaml` runs both on every change under `website/`, `i18n/`, the tokens or the lockfile.
 
 ## Where content lives
 

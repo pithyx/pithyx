@@ -28,5 +28,5 @@ pre-push:
     # lefthook skips pre-push jobs without push files; the {files} placeholder forces the run.
     - name: protected-branches
       run: tools/checks/pre-push.sh {files}
-      files: echo lefthook.yml
+      files: echo lefthook.yaml
       use_stdin: true
