@@ -38,7 +38,7 @@ SSH ist standardmäßig aus. Zwei getrennte Schalter auf der Seite **Dateidienst
 - **Freigegebene Ordner über SFTP anbieten**: nur Dateiübertragung, keine Shell.
 - **SSH-Anmeldungen** mit dem Schalter **Benutzer mit dem Recht zur SSH-Anmeldung mit einer Shell anmelden lassen**. Benutzer mit dem Recht „Über SSH mit einer Shell anmelden“ bekommen eine Shell mit ihren eigenen Rechten, mit Passwort oder öffentlichem Schlüssel, ohne Weiterleitung, Tunnel oder X11. Eine Shell erreicht mit den Rechten des Benutzers das ganze System, daher gib das Recht nur Leuten, die es brauchen.
 
-Das Ausschalten eines der beiden stoppt SSH für die eigenen Konten des Systems nie; Pithyx hält `sshd` nie an. Die Host-Schlüssel entstehen beim ersten Start und gehören zum Konfigurationsbackup.
+Das Ausschalten eines der beiden stoppt SSH für die eigenen Konten des Systems nie; Pithyx hält `sshd` nie an. Eine Anmeldung mit Shell begrüßt dich mit dem Pithyx-Logo, der Version und einem Hinweis, dass Änderungen von Hand in der Shell die Box beschädigen oder von Pithyx oder einem Update rückgängig gemacht werden können (vorerst auf Englisch). Die Host-Schlüssel entstehen beim ersten Start und gehören zum Konfigurationsbackup.
 
 ## Zwei-Faktor-Anmeldung
 

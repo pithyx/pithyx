@@ -38,7 +38,7 @@ SSH is off by default. Two separate switches on the **File services** page:
 - **Offer shared folders over SFTP**: file transfer only, no shell.
 - **SSH logins** with the switch **Let users with the SSH login right sign in with a shell**. Users with the right "Sign in over SSH with a shell" get a shell with their own rights, with password or public key, without forwarding, tunnels or X11. A shell reaches the whole system with the user's rights, so give the right only to people who need it.
 
-Switching either off never stops SSH for the system's own accounts; Pithyx never stops `sshd`. The host keys are made on the first boot and are part of the configuration backup.
+Switching either off never stops SSH for the system's own accounts; Pithyx never stops `sshd`. A shell sign-in greets with the Pithyx logo, the version and a warning that changes made by hand in the shell can break the box or be undone by Pithyx or an update (in English for now). The host keys are made on the first boot and are part of the configuration backup.
 
 ## Two-factor sign-in
 

@@ -125,7 +125,7 @@ website/  landing page and docs at pithyx.org (Astro + Starlight, GitHub Pages, 
 ## Errors and i18n
 
 - Stable codes `area.object.reason` (lowercase, dots, underscores inside words), e.g. `fs.file.not_found`. Defined once as C# constants; the TS union is generated. Exception: SDK transport codes (`sdkErrorCodes` in `sdk/src/errors.ts`), texts under `errors.sdk.*`.
-- RFC 9457 problem details with `code`, `params`, `detail` (English fallback), `requestId`. The API never returns translated text, except out-of-band channels (email, push, SSH MOTD; none built yet) rendered server-side in the recipient's language.
+- RFC 9457 problem details with `code`, `params`, `detail` (English fallback), `requestId`. The API never returns translated text, except out-of-band channels (email, push; none built yet; the SSH MOTD is English for now) rendered server-side in the recipient's language.
 - No user-visible string literals; keys `area.screen.element`, errors under `errors.<code>`. English reference, German required, ICU plurals and params, German uses informal "du". Never name companies or their products (no other NAS vendors); open-source projects may be named.
 
 ## Tracing and logging
@@ -140,7 +140,7 @@ website/  landing page and docs at pithyx.org (Astro + Starlight, GitHub Pages, 
 - Permissions to groups and users; effective = union; admins have everything. Share access: none, read, read-write. Protocol access per user (SMB, SFTP, WebDAV, FTP; NFS is planned, not built yet). App access per app. Special rights: admin, desktop login, SSH login, reboot/shutdown.
 - TOTP 2FA per user. Login forms have correct `autocomplete` attributes.
 - No password reset without proof: only the recovery key from setup, otherwise reinstall.
-- No Secure Boot (installer detects it and asks to disable). SSH off by default; its MOTD with the ASCII logo and a warning is planned, not built yet. The ASCII logo (`image/rootfs/usr/lib/pithyx/logo.txt`: the isometric box with the lid shut and the word mark PITHYX, at most 72 columns) also appears on the console after boot and in the installer's console (D294); the MOTD uses the same file; it is the only allowed ASCII art.
+- No Secure Boot (installer detects it and asks to disable). SSH off by default; its MOTD (`/etc/update-motd.d/10-pithyx`, run by pam_motd) shows the ASCII logo, the version and a warning, in English. The ASCII logo (`image/rootfs/usr/lib/pithyx/logo.txt`: the isometric box with the lid shut and the word mark PITHYX, at most 72 columns) also appears on the console after boot and in the installer's console (D294); the SSH MOTD uses the same file; it is the only allowed ASCII art.
 - Pool encryption: ZFS native. Unlock manually, from a key vault on the system disk (UI explains it only protects against stolen disks) or a USB key.
 
 ## Apps

@@ -9,6 +9,11 @@ if [ "$1" = configure ]; then
   for tty in 1 2 3 4 5 6; do
     systemctl mask "getty@tty$tty.service" "autovt@tty$tty.service" >/dev/null 2>&1 || true
   done
+  # The SSH greeting is Pithyx's (/etc/update-motd.d/10-pithyx), not Debian's uname line and license text.
+  chmod -x /etc/update-motd.d/10-uname 2>/dev/null || true
+  if [ -f /etc/motd ] && grep -q 'Debian GNU/Linux comes with' /etc/motd; then
+    : >/etc/motd
+  fi
   if [ -d /run/systemd/system ]; then
     systemctl daemon-reload >/dev/null 2>&1 || true
   fi
