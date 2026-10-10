@@ -267,3 +267,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Unsubscribing from a topic acknowledged before the daemon stopped the work behind it (for example a folder watch); the work now stops first.
 - Uploading and dropping files in Files failed outside a secure context (`crypto.randomUUID is not a function` when the box is reached as `http://<address>:7484`).
 - Opening the account menu or the start menu's power menu can no longer sign you out by accident. A menu that opened while its button moved could sit under the pointer, and releasing the button then picked "Sign out"; "Sign out" now needs a press that starts on it. The taskbar also takes no presses while it slides in after sign-in, and it slides in only once instead of again after every move to another screen edge.
+
+### Security
+
+- The command log no longer records the output of commands that print secrets: creating a configuration backup ran `pdbedit -L -w` and wrote every user's NT password hash into the Log Center and the log files at Info level. The output of `pdbedit`, `smbpasswd` and `chpasswd` is now always masked, and other callers mark secret output per command (the catalog deploy key's `ssh-keygen`).

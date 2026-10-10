@@ -1,0 +1,8 @@
+{
+  "command": "pdbedit",
+  "args": [
+    "-L",
+    "-w"
+  ],
+  "exitCode": 0
+}

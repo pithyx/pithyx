@@ -321,7 +321,7 @@ public sealed partial class ConfigBackupService(
             var hashes = ShadowParser.Hashes(await File.ReadAllTextAsync(shadowPath, cancellationToken), usernames);
             entries[ShadowEntry] = Encoding.UTF8.GetBytes(string.Concat(hashes.Select(pair => $"{pair.Key}:{pair.Value}\n")));
         }
-        var passdb = await commands.RunAsync(new CommandRequest("pdbedit", ["-L", "-w"]), cancellationToken);
+        var passdb = await commands.RunAsync(new CommandRequest("pdbedit", ["-L", "-w"], SecretOutput: true), cancellationToken);
         if (passdb.ExitCode == 0)
         {
             var lines = PassdbParser.Lines(passdb.StandardOutput, AccountReconciler.IsManaged)

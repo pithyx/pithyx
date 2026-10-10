@@ -12,10 +12,17 @@ namespace Pithyx.Daemon.Commands;
 public sealed class FixtureCommandRunner : ICommandRunner
 {
     private readonly Dictionary<string, CommandResult> _results;
+    private readonly ILogger _logger;
 
-    private FixtureCommandRunner(Dictionary<string, CommandResult> results) => _results = results;
+    private FixtureCommandRunner(Dictionary<string, CommandResult> results, ILogger logger)
+    {
+        _results = results;
+        _logger = logger;
+    }
 
-    public static FixtureCommandRunner Load(string scenarioDirectory)
+    /// <param name="scenarioDirectory">The scenario folder.</param>
+    /// <param name="logger">Gets the same line per command as the real runner, so tests see what a box would log.</param>
+    public static FixtureCommandRunner Load(string scenarioDirectory, ILogger? logger = null)
     {
         if (!Directory.Exists(scenarioDirectory))
         {
@@ -36,13 +43,15 @@ public sealed class FixtureCommandRunner : ICommandRunner
                 throw new InvalidDataException($"Fixture {definitionPath} duplicates another fixture for the same command.");
             }
         }
-        return new FixtureCommandRunner(results);
+        return new FixtureCommandRunner(results, logger ?? Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance);
     }
 
     public Task<CommandResult> RunAsync(CommandRequest request, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(request);
         if (_results.TryGetValue(Key(request.FileName, request.Arguments), out var result))
         {
+            CommandLog.Finished(_logger, request, result);
             return Task.FromResult(result);
         }
         throw new InvalidOperationException(
