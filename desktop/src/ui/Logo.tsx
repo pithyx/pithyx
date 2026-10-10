@@ -3,8 +3,8 @@ import { cx } from '@pithyx/ui';
 import styles from './Logo.module.css';
 
 /**
- * - `static`: open, no glow (small sizes, favicon)
- * - `closed`: lid shut
+ * - `static`: lid shut, no glow (small sizes, app icons, favicon); the default
+ * - `closed`: lid shut, the same as `static`
  * - `hover`: shut; opens while the surrounding button or link is hovered, focused or expanded
  * - `welcome`: opens once
  * - `loop`: opens and closes continuously (setup, installer)
@@ -13,13 +13,17 @@ import styles from './Logo.module.css';
 export type LogoMotion = 'static' | 'closed' | 'hover' | 'welcome' | 'loop' | 'loading';
 
 const motionClass: Record<LogoMotion, string | undefined> = {
-  static: undefined,
+  static: styles.closed,
   closed: styles.closed,
   hover: styles.hover,
   welcome: styles.welcome,
   loop: styles.loop,
   loading: styles.loading,
 };
+
+// A shut mark never moves, so it is centred like desktop/public/logo.svg: the closed lid and the body span y 22.52 to
+// 90.07, so the view moves down by half the empty space below.
+const CLOSED_OFFSET = 6.3;
 
 // Below this size the glow is a smudge, so small marks never get it.
 const GLOW_MIN_SIZE = 32;
@@ -35,12 +39,13 @@ export function LogoMark({
   motion?: LogoMotion;
 }) {
   const filterId = `logo-glow-${useId().replace(/[^\w-]/g, '')}`;
-  const glow = motion !== 'static' && motion !== 'closed' && size >= GLOW_MIN_SIZE;
+  const shut = motion === 'static' || motion === 'closed';
+  const glow = !shut && size >= GLOW_MIN_SIZE;
   return (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 100 100"
+      viewBox={shut ? `0 ${String(CLOSED_OFFSET)} 100 100` : '0 0 100 100'}
       role={label === undefined ? undefined : 'img'}
       aria-label={label}
       aria-hidden={label === undefined ? true : undefined}

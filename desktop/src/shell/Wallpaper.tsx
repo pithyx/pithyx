@@ -8,8 +8,8 @@ interface Cube {
   depth: number;
 }
 
-// Boxes drawn like the logo in the menu button: the geometry of desktop/public/logo.svg in its 100x100 units, with the
-// lid in its closed position, 13 units lower (as in ui/Logo.module.css), so only a narrow gap shows. Positions are in
+// Boxes drawn like the logo in the menu button: the geometry of ui/Logo.tsx in its 100x100 units, with the lid in its
+// closed position, 13 units lower (as in ui/Logo.module.css), so only a narrow gap shows. Positions are in
 // the 1600x1000 viewBox; in the dark theme depth fades the smaller boxes into the background.
 const CUBES: Cube[] = [
   { x: 1180, y: 430, scale: 7.2, depth: 1 },

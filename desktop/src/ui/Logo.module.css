@@ -155,7 +155,7 @@
   }
 }
 
-/* Without motion every variant shows its resting state: open, except the closed and hover marks. */
+/* Without motion every variant shows its resting state: open, except the static, closed and hover marks. */
 @media (prefers-reduced-motion: reduce) {
   .lid,
   .glow {

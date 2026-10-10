@@ -176,6 +176,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- The Pithyx mark shows its lid shut wherever it does not move: `desktop/public/logo.svg` (also in the README), the website's logo and favicon, the template icon of `@pithyx/cli` and the desktop's static mark (app icons), centred in its square; the animated marks (welcome, loop, loading, hover) are unchanged.
 - YAML files end in `.yaml` (the owner's wish of 2026-10-10): `lefthook.yaml`, `.github/workflows/ci.yaml` and `pages.yaml`; the repo check refuses `.yml` files.
 - The image installs Pithyx from its packages (D338), so an image and an update file of the same version install the same thing: `zfs-dkms`, the kernel headers and the compiler are no longer on a box, apt never takes a kernel or ZFS package from Debian, `image/build.sh` takes `--version` and writes the image's package list `pithyx-<version>-amd64.packages`, and the Debian base comes from `image/debian.env`.
 - `pithyx dev` runs `backend/compose.dev.yaml` on its own when it exists (it is the backend's whole source form now, not an override of `compose.yaml`), and the Vite plugin accepts a backend that is still in its source form with a warning. The npm packages are at `1.0.0-rc.5`.
