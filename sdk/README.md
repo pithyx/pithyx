@@ -3,7 +3,7 @@
 [![npm](https://img.shields.io/npm/v/@pithyx/sdk/next?label=npm%40next)](https://www.npmjs.com/package/@pithyx/sdk)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
 
-> **Work in progress.** This is a release candidate of the first SDK. The API can still change before `1.0.0`, and the documentation, guides and examples come with the first Pithyx release. Until then this page only says what the package is.
+> **Release candidate.** The API can still change before `1.0.0`.
 
 The SDK for apps on [Pithyx](https://github.com/pithyx/pithyx), the free, self-hosted NAS and server OS with a web desktop. Every Pithyx app uses it, the system apps as well as third-party apps: it is the only way an app talks to the desktop and to the box.
 
@@ -30,6 +30,26 @@ npm install @pithyx/sdk@next
 | ---------------------------------------------------------- | ------------------------------------------------------- |
 | [`@pithyx/ui`](https://www.npmjs.com/package/@pithyx/ui)   | The React components and design tokens of the desktop   |
 | [`@pithyx/cli`](https://www.npmjs.com/package/@pithyx/cli) | The `pithyx` command: validate, pack and a mock desktop |
+
+## Entry points
+
+| Import                      | What it is                                                   |
+| --------------------------- | ------------------------------------------------------------ |
+| `@pithyx/sdk`               | The app API                                                  |
+| `@pithyx/sdk/host`          | The desktop's side of the protocol; apps do not use it       |
+| `@pithyx/sdk/i18n`          | An optional helper for ICU message texts                     |
+| `@pithyx/sdk/schema/*.json` | The JSON schemas of the manifest, Compose rules and catalogs |
+
+## Documentation
+
+The full documentation is on the docs site at [pithyx.org](https://pithyx.org):
+
+- [The @pithyx/sdk reference](https://pithyx.org/docs/sdk/sdk/)
+- [SDK overview](https://pithyx.org/docs/sdk/overview/)
+- [Apps overview](https://pithyx.org/docs/developers/apps/overview/)
+- [Your first app](https://pithyx.org/docs/developers/apps/first-app/)
+
+Every page is also available as Markdown (add `.md` to its path), and [pithyx.org/llms.txt](https://pithyx.org/llms.txt) indexes them all.
 
 ## Versions
 

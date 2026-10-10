@@ -3,7 +3,7 @@
 [![npm](https://img.shields.io/npm/v/@pithyx/ui/next?label=npm%40next)](https://www.npmjs.com/package/@pithyx/ui)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
 
-> **Work in progress.** This is a release candidate. The components can still change before `1.0.0`, and the documentation and examples come with the first Pithyx release. Until then this page only says what the package is.
+> **Release candidate.** The API can still change before `1.0.0`.
 
 The React components and design tokens of the [Pithyx](https://github.com/pithyx/pithyx) desktop, for Pithyx apps. The system apps use them, and third-party apps can too, so every app looks and behaves like part of the desktop.
 
@@ -29,6 +29,24 @@ npm install @pithyx/ui@next react react-dom
 | ---------------------------------------------------------- | ------------------------------------------------------- |
 | [`@pithyx/sdk`](https://www.npmjs.com/package/@pithyx/sdk) | The API between an app and the Pithyx desktop           |
 | [`@pithyx/cli`](https://www.npmjs.com/package/@pithyx/cli) | The `pithyx` command: validate, pack and a mock desktop |
+
+## Entry points
+
+| Import                  | What it is                                                    |
+| ----------------------- | ------------------------------------------------------------- |
+| `@pithyx/ui`            | The React components                                          |
+| `@pithyx/ui/native`     | Class names and texts for native elements, without React Aria |
+| `@pithyx/ui/tokens.css` | The design tokens as CSS, usable without React                |
+
+## Documentation
+
+The full documentation is on the docs site at [pithyx.org](https://pithyx.org):
+
+- [The @pithyx/ui reference](https://pithyx.org/docs/sdk/ui/)
+- [SDK overview](https://pithyx.org/docs/sdk/overview/)
+- [Your first app](https://pithyx.org/docs/developers/apps/first-app/)
+
+Every page is also available as Markdown (add `.md` to its path), and [pithyx.org/llms.txt](https://pithyx.org/llms.txt) indexes them all.
 
 ## Versions
 

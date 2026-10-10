@@ -3,7 +3,7 @@
 [![npm](https://img.shields.io/npm/v/@pithyx/cli/next?label=npm%40next)](https://www.npmjs.com/package/@pithyx/cli)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
 
-> **Work in progress.** This is a release candidate. The commands can still change before `1.0.0`, and the documentation, guides and app templates come with the first Pithyx release. Until then this page only says what the package is.
+> **Release candidate.** The API can still change before `1.0.0`.
 
 The `pithyx` command for building apps for [Pithyx](https://github.com/pithyx/pithyx), the free, self-hosted NAS and server OS with a web desktop.
 
@@ -32,6 +32,25 @@ npm install --save-dev @pithyx/cli@next
 | ---------------------------------------------------------- | ----------------------------------------------------- |
 | [`@pithyx/sdk`](https://www.npmjs.com/package/@pithyx/sdk) | The API between an app and the Pithyx desktop         |
 | [`@pithyx/ui`](https://www.npmjs.com/package/@pithyx/ui)   | The React components and design tokens of the desktop |
+
+## Entry points
+
+| Import             | What it is                                 |
+| ------------------ | ------------------------------------------ |
+| `pithyx` (command) | The command line, see Commands             |
+| `@pithyx/cli`      | The checks the command shares with the box |
+| `@pithyx/cli/vite` | The Vite plugin with the mock desktop      |
+
+## Documentation
+
+The full documentation is on the docs site at [pithyx.org](https://pithyx.org):
+
+- [The @pithyx/cli reference](https://pithyx.org/docs/sdk/cli/)
+- [Your first app](https://pithyx.org/docs/developers/apps/first-app/)
+- [Publishing an app](https://pithyx.org/docs/developers/apps/publishing/)
+- [Apps overview](https://pithyx.org/docs/developers/apps/overview/)
+
+Every page is also available as Markdown (add `.md` to its path), and [pithyx.org/llms.txt](https://pithyx.org/llms.txt) indexes them all.
 
 ## Versions
 
