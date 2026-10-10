@@ -215,6 +215,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- A backend endpoint name is at most 32 characters everywhere, as the manifest schema says: the SDK's `backend.ticket` and the daemon's `app.backend.endpoint_unknown` used 63. The text of `app.backend.unsupported`, which Pithyx 0.1 no longer returns, says so. The `@pithyx/cli` README lists `pithyx build` and `pithyx catalog`, and NOTICE names `@pithyx/ui` and `@pithyx/cli` as MIT next to `@pithyx/sdk`.
 - Store: a catalog that was just fetched no longer shows as fetched with no apps for a moment; the box keeps the verified copy in memory before it marks the catalog as fetched (found as a flaky `StoreApiTests` run on the runner).
 - The Store's settings name the project's catalogs (Pithyx, Community) before a box has fetched them, instead of showing their ids.
 - The Store after its proof on 7484 (D336): the rollback dialog stays open until the rollback ends, the settings' choices show at once, the next and last check times are sent in UTC, a rollback under the automatic policy makes the app announce updates instead of installing the version it left again, and the build-time OpenAPI run no longer builds the Store's services.

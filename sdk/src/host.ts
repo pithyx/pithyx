@@ -303,7 +303,7 @@ const validators: Record<MethodName, (params: unknown) => boolean> = {
   'storage.remove': isKey,
   'storage.keys': isRecord,
   'backend.token': isRecord,
-  'backend.ticket': (p) => isRecord(p) && isText(p.endpoint, 63),
+  'backend.ticket': (p) => isRecord(p) && isText(p.endpoint, 32),
   'directory.users': isRecord,
   'directory.groups': isRecord,
   'contextMenu.show': (p) =>

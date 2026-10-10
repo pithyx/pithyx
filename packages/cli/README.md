@@ -9,12 +9,14 @@ The `pithyx` command for building apps for [Pithyx](https://github.com/pithyx/pi
 
 ## Commands
 
-| Command           | What it does                                                                      |
-| ----------------- | --------------------------------------------------------------------------------- |
-| `pithyx validate` | Checks an app with the same rules and error codes as the box                      |
-| `pithyx lock`     | Pins the images of the app's backend by digest                                    |
-| `pithyx pack`     | Writes the `.pithyxapp` file the box installs; the same files give the same bytes |
-| `pithyx dev`      | Runs the app on your machine in a mock of the desktop, with the box's sandbox     |
+| Command           | What it does                                                                                                  |
+| ----------------- | ------------------------------------------------------------------------------------------------------------- |
+| `pithyx validate` | Checks an app with the same rules and error codes as the box                                                  |
+| `pithyx lock`     | Pins the images of the app's backend by digest                                                                |
+| `pithyx pack`     | Writes the `.pithyxapp` file the box installs; the same files give the same bytes                             |
+| `pithyx dev`      | Runs the app on your machine in a mock of the desktop, with the box's sandbox                                 |
+| `pithyx build`    | Builds the backend's own images and pins the app to them; `--oci-out` builds reproducibly for amd64 and arm64 |
+| `pithyx catalog`  | The CI of a catalog repository: `check`, `pending`, `index`, `sign` and `verify`                              |
 
 `pithyx --help` lists every option. The package also brings a Vite plugin (`@pithyx/cli/vite`) with the same mock desktop. There is no development mode on the box: to try an app there, upload its package in the Store.
 

@@ -371,6 +371,15 @@
       }
     }
   ],
+  "endpoint-name-too-long.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/backend/endpoints/a234567890123456789012345678901bc",
+        "keyword": "additionalProperties"
+      }
+    }
+  ],
   "endpoint-port.json": [
     {
       "code": "app.manifest.schema_violation",
