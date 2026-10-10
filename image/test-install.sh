@@ -57,7 +57,7 @@ if [[ -z "$iso" ]]; then
   iso="$(find "$repo/image/out" -maxdepth 1 -name 'pithyx-*-amd64.iso' -printf '%T@ %p\n' 2>/dev/null | sort -n | tail -n1 | cut -d' ' -f2-)"
 fi
 [[ -f "$iso" ]] || die "no ISO; run image/build.sh first or pass --iso"
-for tool in qemu-system-x86_64 qemu-img curl python3; do
+for tool in qemu-system-x86_64 qemu-img curl python3 sshpass ssh sftp; do
   command -v "$tool" >/dev/null || die "$tool not found"
 done
 [[ -w /dev/kvm ]] || die "/dev/kvm is not writable; an installation without KVM takes too long"
@@ -90,6 +90,7 @@ free_port() {
 }
 port="$(free_port)"
 plain="$(free_port)"
+ssh_port="$(free_port)"
 bonded="$(free_port)"
 api="http://127.0.0.1:$port/api"
 # The network cards with --network: the first one carries the test's connection, the other two share one network.
@@ -123,7 +124,7 @@ start_vm() {
     -drive if=pflash,format=raw,readonly=on,file="$OVMF_CODE" \
     -drive if=pflash,format=raw,file="$vm/vars.fd" \
     -device ahci,id=ahci -device usb-ehci,id=usb "${drives[@]}" \
-    -netdev user,id=net0,hostfwd=tcp:127.0.0.1:"$port"-:7484,hostfwd=tcp:127.0.0.1:"$plain"-:80 \
+    -netdev user,id=net0,hostfwd=tcp:127.0.0.1:"$port"-:7484,hostfwd=tcp:127.0.0.1:"$plain"-:80,hostfwd=tcp:127.0.0.1:"$ssh_port"-:22 \
     -device virtio-net-pci,netdev=net0,id=nic0,mac=$NIC0_MAC,addr=0x10 "${nics[@]}" \
     -display none -chardev "socket,id=serial0,path=$vm/serial.sock,server=on,wait=off,logfile=$serial_log" -serial chardev:serial0 \
     -monitor unix:"$vm/monitor.sock",server,nowait \
@@ -496,6 +497,30 @@ admin() {
 step "checking that the ZFS module loads"
 admin /storage/import/scan -X POST -o /dev/null || die "zpool cannot run on the installed system; serial logs in $vm"
 echo "zpool answers: the ZFS module fits the kernel"
+
+# sshd never ran on a fresh install (the image disables it), so switching SFTP or SSH on is its first start.
+step "checking SFTP and SSH"
+readonly REMOTE_PASSWORD="correct horse battery staple"
+for account in "sftptest protocol:sftp" "sshtest right:sshLogin"; do
+  read -r name resource <<<"$account"
+  admin /users -X POST -H 'Content-Type: application/json' -o /dev/null \
+    --data "{\"username\": \"$name\", \"password\": \"$REMOTE_PASSWORD\", \"grants\": [{\"resource\": \"$resource\", \"level\": \"allow\"}]}"
+done
+admin /file-services -X PUT -H 'Content-Type: application/json' --data '{"sftpEnabled": true, "sshEnabled": true}' -o /dev/null
+services="$(admin /file-services)"
+[[ "$(json 'd["sftp"]' <<<"$services")" == running ]] || die "SFTP does not run: $services; serial logs in $vm"
+remote=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o ConnectTimeout=10 -o PubkeyAuthentication=no -P "$ssh_port")
+for _ in $(seq 30); do
+  SSHPASS="$REMOTE_PASSWORD" sshpass -e sftp "${remote[@]}" sftptest@127.0.0.1 <<<"ls" >/dev/null 2>&1 && break
+  sleep 2
+done
+SSHPASS="$REMOTE_PASSWORD" sshpass -e sftp "${remote[@]}" sftptest@127.0.0.1 <<<"ls" >/dev/null || die "the SFTP user cannot sign in over SFTP"
+shell="$(SSHPASS="$REMOTE_PASSWORD" sshpass -e ssh "${remote[@]/-P/-p}" sshtest@127.0.0.1 id -un)" || die "the SSH user cannot sign in"
+[[ "$shell" == sshtest ]] || die "the SSH login answered $shell"
+if SSHPASS="$REMOTE_PASSWORD" sshpass -e ssh "${remote[@]/-P/-p}" sftptest@127.0.0.1 true 2>/dev/null; then
+  die "the SFTP user got a shell"
+fi
+echo "SFTP and SSH answer on port 22"
 
 # Waits until a Python expression over GET /api/system/network is true.
 wait_network() {
