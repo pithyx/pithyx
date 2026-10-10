@@ -19,6 +19,11 @@ The landing page and the docs at https://pithyx.org (D339): Astro with Starlight
 - Pictures: `src/assets/screenshots/`. The SVGs there are placeholders; replace them with real screenshots (PNG or WebP, 16:10, at least 1600 px wide) from `pnpm design:shots` or the dev box, and keep the file names or update the YAML.
 - Generated pages: `reference/errors` comes from `i18n/<locale>/errors.json`, the docs overview from `sections.ts`, the FAQ page from the FAQ files (frontmatter `generated`). Do not write their lists by hand.
 
+## Research notes
+
+- `notes/` holds the fact notes for the content pass (owner's wish of 2026-10-10): one file per area with facts, `path:line` evidence, UI texts with their i18n keys, "Not in code (plan only)" and FAQ raw material; `open-questions.md` collects what stayed unclear, with the owner's answers. Start a page from its notes, then check every fact against the code before `ready`.
+- The notes are not built (outside `src/`) and never linked from a page. Answer or strike questions in `open-questions.md` when a page settles them. Delete the folder once every docs page is `ready`, and before the repository goes public.
+
 ## Writing a docs page
 
 - Frontmatter: `title`, `description` (one sentence, required; it is the line in `llms.txt`), `status`, optional `audience` (`user`, `admin`, `developer`), `since` (the Pithyx version) and `sidebar.order`.

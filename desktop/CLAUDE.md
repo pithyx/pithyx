@@ -16,8 +16,8 @@ Rules for `desktop/`. The root `CLAUDE.md` applies as well.
 ## Performance
 
 - The UI never blocks on the network. Show cached data first, then reconcile.
-- Directory listings stream in chunks over the WebSocket. Never wait for a full listing.
-- Long lists are virtualized. Heavy sorting and filtering run in a Web Worker.
+- Directory listings come in cursor pages over REST (step 6.2, pages instead of a WebSocket stream); live changes of open folders come over the WebSocket. Never wait for a full listing.
+- Long lists are virtualized. A Web Worker for heavy sorting and filtering is planned, not built yet.
 - Thumbnails and other derived data load asynchronously and never delay a listing.
 - User actions are optimistic and roll back on error.
 - No spinner before 300 ms.
