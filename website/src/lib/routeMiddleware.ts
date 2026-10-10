@@ -23,7 +23,7 @@ function relabel(entries: SidebarEntry[], locale: 'en' | 'de'): void {
 export const onRequest = defineRouteMiddleware((context) => {
   const route = context.locals.starlightRoute;
   const { entry } = route;
-  relabel(route.sidebar as SidebarEntry[], route.locale === 'de' ? 'de' : 'en');
+  relabel(route.sidebar, route.locale === 'de' ? 'de' : 'en');
   if (!isDocsPage(entry.id) || entry.id.endsWith('404')) {
     return;
   }
