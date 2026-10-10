@@ -70,3 +70,15 @@ Path rules: relative paths with `/`, ASCII letters, digits and `._~@+-`, no empt
 Limits when a package is uploaded to a box: 256 MB for the file, 512 MB unpacked, 10,000 entries and 64 KB for `pithyx.json`. Only an administrator can upload (`PUT /api/apps/packages`, kept for 15 minutes), then install. A package installed from a file is marked as a sideload and shown as not verified.
 
 Build packages with the command line tool: see [@pithyx/cli](/docs/sdk/cli/) and [Your first app](/docs/developers/apps/first-app/).
+
+## SDK guides
+
+How a frontend works with the box, task by task:
+
+- [Files and app storage](/docs/sdk/guides/files-and-storage/)
+- [Calling the backend](/docs/sdk/guides/backend/)
+- [Events, window context and launch arguments](/docs/sdk/guides/events-and-context/)
+- [Permissions and permissionsChange](/docs/sdk/guides/permissions/)
+- [Languages and theming in an app](/docs/sdk/guides/i18n-and-theming/)
+- [Logging and errors](/docs/sdk/guides/logging-and-errors/)
+- [Testing with pithyx dev and the mock desktop](/docs/sdk/guides/testing/)

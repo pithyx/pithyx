@@ -27,6 +27,16 @@ console.log(app.context.user.displayName);
 - **Konstanten.** `SDK_VERSION`, `PROTOCOL_VERSION` und `MIN_PROTOCOL_VERSION`.
 - `app.supports(method)` sagt, ob der Desktop eine Methode kennt. `app.on(event, handler)` liefert eine Funktion zum Abmelden.
 
+## Leitfäden
+
+- [Dateien und App-Speicher](/de/docs/sdk/guides/files-and-storage/)
+- [Das Backend aufrufen](/de/docs/sdk/guides/backend/)
+- [Ereignisse, Fensterkontext und Startargumente](/de/docs/sdk/guides/events-and-context/)
+- [Berechtigungen und permissionsChange](/de/docs/sdk/guides/permissions/)
+- [Sprachen und Darstellung in einer App](/de/docs/sdk/guides/i18n-and-theming/)
+- [Logging und Fehler](/de/docs/sdk/guides/logging-and-errors/)
+- [Testen mit pithyx dev und dem Mock-Desktop](/de/docs/sdk/guides/testing/)
+
 ## App und Benutzer
 
 `app.context` wird durch Ereignisse aktuell gehalten und enthält die App (`id`, `version`), die Fensterinstanz, den Benutzer (`id`, `name`, `displayName`, `groups`, `isAdmin`, `twoFactor`), `language`, `locale` (zum Beispiel `de-AT`), `timeZone`, `theme`, `sizeClass` (`compact` unter 600 px, `medium` bis 1023 px, `expanded`), Startargumente, `permissions`, `capabilities`, die Box (`name`, `version`), `visible`, `online`, `logLevel`, den Status und die Endpunkte des Backends und den Zustand jeder Speicheranforderung.

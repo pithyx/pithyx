@@ -70,3 +70,15 @@ Pfadregeln: relative Pfade mit `/`, ASCII-Buchstaben, Ziffern und `._~@+-`, kein
 Grenzen beim Hochladen eines Pakets auf eine Box: 256 MB für die Datei, 512 MB entpackt, 10.000 Einträge und 64 KB für `pithyx.json`. Nur ein Administrator kann hochladen (`PUT /api/apps/packages`, 15 Minuten aufbewahrt) und dann installieren. Ein aus einer Datei installiertes Paket wird als Sideload markiert und als nicht geprüft angezeigt.
 
 Pakete baust du mit dem Kommandozeilenwerkzeug: siehe [@pithyx/cli](/de/docs/sdk/cli/) und [Deine erste App](/de/docs/developers/apps/first-app/).
+
+## SDK-Leitfäden
+
+Wie ein Frontend mit der Box arbeitet, Aufgabe für Aufgabe:
+
+- [Dateien und App-Speicher](/de/docs/sdk/guides/files-and-storage/)
+- [Das Backend aufrufen](/de/docs/sdk/guides/backend/)
+- [Ereignisse, Fensterkontext und Startargumente](/de/docs/sdk/guides/events-and-context/)
+- [Berechtigungen und permissionsChange](/de/docs/sdk/guides/permissions/)
+- [Sprachen und Darstellung in einer App](/de/docs/sdk/guides/i18n-and-theming/)
+- [Logging und Fehler](/de/docs/sdk/guides/logging-and-errors/)
+- [Testen mit pithyx dev und dem Mock-Desktop](/de/docs/sdk/guides/testing/)

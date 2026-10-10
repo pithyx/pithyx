@@ -27,6 +27,16 @@ console.log(app.context.user.displayName);
 - **Constants.** `SDK_VERSION`, `PROTOCOL_VERSION` and `MIN_PROTOCOL_VERSION`.
 - `app.supports(method)` tells whether the desktop knows a method. `app.on(event, handler)` returns an unsubscribe function.
 
+## Guides
+
+- [Files and app storage](/docs/sdk/guides/files-and-storage/)
+- [Calling the backend](/docs/sdk/guides/backend/)
+- [Events, window context and launch arguments](/docs/sdk/guides/events-and-context/)
+- [Permissions and permissionsChange](/docs/sdk/guides/permissions/)
+- [Languages and theming in an app](/docs/sdk/guides/i18n-and-theming/)
+- [Logging and errors](/docs/sdk/guides/logging-and-errors/)
+- [Testing with pithyx dev and the mock desktop](/docs/sdk/guides/testing/)
+
 ## App and user
 
 `app.context` is kept current by events and holds the app (`id`, `version`), the window instance, the user (`id`, `name`, `displayName`, `groups`, `isAdmin`, `twoFactor`), `language`, `locale` (for example `de-AT`), `timeZone`, `theme`, `sizeClass` (`compact` below 600 px, `medium` up to 1023 px, `expanded`), launch arguments, `permissions`, `capabilities`, the box (`name`, `version`), `visible`, `online`, `logLevel`, the backend status and endpoints, and the state of each storage request.

@@ -1,0 +1,7 @@
+{
+  "files": {
+    "title": "Files",
+    "count": "{count, plural, one {# file} other {# files}}",
+    "changed": "Changed {when}"
+  }
+}
