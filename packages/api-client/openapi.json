@@ -2434,7 +2434,7 @@
         "tags": [
           "FileServices"
         ],
-        "description": "Administrators only. Whether SMB, SFTP, SSH logins, WebDAV and FTP are switched on, the SMB workgroup, how each service is doing, the FTP port and the FTPS certificate's fingerprint.",
+        "description": "Administrators only. Whether SMB, SFTP, SSH logins, WebDAV and FTP are switched on, the SMB workgroup, how each service is doing, the FTP port, the FTPS certificate's fingerprint, whether the file services are limited to private networks and whether the firewall is applied here.",
         "operationId": "GetFileServices",
         "responses": {
           "200": {
@@ -2463,7 +2463,7 @@
         "tags": [
           "FileServices"
         ],
-        "description": "Administrators only. Switches SMB, SFTP or SSH logins on or off and sets the SMB workgroup; the configuration is checked and applied before the answer. SSH logins give users with the SSH login right a shell. Switching SFTP or SSH logins off never stops sshd: it only stops letting Pithyx users in. WebDAV answers at /webdav/, FTP with TLS (FTPS), and without TLS only while plain FTP is allowed, at the users' own risk.",
+        "description": "Administrators only. Switches SMB, SFTP or SSH logins on or off and sets the SMB workgroup; the configuration is checked and applied before the answer. SSH logins give users with the SSH login right a shell. Switching SFTP or SSH logins off never stops sshd: it only stops letting Pithyx users in. WebDAV answers at /webdav/, FTP with TLS (FTPS), and without TLS only while plain FTP is allowed, at the users' own risk. The firewall opens only the ports of the switched-on services, optionally only to private networks (RFC 1918, ULA, link-local).",
         "operationId": "UpdateFileServices",
         "requestBody": {
           "content": {
@@ -9470,6 +9470,7 @@
           "network.default_interface.invalid",
           "network.dns.invalid",
           "network.dns.too_many",
+          "network.firewall.failed",
           "network.gateway.invalid",
           "network.global.not_changeable",
           "network.host_name.invalid",
@@ -9820,7 +9821,9 @@
           "ftpPlainAllowed",
           "ftp",
           "ftpPort",
-          "ftpFingerprint"
+          "ftpFingerprint",
+          "privateNetworksOnly",
+          "firewallActive"
         ],
         "type": "object",
         "properties": {
@@ -9875,6 +9878,14 @@
               "string"
             ],
             "description": "The SHA-256 fingerprint of the FTPS certificate, for clients that ask whether to trust it; null until FTP ran once."
+          },
+          "privateNetworksOnly": {
+            "type": "boolean",
+            "description": "Whether the firewall lets only private networks (RFC 1918, ULA, link-local) reach SMB, SFTP, SSH and FTP (D342). Off by default."
+          },
+          "firewallActive": {
+            "type": "boolean",
+            "description": "Whether the firewall is applied here; false on a development machine and in simulation, where the rules are only rendered."
           }
         },
         "description": "The file services of the box. Administrators only."
@@ -9930,6 +9941,13 @@
               "boolean"
             ],
             "description": "Allows or refuses plain FTP without TLS; refusing it ends every plain session."
+          },
+          "privateNetworksOnly": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "Limits SMB, SFTP, SSH and FTP to private networks, or lets every network reach them again."
           }
         },
         "description": "Changes of the file services; fields left out stay."

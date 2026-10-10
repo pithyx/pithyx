@@ -296,6 +296,9 @@
       "invalid": "„{server}“ ist keine IPv4- oder IPv6-Adresse.",
       "too_many": "Gib höchstens {max} Nameserver ein."
     },
+    "firewall": {
+      "failed": "Die Firewall-Regeln konnten nicht angewendet werden. Die Einstellung ist gespeichert; Details stehen im Protokollcenter."
+    },
     "gateway": {
       "invalid": "Das {field, select, ipv6Gateway {IPv6} other {IPv4}}-Gateway von {name} muss eine Adresse in seinem Netz sein."
     },

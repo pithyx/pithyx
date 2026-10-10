@@ -160,7 +160,7 @@
     "fileServices": {
       "title": "File services",
       "description": "SMB and SFTP for access from other computers",
-      "keywords": "smb samba sftp ssh network drive protocol"
+      "keywords": "smb samba sftp ssh network drive protocol firewall"
     },
     "users": {
       "title": "Users",
@@ -200,6 +200,13 @@
   "fileServices": {
     "intro": "File services let other computers open your shared folders over the network. Users sign in with their Pithyx user name and password.",
     "save": "Save",
+    "firewall": {
+      "title": "Firewall",
+      "explain": "Pithyx lets other computers reach only the web interface and the file services that are switched on. Switching a service off also closes its port.",
+      "privateSwitch": "Only private networks may use the file services",
+      "privateExplain": "SMB, SFTP, SSH and FTP then answer only computers in private networks (10.x, 172.16 to 31.x, 192.168.x, link-local and IPv6 ULA). Leave it off if you reach the box through a router from another network or over a VPN with public addresses. The web interface stays reachable either way.",
+      "inactive": "This is a development machine: Pithyx keeps the rules but does not apply them here."
+    },
     "rights": "Who may use which file service is set with the rights of each user or group on the Users and Groups pages. Which shared folders they offer is set per folder on the Shared folders page. A user who has not signed in on the web since file services arrived must sign in once, so the services learn the password.",
     "state": {
       "off": "Off",

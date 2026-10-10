@@ -152,6 +152,7 @@ if (!BuildTimeDocument.IsGenerating)
         builder.Services.AddHostedService<Pithyx.Daemon.Files.Thumbnails.ThumbnailCacheProvisioner>();
         builder.Services.AddHostedService<LinuxAccountSync>();
         builder.Services.AddHostedService(services => services.GetRequiredService<FileServiceSync>());
+        builder.Services.AddHostedService(services => services.GetRequiredService<Pithyx.Daemon.Network.Firewall>());
     }
     if (!installer.Active)
     {

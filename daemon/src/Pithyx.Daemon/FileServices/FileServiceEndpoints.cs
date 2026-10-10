@@ -13,15 +13,16 @@ public sealed class FileServiceSettingsService(
     FileServiceOptions options,
     FileServiceChanges changes,
     Users.LinuxAccounts accounts,
-    Ftp.FtpServer ftp)
+    Ftp.FtpServer ftp,
+    Network.Firewall firewall)
 {
     public async Task<FileServiceSettings> GetAsync(ClaimsPrincipal caller, CancellationToken cancellationToken)
     {
         RequireAdmin(caller);
         await using var connection = await connections.OpenAsync(cancellationToken);
-        var row = await connection.QuerySingleAsync<(long Smb, string Workgroup, long Sftp, long Ssh, long WebDav, long Ftp, long FtpPlain)>(
-            "SELECT smb_enabled, smb_workgroup, sftp_enabled, ssh_enabled, webdav_enabled, ftp_enabled, ftp_plain FROM file_services WHERE id = 1");
-        return new FileServiceSettings(row.Smb == 1, row.Workgroup, row.Sftp == 1, sync.SmbState, sync.SftpState, row.Ssh == 1, row.WebDav == 1, row.Ftp == 1, row.FtpPlain == 1, ftp.State, ftp.Port, ftp.Fingerprint);
+        var row = await connection.QuerySingleAsync<(long Smb, string Workgroup, long Sftp, long Ssh, long WebDav, long Ftp, long FtpPlain, long PrivateOnly)>(
+            "SELECT smb_enabled, smb_workgroup, sftp_enabled, ssh_enabled, webdav_enabled, ftp_enabled, ftp_plain, private_networks_only FROM file_services WHERE id = 1");
+        return new FileServiceSettings(row.Smb == 1, row.Workgroup, row.Sftp == 1, sync.SmbState, sync.SftpState, row.Ssh == 1, row.WebDav == 1, row.Ftp == 1, row.FtpPlain == 1, ftp.State, ftp.Port, ftp.Fingerprint, row.PrivateOnly == 1, firewall.Applies);
     }
 
     /// <summary>Saves the changes and applies them before it answers, so the states in the answer are current.</summary>
@@ -49,10 +50,10 @@ public sealed class FileServiceSettingsService(
                 UPDATE file_services SET smb_enabled = coalesce(@smb, smb_enabled), smb_workgroup = coalesce(@workgroup, smb_workgroup),
                     sftp_enabled = coalesce(@sftp, sftp_enabled), ssh_enabled = coalesce(@ssh, ssh_enabled),
                     webdav_enabled = coalesce(@webDav, webdav_enabled), ftp_enabled = coalesce(@ftp, ftp_enabled),
-                    ftp_plain = coalesce(@ftpPlain, ftp_plain)
+                    ftp_plain = coalesce(@ftpPlain, ftp_plain), private_networks_only = coalesce(@privateOnly, private_networks_only)
                 WHERE id = 1
                 """,
-                new { smb = request.SmbEnabled, workgroup, sftp = request.SftpEnabled, ssh = request.SshEnabled, webDav = request.WebDavEnabled, ftp = request.FtpEnabled, ftpPlain = request.FtpPlainAllowed });
+                new { smb = request.SmbEnabled, workgroup, sftp = request.SftpEnabled, ssh = request.SshEnabled, webDav = request.WebDavEnabled, ftp = request.FtpEnabled, ftpPlain = request.FtpPlainAllowed, privateOnly = request.PrivateNetworksOnly });
         }
         if (request.SshEnabled is not null)
         {
@@ -62,6 +63,7 @@ public sealed class FileServiceSettingsService(
         }
         await sync.ReconcileAsync(force: false, cancellationToken);
         await ftp.ReconcileAsync(cancellationToken);
+        await firewall.ApplyAsync(cancellationToken);
         return await GetAsync(caller, cancellationToken);
     }
 
@@ -100,11 +102,11 @@ public static class FileServiceEndpoints
                 TypedResults.Ok(await service.GetAsync(context.User, cancellationToken)))
             .RequireAuthorization(Policies.Admin)
             .WithName("GetFileServices")
-            .WithDescription("Administrators only. Whether SMB, SFTP, SSH logins, WebDAV and FTP are switched on, the SMB workgroup, how each service is doing, the FTP port and the FTPS certificate's fingerprint.");
+            .WithDescription("Administrators only. Whether SMB, SFTP, SSH logins, WebDAV and FTP are switched on, the SMB workgroup, how each service is doing, the FTP port, the FTPS certificate's fingerprint, whether the file services are limited to private networks and whether the firewall is applied here.");
         group.MapPut("", async (FileServiceSettingsRequest request, FileServiceSettingsService service, HttpContext context, CancellationToken cancellationToken) =>
                 TypedResults.Ok(await service.UpdateAsync(context.User, request, cancellationToken)))
             .RequireAuthorization(Policies.Admin)
             .WithName("UpdateFileServices")
-            .WithDescription("Administrators only. Switches SMB, SFTP or SSH logins on or off and sets the SMB workgroup; the configuration is checked and applied before the answer. SSH logins give users with the SSH login right a shell. Switching SFTP or SSH logins off never stops sshd: it only stops letting Pithyx users in. WebDAV answers at /webdav/, FTP with TLS (FTPS), and without TLS only while plain FTP is allowed, at the users' own risk.");
+            .WithDescription("Administrators only. Switches SMB, SFTP or SSH logins on or off and sets the SMB workgroup; the configuration is checked and applied before the answer. SSH logins give users with the SSH login right a shell. Switching SFTP or SSH logins off never stops sshd: it only stops letting Pithyx users in. WebDAV answers at /webdav/, FTP with TLS (FTPS), and without TLS only while plain FTP is allowed, at the users' own risk. The firewall opens only the ports of the switched-on services, optionally only to private networks (RFC 1918, ULA, link-local).");
     }
 }
