@@ -1588,6 +1588,12 @@
       },
       "expected": "The snapshot 20261009T214000Z does not exist any more."
     },
+    "update.source.invalid": {
+      "params": {
+        "reason": "url"
+      },
+      "expected": "The update source file does not pass its check (the URL must use https and contain {channel})."
+    },
     "update.source.unreachable": {
       "params": {
         "reason": "status",

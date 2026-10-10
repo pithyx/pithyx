@@ -1270,6 +1270,14 @@ public static class ErrorCodes
     public const string UpdateSnapshotNotFound = "update.snapshot.not_found";
 
     /// <summary>
+    /// An update source file (<c>pithyx-source.json</c>, D339) does not pass its check; <c>params.reason</c> is <c>json</c>
+    /// (not JSON, or larger than 64 KB), <c>url</c> (not https or without <c>{channel}</c>), <c>schema</c> (a missing,
+    /// unknown or malformed field, or a public key that is not 32 bytes) or <c>duplicate_key</c>.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string UpdateSourceInvalid = "update.source.invalid";
+
+    /// <summary>
     /// The update source cannot be reached; <c>params.reason</c> is <c>network</c>, <c>status</c> (with
     /// <c>params.status</c>), <c>timeout</c> or <c>missing</c> (the channel has no <c>channel.json</c> yet). The box keeps
     /// what it knew.

@@ -1,0 +1,12 @@
+{
+  "sourceVersion": 2,
+  "name": "Example fork",
+  "url": "https://github.com/example/pithyx/releases/download/channel-{channel}/channel.json",
+  "keys": [
+    {
+      "keyId": "example-release-1",
+      "publicKey": "sixNtoP5AFf5nH7eNZ5NerpiyWVk5qSoPb6wT5gO64M=",
+      "channels": ["stable", "beta"]
+    }
+  ]
+}

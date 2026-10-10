@@ -169,8 +169,8 @@
     },
     "updates": {
       "title": "Updates",
-      "description": "Pithyx- und Debian-Updates, der Update-Kanal, Rückkehr zu einem Snapshot",
-      "keywords": "update aktualisierung version release kanal beta stable debian sicherheit rollback snapshot wiederherstellen zurück"
+      "description": "Pithyx- und Debian-Updates, der Update-Kanal, Rückkehr zu einem Snapshot, die Update-Quelle",
+      "keywords": "update aktualisierung version release kanal beta stable debian sicherheit rollback snapshot wiederherstellen zurück quelle fork schlüssel"
     },
     "backup": {
       "title": "Backup und Wiederherstellung",
@@ -574,6 +574,20 @@
       "lost": "Seitdem geänderte Einstellungen gehen verloren (Benutzer, freigegebene Ordner, App-Einstellungen). Pools und ihre Dateien bleiben, wie sie sind.",
       "type": "Gib {version} zur Bestätigung ein",
       "confirm": "Zurück und neu starten"
+    },
+    "source": {
+      "title": "Update-Quelle",
+      "name": "Quelle",
+      "official": "{name} (das Projekt)",
+      "url": "Kanäle",
+      "other": "Diese Box folgt {name}, nicht dem Pithyx-Projekt. Das wurde im Recovery-Menü umgestellt, und die Box vertraut nur den Schlüsseln unten. Zum Zurückwechseln wähle dort „Back to the Pithyx project“.",
+      "key": "Schlüssel {id} ({channels}):",
+      "intro": "Nur das Recovery-Menü an der Konsole wechselt die Update-Quelle, zum Beispiel zu einem Fork. So kann ein übernommenes Konto die Updates nicht umleiten. Zum Wechseln speichere die pithyx-source.json der Quelle hier (praktisch, wenn du die Konsole nur über die Fernwartung erreichst), lege sie auf einen USB-Stick oder tippe sie im Menü ein.",
+      "choose": "Quelldatei für das Recovery-Menü speichern",
+      "saved": "{name} ist für das Recovery-Menü gespeichert",
+      "savedBy": "Gespeichert von {user} am {date}. Es ändert sich nichts, bis sie an der Konsole gewählt wird.",
+      "next": "Zum Wechseln: Starte die Box neu, wähle im Bootmenü „Pithyx recovery“ (Taste r), dann „Change the update source“ und „Use the file saved in Settings“, und tippe den Namen der Quelle.",
+      "discard": "Entfernen"
     }
   }
 }

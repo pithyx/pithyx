@@ -48,12 +48,14 @@ public sealed partial class UpdateService(
     public const string TimeSetting = "updates.time";
     public const string StatusSetting = "updates.status";
     public const string SequenceSetting = "updates.sequence.";
+    public const string SourceSetting = "updates.source";
 
     public const string AvailableCode = "update.available";
     public const string DebianCode = "update.debian.available";
     public const string InstalledCode = "update.installed";
     public const string RolledBackCode = "update.rolled_back";
     public const string RestoredCode = "update.restored";
+    public const string SourceChangedCode = "update.source.changed";
 
     public const string UpdateJob = "system.update";
     public const string RollbackJob = "system.rollback";
@@ -130,6 +132,7 @@ public sealed partial class UpdateService(
     {
         await EnsureTimeAsync(cancellationToken);
         _check = await LoadCheckAsync(cancellationToken);
+        await NoticeSourceAsync(cancellationToken);
         if (options.Simulated)
         {
             _layout = new SystemLayout(null, "simulated");
@@ -230,7 +233,11 @@ public sealed partial class UpdateService(
             staged,
             _runningJob,
             await HistoryAsync(cancellationToken),
-            _snapshots);
+            _snapshots,
+            UpdateSources.Describe(Source(), options.Keyring),
+            UpdateSources.ReadCandidate(CandidateFile) is var (candidate, savedBy, savedAt)
+                ? new UpdateSourceCandidate(candidate.Name, candidate.Url, UpdateSources.Keys(candidate.Keys), savedBy, savedAt)
+                : null);
     }
 
     public async Task<UpdateStatus> GetStatusAsync(ClaimsPrincipal caller, CancellationToken cancellationToken)
@@ -361,7 +368,7 @@ public sealed partial class UpdateService(
         {
             known = await connection.ExecuteScalarAsync<long?>("SELECT CAST(value AS INTEGER) FROM settings WHERE key = @key", new { key });
         }
-        var result = UpdateDocuments.CheckChannel(document, signature, options.Keyring, channel, known);
+        var result = UpdateDocuments.CheckChannel(document, signature, UpdateSources.Keyring(config, options.Keyring), channel, known);
         if (result.Document is not { } checkedChannel)
         {
             throw result.Issues[0].ToException();
@@ -451,7 +458,92 @@ public sealed partial class UpdateService(
     }
 
     private UpdateExpectation Expectation(string channel) =>
-        new(options.Keyring, channel, AllowUnsigned, InstalledVersion, UpdateFile.BoxArchitecture);
+        new(UpdateSources.Keyring(Source(), options.Keyring), channel, AllowUnsigned, InstalledVersion, UpdateFile.BoxArchitecture);
+
+    private UpdateSourceConfig Source() => UpdateSourceConfig.Load(options.SourceFile, options.DefaultSource);
+
+    private string CandidateFile => Path.Combine(system.Paths.State, UpdateSources.CandidateFileName);
+
+    // Update sources (D339).
+
+    /// <summary>
+    /// Notices a switch of the update source made in the recovery menu: the new source's channels start their sequences
+    /// anew, what the last check found is forgotten, and administrators learn of it once, so no switch at the console
+    /// stays silent.
+    /// </summary>
+    private async Task NoticeSourceAsync(CancellationToken cancellationToken)
+    {
+        var config = Source();
+        var identity = UpdateSources.Identity(config);
+        string? known;
+        await using (var connection = await connections.OpenAsync(cancellationToken))
+        {
+            known = await connection.ExecuteScalarAsync<string?>("SELECT value FROM settings WHERE key = @key", new { key = SourceSetting });
+            if (known == identity)
+            {
+                return;
+            }
+            await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+            await connection.ExecuteAsync("DELETE FROM settings WHERE key LIKE 'updates.sequence.%'", transaction: transaction);
+            await connection.ExecuteAsync(
+                "INSERT INTO settings (key, value) VALUES (@key, @value) ON CONFLICT (key) DO UPDATE SET value = excluded.value",
+                new { key = SourceSetting, value = identity }, transaction);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        if (known is null && config.Keys is null)
+        {
+            return;
+        }
+        _check = new CheckState(null, null, null, null, null);
+        await SaveCheckAsync(_check, cancellationToken);
+        var info = UpdateSources.Describe(config, options.Keyring);
+        LogSourceChanged(info.Name, info.Url, info.Official);
+        await notifications.CreateForAdministratorsAsync(new NotificationDraft(SourceChangedCode, new Dictionary<string, object?>
+        {
+            ["name"] = info.Name,
+            ["url"] = info.Url,
+            ["official"] = info.Official ? "true" : "false",
+        }, info.Official ? NotificationTone.Info : NotificationTone.Warning), cancellationToken);
+    }
+
+    /// <summary>
+    /// Checks a <c>pithyx-source.json</c> and keeps it for the recovery menu, which alone can switch to it (D339); this
+    /// changes nothing the box trusts.
+    /// </summary>
+    public async Task<UpdateStatus> SaveSourceCandidateAsync(ClaimsPrincipal caller, Stream body, CancellationToken cancellationToken)
+    {
+        RequireAdmin(caller);
+        ArgumentNullException.ThrowIfNull(body);
+        using var buffer = new MemoryStream();
+        var chunk = new byte[8192];
+        int read;
+        while ((read = await body.ReadAsync(chunk, cancellationToken)) > 0)
+        {
+            if (buffer.Length + read > UpdateSources.MaxBytes)
+            {
+                throw new PithyxException(ErrorCodes.UpdateSourceInvalid, new Dictionary<string, object?> { ["reason"] = "json" });
+            }
+            buffer.Write(chunk, 0, read);
+        }
+        var result = UpdateSources.Check(buffer.ToArray());
+        if (result.Document is not { } candidate)
+        {
+            throw result.Issues[0].ToException();
+        }
+        var savedBy = caller.Identity?.Name ?? "";
+        await UpdateSources.SaveCandidateAsync(CandidateFile, buffer.ToArray(), savedBy, time.GetUtcNow(), cancellationToken);
+        LogSourceCandidate(candidate.Name, candidate.Url, savedBy);
+        await PublishAsync(cancellationToken);
+        return await StatusAsync(cancellationToken);
+    }
+
+    public async Task<UpdateStatus> DiscardSourceCandidateAsync(ClaimsPrincipal caller, CancellationToken cancellationToken)
+    {
+        RequireAdmin(caller);
+        UpdateSources.DeleteIfPresent(CandidateFile);
+        await PublishAsync(cancellationToken);
+        return await StatusAsync(cancellationToken);
+    }
 
     // Install and rollback.
 
@@ -883,4 +975,10 @@ public sealed partial class UpdateService(
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Update {HistoryId} ended after the restart: {State}")]
     private partial void LogOutcome(long historyId, string state);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "The update source changed to {Name} ({Url}, official {Official})")]
+    private partial void LogSourceChanged(string name, string url, bool official);
+
+    [LoggerMessage(Level = LogLevel.Information, Message = "Update source {Name} ({Url}) saved by {User} for the recovery menu")]
+    private partial void LogSourceCandidate(string name, string url, string user);
 }

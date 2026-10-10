@@ -165,6 +165,12 @@
     "restored": {
       "title": "Pithyx {version} restored",
       "body": "The system went back to the snapshot. Settings changed since then are lost."
+    },
+    "source": {
+      "changed": {
+        "title": "The update source is now {name}",
+        "body": "{official, select, true {The box follows the Pithyx project again and trusts only its keys.} other {Switched in the recovery menu: the box reads its updates from {url} and trusts only the keys of {name}. If nobody here did this, switch back in the recovery menu.}}"
+      }
     }
   },
   "system": {

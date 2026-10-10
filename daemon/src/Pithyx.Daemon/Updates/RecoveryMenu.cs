@@ -13,11 +13,18 @@ namespace Pithyx.Daemon.Updates;
 /// password: whoever has the console controls the box anyway (GRUB has no password, pools are unencrypted in v0.1), so
 /// the menu asks for confirmations against mistakes instead, checks every file's signature and logs every action. It
 /// rolls back to a snapshot, installs an update file from a USB stick, resets the network to DHCP and restarts, through
-/// the same code as Settings. Started from a snapshot's entry (read-only), it offers only the rollback to it and the
-/// restart; <c>pithyx.rollback=auto:&lt;snapshot&gt;</c> (an update whose new version never confirmed its boot) rolls
+/// the same code as Settings. It is also the only place that switches the update source (D339), for example to a fork:
+/// from a USB stick, from the file an administrator saved in Settings, or typed. Started from a snapshot's entry
+/// (read-only), it offers only the rollback to it and the restart; <c>pithyx.rollback=auto:&lt;snapshot&gt;</c> (an update whose new version never confirmed its boot) rolls
 /// back without asking.
 /// </summary>
-public sealed partial class RecoveryMenu(UpdateSystem system, ICommandRunner commands, ILoggerFactory loggers, TextReader input, TextWriter output)
+public sealed partial class RecoveryMenu(
+    UpdateSystem system,
+    ICommandRunner commands,
+    ILoggerFactory loggers,
+    TextReader input,
+    TextWriter output,
+    string sourceFile = UpdateSourceConfig.BoxFile)
 {
     private readonly ILogger<RecoveryMenu> _logger = loggers.CreateLogger<RecoveryMenu>();
 
@@ -53,6 +60,7 @@ public sealed partial class RecoveryMenu(UpdateSystem system, ICommandRunner com
             {
                 await LineAsync("  [2] Install an update file from a USB stick");
                 await LineAsync("  [3] Reset the network to DHCP");
+                await LineAsync("  [5] Change the update source");
             }
             await LineAsync("  [4] Restart");
             await LineAsync("");
@@ -67,6 +75,9 @@ public sealed partial class RecoveryMenu(UpdateSystem system, ICommandRunner com
                     break;
                 case "3" when !fromSnapshot:
                     await ResetNetworkAsync(cancellationToken);
+                    break;
+                case "5" when !fromSnapshot:
+                    await ChangeSourceAsync(cancellationToken);
                     break;
                 case "4":
                     LogAction("restart", "");
@@ -151,7 +162,7 @@ public sealed partial class RecoveryMenu(UpdateSystem system, ICommandRunner com
 
     private async Task InstallFromUsbAsync(CancellationToken cancellationToken)
     {
-        var files = await FindUpdateFilesAsync(cancellationToken);
+        var files = await FindStickFilesAsync("*.pithyxupdate", cancellationToken);
         if (files.Count == 0)
         {
             await PauseAsync("No .pithyxupdate file was found on a USB stick. Put the file into the stick's top folder and try again.");
@@ -229,7 +240,8 @@ public sealed partial class RecoveryMenu(UpdateSystem system, ICommandRunner com
             // A box without its database still takes stable files.
         }
         var environment = DeploymentEnvironment.Load(DeploymentEnvironment.DefaultDirectory);
-        return new UpdateExpectation(UpdateKeys.Project, channel, environment.Kind == DeploymentKind.Dev, system.InstalledVersion(), UpdateFile.BoxArchitecture);
+        var keyring = UpdateSources.Keyring(UpdateSourceConfig.Load(sourceFile, UpdateSourceConfig.Default), UpdateKeys.Project);
+        return new UpdateExpectation(keyring, channel, environment.Kind == DeploymentKind.Dev, system.InstalledVersion(), UpdateFile.BoxArchitecture);
     }
 
     private static async Task<long> InsertHistoryAsync(string from, string to, CancellationToken cancellationToken)
@@ -243,10 +255,10 @@ public sealed partial class RecoveryMenu(UpdateSystem system, ICommandRunner com
     private const string StickRoot = "/run/pithyx/usb";
 
     /// <summary>
-    /// Mounts every partition with a file system a stick has (FAT, exFAT, ext, NTFS) read-only and lists the update
-    /// files in its top folder. The system disks (RAID members, the ESPs) are never touched.
+    /// Mounts every partition with a file system a stick has (FAT, exFAT, ext, NTFS) read-only and lists the files of
+    /// <paramref name="pattern"/> in its top folder. The system disks (RAID members, the ESPs) are never touched.
     /// </summary>
-    private async Task<IReadOnlyList<string>> FindUpdateFilesAsync(CancellationToken cancellationToken)
+    private async Task<IReadOnlyList<string>> FindStickFilesAsync(string pattern, CancellationToken cancellationToken)
     {
         var listing = await commands.RunAsync(new CommandRequest("lsblk", ["--json", "--paths", "--list", "--output", "PATH,FSTYPE,MOUNTPOINT"], TimeSpan.FromSeconds(30)), cancellationToken);
         if (listing.ExitCode != 0)
@@ -269,7 +281,7 @@ public sealed partial class RecoveryMenu(UpdateSystem system, ICommandRunner com
             var mount = await commands.RunAsync(new CommandRequest("mount", ["-o", "ro,nosuid,nodev,noexec", device.GetProperty("path").GetString()!, mountPoint], TimeSpan.FromSeconds(30)), cancellationToken);
             if (mount.ExitCode == 0)
             {
-                files.AddRange(Directory.EnumerateFiles(mountPoint, "*.pithyxupdate").Order(StringComparer.Ordinal));
+                files.AddRange(Directory.EnumerateFiles(mountPoint, pattern).Order(StringComparer.Ordinal));
             }
         }
         return files;
@@ -299,6 +311,146 @@ public sealed partial class RecoveryMenu(UpdateSystem system, ICommandRunner com
         await NetworkService.ResetStoredAsync(new SqliteConnectionFactory(UpdateCommands.DatabasePath), host, cancellationToken);
         LogAction("network-reset", "");
         await PauseAsync("The network is back on DHCP; it applies at the next start.");
+    }
+
+    private string CandidateFile => Path.Combine(system.Paths.State, UpdateSources.CandidateFileName);
+
+    /// <summary>
+    /// Switches the update source (D339): after a switch the box trusts only the new source's keys. Every way ends in
+    /// the same check of <c>pithyx-source.json</c> and the same confirmation, the source's name typed.
+    /// </summary>
+    private async Task ChangeSourceAsync(CancellationToken cancellationToken)
+    {
+        var current = UpdateSources.Describe(UpdateSourceConfig.Load(sourceFile, UpdateSourceConfig.Default), UpdateKeys.Project);
+        var candidate = UpdateSources.ReadCandidate(CandidateFile);
+        await LineAsync("");
+        await LineAsync($"This box follows the update source {current.Name}{(current.Official ? " (the Pithyx project)" : "")}: {current.Url}");
+        await LineAsync("Whoever signs a source's updates can change everything on this box. Switch only to a source you trust.");
+        await LineAsync("  [1] Read pithyx-source.json from a USB stick");
+        if (candidate is var (saved, savedBy, savedAt))
+        {
+            await LineAsync($"  [2] Use the file saved in Settings: {saved.Name} (by {savedBy}, {savedAt:yyyy-MM-dd HH:mm} UTC)");
+        }
+        await LineAsync("  [3] Type the source");
+        if (!current.Official)
+        {
+            await LineAsync("  [4] Back to the Pithyx project");
+        }
+        await LineAsync("  [0] Back");
+        await output.WriteAsync("Choice: ");
+        switch ((await input.ReadLineAsync(cancellationToken))?.Trim())
+        {
+            case "1":
+                await SourceFromStickAsync(cancellationToken);
+                break;
+            case "2" when candidate is var (chosen, _, _):
+                await ConfirmSourceAsync(chosen, cancellationToken);
+                break;
+            case "3":
+                await TypedSourceAsync(cancellationToken);
+                break;
+            case "4" when !current.Official:
+                await LineAsync("The box then trusts only the keys of the Pithyx project again and reads its releases.");
+                await output.WriteAsync($"Type {UpdateSources.ProjectName} to switch back: ");
+                if ((await input.ReadLineAsync(cancellationToken))?.Trim() != UpdateSources.ProjectName)
+                {
+                    await PauseAsync("Nothing changed.");
+                    return;
+                }
+                await UpdateSources.SwitchAsync(sourceFile, CandidateFile, null, cancellationToken);
+                LogAction("source", UpdateSources.ProjectName);
+                await PauseAsync("The box follows the Pithyx project from its next start. Restart with [4].");
+                break;
+            default:
+                break;
+        }
+    }
+
+    private async Task SourceFromStickAsync(CancellationToken cancellationToken)
+    {
+        byte[] bytes;
+        try
+        {
+            var files = await FindStickFilesAsync("pithyx-source*.json", cancellationToken);
+            if (files.Count == 0)
+            {
+                await PauseAsync("No pithyx-source.json was found on a USB stick. Put the file into the stick's top folder and try again.");
+                return;
+            }
+            for (var index = 0; index < files.Count; index++)
+            {
+                await LineAsync($"  [{index + 1}] {files[index]}");
+            }
+            await output.WriteAsync("File number: ");
+            if (!int.TryParse(await input.ReadLineAsync(cancellationToken), out var number) || number < 1 || number > files.Count
+                || new FileInfo(files[number - 1]).Length > UpdateSources.MaxBytes)
+            {
+                await PauseAsync("No file chosen; nothing changed.");
+                return;
+            }
+            bytes = await File.ReadAllBytesAsync(files[number - 1], cancellationToken);
+        }
+        finally
+        {
+            await UnmountSticksAsync();
+        }
+        await CheckedSourceAsync(bytes, cancellationToken);
+    }
+
+    private async Task TypedSourceAsync(CancellationToken cancellationToken)
+    {
+        await output.WriteAsync("Name: ");
+        var name = (await input.ReadLineAsync(cancellationToken))?.Trim() ?? "";
+        await output.WriteAsync("Channel URL (https, with {channel}): ");
+        var url = (await input.ReadLineAsync(cancellationToken))?.Trim() ?? "";
+        var keys = new List<Apps.Catalog.TrustedKey>();
+        do
+        {
+            await output.WriteAsync("Key id: ");
+            var keyId = (await input.ReadLineAsync(cancellationToken))?.Trim() ?? "";
+            await output.WriteAsync("Public key (base64): ");
+            var publicKey = (await input.ReadLineAsync(cancellationToken))?.Trim() ?? "";
+            await output.WriteAsync("Channels (stable,beta): ");
+            var channels = (await input.ReadLineAsync(cancellationToken))?.Trim() is { Length: > 0 } typed ? typed : "stable,beta";
+            keys.Add(new(keyId, publicKey, channels.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)));
+            await output.WriteAsync("Another key? Type yes, or press Enter: ");
+        }
+        while ((await input.ReadLineAsync(cancellationToken))?.Trim() == "yes" && keys.Count < 4);
+        await CheckedSourceAsync(UpdateSources.Serialize(name, url, keys), cancellationToken);
+    }
+
+    private async Task CheckedSourceAsync(byte[] bytes, CancellationToken cancellationToken)
+    {
+        var result = UpdateSources.Check(bytes);
+        if (result.Document is not { } source)
+        {
+            await PauseAsync($"The source was refused: {result.Issues[0].Code} {JsonSerializer.Serialize(result.Issues[0].Params)}. Nothing changed.");
+            return;
+        }
+        await ConfirmSourceAsync(source, cancellationToken);
+    }
+
+    private async Task ConfirmSourceAsync(UpdateSourceDefinition source, CancellationToken cancellationToken)
+    {
+        await LineAsync("");
+        await LineAsync($"Name: {source.Name}");
+        await LineAsync($"URL:  {source.Url}");
+        foreach (var key in source.Keys)
+        {
+            await LineAsync($"Key {key.KeyId} ({string.Join(", ", key.Channels)}): {key.PublicKey}");
+        }
+        await LineAsync("Compare every key with the one the source publishes.");
+        await LineAsync("After the switch this box trusts only these keys; updates of the Pithyx project are refused until you switch back here.");
+        await LineAsync("The source may change the system and its database so that going back needs a reinstall. Pools and their files are never touched.");
+        await output.WriteAsync($"Type the name {source.Name} to switch: ");
+        if ((await input.ReadLineAsync(cancellationToken))?.Trim() != source.Name)
+        {
+            await PauseAsync("The name did not match; nothing changed.");
+            return;
+        }
+        await UpdateSources.SwitchAsync(sourceFile, CandidateFile, source, cancellationToken);
+        LogAction("source", $"{source.Name} {source.Url}");
+        await PauseAsync($"The box follows {source.Name} from its next start. Restart with [4].");
     }
 
     private Task LineAsync(string text) => output.WriteLineAsync(text);

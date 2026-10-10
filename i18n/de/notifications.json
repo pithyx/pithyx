@@ -165,6 +165,12 @@
     "restored": {
       "title": "Pithyx {version} wiederhergestellt",
       "body": "Das System ist zum Snapshot zurückgekehrt. Seitdem geänderte Einstellungen sind verloren."
+    },
+    "source": {
+      "changed": {
+        "title": "Die Update-Quelle ist jetzt {name}",
+        "body": "{official, select, true {Die Box folgt wieder dem Pithyx-Projekt und vertraut nur dessen Schlüsseln.} other {Im Recovery-Menü gewechselt: Die Box liest ihre Updates von {url} und vertraut nur den Schlüsseln von {name}. Wenn das hier niemand war, wechsle im Recovery-Menü zurück.}}"
+      }
     }
   },
   "system": {

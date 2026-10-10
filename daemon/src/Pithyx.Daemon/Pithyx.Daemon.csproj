@@ -50,5 +50,6 @@
     <EmbeddedResource Include="../../../sdk/schema/maintainers.v1.schema.json" LogicalName="schema/maintainers.v1.schema.json" />
     <EmbeddedResource Include="../../../tools/release/schema/update-manifest.v1.schema.json" LogicalName="schema/update-manifest.v1.schema.json" />
     <EmbeddedResource Include="../../../tools/release/schema/update-channel.v1.schema.json" LogicalName="schema/update-channel.v1.schema.json" />
+    <EmbeddedResource Include="../../../tools/release/schema/update-source.v1.schema.json" LogicalName="schema/update-source.v1.schema.json" />
   </ItemGroup>
 </Project>

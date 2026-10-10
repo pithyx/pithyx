@@ -1,0 +1,120 @@
+[
+  {
+    "name": "a source with one key",
+    "document": "valid.json",
+    "expected": []
+  },
+  {
+    "name": "a source with two keys",
+    "document": "two-keys.json",
+    "expected": []
+  },
+  {
+    "name": "plain http",
+    "document": "http.json",
+    "expected": [
+      {
+        "code": "update.source.invalid",
+        "params": {
+          "reason": "url"
+        }
+      }
+    ]
+  },
+  {
+    "name": "a URL without {channel}",
+    "document": "no-channel-placeholder.json",
+    "expected": [
+      {
+        "code": "update.source.invalid",
+        "params": {
+          "reason": "url"
+        }
+      }
+    ]
+  },
+  {
+    "name": "a key id twice",
+    "document": "duplicate-key-id.json",
+    "expected": [
+      {
+        "code": "update.source.invalid",
+        "params": {
+          "reason": "duplicate_key"
+        }
+      }
+    ]
+  },
+  {
+    "name": "a key that is not 32 bytes",
+    "document": "short-key.json",
+    "expected": [
+      {
+        "code": "update.source.invalid",
+        "params": {
+          "reason": "schema"
+        }
+      }
+    ]
+  },
+  {
+    "name": "an unknown field",
+    "document": "unknown-field.json",
+    "expected": [
+      {
+        "code": "update.source.invalid",
+        "params": {
+          "reason": "schema"
+        }
+      }
+    ]
+  },
+  {
+    "name": "no keys",
+    "document": "no-keys.json",
+    "expected": [
+      {
+        "code": "update.source.invalid",
+        "params": {
+          "reason": "schema"
+        }
+      }
+    ]
+  },
+  {
+    "name": "another format version",
+    "document": "version-2.json",
+    "expected": [
+      {
+        "code": "update.source.invalid",
+        "params": {
+          "reason": "schema"
+        }
+      }
+    ]
+  },
+  {
+    "name": "a name with a line break",
+    "document": "name-with-newline.json",
+    "expected": [
+      {
+        "code": "update.source.invalid",
+        "params": {
+          "reason": "schema"
+        }
+      }
+    ]
+  },
+  {
+    "name": "not JSON",
+    "document": "not-json.json",
+    "expected": [
+      {
+        "code": "update.source.invalid",
+        "params": {
+          "reason": "json"
+        }
+      }
+    ]
+  }
+]

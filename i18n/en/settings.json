@@ -169,8 +169,8 @@
     },
     "updates": {
       "title": "Updates",
-      "description": "Pithyx and Debian updates, the update channel, rollback to a snapshot",
-      "keywords": "update upgrade version release channel beta stable debian security rollback snapshot restore"
+      "description": "Pithyx and Debian updates, the update channel, rollback to a snapshot, the update source",
+      "keywords": "update upgrade version release channel beta stable debian security rollback snapshot restore source fork key"
     },
     "backup": {
       "title": "Backup and restore",
@@ -574,6 +574,20 @@
       "lost": "Settings changed since then are lost (users, shared folders, apps settings). Pools and their files stay as they are.",
       "type": "Type {version} to confirm",
       "confirm": "Go back and restart"
+    },
+    "source": {
+      "title": "Update source",
+      "name": "Source",
+      "official": "{name} (the project)",
+      "url": "Channels",
+      "other": "This box follows {name}, not the Pithyx project. It was switched in the recovery menu and trusts only the keys below. To go back, choose \"Back to the Pithyx project\" there.",
+      "key": "Key {id} ({channels}):",
+      "intro": "Only the recovery menu at the console switches the update source, for example to a fork, so a taken-over account cannot redirect the updates. To switch, save the source’s pithyx-source.json here (useful when you reach the console only through remote management), or put it on a USB stick, or type it in the menu.",
+      "choose": "Save source file for the recovery menu",
+      "saved": "{name} is saved for the recovery menu",
+      "savedBy": "Saved by {user} on {date}. Nothing changes until it is chosen at the console.",
+      "next": "To switch: restart the box, choose \"Pithyx recovery\" in the boot menu (key r), then \"Change the update source\" and \"Use the file saved in Settings\", and type the source’s name.",
+      "discard": "Remove"
     }
   }
 }

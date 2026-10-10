@@ -36,6 +36,9 @@ interface UpdateMethods {
     result: Job;
   };
   'internal.admin.updates.rollback': { params: { snapshot: string; version: string }; result: Job };
+  /** Keeps a checked pithyx-source.json for the recovery menu, which alone switches the source (D339). */
+  'internal.admin.updates.source.save': { params: { text: string }; result: UpdateStatus };
+  'internal.admin.updates.source.discard': { params: Record<string, never>; result: UpdateStatus };
 }
 
 type UpdateName = keyof UpdateMethods;
@@ -97,6 +100,20 @@ function upload(file: Blob, name: string): Promise<UpdateStatus> {
     };
     request.send(file);
   });
+}
+
+/** Sends the exact bytes of a source file: the daemon checks them as the recovery menu does, duplicate keys included. */
+async function saveSource(text: string): Promise<UpdateStatus> {
+  const response = await fetch('/api/system/updates/source', {
+    method: 'PUT',
+    headers: { 'X-Pithyx-Request': '1', 'Content-Type': 'application/json' },
+    body: text,
+  });
+  const body = await response.text();
+  if (!response.ok) {
+    throw problemOf(response.status, body);
+  }
+  return JSON.parse(body) as UpdateStatus;
 }
 
 /**
@@ -181,6 +198,15 @@ export function updatesHost(emit: (event: string, data?: unknown) => void): {
             ),
           ),
         ),
+    },
+    'internal.admin.updates.source.save': {
+      validate: (value) => isRecord(value) && hasText(value, 'text'),
+      handle: (params) =>
+        saveSource((params as UpdateMethods['internal.admin.updates.source.save']['params']).text),
+    },
+    'internal.admin.updates.source.discard': {
+      validate: isRecord,
+      handle: () => daemon(async () => unwrap(await api.DELETE('/api/system/updates/source'))),
     },
   };
   return {

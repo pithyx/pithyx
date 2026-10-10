@@ -49,6 +49,8 @@ public sealed record StagedUpdate(
 /// <c>UnsupportedReason</c>: <c>not_btrfs</c>, <c>not_subvolume</c>, <c>not_array</c> or <c>findmnt</c>.
 /// <c>RunningJobId</c>: The job of an update or rollback that runs now.
 /// <c>Snapshots</c>: The kept snapshots, newest first; each can be restored.
+/// <c>Source</c>: The update source the box follows (D339); only the recovery menu switches it.
+/// <c>SourceCandidate</c>: A source file saved in Settings for the recovery menu, or null.
 /// </summary>
 public sealed record UpdateStatus(
     string InstalledVersion,
@@ -65,7 +67,9 @@ public sealed record UpdateStatus(
     StagedUpdate? Staged,
     long? RunningJobId,
     IReadOnlyList<UpdateHistoryEntry> History,
-    IReadOnlyList<SnapshotInfo> Snapshots);
+    IReadOnlyList<SnapshotInfo> Snapshots,
+    UpdateSourceInfo Source,
+    UpdateSourceCandidate? SourceCandidate);
 
 /// <param name="CheckEnabled">The daily check (on by default; it only notifies).</param>
 /// <param name="Channel"><c>stable</c> or <c>beta</c>.</param>

@@ -18,8 +18,10 @@
 # the channel-beta of pithyx/pithyx (publish it first with tools/release/publish-beta.sh; without the token file N+2 is
 # uploaded as well), a broken N+3 made from N+2 whose daemon never starts rolls back by itself, the GRUB entry of a
 # snapshot rolls back through the recovery menu, and the recovery menu resets the network and installs N+2 from a
-# virtual USB stick. Afterwards both ESPs carry the same GRUB and the trial file of the updater, and the mirror starts
-# from its second disk alone.
+# virtual USB stick. Then the update source (D339): a fork's pithyx-source.json saved in Settings is chosen in the
+# recovery menu, after which a file of the fork's key verifies and one of the project's is refused; a typed source
+# replaces it, and "Back to the Pithyx project" restores the project's keys. Afterwards both ESPs carry the same GRUB
+# and the trial file of the updater, and the mirror starts from its second disk alone.
 set -euo pipefail
 export LC_ALL=C.UTF-8
 
@@ -253,9 +255,10 @@ update_version() {
   echo "${name%-amd64.pithyxupdate}"
 }
 
-# An update file made from another whose daemon never starts, for the health check's rollback.
-make_broken() {
-  local source="$1" version="$2" target="$3" work="$vm/broken" deb_version="${2/-/\~}" deb
+# An update file made from another with a new version, signed with a key of its own; "broken" makes its daemon never
+# start, for the health check's rollback.
+make_update() {
+  local source="$1" version="$2" target="$3" key="$4" key_id="$5" broken="${6:-}" work="$vm/remade" deb_version="${2/-/\~}" deb
   rm -rf "$work"
   mkdir -p "$work/file" "$work/pithyx" "$work/kernel"
   tar --extract --file="$source" --directory="$work/file"
@@ -264,7 +267,9 @@ make_broken() {
   rm "$work/file/debs"/pithyx_*.deb "$work/file/debs"/pithyx-kernel_*.deb "$work/file/manifest.json.sig"
   sed -i -e "s/^Version: .*/Version: $deb_version/" -e "s/pithyx-kernel (= [^)]*)/pithyx-kernel (= $deb_version)/" "$work/pithyx/DEBIAN/control"
   sed -i "s/^Version: .*/Version: $deb_version/" "$work/kernel/DEBIAN/control"
-  sed -i 's|^ExecStart=.*|ExecStart=/bin/false|' "$work/pithyx/usr/lib/systemd/system/pithyx.service"
+  if [[ "$broken" == broken ]]; then
+    sed -i 's|^ExecStart=.*|ExecStart=/bin/false|' "$work/pithyx/usr/lib/systemd/system/pithyx.service"
+  fi
   sed -i "s/^PITHYX_VERSION=.*/PITHYX_VERSION=$version/" "$work/pithyx/usr/lib/pithyx/release"
   for deb in pithyx kernel; do
     dpkg-deb --root-owner-group -Zxz --build "$work/$deb" "$work/file/debs/" >/dev/null
@@ -279,7 +284,7 @@ make_broken() {
   node "$repo/tools/release/update-file.ts" manifest "$work/file" --version "$version" --channel beta --minimum "$minimum" \
     --commit "$commit" --kernel "$kernel" --zfs "$zfs" --published-at "$published"
   "$repo/tools/release/pack-update.sh" "$work/file" "$target"
-  "$repo/tools/release/sign-update.sh" "$target" --key "$HOME/.config/pithyx-dev/pithyx-beta-1.pem" --key-id pithyx-beta-1 >/dev/null
+  "$repo/tools/release/sign-update.sh" "$target" --key "$key" --key-id "$key_id" >/dev/null
 }
 
 # Shuts the VM down through ACPI and waits for QEMU to end.
@@ -322,11 +327,33 @@ type_keys() {
     case "$char" in
       .) key='dot' ;;
       -) key=minus ;;
+      _) key=shift-minus ;;
       ' ') key=spc ;;
+      /) key=slash ;;
+      :) key=shift-semicolon ;;
+      =) key=equal ;;
+      +) key=shift-equal ;;
+      '{') key=shift-bracket_left ;;
+      '}') key=shift-bracket_right ;;
       $'\n') key=ret ;;
+      [A-Z]) key="shift-${char,,}" ;;
       *) key="$char" ;;
     esac
     monitor "sendkey $key"
+  done
+}
+
+# Restarts into "Pithyx recovery" (key r) and types each argument as one answer to the menu on tty1.
+recovery_menu() {
+  local answer
+  power_off
+  start_vm "${installed[@]}"
+  grub_choose r
+  sleep 90
+  screenshot "recovery-$(date +%s)"
+  for answer in "$@"; do
+    type_keys "$answer"
+    sleep 3
   done
 }
 
@@ -562,7 +589,7 @@ if [[ -n "$updates" ]]; then
 
   broken_version="${second_version%.*}.$((${second_version##*.} + 1))"
   step "installing a broken $broken_version whose daemon never starts: the health check rolls back"
-  make_broken "$second" "$broken_version" "$vm/pithyx-$broken_version-amd64.pithyxupdate"
+  make_update "$second" "$broken_version" "$vm/pithyx-$broken_version-amd64.pithyxupdate" "$HOME/.config/pithyx-dev/pithyx-beta-1.pem" pithyx-beta-1 broken
   upload_update "$vm/pithyx-$broken_version-amd64.pithyxupdate" || die "the upload of the broken file was refused"
   install_update file
   # The daemon of the broken version never answers; the health check gives up after five minutes and restarts.
@@ -623,6 +650,37 @@ print(json.dumps(config))")"
   wait_updates "d['installedVersion'] == '$second_version' and d['runningJobId'] is None and d['history'][0]['source'] == 'recovery' and d['history'][0]['state'] == 'succeeded'" 1500
   wait_network "any(l['name'] == '$nic0' and l['method'] == 'dhcp' for l in d['links'])" 60
   echo "the recovery menu reset $nic0 to DHCP and installed $second_version from the stick"
+
+  step "saving a fork's source file in Settings and switching to it in the recovery menu"
+  fork_key="$(env -C "$vm" "$repo/tools/release/create-key.sh" fork-test-1 "$vm/fork.pem" | sed -n 's/^public key of fork-test-1: //p')"
+  [[ -n "$fork_key" ]] || die "no fork key"
+  # A source that is never reached: the switch is about trust, files come by upload.
+  node "$repo/tools/release/update-file.ts" source --name "Test fork" \
+    --url 'https://example.invalid/pithyx/channel-{channel}/channel.json' --key "fork-test-1:$fork_key:stable,beta" >"$vm/pithyx-source.json"
+  admin /system/updates/source -X PUT -H 'Content-Type: application/json' --data-binary @"$vm/pithyx-source.json" -o /dev/null
+  [[ "$(admin /system/updates | json 'd["sourceCandidate"]["name"]')" == "Test fork" ]] || die "the source file was not saved"
+  recovery_menu $'5\n' $'2\n' $'Test fork\n' $'\n' $'4\n'
+  wait_updates "d['source']['name'] == 'Test fork' and not d['source']['official'] and d['sourceCandidate'] is None" 600
+  fork_version="${second_version%.*}.$((${second_version##*.} + 2))"
+  make_update "$second" "$fork_version" "$vm/pithyx-$fork_version-amd64.pithyxupdate" "$vm/fork.pem" fork-test-1
+  if upload_update "$vm/pithyx-$broken_version-amd64.pithyxupdate" 2>/dev/null; then
+    die "a file of the project's beta key was accepted after the switch"
+  fi
+  upload_update "$vm/pithyx-$fork_version-amd64.pithyxupdate" || die "the fork's file was refused after the switch"
+  admin /system/updates/file -X DELETE -o /dev/null
+  [[ "$(admin /notifications | json "any(i['code'] == 'update.source.changed' for i in d['items'])")" == True ]] \
+    || die "administrators were not told of the switch"
+  echo "the box follows Test fork: its file verifies, the project's is refused, administrators were told"
+
+  step "typing a source in the recovery menu, then going back to the Pithyx project"
+  recovery_menu $'5\n' $'3\n' $'Typed fork\n' $'https://example.invalid/typed/channel-{channel}/channel.json\n' \
+    $'fork-test-1\n' "$fork_key"$'\n' $'\n' $'\n' $'Typed fork\n' $'\n' $'4\n'
+  wait_updates "d['source']['name'] == 'Typed fork' and d['source']['keys'][0]['publicKey'] == '$fork_key'" 600
+  recovery_menu $'5\n' $'4\n' $'Pithyx\n' $'\n' $'4\n'
+  wait_updates "d['source']['official']" 600
+  upload_update "$vm/pithyx-$broken_version-amd64.pithyxupdate" || die "the project's file was refused after going back"
+  admin /system/updates/file -X DELETE -o /dev/null
+  echo "a typed source switched, and the box trusts the Pithyx project again"
 
   step "comparing both ESPs"
   power_off

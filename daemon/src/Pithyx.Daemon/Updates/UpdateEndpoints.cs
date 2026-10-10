@@ -76,6 +76,13 @@ public static class UpdateEndpoints
         updates.MapPost("/install", InstallAsync)
             .WithName("InstallSystemUpdate")
             .WithDescription("Administrators only. Installs the uploaded file or the channel's newest version as a job of the box: a snapshot of the system, the packages (optionally Debian's updates in the same snapshot), GRUB on every disk, then the restart and the health check, which rolls back to the snapshot by itself when the new version does not come up within five minutes.");
+        updates.MapPut("/source", async (UpdateService service, HttpContext context) =>
+                TypedResults.Ok(await service.SaveSourceCandidateAsync(context.User, context.Request.Body, context.RequestAborted)))
+            .WithName("SaveUpdateSourceCandidate")
+            .WithDescription("Administrators only. Checks a pithyx-source.json (another update source, for example a fork, D339) sent as the raw body and keeps it for the recovery menu. It changes nothing the box trusts: only the recovery menu at the console (GRUB entry \"Pithyx recovery\", \"Change the update source\") switches to it.");
+        updates.MapDelete("/source", async (UpdateService service, HttpContext context) => TypedResults.Ok(await service.DiscardSourceCandidateAsync(context.User, context.RequestAborted)))
+            .WithName("DiscardUpdateSourceCandidate")
+            .WithDescription("Administrators only. Forgets the source file saved for the recovery menu.");
         updates.MapPost("/rollback", RollbackAsync)
             .WithName("RollBackSystem")
             .WithDescription("Administrators only. Restores a snapshot (the version typed as the confirmation) and restarts into it. Settings changed since the snapshot are lost; pools and their files are not touched.");
