@@ -1,6 +1,6 @@
 ---
 title: 'Lizenz'
-description: 'AGPL-3.0 für das System, MIT für die npm-Pakete und die Hinweise zu Drittanbietern.'
+description: 'AGPL-3.0 für das System mit einer Urheberangabe für Forks, MIT für die npm-Pakete und die Hinweise zu Drittanbietern.'
 status: ready
 sidebar:
   order: 1
@@ -10,7 +10,19 @@ Das Pithyx-System (Daemon, Desktop, Installer, Image-Werkzeuge und diese Webseit
 
 ## Das System
 
-Die Datei `LICENSE` im Repository ist die GNU AGPL v3. Die Datei `NOTICE` ergänzt Bedingungen nach Abschnitt 7 dieser Lizenz: Die Benutzeroberfläche muss den Hinweistext in der About-App beibehalten („Based on Pithyx (https://github.com/pithyx/pithyx), created by the Pithyx contributors and licensed under the GNU AGPL-3.0.“), und geänderte Versionen müssen als geändert gekennzeichnet werden. Die Datei `NOTICE` wurde noch von keinem Anwalt geprüft.
+Die Datei `LICENSE` im Repository ist die GNU AGPL v3. Die Datei `NOTICE` ergänzt Bedingungen nach Abschnitt 7(b) dieser Lizenz, der erlaubt, die Erhaltung bestimmter angemessener rechtlicher Hinweise oder Urheberangaben zu verlangen („requiring preservation of specified reasonable legal notices or author attributions“). Die Datei `NOTICE` wurde noch von keinem Anwalt geprüft.
+
+## Urheberangabe in Forks und Weitergaben
+
+Pithyx wurde ursprünglich von [Schecher1](https://github.com/Schecher1) entwickelt. Jeder darf es unter der AGPL forken, ändern und weitergeben, aber ein Fork oder eine Weitergabe darf weder den Namen Pithyx noch die Herkunft von Schecher1 verbergen. Er behält diese Urheberangabe:
+
+> Based on Pithyx (https://github.com/pithyx/pithyx), originally created by Schecher1 (https://github.com/Schecher1), licensed under the GNU AGPL-3.0.
+
+- **Quellcode**: die Datei `NOTICE` mit der Urheberangabe und ihren Bedingungen sowie die README.
+- **Benutzeroberfläche**: die App **Über Pithyx** (oder eine gleichwertige, gut sichtbare Stelle); eine getreue Übersetzung ist erlaubt, so wie der Desktop sie auf Deutsch zeigt.
+- **Dokumentation**: überall, wo das abgeleitete Werk seine Lizenz, Herkunft oder Urheber beschreibt.
+
+Ein Fork darf einen eigenen Produktnamen, ein eigenes Logo und eigenes Branding verwenden, aber wo er sich an diesen Stellen nennt, sagt er, dass er auf Pithyx von Schecher1 basiert, und er kennzeichnet sich als geändert (Abschnitt 5(a) der AGPL). Diese Bedingungen gelten nur für das System, nicht für die npm-Pakete unter MIT.
 
 ## Die npm-Pakete
 

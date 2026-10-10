@@ -1,6 +1,6 @@
 ---
 title: 'License'
-description: 'AGPL-3.0 for the system, MIT for the npm packages, and the third-party notices.'
+description: 'AGPL-3.0 for the system with an attribution term for forks, MIT for the npm packages, and the third-party notices.'
 status: ready
 sidebar:
   order: 1
@@ -10,7 +10,19 @@ The Pithyx system (daemon, desktop, installer, image tooling and this website) i
 
 ## The system
 
-The `LICENSE` file in the repository is the GNU AGPL v3. The `NOTICE` file adds terms under section 7 of that license: the user interface must keep the attribution text in the About app ("Based on Pithyx (https://github.com/pithyx/pithyx), created by the Pithyx contributors and licensed under the GNU AGPL-3.0."), and modified versions must be marked as modified. The `NOTICE` file has not been reviewed by a lawyer yet.
+The `LICENSE` file in the repository is the GNU AGPL v3. The `NOTICE` file adds terms under section 7(b) of that license, which allows "requiring preservation of specified reasonable legal notices or author attributions". The `NOTICE` file has not been reviewed by a lawyer yet.
+
+## Attribution in forks and redistributions
+
+Pithyx was originally created by [Schecher1](https://github.com/Schecher1). Anyone may fork, change and redistribute it under the AGPL, but a fork or redistribution must not hide the name Pithyx or that it comes from Schecher1. It keeps this attribution:
+
+> Based on Pithyx (https://github.com/pithyx/pithyx), originally created by Schecher1 (https://github.com/Schecher1), licensed under the GNU AGPL-3.0.
+
+- **Source**: the `NOTICE` file with the attribution and its terms, and the README.
+- **User interface**: the **About Pithyx** app (or an equivalent, reasonably visible place); a faithful translation is allowed, as the desktop shows it in German.
+- **Docs**: wherever the derived work describes its license, origin or authors.
+
+A fork may use its own product name, logo and branding, but where it names itself in these places it states that it is based on Pithyx by Schecher1, and it marks itself as modified (section 5(a) of the AGPL). These terms apply to the system only, not to the MIT-licensed npm packages.
 
 ## The npm packages
 

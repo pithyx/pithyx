@@ -1,27 +1,47 @@
 Pithyx
-Copyright (C) 2026 Pithyx contributors
+Copyright (C) 2026 Schecher1 (https://github.com/Schecher1) and the Pithyx
+contributors
 https://github.com/pithyx/pithyx
 
 This program is free software: you can redistribute it and/or modify it under
 the terms of the GNU Affero General Public License version 3 as published by
-the Free Software Foundation, with the additional term below. See LICENSE.
+the Free Software Foundation, with the additional terms below. See LICENSE.
 
 The npm packages @pithyx/sdk (sdk/), @pithyx/ui (packages/ui/) and @pithyx/cli
-(packages/cli/) are licensed separately under the MIT License. See sdk/LICENSE,
-packages/ui/LICENSE and packages/cli/LICENSE.
+(packages/cli/) are licensed separately under the MIT License, without the
+additional terms below. See sdk/LICENSE, packages/ui/LICENSE and
+packages/cli/LICENSE.
 
-Additional term under section 7(b) of the GNU Affero General Public License:
+Additional terms under section 7(b) of the GNU Affero General Public License:
 
-Any interactive user interface of this program or of a modified version must
-preserve the following attribution in the "About" page (or an equivalent,
-reasonably visible location if no About page exists):
+1. Attribution. Pithyx was originally created by Schecher1. Copies of this
+   program and of modified versions ("derived works") must preserve the
+   following attribution:
 
-    Based on Pithyx (https://github.com/pithyx/pithyx), created by the Pithyx
-    contributors and licensed under the GNU AGPL-3.0.
+       Based on Pithyx (https://github.com/pithyx/pithyx), originally created
+       by Schecher1 (https://github.com/Schecher1), licensed under the
+       GNU AGPL-3.0.
 
-Modified versions must not remove this attribution, but may add their own
-notices next to it and must mark themselves as modified as required by
-section 5(a).
+   It must stay visible in each of these places:
+
+   a) the source code: this NOTICE file with its attribution and these
+      additional terms, and the README or the equivalent first document of
+      the source;
+   b) any interactive user interface: the "About" page, or an equivalent,
+      reasonably visible location if there is no About page; a faithful
+      translation into the language of the interface is allowed next to or
+      instead of the English text;
+   c) the documentation: wherever it describes the product's license, origin
+      or authors.
+
+2. Name of a derived work. A derived work may use its own product name, logo
+   and branding. It must not hide that it is based on Pithyx or that Pithyx
+   comes from Schecher1: wherever it names itself in the places of term 1, it
+   states that it is based on Pithyx by Schecher1. It must not remove, obscure
+   or reword the attribution so that the name Pithyx or the original author
+   is lost, and it must mark itself as modified as section 5(a) requires.
+
+Derived works may add their own notices and attributions next to these terms.
 
 REVIEW REQUIRED: this notice has not been checked by a lawyer yet. It must be
 reviewed before the first public release.
