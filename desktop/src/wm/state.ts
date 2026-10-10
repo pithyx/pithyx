@@ -23,7 +23,7 @@ export function topVisible(state: Pick<DesktopState, 'windows' | 'order'>): stri
 }
 
 /**
- * Where a free window is shown: its saved rect, kept reachable in the current workspace. The saved rect itself stays
+ * Where a free window is shown: its saved rect, kept fully inside the current workspace. The saved rect itself stays
  * untouched, so a window returns to its place when the screen grows again.
  */
 export function visibleRect(window: Pick<WindowState, 'rect' | 'minSize'>, workspace: Size): Rect {

@@ -217,6 +217,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- Windows always stay fully inside the browser window: after zooming in, resizing or restoring a layout from a larger screen they move in and shrink to fit instead of being cut off on the right or bottom; dragging also stops at the edge.
 - A backend endpoint name is at most 32 characters everywhere, as the manifest schema says: the SDK's `backend.ticket` and the daemon's `app.backend.endpoint_unknown` used 63. The text of `app.backend.unsupported`, which Pithyx 0.1 no longer returns, says so. The `@pithyx/cli` README lists `pithyx build` and `pithyx catalog`, and NOTICE names `@pithyx/ui` and `@pithyx/cli` as MIT next to `@pithyx/sdk`.
 - Store: a catalog that was just fetched no longer shows as fetched with no apps for a moment; the box keeps the verified copy in memory before it marks the catalog as fetched (found as a flaky `StoreApiTests` run on the runner).
 - The Store's settings name the project's catalogs (Pithyx, Community) before a box has fetched them, instead of showing their ids.

@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { MIN_VISIBLE_START } from './geometry';
 import { APP_DATA_LIMIT, LAYOUT_VERSION, fromLayout, toLayout } from './layout';
 import { initialState, reduce, visibleRect } from './state';
 import type { Action, DesktopState, WindowOptions } from './types';
@@ -50,12 +49,12 @@ describe('toLayout and fromLayout', () => {
     const wide = { ...initialState({ width: 3440, height: 1388 }) };
     const state = [
       { type: 'open', app: 'disks', options } as const,
-      { type: 'move', id: 'w1', rect: { x: 3000, y: 1300, width: 700, height: 500 } } as const,
+      { type: 'move', id: 'w1', rect: { x: 2700, y: 800, width: 700, height: 500 } } as const,
     ].reduce<DesktopState>(reduce, wide);
     const restored = fromLayout(toLayout(state), known, workspace);
     const window = restored.state.windows.w1;
-    expect(window?.rect.x).toBe(3000);
-    expect(window && visibleRect(window, workspace).x).toBe(workspace.width - MIN_VISIBLE_START);
+    expect(window?.rect.x).toBe(2700);
+    expect(window && visibleRect(window, workspace).x).toBe(workspace.width - 700);
     expect(restored.state.workspace).toEqual(workspace);
   });
 

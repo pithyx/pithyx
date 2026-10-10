@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import {
-  MIN_GRAB,
-  MIN_VISIBLE_END,
-  MIN_VISIBLE_START,
   SNAP_EDGE,
   clampRect,
   dragRect,
@@ -23,26 +20,33 @@ describe('clampRect', () => {
     expect(clampRect(rect, min, laptop)).toEqual(rect);
   });
 
-  it('keeps the buttons on the inner side and room to grab inside on every side', () => {
+  it('moves a window back inside from every edge', () => {
     expect(clampRect({ x: 1439, y: 900, width: 600, height: 400 }, min, laptop)).toEqual({
-      x: laptop.width - MIN_VISIBLE_START,
-      y: laptop.height - 40,
+      x: laptop.width - 600,
+      y: laptop.height - 400,
       width: 600,
       height: 400,
     });
     expect(clampRect({ x: -700, y: -20, width: 600, height: 400 }, min, laptop)).toMatchObject({
-      x: MIN_VISIBLE_END - 600,
+      x: 0,
       y: 0,
     });
-    // Past the left edge the three window buttons stay inside, plus 48 px of free title bar.
-    expect(MIN_VISIBLE_END).toBeGreaterThanOrEqual(3 * 44 + MIN_GRAB);
   });
 
-  it('keeps a narrow window fully reachable', () => {
+  it('fits a window from a wider browser window, as after zooming in', () => {
+    // Saved at 90 % zoom on 1536 px (1707 CSS px), shown at 100 %.
+    const shown = clampRect({ x: 700, y: 80, width: 1000, height: 700 }, min, {
+      width: 1536,
+      height: 812,
+    });
+    expect(shown).toEqual({ x: 536, y: 80, width: 1000, height: 700 });
     expect(
-      clampRect({ x: -300, y: 0, width: 150, height: 200 }, { width: 100, height: 100 }, laptop),
-    ).toMatchObject({
+      clampRect({ x: 700, y: 80, width: 1600, height: 900 }, min, { width: 1366, height: 716 }),
+    ).toEqual({
       x: 0,
+      y: 0,
+      width: 1366,
+      height: 716,
     });
   });
 
