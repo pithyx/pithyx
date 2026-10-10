@@ -749,6 +749,10 @@
       },
       "expected": "Enter at most 4 name servers."
     },
+    "network.firewall.failed": {
+      "params": {},
+      "expected": "The firewall rules could not be applied. The setting is saved; the Log Center has the details."
+    },
     "network.gateway.invalid": {
       "params": {
         "name": "enp1s0",
