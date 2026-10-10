@@ -5,7 +5,6 @@ namespace Pithyx.Daemon.Commands;
 
 public sealed partial class ProcessCommandRunner(ILogger<ProcessCommandRunner> logger) : ICommandRunner
 {
-    private const int MaxLoggedOutputLength = 4096;
     /// <summary>The timeout of a <see cref="CommandRequest"/> that sets none.</summary>
     public static readonly TimeSpan DefaultTimeout = TimeSpan.FromMinutes(1);
 
@@ -45,12 +44,7 @@ public sealed partial class ProcessCommandRunner(ILogger<ProcessCommandRunner> l
         }
 
         var result = new CommandResult(process.ExitCode, await standardOutput, await standardError, stopwatch.Elapsed);
-        if (logger.IsEnabled(LogLevel.Information))
-        {
-            var loggedOutput = Truncate(result.StandardOutput);
-            var loggedError = Truncate(result.StandardError);
-            LogCommandFinished(request.FileName, request.LoggableArguments, result.ExitCode, result.Duration.TotalMilliseconds, loggedOutput, loggedError);
-        }
+        CommandLog.Finished(logger, request, result);
         return result;
     }
 
@@ -78,7 +72,7 @@ public sealed partial class ProcessCommandRunner(ILogger<ProcessCommandRunner> l
                 process.Kill(entireProcessTree: true);
             }
             await process.WaitForExitAsync(CancellationToken.None);
-            var error = Truncate(await standardError);
+            var error = request.LoggableOutput(await standardError);
             LogStreamEnded(request.FileName, request.LoggableArguments, process.ExitCode, stopwatch.Elapsed.TotalMilliseconds, error);
         }
     }
@@ -115,20 +109,6 @@ public sealed partial class ProcessCommandRunner(ILogger<ProcessCommandRunner> l
         }
         return startInfo;
     }
-
-    private static string Truncate(string output) =>
-        output.Length <= MaxLoggedOutputLength ? output : output[..MaxLoggedOutputLength] + "...";
-
-    [LoggerMessage(
-        Level = LogLevel.Information,
-        Message = "Command {Command} {Arguments} exited with {ExitCode} after {DurationMs} ms. stdout: {StandardOutput} stderr: {StandardError}")]
-    private partial void LogCommandFinished(
-        string command,
-        IReadOnlyList<string> arguments,
-        int exitCode,
-        double durationMs,
-        string standardOutput,
-        string standardError);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Streaming command {Command} {Arguments} started")]
     private partial void LogStreamStarted(string command, IReadOnlyList<string> arguments);
