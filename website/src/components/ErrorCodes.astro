@@ -1,0 +1,34 @@
+---
+import { localeOf } from '../lib/docs.ts';
+import { errorAreas } from '../lib/errorCodes.ts';
+import { t } from '../lib/i18n.ts';
+
+// The error code reference, generated from i18n/<locale>/errors.json at build time.
+const locale = localeOf(Astro.locals.starlightRoute.entry.id);
+---
+
+{
+  errorAreas(locale).map(([area, codes]) => (
+    <>
+      <h2 id={area}>{area}</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>{t(locale, 'errors.code')}</th>
+            <th>{t(locale, 'errors.message')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {codes.map((error) => (
+            <tr id={error.code}>
+              <td>
+                <code>{error.code}</code>
+              </td>
+              <td>{error.message}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </>
+  ))
+}

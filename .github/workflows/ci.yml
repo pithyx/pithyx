@@ -38,6 +38,7 @@ jobs:
       code: ${{ steps.areas.outputs.code }}
       daemon: ${{ steps.areas.outputs.daemon }}
       frontend: ${{ steps.areas.outputs.frontend }}
+      website: ${{ steps.areas.outputs.website }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -94,6 +95,23 @@ jobs:
       - run: pnpm test
       - run: pnpm build
       - run: pnpm check:bundle
+
+  # The website (Astro + Starlight): type check, build, and the check that every docs page has its Markdown twin and the
+  # llms files exist. Deploying is .github/workflows/pages.yml.
+  website:
+    needs: changes
+    if: needs.changes.outputs.website == 'true'
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @pithyx/website check
+      - run: pnpm --filter @pithyx/website build:site
 
   repo:
     needs: changes

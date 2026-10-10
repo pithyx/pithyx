@@ -1,0 +1,6 @@
+# Everything here may be crawled and used to answer questions about Pithyx.
+# Docs for language models: https://pithyx.org/llms.txt (index), https://pithyx.org/llms-full.txt (everything).
+User-agent: *
+Allow: /
+
+Sitemap: https://pithyx.org/sitemap-index.xml

@@ -8,7 +8,7 @@ Pandora never opened a box. She opened a pithos (πίθος), a great storage ja
 
 The stem is pithos; the ending -yx is a stylization after Greek models such as onyx and Styx.
 
-Pithyx is a free, self-hosted NAS and server operating system with a web desktop. It runs on Debian 13, manages storage with ZFS, shares files over SMB, NFS, SFTP and WebDAV, and runs apps as containers, all from a desktop in the browser that works the same on a phone and on an ultrawide monitor. Everything stays on your box: no telemetry, no cloud accounts, no services the system depends on.
+Pithyx is a free, self-hosted NAS and server operating system with a web desktop. It runs on Debian 13, manages storage with ZFS, shares files over SMB, SFTP, WebDAV and FTP, and runs apps as containers, all from a desktop in the browser that works the same on a phone and on an ultrawide monitor. Everything stays on your box: no telemetry, no cloud accounts, no services the system depends on.
 
 ## Status
 

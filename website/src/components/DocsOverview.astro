@@ -1,0 +1,22 @@
+---
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+import { docsInOrder, localeOf, localePrefix, sectionLabel, sectionSummary } from '../lib/docs.ts';
+import { sections } from '../lib/sections.ts';
+
+// One card per docs area, linking to its first page; the list comes from src/lib/sections.ts.
+const locale = localeOf(Astro.locals.starlightRoute.entry.id);
+const cards = await Promise.all(
+  sections.flatMap((section) => section.children ?? [section]).map(async (section) => {
+    const first = (await docsInOrder(locale, section))[0];
+    return {
+      title: sectionLabel(locale, section),
+      description: sectionSummary(locale, section),
+      href: first ? `/${first.id}/` : `${localePrefix(locale)}/docs/`,
+    };
+  }),
+);
+---
+
+<CardGrid>
+  {cards.map((card) => <LinkCard title={card.title} description={card.description} href={card.href} />)}
+</CardGrid>

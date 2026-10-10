@@ -1,0 +1,48 @@
+---
+import Default from '@astrojs/starlight/components/PageTitle.astro';
+import { isDocsPage, localeOf, markdownUrl } from '../../lib/docs.ts';
+import { t } from '../../lib/i18n.ts';
+
+const { entry } = Astro.locals.starlightRoute;
+const locale = localeOf(entry.id);
+const twin = isDocsPage(entry.id) ? markdownUrl(entry.id) : undefined;
+---
+
+<Default />
+{
+  twin && (
+    <div class="px-page-actions" data-pagefind-ignore>
+      <a href={twin} type="text/markdown">
+        {t(locale, 'markdown.view')}
+      </a>
+      <button
+        type="button"
+        data-px-copy-markdown={twin}
+        data-copied={t(locale, 'markdown.copied')}
+        hidden
+      >
+        {t(locale, 'markdown.copy')}
+      </button>
+    </div>
+  )
+}
+
+<script>
+  // The copy button needs the Clipboard API, which only exists in a secure context; without it only the link shows.
+  for (const button of document.querySelectorAll<HTMLButtonElement>('[data-px-copy-markdown]')) {
+    if (!('clipboard' in navigator)) {
+      continue;
+    }
+    button.hidden = false;
+    const label = button.textContent;
+    button.addEventListener('click', () => {
+      void fetch(button.dataset.pxCopyMarkdown!)
+        .then((response) => response.text())
+        .then((text) => navigator.clipboard.writeText(text))
+        .then(() => {
+          button.textContent = button.dataset.copied ?? label;
+          setTimeout(() => (button.textContent = label), 2000);
+        });
+    });
+  }
+</script>

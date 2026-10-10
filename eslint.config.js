@@ -44,6 +44,8 @@ export default defineConfig(
     // Fixture data of the shared corpus, not code.
     'sdk/schema/fixtures/',
     '.worktrees/',
+    // Types Astro generates for the website's content collections.
+    '**/.astro/',
   ]),
   js.configs.recommended,
   ...typescriptConfigs,
@@ -54,6 +56,8 @@ export default defineConfig(
       'desktop/scripts/**/*.ts',
       'sdk/scripts/**/*.ts',
       'packages/cli/src/**/*.ts',
+      'website/scripts/**/*.ts',
+      'website/astro.config.ts',
       '**/vite.config.ts',
       '**/vite.*.config.ts',
     ],
@@ -66,6 +70,12 @@ export default defineConfig(
   },
   {
     files: ['desktop/src/**/*.{ts,tsx}', 'packages/ui/src/**/*.{ts,tsx}'],
+    extends: [reactHooks.configs.flat['recommended-latest']],
+    languageOptions: { globals: globals.browser },
+  },
+  {
+    // The website's texts come from its content files, so the literal-string rule of the product does not apply.
+    files: ['website/src/**/*.{ts,tsx}'],
     extends: [reactHooks.configs.flat['recommended-latest']],
     languageOptions: { globals: globals.browser },
   },
