@@ -11,7 +11,7 @@
       "start_failed": "Das Backend der App ist nicht gestartet. Das Protokoll der App zeigt, was ihre Container geschrieben haben.",
       "storage_unavailable": "Das Backend der App braucht den Ordner für {storage}, der nicht bereit ist ({reason, select, unmapped {kein Ordner zugeordnet} other {sein Pool fehlt oder ist gesperrt}}).",
       "unavailable": "Das Backend der App läuft nicht oder antwortet nicht. Versuch es gleich noch einmal.",
-      "unsupported": "Die App hat ein Backend mit Containern. Diese Version von Pithyx installiert nur Apps ohne Backend."
+      "unsupported": "Dieser Fehler stammt aus Versionen von Pithyx vor 0.1, die nur Apps ohne Backend installiert haben. Diese Version führt App-Backends aus; aktualisiere die Box, falls du ihn noch siehst."
     },
     "compose": {
       "key_unsupported": "Die Compose-Datei der App nutzt {key} unter {path}, was Pithyx nicht erlaubt.",
