@@ -139,7 +139,7 @@ website/  landing page and docs at pithyx.org (Astro + Starlight, GitHub Pages, 
 - Permissions to groups and users; effective = union; admins have everything. Share access: none, read, read-write. Protocol access per user (SMB, SFTP, WebDAV, FTP; NFS is planned, not built yet). App access per app. Special rights: admin, desktop login, SSH login, reboot/shutdown.
 - TOTP 2FA per user. Login forms have correct `autocomplete` attributes.
 - No password reset without proof: only the recovery key from setup, otherwise reinstall.
-- No Secure Boot (installer detects it and asks to disable). SSH off by default; its MOTD with the ASCII logo and a warning is planned, not built yet. The ASCII logo also appears on the console after boot and in the installer's console (D294); it is the only allowed ASCII art.
+- No Secure Boot (installer detects it and asks to disable). SSH off by default; its MOTD with the ASCII logo and a warning is planned, not built yet. The ASCII logo (`image/rootfs/usr/lib/pithyx/logo.txt`: the isometric box with the lid shut and the word mark PITHYX, at most 72 columns) also appears on the console after boot and in the installer's console (D294); the MOTD uses the same file; it is the only allowed ASCII art.
 - Pool encryption: ZFS native. Unlock manually, from a key vault on the system disk (UI explains it only protects against stolen disks) or a USB key.
 
 ## Apps
