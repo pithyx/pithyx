@@ -1,6 +1,6 @@
 {
   "name": "@pithyx/cli",
-  "version": "1.0.0-rc.5",
+  "version": "1.0.0-rc.6",
   "description": "The pithyx command for Pithyx apps: validate, pack, a mock desktop for development, and a Vite plugin",
   "keywords": [
     "pithyx",
