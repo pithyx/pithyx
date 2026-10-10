@@ -13,6 +13,10 @@ In den folgenden Schritten ist `<box-address>` der Name oder die IP-Adresse, mit
 
 ## Welches Protokoll du nutzen solltest
 
+![Einstellungen, Dateidienste, mit SFTP aus, WebDAV an, FTP aus und den Adressen zum Verbinden, etwa sftp://pithyx und http://pithyx:7484/webdav/](../../../../../assets/screenshots/file-services.de.webp)
+
+_Ein Administrator schaltet die Dateidienste unter Einstellungen > Dateidienste ein; jede Karte zeigt die Adresse dafür._
+
 | Protokoll  | Wofür                                                                                            | Hinweise                                                                                                       |
 | ---------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
 | **SMB**    | Ein Netzlaufwerk unter Windows, macOS und Linux für die tägliche Arbeit                          | Braucht SMB 3. Ältere Systeme können sich nicht verbinden. Frühere Versionen und der Papierkorb funktionieren. |

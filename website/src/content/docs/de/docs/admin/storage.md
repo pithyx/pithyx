@@ -11,6 +11,10 @@ Die App Speicher (nur für Administratoren) legt die ZFS-Pools an, die alle Date
 
 ## Bewertung der Platten
 
+![Speicher, Platten, mit der Spalte Für einen neuen Pool: zwei Systemplatten Nicht verfügbar, vier leere Platten Verfügbar und eine Platte mit Partitionen Bestätigung nötig](../../../../../assets/screenshots/storage-disks.de.webp)
+
+_Der Reiter Platten sagt für jede Platte, ob ein neuer Pool sie verwenden darf._
+
 Die Spalte **Für einen neuen Pool** zeigt pro Platte eine von drei Bewertungen: **Verfügbar**, **Bestätigung nötig** oder **Nicht verfügbar**. Pithyx prüft die Bewertung direkt vor jedem Befehl eines Plans erneut, sodass eine Platte, die sich nach deinem Blick geändert hat, erkannt wird.
 
 Eine Platte ist **Nicht verfügbar**, wenn:
@@ -30,6 +34,10 @@ Die Bestätigung mit der Seriennummer löscht die Platte: Pithyx führt bei Pool
 Wenn sich eine Platte geändert hat, nachdem der Plan angezeigt wurde, wird nichts geändert, und du bekommst [`storage.plan.stale`](/de/docs/reference/errors/#storage.plan.stale). Ein Plan läuft nach 10 Minuten ab ([`storage.plan.expired`](/de/docs/reference/errors/#storage.plan.expired)); zeige ihn dann erneut an.
 
 ## Einen Pool anlegen
+
+![Der Assistent Pool anlegen bei Schritt 2, Aufbau, für vier Platten mit empfohlenem RAID-Z1 und den Karten Spiegel, Spiegelpaare, RAID-Z1, RAID-Z2 und Stripe](../../../../../assets/screenshots/storage-layout.de.webp)
+
+_Schritt 2 des Assistenten vergleicht die Aufbauten für die gewählten Platten und markiert den empfohlenen._
 
 Öffne Speicher und wähle **Pool anlegen…**. Der Assistent hat vier Schritte: **Platten**, **Aufbau**, **Verschlüsselung** und **Name und Prüfung**. Platten werden über ihre Namen unter `/dev/disk/by-id` angesprochen, sodass ein Pool einen geänderten Anschluss oder ein anderes Kabel übersteht.
 

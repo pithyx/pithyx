@@ -11,6 +11,10 @@ Two administrator apps show what the box is doing: the Log Center (messages from
 
 ## The Log Center
 
+![The Log Center in the dark theme with the search network, the levels Info, Warning and Error, the time range Last 24 hours and the details pane of a warning](../../../../assets/screenshots/logs-center.webp)
+
+_The Log Center with a search, level and time filters and the details of the selected entry._
+
 The Log Center lets you search messages or a request id and filter by **Levels** (Debug, Info, Warning, Error), by time range (last hour, 24 hours, 7 days, 30 days, all time) and by source: "Pithyx daemon", "System · {name}" for journal units (kernel, Samba, SSH, ZFS, systemd-networkd, timesyncd, Docker, smartmontools and others) and "App · {name}". The details show time, level, source, user, request id and whether the entry is in the archive. Pages hold 200 entries by default, at most 1000. **Export as text** (`.log`) and **Export as JSON lines** (`.jsonl`) write up to 1 000 000 entries.
 
 Logs are stored in a database on the system disk under `/var/log/pithyx/`, so they work without a pool. Retention is set with **Retention**: keep 30 days by default (1 to 365) and at most 4 GB (64 MB to 4 GB); the oldest entries go first. The optional archive on a pool is off by default. When on, entries are copied to the pool once a day and before the current logs drop any, which wakes the pool's disks about once a day. Archive days: 1 to 3650 (default 365); size 0.25 to 1024 GB (default 10 GB). If the pool is unavailable, entries wait on the system disk.
@@ -20,6 +24,10 @@ The daemon also writes JSON files `/var/log/pithyx/daemon.json*`, rolling at 20 
 App messages arrive through the SDK: `info`, `warn` and `error` always, `debug` only while an administrator turned it on in the app's detail. A message is at most 4000 characters, with at most 20 data fields; an app may log 20 messages per second (burst 200). Backend container output lands in the source `app/<id>`.
 
 ## The Resource Monitor
+
+![The Resource Monitor, Performance, with CPU, memory with the ZFS cache, network and disks, one disk busy with a scrub](../../../../assets/screenshots/monitor-performance.webp)
+
+_The Performance view of the last minute, here during a scrub._
 
 The Resource Monitor has the views **Performance** and **Processes**, with time ranges of a minute, 10 minutes and an hour. It samples every second, and only while someone watches it; the history is kept in memory for one hour. So the history covers only the time the monitor was open somewhere: nothing is measured while nobody watches.
 

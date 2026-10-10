@@ -33,6 +33,10 @@ If you lose the key and the password, the system has to be reinstalled. See [Rec
 
 ## The first pool
 
+![The Create a pool wizard at step 3, Encryption, with No encryption chosen and Encrypt with a key not available yet](../../../../assets/screenshots/first-setup-encryption.webp)
+
+_Step 3 of the pool wizard: encryption can only be chosen when the pool is created._
+
 All of your data lives on ZFS pools, and the box starts without one. Create the first pool in the Storage app, which only administrators can open:
 
 1. Open the Pithyx menu and start **Storage**.

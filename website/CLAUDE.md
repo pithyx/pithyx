@@ -16,7 +16,7 @@ The landing page and the docs at https://pithyx.org (D339): Astro with Starlight
 - FAQ: one file per question in `src/content/faq/<locale>/<slug>.md`, the same slug in both languages. Frontmatter: `question`, `category` (one of `src/lib/faqCategories.ts`), `tags` (search words), `order` (within the category), `status`. The body is the answer, short, plain Markdown.
 - Landing page: every text, link and picture in `src/content/landing/en.yaml` and `de.yaml` (same keys, schema in `src/content.config.ts`, a missing field fails the build). Feature icons are the names in `src/lib/landingIcons.ts`.
 - Site strings (buttons, banners, FAQ labels, the llms texts): `src/content/i18n/en.json` and `de.json`. German must have every English key (the type check fails otherwise).
-- Pictures: `src/assets/screenshots/`. The SVGs there are placeholders; replace them with real screenshots (PNG or WebP, 16:10, at least 1600 px wide) from `pnpm design:shots` or the dev box, and keep the file names or update the YAML.
+- Pictures: `src/assets/screenshots/`, real screenshots only: WebP, 1920 x 1200 (taken at 1440 x 900 with device scale factor 2), `<name>.webp` for English and `<name>.de.webp` for German. Docs pages use plain Markdown (`![alt](relative path)` with an italic caption line below). Take them from a throwaway VM (`image/test-install.sh`, `image/test-boot.sh`) or the dev box, with invented sample data and nothing of the owner, the dev box or the home network in view.
 - Generated pages: `reference/errors` comes from `i18n/<locale>/errors.json`, the docs overview from `sections.ts`, the FAQ page from the FAQ files (frontmatter `generated`). Do not write their lists by hand.
 
 ## Research notes

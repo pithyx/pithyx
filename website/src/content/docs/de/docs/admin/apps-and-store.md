@@ -29,6 +29,10 @@ Jede App bekommt ein Dataset `<pool>/pithyx/apps/<id>`, eingehängt unter `/<poo
 
 ## Updates und Rollback
 
+![Die Store-Einstellungen mit der Update-Regel Administratoren benachrichtigen, der täglichen Prüfzeit 03:00, dem Kanal Stabil und der Liste der Kataloge](../../../../../assets/screenshots/store-update-settings.de.webp)
+
+_Die Store-Einstellungen: was mit neuen Versionen passiert, wann die Box prüft und welchem Kanal sie folgt._
+
 Öffne das Zahnrad, dann **Updates**. Die Regel „Wenn ein Katalog eine neuere Version hat“ ist **Installieren**, **Administratoren benachrichtigen** (Standard) oder **Nichts tun** (das Update wird nur im Tab **Updates** aufgeführt). Ein Update, das neue Berechtigungen oder besondere Rechte verlangt, installiert sich nie von selbst. Die Zeit der täglichen Prüfung ist standardmäßig 03:00 (Zeitzone der Box) plus eine feste zufällige Verzögerung von 0 bis 3600 Sekunden pro Box; **Jetzt prüfen** führt sie sofort aus. Eine App kann in ihren Details einer eigenen Regel folgen. Administratoren bekommen die Benachrichtigungen „App-Updates“ und „Katalog nicht abgerufen“.
 
 Vor einem Update legt Pithyx einen Snapshot des Datasets der App an. Startet die neue Version nicht, kommt die alte zurück. **Zurück zu** und die Versionsnummer (zum Beispiel **Zurück zu 1.2.0**) kehrt zur vorigen Version zurück, mit den Daten der App, wie sie vor dem Update waren; seitdem gemachte Änderungen und Snapshots gehen verloren. Es wird nur die eine vorige Version aufbewahrt.

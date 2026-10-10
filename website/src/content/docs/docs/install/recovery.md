@@ -11,6 +11,10 @@ Pithyx has no password reset by email. A user who forgot a password asks an admi
 
 ## Forgotten password
 
+![The sign-in page with the form Reset your password: user name, recovery key and new password for administrators](../../../../assets/screenshots/recovery-reset-password.webp)
+
+_Forgot password? opens this form. Only administrators can reset their password here, with the recovery key._
+
 **A normal user** asks an administrator. The administrator opens Settings > **Users** and uses **New password** for that user. The user is signed out everywhere and signs in with the new password. File services (SMB and SFTP) get the new password too.
 
 **An administrator** uses the recovery key:

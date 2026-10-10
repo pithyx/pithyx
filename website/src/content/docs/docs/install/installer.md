@@ -20,6 +20,10 @@ The first browser that opens the page owns the installation. Another browser see
 
 ## What the checks mean
 
+![The start page of the installer, Welcome to Pithyx, with the five requirements checked and the button Begin](../../../../assets/screenshots/install-requirements.webp)
+
+_The installer lists its five checks before the first step._
+
 The first page, **Requirements**, shows five checks. **Begin** stays disabled until all pass.
 
 | Check                              | What it needs                                 |
@@ -49,6 +53,10 @@ Bonds, VLANs and further options come after the installation, in Settings under 
 
 ## System disk and mirror (step 3)
 
+![Step 3 of the installer with Mirror on two disks switched on and the second disk chosen; a disk with old data carries the warning that it will be erased](../../../../assets/screenshots/install-system-disk-mirror.webp)
+
+_Step 3 with the mirror switched on: the second disk is chosen from the same list._
+
 Pick the disk for the system. Each disk is listed with its model, size and serial number. Disks that cannot be used are greyed out with the reason (USB disk, removable medium, the stick of this installer, read only, in use, too small). A disk that holds data shows "This disk holds data that will be erased."
 
 - To install on two disks as a mirror, switch on **Mirror on two disks** and choose a **Second disk**. The system is written to both disks and the box keeps running when one fails. The option only appears when two usable disks exist.
@@ -75,6 +83,10 @@ The page then shows **Installing Pithyx** with these steps: **Partitioning the d
 If a step fails, the page shows **The installation failed**, which step failed and the command with its exit code. Click **Change the settings** to go back. Nothing is installed completely after a failure, and you can try again.
 
 ## After the restart
+
+![The page Pithyx is installed with the recovery key of a test installation, the buttons Copy key and Print and the box I have stored the recovery key](../../../../assets/screenshots/install-recovery-key.webp)
+
+_The recovery key appears once, when the installation ends. This one belongs to a deleted test machine._
 
 When the installation ends, the page shows **Pithyx is installed** and your recovery key. Copy or print it, tick **I have stored the recovery key** and click **Continue**. Then the page says **Remove the USB stick**. Remove the stick and click **Restart now**.
 

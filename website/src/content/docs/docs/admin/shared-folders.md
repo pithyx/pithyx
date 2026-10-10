@@ -27,6 +27,10 @@ Registering an existing folder as a shared folder works only on development mach
 
 ## Rules for folders
 
+![The dialog Edit Photos with the network access switches and the rights: the group family with Read and write, the users with the access they end up with](../../../../assets/screenshots/shared-folders-edit.webp)
+
+_The edit dialog of a shared folder: network access per protocol and rights per group and user._
+
 The edit dialog has three parts.
 
 - **Name and description.** Renaming changes only the name users see; the dataset keeps its name.

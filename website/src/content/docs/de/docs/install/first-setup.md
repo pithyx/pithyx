@@ -33,6 +33,10 @@ Wenn du den Schlüssel und das Passwort verlierst, muss das System neu installie
 
 ## Der erste Pool
 
+![Der Assistent Pool anlegen bei Schritt 3, Verschlüsselung, mit gewählter Option Keine Verschlüsselung; Mit einem Schlüssel verschlüsseln ist noch nicht verfügbar](../../../../../assets/screenshots/first-setup-encryption.de.webp)
+
+_Schritt 3 des Pool-Assistenten: Verschlüsselung lässt sich nur beim Anlegen des Pools wählen._
+
 Alle deine Daten liegen auf ZFS-Pools, und die Box startet ohne einen. Lege den ersten Pool in der Speicher-App an, die nur Administratoren öffnen können:
 
 1. Öffne das Pithyx-Menü und starte **Speicher**.

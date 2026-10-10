@@ -11,6 +11,10 @@ Pithyx hat kein Zurücksetzen des Passworts per E-Mail. Ein Benutzer, der sein P
 
 ## Passwort vergessen
 
+![Die Anmeldeseite mit dem Formular Passwort zurücksetzen: Benutzername, Wiederherstellungsschlüssel und neues Passwort für Administratoren](../../../../../assets/screenshots/recovery-reset-password.de.webp)
+
+_Passwort vergessen? öffnet dieses Formular. Nur Administratoren setzen hier ihr Passwort zurück, mit dem Wiederherstellungsschlüssel._
+
 **Ein normaler Benutzer** fragt einen Administrator. Der Administrator öffnet Einstellungen > **Benutzer** und nutzt für diesen Benutzer **Neues Passwort**. Der Benutzer wird überall abgemeldet und meldet sich mit dem neuen Passwort an. Auch die Dateidienste (SMB und SFTP) bekommen das neue Passwort.
 
 **Ein Administrator** nutzt den Wiederherstellungsschlüssel:

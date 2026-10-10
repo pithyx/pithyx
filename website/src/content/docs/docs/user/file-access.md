@@ -13,6 +13,10 @@ In the steps below, `<box-address>` is the name or IP address you use to open th
 
 ## Which protocol to use
 
+![Settings, File services, with SFTP off, WebDAV on, FTP off and the addresses to connect to, such as sftp://pithyx and http://pithyx:7484/webdav/](../../../../assets/screenshots/file-services.webp)
+
+_An administrator switches the file services on in Settings > File services; each card shows the address to use._
+
 | Protocol   | Use it for                                                                            | Notes                                                                                  |
 | ---------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | **SMB**    | A network drive on Windows, macOS and Linux for everyday work                         | Needs SMB 3. Older systems cannot connect. Previous versions and the recycle bin work. |

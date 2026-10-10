@@ -34,6 +34,10 @@ Ein Test (`packages/ui/src/contrast.test.ts`) parst `tokens.css`, löst jedes Th
 
 ## Hell und dunkel
 
+![Das Kontomenü im dunklen Design mit geöffnetem Untermenü Darstellung: Wie das System, Hell und Dunkel](../../../../../../assets/screenshots/theming-appearance.de.webp)
+
+_Darstellung im Kontomenü; Akzentfarbe und Hintergrundbild sind die Einträge darunter._
+
 Das Wurzelelement hat `color-scheme: light dark`, und jede semantische Farbe ist ein Paar `light-dark(a, b)`. Setzt du `data-theme="light"` oder `data-theme="dark"` auf `<html>`, erzwingt das ein Schema.
 
 Das Konto-Menü hat **Darstellung** mit **Wie das System**, **Hell** und **Dunkel**. Die Wahl wird pro Browser in `localStorage` gespeichert (`pithyx.theme`); "Wie das System" entfernt den Schlüssel. Die gespeicherte Wahl wird vor dem ersten Rendern angewendet, damit die Seite nicht aufblitzt.

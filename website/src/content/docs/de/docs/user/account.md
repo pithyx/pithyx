@@ -24,6 +24,14 @@ Wenn du Administrator bist und dein Passwort vergessen hast, nutze den Wiederher
 
 ## Zwei-Faktor-Anmeldung
 
+![Der Dialog Zwei-Faktor-Authentifizierung mit einem QR-Code, dem Schlüssel zur Eingabe von Hand, dem Feld Code und dem Knopf Einschalten](../../../../../assets/screenshots/account-two-factor-qr.de.webp)
+
+_Scanne den QR-Code mit einer Authenticator-App und gib dann den Code ein, den sie zeigt._
+
+![Der Dialog Deine Wiederherstellungscodes mit zehn Einmalcodes und dem Knopf Codes kopieren](../../../../../assets/screenshots/account-recovery-codes.de.webp)
+
+_Nach dem ersten Code zeigt der Dialog einmalig zehn Wiederherstellungscodes. Diese gehören zu einer gelöschten Testmaschine._
+
 Die Zwei-Faktor-Anmeldung verlangt zusätzlich zu deinem Passwort einen Code aus einer Authenticator-App auf deinem Handy. Sie ist optional und gilt pro Benutzer. Jede App für zeitbasierte Codes funktioniert (6 Ziffern, 30 Sekunden).
 
 So schaltest du sie ein:

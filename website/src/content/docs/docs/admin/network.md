@@ -42,6 +42,10 @@ The card "Host name and name servers" holds:
 
 ## The confirmation timer
 
+![Settings, Network, with the banner 55 seconds left to keep the new network settings and the buttons Keep and Undo now](../../../../assets/screenshots/network-confirm.webp)
+
+_After Apply the page counts down. Without Keep the box goes back to the previous settings._
+
 After **Apply…** a banner shows "{seconds} left to keep the new network settings" with **Keep** and **Undo now**. Without confirmation within 60 seconds, after **Undo now**, after a failed apply ([`network.apply.failed`](/docs/reference/errors/#network.apply.failed)) or after a daemon restart, the previous settings come back. Only one change can wait at a time. If the page stops answering because the address changed, open the box at its new address and keep the change there; the dialog lists the addresses.
 
 :::note

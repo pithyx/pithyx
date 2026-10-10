@@ -31,6 +31,10 @@ The sign-in page has its own language selector in the footer. The first time the
 
 ## Windows and snapping
 
+![The window menu of Files, opened from the app icon in the title bar, with Move, Size, Minimize, Maximize, Snap left, Snap right and Close](../../../../assets/screenshots/desktop-window-menu.webp)
+
+_The app icon in the title bar opens the window menu with the keyboard shortcuts for snapping._
+
 Every app opens in a window. What you can do with a window depends on the width of your browser:
 
 - **1024 pixels or wider:** free windows. You can move and resize them and snap them to the screen edges.
@@ -51,6 +55,10 @@ New windows open slightly offset from each other. You can have at most 50 window
 If an app does not answer for five seconds, a dialog says that the app is not responding. Click **Wait** or **Close anyway**; closing anyway loses changes the app has not saved.
 
 ## The taskbar
+
+![The Pithyx menu in the dark theme with the account menu of Anna Weber open: Two-factor authentication, Language, Appearance, Accent color, Wallpaper, Get desktop from and Taskbar position](../../../../assets/screenshots/desktop-account-menu.webp)
+
+_The account menu opens when you click your name at the bottom of the Pithyx menu._
 
 By default the taskbar is at the bottom of the screen. From the left it has:
 
@@ -80,6 +88,10 @@ Administrators, and users with the right **Restart and shut down**, also get **R
 **Notifications.** The bell opens a panel with **Running tasks** and **Recent** notifications. Use **Dismiss**, **Mute** or **Clear all**. Press **Escape** to close the panel.
 
 ## Desktop items and notes
+
+![The desktop with the Files and Storage windows side by side, the shortcuts Files and Settings and a sticky note at the left and the taskbar at the bottom](../../../../assets/screenshots/desktop.webp)
+
+_Two shortcuts and a sticky note next to two open windows._
 
 The desktop holds shortcuts to apps and sticky notes. They belong to your account and appear on every device.
 

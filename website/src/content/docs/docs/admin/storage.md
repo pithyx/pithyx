@@ -11,6 +11,10 @@ The Storage app (administrators only) creates and manages the ZFS pools that hol
 
 ## Disk verdicts
 
+![Storage, Disks, with the column For a new pool: two system disks Not available, four empty disks Available and one disk with partitions Needs confirmation](../../../../assets/screenshots/storage-disks.webp)
+
+_The Disks tab says for every disk whether a new pool may use it._
+
 The column **For a new pool** shows one of three verdicts per disk: **Available**, **Needs confirmation** or **Not available**. Pithyx re-checks the verdict right before each command of a plan, so a disk that changed after you looked is caught.
 
 A disk is **Not available** when:
@@ -30,6 +34,10 @@ Confirming with the serial number clears the disk: Pithyx runs `zpool labelclear
 If a disk changed after the plan was shown, nothing is changed and you get [`storage.plan.stale`](/docs/reference/errors/#storage.plan.stale). A plan expires after 10 minutes ([`storage.plan.expired`](/docs/reference/errors/#storage.plan.expired)); show it again.
 
 ## Creating a pool
+
+![The Create a pool wizard at step 2, Layout, for four disks with RAID-Z1 recommended and the cards Mirror, Mirror pairs, RAID-Z1, RAID-Z2 and Stripe](../../../../assets/screenshots/storage-layout.webp)
+
+_Step 2 of the wizard compares the layouts for the chosen disks and marks the recommended one._
 
 Open Storage and choose **Create pool…**. The wizard has four steps: **Disks**, **Layout**, **Encryption** and **Name and check**. Disks are addressed by their `/dev/disk/by-id` names, so a pool survives a changed port or cable.
 

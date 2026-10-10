@@ -11,6 +11,10 @@ Dateien ist die App, mit der du in den freigegebenen Ordnern arbeitest, die du n
 
 ## Freigegebene Ordner durchsuchen
 
+![Dateien mit den Freigaben und Papierkörben in der Seitenleiste, dem Ordner Photos/2026-summer in der Listenansicht und dem geöffneten Kontextmenü eines Fotos](../../../../../assets/screenshots/files.de.webp)
+
+_Dateien in der Listenansicht. Ein Rechtsklick auf einen Eintrag öffnet sein Kontextmenü._
+
 Öffne **Dateien** im Pithyx-Menü. Die Seitenleiste listet deine freigegebenen Ordner unter **Freigaben** auf. Klicke auf einen, um ihn zu öffnen. Ein Ordner, der gerade nicht erreichbar ist (zum Beispiel weil sein Pool offline ist), zeigt **Nicht verfügbar**. Ist die Liste leer, hast du noch keine freigegebenen Ordner, und ein Administrator muss sie anlegen. Ein freigegebener Ordner mit der Markierung **Nur lesen** lässt dich ansehen und herunterladen, aber nichts ändern.
 
 So bewegst du dich:
@@ -51,6 +55,10 @@ Gut zu wissen:
 
 ## Kopieren, Verschieben und Konflikte
 
+![Der Dialog Namen gibt es schon mit den Knöpfen Abbrechen, Überspringen, Ersetzen und Beide behalten](../../../../../assets/screenshots/files-conflict.de.webp)
+
+_Der Dialog, wenn es die Namen im Zielordner schon gibt._
+
 - **Kopieren und Einfügen:** Wähle Elemente aus, drücke **Strg+C** (oder **Cmd+C**), öffne den Zielordner und drücke **Strg+V**. **Strg+X** schneidet aus, statt zu kopieren.
 - **Ziehen und Ablegen:** Elemente in einen anderen Ordner oder auf eine Freigabe in der Seitenleiste zu ziehen, verschiebt sie. Halte beim Ablegen **Strg** oder **Alt** gedrückt, um zu kopieren.
 - **Umbenennen:** Drücke **F2** oder wähle **Umbenennen**. Ein Name darf nicht leer sein, kein `/` enthalten und höchstens 255 Bytes lang sein.
@@ -68,6 +76,10 @@ Hat das Ziel schon Elemente mit denselben Namen, bietet ein Dialog mit dem Titel
 Zum Herunterladen wählst du **Herunterladen** oder öffnest eine Datei, die der Betrachter nicht zeigen kann.
 
 ## Der Papierkorb
+
+![Der Papierkorb der Freigabe Photos mit zwei gelöschten Fotos, ihrem ursprünglichen Pfad und den Daten, und den Knöpfen Wiederherstellen, Endgültig löschen und Papierkorb leeren](../../../../../assets/screenshots/files-recycle-bin.de.webp)
+
+_Jede Freigabe hat ihren eigenen Papierkorb mit dem Datum, an dem ein Eintrag endgültig gelöscht wird._
 
 **In den Papierkorb** (die Taste **Entf**) löscht eine Datei nicht. Sie verschiebt sie in den Papierkorb ihres freigegebenen Ordners. Dateien über SMB oder WebDAV zu löschen, tut dasselbe.
 

@@ -1,7 +1,7 @@
 ---
 question: 'Which ports does Pithyx use?'
 category: network
-tags: [ports, firewall, 7484, 445, 22, 21, port forwarding, router]
+tags: [ports, firewall, '7484', '445', '22', '21', port forwarding, router]
 order: 30
 status: draft
 ---

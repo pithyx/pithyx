@@ -31,6 +31,10 @@ Die Anmeldeseite hat in der Fußzeile eine eigene Sprachauswahl. Wenn die Box zu
 
 ## Fenster und Andocken
 
+![Das Fenstermenü von Dateien, geöffnet über das App-Symbol in der Titelleiste, mit Verschieben, Größe ändern, Minimieren, Maximieren, Links andocken, Rechts andocken und Schließen](../../../../../assets/screenshots/desktop-window-menu.de.webp)
+
+_Das App-Symbol in der Titelleiste öffnet das Fenstermenü mit den Tastenkürzeln zum Andocken._
+
 Jede App öffnet sich in einem Fenster. Was du mit einem Fenster tun kannst, hängt von der Breite deines Browsers ab:
 
 - **1024 Pixel oder breiter:** freie Fenster. Du kannst sie verschieben, in der Größe ändern und an den Bildschirmrändern andocken.
@@ -51,6 +55,10 @@ Neue Fenster öffnen sich leicht versetzt zueinander. Du kannst höchstens 50 Fe
 Antwortet eine App fünf Sekunden lang nicht, sagt ein Dialog, dass die App nicht reagiert. Klicke auf **Warten** oder **Trotzdem schließen**; beim Trotzdem-Schließen gehen Änderungen verloren, die die App noch nicht gespeichert hat.
 
 ## Die Taskleiste
+
+![Das Pithyx-Menü im dunklen Design mit geöffnetem Kontomenü von Anna Weber: Zwei-Faktor-Authentifizierung, Sprache, Darstellung, Akzentfarbe, Hintergrundbild, Desktop holen von und Position der Taskleiste](../../../../../assets/screenshots/desktop-account-menu.de.webp)
+
+_Das Kontomenü öffnet sich, wenn du unten im Pithyx-Menü auf deinen Namen klickst._
 
 Standardmäßig liegt die Taskleiste am unteren Bildschirmrand. Von links nach rechts hat sie:
 
@@ -80,6 +88,10 @@ Administratoren und Benutzer mit dem Recht **Neu starten und herunterfahren** fi
 **Benachrichtigungen.** Die Glocke öffnet ein Fenster mit **Laufende Aufgaben** und **Neueste** Benachrichtigungen. Nutze **Verwerfen**, **Stummschalten** oder **Alle löschen**. Drücke **Esc**, um das Fenster zu schließen.
 
 ## Desktop-Elemente und Notizen
+
+![Der Desktop mit den Fenstern Dateien und Speicher nebeneinander, links den Verknüpfungen Dateien und Einstellungen und einer Notiz und unten der Taskleiste](../../../../../assets/screenshots/desktop.de.webp)
+
+_Zwei Verknüpfungen und eine Notiz neben zwei offenen Fenstern._
 
 Der Desktop enthält Verknüpfungen zu Apps und Notizzettel. Sie gehören zu deinem Konto und erscheinen auf jedem Gerät.
 

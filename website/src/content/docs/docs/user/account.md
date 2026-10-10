@@ -24,6 +24,14 @@ If you are an administrator and forgot your password, use the recovery key. See 
 
 ## Two-factor sign-in
 
+![The dialog Two-factor authentication with a QR code, the key to enter manually, the field Code and the button Turn on](../../../../assets/screenshots/account-two-factor-qr.webp)
+
+_Scan the QR code with an authenticator app, then enter the code it shows._
+
+![The dialog Your recovery codes with ten one-time codes and the button Copy codes](../../../../assets/screenshots/account-recovery-codes.webp)
+
+_After the first code the dialog shows ten recovery codes, once. These belong to a deleted test machine._
+
 Two-factor sign-in asks for a code from an authenticator app on your phone in addition to your password. It is optional and applies per user. Any app for time-based codes works (6 digits, 30 seconds).
 
 To turn it on:

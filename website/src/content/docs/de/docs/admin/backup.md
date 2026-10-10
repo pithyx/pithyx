@@ -36,6 +36,10 @@ Nicht enthalten: Dateien auf Pools, App-Daten, Logs, Docker-Daten, Sitzungen, Jo
 
 ## Wiederherstellen
 
+![Einstellungen, Backup und Wiederherstellung, nach Backup prüfen: wann und wo das Backup entstand, sein Inhalt und die Teile zum Wiederherstellen, mit dem Knopf Wiederherstellen](../../../../../assets/screenshots/backup-checked.de.webp)
+
+_Backup prüfen zeigt, was die Datei enthält; geändert wird erst, wenn du Wiederherstellen wählst._
+
 1. Wähle die Datei, gib ihr Passwort ein und wähle **Backup prüfen**. Noch ändert sich nichts.
 2. Die Seite zeigt „Dieses Backup enthält“: wann es erstellt wurde, von welchem Host, die Pithyx-Version und Zahlen zu Benutzern, Gruppen und freigegebenen Ordnern.
 3. Hake unter „Was wiederhergestellt wird“ die Teile an, wähle dann **Wiederherstellen…** und **Jetzt wiederherstellen**.

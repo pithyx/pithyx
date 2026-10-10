@@ -41,6 +41,10 @@ export default defineConfig({ plugins: [pithyx()] });
 
 ## pithyx dev
 
+![The mock desktop of pithyx dev with the SDK showcase in a window and the side panel with user, theme, accent color, language, size class and permissions](../../../../../assets/screenshots/dev-pithyx-dev.webp)
+
+_The mock desktop of pithyx dev: the side panel changes the user, theme, language and permissions the app sees._
+
 `pithyx dev` starts a mock desktop on `http://127.0.0.1:7400/` (change it with `--port` and `--host`), opens your built frontend in the same sandbox the box uses, and proxies `/apps/<id>/api*` to your backend. After a change, rebuild the frontend and reload.
 
 With the Vite plugin you can run `vite` instead: the mock desktop joins the dev server, the base becomes `/apps/<id>/`, and hot reload works.
@@ -64,6 +68,10 @@ Press Ctrl+C to stop; the CLI runs `docker compose down` and keeps volumes.
 Details of every command are on [@pithyx/cli](/docs/sdk/cli/).
 
 ## Install it on a box
+
+![The dialog Install an app with a package file, the warning that it is not verified, the permissions it asks for, who may use it and the pool for app data](../../../../../assets/screenshots/dev-install-from-file.webp)
+
+_Install from file shows the package before it installs: the unverified warning, its permissions and who may use it._
 
 Only an administrator can install a package.
 

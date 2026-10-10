@@ -41,6 +41,10 @@ export default defineConfig({ plugins: [pithyx()] });
 
 ## pithyx dev
 
+![Der Test-Desktop von pithyx dev mit dem SDK-Schaufenster in einem Fenster und der Seitenleiste mit Benutzer, Design, Akzentfarbe, Sprache, Größenklasse und Berechtigungen](../../../../../../assets/screenshots/dev-pithyx-dev.de.webp)
+
+_Der Test-Desktop von pithyx dev: Die Seitenleiste ändert Benutzer, Design, Sprache und Berechtigungen, die die App sieht._
+
 `pithyx dev` startet einen Mock-Desktop auf `http://127.0.0.1:7400/` (änderbar mit `--port` und `--host`), öffnet dein gebautes Frontend in derselben Sandbox, die auch die Box nutzt, und leitet `/apps/<id>/api*` an dein Backend weiter. Nach einer Änderung baust du das Frontend neu und lädst die Seite neu.
 
 Mit dem Vite-Plugin kannst du stattdessen `vite` starten: Der Mock-Desktop hängt sich an den Dev-Server, die Basis wird `/apps/<id>/` und Hot Reload funktioniert.
@@ -64,6 +68,10 @@ Mit Strg+C beendest du es; das CLI führt `docker compose down` aus und behält 
 Die Details zu jedem Befehl stehen auf [@pithyx/cli](/de/docs/sdk/cli/).
 
 ## Auf einer Box installieren
+
+![Der Dialog App installieren mit einer Paketdatei, dem Hinweis, dass sie nicht geprüft ist, den verlangten Berechtigungen, wer sie nutzen darf, und dem Pool für App-Daten](../../../../../../assets/screenshots/dev-install-from-file.de.webp)
+
+_Aus Datei installieren zeigt das Paket vor der Installation: den Hinweis, dass es nicht geprüft ist, seine Berechtigungen und wer es nutzen darf._
 
 Nur ein Administrator kann ein Paket installieren.
 

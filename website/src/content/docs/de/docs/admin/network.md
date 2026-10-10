@@ -42,6 +42,10 @@ Die Karte „Hostname und Nameserver“ enthält:
 
 ## Der Bestätigungs-Timer
 
+![Einstellungen, Netzwerk, mit dem Banner Noch 54 Sekunden, um die neuen Netzwerkeinstellungen zu behalten und den Knöpfen Behalten und Jetzt rückgängig machen](../../../../../assets/screenshots/network-confirm.de.webp)
+
+_Nach Anwenden zählt die Seite herunter. Ohne Behalten kehrt die Box zu den vorherigen Einstellungen zurück._
+
 Nach **Anwenden …** zeigt ein Banner „Noch {seconds} Sekunden, um die neuen Netzwerkeinstellungen zu behalten“ mit **Behalten** und **Jetzt rückgängig machen**. Ohne Bestätigung innerhalb von 60 Sekunden, nach **Jetzt rückgängig machen**, nach einem fehlgeschlagenen Anwenden ([`network.apply.failed`](/de/docs/reference/errors/#network.apply.failed)) oder nach einem Neustart des Daemons kommen die vorherigen Einstellungen zurück. Es kann immer nur eine Änderung warten. Wenn die Seite nicht mehr antwortet, weil sich die Adresse geändert hat, öffne die Box unter ihrer neuen Adresse und behalte die Änderung dort; der Dialog listet die Adressen auf.
 
 :::note

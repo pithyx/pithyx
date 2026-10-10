@@ -8,8 +8,8 @@ hero:
   secondary: { label: Zur Doku, href: /de/docs/ }
   github: { label: GitHub, href: https://github.com/pithyx/pithyx }
 showcase:
-  image: ../../assets/screenshots/desktop.svg
-  alt: 'Der Pithyx-Desktop im Browser: die Fenster Dateien und Speicher nebeneinander angedockt, Verknüpfungen und eine Notiz auf dem Desktop und unten die Taskleiste'
+  image: ../../assets/screenshots/desktop.de.webp
+  alt: 'Der Pithyx-Desktop im Browser: die Fenster Dateien und Speicher nebeneinander, zwei Verknüpfungen und eine Notiz auf dem Desktop und unten die Taskleiste'
   caption: 'Der Web-Desktop mit Dateien und Speicher nebeneinander. Jede App, ob mitgeliefert oder installiert, öffnet sich in einem solchen Fenster.'
 features:
   title: Was schon drin ist
@@ -91,23 +91,23 @@ gallery:
   close: Schließen
   items:
     - {
-        image: '../../assets/screenshots/files.svg',
-        alt: 'Die App Dateien mit den Freigaben in der Seitenleiste, einem Ordner mit Urlaubsfotos in der Listenansicht und dem geöffneten Kontextmenü eines Fotos',
+        image: '../../assets/screenshots/files.de.webp',
+        alt: 'Die App Dateien mit den Freigaben in der Seitenleiste, einem Ordner mit zwölf Urlaubsfotos in der Listenansicht und dem geöffneten Kontextmenü eines Fotos',
         caption: 'Dateien: Freigaben, Papierkorb und frühere Versionen im Browser.',
       }
     - {
-        image: '../../assets/screenshots/storage.svg',
+        image: '../../assets/screenshots/storage.de.webp',
         alt: 'Die App Speicher mit einem gesunden RAID-Z1-Pool aus vier Platten, seinem belegten und freien Platz und der Liste seiner Platten',
         caption: 'Speicher: ZFS-Pools, Platten und Snapshots, und die genauen Befehle siehst du, bevor etwas läuft.',
       }
     - {
-        image: '../../assets/screenshots/store.svg',
-        alt: 'Der Store auf dem Tab Installiert mit drei installierten Apps, für eine davon wartet ein Update',
+        image: '../../assets/screenshots/store.de.webp',
+        alt: 'Der Store auf dem Tab Installiert mit vier installierten Apps, darunter eine Chat-App und das SDK-Schaufenster',
         caption: 'Store: Apps aus Katalogen oder aus einer Datei, mit Updates und einem Weg zurück zur vorigen Version.',
       }
     - {
-        image: '../../assets/screenshots/settings.svg',
-        alt: 'Die Einstellungen auf der Seite Benutzer mit einer Liste von Benutzern und den Abzeichen Administrator und Zwei-Faktor',
+        image: '../../assets/screenshots/settings.de.webp',
+        alt: 'Die Einstellungen auf der Seite Benutzer mit vier Benutzern und den Abzeichen Administrator und Zwei-Faktor',
         caption: 'Einstellungen: Benutzer und Gruppen, Freigaben, Dateidienste, Netzwerk und Sicherung.',
       }
 ai:

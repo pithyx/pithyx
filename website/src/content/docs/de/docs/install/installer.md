@@ -20,6 +20,10 @@ Der erste Browser, der die Seite öffnet, besitzt die Installation. Ein anderer 
 
 ## Was die Prüfungen bedeuten
 
+![Die Startseite des Installers, Willkommen bei Pithyx, mit den fünf erfüllten Voraussetzungen und dem Knopf Los geht's](../../../../../assets/screenshots/install-requirements.de.webp)
+
+_Der Installer zeigt seine fünf Prüfungen vor dem ersten Schritt._
+
 Die erste Seite, **Voraussetzungen**, zeigt fünf Prüfungen. **Los geht's** bleibt deaktiviert, bis alle bestanden sind.
 
 | Prüfung                                      | Was sie braucht                                      |
@@ -49,6 +53,10 @@ Bonds, VLANs und weitere Optionen kommen nach der Installation, in den Einstellu
 
 ## Systemfestplatte und Spiegel (Schritt 3)
 
+![Schritt 3 des Installers mit eingeschaltetem Auf zwei Festplatten spiegeln und gewählter zweiter Festplatte; eine Festplatte mit alten Daten trägt den Hinweis, dass sie gelöscht wird](../../../../../assets/screenshots/install-system-disk-mirror.de.webp)
+
+_Schritt 3 mit eingeschaltetem Spiegel: Die zweite Festplatte wählst du aus derselben Liste._
+
 Wähle die Festplatte für das System. Jede Festplatte wird mit Modell, Größe und Seriennummer aufgelistet. Festplatten, die nicht genutzt werden können, sind ausgegraut und nennen den Grund (USB-Festplatte, Wechseldatenträger, der USB-Stick dieses Installers, schreibgeschützt, in Benutzung, zu klein). Eine Festplatte mit Daten zeigt „Auf dieser Festplatte liegen Daten, die gelöscht werden.“
 
 - Um auf zwei Festplatten als Spiegel zu installieren, schalte **Auf zwei Festplatten spiegeln** ein und wähle eine **Zweite Festplatte**. Das System wird auf beide Festplatten geschrieben, und die Box läuft weiter, wenn eine ausfällt. Die Option erscheint nur, wenn zwei nutzbare Festplatten vorhanden sind.
@@ -75,6 +83,10 @@ Die Seite zeigt dann **Pithyx wird installiert** mit diesen Schritten: **Festpla
 Schlägt ein Schritt fehl, zeigt die Seite **Die Installation ist fehlgeschlagen**, welcher Schritt fehlgeschlagen ist, und den Befehl mit seinem Exit-Code. Klicke auf **Einstellungen ändern**, um zurückzugehen. Nach einem Fehlschlag ist nichts vollständig installiert, und du kannst es erneut versuchen.
 
 ## Nach dem Neustart
+
+![Die Seite Pithyx ist installiert mit dem Wiederherstellungsschlüssel einer Testinstallation, den Knöpfen Schlüssel kopieren und Drucken und dem Kästchen Ich habe den Wiederherstellungsschlüssel gesichert](../../../../../assets/screenshots/install-recovery-key.de.webp)
+
+_Der Wiederherstellungsschlüssel erscheint einmal, wenn die Installation endet. Dieser gehört zu einer gelöschten Testmaschine._
 
 Wenn die Installation endet, zeigt die Seite **Pithyx ist installiert** und deinen Wiederherstellungsschlüssel. Kopiere oder drucke ihn, hake **Ich habe den Wiederherstellungsschlüssel gesichert** an und klicke auf **Weiter**. Dann sagt die Seite **USB-Stick entfernen**. Entferne den Stick und klicke auf **Jetzt neu starten**.
 

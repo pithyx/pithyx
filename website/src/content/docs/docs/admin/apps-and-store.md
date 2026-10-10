@@ -29,6 +29,10 @@ Each app gets a dataset `<pool>/pithyx/apps/<id>`, mounted at `/<pool>/.pithyx/a
 
 ## Updates and rollback
 
+![Store settings with the update policy Tell administrators, the daily check time 03:00, the channel Stable and the catalog list](../../../../assets/screenshots/store-update-settings.webp)
+
+_The Store settings: what happens with new versions, when the box checks and which channel it follows._
+
 Open the gear, then **Updates**. The policy "When a catalog has a newer version" is **Install it**, **Tell administrators** (default) or **Do nothing** (the update is only listed in the **Updates** tab). An update that asks for new permissions or special rights never installs on its own. The daily check time defaults to 03:00 (box time zone) plus a fixed random delay of 0 to 3600 seconds per box; **Check now** runs it at once. An app can follow its own policy in its detail. Administrators get the notifications "App updates" and "Catalog not fetched".
 
 Before an update Pithyx takes a snapshot of the app's dataset. If the new version does not start, the old one comes back. **Back to** and the version number (for example **Back to 1.2.0**) returns to the previous version, with the app's data as it was before the update; changes and snapshots made since are lost. Only the one previous version is kept.

@@ -27,6 +27,10 @@ Einen vorhandenen Ordner als freigegebenen Ordner einzutragen, funktioniert nur 
 
 ## Regeln für Ordner
 
+![Der Dialog Photos bearbeiten mit den Schaltern für den Netzwerkzugriff und den Rechten: die Gruppe family mit Lesen und schreiben, die Benutzer mit dem Zugriff, den sie insgesamt bekommen](../../../../../assets/screenshots/shared-folders-edit.de.webp)
+
+_Der Bearbeiten-Dialog einer Freigabe: Netzwerkzugriff pro Protokoll und Rechte pro Gruppe und Benutzer._
+
 Der Bearbeiten-Dialog hat drei Teile.
 
 - **Name und Beschreibung.** Das Umbenennen ändert nur den Namen, den Benutzer sehen; das Dataset behält seinen Namen.

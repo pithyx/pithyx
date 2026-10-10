@@ -36,6 +36,10 @@ Not included: files on pools, app data, logs, Docker data, sessions, jobs, notif
 
 ## Restoring
 
+![Settings, Backup and restore, after Check backup: when and where the backup was made, its contents and the parts to restore, with the button Restore](../../../../assets/screenshots/backup-checked.webp)
+
+_Check backup shows what the file holds; nothing changes until you choose Restore._
+
 1. Choose the file, enter its password and choose **Check backup**. Nothing changes yet.
 2. The page shows "This backup holds": when it was created, from which host, the Pithyx version and counts of users, groups and shared folders.
 3. Under "What to restore", tick the parts, then choose **Restore…** and **Restore now**.

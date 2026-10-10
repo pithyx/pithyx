@@ -11,6 +11,10 @@ Files is the app for working with the shared folders you may use: open folders, 
 
 ## Browsing shared folders
 
+![Files with the shared folders and recycle bins in the sidebar, the folder Photos/2026-summer in list view and the context menu of a photo open](../../../../assets/screenshots/files.webp)
+
+_Files in list view. Right-click an entry for its context menu._
+
 Open **Files** from the Pithyx menu. The sidebar lists your shared folders under **Shares**. Click one to open it. A folder that cannot be reached right now (for example because its pool is offline) shows **Not available**. If the list is empty, you have no shared folders yet and an administrator has to create them. A shared folder marked **Read only** lets you look and download, but not change anything.
 
 To move around:
@@ -51,6 +55,10 @@ Things to know:
 
 ## Copy, move and conflicts
 
+![The dialog Names already exist with the buttons Cancel, Skip them, Replace them and Keep both](../../../../assets/screenshots/files-conflict.webp)
+
+_The dialog when names already exist in the target folder._
+
 - **Copy and paste:** select items, press **Ctrl+C** (or **Cmd+C**), open the target folder and press **Ctrl+V**. **Ctrl+X** cuts instead of copies.
 - **Drag and drop:** dragging items to another folder or to a share in the sidebar moves them. Hold **Ctrl** or **Alt** while dropping to copy.
 - **Rename:** press **F2** or choose **Rename**. A name must not be empty, must not contain `/` and may be at most 255 bytes long.
@@ -68,6 +76,10 @@ When the target already has items with the same names, a dialog titled **Names a
 To download, choose **Download** or open a file that the Viewer cannot show.
 
 ## The recycle bin
+
+![The recycle bin of the shared folder Photos with two deleted photos, their original path and dates, and the buttons Restore, Delete for good and Empty recycle bin](../../../../assets/screenshots/files-recycle-bin.webp)
+
+_Each shared folder has its own recycle bin with the date an entry is deleted for good._
 
 **Move to recycle bin** (the **Del** key) does not delete a file. It moves it into the recycle bin of its shared folder. Deleting files over SMB or WebDAV does the same.
 

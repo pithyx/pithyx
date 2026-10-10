@@ -34,6 +34,10 @@ A test (`packages/ui/src/contrast.test.ts`) parses `tokens.css`, resolves every 
 
 ## Light and dark
 
+![The account menu in the dark theme with the submenu Appearance open: Like the system, Light and Dark](../../../../../assets/screenshots/theming-appearance.webp)
+
+_Appearance in the account menu; Accent color and Wallpaper are the entries below it._
+
 The root element has `color-scheme: light dark`, and every semantic color is a `light-dark(a, b)` pair. Setting `data-theme="light"` or `data-theme="dark"` on `<html>` forces a scheme.
 
 The account menu has **Appearance** with **Like the system**, **Light** and **Dark**. The choice is saved per browser in `localStorage` (`pithyx.theme`); "like the system" removes the key. The stored choice is applied before the first render, so the page does not flash.
