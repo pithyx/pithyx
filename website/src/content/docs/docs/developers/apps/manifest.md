@@ -9,7 +9,7 @@ sidebar:
 
 `pithyx.json` at the package root describes an app: who it is, which window it opens, which permissions it asks for, which folders it wants and, if it has one, how its backend runs. The JSON Schema is `sdk/schema/manifest.v1.schema.json` (published as `@pithyx/sdk/schema/manifest.v1.schema.json`); unknown fields are errors. The schema is a stable contract: a new optional field is a minor change, anything else a major one.
 
-Required fields: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, `sdk`, `permissions` and `window`. Optional: `$schema`, `description`, `license`, `homepage`, `pithyx`, `dataVersion`, `storage`, `fileHandlers` and `backend`. See also the [schema reference](/docs/reference/manifest-schema/).
+Required fields: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, `sdk`, `permissions` and `window`. Optional: `$schema`, `description`, `license`, `homepage`, `pithyx`, `dataVersion`, `storage`, `fileHandlers` and `backend`. See also the [schema reference](/docs/reference/manifest-schema/) with every field and the [Compose rules](/docs/reference/compose-rules/) for the backend.
 
 ```json
 {

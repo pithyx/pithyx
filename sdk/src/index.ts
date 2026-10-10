@@ -95,9 +95,18 @@ function isConnectMessage(value: unknown): value is ConnectMessage {
  * ignored, before and after. Rejects with `sdk.transport.closed` when no desktop connects in time, for example when
  * the page was opened outside the desktop. From then on a right-click in the app never opens the browser's own menu,
  * except in text fields; an app shows its own menu by listening for `contextmenu`.
+ *
+ * @param options - Theme root, call time limit and box address as for {@link createApp}, plus how long to wait for
+ * the desktop.
+ * @returns The app API, once the desktop accepted the app.
+ * @throws `sdk.transport.closed` when no desktop connects within the time limit.
+ * @throws `sdk.protocol.unsupported` when the desktop does not speak the SDK's protocol version.
  */
 export function connect(
-  options: CreateAppOptions & { connectTimeout?: number } = {},
+  options: CreateAppOptions & {
+    /** How long to wait for the desktop's port in milliseconds; 10 seconds when left out. */
+    connectTimeout?: number;
+  } = {},
 ): Promise<PithyxApp> {
   preventBrowserMenu(document);
   return new Promise((resolve, reject) => {

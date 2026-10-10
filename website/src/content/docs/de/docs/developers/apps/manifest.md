@@ -9,7 +9,7 @@ sidebar:
 
 `pithyx.json` im Wurzelverzeichnis des Pakets beschreibt eine App: wer sie ist, welches Fenster sie öffnet, welche Berechtigungen sie anfordert, welche Ordner sie haben will und, falls sie eines hat, wie ihr Backend läuft. Das JSON-Schema ist `sdk/schema/manifest.v1.schema.json` (veröffentlicht als `@pithyx/sdk/schema/manifest.v1.schema.json`); unbekannte Felder sind Fehler. Das Schema ist ein stabiler Vertrag: Ein neues optionales Feld ist eine Minor-Änderung, alles andere eine Major-Änderung.
 
-Pflichtfelder: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, `sdk`, `permissions` und `window`. Optional: `$schema`, `description`, `license`, `homepage`, `pithyx`, `dataVersion`, `storage`, `fileHandlers` und `backend`. Siehe auch die [Schema-Referenz](/de/docs/reference/manifest-schema/).
+Pflichtfelder: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, `sdk`, `permissions` und `window`. Optional: `$schema`, `description`, `license`, `homepage`, `pithyx`, `dataVersion`, `storage`, `fileHandlers` und `backend`. Siehe auch die [Schema-Referenz](/de/docs/reference/manifest-schema/) mit jedem Feld und die [Compose-Regeln](/de/docs/reference/compose-rules/) für das Backend.
 
 ```json
 {

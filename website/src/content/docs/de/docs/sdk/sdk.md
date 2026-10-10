@@ -9,6 +9,8 @@ sidebar:
 
 `@pithyx/sdk` ist die API, mit der eine App mit dem Desktop spricht: `connect()` liefert ein `PithyxApp`-Objekt mit dem Benutzer- und Fensterkontext, Benachrichtigungen, Speicher pro Benutzer, freigegebenen Ordnern, dem Backend, Ereignissen und Logs. Es funktioniert in jedem Framework. Jede Methode wird vom Daemon auf Berechtigungen geprüft, und jeder Fehlschlag weist mit einem `PithyxError` ab, der einen stabilen Code trägt.
 
+Die [API-Referenz](/de/docs/reference/sdk/) wird aus dem TSDoc erzeugt und listet jeden Export mit seinen Parametern, der Berechtigung, die er braucht, und den Fehlercodes, mit denen er ablehnt, eine Seite pro Modul: [App](/de/docs/reference/sdk/app/), [Dateien](/de/docs/reference/sdk/files/), [Backend](/de/docs/reference/sdk/backend/), [Ereignisse und Kontext](/de/docs/reference/sdk/events-context/), [i18n](/de/docs/reference/sdk/i18n/), [Theme](/de/docs/reference/sdk/theme/), [Host](/de/docs/reference/sdk/host/) und [Fehler](/de/docs/reference/sdk/errors/).
+
 ## Erste Schritte
 
 ```ts
@@ -25,6 +27,16 @@ console.log(app.context.user.displayName);
 - **Konstanten.** `SDK_VERSION`, `PROTOCOL_VERSION` und `MIN_PROTOCOL_VERSION`.
 - `app.supports(method)` sagt, ob der Desktop eine Methode kennt. `app.on(event, handler)` liefert eine Funktion zum Abmelden.
 
+## Leitfäden
+
+- [Dateien und App-Speicher](/de/docs/sdk/guides/files-and-storage/)
+- [Das Backend aufrufen](/de/docs/sdk/guides/backend/)
+- [Ereignisse, Fensterkontext und Startargumente](/de/docs/sdk/guides/events-and-context/)
+- [Berechtigungen und permissionsChange](/de/docs/sdk/guides/permissions/)
+- [Sprachen und Darstellung in einer App](/de/docs/sdk/guides/i18n-and-theming/)
+- [Logging und Fehler](/de/docs/sdk/guides/logging-and-errors/)
+- [Testen mit pithyx dev und dem Mock-Desktop](/de/docs/sdk/guides/testing/)
+
 ## App und Benutzer
 
 `app.context` wird durch Ereignisse aktuell gehalten und enthält die App (`id`, `version`), die Fensterinstanz, den Benutzer (`id`, `name`, `displayName`, `groups`, `isAdmin`, `twoFactor`), `language`, `locale` (zum Beispiel `de-AT`), `timeZone`, `theme`, `sizeClass` (`compact` unter 600 px, `medium` bis 1023 px, `expanded`), Startargumente, `permissions`, `capabilities`, die Box (`name`, `version`), `visible`, `online`, `logLevel`, den Status und die Endpunkte des Backends und den Zustand jeder Speicheranforderung.
@@ -39,11 +51,15 @@ console.log(app.context.user.displayName);
 
 ## Dateien und Speicher
 
-**Speicher pro Benutzer.** `app.storage.get(key)`, `set(key, value)`, `remove(key)` und `keys()`. Schlüssel haben bis zu 128 Zeichen, Werte bis zu 64 KB JSON, und jeder Benutzer bekommt 1 MB pro App. Das ersetzt `localStorage`, das eine App in der Sandbox nicht nutzen kann. Fehler: [`app.storage.key_invalid`](/de/docs/reference/errors/#app.storage.key_invalid), [`app.storage.too_large`](/de/docs/reference/errors/#app.storage.too_large).
+**Speicher pro Benutzer.** `app.storage.get(key)`, `set(key, value)`, `remove(key)` und `keys()`. Schlüssel haben bis zu 128 Zeichen, Werte bis zu 64 KB JSON, und jeder Benutzer bekommt 1 MB pro App. Das ersetzt `localStorage`, das eine App in der Sandbox nicht nutzen kann. Fehler: Ein leerer oder zu langer Schlüssel scheitert schon im Desktop mit [`sdk.request.invalid`](/de/docs/reference/errors/#sdk.request.invalid), bevor er die Box erreicht, die für andere ungültige Schlüssel [`app.storage.key_invalid`](/de/docs/reference/errors/#app.storage.key_invalid) antwortet; [`app.storage.too_large`](/de/docs/reference/errors/#app.storage.too_large).
 
 **Übergebene Dateien** (`files.read` und `files.write`): `app.files.pick({ multiple?, extensions? })`, `saveAs(suggestedName, blob)`, `read(ref)`, `write(ref, blob)` und `url(ref)` (5 Minuten gültig). Ein `FileRef` hat `ref`, `name`, `type`, `size`, `modified` und `writable`. Auswählen und Speichern müssen einer Benutzeraktion folgen.
 
 **Ordner** (`FileLocation` ist `{ storage: id }` für eine Speicheranforderung im Manifest oder `{ share: id }` für einen freigegebenen Ordner, was `files.shares` braucht): `shares()`, `list(location, path, { cursor, limit, sort, order })` (standardmäßig 100 Einträge, höchstens 1000), `watch`, `upload`, `download`, `createFolder`, `rename`, `run(operation)` für Kopieren, Verschieben und Löschen als Job (Löschen geht in den Papierkorb, außer bei `permanent`), `versions` und `restoreVersion`. Hochladen über einen vorhandenen Namen schlägt mit `fs.entry.exists` fehl. `app.trash` listet den Papierkorb, stellt wieder her, löscht und leert ihn, und `app.jobs.cancel(id)` bricht einen Job ab.
+
+:::caution[Für Apps von Drittanbietern noch nicht bedient]
+Eine App aus einem Paket oder einem Katalog läuft in der Sandbox, und der Desktop bedient ihr heute nur `files.shares`, `list`, `open`, `read`, `write`, `upload` und `createFolder`. `pick`, `saveAs`, `url`, `watch`, `rename`, `run`, `versions`, `restoreVersion`, `app.trash`, `app.jobs.cancel` und `app.ui.showError` funktionieren nur in den eingebauten Apps; eine App von Drittanbietern bekommt [`sdk.method.unknown`](/de/docs/reference/errors/#sdk.method.unknown). `files.read` und `files.write` brechen nach 15 Sekunden ab ([`sdk.request.timeout`](/de/docs/reference/errors/#sdk.request.timeout)), große Dateien gehen deshalb über `upload`. Die [Leitfäden](/de/docs/sdk/guides/files-and-storage/) zeigen, was funktioniert.
+:::
 
 ## Backend
 

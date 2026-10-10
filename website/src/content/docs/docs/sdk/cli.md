@@ -16,6 +16,8 @@ npx pithyx --help
 
 Usage: `pithyx <command> [project folder] [options]`. The folder defaults to the current directory. Exit codes: 0 for success, 1 for findings or a failure, 2 for wrong usage (an unknown command, a missing option). `pithyx --version` prints the version. Node.js 22.12 or newer is required.
 
+Every command with all its options, exit codes, files and findings is in the [pithyx command reference](/docs/reference/cli/).
+
 The option `--frontend <folder>` names the built frontend (default `dist`) for `validate`, `lock`, `pack` and `dev`.
 
 ## pithyx dev

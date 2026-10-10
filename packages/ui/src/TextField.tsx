@@ -17,11 +17,17 @@ import { useUiTexts } from './UiProvider';
 
 /** The props of {@link TextField}: React Aria's text field props plus label, hints and an error. */
 export interface TextFieldProps extends Omit<AriaTextFieldProps, 'className' | 'children'> {
+  /** The visible label, also the accessible name. */
   label: ReactNode;
+  /** A hint below the input, announced with it. */
   description?: ReactNode;
+  /** The text shown while the field is invalid (`isInvalid` or a failed `validate`). */
   errorMessage?: ReactNode;
+  /** A hint inside the empty input; never a replacement for the label. */
   placeholder?: string;
+  /** Extra class names for the field, added after its own. */
   className?: string;
+  /** Extra class names for the input element. */
   inputClassName?: string;
   /** "none" for user names and codes, so phones do not capitalize the first letter. */
   autoCapitalize?: 'none' | 'characters';
@@ -29,7 +35,19 @@ export interface TextFieldProps extends Omit<AriaTextFieldProps, 'className' | '
   trailing?: ReactNode;
 }
 
-/** A labelled text input with an optional description and error message. */
+/**
+ * A labelled text input with an optional description and error message. Set `autoComplete` as the form needs it
+ * (`username`, `email`), so password managers and browsers fill it in.
+ *
+ * @param props - React Aria's text field props (`value`, `onChange`, `isRequired`, `validate`) plus label, hints and
+ * error.
+ * @returns The field with label, input, description and error.
+ *
+ * @example
+ * ```tsx
+ * <TextField label="Name" value={name} onChange={setName} isRequired />
+ * ```
+ */
 export function TextField({
   label,
   description,
@@ -64,10 +82,17 @@ export function TextField({
 
 /** The props of {@link PasswordField}; `autoComplete` tells password managers what to do. */
 export interface PasswordFieldProps extends Omit<TextFieldProps, 'type' | 'trailing'> {
+  /** `current-password` to sign in, `new-password` to set one. */
   autoComplete: 'current-password' | 'new-password';
 }
 
-/** A password input with a button that shows or hides the password. */
+/**
+ * A password input with a button that shows or hides the password. The button's label comes from the package's own
+ * texts in the language of the nearest `UiProvider`.
+ *
+ * @param props - The props of {@link TextField} without `type` and `trailing`, plus the required `autoComplete`.
+ * @returns The password field.
+ */
 export function PasswordField(props: PasswordFieldProps) {
   const texts = useUiTexts();
   const [visible, setVisible] = useState(false);
@@ -92,7 +117,13 @@ export function PasswordField(props: PasswordFieldProps) {
   );
 }
 
-/** Six-digit code from an authenticator app. */
+/**
+ * An input for the six-digit code from an authenticator app: numeric keyboard, `one-time-code` autofill and at most
+ * seven characters (a space in the middle is allowed).
+ *
+ * @param props - The props of {@link TextField} without `type`, `inputMode` and `autoComplete`.
+ * @returns The code field.
+ */
 export function OtpField(props: Omit<TextFieldProps, 'type' | 'inputMode' | 'autoComplete'>) {
   return (
     <TextField
@@ -107,12 +138,21 @@ export function OtpField(props: Omit<TextFieldProps, 'type' | 'inputMode' | 'aut
 
 /** The props of {@link SearchField}; `label` is announced, not shown. */
 export interface SearchFieldProps extends Omit<AriaSearchFieldProps, 'className' | 'children'> {
+  /** The accessible name, announced but not shown. */
   label: string;
+  /** The visible hint inside the empty input. */
   placeholder?: string;
+  /** Extra class names, added after the field's own. */
   className?: string;
 }
 
-/** A search input whose label is only announced; the placeholder carries the visible hint. */
+/**
+ * A search input whose label is only announced; the placeholder carries the visible hint. Escape and the clear
+ * button empty it.
+ *
+ * @param props - React Aria's search field props (`value`, `onChange`, `onSubmit`) plus label and placeholder.
+ * @returns The search field.
+ */
 export function SearchField({ label, placeholder, className, ...props }: SearchFieldProps) {
   const texts = useUiTexts();
   return (

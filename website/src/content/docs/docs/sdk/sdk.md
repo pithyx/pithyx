@@ -9,6 +9,8 @@ sidebar:
 
 `@pithyx/sdk` is the API an app uses to talk to the desktop: `connect()` returns a `PithyxApp` object with the user and window context, notifications, per-user storage, shared folders, the backend, events and logs. It works in any framework. Every method is permission-checked by the daemon, and every failure rejects with a `PithyxError` that carries a stable code.
 
+The [API reference](/docs/reference/sdk/) is generated from the TSDoc and lists every export with its parameters, the permission it needs and the error codes it rejects with, one page per module: [app](/docs/reference/sdk/app/), [files](/docs/reference/sdk/files/), [backend](/docs/reference/sdk/backend/), [events and context](/docs/reference/sdk/events-context/), [i18n](/docs/reference/sdk/i18n/), [theme](/docs/reference/sdk/theme/), [host](/docs/reference/sdk/host/) and [errors](/docs/reference/sdk/errors/).
+
 ## Getting started
 
 ```ts
@@ -25,6 +27,16 @@ console.log(app.context.user.displayName);
 - **Constants.** `SDK_VERSION`, `PROTOCOL_VERSION` and `MIN_PROTOCOL_VERSION`.
 - `app.supports(method)` tells whether the desktop knows a method. `app.on(event, handler)` returns an unsubscribe function.
 
+## Guides
+
+- [Files and app storage](/docs/sdk/guides/files-and-storage/)
+- [Calling the backend](/docs/sdk/guides/backend/)
+- [Events, window context and launch arguments](/docs/sdk/guides/events-and-context/)
+- [Permissions and permissionsChange](/docs/sdk/guides/permissions/)
+- [Languages and theming in an app](/docs/sdk/guides/i18n-and-theming/)
+- [Logging and errors](/docs/sdk/guides/logging-and-errors/)
+- [Testing with pithyx dev and the mock desktop](/docs/sdk/guides/testing/)
+
 ## App and user
 
 `app.context` is kept current by events and holds the app (`id`, `version`), the window instance, the user (`id`, `name`, `displayName`, `groups`, `isAdmin`, `twoFactor`), `language`, `locale` (for example `de-AT`), `timeZone`, `theme`, `sizeClass` (`compact` below 600 px, `medium` up to 1023 px, `expanded`), launch arguments, `permissions`, `capabilities`, the box (`name`, `version`), `visible`, `online`, `logLevel`, the backend status and endpoints, and the state of each storage request.
@@ -39,11 +51,15 @@ console.log(app.context.user.displayName);
 
 ## Files and storage
 
-**Per-user storage.** `app.storage.get(key)`, `set(key, value)`, `remove(key)` and `keys()`. Keys are up to 128 characters, values up to 64 KB of JSON, and each user gets 1 MB per app. This replaces `localStorage`, which a sandboxed app cannot use. Errors: [`app.storage.key_invalid`](/docs/reference/errors/#app.storage.key_invalid), [`app.storage.too_large`](/docs/reference/errors/#app.storage.too_large).
+**Per-user storage.** `app.storage.get(key)`, `set(key, value)`, `remove(key)` and `keys()`. Keys are up to 128 characters, values up to 64 KB of JSON, and each user gets 1 MB per app. This replaces `localStorage`, which a sandboxed app cannot use. Errors: an empty or too long key fails in the desktop with [`sdk.request.invalid`](/docs/reference/errors/#sdk.request.invalid) before it reaches the box, which answers [`app.storage.key_invalid`](/docs/reference/errors/#app.storage.key_invalid) for other invalid keys; [`app.storage.too_large`](/docs/reference/errors/#app.storage.too_large).
 
 **Handed-over files** (`files.read` and `files.write`): `app.files.pick({ multiple?, extensions? })`, `saveAs(suggestedName, blob)`, `read(ref)`, `write(ref, blob)` and `url(ref)` (valid for 5 minutes). A `FileRef` has `ref`, `name`, `type`, `size`, `modified` and `writable`. Picking and saving must follow a user action.
 
 **Folders** (`FileLocation` is `{ storage: id }` for a manifest storage request or `{ share: id }` for a shared folder, which needs `files.shares`): `shares()`, `list(location, path, { cursor, limit, sort, order })` (default 100 entries, at most 1000), `watch`, `upload`, `download`, `createFolder`, `rename`, `run(operation)` for copy, move and delete as a job (delete goes to the recycle bin unless `permanent`), `versions` and `restoreVersion`. Uploading over an existing name fails with `fs.entry.exists`. `app.trash` lists, restores, deletes and empties the recycle bin, and `app.jobs.cancel(id)` cancels a job.
+
+:::caution[Not yet served to third-party apps]
+An app from a package or a catalog runs in the sandbox, and the desktop serves it only `files.shares`, `list`, `open`, `read`, `write`, `upload` and `createFolder` today. `pick`, `saveAs`, `url`, `watch`, `rename`, `run`, `versions`, `restoreVersion`, `app.trash`, `app.jobs.cancel` and `app.ui.showError` work only in the built-in apps; a third-party app gets [`sdk.method.unknown`](/docs/reference/errors/#sdk.method.unknown). `files.read` and `files.write` time out after 15 seconds ([`sdk.request.timeout`](/docs/reference/errors/#sdk.request.timeout)), so large files go through `upload`. The [guides](/docs/sdk/guides/files-and-storage/) show what works.
+:::
 
 ## Backend
 

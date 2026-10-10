@@ -25,7 +25,13 @@ export interface Messages {
 export interface I18n {
   /** The language whose texts are in use: the user's, or its base language, or `en`. */
   readonly language: string;
-  /** The text for a dotted key with its parameters; the key itself when no language has it. */
+  /**
+   * The text for a dotted key with its parameters; the key itself when no language has it.
+   *
+   * @param key - A dotted key such as `files.count`.
+   * @param params - Values for the message's placeholders, for example `{ count: 3 }`.
+   * @returns The formatted text in the current language, or in English when the language lacks the key.
+   */
   t(key: string, params?: Record<string, unknown>): string;
 }
 
@@ -40,7 +46,13 @@ function lookup(messages: Messages | undefined, key: string): string | undefined
   return typeof node === 'string' ? node : undefined;
 }
 
-/** Picks the user's language, then its base language (`de` for `de-AT`), then `en`. */
+/**
+ * Picks the user's language, then its base language (`de` for `de-AT`), then `en`.
+ *
+ * @param locale - A BCP 47 tag such as `de-AT`.
+ * @param available - The languages the app has texts for.
+ * @returns One of `available`, or `en`.
+ */
 export function pickLanguage(locale: string, available: readonly string[]): string {
   const lower = locale.toLowerCase();
   const exact = available.find((language) => language.toLowerCase() === lower);
@@ -51,10 +63,18 @@ export function pickLanguage(locale: string, available: readonly string[]): stri
 /**
  * Texts for the app's current locale, following `localeChange`. `en` is the fallback for keys a language lacks.
  * Messages are compiled once per language and key.
+ *
+ * @param app - The connected app; only its `context` is read.
+ * @param messages - Texts per language; `en` is required.
+ * @returns Texts that follow the user's locale.
+ * @throws A syntax error of `intl-messageformat` from `t` when a message is not valid ICU MessageFormat.
  */
 export function createI18n(
   app: Pick<PithyxApp, 'context'>,
-  messages: { en: Messages } & Partial<Record<string, Messages>>,
+  messages: {
+    /** The English texts, the fallback for every other language. */
+    en: Messages;
+  } & Partial<Record<string, Messages>>,
 ): I18n {
   const compiled = new Map<string, IntlMessageFormat>();
   const language = () => pickLanguage(app.context.locale, Object.keys(messages));

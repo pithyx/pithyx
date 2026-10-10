@@ -6,6 +6,20 @@ import menuStyles from './Menu.module.css';
 /**
  * The popover of a context menu, opened at a point of the viewport. A second right-click while it is open moves the
  * menu there, or to whichever menu the element at that point opens.
+ *
+ * @param props - The point and the menu.
+ * @returns The popover, open until `onClose` removes it.
+ *
+ * @example
+ * ```tsx
+ * {menuAt && (
+ *   <ContextMenuPopover x={menuAt.x} y={menuAt.y} onClose={() => setMenuAt(null)}>
+ *     <Menu onAction={run}>
+ *       <MenuItem id="rename">Rename</MenuItem>
+ *     </Menu>
+ *   </ContextMenuPopover>
+ * )}
+ * ```
  */
 export function ContextMenuPopover({
   x,
@@ -13,9 +27,13 @@ export function ContextMenuPopover({
   onClose,
   children,
 }: {
+  /** Horizontal position in the viewport, in CSS pixels (the event's `clientX`). */
   x: number;
+  /** Vertical position in the viewport, in CSS pixels (the event's `clientY`). */
   y: number;
+  /** Called when the menu should close: Escape, a press outside, a picked entry. */
   onClose: () => void;
+  /** The menu, usually a `Menu`. */
   children: ReactNode;
 }) {
   const anchor = useRef<HTMLDivElement>(null);

@@ -48,4 +48,4 @@ The components read the `--color-*`, `--space-*`, `--radius-*` and `--control-he
 - Overlays: `Dialog`, `Menu`, `MenuItem`, `MenuTrigger`, `MenuPopover`, `MenuSeparator`, `ContextMenuPopover`, `Tooltip` and `TooltipTrigger`.
 - Helpers: `UiProvider`, `useDeliberatePress`, `cx` and `uiTexts`.
 
-The components are documented by their TSDoc comments; `pnpm docs:api` in the repository builds the TypeDoc reference. There is no page per component here.
+The [API reference](/docs/reference/sdk/) has a page per component, generated from its TSDoc (for example [Button](/docs/reference/sdk/ui/button/) and [Dialog](/docs/reference/sdk/ui/dialog/)), and every token with its value on [tokens](/docs/reference/sdk/ui/tokens/).

@@ -14,7 +14,15 @@ export type FileKind = 'file' | 'folder' | 'symlink' | 'other';
  * Where paths start: a named storage from the manifest, or a share by its id (needs `files.shares`). Paths inside are
  * relative, with `/` as separator, and never leave it; `.` and `..` are refused.
  */
-export type FileLocation = { storage: string } | { share: string };
+export type FileLocation =
+  | {
+      /** The `id` of a storage request in the manifest. */
+      storage: string;
+    }
+  | {
+      /** The `id` of a share from `files.shares`. */
+      share: string;
+    };
 
 /** One entry of a folder. */
 export interface FileEntry {
@@ -67,7 +75,17 @@ export interface FolderPage {
  * Entries of one folder that an operation works on. `all` with `except` names a whole folder without listing it, so
  * selecting everything in a folder of 100,000 entries never sends 100,000 names.
  */
-export type FileItems = { names: string[] } | { all: true; except: string[] };
+export type FileItems =
+  | {
+      /** The names of the entries, 1 to 1000. */
+      names: string[];
+    }
+  | {
+      /** Every entry of the folder. */
+      all: true;
+      /** Names to leave out, at most 1000. */
+      except: string[];
+    };
 
 /** A selection in one folder. */
 export interface FileSelection {
@@ -92,8 +110,13 @@ export interface FileOperation {
   kind: 'copy' | 'move' | 'delete';
   /** The entries to work on, all in one folder. */
   source: FileSelection;
-  /** The folder to copy or move into. Not used for delete. */
-  target?: { location: FileLocation; path: string };
+  /** The folder to copy or move into. Required for copy and move, not allowed for delete. */
+  target?: {
+    /** Where the target folder is. */
+    location: FileLocation;
+    /** The target folder, relative to its location. */
+    path: string;
+  };
   /** For copy and move; `fail` when left out. */
   onConflict?: ConflictPolicy;
   /**
@@ -112,12 +135,17 @@ export interface JobInfo {
   id: number;
   /** For example `files.copy`, `files.trash`, `files.restore`. */
   kind: string;
+  /** Where the job is. */
   state: JobState;
   /** Entries and bytes done and in total; totals grow while a job still counts what it works on. */
   progress: {
+    /** Entries finished. */
     itemsDone: number;
+    /** Entries counted so far. */
     itemsTotal: number;
+    /** Bytes copied or moved. */
     bytesDone: number;
+    /** Bytes counted so far. */
     bytesTotal: number;
     /** The entry being worked on, relative to its location. */
     current: string | null;
@@ -125,7 +153,12 @@ export interface JobInfo {
   /** Why the job failed, with the stable code and its params. */
   problem: Problem | null;
   /** When it finished: entries done and paths left out (conflicts with `skip`, symlinks, which are never copied). */
-  result: { done: number; skipped: string[] } | null;
+  result: {
+    /** Entries the job finished. */
+    done: number;
+    /** Paths it left out. */
+    skipped: string[];
+  } | null;
 }
 
 /** An item in a share's recycle bin. */

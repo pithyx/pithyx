@@ -48,11 +48,13 @@ export type SizeClass = 'compact' | 'medium' | 'expanded';
  * file is: `ref` is an opaque handle, valid for this user and app, that only the SDK file API accepts.
  */
 export interface FileRef {
+  /** Opaque handle; only the SDK file API accepts it. */
   ref: string;
   /** File name with extension, for display. */
   name: string;
   /** MIME type, when known. */
   type?: string;
+  /** Size in bytes. */
   size: number;
   /** Last change, ISO 8601 UTC. */
   modified: string;
@@ -74,6 +76,7 @@ export interface LaunchArgs {
 export interface GroupRef {
   /** Stable id (the group's Linux gid). */
   id: number;
+  /** The group's name. */
   name: string;
 }
 
@@ -87,6 +90,7 @@ export type BackendStatus = 'stopped' | 'starting' | 'running' | 'updating' | 'u
 
 /** The app's backend, as the window sees it. */
 export interface BackendInfo {
+  /** Whether the backend runs; `backendStatus` follows it. */
   status: BackendStatus;
   /** The names of the endpoints the manifest declares under `backend.endpoints`; `api` is the default one. */
   endpoints: string[];
@@ -103,6 +107,7 @@ export type StorageState = 'ready' | 'unmapped' | 'locked' | 'unavailable';
 export interface StorageInfo {
   /** The `id` of the request in the manifest; reach it as `{ storage: id }`. */
   id: string;
+  /** Whether the storage can be used now. */
   state: StorageState;
   /** What the mapping allows (never more than the manifest requests), or null while it is unmapped. */
   access: 'read' | 'readWrite' | null;
@@ -113,7 +118,13 @@ export type AppLogLevel = 'debug' | 'info';
 
 /** Everything an app needs to start, sent once in `init`. No permission is needed for any of it (D304). */
 export interface AppContext {
-  app: { id: AppId; version: string };
+  /** The app itself. */
+  app: {
+    /** The app id from the manifest, such as `com.example.notes`. */
+    id: AppId;
+    /** The installed version of the app. */
+    version: string;
+  };
   /** Id of this window, unique per desktop tab. */
   instance: string;
   /**
@@ -121,6 +132,7 @@ export interface AppContext {
    * `X-Pithyx-User` headers the proxy sets (see `backend.token`), never by anything the window sends.
    */
   user: {
+    /** Stable id of the user (the Linux uid). */
     id: number;
     /** The user name, lower case. */
     name: string;
@@ -142,8 +154,11 @@ export interface AppContext {
   locale: string;
   /** IANA time zone of the user, for example `Europe/Berlin`. Dates cross the API as UTC. */
   timeZone: string;
+  /** The desktop's look; the SDK has already applied it. `themeChange` replaces it. */
   theme: Theme;
+  /** The width class of the window; `sizeClassChange` follows it. */
   sizeClass: SizeClass;
+  /** Why and with what the window was opened. */
   launch: LaunchArgs;
   /** The state this window saved with `session.save` before a reload or on another device, or null. */
   session: unknown;
@@ -152,7 +167,12 @@ export interface AppContext {
   /** Every method name the desktop supports; check before calling one (see `supports`). */
   capabilities: string[];
   /** The box the app runs on: its name (host name) and the Pithyx version. */
-  box: { name: string; version: string };
+  box: {
+    /** The box's host name. */
+    name: string;
+    /** The Pithyx version of the box. */
+    version: string;
+  };
   /** Whether the window can be seen (not minimized); `visibilityChange` follows it. */
   visible: boolean;
   /** Whether the desktop reaches the box; `connectionChange` follows it. */
@@ -163,7 +183,13 @@ export interface AppContext {
   backend: BackendInfo | null;
   /** The storage requests of the manifest with their state; `storageChange` replaces the list. */
   storage: StorageInfo[];
-  host: { version: string; protocol: number };
+  /** The desktop that serves the app. */
+  host: {
+    /** The SDK version of the desktop. */
+    version: string;
+    /** The protocol version both sides use. */
+    protocol: number;
+  };
 }
 
 /** A button of a notification. */
@@ -193,6 +219,7 @@ export interface NotificationRequest {
   title: string;
   /** Plain text, at most 1000 characters. */
   body?: string;
+  /** How the toast looks; `info` when left out. */
   level?: 'info' | 'success' | 'warning' | 'error';
   /** At most 2 buttons. A click sends `notificationAction`, or starts the app with `launch.notification`. */
   actions?: NotificationAction[];
@@ -207,6 +234,7 @@ export interface NotificationRequest {
 
 /** A token for the app's backend. */
 export interface BackendToken {
+  /** The token, 256 bits; never log it. */
   token: string;
   /** ISO 8601 UTC; ask again before then. */
   expiresAt: string;
@@ -214,6 +242,7 @@ export interface BackendToken {
 
 /** A one-time ticket for one WebSocket connection to the app's backend, valid 30 seconds. */
 export interface BackendTicket {
+  /** The ticket, for `?pithyx-ticket=`. */
   ticket: string;
   /** ISO 8601 UTC. */
   expiresAt: string;
@@ -221,8 +250,11 @@ export interface BackendTicket {
 
 /** A user of the box, as `directory.users` lists it. Deactivated users are left out. */
 export interface DirectoryUser {
+  /** Stable id of the user (the Linux uid). */
   id: number;
+  /** The user name, lower case. */
   name: string;
+  /** The name to show, if the user set one. */
   displayName: string | null;
   /** Ids of the user's groups (see `directory.groups`); the built-in group every user belongs to is left out. */
   groups: number[];
@@ -230,7 +262,9 @@ export interface DirectoryUser {
 
 /** A group of the box, as `directory.groups` lists it. The built-in group every user belongs to is left out. */
 export interface DirectoryGroup {
+  /** Stable id (the group's Linux gid). */
   id: number;
+  /** The group's name. */
   name: string;
   /** Free text, may be empty. */
   description: string;
@@ -238,7 +272,9 @@ export interface DirectoryGroup {
 
 /** A point in CSS pixels, relative to the top left corner of the app's window content. */
 export interface Point {
+  /** Distance from the left edge. */
   x: number;
+  /** Distance from the top edge. */
   y: number;
 }
 
@@ -249,6 +285,7 @@ export type ContextMenuItem =
       id: string;
       /** Plain text, 1 to 100 characters. */
       label: string;
+      /** Shows the entry greyed out; it cannot be picked. */
       disabled?: boolean;
       /** Shows a check mark. */
       checked?: boolean;
@@ -257,7 +294,10 @@ export type ContextMenuItem =
       /** A key hint shown next to the label, for example `Ctrl+C`. The app handles the keys itself. */
       shortcut?: string;
     }
-  | { separator: true };
+  | {
+      /** A line between groups of entries. */
+      separator: true;
+    };
 
 /** How serious a log entry is. The Log Center filters by it; `debug` is for details only needed while looking for a fault. */
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error';
@@ -267,6 +307,7 @@ export type LogData = Record<string, string | number | boolean | null>;
 
 /** One entry of the app's log, as the SDK sends it (see `app.log`). */
 export interface LogRecord {
+  /** How serious the entry is. */
   level: LogLevel;
   /** At most 4000 characters; the SDK cuts longer ones. */
   message: string;
@@ -320,7 +361,9 @@ export interface Methods {
    * characters, values at most 64 KB as JSON, and an app keeps at most 1 MB per user.
    */
   'storage.set': { params: { key: string; value: unknown }; result: undefined };
+  /** Removes a value the app stored for this user; a missing key is no error. */
   'storage.remove': { params: { key: string }; result: undefined };
+  /** Every key the app stored for this user. */
   'storage.keys': { params: Record<string, never>; result: string[] };
   /**
    * A token for the app's backend, valid 5 minutes and for every endpoint of the app. `app.backend.fetch` and
@@ -478,38 +521,79 @@ export type MethodName = keyof Methods;
 export interface Events {
   /** A `single` app was launched again; the new launch arguments. */
   launch: LaunchArgs;
+  /** The window got the focus. */
   focus: Record<string, never>;
+  /** The window lost the focus. */
   blur: Record<string, never>;
+  /** The window was minimized. */
   minimize: Record<string, never>;
+  /** The window was shown again after it was minimized. */
   restore: Record<string, never>;
+  /** The look changed (light or dark, accent, density); the SDK has applied it and updated `context.theme`. */
   themeChange: Theme;
-  localeChange: { language: string; locale: string; timeZone: string };
-  sizeClassChange: { sizeClass: SizeClass };
+  /** The user changed language, formats or time zone. The SDK updates the context and `app.format` follows. */
+  localeChange: {
+    /** The new language for texts. */
+    language: string;
+    /** The new BCP 47 tag for formats. */
+    locale: string;
+    /** The new IANA time zone. */
+    timeZone: string;
+  };
+  /** The window crossed a width class. The SDK updates `context.sizeClass`. */
+  sizeClassChange: {
+    /** The new width class. */
+    sizeClass: SizeClass;
+  };
   /** The user opened a file with the app while its window was open. Only types from `fileHandlers`. */
-  openFile: { file: FileRef };
+  openFile: {
+    /** The file to open. */
+    file: FileRef;
+  };
   /** A new version of the app is installed; reload to use it (unsaved work first). */
-  appUpdated: { version: string };
+  appUpdated: {
+    /** The new version. */
+    version: string;
+  };
   /**
    * The window was minimized or shown again. Minimizing does not change the frame's own visibility, so this is the
    * way to pause work nobody sees. The SDK updates `context.visible`.
    */
-  visibilityChange: { visible: boolean };
+  visibilityChange: {
+    /** Whether the window can be seen. */
+    visible: boolean;
+  };
   /** The desktop lost or regained the connection to the box, for example while it restarts. Updates `context.online`. */
-  connectionChange: { online: boolean };
+  connectionChange: {
+    /** Whether the desktop reaches the box. */
+    online: boolean;
+  };
   /** The backend's status changed. The SDK updates `context.backend.status`. */
-  backendStatus: { status: BackendStatus };
+  backendStatus: {
+    /** The new status. */
+    status: BackendStatus;
+  };
   /**
    * An administrator granted or revoked permissions of the app; `permissions` is the complete new list. The SDK
    * replaces `context.permissions`; calls that need a revoked permission fail with `app.permission.denied`. Revoking
    * access to the app ends its windows.
    */
-  permissionsChange: { permissions: string[] };
+  permissionsChange: {
+    /** Every permission the app holds now. */
+    permissions: string[];
+  };
   /** A storage mapping changed, or its pool was locked or came back. The SDK replaces `context.storage`. */
-  storageChange: { storage: StorageInfo[] };
+  storageChange: {
+    /** Every storage request with its state now. */
+    storage: StorageInfo[];
+  };
   /** The user clicked a notification of the app or one of its buttons while a window of the app was open. */
   notificationAction: NotificationActivation;
   /** An administrator switched debug logging for the app on or off. The SDK updates `context.logLevel`. */
-  logLevelChange: { level: AppLogLevel };
+  logLevelChange: {
+    /** The new log level. */
+    level: AppLogLevel;
+  };
   /**
    * The list of shares the user can use may have changed: a share was created, renamed, described or deleted, or the
    * user's access changed. Call `files.shares` again. Sent only to apps that hold `files.shares`; it carries nothing,
@@ -533,12 +617,28 @@ export interface Queries {
    * The user closes the window. Answer `allow: false` to keep it open (for example to ask about unsaved changes).
    * The desktop waits at most 5 seconds and then offers to close the window anyway. See `window.setDirty`.
    */
-  beforeClose: { data: Record<string, never>; answer: { allow: boolean } };
+  beforeClose: {
+    /** Carries nothing. */
+    data: Record<string, never>;
+    /** Whether the window may close. */
+    answer: {
+      /** False keeps the window open. */
+      allow: boolean;
+    };
+  };
   /**
    * The window is about to go away: the user signs out (`logout`), the box shuts down or restarts, or Pithyx installs
    * an update. Save what you can; the desktop waits at most 2 seconds. It cannot be refused.
    */
-  beforeUnload: { data: { reason: UnloadReason }; answer: Record<string, never> };
+  beforeUnload: {
+    /** Why the window goes away. */
+    data: {
+      /** Sign-out, shutdown, restart or update. */
+      reason: UnloadReason;
+    };
+    /** Nothing; the answer is ignored. */
+    answer: Record<string, never>;
+  };
 }
 
 /** Why `beforeUnload` is asked. */
@@ -562,23 +662,93 @@ export const UNTIMED_METHODS: readonly string[] = ['files.upload'];
 
 /** What the desktop posts to the iframe window, with the app's port transferred. */
 export interface ConnectMessage {
+  /** Always `pithyx:connect`. */
   type: 'pithyx:connect';
 }
 
 /** A message from the app to the desktop. */
 export type AppMessage =
-  | { type: 'hello'; protocol: number; sdk: string }
-  | { type: 'request'; id: number; method: string; params: unknown }
-  | { type: 'reply'; id: number; answer: unknown };
+  | {
+      /** The first message on the port. */
+      type: 'hello';
+      /** The protocol version the app speaks. */
+      protocol: number;
+      /** The SDK version the app was built with. */
+      sdk: string;
+    }
+  | {
+      /** A call of a method. */
+      type: 'request';
+      /** Unique per connection; the `response` carries it back. */
+      id: number;
+      /** A method name of {@link Methods}. */
+      method: string;
+      /** The method's parameters. */
+      params: unknown;
+    }
+  | {
+      /** The answer to a `query`. */
+      type: 'reply';
+      /** The `id` of the query. */
+      id: number;
+      /** The answer the question expects. */
+      answer: unknown;
+    };
 
 /** A message from the desktop to the app. */
 export type HostMessage =
-  | { type: 'init'; protocol: number; context: AppContext }
-  | { type: 'refuse'; problem: Problem }
-  | { type: 'response'; id: number; ok: true; result: unknown }
-  | { type: 'response'; id: number; ok: false; problem: Problem }
-  | { type: 'event'; event: string; data: unknown }
-  | { type: 'query'; id: number; query: string; data: unknown };
+  | {
+      /** The answer to `hello`: the app may start. */
+      type: 'init';
+      /** The protocol version both sides use. */
+      protocol: number;
+      /** Everything the app needs to start. */
+      context: AppContext;
+    }
+  | {
+      /** The answer to `hello` when the desktop cannot serve the app; the port closes after it. */
+      type: 'refuse';
+      /** Why, for example `sdk.protocol.unsupported`. */
+      problem: Problem;
+    }
+  | {
+      /** The result of a `request`. */
+      type: 'response';
+      /** The `id` of the request. */
+      id: number;
+      /** The call succeeded. */
+      ok: true;
+      /** The method's result. */
+      result: unknown;
+    }
+  | {
+      /** The failure of a `request`. */
+      type: 'response';
+      /** The `id` of the request. */
+      id: number;
+      /** The call failed. */
+      ok: false;
+      /** Why it failed. */
+      problem: Problem;
+    }
+  | {
+      /** An event of {@link Events}. */
+      type: 'event';
+      /** The event name. */
+      event: string;
+      /** The event's data. */
+      data: unknown;
+    }
+  | {
+      /** A question of {@link Queries} the app answers with `reply`. */
+      type: 'query';
+      /** Unique per connection; the `reply` carries it back. */
+      id: number;
+      /** The question's name. */
+      query: string;
+      /** What the question carries. */
+      data: unknown;
+    };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;

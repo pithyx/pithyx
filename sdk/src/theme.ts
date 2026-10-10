@@ -43,6 +43,7 @@ export type ThemeTokenName = (typeof themeTokenNames)[number];
 
 /** The desktop's look as an app gets it, in the context and with `themeChange`. */
 export interface Theme {
+  /** Whether the desktop shows its light or its dark theme. */
   scheme: 'light' | 'dark';
   /** `compact` shrinks `--pithyx-space` and `--pithyx-control-height`; the values already reflect it. */
   density: 'comfortable' | 'compact';
@@ -50,7 +51,14 @@ export interface Theme {
   tokens: Record<ThemeTokenName, string>;
 }
 
-/** Applies a theme to a document (the SDK does this on connect and on every `themeChange`). */
+/**
+ * Applies a theme to a document (the SDK does this on connect and on every `themeChange`): sets `color-scheme`,
+ * `data-pithyx-theme`, `data-pithyx-density` and every public token. Values with `;`, braces or angle brackets are
+ * skipped, so a theme cannot inject other CSS.
+ *
+ * @param theme - The theme from the context or from `themeChange`.
+ * @param root - The element that gets the properties, usually `document.documentElement`.
+ */
 export function applyTheme(theme: Theme, root: HTMLElement): void {
   root.style.colorScheme = theme.scheme;
   root.dataset.pithyxTheme = theme.scheme;

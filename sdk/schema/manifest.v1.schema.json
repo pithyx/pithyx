@@ -138,12 +138,14 @@
       "required": ["en"],
       "properties": {
         "en": {
-          "$ref": "#/$defs/NameText"
+          "$ref": "#/$defs/NameText",
+          "description": "The English text, shown when no other language matches. One line, at most 60 characters."
         }
       },
       "patternProperties": {
         "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$": {
-          "$ref": "#/$defs/NameText"
+          "$ref": "#/$defs/NameText",
+          "description": "The text in the language of the key, a BCP 47 language tag such as `de` or `pt-BR`. One line, at most 60 characters."
         }
       },
       "additionalProperties": false
@@ -155,17 +157,20 @@
       "required": ["en"],
       "properties": {
         "en": {
-          "$ref": "#/$defs/LongText"
+          "$ref": "#/$defs/LongText",
+          "description": "The English text, shown when no other language matches. At most 500 characters; line breaks are allowed."
         }
       },
       "patternProperties": {
         "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$": {
-          "$ref": "#/$defs/LongText"
+          "$ref": "#/$defs/LongText",
+          "description": "The text in the language of the key, a BCP 47 language tag such as `de` or `pt-BR`. At most 500 characters; line breaks are allowed."
         }
       },
       "additionalProperties": false
     },
     "HttpUrl": {
+      "description": "An `http` or `https` URL of printable ASCII characters, at most 500 characters.",
       "type": "string",
       "maxLength": 500,
       "pattern": "^https?://[!-~]+$"
@@ -185,7 +190,8 @@
           "pattern": "^[^\\u0000-\\u001f\\u007f]+$"
         },
         "url": {
-          "$ref": "#/$defs/HttpUrl"
+          "$ref": "#/$defs/HttpUrl",
+          "description": "The author's website."
         }
       }
     },
@@ -218,11 +224,13 @@
       "required": ["width", "height"],
       "properties": {
         "width": {
+          "description": "The width in CSS pixels.",
           "type": "integer",
           "minimum": 100,
           "maximum": 8192
         },
         "height": {
+          "description": "The height in CSS pixels.",
           "type": "integer",
           "minimum": 100,
           "maximum": 8192
@@ -277,6 +285,7 @@
           "$ref": "#/$defs/LocalizedText"
         },
         "access": {
+          "description": "The most the app may do with the mapped folder: `read` or `readWrite`. Users never get more than their own rights on the folder, and with `read` every backend service mounts it read-only.",
           "type": "string",
           "enum": ["read", "readWrite"]
         },
@@ -448,6 +457,7 @@
           "$ref": "#/$defs/BackendHealth"
         },
         "schedules": {
+          "description": "Recurring jobs that call the backend on a cron schedule, also without an open window.",
           "type": "array",
           "maxItems": 16,
           "items": {
