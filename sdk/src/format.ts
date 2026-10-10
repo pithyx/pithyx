@@ -4,20 +4,62 @@
  * user's time zone.
  */
 
+/** Formatters in the user's language and time zone, as `app.format` has them. None of them throws or needs a permission. */
 export interface Formatters {
-  /** A date, for example "Sep 27, 2026". */
+  /**
+   * A date, for example "Sep 27, 2026".
+   *
+   * @param value - An ISO 8601 string or a `Date`.
+   * @param options - `Intl.DateTimeFormat` options; `{ dateStyle: 'medium' }` when left out.
+   * @returns The date in the user's time zone.
+   */
   date(value: string | Date, options?: Intl.DateTimeFormatOptions): string;
-  /** A time of day, for example "14:05". */
+  /**
+   * A time of day, for example "14:05".
+   *
+   * @param value - An ISO 8601 string or a `Date`.
+   * @param options - `Intl.DateTimeFormat` options; `{ timeStyle: 'short' }` when left out.
+   * @returns The time in the user's time zone.
+   */
   time(value: string | Date, options?: Intl.DateTimeFormatOptions): string;
-  /** Date and time. */
+  /**
+   * Date and time.
+   *
+   * @param value - An ISO 8601 string or a `Date`.
+   * @param options - `Intl.DateTimeFormat` options; medium date and short time when left out.
+   * @returns Date and time in the user's time zone.
+   */
   dateTime(value: string | Date, options?: Intl.DateTimeFormatOptions): string;
-  /** How long ago or how far ahead, for example "5 minutes ago". */
+  /**
+   * How long ago or how far ahead, for example "5 minutes ago", in the largest unit that fits.
+   *
+   * @param value - An ISO 8601 string or a `Date`.
+   * @param now - The moment to compare with; the current time when left out.
+   * @returns The distance in words, such as "yesterday" or "in 3 hours".
+   */
   relative(value: string | Date, now?: Date): string;
-  /** A number with the user's separators, for example "1,234.5". */
+  /**
+   * A number with the user's separators, for example "1,234.5".
+   *
+   * @param value - The number.
+   * @param options - `Intl.NumberFormat` options.
+   * @returns The formatted number.
+   */
   number(value: number, options?: Intl.NumberFormatOptions): string;
-  /** A byte count with decimal units, as the desktop shows sizes (10 GB, 4 TB). */
+  /**
+   * A byte count with decimal units, as the desktop shows sizes (10 GB, 4 TB).
+   *
+   * @param value - The size in bytes.
+   * @returns The size with one decimal below 100 of its unit.
+   */
   bytes(value: number): string;
-  /** A list, for example "Anna, Ben and Chris". */
+  /**
+   * A list, for example "Anna, Ben and Chris".
+   *
+   * @param values - The items, already as text.
+   * @param options - `Intl.ListFormat` options; a conjunction when left out.
+   * @returns The joined list.
+   */
   list(values: readonly string[], options?: Intl.ListFormatOptions): string;
 }
 
@@ -54,8 +96,21 @@ function toDate(value: string | Date): Date {
   return typeof value === 'string' ? new Date(value) : value;
 }
 
-/** Formatters that follow the locale and time zone `current` returns at each call. */
-export function createFormatters(current: () => { locale: string; timeZone: string }): Formatters {
+/**
+ * Formatters that follow the locale and time zone `current` returns at each call. `app.format` is built with it; an
+ * app needs it only to format outside the desktop, for example in tests.
+ *
+ * @param current - Returns the locale and the time zone to use now.
+ * @returns The formatters.
+ */
+export function createFormatters(
+  current: () => {
+    /** A BCP 47 tag such as `de-AT`. */
+    locale: string;
+    /** An IANA time zone such as `Europe/Berlin`. */
+    timeZone: string;
+  },
+): Formatters {
   const dateTime = (value: string | Date, options: Intl.DateTimeFormatOptions) => {
     const { locale, timeZone } = current();
     const resolved = { ...options, timeZone: options.timeZone ?? timeZone };

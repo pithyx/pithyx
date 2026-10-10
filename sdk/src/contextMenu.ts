@@ -1,4 +1,9 @@
-/** Text fields keep the browser's menu, so paste and spelling suggestions still work there. */
+/**
+ * Text fields keep the browser's menu, so paste and spelling suggestions still work there.
+ *
+ * @param target - The target of a `contextmenu` event.
+ * @returns Whether the target is inside an input, a text area, a select or an editable element.
+ */
 export function keepsBrowserMenu(target: EventTarget | null): boolean {
   return (
     target instanceof Element &&

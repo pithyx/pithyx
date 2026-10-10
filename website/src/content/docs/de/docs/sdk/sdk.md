@@ -9,6 +9,8 @@ sidebar:
 
 `@pithyx/sdk` ist die API, mit der eine App mit dem Desktop spricht: `connect()` liefert ein `PithyxApp`-Objekt mit dem Benutzer- und Fensterkontext, Benachrichtigungen, Speicher pro Benutzer, freigegebenen Ordnern, dem Backend, Ereignissen und Logs. Es funktioniert in jedem Framework. Jede Methode wird vom Daemon auf Berechtigungen geprüft, und jeder Fehlschlag weist mit einem `PithyxError` ab, der einen stabilen Code trägt.
 
+Die [API-Referenz](/de/docs/reference/sdk/) wird aus dem TSDoc erzeugt und listet jeden Export mit seinen Parametern, der Berechtigung, die er braucht, und den Fehlercodes, mit denen er ablehnt, eine Seite pro Modul: [App](/de/docs/reference/sdk/app/), [Dateien](/de/docs/reference/sdk/files/), [Backend](/de/docs/reference/sdk/backend/), [Ereignisse und Kontext](/de/docs/reference/sdk/events-context/), [i18n](/de/docs/reference/sdk/i18n/), [Theme](/de/docs/reference/sdk/theme/), [Host](/de/docs/reference/sdk/host/) und [Fehler](/de/docs/reference/sdk/errors/).
+
 ## Erste Schritte
 
 ```ts

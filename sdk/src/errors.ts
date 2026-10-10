@@ -42,12 +42,38 @@ export interface Problem {
   requestId?: string;
 }
 
+/**
+ * The error every failed SDK call rejects with. It carries the problem's fields, so an app branches on `code` and
+ * translates it itself; `message` is the English `detail`, or the code when there is none.
+ *
+ * @example
+ * ```ts
+ * try {
+ *   await app.storage.set('draft', draft);
+ * } catch (error) {
+ *   if (error instanceof PithyxError && error.code === 'app.storage.too_large') {
+ *     showTooLarge();
+ *   } else {
+ *     await app.ui.showError(error);
+ *   }
+ * }
+ * ```
+ */
 export class PithyxError extends Error implements Problem {
+  /** Stable code, `area.object.reason`, for example `fs.entry.not_found`. */
   readonly code: string;
+  /** Values for the translated message, for example `{ permission: 'files.read' }`. */
   readonly params: Record<string, unknown>;
+  /** English fallback text. */
   readonly detail?: string;
+  /** The request id for support, when the daemon was involved. */
   readonly requestId?: string;
 
+  /**
+   * An error from a problem, as the SDK builds it from a desktop or daemon answer.
+   *
+   * @param problem - The problem's code, params, detail and request id.
+   */
   constructor(problem: Problem) {
     super(problem.detail ?? problem.code);
     this.name = 'PithyxError';
@@ -61,7 +87,11 @@ export class PithyxError extends Error implements Problem {
     }
   }
 
-  /** The plain problem, for sending it over a transport. */
+  /**
+   * The plain problem, for sending it over a transport.
+   *
+   * @returns The problem without the `Error` parts.
+   */
   toProblem(): Problem {
     return {
       code: this.code,
@@ -72,7 +102,14 @@ export class PithyxError extends Error implements Problem {
   }
 }
 
-/** A {@link PithyxError} with one of the SDK's own transport codes. */
+/**
+ * A {@link PithyxError} with one of the SDK's own transport codes.
+ *
+ * @param code - One of {@link sdkErrorCodes}.
+ * @param params - Values for the translated message.
+ * @param detail - English fallback text.
+ * @returns The error, to throw or to reject with.
+ */
 export function sdkError(
   code: SdkErrorCode,
   params: Record<string, unknown> = {},
@@ -96,7 +133,12 @@ export function toProblem(error: unknown): Problem {
   };
 }
 
-/** Whether a value has the shape of a problem (RFC 9457 fields `code` and `params`). */
+/**
+ * Whether a value has the shape of a problem (RFC 9457 fields `code` and `params`).
+ *
+ * @param value - Anything, for example a caught error or a parsed response body.
+ * @returns Whether `value.code` is a string and `value.params` an object.
+ */
 export function isProblem(value: unknown): value is Problem {
   return (
     typeof value === 'object' &&

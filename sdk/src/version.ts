@@ -14,7 +14,7 @@ export const SDK_VERSION: string = version;
 /**
  * The version of the wire protocol between an app and the desktop. It changes only when a message changes in a way an
  * older side cannot ignore. Additions (new methods, events, optional fields) keep the protocol version; apps find
- * them through {@link AppContext.capabilities}.
+ * them through `AppContext.capabilities`.
  *
  * The desktop supports every protocol version from {@link MIN_PROTOCOL_VERSION} up to this one, so an app built
  * against an older SDK keeps working after a desktop update.

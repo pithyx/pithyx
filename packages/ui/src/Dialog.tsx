@@ -11,17 +11,43 @@ import styles from './Dialog.module.css';
 
 /** The props of {@link Dialog}: React Aria's modal props plus title, content and actions. */
 export interface DialogProps extends Omit<ModalOverlayProps, 'className' | 'children'> {
+  /** The heading, also the dialog's accessible name. */
   title: ReactNode;
+  /** An icon before the title. */
   icon?: ReactNode;
+  /** `danger` for a destructive question; `default` when left out. */
   tone?: 'default' | 'danger';
+  /** `alertdialog` for a question that interrupts the user; `dialog` when left out. */
   role?: 'dialog' | 'alertdialog';
   /** Wide dialogs for side-by-side content such as the pool wizard's layout cards. */
   size?: 'default' | 'large';
+  /** The content. */
   children: ReactNode;
+  /** The buttons at the bottom, usually a `Button` each. */
   actions: ReactNode;
 }
 
-/** A modal dialog with a title, content and a row of actions. */
+/**
+ * A modal dialog with a title, content and a row of actions. Open it with `isOpen` and `onOpenChange`, or inside a
+ * React Aria `DialogTrigger`; Escape and a press outside close it unless `isDismissable` is false.
+ *
+ * @param props - React Aria's modal overlay props plus title, content and actions.
+ * @returns The modal overlay with the dialog.
+ *
+ * @example
+ * ```tsx
+ * <Dialog
+ *   title="Delete 3 files?"
+ *   tone="danger"
+ *   role="alertdialog"
+ *   isOpen={open}
+ *   onOpenChange={setOpen}
+ *   actions={<Button variant="danger" onPress={remove}>Delete</Button>}
+ * >
+ *   They go to the recycle bin.
+ * </Dialog>
+ * ```
+ */
 export function Dialog({
   title,
   icon,

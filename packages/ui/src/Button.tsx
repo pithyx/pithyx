@@ -9,13 +9,28 @@ export type ButtonVariant = 'primary' | 'secondary' | 'quiet' | 'danger';
 
 /** The props of {@link Button}: React Aria's button props plus the look. */
 export interface ButtonProps extends Omit<AriaButtonProps, 'className' | 'children'> {
+  /** How much the button stands out; `secondary` when left out. */
   variant?: ButtonVariant;
+  /** `sm` for dense rows and toolbars; `md` when left out. */
   size?: 'md' | 'sm';
+  /** Extra class names, added after the button's own. */
   className?: string;
+  /** The label, an icon or both. */
   children?: ReactNode;
 }
 
-/** A button in the desktop's look. */
+/**
+ * A button in the desktop's look. Use `onPress` instead of `onClick`, so keyboard, touch and screen readers act alike,
+ * and `isPending` for an action that runs.
+ *
+ * @param props - React Aria's button props plus `variant` and `size`.
+ * @returns The button element.
+ *
+ * @example
+ * ```tsx
+ * <Button variant="primary" onPress={save}>Save</Button>
+ * ```
+ */
 export function Button({ variant = 'secondary', size = 'md', className, ...props }: ButtonProps) {
   return (
     <AriaButton
@@ -33,7 +48,17 @@ export interface IconButtonProps extends Omit<ButtonProps, 'aria-label'> {
   tooltip?: boolean;
 }
 
-/** A button that shows only an icon; its label is announced and shown as a tooltip. */
+/**
+ * A button that shows only an icon; its label is announced and shown as a tooltip. `quiet` when no `variant` is set.
+ *
+ * @param props - The props of {@link Button} plus `label` and `tooltip`.
+ * @returns The button, wrapped in a tooltip trigger unless `tooltip` is false.
+ *
+ * @example
+ * ```tsx
+ * <IconButton label="Delete" onPress={remove}><IconTrash size={18} /></IconButton>
+ * ```
+ */
 export function IconButton({
   label,
   tooltip = true,

@@ -18,7 +18,10 @@ import {
 import type { Endpoint } from './transport';
 import { isProtocolSupported, MIN_PROTOCOL_VERSION, PROTOCOL_VERSION } from './version';
 
-/** The host's handler per protocol method; a method without a handler is not in `capabilities`. */
+/**
+ * The host's handler per protocol method; a method without a handler is not in `capabilities`. A handler gets the
+ * checked parameters and returns the result or throws a {@link PithyxError}, which goes back to the app as a problem.
+ */
 export type MethodHandlers = {
   [M in MethodName]?: (
     params: Methods[M]['params'],
@@ -32,9 +35,19 @@ export type MethodHandlers = {
 export type HostExtensions = Record<
   string,
   {
-    /** Whether the parameters are acceptable; a call that fails never reaches `handle`. */
+    /**
+     * Whether the parameters are acceptable; a call that fails never reaches `handle`.
+     *
+     * @param params - What the app sent.
+     * @returns Whether `handle` may run; false answers `sdk.request.invalid`.
+     */
     validate(params: unknown): boolean;
-    /** Serves the call; the result or a thrown problem goes back to the app. */
+    /**
+     * Serves the call; the result or a thrown problem goes back to the app.
+     *
+     * @param params - The parameters `validate` accepted.
+     * @returns The result, or a promise of it.
+     */
     handle(params: unknown): unknown;
   }
 >;
@@ -43,11 +56,17 @@ export type HostExtensions = Record<
 export interface ServeOptions {
   /** The init context; `capabilities` is filled in from the handlers. */
   context: Omit<AppContext, 'capabilities'>;
+  /** The handlers of the protocol methods this host serves. */
   methods: MethodHandlers;
   /** Host-only methods for the host's own apps; see {@link HostExtensions}. */
   extensions?: HostExtensions;
   /** Called when the app completed the handshake. */
-  onReady?: (hello: { protocol: number; sdk: string }) => void;
+  onReady?: (hello: {
+    /** The protocol version the app speaks. */
+    protocol: number;
+    /** The SDK version the app was built with. */
+    sdk: string;
+  }) => void;
 }
 
 /** The host's side of one app window's connection. */
@@ -55,9 +74,19 @@ export interface AppConnection {
   /**
    * Sends an event; an event that needs a permission the app does not hold (`sharesChanged`) is dropped.
    * `permissionsChange` also updates the permissions the host checks.
+   *
+   * @param event - The event name.
+   * @param data - The event's data.
    */
   emit<E extends EventName>(event: E, data: Events[E]): void;
-  /** Asks the app and waits; resolves undefined when it does not answer in time. */
+  /**
+   * Asks the app and waits; resolves undefined when it does not answer in time.
+   *
+   * @param query - The question.
+   * @param data - What the question carries.
+   * @param timeout - How long to wait in milliseconds, for example `BEFORE_CLOSE_TIMEOUT`.
+   * @returns The app's answer, or undefined after the timeout or when the connection closed.
+   */
   ask<Q extends QueryName>(
     query: Q,
     data: Queries[Q]['data'],
@@ -366,7 +395,15 @@ function isMethod(name: string): name is MethodName {
   return Object.hasOwn(validators, name);
 }
 
-/** Serves one app window over a transport end. */
+/**
+ * Serves one app window over a transport end. Answers `hello` with `init` (or `refuse` with
+ * `sdk.protocol.unsupported`), then checks each request's parameters (`sdk.request.invalid`), the permissions the host
+ * itself checks (`app.permission.denied`) and whether a handler exists (`sdk.method.unknown`) before the handler runs.
+ *
+ * @param endpoint - The host's end of the transport.
+ * @param options - The context, the handlers and the host-only extensions.
+ * @returns The connection, to send events and questions and to close it.
+ */
 export function serveApp(endpoint: Endpoint, options: ServeOptions): AppConnection {
   let ready = false;
   let closed = false;

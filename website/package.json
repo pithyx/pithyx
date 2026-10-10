@@ -3,8 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "astro dev",
-    "build:site": "astro build && node scripts/check-build.ts",
+    "dev": "node scripts/generate-reference.ts && astro dev",
+    "reference": "node scripts/generate-reference.ts",
+    "build:site": "node scripts/generate-reference.ts && astro build && node scripts/check-build.ts",
     "preview": "astro preview",
     "sync": "astro sync",
     "check": "astro check",
@@ -26,6 +27,8 @@
     "@types/node": "^24.13.6",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "typedoc": "0.28.20",
+    "typedoc-plugin-markdown": "4.13.1",
     "typescript": "~6.0.3"
   }
 }

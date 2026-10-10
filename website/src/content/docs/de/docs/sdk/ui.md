@@ -48,4 +48,4 @@ Die Komponenten lesen die Tokens `--color-*`, `--space-*`, `--radius-*` und `--c
 - Überlagerungen: `Dialog`, `Menu`, `MenuItem`, `MenuTrigger`, `MenuPopover`, `MenuSeparator`, `ContextMenuPopover`, `Tooltip` und `TooltipTrigger`.
 - Helfer: `UiProvider`, `useDeliberatePress`, `cx` und `uiTexts`.
 
-Die Komponenten sind durch ihre TSDoc-Kommentare dokumentiert; `pnpm docs:api` im Repository baut die TypeDoc-Referenz. Hier gibt es keine Seite pro Komponente.
+Die [API-Referenz](/de/docs/reference/sdk/) hat eine Seite pro Komponente, erzeugt aus ihrem TSDoc (zum Beispiel [Button](/de/docs/reference/sdk/ui/button/) und [Dialog](/de/docs/reference/sdk/ui/dialog/)), und jedes Token mit seinem Wert unter [Tokens](/de/docs/reference/sdk/ui/tokens/).

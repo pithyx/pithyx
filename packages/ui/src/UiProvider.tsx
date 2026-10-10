@@ -6,12 +6,23 @@ import { uiTexts, type UiTexts } from './texts';
 export interface UiProviderProps {
   /** A BCP 47 tag such as `de-AT`. Dates and numbers follow it; the texts follow its language. */
   locale: string;
+  /** The app, or the part of it that uses the locale. */
   children: ReactNode;
 }
 
 /**
  * Sets the language of the components below it: React Aria's formatting and announcements, and the package's own
  * texts (English and German; English for any other language). Without it, both follow the browser.
+ *
+ * @param props - The locale and the components below it.
+ * @returns React Aria's `I18nProvider` with the locale.
+ *
+ * @example
+ * ```tsx
+ * <UiProvider locale={app.context.locale}>
+ *   <App />
+ * </UiProvider>
+ * ```
  */
 export function UiProvider({ locale, children }: UiProviderProps) {
   return <I18nProvider locale={locale}>{children}</I18nProvider>;
