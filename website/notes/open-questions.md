@@ -92,3 +92,4 @@ Collected from the six notes files (the number in brackets is the item in that f
 53. **Code of conduct.** The repository has none; `project/contributing.md` does not mention one. Add one before the repository goes public?
 54. **Tokens for scripts.** There are no personal access tokens; a script signs in like the desktop (`developers/daemon/api.md`). Intended for v0.1?
 55. **German pages.** Only the English pages under `docs/` were written in this pass; the German pages under `de/docs/` are still placeholders and must follow (website/CLAUDE.md wants both in the same commit).
+    - **Done (2026-10-10):** every English page under `docs/` except `install/updates.md` is translated to `de/docs/` with the same frontmatter, status and sidebar order.

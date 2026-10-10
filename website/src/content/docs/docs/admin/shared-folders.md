@@ -47,7 +47,7 @@ The retention is per folder: 30 days by default, 0 keeps items until the bin is 
 
 ## Restore points
 
-Restore points are daily snapshots kept for 7 days. They only use space for files that changed or were deleted, and a deleted file frees its space after the last point holding it expires. Users restore older versions with **Previous versions** in Files, and Windows shows them as "Previous versions". They help against accidental deletion and ransomware but are no replacement for a backup on another device, because they live on the same disks. Restore points are not available for folder shares.
+Restore points are daily snapshots kept for 7 days. They only use space for files that changed or were deleted, and a deleted file frees its space after the last point holding it expires. Users restore older versions with **Previous versions** in Files, and Windows shows them as "Previous versions". They help against accidental deletion and ransomware but are no replacement for a backup on another device, because they live on the same disks. Restore points are not available for a shared folder registered from an existing folder (development machines only), because it has no dataset of its own.
 
 ## Encryption over SMB
 

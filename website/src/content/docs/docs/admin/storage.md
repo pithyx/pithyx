@@ -21,7 +21,7 @@ A disk is **Not available** when:
 - another disk reports the same serial number, so the two cannot be told apart;
 - it holds data but has no serial number to confirm with.
 
-A disk **Needs confirmation** when it has partitions or signatures ("Holds data ({contents})") or has not been checked yet. Type its serial number exactly as shown to use it. Empty disks are **Available**. A replacement disk (see below) always needs its serial, even when it is empty.
+A disk **Needs confirmation** when it has partitions, file systems or other signatures, or has not been checked yet. For a disk with contents Pithyx says "Holds data" and lists the partitions, file systems and signatures it found. Type its serial number exactly as shown to use it. Empty disks are **Available**. A replacement disk (see below) always needs its serial, even when it is empty.
 
 :::danger[Everything on a confirmed disk is lost]
 Confirming with the serial number clears the disk: Pithyx runs `zpool labelclear -f` on pool members, then `wipefs --all` on the partitions and the disk. There is no undo. Check the serial against the label on the disk.
@@ -97,7 +97,7 @@ Pool encryption is not available in this version. The wizard asks "Should the po
 
 ## Health and warnings
 
-Administrators get a desktop notification when a storage alert appears or worsens, and "Resolved: {problem}" when it clears. Alerts cover: pool suspended, degraded, faulted or offline, a missing disk, data errors, scrub errors, a pool 80 percent full (warning) or 90 percent full (critical), and failing or worrying SMART values. You can mute an alert for yourself.
+Administrators get a desktop notification when a storage alert appears or worsens, and a second one that starts with "Resolved:" and names the problem when it clears. Alerts cover: pool suspended, degraded, faulted or offline, a missing disk, data errors, scrub errors, a pool 80 percent full (warning) or 90 percent full (critical), and failing or worrying SMART values. You can mute an alert for yourself.
 
 - **Scrub now**, pause, resume and stop. A schedule per pool: Off, Weekly or Monthly (default Monthly).
 - SMART is read with `smartctl -n standby` (30 second timeout), so sleeping disks stay asleep. States: Healthy, Warning, Failing, No SMART, Unknown. Short self-tests run weekly and long ones monthly by default; a sleeping disk is skipped and retried later, never woken.
