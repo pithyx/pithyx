@@ -5,19 +5,20 @@ The landing page and the docs at https://pithyx.org (D340): Astro with Starlight
 ## Commands
 
 - `pnpm --filter @pithyx/website dev`: dev server on http://localhost:4321 (search works only after a build).
-- `pnpm --filter @pithyx/website build:site`: build to `website/dist/`, then `scripts/check-build.ts` (every docs page has a Markdown twin, the llms files exist, no MDX component left in a twin, every link in `llms.txt` is built). It prints how many pages are still placeholders.
-- `pnpm --filter @pithyx/website check`: `astro check` (types of the content schemas and components).
-- CI: the `website` job in `ci.yaml` runs both on every change under `website/`, `i18n/`, the tokens or the lockfile.
+- `pnpm --filter @pithyx/website build:site`: first `scripts/generate-sdk-reference.ts` (TypeDoc over the public entry points of `@pithyx/sdk` and `@pithyx/ui` into `reference/sdk/`, gitignored; it fails on an export without a page or without TSDoc) and `scripts/generate-cli-reference.ts` (fills the `<!-- generated:... -->` parts of `reference/cli/`, `reference/manifest-schema` and `reference/compose-rules` from `packages/cli/src/cli.ts` and the schemas; `--check` only reports stale pages), then the build to `website/dist/`, then `scripts/check-build.ts` (every docs page has a Markdown twin, the llms files exist, no MDX component left in a twin, every link in `llms.txt` is built). It prints how many pages are still placeholders.
+- `pnpm --filter @pithyx/website check`: `astro check` (types of the content schemas and components), the typecheck of the guide examples in `examples/` and `scripts/check-examples.ts` (each page shows its example file unchanged).
+- CI: the `website` job in `ci.yaml` runs both on every change under `website/`, `i18n/`, the tokens, the sources of `sdk/`, `packages/ui/` and `packages/cli/`, the schemas or the lockfile.
 
 ## Where content lives
 
 - Docs pages: `src/content/docs/docs/<area>/<page>.md` (English, the reference) and the same path under `src/content/docs/de/docs/` (German). The URL is the path: `/docs/admin/storage/`, `/de/docs/admin/storage/`.
+- Subfolders of an area (`sdk/guides`, `reference/cli`, `reference/sdk`) appear as sidebar groups; their label is `sidebar.folder.<folder>` in `src/content/i18n/<locale>.json` (`src/lib/routeMiddleware.ts`).
 - Areas: `src/lib/sections.ts` (id, folder, order) with label and summary in `src/content/i18n/<locale>.json` (`section.<id>.label`, `section.<id>.summary`). The sidebar, the docs overview and the LLM bundles read that list; a new area is added there once and gets its folder.
 - FAQ: one file per question in `src/content/faq/<locale>/<slug>.md`, the same slug in both languages. Frontmatter: `question`, `category` (one of `src/lib/faqCategories.ts`), `tags` (search words), `order` (within the category), `status`. The body is the answer, short, plain Markdown.
 - Landing page: every text, link and picture in `src/content/landing/en.yaml` and `de.yaml` (same keys, schema in `src/content.config.ts`, a missing field fails the build). Feature icons are the names in `src/lib/landingIcons.ts`.
 - Site strings (buttons, banners, FAQ labels, the llms texts): `src/content/i18n/en.json` and `de.json`. German must have every English key (the type check fails otherwise).
 - Pictures: `src/assets/screenshots/`, real screenshots only: WebP, 1920 x 1200 (taken at 1440 x 900 with device scale factor 2), `<name>.webp` for English and `<name>.de.webp` for German. Docs pages use plain Markdown (`![alt](relative path)` with an italic caption line below). Take them from a throwaway VM (`image/test-install.sh`, `image/test-boot.sh`) or the dev box, with invented sample data and nothing of the owner, the dev box or the home network in view.
-- Generated pages: `reference/errors` comes from `i18n/<locale>/errors.json`, the docs overview from `sections.ts`, the FAQ page from the FAQ files (frontmatter `generated`). Do not write their lists by hand.
+- Generated pages: `reference/sdk/` (TSDoc), the generated parts of `reference/cli/`, `reference/manifest-schema` and `reference/compose-rules` (see Commands); edit their sources, not the output. `reference/errors` comes from `i18n/<locale>/errors.json`, the docs overview from `sections.ts`, the FAQ page from the FAQ files (frontmatter `generated`). Do not write their lists by hand.
 
 ## Writing a docs page
 

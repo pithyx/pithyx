@@ -51,11 +51,15 @@ console.log(app.context.user.displayName);
 
 ## Files and storage
 
-**Per-user storage.** `app.storage.get(key)`, `set(key, value)`, `remove(key)` and `keys()`. Keys are up to 128 characters, values up to 64 KB of JSON, and each user gets 1 MB per app. This replaces `localStorage`, which a sandboxed app cannot use. Errors: [`app.storage.key_invalid`](/docs/reference/errors/#app.storage.key_invalid), [`app.storage.too_large`](/docs/reference/errors/#app.storage.too_large).
+**Per-user storage.** `app.storage.get(key)`, `set(key, value)`, `remove(key)` and `keys()`. Keys are up to 128 characters, values up to 64 KB of JSON, and each user gets 1 MB per app. This replaces `localStorage`, which a sandboxed app cannot use. Errors: an empty or too long key fails in the desktop with [`sdk.request.invalid`](/docs/reference/errors/#sdk.request.invalid) before it reaches the box, which answers [`app.storage.key_invalid`](/docs/reference/errors/#app.storage.key_invalid) for other invalid keys; [`app.storage.too_large`](/docs/reference/errors/#app.storage.too_large).
 
 **Handed-over files** (`files.read` and `files.write`): `app.files.pick({ multiple?, extensions? })`, `saveAs(suggestedName, blob)`, `read(ref)`, `write(ref, blob)` and `url(ref)` (valid for 5 minutes). A `FileRef` has `ref`, `name`, `type`, `size`, `modified` and `writable`. Picking and saving must follow a user action.
 
 **Folders** (`FileLocation` is `{ storage: id }` for a manifest storage request or `{ share: id }` for a shared folder, which needs `files.shares`): `shares()`, `list(location, path, { cursor, limit, sort, order })` (default 100 entries, at most 1000), `watch`, `upload`, `download`, `createFolder`, `rename`, `run(operation)` for copy, move and delete as a job (delete goes to the recycle bin unless `permanent`), `versions` and `restoreVersion`. Uploading over an existing name fails with `fs.entry.exists`. `app.trash` lists, restores, deletes and empties the recycle bin, and `app.jobs.cancel(id)` cancels a job.
+
+:::caution[Not yet served to third-party apps]
+An app from a package or a catalog runs in the sandbox, and the desktop serves it only `files.shares`, `list`, `open`, `read`, `write`, `upload` and `createFolder` today. `pick`, `saveAs`, `url`, `watch`, `rename`, `run`, `versions`, `restoreVersion`, `app.trash`, `app.jobs.cancel` and `app.ui.showError` work only in the built-in apps; a third-party app gets [`sdk.method.unknown`](/docs/reference/errors/#sdk.method.unknown). `files.read` and `files.write` time out after 15 seconds ([`sdk.request.timeout`](/docs/reference/errors/#sdk.request.timeout)), so large files go through `upload`. The [guides](/docs/sdk/guides/files-and-storage/) show what works.
+:::
 
 ## Backend
 
