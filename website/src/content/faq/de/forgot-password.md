@@ -1,9 +1,11 @@
 ---
-question: 'Ich habe mein Passwort vergessen. Was nun?'
+question: 'Ich habe mein Passwort vergessen. Was jetzt?'
 category: users
-tags: [password, recovery key, reset]
+tags: [passwort, passwort vergessen, wiederherstellungsschlüssel, zurücksetzen, ausgesperrt]
 order: 10
-status: draft
+status: ready
 ---
 
-Nimm den Recovery Key, den du bei der Einrichtung gespeichert hast. Ohne ihn gibt es kein Zurücksetzen; das schützt deine Daten vor jedem, der nur physischen Zugriff hat.
+Bitte einen Administrator, ein neues zu setzen; einen Reset per E-Mail gibt es nicht. Ein Administrator, der sein eigenes Passwort vergessen hat, wählt auf der Anmeldeseite **Passwort vergessen?** und gibt den Wiederherstellungsschlüssel aus der Installation ein. Ohne Schlüssel und ohne weiteren Administrator hilft nur eine Neuinstallation.
+
+Details: [Wiederherstellen und neu installieren](/de/docs/install/recovery/).

@@ -1,9 +1,11 @@
 ---
-question: 'Warum warnt mein Browser vor dem Zertifikat?'
+question: 'Warum sagt mein Browser, die Verbindung sei nicht sicher?'
 category: security
-tags: [https, certificate, browser warning]
-order: 30
+tags: [https, http, nicht sicher, zertifikat, ssl, tls, browserwarnung]
+order: 20
 status: draft
 ---
 
-Eine frische Box nutzt ein selbstsigniertes Zertifikat. Damit funktioniert alles; der Vertrauensschritt in den Einstellungen entfernt die Warnung mit einer lokalen Zertifizierungsstelle oder deiner eigenen Domain.
+Die Box liefert den Desktop heute über unverschlüsseltes HTTP auf Port 7484 aus; HTTPS ist noch nicht gebaut. Dein Passwort und das Sitzungs-Cookie gehen deshalb unverschlüsselt übers Netz, also nutz die Box nur in einem Netzwerk, dem du vertraust, und mach sie nicht aus dem Internet erreichbar.
+
+Details: [Sicherheit](/de/docs/admin/security/).

@@ -1,9 +1,11 @@
 ---
 question: 'Which hardware do I need?'
 category: hardware
-tags: [cpu, ram, n100, x86]
+tags: [cpu, ram, memory, n100, n305, x86, requirements, minimum]
 order: 10
-status: draft
+status: ready
 ---
 
-A 64-bit x86 machine (x86-64-v2 or newer) with UEFI. The reference is an Intel N100 or N305 with 8 GB RAM. arm64 with UEFI SystemReady and the Raspberry Pi 5 are community platforms.
+A 64-bit x86 computer (x86-64-v2 or newer) with UEFI, at least 4 GB of memory and an internal system disk of at least 40 GB. The installer checks all of this before it starts. The reference machine is an Intel N100 or N305 with 8 GB of memory.
+
+Details: [Hardware requirements](/docs/getting-started/requirements/).

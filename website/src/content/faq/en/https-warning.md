@@ -1,9 +1,11 @@
 ---
-question: 'Why does my browser warn about the certificate?'
+question: 'Why does my browser say the connection is not secure?'
 category: security
-tags: [https, certificate, browser warning]
-order: 30
+tags: [https, http, not secure, certificate, ssl, tls, browser warning]
+order: 20
 status: draft
 ---
 
-A fresh box uses a self-signed certificate. Everything works with it; the trust step in the settings removes the warning with a local certificate authority or your own domain.
+The box serves the desktop over plain HTTP on port 7484 today; HTTPS is not built yet. Your password and session cookie therefore travel unencrypted, so use the box only on a network you trust and do not expose it to the internet.
+
+Details: [HTTPS and certificates](/docs/admin/security/#https-and-certificates).

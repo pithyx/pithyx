@@ -93,3 +93,11 @@ Collected from the six notes files (the number in brackets is the item in that f
 54. **Tokens for scripts.** There are no personal access tokens; a script signs in like the desktop (`developers/daemon/api.md`). Intended for v0.1?
 55. **German pages.** Only the English pages under `docs/` were written in this pass; the German pages under `de/docs/` are still placeholders and must follow (website/CLAUDE.md wants both in the same commit).
     - **Done (2026-10-10):** every English page under `docs/` except `install/updates.md` is translated to `de/docs/` with the same frontmatter, status and sidebar order.
+
+## G. Found while writing the FAQ (2026-10-10)
+
+56. **Pools after a reboot** (FAQ `pool-missing-after-restart`, `draft`). The answer says a pool created or imported for use comes back at every boot. That relies on Debian's ZFS pool cache: the read-write import uses the default cache file, the read-only preview `cachefile=none` (`Storage/Zfs/ImportPlans.cs:58-64`), and `pithyx.service` starts after `zfs-import.target`. Not tested on a box: confirm with a reboot, and how a pool whose disks are all missing shows after the boot (see 23).
+57. **Lost authenticator for non-admins** (FAQ `lost-2fa`, `draft`). The answer says the interface cannot turn off two-factor sign-in for another user (see 11). Rewrite once that is decided.
+58. **Answers that depend on HTTPS** (FAQ `https-warning`, `encrypted-traffic`, `ports`, `draft`): they describe plain HTTP on 7484 and advise against forwarding ports to the internet. Rewrite when HTTPS is built (see 1).
+59. **System updates** (FAQ `system-updates`, `draft`): says this pre-release has no update function and a new version means a reinstall with backup and pool import. Rewrite together with `install/updates.md` after the update branch is merged (see 2).
+60. **Download and scripts** (FAQ `download` and `api-scripts`, `draft`): follow 21 (no public download, no ISO signature) and 54 (no personal access tokens).

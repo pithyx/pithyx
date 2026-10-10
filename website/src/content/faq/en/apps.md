@@ -1,9 +1,11 @@
 ---
 question: 'Where do apps come from?'
 category: apps
-tags: [store, docker, containers]
+tags: [store, catalog, install app, pithyxapp, sideload, docker, containers]
 order: 10
-status: draft
+status: ready
 ---
 
-From the Store, which reads signed catalogs, or from an app file you install yourself. Apps run in a sandbox; their backends run as containers without internet unless the app asks for it.
+Administrators install them in the Store, from the official or community catalog, from catalogs they add, or from a package file (`.pithyxapp`). The official and community catalogs are signed and checked by the box; own catalogs and package files are not verified. Each app runs in a sandbox, and its backend, if it has one, runs in containers.
+
+Details: [Apps and the Store](/docs/admin/apps-and-store/).
