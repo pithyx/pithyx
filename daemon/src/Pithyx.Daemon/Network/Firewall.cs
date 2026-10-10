@@ -167,6 +167,11 @@ public sealed partial class Firewall(
         {
             // Logged; the next switch of a service tries again.
         }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            // A missing or crashing nft must not stop the daemon; the next switch of a service tries again.
+            LogFailed(exception);
+        }
     }
 
     public override void Dispose()
@@ -180,6 +185,9 @@ public sealed partial class Firewall(
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Firewall not applied on a development machine; file service ports it would open: {Ports}")]
     private partial void LogSkipped(string ports);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "The firewall could not be applied")]
+    private partial void LogFailed(Exception exception);
 
     [LoggerMessage(Level = LogLevel.Error, Message = "nft refused the firewall rules (exit {ExitCode}); the command log has its output")]
     private partial void LogRefused(int exitCode);
