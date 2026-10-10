@@ -759,6 +759,52 @@ describe.each(transports)('over the %s transport', (_, pair) => {
     expect((await connected.backend.token()).token).toBe('t3');
   });
 
+  it('renews a backend token the proxy refused and repeats the request once', async () => {
+    const refused = () =>
+      new Response(JSON.stringify({ code: 'app.token.invalid' }), { status: 401 });
+    const fetchMock = vi
+      .fn<(url: URL, init?: RequestInit) => Promise<Response>>()
+      .mockImplementation((_url, init) =>
+        Promise.resolve(
+          new Headers(init?.headers).get('Authorization') === 'Bearer fresh'
+            ? new Response('ok')
+            : refused(),
+        ),
+      );
+    vi.stubGlobal('fetch', fetchMock);
+    const calls: unknown[] = [];
+    const token = vi.fn((params: { renew?: boolean }) => {
+      calls.push(params);
+      return {
+        token: params.renew === true ? 'fresh' : 'stale',
+        expiresAt: new Date(Date.now() + 5 * 60_000).toISOString(),
+      };
+    });
+    const { app } = connectTo(
+      { 'backend.token': token },
+      { backend: { status: 'running', endpoints: ['api'] } },
+    );
+    const connected = await app;
+
+    expect(await (await connected.backend.fetch('/x')).text()).toBe('ok');
+    expect(calls).toEqual([{}, { renew: true }]);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    // The new token is kept for the next call.
+    expect(await (await connected.backend.fetch('/y')).text()).toBe('ok');
+    expect(token).toHaveBeenCalledTimes(2);
+
+    // A second refusal is the answer, and a 401 of the backend itself is not retried.
+    fetchMock.mockImplementation(() => Promise.resolve(refused()));
+    expect((await connected.backend.fetch('/z')).status).toBe(401);
+    expect(token).toHaveBeenCalledTimes(3);
+    fetchMock.mockClear();
+    fetchMock.mockImplementation(() =>
+      Promise.resolve(new Response(JSON.stringify({ code: 'chat.denied' }), { status: 401 })),
+    );
+    expect((await connected.backend.fetch('/z')).status).toBe(401);
+    expect(fetchMock).toHaveBeenCalledOnce();
+  });
+
   it('fails a call that the desktop never answers', async () => {
     const [appEnd, hostEnd] = pair();
     const app = createApp(appEnd, { themeRoot: null, timeout: 50 });

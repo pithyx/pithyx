@@ -48,6 +48,7 @@ public static class AppEndpoints
         services.AddHostedService(provider => provider.GetRequiredService<Proxy.AppProxySockets>());
         services.AddHttpForwarder();
         services.AddSingleton<AppValueStore>();
+        services.AddSingleton<AppHandles>();
         services.AddSingleton<AppFiles>();
         services.AddSingleton<AppContexts>();
         services.AddSingleton(provider => provider.GetRequiredService<AppContexts>().Definition());

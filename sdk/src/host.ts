@@ -331,7 +331,7 @@ const validators: Record<MethodName, (params: unknown) => boolean> = {
   'storage.set': (p) => isKey(p) && isRecord(p) && 'value' in p,
   'storage.remove': isKey,
   'storage.keys': isRecord,
-  'backend.token': isRecord,
+  'backend.token': (p) => isRecord(p) && (p.renew === undefined || typeof p.renew === 'boolean'),
   'backend.ticket': (p) => isRecord(p) && isText(p.endpoint, 32),
   'directory.users': isRecord,
   'directory.groups': isRecord,

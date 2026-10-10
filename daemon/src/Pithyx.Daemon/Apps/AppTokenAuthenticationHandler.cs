@@ -47,6 +47,14 @@ public sealed class AppTokenAuthenticationHandler(
             return AuthenticateResult.Fail("Session, user or app no longer valid");
         }
         Context.Items[typeof(AppTokenGrant)] = grant;
+        return AuthenticateResult.Success(new AuthenticationTicket(Principal(grant, user), SchemeName));
+    }
+
+    /// <summary>The user a token acts for, as the session handler builds it, plus the app and window of the grant.</summary>
+    public static ClaimsPrincipal Principal(AppTokenGrant grant, UserInfo user)
+    {
+        ArgumentNullException.ThrowIfNull(grant);
+        ArgumentNullException.ThrowIfNull(user);
         var identity = new ClaimsIdentity(
             [
                 new Claim(ClaimTypes.NameIdentifier, user.Id.ToString(CultureInfo.InvariantCulture)),
@@ -58,7 +66,7 @@ public sealed class AppTokenAuthenticationHandler(
                 .. user.Permissions.Rights.Concat(user.Permissions.Protocols).Concat(user.Permissions.Apps.Select(Resources.App)).Select(right => new Claim(Policies.RightClaim, right)),
             ],
             SchemeName);
-        return AuthenticateResult.Success(new AuthenticationTicket(new ClaimsPrincipal(identity), SchemeName));
+        return new ClaimsPrincipal(identity);
     }
 
     /// <summary>The grant of the host token that authenticated the request.</summary>

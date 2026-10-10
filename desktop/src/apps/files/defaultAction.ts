@@ -1,4 +1,5 @@
 import type { FileEntry } from '@pithyx/sdk';
+import type { InstalledApp } from '../installed';
 import { viewKindOf } from '../viewer/kinds';
 
 /**
@@ -21,13 +22,28 @@ export function defaultAction(entry: FileEntry): DefaultAction {
   }
 }
 
-/** The ways "Open with" offers for a file; later apps that open files add themselves here. */
-export type OpenWith = 'viewer' | 'download';
+/** The ways "Open with" offers for a file: the viewer, a download, and an installed app by its id (`app:<id>`). */
+export type OpenWith = 'viewer' | 'download' | `app:${string}`;
 
-export function openWithChoices(entry: FileEntry): OpenWith[] {
-  return entry.kind !== 'file'
-    ? []
-    : viewKindOf(entry.name) === null
-      ? ['download']
-      : ['viewer', 'download'];
+/** The installed apps whose `fileHandlers` name the extension of a file. */
+export function appsFor(entry: FileEntry, apps: readonly InstalledApp[]): string[] {
+  const name = entry.name.toLowerCase();
+  return apps
+    .filter((app) =>
+      app.fileHandlers.some((handler) =>
+        handler.extensions.some((extension) => name.endsWith(`.${extension}`)),
+      ),
+    )
+    .map((app) => app.id);
+}
+
+export function openWithChoices(entry: FileEntry, apps: readonly InstalledApp[] = []): OpenWith[] {
+  if (entry.kind !== 'file') {
+    return [];
+  }
+  return [
+    ...(viewKindOf(entry.name) === null ? [] : (['viewer'] as const)),
+    'download',
+    ...appsFor(entry, apps).map((id): OpenWith => `app:${id}`),
+  ];
 }

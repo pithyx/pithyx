@@ -113,6 +113,74 @@ public static class AppApiEndpoints
                 TypedResults.Created((string?)null, await files.CreateFolderAsync(Caller(context, registry).App, context.User, new AppFileLocation(share, storage), path, cancellationToken)))
             .WithName("AppCreateFolder")
             .WithDescription("Creates a folder in a location, with the same rules as writing a file.");
+        app.MapPost("/files/rename", async (AppRenameRequest request, AppFiles files, AppRegistry registry, HttpContext context, CancellationToken cancellationToken) =>
+                TypedResults.Ok(await files.RenameAsync(Caller(context, registry).App, context.User, new AppFileLocation(Required(request).Share, request.Storage), request.Path, request.Name, cancellationToken)))
+            .WithName("AppRenameFileEntry")
+            .WithDescription("Renames a file or folder within its folder; an existing name is never replaced. Needs the permissions of writing: files.shares and files.write for a shared folder.");
+        app.MapPost("/files/operations", async (FileOperationRequest request, AppFiles files, AppRegistry registry, HttpContext context, CancellationToken cancellationToken) =>
+            {
+                var job = await files.StartOperationAsync(Caller(context, registry).App, context.User, request, cancellationToken);
+                return TypedResults.Accepted($"/api/jobs/{job.Id}", job);
+            })
+            .WithName("AppStartFileOperation")
+            .WithDescription("As POST /api/files/operations, for shared folders. Needs files.shares and files.write, and files.read for copy and move. Follow the job on jobs/<id>.");
+        app.MapGet("/files/versions", async ([FromQuery] string? share, [FromQuery] string? path, AppFiles files, AppRegistry registry, HttpContext context, CancellationToken cancellationToken) =>
+                TypedResults.Ok(await files.VersionsAsync(Caller(context, registry).App, context.User, share, path, cancellationToken)))
+            .WithName("AppListFileVersions")
+            .WithDescription("Earlier versions of a file or folder of a shared folder, as GET /api/files/{shareId}/versions. Needs files.shares and files.read.");
+        app.MapPost("/files/versions/restore", async (AppVersionRestoreRequest request, AppFiles files, AppRegistry registry, HttpContext context, CancellationToken cancellationToken) =>
+            {
+                var job = await files.RestoreVersionAsync(Caller(context, registry).App, context.User, Required(request).Share, new FileVersionRestoreRequest(request.Path, request.Snapshot, request.Overwrite), cancellationToken);
+                return TypedResults.Accepted($"/api/jobs/{job.Id}", job);
+            })
+            .WithName("AppRestoreFileVersion")
+            .WithDescription("Starts a job that copies a version back, as POST /api/files/{shareId}/versions/restore. Needs files.shares, files.read and files.write.");
+        app.MapGet("/files/trash", async ([FromQuery] string? share, [FromQuery] string? cursor, [FromQuery] int? limit, AppFiles files, AppRegistry registry, HttpContext context, CancellationToken cancellationToken) =>
+                TypedResults.Ok(await files.TrashAsync(Caller(context, registry).App, context.User, share, cursor, limit, cancellationToken)))
+            .WithName("AppListTrash")
+            .WithDescription("The recycle bin of a shared folder, as GET /api/files/{shareId}/trash. Needs files.shares and files.read.");
+        app.MapPost("/files/trash/restore", async (AppTrashRequest request, AppFiles files, AppRegistry registry, HttpContext context, CancellationToken cancellationToken) =>
+            {
+                var job = await files.RestoreTrashAsync(Caller(context, registry).App, context.User, Required(request).Share, new TrashItemsRequest(request.Ids ?? [], request.OnConflict), cancellationToken);
+                return TypedResults.Accepted($"/api/jobs/{job.Id}", job);
+            })
+            .WithName("AppRestoreTrash")
+            .WithDescription("Starts a job that puts recycle bin items back. Needs files.shares and files.write.");
+        app.MapPost("/files/trash/delete", async (AppTrashRequest request, AppFiles files, AppRegistry registry, HttpContext context, CancellationToken cancellationToken) =>
+            {
+                var job = await files.PurgeTrashAsync(Caller(context, registry).App, context.User, Required(request).Share, request.Ids ?? [], cancellationToken);
+                return TypedResults.Accepted($"/api/jobs/{job.Id}", job);
+            })
+            .WithName("AppDeleteTrashItems")
+            .WithDescription("Starts a job that deletes recycle bin items for good. Needs files.shares and files.write.");
+        app.MapPost("/files/trash/empty", async (AppTrashRequest request, AppFiles files, AppRegistry registry, HttpContext context, CancellationToken cancellationToken) =>
+            {
+                var job = await files.PurgeTrashAsync(Caller(context, registry).App, context.User, Required(request).Share, null, cancellationToken);
+                return TypedResults.Accepted($"/api/jobs/{job.Id}", job);
+            })
+            .WithName("AppEmptyTrash")
+            .WithDescription("Starts a job that deletes everything in the recycle bin for good. Needs files.shares and files.write.");
+        app.MapPost("/files/handles", (AppHandleRequest request, AppFiles files, AppRegistry registry, HttpContext context) =>
+            {
+                var (grant, installed) = Caller(context, registry);
+                files.Hand(installed, grant, Required(request).Share, request.Path, request.Write);
+                return TypedResults.NoContent();
+            })
+            .WithName("AppHandFile")
+            .WithDescription(
+                "The desktop tells the daemon that the user handed one file of a shared folder to this window (a pick, a save dialog or Open with). "
+                + "The window may then read it with files.read, or also write it with files.write, without files.shares; only this exact path, "
+                + "and the user's own rights still apply. Only the desktop calls this, after a dialog the user answered.");
+        app.MapPost("/files/url", CreateFileUrlAsync)
+            .WithName("AppCreateFileUrl")
+            .WithDescription("A URL that reads one file with range requests for 5 minutes, without the desktop session. Needs the permissions of reading the file.");
+        app.MapPost("/jobs/{id:long}/cancel", async (long id, AppFiles files, AppRegistry registry, HttpContext context, CancellationToken cancellationToken) =>
+            {
+                await files.CancelJobAsync(Caller(context, registry).App, context.User, id, cancellationToken);
+                return TypedResults.NoContent();
+            })
+            .WithName("AppCancelJob")
+            .WithDescription("Cancels a job the token's app started for the user; any other job is jobs.job.not_found.");
         app.MapPost("/tickets", CreateTicket)
             .WithName("AppCreateTicket")
             .WithDescription(
@@ -209,6 +277,60 @@ public static class AppApiEndpoints
             ? parsed
             : throw new PithyxException(ErrorCodes.FsOperationInvalid);
 
+    private static T Required<T>(T request) where T : class
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return request;
+    }
+
+    private static async Task<Ok<AppFileUrl>> CreateFileUrlAsync(AppFileUrlRequest request, AppFiles files, AppTokens tokens, AppRegistry registry, HttpContext context, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var (grant, app) = Caller(context, registry);
+        var location = new AppFileLocation(request.Share, request.Storage);
+        await files.CheckReadableAsync(app, grant, context.User, location, request.Path, cancellationToken);
+        var issued = tokens.IssueFile(grant, new AppFileResource(request.Share, request.Storage, request.Path));
+        return TypedResults.Ok(new AppFileUrl($"/api/app-files/content?pithyx-token={issued.Token}", issued.ExpiresAt));
+    }
+
+    /// <summary>
+    /// <c>GET /api/app-files/content?pithyx-token=</c>: the one file of a file token, for <c>&lt;img&gt;</c>, <c>&lt;video&gt;</c> and
+    /// <c>fetch</c> in the sandboxed frame, which has no cookie. The token is only a bearer of that file; the session, the user,
+    /// the app and its permissions are checked again on every request.
+    /// </summary>
+    public static void MapAppFileUrl(this RouteGroupBuilder api)
+    {
+        api.MapGet("/app-files/content", async ([FromQuery] bool? download, AppFiles files, AppTokens tokens, AppTokenCheck check, AppRegistry registry, HttpContext context, CancellationToken cancellationToken) =>
+            {
+                var headers = context.Response.Headers;
+                headers[HeaderNames.AccessControlAllowOrigin] = "*";
+                headers["Cross-Origin-Resource-Policy"] = "cross-origin";
+                headers[HeaderNames.XContentTypeOptions] = "nosniff";
+                if (tokens.Validate(context.Request.Query["pithyx-token"].FirstOrDefault(), AppTokenKind.File) is not { Resource: { } resource } grant
+                    || await check.CheckAsync(grant, withGroups: false, cancellationToken) is not { User: var user }
+                    || registry.Find(grant.AppId) is not { } app
+                    || System.Text.Json.JsonSerializer.Deserialize<AppFileResource>(resource) is not { } file)
+                {
+                    throw new PithyxException(ErrorCodes.AppTokenInvalid);
+                }
+                var principal = AppTokenAuthenticationHandler.Principal(grant, user);
+                var (stream, stat, name) = await files.OpenReadAsync(app, grant, principal, new AppFileLocation(file.Share, file.Storage), file.Path, cancellationToken);
+                context.Response.RegisterForDispose(stream);
+                headers[HeaderNames.ContentSecurityPolicy] = "sandbox; default-src 'none'; img-src 'self' data:; media-src 'self'; style-src 'unsafe-inline'";
+                headers[HeaderNames.CacheControl] = "private, no-store";
+                var disposition = new ContentDispositionHeaderValue(download == true ? "attachment" : "inline");
+                disposition.SetHttpFileName(name);
+                headers[HeaderNames.ContentDisposition] = disposition.ToString();
+                return TypedResults.Stream(stream, download == true ? "application/octet-stream" : FileEndpoints.InlineType(name), fileDownloadName: null, lastModified: stat.Modified, enableRangeProcessing: true);
+            })
+            .AllowAnonymous()
+            .WithTags("App API")
+            .WithName("AppReadFileByToken")
+            .WithDescription(
+                "The file of a file token from POST /api/app/files/url, with range requests, for 5 minutes; inline for images, audio, video and PDF, "
+                + "an attachment with download=true. Needs no session cookie and no Authorization header: the token is the query parameter pithyx-token.");
+    }
+
     private static async Task<FileStreamHttpResult> ReadFileAsync(
         [FromQuery] string? share,
         [FromQuery] string? storage,
@@ -218,7 +340,8 @@ public static class AppApiEndpoints
         HttpContext context,
         CancellationToken cancellationToken)
     {
-        var (stream, stat, name) = await files.OpenReadAsync(Caller(context, registry).App, context.User, new AppFileLocation(share, storage), path, cancellationToken);
+        var (grant, app) = Caller(context, registry);
+        var (stream, stat, name) = await files.OpenReadAsync(app, grant, context.User, new AppFileLocation(share, storage), path, cancellationToken);
         context.Response.RegisterForDispose(stream);
         var headers = context.Response.Headers;
         headers[HeaderNames.ContentSecurityPolicy] = "sandbox; default-src 'none'";
@@ -245,7 +368,8 @@ public static class AppApiEndpoints
         {
             limit.MaxRequestBodySize = null;
         }
-        var entry = await files.WriteAsync(Caller(context, registry).App, context.User, new AppFileLocation(share, storage), path, context.Request.Body, context.Request.ContentLength, overwrite == true, cancellationToken);
+        var (grant, app) = Caller(context, registry);
+        var entry = await files.WriteAsync(app, grant, context.User, new AppFileLocation(share, storage), path, context.Request.Body, context.Request.ContentLength, overwrite == true, cancellationToken);
         return TypedResults.Created((string?)null, entry);
     }
 

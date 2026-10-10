@@ -139,18 +139,18 @@ export async function loadDashboard(app: PithyxApp, show: (text: string) => void
 
 ## Wiederholen oder nicht
 
-| Code                                                                            | Bedeutung                                                                  | Wiederholen                                        |
-| ------------------------------------------------------------------------------- | -------------------------------------------------------------------------- | -------------------------------------------------- |
-| [`sdk.request.timeout`](/de/docs/reference/errors/#sdk.request.timeout)         | der Desktop hat nicht innerhalb von 15 Sekunden geantwortet                | ein paar Mal, mit wachsender Pause                 |
-| [`sdk.backend.unreachable`](/de/docs/reference/errors/#sdk.backend.unreachable) | die Anfrage hat die Box nicht erreicht                                     | nach `connectionChange` mit `online: true`         |
-| [`app.backend.unavailable`](/de/docs/reference/errors/#app.backend.unavailable) | das Backend wird aktualisiert, ist gescheitert oder kam nicht in 30 s hoch | wenn `backendStatus` `running` meldet, oder später |
-| [`auth.rate.limited`](/de/docs/reference/errors/#auth.rate.limited)             | zu viele Tokens auf einmal                                                 | nach `params.retryAfterSeconds`                    |
-| [`app.token.invalid`](/de/docs/reference/errors/#app.token.invalid)             | Sitzung beendet oder Zugriff auf die App weg                               | nein; der Benutzer öffnet das Fenster neu          |
-| [`app.permission.denied`](/de/docs/reference/errors/#app.permission.denied)     | der App fehlt `params.permission`                                          | nein; warte auf `permissionsChange`                |
-| [`sdk.transport.closed`](/de/docs/reference/errors/#sdk.transport.closed)       | kein Desktop verbunden, oder die Verbindung zu ihm ist weg                 | nein                                               |
-| [`sdk.method.unknown`](/de/docs/reference/errors/#sdk.method.unknown)           | der Desktop bedient diesen Aufruf nicht                                    | nein; prüfe vorher `app.supports`                  |
-| [`sdk.request.invalid`](/de/docs/reference/errors/#sdk.request.invalid)         | die Parameter sind falsch, etwa ein Schlüssel über 128 Zeichen             | nein; ein Fehler in der App                        |
-| `fs.*`, `app.storage.*`                                                         | die Anfrage selbst wird abgelehnt                                          | nein; sag es dem Benutzer                          |
+| Code                                                                            | Bedeutung                                                                                          | Wiederholen                                        |
+| ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| [`sdk.request.timeout`](/de/docs/reference/errors/#sdk.request.timeout)         | der Desktop hat nicht innerhalb von 15 Sekunden geantwortet (nicht bei Übertragungen und Dialogen) | ein paar Mal, mit wachsender Pause                 |
+| [`sdk.backend.unreachable`](/de/docs/reference/errors/#sdk.backend.unreachable) | die Anfrage hat die Box nicht erreicht                                                             | nach `connectionChange` mit `online: true`         |
+| [`app.backend.unavailable`](/de/docs/reference/errors/#app.backend.unavailable) | das Backend wird aktualisiert, ist gescheitert oder kam nicht in 30 s hoch                         | wenn `backendStatus` `running` meldet, oder später |
+| [`auth.rate.limited`](/de/docs/reference/errors/#auth.rate.limited)             | zu viele Tokens auf einmal                                                                         | nach `params.retryAfterSeconds`                    |
+| [`app.token.invalid`](/de/docs/reference/errors/#app.token.invalid)             | Sitzung beendet oder Zugriff auf die App weg (das SDK hat schon einmal ein neues Token versucht)   | nein; der Benutzer öffnet das Fenster neu          |
+| [`app.permission.denied`](/de/docs/reference/errors/#app.permission.denied)     | der App fehlt `params.permission`                                                                  | nein; warte auf `permissionsChange`                |
+| [`sdk.transport.closed`](/de/docs/reference/errors/#sdk.transport.closed)       | kein Desktop verbunden, oder die Verbindung zu ihm ist weg                                         | nein                                               |
+| [`sdk.method.unknown`](/de/docs/reference/errors/#sdk.method.unknown)           | der Desktop bedient diesen Aufruf nicht                                                            | nein; prüfe vorher `app.supports`                  |
+| [`sdk.request.invalid`](/de/docs/reference/errors/#sdk.request.invalid)         | die Parameter sind falsch, etwa ein Schlüssel über 128 Zeichen                                     | nein; ein Fehler in der App                        |
+| `fs.*`, `app.storage.*`                                                         | die Anfrage selbst wird abgelehnt                                                                  | nein; sag es dem Benutzer                          |
 
 Ein Aufruf mit Zeitüberschreitung kann auf der Box trotzdem passiert sein. Wiederhole nur Aufrufe, die sich gefahrlos wiederholen lassen, etwa Lesen und `upload` mit `overwrite`.
 
@@ -158,7 +158,7 @@ Ein Aufruf mit Zeitüberschreitung kann auf der Box trotzdem passiert sein. Wied
 
 Die App übersetzt die Codes, die sie erwartet, mit eigenen Texten, nutzt `params` für die Platzhalter und fällt auf eine allgemeine Meldung zurück. `detail` ist Englisch und für Logs gedacht. Logge die `requestId`, statt sie zu zeigen: Mit ihr findet ein Administrator die Anfrage im Protokoll-Center.
 
-`app.ui.showError(error)` zeigt den eigenen Fehlerdialog des Desktops mit dem übersetzten Text. Der Desktop bedient ihn nur für seine eigenen Apps; eine Drittanbieter-App bekommt [`sdk.method.unknown`](/de/docs/reference/errors/#sdk.method.unknown), prüfe also `app.supports('ui.showError')` wie im Beispiel. Der Mock-Desktop von `pithyx dev` bedient ihn und schreibt den Code in sein Log.
+`app.ui.showError(error)` zeigt den eigenen Fehlerdialog des Desktops mit dem übersetzten Text. Prüfe `app.supports('ui.showError')` wie im Beispiel: Ein älterer Desktop bedient ihn vielleicht nicht und antwortet mit [`sdk.method.unknown`](/de/docs/reference/errors/#sdk.method.unknown). Der Mock-Desktop von `pithyx dev` bedient ihn und schreibt den Code in sein Log.
 
 ## Sonderfälle
 

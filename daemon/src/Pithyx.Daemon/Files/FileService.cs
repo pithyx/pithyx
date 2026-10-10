@@ -182,13 +182,13 @@ public sealed class FileService(ShareService shares, FolderCache cache, TimeProv
     }
 
     /// <summary>Renames within the same folder; an existing name is never replaced.</summary>
-    public async Task<FileEntry> RenameAsync(ClaimsPrincipal user, long shareId, string? path, string? newName, CancellationToken cancellationToken)
+    public async Task<FileEntry> RenameAsync(ClaimsPrincipal user, long shareId, string? path, string? newName, CancellationToken cancellationToken, string within = "")
     {
         var share = await shares.ResolveAsync(user, shareId, write: true, cancellationToken);
         var normalized = NonRoot(path);
         var (parent, name) = FsPath.Split(normalized);
         var target = FsPath.CheckName(newName);
-        using var root = OpenRoot(share);
+        using var root = OpenRoot(share, within);
         using var folder = Open(root, parent, LinuxFs.Path | LinuxFs.Directory);
         if (target != name)
         {

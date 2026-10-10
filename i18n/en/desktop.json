@@ -256,6 +256,25 @@
       "manual": "This browser does not allow copying here. Select the text and press Ctrl+C (Cmd+C on a Mac).",
       "copy": "Copy",
       "close": "Close"
+    },
+    "files": {
+      "pickTitle": "Choose files for {name}",
+      "saveTitle": "Save for {name}",
+      "cancel": "Cancel",
+      "choose": "Choose",
+      "save": "Save",
+      "replace": "Replace",
+      "loading": "Loading...",
+      "failed": "The files could not be loaded.",
+      "noShares": "There are no shared folders you can use.",
+      "shares": "Shared folders",
+      "location": "Location",
+      "entries": "Files and folders",
+      "empty": "This folder is empty.",
+      "more": "Load more",
+      "name": "File name",
+      "readOnly": "You can only read this shared folder. Choose another one to save here.",
+      "exists": "A file with this name exists. Saving replaces it."
     }
   }
 }

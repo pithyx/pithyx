@@ -29,7 +29,7 @@ import {
   resolveLock,
 } from './lock';
 import { pack, packageName } from './pack';
-import { readProject, type Project } from './project';
+import { lockTarget, readProject, type Project } from './project';
 
 const HELP = `pithyx ${version}: build Pithyx apps
 
@@ -175,11 +175,17 @@ async function main(): Promise<number> {
     }
     case 'lock': {
       const project = readProject(folder, projectOptions);
-      const compose = project.manifest?.backend?.compose;
-      if (project.manifest === undefined || compose === undefined) {
-        console.error('The app has no backend; there is nothing to lock.');
-        return project.manifest === undefined ? 1 : 0;
+      const target = lockTarget(project);
+      if (target.kind === 'invalid') {
+        print(target.findings);
+        console.error('The project is not valid; there is nothing to lock.');
+        return 1;
       }
+      if (target.kind === 'none') {
+        console.error('The app has no backend; there is nothing to lock.');
+        return 0;
+      }
+      const compose = target.path;
       const images = composeImages(readFileSync(join(project.root, compose)));
       const lock = await resolveLock(images, new RegistryClient(fetch, dockerCredentials));
       const file = join(project.root, LOCK_FILE);

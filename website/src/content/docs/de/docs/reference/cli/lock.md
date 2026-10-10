@@ -49,11 +49,11 @@ pithyx lock [project folder] [--frontend <folder>]
 
 ## Exit-Codes
 
-| Code | Wann                                                                                                                                                                                            |
-| ---- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0    | Der Lock ist geschrieben oder aktuell. Auch wenn die App kein Backend hat: `The app has no backend; there is nothing to lock.`                                                                  |
-| 1    | `pithyx.json` fehlt oder ist ungültig (es gibt dieselbe Zeile "no backend" aus), eine Registry scheitert oder verweigert den Zugriff, oder ein Image hat weder ein amd64- noch ein arm64-Image. |
-| 2    | Mehr als ein Projektordner.                                                                                                                                                                     |
+| Code | Wann                                                                                                                                                                                                                                     |
+| ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0    | Der Lock ist geschrieben oder aktuell. Auch wenn die App kein Backend hat: `The app has no backend; there is nothing to lock.`                                                                                                           |
+| 1    | `pithyx.json` fehlt oder ist ungültig (es gibt die Fehler und `The project is not valid; there is nothing to lock.` aus), eine Registry scheitert oder verweigert den Zugriff, oder ein Image hat weder ein amd64- noch ein arm64-Image. |
+| 2    | Mehr als ein Projektordner.                                                                                                                                                                                                              |
 
 ## Befunde
 

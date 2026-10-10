@@ -57,8 +57,8 @@ console.log(app.context.user.displayName);
 
 **Folders** (`FileLocation` is `{ storage: id }` for a manifest storage request or `{ share: id }` for a shared folder, which needs `files.shares`): `shares()`, `list(location, path, { cursor, limit, sort, order })` (default 100 entries, at most 1000), `watch`, `upload`, `download`, `createFolder`, `rename`, `run(operation)` for copy, move and delete as a job (delete goes to the recycle bin unless `permanent`), `versions` and `restoreVersion`. Uploading over an existing name fails with `fs.entry.exists`. `app.trash` lists, restores, deletes and empties the recycle bin, and `app.jobs.cancel(id)` cancels a job.
 
-:::caution[Not yet served to third-party apps]
-An app from a package or a catalog runs in the sandbox, and the desktop serves it only `files.shares`, `list`, `open`, `read`, `write`, `upload` and `createFolder` today. `pick`, `saveAs`, `url`, `watch`, `rename`, `run`, `versions`, `restoreVersion`, `app.trash`, `app.jobs.cancel` and `app.ui.showError` work only in the built-in apps; a third-party app gets [`sdk.method.unknown`](/docs/reference/errors/#sdk.method.unknown). `files.read` and `files.write` time out after 15 seconds ([`sdk.request.timeout`](/docs/reference/errors/#sdk.request.timeout)), so large files go through `upload`. The [guides](/docs/sdk/guides/files-and-storage/) show what works.
+:::note[Files in the sandbox]
+An app from a package or a catalog gets every file call of the SDK. `pick` and `saveAs` open the desktop's file dialog and need a user action in the window; a file the user picks or opens with the app can be read without `files.shares`. `read`, `write` and `upload` have no time limit. The [guide](/docs/sdk/guides/files-and-storage/) has the details.
 :::
 
 ## Backend

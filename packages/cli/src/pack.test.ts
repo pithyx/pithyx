@@ -15,7 +15,7 @@ import { gunzipSync } from 'node:zlib';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { formatLock, LOCK_FILE } from './lock';
 import { pack, packageName } from './pack';
-import { readProject, TEMPLATE_ICON_PATH } from './project';
+import { lockTarget, readProject, TEMPLATE_ICON_PATH } from './project';
 
 const fixtures = join(dirname(fileURLToPath(import.meta.url)), '../../../sdk/schema/fixtures');
 const fixtureProject = join(fixtures, 'package', 'project');
@@ -150,6 +150,30 @@ describe('pithyx validate', () => {
     ]);
     rmSync(join(root, 'build', 'index.html'));
     expect(codes(root)).toEqual(['error app.package.layout_invalid']);
+  });
+
+  it('fails on a folder without pithyx.json', () => {
+    const root = join(scratch, 'empty');
+    mkdirSync(root);
+    const project = readProject(root);
+    expect(project.findings.map((finding) => `${finding.level} ${finding.code}`)).toContain(
+      'error cli.manifest.missing',
+    );
+    expect(project.manifest).toBeUndefined();
+  });
+
+  it('tells pithyx lock apart: invalid manifest, no backend, a backend', () => {
+    const empty = join(scratch, 'empty');
+    mkdirSync(empty);
+    const missing = lockTarget(readProject(empty));
+    expect(missing.kind).toBe('invalid');
+    expect(missing.kind === 'invalid' && missing.findings.map((finding) => finding.code)).toContain(
+      'cli.manifest.missing',
+    );
+    const broken = copyProject('broken-lock');
+    writeFileSync(join(broken, 'pithyx.json'), '{"manifestVersion": 1}');
+    expect(lockTarget(readProject(broken, { frontend: 'build' })).kind).toBe('invalid');
+    expect(lockTarget(readProject(copyProject('plain'), { frontend: 'build' })).kind).toBe('none');
   });
 
   it('checks the manifest and the icon as the box does', () => {

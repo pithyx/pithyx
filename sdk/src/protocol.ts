@@ -369,9 +369,11 @@ export interface Methods {
    * A token for the app's backend, valid 5 minutes and for every endpoint of the app. `app.backend.fetch` and
    * `app.backend.url` send it for the app (as `Authorization: Bearer` or `?pithyx-token=`). The daemon's proxy checks
    * it and hands the backend the user as `X-Pithyx-User`, `X-Pithyx-User-Id`, `X-Pithyx-Groups` and
-   * `X-Pithyx-Admin`; those headers are the only identity a backend may trust.
+   * `X-Pithyx-Admin`; those headers are the only identity a backend may trust. With `renew` the desktop drops the
+   * token it holds and issues a new one: the SDK asks so after the proxy refused a token as `app.token.invalid`, for
+   * example because the box restarted.
    */
-  'backend.token': { params: Record<string, never>; result: BackendToken };
+  'backend.token': { params: { renew?: boolean }; result: BackendToken };
   /** A one-time ticket for one WebSocket to an endpoint of the app's backend (`app.backend.socket` uses it). */
   'backend.ticket': { params: { endpoint: string }; result: BackendTicket };
   /** Every user of the box. Needs `directory.read`. */
@@ -653,12 +655,19 @@ export const BEFORE_CLOSE_TIMEOUT = 5000;
 export const BEFORE_UNLOAD_TIMEOUT = 2000;
 /**
  * An app waits this long for a response before a call fails with `sdk.request.timeout`. Calls that move a whole file
- * (`files.upload`) take as long as the transfer and have no time limit.
+ * (`files.upload`, `files.read`, `files.write`) take as long as the transfer, and the dialogs of `files.pick` and
+ * `files.saveAs` as long as the user; none of them has a time limit.
  */
 export const REQUEST_TIMEOUT = 15_000;
 
-/** Calls without a time limit, because they last as long as a transfer. */
-export const UNTIMED_METHODS: readonly string[] = ['files.upload'];
+/** Calls without a time limit, because they last as long as a transfer or as the user takes. */
+export const UNTIMED_METHODS: readonly string[] = [
+  'files.upload',
+  'files.read',
+  'files.write',
+  'files.pick',
+  'files.saveAs',
+];
 
 /** What the desktop posts to the iframe window, with the app's port transferred. */
 export interface ConnectMessage {

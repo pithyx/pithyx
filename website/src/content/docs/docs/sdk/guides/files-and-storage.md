@@ -165,9 +165,9 @@ A storage request names a place the app needs. At install an administrator maps 
 
 `app.files.shares()` lists the shared folders the user can use, with the user's `access` and, while its pool cannot be reached, `unavailable`. Listing a shared folder needs `files.shares`; reading a file's content also needs `files.read`, writing also `files.write`. A shared folder the user has no access to fails with [`fs.share.not_found`](/docs/reference/errors/#fs.share.not_found).
 
-## Calls a third-party window can make
+## File calls of a sandboxed window
 
-On the box a sandboxed app is served these file calls:
+A sandboxed app gets every file call of the SDK. The daemon checks the app's permissions and the user's own rights on each of them. Most calls name a place (`{ storage: id }` or `{ share: id }`):
 
 | Call                                            | What it does                                                                              |
 | ----------------------------------------------- | ----------------------------------------------------------------------------------------- |
@@ -177,15 +177,23 @@ On the box a sandboxed app is served these file calls:
 | `files.read(ref)`, `files.write(ref, blob)`     | the content of an opened file; `write` always replaces it                                 |
 | `files.upload(location, folder, name, blob, o)` | a new file; an existing name fails with `fs.entry.exists` unless `overwrite: true`        |
 | `files.createFolder(location, path)`            | a folder; its parent must exist                                                           |
+| `files.rename(location, path, name)`            | renames within the folder; an existing name is never replaced                             |
+| `files.url(ref)`                                | a URL for `<img>`, `<video>` or `fetch` with range requests, valid 5 minutes, one file    |
+| `files.download(location, path)`                | a download through the browser, with progress in the taskbar                              |
+| `files.watch(location, path)` and `unwatch`     | `folderChanged` events while a folder is on screen                                        |
 
-The other file calls of the SDK (`pick`, `saveAs`, `url`, `watch`, `unwatch`, `download`, `rename`, `run`, `versions`, `restoreVersion`, `trash.*`, `jobs.cancel`) are not served to third-party apps yet and fail with [`sdk.method.unknown`](/docs/reference/errors/#sdk.method.unknown). Test with `app.supports(method)` before you offer a feature.
+**Dialogs.** `files.pick({ multiple, extensions })` (needs `files.read`) and `files.saveAs(suggestedName, blob)` (needs `files.write`) open the desktop's file dialog. Call them from a click or key handler: the dialog opens only for the window the user is working in, and otherwise `pick` resolves with `[]` and `saveAs` with `null`. The dialog browses the user's shared folders; the app learns only the files the user chose, and it can read (and, with `files.write`, write) exactly those without `files.shares`. The same holds for the file a user opens with the app from the Files app (`launch.file`, `openFile`).
+
+**The file manager calls** need `files.shares` and work on shared folders: `files.run(operation)` for copy, move and delete as a job (`files.read` and `files.write` for copy and move, `files.write` for delete), `files.versions` and `files.restoreVersion` (`files.read`, restore also `files.write`), `trash.list` (`files.read`) and `trash.restore`, `trash.delete` and `trash.empty` (`files.write`). `jobChanged` events follow a job; `jobs.cancel(id)` cancels only a job this app started for the user. `app.ui.showError(error)` shows the desktop's error dialog. `sharesChanged` reaches an app that holds `files.shares`.
+
+Test with `app.supports(method)` before you offer a feature the desktop may not have: the mock desktop of `pithyx dev` serves fewer calls than the box.
 
 ## Edge cases
 
 - **Paths** are relative to the location, with `/` between names and `""` for the root. A leading or doubled slash, `.`, `..` or a path over 4096 characters is refused with `sdk.request.invalid`. A name has 1 to 255 characters and no `/`.
 - **File handles** belong to the window that opened them and end with it. Store paths, never a `FileRef`; a stale one fails with `sdk.request.invalid`.
-- **Time limits.** Every call except `files.upload` fails after 15 seconds with `sdk.request.timeout`, `files.read` and `files.write` included. Write large files with `files.upload`, which has no time limit.
-- **Upload progress.** `uploadProgress` events are not sent to third-party apps.
+- **Time limits.** Every call fails after 15 seconds with `sdk.request.timeout` except the ones that last as long as a transfer or as the user takes: `files.upload`, `files.read`, `files.write`, `files.pick` and `files.saveAs`.
+- **Upload progress.** With an `upload` id, `files.upload` sends `uploadProgress` events with the bytes sent, and the upload shows in the taskbar with a cancel button.
 - **Pages.** A `limit` above 1000 is cut to 1000. Pass `nextCursor` as `cursor` for the next page; it stays valid while the folder changes. Symbolic links are listed as `symlink` and never followed.
 - **Mock desktop.** `pithyx dev` serves only `files.pick`, `files.saveAs`, `files.read` and `files.write` (on picked files) and keeps `app.storage` in the browser of the mock desktop. See [Testing](/docs/sdk/guides/testing/).
 

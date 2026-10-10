@@ -673,6 +673,128 @@ public sealed class AppApiForAppsTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task AFileTheUserHandedToAWindowNeedsNoSharesPermissionAndNothingElseOpens()
+    {
+        var root = Directory.CreateDirectory(Path.Combine(_factory.DataDirectory, "pool", "handed")).FullName;
+        await File.WriteAllTextAsync(Path.Combine(root, "readme.txt"), "hello", Token);
+        await File.WriteAllTextAsync(Path.Combine(root, "other.txt"), "other", Token);
+        long media;
+        using (var created = await _admin.PostAsJsonAsync("/api/shares", new { name = "Handed", path = root }, Token))
+        {
+            media = (await created.JsonAsync()).GetProperty("id").GetInt64();
+        }
+        await InstallAsync(AppA, "\"files.read\"");
+        await InstallAsync(AppB, "\"files.read\", \"files.write\"");
+        var (rita, ritaId, _) = await UserAsync("rita", AppA, AppB);
+        await _admin.SetShareAccessAsync(media, ritaId, "readWrite");
+        var reader = App(await TokenAsync(rita, AppA));
+        var writer = App(await TokenAsync(rita, AppB));
+        var otherWindow = App(await TokenAsync(rita, AppB, instance: "w2"));
+        var share = $"share={media}";
+
+        async Task<string?> HandAsync(HttpClient app, string path, bool write) =>
+            await ErrorAsync(await app.PostAsJsonAsync("/api/app/files/handles", new { share = media.ToString(System.Globalization.CultureInfo.InvariantCulture), path, write }, Token));
+
+        Assert.Equal("app.permission.denied", await ErrorAsync(await reader.GetAsync($"/api/app/files/content?{share}&path=readme.txt", Token)));
+        Assert.Null(await HandAsync(reader, "readme.txt", write: false));
+        Assert.Equal("hello", await reader.GetStringAsync($"/api/app/files/content?{share}&path=readme.txt", Token));
+        // Exactly the handed path, not its neighbours, not a folder listing, and not for writing.
+        Assert.Equal("app.permission.denied", await ErrorAsync(await reader.GetAsync($"/api/app/files/content?{share}&path=other.txt", Token)));
+        Assert.Equal("app.permission.denied", await ErrorAsync(await reader.GetAsync($"/api/app/files/list?{share}", Token)));
+        Assert.Equal("app.permission.denied", await HandAsync(reader, "readme.txt", write: true));
+        Assert.Equal("app.permission.denied", await ErrorAsync(await reader.PutAsync($"/api/app/files/content?{share}&path=readme.txt&overwrite=true", new StringContent("x"), Token)));
+
+        Assert.Null(await HandAsync(writer, "new.txt", write: true));
+        Assert.Null(await ErrorAsync(await writer.PutAsync($"/api/app/files/content?{share}&path=new.txt", new StringContent("saved"), Token)));
+        Assert.Equal("saved", await File.ReadAllTextAsync(Path.Combine(root, "new.txt"), Token));
+        Assert.Equal("app.permission.denied", await ErrorAsync(await writer.PutAsync($"/api/app/files/content?{share}&path=other.txt&overwrite=true", new StringContent("x"), Token)));
+        // A handle belongs to the window that got it.
+        Assert.Equal("app.permission.denied", await ErrorAsync(await otherWindow.PutAsync($"/api/app/files/content?{share}&path=new.txt&overwrite=true", new StringContent("x"), Token)));
+        // The user's own rights still decide.
+        await _admin.SetShareAccessAsync(media, ritaId, "read");
+        Assert.Equal("fs.share.read_only", await ErrorAsync(await writer.PutAsync($"/api/app/files/content?{share}&path=new.txt&overwrite=true", new StringContent("x"), Token)));
+
+        // A file URL reads that one file without any credentials, and ends with the app's permission.
+        using var created2 = await reader.PostAsJsonAsync("/api/app/files/url", new { share = media.ToString(System.Globalization.CultureInfo.InvariantCulture), path = "readme.txt" }, Token);
+        var url = (await created2.JsonAsync()).GetProperty("url").GetString()!;
+        Assert.StartsWith("/api/app-files/content?pithyx-token=", url, StringComparison.Ordinal);
+        var anonymous = _factory.CreateClient(new() { HandleCookies = false });
+        _clients.Add(anonymous);
+        using (var response = await anonymous.GetAsync(url, Token))
+        {
+            Assert.Equal("hello", await response.Content.ReadAsStringAsync(Token));
+            Assert.Equal("*", response.Headers.GetValues("Access-Control-Allow-Origin").Single());
+        }
+        using (var download = await anonymous.GetAsync(url + "&download=true", Token))
+        {
+            Assert.Equal("attachment", download.Content.Headers.ContentDisposition?.DispositionType);
+        }
+        using (var range = new HttpRequestMessage(HttpMethod.Get, url))
+        {
+            range.Headers.Range = new RangeHeaderValue(1, 2);
+            using var partial = await anonymous.SendAsync(range, Token);
+            Assert.Equal(HttpStatusCode.PartialContent, partial.StatusCode);
+            Assert.Equal("el", await partial.Content.ReadAsStringAsync(Token));
+        }
+        using (var other = await reader.PostAsJsonAsync("/api/app/files/url", new { share = media.ToString(System.Globalization.CultureInfo.InvariantCulture), path = "other.txt" }, Token))
+        {
+            Assert.Equal("app.permission.denied", await ErrorAsync(other));
+        }
+        Assert.Equal("app.token.invalid", await ErrorAsync(await anonymous.GetAsync("/api/app-files/content?pithyx-token=nope", Token)));
+        Assert.Equal("app.token.invalid", await ErrorAsync(await anonymous.GetAsync($"/api/app-files/content?pithyx-token={await TokenAsync(rita, AppA)}", Token)));
+        await _admin.PutAsJsonAsync($"/api/apps/{AppA}/permissions", new { permissions = new[] { new { permission = "files.read", granted = false } } }, Token);
+        Assert.Equal("app.permission.denied", await ErrorAsync(await anonymous.GetAsync(url, Token)));
+    }
+
+    [Fact]
+    public async Task TheFileManagerCallsNeedTheSharesAndTheReadOrWritePermissionAndJobsBelongToTheirApp()
+    {
+        var root = Directory.CreateDirectory(Path.Combine(_factory.DataDirectory, "pool", "manage")).FullName;
+        await File.WriteAllTextAsync(Path.Combine(root, "a.txt"), "a", Token);
+        await File.WriteAllTextAsync(Path.Combine(root, "b.txt"), "b", Token);
+        long media;
+        using (var created = await _admin.PostAsJsonAsync("/api/shares", new { name = "Manage", path = root }, Token))
+        {
+            media = (await created.JsonAsync()).GetProperty("id").GetInt64();
+        }
+        await InstallAsync(AppA, "\"files.shares\"");
+        await InstallAsync(AppB, "\"files.shares\", \"files.read\", \"files.write\"");
+        var (rita, ritaId, _) = await UserAsync("rita", AppA, AppB);
+        await _admin.SetShareAccessAsync(media, ritaId, "readWrite");
+        var weak = App(await TokenAsync(rita, AppA));
+        var strong = App(await TokenAsync(rita, AppB));
+        var id = media.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        var share = $"share={media}";
+
+        Task<HttpResponseMessage> Rename(HttpClient app) => app.PostAsJsonAsync("/api/app/files/rename", new { share = id, path = "a.txt", name = "c.txt" }, Token);
+        Task<HttpResponseMessage> Operation(HttpClient app, string path) => app.PostAsJsonAsync("/api/app/files/operations", new { kind = "delete", items = new[] { new { shareId = media, path } } }, Token);
+
+        Assert.Equal("app.permission.denied", await ErrorAsync(await Rename(weak)));
+        Assert.Equal("app.permission.denied", await ErrorAsync(await Operation(weak, "b.txt")));
+        Assert.Equal("app.permission.denied", await ErrorAsync(await weak.GetAsync($"/api/app/files/trash?{share}", Token)));
+        Assert.Equal("app.permission.denied", await ErrorAsync(await weak.GetAsync($"/api/app/files/versions?{share}&path=a.txt", Token)));
+        Assert.Equal("app.permission.denied", await ErrorAsync(await weak.PostAsJsonAsync("/api/app/files/trash/empty", new { share = id }, Token)));
+
+        using (var renamed = await Rename(strong))
+        {
+            Assert.Equal("c.txt", (await renamed.JsonAsync()).GetProperty("name").GetString());
+        }
+        using var started = await Operation(strong, "b.txt");
+        Assert.Equal(HttpStatusCode.Accepted, started.StatusCode);
+        var startedJob = await started.JsonAsync();
+        var job = startedJob.GetProperty("id").GetInt64();
+        await FinishedAsync(startedJob);
+        Assert.Equal(["b.txt"], (await strong.GetFromJsonAsync<JsonElement>($"/api/app/files/trash?{share}", Token)).GetProperty("items").EnumerateArray().Select(item => item.GetProperty("name").GetString()));
+        Assert.Equal(JsonValueKind.Array, (await strong.GetFromJsonAsync<JsonElement>($"/api/app/files/versions?{share}&path=c.txt", Token)).GetProperty("versions").ValueKind);
+
+        // A job belongs to the app that started it.
+        Assert.Equal("jobs.job.not_found", await ErrorAsync(await weak.PostAsync($"/api/app/jobs/{job}/cancel", null, Token)));
+        Assert.Equal("jobs.job.not_found", await ErrorAsync(await strong.PostAsync("/api/app/jobs/9999/cancel", null, Token)));
+        using var cancelled = await strong.PostAsync($"/api/app/jobs/{job}/cancel", null, Token);
+        Assert.Equal(HttpStatusCode.NoContent, cancelled.StatusCode);
+    }
+
+    [Fact]
     public async Task ConcurrentWritesKeepOneNotificationPerTagAndTheStorageLimit()
     {
         await InstallAsync(AppA, "\"notifications\"");

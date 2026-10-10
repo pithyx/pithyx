@@ -56,13 +56,11 @@ The lock is checked only when the Compose file passes. Warnings never change the
 | 1    | At least one error.                                             |
 | 2    | More than one project folder.                                   |
 
-:::caution
-A folder without `pithyx.json` but with a built frontend currently passes with an empty name (` is valid.`). `pack` refuses the same folder.
-:::
+A folder without `pithyx.json` fails with the error `cli.manifest.missing` and exit code 1, also when it has a built frontend; `pack` and `lock` refuse it the same way.
 
 ## Findings
 
-Errors with the box's codes `app.manifest.*`, `app.icon.invalid`, `app.package.invalid`, `app.package.layout_invalid`, `app.compose.*` and `app.elevated.unsupported`, plus the CLI's own `cli.frontend.*`, `cli.icon.template` and `cli.lock.*`. Each one with its message is listed under [Findings](/docs/reference/cli/findings/).
+Errors with the box's codes `app.manifest.*`, `app.icon.invalid`, `app.package.invalid`, `app.package.layout_invalid`, `app.compose.*` and `app.elevated.unsupported`, plus the CLI's own `cli.manifest.missing`, `cli.frontend.*`, `cli.icon.template` and `cli.lock.*`. Each one with its message is listed under [Findings](/docs/reference/cli/findings/).
 
 ## Examples
 

@@ -1,8 +1,7 @@
-import type { LaunchArgs } from '@pithyx/sdk';
 import { create } from 'zustand';
 import { isAppAllowed } from '../apps/access';
-import { emitTo } from '../apps/host/connections';
-import { withArgs, type WindowArgs } from '../apps/host/rules';
+import { emitTo, openFileIn } from '../apps/host/connections';
+import { withArgs, type DesktopLaunch, type WindowArgs } from '../apps/host/rules';
 import { findApp } from '../apps/registry';
 import { preferredSize } from './preferences';
 import { initialState, launchTarget, reduce } from './state';
@@ -22,7 +21,7 @@ export function dispatch(action: Action): void {
  */
 export function openApp(
   id: string,
-  launch: LaunchArgs = { args: null },
+  launch: DesktopLaunch = { args: null },
   options: { session?: unknown } = {},
 ): boolean {
   const app = findApp(id);
@@ -41,7 +40,17 @@ export function openApp(
       args: withArgs(state.windows[target.id]?.args, { launch }),
     });
     dispatch({ type: 'focus', id: target.id });
-    emitTo(target.id, 'launch', launch);
+    const { pendingFile, ...visible } = launch;
+    if (pendingFile === undefined) {
+      emitTo(target.id, 'launch', visible);
+    } else {
+      // A file opened with the app reaches its open window as `openFile`; without a handle it is a plain launch.
+      void openFileIn(target.id, pendingFile).then((sent) => {
+        if (!sent) {
+          emitTo(target.id, 'launch', visible);
+        }
+      });
+    }
     return true;
   }
   const size = preferredSize(id);

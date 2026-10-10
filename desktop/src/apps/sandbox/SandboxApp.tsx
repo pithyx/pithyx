@@ -3,6 +3,7 @@ import type { components } from '@pithyx/api-client';
 import { portEndpoint } from '@pithyx/sdk';
 import { serveApp, type AppConnection } from '@pithyx/sdk/host';
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
+import { useDesktop } from '../../wm/store';
 import { queryKeys } from '../../api/queries';
 import { realtime } from '../../realtime/connection';
 import { useSizeClass } from '../../wm/sizeClass';
@@ -11,8 +12,8 @@ import type { AppProps } from '../registry';
 import { brokerFor } from './broker';
 import { appApiFor } from './appApi';
 import { appBrokerFor } from './appBroker';
-import { setReady } from '../host/connections';
-import { contextChanges } from '../host/rules';
+import { registerFileAdopter, setReady } from '../host/connections';
+import { contextChanges, launchOf, pendingFileOf } from '../host/rules';
 import styles from './SandboxApp.module.css';
 import { appContext, storageOf, type DaemonAppContext } from '../sdk/context';
 import { useAppLifecycle } from '../sdk/useAppLifecycle';
@@ -33,14 +34,16 @@ type User = components['schemas']['UserInfo'];
 export function SandboxApp({ windowId, app, entry }: AppProps & { app: string; entry: string }) {
   const frame = useRef<HTMLIFrameElement>(null);
   const connection = useRef<AppConnection | null>(null);
+  const broker = useRef<ReturnType<typeof appBrokerFor> | null>(null);
   const daemonContext = useRef<DaemonAppContext | undefined>(undefined);
   const waiting = useRef(false);
+  const generation = useRef(0);
   const [daemon] = useState(() => appApiFor(app, windowId));
   const client = useQueryClient();
   const appName = useAppName();
   const sizeClass = useSizeClass();
 
-  function connect() {
+  async function connect() {
     const target = frame.current?.contentWindow;
     const context = daemonContext.current;
     if (target == null) {
@@ -52,8 +55,27 @@ export function SandboxApp({ windowId, app, entry }: AppProps & { app: string; e
       return;
     }
     waiting.current = false;
+    const mine = ++generation.current;
     connection.current?.close();
+    broker.current?.close();
     setReady(windowId, false);
+    broker.current = appBrokerFor({
+      app,
+      windowId,
+      daemon,
+      logLevel: () => daemonContext.current?.logLevel ?? 'info',
+      permissions: () => daemonContext.current?.permissions ?? [],
+      emit: (event, data) => {
+        connection.current?.emit(event, data);
+      },
+    });
+    const args = useDesktop.getState().windows[windowId]?.args;
+    const pending = pendingFileOf(args);
+    const file = pending === undefined ? undefined : await broker.current.adopt(pending);
+    // The frame may have loaded again while the handle was made; that load connects it.
+    if (generation.current !== mine) {
+      return;
+    }
     const channel = new MessageChannel();
     const user = client.getQueryData<User>(queryKeys.session);
     connection.current = serveApp(portEndpoint(channel.port1), {
@@ -64,6 +86,7 @@ export function SandboxApp({ windowId, app, entry }: AppProps & { app: string; e
         permissions: context.permissions,
         sizeClass,
         daemon: context,
+        launch: file === undefined ? launchOf(args) : { ...launchOf(args), file },
       }),
       methods: {
         ...brokerFor({
@@ -73,12 +96,7 @@ export function SandboxApp({ windowId, app, entry }: AppProps & { app: string; e
           permissions: context.permissions,
           content: () => frame.current,
         }),
-        ...appBrokerFor({
-          app,
-          windowId,
-          daemon,
-          logLevel: () => daemonContext.current?.logLevel ?? 'info',
-        }),
+        ...broker.current.methods,
       },
       onReady: () => {
         setReady(windowId, true);
@@ -94,7 +112,7 @@ export function SandboxApp({ windowId, app, entry }: AppProps & { app: string; e
     daemonContext.current = next;
     if (previous === undefined) {
       if (waiting.current) {
-        connect();
+        void connect();
       }
       return;
     }
@@ -114,6 +132,25 @@ export function SandboxApp({ windowId, app, entry }: AppProps & { app: string; e
 
   useAppLifecycle(windowId, connection);
 
+  // A file opened with the app while its window is open gets a handle from the window's own broker.
+  useEffect(
+    () =>
+      registerFileAdopter(
+        windowId,
+        async (file) => (await broker.current?.adopt(file)) ?? undefined,
+      ),
+    [windowId],
+  );
+
+  // The window's folder watches, jobs and share list end with the window.
+  useEffect(
+    () => () => {
+      broker.current?.close();
+      broker.current = null;
+    },
+    [],
+  );
+
   return (
     <iframe
       ref={frame}
@@ -122,7 +159,9 @@ export function SandboxApp({ windowId, app, entry }: AppProps & { app: string; e
       title={appName(app)}
       sandbox="allow-scripts allow-forms"
       referrerPolicy="no-referrer"
-      onLoad={connect}
+      onLoad={() => {
+        void connect();
+      }}
     />
   );
 }

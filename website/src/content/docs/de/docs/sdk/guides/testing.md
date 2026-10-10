@@ -33,15 +33,15 @@ npx pithyx dev --no-docker                           # kein Backend; seine Endpu
 
 ## Wo der Mock von der Box abweicht
 
-| Bereich         | Mock-Desktop                                                                               | Box                                                                                    |
-| --------------- | ------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
-| `app.storage`   | im Browser des Mock-Desktops, pro Mock-Benutzer; prüft 64 KB pro Wert, kein Limit von 1 MB | im Daemon, pro Benutzer, 64 KB pro Wert und insgesamt 1 MB                             |
-| Dateien         | `pick`, `saveAs`, `read` und `write` auf ausgewählten Dateien                              | `shares`, `list`, `open`, `read`, `write`, `upload`, `createFolder`                    |
-| `ui.showError`  | ins Log geschrieben                                                                        | für Drittanbieter-Apps nicht bedient                                                   |
-| `session.save`  | im Session Storage des Tabs, ohne Größenprüfung                                            | mit dem Desktop-Layout, höchstens 16 KB                                                |
-| Backend-Zustand | das Panel sendet nur das Ereignis; der Proxy leitet weiter                                 | ein gestopptes Backend wacht für eine Anfrage auf; bei updating oder unavailable 503   |
-| Start           | immer `{ args: null }`; sende `launch` aus dem Panel                                       | `{ args: null }` oder `launch.notification` nach einem Klick auf eine Benachrichtigung |
-| Tokens          | gültig 5 Minuten, Tickets 30 Sekunden und einmal, wie auf der Box                          | dasselbe, und bei jeder Nutzung gegen die Sitzung und die Freigabe der App geprüft     |
+| Bereich         | Mock-Desktop                                                                               | Box                                                                                         |
+| --------------- | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------- |
+| `app.storage`   | im Browser des Mock-Desktops, pro Mock-Benutzer; prüft 64 KB pro Wert, kein Limit von 1 MB | im Daemon, pro Benutzer, 64 KB pro Wert und insgesamt 1 MB                                  |
+| Dateien         | `pick`, `saveAs`, `read` und `write` auf ausgewählten Dateien                              | jeder Dateiaufruf, siehe [Dateien und App-Speicher](/de/docs/sdk/guides/files-and-storage/) |
+| `ui.showError`  | ins Log geschrieben                                                                        | der Fehlerdialog des Desktops                                                               |
+| `session.save`  | im Session Storage des Tabs, ohne Größenprüfung                                            | mit dem Desktop-Layout, höchstens 16 KB                                                     |
+| Backend-Zustand | das Panel sendet nur das Ereignis; der Proxy leitet weiter                                 | ein gestopptes Backend wacht für eine Anfrage auf; bei updating oder unavailable 503        |
+| Start           | immer `{ args: null }`; sende `launch` aus dem Panel                                       | `{ args: null }` oder `launch.notification` nach einem Klick auf eine Benachrichtigung      |
+| Tokens          | gültig 5 Minuten, Tickets 30 Sekunden und einmal, wie auf der Box                          | dasselbe, und bei jeder Nutzung gegen die Sitzung und die Freigabe der App geprüft          |
 
 Prüfe `app.supports(method)` vor jedem Aufruf, der fehlen kann; dann weicht die App in beiden gleich aus.
 

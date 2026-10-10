@@ -1,9 +1,29 @@
 import type { EventName, LaunchArgs, Point, StorageInfo } from '@pithyx/sdk';
 import type { RealtimeStatus } from '../../realtime/connection';
 
+/** A file of a shared folder that an app is launched with; the window turns it into the app's `launch.file`. */
+export interface PendingFile {
+  share: string;
+  path: string;
+  size: number;
+  modified: string;
+  writable: boolean;
+}
+
+/** Launch arguments as the desktop passes them on: what the app sees, and the file it is opened with. */
+export type DesktopLaunch = LaunchArgs & { pendingFile?: PendingFile };
+
+/** The file a window was launched with, if any. */
+export function pendingFileOf(args: unknown): PendingFile | undefined {
+  const launch = argsRecord(args).launch;
+  return typeof launch === 'object' && launch !== null && 'pendingFile' in launch
+    ? (launch.pendingFile as PendingFile)
+    : undefined;
+}
+
 /** What a window keeps in its `args`: the arguments it was launched with and the state the app saved. */
 export interface WindowArgs {
-  launch?: LaunchArgs;
+  launch?: DesktopLaunch;
   session?: unknown;
 }
 
@@ -16,9 +36,14 @@ function argsRecord(args: unknown): Record<string, unknown> {
 /** The launch arguments a window keeps; windows of older layouts and windows opened without any get `{ args: null }`. */
 export function launchOf(args: unknown): LaunchArgs {
   const launch = argsRecord(args).launch;
-  return typeof launch === 'object' && launch !== null && 'args' in launch
-    ? launch
-    : { args: null };
+  if (typeof launch !== 'object' || launch === null || !('args' in launch)) {
+    return { args: null };
+  }
+  // The file the window was launched with reaches the app as `file`, made by the window, not as the path it names.
+  const visible: Record<string, unknown> = { ...launch };
+  delete visible.pendingFile;
+  delete visible.file;
+  return visible as unknown as LaunchArgs;
 }
 
 /** The state an app saved for the window with `session.save`, or null. */
@@ -31,7 +56,7 @@ export function withArgs(args: unknown, change: WindowArgs): WindowArgs {
   const current = argsRecord(args);
   const next: WindowArgs = {};
   if ('launch' in current) {
-    next.launch = current.launch as LaunchArgs;
+    next.launch = current.launch as DesktopLaunch;
   }
   if ('session' in current) {
     next.session = current.session;

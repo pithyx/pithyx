@@ -1,5 +1,6 @@
 import type { FileEntry, FolderPage } from '@pithyx/sdk';
 import { describe, expect, it } from 'vitest';
+import type { InstalledApp } from '../installed';
 import { defaultAction, openWithChoices } from './defaultAction';
 import { compareEntries, naturalKey } from './order';
 import { applyChange, loadedEntries, type FolderPages } from './pages';
@@ -147,6 +148,27 @@ describe('default action', () => {
     expect(openWithChoices(entry('a.zip'))).toEqual(['download']);
     expect(openWithChoices(entry('a.png'))).toEqual(['viewer', 'download']);
     expect(openWithChoices(entry('dir', 0, 'folder'))).toEqual([]);
+    const app = (id: string, extensions: string[]): InstalledApp => ({
+      id,
+      version: '1.0.0',
+      name: { en: id },
+      description: null,
+      entry: '/apps/x/index.html',
+      icon: '',
+      window: {},
+      permissions: [],
+      logLevel: 'info',
+      fileHandlers: [{ extensions, isDefault: false }],
+    });
+    const apps = [app('com.example.draw', ['png', 'tar.gz']), app('com.example.text', ['txt'])];
+    expect(openWithChoices(entry('a.PNG'), apps)).toEqual([
+      'viewer',
+      'download',
+      'app:com.example.draw',
+    ]);
+    expect(openWithChoices(entry('a.tar.gz'), apps)).toEqual(['download', 'app:com.example.draw']);
+    expect(openWithChoices(entry('a.zip'), apps)).toEqual(['download']);
+    expect(openWithChoices(entry('png', 0, 'folder'), apps)).toEqual([]);
     expect(defaultAction(entry('dev', 0, 'other'))).toEqual({ kind: 'none' });
   });
 });

@@ -33,15 +33,15 @@ Open `http://127.0.0.1:7400/`. After a change, rebuild the frontend and reload; 
 
 ## Where the mock differs from the box
 
-| Area           | Mock desktop                                                                             | Box                                                                        |
-| -------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `app.storage`  | in the browser of the mock desktop, per mock user; checks 64 KB per value, no 1 MB total | in the daemon, per user, 64 KB per value and 1 MB in total                 |
-| Files          | `pick`, `saveAs`, `read` and `write` on picked files                                     | `shares`, `list`, `open`, `read`, `write`, `upload`, `createFolder`        |
-| `ui.showError` | written to the log                                                                       | not served to third-party apps                                             |
-| `session.save` | kept in the tab's session storage, no size check                                         | with the desktop layout, at most 16 KB                                     |
-| Backend status | the panel only sends the event; the proxy keeps forwarding                               | a stopped backend wakes for a request; updating or unavailable answers 503 |
-| Launch         | always `{ args: null }`; send `launch` from the panel                                    | `{ args: null }`, or `launch.notification` after a notification click      |
-| Tokens         | valid 5 minutes, tickets 30 seconds and once, as on the box                              | the same, and checked against the session and the app's grant on every use |
+| Area           | Mock desktop                                                                             | Box                                                                               |
+| -------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| `app.storage`  | in the browser of the mock desktop, per mock user; checks 64 KB per value, no 1 MB total | in the daemon, per user, 64 KB per value and 1 MB in total                        |
+| Files          | `pick`, `saveAs`, `read` and `write` on picked files                                     | every file call, see [Files and app storage](/docs/sdk/guides/files-and-storage/) |
+| `ui.showError` | written to the log                                                                       | the desktop's error dialog                                                        |
+| `session.save` | kept in the tab's session storage, no size check                                         | with the desktop layout, at most 16 KB                                            |
+| Backend status | the panel only sends the event; the proxy keeps forwarding                               | a stopped backend wakes for a request; updating or unavailable answers 503        |
+| Launch         | always `{ args: null }`; send `launch` from the panel                                    | `{ args: null }`, or `launch.notification` after a notification click             |
+| Tokens         | valid 5 minutes, tickets 30 seconds and once, as on the box                              | the same, and checked against the session and the app's grant on every use        |
 
 Check `app.supports(method)` before every call that may be missing, so the app falls back the same way in both.
 

@@ -256,6 +256,25 @@
       "manual": "Dieser Browser erlaubt hier kein Kopieren. Markiere den Text und drücke Strg+C (auf dem Mac Cmd+C).",
       "copy": "Kopieren",
       "close": "Schließen"
+    },
+    "files": {
+      "pickTitle": "Dateien für {name} auswählen",
+      "saveTitle": "Speichern für {name}",
+      "cancel": "Abbrechen",
+      "choose": "Auswählen",
+      "save": "Speichern",
+      "replace": "Ersetzen",
+      "loading": "Lädt ...",
+      "failed": "Die Dateien konnten nicht geladen werden.",
+      "noShares": "Es gibt keine Freigaben, die du nutzen kannst.",
+      "shares": "Freigaben",
+      "location": "Ort",
+      "entries": "Dateien und Ordner",
+      "empty": "Dieser Ordner ist leer.",
+      "more": "Mehr laden",
+      "name": "Dateiname",
+      "readOnly": "Diese Freigabe kannst du nur lesen. Wähle eine andere, um hier zu speichern.",
+      "exists": "Eine Datei mit diesem Namen gibt es schon. Speichern ersetzt sie."
     }
   }
 }

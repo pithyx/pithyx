@@ -1,10 +1,26 @@
 import type { components } from '@pithyx/api-client';
-import type { FileEntry, FileLocation, FileRef, FolderPage, ShareInfo } from '@pithyx/sdk';
-import { sdkError, type MethodHandlers } from '@pithyx/sdk/host';
+import type { FileLocation, FileRef, FolderPage, ShareInfo } from '@pithyx/sdk';
+import { PithyxError, sdkError, type MethodHandlers } from '@pithyx/sdk/host';
 import { api } from '../../api/client';
 import { randomId } from '../../platform/browser';
-import { rememberNotification } from '../host/store';
+import { download } from '../../shell/transfers';
+import { useDesktop } from '../../wm/store';
+import type { PendingFile } from '../host/rules';
+import { offerFileDialog, rememberNotification, type ChosenFile } from '../host/store';
 import { toPithyxError } from '../sdk/daemonError';
+import {
+  folderWatcher,
+  jobFollower,
+  operationBody,
+  shareIdOf,
+  sharesWatcher,
+  showProblem,
+  toEntry,
+  toJob,
+  toTrashPage,
+  toVersions,
+  type Emit,
+} from '../sdk/fileMapping';
 import { locationQuery, type AppApi } from './appApi';
 
 type AppFileEntry = components['schemas']['AppFileEntry'];
@@ -20,10 +36,6 @@ async function daemon<T>(work: () => Promise<T>): Promise<T> {
   }
 }
 
-function entryOf(entry: AppFileEntry | components['schemas']['FileEntry']): FileEntry {
-  return { name: entry.name, kind: entry.kind, size: entry.size, modified: entry.modified };
-}
-
 function shareOf(share: AppShareInfo): ShareInfo {
   return {
     id: share.id,
@@ -35,8 +47,15 @@ function shareOf(share: AppShareInfo): ShareInfo {
   };
 }
 
+/** The page as the app sees it: the folder's topic stays with the desktop. */
 function pageOf(page: AppFolderPage): FolderPage {
-  return { ...page, entries: page.entries.map(entryOf) };
+  return {
+    path: page.path,
+    folderId: page.folderId,
+    total: page.total,
+    entries: page.entries.map(toEntry),
+    nextCursor: page.nextCursor ?? null,
+  };
 }
 
 function join(folder: string, name: string): string {
@@ -54,9 +73,29 @@ export function appBrokerFor(target: {
   windowId: string;
   daemon: AppApi;
   logLevel: () => 'debug' | 'info';
-}): MethodHandlers {
+  /** The permissions the app holds now (the daemon's context follows revocations). */
+  permissions: () => readonly string[];
+  /** Sends an event to the app's window. */
+  emit: Emit;
+}): {
+  methods: MethodHandlers;
+  close: () => void;
+  adopt: (file: PendingFile) => Promise<FileRef | undefined>;
+} {
   const { daemon: client } = target;
   const refs = new Map<string, { location: FileLocation; path: string }>();
+  const watches = folderWatcher(target.emit);
+  const jobs = jobFollower(target.emit);
+  const stopShares = sharesWatcher(target.emit, () =>
+    target.permissions().includes('files.shares'),
+  );
+  const require = (permission: string) => {
+    if (!target.permissions().includes(permission)) {
+      throw new PithyxError({ code: 'app.permission.denied', params: { permission } });
+    }
+  };
+  /** Dialogs open for a window the user works in only, like menus. */
+  const focused = () => useDesktop.getState().focused === target.windowId;
 
   const fileRef = (location: FileLocation, path: string, entry: AppFileEntry): FileRef => {
     const ref = randomId();
@@ -81,7 +120,38 @@ export function appBrokerFor(target: {
     return (await response.json()) as AppFileEntry;
   };
 
-  return {
+  /** Registers a file the user chose in a dialog with the daemon and gives the app a handle for it. */
+  async function handOut(file: ChosenFile, write: boolean, entry?: AppFileEntry): Promise<FileRef> {
+    const location = { share: String(file.share) };
+    await client.call((headers) =>
+      api.POST('/api/app/files/handles', {
+        headers,
+        body: { share: location.share, path: file.path, write },
+      }),
+    );
+    return fileRef(
+      location,
+      file.path,
+      entry ?? {
+        name: file.name,
+        kind: 'file',
+        size: file.size,
+        modified: file.modified,
+        writable: write,
+      },
+    );
+  }
+  const urlFor = async (location: FileLocation, path: string) => {
+    const created = await client.call((headers) =>
+      api.POST('/api/app/files/url', { headers, body: { path, ...locationQuery(location) } }),
+    );
+    return { url: new URL(created.url, window.location.origin).href, expiresAt: created.expiresAt };
+  };
+  const shareBody = (location: FileLocation) => String(shareIdOf(location));
+  const started = async (call: () => Promise<components['schemas']['Job']>) =>
+    jobs.follow(toJob(await daemon(call)));
+
+  const methods: MethodHandlers = {
     'log.write': async ({ entries }) => {
       const wanted =
         target.logLevel() === 'debug'
@@ -158,7 +228,7 @@ export function appBrokerFor(target: {
       daemon(async () =>
         client.call((headers) => api.GET('/api/app/directory/groups', { headers })),
       ),
-    'backend.token': async () => daemon(async () => client.backendToken()),
+    'backend.token': async ({ renew }) => daemon(async () => client.backendToken(renew === true)),
     'backend.ticket': async ({ endpoint }) =>
       daemon(async () => {
         const issued = await client.call((headers) =>
@@ -215,13 +285,24 @@ export function appBrokerFor(target: {
         const { location, path } = place(file);
         return fileRef(location, path, await write(location, path, data, true));
       }),
-    'files.upload': async ({ location, folder, name, data, overwrite }) =>
-      daemon(async () =>
-        entryOf(await write(location, join(folder, name), data, overwrite === true)),
-      ),
+    'files.upload': async ({ location, folder, name, data, overwrite, upload }) =>
+      daemon(async () => {
+        const path = join(folder, name);
+        const entry = await client.upload(
+          `/api/app/files/content?${query(location, path)}&overwrite=${String(overwrite === true)}`,
+          name,
+          data,
+          (loaded) => {
+            if (upload !== undefined) {
+              target.emit('uploadProgress', { upload, loaded, total: data.size });
+            }
+          },
+        );
+        return toEntry(entry);
+      }),
     'files.createFolder': async ({ location, path }) =>
       daemon(async () =>
-        entryOf(
+        toEntry(
           await client.call((headers) =>
             api.POST('/api/app/files/folders', {
               headers,
@@ -230,5 +311,216 @@ export function appBrokerFor(target: {
           ),
         ),
       ),
+    'files.pick': async ({ multiple, extensions }) => {
+      require('files.read');
+      if (!focused()) {
+        return [];
+      }
+      const chosen = await offerFileDialog({
+        kind: 'pick',
+        windowId: target.windowId,
+        multiple: multiple === true,
+        extensions: (extensions ?? []).map((extension) => extension.replace(/^\./, '')),
+        suggestedName: '',
+      });
+      const refs: FileRef[] = [];
+      for (const file of chosen ?? []) {
+        const write = target.permissions().includes('files.write') && file.access === 'readWrite';
+        refs.push(await daemon(async () => handOut(file, write)));
+      }
+      return refs;
+    },
+    'files.saveAs': async ({ suggestedName, data }) => {
+      require('files.write');
+      if (!focused()) {
+        return null;
+      }
+      const chosen = (
+        await offerFileDialog({
+          kind: 'save',
+          windowId: target.windowId,
+          multiple: false,
+          extensions: [],
+          suggestedName,
+        })
+      )?.[0];
+      if (chosen === undefined) {
+        return null;
+      }
+      return daemon(async () => {
+        await handOut(chosen, true);
+        const location = { share: String(chosen.share) };
+        const entry = await client.upload(
+          `/api/app/files/content?${query(location, chosen.path)}&overwrite=${String(chosen.overwrite)}`,
+          chosen.name,
+          data,
+          () => undefined,
+        );
+        return fileRef(location, chosen.path, entry);
+      });
+    },
+    'files.url': async ({ file }) =>
+      daemon(async () => {
+        const { location, path } = place(file);
+        return urlFor(location, path);
+      }),
+    'files.watch': async ({ location, path }) =>
+      daemon(async () => {
+        // The topic of a folder comes with its listing; a one-entry page is the cheapest way to get it.
+        const page = await client.call((headers) =>
+          api.GET('/api/app/files/list', {
+            headers,
+            params: { query: { ...locationQuery(location), path, limit: 1 } },
+          }),
+        );
+        const needsShares = 'share' in location;
+        return {
+          watch: watches.start(
+            page.topic,
+            () => !needsShares || target.permissions().includes('files.shares'),
+          ),
+        };
+      }),
+    'files.unwatch': ({ watch }) => {
+      watches.stop(watch);
+    },
+    'files.download': async ({ location, path }) =>
+      daemon(async () => {
+        const { url } = await urlFor(location, path);
+        // Returns once the download started; its progress and a cancel button are in the taskbar.
+        download(`${url}&download=true`, path.slice(path.lastIndexOf('/') + 1));
+        return undefined;
+      }),
+    'files.rename': async ({ location, path, name }) =>
+      daemon(async () =>
+        toEntry(
+          await client.call((headers) =>
+            api.POST('/api/app/files/rename', {
+              headers,
+              body: { path, name, ...locationQuery(location) },
+            }),
+          ),
+        ),
+      ),
+    'files.run': async (params) =>
+      started(() =>
+        client.call((headers) =>
+          api.POST('/api/app/files/operations', { headers, body: operationBody(params) }),
+        ),
+      ),
+    'files.versions': async ({ location, path }) =>
+      daemon(async () =>
+        toVersions(
+          await client.call((headers) =>
+            api.GET('/api/app/files/versions', {
+              headers,
+              params: { query: { share: shareBody(location), path } },
+            }),
+          ),
+        ),
+      ),
+    'files.restoreVersion': async ({ location, path, snapshot, overwrite }) =>
+      started(() =>
+        client.call((headers) =>
+          api.POST('/api/app/files/versions/restore', {
+            headers,
+            body: { share: shareBody(location), path, snapshot, overwrite: overwrite === true },
+          }),
+        ),
+      ),
+    'jobs.cancel': async ({ job }) =>
+      daemon(async () => {
+        await client.call((headers) =>
+          api.POST('/api/app/jobs/{id}/cancel', { headers, params: { path: { id: job } } }),
+        );
+        return undefined;
+      }),
+    'trash.list': async ({ location, cursor, limit }) =>
+      daemon(async () =>
+        toTrashPage(
+          await client.call((headers) =>
+            api.GET('/api/app/files/trash', {
+              headers,
+              params: {
+                query: {
+                  share: shareBody(location),
+                  ...(cursor === undefined ? {} : { cursor }),
+                  ...(limit === undefined ? {} : { limit }),
+                },
+              },
+            }),
+          ),
+        ),
+      ),
+    'trash.restore': async ({ location, ids, onConflict }) =>
+      started(() =>
+        client.call((headers) =>
+          api.POST('/api/app/files/trash/restore', {
+            headers,
+            body: {
+              share: shareBody(location),
+              ids,
+              ...(onConflict === undefined ? {} : { onConflict }),
+            },
+          }),
+        ),
+      ),
+    'trash.delete': async ({ location, ids }) =>
+      started(() =>
+        client.call((headers) =>
+          api.POST('/api/app/files/trash/delete', {
+            headers,
+            body: { share: shareBody(location), ids },
+          }),
+        ),
+      ),
+    'trash.empty': async ({ location }) =>
+      started(() =>
+        client.call((headers) =>
+          api.POST('/api/app/files/trash/empty', {
+            headers,
+            body: { share: shareBody(location) },
+          }),
+        ),
+      ),
+    'ui.showError': ({ problem }) => {
+      showProblem(problem);
+    },
+  };
+
+  return {
+    methods,
+    /**
+     * The handle for a file the user opened with this app from the Files app (`launch.file`, `openFile`): the app
+     * reads it with `files.read`, or writes it when it holds `files.write` and the user may. Undefined when the app
+     * holds no `files.read`, because it could not read the file anyway.
+     */
+    adopt: async (file) => {
+      if (!target.permissions().includes('files.read')) {
+        return undefined;
+      }
+      const write = file.writable && target.permissions().includes('files.write');
+      try {
+        return await handOut(
+          {
+            share: Number(file.share),
+            path: file.path,
+            name: file.path.split('/').at(-1) ?? file.path,
+            size: file.size,
+            modified: file.modified,
+            access: file.writable ? 'readWrite' : 'read',
+            overwrite: false,
+          },
+          write,
+        );
+      } catch {
+        return undefined;
+      }
+    },
+    close: () => {
+      stopShares();
+      watches.close();
+      jobs.close();
+    },
   };
 }

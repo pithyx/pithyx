@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { copyText } from '../../platform/browser';
 import { useDesktop } from '../../wm/store';
 import { useAppName } from '../names';
+import { FileDialog } from './FileDialog';
 import { answerForceClose, closeManualCopy, useHost } from './store';
 
 /** D62: an app did not answer `beforeClose` in time; the user decides whether to close its window anyway. */
@@ -102,8 +103,12 @@ function CopyDialog({ text }: { text: string }) {
 export function HostDialogs() {
   const unresponsive = useHost((state) => state.unresponsive[0]);
   const copy = useHost((state) => state.copy);
+  const fileDialog = useHost((state) => state.fileDialog);
   if (unresponsive !== undefined) {
     return <UnresponsiveDialog key={unresponsive} windowId={unresponsive} />;
+  }
+  if (fileDialog !== null) {
+    return <FileDialog request={fileDialog} />;
   }
   return copy === null ? null : <CopyDialog text={copy} />;
 }
