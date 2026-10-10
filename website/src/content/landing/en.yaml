@@ -1,111 +1,115 @@
 # Every text and picture of the English landing page. The German page reads de.yaml with the same keys.
 # Image paths are relative to this file; replace the placeholders in src/assets/screenshots/ with real screenshots.
 title: Pithyx
-description: Free, self-hosted NAS and server OS with a web desktop. Your files, your apps, your hardware.
+description: 'Free, self-hosted NAS and server OS with a web desktop. Your files, your apps, your hardware.'
 hero:
-  title: Your server, with a desktop.
-  tagline: Pithyx turns your own hardware into a NAS and app server with a web desktop. Free, open source and 100 percent local.
+  title: 'Your server, with a desktop.'
+  tagline: 'Pithyx turns a computer you own into a NAS and app server that you manage from a desktop in your browser: free, open source and 100 percent local.'
   primary: { label: Get started, href: /docs/getting-started/quick-start/ }
   secondary: { label: Read the docs, href: /docs/ }
   github: { label: GitHub, href: https://github.com/pithyx/pithyx }
 showcase:
   image: ../../assets/screenshots/desktop.svg
-  alt: The Pithyx desktop with open windows
-  caption: Placeholder for the desktop screenshot.
+  alt: 'The Pithyx desktop in a browser: the Files and Storage windows snapped side by side, shortcuts and a sticky note on the desktop and the taskbar at the bottom'
+  caption: 'The web desktop with Files and Storage open side by side. Every app, built in or installed, opens in a window like these.'
 features:
-  title: Everything a home server needs
-  intro: Placeholder intro. One or two sentences on what Pithyx does out of the box.
+  title: What is built in
+  intro: 'Pithyx installs from a USB stick, and the installer runs in your browser. After that you manage storage, sharing, users, apps and the network in the web desktop.'
   items:
     - {
         icon: 'storage',
         title: 'ZFS storage',
-        text: 'Placeholder. Pools, snapshots and encryption with safety checks before every disk change.',
+        text: 'Pools from a single disk to RAID-Z3, with snapshot schedules, scrubs and SMART checks. A disk that holds data is only wiped after you type its serial number.',
         href: '/docs/admin/storage/',
       }
     - {
         icon: 'files',
         title: 'Files and sharing',
-        text: 'Placeholder. A file manager in the browser plus SMB, SFTP, WebDAV and FTP.',
+        text: 'A file manager in the browser with a recycle bin and previous versions, and shared folders over SMB 3, SFTP, WebDAV and FTP.',
         href: '/docs/user/files/',
       }
     - {
         icon: 'apps',
         title: 'Apps',
-        text: 'Placeholder. Install apps from signed catalogs; backends run sandboxed in containers.',
+        text: 'Install apps from the signed project catalogs, your own catalogs or a package file. Backends run in containers without internet access unless the app asks for it, and an update can be rolled back.',
         href: '/docs/admin/apps-and-store/',
       }
     - {
         icon: 'users',
         title: 'Users and groups',
-        text: 'Placeholder. Rights per shared folder, protocol and app, with two-factor sign-in.',
+        text: 'Rights per shared folder, file service and app, given to users and groups. Two-factor sign-in with any authenticator app (TOTP).',
         href: '/docs/admin/users-and-groups/',
       }
     - {
         icon: 'network',
         title: 'Network',
-        text: 'Placeholder. Static addresses, bonds and VLANs with a confirmation timer that rolls back mistakes.',
+        text: 'Static addresses, bonds and VLANs in the browser. A change goes back after 60 seconds unless you confirm it, and the console menu resets a box you locked yourself out of.',
         href: '/docs/admin/network/',
       }
     - {
-        icon: 'updates',
-        title: 'Updates',
-        text: 'Placeholder. Signed system updates and app updates with rollback.',
-        href: '/docs/install/updates/',
+        icon: 'shield',
+        title: 'Configuration backup',
+        text: 'Users, shared folders and settings in one file encrypted with your password, to restore after a reinstall. Your files stay on the pools and are not part of it.',
+        href: '/docs/admin/backup/',
       }
 why:
   title: Why Pithyx
-  intro: Placeholder. Why this project exists and who it is for.
+  intro: 'Pithyx is for people who want their files and apps on hardware they own, managed in a browser, without an account anywhere. It is pre-release software: try it, but do not trust it with data you cannot lose yet.'
   items:
     - {
         title: 'Free and open',
-        text: 'Placeholder. AGPL-3.0 for the system and MIT for the SDK. No paid edition.',
+        text: 'The system is licensed under AGPL-3.0, the packages for app developers under MIT. There is no paid edition, and all of the code is on GitHub.',
       }
     - {
         title: '100 percent local',
-        text: 'Placeholder. No telemetry, no phone-home, no cloud account.',
+        text: 'No telemetry, no cloud account and no project server the box depends on. It connects out only for the app catalogs you enable, their images and the time, and the docs list each of these connections.',
       }
     - {
         title: 'A real desktop',
-        text: 'Placeholder. Windows, a taskbar and apps in the browser, on any device.',
+        text: 'Windows, a taskbar, shortcuts and notes in the browser, on a PC, tablet or phone. The built-in apps use the same SDK as every app you install.',
       }
     - {
-        title: 'Safe by default',
-        text: 'Placeholder. Disk guards, confirmation timers and sandboxed apps.',
+        title: 'Careful by default',
+        text: 'Disks with data need their serial number, network changes roll back unless you confirm them, app backends run unprivileged and SSH stays off until you switch it on. The desktop still uses plain HTTP, so keep the box on a network you trust.',
       }
 specs:
   title: At a glance
   rows:
     - { label: 'Base', value: 'Debian 13' }
-    - { label: 'Platforms', value: 'x86-64-v2, UEFI (arm64 community)' }
+    - { label: 'Platform', value: '64-bit x86 (x86-64-v2), UEFI, Secure Boot off' }
+    - { label: 'Minimum', value: '4 GB RAM, a 40 GB system disk' }
     - { label: 'Reference hardware', value: 'Intel N100 or N305, 8 GB RAM' }
-    - { label: 'Storage', value: 'OpenZFS' }
-    - { label: 'File services', value: 'SMB 3, SFTP, WebDAV, FTP' }
-    - { label: 'Apps', value: 'Static frontends, container backends' }
-    - { label: 'Ports', value: '443 (HTTPS) and 7484' }
-    - { label: 'License', value: 'AGPL-3.0, SDK MIT' }
+    - { label: 'System disk', value: 'btrfs on one disk or a mirror of two' }
+    - { label: 'Data storage', value: 'OpenZFS pools, from a single disk to RAID-Z3' }
+    - { label: 'File services', value: 'SMB 3, SFTP, WebDAV, FTP with TLS' }
+    - { label: 'Network', value: 'Wired, IPv4 and IPv6, bonds and VLANs' }
+    - { label: 'Apps', value: 'Static frontends, backends in Docker containers' }
+    - { label: 'Web desktop', value: 'HTTP on port 7484 (HTTPS not built yet)' }
+    - { label: 'Languages', value: 'English, German' }
+    - { label: 'License', value: 'AGPL-3.0, npm packages for app developers MIT' }
 gallery:
   title: A look inside
   close: Close
   items:
     - {
         image: '../../assets/screenshots/files.svg',
-        alt: 'The Files app',
-        caption: 'Files (placeholder)',
+        alt: 'The Files app with the shared folders in the sidebar, a folder of holiday photos in list view and the context menu of one photo open',
+        caption: 'Files: shared folders, the recycle bin and previous versions in the browser.',
       }
     - {
         image: '../../assets/screenshots/storage.svg',
-        alt: 'The Storage app',
-        caption: 'Storage (placeholder)',
+        alt: 'The Storage app with a healthy RAID-Z1 pool of four disks, its used and free space and the list of its disks',
+        caption: 'Storage: ZFS pools, disks and snapshots, with the exact commands shown before anything runs.',
       }
     - {
         image: '../../assets/screenshots/store.svg',
-        alt: 'The Store',
-        caption: 'Store (placeholder)',
+        alt: 'The Store on the Installed tab with three installed apps, one of them with an update waiting',
+        caption: 'Store: apps from catalogs or a file, with updates and a way back to the previous version.',
       }
     - {
         image: '../../assets/screenshots/settings.svg',
-        alt: 'The Settings app',
-        caption: 'Settings (placeholder)',
+        alt: 'Settings on the Users page with a list of users and the badges Administrator and Two-factor',
+        caption: 'Settings: users and groups, shared folders, file services, network and backup.',
       }
 ai:
   title: For AI assistants
@@ -131,7 +135,7 @@ ai:
   copy: Copy prompt
   copied: Copied
 cta:
-  title: Ready to try it?
-  text: Placeholder. Grab a USB stick and an old PC, and you have a server in half an hour.
-  primary: { label: Install Pithyx, href: /docs/install/usb-stick/ }
+  title: Want to try it?
+  text: 'Pithyx is pre-release software. The guide walks you through the image, the USB stick and the web installer. Try it on a spare computer or in a virtual machine, not with data you cannot lose.'
+  primary: { label: How to install, href: /docs/install/usb-stick/ }
   secondary: { label: Star on GitHub, href: https://github.com/pithyx/pithyx }

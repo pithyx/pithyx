@@ -101,3 +101,8 @@ Collected from the six notes files (the number in brackets is the item in that f
 58. **Answers that depend on HTTPS** (FAQ `https-warning`, `encrypted-traffic`, `ports`, `draft`): they describe plain HTTP on 7484 and advise against forwarding ports to the internet. Rewrite when HTTPS is built (see 1).
 59. **System updates** (FAQ `system-updates`, `draft`): says this pre-release has no update function and a new version means a reinstall with backup and pool import. Rewrite together with `install/updates.md` after the update branch is merged (see 2).
 60. **Download and scripts** (FAQ `download` and `api-scripts`, `draft`): follow 21 (no public download, no ISO signature) and 54 (no personal access tokens).
+
+## H. Found while writing the landing page (2026-10-10)
+
+61. **Updates card.** The landing page had a feature card "Updates" ("Signed system updates and app updates with rollback") linking to `install/updates.md`. There is no box-side updater in this checkout (see 2), so the card became "Configuration backup" and app updates with rollback moved into the "Apps" card. Bring an "Updates" card back once the update branch is merged.
+62. **HTTP on the landing page.** The spec row "Web desktop" says "HTTP on port 7484 (HTTPS not built yet)" and "Careful by default" tells readers to keep the box on a trusted network (see 1). Rewrite both when HTTPS is built. The arm64 note was dropped from "Platform" (plan only, see 19).

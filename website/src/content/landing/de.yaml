@@ -1,110 +1,114 @@
 # Every text and picture of the German landing page, with the same keys as en.yaml.
 title: Pithyx
-description: Freies, selbst gehostetes NAS- und Server-Betriebssystem mit Web-Desktop. Deine Dateien, deine Apps, deine Hardware.
+description: 'Freies, selbst gehostetes NAS- und Server-Betriebssystem mit Web-Desktop. Deine Dateien, deine Apps, deine Hardware.'
 hero:
-  title: Dein Server, mit Desktop.
-  tagline: Pithyx macht aus deiner eigenen Hardware einen NAS- und App-Server mit Web-Desktop. Frei, quelloffen und zu 100 Prozent lokal.
+  title: 'Dein Server, mit Desktop.'
+  tagline: 'Pithyx macht aus einem Computer, der dir gehört, einen NAS- und App-Server, den du über einen Desktop im Browser verwaltest: frei, quelloffen und zu 100 Prozent lokal.'
   primary: { label: Loslegen, href: /de/docs/getting-started/quick-start/ }
   secondary: { label: Zur Doku, href: /de/docs/ }
   github: { label: GitHub, href: https://github.com/pithyx/pithyx }
 showcase:
   image: ../../assets/screenshots/desktop.svg
-  alt: Der Pithyx-Desktop mit offenen Fenstern
-  caption: Platzhalter für den Desktop-Screenshot.
+  alt: 'Der Pithyx-Desktop im Browser: die Fenster Dateien und Speicher nebeneinander angedockt, Verknüpfungen und eine Notiz auf dem Desktop und unten die Taskleiste'
+  caption: 'Der Web-Desktop mit Dateien und Speicher nebeneinander. Jede App, ob mitgeliefert oder installiert, öffnet sich in einem solchen Fenster.'
 features:
-  title: Alles, was ein Heimserver braucht
-  intro: Platzhalter. Ein oder zwei Sätze dazu, was Pithyx von Haus aus kann.
+  title: Was schon drin ist
+  intro: 'Pithyx installierst du von einem USB-Stick, und der Installer läuft in deinem Browser. Danach verwaltest du Speicher, Freigaben, Benutzer, Apps und das Netzwerk im Web-Desktop.'
   items:
     - {
         icon: 'storage',
         title: 'ZFS-Speicher',
-        text: 'Platzhalter. Pools, Snapshots und Verschlüsselung mit Sicherheitsprüfungen vor jeder Änderung an Platten.',
+        text: 'Pools von der einzelnen Platte bis RAID-Z3, mit Snapshot-Zeitplänen, Scrubs und SMART-Prüfungen. Eine Platte mit Daten wird erst gelöscht, wenn du ihre Seriennummer eintippst.',
         href: '/de/docs/admin/storage/',
       }
     - {
         icon: 'files',
         title: 'Dateien und Freigaben',
-        text: 'Platzhalter. Ein Dateimanager im Browser plus SMB, SFTP, WebDAV und FTP.',
+        text: 'Ein Dateimanager im Browser mit Papierkorb und früheren Versionen, dazu Freigaben über SMB 3, SFTP, WebDAV und FTP.',
         href: '/de/docs/user/files/',
       }
     - {
         icon: 'apps',
         title: 'Apps',
-        text: 'Platzhalter. Apps aus signierten Katalogen; Backends laufen abgeschottet in Containern.',
+        text: 'Installiere Apps aus den signierten Katalogen des Projekts, aus eigenen Katalogen oder aus einer Paketdatei. Backends laufen in Containern ohne Internetzugang, außer die App fragt danach, und ein Update lässt sich zurücknehmen.',
         href: '/de/docs/admin/apps-and-store/',
       }
     - {
         icon: 'users',
         title: 'Benutzer und Gruppen',
-        text: 'Platzhalter. Rechte pro Freigabe, Protokoll und App, mit Zwei-Faktor-Anmeldung.',
+        text: 'Rechte pro Freigabe, Dateidienst und App, vergeben an Benutzer und Gruppen. Zwei-Faktor-Anmeldung mit jeder Authenticator-App (TOTP).',
         href: '/de/docs/admin/users-and-groups/',
       }
     - {
         icon: 'network',
         title: 'Netzwerk',
-        text: 'Platzhalter. Feste Adressen, Bonds und VLANs mit einem Bestätigungs-Timer, der Fehler zurücknimmt.',
+        text: 'Feste Adressen, Bonds und VLANs im Browser. Eine Änderung geht nach 60 Sekunden zurück, wenn du sie nicht bestätigst, und das Konsolenmenü setzt eine Box zurück, aus der du dich ausgesperrt hast.',
         href: '/de/docs/admin/network/',
       }
     - {
-        icon: 'updates',
-        title: 'Updates',
-        text: 'Platzhalter. Signierte Systemupdates und App-Updates mit Rollback.',
-        href: '/de/docs/install/updates/',
+        icon: 'shield',
+        title: 'Konfigurationssicherung',
+        text: 'Benutzer, Freigaben und Einstellungen in einer Datei, verschlüsselt mit deinem Passwort, zum Wiederherstellen nach einer Neuinstallation. Deine Dateien bleiben auf den Pools und gehören nicht dazu.',
+        href: '/de/docs/admin/backup/',
       }
 why:
   title: Warum Pithyx
-  intro: Platzhalter. Warum es das Projekt gibt und für wen es gedacht ist.
+  intro: 'Pithyx ist für Leute, die ihre Dateien und Apps auf eigener Hardware haben wollen, verwaltet im Browser, ohne irgendwo ein Konto. Es ist Vorabsoftware: Probier es aus, aber vertrau ihm noch keine Daten an, die du nicht verlieren darfst.'
   items:
     - {
         title: 'Frei und offen',
-        text: 'Platzhalter. AGPL-3.0 für das System und MIT für das SDK. Keine bezahlte Edition.',
+        text: 'Das System steht unter AGPL-3.0, die Pakete für App-Entwickler unter MIT. Es gibt keine bezahlte Edition, und der ganze Code liegt auf GitHub.',
       }
     - {
         title: '100 Prozent lokal',
-        text: 'Platzhalter. Keine Telemetrie, kein Nach-Hause-Telefonieren, kein Cloud-Konto.',
+        text: 'Keine Telemetrie, kein Cloud-Konto und kein Server des Projekts, von dem die Box abhängt. Nach außen verbindet sie sich nur für die App-Kataloge, die du einschaltest, deren Images und die Uhrzeit, und die Doku nennt jede dieser Verbindungen.',
       }
     - {
         title: 'Ein echter Desktop',
-        text: 'Platzhalter. Fenster, Taskleiste und Apps im Browser, auf jedem Gerät.',
+        text: 'Fenster, Taskleiste, Verknüpfungen und Notizen im Browser, auf PC, Tablet oder Handy. Die mitgelieferten Apps nutzen dasselbe SDK wie jede App, die du installierst.',
       }
     - {
-        title: 'Sicher von Anfang an',
-        text: 'Platzhalter. Schutz für Platten, Bestätigungs-Timer und abgeschottete Apps.',
+        title: 'Von Haus aus vorsichtig',
+        text: 'Platten mit Daten brauchen ihre Seriennummer, Netzwerkänderungen gehen zurück, wenn du sie nicht bestätigst, App-Backends laufen ohne Root-Rechte auf dem Host, und SSH bleibt aus, bis du es einschaltest. Der Desktop läuft noch über unverschlüsseltes HTTP, also lass die Box in einem Netz, dem du vertraust.',
       }
 specs:
   title: Auf einen Blick
   rows:
     - { label: 'Basis', value: 'Debian 13' }
-    - { label: 'Plattformen', value: 'x86-64-v2, UEFI (arm64 Community)' }
+    - { label: 'Plattform', value: '64-Bit x86 (x86-64-v2), UEFI, Secure Boot aus' }
+    - { label: 'Mindestens', value: '4 GB RAM, eine Systemplatte mit 40 GB' }
     - { label: 'Referenzhardware', value: 'Intel N100 oder N305, 8 GB RAM' }
-    - { label: 'Speicher', value: 'OpenZFS' }
-    - { label: 'Dateidienste', value: 'SMB 3, SFTP, WebDAV, FTP' }
-    - { label: 'Apps', value: 'Statische Frontends, Container-Backends' }
-    - { label: 'Ports', value: '443 (HTTPS) und 7484' }
-    - { label: 'Lizenz', value: 'AGPL-3.0, SDK MIT' }
+    - { label: 'Systemplatte', value: 'btrfs auf einer Platte oder einem Spiegel aus zwei' }
+    - { label: 'Datenspeicher', value: 'OpenZFS-Pools, von der einzelnen Platte bis RAID-Z3' }
+    - { label: 'Dateidienste', value: 'SMB 3, SFTP, WebDAV, FTP mit TLS' }
+    - { label: 'Netzwerk', value: 'Kabelgebunden, IPv4 und IPv6, Bonds und VLANs' }
+    - { label: 'Apps', value: 'Statische Frontends, Backends in Docker-Containern' }
+    - { label: 'Web-Desktop', value: 'HTTP auf Port 7484 (HTTPS noch nicht gebaut)' }
+    - { label: 'Sprachen', value: 'Englisch, Deutsch' }
+    - { label: 'Lizenz', value: 'AGPL-3.0, npm-Pakete für App-Entwickler MIT' }
 gallery:
   title: Ein Blick hinein
   close: Schließen
   items:
     - {
         image: '../../assets/screenshots/files.svg',
-        alt: 'Die Dateien-App',
-        caption: 'Dateien (Platzhalter)',
+        alt: 'Die App Dateien mit den Freigaben in der Seitenleiste, einem Ordner mit Urlaubsfotos in der Listenansicht und dem geöffneten Kontextmenü eines Fotos',
+        caption: 'Dateien: Freigaben, Papierkorb und frühere Versionen im Browser.',
       }
     - {
         image: '../../assets/screenshots/storage.svg',
-        alt: 'Die Speicher-App',
-        caption: 'Speicher (Platzhalter)',
+        alt: 'Die App Speicher mit einem gesunden RAID-Z1-Pool aus vier Platten, seinem belegten und freien Platz und der Liste seiner Platten',
+        caption: 'Speicher: ZFS-Pools, Platten und Snapshots, und die genauen Befehle siehst du, bevor etwas läuft.',
       }
     - {
         image: '../../assets/screenshots/store.svg',
-        alt: 'Der Store',
-        caption: 'Store (Platzhalter)',
+        alt: 'Der Store auf dem Tab Installiert mit drei installierten Apps, für eine davon wartet ein Update',
+        caption: 'Store: Apps aus Katalogen oder aus einer Datei, mit Updates und einem Weg zurück zur vorigen Version.',
       }
     - {
         image: '../../assets/screenshots/settings.svg',
-        alt: 'Die Einstellungen',
-        caption: 'Einstellungen (Platzhalter)',
+        alt: 'Die Einstellungen auf der Seite Benutzer mit einer Liste von Benutzern und den Abzeichen Administrator und Zwei-Faktor',
+        caption: 'Einstellungen: Benutzer und Gruppen, Freigaben, Dateidienste, Netzwerk und Sicherung.',
       }
 ai:
   title: Für KI-Assistenten
@@ -131,6 +135,6 @@ ai:
   copied: Kopiert
 cta:
   title: Lust, es auszuprobieren?
-  text: Platzhalter. Ein USB-Stick und ein alter PC, und in einer halben Stunde hast du einen Server.
-  primary: { label: Pithyx installieren, href: /de/docs/install/usb-stick/ }
+  text: 'Pithyx ist Vorabsoftware. Die Anleitung führt dich durch das Image, den USB-Stick und den Web-Installer. Probier es auf einem freien Rechner oder in einer virtuellen Maschine aus, nicht mit Daten, die du nicht verlieren darfst.'
+  primary: { label: So installierst du, href: /de/docs/install/usb-stick/ }
   secondary: { label: Auf GitHub ansehen, href: https://github.com/pithyx/pithyx }
