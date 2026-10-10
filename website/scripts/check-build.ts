@@ -44,7 +44,9 @@ for (const file of files) {
     continue;
   }
   const markdown = readFileSync(join(dist, twin), 'utf8');
-  if (/^\s*<\/?[A-Z][A-Za-z]*[\s/>]/m.test(markdown) || /^import\s/m.test(markdown)) {
+  // Code blocks may show JSX or imports on purpose; only the prose around them must be plain Markdown.
+  const prose = markdown.replace(/^(```|~~~)[^\n]*\n[\s\S]*?^\1\s*$/gm, '');
+  if (/^\s*<\/?[A-Z][A-Za-z]*[\s/>]/m.test(prose) || /^import\s/m.test(prose)) {
     problems.push(`${twin} still contains an MDX component or import`);
   }
   if (/^Status: placeholder$/m.test(markdown)) {
