@@ -82,3 +82,13 @@ Collected from the six notes files (the number in brackets is the item in that f
 
 47. `reference/api.md` and `reference/manifest-schema.md` need a generator (build-time like `errorCodes.ts`, or checked-in output); none exists in `website/`. (daemon 15)
 48. `/api/openapi.json` is served anonymously in every build (`Program.cs:228`). Mention it on `developers/daemon/api.md`? (daemon 13)
+
+## F. Found while writing the English pages (2026-10-10)
+
+49. **Generated references.** `reference/api.md` and `reference/manifest-schema.md` have only a short introduction (`draft`). They should be generated at build time, the endpoint list from `packages/api-client/openapi.json` and the field list from `sdk/schema/manifest.v1.schema.json`, like `reference/errors` from `errors.json` (see 47). Nothing was built yet because the generator cannot be tested without a build.
+50. **App permission texts.** The Store describes `files.read` as "Reads files in the shared folders of the user who uses it." and `files.write` as "Creates, changes and deletes files in the shared folders the user may write to." (`i18n/en/store.json` `permission.files.*`). The SDK grants `files.read`/`files.write` only for files the user opens with the app or picks in a dialog; browsing shared folders needs `files.shares` (notes `developers-apps-sdk.md:155-157`, `sdk/src` files API). `user/apps.md` follows the SDK. Should the Store texts change?
+51. **Registry token of a catalog.** Private images of an own catalog need a read token (`user:token`), accepted only through `PATCH /api/store/catalogs/{key}` with `registryToken` (`Apps/Catalog/StoreContracts.cs:111`); the Store has no field for it (`desktop/src/apps/sdk/store.ts:93` passes it, no UI uses it). `developers/apps/publishing.md` says so. Add a field?
+52. **WebDAV over plain HTTP on Windows and macOS.** `user/file-access.md` gives `http://<box>:7484/webdav/` for "Map network drive" and "Connect to Server" and warns that the system may refuse a password over plain HTTP. Not tested; needs a check on real clients.
+53. **Code of conduct.** The repository has none; `project/contributing.md` does not mention one. Add one before the repository goes public?
+54. **Tokens for scripts.** There are no personal access tokens; a script signs in like the desktop (`developers/daemon/api.md`). Intended for v0.1?
+55. **German pages.** Only the English pages under `docs/` were written in this pass; the German pages under `de/docs/` are still placeholders and must follow (website/CLAUDE.md wants both in the same commit).
