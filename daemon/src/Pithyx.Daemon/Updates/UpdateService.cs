@@ -730,44 +730,7 @@ public sealed partial class UpdateService(
         {
             return;
         }
-        await using (var connection = await connections.OpenAsync(cancellationToken))
-        {
-            await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
-            foreach (var carried in outcome.History)
-            {
-                await connection.ExecuteAsync(
-                    """
-                    INSERT INTO system_updates (id, kind, source, from_version, to_version, snapshot, state, error_code, error_params, started_at, finished_at)
-                    VALUES (@Id, @Kind, @Source, @FromVersion, @ToVersion, @Snapshot, @State, @ErrorCode, @ErrorParams, @StartedAt, @FinishedAt)
-                    ON CONFLICT (id) DO NOTHING
-                    """,
-                    new
-                    {
-                        carried.Id,
-                        carried.Kind,
-                        carried.Source,
-                        carried.FromVersion,
-                        carried.ToVersion,
-                        carried.Snapshot,
-                        carried.State,
-                        carried.ErrorCode,
-                        ErrorParams = carried.ErrorParams is null ? null : JsonSerializer.Serialize(carried.ErrorParams),
-                        StartedAt = Format(carried.StartedAt),
-                        FinishedAt = carried.FinishedAt is { } at ? Format(at) : null,
-                    }, transaction);
-            }
-            await connection.ExecuteAsync(
-                "UPDATE system_updates SET state = @State, error_code = @ErrorCode, error_params = @ErrorParams, finished_at = @FinishedAt WHERE id = @HistoryId",
-                new
-                {
-                    outcome.State,
-                    outcome.ErrorCode,
-                    outcome.HistoryId,
-                    ErrorParams = outcome.ErrorParams is null ? null : JsonSerializer.Serialize(outcome.ErrorParams),
-                    FinishedAt = Format(outcome.FinishedAt),
-                }, transaction);
-            await transaction.CommitAsync(cancellationToken);
-        }
+        await MergeOutcomeAsync(connections, outcome, cancellationToken);
         var entry = (await HistoryAsync(cancellationToken)).FirstOrDefault(entry => entry.Id == outcome.HistoryId);
         if (entry is not null)
         {
@@ -786,6 +749,52 @@ public sealed partial class UpdateService(
         }
         File.Delete(system.Paths.ResultFile);
         LogOutcome(outcome.HistoryId, outcome.State);
+    }
+
+    /// <summary>
+    /// Writes the history carried in <c>result.json</c> over the restored database's: a snapshot was taken while its update
+    /// still ran, so the carried entries are newer for every id both know.
+    /// </summary>
+    internal static async Task MergeOutcomeAsync(SqliteConnectionFactory connections, UpdateOutcome outcome, CancellationToken cancellationToken)
+    {
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+        foreach (var carried in outcome.History)
+        {
+            await connection.ExecuteAsync(
+                """
+                INSERT INTO system_updates (id, kind, source, from_version, to_version, snapshot, state, error_code, error_params, started_at, finished_at)
+                VALUES (@Id, @Kind, @Source, @FromVersion, @ToVersion, @Snapshot, @State, @ErrorCode, @ErrorParams, @StartedAt, @FinishedAt)
+                ON CONFLICT (id) DO UPDATE SET kind = excluded.kind, source = excluded.source, from_version = excluded.from_version,
+                    to_version = excluded.to_version, snapshot = excluded.snapshot, state = excluded.state, error_code = excluded.error_code,
+                    error_params = excluded.error_params, started_at = excluded.started_at, finished_at = excluded.finished_at
+                """,
+                new
+                {
+                    carried.Id,
+                    carried.Kind,
+                    carried.Source,
+                    carried.FromVersion,
+                    carried.ToVersion,
+                    carried.Snapshot,
+                    carried.State,
+                    carried.ErrorCode,
+                    ErrorParams = carried.ErrorParams is null ? null : JsonSerializer.Serialize(carried.ErrorParams),
+                    StartedAt = Format(carried.StartedAt),
+                    FinishedAt = carried.FinishedAt is { } at ? Format(at) : null,
+                }, transaction);
+        }
+        await connection.ExecuteAsync(
+            "UPDATE system_updates SET state = @State, error_code = @ErrorCode, error_params = @ErrorParams, finished_at = @FinishedAt WHERE id = @HistoryId",
+            new
+            {
+                outcome.State,
+                outcome.ErrorCode,
+                outcome.HistoryId,
+                ErrorParams = outcome.ErrorParams is null ? null : JsonSerializer.Serialize(outcome.ErrorParams),
+                FinishedAt = Format(outcome.FinishedAt),
+            }, transaction);
+        await transaction.CommitAsync(cancellationToken);
     }
 
     /// <summary>Called when the health check left its verdict while this daemon runs (the success of an update).</summary>

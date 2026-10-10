@@ -29,6 +29,7 @@ mirror=false
 network=false
 updates=""
 keep=false
+keyboard=de
 
 die() {
   echo "test-install: $*" >&2
@@ -44,7 +45,7 @@ while [[ $# -gt 0 ]]; do
     --iso) iso="$(realpath "$2")"; shift 2 ;;
     --mirror) mirror=true; shift ;;
     --network) network=true; shift ;;
-    --update) updates="$(realpath "$2")"; mirror=true; shift 2 ;;
+    --update) updates="$(realpath "$2")"; mirror=true; keyboard=us; shift 2 ;;
     --keep) keep=true; shift ;;
     -h | --help) sed -n '2,24p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) die "unknown argument $1" ;;
@@ -221,8 +222,17 @@ print("update source written " + ("with" if token else "without") + " a token")'
 # Waits until a Python expression over GET /api/system/updates is true; the box restarts in between.
 wait_updates() {
   local expression="$1" seconds="$2" deadline=$((SECONDS + $2)) state=""
-  until state="$(admin /system/updates 2>/dev/null)" && [[ "$(json "$expression" <<<"$state")" == True ]]; do
-    ((SECONDS < deadline)) || die "the updater did not reach ($expression) within ${seconds}s: $(head -c 800 <<<"$state")"
+  while :; do
+    if state="$(admin /system/updates 2>/dev/null)"; then
+      [[ "$(json "$expression" <<<"$state")" == True ]] && break
+    else
+      # A restart or a rollback can end the test's session (a snapshot brings back the sessions of its time).
+      sign_in 2>/dev/null || true
+    fi
+    if ((SECONDS >= deadline)); then
+      screenshot timeout || true
+      die "the updater did not reach ($expression) within ${seconds}s: $(head -c 800 <<<"$state"); screenshots and serial logs in $vm"
+    fi
     sleep 5
   done
 }
@@ -381,7 +391,7 @@ fi
 step "installing onto $chosen"
 call -X POST -H 'Content-Type: application/json' "$api/installer/install" -o /dev/null --data @- <<EOF
 {"hostname": "pithyx-test", "language": "en", "region": null, "timeZone": "Europe/Berlin", "ntpServers": [],
- "keyboardLayout": "de", "diskIds": $chosen, "username": "admin", "password": "correct horse battery staple",
+ "keyboardLayout": "$keyboard", "diskIds": $chosen, "username": "admin", "password": "correct horse battery staple",
  "displayName": null, "eraseConfirmed": true, "network": $network_request}
 EOF
 deadline=$((SECONDS + 900))
@@ -413,6 +423,11 @@ if [[ -n "$updates" ]]; then
 fi
 start_vm "${installed[@]}"
 
+sign_in() {
+  curl -fsS --max-time 10 -c "$vm/session" -H 'X-Pithyx-Request: 1' -H 'Content-Type: application/json' \
+    --data '{"username": "admin", "password": "correct horse battery staple"}' "$api/auth/login" -o /dev/null
+}
+
 check_installed() {
   wait_for "http://127.0.0.1:$plain/api/install-id" 300
   local answer
@@ -425,9 +440,7 @@ check_installed() {
   setup="$(curl -fsS "$api/setup")"
   [[ "$(json 'd["installer"] or d["required"]' <<<"$setup")" == False ]] || die "the installed system is not set up: $setup"
   [[ "$(json 'd["hostname"]' <<<"$setup")" == pithyx-test ]] || die "wrong host name: $setup"
-  curl -fsS -c "$vm/session" -H 'X-Pithyx-Request: 1' -H 'Content-Type: application/json' \
-    --data '{"username": "admin", "password": "correct horse battery staple"}' "$api/auth/login" -o /dev/null \
-    || die "the administrator cannot sign in"
+  sign_in || die "the administrator cannot sign in"
 }
 check_installed
 echo "the installed system answers and the administrator signs in"
@@ -512,6 +525,121 @@ print(json.dumps(config))")"
   wait_network "d['pending'] is None and any(l['name'] == '$nic0' and l['addresses'] == ['10.0.2.15/24'] for l in d['links'])" 120 --via-bond
   wait_for "$api/health" 30
   echo "after 60 seconds without Keep, $nic0 is back on 10.0.2.15"
+fi
+
+if [[ -n "$updates" ]]; then
+  mapfile -t files < <(find "$updates" -maxdepth 1 -name 'pithyx-*-amd64.pithyxupdate' | sort -V)
+  [[ ${#files[@]} -ge 2 ]] || die "$updates holds fewer than two update files"
+  first="${files[-2]}"
+  second="${files[-1]}"
+  first_version="$(update_version "$first")"
+  second_version="$(update_version "$second")"
+  installed_version="$(admin /system/updates | json 'd["installedVersion"]')"
+  [[ "$(admin /system/updates | json 'd["supported"]')" == True ]] || die "the installed system says updates do not apply: $(admin /system/updates)"
+
+  step "switching to the beta channel"
+  admin /system/updates/settings -X PUT -H 'Content-Type: application/json' --data '{"checkEnabled": true, "channel": "beta"}' -o /dev/null
+
+  step "installing $first_version from an uploaded file (from $installed_version)"
+  upload_update "$first" || die "the upload of $(basename "$first") was refused"
+  [[ "$(admin /system/updates | json 'd["staged"]["version"]')" == "$first_version" ]] || die "the uploaded file is not staged"
+  install_update file
+  wait_updates "d['installedVersion'] == '$first_version' and d['runningJobId'] is None and d['history'][0]['state'] == 'succeeded'" 1200
+  echo "$first_version runs, snapshots: $(admin /system/updates | json '[s["version"] for s in d["snapshots"]]')"
+
+  if [[ -f "$HOME/.config/pithyx-dev/github-updates.env" ]]; then
+    step "installing $second_version online from channel-beta"
+    admin /system/updates/check -X POST -o /dev/null
+    wait_updates "d['available'] is not None and d['available']['version'] == '$second_version'" 120
+    install_update online
+  else
+    step "installing $second_version from an uploaded file (no token for the online channel)"
+    upload_update "$second" || die "the upload of $(basename "$second") was refused"
+    install_update file
+  fi
+  wait_updates "d['installedVersion'] == '$second_version' and d['runningJobId'] is None and d['history'][0]['state'] == 'succeeded'" 1200
+  echo "$second_version runs"
+
+  broken_version="${second_version%.*}.$((${second_version##*.} + 1))"
+  step "installing a broken $broken_version whose daemon never starts: the health check rolls back"
+  make_broken "$second" "$broken_version" "$vm/pithyx-$broken_version-amd64.pithyxupdate"
+  upload_update "$vm/pithyx-$broken_version-amd64.pithyxupdate" || die "the upload of the broken file was refused"
+  install_update file
+  # The daemon of the broken version never answers; the health check gives up after five minutes and restarts.
+  wait_updates "d['installedVersion'] == '$second_version' and d['runningJobId'] is None and d['history'][0]['toVersion'] == '$broken_version' and d['history'][0]['state'] == 'rolled_back'" 1500
+  echo "the broken update rolled back by itself: $(admin /system/updates | json 'd["history"][0]["errorCode"]')"
+
+  step "rolling back to $first_version through its GRUB entry and the recovery menu"
+  status="$(admin /system/updates)"
+  index="$(json "[i for i, s in enumerate(d['snapshots']) if s['version'] == '$first_version'][0] + 1" <<<"$status")"
+  power_off
+  start_vm "${installed[@]}"
+  grub_choose "$index"
+  # The menu of a snapshot's entry: 1 roll back, the snapshot's number, its version as the confirmation.
+  sleep 90
+  screenshot snapshot-menu
+  type_keys $'1\n'
+  sleep 2
+  type_keys "$index"$'\n'
+  sleep 2
+  type_keys "$first_version"$'\n'
+  wait_updates "d['installedVersion'] == '$first_version' and d['history'][0]['kind'] == 'rollback' and d['history'][0]['source'] == 'recovery'" 600
+  echo "$first_version is back through GRUB key $index"
+
+  step "setting a static address, then resetting the network and installing $second_version in the recovery menu"
+  nic0="$(admin /system/network | nic_name "$NIC0_MAC" links)"
+  config="$(admin /system/network | python3 -c "
+import json, sys
+config = json.load(sys.stdin)['config']
+config['interfaces'] = [i for i in config['interfaces'] if i['name'] != '$nic0'] + [
+    {'name': '$nic0', 'kind': 'ethernet', 'ipv4': 'static', 'ipv4Address': '10.0.2.15/24', 'ipv4Gateway': '10.0.2.2', 'ipv6': 'off'}]
+config['global']['dnsServers'] = ['10.0.2.3']
+print(json.dumps(config))")"
+  change="$(admin /system/network -X PUT -H 'Content-Type: application/json' --data "$config")"
+  admin "/system/network/changes/$(json 'd["id"]' <<<"$change")/confirm" -X POST -o /dev/null
+  wait_network "any(l['name'] == '$nic0' and l['method'] == 'static' for l in d['links']) and d['pending'] is None" 60
+  truncate -s 256M "$vm/usb.img"
+  mformat -i "$vm/usb.img" -F ::
+  mcopy -i "$vm/usb.img" "$second" ::/
+  power_off
+  start_vm "${installed[@]}" usb
+  grub_choose r
+  sleep 90
+  screenshot recovery-menu
+  type_keys $'3\n'
+  sleep 2
+  type_keys $'yes\n'
+  sleep 5
+  type_keys $'\n'
+  sleep 3
+  type_keys $'2\n'
+  sleep 15
+  screenshot recovery-usb
+  type_keys $'1\n'
+  # The check reads the whole file before it asks.
+  sleep 60
+  screenshot recovery-verified
+  type_keys $'install\n'
+  wait_updates "d['installedVersion'] == '$second_version' and d['runningJobId'] is None and d['history'][0]['source'] == 'recovery' and d['history'][0]['state'] == 'succeeded'" 1500
+  wait_network "any(l['name'] == '$nic0' and l['method'] == 'dhcp' for l in d['links'])" 60
+  echo "the recovery menu reset $nic0 to DHCP and installed $second_version from the stick"
+
+  step "comparing both ESPs"
+  power_off
+  nbd_attach
+  esp="$vm/esp"
+  mkdir -p "$esp/1" "$esp/2"
+  sudo mount -o ro /dev/nbd0p1 "$esp/1"
+  sudo mount -o ro /dev/nbd1p1 "$esp/2"
+  differences="$(sudo diff -r "$esp/1" "$esp/2" 2>&1 || true)"
+  trials="$(sudo find "$esp/1" "$esp/2" -name pithyx.env | wc -l)"
+  sudo umount "$esp/1" "$esp/2"
+  nbd_detach
+  [[ -z "$differences" ]] || die "the ESPs differ: $differences"
+  [[ "$trials" -ge 2 ]] || die "pithyx.env is missing on an ESP"
+  start_vm "${installed[@]}"
+  check_installed
+  echo "both ESPs carry the same GRUB and pithyx.env"
 fi
 
 if [[ "$mirror" == true ]]; then
