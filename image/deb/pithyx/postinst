@@ -5,8 +5,10 @@ set -e
 
 if [ "$1" = configure ]; then
   systemctl enable pithyx.service pithyx-issue.service pithyx-console.service pithyx-update-health.service >/dev/null 2>&1 || true
-  # tty1 belongs to the console menu (D337); the login prompt is on tty2.
-  systemctl mask getty@tty1.service autovt@tty1.service >/dev/null 2>&1 || true
+  # tty1 belongs to the console menu (D337); the box has no local login (D341).
+  for tty in 1 2 3 4 5 6; do
+    systemctl mask "getty@tty$tty.service" "autovt@tty$tty.service" >/dev/null 2>&1 || true
+  done
   if [ -d /run/systemd/system ]; then
     systemctl daemon-reload >/dev/null 2>&1 || true
   fi

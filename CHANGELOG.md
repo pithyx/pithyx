@@ -174,6 +174,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- No local login on the box (D341): the console greeting no longer offers "Alt+F2: log in", and `getty@tty2` to `getty@tty6` are masked, so tty1 shows only the console menu; root stays locked. Whoever has physical access gets root anyway (GRUB, unencrypted system disk). Each box gets its own ZFS host id: the image no longer ships `/etc/hostid`, the installer writes one with `zgenhostid` before the initramfs is built, so boxes from one ISO never share it, and a pool from before a reinstall needs the forced import. `image/test-install.sh --reinstall` proves it in QEMU.
 - The image installs Pithyx from its packages (D338), so an image and an update file of the same version install the same thing: `zfs-dkms`, the kernel headers and the compiler are no longer on a box, apt never takes a kernel or ZFS package from Debian, `image/build.sh` takes `--version` and writes the image's package list `pithyx-<version>-amd64.packages`, and the Debian base comes from `image/debian.env`.
 - `pithyx dev` runs `backend/compose.dev.yaml` on its own when it exists (it is the backend's whole source form now, not an override of `compose.yaml`), and the Vite plugin accepts a backend that is still in its source form with a warning. The npm packages are at `1.0.0-rc.5`.
 - An update keeps the version before it with its snapshot until the next update, so the Store can go back to it; jobs may belong to the box itself, and administrators see those.
