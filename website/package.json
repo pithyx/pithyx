@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "astro dev",
-    "build:site": "astro build && node scripts/check-build.ts",
+    "build:site": "node scripts/generate-reference.ts && astro build && node scripts/check-build.ts",
     "preview": "astro preview",
     "sync": "astro sync",
     "check": "astro check",
