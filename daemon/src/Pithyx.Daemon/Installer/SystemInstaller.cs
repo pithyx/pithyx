@@ -412,14 +412,16 @@ public sealed partial class SystemInstaller(
         for (var index = esps.Count - 1; index >= 0; index--)
         {
             var espMountPoint = EspMountPoint(index);
-            await RunAsync("chroot", [Target, "grub-install", "--target=x86_64-efi", $"--efi-directory={espMountPoint}", "--bootloader-id=pithyx", "--removable", "--no-nvram"], cancellationToken);
+            // The same installs as the ESP sync after updates (EspPlans); only the first disk's entry goes into NVRAM.
+            var installs = Updates.EspPlans.GrubInstall(espMountPoint, Target);
+            await RunAsync(installs[0], cancellationToken);
             if (index == 0)
             {
                 await RunAsync("chroot", [Target, "grub-install", "--target=x86_64-efi", $"--efi-directory={espMountPoint}", "--bootloader-id=pithyx", "--recheck"], cancellationToken);
             }
             else
             {
-                await RunAsync("chroot", [Target, "grub-install", "--target=x86_64-efi", $"--efi-directory={espMountPoint}", "--bootloader-id=pithyx", "--no-nvram"], cancellationToken);
+                await RunAsync(installs[1], cancellationToken);
                 await RunAsync("efibootmgr", ["--quiet", "--create", "--disk", disks[index].Path, "--part", "1", "--label", "Pithyx (second disk)", "--loader", @"\EFI\pithyx\grubx64.efi"], cancellationToken);
             }
         }

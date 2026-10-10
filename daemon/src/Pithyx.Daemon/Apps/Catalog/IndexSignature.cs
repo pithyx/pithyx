@@ -27,39 +27,52 @@ public static class IndexSignature
         ReadOnlyMemory<byte> index,
         byte[]? signature,
         IReadOnlyList<TrustedKey> keyring,
+        string channel) =>
+        Reason(index, signature, keyring, channel) is { } reason ? Invalid(reason) : [];
+
+    /// <summary>
+    /// Why a signature file in this format does not prove <paramref name="document"/> for <paramref name="channel"/>
+    /// (<c>missing</c>, <c>malformed</c>, <c>untrusted</c> or <c>mismatch</c>), or null when it does. Update files and
+    /// channels are signed the same way (D338).
+    /// </summary>
+    public static string? Reason(
+        ReadOnlyMemory<byte> document,
+        byte[]? signature,
+        IReadOnlyList<TrustedKey> keyring,
         string channel)
     {
+        ArgumentNullException.ThrowIfNull(keyring);
         if (signature is null)
         {
-            return Invalid("missing");
+            return "missing";
         }
-        using var document = JsonSchemaCheck.ParseStrict(signature);
-        if (document is null || !_schema.Value.IsValid(document.RootElement))
+        using var parsed = JsonSchemaCheck.ParseStrict(signature);
+        if (parsed is null || !_schema.Value.IsValid(parsed.RootElement))
         {
-            return Invalid("malformed");
+            return "malformed";
         }
         var trusted = new Dictionary<string, TrustedKey>(StringComparer.Ordinal);
         foreach (var key in keyring.Where(key => key.Channels.Contains(channel)))
         {
             trusted[key.KeyId] = key;
         }
-        var relevant = document.RootElement.GetProperty("signatures").EnumerateArray()
+        var relevant = parsed.RootElement.GetProperty("signatures").EnumerateArray()
             .Select(entry => (KeyId: entry.GetProperty("keyId").GetString()!, Signature: entry.GetProperty("signature").GetString()!))
             .Where(entry => trusted.ContainsKey(entry.KeyId))
             .ToList();
         if (relevant.Count == 0)
         {
-            return Invalid("untrusted");
+            return "untrusted";
         }
         foreach (var (keyId, value) in relevant)
         {
             var publicKey = PublicKey.Import(SignatureAlgorithm.Ed25519, Convert.FromBase64String(trusted[keyId].PublicKey), KeyBlobFormat.RawPublicKey);
-            if (!SignatureAlgorithm.Ed25519.Verify(publicKey, index.Span, Convert.FromBase64String(value)))
+            if (!SignatureAlgorithm.Ed25519.Verify(publicKey, document.Span, Convert.FromBase64String(value)))
             {
-                return Invalid("mismatch");
+                return "mismatch";
             }
         }
-        return [];
+        return null;
     }
 
     /// <summary>Reads a signed index as the box does: the signature first, then the index itself.</summary>

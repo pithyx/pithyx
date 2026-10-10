@@ -1,7 +1,13 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { checkChannel, checkManifest, type Channel, type TrustedKey } from './update-file';
+import {
+  checkChannel,
+  checkManifest,
+  checkSource,
+  type Channel,
+  type TrustedKey,
+} from './update-file';
 
 const corpus = join(import.meta.dirname, 'fixtures');
 const keyring = (
@@ -37,5 +43,18 @@ describe('the update corpus', () => {
             knownSequence: entry.knownSequence,
           });
     expect(issues).toEqual(entry.expected);
+  });
+});
+
+const sources = join(corpus, 'source');
+const sourceCases = JSON.parse(readFileSync(join(sources, 'cases.json'), 'utf8')) as {
+  name: string;
+  document: string;
+  expected: unknown[];
+}[];
+
+describe('update sources', () => {
+  it.each(sourceCases.map((entry) => [entry.name, entry] as const))('%s', (_name, entry) => {
+    expect(checkSource(readFileSync(join(sources, entry.document))).issues).toEqual(entry.expected);
   });
 });

@@ -529,3 +529,67 @@ for (const [name, text] of Object.entries(signatures)) {
   writeFileSync(join(corpus, name), text);
 }
 writeFileSync(join(corpus, 'cases.json'), json(cases));
+
+/** One entry of a ustar archive: the 512-byte header, the content and its padding to 512 bytes. */
+function tarEntry(name: string, content: Buffer | null): Buffer {
+  const header = Buffer.alloc(512);
+  const field = (offset: number, length: number, value: string) => {
+    header.write(value, offset, length, 'ascii');
+  };
+  const octal = (value: number, length: number) => value.toString(8).padStart(length - 1, '0');
+  field(0, 100, name);
+  field(100, 8, octal(content === null ? 0o755 : 0o644, 8));
+  field(108, 8, octal(0, 8));
+  field(116, 8, octal(0, 8));
+  field(124, 12, octal(content?.length ?? 0, 12));
+  field(136, 12, octal(1791580518, 12));
+  field(148, 8, '        ');
+  field(156, 1, content === null ? '5' : '0');
+  field(257, 6, 'ustar');
+  field(263, 2, '00');
+  let sum = 0;
+  for (const byte of header) {
+    sum += byte;
+  }
+  field(148, 8, `${octal(sum, 7)}\0`);
+  if (content === null) {
+    return header;
+  }
+  return Buffer.concat([header, content, Buffer.alloc((512 - (content.length % 512)) % 512)]);
+}
+
+// A whole update file signed by test-beta, laid out as tools/release/build-update.sh lays one out, for the E2E suite
+// (simulation trusts the corpus keys). It installs from any version from 0.0.1 on.
+const debs: Record<string, Buffer> = {
+  'debs/Packages': Buffer.from('Package: pithyx\nVersion: 0.2.0~beta.3\n'),
+  'debs/Release': Buffer.from('Origin: Pithyx\nLabel: Pithyx\n'),
+  'debs/pithyx-kernel_0.2.0~beta.3_amd64.deb': Buffer.from('a test package, not a real one'),
+  'debs/pithyx_0.2.0~beta.3_amd64.deb': Buffer.from('another test package, not a real one'),
+};
+const updateManifest = Buffer.from(
+  json(
+    manifest('0.2.0-beta.3', 'beta', {
+      minimumVersion: '0.0.1',
+      files: Object.entries(debs).map(([path, content]) => ({
+        path,
+        sha256: createHash('sha256').update(content).digest('hex'),
+        size: content.length,
+      })),
+    }),
+  ),
+);
+writeFileSync(
+  join(corpus, 'pithyx-0.2.0-beta.3-amd64.pithyxupdate'),
+  Buffer.concat([
+    tarEntry('manifest.json', updateManifest),
+    tarEntry(
+      'manifest.json.sig',
+      Buffer.from(
+        signatureFile([{ keyId: beta.keyId, signature: signWith(beta, updateManifest) }]),
+      ),
+    ),
+    tarEntry('debs/', null),
+    ...Object.entries(debs).map(([path, content]) => tarEntry(path, content)),
+    Buffer.alloc(1024),
+  ]),
+);

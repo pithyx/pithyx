@@ -1164,6 +1164,141 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string SystemTimeZoneInvalid = "system.time.zone_invalid";
 
+    /// <summary>
+    /// The update cannot be applied: the step <c>params.step</c> failed with <c>params.command</c> and
+    /// <c>params.exitCode</c>. When it failed after the snapshot, the box rolled back to it.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.InternalServerError)]
+    public const string UpdateApplyFailed = "update.apply.failed";
+
+    /// <summary>An update or a rollback of the system runs already; one at a time.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string UpdateApplyRunning = "update.apply.running";
+
+    /// <summary><c>channel.json</c> of the update source does not match its schema.</summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string UpdateChannelInvalid = "update.channel.invalid";
+
+    /// <summary><c>channel.json</c> is for <c>params.channel</c>, the box reads <c>params.expected</c>.</summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string UpdateChannelMismatch = "update.channel.mismatch";
+
+    /// <summary>
+    /// The update source served an older <c>channel.json</c> (<c>params.sequence</c>) than the box saw before
+    /// (<c>params.known</c>); the box keeps what it knows.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string UpdateChannelSequenceOld = "update.channel.sequence_old";
+
+    /// <summary>
+    /// <c>channel.json.sig</c> does not prove the channel; <c>params.reason</c> is <c>missing</c>, <c>malformed</c>,
+    /// <c>untrusted</c> or <c>mismatch</c>.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string UpdateChannelSignatureInvalid = "update.channel.signature_invalid";
+
+    /// <summary>The downloaded update file is not the one <c>channel.json</c> names (size or SHA-256).</summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string UpdateDownloadMismatch = "update.download.mismatch";
+
+    /// <summary>The update file is for <c>params.architecture</c>, the box is <c>params.box</c>.</summary>
+    [ErrorStatus(HttpStatusCode.UnprocessableEntity)]
+    public const string UpdateFileArchitecture = "update.file.architecture";
+
+    /// <summary>
+    /// The update file is for the channel <c>params.channel</c>; a box on <c>params.boxChannel</c> takes only stable files
+    /// there. Switch the channel in Settings to install a beta file.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.UnprocessableEntity)]
+    public const string UpdateFileChannel = "update.file.channel";
+
+    /// <summary>A file of the update (<c>params.path</c>) differs from the size or SHA-256 its manifest names.</summary>
+    [ErrorStatus(HttpStatusCode.UnprocessableEntity)]
+    public const string UpdateFileHashMismatch = "update.file.hash_mismatch";
+
+    /// <summary>The update file is not a <c>.pithyxupdate</c>, or its manifest does not match the schema.</summary>
+    [ErrorStatus(HttpStatusCode.UnprocessableEntity)]
+    public const string UpdateFileInvalid = "update.file.invalid";
+
+    /// <summary>
+    /// The update file needs at least <c>params.minimum</c> installed, the box has <c>params.installed</c>; install a
+    /// version in between first.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string UpdateFileMinimum = "update.file.minimum";
+
+    /// <summary>A file the manifest names (<c>params.path</c>) is missing from the update.</summary>
+    [ErrorStatus(HttpStatusCode.UnprocessableEntity)]
+    public const string UpdateFileMissingEntry = "update.file.missing_entry";
+
+    /// <summary>No uploaded update file waits for its installation (it expired or was replaced).</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string UpdateFileNotFound = "update.file.not_found";
+
+    /// <summary>
+    /// The update file brings <c>params.version</c>, the box has <c>params.installed</c>; an older or the same version
+    /// comes back only through a rollback.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string UpdateFileOlder = "update.file.older";
+
+    /// <summary>
+    /// <c>manifest.json.sig</c> does not prove the update file; <c>params.reason</c> is <c>missing</c>, <c>malformed</c>,
+    /// <c>untrusted</c> or <c>mismatch</c>.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.UnprocessableEntity)]
+    public const string UpdateFileSignatureInvalid = "update.file.signature_invalid";
+
+    /// <summary>The update file is larger than <c>params.limit</c> bytes.</summary>
+    [ErrorStatus(HttpStatusCode.RequestEntityTooLarge)]
+    public const string UpdateFileTooLarge = "update.file.too_large";
+
+    /// <summary>The update file holds an entry its manifest does not name (<c>params.path</c>).</summary>
+    [ErrorStatus(HttpStatusCode.UnprocessableEntity)]
+    public const string UpdateFileUnexpectedEntry = "update.file.unexpected_entry";
+
+    /// <summary>No newer version is offered on the box's channel.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string UpdateNoneAvailable = "update.none.available";
+
+    /// <summary>The typed version (<c>params.typed</c>) is not the snapshot's version (<c>params.version</c>).</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string UpdateRollbackUnconfirmed = "update.rollback.unconfirmed";
+
+    /// <summary>The snapshot <c>params.snapshot</c> does not exist (any more).</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string UpdateSnapshotNotFound = "update.snapshot.not_found";
+
+    /// <summary>
+    /// An update source file (<c>pithyx-source.json</c>, D339) does not pass its check; <c>params.reason</c> is <c>json</c>
+    /// (not JSON, or larger than 64 KB), <c>url</c> (not https or without <c>{channel}</c>), <c>schema</c> (a missing,
+    /// unknown or malformed field, or a public key that is not 32 bytes) or <c>duplicate_key</c>.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string UpdateSourceInvalid = "update.source.invalid";
+
+    /// <summary>
+    /// The update source cannot be reached; <c>params.reason</c> is <c>network</c>, <c>status</c> (with
+    /// <c>params.status</c>), <c>timeout</c> or <c>missing</c> (the channel has no <c>channel.json</c> yet). The box keeps
+    /// what it knew.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string UpdateSourceUnreachable = "update.source.unreachable";
+
+    /// <summary>
+    /// The system disk has <c>params.free</c> bytes free, the update needs <c>params.needed</c> for the snapshot and the
+    /// packages.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.InsufficientStorage)]
+    public const string UpdateSpaceInsufficient = "update.space.insufficient";
+
+    /// <summary>
+    /// This machine is not a Pithyx box installed by the installer (root on btrfs in <c>@</c> on the system array), so
+    /// nothing installs or rolls back here; <c>params.reason</c> says what is missing. Development machines show it.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string UpdateSystemUnsupported = "update.system.unsupported";
+
 
     /// <summary>The Linux account of a user cannot be created; <c>params.reason</c> is <c>name_taken</c> (a system account has the name), <c>uid_taken</c> or <c>command_failed</c>.</summary>
     [ErrorStatus(HttpStatusCode.Conflict)]

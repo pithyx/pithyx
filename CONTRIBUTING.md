@@ -53,6 +53,6 @@ See [Development](README.md#development) in the README. `pnpm install` also inst
 - [ ] New visible text has i18n keys in `en` and `de`.
 - [ ] New error codes have translations.
 - [ ] `TODO.md` is checked off and `CHANGELOG.md` is updated.
-- [ ] Docs in `website/` were checked and updated in English and German, or the change was judged not doc-worthy (D339).
+- [ ] Docs in `website/` were checked and updated in English and German, or the change was judged not doc-worthy (D340).
 - [ ] No em dashes and no non-English text outside translation files.
 - [ ] Every commit is signed off.

@@ -1,0 +1,54 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://pithyx.org/schema/update-source.v1.schema.json",
+  "title": "Pithyx update source v1",
+  "description": "`pithyx-source.json` (D339): an update source a box can switch to in its recovery menu, for example a fork. It names the channels and the keys that sign their files; after a switch the box trusts only these keys. A fork publishes it next to its public keys. The box reads it from a USB stick, from the file an administrator saved in Settings, or as typed at the console, and refuses unknown fields.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["sourceVersion", "name", "url", "keys"],
+  "properties": {
+    "sourceVersion": {
+      "description": "The version of this format.",
+      "const": 1
+    },
+    "name": {
+      "description": "What the console and Settings show, and what is typed to confirm a switch: printable ASCII, so it can be typed on any console.",
+      "type": "string",
+      "pattern": "^[\\x21-\\x7E]([\\x20-\\x7E]{0,62}[\\x21-\\x7E])?$"
+    },
+    "url": {
+      "description": "Where `channel.json` of a channel is, with `{channel}` for `stable` or `beta`; https only.",
+      "type": "string",
+      "pattern": "^https://[^\\s]+$",
+      "maxLength": 512
+    },
+    "keys": {
+      "description": "The public keys whose signatures the box accepts after the switch, each for its channels.",
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["keyId", "publicKey", "channels"],
+        "properties": {
+          "keyId": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9.-]{0,63}$"
+          },
+          "publicKey": {
+            "description": "The Ed25519 public key, 32 bytes in base64 (what tools/release/create-key.sh prints).",
+            "type": "string",
+            "pattern": "^[A-Za-z0-9+/]{42}[AEIMQUYcgkosw048]=$"
+          },
+          "channels": {
+            "type": "array",
+            "minItems": 1,
+            "uniqueItems": true,
+            "items": { "enum": ["stable", "beta"] }
+          }
+        }
+      }
+    }
+  }
+}

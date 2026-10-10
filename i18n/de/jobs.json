@@ -67,6 +67,8 @@
     "apps_rollback": "Zurück zur vorigen Version einer App",
     "store_check": "Kataloge werden geprüft",
     "store_sync": "Katalog wird abgerufen",
-    "unknown": "Aufgabe"
+    "unknown": "Aufgabe",
+    "system_update": "Pithyx wird aktualisiert",
+    "system_rollback": "Pithyx wird zurückgesetzt"
   }
 }

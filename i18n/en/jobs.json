@@ -67,6 +67,8 @@
     "apps_rollback": "Going back to an app's previous version",
     "store_check": "Checking the catalogs",
     "store_sync": "Fetching a catalog",
-    "unknown": "Task"
+    "unknown": "Task",
+    "system_update": "Updating Pithyx",
+    "system_rollback": "Rolling back Pithyx"
   }
 }

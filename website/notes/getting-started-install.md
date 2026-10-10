@@ -511,7 +511,7 @@ In code (tools side):
 
 - what-is-pithyx: NFS (README.md:11 vs TODO.md:526); arm64 image (D294, TODO.md:471); web apps `kind: "web"` (TODO.md:526); encryption (TODO.md:95, D after v0.2).
 - requirements: arm64/Raspberry Pi 5 installer (CLAUDE.md:113); adding second system disk later, replacing failed mirror disk (D295, TODO.md:494-495); ARC cap for VMs (daemon/CLAUDE.md:65); HTTPS 443 (CLAUDE.md:118).
-- quick-start: download page and website screenshots (website D339).
+- quick-start: download page and website screenshots (website D340).
 - usb-stick: published ISO location, ISO signature (D296 release job `image.yml` with `pithyx-release-1`, TODO.md:503); reproducibility check.
 - firmware-and-boot: GRUB entry for previous system snapshot (D297/D338, TODO.md:513); Secure Boot support (CLAUDE.md:141 "No Secure Boot").
 - installer: installer log download on failure (D299 follow-up, TODO.md:1375); Playwright run of the page in the VM; test on real hardware and virtual CD (TODO.md:490,1375); recovery key in step 4 (D299 deviates, TODO.md:485).

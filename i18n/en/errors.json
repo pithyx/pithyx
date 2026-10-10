@@ -548,5 +548,52 @@
       "not_found": "The user was not found. Someone may have deleted it.",
       "self": "You cannot delete your own account."
     }
+  },
+  "update": {
+    "apply": {
+      "failed": "The update failed while {step, select, snapshot {taking the snapshot} install {installing the packages} debian {installing the Debian updates} bootloader {writing GRUB to the disks} health {checking the new version} other {{step}}} ({command}, exit code {exitCode}). If it got past the snapshot, the box went back to the previous version.",
+      "running": "An update or a rollback is already running. Wait until the box has restarted."
+    },
+    "channel": {
+      "invalid": "The update channel's file cannot be read; the box keeps what it knew.",
+      "mismatch": "The update source answers with the {channel} channel, but this box follows {expected}.",
+      "sequence_old": "The update source sent an older channel file ({sequence}) than this box saw before ({known}). It was ignored.",
+      "signature_invalid": "The update channel's signature is {reason, select, missing {missing} malformed {damaged} untrusted {from a key this box does not trust} other {wrong}}. The box ignores it."
+    },
+    "download": {
+      "mismatch": "The downloaded update file is not the one the channel names. Nothing was installed; try again later."
+    },
+    "file": {
+      "architecture": "This update file is for {architecture}, but this box is {box}.",
+      "channel": "This is a {channel} update file, but this box follows the {boxChannel} channel. Switch the channel in Settings > Updates to install it.",
+      "hash_mismatch": "The update file is damaged: {path} does not match its manifest. Download it again.",
+      "invalid": "This is not a Pithyx update file, or it is damaged.",
+      "minimum": "This update needs at least Pithyx {minimum}; this box has {installed}. Install a version in between first.",
+      "missing_entry": "The update file is incomplete: {path} is missing.",
+      "not_found": "There is no uploaded update file any more. Upload it again.",
+      "older": "This update file brings Pithyx {version}, but the box already has {installed}. An older version only comes back through a rollback.",
+      "signature_invalid": "The update file's signature is {reason, select, missing {missing} malformed {damaged} untrusted {from a key this box does not trust} other {wrong}}. Nothing was changed.",
+      "too_large": "The update file is larger than {limit, number} bytes.",
+      "unexpected_entry": "The update file contains {path}, which its manifest does not name. Nothing was changed."
+    },
+    "none": {
+      "available": "There is no newer version on this channel."
+    },
+    "rollback": {
+      "unconfirmed": "The typed version does not match {version}. Nothing was changed."
+    },
+    "snapshot": {
+      "not_found": "The snapshot {snapshot} does not exist any more."
+    },
+    "source": {
+      "invalid": "The update source file does not pass its check ({reason, select, json {not JSON, or larger than 64 KB} url {the URL must use https and contain '{channel}'} schema {a field is missing, unknown or malformed, or a public key is not 32 bytes} duplicate_key {a key id appears twice} other {{reason}}}).",
+      "unreachable": "The update source cannot be reached ({reason, select, network {no connection} timeout {no answer in time} status {answer {status}} missing {the channel has no release yet} scheme {only https is allowed} other {{reason}}}). The box tries again tomorrow; you can upload an update file instead."
+    },
+    "space": {
+      "insufficient": "The system disk has {free, number} bytes free, but the update needs {needed, number}."
+    },
+    "system": {
+      "unsupported": "Updates apply only to a box installed with the Pithyx installer. This machine is laid out differently ({reason})."
+    }
   }
 }

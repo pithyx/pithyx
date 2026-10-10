@@ -1465,6 +1465,155 @@
       },
       "expected": "The system does not know the time zone “Mars/Olympus”."
     },
+    "update.apply.failed": {
+      "params": {
+        "step": "install",
+        "command": "apt-get",
+        "exitCode": 100
+      },
+      "expected": "The update failed while installing the packages (apt-get, exit code 100). If it got past the snapshot, the box went back to the previous version."
+    },
+    "update.apply.running": {
+      "params": {},
+      "expected": "An update or a rollback is already running. Wait until the box has restarted."
+    },
+    "update.channel.invalid": {
+      "params": {},
+      "expected": "The update channel's file cannot be read; the box keeps what it knew."
+    },
+    "update.channel.mismatch": {
+      "params": {
+        "channel": "beta",
+        "expected": "stable"
+      },
+      "expected": "The update source answers with the beta channel, but this box follows stable."
+    },
+    "update.channel.sequence_old": {
+      "params": {
+        "sequence": 11,
+        "known": 12
+      },
+      "expected": "The update source sent an older channel file (11) than this box saw before (12). It was ignored."
+    },
+    "update.channel.signature_invalid": {
+      "params": {
+        "reason": "untrusted"
+      },
+      "expected": "The update channel's signature is from a key this box does not trust. The box ignores it."
+    },
+    "update.download.mismatch": {
+      "params": {},
+      "expected": "The downloaded update file is not the one the channel names. Nothing was installed; try again later."
+    },
+    "update.file.architecture": {
+      "params": {
+        "architecture": "arm64",
+        "box": "amd64"
+      },
+      "expected": "This update file is for arm64, but this box is amd64."
+    },
+    "update.file.channel": {
+      "params": {
+        "channel": "beta",
+        "boxChannel": "stable"
+      },
+      "expected": "This is a beta update file, but this box follows the stable channel. Switch the channel in Settings > Updates to install it."
+    },
+    "update.file.hash_mismatch": {
+      "params": {
+        "path": "debs/Release"
+      },
+      "expected": "The update file is damaged: debs/Release does not match its manifest. Download it again."
+    },
+    "update.file.invalid": {
+      "params": {},
+      "expected": "This is not a Pithyx update file, or it is damaged."
+    },
+    "update.file.minimum": {
+      "params": {
+        "minimum": "0.2.0",
+        "installed": "0.1.0"
+      },
+      "expected": "This update needs at least Pithyx 0.2.0; this box has 0.1.0. Install a version in between first."
+    },
+    "update.file.missing_entry": {
+      "params": {
+        "path": "debs/Release"
+      },
+      "expected": "The update file is incomplete: debs/Release is missing."
+    },
+    "update.file.not_found": {
+      "params": {},
+      "expected": "There is no uploaded update file any more. Upload it again."
+    },
+    "update.file.older": {
+      "params": {
+        "version": "0.1.0",
+        "installed": "0.2.0"
+      },
+      "expected": "This update file brings Pithyx 0.1.0, but the box already has 0.2.0. An older version only comes back through a rollback."
+    },
+    "update.file.signature_invalid": {
+      "params": {
+        "reason": "missing"
+      },
+      "expected": "The update file's signature is missing. Nothing was changed."
+    },
+    "update.file.too_large": {
+      "params": {
+        "limit": 4294967296
+      },
+      "expected": "The update file is larger than 4,294,967,296 bytes."
+    },
+    "update.file.unexpected_entry": {
+      "params": {
+        "path": "debs/evil_1.0_amd64.deb"
+      },
+      "expected": "The update file contains debs/evil_1.0_amd64.deb, which its manifest does not name. Nothing was changed."
+    },
+    "update.none.available": {
+      "params": {},
+      "expected": "There is no newer version on this channel."
+    },
+    "update.rollback.unconfirmed": {
+      "params": {
+        "typed": "0.1",
+        "version": "0.1.0"
+      },
+      "expected": "The typed version does not match 0.1.0. Nothing was changed."
+    },
+    "update.snapshot.not_found": {
+      "params": {
+        "snapshot": "20261009T214000Z"
+      },
+      "expected": "The snapshot 20261009T214000Z does not exist any more."
+    },
+    "update.source.invalid": {
+      "params": {
+        "reason": "url"
+      },
+      "expected": "The update source file does not pass its check (the URL must use https and contain {channel})."
+    },
+    "update.source.unreachable": {
+      "params": {
+        "reason": "status",
+        "status": 404
+      },
+      "expected": "The update source cannot be reached (answer 404). The box tries again tomorrow; you can upload an update file instead."
+    },
+    "update.space.insufficient": {
+      "params": {
+        "free": 1000000000,
+        "needed": 2000000000
+      },
+      "expected": "The system disk has 1,000,000,000 bytes free, but the update needs 2,000,000,000."
+    },
+    "update.system.unsupported": {
+      "params": {
+        "reason": "not_btrfs"
+      },
+      "expected": "Updates apply only to a box installed with the Pithyx installer. This machine is laid out differently (not_btrfs)."
+    },
     "users.account.refused": {
       "params": {
         "username": "backup",

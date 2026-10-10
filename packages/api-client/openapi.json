@@ -4555,6 +4555,311 @@
         }
       }
     },
+    "/api/system/updates": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. The installed version, the channel and the daily check, what the last check found (the channel's newer version with its changelog, the Debian updates with the security fixes, or why the channel could not be read), an uploaded file waiting for its installation, the running update, the history and the snapshots that can be restored. Whether updates apply here at all (a machine not installed by the installer cannot). The topic system/updates sends the same.",
+        "operationId": "GetSystemUpdates",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/updates/check": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Reads the channel and Debian's lists now. Installs nothing.",
+        "operationId": "CheckSystemUpdates",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/updates/settings": {
+      "put": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Switches the daily check (it only notifies) and the channel (stable or beta).",
+        "operationId": "SetSystemUpdateSettings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/updates/file": {
+      "put": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Streams a .pithyxupdate as the raw body (at most 4 GB) and checks it completely before anything changes: its signature by a key the box trusts for its channel (a development box also takes unsigned files), every package's size and SHA-256, and that it is newer than the installed version and fits it. Keeps it for \"Install\" until another upload or a restart.",
+        "operationId": "UploadSystemUpdate",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Forgets the uploaded file.",
+        "operationId": "DiscardSystemUpdate",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/updates/install": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Installs the uploaded file or the channel's newest version as a job of the box: a snapshot of the system, the packages (optionally Debian's updates in the same snapshot), GRUB on every disk, then the restart and the health check, which rolls back to the snapshot by itself when the new version does not come up within five minutes.",
+        "operationId": "InstallSystemUpdate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InstallUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/updates/source": {
+      "put": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Checks a pithyx-source.json (another update source, for example a fork, D339) sent as the raw body and keeps it for the recovery menu. It changes nothing the box trusts: only the recovery menu at the console (GRUB entry \"Pithyx recovery\", \"Change the update source\") switches to it.",
+        "operationId": "SaveUpdateSourceCandidate",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Forgets the source file saved for the recovery menu.",
+        "operationId": "DiscardUpdateSourceCandidate",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/updates/rollback": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Restores a snapshot (the version typed as the confirmation) and restarts into it. Settings changed since the snapshot are lost; pools and their files are not touched.",
+        "operationId": "RollBackSystem",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RollbackRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/system/backup": {
       "post": {
         "tags": [
@@ -7794,6 +8099,40 @@
         },
         "description": "How the desktop looks for the user on every device. The theme (light, dark) is a choice of each device."
       },
+      "AvailableUpdate": {
+        "required": [
+          "version",
+          "minimumVersion",
+          "changelog",
+          "size",
+          "publishedAt",
+          "installable"
+        ],
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string"
+          },
+          "minimumVersion": {
+            "type": "string"
+          },
+          "changelog": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "installable": {
+            "type": "boolean"
+          }
+        },
+        "description": "The newest version of the box's channel when it is newer than the installed one.\n    `Installable`: False when the box is older than MinimumVersion and needs a version in between first."
+      },
       "BackupCategory": {
         "enum": [
           "users",
@@ -8278,6 +8617,62 @@
             "format": "int64"
           }
         }
+      },
+      "DebianUpdate": {
+        "required": [
+          "name",
+          "from",
+          "to",
+          "security"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The package."
+          },
+          "from": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The installed version; null for a package the upgrade adds."
+          },
+          "to": {
+            "type": "string",
+            "description": "The version it would install."
+          },
+          "security": {
+            "type": "boolean",
+            "description": "Whether it comes from a security archive (`Debian-Security:13/stable-security`)."
+          }
+        },
+        "description": "A Debian package `apt-get --simulate upgrade` would install."
+      },
+      "DebianUpdates": {
+        "required": [
+          "count",
+          "security",
+          "packages"
+        ],
+        "type": "object",
+        "properties": {
+          "count": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "security": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "packages": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DebianUpdate"
+            }
+          }
+        },
+        "description": "The Debian updates apt offers; the kernel and ZFS never come from Debian (D338)."
       },
       "DesktopItem": {
         "required": [
@@ -9189,6 +9584,31 @@
           "system.time.server_invalid",
           "system.time.servers_too_many",
           "system.time.zone_invalid",
+          "update.apply.failed",
+          "update.apply.running",
+          "update.channel.invalid",
+          "update.channel.mismatch",
+          "update.channel.sequence_old",
+          "update.channel.signature_invalid",
+          "update.download.mismatch",
+          "update.file.architecture",
+          "update.file.channel",
+          "update.file.hash_mismatch",
+          "update.file.invalid",
+          "update.file.minimum",
+          "update.file.missing_entry",
+          "update.file.not_found",
+          "update.file.older",
+          "update.file.signature_invalid",
+          "update.file.too_large",
+          "update.file.unexpected_entry",
+          "update.none.available",
+          "update.rollback.unconfirmed",
+          "update.snapshot.not_found",
+          "update.source.invalid",
+          "update.source.unreachable",
+          "update.space.insufficient",
+          "update.system.unsupported",
           "users.account.refused",
           "users.gid.exhausted",
           "users.group.builtin",
@@ -10308,6 +10728,23 @@
           }
         },
         "description": "Body of `POST /api/installer/install`."
+      },
+      "InstallUpdateRequest": {
+        "required": [
+          "source",
+          "includeDebian"
+        ],
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string",
+            "description": "`online` installs the channel's newest file, `file` the uploaded one."
+          },
+          "includeDebian": {
+            "type": "boolean",
+            "description": "Also install the Debian updates, in the same snapshot."
+          }
+        }
       },
       "InstallerCheck": {
         "required": [
@@ -12994,6 +13431,23 @@
           }
         }
       },
+      "RollbackRequest": {
+        "required": [
+          "snapshot",
+          "version"
+        ],
+        "type": "object",
+        "properties": {
+          "snapshot": {
+            "type": "string",
+            "description": "The snapshot to restore."
+          },
+          "version": {
+            "type": "string",
+            "description": "Its version, typed by the administrator as the confirmation."
+          }
+        }
+      },
       "SavedLayout": {
         "required": [
           "layout",
@@ -13718,6 +14172,40 @@
           }
         }
       },
+      "SnapshotInfo": {
+        "required": [
+          "name",
+          "version",
+          "createdAt",
+          "kernel",
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Its folder in `/@snapshots`, the UTC time it was taken (`20261009T214000Z`)."
+          },
+          "version": {
+            "type": "string",
+            "description": "The Pithyx version it holds."
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "When it was taken.",
+            "format": "date-time"
+          },
+          "kernel": {
+            "type": "string",
+            "description": "The kernel release it booted with; its GRUB entry boots that kernel."
+          },
+          "reason": {
+            "type": "string",
+            "description": "Why it was taken, for example `update to 0.2.0`."
+          }
+        },
+        "description": "A read-only snapshot of the system (`@` with `/var/lib/pithyx`), taken before an update."
+      },
       "SnapshotList": {
         "required": [
           "dataset",
@@ -13828,6 +14316,53 @@
           }
         },
         "description": "Schedules of a dataset: all four kinds, in the order hourly, daily, weekly, monthly."
+      },
+      "StagedUpdate": {
+        "required": [
+          "version",
+          "channel",
+          "minimumVersion",
+          "changelog",
+          "size",
+          "trustedSignature",
+          "packages",
+          "kernel",
+          "publishedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "string"
+          },
+          "channel": {
+            "type": "string"
+          },
+          "minimumVersion": {
+            "type": "string"
+          },
+          "changelog": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "trustedSignature": {
+            "type": "boolean"
+          },
+          "packages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "kernel": {
+            "type": "string"
+          },
+          "publishedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "An uploaded update file that passed every check and waits for \"Install\".\n    `TrustedSignature`: False only for a development file on a development box."
       },
       "StorageAlert": {
         "required": [
@@ -14893,6 +15428,7 @@
           "system/network",
           "system/processes",
           "system/resources",
+          "system/updates",
           "thumbnails/+/+"
         ],
         "type": "object",
@@ -14948,6 +15484,9 @@
           "system/resources": {
             "$ref": "#/components/schemas/ResourceSample"
           },
+          "system/updates": {
+            "$ref": "#/components/schemas/UpdateStatus"
+          },
           "thumbnails/+/+": {
             "$ref": "#/components/schemas/ThumbnailsReady"
           }
@@ -14972,6 +15511,7 @@
           "system/network",
           "system/processes",
           "system/resources",
+          "system/updates",
           "thumbnails/+/+"
         ],
         "type": "object",
@@ -15026,6 +15566,9 @@
           },
           "system/resources": {
             "$ref": "#/components/schemas/ResourceSnapshot"
+          },
+          "system/updates": {
+            "$ref": "#/components/schemas/UpdateStatus"
           },
           "thumbnails/+/+": {
             "$ref": "#/components/schemas/ThumbnailWatch"
@@ -15277,6 +15820,73 @@
           }
         }
       },
+      "UpdateHistoryEntry": {
+        "required": [
+          "id",
+          "kind",
+          "source",
+          "fromVersion",
+          "toVersion",
+          "snapshot",
+          "state",
+          "errorCode",
+          "errorParams",
+          "startedAt",
+          "finishedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "source": {
+            "type": "string"
+          },
+          "fromVersion": {
+            "type": "string"
+          },
+          "toVersion": {
+            "type": "string"
+          },
+          "snapshot": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "state": {
+            "type": "string"
+          },
+          "errorCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "errorParams": {
+            "type": [
+              "null",
+              "object"
+            ]
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        },
+        "description": "One update or rollback of the system.\n    `Kind`: `update` or `rollback`.\n    `Source`: `online` (from the channel), `file` (uploaded), `recovery` (the console menu) or `manual` (a rollback from Settings).\n    `Snapshot`: The snapshot taken before an update, or the one a rollback restored.\n    `State`: `running`, `restarting`, `succeeded`, `failed` (nothing changed) or `rolled_back`."
+      },
       "UpdatePolicy": {
         "enum": [
           "automatic",
@@ -15284,6 +15894,258 @@
           "none",
           null
         ]
+      },
+      "UpdateProblem": {
+        "required": [
+          "code",
+          "params"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "params": {
+            "type": "object"
+          }
+        },
+        "description": "Why the last check could not read the channel, as an error code with its params."
+      },
+      "UpdateSettingsRequest": {
+        "required": [
+          "checkEnabled",
+          "channel"
+        ],
+        "type": "object",
+        "properties": {
+          "checkEnabled": {
+            "type": "boolean",
+            "description": "The daily check (on by default; it only notifies)."
+          },
+          "channel": {
+            "type": "string",
+            "description": "`stable` or `beta`."
+          }
+        }
+      },
+      "UpdateSourceCandidate": {
+        "required": [
+          "name",
+          "url",
+          "keys",
+          "savedBy",
+          "savedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "keys": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UpdateSourceKey"
+            }
+          },
+          "savedBy": {
+            "type": "string"
+          },
+          "savedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        },
+        "description": "A source file an administrator saved in Settings for the recovery menu, which alone can switch to it."
+      },
+      "UpdateSourceInfo": {
+        "required": [
+          "name",
+          "url",
+          "official",
+          "keys"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "official": {
+            "type": "boolean"
+          },
+          "keys": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UpdateSourceKey"
+            }
+          }
+        },
+        "description": "The update source the box follows.\n    `Official`: True for the Pithyx project's keys; false after a switch to another source in the recovery menu."
+      },
+      "UpdateSourceKey": {
+        "required": [
+          "keyId",
+          "publicKey",
+          "channels"
+        ],
+        "type": "object",
+        "properties": {
+          "keyId": {
+            "type": "string"
+          },
+          "publicKey": {
+            "type": "string"
+          },
+          "channels": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "description": "A key of an update source as Settings shows it."
+      },
+      "UpdateStatus": {
+        "required": [
+          "installedVersion",
+          "channel",
+          "checkEnabled",
+          "lastCheckAt",
+          "nextCheckAt",
+          "checking",
+          "available",
+          "debian",
+          "problem",
+          "supported",
+          "unsupportedReason",
+          "staged",
+          "runningJobId",
+          "history",
+          "snapshots",
+          "source",
+          "sourceCandidate"
+        ],
+        "type": "object",
+        "properties": {
+          "installedVersion": {
+            "type": "string"
+          },
+          "channel": {
+            "type": "string"
+          },
+          "checkEnabled": {
+            "type": "boolean"
+          },
+          "lastCheckAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "nextCheckAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "checking": {
+            "type": "boolean"
+          },
+          "available": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/AvailableUpdate"
+              }
+            ],
+            "description": "The newest version of the box's channel when it is newer than the installed one.\n    `Installable`: False when the box is older than MinimumVersion and needs a version in between first."
+          },
+          "debian": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/DebianUpdates"
+              }
+            ],
+            "description": "The Debian updates apt offers; the kernel and ZFS never come from Debian (D338)."
+          },
+          "problem": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/UpdateProblem"
+              }
+            ],
+            "description": "Why the last check could not read the channel, as an error code with its params."
+          },
+          "supported": {
+            "type": "boolean"
+          },
+          "unsupportedReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "staged": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/StagedUpdate"
+              }
+            ],
+            "description": "An uploaded update file that passed every check and waits for \"Install\".\n    `TrustedSignature`: False only for a development file on a development box."
+          },
+          "runningJobId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int64"
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/UpdateHistoryEntry"
+            }
+          },
+          "snapshots": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SnapshotInfo"
+            }
+          },
+          "source": {
+            "$ref": "#/components/schemas/UpdateSourceInfo"
+          },
+          "sourceCandidate": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/UpdateSourceCandidate"
+              }
+            ],
+            "description": "A source file an administrator saved in Settings for the recovery menu, which alone can switch to it."
+          }
+        },
+        "description": "Settings &gt; Updates for administrators (topic `system/updates`).\n    `Supported`: Whether updates and rollbacks apply here; false on a machine not laid out by the installer.\n    `UnsupportedReason`: `not_btrfs`, `not_subvolume`, `not_array` or `findmnt`.\n    `RunningJobId`: The job of an update or rollback that runs now.\n    `Snapshots`: The kept snapshots, newest first; each can be restored.\n    `Source`: The update source the box follows (D339); only the recovery menu switches it.\n    `SourceCandidate`: A source file saved in Settings for the recovery menu, or null."
       },
       "UserGrants": {
         "required": [

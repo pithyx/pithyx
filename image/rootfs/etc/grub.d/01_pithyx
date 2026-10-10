@@ -1,0 +1,19 @@
+#!/bin/sh
+# Managed by pithyx (D338): an update boots its new version once. Before the restart the updater sets pithyx_trial to
+# pending in pithyx.env on every ESP; GRUB, which can write only to the ESP it started from (never to btrfs or mdadm),
+# turns it into booted. The health check after the start removes it. A version that never got that far (a kernel that
+# does not start, a hang, a reset) finds booted at the next start, and GRUB starts the automatic rollback to the
+# snapshot taken before the update (the entry pithyx-rollback-auto of /@snapshots/menu.cfg, written by the updater).
+set -e
+cat <<'GRUB'
+if [ -f "${cmdpath}/pithyx.env" ]; then
+  load_env --file "${cmdpath}/pithyx.env" pithyx_trial
+  if [ "${pithyx_trial}" = "pending" ]; then
+    set pithyx_trial=booted
+    save_env --file "${cmdpath}/pithyx.env" pithyx_trial
+  elif [ "${pithyx_trial}" = "booted" ]; then
+    set default=pithyx-rollback-auto
+    set timeout=3
+  fi
+fi
+GRUB

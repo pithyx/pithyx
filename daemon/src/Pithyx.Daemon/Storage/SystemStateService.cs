@@ -195,8 +195,12 @@ public sealed partial class SystemStateService(
         }
     }
 
+    /// <summary>Raised for every block device event udev reports, before the disks are read again (the system mirror listens).</summary>
+    public event Action? BlockDevicesChanged;
+
     private async Task RefreshAsync(CancellationToken cancellationToken)
     {
+        BlockDevicesChanged?.Invoke();
         // Each read is its own trace, so the resulting event and the lsblk call share one request id.
         var parent = Activity.Current;
         Activity.Current = null;

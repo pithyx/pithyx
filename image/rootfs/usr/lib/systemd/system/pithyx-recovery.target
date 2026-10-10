@@ -1,0 +1,7 @@
+# Managed by pithyx: shipped by the package pithyx (image/rootfs). Started by the GRUB entries "Pithyx recovery" and
+# of every snapshot (systemd.unit=pithyx-recovery.target, D338): only the recovery menu, no daemon, no network.
+[Unit]
+Description=Pithyx recovery console
+Requires=sysinit.target pithyx-recovery.service
+After=sysinit.target pithyx-recovery.service
+AllowIsolate=yes

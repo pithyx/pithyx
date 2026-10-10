@@ -167,6 +167,11 @@
       "description": "Konten, Passwörter und Administratoren",
       "keywords": "benutzer konto passwort administrator anmeldung personen"
     },
+    "updates": {
+      "title": "Updates",
+      "description": "Pithyx- und Debian-Updates, der Update-Kanal, Rückkehr zu einem Snapshot, die Update-Quelle",
+      "keywords": "update aktualisierung version release kanal beta stable debian sicherheit rollback snapshot wiederherstellen zurück quelle fork schlüssel"
+    },
     "backup": {
       "title": "Backup und Wiederherstellung",
       "description": "Konfiguration dieser Box sichern und wiederherstellen",
@@ -475,6 +480,114 @@
       "time": "Zeitzone und Zeitserver",
       "tls": "Zertifikate",
       "sshKeys": "SSH-Host-Schlüssel"
+    }
+  },
+  "updates": {
+    "intro": "Pithyx prüft einmal am Tag, ob eine neuere Version verfügbar ist, und sagt dir Bescheid; es installiert nie von selbst. Vor jedem Update macht die Box einen Snapshot des Systems und prüft die neue Version nach dem Neustart. Schlägt diese Prüfung fehl, kehrt sie von selbst zum Snapshot zurück.",
+    "unsupported": "Updates gelten nur für eine Box, die mit dem Pithyx-Installer installiert wurde. Diese Maschine ist anders aufgebaut ({reason}); du kannst nach Updates suchen, sie hier aber nicht installieren oder zurückkehren.",
+    "pithyx": "Pithyx",
+    "installed": "Installierte Version",
+    "channel": "Kanal",
+    "channels": {
+      "stable": "Stabil",
+      "beta": "Beta"
+    },
+    "lastCheck": "Letzte Prüfung",
+    "nextCheck": "Nächste Prüfung",
+    "checkOff": "Aus",
+    "never": "Nie",
+    "checking": "Prüfe…",
+    "upToDate": "Pithyx ist aktuell.",
+    "newVersion": "Pithyx {version} ist verfügbar",
+    "needsMinimum": "Diese Version braucht mindestens Pithyx {minimum}. Installiere zuerst eine Version dazwischen aus einer Update-Datei.",
+    "changelog": "Was sich ändert",
+    "debian": "{count, plural, =0 {Keine Debian-Updates.} one {# Debian-Update} other {# Debian-Updates}}{count, plural, =0 {} other {, {security, plural, =0 {keine davon Sicherheitskorrektur} one {davon # Sicherheitskorrektur} other {davon # Sicherheitskorrekturen}}.}}",
+    "checkNow": "Jetzt prüfen",
+    "install": "{version} installieren",
+    "cancel": "Abbrechen",
+    "progress": {
+      "title": "Update läuft",
+      "rollbackTitle": "Rückkehr läuft",
+      "running": "Läuft. Schalte die Box nicht aus.",
+      "restarting": "Die Box startet jetzt neu und prüft die neue Version. Diese Seite verbindet sich von selbst wieder; der Verlauf zeigt dann das Ergebnis.",
+      "done": "Fertig."
+    },
+    "steps": {
+      "download": "Herunterladen",
+      "snapshot": "Snapshot",
+      "install": "Installieren",
+      "debian": "Debian-Updates",
+      "bootloader": "Bootloader",
+      "restart": "Neustart und Prüfung"
+    },
+    "upload": {
+      "title": "Aus einer Datei installieren",
+      "intro": "Lade eine .pithyxupdate-Datei hoch, zum Beispiel auf einer Box ohne Internet. Die Box prüft ihre Signatur und jedes Paket, bevor sich etwas ändert.",
+      "choose": "Update-Datei hochladen",
+      "checking": "Prüfe…",
+      "checked": "Update-Datei für Pithyx {version} geprüft",
+      "signed": "Signiert mit einem Schlüssel, dem diese Box vertraut.",
+      "unsigned": "Nicht signiert: eine Entwicklungsdatei, die nur eine Entwicklungsmaschine annimmt.",
+      "details": "Kanal {channel}, {packages, plural, one {# Paket} other {# Pakete}}, Kernel {kernel}.",
+      "discard": "Verwerfen"
+    },
+    "snapshots": {
+      "title": "Snapshots",
+      "intro": "Vor jedem Update wird ein Snapshot des Systems gemacht; die letzten drei bleiben. Eine Rückkehr stellt das System und seine Einstellungen so her, wie sie damals waren. Pools und ihre Dateien bleiben unberührt.",
+      "none": "Noch kein Snapshot.",
+      "entry": "Pithyx {version} vom {date}",
+      "rollback": "Zu dieser Version zurück"
+    },
+    "history": {
+      "title": "Verlauf",
+      "none": "Noch kein Update und keine Rückkehr.",
+      "date": "Datum",
+      "change": "Änderung",
+      "result": "Ergebnis",
+      "update": "Update {from} → {to} ({source, select, online {online} file {aus einer Datei} recovery {Wiederherstellungsmenü} other {{source}}})",
+      "rollback": "Zurück von {from} auf {to} ({source, select, manual {Einstellungen} recovery {Wiederherstellungsmenü} other {{source}}})",
+      "states": {
+        "running": "Läuft",
+        "restarting": "Startet neu",
+        "succeeded": "Erfolgreich",
+        "failed": "Fehlgeschlagen, nichts geändert",
+        "rolled_back": "Fehlgeschlagen, vorherige Version zurück"
+      }
+    },
+    "settings": {
+      "title": "Einstellungen",
+      "check": "Täglich nach Updates suchen",
+      "checkHint": "Die Prüfung liest nur eine kleine Datei von der Update-Quelle und benachrichtigt Administratoren. Nichts installiert sich von selbst.",
+      "channelHint": "Stabil bekommt nur Releases. Beta bekommt neue Versionen früher, zum Testen; eine Beta-Box installiert auch stabile Versionen."
+    },
+    "installDialog": {
+      "title": "Pithyx {version} installieren?",
+      "change": "Pithyx geht von {from} auf {to}.",
+      "snapshot": "Zuerst macht die Box einen Snapshot des Systems, damit du immer zur jetzigen Version zurückkannst.",
+      "restart": "Dann installiert sie das Update und startet neu. Danach prüft sie die neue Version bis zu fünf Minuten lang und kehrt von selbst zum Snapshot zurück, wenn die Prüfung fehlschlägt. Während des Neustarts ist die Box nicht erreichbar.",
+      "debian": "Auch {count, plural, one {das Debian-Update} other {die # Debian-Updates}} installieren",
+      "confirm": "Installieren und neu starten"
+    },
+    "rollbackDialog": {
+      "title": "Zu Pithyx {version} zurück?",
+      "what": "Das System kehrt zum Snapshot von Pithyx {version} vom {date} zurück und startet neu.",
+      "lost": "Seitdem geänderte Einstellungen gehen verloren (Benutzer, freigegebene Ordner, App-Einstellungen). Pools und ihre Dateien bleiben, wie sie sind.",
+      "type": "Gib {version} zur Bestätigung ein",
+      "confirm": "Zurück und neu starten"
+    },
+    "source": {
+      "title": "Update-Quelle",
+      "name": "Quelle",
+      "official": "{name} (das Projekt)",
+      "url": "Kanäle",
+      "other": "Diese Box folgt {name}, nicht dem Pithyx-Projekt. Das wurde im Recovery-Menü umgestellt, und die Box vertraut nur den Schlüsseln unten. Zum Zurückwechseln wähle dort „Back to the Pithyx project“.",
+      "key": "Schlüssel {id} ({channels}):",
+      "intro": "Nur das Recovery-Menü an der Konsole wechselt die Update-Quelle, zum Beispiel zu einem Fork. So kann ein übernommenes Konto die Updates nicht umleiten. Zum Wechseln speichere die pithyx-source.json der Quelle hier (praktisch, wenn du die Konsole nur über die Fernwartung erreichst), lege sie auf einen USB-Stick oder tippe sie im Menü ein.",
+      "choose": "Quelldatei für das Recovery-Menü speichern",
+      "saved": "{name} ist für das Recovery-Menü gespeichert",
+      "savedBy": "Gespeichert von {user} am {date}. Es ändert sich nichts, bis sie an der Konsole gewählt wird.",
+      "next": "Zum Wechseln: Starte die Box neu, wähle im Bootmenü „Pithyx recovery“ (Taste r), dann „Change the update source“ und „Use the file saved in Settings“, und tippe den Namen der Quelle.",
+      "discard": "Entfernen"
     }
   }
 }

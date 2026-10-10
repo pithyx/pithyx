@@ -142,5 +142,43 @@
         "body": "{catalog}: {error}"
       }
     }
+  },
+  "update": {
+    "available": {
+      "title": "Pithyx {version} is available",
+      "body": "This box has {installed}. Settings > Updates shows what changes."
+    },
+    "debian": {
+      "available": {
+        "title": "Debian updates",
+        "body": "{count, plural, one {# update} other {# updates}}, {security, plural, one {# of them a security fix} other {# of them security fixes}}. Install them in Settings > Updates."
+      }
+    },
+    "installed": {
+      "title": "Pithyx {version} installed",
+      "body": "The update passed its health check."
+    },
+    "rolled_back": {
+      "title": "Update to {version} failed",
+      "body": "Pithyx {restored} is back{reason, select, null {.} other { (failed check: {reason}).}}"
+    },
+    "restored": {
+      "title": "Pithyx {version} restored",
+      "body": "The system went back to the snapshot. Settings changed since then are lost."
+    },
+    "source": {
+      "changed": {
+        "title": "The update source is now {name}",
+        "body": "{official, select, true {The box follows the Pithyx project again and trusts only its keys.} other {Switched in the recovery menu: the box reads its updates from {url} and trusts only the keys of {name}. If nobody here did this, switch back in the recovery menu.}}"
+      }
+    }
+  },
+  "system": {
+    "mirror": {
+      "degraded": {
+        "title": "A system disk is missing",
+        "body": "The {array, select, system {system} other {swap}} mirror runs on {working} of {expected} disks. The box keeps running; replace the disk soon."
+      }
+    }
   }
 }

@@ -1,6 +1,6 @@
 # Website
 
-The landing page and the docs at https://pithyx.org (D339): Astro with Starlight, React for the landing page sections, built to static files and published with GitHub Pages (`.github/workflows/pages.yml`). Everything a reader sees is content in Markdown or YAML; components only arrange it. The root `CLAUDE.md` stays binding.
+The landing page and the docs at https://pithyx.org (D340): Astro with Starlight, React for the landing page sections, built to static files and published with GitHub Pages (`.github/workflows/pages.yml`). Everything a reader sees is content in Markdown or YAML; components only arrange it. The root `CLAUDE.md` stays binding.
 
 ## Commands
 

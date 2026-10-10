@@ -1,0 +1,6 @@
+{
+  "sourceVersion": 1,
+  "name": "Example fork",
+  "url": "https://github.com/example/pithyx/releases/download/channel-{channel}/channel.json",
+  "keys": []
+}
