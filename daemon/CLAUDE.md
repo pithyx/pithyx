@@ -2,6 +2,8 @@
 
 Rules for `daemon/`; the root `CLAUDE.md` applies as well.
 
+- Docs (D339): a change to the API, an error code, a setting, a limit or what the box does on disk or the network checks the matching pages under `website/src/content/docs/` (admin and install pages for behavior, `developers/daemon/` for internals worth knowing, `reference/` for contracts) and updates or adds them in English and German in the same commit (`website/CLAUDE.md`).
+
 ## Daemon
 
 - Modular monolith. Modules are folders (`Storage/`, `Users/`, `Shares/`, `Apps/`, `Jobs/`), not projects.

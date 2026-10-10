@@ -6,3 +6,5 @@ daemon/
 LICENSE
 sdk/schema/fixtures/
 tools/release/fixtures/
+website/dist/
+website/.astro/

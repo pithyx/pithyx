@@ -1,0 +1,53 @@
+name: Pages
+
+# Builds website/ and publishes it with GitHub Pages at https://pithyx.org (D339). It runs only once the owner has
+# switched Pages on for the public repository and set the repository variable PAGES_ENABLED to true; until then the
+# site is built and checked by the website job in ci.yml only. From the v0.1 release on it deploys from master.
+on:
+  push:
+    branches: [dev]
+    paths:
+      - website/**
+      - i18n/**
+      - packages/ui/tokens.css
+      - pnpm-lock.yaml
+      - .github/workflows/pages.yml
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One deployment at a time; a newer push replaces a queued one but never cancels a running deployment.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: vars.PAGES_ENABLED == 'true'
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @pithyx/website build:site
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: website/dist
+
+  deploy:
+    needs: build
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

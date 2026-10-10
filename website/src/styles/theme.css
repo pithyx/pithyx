@@ -1,0 +1,125 @@
+/* Starlight's variables mapped to the Pithyx tokens (@pithyx/ui/tokens.css), so the site looks like the product. Dark is
+   Starlight's default; [data-theme='light'] overrides it. */
+
+:root {
+  --sl-font: var(--font-sans);
+  --sl-font-mono: var(--font-mono);
+  --sl-content-width: 48rem;
+
+  --sl-color-accent-low: #123a44;
+  --sl-color-accent: var(--petrol-500);
+  --sl-color-accent-high: var(--petrol-200);
+
+  /* Note asides use Starlight's blue; in Pithyx they are petrol. */
+  --sl-color-blue-low: #123a44;
+  --sl-color-blue: var(--petrol-300);
+  --sl-color-blue-high: var(--petrol-100);
+
+  --sl-color-white: #e6f0f2;
+  --sl-color-gray-1: var(--neutral-100);
+  --sl-color-gray-2: var(--neutral-200);
+  --sl-color-gray-3: var(--neutral-300);
+  --sl-color-gray-4: var(--neutral-500);
+  --sl-color-gray-5: var(--neutral-750);
+  --sl-color-gray-6: var(--neutral-900);
+  --sl-color-black: var(--neutral-1000);
+
+  --px-hero-glow: rgb(26 110 130 / 35%);
+  --px-hero-glow-2: rgb(224 163 58 / 16%);
+  --px-card-bg: var(--neutral-900);
+  --px-card-border: var(--neutral-750);
+}
+
+:root[data-theme='light'] {
+  --sl-color-accent-low: var(--petrol-50);
+  --sl-color-accent: var(--petrol-500);
+  --sl-color-accent-high: var(--petrol-700);
+
+  --sl-color-blue-low: var(--petrol-50);
+  --sl-color-blue: var(--petrol-500);
+  --sl-color-blue-high: var(--petrol-800);
+
+  --sl-color-white: var(--neutral-900);
+  --sl-color-gray-1: var(--neutral-850);
+  --sl-color-gray-2: var(--neutral-700);
+  --sl-color-gray-3: var(--neutral-600);
+  --sl-color-gray-4: var(--neutral-400);
+  --sl-color-gray-5: var(--neutral-200);
+  --sl-color-gray-6: var(--neutral-50);
+  --sl-color-gray-7: var(--neutral-25);
+  --sl-color-black: var(--neutral-0);
+
+  --px-hero-glow: rgb(26 110 130 / 18%);
+  --px-hero-glow-2: rgb(224 163 58 / 14%);
+  --px-card-bg: var(--neutral-0);
+  --px-card-border: var(--neutral-200);
+}
+
+h1,
+h2,
+.site-title,
+.hero h1 {
+  font-family: var(--font-display);
+  letter-spacing: var(--letter-spacing-display);
+}
+
+.site-title {
+  font-weight: 600;
+  gap: 0.6rem;
+}
+
+/* The landing page uses the splash template without a sidebar; its sections bring their own layout. */
+[data-has-hero] .hero {
+  padding-block: clamp(2.5rem, 6vw, 5rem) 1rem;
+}
+
+[data-has-hero] main {
+  background:
+    radial-gradient(60rem 30rem at 85% -10%, var(--px-hero-glow), transparent 70%),
+    radial-gradient(40rem 24rem at 0% 0%, var(--px-hero-glow-2), transparent 70%);
+}
+
+.hero h1 {
+  font-size: clamp(2.4rem, 6vw, 4rem);
+}
+
+@media (max-width: 50rem) {
+  .hero > img {
+    max-width: 7rem;
+  }
+}
+
+.hero .tagline {
+  color: var(--sl-color-gray-2);
+  max-width: 36rem;
+}
+
+/* The Markdown buttons next to every docs page title. */
+.px-page-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+.px-page-actions a,
+.px-page-actions button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.65rem;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--sl-color-gray-2);
+  font: inherit;
+  font-size: var(--sl-text-xs);
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.px-page-actions a:hover,
+.px-page-actions button:hover {
+  border-color: var(--sl-color-accent);
+  color: var(--sl-color-white);
+}

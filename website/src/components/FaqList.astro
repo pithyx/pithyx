@@ -1,0 +1,35 @@
+---
+import { faqCategories } from '../lib/faqCategories.ts';
+import { faqInOrder, localeOf } from '../lib/docs.ts';
+import { t, type Key } from '../lib/i18n.ts';
+import { FaqSearch, type FaqItem } from './FaqSearch.tsx';
+import '../styles/faq.css';
+
+// The FAQ page's list: every file in src/content/faq/<locale>/, one question each.
+const locale = localeOf(Astro.locals.starlightRoute.entry.id);
+const entries = await faqInOrder(locale);
+const items: FaqItem[] = entries.map((entry) => {
+  const html = entry.rendered?.html ?? '';
+  return {
+    id: entry.id.slice(locale.length + 1),
+    question: entry.data.question,
+    category: entry.data.category,
+    tags: entry.data.tags,
+    html,
+    text: [entry.data.question, ...entry.data.tags, html.replace(/<[^>]+>/g, ' ')].join(' ').toLowerCase(),
+  };
+});
+const categories = faqCategories.map((id) => ({ id, label: t(locale, `faq.category.${id}` as Key) }));
+---
+
+<FaqSearch
+  client:visible
+  items={items}
+  categories={categories}
+  labels={{
+    search: t(locale, 'faq.search'),
+    all: t(locale, 'faq.all'),
+    empty: t(locale, 'faq.empty'),
+    count: t(locale, 'faq.count'),
+  }}
+/>

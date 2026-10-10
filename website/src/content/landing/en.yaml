@@ -1,0 +1,137 @@
+# Every text and picture of the English landing page. The German page reads de.yaml with the same keys.
+# Image paths are relative to this file; replace the placeholders in src/assets/screenshots/ with real screenshots.
+title: Pithyx
+description: Free, self-hosted NAS and server OS with a web desktop. Your files, your apps, your hardware.
+hero:
+  title: Your server, with a desktop.
+  tagline: Pithyx turns your own hardware into a NAS and app server with a web desktop. Free, open source and 100 percent local.
+  primary: { label: Get started, href: /docs/getting-started/quick-start/ }
+  secondary: { label: Read the docs, href: /docs/ }
+  github: { label: GitHub, href: https://github.com/pithyx/pithyx }
+showcase:
+  image: ../../assets/screenshots/desktop.svg
+  alt: The Pithyx desktop with open windows
+  caption: Placeholder for the desktop screenshot.
+features:
+  title: Everything a home server needs
+  intro: Placeholder intro. One or two sentences on what Pithyx does out of the box.
+  items:
+    - {
+        icon: 'storage',
+        title: 'ZFS storage',
+        text: 'Placeholder. Pools, snapshots and encryption with safety checks before every disk change.',
+        href: '/docs/admin/storage/',
+      }
+    - {
+        icon: 'files',
+        title: 'Files and sharing',
+        text: 'Placeholder. A file manager in the browser plus SMB, SFTP, WebDAV and FTP.',
+        href: '/docs/user/files/',
+      }
+    - {
+        icon: 'apps',
+        title: 'Apps',
+        text: 'Placeholder. Install apps from signed catalogs; backends run sandboxed in containers.',
+        href: '/docs/admin/apps-and-store/',
+      }
+    - {
+        icon: 'users',
+        title: 'Users and groups',
+        text: 'Placeholder. Rights per shared folder, protocol and app, with two-factor sign-in.',
+        href: '/docs/admin/users-and-groups/',
+      }
+    - {
+        icon: 'network',
+        title: 'Network',
+        text: 'Placeholder. Static addresses, bonds and VLANs with a confirmation timer that rolls back mistakes.',
+        href: '/docs/admin/network/',
+      }
+    - {
+        icon: 'updates',
+        title: 'Updates',
+        text: 'Placeholder. Signed system updates and app updates with rollback.',
+        href: '/docs/install/updates/',
+      }
+why:
+  title: Why Pithyx
+  intro: Placeholder. Why this project exists and who it is for.
+  items:
+    - {
+        title: 'Free and open',
+        text: 'Placeholder. AGPL-3.0 for the system and MIT for the SDK. No paid edition.',
+      }
+    - {
+        title: '100 percent local',
+        text: 'Placeholder. No telemetry, no phone-home, no cloud account.',
+      }
+    - {
+        title: 'A real desktop',
+        text: 'Placeholder. Windows, a taskbar and apps in the browser, on any device.',
+      }
+    - {
+        title: 'Safe by default',
+        text: 'Placeholder. Disk guards, confirmation timers and sandboxed apps.',
+      }
+specs:
+  title: At a glance
+  rows:
+    - { label: 'Base', value: 'Debian 13' }
+    - { label: 'Platforms', value: 'x86-64-v2, UEFI (arm64 community)' }
+    - { label: 'Reference hardware', value: 'Intel N100 or N305, 8 GB RAM' }
+    - { label: 'Storage', value: 'OpenZFS' }
+    - { label: 'File services', value: 'SMB 3, SFTP, WebDAV, FTP' }
+    - { label: 'Apps', value: 'Static frontends, container backends' }
+    - { label: 'Ports', value: '443 (HTTPS) and 7484' }
+    - { label: 'License', value: 'AGPL-3.0, SDK MIT' }
+gallery:
+  title: A look inside
+  close: Close
+  items:
+    - {
+        image: '../../assets/screenshots/files.svg',
+        alt: 'The Files app',
+        caption: 'Files (placeholder)',
+      }
+    - {
+        image: '../../assets/screenshots/storage.svg',
+        alt: 'The Storage app',
+        caption: 'Storage (placeholder)',
+      }
+    - {
+        image: '../../assets/screenshots/store.svg',
+        alt: 'The Store',
+        caption: 'Store (placeholder)',
+      }
+    - {
+        image: '../../assets/screenshots/settings.svg',
+        alt: 'The Settings app',
+        caption: 'Settings (placeholder)',
+      }
+ai:
+  title: For AI assistants
+  intro: All docs are plain Markdown. Point your assistant at one of these addresses, from the smallest to everything at once.
+  levels:
+    - {
+        title: 'Index',
+        text: 'A list of every page with one line each. Read it first, then fetch only the page you need, for example /docs/admin/storage.md.',
+        path: '/llms.txt',
+      }
+    - {
+        title: 'One area',
+        text: 'Every page of one area in one file: getting-started, user, admin, install, developers, sdk, reference, project or faq.',
+        path: '/llms/admin.txt',
+      }
+    - {
+        title: 'Everything',
+        text: 'All pages and the FAQ in a single file, for assistants with a large context.',
+        path: '/llms-full.txt',
+      }
+  promptLabel: A prompt to start with
+  prompt: 'Read {site}/llms.txt, fetch the pages you need as Markdown and answer my question about Pithyx with links to the pages you used: '
+  copy: Copy prompt
+  copied: Copied
+cta:
+  title: Ready to try it?
+  text: Placeholder. Grab a USB stick and an old PC, and you have a server in half an hour.
+  primary: { label: Install Pithyx, href: /docs/install/usb-stick/ }
+  secondary: { label: Star on GitHub, href: https://github.com/pithyx/pithyx }

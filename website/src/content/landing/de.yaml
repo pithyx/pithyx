@@ -1,0 +1,136 @@
+# Every text and picture of the German landing page, with the same keys as en.yaml.
+title: Pithyx
+description: Freies, selbst gehostetes NAS- und Server-Betriebssystem mit Web-Desktop. Deine Dateien, deine Apps, deine Hardware.
+hero:
+  title: Dein Server, mit Desktop.
+  tagline: Pithyx macht aus deiner eigenen Hardware einen NAS- und App-Server mit Web-Desktop. Frei, quelloffen und zu 100 Prozent lokal.
+  primary: { label: Loslegen, href: /de/docs/getting-started/quick-start/ }
+  secondary: { label: Zur Doku, href: /de/docs/ }
+  github: { label: GitHub, href: https://github.com/pithyx/pithyx }
+showcase:
+  image: ../../assets/screenshots/desktop.svg
+  alt: Der Pithyx-Desktop mit offenen Fenstern
+  caption: Platzhalter für den Desktop-Screenshot.
+features:
+  title: Alles, was ein Heimserver braucht
+  intro: Platzhalter. Ein oder zwei Sätze dazu, was Pithyx von Haus aus kann.
+  items:
+    - {
+        icon: 'storage',
+        title: 'ZFS-Speicher',
+        text: 'Platzhalter. Pools, Snapshots und Verschlüsselung mit Sicherheitsprüfungen vor jeder Änderung an Platten.',
+        href: '/de/docs/admin/storage/',
+      }
+    - {
+        icon: 'files',
+        title: 'Dateien und Freigaben',
+        text: 'Platzhalter. Ein Dateimanager im Browser plus SMB, SFTP, WebDAV und FTP.',
+        href: '/de/docs/user/files/',
+      }
+    - {
+        icon: 'apps',
+        title: 'Apps',
+        text: 'Platzhalter. Apps aus signierten Katalogen; Backends laufen abgeschottet in Containern.',
+        href: '/de/docs/admin/apps-and-store/',
+      }
+    - {
+        icon: 'users',
+        title: 'Benutzer und Gruppen',
+        text: 'Platzhalter. Rechte pro Freigabe, Protokoll und App, mit Zwei-Faktor-Anmeldung.',
+        href: '/de/docs/admin/users-and-groups/',
+      }
+    - {
+        icon: 'network',
+        title: 'Netzwerk',
+        text: 'Platzhalter. Feste Adressen, Bonds und VLANs mit einem Bestätigungs-Timer, der Fehler zurücknimmt.',
+        href: '/de/docs/admin/network/',
+      }
+    - {
+        icon: 'updates',
+        title: 'Updates',
+        text: 'Platzhalter. Signierte Systemupdates und App-Updates mit Rollback.',
+        href: '/de/docs/install/updates/',
+      }
+why:
+  title: Warum Pithyx
+  intro: Platzhalter. Warum es das Projekt gibt und für wen es gedacht ist.
+  items:
+    - {
+        title: 'Frei und offen',
+        text: 'Platzhalter. AGPL-3.0 für das System und MIT für das SDK. Keine bezahlte Edition.',
+      }
+    - {
+        title: '100 Prozent lokal',
+        text: 'Platzhalter. Keine Telemetrie, kein Nach-Hause-Telefonieren, kein Cloud-Konto.',
+      }
+    - {
+        title: 'Ein echter Desktop',
+        text: 'Platzhalter. Fenster, Taskleiste und Apps im Browser, auf jedem Gerät.',
+      }
+    - {
+        title: 'Sicher von Anfang an',
+        text: 'Platzhalter. Schutz für Platten, Bestätigungs-Timer und abgeschottete Apps.',
+      }
+specs:
+  title: Auf einen Blick
+  rows:
+    - { label: 'Basis', value: 'Debian 13' }
+    - { label: 'Plattformen', value: 'x86-64-v2, UEFI (arm64 Community)' }
+    - { label: 'Referenzhardware', value: 'Intel N100 oder N305, 8 GB RAM' }
+    - { label: 'Speicher', value: 'OpenZFS' }
+    - { label: 'Dateidienste', value: 'SMB 3, SFTP, WebDAV, FTP' }
+    - { label: 'Apps', value: 'Statische Frontends, Container-Backends' }
+    - { label: 'Ports', value: '443 (HTTPS) und 7484' }
+    - { label: 'Lizenz', value: 'AGPL-3.0, SDK MIT' }
+gallery:
+  title: Ein Blick hinein
+  close: Schließen
+  items:
+    - {
+        image: '../../assets/screenshots/files.svg',
+        alt: 'Die Dateien-App',
+        caption: 'Dateien (Platzhalter)',
+      }
+    - {
+        image: '../../assets/screenshots/storage.svg',
+        alt: 'Die Speicher-App',
+        caption: 'Speicher (Platzhalter)',
+      }
+    - {
+        image: '../../assets/screenshots/store.svg',
+        alt: 'Der Store',
+        caption: 'Store (Platzhalter)',
+      }
+    - {
+        image: '../../assets/screenshots/settings.svg',
+        alt: 'Die Einstellungen',
+        caption: 'Einstellungen (Platzhalter)',
+      }
+ai:
+  title: Für KI-Assistenten
+  intro: Die ganze Doku ist reines Markdown. Gib deinem Assistenten eine dieser Adressen, von klein bis alles auf einmal.
+  levels:
+    - {
+        title: 'Index',
+        text: 'Eine Liste aller Seiten mit je einer Zeile. Zuerst lesen, dann nur die nötige Seite holen, zum Beispiel /de/docs/admin/storage.md.',
+        path: '/de/llms.txt',
+      }
+    - {
+        title: 'Ein Bereich',
+        text: 'Alle Seiten eines Bereichs in einer Datei: getting-started, user, admin, install, developers, sdk, reference, project oder faq.',
+        path: '/de/llms/admin.txt',
+      }
+    - {
+        title: 'Alles',
+        text: 'Alle Seiten und die FAQ in einer einzigen Datei, für Assistenten mit großem Kontext.',
+        path: '/de/llms-full.txt',
+      }
+  promptLabel: Ein Prompt für den Anfang
+  prompt: 'Lies {site}/de/llms.txt, hol dir die nötigen Seiten als Markdown und beantworte meine Frage zu Pithyx mit Links auf die Seiten, die du benutzt hast: '
+  copy: Prompt kopieren
+  copied: Kopiert
+cta:
+  title: Lust, es auszuprobieren?
+  text: Platzhalter. Ein USB-Stick und ein alter PC, und in einer halben Stunde hast du einen Server.
+  primary: { label: Pithyx installieren, href: /de/docs/install/usb-stick/ }
+  secondary: { label: Auf GitHub ansehen, href: https://github.com/pithyx/pithyx }

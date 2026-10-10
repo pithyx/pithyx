@@ -2,6 +2,8 @@
 
 Rules for `desktop/`. The root `CLAUDE.md` applies as well.
 
+- Docs (D339): a visible change (a screen, a button, a shortcut, a setting, a message) checks the matching pages under `website/src/content/docs/` (`user/` for everyone, `admin/` for administrators, `developers/desktop/` for internals) and updates or adds them in English and German in the same commit; a likely question goes into the FAQ (`website/CLAUDE.md`).
+
 ## Responsive and accessible
 
 - One UI for every screen: phone, tablet, laptop, desktop, ultrawide. No separate mobile app.
