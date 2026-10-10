@@ -79,6 +79,9 @@ else
 fi
 
 mkdir -p "$out" "$work"
+# dash (apt's hook shell) only takes fds 0 to 9: keep the lock fds out of mmdebstrap, or apt's status fd becomes 10.
+mmdebstrap() { command mmdebstrap "$@" 8>&- 9>&-; }
+
 exec 9>"$work/.lock"
 flock --nonblock 9 || die "another build uses $work"
 rm -rf "$work/staging" "$work/efi.img"

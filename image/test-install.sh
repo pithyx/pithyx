@@ -7,7 +7,7 @@
 #
 # Every run checks that tty2 shows no login prompt (D341). --reinstall (D341, root is asked for through qemu-nbd) gives
 # the VM a third disk with the pool tank, reads the ZFS host id of the installed system, installs again onto the same
-# disk and checks that the new system has another host id in /etc/hostid and its initramfs, and that tank imports there
+# disk and checks that the new system has another host id in /etc/hostid, and that tank imports there
 # with the forced import, as after a reinstall on a real box.
 # --mirror installs onto both disks and afterwards boots once with the first disk removed. --network gives the VM three
 # network cards (D337): the first one, which the test talks through, gets a static address in installer step 2 after
@@ -441,7 +441,9 @@ installed_hostid() {
   sudo umount "$root"
   nbd_detach
   [[ -n "$hostid" ]] || die "the installed system has no /etc/hostid"
-  [[ "$inner" == "$hostid" ]] || die "the initramfs carries host id '$inner', /etc/hostid is $hostid"
+  # The image has no zfs-initramfs (the root is btrfs), so pools are imported after boot from /etc/hostid; an
+  # initramfs that carries a host id anyway must carry the same.
+  [[ -z "$inner" || "$inner" == "$hostid" ]] || die "the initramfs carries host id '$inner', /etc/hostid is $hostid"
   echo "$hostid"
 }
 
@@ -818,7 +820,7 @@ if [[ "$reinstall" == true ]]; then
   step "reading the host id of the first installation"
   power_off
   first_hostid="$(installed_hostid)"
-  echo "host id $first_hostid in /etc/hostid and the initramfs"
+  echo "host id $first_hostid in /etc/hostid"
 
   step "installing again onto the same disk"
   # A fresh UEFI store, so the VM boots the stick and not the first installation.

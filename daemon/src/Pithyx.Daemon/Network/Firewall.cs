@@ -88,30 +88,30 @@ public sealed partial class Firewall(
     public static string Render(FirewallPlan plan)
     {
         ArgumentNullException.ThrowIfNull(plan);
-        const string rule = $"add rule inet pithyx {Chain}";
+        const string Rule = $"add rule inet pithyx {Chain}";
         var text = new StringBuilder()
             .Append("add table inet pithyx\n")
             .Append(CultureInfo.InvariantCulture, $"add chain inet pithyx {Chain} {{ type filter hook input priority filter; policy drop; }}\n")
             .Append(CultureInfo.InvariantCulture, $"flush chain inet pithyx {Chain}\n")
-            .Append(CultureInfo.InvariantCulture, $"{rule} iif \"lo\" accept\n")
-            .Append(CultureInfo.InvariantCulture, $"{rule} ct state established,related accept\n")
-            .Append(CultureInfo.InvariantCulture, $"{rule} icmp type {{ {string.Join(", ", _icmp)} }} accept\n")
-            .Append(CultureInfo.InvariantCulture, $"{rule} icmpv6 type {{ {string.Join(", ", _icmpv6)} }} accept\n")
-            .Append(CultureInfo.InvariantCulture, $"{rule} udp sport 67 udp dport 68 accept\n")
-            .Append(CultureInfo.InvariantCulture, $"{rule} ip6 saddr fe80::/10 udp sport 547 udp dport 546 accept\n")
-            .Append(CultureInfo.InvariantCulture, $"{rule} tcp dport {{ {string.Join(", ", WebPorts)} }} accept\n");
+            .Append(CultureInfo.InvariantCulture, $"{Rule} iif \"lo\" accept\n")
+            .Append(CultureInfo.InvariantCulture, $"{Rule} ct state established,related accept\n")
+            .Append(CultureInfo.InvariantCulture, $"{Rule} icmp type {{ {string.Join(", ", _icmp)} }} accept\n")
+            .Append(CultureInfo.InvariantCulture, $"{Rule} icmpv6 type {{ {string.Join(", ", _icmpv6)} }} accept\n")
+            .Append(CultureInfo.InvariantCulture, $"{Rule} udp sport 67 udp dport 68 accept\n")
+            .Append(CultureInfo.InvariantCulture, $"{Rule} ip6 saddr fe80::/10 udp sport 547 udp dport 546 accept\n")
+            .Append(CultureInfo.InvariantCulture, $"{Rule} tcp dport {{ {string.Join(", ", WebPorts)} }} accept\n");
         var ports = FileServicePorts(plan);
         if (ports.Count > 0)
         {
             var accept = $"tcp dport {{ {string.Join(", ", ports)} }} accept";
             if (plan.PrivateNetworksOnly)
             {
-                text.Append(CultureInfo.InvariantCulture, $"{rule} ip saddr {{ {string.Join(", ", PrivateIpv4)} }} {accept}\n")
-                    .Append(CultureInfo.InvariantCulture, $"{rule} ip6 saddr {{ {string.Join(", ", PrivateIpv6)} }} {accept}\n");
+                text.Append(CultureInfo.InvariantCulture, $"{Rule} ip saddr {{ {string.Join(", ", PrivateIpv4)} }} {accept}\n")
+                    .Append(CultureInfo.InvariantCulture, $"{Rule} ip6 saddr {{ {string.Join(", ", PrivateIpv6)} }} {accept}\n");
             }
             else
             {
-                text.Append(CultureInfo.InvariantCulture, $"{rule} {accept}\n");
+                text.Append(CultureInfo.InvariantCulture, $"{Rule} {accept}\n");
             }
         }
         return text.ToString();
