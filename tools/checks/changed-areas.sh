@@ -3,7 +3,7 @@
 #   code      anything besides Markdown and website/ changed (E2E runs)
 #   daemon    the daemon, its translations, the OpenAPI document, the shared schemas or the CI setup changed
 #   frontend  anything besides docs and daemon/ changed
-#   website   website/ or what it reads (the error texts, the design tokens, the lockfile) changed
+#   website   website/ or what it reads (the error texts, the design tokens, the SDK its examples use, the lockfile) changed
 # Pushes to dev and master run everything; so does a range git cannot resolve.
 set -euo pipefail
 
@@ -21,7 +21,7 @@ website=false
 while IFS= read -r file; do
   [[ -z "$file" ]] && continue
   case "$file" in
-    website/* | i18n/* | packages/ui/tokens.css | pnpm-lock.yaml | .github/workflows/*) website=true ;;
+    website/* | i18n/* | packages/ui/tokens.css | sdk/src/* | pnpm-lock.yaml | .github/workflows/*) website=true ;;
   esac
   case "$file" in
     *.md | website/* | .github/ISSUE_TEMPLATE/*) continue ;;
