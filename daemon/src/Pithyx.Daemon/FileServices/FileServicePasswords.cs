@@ -95,7 +95,7 @@ public sealed partial class FileServicePasswords(ICommandRunner commands, Accoun
         {
             return;
         }
-        var result = await commands.RunAsync(new CommandRequest("pdbedit", ["-L", "-w"]), cancellationToken);
+        var result = await commands.RunAsync(new CommandRequest("pdbedit", ["-L", "-w"], SecretOutput: true), cancellationToken);
         if (result.ExitCode == 0)
         {
             Volatile.Write(ref _passdb, PassdbParser.Parse(result.StandardOutput).GroupBy(entry => entry.Name, StringComparer.Ordinal).ToDictionary(group => group.Key, group => group.First(), StringComparer.Ordinal));

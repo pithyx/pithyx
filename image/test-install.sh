@@ -3,8 +3,12 @@
 # then starts the VM again without the USB stick and checks the installed system: it answers its install id on port 80
 # and asks for the sign-in, not the setup. Without root; needs qemu-system-x86, qemu-utils, ovmf and /dev/kvm.
 #
-#   image/test-install.sh [--iso <file>] [--mirror] [--network] [--update <folder>] [--keep]
+#   image/test-install.sh [--iso <file>] [--mirror] [--network] [--update <folder>] [--reinstall] [--keep]
 #
+# Every run checks that tty2 shows no login prompt (D341). --reinstall (D341, root is asked for through qemu-nbd) gives
+# the VM a third disk with the pool tank, reads the ZFS host id of the installed system, installs again onto the same
+# disk and checks that the new system has another host id in /etc/hostid, and that tank imports there
+# with the forced import, as after a reinstall on a real box.
 # --mirror installs onto both disks and afterwards boots once with the first disk removed. --network gives the VM three
 # network cards (D337): the first one, which the test talks through, gets a static address in installer step 2 after
 # the step's connection test; the other two share one network and become an active-backup bond with a VLAN, reached
@@ -31,7 +35,9 @@ mirror=false
 network=false
 updates=""
 keep=false
+reinstall=false
 keyboard=de
+extra_disks=()
 
 die() {
   echo "test-install: $*" >&2
@@ -48,6 +54,7 @@ while [[ $# -gt 0 ]]; do
     --mirror) mirror=true; shift ;;
     --network) network=true; shift ;;
     --update) updates="$(realpath "$2")"; mirror=true; keyboard=us; shift 2 ;;
+    --reinstall) reinstall=true; shift ;;
     --keep) keep=true; shift ;;
     -h | --help) sed -n '2,24p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) die "unknown argument $1" ;;
@@ -57,7 +64,7 @@ if [[ -z "$iso" ]]; then
   iso="$(find "$repo/image/out" -maxdepth 1 -name 'pithyx-*-amd64.iso' -printf '%T@ %p\n' 2>/dev/null | sort -n | tail -n1 | cut -d' ' -f2-)"
 fi
 [[ -f "$iso" ]] || die "no ISO; run image/build.sh first or pass --iso"
-for tool in qemu-system-x86_64 qemu-img curl python3; do
+for tool in qemu-system-x86_64 qemu-img curl python3 sshpass ssh sftp; do
   command -v "$tool" >/dev/null || die "$tool not found"
 done
 [[ -w /dev/kvm ]] || die "/dev/kvm is not writable; an installation without KVM takes too long"
@@ -85,11 +92,16 @@ trap 'if [[ $keep == false ]]; then cleanup; fi' EXIT
 cp "$OVMF_VARS" "$vm/vars.fd"
 qemu-img create -q -f qcow2 "$vm/disk1.qcow2" 64G
 qemu-img create -q -f qcow2 "$vm/disk2.qcow2" 64G
+if [[ "$reinstall" == true ]]; then
+  qemu-img create -q -f qcow2 "$vm/disk3.qcow2" 8G
+  extra_disks=(disk3)
+fi
 free_port() {
   python3 -c 'import socket; s = socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])'
 }
 port="$(free_port)"
 plain="$(free_port)"
+ssh_port="$(free_port)"
 bonded="$(free_port)"
 api="http://127.0.0.1:$port/api"
 # The network cards with --network: the first one carries the test's connection, the other two share one network.
@@ -102,7 +114,7 @@ readonly BOND_ADDRESS=10.0.3.50
 start_vm() {
   local drives=() nics=() bus=0 drive
   serial_log="$vm/serial-$(date +%s%N).log"
-  for drive in "$@"; do
+  for drive in "$@" "${extra_disks[@]}"; do
     case "$drive" in
       stick) drives+=(-drive "id=stick,if=none,format=raw,readonly=on,file=$iso" -device "usb-storage,bus=usb.0,drive=stick,removable=on") ;;
       usb) drives+=(-drive "id=usb,if=none,format=raw,readonly=on,file=$vm/usb.img" -device "usb-storage,bus=usb.0,drive=usb,removable=on") ;;
@@ -123,7 +135,7 @@ start_vm() {
     -drive if=pflash,format=raw,readonly=on,file="$OVMF_CODE" \
     -drive if=pflash,format=raw,file="$vm/vars.fd" \
     -device ahci,id=ahci -device usb-ehci,id=usb "${drives[@]}" \
-    -netdev user,id=net0,hostfwd=tcp:127.0.0.1:"$port"-:7484,hostfwd=tcp:127.0.0.1:"$plain"-:80 \
+    -netdev user,id=net0,hostfwd=tcp:127.0.0.1:"$port"-:7484,hostfwd=tcp:127.0.0.1:"$plain"-:80,hostfwd=tcp:127.0.0.1:"$ssh_port"-:22 \
     -device virtio-net-pci,netdev=net0,id=nic0,mac=$NIC0_MAC,addr=0x10 "${nics[@]}" \
     -display none -chardev "socket,id=serial0,path=$vm/serial.sock,server=on,wait=off,logfile=$serial_log" -serial chardev:serial0 \
     -monitor unix:"$vm/monitor.sock",server,nowait \
@@ -374,84 +386,6 @@ open(sys.argv[2], "wb").write(b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", struct.pack(
 PY2
 }
 
-step "booting the installer from $(basename "$iso")"
-start_vm stick disk1 disk2
-wait_for "$api/health" 240
-[[ "$(call "$api/setup" | json 'd["installer"]')" == True ]] || die "the live system does not run the installer"
-
-step "claiming the installation and checking the requirements"
-status="$(call -X POST "$api/installer/claim")"
-failed="$(json '[c["id"] for c in d["checks"] if not c["passed"]]' <<<"$status")"
-[[ "$failed" == "[]" ]] || die "requirements not met: $failed"
-options="$(call "$api/installer/options")"
-mapfile -t disks < <(json '"\n".join(x["disk"]["id"] for x in d["disks"] if x["suitable"])' <<<"$options")
-[[ ${#disks[@]} -ge 2 ]] || die "expected two suitable disks, got ${#disks[*]}"
-network_request=null
-if [[ "$network" == true ]]; then
-  step "testing a static address on the first network card (installer step 2)"
-  nic0="$(nic_name "$NIC0_MAC" network <<<"$options")"
-  nic1="$(nic_name "$NIC1_MAC" network <<<"$options")"
-  nic2="$(nic_name "$NIC2_MAC" network <<<"$options")"
-  echo "cards: $nic0 (test connection), $nic1 and $nic2 (one network)"
-  # The address the user network hands out anyway, now static, so the test keeps its connection.
-  network_request="{\"interfaces\": [{\"name\": \"$nic0\", \"kind\": \"ethernet\", \"ipv4\": \"static\",
-    \"ipv4Address\": \"10.0.2.15/24\", \"ipv4Gateway\": \"10.0.2.2\", \"ipv6\": \"off\"}],
-    \"global\": {\"hostName\": \"pithyx-test\", \"dnsServers\": [\"10.0.2.3\"], \"searchDomains\": []}}"
-  call -X POST -H 'Content-Type: application/json' "$api/installer/network/test" -o /dev/null --data "$network_request"
-  deadline=$((SECONDS + 60))
-  until result="$(call "$api/installer/network/test" 2>/dev/null)" && [[ "$(json 'd["running"]' <<<"$result")" == False ]]; do
-    ((SECONDS < deadline)) || die "the connection test did not finish within 60 seconds"
-    sleep 2
-  done
-  [[ "$(json 'd["errorCode"]' <<<"$result")" == None ]] || die "the connection test failed: $result"
-  [[ "$(json "[i['up'] and '10.0.2.15/24' in i['addresses'] and i['gatewayReachable'] for i in d['interfaces'] if i['name'] == '$nic0']" <<<"$result")" == "[True]" ]] \
-    || die "the connection test did not reach the gateway: $result"
-  echo "the connection test reached the gateway 10.0.2.2 from $nic0"
-fi
-if [[ "$mirror" == true ]]; then
-  chosen="[\"${disks[0]}\", \"${disks[1]}\"]"
-  installed=(disk1 disk2)
-else
-  chosen="[\"${disks[0]}\"]"
-  # The disk ids carry the serials PITHYXVM01 and PITHYXVM02 that start_vm gives disk1 and disk2.
-  installed=("disk${disks[0]: -1}")
-fi
-
-step "installing onto $chosen"
-call -X POST -H 'Content-Type: application/json' "$api/installer/install" -o /dev/null --data @- <<EOF
-{"hostname": "pithyx-test", "language": "en", "region": null, "timeZone": "Europe/Berlin", "ntpServers": [],
- "keyboardLayout": "$keyboard", "diskIds": $chosen, "username": "admin", "password": "correct horse battery staple",
- "displayName": null, "eraseConfirmed": true, "network": $network_request}
-EOF
-deadline=$((SECONDS + 900))
-slow=0
-while :; do
-  ((SECONDS < deadline)) || die "the installation did not finish within 15 minutes"
-  # Under the load of the installation a request can take long; the next one tries again.
-  if ! status="$(call "$api/installer")"; then
-    slow=$((slow + 1))
-    sleep 5
-    continue
-  fi
-  phase="$(json 'd["phase"]' <<<"$status")"
-  [[ "$phase" == installing ]] || break
-  sleep 5
-done
-[[ "$phase" == installed ]] || die "the installation ended as $phase in step $(json 'd["step"]' <<<"$status"); serial logs in $vm"
-install_id="$(json 'd["installId"]' <<<"$status")"
-[[ "$(json 'd["recoveryKey"][:4]' <<<"$status")" == PTHX ]] || die "no recovery key"
-echo "installed in $((SECONDS - deadline + 900))s, install id $install_id ($slow status requests timed out)"
-
-step "restarting without the USB stick"
-call -X POST "$api/installer/reboot" -o /dev/null
-sleep 5
-stop_vm
-if [[ -n "$updates" ]]; then
-  step "writing the update source and a serial GRUB console into the installed system"
-  prepare_updates
-fi
-start_vm "${installed[@]}"
-
 sign_in() {
   curl -fsS --max-time 10 -c "$vm/session" -H 'X-Pithyx-Request: 1' -H 'Content-Type: application/json' \
     --data '{"username": "admin", "password": "correct horse battery staple"}' "$api/auth/login" -o /dev/null
@@ -471,6 +405,146 @@ check_installed() {
   [[ "$(json 'd["hostname"]' <<<"$setup")" == pithyx-test ]] || die "wrong host name: $setup"
   sign_in || die "the administrator cannot sign in"
 }
+
+# How many pixels of a screenshot differ from its most common colour: an empty virtual terminal shows at most a cursor.
+drawn_pixels() {
+  screenshot "$1"
+  python3 - "$vm/$1.ppm" <<'PY'
+import collections, sys
+data = open(sys.argv[1], "rb").read()
+header = data.split(b"\n", 3)
+pixels = header[3]
+colours = collections.Counter(pixels[i:i + 3] for i in range(0, len(pixels), 3))
+print(sum(colours.values()) - colours.most_common(1)[0][1])
+PY
+}
+
+# The ZFS host id of the installed system (powered off) from /etc/hostid, and whether its initramfs carries the same.
+installed_hostid() {
+  local root="$vm/system-root" members=() index
+  nbd_attach
+  for index in "${!installed[@]}"; do
+    members+=("/dev/nbd${index}p2")
+  done
+  sudo mdadm --assemble --run /dev/md/pithyxvm-system "${members[@]}" >/dev/null
+  mkdir -p "$root"
+  sudo mount -o ro,subvol=@ /dev/md/pithyxvm-system "$root"
+  local hostid initramfs extracted="$vm/initramfs"
+  hostid="$(sudo od -An -tx1 "$root/etc/hostid" 2>/dev/null | tr -d ' \n' || true)"
+  rm -rf "$extracted"
+  initramfs="$(sudo find "$root/boot" -maxdepth 1 -name 'initrd.img-*' | sort | tail -n1)"
+  sudo unmkinitramfs "$initramfs" "$extracted" >/dev/null 2>&1 || true
+  local inner
+  inner="$(sudo find "$extracted" -path '*/etc/hostid' | head -n1)"
+  [[ -n "$inner" ]] && inner="$(sudo od -An -tx1 "$inner" | tr -d ' \n')"
+  sudo rm -rf "$extracted"
+  sudo umount "$root"
+  nbd_detach
+  [[ -n "$hostid" ]] || die "the installed system has no /etc/hostid"
+  # The image has no zfs-initramfs (the root is btrfs), so pools are imported after boot from /etc/hostid; an
+  # initramfs that carries a host id anyway must carry the same.
+  [[ -z "$inner" || "$inner" == "$hostid" ]] || die "the initramfs carries host id '$inner', /etc/hostid is $hostid"
+  echo "$hostid"
+}
+
+# Plans a storage action as the administrator, runs it and waits for its job.
+storage_action() {
+  local preview plan job state deadline=$((SECONDS + 300))
+  preview="$(admin /storage/plans -X POST -H 'Content-Type: application/json' --data "$1")" || die "planning $1 failed"
+  plan="$(json 'd["planId"]' <<<"$preview")"
+  [[ "$plan" != None ]] || die "no plan id for $1: $preview"
+  job="$(admin "/storage/plans/$plan/run" -X POST | json 'd["id"]')"
+  until state="$(admin "/jobs/$job" | json 'd["state"]')" && [[ "$state" != queued && "$state" != running ]]; do
+    ((SECONDS < deadline)) || die "job $job did not finish within 5 minutes"
+    sleep 2
+  done
+  [[ "$state" == succeeded ]] || die "job $job ended as $state: $(admin "/jobs/$job")"
+}
+
+# Installs from the stick onto the chosen disks and starts the installed system without the stick.
+install_box() {
+  step "booting the installer from $(basename "$iso")"
+  start_vm stick disk1 disk2
+  wait_for "$api/health" 240
+  [[ "$(call "$api/setup" | json 'd["installer"]')" == True ]] || die "the live system does not run the installer"
+
+  step "claiming the installation and checking the requirements"
+  status="$(call -X POST "$api/installer/claim")"
+  failed="$(json '[c["id"] for c in d["checks"] if not c["passed"]]' <<<"$status")"
+  [[ "$failed" == "[]" ]] || die "requirements not met: $failed"
+  options="$(call "$api/installer/options")"
+  mapfile -t disks < <(json '"\n".join(x["disk"]["id"] for x in d["disks"] if x["suitable"])' <<<"$options")
+  # --reinstall keeps its pool on disk3 (serial PITHYXVM03), which no installation may take.
+  mapfile -t disks < <(printf '%s\n' "${disks[@]}" | grep -v PITHYXVM03 || true)
+  [[ ${#disks[@]} -ge 2 ]] || die "expected two suitable disks, got ${#disks[*]}"
+  network_request=null
+  if [[ "$network" == true ]]; then
+    step "testing a static address on the first network card (installer step 2)"
+    nic0="$(nic_name "$NIC0_MAC" network <<<"$options")"
+    nic1="$(nic_name "$NIC1_MAC" network <<<"$options")"
+    nic2="$(nic_name "$NIC2_MAC" network <<<"$options")"
+    echo "cards: $nic0 (test connection), $nic1 and $nic2 (one network)"
+    # The address the user network hands out anyway, now static, so the test keeps its connection.
+    network_request="{\"interfaces\": [{\"name\": \"$nic0\", \"kind\": \"ethernet\", \"ipv4\": \"static\",
+      \"ipv4Address\": \"10.0.2.15/24\", \"ipv4Gateway\": \"10.0.2.2\", \"ipv6\": \"off\"}],
+      \"global\": {\"hostName\": \"pithyx-test\", \"dnsServers\": [\"10.0.2.3\"], \"searchDomains\": []}}"
+    call -X POST -H 'Content-Type: application/json' "$api/installer/network/test" -o /dev/null --data "$network_request"
+    deadline=$((SECONDS + 60))
+    until result="$(call "$api/installer/network/test" 2>/dev/null)" && [[ "$(json 'd["running"]' <<<"$result")" == False ]]; do
+      ((SECONDS < deadline)) || die "the connection test did not finish within 60 seconds"
+      sleep 2
+    done
+    [[ "$(json 'd["errorCode"]' <<<"$result")" == None ]] || die "the connection test failed: $result"
+    [[ "$(json "[i['up'] and '10.0.2.15/24' in i['addresses'] and i['gatewayReachable'] for i in d['interfaces'] if i['name'] == '$nic0']" <<<"$result")" == "[True]" ]] \
+      || die "the connection test did not reach the gateway: $result"
+    echo "the connection test reached the gateway 10.0.2.2 from $nic0"
+  fi
+  if [[ "$mirror" == true ]]; then
+    chosen="[\"${disks[0]}\", \"${disks[1]}\"]"
+    installed=(disk1 disk2)
+  else
+    chosen="[\"${disks[0]}\"]"
+    # The disk ids carry the serials PITHYXVM01 and PITHYXVM02 that start_vm gives disk1 and disk2.
+    installed=("disk${disks[0]: -1}")
+  fi
+
+  step "installing onto $chosen"
+  call -X POST -H 'Content-Type: application/json' "$api/installer/install" -o /dev/null --data @- <<EOF
+{"hostname": "pithyx-test", "language": "en", "region": null, "timeZone": "Europe/Berlin", "ntpServers": [],
+ "keyboardLayout": "$keyboard", "diskIds": $chosen, "username": "admin", "password": "correct horse battery staple",
+ "displayName": null, "eraseConfirmed": true, "network": $network_request}
+EOF
+  deadline=$((SECONDS + 900))
+  slow=0
+  while :; do
+    ((SECONDS < deadline)) || die "the installation did not finish within 15 minutes"
+    # Under the load of the installation a request can take long; the next one tries again.
+    if ! status="$(call "$api/installer")"; then
+      slow=$((slow + 1))
+      sleep 5
+      continue
+    fi
+    phase="$(json 'd["phase"]' <<<"$status")"
+    [[ "$phase" == installing ]] || break
+    sleep 5
+  done
+  [[ "$phase" == installed ]] || die "the installation ended as $phase in step $(json 'd["step"]' <<<"$status"); serial logs in $vm"
+  install_id="$(json 'd["installId"]' <<<"$status")"
+  [[ "$(json 'd["recoveryKey"][:4]' <<<"$status")" == PTHX ]] || die "no recovery key"
+  echo "installed in $((SECONDS - deadline + 900))s, install id $install_id ($slow status requests timed out)"
+
+  step "restarting without the USB stick"
+  call -X POST "$api/installer/reboot" -o /dev/null
+  sleep 5
+  stop_vm
+  if [[ -n "$updates" ]]; then
+    step "writing the update source and a serial GRUB console into the installed system"
+    prepare_updates
+  fi
+  start_vm "${installed[@]}"
+}
+
+install_box
 check_installed
 echo "the installed system answers and the administrator signs in"
 
@@ -496,6 +570,30 @@ admin() {
 step "checking that the ZFS module loads"
 admin /storage/import/scan -X POST -o /dev/null || die "zpool cannot run on the installed system; serial logs in $vm"
 echo "zpool answers: the ZFS module fits the kernel"
+
+# sshd never ran on a fresh install (the image disables it), so switching SFTP or SSH on is its first start.
+step "checking SFTP and SSH"
+readonly REMOTE_PASSWORD="correct horse battery staple"
+for account in "sftptest protocol:sftp" "sshtest right:sshLogin"; do
+  read -r name resource <<<"$account"
+  admin /users -X POST -H 'Content-Type: application/json' -o /dev/null \
+    --data "{\"username\": \"$name\", \"password\": \"$REMOTE_PASSWORD\", \"grants\": [{\"resource\": \"$resource\", \"level\": \"allow\"}]}"
+done
+admin /file-services -X PUT -H 'Content-Type: application/json' --data '{"sftpEnabled": true, "sshEnabled": true}' -o /dev/null
+services="$(admin /file-services)"
+[[ "$(json 'd["sftp"]' <<<"$services")" == running ]] || die "SFTP does not run: $services; serial logs in $vm"
+remote=(-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null -o LogLevel=ERROR -o ConnectTimeout=10 -o PubkeyAuthentication=no -P "$ssh_port")
+for _ in $(seq 30); do
+  SSHPASS="$REMOTE_PASSWORD" sshpass -e sftp "${remote[@]}" sftptest@127.0.0.1 <<<"ls" >/dev/null 2>&1 && break
+  sleep 2
+done
+SSHPASS="$REMOTE_PASSWORD" sshpass -e sftp "${remote[@]}" sftptest@127.0.0.1 <<<"ls" >/dev/null || die "the SFTP user cannot sign in over SFTP"
+shell="$(SSHPASS="$REMOTE_PASSWORD" sshpass -e ssh "${remote[@]/-P/-p}" sshtest@127.0.0.1 id -un)" || die "the SSH user cannot sign in"
+[[ "$shell" == sshtest ]] || die "the SSH login answered $shell"
+if SSHPASS="$REMOTE_PASSWORD" sshpass -e ssh "${remote[@]/-P/-p}" sftptest@127.0.0.1 true 2>/dev/null; then
+  die "the SFTP user got a shell"
+fi
+echo "SFTP and SSH answer on port 22"
 
 # Waits until a Python expression over GET /api/system/network is true.
 wait_network() {
@@ -700,6 +798,54 @@ print(json.dumps(config))")"
   start_vm "${installed[@]}"
   check_installed
   echo "both ESPs carry the same GRUB and pithyx.env"
+fi
+
+step "checking that tty2 shows no login prompt"
+monitor "sendkey ctrl-alt-f2"
+sleep 3
+tty2="$(drawn_pixels tty2)"
+monitor "sendkey ctrl-alt-f1"
+sleep 3
+tty1="$(drawn_pixels tty1)"
+((tty1 > 1000)) || die "tty1 shows no console menu ($tty1 pixels drawn); screenshots in $vm"
+((tty2 < 200)) || die "tty2 shows something ($tty2 pixels drawn), a login prompt?; screenshots in $vm"
+echo "tty2 is empty ($tty2 pixels drawn), tty1 shows the console menu ($tty1 pixels)"
+
+if [[ "$reinstall" == true ]]; then
+  step "creating the pool tank on disk3"
+  disk3="$(admin /storage/disks | json "[x['disk']['id'] for x in d['disks'] if 'PITHYXVM03' in x['disk']['id']][0]")"
+  storage_action "{\"action\": \"pool.create\", \"pool\": \"tank\", \"layout\": \"single\", \"diskIds\": [\"$disk3\"], \"encryption\": \"none\"}"
+  echo "tank is on $disk3"
+
+  step "reading the host id of the first installation"
+  power_off
+  first_hostid="$(installed_hostid)"
+  echo "host id $first_hostid in /etc/hostid"
+
+  step "installing again onto the same disk"
+  # A fresh UEFI store, so the VM boots the stick and not the first installation.
+  cp "$OVMF_VARS" "$vm/vars.fd"
+  install_box
+  check_installed
+
+  step "reading the host id of the second installation"
+  power_off
+  second_hostid="$(installed_hostid)"
+  [[ "$second_hostid" != "$first_hostid" ]] || die "both installations have host id $first_hostid"
+  echo "host id $second_hostid, the first installation had $first_hostid"
+  start_vm "${installed[@]}"
+  check_installed
+
+  step "importing tank with the forced import"
+  scan="$(admin /storage/import/scan -X POST)"
+  [[ "$(json "[(p['needsForce'], p['allowed']) for p in d['pools'] if p['name'] == 'tank']" <<<"$scan")" == "[(True, True)]" ]] \
+    || die "tank is not offered as a pool of another system: $scan"
+  guid="$(json "[p['poolGuid'] for p in d['pools'] if p['name'] == 'tank'][0]" <<<"$scan")"
+  storage_action "{\"action\": \"pool.import.readonly\", \"pool\": \"tank\", \"poolGuid\": \"$guid\", \"force\": true, \"confirmName\": \"tank\"}"
+  storage_action '{"action": "pool.import", "pool": "tank", "force": true, "confirmName": "tank"}'
+  [[ "$(admin /storage/pools | json "[(p['state'], p['readOnly']) for p in d['pools'] if p['name'] == 'tank']")" == "[('ONLINE', False)]" ]] \
+    || die "tank is not imported: $(admin /storage/pools)"
+  echo "tank from the first installation is imported and ONLINE"
 fi
 
 if [[ "$mirror" == true ]]; then

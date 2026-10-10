@@ -662,6 +662,10 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string NetworkDnsTooMany = "network.dns.too_many";
 
+    /// <summary>nft refused the firewall rules for the file services; the setting is saved and the Log Center has the details.</summary>
+    [ErrorStatus(HttpStatusCode.InternalServerError)]
+    public const string NetworkFirewallFailed = "network.firewall.failed";
+
     /// <summary>A gateway is not an address inside the interface's network (or, for IPv6, link-local); <c>params.name</c> is the interface, <c>params.field</c> <c>ipv4Gateway</c> or <c>ipv6Gateway</c>.</summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string NetworkGatewayInvalid = "network.gateway.invalid";

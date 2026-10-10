@@ -49,6 +49,8 @@ public enum FileServiceState
 /// <param name="Ftp">How FTP is doing.</param>
 /// <param name="FtpPort">The FTP control port.</param>
 /// <param name="FtpFingerprint">The SHA-256 fingerprint of the FTPS certificate, for clients that ask whether to trust it; null until FTP ran once.</param>
+/// <param name="PrivateNetworksOnly">Whether the firewall lets only private networks (RFC 1918, ULA, link-local) reach SMB, SFTP, SSH and FTP (D342). Off by default.</param>
+/// <param name="FirewallActive">Whether the firewall is applied here; false on a development machine and in simulation, where the rules are only rendered.</param>
 public sealed record FileServiceSettings(
     bool SmbEnabled,
     string Workgroup,
@@ -61,7 +63,9 @@ public sealed record FileServiceSettings(
     bool FtpPlainAllowed,
     FileServiceState Ftp,
     int FtpPort,
-    string? FtpFingerprint);
+    string? FtpFingerprint,
+    bool PrivateNetworksOnly,
+    bool FirewallActive);
 
 /// <summary>Changes of the file services; fields left out stay.</summary>
 /// <param name="SmbEnabled">Switches SMB on or off.</param>
@@ -71,6 +75,7 @@ public sealed record FileServiceSettings(
 /// <param name="WebDavEnabled">Switches WebDAV on or off.</param>
 /// <param name="FtpEnabled">Switches FTP (FTPS) on or off.</param>
 /// <param name="FtpPlainAllowed">Allows or refuses plain FTP without TLS; refusing it ends every plain session.</param>
+/// <param name="PrivateNetworksOnly">Limits SMB, SFTP, SSH and FTP to private networks, or lets every network reach them again.</param>
 public sealed record FileServiceSettingsRequest(
     bool? SmbEnabled = null,
     string? Workgroup = null,
@@ -78,4 +83,5 @@ public sealed record FileServiceSettingsRequest(
     bool? SshEnabled = null,
     bool? WebDavEnabled = null,
     bool? FtpEnabled = null,
-    bool? FtpPlainAllowed = null);
+    bool? FtpPlainAllowed = null,
+    bool? PrivateNetworksOnly = null);

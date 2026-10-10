@@ -15,7 +15,7 @@ Die Seite listet Netzwerkkarten, Bonds und VLANs mit ihrem Zustand (Verbunden, K
 
 Pro Schnittstelle kannst du sie ein- oder ausschalten, IPv4 per DHCP, statisch oder aus wählen sowie IPv6 automatisch (Router und DHCPv6), statisch oder aus. Eine statische Adresse wird mit ihrer Präfixlänge geschrieben, zum Beispiel `192.168.1.10/24` oder `2001:db8::10/64`; das Gateway ist optional und muss im Netzwerk liegen. Die MTU liegt zwischen 1280 und 9000 (576 bis 9000 bei ausgeschaltetem IPv6); leer bedeutet 1500. **Zurück zu DHCP** entfernt die eigenen Einstellungen einer Karte.
 
-Änderungen werden als Entwurf gesammelt („Noch nicht angewendete Änderungen“) und gemeinsam mit **Anwenden …** übernommen oder mit **Änderungen verwerfen** verworfen. Pithyx lehnt eine Änderung ab, die die Box ohne jede Schnittstelle mit Adresse zurückließe ([`network.config.unreachable`](/de/docs/reference/errors/#network.config.unreachable)). Pithyx schreibt dafür Dateien für systemd-networkd und systemd-resolved; es gibt keine Einstellung für WLAN, Bridge oder Firewall.
+Änderungen werden als Entwurf gesammelt („Noch nicht angewendete Änderungen“) und gemeinsam mit **Anwenden …** übernommen oder mit **Änderungen verwerfen** verworfen. Pithyx lehnt eine Änderung ab, die die Box ohne jede Schnittstelle mit Adresse zurückließe ([`network.config.unreachable`](/de/docs/reference/errors/#network.config.unreachable)). Pithyx schreibt dafür Dateien für systemd-networkd und systemd-resolved; es gibt keine Einstellung für WLAN oder Bridge. Die Firewall stellst du bei den Dateidiensten ein (siehe [Sicherheit](/de/docs/admin/security/#offene-ports)).
 
 ## Bonds
 

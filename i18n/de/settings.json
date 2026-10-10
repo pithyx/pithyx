@@ -160,7 +160,7 @@
     "fileServices": {
       "title": "Dateidienste",
       "description": "SMB und SFTP für den Zugriff von anderen Computern",
-      "keywords": "smb samba sftp ssh netzlaufwerk protokoll"
+      "keywords": "smb samba sftp ssh netzlaufwerk protokoll firewall"
     },
     "users": {
       "title": "Benutzer",
@@ -200,6 +200,13 @@
   "fileServices": {
     "intro": "Mit Dateidiensten öffnen andere Computer deine freigegebenen Ordner über das Netzwerk. Benutzer melden sich mit ihrem Pithyx-Benutzernamen und Passwort an.",
     "save": "Speichern",
+    "firewall": {
+      "title": "Firewall",
+      "explain": "Pithyx lässt andere Computer nur die Weboberfläche und die eingeschalteten Dateidienste erreichen. Schaltest du einen Dienst aus, ist auch sein Port zu.",
+      "privateSwitch": "Nur private Netze dürfen die Dateidienste nutzen",
+      "privateExplain": "SMB, SFTP, SSH und FTP antworten dann nur Computern in privaten Netzen (10.x, 172.16 bis 31.x, 192.168.x, Link-local und IPv6-ULA). Lass es aus, wenn du die Box über einen Router aus einem anderen Netz oder über ein VPN mit öffentlichen Adressen erreichst. Die Weboberfläche bleibt in jedem Fall erreichbar.",
+      "inactive": "Das ist ein Entwicklungsrechner: Pithyx kennt die Regeln, wendet sie hier aber nicht an."
+    },
     "rights": "Wer welchen Dateidienst nutzen darf, legst du mit den Rechten jedes Benutzers oder jeder Gruppe auf den Seiten Benutzer und Gruppen fest. Welche freigegebenen Ordner sie anbieten, legst du pro Ordner auf der Seite Freigegebene Ordner fest. Wer sich seit den Dateidiensten nicht im Web angemeldet hat, muss das einmal tun, damit die Dienste das Passwort kennen.",
     "state": {
       "off": "Aus",

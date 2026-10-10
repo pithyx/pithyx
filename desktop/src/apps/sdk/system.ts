@@ -108,6 +108,7 @@ export function systemHost(queryClient: QueryClient): HostExtensions {
           value.webDavEnabled,
           value.ftpEnabled,
           value.ftpPlainAllowed,
+          value.privateNetworksOnly,
         ].every((flag) => flag === undefined || flag === null || typeof flag === 'boolean') &&
         (value.workgroup === undefined ||
           value.workgroup === null ||

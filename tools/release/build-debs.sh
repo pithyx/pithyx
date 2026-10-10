@@ -62,6 +62,9 @@ SOURCE_DATE_EPOCH="$(git -C "$repo" log -1 --format=%ct)"
 export SOURCE_DATE_EPOCH
 
 mkdir -p "$work" "$debs"
+# dash (apt's hook shell) only takes fds 0 to 9: keep the lock fds out of mmdebstrap, or apt's status fd becomes 10.
+mmdebstrap() { command mmdebstrap "$@" 8>&- 9>&-; }
+
 exec 8>"$work/.debs.lock"
 flock --nonblock 8 || die "another build of the packages uses $work"
 

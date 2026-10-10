@@ -16,7 +16,7 @@ const fileServicesKey = ['settings', 'system', 'fileServices'] as const;
 
 /**
  * File services: SMB, SFTP, WebDAV, FTP and SSH logins switched on and off for the box, the SMB workgroup, how each service is
- * doing and how other computers connect. Who may use which protocol is set per user on the Users page, which shared folders they
+ * doing, how other computers connect and whether the firewall lets only private networks reach them. Who may use which protocol is set per user on the Users page, which shared folders they
  * offer on the Shared folders page.
  */
 export function FileServicesPage({ app }: { app: PithyxApp }) {
@@ -214,6 +214,27 @@ function FileServicesForm({ app, saved }: { app: PithyxApp; saved: FileServiceSe
         <p className={styles.notice} role="note">
           {t('fileServices.ssh.warning')}
         </p>
+      </section>
+      <section className={styles.card} aria-labelledby="file-services-firewall">
+        <h3 id="file-services-firewall" className={styles.sectionTitle}>
+          {t('fileServices.firewall.title')}
+        </h3>
+        <p className={styles.muted}>{t('fileServices.firewall.explain')}</p>
+        <Switch
+          isSelected={saved.privateNetworksOnly}
+          isDisabled={save.isPending}
+          onChange={(privateNetworksOnly) => {
+            save.mutate({ privateNetworksOnly });
+          }}
+        >
+          {t('fileServices.firewall.privateSwitch')}
+        </Switch>
+        <p className={styles.muted}>{t('fileServices.firewall.privateExplain')}</p>
+        {!saved.firewallActive && (
+          <p className={styles.notice} role="note">
+            {t('fileServices.firewall.inactive')}
+          </p>
+        )}
       </section>
       <p className={styles.notice} role="note">
         {t('fileServices.rights')}
