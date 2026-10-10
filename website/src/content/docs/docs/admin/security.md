@@ -19,11 +19,15 @@ The session cookie is `HttpOnly` and `SameSite=Strict`, and it gets the `Secure`
 
 ## Open ports
 
-Pithyx has no firewall for its own services today. Every service that is switched on answers on every network the box is connected to, over IPv4 and IPv6: the web desktop and WebDAV on 7484 and 80, SMB on 445 (on from the first start), SFTP and SSH on 22, FTP on 21 with the passive ports 50000 to 50099. Only app backends are shielded: they publish no ports at all. Keep the box behind a router and do not forward these ports to the internet.
+Pithyx has a firewall that lets in only the web interface and the file services that are switched on, over IPv4 and IPv6: the web desktop and WebDAV on 7484 and 80, SMB on 445 (on from the first start), SFTP and SSH on 22, FTP on 21 with the passive ports 50000 to 50099. Switching a service off in Settings > **File services** also closes its port. Everything else is dropped, except answers to the box's own connections, DHCP replies and the ICMP messages IPv6 needs. App backends publish no ports at all.
+
+With **Only private networks may use the file services** (section **Firewall** on the same page, off by default), SMB, SFTP, SSH and FTP answer only computers in private networks (10.x, 172.16 to 31.x, 192.168.x, link-local and IPv6 ULA); the web interface stays reachable either way. Leave it off if you reach the box through a router from another network or over a VPN with public addresses. If the rules cannot be applied, the setting is still saved and the error is [`network.firewall.failed`](/docs/reference/errors/#network.firewall.failed). The desktop is not encrypted yet, so keep the box behind a router and do not forward these ports to the internet.
 
 ## Physical access
 
-Whoever can use the box's console, in person or through remote management (BMC, IPMI), can get root: the boot menu has no password, and the system disk is not encrypted. A password at the console would therefore protect nothing, so the console menu and the [recovery menu](/docs/install/updates/#the-recovery-menu) ask for none and only ask you to confirm what you do. Put the box where strangers cannot reach it, and secure its remote management.
+Whoever can use the box's console, in person or through remote management (BMC, IPMI), can get root: the boot menu has no password, and the system disk is not encrypted. A password at the console would therefore protect nothing, so the console menu and the [recovery menu](/docs/install/updates/#the-recovery-menu) ask for none and only ask you to confirm what you do. The box has no login at the console at all: tty1 shows only the console menu, the other consoles are switched off, and root stays locked. Put the box where strangers cannot reach it, and secure its remote management.
+
+Each box writes its own ZFS host id during the installation, so two boxes installed from the same stick never claim to be the same system. A pool from before a reinstall therefore counts as used by another system and needs the forced import (see [Recovery](/docs/install/recovery/#importing-the-pools-again)).
 
 Pool encryption is not available in this version; the storage wizard says it comes with the key vault. A key kept in a vault on the system disk protects only against stolen disks, not against someone who has the whole box or its console.
 

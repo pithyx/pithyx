@@ -296,6 +296,9 @@
       "invalid": "“{server}” is not an IPv4 or IPv6 address.",
       "too_many": "Enter at most {max} name servers."
     },
+    "firewall": {
+      "failed": "The firewall rules could not be applied. The setting is saved; the Log Center has the details."
+    },
     "gateway": {
       "invalid": "The {field, select, ipv6Gateway {IPv6} other {IPv4}} gateway of {name} must be an address in its network."
     },

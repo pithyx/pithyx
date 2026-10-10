@@ -269,6 +269,10 @@ public sealed partial class FileServiceSync(
         if (changed)
         {
             await File.WriteAllTextAsync(options.SshdDropIn, content, cancellationToken);
+            if (OperatingSystem.IsLinux())
+            {
+                Directory.CreateDirectory(SshdConfig.PrivilegeSeparationPath, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute | UnixFileMode.GroupRead | UnixFileMode.GroupExecute | UnixFileMode.OtherRead | UnixFileMode.OtherExecute);
+            }
             // sshd reads its files only at start and reload, so the check runs on the file in place.
             var check = await commands.RunAsync(new CommandRequest("sshd", ["-t"]), cancellationToken);
             if (check.ExitCode != 0)

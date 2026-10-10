@@ -165,7 +165,7 @@ public sealed class CatalogGit(ICommandRunner commands, bool allowFile)
         try
         {
             var key = Path.Combine(folder, "key");
-            var result = await commands.RunAsync(new CommandRequest("ssh-keygen", ["-q", "-t", "ed25519", "-N", "", "-C", comment, "-f", key], TimeSpan.FromSeconds(30)), cancellationToken);
+            var result = await commands.RunAsync(new CommandRequest("ssh-keygen", ["-q", "-t", "ed25519", "-N", "", "-C", comment, "-f", key], TimeSpan.FromSeconds(30), SecretOutput: true), cancellationToken);
             if (result.ExitCode != 0)
             {
                 throw new PithyxException(ErrorCodes.SystemInternalUnexpected);

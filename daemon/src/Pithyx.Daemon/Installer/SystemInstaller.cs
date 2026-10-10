@@ -407,6 +407,8 @@ public sealed partial class SystemInstaller(
             await RunAsync("mount", ["--make-rslave", Path.Combine(Target, path)], cancellationToken);
         }
         await RunAsync("chroot", [Target, "ssh-keygen", "-A"], cancellationToken);
+        // Each box gets its own ZFS host id (D341); the initramfs below copies it, so boxes from one ISO never share one.
+        await RunAsync("chroot", [Target, "zgenhostid", "-f"], cancellationToken);
         await RunAsync("chroot", [Target, "update-initramfs", "-u", "-k", "all"], cancellationToken, _longCommand);
         // The second disk first: grub-install of the first disk puts its own boot entry at the front of the boot order.
         for (var index = esps.Count - 1; index >= 0; index--)

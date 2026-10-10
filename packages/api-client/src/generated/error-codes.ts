@@ -143,6 +143,7 @@ export const errorCodes = [
   'network.default_interface.invalid',
   'network.dns.invalid',
   'network.dns.too_many',
+  'network.firewall.failed',
   'network.gateway.invalid',
   'network.global.not_changeable',
   'network.host_name.invalid',

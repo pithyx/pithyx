@@ -3,7 +3,7 @@
 # keyboard menu to set a static address when there is no DHCP lease and to reset the network to DHCP. It needs no
 # password: whoever sits at the box may fix its network. The menu talks to the daemon through files in
 # /run/pithyx/console, which only root writes; the daemon checks the settings like Settings > Network does, and a
-# static address waits 60 seconds for Keep like every other change. Alt+F2 opens a login prompt.
+# static address waits 60 seconds for Keep like every other change. The box has no local login (D341).
 set -uo pipefail
 export LC_ALL=C.UTF-8
 
@@ -44,7 +44,7 @@ show() {
     echo
     echo "  [k] Keep the new network settings    [u] Undo them now"
   fi
-  echo "  [s] Set a static address    [r] Reset the network to DHCP    Alt+F2: log in"
+  echo "  [s] Set a static address    [r] Reset the network to DHCP"
   [[ -n "$message" ]] && printf '\n  %s\n' "$message"
 }
 

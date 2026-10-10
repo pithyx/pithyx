@@ -11,6 +11,7 @@ public static class NetworkEndpoints
         services.AddSingleton<NetworkConfirmation>();
         services.AddSingleton(provider => ActivatorUtilities.CreateInstance<NetworkHost>(provider, mode));
         services.AddSingleton<NetworkService>();
+        services.AddSingleton(provider => ActivatorUtilities.CreateInstance<Firewall>(provider, mode));
         // Resolved per snapshot: the service publishes through the hub, which is built from these definitions.
         services.AddSingleton(provider => NetworkService.Definition(provider.GetRequiredService<NetworkService>));
         if (!BuildTimeDocument.IsGenerating)

@@ -58,6 +58,31 @@ public sealed class ProcessCommandRunnerTests
     }
 
     [Fact]
+    public async Task MasksTheOutputOfSecretBearingCommandsInLogs()
+    {
+        var logger = new ListLogger<ProcessCommandRunner>();
+        var runner = new ProcessCommandRunner(logger);
+
+        var result = await runner.RunAsync(
+            new CommandRequest("sh", ["-c", "echo hun''ter2; echo hun''ter3 >&2"], SecretOutput: true),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal("hunter2\n", result.StandardOutput);
+        var message = Assert.Single(logger.Messages);
+        Assert.DoesNotContain("hunter2", message, StringComparison.Ordinal);
+        Assert.DoesNotContain("hunter3", message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void PasswordToolsAlwaysHideTheirOutput()
+    {
+        Assert.True(new CommandRequest("pdbedit", ["-L", "-w"]).HidesOutput);
+        Assert.True(new CommandRequest("/usr/bin/smbpasswd", ["-s", "-a", "anna"]).HidesOutput);
+        Assert.True(new CommandRequest("chpasswd", ["-e"]).HidesOutput);
+        Assert.False(new CommandRequest("zpool", ["list"]).HidesOutput);
+    }
+
+    [Fact]
     public async Task PassesTraceparentToTheCommand()
     {
         using var activity = new Activity("test").SetIdFormat(ActivityIdFormat.W3C).Start();
