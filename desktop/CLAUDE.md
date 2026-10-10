@@ -2,6 +2,8 @@
 
 Rules for `desktop/`. The root `CLAUDE.md` applies as well.
 
+- Docs (D340): a visible change (a screen, a button, a shortcut, a setting, a message) checks the matching pages under `website/src/content/docs/` (`user/` for everyone, `admin/` for administrators, `developers/desktop/` for internals) and updates or adds them in English and German in the same commit; a likely question goes into the FAQ (`website/CLAUDE.md`).
+
 ## Responsive and accessible
 
 - One UI for every screen: phone, tablet, laptop, desktop, ultrawide. No separate mobile app.
@@ -14,8 +16,8 @@ Rules for `desktop/`. The root `CLAUDE.md` applies as well.
 ## Performance
 
 - The UI never blocks on the network. Show cached data first, then reconcile.
-- Directory listings stream in chunks over the WebSocket. Never wait for a full listing.
-- Long lists are virtualized. Heavy sorting and filtering run in a Web Worker.
+- Directory listings come in cursor pages over REST (step 6.2, pages instead of a WebSocket stream); live changes of open folders come over the WebSocket. Never wait for a full listing.
+- Long lists are virtualized. A Web Worker for heavy sorting and filtering is planned, not built yet.
 - Thumbnails and other derived data load asynchronously and never delay a listing.
 - User actions are optimistic and roll back on error.
 - No spinner before 300 ms.

@@ -1,0 +1,77 @@
+---
+import StarlightPage from '@astrojs/starlight/components/StarlightPage.astro';
+import { getImage } from 'astro:assets';
+import { getEntry } from 'astro:content';
+import logo from '../../assets/logo.svg';
+import type { Locale } from '../../lib/i18n.ts';
+import '../../styles/landing.css';
+import { AiAccess } from './AiAccess.tsx';
+import { CallToAction } from './CallToAction.tsx';
+import { FeatureGrid } from './FeatureGrid.tsx';
+import { Gallery } from './Gallery.tsx';
+import { Showcase } from './Showcase.tsx';
+import { SpecTable } from './SpecTable.tsx';
+import type { Picture } from './types.ts';
+import { WhySection } from './WhySection.tsx';
+
+interface Props {
+  locale: Locale;
+}
+
+// All text and pictures come from src/content/landing/<locale>.yaml; this file only arranges them.
+const { locale } = Astro.props;
+const entry = await getEntry('landing', locale);
+if (!entry) {
+  throw new Error(`src/content/landing/${locale}.yaml is missing`);
+}
+const data = entry.data;
+const site = (Astro.site?.href ?? 'https://pithyx.org/').replace(/\/$/, '');
+
+async function picture(item: { image: ImageMetadata; alt: string; caption: string }): Promise<Picture> {
+  const image = await getImage({ src: item.image, width: Math.min(item.image.width, 1920) });
+  return {
+    src: image.src,
+    width: item.image.width,
+    height: item.image.height,
+    alt: item.alt,
+    caption: item.caption,
+  };
+}
+
+const showcase = await picture(data.showcase);
+const gallery = await Promise.all(data.gallery.items.map(picture));
+---
+
+<StarlightPage
+  frontmatter={{
+    title: data.title,
+    description: data.description,
+    template: 'splash',
+    status: 'ready',
+    pagefind: true,
+    editUrl: false,
+    lastUpdated: false,
+    prev: false,
+    next: false,
+    hero: {
+      title: data.hero.title,
+      tagline: data.hero.tagline,
+      image: { file: logo, alt: '' },
+      actions: [
+        { text: data.hero.primary.label, link: data.hero.primary.href, variant: 'primary', icon: 'right-arrow' },
+        { text: data.hero.secondary.label, link: data.hero.secondary.href, variant: 'secondary' },
+        { text: data.hero.github.label, link: data.hero.github.href, variant: 'minimal', icon: 'github' },
+      ],
+    },
+  }}
+>
+  <div class="not-content px-landing">
+    <Showcase picture={showcase} />
+    <FeatureGrid features={data.features} />
+    <WhySection why={data.why} />
+    <SpecTable specs={data.specs} />
+    <Gallery client:visible title={data.gallery.title} close={data.gallery.close} pictures={gallery} />
+    <AiAccess client:visible ai={data.ai} site={site} />
+    <CallToAction cta={data.cta} />
+  </div>
+</StarlightPage>

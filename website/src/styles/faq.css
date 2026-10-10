@@ -1,0 +1,81 @@
+.px-faq {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.px-faq-search {
+  width: 100%;
+  padding: 0.7rem 1rem;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: var(--radius-md);
+  background: var(--sl-color-black);
+  color: var(--sl-color-white);
+  font: inherit;
+  font-size: var(--sl-text-base);
+}
+
+.px-faq-search:focus-visible {
+  outline: 2px solid var(--sl-color-accent);
+  outline-offset: 1px;
+}
+
+.px-faq-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.px-faq-categories button {
+  padding: 0.25rem 0.75rem;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--sl-color-gray-2);
+  font: inherit;
+  font-size: var(--sl-text-sm);
+  cursor: pointer;
+}
+
+.px-faq-categories button[aria-pressed='true'] {
+  background: var(--sl-color-accent-low);
+  border-color: var(--sl-color-accent);
+  color: var(--sl-color-white);
+}
+
+.px-faq-count {
+  margin: 0;
+  font-size: var(--sl-text-sm);
+  color: var(--sl-color-gray-3);
+}
+
+.px-faq-list {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.px-faq details {
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: var(--radius-md);
+  background: var(--sl-color-gray-6);
+}
+
+.px-faq summary {
+  padding: 0.85rem 1rem;
+  cursor: pointer;
+  list-style-position: inside;
+}
+
+.px-faq summary h2 {
+  display: inline;
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: var(--sl-text-base);
+  font-weight: 600;
+  letter-spacing: normal;
+  color: var(--sl-color-white);
+}
+
+.px-faq-answer {
+  padding: 0 1rem 1rem;
+}

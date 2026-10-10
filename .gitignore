@@ -12,6 +12,8 @@ dist/
 coverage/
 # Generated API references (pnpm docs).
 api-docs/
+# Astro content types (website/).
+.astro/
 
 # Playwright
 e2e/test-results/

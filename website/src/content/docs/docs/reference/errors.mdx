@@ -1,0 +1,15 @@
+---
+title: Error codes
+description: Every error code the daemon returns, with its message, generated from the product's translations.
+status: draft
+audience: developer
+generated: error-codes
+sidebar:
+  order: 1
+---
+
+import ErrorCodes from '~/components/ErrorCodes.astro';
+
+The API returns errors as RFC 9457 problem details with a stable `code`, `params` and an English `detail`. This list is generated from `i18n/en/errors.json`; `{name}` marks a parameter.
+
+<ErrorCodes />

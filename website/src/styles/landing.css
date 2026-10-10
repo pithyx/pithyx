@@ -1,0 +1,330 @@
+/* The landing page sections below Starlight's hero. Colors come from theme.css and the Pithyx tokens. */
+
+.px-landing {
+  display: grid;
+  gap: clamp(3rem, 8vw, 6rem);
+  padding-bottom: 4rem;
+}
+
+.px-landing h2 {
+  font-size: clamp(1.6rem, 3.5vw, 2.25rem);
+  line-height: var(--line-height-tight);
+  color: var(--sl-color-white);
+  margin: 0;
+}
+
+.px-landing h3 {
+  font-size: var(--sl-text-lg);
+  color: var(--sl-color-white);
+  margin: 0;
+}
+
+.px-landing p {
+  margin: 0;
+  color: var(--sl-color-gray-2);
+  line-height: var(--line-height-relaxed);
+}
+
+.px-section {
+  display: grid;
+  gap: 1rem;
+}
+
+.px-intro {
+  max-width: 42rem;
+  font-size: var(--sl-text-lg);
+}
+
+.px-card {
+  background: var(--px-card-bg);
+  border: 1px solid var(--px-card-border);
+  border-radius: var(--radius-lg);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-1);
+}
+
+.px-card-link {
+  display: grid;
+  gap: 0.5rem;
+  color: inherit;
+  text-decoration: none;
+}
+
+.px-card:has(.px-card-link:hover) {
+  border-color: var(--sl-color-accent);
+}
+
+/* Showcase */
+.px-showcase {
+  margin: 0;
+  display: grid;
+  gap: 0.75rem;
+  justify-items: center;
+}
+
+.px-showcase img {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--px-card-border);
+  box-shadow: var(--shadow-4);
+}
+
+.px-showcase figcaption {
+  font-size: var(--sl-text-sm);
+  color: var(--sl-color-gray-3);
+}
+
+/* Features */
+.px-feature-grid {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+}
+
+.px-feature-grid .px-card {
+  display: grid;
+  gap: 0.5rem;
+  align-content: start;
+}
+
+.px-feature-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: var(--radius-md);
+  background: var(--sl-color-accent-low);
+  color: var(--sl-color-accent-high);
+}
+
+/* Why */
+.px-why {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+  display: grid;
+  gap: 1.5rem 2.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+}
+
+.px-why li {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.px-why div {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.px-why-number {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--sl-text-2xl);
+  color: var(--color-highlight);
+  line-height: 1;
+}
+
+/* Specs */
+.px-specs {
+  margin: 1rem 0 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  border: 1px solid var(--px-card-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.px-specs div {
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--px-card-border);
+  background: var(--px-card-bg);
+}
+
+.px-specs dt {
+  font-size: var(--sl-text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--sl-color-gray-3);
+}
+
+.px-specs dd {
+  margin: 0.25rem 0 0;
+  color: var(--sl-color-white);
+  font-weight: 500;
+}
+
+/* Gallery */
+.px-gallery {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 10rem), 1fr));
+}
+
+.px-gallery button {
+  display: grid;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--sl-color-gray-2);
+  font: inherit;
+  font-size: var(--sl-text-sm);
+  text-align: start;
+  cursor: zoom-in;
+}
+
+.px-gallery img {
+  width: 100%;
+  height: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--px-card-border);
+  transition: transform var(--duration-fast) var(--ease-standard);
+}
+
+.px-gallery button:hover img,
+.px-gallery button:focus-visible img {
+  transform: translateY(-2px);
+  border-color: var(--sl-color-accent);
+}
+
+.px-lightbox {
+  width: min(96vw, 90rem);
+  max-height: 94vh;
+  padding: 1rem;
+  border: 1px solid var(--px-card-border);
+  border-radius: var(--radius-lg);
+  background: var(--sl-color-black);
+  color: var(--sl-color-gray-2);
+}
+
+.px-lightbox::backdrop {
+  background: var(--color-overlay);
+  backdrop-filter: blur(4px);
+}
+
+.px-lightbox figure {
+  margin: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.px-lightbox img {
+  width: 100%;
+  height: auto;
+  max-height: 80vh;
+  object-fit: contain;
+}
+
+.px-lightbox-close {
+  margin-top: 0.75rem;
+  padding: 0.4rem 1rem;
+  border: 1px solid var(--px-card-border);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+}
+
+/* For AI assistants */
+.px-ai-levels {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  counter-reset: level;
+}
+
+.px-ai-levels .px-card {
+  display: grid;
+  gap: 0.5rem;
+  align-content: start;
+}
+
+.px-ai-levels a {
+  overflow-wrap: anywhere;
+  font-size: var(--sl-text-sm);
+}
+
+.px-ai-prompt {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: start;
+  margin-top: 0.5rem;
+}
+
+.px-ai-prompt span {
+  font-size: var(--sl-text-sm);
+  color: var(--sl-color-gray-3);
+}
+
+.px-ai-prompt pre {
+  margin: 0;
+  width: 100%;
+  padding: 1rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--px-card-border);
+  background: var(--sl-color-gray-6);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-family: var(--font-mono);
+  font-size: var(--sl-text-sm);
+  color: var(--sl-color-white);
+}
+
+.px-ai-prompt button,
+.px-button {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.55rem 1.1rem;
+  border: 1px solid var(--sl-color-gray-5);
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--sl-color-white);
+  font: inherit;
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.px-button-primary {
+  background: var(--sl-color-accent);
+  border-color: var(--sl-color-accent);
+  color: var(--neutral-0);
+}
+
+/* Closing call */
+.px-cta {
+  justify-items: center;
+  text-align: center;
+  padding: clamp(2rem, 6vw, 3.5rem) 1rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--px-card-border);
+  background:
+    radial-gradient(30rem 14rem at 50% 0%, var(--px-hero-glow), transparent 70%), var(--px-card-bg);
+}
+
+.px-cta p {
+  max-width: 36rem;
+}
+
+.px-cta-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
