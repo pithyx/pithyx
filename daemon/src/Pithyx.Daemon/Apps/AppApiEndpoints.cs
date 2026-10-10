@@ -256,7 +256,7 @@ public static class AppApiEndpoints
         if (request.Endpoint is null || !app.Endpoints.Contains(request.Endpoint))
         {
             var endpoint = request.Endpoint ?? "";
-            throw new PithyxException(ErrorCodes.AppBackendEndpointUnknown, new Dictionary<string, object?> { ["endpoint"] = endpoint.Length > 63 ? endpoint[..63] : endpoint });
+            throw new PithyxException(ErrorCodes.AppBackendEndpointUnknown, new Dictionary<string, object?> { ["endpoint"] = endpoint.Length > 32 ? endpoint[..32] : endpoint });
         }
         var issued = tokens.IssueTicket(grant, request.Endpoint);
         return TypedResults.Ok(new AppTicket(issued.Token, issued.ExpiresAt));

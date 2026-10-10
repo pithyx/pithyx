@@ -48,7 +48,7 @@
     },
     "app.backend.unsupported": {
       "params": {},
-      "expected": "The app has a backend with containers. This version of Pithyx installs apps without a backend only."
+      "expected": "This error came from versions of Pithyx before 0.1, which installed apps without a backend only. This version runs app backends; update the box if you still see it."
     },
     "app.compose.key_unsupported": {
       "params": {

@@ -88,6 +88,10 @@
       "thumbs-v2": {
         "service": "worker-1",
         "port": 1
+      },
+      "a234567890123456789012345678901b": {
+        "service": "web",
+        "port": 65535
       }
     },
     "lifecycle": "always",
