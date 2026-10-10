@@ -158,6 +158,8 @@ public sealed partial class EndpointMatrixTests : IDisposable
         ["UploadSystemUpdate"] = Need.Admin,
         ["DiscardSystemUpdate"] = Need.Admin,
         ["InstallSystemUpdate"] = Need.Admin,
+        ["SaveUpdateSourceCandidate"] = Need.Admin,
+        ["DiscardUpdateSourceCandidate"] = Need.Admin,
         ["RollBackSystem"] = Need.Admin,
         ["ConfirmNetworkChange"] = Need.Admin,
         ["RevertNetworkChange"] = Need.Admin,

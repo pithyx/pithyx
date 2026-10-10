@@ -586,6 +586,7 @@
       "not_found": "Den Snapshot {snapshot} gibt es nicht mehr."
     },
     "source": {
+      "invalid": "Die Datei der Update-Quelle besteht die Prüfung nicht ({reason, select, json {kein JSON oder größer als 64 KB} url {die URL muss https verwenden und '{channel}' enthalten} schema {ein Feld fehlt, ist unbekannt oder fehlerhaft, oder ein öffentlicher Schlüssel hat nicht 32 Byte} duplicate_key {eine Key-ID kommt zweimal vor} other {{reason}}}).",
       "unreachable": "Die Update-Quelle ist nicht erreichbar ({reason, select, network {keine Verbindung} timeout {keine Antwort in der Zeit} status {Antwort {status}} missing {der Kanal hat noch kein Release} scheme {nur https ist erlaubt} other {{reason}}}). Die Box versucht es morgen wieder; du kannst stattdessen eine Update-Datei hochladen."
     },
     "space": {

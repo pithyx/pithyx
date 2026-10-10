@@ -427,6 +427,13 @@
   font-family: var(--font-mono);
 }
 
+.sourceKeys {
+  margin: 0;
+  padding-inline-start: var(--space-5);
+  font-size: var(--font-size-xs);
+  overflow-wrap: anywhere;
+}
+
 @container window (max-width: 640px) {
   .page,
   .overview {

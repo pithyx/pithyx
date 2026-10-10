@@ -278,6 +278,7 @@ export const errorCodes = [
   'update.none.available',
   'update.rollback.unconfirmed',
   'update.snapshot.not_found',
+  'update.source.invalid',
   'update.source.unreachable',
   'update.space.insufficient',
   'update.system.unsupported',

@@ -820,6 +820,19 @@ export const sampleUpdates: UpdateStatus = {
       reason: 'update to 0.1.0',
     },
   ],
+  source: {
+    name: 'Pithyx',
+    url: 'https://github.com/pithyx/pithyx/releases/download/channel-{channel}/channel.json',
+    official: true,
+    keys: [
+      {
+        keyId: 'pithyx-release-1',
+        publicKey: 'X86BspTUgM8UdRY2ac31eIq2l7bRduf0leSj5x3+pZI=',
+        channels: ['stable', 'beta'],
+      },
+    ],
+  },
+  sourceCandidate: null,
 };
 
 export const sampleNetwork = {

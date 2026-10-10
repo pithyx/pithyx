@@ -13,6 +13,9 @@
 //   node tools/release/update-file.ts channel <manifest.json> --name <file> --url <url> --size <n> --sha256 <hex>
 //        --sequence <n>                                               prints channel.json for an update file
 //   node tools/release/update-file.ts public-key                     prints the public half of PITHYX_SIGNING_KEY
+//   node tools/release/update-file.ts source --name <name> --url <url with {channel}> --key <id>:<public key>:<channels>
+//        [--key ...]                                                  prints pithyx-source.json for a fork (D339)
+//   node tools/release/update-file.ts verify-source <pithyx-source.json>
 //
 // A failed check prints its issues as JSON and exits 1.
 import {
@@ -84,6 +87,7 @@ function schema(path: string): ValidateFunction {
 const validateSignature = schema(join(here, '../../sdk/schema/index-signature.v1.schema.json'));
 const validateManifest = schema(join(here, 'schema/update-manifest.v1.schema.json'));
 const validateChannel = schema(join(here, 'schema/update-channel.v1.schema.json'));
+const validateSource = schema(join(here, 'schema/update-source.v1.schema.json'));
 
 /** The keys a box trusts, with the channels each signs for; the daemon builds in the same (UpdateKeys). */
 export function builtInKeys(): TrustedKey[] {
@@ -221,6 +225,42 @@ export function checkManifest(
     };
   }
   return { issues: [], manifest };
+}
+
+export interface UpdateSource {
+  sourceVersion: 1;
+  name: string;
+  url: string;
+  keys: TrustedKey[];
+}
+
+/**
+ * Reads `pithyx-source.json` (D339) as the box's recovery menu does before it offers the switch: valid JSON, the
+ * schema, an https URL with `{channel}`, and every key id once.
+ */
+export function checkSource(bytes: Uint8Array): { issues: Issue[]; source?: UpdateSource } {
+  const invalid = (reason: string) => ({
+    issues: [{ code: 'update.source.invalid', params: { reason } }],
+  });
+  const parsed = parseStrict(bytes);
+  if (parsed === undefined) {
+    return invalid('json');
+  }
+  const value = parsed.value as { url?: unknown };
+  if (
+    typeof value.url === 'string' &&
+    (!value.url.startsWith('https://') || !value.url.includes('{channel}'))
+  ) {
+    return invalid('url');
+  }
+  if (!validateSource(parsed.value)) {
+    return invalid('schema');
+  }
+  const source = parsed.value as UpdateSource;
+  if (new Set(source.keys.map((key) => key.keyId)).size !== source.keys.length) {
+    return invalid('duplicate_key');
+  }
+  return { issues: [], source };
 }
 
 /** Reads a channel's `channel.json` as the box does: the signature, the document, its channel and its sequence. */
@@ -389,6 +429,11 @@ function json(value: unknown): string {
   return `${JSON.stringify(value, null, 2)}\n`;
 }
 
+function keyOption(value: string): TrustedKey {
+  const [keyId = '', publicKey = '', channels = 'stable,beta'] = value.split(':');
+  return { keyId, publicKey, channels: channels.split(',') };
+}
+
 function options(args: string[]): Map<string, string | true> {
   const parsed = new Map<string, string | true>();
   for (let index = 0; index < args.length; index += 1) {
@@ -534,6 +579,28 @@ function main(args: string[]): number {
       process.stdout.write(json(channel));
       return 0;
     }
+    case 'source': {
+      const keys = args.flatMap((arg, index) =>
+        arg === '--key' && args[index + 1] !== undefined ? [keyOption(args[index + 1] ?? '')] : [],
+      );
+      const named = options(args.slice(1));
+      const document = new TextEncoder().encode(
+        json({
+          sourceVersion: 1,
+          name: required(named, 'name'),
+          url: required(named, 'url'),
+          keys,
+        }),
+      );
+      const result = checkSource(document);
+      if (result.issues.length > 0) {
+        return report(result.issues);
+      }
+      process.stdout.write(new TextDecoder().decode(document));
+      return 0;
+    }
+    case 'verify-source':
+      return report(checkSource(readFileSync(target ?? '')).issues);
     case 'public-key':
       process.stdout.write(`${publicKeyOf(keyFromEnvironment())}\n`);
       return 0;

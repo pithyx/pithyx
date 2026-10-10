@@ -7,13 +7,17 @@ using Pithyx.Daemon.Errors;
 namespace Pithyx.Daemon.Updates;
 
 /// <summary>
-/// Where the box reads its channels (<c>/etc/pithyx/update-source.json</c>, root, mode 600, no UI, D338): a URL with
+/// Where the box reads its channels (<c>/etc/pithyx/update-source.json</c>, root, mode 600, D338): a URL with
 /// <c>{channel}</c> for <c>channel.json</c> and an optional bearer token for a private repository or mirror. The token
-/// is never logged, shown or put into a support bundle.
+/// is never logged, shown or put into a support bundle. After a switch in the recovery menu (D339) the file is a
+/// <c>pithyx-source.json</c> with <paramref name="Name"/> and <paramref name="Keys"/>, and the box trusts only those keys;
+/// a file whose source does not pass its check counts as absent.
 /// </summary>
-public sealed record UpdateSourceConfig(string Url, string? Token)
+public sealed record UpdateSourceConfig(string Url, string? Token, string? Name = null, IReadOnlyList<Apps.Catalog.TrustedKey>? Keys = null)
 {
     public const string DefaultUrl = "https://github.com/pithyx/pithyx/releases/download/channel-{channel}/channel.json";
+
+    public const string BoxFile = "/etc/pithyx/update-source.json";
 
     public static UpdateSourceConfig Default { get; } = new(DefaultUrl, null);
 
@@ -26,8 +30,13 @@ public sealed record UpdateSourceConfig(string Url, string? Token)
             {
                 return fallback;
             }
-            using var document = JsonDocument.Parse(File.ReadAllText(path));
+            var bytes = File.ReadAllBytes(path);
+            using var document = JsonDocument.Parse(bytes);
             var root = document.RootElement;
+            if (root.TryGetProperty("keys", out _))
+            {
+                return UpdateSources.Check(bytes).Document is { } source ? new UpdateSourceConfig(source.Url, null, source.Name, source.Keys) : fallback;
+            }
             var url = root.TryGetProperty("url", out var value) && value.GetString() is { Length: > 0 } text ? text : fallback.Url;
             var token = root.TryGetProperty("token", out var secret) && secret.GetString() is { Length: > 0 } bearer ? bearer : null;
             return new UpdateSourceConfig(url, token);
@@ -39,7 +48,7 @@ public sealed record UpdateSourceConfig(string Url, string? Token)
     }
 
     /// <summary>Records print every member; this one would print the token.</summary>
-    public override string ToString() => $"UpdateSourceConfig {{ Url = {Url}, Token = {(Token is null ? "none" : Hosting.SecretMaskingEnricher.Mask)} }}";
+    public override string ToString() => $"UpdateSourceConfig {{ Url = {Url}, Token = {(Token is null ? "none" : Hosting.SecretMaskingEnricher.Mask)}, Name = {Name ?? "project"} }}";
 }
 
 /// <summary>

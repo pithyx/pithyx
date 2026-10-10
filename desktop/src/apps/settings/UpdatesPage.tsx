@@ -23,7 +23,8 @@ const STEPS = ['download', 'snapshot', 'install', 'debian', 'bootloader', 'resta
 /**
  * Settings > Updates (D297, D338): the installed version and the channel, what the daily check found (it only
  * notifies), installing the channel's newer version or an uploaded file with a snapshot before and a health check
- * after the restart, the history and the rollback to a snapshot. Administrators only.
+ * after the restart, the history and the rollback to a snapshot, and the update source (D339), which only the recovery
+ * menu switches. Administrators only.
  */
 export function UpdatesPage({ app }: { app: PithyxApp }) {
   const { t } = useTranslation('settings');
@@ -93,6 +94,7 @@ export function UpdatesPage({ app }: { app: PithyxApp }) {
           />
           <History status={data} busy={busy} onRollback={setRollback} />
           <UpdateSettings app={app} status={data} />
+          <Source app={app} status={data} />
           {installing !== null && (
             <InstallDialog
               app={app}
@@ -505,6 +507,126 @@ function UpdateSettings({ app, status }: { app: PithyxApp; status: UpdateStatus 
         </select>
       </label>
       <p className={styles.muted}>{t('updates.settings.channelHint')}</p>
+      {save.isError && <ErrorNotice error={describeProblem(save.error)} />}
+    </section>
+  );
+}
+
+type SourceKey = UpdateStatus['source']['keys'][number];
+
+function SourceKeys({ keys }: { keys: readonly SourceKey[] }) {
+  const { t } = useTranslation('settings');
+  return (
+    <ul className={styles.sourceKeys}>
+      {keys.map((key) => (
+        <li key={key.keyId}>
+          {t('updates.source.key', { id: key.keyId, channels: key.channels.join(', ') })}{' '}
+          <code className={styles.mono}>{key.publicKey}</code>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+/**
+ * The update source the box follows and a source file saved for the recovery menu (D339). Switching happens only at the
+ * console, so a taken-over account cannot redirect the box's updates; the file saved here spares typing a key there.
+ */
+function Source({ app, status }: { app: PithyxApp; status: UpdateStatus }) {
+  const { t } = useTranslation('settings');
+  const locale = useFormatLocale();
+  const queryClient = useQueryClient();
+  const input = useRef<HTMLInputElement>(null);
+  const save = useMutation({
+    mutationFn: async (file: File) =>
+      updatesCall(app, 'internal.admin.updates.source.save', { text: await file.text() }),
+    onSuccess: (next) => queryClient.setQueryData(updatesKey, next),
+  });
+  const discard = useMutation({
+    mutationFn: () => updatesCall(app, 'internal.admin.updates.source.discard', {}),
+    onSuccess: (next) => queryClient.setQueryData(updatesKey, next),
+  });
+  const { source } = status;
+  const candidate = status.sourceCandidate ?? null;
+  return (
+    <section className={styles.card} aria-labelledby="updates-source">
+      <h3 id="updates-source" className={styles.sectionTitle}>
+        {t('updates.source.title')}
+      </h3>
+      <dl className={styles.facts}>
+        <div className={styles.fact}>
+          <dt>{t('updates.source.name')}</dt>
+          <dd>
+            {source.official ? t('updates.source.official', { name: source.name }) : source.name}
+          </dd>
+        </div>
+        <div className={styles.fact}>
+          <dt>{t('updates.source.url')}</dt>
+          <dd className={styles.mono}>{source.url}</dd>
+        </div>
+      </dl>
+      {!source.official && (
+        <div className={styles.notice} role="note">
+          <p>
+            <strong>{t('updates.source.other', { name: source.name })}</strong>
+          </p>
+        </div>
+      )}
+      <SourceKeys keys={source.keys} />
+      <p className={styles.muted}>{t('updates.source.intro')}</p>
+      <input
+        ref={input}
+        type="file"
+        accept=".json,application/json"
+        hidden
+        aria-label={t('updates.source.choose')}
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          if (file !== undefined) {
+            save.mutate(file);
+          }
+          event.target.value = '';
+        }}
+      />
+      {candidate !== null && (
+        <div className={styles.notice} role="status">
+          <p>
+            <strong>{t('updates.source.saved', { name: candidate.name })}</strong>
+          </p>
+          <p className={styles.mono}>{candidate.url}</p>
+          <SourceKeys keys={candidate.keys} />
+          <p className={styles.muted}>
+            {t('updates.source.savedBy', {
+              user: candidate.savedBy,
+              date: new Intl.DateTimeFormat(locale, {
+                dateStyle: 'medium',
+                timeStyle: 'short',
+              }).format(new Date(candidate.savedAt)),
+            })}
+          </p>
+          <p>{t('updates.source.next')}</p>
+        </div>
+      )}
+      <div className={styles.buttons}>
+        <Button
+          variant="secondary"
+          isDisabled={save.isPending}
+          onPress={() => input.current?.click()}
+        >
+          {t('updates.source.choose')}
+        </Button>
+        {candidate !== null && (
+          <Button
+            variant="secondary"
+            isDisabled={discard.isPending}
+            onPress={() => {
+              discard.mutate();
+            }}
+          >
+            {t('updates.source.discard')}
+          </Button>
+        )}
+      </div>
       {save.isError && <ErrorNotice error={describeProblem(save.error)} />}
     </section>
   );
