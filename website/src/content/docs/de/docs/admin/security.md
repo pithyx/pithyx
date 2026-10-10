@@ -38,7 +38,7 @@ SSH ist standardmäßig aus. Zwei getrennte Schalter auf der Seite **Dateidienst
 - **Freigegebene Ordner über SFTP anbieten**: nur Dateiübertragung, keine Shell.
 - **SSH-Anmeldungen** mit dem Schalter **Benutzer mit dem Recht zur SSH-Anmeldung mit einer Shell anmelden lassen**. Benutzer mit dem Recht „Über SSH mit einer Shell anmelden“ bekommen eine Shell mit ihren eigenen Rechten, mit Passwort oder öffentlichem Schlüssel, ohne Weiterleitung, Tunnel oder X11. Eine Shell erreicht mit den Rechten des Benutzers das ganze System, daher gib das Recht nur Leuten, die es brauchen.
 
-Das Ausschalten eines der beiden stoppt SSH für die eigenen Konten des Systems nie; Pithyx hält `sshd` nie an. Die Host-Schlüssel entstehen beim ersten Start und gehören zum Konfigurationsbackup.
+Das Ausschalten eines der beiden stoppt SSH für die eigenen Konten des Systems nie; Pithyx hält `sshd` nie an. Eine Anmeldung mit Shell begrüßt dich mit dem Pithyx-Logo, der Version und einem Hinweis, dass Änderungen von Hand in der Shell die Box beschädigen oder von Pithyx oder einem Update rückgängig gemacht werden können (vorerst auf Englisch). Die Host-Schlüssel entstehen beim ersten Start und gehören zum Konfigurationsbackup.
 
 ## Zwei-Faktor-Anmeldung
 
@@ -55,7 +55,7 @@ Die Ersteinrichtung zeigt den Wiederherstellungsschlüssel einmal an (`PTHX-` ge
 Die Box schickt keine Daten an das Pithyx-Projekt. Das sind die ausgehenden Verbindungen, die Pithyx selbst aufbaut:
 
 - **Systemupdates**: einmal am Tag zu einer Zeit, die jede Box zufällig wählt (abschaltbar mit **Täglich nach Updates suchen** unter Einstellungen > **Updates**), und bei **Jetzt prüfen** liest die Box die Kanaldatei ihrer Update-Quelle (standardmäßig die Releases des Projekts auf GitHub) und die Paketlisten von Debian von `deb.debian.org`. Ein Update, das du installierst, lädt seine Datei von derselben Quelle. Siehe [Systemupdates](/de/docs/install/updates/).
-- **App-Kataloge**: Git über HTTPS oder SSH zu jedem aktivierten Katalog-Repository (der offizielle Katalog ist an und wird standardmäßig von GitHub abgerufen; der Community-Katalog ist aus), einmal täglich zur eingestellten Zeit mit einer zufälligen Verzögerung von bis zu einer Stunde, wenn du einen Katalog hinzufügst, und bei **Jetzt prüfen**. Schalte einen Katalog aus, um das zu beenden.
+- **App-Kataloge**: Git über HTTPS oder SSH zu jedem aktivierten Katalog-Repository (der offizielle und der Community-Katalog sind an und werden standardmäßig von GitHub abgerufen), einmal täglich zur eingestellten Zeit mit einer zufälligen Verzögerung von bis zu einer Stunde, wenn du einen Katalog hinzufügst, und bei **Jetzt prüfen**. Schalte einen Katalog aus, um das zu beenden.
 - **Container-Images** von Katalog-Apps aus der Registry, die der Katalog nennt, außer das Paket bringt sie mit.
 - **Zeit**: Ist **Zeitserver** unter Einstellungen > **Regionale Einstellungen** leer, nutzt die Box die Debian-Vorgaben über systemd-timesyncd, das öffentliche Zeitserver kontaktiert.
 - **Apps**, denen du die Berechtigung „Internet“ erlaubst, bekommen ein zweites Netzwerk mit ausgehendem Zugriff; andere Apps haben keines.

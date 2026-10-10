@@ -56,3 +56,9 @@ See [Development](README.md#development) in the README. `pnpm install` also inst
 - [ ] Docs in `website/` were checked and updated in English and German, or the change was judged not doc-worthy (D340).
 - [ ] No em dashes and no non-English text outside translation files.
 - [ ] Every commit is signed off.
+
+The same checklist is in the pull request template (`.github/pull_request_template.md`).
+
+## License and attribution
+
+Contributions to the system are licensed under the [GNU AGPL-3.0](LICENSE) with the additional terms in [NOTICE](NOTICE); contributions to `sdk/`, `packages/ui` and `packages/cli` under the MIT License of those folders. Pithyx was originally created by [Schecher1](https://github.com/Schecher1). NOTICE asks every fork and redistribution to keep the attribution "Based on Pithyx, originally created by Schecher1" in its source, its About page and its docs; a fork may use its own name but states that it is based on Pithyx by Schecher1. Do not remove or reword that attribution in a pull request.

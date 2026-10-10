@@ -41,7 +41,7 @@ The channel is **Stable** (versions the catalogs' owners released, default) or *
 
 ## Catalogs and trust
 
-The official catalog is on and the community catalog is off; switching the community one on asks "Use the community catalog?". Neither can be removed ([`store.catalog.built_in`](/docs/reference/errors/#store.catalog.built_in)). To add your own, enter a **Repository URL**: `https://...` for a public catalog or `git@host:owner/repository.git` for a private one (no credentials in the URL, at most 500 characters; [`store.catalog.url_invalid`](/docs/reference/errors/#store.catalog.url_invalid)).
+The official and the community catalog are both on by default; the tab **Community** says that its apps come from developers outside the project, reviewed by the project but not vouched for like its own. Switch the community catalog off in the Store settings if you want only official apps; switching it on again asks "Use the community catalog?". Neither can be removed ([`store.catalog.built_in`](/docs/reference/errors/#store.catalog.built_in)). To add your own, enter a **Repository URL**: `https://...` for a public catalog or `git@host:owner/repository.git` for a private one (no credentials in the URL, at most 500 characters; [`store.catalog.url_invalid`](/docs/reference/errors/#store.catalog.url_invalid)).
 
 For a private catalog over SSH the box generates an ed25519 deploy key and shows its public line; add it to the repository as a read-only deploy key and choose **Fetch now**. The server's host key is pinned at the first connection. A fetch times out after 3 minutes. A fetch state is Off, Not fetched yet, Up to date, Fetch failed or Fetching; a failed fetch keeps the last verified copy.
 

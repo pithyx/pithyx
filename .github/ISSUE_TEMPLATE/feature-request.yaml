@@ -1,0 +1,35 @@
+name: Feature request
+description: Suggest something Pithyx should do.
+title: '[Feature]: '
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Pithyx is 100 percent local: no telemetry, cloud accounts or services the box depends on. Ideas that need one cannot be accepted.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would it solve?
+      description: Describe what you want to do and why it is hard or impossible today.
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What should Pithyx do?
+      description: How you imagine it, from the user's side.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives
+      description: Workarounds or other solutions you have considered.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Checks
+      options:
+        - label: I searched the existing issues, the docs and the FAQ.
+          required: true

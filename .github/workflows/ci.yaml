@@ -97,7 +97,7 @@ jobs:
       - run: pnpm check:bundle
 
   # The website (Astro + Starlight): type check, build, and the check that every docs page has its Markdown twin and the
-  # llms files exist. Deploying is .github/workflows/pages.yml.
+  # llms files exist. Deploying is .github/workflows/pages.yaml.
   website:
     needs: changes
     if: needs.changes.outputs.website == 'true'

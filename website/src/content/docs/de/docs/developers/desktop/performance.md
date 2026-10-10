@@ -37,7 +37,7 @@ Faustregeln: keinen Spinner vor 300 ms zeigen, Apps mit dynamischem `import()` �
 
 ## Das Perf-Gate
 
-- Der Job `e2e` in `.github/workflows/ci.yml` baut den Daemon und den Desktop und führt `pnpm e2e` (das die Budgets einschließt), `pnpm design:test` und die `TimingBudget`-Tests des Daemons aus.
+- Der Job `e2e` in `.github/workflows/ci.yaml` baut den Daemon und den Desktop und führt `pnpm e2e` (das die Budgets einschließt), `pnpm design:test` und die `TimingBudget`-Tests des Daemons aus.
 - Er läuft nur auf Anforderung: mit dem Pull-Request-Label `e2e`, durch manuelles Starten des Workflows oder für jeden Pull Request auf `master`. Füge das Label bei Änderungen an Benutzerabläufen, der Shell, dem Fenstermanager, der Anmeldung, der Einrichtung, dem SDK-Transport, dem API-Vertrag, dem Ladepfad oder dem Bundle hinzu.
 - Er startet, nachdem die Daemon-Tests fertig sind, weil parallele Last die Zeiten verfälscht. Bei Pushes auf `dev` werden die Budgets übersprungen (`PITHYX_SKIP_BUDGETS=1`).
 - Zeiten schwanken mit der Last der Maschine. Schlägt ein Budget fehl, ohne dass deine Änderung etwas Langsames enthält, prüfe `uptime` und führe es noch einmal aus.

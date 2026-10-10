@@ -1,0 +1,16 @@
+#!/bin/sh
+# Managed by pithyx (image/rootfs). The SSH greeting: pam_motd runs this at every sign-in.
+# shellcheck source=/dev/null
+PITHYX_VERSION=
+if [ -r /usr/lib/pithyx/release ]; then
+  . /usr/lib/pithyx/release
+fi
+echo
+cat /usr/lib/pithyx/logo.txt
+echo
+echo "  Pithyx $PITHYX_VERSION on $(hostname)"
+echo
+echo "  This is the system shell of a Pithyx box. Pithyx manages users, shares, pools,"
+echo "  services and apps from its web interface on port 7484; changes made here by hand"
+echo "  can break the box or be undone by Pithyx or the next update."
+echo

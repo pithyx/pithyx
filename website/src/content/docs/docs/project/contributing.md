@@ -11,13 +11,13 @@ Pithyx is developed in the open on GitHub at `pithyx/pithyx`. Pull requests targ
 
 ## Reporting bugs
 
-Open an issue in the repository. Describe what you did, what you expected and what happened, and include the Pithyx version or commit. Do not report security problems in public: see [Reporting a vulnerability](/docs/project/security/).
+Open an issue in the repository and choose **Bug report** or **Feature request**; blank issues are off, and the chooser links these docs. The bug form asks what happened, the steps, the Pithyx version, the area, the hardware and browser, and the error code with log lines (without secrets). Do not report security problems in public: see [Reporting a vulnerability](/docs/project/security/).
 
 ## Pull requests
 
 1. Set up the build as described in [Developing the daemon](/docs/developers/daemon/development/). `pnpm install` also installs the git hooks.
 2. Branch from `dev` as `feature/<name>`, `fix/<name>` or `hotfix/<name>`. `master` is stable and receives only release pull requests and hotfixes. Never push directly to `master` or `dev`; the pre-push hook refuses it.
-3. Open the pull request against `dev`. Its title follows the commit format below.
+3. Open the pull request against `dev`. Its title follows the commit format below. The pull request template asks for a summary, how it was tested, and the checklist below.
 
 Checklist:
 
@@ -28,6 +28,8 @@ Checklist:
 - The documentation under `website/` was checked and updated in English and German where the change touches it.
 - No em dashes, and no non-English text outside translation files.
 - Every commit is signed off.
+
+YAML files in the repository end in `.yaml`; the repo check refuses `.yml`.
 
 Code style: short English comments only where logic is not obvious, warnings are errors in C# and TypeScript, and no abstraction without a second real implementation.
 

@@ -38,7 +38,7 @@ SSH is off by default. Two separate switches on the **File services** page:
 - **Offer shared folders over SFTP**: file transfer only, no shell.
 - **SSH logins** with the switch **Let users with the SSH login right sign in with a shell**. Users with the right "Sign in over SSH with a shell" get a shell with their own rights, with password or public key, without forwarding, tunnels or X11. A shell reaches the whole system with the user's rights, so give the right only to people who need it.
 
-Switching either off never stops SSH for the system's own accounts; Pithyx never stops `sshd`. The host keys are made on the first boot and are part of the configuration backup.
+Switching either off never stops SSH for the system's own accounts; Pithyx never stops `sshd`. A shell sign-in greets with the Pithyx logo, the version and a warning that changes made by hand in the shell can break the box or be undone by Pithyx or an update (in English for now). The host keys are made on the first boot and are part of the configuration backup.
 
 ## Two-factor sign-in
 
@@ -55,7 +55,7 @@ First setup shows the recovery key once (`PTHX-` followed by 26 characters). It 
 The box sends no data to the Pithyx project. These are the outbound connections Pithyx itself makes:
 
 - **System updates**: once a day at a random time chosen by each box (switch it off with **Check for updates daily** in Settings > **Updates**), and on **Check now**, the box reads the channel file of its update source (by default the project's releases on GitHub) and Debian's package lists from `deb.debian.org`. An update you install downloads its file from the same source. See [System updates](/docs/install/updates/).
-- **App catalogs**: git over HTTPS or SSH to each enabled catalog repository (the official catalog is on and fetched from GitHub by default; the community catalog is off), once a day at the set time with a random delay of up to an hour, when you add a catalog, and on **Check now**. Switch a catalog off to stop it.
+- **App catalogs**: git over HTTPS or SSH to each enabled catalog repository (the official and the community catalog are on and fetched from GitHub by default), once a day at the set time with a random delay of up to an hour, when you add a catalog, and on **Check now**. Switch a catalog off to stop it.
 - **Container images** of catalog apps from the registry the catalog names, unless the package carries them.
 - **Time**: with **Time servers** in Settings > **Regional settings** empty, the box uses the Debian defaults through systemd-timesyncd, which contacts public time servers.
 - **Apps** that you allow the permission "Internet" get a second network with outbound access; other apps have none.
