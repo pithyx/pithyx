@@ -1,4 +1,4 @@
-// The pages of the generated API reference under src/content/docs/docs/reference/sdk/ (scripts/generate-reference.ts).
+// The pages of the generated API reference under src/content/docs/docs/reference/sdk/ (scripts/generate-sdk-reference.ts).
 // Each page lists the public exports it documents, by the package entry point they come from; the generator fails
 // when an export of an entry point is on no page, so a new export needs a line here. Title, description and intro of
 // each page are site strings in src/content/i18n/<locale>.json: reference.<package>.<id>.title|description|intro.

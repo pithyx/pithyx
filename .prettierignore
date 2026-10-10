@@ -8,6 +8,6 @@ sdk/schema/fixtures/
 tools/release/fixtures/
 website/dist/
 website/.astro/
-# The API reference, written by website/scripts/generate-reference.ts at build time.
+# The API reference, written by website/scripts/generate-sdk-reference.ts at build time.
 website/src/content/docs/docs/reference/sdk/
 website/src/content/docs/de/docs/reference/sdk/

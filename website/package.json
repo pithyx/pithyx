@@ -3,9 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node scripts/generate-reference.ts && astro dev",
-    "reference": "node scripts/generate-reference.ts",
-    "build:site": "node scripts/generate-reference.ts && astro build && node scripts/check-build.ts",
+    "dev": "node scripts/generate-sdk-reference.ts && node scripts/generate-cli-reference.ts && astro dev",
+    "reference": "node scripts/generate-sdk-reference.ts && node scripts/generate-cli-reference.ts",
+    "build:site": "node scripts/generate-sdk-reference.ts && node scripts/generate-cli-reference.ts && astro build && node scripts/check-build.ts",
     "preview": "astro preview",
     "sync": "astro sync",
     "check": "astro check",

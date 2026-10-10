@@ -7,7 +7,7 @@
 // export, when an exported symbol or one of its members has no TSDoc summary, or when a function or method lacks an
 // @param for one of its parameters. The exemptions are below (exemptMembers, exemptPaths).
 //
-//   node scripts/generate-reference.ts
+//   node scripts/generate-sdk-reference.ts
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, posix, relative } from 'node:path';

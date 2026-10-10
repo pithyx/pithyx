@@ -37,62 +37,203 @@
     "dockerfilePath": "^(?:(?:[A-Za-z0-9_][A-Za-z0-9._-]{0,127}/){0,15}(?:(?:Dockerfile|Containerfile)(?:\\.[A-Za-z0-9_-]{1,64})?|[A-Za-z0-9_][A-Za-z0-9_-]{0,63}\\.(?:Dockerfile|Containerfile)))$"
   },
   "top": {
-    "services": { "type": "services", "required": true },
-    "volumes": { "type": "volumeDeclarations" }
+    "services": {
+      "type": "services",
+      "required": true,
+      "description": "The containers of the backend, by service name."
+    },
+    "volumes": {
+      "type": "volumeDeclarations",
+      "description": "Named volumes, declared without options. Each one is a folder in the app's dataset, or a storage request of the manifest with the same id."
+    }
   },
   "service": {
-    "image": { "type": "image", "required": true },
-    "command": { "type": "command" },
-    "entrypoint": { "type": "command" },
-    "environment": { "type": "environment" },
-    "working_dir": { "type": "string", "pattern": "containerPath" },
-    "volumes": { "type": "mounts" },
-    "tmpfs": { "type": "tmpfs" },
-    "depends_on": { "type": "dependsOn" },
+    "image": {
+      "type": "image",
+      "required": true,
+      "description": "The image, pinned by digest. The box takes the image for its architecture from `backend/images.lock.json`."
+    },
+    "command": {
+      "type": "command",
+      "description": "Replaces the command of the image."
+    },
+    "entrypoint": {
+      "type": "command",
+      "description": "Replaces the entrypoint of the image."
+    },
+    "environment": {
+      "type": "environment",
+      "description": "Environment variables of the container."
+    },
+    "working_dir": {
+      "type": "string",
+      "pattern": "containerPath",
+      "description": "The working directory in the container."
+    },
+    "volumes": {
+      "type": "mounts",
+      "description": "Named volumes to mount, in the short form `VOLUME:TARGET[:ro|rw]` or the long form. Host paths are refused."
+    },
+    "tmpfs": {
+      "type": "tmpfs",
+      "description": "tmpfs mounts, `PATH[:size=<size>,mode=<octal>]`."
+    },
+    "depends_on": {
+      "type": "dependsOn",
+      "description": "Services to start before this one."
+    },
     "healthcheck": {
       "type": "object",
       "keys": {
-        "test": { "type": "healthTest" },
-        "interval": { "type": "duration", "min": "1s", "max": "1h" },
-        "timeout": { "type": "duration", "min": "1s", "max": "1h" },
-        "start_period": { "type": "duration", "min": "0s", "max": "1h" },
-        "start_interval": { "type": "duration", "min": "1s", "max": "1h" },
-        "retries": { "type": "int", "min": 1, "max": 100 },
-        "disable": { "type": "bool" }
-      }
+        "test": {
+          "type": "healthTest",
+          "description": "The check: `NONE`, a command for the shell, `[CMD, <program>, <argument>...]` or `[CMD-SHELL, <command>]`."
+        },
+        "interval": {
+          "type": "duration",
+          "min": "1s",
+          "max": "1h",
+          "description": "The time between two checks."
+        },
+        "timeout": {
+          "type": "duration",
+          "min": "1s",
+          "max": "1h",
+          "description": "How long one check may take."
+        },
+        "start_period": {
+          "type": "duration",
+          "min": "0s",
+          "max": "1h",
+          "description": "The time after the start in which failed checks do not count."
+        },
+        "start_interval": {
+          "type": "duration",
+          "min": "1s",
+          "max": "1h",
+          "description": "The time between two checks during `start_period`."
+        },
+        "retries": {
+          "type": "int",
+          "min": 1,
+          "max": 100,
+          "description": "Failed checks in a row after which the container counts as unhealthy."
+        },
+        "disable": {
+          "type": "bool",
+          "description": "Switches the health check of the image off."
+        }
+      },
+      "description": "The health check of the container; it replaces the one of the image."
     },
-    "expose": { "type": "ports" },
-    "read_only": { "type": "bool" },
-    "init": { "type": "bool" },
-    "stop_signal": { "type": "string", "pattern": "signal" },
-    "stop_grace_period": { "type": "duration", "min": "0s", "max": "5m" },
-    "shm_size": { "type": "byteSize", "max": "shmSizeBytes" },
+    "expose": {
+      "type": "ports",
+      "description": "Ports the service listens on for the other services of the app. Nothing is published on the host."
+    },
+    "read_only": {
+      "type": "bool",
+      "description": "Mounts the root file system of the container read-only."
+    },
+    "init": {
+      "type": "bool",
+      "description": "Runs an init process as PID 1 that forwards signals and reaps child processes."
+    },
+    "stop_signal": {
+      "type": "string",
+      "pattern": "signal",
+      "description": "The signal that stops the container, for example `SIGTERM` or `SIGINT`."
+    },
+    "stop_grace_period": {
+      "type": "duration",
+      "min": "0s",
+      "max": "5m",
+      "description": "How long the box waits after the stop signal before it kills the container."
+    },
+    "shm_size": {
+      "type": "byteSize",
+      "max": "shmSizeBytes",
+      "description": "The size of `/dev/shm`."
+    },
     "mem_limit": {
       "type": "byteSize",
       "pattern": "memorySize",
       "min": "memoryMinBytes",
-      "max": "memoryMaxBytes"
+      "max": "memoryMaxBytes",
+      "description": "The memory limit, with a unit."
     },
-    "cpus": { "type": "cpus", "max": "cpus" },
-    "labels": { "type": "labels" },
-    "network_mode": { "type": "enum", "values": ["host"], "right": "host.network" },
-    "pid": { "type": "enum", "values": ["host"], "right": "host.pid" },
-    "devices": { "type": "devices", "right": "device:" },
-    "cap_drop": { "type": "capabilities" },
-    "cap_add": { "type": "capabilities", "right": "capability:" },
-    "privileged": { "type": "bool", "right": "host.full" }
+    "cpus": {
+      "type": "cpus",
+      "max": "cpus",
+      "description": "The CPU limit in cores, for example `0.5` or `2`."
+    },
+    "labels": {
+      "type": "labels",
+      "description": "Labels of the container. Keys under `com.pithyx` and `com.docker` are reserved."
+    },
+    "network_mode": {
+      "type": "enum",
+      "values": ["host"],
+      "right": "host.network",
+      "description": "`host`: the container uses the host's network instead of the app's internal network."
+    },
+    "pid": {
+      "type": "enum",
+      "values": ["host"],
+      "right": "host.pid",
+      "description": "`host`: the container sees the processes of the host."
+    },
+    "devices": {
+      "type": "devices",
+      "right": "device:",
+      "description": "Device nodes, `HOST[:CONTAINER[:PERMISSIONS]]`; each device needs its own right `device:<host path>`."
+    },
+    "cap_drop": {
+      "type": "capabilities",
+      "description": "Linux capabilities to drop, without the `CAP_` prefix."
+    },
+    "cap_add": {
+      "type": "capabilities",
+      "right": "capability:",
+      "description": "Linux capabilities to add, without the `CAP_` prefix; each one needs its own right `capability:<NAME>`."
+    },
+    "privileged": {
+      "type": "bool",
+      "right": "host.full",
+      "description": "A privileged container. The key needs `host.full`, which this version of Pithyx refuses."
+    }
   },
   "mount": {
     "keys": {
-      "type": { "type": "enum", "values": ["volume", "tmpfs", "bind"], "required": true },
-      "source": { "type": "string" },
-      "target": { "type": "string", "pattern": "containerPath", "required": true },
-      "read_only": { "type": "bool" },
+      "type": {
+        "type": "enum",
+        "values": ["volume", "tmpfs", "bind"],
+        "required": true,
+        "description": "`volume` or `tmpfs`. `bind` is refused: host paths are never mounted."
+      },
+      "source": {
+        "type": "string",
+        "description": "The named volume, declared under the top-level `volumes`. Not allowed for `tmpfs`."
+      },
+      "target": {
+        "type": "string",
+        "pattern": "containerPath",
+        "required": true,
+        "description": "The path in the container."
+      },
+      "read_only": {
+        "type": "bool",
+        "description": "Mounts the volume read-only. Required for a storage request with `read` access."
+      },
       "tmpfs": {
         "type": "object",
         "keys": {
-          "size": { "type": "byteSize", "max": "tmpfsSizeBytes" }
-        }
+          "size": {
+            "type": "byteSize",
+            "max": "tmpfsSizeBytes",
+            "description": "The size of the tmpfs."
+          }
+        },
+        "description": "Options of a `tmpfs` mount."
       }
     },
     "reservedTargets": ["/proc", "/sys", "/dev"],
@@ -103,23 +244,49 @@
     "keys": {
       "condition": {
         "type": "enum",
-        "values": ["service_started", "service_healthy", "service_completed_successfully"]
+        "values": ["service_started", "service_healthy", "service_completed_successfully"],
+        "description": "When the other service counts as ready: started (the default in Compose), healthy, or finished with exit code 0."
       },
-      "restart": { "type": "bool" },
-      "required": { "type": "bool" }
+      "restart": {
+        "type": "bool",
+        "description": "Restarts this service when Compose restarts the other one."
+      },
+      "required": {
+        "type": "bool",
+        "description": "As in Compose; the other service must still be in this file."
+      }
     }
   },
   "dev": {
     "$comment": "backend/compose.dev.yaml, the source form that `pithyx build` reads; the box never reads it. It sits next to the manifest's backend.compose with `.dev` before the extension (backend/compose.yaml and backend/compose.dev.yaml). Every rule of this file applies, plus `build`, and each service has exactly one of `image` and `build`. `build` is a folder relative to the file, as a string or as `context`, with an optional `dockerfile` relative to it (default Dockerfile; its name is a Dockerfile name of catalog.v1.rules.json), a `target` stage and `args` with values. pithyx build builds those services, tags them as <prefix>/<id>/<service>:<version>, and writes backend/compose.yaml with each `build` replaced by the image pinned by digest, plus backend/images.lock.json; services with `image` are copied as they are. A catalog builds from this file and every FROM of its Dockerfiles must be pinned by digest.",
     "service": {
-      "build": { "type": "build" }
+      "build": {
+        "type": "build",
+        "description": "Where `pithyx build` builds the image of the service: a context folder relative to the file, or a map. `compose.yaml` gets the built image pinned by digest instead."
+      }
     },
     "build": {
       "keys": {
-        "context": { "type": "string", "pattern": "buildPath", "required": true },
-        "dockerfile": { "type": "string", "pattern": "dockerfilePath" },
-        "target": { "type": "string", "pattern": "buildTarget" },
-        "args": { "type": "buildArgs" }
+        "context": {
+          "type": "string",
+          "pattern": "buildPath",
+          "required": true,
+          "description": "The build context, a folder relative to the Compose file."
+        },
+        "dockerfile": {
+          "type": "string",
+          "pattern": "dockerfilePath",
+          "description": "The Dockerfile relative to the context; default `Dockerfile`."
+        },
+        "target": {
+          "type": "string",
+          "pattern": "buildTarget",
+          "description": "The stage of a multi-stage Dockerfile to build."
+        },
+        "args": {
+          "type": "buildArgs",
+          "description": "Build arguments, as a map or as a list of `NAME=value`."
+        }
       }
     }
   },
@@ -207,6 +374,69 @@
       "bind": "host paths are never mounted",
       "volume": "subpath and nocopy are not needed",
       "consistency": "not on Linux"
+    }
+  },
+  "descriptions": {
+    "$comment": "Documentation only, read by the website's reference (reference/compose-rules); the validators ignore it.",
+    "types": {
+      "services": "A map from service name (pattern `serviceName`) to a service, at least one and at most `services` entries.",
+      "volumeDeclarations": "A map from volume name (pattern `volumeName`) to an empty value (`data:` or `data: {}`), at most `volumes` entries. Options are refused.",
+      "image": "A string matching `image`. Without `@sha256:` it is refused as `unpinned`; longer than `imageChars` is refused.",
+      "command": "A string, or a list of strings.",
+      "environment": "A map from name to a string, a whole number or a boolean, or a list of `NAME=value`. Names match `envName` and appear once; every variable has a value.",
+      "labels": "A map from key to a string, a whole number, a boolean or nothing, or a list of `key=value`. Keys match `labelKey`, appear once and do not start with a reserved prefix.",
+      "string": "A string. A plain scalar that YAML reads as null, a boolean or a number is refused: quote it. With a pattern, the string must match it.",
+      "bool": "`true` or `false`.",
+      "int": "A whole number between the rule's minimum and maximum.",
+      "enum": "One of the listed strings.",
+      "object": "A map with only the listed keys.",
+      "duration": "A Compose duration such as `30s`, `1m30s` or `500ms` (units `h`, `m`, `s`, `ms`, `us`), between the rule's minimum and maximum.",
+      "byteSize": "A number of bytes, or a number with the unit `b`, `k`, `m` or `g` (also `kb`, `mb`, `gb`; powers of 1024), above 0 and at most the rule's maximum.",
+      "cpus": "A number of cores above 0 with at most three decimals, as a number or a string, at most the limit `cpus`.",
+      "mounts": "A list of mounts, each in the short form `VOLUME:TARGET[:ro|rw]` or the long form. Two mounts of a service cannot share a target.",
+      "tmpfs": "A path, or a list of `PATH[:OPTIONS]`. The only options are `size` (a byte size up to `tmpfsSizeBytes`) and `mode` (octal).",
+      "dependsOn": "A list of service names, or a map from service name to the long form.",
+      "healthTest": "A string for the shell, or a list: `[NONE]`, `[CMD, <program>, <argument>...]` or `[CMD-SHELL, <command>]`.",
+      "ports": "A list of ports or port ranges `a-b`, optionally with `/tcp` or `/udp`, from 1 to 65535.",
+      "devices": "A list of `HOST[:CONTAINER[:PERMISSIONS]]` with paths matching `devicePath` and permissions `r`, `w` or `rw`. Each host device appears once.",
+      "capabilities": "A list of capability names matching `capability`, each once.",
+      "build": "A context folder as a string, or a map with the keys of `build`.",
+      "buildArgs": "Like `environment`."
+    },
+    "limits": {
+      "fileBytes": "The largest Compose file, in bytes.",
+      "depth": "The deepest nesting of maps and lists.",
+      "entries": "The most entries of one list or map inside a service, such as `environment` or `volumes`.",
+      "services": "The most services.",
+      "volumes": "The most declared volumes.",
+      "shmSizeBytes": "The largest `shm_size`.",
+      "tmpfsSizeBytes": "The largest tmpfs, in a `tmpfs` entry or a long-form mount.",
+      "imageChars": "The longest image reference.",
+      "memoryMinBytes": "The smallest `mem_limit`.",
+      "memoryMaxBytes": "The largest `mem_limit`.",
+      "cpus": "The largest `cpus`."
+    },
+    "patterns": {
+      "serviceName": "Service names.",
+      "volumeName": "Volume names.",
+      "image": "Image references with an optional registry, an optional tag and the digest.",
+      "imageDigest": "Whether a reference is pinned by digest at all.",
+      "envName": "Names of environment variables and build arguments.",
+      "labelKey": "Label keys.",
+      "containerPath": "Absolute paths in a container, without `:`, `\\` or control characters; `.` and `..` segments are refused as well.",
+      "devicePath": "Device paths below `/dev`.",
+      "devicePermissions": "Permissions of a device.",
+      "capability": "Linux capability names without the `CAP_` prefix.",
+      "signal": "Signal names, optionally with `+n` for a real-time signal.",
+      "duration": "Durations.",
+      "byteSize": "Sizes with an optional unit.",
+      "port": "Ports and port ranges with an optional protocol.",
+      "memorySize": "Sizes that must have a unit, for `mem_limit`.",
+      "cpus": "CPU counts.",
+      "tmpfsMode": "The octal mode of a tmpfs.",
+      "buildPath": "Build contexts relative to the Compose file, at most 16 segments.",
+      "buildTarget": "Names of Dockerfile stages.",
+      "dockerfilePath": "Dockerfile names: `Dockerfile` or `Containerfile` with an optional suffix, or `<name>.Dockerfile`, in at most 15 folders."
     }
   }
 }

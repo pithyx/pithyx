@@ -5,17 +5,6 @@
  */
 export type AppId = string;
 /**
- * This interface was referenced by `LocalizedName`'s JSON-Schema definition
- * via the `patternProperty` "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$".
- */
-export type NameText = string;
-/**
- * This interface was referenced by `LocalizedText`'s JSON-Schema definition
- * via the `patternProperty` "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$".
- */
-export type LongText = string;
-export type HttpUrl = string;
-/**
  * A permission an app declares. Nothing is granted by using an API: the install dialog lists every declared permission, an administrator confirms them for the app, and each one can be revoked later (the app gets `permissionsChange`). Which users may use the app at all is a separate grant per user and group. The daemon checks every permission on every call that reaches data or leaves the window. An update that declares a new permission waits until an administrator confirms it; the old version keeps running. `files.read`: read files the user opens with the app or picks in a desktop file dialog. `files.write`: write those files, and save new files where the user chooses in a desktop save dialog. `files.shares`: browse every shared folder the user may access, with the user's own rights. `notifications`: show notifications. `directory.read`: list all users and groups of the box. `network.internet`: outgoing connections to the internet, from the window (`connect-src https:`) and from the backend.
  */
 export type Permission =
@@ -111,15 +100,33 @@ export interface AppManifest {
  * A short text in several languages, keyed by BCP 47 language tag, for example the app's name or a storage request's name. `en` is required and used when nothing else matches. One line, at most 60 characters per language.
  */
 export interface LocalizedName {
-  en: NameText;
-  [k: string]: NameText;
+  /**
+   * The English text, shown when no other language matches. One line, at most 60 characters.
+   */
+  en: string;
+  /**
+   * The text in the language of the key, a BCP 47 language tag such as `de` or `pt-BR`. One line, at most 60 characters.
+   *
+   * This interface was referenced by `LocalizedName`'s JSON-Schema definition
+   * via the `patternProperty` "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$".
+   */
+  [k: string]: string;
 }
 /**
  * A text in several languages, keyed by BCP 47 language tag, for example the app's description of one or two sentences for the store and the install dialog. `en` is required and used when nothing else matches. At most 500 characters per language; line breaks are allowed.
  */
 export interface LocalizedText {
-  en: LongText;
-  [k: string]: LongText;
+  /**
+   * The English text, shown when no other language matches. At most 500 characters; line breaks are allowed.
+   */
+  en: string;
+  /**
+   * The text in the language of the key, a BCP 47 language tag such as `de` or `pt-BR`. At most 500 characters; line breaks are allowed.
+   *
+   * This interface was referenced by `LocalizedText`'s JSON-Schema definition
+   * via the `patternProperty` "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$".
+   */
+  [k: string]: string;
 }
 /**
  * Who makes the app.
@@ -129,7 +136,10 @@ export interface AppAuthor {
    * A person or an organization.
    */
   name: string;
-  url?: HttpUrl;
+  /**
+   * The author's website.
+   */
+  url?: string;
 }
 /**
  * How the app's windows behave. `defaultSize` is the size of a new window when the user has no remembered size for the app; `minSize` is the smallest size on screens that can fit it, at most `defaultSize` in both dimensions.
@@ -146,7 +156,13 @@ export interface WindowManifest {
  * A size in CSS pixels.
  */
 export interface WindowSize {
+  /**
+   * The width in CSS pixels.
+   */
   width: number;
+  /**
+   * The height in CSS pixels.
+   */
   height: number;
 }
 /**
@@ -159,6 +175,9 @@ export interface StorageRequest {
   id: string;
   name: LocalizedName;
   description?: LocalizedText;
+  /**
+   * The most the app may do with the mapped folder: `read` or `readWrite`. Users never get more than their own rights on the folder, and with `read` every backend service mounts it read-only.
+   */
   access: 'read' | 'readWrite';
   /**
    * The app cannot start until this storage is mapped.
@@ -223,6 +242,8 @@ export interface BackendManifest {
   root?: boolean;
   health?: BackendHealth;
   /**
+   * Recurring jobs that call the backend on a cron schedule, also without an open window.
+   *
    * @maxItems 16
    */
   schedules?: BackendSchedule[];
