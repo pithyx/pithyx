@@ -14,6 +14,10 @@ public static class SshdConfig
 {
     public const string DropInPath = "/etc/ssh/sshd_config.d/50-pithyx.conf";
 
+    /// <summary>The privilege separation directory: <c>sshd -t</c> refuses every configuration while it is missing, and only
+    /// <c>ssh.service</c> creates it, which never ran on a fresh install.</summary>
+    public const string PrivilegeSeparationPath = "/run/sshd";
+
     public const string UsersGroup = "pithyx-users";
 
     public const string SftpGroup = "pithyx-sftp";

@@ -126,7 +126,9 @@ fi
 
 step "squashfs"
 mkdir -p "$work/staging/live"
-sqfstar -quiet -comp zstd -Xcompression-level 19 -b 1M -no-xattrs -force "$work/staging/live/filesystem.squashfs" <"$work/rootfs.tar"
+# A tar has no entry for the root directory itself, so sqfstar would make it 0777 and owned by the builder; the installer
+# unpacks this file onto / and sshd refuses a chroot below a / like that.
+sqfstar -quiet -comp zstd -Xcompression-level 19 -b 1M -no-xattrs -root-mode 0755 -root-uid 0 -root-gid 0 -force "$work/staging/live/filesystem.squashfs" <"$work/rootfs.tar"
 
 # The kernel and the live initramfs are read from outside the squashfs.
 # One listing: grep -q on a pipe from tar would end it early, and pipefail would count the broken pipe as a failure.
