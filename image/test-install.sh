@@ -215,8 +215,9 @@ descriptor = os.open(os.environ["TARGET"], os.O_WRONLY | os.O_CREAT | os.O_TRUNC
 os.write(descriptor, (json.dumps(config) + "\n").encode())
 os.close(descriptor)
 print("update source written " + ("with" if token else "without") + " a token")'
+  # After the installer's pithyx.cfg, which sets 3 seconds.
   printf '# The QEMU test reads and picks GRUB entries on the serial console.\nGRUB_TERMINAL=console\nGRUB_TIMEOUT=10\n' \
-    | sudo tee "$root/etc/default/grub.d/99-pithyx-test.cfg" >/dev/null
+    | sudo tee "$root/etc/default/grub.d/zz-pithyx-test.cfg" >/dev/null
   sudo umount "$root"
   nbd_detach
 }
@@ -302,19 +303,20 @@ power_off() {
   rm -f "$vm/qemu.pid"
 }
 
-# Waits for GRUB's menu on the serial console and presses an entry's key there.
+# Waits for GRUB's menu on the serial console and presses an entry's key there, once the countdown runs (before it,
+# GRUB is not reading keys yet).
 grub_choose() {
   local key="$1" deadline=$((SECONDS + 180))
-  until grep -aq "Pithyx recovery" "$serial_log" 2>/dev/null; do
+  until grep -aq "Pithyx recovery" "$serial_log" 2>/dev/null && grep -aq "automatically in" "$serial_log" 2>/dev/null; do
     ((SECONDS < deadline)) || die "GRUB's menu did not appear on the serial console ($serial_log)"
-    sleep 1
+    sleep 0.2
   done
-  sleep 1
   python3 - "$vm/serial.sock" "$key" <<'PY2'
-import socket, sys
+import socket, sys, time
 connection = socket.socket(socket.AF_UNIX)
 connection.connect(sys.argv[1])
 connection.sendall(sys.argv[2].encode())
+time.sleep(0.5)
 connection.close()
 PY2
 }
