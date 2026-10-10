@@ -25,7 +25,7 @@ Pro Schnittstelle kannst du sie ein- oder ausschalten, IPv4 per DHCP, statisch o
 - **LACP (802.3ad)**: alle Karten gemeinsam; die Switch-Ports müssen eine LACP-Gruppe bilden. Die LACP-Rate ist Langsam (alle 30 Sekunden) oder Schnell (jede Sekunde).
 - **Adaptiver Lastausgleich**: Alle Karten senden und empfangen ohne Hilfe des Switches.
 
-Namen von Bonds und VLANs haben bis zu 15 Kleinbuchstaben, Ziffern, Punkte, Bindestriche oder Unterstriche, beginnen mit einem Buchstaben und dürfen nicht mit Namen von Docker kollidieren (`px-*`, `docker*`, `br-*`, `veth*`).
+Namen von Bonds und VLANs haben bis zu 15 Kleinbuchstaben, Ziffern, Punkte, Bindestriche oder Unterstriche, beginnen mit einem Buchstaben und dürfen nicht mit einem Präfix beginnen, das Docker, die Netzwerke der Apps, Container oder VPNs nutzen: `px-`, `veth`, `docker`, `br-`, `ve-`, `vb-`, `vz-`, `vt-`, `virbr`, `tun`, `tap` oder `wg`.
 
 ## VLANs
 

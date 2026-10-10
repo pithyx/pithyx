@@ -1,11 +1,11 @@
 ---
 question: 'How do I update Pithyx?'
 category: updates
-tags: [update, upgrade, new version, system update, apt, debian]
+tags: [update, upgrade, new version, system update, apt, debian, rollback]
 order: 10
 status: draft
 ---
 
-This pre-release has no update function on the box. A new version means a reinstall: make a configuration backup, reinstall on the system disks only, import your pools and restore the backup.
+In Settings > **Updates**. The box checks its channel once a day and notifies the administrators; it never installs by itself. **Install {version}** takes a snapshot of the system, installs the update and restarts, and goes back to the snapshot by itself if the new version fails its check. Without internet, upload a `.pithyxupdate` file instead. Pools and their files are not touched.
 
-Details: [Recovery and reinstall](/docs/install/recovery/#reinstalling).
+Details: [System updates](/docs/install/updates/).

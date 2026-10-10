@@ -4,7 +4,7 @@ description: 'Vergessene Passwörter, eine ausgefallene Systemfestplatte und Pit
 status: draft
 audience: admin
 sidebar:
-  order: 6
+  order: 7
 ---
 
 Pithyx hat kein Zurücksetzen des Passworts per E-Mail. Ein Benutzer, der sein Passwort vergessen hat, fragt einen Administrator; ein Administrator nutzt den Wiederherstellungsschlüssel aus der Installation. Ist auch der Schlüssel verloren, muss das System neu installiert werden. Eine Neuinstallation löscht nur die Systemfestplatte oder -festplatten, die du wählst, und deine Pools lassen sich danach wieder importieren.
@@ -35,10 +35,14 @@ Hast du den Wiederherstellungsschlüssel verloren und kann sich kein Administrat
 
 ## Systemfestplatte ausgefallen
 
-- **Spiegel:** Wenn du auf zwei Festplatten installiert hast, startet die Box auch mit einer fehlenden Festplatte, weil der Bootloader auf beiden liegt. Die Oberfläche kann eine ausgefallene Systemfestplatte nicht ersetzen, und die Box benachrichtigt dich nicht, dass eine ausgefallen ist. Der Weg zurück zu zwei Festplatten ist eine Neuinstallation.
+- **Spiegel:** Wenn du auf zwei Festplatten installiert hast, startet die Box auch mit einer fehlenden Festplatte, weil der Bootloader auf beiden liegt und nach jedem Update abgeglichen wird. Die Administratoren bekommen pro Ausfall einmal die Benachrichtigung „Eine Systemplatte fehlt“. Die Oberfläche kann eine ausgefallene Systemfestplatte nicht ersetzen; der Weg zurück zu zwei Festplatten ist eine Neuinstallation.
 - **Einzelne Festplatte:** Das System ist verloren, aber deine Pools liegen auf anderen Festplatten und sind nicht betroffen. Installiere neu.
 
 Die Systemfestplatte enthält nur das System und die Einstellungen, daher ist ihr Neuaufbau mit einem Konfigurationsbackup einfach gedacht. Deine Dateien, die Daten der Apps und die Daten von Docker liegen auf den Pools, nicht auf der Systemfestplatte.
+
+## Ein gescheitertes Update oder ein kaputtes System
+
+Bevor du neu installierst, versuch es über das Bootmenü: **Pithyx recovery** (Taste `r`) kehrt zu einem der letzten drei System-Snapshots zurück, installiert eine Update-Datei von einem USB-Stick oder setzt das Netzwerk auf DHCP zurück, und jeder behaltene Snapshot hat einen eigenen Eintrag. Ein gescheitertes Update kehrt von selbst zu seinem Snapshot zurück. Siehe [Systemupdates](/de/docs/install/updates/#das-recovery-menü).
 
 ## Neu installieren
 
@@ -62,6 +66,6 @@ Ein frisches System kennt deine Pools nicht. Importiere sie in der Speicher-App:
 4. Beginne mit **Schreibgeschützt importieren**: Nichts wird eingehängt und nichts ändert sich. Prüfe die Datasets auf der Karte des Pools.
 5. Klicke dann auf **Zur Nutzung importieren…**.
 
-Ein Pool, der zuletzt von einem anderen System benutzt und nicht exportiert wurde, ist mit „Von einem anderen System benutzt“ markiert. Eine neu installierte Box kann als anderes System gelten; wähle dann **Trotzdem importieren (erzwingen)** und tippe den Pool-Namen ein. Tu das nie, solange ein anderes System den Pool noch benutzt: Zwei Systeme, die auf einen Pool schreiben, zerstören ihn.
+Ein Pool, der zuletzt von einem anderen System benutzt und nicht exportiert wurde, ist mit „Von einem anderen System benutzt“ markiert. Nach einer Neuinstallation ist das normal: Das alte System hat den Pool nie exportiert, und das neue gilt als anderes System. Wähle **Trotzdem importieren (erzwingen)** und tippe den Pool-Namen ein. Tu das nie, solange ein anderes System den Pool noch benutzt: Zwei Systeme, die auf einen Pool schreiben, zerstören ihn.
 
 Ist der Name schon vergeben, wähle einen **Neuen Namen für den Pool**. Ein Pool, der sich nicht importieren lässt, hat meist fehlende Platten: Schließe sie an und durchsuche erneut. Siehe [Speicher und Pools](/de/docs/admin/storage/).

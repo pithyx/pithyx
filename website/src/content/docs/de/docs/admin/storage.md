@@ -1,6 +1,6 @@
 ---
 title: 'Speicher und Pools'
-description: 'Festplatten, ZFS-Pools, Datasets und Snapshots, einen Pool importieren und erweitern, und warum manche Platten abgelehnt werden.'
+description: 'Festplatten, ZFS-Pools, Datasets, einen Pool importieren und erweitern, und warum manche Platten abgelehnt werden.'
 status: draft
 audience: admin
 sidebar:
@@ -63,7 +63,7 @@ Weitere Pool-Aktionen: **Ersetzen…** (fragt immer nach der Seriennummer), **Ho
 
 Ein Pool zeigt einen dieser Zustände: Intakt, Beeinträchtigt, Ausgefallen, Offline, Nicht erreichbar, Entfernt, Angehalten, Unbekannt oder „Nicht angeschlossen“. Bei einem beeinträchtigten Pool wird eine Platte, die zurückkommt, von selbst neu aufgebaut (Resilver). Der Daemon holt eine zurückkehrende Platte mit `zpool online` und danach `zpool clear` zurück, jeweils mit 30 Sekunden Zeitlimit.
 
-## Datasets und Snapshots
+## Datasets und Wiederherstellungspunkte
 
 Unter **Erweitert** listet **Datasets** > **Datasets anzeigen** die Datasets mit Name, Belegt, Frei, Limit, Kompression und dem Ordner oder der Größe. Dataset-Namen bestehen aus Buchstaben, Ziffern, `.`, `-` und `_`, beginnen mit einem Buchstaben oder einer Ziffer und sind höchstens 64 Zeichen lang.
 
@@ -73,13 +73,7 @@ Unter **Erweitert** listet **Datasets** > **Datasets anzeigen** die Datasets mit
 
 Datasets für Home-Ordner, Apps und das System lassen sich weder umbenennen noch löschen ([`storage.dataset.managed`](/de/docs/reference/errors/#storage.dataset.managed)), und ein Dataset, das ein freigegebener Ordner nutzt, muss zuerst diesen freigegebenen Ordner verlieren. **Volume anlegen…** erstellt ein Block-Volume auf Pools, die Pithyx eingerichtet hat; die Größe beträgt mindestens 1 MiB und wird auf 16-KiB-Blöcke aufgerundet. Ein Sparse-Volume kann Schreibzugriffe verlieren, wenn der Pool voll wird.
 
-Der Tab **Snapshots** listet Snapshots mit Name, Angelegt und Platz. Snapshots von Pithyx heißen `pithyx-<kind>-<yyyyMMddTHHmmssZ>` mit der Art Stündlich, Täglich, Wöchentlich, Monatlich, Von Hand oder „Vor einem App-Update“; andere erscheinen als „Fremd“. Du kannst einen **Snapshot anlegen**, festhalten und freigeben, **Zurücksetzen** und löschen. Pithyx löscht nur seine eigenen Snapshots, und festgehaltene werden abgelehnt ([`storage.snapshot.held`](/de/docs/reference/errors/#storage.snapshot.held)).
-
-:::caution[Zurücksetzen]
-Beim Zurücksetzen musst du den Dataset-Namen eingeben, und alle neueren Snapshots werden gelöscht. Jede Änderung seit dem Snapshot geht für alle verloren, die das Dataset nutzen.
-:::
-
-Zeitpläne (stündlich, täglich, wöchentlich ab Montag, monatlich) legen pro Zeitraum einen Snapshot in UTC an und behalten eine Anzahl ihrer eigenen Snapshots, 1 bis 1000. Die Vorgaben beim Einschalten: stündlich 24, täglich 7, wöchentlich 4, monatlich 6. Neue Zeitpläne sind zunächst ausgeschaltet. Die Aufbewahrung zählt Snapshots, nicht das Alter, und festgehaltene oder fremde Snapshots werden nie entfernt. Benutzer bekommen ältere Dateiversionen über **Frühere Versionen** in Dateien. Freigegebene Ordner haben einen eigenen täglichen Zeitplan, siehe [Freigegebene Ordner](/de/docs/admin/shared-folders/).
+Die Speicher-App hat keinen Bereich für Snapshots. Snapshots erscheinen in der Oberfläche als Wiederherstellungspunkte: ein Schalter pro freigegebenem Ordner unter Einstellungen > **Freigegebene Ordner**, der einmal am Tag einen Snapshot des Datasets des Ordners macht und jeden 7 Tage behält, und **Frühere Versionen** in Dateien, um ältere Versionen zurückzuholen. Siehe [Freigegebene Ordner](/de/docs/admin/shared-folders/). Snapshots von Hand, Festhalten, das Zurücksetzen eines Datasets und andere Zeitpläne gibt es in der Oberfläche nicht.
 
 ## Importieren und exportieren
 

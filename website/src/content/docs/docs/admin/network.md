@@ -25,7 +25,7 @@ Changes are collected as a draft ("Changes not applied yet") and applied togethe
 - **LACP (802.3ad)**: all cards together; the switch ports must form an LACP group. The LACP rate is Slow (every 30 seconds) or Fast (every second).
 - **Adaptive load balancing**: all cards send and receive without help from the switch.
 
-Names of bonds and VLANs have up to 15 lowercase letters, digits, dots, hyphens or underscores, start with a letter, and must not clash with Docker's names (`px-*`, `docker*`, `br-*`, `veth*`).
+Names of bonds and VLANs have up to 15 lowercase letters, digits, dots, hyphens or underscores, start with a letter, and must not start with a prefix that Docker, the apps' networks, containers or VPNs use: `px-`, `veth`, `docker`, `br-`, `ve-`, `vb-`, `vz-`, `vt-`, `virbr`, `tun`, `tap` or `wg`.
 
 ## VLANs
 

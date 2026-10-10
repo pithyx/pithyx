@@ -4,7 +4,7 @@ description: 'Forgotten passwords, a failed system disk and reinstalling Pithyx 
 status: draft
 audience: admin
 sidebar:
-  order: 6
+  order: 7
 ---
 
 Pithyx has no password reset by email. A user who forgot a password asks an administrator; an administrator uses the recovery key from the installation. If the key is lost too, the system has to be reinstalled. A reinstall erases only the system disk or disks you choose, and your pools can be imported again afterwards.
@@ -35,10 +35,14 @@ If you lost the recovery key and no administrator can sign in, nothing resets th
 
 ## System disk failed
 
-- **Mirror:** if you installed on two disks, the box still starts with one disk missing, because the boot loader sits on both. The interface cannot replace a failed system disk, and the box does not notify you that one failed. The way back to two disks is a reinstall.
+- **Mirror:** if you installed on two disks, the box still starts with one disk missing, because the boot loader sits on both and is kept in sync after every update. The administrators get the notification "A system disk is missing" once per failure. The interface cannot replace a failed system disk; the way back to two disks is a reinstall.
 - **Single disk:** the system is lost, but your pools are on other disks and are not affected. Reinstall.
 
 The system disk holds only the system and settings, so rebuilding it is meant to be easy when you have a configuration backup. Your files, apps' data and Docker's data live on the pools, not on the system disk.
+
+## A failed update or a broken system
+
+Before you reinstall, try the boot menu: **Pithyx recovery** (key `r`) rolls back to one of the last three system snapshots, installs an update file from a USB stick or resets the network to DHCP, and every kept snapshot has its own entry. A failed update goes back to its snapshot by itself. See [System updates](/docs/install/updates/#the-recovery-menu).
 
 ## Reinstalling
 
@@ -62,6 +66,6 @@ A fresh system does not know your pools. Import them in the Storage app:
 4. Start with **Import read-only**: nothing is mounted and nothing changes. Check the datasets on the pool's card.
 5. Then click **Import for use…**.
 
-A pool that was last used by another system and not exported is marked "Used by another system". A reinstalled box may count as another system; then choose **Import it anyway (force)** and type the pool name. Never do this while another system still uses the pool: two systems writing to one pool destroy it.
+A pool that was last used by another system and not exported is marked "Used by another system". After a reinstall this is normal: the old system never exported the pool, and the new one counts as another system. Choose **Import it anyway (force)** and type the pool name. Never do this while another system still uses the pool: two systems writing to one pool destroy it.
 
 If the name is already taken, choose a **New name for the pool**. A pool that cannot be imported usually has missing disks: connect them and scan again. See [Storage](/docs/admin/storage/).

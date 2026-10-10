@@ -1,6 +1,6 @@
 ---
 title: 'Storage and pools'
-description: 'Disks, ZFS pools, datasets and snapshots, importing and growing a pool, and why some disks are refused.'
+description: 'Disks, ZFS pools, datasets, importing and growing a pool, and why some disks are refused.'
 status: draft
 audience: admin
 sidebar:
@@ -63,7 +63,7 @@ Other pool actions: **Replace…** (always asks for the serial), **Add hot spare
 
 A pool shows one of these states: Healthy, Degraded, Faulted, Offline, Unavailable, Removed, Suspended, Unknown or "Not connected". On a degraded pool a disk that comes back is rebuilt on its own (resilver). The daemon brings a returning disk back with `zpool online` and then `zpool clear`, each with a 30 second timeout.
 
-## Datasets and snapshots
+## Datasets and restore points
 
 Under **Advanced**, **Datasets** > **Show datasets** lists datasets with Name, Used, Free, Limit, Compression and the folder or size. Dataset names use letters, digits, `.`, `-` and `_`, start with a letter or digit and are at most 64 characters.
 
@@ -73,13 +73,7 @@ Under **Advanced**, **Datasets** > **Show datasets** lists datasets with Name, U
 
 Datasets of homes, apps and the system cannot be renamed or deleted ([`storage.dataset.managed`](/docs/reference/errors/#storage.dataset.managed)), and a dataset used by a shared folder must lose that shared folder first. **Create volume…** makes a block volume on pools that Pithyx set up; the size is at least 1 MiB, rounded up to 16 KiB blocks. A sparse volume can fail writes when the pool fills up.
 
-The **Snapshots** tab lists snapshots with Name, Taken and Space. Snapshots made by Pithyx are named `pithyx-<kind>-<yyyyMMddTHHmmssZ>` with kind Hourly, Daily, Weekly, Monthly, Manual or "Before an app update"; others show as "Other". You can **Take snapshot**, hold and release, **Roll back** and delete. Pithyx deletes only its own snapshots, and held ones are refused ([`storage.snapshot.held`](/docs/reference/errors/#storage.snapshot.held)).
-
-:::caution[Rolling back]
-A rollback asks you to type the dataset name and deletes all newer snapshots. Every change since the snapshot is lost for everyone who uses the dataset.
-:::
-
-Schedules (hourly, daily, weekly from Monday, monthly) take one snapshot per period in UTC and keep a number of their own snapshots, 1 to 1000. Defaults when you switch one on: hourly 24, daily 7, weekly 4, monthly 6. New schedules start switched off. Retention counts snapshots, not age, and held or foreign snapshots are never pruned. Users get older versions of files through **Previous versions** in Files. Shared folders have their own daily schedule, see [Shared folders](/docs/admin/shared-folders/).
+The Storage app has no snapshot section. Snapshots reach the interface as restore points: one switch per shared folder in Settings > **Shared folders**, which takes a snapshot of the folder's dataset once a day and keeps each for 7 days, and **Previous versions** in Files to get older versions back. See [Shared folders](/docs/admin/shared-folders/). Manual snapshots, holds, rolling back a dataset and other schedules are not in the interface.
 
 ## Importing and exporting
 

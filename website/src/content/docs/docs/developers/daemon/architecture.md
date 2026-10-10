@@ -11,7 +11,7 @@ The daemon (`pithyxd`) is the only privileged process on a Pithyx box: one C# bi
 
 ## Overview
 
-The daemon is a modular monolith. Each module is a folder under `daemon/src/Pithyx.Daemon`: Apps, Auth, Backup, Commands, Database, Errors, FileServices, Files, Health, Hosting, Installer, Jobs, Layouts, Localization, Logs, Monitoring, Network, Notifications, Permissions, Realtime, Shares, Storage, SystemSettings and Users. The solution is `daemon/Pithyx.slnx`, the tests are in `daemon/tests/Pithyx.Daemon.Tests`.
+The daemon is a modular monolith. Each module is a folder under `daemon/src/Pithyx.Daemon`: Apps, Auth, Backup, Commands, Database, Errors, FileServices, Files, Health, Hosting, Installer, Jobs, Layouts, Localization, Logs, Monitoring, Network, Notifications, Permissions, Realtime, Shares, Storage, SystemSettings, Updates and Users. The solution is `daemon/Pithyx.slnx`, the tests are in `daemon/tests/Pithyx.Daemon.Tests`.
 
 - **Process.** `pithyx.service` runs `/usr/lib/pithyx/daemon/pithyxd`. The unit restarts it on failure after 2 seconds, allows 5 starts in 120 seconds and does not restart on exit codes 65 and 78.
 - **Ports.** Kestrel listens on 7484. On a real box (production build) it also listens on port 80, which redirects everything to 7484. The daemon serves plain HTTP only today; HTTPS is not built yet.
@@ -52,7 +52,7 @@ Storage state reaches clients through the topics `storage/disks`, `storage/pools
 
 The daemon uses SQLite through Dapper with explicit SQL, no ORM and no repository layer. The database is `/var/lib/pithyx/pithyx.db`, or the path in `PITHYX_DB`. It runs in WAL mode. Logs live in a separate `logs.db`.
 
-- Migrations are embedded files `daemon/src/Pithyx.Daemon/Database/Migrations/NNNN_name.sql` (26 today). Each one runs in its own transaction; a failure exits with code 1. The table `schema_version` records what ran.
+- Migrations are embedded files `daemon/src/Pithyx.Daemon/Database/Migrations/NNNN_name.sql` (27 today). Each one runs in its own transaction; a failure exits with code 1. The table `schema_version` records what ran.
 - Before migrating a non-empty database, the daemon writes a copy with `VACUUM INTO` named `pithyx.db.pre-<NNNN>-<time>.bak`, where `NNNN` is the first pending version.
 - If the database contains versions the daemon does not know, the daemon logs a critical message and exits with 65. Start a newer daemon or point `PITHYX_DB` at another database.
 - Dates are stored as UTC ISO 8601 text.

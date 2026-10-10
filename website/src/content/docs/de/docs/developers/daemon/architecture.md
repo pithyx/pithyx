@@ -11,7 +11,7 @@ Der Daemon (`pithyxd`) ist der einzige privilegierte Prozess auf einer Pithyx-Bo
 
 ## Überblick
 
-Der Daemon ist ein modularer Monolith. Jedes Modul ist ein Ordner unter `daemon/src/Pithyx.Daemon`: Apps, Auth, Backup, Commands, Database, Errors, FileServices, Files, Health, Hosting, Installer, Jobs, Layouts, Localization, Logs, Monitoring, Network, Notifications, Permissions, Realtime, Shares, Storage, SystemSettings und Users. Die Solution ist `daemon/Pithyx.slnx`, die Tests liegen in `daemon/tests/Pithyx.Daemon.Tests`.
+Der Daemon ist ein modularer Monolith. Jedes Modul ist ein Ordner unter `daemon/src/Pithyx.Daemon`: Apps, Auth, Backup, Commands, Database, Errors, FileServices, Files, Health, Hosting, Installer, Jobs, Layouts, Localization, Logs, Monitoring, Network, Notifications, Permissions, Realtime, Shares, Storage, SystemSettings, Updates und Users. Die Solution ist `daemon/Pithyx.slnx`, die Tests liegen in `daemon/tests/Pithyx.Daemon.Tests`.
 
 - **Prozess.** `pithyx.service` startet `/usr/lib/pithyx/daemon/pithyxd`. Die Unit startet ihn bei einem Fehler nach 2 Sekunden neu, erlaubt 5 Starts in 120 Sekunden und startet bei den Exit-Codes 65 und 78 nicht neu.
 - **Ports.** Kestrel lauscht auf 7484. Auf einer echten Box (Produktions-Build) lauscht er zusätzlich auf Port 80, der alles auf 7484 umleitet. Der Daemon liefert heute nur reines HTTP aus; HTTPS ist noch nicht gebaut.
@@ -52,7 +52,7 @@ Der Speicherzustand erreicht die Clients über die Topics `storage/disks`, `stor
 
 Der Daemon nutzt SQLite über Dapper mit explizitem SQL, ohne ORM und ohne Repository-Schicht. Die Datenbank ist `/var/lib/pithyx/pithyx.db` oder der Pfad in `PITHYX_DB`. Sie läuft im WAL-Modus. Logs liegen in einer eigenen `logs.db`.
 
-- Migrationen sind eingebettete Dateien `daemon/src/Pithyx.Daemon/Database/Migrations/NNNN_name.sql` (heute 26). Jede läuft in einer eigenen Transaktion; ein Fehler beendet mit Code 1. Die Tabelle `schema_version` hält fest, was gelaufen ist.
+- Migrationen sind eingebettete Dateien `daemon/src/Pithyx.Daemon/Database/Migrations/NNNN_name.sql` (heute 27). Jede läuft in einer eigenen Transaktion; ein Fehler beendet mit Code 1. Die Tabelle `schema_version` hält fest, was gelaufen ist.
 - Bevor eine nicht leere Datenbank migriert wird, schreibt der Daemon mit `VACUUM INTO` eine Kopie namens `pithyx.db.pre-<NNNN>-<time>.bak`, wobei `NNNN` die erste ausstehende Version ist.
 - Enthält die Datenbank Versionen, die der Daemon nicht kennt, loggt er eine kritische Meldung und beendet sich mit 65. Starte einen neueren Daemon oder richte `PITHYX_DB` auf eine andere Datenbank.
 - Daten werden als UTC-Text nach ISO 8601 gespeichert.

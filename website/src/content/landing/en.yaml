@@ -19,7 +19,7 @@ features:
     - {
         icon: 'storage',
         title: 'ZFS storage',
-        text: 'Pools from a single disk to RAID-Z3, with snapshot schedules, scrubs and SMART checks. A disk that holds data is only wiped after you type its serial number.',
+        text: 'Pools from a single disk to RAID-Z3, with daily restore points, scrubs and SMART checks. A disk that holds data is only wiped after you type its serial number.',
         href: '/docs/admin/storage/',
       }
     - {
@@ -47,10 +47,10 @@ features:
         href: '/docs/admin/network/',
       }
     - {
-        icon: 'shield',
-        title: 'Configuration backup',
-        text: 'Users, shared folders and settings in one file encrypted with your password, to restore after a reinstall. Your files stay on the pools and are not part of it.',
-        href: '/docs/admin/backup/',
+        icon: 'updates',
+        title: 'Updates and backup',
+        text: 'Signed system updates with a snapshot before each one and an automatic way back when the new version fails its check. Users, shared folders and settings go into one backup file encrypted with your password.',
+        href: '/docs/install/updates/',
       }
 why:
   title: Why Pithyx
@@ -99,7 +99,7 @@ gallery:
     - {
         image: '../../assets/screenshots/storage.webp',
         alt: 'The Storage app with a healthy RAID-Z1 pool of four disks, its used and free space and the list of its disks',
-        caption: 'Storage: ZFS pools, disks and snapshots, with the exact commands shown before anything runs.',
+        caption: 'Storage: ZFS pools and disks, with the exact commands shown before anything runs.',
       }
     - {
         image: '../../assets/screenshots/store.webp',

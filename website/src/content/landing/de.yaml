@@ -18,7 +18,7 @@ features:
     - {
         icon: 'storage',
         title: 'ZFS-Speicher',
-        text: 'Pools von der einzelnen Platte bis RAID-Z3, mit Snapshot-Zeitplänen, Scrubs und SMART-Prüfungen. Eine Platte mit Daten wird erst gelöscht, wenn du ihre Seriennummer eintippst.',
+        text: 'Pools von der einzelnen Platte bis RAID-Z3, mit täglichen Wiederherstellungspunkten, Scrubs und SMART-Prüfungen. Eine Platte mit Daten wird erst gelöscht, wenn du ihre Seriennummer eintippst.',
         href: '/de/docs/admin/storage/',
       }
     - {
@@ -46,10 +46,10 @@ features:
         href: '/de/docs/admin/network/',
       }
     - {
-        icon: 'shield',
-        title: 'Konfigurationssicherung',
-        text: 'Benutzer, Freigaben und Einstellungen in einer Datei, verschlüsselt mit deinem Passwort, zum Wiederherstellen nach einer Neuinstallation. Deine Dateien bleiben auf den Pools und gehören nicht dazu.',
-        href: '/de/docs/admin/backup/',
+        icon: 'updates',
+        title: 'Updates und Sicherung',
+        text: 'Signierte Systemupdates mit einem Snapshot vor jedem und einem automatischen Weg zurück, wenn die neue Version ihre Prüfung nicht besteht. Benutzer, Freigaben und Einstellungen kommen in eine Sicherungsdatei, verschlüsselt mit deinem Passwort.',
+        href: '/de/docs/install/updates/',
       }
 why:
   title: Warum Pithyx
@@ -98,7 +98,7 @@ gallery:
     - {
         image: '../../assets/screenshots/storage.de.webp',
         alt: 'Die App Speicher mit einem gesunden RAID-Z1-Pool aus vier Platten, seinem belegten und freien Platz und der Liste seiner Platten',
-        caption: 'Speicher: ZFS-Pools, Platten und Snapshots, und die genauen Befehle siehst du, bevor etwas läuft.',
+        caption: 'Speicher: ZFS-Pools und Platten, und die genauen Befehle siehst du, bevor etwas läuft.',
       }
     - {
         image: '../../assets/screenshots/store.de.webp',

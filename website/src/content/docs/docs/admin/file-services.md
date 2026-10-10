@@ -13,7 +13,7 @@ Which user may use which service is set per user or group (see [Permissions](/do
 
 ## SMB
 
-Switch **Offer shared folders over SMB**; the default workgroup is `WORKGROUP` (1 to 15 characters: letters, digits, dot, dash, underscore, starting with a letter or digit). SMB serves network drives to Windows, macOS and Linux on port 445. Only encrypted, signed connections of current systems (SMB 3) are accepted; guests are refused and NetBIOS is off. Pithyx writes `/etc/samba/smb.conf` itself on every change; put your own Samba settings into `/etc/samba/pithyx.local.conf`, which Pithyx includes and never writes. The file is checked with `testparm` before Samba reloads.
+Switch **Offer shared folders over SMB**; the default workgroup is `WORKGROUP` (1 to 15 characters: letters, digits, dot, dash, underscore, starting with a letter or digit). SMB serves network drives to Windows, macOS and Linux on port 445. Only signed connections of current systems (SMB 3) are accepted, encrypted whenever the client supports it, and always encrypted for shared folders with **Require encryption over SMB** on (see [Shared folders](/docs/admin/shared-folders/#encryption-over-smb)); guests are refused and NetBIOS is off. Pithyx writes `/etc/samba/smb.conf` itself on every change; put your own Samba settings into `/etc/samba/pithyx.local.conf`, which Pithyx includes and never writes. The file is checked with `testparm` before Samba reloads.
 
 Connect from Windows File Explorer with `\\<address>\<share>`, from macOS or Linux with `smb://<address>`. The box does not announce itself on the network (no WS-Discovery, no mDNS), so clients connect by address. Deletes go to the recycle bin, and the daily restore points show as "Previous versions" in Windows.
 

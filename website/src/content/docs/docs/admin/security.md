@@ -1,13 +1,13 @@
 ---
 title: 'Security'
-description: 'Transport, SSH, two-factor sign-in, the recovery key and what leaves the box.'
+description: 'Transport, open ports, physical access, SSH, two-factor sign-in, the recovery key and what leaves the box.'
 status: draft
 audience: admin
 sidebar:
   order: 9
 ---
 
-Pithyx keeps everything on the box: no telemetry, no cloud account, no phone-home. The one thing to know before you use it: the web desktop is served over plain HTTP today. This page covers transport, SSH, two-factor sign-in, the recovery key and the few connections the box makes on its own.
+Pithyx keeps everything on the box: no telemetry, no cloud account, no phone-home. The one thing to know before you use it: the web desktop is served over plain HTTP today. This page covers transport, open ports, physical access, SSH, two-factor sign-in, the recovery key and the few connections the box makes on its own.
 
 ## HTTPS and certificates
 
@@ -16,6 +16,16 @@ The box serves the desktop on `http://<box-address>:7484`, and port 80 redirects
 :::
 
 The session cookie is `HttpOnly` and `SameSite=Strict`, and it gets the `Secure` flag only when a request arrives over HTTPS. State-changing requests need the header `X-Pithyx-Request`. The only TLS the box has today is the self-signed certificate of FTP over TLS (see [File services](/docs/admin/file-services/#ftp)). SMB 3 and SFTP encrypt their own traffic.
+
+## Open ports
+
+Pithyx has no firewall for its own services today. Every service that is switched on answers on every network the box is connected to, over IPv4 and IPv6: the web desktop and WebDAV on 7484 and 80, SMB on 445 (on from the first start), SFTP and SSH on 22, FTP on 21 with the passive ports 50000 to 50099. Only app backends are shielded: they publish no ports at all. Keep the box behind a router and do not forward these ports to the internet.
+
+## Physical access
+
+Whoever can use the box's console, in person or through remote management (BMC, IPMI), can get root: the boot menu has no password, and the system disk is not encrypted. A password at the console would therefore protect nothing, so the console menu and the [recovery menu](/docs/install/updates/#the-recovery-menu) ask for none and only ask you to confirm what you do. Put the box where strangers cannot reach it, and secure its remote management.
+
+Pool encryption is not available in this version; the storage wizard says it comes with the key vault. A key kept in a vault on the system disk protects only against stolen disks, not against someone who has the whole box or its console.
 
 ## SSH
 
@@ -38,8 +48,9 @@ First setup shows the recovery key once (`PTHX-` followed by 26 characters). It 
 
 ## What leaves the box
 
-The box sends nothing to the Pithyx project. These are the outbound connections Pithyx itself makes:
+The box sends no data to the Pithyx project. These are the outbound connections Pithyx itself makes:
 
+- **System updates**: once a day at a random time chosen by each box (switch it off with **Check for updates daily** in Settings > **Updates**), and on **Check now**, the box reads the channel file of its update source (by default the project's releases on GitHub) and Debian's package lists from `deb.debian.org`. An update you install downloads its file from the same source. See [System updates](/docs/install/updates/).
 - **App catalogs**: git over HTTPS or SSH to each enabled catalog repository (the official catalog is on and fetched from GitHub by default; the community catalog is off), once a day at the set time with a random delay of up to an hour, when you add a catalog, and on **Check now**. Switch a catalog off to stop it.
 - **Container images** of catalog apps from the registry the catalog names, unless the package carries them.
 - **Time**: with **Time servers** in Settings > **Regional settings** empty, the box uses the Debian defaults through systemd-timesyncd, which contacts public time servers.
