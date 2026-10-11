@@ -1,7 +1,7 @@
 ---
 title: 'Schnellstart'
 description: 'Vom Image bis zum ersten angemeldeten Desktop in so wenigen Schritten wie möglich, mit Links zu den Details.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 3

@@ -1,7 +1,7 @@
 ---
 title: 'System updates'
 description: 'Update channels, how an update is checked and applied, and what happens when one fails.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 5

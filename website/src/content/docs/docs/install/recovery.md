@@ -1,7 +1,7 @@
 ---
 title: 'Recovery and reinstall'
 description: 'Forgotten passwords, a failed system disk and reinstalling Pithyx while keeping the data on the pools.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 7
@@ -46,7 +46,7 @@ Before you reinstall, try the boot menu: **Pithyx recovery** (key `r`) rolls bac
 
 ## Reinstalling
 
-1. If the box still works, make a configuration backup first: Settings > **Backup and restore**, then **Create and download**. Choose a password; without it the backup cannot be restored, and Pithyx cannot recover it. Keep the file off the box. The backup holds users, groups and passwords, two-factor settings, the recovery key, shared folders, file service settings, schedules, system settings, and the list of installed apps. It does not hold the files on your pools. The file ends in `.pithyxbackup` and may be up to 16 MB.
+1. If the box still works, make a configuration backup first: Settings > **Backup and restore**, then **Create and download**. Choose a password; without it the backup cannot be restored, and Pithyx cannot recover it. Keep the file off the box. The backup holds users, groups and passwords, two-factor settings, the recovery key, shared folders, file service settings, schedules, system settings, the certificates and SSH host keys, and the list of installed apps. It does not hold the files on your pools. The file ends in `.pithyxbackup` and may be up to 16 MB.
 2. Write a new stick and run [the web installer](/docs/install/installer/). Choose the same system disks only. The installer warns about disks that hold data. Do not select your pool disks. Disks you do not choose are not touched.
 3. Sign in with the new administrator account and store the new recovery key.
 4. Import your pools (next section).

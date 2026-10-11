@@ -1,7 +1,7 @@
 ---
 title: 'Wiederherstellen und neu installieren'
 description: 'Vergessene Passwörter, eine ausgefallene Systemfestplatte und Pithyx neu installieren, ohne die Daten auf den Pools zu verlieren.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 7
@@ -46,7 +46,7 @@ Bevor du neu installierst, versuch es über das Bootmenü: **Pithyx recovery** (
 
 ## Neu installieren
 
-1. Wenn die Box noch funktioniert, erstelle zuerst ein Konfigurationsbackup: Einstellungen > **Backup und Wiederherstellung**, dann **Erstellen und herunterladen**. Wähle ein Passwort; ohne es lässt sich das Backup nicht wiederherstellen, und Pithyx kann es nicht zurückholen. Bewahre die Datei nicht auf der Box auf. Das Backup enthält Benutzer, Gruppen und Passwörter, Zwei-Faktor-Einstellungen, den Wiederherstellungsschlüssel, freigegebene Ordner, Einstellungen der Dateidienste, Zeitpläne, Systemeinstellungen und die Liste der installierten Apps. Es enthält nicht die Dateien auf deinen Pools. Die Datei endet auf `.pithyxbackup` und darf bis zu 16 MB groß sein.
+1. Wenn die Box noch funktioniert, erstelle zuerst ein Konfigurationsbackup: Einstellungen > **Backup und Wiederherstellung**, dann **Erstellen und herunterladen**. Wähle ein Passwort; ohne es lässt sich das Backup nicht wiederherstellen, und Pithyx kann es nicht zurückholen. Bewahre die Datei nicht auf der Box auf. Das Backup enthält Benutzer, Gruppen und Passwörter, Zwei-Faktor-Einstellungen, den Wiederherstellungsschlüssel, freigegebene Ordner, Einstellungen der Dateidienste, Zeitpläne, Systemeinstellungen, die Zertifikate und SSH-Host-Schlüssel und die Liste der installierten Apps. Es enthält nicht die Dateien auf deinen Pools. Die Datei endet auf `.pithyxbackup` und darf bis zu 16 MB groß sein.
 2. Schreibe einen neuen Stick und starte den [Web-Installer](/de/docs/install/installer/). Wähle nur dieselben Systemfestplatten. Der Installer warnt vor Festplatten, auf denen Daten liegen. Wähle nicht die Festplatten deiner Pools. Festplatten, die du nicht wählst, bleiben unberührt.
 3. Melde dich mit dem neuen Administratorkonto an und bewahre den neuen Wiederherstellungsschlüssel auf.
 4. Importiere deine Pools (nächster Abschnitt).
@@ -68,4 +68,4 @@ Ein frisches System kennt deine Pools nicht. Importiere sie in der Speicher-App:
 
 Ein Pool, der zuletzt von einem anderen System benutzt und nicht exportiert wurde, ist mit „Von einem anderen System benutzt“ markiert. Nach einer Neuinstallation ist das normal: Das alte System hat den Pool nie exportiert, und das neue gilt als anderes System. Wähle **Trotzdem importieren (erzwingen)** und tippe den Pool-Namen ein. Tu das nie, solange ein anderes System den Pool noch benutzt: Zwei Systeme, die auf einen Pool schreiben, zerstören ihn.
 
-Ist der Name schon vergeben, wähle einen **Neuen Namen für den Pool**. Ein Pool, der sich nicht importieren lässt, hat meist fehlende Platten: Schließe sie an und durchsuche erneut. Siehe [Speicher und Pools](/de/docs/admin/storage/).
+Ist der Name schon vergeben, wähle einen **Neuer Name für den Pool**. Ein Pool, der sich nicht importieren lässt, hat meist fehlende Platten: Schließe sie an und durchsuche erneut. Siehe [Speicher und Pools](/de/docs/admin/storage/).

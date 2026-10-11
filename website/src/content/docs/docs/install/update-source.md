@@ -1,7 +1,7 @@
 ---
 title: 'Switching the update source (forks)'
 description: 'How a box follows the updates of a fork instead of the Pithyx project, what that means, the way back, and what a fork has to publish.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 6
@@ -56,7 +56,7 @@ A box that switches to your fork reads your channels exactly as it reads the pro
 Build and sign them with the release scripts of the repository:
 
 1. `image/build.sh --version <version>` builds the image and the list of its packages.
-2. `tools/release/build-update.sh --version <version> --channel stable|beta [--minimum <version>] [--since <packages file> | --full]` builds `pithyx-<version>-amd64.pithyxupdate` (unsigned). It carries every package whose version differs from the package list of the minimum version (`image/baseline/` keeps the lists of releases; `--since` names one directly), so keep the package list of every release you publish. `--full` puts every package in.
+2. `tools/release/build-update.sh --version <version> --channel stable|beta [--minimum <version>] [--since <packages file> | --full]` builds `pithyx-<version>-amd64.pithyxupdate` (unsigned). It carries every package whose version differs from the package list of the minimum version (`image/build.sh` writes it as `image/out/pithyx-<version>-amd64.packages`; the script looks for the minimum version's list in `image/baseline/pithyx-<minimum>-amd64.packages`, a folder that does not exist in the repository yet, so `--since` names one directly), so keep the package list of every release you publish. `--full` puts every package in.
 3. `tools/release/sign-update.sh <file> --key <pem file> --key-id <id>` signs the manifest and checks the file as a box does.
 4. `tools/release/build-channel.sh <file> --key <pem file> --key-id <id> --sequence <n> [--url <url>]` writes and signs `channel.json` and `channel.json.sig`.
 
