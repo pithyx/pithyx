@@ -1,7 +1,7 @@
 ---
 title: 'Erste Einrichtung'
 description: 'Das Owner-Konto, der Wiederherstellungsschlüssel, der erste Pool und weitere Benutzer nach der Installation.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 4

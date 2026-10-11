@@ -1,7 +1,7 @@
 ---
 title: 'Write the USB stick'
 description: 'The image file, how to check it and how to write it to a USB stick on Windows, macOS and Linux.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 1

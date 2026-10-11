@@ -1,7 +1,7 @@
 ---
 title: 'Firmware and boot'
 description: 'UEFI settings, why Secure Boot must be off, and the boot menu of the stick and the installed system.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 2
@@ -32,7 +32,7 @@ The stick starts a boot menu (GRUB) that waits 5 seconds and then picks the firs
 - **Install Pithyx** `<version>` **(show boot messages)**: the same with boot messages, useful when something does not start.
 - **UEFI firmware settings**: restarts into the firmware settings.
 
-The installed system has a boot menu of its own that waits 3 seconds. It has no password.
+The installed system has a boot menu of its own that waits 3 seconds. It has no password. Besides the system it lists **Pithyx recovery** (key `r`) and one entry per kept system snapshot; see [Recovery and reinstall](/docs/install/recovery/).
 
 ## Booting from the stick
 

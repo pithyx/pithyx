@@ -1,7 +1,7 @@
 ---
 title: 'The web installer'
 description: 'Each step of the installer in the browser: checks, name and region, network, system disk or mirror, administrator account and the restart.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 3
@@ -14,7 +14,7 @@ The installer runs in a browser on another device, not on the computer you are i
 1. Start the computer from the stick (see [Firmware and boot](/docs/install/firmware-and-boot/)).
 2. Read the address on the console, for example `http://192.168.1.50:7484`. IPv6 addresses appear as `http://[address]:7484`. Port 80 forwards to port 7484.
 3. Open the address in a browser on a phone, tablet or computer in the same network. The console also shows a QR code for the first address.
-4. The page opens with **Welcome to Pithyx**. Choose a language (English or German) if needed, check the requirements and click **Begin**.
+4. The page opens with **Welcome to Pithyx** in English or German, following your browser. Check the requirements and click **Begin**. You choose the language of the box in step 1.
 
 The first browser that opens the page owns the installation. Another browser sees **Installation in use** and cannot continue. The console names the address that owns it. To start over, restart the computer from the stick. Do not close the browser during the installation.
 
@@ -47,7 +47,7 @@ Each failed check shows what to do. See [Hardware requirements](/docs/getting-st
 
 ## Network (step 2)
 
-The page lists every network card with its state: **Connected**, **No cable** or **No address yet**. By default each connected card gets its address by DHCP. For a card, open **Settings of** and the card's name to choose **Fixed address** and, if needed, **Name servers (optional)**. Click **Test connection** to try the settings for a moment: the page may lose its connection for a few seconds, and the result says whether the gateway answers. A failed test is rolled back. Below, **After the installation the box answers at** shows the address you will use.
+The page lists every network card with its state: **Connected**, **No cable** or **No address yet**. By default each connected card gets its address by DHCP. For a card, open **Settings of** and the card's name to choose **Fixed address** and, if needed, **Name servers (optional)**. Click **Test connection** to try the settings for a moment: the page may lose its connection for a few seconds, and the result says whether the gateway answers. The settings are always rolled back after the test, whether it succeeded or not. Below, **After the installation the box answers at** shows the address you will use.
 
 Bonds, VLANs and further options come after the installation, in Settings under Network. See [Network](/docs/admin/network/).
 
