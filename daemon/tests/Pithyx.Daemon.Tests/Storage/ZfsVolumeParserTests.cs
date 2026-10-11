@@ -4,8 +4,8 @@ using static Pithyx.Daemon.Tests.Storage.StorageFixtures;
 namespace Pithyx.Daemon.Tests.Storage;
 
 /// <summary>
-/// The dataset list with volumes and a quota, recorded on dev01 by <c>DatasetIntegrationTests</c> on a file pool
-/// (<c>PITHYX_RECORD_FIXTURES</c>); the owner's test pool is in it too, read-only.
+/// The dataset list with volumes and a quota, recorded on a dev VM by <c>DatasetIntegrationTests</c> on a file pool
+/// (<c>PITHYX_RECORD_FIXTURES</c>); a test pool is in it too, read-only.
 /// </summary>
 public sealed class ZfsVolumeParserTests
 {

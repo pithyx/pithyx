@@ -14,7 +14,7 @@
 # module come from the Debian snapshot of image/debian.env; the built module is kept in <work>/kernel-<snapshot> and
 # reused until --rebuild-kernel. --no-app-build packs the daemon and desktop of an earlier run. Timestamps come from
 # the commit (SOURCE_DATE_EPOCH), so the same commit gives the same packages. Needs mmdebstrap, uidmap, dpkg-dev and
-# the .NET SDK and pnpm (tools/dev-vm/provision.sh installs them on dev01).
+# the .NET SDK and pnpm (tools/dev-vm/provision.sh installs them on a dev VM).
 set -euo pipefail
 export LC_ALL=C.UTF-8
 

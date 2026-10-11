@@ -130,7 +130,7 @@ cleanup() {
 }
 trap cleanup EXIT
 
-line "## Disk failure test on dev01, $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+line "## Disk failure test on the dev VM, $(date -u +%Y-%m-%dT%H:%M:%SZ)"
 line ""
 line "Checkout: \`$(git -C "$repo" rev-parse --short HEAD)\` ($(git -C "$repo" branch --show-current)), OpenZFS $(zfs version | head -n1), kernel $(uname -r). ZED: $(systemctl is-active zfs-zed 2>/dev/null || true)."
 line ""
@@ -157,7 +157,7 @@ mkdir -p "$work/logs" "$work/cache"
 ) &
 daemon_pid=$!
 wait_for 60 curl -sf "http://127.0.0.1:$PORT/api/health" >/dev/null || die "the daemon did not start; see $work/daemon.log"
-api POST /api/setup '{"username":"disktest","password":"disk failure test on dev01"}' >/dev/null
+api POST /api/setup '{"username":"disktest","password":"disk failure test on the dev VM"}' >/dev/null
 check "The test daemon runs in real mode" bash -c "curl -s http://127.0.0.1:$PORT/api/health | grep -q '\"real\"'"
 check "Pool $POOL (mirror on $KEEP and $PULL) is ONLINE" state_is "$POOL" ONLINE
 

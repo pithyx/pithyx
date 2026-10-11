@@ -1,5 +1,5 @@
 root:x:0:
-users:x:100:gabriel
+users:x:100:alice
 # a comment
 pithyx-users:x:990:ada,rita,tom
 pithyx-sftp:x:989:

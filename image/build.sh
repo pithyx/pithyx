@@ -17,7 +17,7 @@
 # --no-app-build packs the daemon and desktop already built by an earlier run, and --reuse-rootfs packs the root file
 # system of an earlier run again (for work on the boot steps only).
 # Packages needed on the build host: mmdebstrap uidmap squashfs-tools xorriso mtools dosfstools grub-efi-amd64-bin
-# dpkg-dev, plus the .NET SDK and pnpm for the daemon and desktop (tools/dev-vm/provision.sh installs them on dev01).
+# dpkg-dev, plus the .NET SDK and pnpm for the daemon and desktop (tools/dev-vm/provision.sh installs them on a dev VM).
 set -euo pipefail
 export LC_ALL=C.UTF-8
 

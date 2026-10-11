@@ -150,7 +150,7 @@ public sealed class FolderWatchTests : IDisposable
         socket.Dispose();
     }
 
-    // Found on dev01: an open Files window kept the share's dataset busy, so zfs destroy could not unmount it.
+    // Found on a dev VM: an open Files window kept the share's dataset busy, so zfs destroy could not unmount it.
     [Fact]
     public async Task ReleasingAMountPointClosesTheWatchHandlesAndReportsTheFolderGone()
     {

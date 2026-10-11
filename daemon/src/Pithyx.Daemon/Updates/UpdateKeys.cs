@@ -5,7 +5,7 @@ namespace Pithyx.Daemon.Updates;
 /// <summary>
 /// The keys whose signatures on update files and channels a box accepts (D338), the same as
 /// <c>tools/release/keys.json</c>: <c>pithyx-release-1</c> (the owner's) signs stable and beta, <c>pithyx-release-2</c> is
-/// its offline reserve for the same channels, <c>pithyx-beta-1</c> (on dev01) signs only beta.
+/// its offline reserve for the same channels, <c>pithyx-beta-1</c> (on the maintainer's dev machine) signs only beta.
 /// </summary>
 public static class UpdateKeys
 {

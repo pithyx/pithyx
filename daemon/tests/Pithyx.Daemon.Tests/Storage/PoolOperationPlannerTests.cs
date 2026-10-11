@@ -282,7 +282,7 @@ public sealed class PoolOperationPlannerTests : IDisposable
             _commands.Calls.Where(call => call.Arguments[0] is "export" or "import" or "set" or "mount").Select(call => $"{call.FileName} {call.Arguments[0]}"));
     }
 
-    // Found on dev01: the disks of a pool imported read-only are not probed, and after the export step they are, so
+    // Found on a dev VM: the disks of a pool imported read-only are not probed, and after the export step they are, so
     // their signatures changed between the plan and the import step without the disks changing.
     [Fact]
     public async Task AReadWriteImportIsNotStaleWhenTheExportStepMakesItsDisksProbeable()

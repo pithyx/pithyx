@@ -54,3 +54,4 @@ tools/design-shots/*.zip
 
 # Image build output (image/build.sh)
 image/out/
+CLAUDE.local.md

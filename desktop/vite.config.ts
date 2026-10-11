@@ -35,8 +35,8 @@ function cssModuleTypes(): Plugin {
   };
 }
 
-// The dev server sends modules uncompressed (react-dom alone is about 3 MB), which is slow over a VPN such as
-// Tailscale. Text responses are gzipped here; the daemon's API and WebSocket pass through untouched.
+// The dev server sends modules uncompressed (react-dom alone is about 3 MB), which is slow over a VPN.
+// Text responses are gzipped here; the daemon's API and WebSocket pass through untouched.
 function devCompression(): Plugin {
   return {
     name: 'pithyx-dev-compression',

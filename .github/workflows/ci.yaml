@@ -18,7 +18,7 @@ permissions:
 # pithyx-ci; the E2E job on CI_RUNNER_E2E, label pithyx-e2e, when that is set) and on GitHub-hosted runners when it is
 # unset. A pull request from a fork never runs on them: its jobs use ubuntu-latest, and only after a maintainer approved
 # the run (repository setting "Fork pull request workflows"; see CLAUDE.md, CI). The self-hosted runner has no Docker and
-# no root: no job uses services or containers, and nothing here needs ZFS, real disks or root. Those tests run on dev01
+# no root: no job uses services or containers, and nothing here needs ZFS, real disks or root. Those tests run on a dev VM
 # (tools/dev-vm/integration.sh).
 
 # One run per branch: a new push to a pull request cancels the run it replaces. Runs on dev and master always finish,

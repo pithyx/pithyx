@@ -11,10 +11,10 @@ using Pithyx.Daemon.Storage.Zfs;
 namespace Pithyx.Daemon.Tests.Storage.Integration;
 
 /// <summary>
-/// A disk pulled out of a running box, the way the owner tests it on dev01: the kernel deletes the SCSI device
+/// A disk pulled out of a running box, the way a maintainer tests it on a dev VM: the kernel deletes the SCSI device
 /// (<c>/sys/block/&lt;dev&gt;/device/delete</c>) and a rescan of its host brings it back. The disks are <c>scsi_debug</c>
 /// devices in memory, one host each with its own store, so nothing but RAM is touched. There is no ZED on
-/// dev01: ZFS notices nothing until its next write, and the daemon must see the disk go on its own.
+/// devbox: ZFS notices nothing until its next write, and the daemon must see the disk go on its own.
 /// </summary>
 [Trait("Category", FileVdevs.Category)]
 public sealed class DiskFailureIntegrationTests
@@ -108,7 +108,7 @@ public sealed class DiskFailureIntegrationTests
 
     /// <summary>
     /// Pulling a disk that ZFS still writes to can leave a transaction group waiting in the kernel for I/O that never
-    /// returns (seen on dev01 with OpenZFS 2.3.9); every later zpool command then waits until a reboot. These tests run
+    /// returns (seen on a dev VM with OpenZFS 2.3.9); every later zpool command then waits until a reboot. These tests run
     /// only on a freshly booted dev VM with <c>PITHYX_DISK_PULL_TESTS=1</c> (<c>integration.sh --disk-pulls</c>).
     /// </summary>
     private static void RequireDiskPulls()

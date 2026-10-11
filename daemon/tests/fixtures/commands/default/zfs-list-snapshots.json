@@ -10,5 +10,5 @@
     "name,used,referenced,creation,userrefs"
   ],
   "exitCode": 0,
-  "handWritten": "Written by hand in the OpenZFS 2.3 shape; record it again on dev01 with tools/fixtures/record.sh."
+  "handWritten": "Written by hand in the OpenZFS 2.3 shape; record it again on devbox with tools/fixtures/record.sh."
 }

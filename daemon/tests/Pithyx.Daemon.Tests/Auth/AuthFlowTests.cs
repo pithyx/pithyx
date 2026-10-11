@@ -23,13 +23,13 @@ public sealed class AuthFlowTests : IDisposable
     {
         Assert.True((await (await _client.GetAsync("/api/setup", Token)).JsonAsync()).GetProperty("required").GetBoolean());
 
-        using var setup = await _client.PostAsync("/api/setup", new { username = "Admin", password = AdminPassword, displayName = " Gabriel Ä. " });
+        using var setup = await _client.PostAsync("/api/setup", new { username = "Admin", password = AdminPassword, displayName = " Alice Ä. " });
         var body = await setup.JsonAsync();
 
         Assert.Equal(HttpStatusCode.OK, setup.StatusCode);
         Assert.Matches("^PTHX-[0-9A-HJKMNP-TV-Z]{4}(-[0-9A-HJKMNP-TV-Z]{4}){5}-[0-9A-HJKMNP-TV-Z]{2}$", body.GetProperty("recoveryKey").GetString());
         Assert.Equal("admin", body.GetProperty("user").GetProperty("username").GetString());
-        Assert.Equal("Gabriel Ä.", body.GetProperty("user").GetProperty("displayName").GetString());
+        Assert.Equal("Alice Ä.", body.GetProperty("user").GetProperty("displayName").GetString());
         Assert.Equal(HttpStatusCode.OK, (await _client.GetAsync("/api/auth/session", Token)).StatusCode);
         Assert.False((await (await _client.GetAsync("/api/setup", Token)).JsonAsync()).GetProperty("required").GetBoolean());
 

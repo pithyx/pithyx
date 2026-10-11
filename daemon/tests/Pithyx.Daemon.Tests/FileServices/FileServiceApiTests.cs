@@ -111,7 +111,7 @@ public sealed class FileServiceApiTests : IDisposable
         // An SFTP session of a Pithyx user reads the pools once a minute while it is open and once at its end.
         activity.SftpUsers = new HashSet<string>(["rita"]);
         Assert.True(activity.Observe(Entry("system/ssh", "pam_unix(sshd:session): session opened for user rita(uid=20001) by rita(uid=0)"), "sshd-session"));
-        Assert.True(activity.Observe(Entry("system/ssh", "pam_unix(sshd:session): session opened for user gabriel(uid=1000) by gabriel(uid=0)"), "sshd-session"));
+        Assert.True(activity.Observe(Entry("system/ssh", "pam_unix(sshd:session): session opened for user alice(uid=1000) by alice(uid=0)"), "sshd-session"));
         time.Advance(FileServiceActivity.SessionInterval);
         Assert.Equal(2, reads);
         activity.Observe(Entry("system/ssh", "pam_unix(sshd:session): session closed for user rita"), "sshd-session");
