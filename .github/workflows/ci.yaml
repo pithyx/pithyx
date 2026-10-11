@@ -6,6 +6,9 @@ on:
   push:
     branches: [dev, master]
   workflow_dispatch:
+  # The nightly run: the whole suite including E2E on dev (the default branch, where scheduled runs start).
+  schedule:
+    - cron: '17 1 * * *'
 
 # Read-only token for every job; a job that needs more asks for it itself. No pull_request_target, no secrets.
 permissions:
@@ -13,8 +16,9 @@ permissions:
 
 # Every job runs on the runners named by the repository variable CI_RUNNER (the owner's self-hosted runners, label
 # pithyx-ci; the E2E job on CI_RUNNER_E2E, label pithyx-e2e, when that is set) and on GitHub-hosted runners when it is
-# unset. The self-hosted runner has no Docker and no root: no job
-# uses services or containers, and nothing here needs ZFS, real disks or root. Those tests run on dev01
+# unset. A pull request from a fork never runs on them: its jobs use ubuntu-latest, and only after a maintainer approved
+# the run (repository setting "Fork pull request workflows"; see CLAUDE.md, CI). The self-hosted runner has no Docker and
+# no root: no job uses services or containers, and nothing here needs ZFS, real disks or root. Those tests run on dev01
 # (tools/dev-vm/integration.sh).
 
 # One run per branch: a new push to a pull request cancels the run it replaces. Runs on dev and master always finish,
@@ -31,9 +35,12 @@ env:
 jobs:
   # Pull requests that change only docs skip the builds; the daemon job needs a daemon-side change. Adding a label runs
   # the checks again only for the label e2e, which also runs the E2E suite (D278).
+  # Forks of the repository do not run the nightly schedule.
   changes:
-    if: github.event.action != 'labeled' || github.event.label.name == 'e2e'
-    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    if: >-
+      (github.event.action != 'labeled' || github.event.label.name == 'e2e')
+      && (github.event_name != 'schedule' || github.repository == 'pithyx/pithyx')
+    runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true) && 'ubuntu-latest' || vars.CI_RUNNER || 'ubuntu-latest' }}
     outputs:
       code: ${{ steps.areas.outputs.code }}
       daemon: ${{ steps.areas.outputs.daemon }}
@@ -53,11 +60,14 @@ jobs:
   daemon:
     needs: changes
     if: needs.changes.outputs.daemon == 'true'
-    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true) && 'ubuntu-latest' || vars.CI_RUNNER || 'ubuntu-latest' }}
     env:
       PITHYX_SKIP_BUDGETS: ${{ github.event_name == 'push' && github.ref_name == 'dev' && '1' || '' }}
     steps:
       - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
       - uses: actions/setup-dotnet@v6
         env:
           DOTNET_INSTALL_DIR: ${{ runner.tool_cache }}/dotnet
@@ -70,16 +80,18 @@ jobs:
       - name: OpenAPI document is up to date
         run: git diff --exit-code packages/api-client/openapi.json
       # The ZFS and Linux account tests need root and real ZFS; they run on the dev VM (tools/dev-vm/integration.sh).
-      # The timing budgets run in the E2E job, where no parallel build skews them (D280).
+      # The timing budgets run in the E2E job, where no parallel build skews them (D280). A failed test that is a known
+      # flake (SQLite "database is locked", the ProcessCommandRunner stream test) is rerun once, alone and visibly; any
+      # other failure fails the job (tools/checks/dotnet-test-retry.ts).
       - run: >-
-          dotnet test --solution daemon/Pithyx.slnx --configuration Release --no-build
+          node tools/checks/dotnet-test-retry.ts -- --solution daemon/Pithyx.slnx --configuration Release --no-build
           --filter-not-trait "Category=StorageIntegration" --filter-not-trait "Category=DockerIntegration" --filter-not-trait "Category=NetworkIntegration" --filter-not-trait "Category=TimingBudget"
       - run: dotnet format daemon/Pithyx.slnx --verify-no-changes --no-restore
 
   frontend:
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
-    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true) && 'ubuntu-latest' || vars.CI_RUNNER || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -101,7 +113,7 @@ jobs:
   website:
     needs: changes
     if: needs.changes.outputs.website == 'true'
-    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true) && 'ubuntu-latest' || vars.CI_RUNNER || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -115,7 +127,7 @@ jobs:
 
   repo:
     needs: changes
-    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true) && 'ubuntu-latest' || vars.CI_RUNNER || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -130,13 +142,16 @@ jobs:
       - run: pnpm format:check
       - run: git ls-files -z '*.sh' | xargs -0 shellcheck
       - name: Commit messages
+        if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
         run: node tools/checks/commit-msg.ts --range "$(tools/checks/ci-range.sh)"
         env:
           EVENT_NAME: ${{ github.event_name }}
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+      # Both checks read a pull request's or push's range; a manual or nightly run has none, so they are skipped there.
       # Sign-off (DCO) of every commit in the range; part of this job so it needs no runner of its own.
       - name: Sign-off
+        if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
         run: node tools/checks/dco.ts "$(tools/checks/ci-range.sh)"
         env:
           EVENT_NAME: ${{ github.event_name }}
@@ -144,17 +159,17 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
   # The E2E suite, the performance gate and the design checks take minutes, so they run only when asked (D278): the
-  # label e2e on a pull request, a manual run, and every pull request or push to master.
+  # label e2e on a pull request, a manual run, the nightly run, and every pull request or push to master.
   e2e:
     # It waits for the daemon job, whose tests skew the timing budgets even on pinned cores, and runs whether that job
     # passed, failed or was skipped (D280).
     needs: [changes, daemon]
     if: >-
       always() && !cancelled() && needs.changes.result == 'success' && needs.changes.outputs.code == 'true'
-      && (github.event_name == 'workflow_dispatch' || github.ref_name == 'master' || github.base_ref == 'master'
+      && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.ref_name == 'master' || github.base_ref == 'master'
       || contains(github.event.pull_request.labels.*.name, 'e2e'))
     # Its own runner with pinned cores (label pithyx-e2e), so no other job's build skews the timing budgets (D280).
-    runs-on: ${{ vars.CI_RUNNER_E2E || vars.CI_RUNNER || 'ubuntu-latest' }}
+    runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true) && 'ubuntu-latest' || vars.CI_RUNNER_E2E || vars.CI_RUNNER || 'ubuntu-latest' }}
     env:
       # The performance gate guards pull requests; after the merge, dev runs the other E2E tests only.
       PITHYX_SKIP_BUDGETS: ${{ github.event_name == 'push' && github.ref_name == 'dev' && '1' || '' }}
@@ -176,6 +191,11 @@ jobs:
       # The suite runs the daemon only; its tests are the daemon job's.
       - run: dotnet build daemon/src/Pithyx.Daemon
       - run: pnpm --filter "@pithyx/desktop..." build
+      - if: runner.environment == 'github-hosted'
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
       # Only a GitHub-hosted runner may install system packages; the self-hosted runner has the libraries already.
       - run: pnpm --filter @pithyx/e2e exec playwright install ${{ runner.environment == 'github-hosted' && '--with-deps' || '' }} chromium
       - run: pnpm e2e
