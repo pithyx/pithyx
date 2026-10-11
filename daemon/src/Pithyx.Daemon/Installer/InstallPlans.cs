@@ -4,7 +4,7 @@ using Pithyx.Daemon.Storage;
 namespace Pithyx.Daemon.Installer;
 
 /// <summary>
-/// The commands that write the system disks during an installation (System layout v0.1, D295), as pure functions. Like
+/// The commands that write the system disks during an installation (System layout 1.0, D295), as pure functions. Like
 /// the storage plan builders this is one of the few places that may name destructive commands
 /// (<c>CommandSafetyTests</c>); only <see cref="SystemInstaller"/> runs them, and only on the live system.
 /// </summary>

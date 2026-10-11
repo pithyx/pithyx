@@ -2,7 +2,7 @@ name: Pages
 
 # Builds website/ and publishes it with GitHub Pages at https://pithyx.org (D340). It runs only once the owner has
 # switched Pages on for the public repository and set the repository variable PAGES_ENABLED to true; until then the
-# site is built and checked by the website job in ci.yaml only. From the v0.1 release on it deploys from master.
+# site is built and checked by the website job in ci.yaml only. From the first release on it deploys from master.
 # workflow_dispatch is the "Run workflow" button (Actions > Pages) to publish the docs by hand; while PAGES_ENABLED is
 # not true, a manual run skips both jobs, because the free plan has no Pages for a private repository.
 on:

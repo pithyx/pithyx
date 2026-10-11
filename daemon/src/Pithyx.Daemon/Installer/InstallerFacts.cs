@@ -8,7 +8,7 @@ public static class InstallerFacts
 {
     public const long MinMemoryBytes = 4L * 1000 * 1000 * 1000;
 
-    /// <summary>ESP, system and swap partition (System layout v0.1) with room to spare.</summary>
+    /// <summary>ESP, system and swap partition (System layout 1.0) with room to spare.</summary>
     public const long MinDiskBytes = 40L * 1000 * 1000 * 1000;
 
     // The kernel reserves some memory, so a 4 GB box reports a little less.

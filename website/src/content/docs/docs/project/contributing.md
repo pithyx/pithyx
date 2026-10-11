@@ -7,7 +7,7 @@ sidebar:
   order: 3
 ---
 
-Pithyx is developed in the open on GitHub at `pithyx/pithyx`. Pull requests target the `dev` branch, commits carry a sign-off, and each pull request follows a short checklist. The project is pre-alpha: there is no release yet.
+Pithyx is developed in the open on GitHub at `pithyx/pithyx`. Pull requests target the `dev` branch, commits carry a sign-off, and each pull request follows a short checklist. The first release will be 1.0.0-beta.1; there is no release yet.
 
 ## Reporting bugs
 
