@@ -21,7 +21,7 @@ The file is `backend/compose.yaml`. The rules are in `sdk/schema/compose.v1.rule
 
 - `image` is required and pinned by digest (`name@sha256:...`).
 - Allowed: `command`, `entrypoint`, `environment`, `working_dir`, `volumes`, `tmpfs`, `depends_on`, `healthcheck`, `expose`, `read_only`, `init`, `stop_signal`, `stop_grace_period`, `shm_size`, `mem_limit`, `cpus` and `labels` (not with the prefixes `com.pithyx` or `com.docker`).
-- Only with a matching elevated right: `network_mode: host`, `pid: host`, `devices`, `cap_add`, `cap_drop` and `privileged`.
+- Needs an elevated right, which this version does not grant (refused with `app.elevated.unsupported`): `network_mode: host`, `pid: host`, `devices`, `cap_add`, `cap_drop` and `privileged`.
 - Mounts are named volumes or `tmpfs`. Bind mounts are refused because host paths are never mounted. The targets `/proc`, `/sys` and `/dev` and the Docker sockets are refused.
 - Refused with a reason in the error text: `ports` (backends are reached only through the proxy), `build` (the box never builds), `networks`, `links`, `env_file`, `secrets`, `configs`, `user` (the box sets the user id), `restart` (the box runs the lifecycle), `logging`, `deploy` (use `mem_limit` and `cpus`), `security_opt`, `sysctls`, `ulimits`, `container_name`, `extends`, `profiles` and more.
 

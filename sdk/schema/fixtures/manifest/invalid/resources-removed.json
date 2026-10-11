@@ -89,9 +89,6 @@
         "endpoint": "api",
         "path": "/jobs/cleanup"
       }
-    ],
-    "elevated": [
-      "device:/dev/dri/renderD128"
     ]
   }
 }

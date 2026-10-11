@@ -21,7 +21,7 @@ Die Datei ist `backend/compose.yaml`. Die Regeln stehen in `sdk/schema/compose.v
 
 - `image` ist Pflicht und per Digest festgelegt (`name@sha256:...`).
 - Erlaubt: `command`, `entrypoint`, `environment`, `working_dir`, `volumes`, `tmpfs`, `depends_on`, `healthcheck`, `expose`, `read_only`, `init`, `stop_signal`, `stop_grace_period`, `shm_size`, `mem_limit`, `cpus` und `labels` (nicht mit den Präfixen `com.pithyx` oder `com.docker`).
-- Nur mit einem passenden erhöhten Recht: `network_mode: host`, `pid: host`, `devices`, `cap_add`, `cap_drop` und `privileged`.
+- Braucht ein erhöhtes Recht, das diese Version nicht vergibt (abgelehnt mit `app.elevated.unsupported`): `network_mode: host`, `pid: host`, `devices`, `cap_add`, `cap_drop` und `privileged`.
 - Mounts sind benannte Volumes oder `tmpfs`. Bind-Mounts werden abgelehnt, weil Host-Pfade nie eingehängt werden. Die Ziele `/proc`, `/sys` und `/dev` sowie die Docker-Sockets werden abgelehnt.
 - Mit einer Begründung im Fehlertext abgelehnt: `ports` (Backends sind nur über den Proxy erreichbar), `build` (die Box baut nie), `networks`, `links`, `env_file`, `secrets`, `configs`, `user` (die Box setzt die Benutzer-ID), `restart` (die Box steuert den Lebenszyklus), `logging`, `deploy` (nutze `mem_limit` und `cpus`), `security_opt`, `sysctls`, `ulimits`, `container_name`, `extends`, `profiles` und mehr.
 

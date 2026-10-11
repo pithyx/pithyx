@@ -20,10 +20,6 @@ public static class ManifestValidator
 {
     public const int SupportedVersion = 1;
 
-    /// <summary>Capabilities that reach the host's secrets (D71); never granted on their own.</summary>
-    private static readonly HashSet<string> _blockedCapabilities =
-        ["ALL", "SYS_ADMIN", "SYS_PTRACE", "SYS_MODULE", "SYS_RAWIO", "DAC_READ_SEARCH", "BPF"];
-
     private static readonly Lazy<JsonSchemaCheck> _schema = new(() => JsonSchemaCheck.Load("manifest.v1.schema.json"));
 
     /// <summary>
@@ -196,10 +192,8 @@ public static class ManifestValidator
         }
     }
 
-    /// <summary>Whether this version of Pithyx can grant an elevated right the schema accepts (D71, D304).</summary>
-    public static bool IsSupportedElevatedRight(string right) =>
-        right is not ("docker.socket" or "host.full")
-        && !(right.StartsWith("capability:", StringComparison.Ordinal) && _blockedCapabilities.Contains(right["capability:".Length..]));
+    /// <summary>Whether this version of Pithyx can grant an elevated right the schema accepts: none (D345, A16 follows).</summary>
+    public static bool IsSupportedElevatedRight(string right) => false;
 
     private static ValidationIssue Duplicate(string path, string value) =>
         new(ErrorCodes.AppManifestDuplicate, ("path", path), ("value", value));

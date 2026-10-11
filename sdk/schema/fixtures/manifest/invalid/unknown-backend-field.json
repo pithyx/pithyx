@@ -87,9 +87,6 @@
         "path": "/jobs/cleanup"
       }
     ],
-    "elevated": [
-      "device:/dev/dri/renderD128"
-    ],
     "image": "nginx@sha256:00"
   }
 }

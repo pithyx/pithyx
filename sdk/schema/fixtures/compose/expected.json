@@ -807,79 +807,33 @@
       }
     }
   ],
-  "right-missing.yaml": [
+  "right-unsupported.yaml": [
     {
-      "code": "app.compose.right_missing",
+      "code": "app.elevated.unsupported",
       "params": {
         "path": "/services/server/cap_add/0",
         "right": "capability:NET_ADMIN"
       }
     },
     {
-      "code": "app.compose.right_missing",
+      "code": "app.elevated.unsupported",
       "params": {
         "path": "/services/server/devices/0",
         "right": "device:/dev/dri/renderD128"
       }
     },
     {
-      "code": "app.compose.right_missing",
+      "code": "app.elevated.unsupported",
       "params": {
         "path": "/services/server/pid",
         "right": "host.pid"
       }
     },
     {
-      "code": "app.compose.right_missing",
+      "code": "app.elevated.unsupported",
       "params": {
         "path": "/services/discovery/network_mode",
         "right": "host.network"
-      }
-    }
-  ],
-  "right-other-device.yaml": [
-    {
-      "code": "app.compose.right_missing",
-      "params": {
-        "path": "/services/server/devices/0",
-        "right": "device:/dev/dri/card0"
-      }
-    },
-    {
-      "code": "app.compose.right_unused",
-      "params": {
-        "path": "/backend/elevated/0",
-        "right": "device:/dev/dri/renderD128"
-      }
-    }
-  ],
-  "right-unused.yaml": [
-    {
-      "code": "app.compose.right_unused",
-      "params": {
-        "path": "/backend/elevated/0",
-        "right": "device:/dev/dri/renderD128"
-      }
-    },
-    {
-      "code": "app.compose.right_unused",
-      "params": {
-        "path": "/backend/elevated/1",
-        "right": "capability:NET_ADMIN"
-      }
-    },
-    {
-      "code": "app.compose.right_unused",
-      "params": {
-        "path": "/backend/elevated/2",
-        "right": "host.network"
-      }
-    },
-    {
-      "code": "app.compose.right_unused",
-      "params": {
-        "path": "/backend/elevated/3",
-        "right": "host.pid"
       }
     }
   ],

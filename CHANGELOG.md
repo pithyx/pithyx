@@ -6,6 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.0.0-beta.1] - 2026-10-11
+
+The first beta, codename Pyxis (D345): the NAS core, the file services, the app runtime with the Store, the installer and the updater.
+
+### Known limitations
+
+- The web interface runs over plain HTTP only (port 7484 and 80); HTTPS with the trust step comes later.
+- Pool encryption (ZFS native, key vault) is not built, so no real data belongs on a beta box that needs encryption.
+- Every elevated app right is refused with `app.elevated.unsupported`: an app that asks for `host.network`, `host.pid`, a device, a capability, `docker.socket` or `host.full` cannot be installed.
+- Importing a pool after a reinstall fails at `zpool export` when the pool was first imported read-only and then switched to read-write.
+- Most pages of the documentation are still drafts, written from the code and not yet checked line by line.
+
 ### Added
 
 - Website: a reference of the `pithyx` command under `/docs/reference/cli/` (one page per command and catalog subcommand, the global options, exit codes and every finding), generated in its synopsis and option tables from `packages/cli/src/cli.ts` by `website/scripts/generate-cli-reference.ts`, and the manifest schema and the Compose rules as generated reference pages; every field of `sdk/schema/manifest.v1.schema.json` and every rule of `compose.v1.rules.json` now has a description.
@@ -183,6 +195,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- The daemon's version is `1.0.0-beta.1`; the updater orders it after `0.1.0-dev.x` and before `1.0.0`, and `tools/release/build-update.sh` uses it as the default minimum version.
+- The daemon and the CLI refuse every elevated app right with `app.elevated.unsupported` (before, only `docker.socket`, `host.full` and the capabilities that reach the host's secrets); the manifest schema, the shared fixture corpus and the docs say so.
 - `@pithyx/sdk`, `@pithyx/ui` and `@pithyx/cli` are at `1.0.0-rc.6`, so the reworked READMEs reach npm.
 - The READMEs of `@pithyx/sdk`, `@pithyx/ui` and `@pithyx/cli` on npm lose the empty usage section and gain the entry points and links to the docs site.
 - Attribution (D344): `NOTICE` names Schecher1 as the original author of Pithyx and asks under section 7(b) of the AGPL that forks and redistributions keep "Based on Pithyx, originally created by Schecher1" in their source, About page and docs; a fork may rename its product but states that it is based on Pithyx by Schecher1. The About app, README, CONTRIBUTING and the license docs page say so. The npm packages stay MIT without additional terms.

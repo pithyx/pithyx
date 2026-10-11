@@ -9,7 +9,7 @@
 # sorted, root as owner, the commit's time) with manifest.json first, then debs/ with the packages, Packages and
 # Release, which the box reads as a local apt repository. It carries pithyx, pithyx-kernel, the ZFS module and every
 # Debian package of the image whose version differs from the packages file of --minimum (default: the version itself
-# for --full, else 0.1.0), written by image/build.sh as pithyx-<version>-amd64.packages and kept for every release in
+# for --full, else 1.0.0-beta.1), written by image/build.sh as pithyx-<version>-amd64.packages and kept for every release in
 # image/baseline/. Snapshot dates only move forward, so a box of any version from --minimum on already has every
 # package the file leaves out, and one file updates every such box without the versions between. --since names the
 # packages file directly; --full puts every package of the image in (a large file that needs no baseline).
@@ -74,7 +74,7 @@ if [[ "$full" == true ]]; then
   minimum="${minimum:-$version}"
   since=/dev/null
 else
-  minimum="${minimum:-0.1.0}"
+  minimum="${minimum:-1.0.0-beta.1}"
   since="${since:-$repo/image/baseline/pithyx-$minimum-$ARCH.packages}"
   [[ -f "$since" ]] || die "no packages file of $minimum ($since); pass --since <file> or --full"
 fi

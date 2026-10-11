@@ -92,9 +92,6 @@
         "endpoint": "api",
         "path": "/b"
       }
-    ],
-    "elevated": [
-      "device:/dev/dri/renderD128"
     ]
   }
 }

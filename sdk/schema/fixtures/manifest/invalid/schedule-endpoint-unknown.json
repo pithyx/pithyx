@@ -86,9 +86,6 @@
         "endpoint": "jobs",
         "path": "/x"
       }
-    ],
-    "elevated": [
-      "device:/dev/dri/renderD128"
     ]
   }
 }

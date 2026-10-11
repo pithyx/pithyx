@@ -31,12 +31,6 @@
       }
     },
     "lifecycle": "onDemand",
-    "elevated": [
-      "device:/dev/dri/renderD128",
-      "capability:NET_ADMIN",
-      "host.network",
-      "host.pid"
-    ],
     "root": true
   }
 }
