@@ -71,8 +71,8 @@ interface NpmLicense {
   homepage?: string;
 }
 
-function npmEntries(): { entry: Entry; text?: string }[] {
-  const found = new Map<string, { entry: Entry; text?: string }>();
+function npmEntries(): { entry: Entry; text?: string | undefined }[] {
+  const found = new Map<string, { entry: Entry; text?: string | undefined }>();
   const json = run('pnpm', ['--filter', '@pithyx/desktop', 'licenses', 'list', '--prod', '--json']);
   const groups = JSON.parse(json) as Record<string, NpmLicense[]>;
   for (const packages of Object.values(groups)) {
@@ -95,7 +95,7 @@ function npmEntries(): { entry: Entry; text?: string }[] {
   return [...found.values()];
 }
 
-function nugetEntries(): { entry: Entry; text?: string }[] {
+function nugetEntries(): { entry: Entry; text?: string | undefined }[] {
   const json = JSON.parse(
     run('dotnet', ['list', daemonProject, 'package', '--include-transitive', '--format', 'json']),
   ) as {
@@ -115,7 +115,7 @@ function nugetEntries(): { entry: Entry; text?: string }[] {
     }
   }
   const cache = process.env.NUGET_PACKAGES ?? join(homedir(), '.nuget/packages');
-  const result: { entry: Entry; text?: string }[] = [];
+  const result: { entry: Entry; text?: string | undefined }[] = [];
   for (const pkg of [...packages.values()].sort((a, b) => a.id.localeCompare(b.id))) {
     if (notShipped.has(pkg.id) || listedByHand.has(pkg.id)) {
       continue;
