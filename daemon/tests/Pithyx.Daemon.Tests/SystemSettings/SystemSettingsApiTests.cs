@@ -45,7 +45,7 @@ public sealed class SystemSettingsApiTests : IAsyncLifetime
     {
         var overview = await GetAsync("/api/system/overview");
 
-        Assert.StartsWith("0.1.0", overview.GetProperty("version").GetString(), StringComparison.Ordinal);
+        Assert.StartsWith("1.0.0-beta.1", overview.GetProperty("version").GetString(), StringComparison.Ordinal);
         Assert.True(overview.GetProperty("cpuCores").GetInt32() >= 1);
         Assert.True(overview.GetProperty("memoryTotalBytes").GetInt64() > 0);
         Assert.False(string.IsNullOrEmpty(overview.GetProperty("kernel").GetString()));

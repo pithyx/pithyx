@@ -13,7 +13,7 @@ namespace Pithyx.Daemon.Tests.Updates;
 /// <summary>The updater through its API in simulation: the check, an upload, the install job, the history and a rollback.</summary>
 public sealed class UpdateApiTests : IDisposable
 {
-    private readonly DaemonFactory _factory = new();
+    private readonly OlderBoxFactory _factory = new();
     private readonly HttpClient _admin;
 
     public UpdateApiTests()
@@ -25,6 +25,21 @@ public sealed class UpdateApiTests : IDisposable
     {
         _admin.Dispose();
         _factory.Dispose();
+    }
+
+    /// <summary>The corpus's channels and files carry versions from 0.2.0 on, so the box under test claims to run 0.1.0-dev.</summary>
+    private sealed class OlderBoxFactory : DaemonFactory
+    {
+        protected override void ConfigureWebHost(Microsoft.AspNetCore.Hosting.IWebHostBuilder builder)
+        {
+            base.ConfigureWebHost(builder);
+            builder.ConfigureServices(services =>
+            {
+                var original = services.Single(descriptor => descriptor.ServiceType == typeof(UpdateOptions));
+                services.Remove(original);
+                services.AddSingleton(provider => ((UpdateOptions)original.ImplementationFactory!(provider)) with { InstalledVersion = "0.1.0-dev" });
+            });
+        }
     }
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
@@ -115,7 +130,7 @@ public sealed class UpdateApiTests : IDisposable
         var status = await StatusAsync();
 
         Assert.Equal("0.2.0-beta.3", status.GetProperty("available").GetProperty("version").GetString());
-        // The corpus's channel needs at least 0.1.0; the daemon under test is a 0.1.0 prerelease.
+        // The corpus's channel needs at least 0.1.0; the box under test runs 0.1.0-dev.
         Assert.False(status.GetProperty("available").GetProperty("installable").GetBoolean());
         Assert.Equal(JsonValueKind.Null, status.GetProperty("problem").ValueKind);
         var notifications = await _admin.GetFromJsonAsync<JsonElement>("/api/notifications", Token);

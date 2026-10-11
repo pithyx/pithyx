@@ -8,7 +8,7 @@
 #
 #   tools/release/build-debs.sh [--version <version>] [--out <dir>] [--work <dir>] [--no-app-build] [--rebuild-kernel]
 #
-# --version overrides the version of daemon/Directory.Build.props (for example 0.1.0-dev.2 for an update test); the
+# --version overrides the version of daemon/Directory.Build.props (for example 1.0.0-beta.2 for an update test); the
 # Debian version replaces the first "-" with "~", so a prerelease sorts before its release. The packages land in
 # <out>/debs (default image/out/debs) with debs.env, which names the kernel and the versions. The kernel and the ZFS
 # module come from the Debian snapshot of image/debian.env; the built module is kept in <work>/kernel-<snapshot> and

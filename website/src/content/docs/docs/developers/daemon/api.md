@@ -65,4 +65,4 @@ The client wraps `openapi-fetch`, adds the CSRF header and throws `PithyxApiErro
 
 ## Stability
 
-The REST and WebSocket API, the SDK API, the manifest schema and the error codes are stable contracts: a breaking change needs a major version. Pithyx has no release yet, so the API can still change.
+The REST and WebSocket API, the SDK API, the manifest schema and the error codes are stable contracts: a breaking change needs a major version. Pithyx is in beta (1.0.0-beta.1), so the API can still change before 1.0.0.
