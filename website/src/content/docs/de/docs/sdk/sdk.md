@@ -1,7 +1,7 @@
 ---
 title: '@pithyx/sdk'
 description: 'Die App-API: Identität, Dateien, Speicher, das Backend, Ereignisse, Logs und Berechtigungen.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 2
@@ -20,10 +20,10 @@ const app = await connect();
 console.log(app.context.user.displayName);
 ```
 
-`connect()` wartet auf die Nachricht `pithyx:connect` des Desktops mit einem `MessagePort` von `window.parent`. Kommt innerhalb von 10 Sekunden nichts an (zum Beispiel weil die Seite außerhalb des Desktops geöffnet wurde), weist es mit `sdk.transport.closed` ab. Optionen: `themeRoot` (das Element, das die Theme-Eigenschaften erhält, `null` zum Überspringen), `timeout` (Aufruflimit in Millisekunden) und `origin` (die Box-Adresse für Backend-URLs).
+`connect()` wartet auf die Nachricht `pithyx:connect` des Desktops mit einem `MessagePort` von `window.parent`. Kommt innerhalb von 10 Sekunden nichts an (zum Beispiel weil die Seite außerhalb des Desktops geöffnet wurde), weist es mit `sdk.transport.closed` ab. Optionen: `themeRoot` (das Element, das die Theme-Eigenschaften erhält, `null` zum Überspringen), `timeout` (Aufruflimit in Millisekunden), `connectTimeout` (wie lange auf den Desktop gewartet wird, standardmäßig 10 Sekunden) und `origin` (die Box-Adresse für Backend-URLs).
 
 - **Theme.** Das SDK setzt die CSS-Custom-Properties `--pithyx-color-background`, `-surface`, `-surface-raised`, `-hover`, `-selected`, `-text`, `-text-muted`, `-border`, `-accent`, `-accent-text`, `-focus`, `-success`, `-warning`, `-danger`, dazu `--pithyx-font-ui`, `--pithyx-font-mono`, `--pithyx-font-size`, `--pithyx-radius`, `--pithyx-space` und `--pithyx-control-height`. Es setzt außerdem `color-scheme`, `data-pithyx-theme` und `data-pithyx-density` und folgt Theme-Wechseln.
-- **Zeitlimits.** Ein Aufruf schlägt nach 15 Sekunden mit `sdk.request.timeout` fehl; `files.upload` hat kein Zeitlimit.
+- **Zeitlimits.** Ein Aufruf schlägt nach 15 Sekunden mit `sdk.request.timeout` fehl; `files.upload`, `read`, `write`, `pick` und `saveAs` haben kein Zeitlimit.
 - **Konstanten.** `SDK_VERSION`, `PROTOCOL_VERSION` und `MIN_PROTOCOL_VERSION`.
 - `app.supports(method)` sagt, ob der Desktop eine Methode kennt. `app.on(event, handler)` liefert eine Funktion zum Abmelden.
 
@@ -55,7 +55,7 @@ console.log(app.context.user.displayName);
 
 **Übergebene Dateien** (`files.read` und `files.write`): `app.files.pick({ multiple?, extensions? })`, `saveAs(suggestedName, blob)`, `read(ref)`, `write(ref, blob)` und `url(ref)` (5 Minuten gültig). Ein `FileRef` hat `ref`, `name`, `type`, `size`, `modified` und `writable`. Auswählen und Speichern müssen einer Benutzeraktion folgen.
 
-**Ordner** (`FileLocation` ist `{ storage: id }` für eine Speicheranforderung im Manifest oder `{ share: id }` für einen freigegebenen Ordner, was `files.shares` braucht): `shares()`, `list(location, path, { cursor, limit, sort, order })` (standardmäßig 100 Einträge, höchstens 1000), `watch`, `upload`, `download`, `createFolder`, `rename`, `run(operation)` für Kopieren, Verschieben und Löschen als Job (Löschen geht in den Papierkorb, außer bei `permanent`), `versions` und `restoreVersion`. Hochladen über einen vorhandenen Namen schlägt mit `fs.entry.exists` fehl. `app.trash` listet den Papierkorb, stellt wieder her, löscht und leert ihn, und `app.jobs.cancel(id)` bricht einen Job ab.
+**Ordner** (`FileLocation` ist `{ storage: id }` für eine Speicheranforderung im Manifest oder `{ share: id }` für einen freigegebenen Ordner, was `files.shares` braucht): `open(location, path)` (ein `FileRef` für eine Datei), `shares()`, `list(location, path, { cursor, limit, sort, order })` (standardmäßig 100 Einträge, höchstens 1000), `watch`, `upload`, `download`, `createFolder`, `rename`, `run(operation)` für Kopieren, Verschieben und Löschen als Job (Löschen geht in den Papierkorb, außer bei `permanent`), `versions` und `restoreVersion`. Hochladen über einen vorhandenen Namen schlägt mit `fs.entry.exists` fehl. `app.trash` listet den Papierkorb, stellt wieder her, löscht und leert ihn, und `app.jobs.cancel(id)` bricht einen Job ab.
 
 :::note[Dateien in der Sandbox]
 Eine App aus einem Paket oder einem Katalog bekommt jeden Dateiaufruf des SDK. `pick` und `saveAs` öffnen den Dateidialog des Desktops und brauchen eine Benutzeraktion im Fenster; eine Datei, die der Benutzer auswählt oder mit der App öffnet, lässt sich ohne `files.shares` lesen. `read`, `write` und `upload` haben keine Zeitgrenze. Der [Leitfaden](/de/docs/sdk/guides/files-and-storage/) hat die Einzelheiten.

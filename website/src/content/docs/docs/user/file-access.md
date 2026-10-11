@@ -1,7 +1,7 @@
 ---
 title: 'Access files from other devices'
 description: 'Connecting to your shared folders from Windows, macOS, Linux and phones over SMB, SFTP, WebDAV and FTP.'
-status: draft
+status: ready
 audience: user
 sidebar:
   order: 3

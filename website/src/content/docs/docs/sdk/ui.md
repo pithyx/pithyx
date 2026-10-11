@@ -1,7 +1,7 @@
 ---
 title: '@pithyx/ui'
 description: "The desktop's React components and tokens, so third-party apps look native."
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 3

@@ -1,7 +1,7 @@
 ---
 title: 'REST API reference'
 description: 'The REST API of the daemon is described by an OpenAPI document that ships with every build.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 2

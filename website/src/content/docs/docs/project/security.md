@@ -1,7 +1,7 @@
 ---
 title: 'Reporting a vulnerability'
 description: 'How to report a security issue privately and what happens next.'
-status: draft
+status: ready
 sidebar:
   order: 4
 ---

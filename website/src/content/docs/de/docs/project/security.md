@@ -1,7 +1,7 @@
 ---
 title: 'Sicherheitslücke melden'
 description: 'Wie du ein Sicherheitsproblem vertraulich meldest und was danach passiert.'
-status: draft
+status: ready
 sidebar:
   order: 4
 ---

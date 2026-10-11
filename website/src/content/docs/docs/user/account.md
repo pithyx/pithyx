@@ -1,7 +1,7 @@
 ---
 title: 'Your account'
 description: 'Password, two-factor sign-in, how long you stay signed in, and personal settings such as language, theme and accent.'
-status: draft
+status: ready
 audience: user
 sidebar:
   order: 5

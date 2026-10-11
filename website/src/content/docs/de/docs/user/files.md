@@ -1,7 +1,7 @@
 ---
 title: 'Dateien'
 description: 'Die Dateien-App: Durchsuchen, Hochladen, Kopieren und Verschieben, der Papierkorb, Vorschaubilder und der Betrachter.'
-status: draft
+status: ready
 audience: user
 sidebar:
   order: 2
@@ -28,7 +28,7 @@ So bewegst du dich:
 
 Die Statuszeile zeigt, wie viele Elemente der Ordner enthält oder wie viele du ausgewählt hast. Lange Ordner laden beim Scrollen seitenweise nach. Das Fenster merkt sich seinen Ordner und seine Ansicht für das nächste Mal.
 
-Wie sich eine Datei öffnet, hängt von ihrem Typ ab: Bilder, PDFs, Text, Audio und Video öffnen sich im Betrachter; andere Dateien werden heruntergeladen. Um selbst zu wählen, klicke mit der rechten Maustaste, wähle **Öffnen mit …** und dann **Betrachter** oder **Herunterladen**. Namen, die mit `.pithyx-upload-` beginnen, und der Ordner `.pithyx-trash` sind intern und werden nicht angezeigt.
+Wie sich eine Datei öffnet, hängt von ihrem Typ ab: Bilder, PDFs, Text, Audio und Video öffnen sich im Betrachter; andere Dateien werden heruntergeladen. Um selbst zu wählen, klicke mit der rechten Maustaste, wähle **Öffnen mit …** und dann **Betrachter**, **Herunterladen** oder eine installierte App, die angibt, diesen Dateityp zu öffnen. Namen, die mit `.pithyx-upload-` beginnen, und der Ordner `.pithyx-trash` sind intern und werden nicht angezeigt.
 
 Klicke mit der rechten Maustaste auf ein Element für sein Menü: **Öffnen**, **Herunterladen**, **Öffnen mit …**, **Kopieren**, **Ausschneiden**, **Umbenennen**, **Frühere Versionen**, **In den Papierkorb** und **Endgültig löschen**. Klicke mit der rechten Maustaste auf eine freie Stelle für **Neuer Ordner**, **Hochladen**, **Einfügen** (nachdem du etwas kopiert oder ausgeschnitten hast) und **Alles auswählen**. Aktionen, die etwas ändern, erscheinen nur, wenn du im freigegebenen Ordner schreiben darfst.
 
@@ -81,7 +81,7 @@ Zum Herunterladen wählst du **Herunterladen** oder öffnest eine Datei, die der
 
 _Jede Freigabe hat ihren eigenen Papierkorb mit dem Datum, an dem ein Eintrag endgültig gelöscht wird._
 
-**In den Papierkorb** (die Taste **Entf**) löscht eine Datei nicht. Sie verschiebt sie in den Papierkorb ihres freigegebenen Ordners. Dateien über SMB oder WebDAV zu löschen, tut dasselbe.
+**In den Papierkorb** (die Taste **Entf**) löscht eine Datei nicht. Sie verschiebt sie in den Papierkorb ihres freigegebenen Ordners. Dateien über SMB, WebDAV oder FTP zu löschen, tut dasselbe.
 
 Um einen Papierkorb zu sehen, klicke in der Seitenleiste auf **Papierkorb** und wähle den freigegebenen Ordner. Jeder Eintrag zeigt, woher er kam und wann er gelöscht wurde. Mit **Wiederherstellen** bekommst du ihn in seinem ursprünglichen Ordner zurück; fehlende übergeordnete Ordner werden angelegt. **Endgültig löschen** entfernt einzelne Elemente. **Papierkorb leeren** entfernt alles im Papierkorb dieses Ordners. Beides fragt vorher nach, und du brauchst Schreibzugriff.
 
@@ -89,7 +89,7 @@ Dateien bleiben standardmäßig 30 Tage im Papierkorb, dann löscht die Box sie.
 
 Um den Papierkorb zu überspringen, drücke **Umschalt+Entf** oder wähle **Endgültig löschen**. Nach der Frage **Endgültig löschen?** sind die Elemente endgültig weg.
 
-Löschen über SFTP oder FTP nutzt den Papierkorb möglicherweise nicht. Verlass dich bei diesen Verbindungen nicht darauf.
+Löschen über SFTP nutzt den Papierkorb nicht: Die Dateien sind sofort weg.
 
 ## Vorschaubilder und der Betrachter
 

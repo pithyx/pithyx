@@ -1,7 +1,7 @@
 ---
 title: 'Mitmachen'
 description: 'Wie du Fehler meldest, Änderungen vorschlägst und Pull Requests schickst.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 3

@@ -1,7 +1,7 @@
 ---
 title: 'Contributing'
 description: 'How to report bugs, propose changes and send pull requests.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 3

@@ -1,7 +1,7 @@
 ---
 title: 'Using apps'
 description: 'Opening apps, windows of the same app, and what an app may see of your data.'
-status: draft
+status: ready
 audience: user
 sidebar:
   order: 4
@@ -37,16 +37,16 @@ An app installed from the Store runs inside a frame of its own, without access t
 
 | Permission                   | What it lets the app do                                                    |
 | ---------------------------- | -------------------------------------------------------------------------- |
-| **Read files**               | Read files you open with the app or pick in a file dialog                  |
-| **Change files**             | Change those files and save new files through a save dialog                |
-| **See shared folders**       | Browse the shared folders you may use, with your own rights                |
+| **Read files**               | Read files in the shared folders you may use                               |
+| **Change files**             | Create, change and delete files in the shared folders you may write to     |
+| **See shared folders**       | See which shared folders you may use                                       |
 | **Notifications**            | Show notifications to that user                                            |
 | **See all users and groups** | See the names of every user and group on the box                           |
 | **Internet**                 | Connect to servers on the internet. Without it, the app stays on this box. |
 
 Good to know:
 
-- An app acts with your rights. It never sees a shared folder you cannot use.
+- An app acts with your rights. It never sees a shared folder you cannot use, and it cannot write where you only may read. With **Read files** and **Change files** it can use the whole file API of the box in your shared folders, not only files you picked.
 - An administrator can switch a permission off for an app. The change reaches open windows within a few minutes.
 - If an administrator removes your right to use an app, its windows close.
 - Apps with a backend run their own service in containers on the box. Depending on the app, the backend runs all the time, or it starts when someone opens the app and stops again after the last window closes (10 minutes later unless the app sets another time).
@@ -59,7 +59,7 @@ For administrators: [Apps and the Store](/docs/admin/apps-and-store/).
 - **The window closes at once or the app is gone.** An administrator may have disabled or removed it, or taken away your right to use it. Ask an administrator.
 - **The app is slow on its first start.** A backend that was stopped needs a moment to start. A request to it waits up to 30 seconds. If it still fails, you see "The app's backend is not running or does not answer. Try again in a moment."
 - **A message mentions the container service** or that the backend could not start. An administrator can read the app's log in the Log Center.
-- **A message says the app's data is not available.** The pool with the app's data is offline or locked. Nobody can open the app until it is back.
+- **A message says the folder for the app's storage is not ready.** The pool with the app's data is missing, offline or locked. Nobody can open the app until it is back.
 - **The app's access expired** ("Close the app and open it again."). Close the window and open the app again.
 - **The connection between the app and the desktop is closed.** Open the app again.
 - **The app does not answer.** After five seconds a dialog asks whether to **Wait** or **Close anyway**. Closing loses unsaved changes.

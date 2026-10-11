@@ -1,7 +1,7 @@
 ---
 title: 'Dein Konto'
 description: 'Passwort, Zwei-Faktor-Anmeldung, wie lange du angemeldet bleibst, und persönliche Einstellungen wie Sprache, Theme und Akzentfarbe.'
-status: draft
+status: ready
 audience: user
 sidebar:
   order: 5

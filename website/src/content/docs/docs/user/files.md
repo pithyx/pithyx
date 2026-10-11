@@ -1,7 +1,7 @@
 ---
 title: 'Files'
 description: 'The Files app: browsing, uploading, copying and moving, the recycle bin, thumbnails and the viewer.'
-status: draft
+status: ready
 audience: user
 sidebar:
   order: 2
@@ -28,7 +28,7 @@ To move around:
 
 The status line shows how many items the folder holds, or how many you selected. Long folders load in pages as you scroll. The window remembers its folder and view for the next time.
 
-Opening a file depends on its type: pictures, PDFs, text, audio and video open in the Viewer; other files download. To choose, right-click and pick **Open with…**, then **Viewer** or **Download**. Names that start with `.pithyx-upload-` and the folder `.pithyx-trash` are internal and not shown.
+Opening a file depends on its type: pictures, PDFs, text, audio and video open in the Viewer; other files download. To choose, right-click and pick **Open with…**, then **Viewer**, **Download** or an installed app that declares it opens this file type. Names that start with `.pithyx-upload-` and the folder `.pithyx-trash` are internal and not shown.
 
 Right-click an item for its menu: **Open**, **Download**, **Open with…**, **Copy**, **Cut**, **Rename**, **Previous versions**, **Move to recycle bin** and **Delete permanently**. Right-click an empty spot for **New folder**, **Upload**, **Paste** (after you copied or cut something) and **Select all**. Actions that change something appear only when you may write to the shared folder.
 
@@ -81,7 +81,7 @@ To download, choose **Download** or open a file that the Viewer cannot show.
 
 _Each shared folder has its own recycle bin with the date an entry is deleted for good._
 
-**Move to recycle bin** (the **Del** key) does not delete a file. It moves it into the recycle bin of its shared folder. Deleting files over SMB or WebDAV does the same.
+**Move to recycle bin** (the **Del** key) does not delete a file. It moves it into the recycle bin of its shared folder. Deleting files over SMB, WebDAV or FTP does the same.
 
 To see a bin, click **Recycle bin** in the sidebar and choose the shared folder. Each entry shows where it came from and when it was deleted. With **Restore** you get it back in its original folder; missing parent folders are created. **Delete for good** removes single items. **Empty recycle bin** removes everything in the bin of that folder. Both ask first, and you need write access.
 
@@ -89,7 +89,7 @@ Files stay in the bin for 30 days by default, then the box deletes them. The bin
 
 To skip the bin, press **Shift+Del** or choose **Delete permanently**. After the question **Delete permanently?** the items are gone for good.
 
-Deleting over SFTP or FTP may not use the recycle bin. Do not rely on it for those connections.
+Deleting over SFTP does not use the recycle bin: the files are gone at once.
 
 ## Thumbnails and the viewer
 

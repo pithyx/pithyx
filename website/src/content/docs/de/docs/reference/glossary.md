@@ -1,7 +1,7 @@
 ---
 title: 'Glossar'
 description: 'Die Wörter, die Pithyx verwendet, und was sie jeweils bedeuten.'
-status: draft
+status: ready
 sidebar:
   order: 4
 ---
