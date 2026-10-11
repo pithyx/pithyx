@@ -1,7 +1,7 @@
 ---
 title: 'Shared folders'
 description: 'Create, edit and delete shared folders, set who may use them, and how the recycle bin and restore points protect their files.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 4
@@ -45,14 +45,14 @@ Deleting asks you to type the folder name and to choose: **Keep the data** (the 
 
 ## Recycle bin and retention
 
-Every shared folder has a hidden folder `.pithyx-trash` at its root. Deleting in Files moves items there, and so do deletes over SMB and WebDAV. The bin lists where each item came from, when it was deleted and when it goes for good, and offers **Restore**, **Delete for good** and **Empty recycle bin**. How users work with it is in [Files](/docs/user/files/#the-recycle-bin).
+Every shared folder has a hidden folder `.pithyx-trash` at its root. Deleting in Files moves items there, and so do deletes over SMB, WebDAV and FTP. Deleting over SFTP removes files for good. The bin lists where each item came from, when it was deleted and when it goes for good, and offers **Restore**, **Delete for good** and **Empty recycle bin**. How users work with it is in [Files](/docs/user/files/#the-recycle-bin).
 
 The retention is per folder: 30 days by default, 0 keeps items until the bin is emptied, at most 3650 days. A cleanup runs hourly. Only administrators can change the retention, and the desktop has no setting for it today; it can only be set through the API (`PUT /api/shares/{shareId}/trash`, [`fs.trash.retention_invalid`](/docs/reference/errors/#fs.trash.retention_invalid) for a bad value). The bin shows "Deleted items are kept for {days} days."
 
 ## Restore points
 
-Restore points are daily snapshots kept for 7 days. They only use space for files that changed or were deleted, and a deleted file frees its space after the last point holding it expires. Users restore older versions with **Previous versions** in Files, and Windows shows them as "Previous versions". They help against accidental deletion and ransomware but are no replacement for a backup on another device, because they live on the same disks. Restore points are not available for a shared folder registered from an existing folder (development machines only), because it has no dataset of its own.
+Restore points are daily snapshots; the newest 7 are kept (a box that was off for a while keeps its last points instead of losing them). They only use space for files that changed or were deleted, and a deleted file frees its space after the last point holding it expires. Each folder has a switch in the column **Restore points** ("Daily, kept 7 days" or "Off"); **What are restore points?** explains them to the user. Users restore older versions with **Previous versions** in Files, and Windows shows them as "Previous versions". They help against accidental deletion and ransomware but are no replacement for a backup on another device, because they live on the same disks. Restore points are not available for a shared folder registered from an existing folder (development machines only), because it has no dataset of its own.
 
 ## Encryption over SMB
 
-The per-folder switch **Require encryption over SMB** sets `server smb encrypt = required` for that folder; otherwise encryption is used when the client supports it. The server always requires SMB 3 and signing. This is separate from pool encryption, which is not available (see [Storage](/docs/admin/storage/#encryption)).
+The per-folder switch **Require encryption over SMB** sets `server smb encrypt = required` for that folder; otherwise a connection is encrypted when the client asks for it. The server always requires SMB 3 and signing. This is separate from pool encryption, which is not available (see [Storage](/docs/admin/storage/#encryption)).

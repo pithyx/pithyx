@@ -1,6 +1,6 @@
 # Contributing to Pithyx
 
-Thanks for your interest. Pithyx is pre-alpha, so expect things to move fast.
+Thanks for your interest. Pithyx is in beta, so expect things to move fast.
 
 ## Branches
 

@@ -65,12 +65,13 @@ public sealed class ManifestValidatorTests
     }
 
     [Theory]
-    [InlineData("docker.socket", false)]
-    [InlineData("host.full", false)]
-    [InlineData("capability:BPF", false)]
-    [InlineData("capability:NET_ADMIN", true)]
-    [InlineData("device:/dev/dri/renderD128", true)]
-    [InlineData("host.network", true)]
-    public void ElevatedRightsOfThisVersion(string right, bool supported) =>
-        Assert.Equal(supported, ManifestValidator.IsSupportedElevatedRight(right));
+    [InlineData("docker.socket")]
+    [InlineData("host.full")]
+    [InlineData("capability:BPF")]
+    [InlineData("capability:NET_ADMIN")]
+    [InlineData("device:/dev/dri/renderD128")]
+    [InlineData("host.network")]
+    [InlineData("host.pid")]
+    public void NoElevatedRightIsGrantedInThisVersion(string right) =>
+        Assert.False(ManifestValidator.IsSupportedElevatedRight(right));
 }

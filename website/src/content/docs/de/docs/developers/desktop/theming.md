@@ -1,7 +1,7 @@
 ---
 title: 'Theming und Design-Tokens'
 description: 'Die Token-Datei, hell und dunkel, Akzent-Presets und Schriften.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 3

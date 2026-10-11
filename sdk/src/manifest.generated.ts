@@ -23,7 +23,7 @@ export type ServiceName = string;
  */
 export type BackendPath = string;
 /**
- * A right beyond the sandbox, for the backend only (D71): `host.network` (the host's network namespace), `host.pid` (the host's process namespace), `device:<path under /dev>` (one device node, for example `device:/dev/dri/renderD128`), `capability:<NAME>` (one Linux capability without the `CAP_` prefix, for example `capability:NET_ADMIN`), `docker.socket` (the Docker Engine API through the daemon's filtering proxy) and `host.full` (a privileged container: root on the host). Only administrators install an app that asks for one, after a confirmation with password and TOTP. This version of Pithyx refuses `docker.socket`, `host.full` and the capabilities that reach the host's secrets (`ALL`, `SYS_ADMIN`, `SYS_PTRACE`, `SYS_MODULE`, `SYS_RAWIO`, `DAC_READ_SEARCH`, `BPF`) with `app.elevated.unsupported`.
+ * A right beyond the sandbox, for the backend only (D71): `host.network` (the host's network namespace), `host.pid` (the host's process namespace), `device:<path under /dev>` (one device node, for example `device:/dev/dri/renderD128`), `capability:<NAME>` (one Linux capability without the `CAP_` prefix, for example `capability:NET_ADMIN`), `docker.socket` (the Docker Engine API through the daemon's filtering proxy) and `host.full` (a privileged container: root on the host). The schema describes the planned rights; Pithyx 1.0.0-beta.1 refuses every one of them with `app.elevated.unsupported` (D345), and a later version grants them to administrators only, after a confirmation with password and TOTP.
  */
 export type ElevatedPermission =
   | 'docker.socket'

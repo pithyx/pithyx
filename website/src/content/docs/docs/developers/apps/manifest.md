@@ -1,7 +1,7 @@
 ---
 title: 'The manifest'
 description: 'Every field of pithyx.json: identity, windows, permissions, backend and lifecycle.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 3
@@ -52,7 +52,7 @@ Required fields: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, 
 - `instances`: `single` focuses the user's existing window on this device and passes launch arguments; `multi` opens a new window each time.
 - `defaultSize` and `minSize`: `width` and `height` as integers from 100 to 8192 CSS pixels. `minSize` may not be larger than `defaultSize` in either direction. The default size is used when the user has no remembered size; the minimum applies on screens that can fit it.
 
-`fileHandlers` (optional, up to 32) makes the app appear under "Open with" for file types. Each handler has `extensions` (1 to 32 lowercase extensions without a dot, such as `png` or `tar.gz`), `mimeTypes` (1 to 32) and `isDefault`. An extension can belong to one handler only. The file reaches the app through the `launch` or `openFile` event.
+`fileHandlers` (optional, up to 32) makes the app appear under "Open with" for file types. Each handler has `extensions` (1 to 32 lowercase extensions without a dot, such as `png` or `tar.gz`), and optionally `mimeTypes` (1 to 32) and `isDefault`. An extension can belong to one handler only. The file reaches the app through the `launch` or `openFile` event.
 
 ## Permissions
 
@@ -82,7 +82,7 @@ An administrator confirms the list at install and can revoke each permission lat
 - `root`: `true` runs the services as root inside the container (unprivileged on the host); default `false`. The install dialog warns.
 - `health`: `{ "endpoint": "api", "path": "/health" }`. The daemon calls `GET` on it; a 2xx answer means the backend is running.
 - `schedules`: up to 16 entries of `{ id, cron, endpoint, path }`. The daemon starts the backend and calls `POST path`. The cron expression has five fields (minute 0 to 59, hour 0 to 23, day of month 1 to 31, month 1 to 12, weekday 0 to 7) in the box's time zone, with `*`, numbers, ranges, lists and steps; names are not allowed ([`app.manifest.cron_invalid`](/docs/reference/errors/#app.manifest.cron_invalid)).
-- `elevated`: a list of extra rights (`host.network`, `host.pid`, `device:/dev/<path>`, `capability:<NAME>`, `docker.socket`, `host.full`), up to 32. This version of the box refuses `docker.socket`, `host.full` and the dangerous capabilities (`ALL`, `SYS_ADMIN`, `SYS_PTRACE`, `SYS_MODULE`, `SYS_RAWIO`, `DAC_READ_SEARCH`, `BPF`) with [`app.elevated.unsupported`](/docs/reference/errors/#app.elevated.unsupported). The Compose file must use exactly the rights declared here.
+- `elevated`: a list of extra rights (`host.network`, `host.pid`, `device:/dev/<path>`, `capability:<NAME>`, `docker.socket`, `host.full`), up to 32. Elevated rights are not granted yet: Pithyx 1.0.0-beta.1 refuses every entry with [`app.elevated.unsupported`](/docs/reference/errors/#app.elevated.unsupported).
 
 Beyond the schema the box checks that service and endpoint names exist ([`app.manifest.reference_unknown`](/docs/reference/errors/#app.manifest.reference_unknown)) and that the storage requests match the Compose mounts.
 

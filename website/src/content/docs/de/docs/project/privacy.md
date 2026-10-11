@@ -1,7 +1,7 @@
 ---
 title: 'Datenschutz'
 description: 'Pithyx und diese Webseite sammeln nichts: keine Telemetrie, keine Konten, keine Tracker.'
-status: draft
+status: ready
 sidebar:
   order: 2
 ---

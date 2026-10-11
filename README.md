@@ -12,7 +12,7 @@ Pithyx is a free, self-hosted NAS and server operating system with a web desktop
 
 ## Status
 
-Pre-alpha. Nothing here is usable yet. Do not put data you care about on it.
+Beta (1.0.0-beta.1). Expect rough edges and keep backups of data you care about.
 
 ## Development
 

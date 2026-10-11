@@ -14,12 +14,22 @@ interface Notice {
 
 const SOURCE = 'https://github.com/pithyx/pithyx';
 
-async function fetchNotices(signal: AbortSignal): Promise<Notice[]> {
-  const response = await fetch('/third-party-notices.json', { signal });
+async function fetchList(file: string, signal: AbortSignal): Promise<Notice[]> {
+  const response = await fetch(`/${file}`, { signal });
   if (!response.ok) {
-    throw new Error(`third-party notices: ${String(response.status)}`);
+    throw new Error(`${file}: ${String(response.status)}`);
   }
-  return (await response.json()) as Notice[];
+  const json = (await response.json()) as Notice[] | { entries: Notice[] };
+  return Array.isArray(json) ? json : json.entries;
+}
+
+// The hand-written list (fonts, icons) comes first, then the generated npm and NuGet packages.
+async function fetchNotices(signal: AbortSignal): Promise<Notice[]> {
+  const [listed, packages] = await Promise.all([
+    fetchList('third-party-notices.json', signal),
+    fetchList('third-party-packages.json', signal),
+  ]);
+  return [...listed, ...packages];
 }
 
 /** Product, license, the attribution required by NOTICE (AGPL section 7(b)) and the third-party notices. */
@@ -61,7 +71,7 @@ export function AboutApp() {
         {notices.data !== undefined && (
           <ul className={styles.notices}>
             {notices.data.map((notice) => (
-              <li key={notice.name} className={styles.notice}>
+              <li key={`${notice.name}@${notice.version}`} className={styles.notice}>
                 <span className={styles.noticeName}>{notice.name}</span>
                 <span className={styles.noticeMeta}>
                   {notice.version} · {notice.license}

@@ -1,7 +1,7 @@
 ---
 title: 'The desktop'
 description: 'Windows, the taskbar, desktop items, snapping, shortcuts and the layout each device remembers.'
-status: draft
+status: ready
 audience: user
 sidebar:
   order: 1
@@ -23,7 +23,7 @@ You need the right **Sign in to the desktop**. If your account is deactivated or
 
 After five wrong attempts for the same user name from the same address within five minutes, sign-in pauses for a short time and tells you how many seconds to wait.
 
-To sign out, open the Pithyx menu, click your name and choose **Sign out**.
+To sign out, open the Pithyx menu and click the **Sign out** button at the bottom, next to the power button.
 
 Forgot your password? Click **Forgot password?** on the sign-in page. Pithyx cannot reset a password by email: ask an administrator to set a new one. Administrators can use the recovery key. See [Recovery and reinstall](/docs/install/recovery/).
 
@@ -72,18 +72,17 @@ By default the taskbar is at the bottom of the screen. From the left it has:
 
 Click a running app to bring it to the front. Click the active app again to minimize it. Right-click a running app (or press **Shift+F10** on it) for **Minimize** or **Restore**, **Add to desktop** and **Close**.
 
-To move the taskbar, open the Pithyx menu, click your name, choose **Taskbar position** and pick **Bottom**, **Top**, **Left** or **Right**. On phones the taskbar always stays at the bottom.
+To move the taskbar, open the Pithyx menu, click your name, choose **Taskbar position** and pick **Bottom**, **Top**, **Left** or **Right**. On phones the taskbar always stays at the bottom and the entry is missing.
 
-**The Pithyx menu** opens with the button at the left of the taskbar, or by pressing and releasing the Windows or Command key. It lists your apps and has a search field. The search finds apps by name only; settings and files are not found there. Your account menu (click your name) has:
+**The Pithyx menu** opens with the button at the left of the taskbar, or by pressing and releasing the Windows or Command key. It lists your apps and has a search field. The search field finds apps by name only; settings and files are not found there, and the list of recent files stays empty. Your account menu (click your name) has:
 
 - **Two-factor authentication**
 - **Language**
 - **Appearance**, **Accent color** and **Wallpaper**
 - **Get desktop from**
-- **Taskbar position**
-- **Sign out**
+- **Taskbar position** (not on phones)
 
-Administrators, and users with the right **Restart and shut down**, also get **Restart** and **Shut down** here. Both sign every user out and stop file transfers.
+At the bottom of the Pithyx menu, next to your name, are the **Sign out** button and, for administrators and users with the right **Restart and shut down**, the **Power options** button with **Restart** and **Shut down**. Both sign every user out and stop file transfers.
 
 **Notifications.** The bell opens a panel with **Running tasks** and **Recent** notifications. Use **Dismiss**, **Mute** or **Clear all**. Press **Escape** to close the panel.
 
@@ -109,11 +108,13 @@ The desktop holds at most 200 items. Icons snap to a grid. On small screens they
 
 These window shortcuts work anywhere on the desktop except while you type in a text field:
 
-| Keys                           | Action                                                        |
-| ------------------------------ | ------------------------------------------------------------- |
-| **Alt+Shift+Left** / **Right** | Snap the window to the left or right                          |
-| **Alt+Shift+Up**               | Maximize                                                      |
-| **Alt+Shift+Down**             | Restore a snapped or maximized window, or minimize a free one |
+| Keys                                  | Action                                                        |
+| ------------------------------------- | ------------------------------------------------------------- |
+| **Alt+Shift+Left** / **Right**        | Snap the window to the left or right                          |
+| **Alt+Shift+Up**                      | Maximize                                                      |
+| **Alt+Shift+Down**                    | Restore a snapped or maximized window, or minimize a free one |
+| **Alt+Shift+Space**                   | Open the window menu of the active window                     |
+| **Alt+Shift+Page Up** / **Page Down** | Switch to the previous or next window                         |
 
 Other keys:
 

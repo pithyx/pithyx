@@ -1,7 +1,7 @@
 ---
 title: 'Sicherheitslücke melden'
 description: 'Wie du ein Sicherheitsproblem vertraulich meldest und was danach passiert.'
-status: draft
+status: ready
 sidebar:
   order: 4
 ---
@@ -16,4 +16,4 @@ Melde ein Sicherheitsproblem vertraulich über GitHub Security Advisories, nicht
 
 ## Was danach passiert
 
-Das Projekt antwortet so schnell wie möglich und stimmt einen Fix und seine Veröffentlichung mit dir ab. Es gibt keine festen Reaktionszeiten und noch keine Tabelle unterstützter Versionen: Pithyx ist Pre-Alpha und hat keine veröffentlichten Versionen.
+Das Projekt antwortet so schnell wie möglich und stimmt einen Fix und seine Veröffentlichung mit dir ab. Es gibt keine festen Reaktionszeiten und noch keine Tabelle unterstützter Versionen: Pithyx ist noch nicht veröffentlicht; das erste Release wird 1.0.0-beta.1.

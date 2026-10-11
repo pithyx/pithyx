@@ -1,7 +1,7 @@
 ---
 title: 'API'
 description: 'The REST and WebSocket API, authentication, topics and the generated client.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 2
@@ -55,7 +55,7 @@ Client messages are `sub` and `unsub` with an id and a topic. The server answers
 | 4401       | Session ended    | show the sign-in     |
 | 4403       | Forbidden        | stop                 |
 
-Topic patterns may use `+` for one level and `#` for the rest. Permissions are checked for every snapshot and event. Topics today: `system/info`, `system/resources`, `system/processes`, `system/network`, `storage/disks`, `storage/pools`, `storage/alerts`, `shares/list`, `jobs`, `jobs/+`, `notifications`, `session/permissions`, `files/+/+`, `thumbnails/+/+`, `apps`, `apps/admin`, `apps/+/context` and `store/admin`.
+Topic patterns may use `+` for one level and `#` for the rest. Permissions are checked for every snapshot and event. Topics today: `system/info`, `system/resources`, `system/processes`, `system/network`, `system/updates`, `storage/disks`, `storage/pools`, `storage/alerts`, `shares/list`, `jobs`, `jobs/+`, `notifications`, `session/permissions`, `files/+/+`, `thumbnails/+/+`, `apps`, `apps/admin`, `apps/+/context` and `store/admin`.
 
 ## Generated client
 
@@ -65,4 +65,4 @@ The client wraps `openapi-fetch`, adds the CSRF header and throws `PithyxApiErro
 
 ## Stability
 
-The REST and WebSocket API, the SDK API, the manifest schema and the error codes are stable contracts: a breaking change needs a major version. Pithyx has no release yet, so the API can still change.
+The REST and WebSocket API, the SDK API, the manifest schema and the error codes are stable contracts: a breaking change needs a major version. Pithyx is in beta (1.0.0-beta.1), so the API can still change before 1.0.0.

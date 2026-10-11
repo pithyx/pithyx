@@ -1,7 +1,7 @@
 ---
 title: 'Apps und der Store'
 description: 'Apps aus Katalogen oder einer Datei installieren, den App-Pool wählen, Update-Regeln festlegen und wie Backends in Docker laufen.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 10
@@ -23,7 +23,7 @@ Grenzen eines Uploads: die Datei höchstens 256 MB, entpackt höchstens 512 MB u
 
 ## Der App-Pool
 
-Bei der ersten Installation wählst du **Pool für App-Daten**: „Alle Apps speichern ihre Daten auf diesem Pool. Er lässt sich nicht ändern, solange eine App installiert ist.“ Ohne Pool sagt der Store, dass du zuerst in Speicher einen anlegen sollst. Der Pool muss importiert, online, beschreibbar, entsperrt und von Pithyx eingerichtet sein.
+Bei der ersten Installation wählst du **Pool für App-Daten**: „Alle Apps speichern ihre Daten auf diesem Pool. Er lässt sich nicht ändern, solange eine App installiert ist.“ Ohne Pool sagt der Store, dass du zuerst in Speicher einen anlegen sollst. Der Pool muss importiert, online (oder degradiert), beschreibbar, entsperrt und von Pithyx eingerichtet sein.
 
 Jede App bekommt ein Dataset `<pool>/pithyx/apps/<id>`, eingehängt unter `/<pool>/.pithyx/apps/<id>`. Das Datenverzeichnis von Docker ist `/<pool>/.pithyx/docker`. Fehlt der Pool oder ist er gesperrt, zeigen Apps darauf „Pool nicht verfügbar“, und niemand kann sie öffnen, bis er zurück ist. App-Container laufen mit Benutzer-IDs von 40000 bis 49999.
 

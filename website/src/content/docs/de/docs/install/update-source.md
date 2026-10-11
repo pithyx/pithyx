@@ -1,7 +1,7 @@
 ---
 title: 'Die Update-Quelle wechseln (Forks)'
 description: 'Wie eine Box den Updates eines Forks statt dem Pithyx-Projekt folgt, was das bedeutet, der Weg zurück und was ein Fork veröffentlichen muss.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 6
@@ -56,7 +56,7 @@ Eine Box, die zu deinem Fork wechselt, liest deine Kanäle genau so wie die des 
 Baue und signiere sie mit den Release-Skripten des Repositorys:
 
 1. `image/build.sh --version <version>` baut das Image und die Liste seiner Pakete.
-2. `tools/release/build-update.sh --version <version> --channel stable|beta [--minimum <version>] [--since <packages file> | --full]` baut `pithyx-<version>-amd64.pithyxupdate` (unsigniert). Sie enthält jedes Paket, dessen Version von der Paketliste der Mindestversion abweicht (`image/baseline/` hält die Listen der Releases; `--since` nennt eine direkt), also bewahre die Paketliste jedes Releases auf, das du veröffentlichst. `--full` nimmt jedes Paket auf.
+2. `tools/release/build-update.sh --version <version> --channel stable|beta [--minimum <version>] [--since <packages file> | --full]` baut `pithyx-<version>-amd64.pithyxupdate` (unsigniert). Sie enthält jedes Paket, dessen Version von der Paketliste der Mindestversion abweicht (`image/build.sh` schreibt sie als `image/out/pithyx-<version>-amd64.packages`; das Skript sucht die Liste der Mindestversion in `image/baseline/pithyx-<minimum>-amd64.packages`, einem Ordner, den es im Repository noch nicht gibt, also nennt `--since` eine direkt), bewahre also die Paketliste jedes Releases auf, das du veröffentlichst. `--full` nimmt jedes Paket auf.
 3. `tools/release/sign-update.sh <file> --key <pem file> --key-id <id>` signiert das Manifest und prüft die Datei so, wie eine Box es tut.
 4. `tools/release/build-channel.sh <file> --key <pem file> --key-id <id> --sequence <n> [--url <url>]` schreibt und signiert `channel.json` und `channel.json.sig`.
 

@@ -1,7 +1,7 @@
 ---
 title: 'USB-Stick schreiben'
 description: 'Die Image-Datei, wie du sie prüfst und wie du sie unter Windows, macOS und Linux auf einen USB-Stick schreibst.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 1

@@ -1,7 +1,7 @@
 ---
 title: 'Systemupdates'
 description: 'Update-Kanäle, wie ein Update geprüft und eingespielt wird und was passiert, wenn eines scheitert.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 5

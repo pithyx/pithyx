@@ -1,7 +1,7 @@
 ---
 title: '@pithyx/ui'
 description: 'Die React-Komponenten und Tokens des Desktops, damit Apps von Dritten nativ aussehen.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 3

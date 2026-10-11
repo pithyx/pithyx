@@ -1,7 +1,7 @@
 ---
 title: 'Your first app'
 description: 'From a template to a running app with pithyx dev, then a package to install.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 2

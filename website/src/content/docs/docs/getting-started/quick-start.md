@@ -1,7 +1,7 @@
 ---
 title: 'Quick start'
 description: 'From the image to the first signed-in desktop in the fewest steps, with links to the details.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 3

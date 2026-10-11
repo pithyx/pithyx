@@ -1,7 +1,7 @@
 ---
 title: 'Benutzer und Gruppen'
 description: 'Benutzer und Gruppen anlegen, ihnen Rechte geben, Konten deaktivieren oder löschen, und was mit Home-Ordnern passiert.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 5
@@ -28,11 +28,11 @@ Wähle **Gruppe anlegen** unter Einstellungen > **Gruppen**. Eine Gruppe hat ein
 
 ## Sonderrechte
 
-Der Rechte-Dialog eines Benutzers oder einer Gruppe hat vier Sonderrechte: „Administrator (darf alles ändern)“, „Am Desktop anmelden“, „Über SSH mit einer Shell anmelden“ und „Neu starten und herunterfahren“. Weitere Abschnitte betreffen Dateidienste, Apps und freigegebene Ordner. Wie sich Rechte verbinden, steht unter [Berechtigungen](/de/docs/admin/permissions/). Ohne „Am Desktop anmelden“ kann sich ein Benutzer nicht am Web-Desktop anmelden; wird das Recht entzogen, enden offene Sitzungen.
+Der Rechte-Dialog eines Benutzers oder einer Gruppe hat vier Sonderrechte: „Administrator (darf alles ändern)“, „Am Desktop anmelden“, „Über SSH mit einer Shell anmelden“ und „Neu starten und herunterfahren“. Weitere Abschnitte betreffen Dateidienste, Apps und freigegebene Ordner. Wie sich Rechte verbinden, steht unter [Berechtigungen](/de/docs/admin/permissions/). Ohne „Am Desktop anmelden“ kann sich ein Benutzer nicht am Web-Desktop anmelden; wer das Recht verliert, wird mit der nächsten Anfrage abgemeldet.
 
 ## Deaktivieren und löschen
 
-**Deaktivieren** nimmt dem Benutzer alle Rechte und meldet ihn ab. Du kannst dich nicht selbst deaktivieren ([`users.user.self`](/de/docs/reference/errors/#users.user.self)), und der letzte Administrator kann weder deaktiviert noch gelöscht werden noch das Recht verlieren ([`users.user.last_admin`](/de/docs/reference/errors/#users.user.last_admin)).
+**Deaktivieren** nimmt dem Benutzer alle Rechte und meldet ihn ab; **Aktivieren** gibt die Rechte zurück. Du kannst dich nicht selbst deaktivieren ([`users.user.self`](/de/docs/reference/errors/#users.user.self)), und der letzte Administrator kann weder deaktiviert noch gelöscht werden noch das Recht verlieren ([`users.user.last_admin`](/de/docs/reference/errors/#users.user.last_admin)).
 
 **Löschen** verlangt die Eingabe des Benutzernamens. Das Konto verschwindet; die Dateien und der Home-Ordner des Benutzers bleiben, und die Benutzer-ID wird nie an jemand anderen vergeben. Rechte, Gruppenmitgliedschaften sowie die Jobs und Benachrichtigungen des Benutzers werden entfernt.
 

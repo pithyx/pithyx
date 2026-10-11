@@ -4,7 +4,7 @@
 initramfs-tools live-boot systemd-sysv systemd-resolved systemd-timesyncd
 dbus udev kmod grub-efi-amd64 efibootmgr gdisk dosfstools mdadm btrfs-progs squashfs-tools
 intel-microcode amd64-microcode firmware-linux-free firmware-realtek
-# What the daemon needs (TODO.md, Image build v0.1).
+# What the daemon needs (TODO.md, Image build 1.0).
 zfsutils-linux samba openssh-server smartmontools acl
 # App backends (D309): Debian's Docker, disabled until the daemon starts it for a backend app, and nftables for the
 # rule that keeps containers away from the host's services.

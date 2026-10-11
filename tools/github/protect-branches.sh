@@ -1,6 +1,10 @@
 #!/usr/bin/env bash
-# Creates the ruleset that protects master and dev on GitHub.
-# Not usable yet: rulesets on private repositories need a paid plan or a public repository.
+# Creates the ruleset that protects master and dev on GitHub: no deletion, no force push, pull request required, and the
+# CI jobs green. The required contexts are the job names of .github/workflows/ci.yaml; a job skipped by its `if` (no
+# daemon change, no docs change) counts as passed. e2e is not required: it runs on request (D278) and nightly.
+# Run it once, when the repository goes public (rulesets on private repositories need a paid plan). It is not
+# idempotent: a second run creates a second ruleset. The Actions settings for fork pull requests are not part of a
+# ruleset; the owner sets them in the web interface (CLAUDE.md, CI).
 set -euo pipefail
 
 repo=${1:-pithyx/pithyx}
@@ -31,10 +35,11 @@ gh api --method POST "repos/$repo/rulesets" --input - <<'JSON'
       "parameters": {
         "strict_required_status_checks_policy": false,
         "required_status_checks": [
+          { "context": "changes" },
           { "context": "daemon" },
           { "context": "frontend" },
-          { "context": "repo" },
-          { "context": "dco" }
+          { "context": "website" },
+          { "context": "repo" }
         ]
       }
     }

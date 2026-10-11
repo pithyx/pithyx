@@ -10,7 +10,7 @@ namespace Pithyx.Daemon.Updates;
 
 /// <summary>
 /// The console menu of the GRUB entry "Pithyx recovery" and of every snapshot's entry (D338), on tty1 without a
-/// password: whoever has the console controls the box anyway (GRUB has no password, pools are unencrypted in v0.1), so
+/// password: whoever has the console controls the box anyway (GRUB has no password, pools are unencrypted in 1.0), so
 /// the menu asks for confirmations against mistakes instead, checks every file's signature and logs every action. It
 /// rolls back to a snapshot, installs an update file from a USB stick, resets the network to DHCP and restarts, through
 /// the same code as Settings. It is also the only place that switches the update source (D339), for example to a fork:

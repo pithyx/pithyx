@@ -19,6 +19,7 @@ public sealed class UpdateApiTests : IDisposable
     public UpdateApiTests()
     {
         _admin = _factory.CreateApiClient();
+        File.WriteAllText(Path.Combine(_factory.DataDirectory, "release"), "PITHYX_VERSION=0.1.0-dev.3\n");
     }
 
     public void Dispose()
@@ -115,7 +116,7 @@ public sealed class UpdateApiTests : IDisposable
         var status = await StatusAsync();
 
         Assert.Equal("0.2.0-beta.3", status.GetProperty("available").GetProperty("version").GetString());
-        // The corpus's channel needs at least 0.1.0; the daemon under test is a 0.1.0 prerelease.
+        // The corpus's channel needs at least 0.1.0 and offers 0.2.0-beta.3, and the box under test is a 0.1.0 prerelease.
         Assert.False(status.GetProperty("available").GetProperty("installable").GetBoolean());
         Assert.Equal(JsonValueKind.Null, status.GetProperty("problem").ValueKind);
         var notifications = await _admin.GetFromJsonAsync<JsonElement>("/api/notifications", Token);

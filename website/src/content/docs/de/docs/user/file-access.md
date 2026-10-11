@@ -1,7 +1,7 @@
 ---
 title: 'Von anderen Geräten zugreifen'
 description: 'Von Windows, macOS, Linux und Handys über SMB, SFTP, WebDAV und FTP auf deine freigegebenen Ordner zugreifen.'
-status: draft
+status: ready
 audience: user
 sidebar:
   order: 3

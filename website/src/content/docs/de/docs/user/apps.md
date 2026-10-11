@@ -1,7 +1,7 @@
 ---
 title: 'Apps benutzen'
 description: 'Apps öffnen, mehrere Fenster derselben App und was eine App von deinen Daten sehen darf.'
-status: draft
+status: ready
 audience: user
 sidebar:
   order: 4
@@ -35,18 +35,18 @@ Fenster kommen zurück, nachdem du die Seite neu geladen oder dich erneut angeme
 
 Eine App, die du aus dem Store installiert hast, läuft in einem eigenen Frame, ohne Zugriff auf den Rest des Desktops, auf deine Cookies oder dein Passwort. Sie spricht mit Pithyx nur über einen kontrollierten Kanal. Ein Administrator sieht vor der Installation, was eine App anfragt. Die möglichen Berechtigungen sind:
 
-| Berechtigung                      | Was sie der App erlaubt                                                                |
-| --------------------------------- | -------------------------------------------------------------------------------------- |
-| **Dateien lesen**                 | Dateien lesen, die du mit der App öffnest oder in einem Dateidialog auswählst          |
-| **Dateien ändern**                | Diese Dateien ändern und neue Dateien über einen Speichern-Dialog sichern              |
-| **Freigegebene Ordner sehen**     | Die freigegebenen Ordner durchsuchen, die du nutzen darfst, mit deinen eigenen Rechten |
-| **Benachrichtigungen**            | Diesem Benutzer Benachrichtigungen zeigen                                              |
-| **Alle Nutzer und Gruppen sehen** | Die Namen aller Benutzer und Gruppen auf der Box sehen                                 |
-| **Internet**                      | Sich mit Servern im Internet verbinden. Ohne sie bleibt die App auf dieser Box.        |
+| Berechtigung                      | Was sie der App erlaubt                                                                      |
+| --------------------------------- | -------------------------------------------------------------------------------------------- |
+| **Dateien lesen**                 | Dateien in den freigegebenen Ordnern lesen, die du nutzen darfst                             |
+| **Dateien ändern**                | Dateien in den freigegebenen Ordnern anlegen, ändern und löschen, in die du schreiben darfst |
+| **Freigegebene Ordner sehen**     | Sehen, welche freigegebenen Ordner du nutzen darfst                                          |
+| **Benachrichtigungen**            | Diesem Benutzer Benachrichtigungen zeigen                                                    |
+| **Alle Nutzer und Gruppen sehen** | Die Namen aller Benutzer und Gruppen auf der Box sehen                                       |
+| **Internet**                      | Sich mit Servern im Internet verbinden. Ohne sie bleibt die App auf dieser Box.              |
 
 Gut zu wissen:
 
-- Eine App handelt mit deinen Rechten. Sie sieht nie einen freigegebenen Ordner, den du nicht nutzen kannst.
+- Eine App handelt mit deinen Rechten. Sie sieht nie einen freigegebenen Ordner, den du nicht nutzen kannst, und sie schreibt nicht dort, wo du nur lesen darfst. Mit **Dateien lesen** und **Dateien ändern** kann sie die ganze Datei-API der Box in deinen freigegebenen Ordnern nutzen, nicht nur Dateien, die du ausgewählt hast.
 - Ein Administrator kann einer App eine Berechtigung entziehen. Die Änderung erreicht offene Fenster innerhalb weniger Minuten.
 - Entzieht dir ein Administrator das Recht, eine App zu nutzen, schließen sich ihre Fenster.
 - Apps mit einem Backend betreiben einen eigenen Dienst in Containern auf der Box. Je nach App läuft das Backend die ganze Zeit, oder es startet, wenn jemand die App öffnet, und stoppt wieder, nachdem das letzte Fenster geschlossen wurde (10 Minuten später, sofern die App keine andere Zeit festlegt).
@@ -59,7 +59,7 @@ Für Administratoren: [Apps und Store](/de/docs/admin/apps-and-store/).
 - **Das Fenster schließt sich sofort, oder die App ist weg.** Ein Administrator hat sie möglicherweise deaktiviert oder entfernt oder dir das Recht entzogen, sie zu nutzen. Frag einen Administrator.
 - **Die App ist beim ersten Start langsam.** Ein Backend, das gestoppt war, braucht einen Moment zum Starten. Eine Anfrage an es wartet bis zu 30 Sekunden. Schlägt sie trotzdem fehl, siehst du „Das Backend der App läuft nicht oder antwortet nicht. Versuch es gleich noch einmal.“
 - **Eine Meldung erwähnt den Container-Dienst** oder dass das Backend nicht starten konnte. Ein Administrator kann das Protokoll der App im Protokoll-Center lesen.
-- **Eine Meldung sagt, dass die Daten der App nicht verfügbar sind.** Der Pool mit den Daten der App ist offline oder gesperrt. Niemand kann die App öffnen, bis er wieder da ist.
+- **Eine Meldung sagt, dass der Ordner für den Speicher der App nicht bereit ist.** Der Pool mit den Daten der App fehlt, ist offline oder gesperrt. Niemand kann die App öffnen, bis er wieder da ist.
 - **Der Zugang der App ist abgelaufen** („Schließ die App und öffne sie erneut.“). Schließe das Fenster und öffne die App erneut.
 - **Die Verbindung zwischen der App und dem Desktop ist geschlossen.** Öffne die App erneut.
 - **Die App antwortet nicht.** Nach fünf Sekunden fragt ein Dialog, ob du **Warten** oder **Trotzdem schließen** willst. Beim Schließen gehen nicht gespeicherte Änderungen verloren.

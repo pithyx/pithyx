@@ -1,7 +1,7 @@
 ---
 title: '@pithyx/sdk'
 description: 'The app API: identity, files, storage, the backend, events, logs and permissions.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 2
@@ -20,10 +20,10 @@ const app = await connect();
 console.log(app.context.user.displayName);
 ```
 
-`connect()` waits for the desktop's `pithyx:connect` message with one `MessagePort` from `window.parent`. If nothing arrives within 10 seconds (for example because the page was opened outside the desktop), it rejects with `sdk.transport.closed`. Options: `themeRoot` (the element that receives theme properties, `null` to skip), `timeout` (call limit in milliseconds) and `origin` (the box address used for backend URLs).
+`connect()` waits for the desktop's `pithyx:connect` message with one `MessagePort` from `window.parent`. If nothing arrives within 10 seconds (for example because the page was opened outside the desktop), it rejects with `sdk.transport.closed`. Options: `themeRoot` (the element that receives theme properties, `null` to skip), `timeout` (call limit in milliseconds), `connectTimeout` (how long to wait for the desktop, 10 seconds by default) and `origin` (the box address used for backend URLs).
 
 - **Theme.** The SDK sets the CSS custom properties `--pithyx-color-background`, `-surface`, `-surface-raised`, `-hover`, `-selected`, `-text`, `-text-muted`, `-border`, `-accent`, `-accent-text`, `-focus`, `-success`, `-warning`, `-danger`, plus `--pithyx-font-ui`, `--pithyx-font-mono`, `--pithyx-font-size`, `--pithyx-radius`, `--pithyx-space` and `--pithyx-control-height`. It also sets `color-scheme`, `data-pithyx-theme` and `data-pithyx-density` and follows theme changes.
-- **Timeouts.** A call fails with `sdk.request.timeout` after 15 seconds; `files.upload` has no time limit.
+- **Timeouts.** A call fails with `sdk.request.timeout` after 15 seconds; `files.upload`, `read`, `write`, `pick` and `saveAs` have no time limit.
 - **Constants.** `SDK_VERSION`, `PROTOCOL_VERSION` and `MIN_PROTOCOL_VERSION`.
 - `app.supports(method)` tells whether the desktop knows a method. `app.on(event, handler)` returns an unsubscribe function.
 
@@ -55,7 +55,7 @@ console.log(app.context.user.displayName);
 
 **Handed-over files** (`files.read` and `files.write`): `app.files.pick({ multiple?, extensions? })`, `saveAs(suggestedName, blob)`, `read(ref)`, `write(ref, blob)` and `url(ref)` (valid for 5 minutes). A `FileRef` has `ref`, `name`, `type`, `size`, `modified` and `writable`. Picking and saving must follow a user action.
 
-**Folders** (`FileLocation` is `{ storage: id }` for a manifest storage request or `{ share: id }` for a shared folder, which needs `files.shares`): `shares()`, `list(location, path, { cursor, limit, sort, order })` (default 100 entries, at most 1000), `watch`, `upload`, `download`, `createFolder`, `rename`, `run(operation)` for copy, move and delete as a job (delete goes to the recycle bin unless `permanent`), `versions` and `restoreVersion`. Uploading over an existing name fails with `fs.entry.exists`. `app.trash` lists, restores, deletes and empties the recycle bin, and `app.jobs.cancel(id)` cancels a job.
+**Folders** (`FileLocation` is `{ storage: id }` for a manifest storage request or `{ share: id }` for a shared folder, which needs `files.shares`): `open(location, path)` (a `FileRef` for a file), `shares()`, `list(location, path, { cursor, limit, sort, order })` (default 100 entries, at most 1000), `watch`, `upload`, `download`, `createFolder`, `rename`, `run(operation)` for copy, move and delete as a job (delete goes to the recycle bin unless `permanent`), `versions` and `restoreVersion`. Uploading over an existing name fails with `fs.entry.exists`. `app.trash` lists, restores, deletes and empties the recycle bin, and `app.jobs.cancel(id)` cancels a job.
 
 :::note[Files in the sandbox]
 An app from a package or a catalog gets every file call of the SDK. `pick` and `saveAs` open the desktop's file dialog and need a user action in the window; a file the user picks or opens with the app can be read without `files.shares`. `read`, `write` and `upload` have no time limit. The [guide](/docs/sdk/guides/files-and-storage/) has the details.

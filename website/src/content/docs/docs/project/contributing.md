@@ -1,13 +1,13 @@
 ---
 title: 'Contributing'
 description: 'How to report bugs, propose changes and send pull requests.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 3
 ---
 
-Pithyx is developed in the open on GitHub at `pithyx/pithyx`. Pull requests target the `dev` branch, commits carry a sign-off, and each pull request follows a short checklist. The project is pre-alpha: there is no release yet.
+Pithyx is developed in the open on GitHub at `pithyx/pithyx`. Pull requests target the `dev` branch, commits carry a sign-off, and each pull request follows a short checklist. The first release will be 1.0.0-beta.1; there is no release yet.
 
 ## Reporting bugs
 
@@ -17,7 +17,7 @@ Open an issue in the repository and choose **Bug report** or **Feature request**
 
 1. Set up the build as described in [Developing the daemon](/docs/developers/daemon/development/). `pnpm install` also installs the git hooks.
 2. Branch from `dev` as `feature/<name>`, `fix/<name>` or `hotfix/<name>`. `master` is stable and receives only release pull requests and hotfixes. Never push directly to `master` or `dev`; the pre-push hook refuses it.
-3. Open the pull request against `dev`. Its title follows the commit format below. The pull request template asks for a summary, how it was tested, and the checklist below.
+3. Open the pull request against `dev`. Its title follows the commit format below. The pull request template asks for a summary, how it was tested, and the checklist below. CI on a pull request from a fork starts only after a maintainer approved the run, and it runs on GitHub-hosted runners.
 
 Checklist:
 

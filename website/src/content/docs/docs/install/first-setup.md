@@ -1,7 +1,7 @@
 ---
 title: 'First setup'
 description: 'The owner account, the recovery key, the first pool and adding more users after the installation.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 4

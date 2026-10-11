@@ -1,7 +1,7 @@
 ---
 title: 'Publishing to a catalog'
 description: 'Getting an app into the official or community catalog, or running an own catalog.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 5
@@ -26,7 +26,7 @@ Every pull request to a project catalog is reviewed by the project: the app id f
 Machine rules run on every pull request (`pithyx catalog check`, see below):
 
 - Each app has a `maintainers.json` with 1 to 20 GitHub logins. A pull request that changes an app must come from one of the maintainers as the file stood before the change. A new app's file must name its author.
-- Workflows: `check.yml` (pull requests, read only), `publish.yml` (pushes to `master` write `catalog-next`) and `promote.yml` (manual, writes `catalog` after approval in the environment `catalog-release`). Runs from outside contributors wait for approval.
+- Workflows: `check.yaml` (pull requests, read only), `publish.yaml` (pushes to `master` write `catalog-next`) and `promote.yaml` (manual, writes `catalog` after approval in the environment `catalog-release`). Runs from outside contributors wait for approval.
 
 ## Rules
 

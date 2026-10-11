@@ -1,7 +1,7 @@
 ---
 title: 'Desktop architecture'
 description: 'The React web desktop: shell, window manager, core apps and how it talks to the daemon.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 1

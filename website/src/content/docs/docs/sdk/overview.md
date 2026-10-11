@@ -1,7 +1,7 @@
 ---
 title: 'SDK overview'
 description: 'The three npm packages, their versions and how they fit together.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 1

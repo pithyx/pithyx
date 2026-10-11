@@ -114,12 +114,6 @@
         "endpoint": "thumbs-v2",
         "path": "/jobs/weekly"
       }
-    ],
-    "elevated": [
-      "capability:NET_ADMIN",
-      "host.network",
-      "host.pid",
-      "device:/dev/dri/renderD128"
     ]
   }
 }

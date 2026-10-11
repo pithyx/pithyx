@@ -1,7 +1,7 @@
 ---
 title: 'Hardware-Anforderungen'
 description: 'Die Hardware, die Pithyx braucht, die Referenzmaschine und was nicht unterstützt wird.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 2
@@ -55,6 +55,7 @@ Neue Pools werden mit 4-KiB-Sektoren (`ashift=12`), `lz4`-Kompression und `atime
 
 - Jede kabelgebundene Netzwerkkarte fragt beim ersten Start per DHCP nach einer Adresse (IPv4 und IPv6). Im Installer kannst du eine feste Adresse einstellen.
 - Der Web-Desktop wird über unverschlüsseltes HTTP auf Port 7484 ausgeliefert. Port 80 leitet dorthin weiter. HTTPS ist noch nicht gebaut.
+- Die Box hat eine Firewall, die nur die Weboberfläche und die Dateidienste durchlässt, die du einschaltest. Siehe [Sicherheit](/de/docs/admin/security/#offene-ports).
 - WLAN wird nicht unterstützt.
 - Die Box kündigt keinen Namen im Netzwerk an. Nutze ihre IP-Adresse, die die Konsole nach dem Start anzeigt.
 

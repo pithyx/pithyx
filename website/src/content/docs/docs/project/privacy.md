@@ -1,7 +1,7 @@
 ---
 title: 'Privacy'
 description: 'Pithyx and this website collect nothing: no telemetry, no accounts, no trackers.'
-status: draft
+status: ready
 sidebar:
   order: 2
 ---

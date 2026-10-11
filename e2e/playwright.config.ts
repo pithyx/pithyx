@@ -1,4 +1,4 @@
-import { mkdtempSync } from 'node:fs';
+import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { defineConfig, devices } from '@playwright/test';
@@ -7,6 +7,8 @@ import { defineConfig, devices } from '@playwright/test';
 // Playwright loads this file in every process; the environment variable keeps them on one directory.
 process.env.PITHYX_E2E_DATA ??= mkdtempSync(join(tmpdir(), 'pithyx-e2e-'));
 const dataDirectory = process.env.PITHYX_E2E_DATA;
+// The signed update files of tools/release/fixtures offer 0.2.0-beta.3, so the simulated box reports an older version.
+writeFileSync(join(dataDirectory, 'release'), 'PITHYX_VERSION=0.1.0-dev.3\n');
 // 7484 by default; PITHYX_E2E_PORT runs the suite next to a daemon that already uses it (dev01's dev unit).
 const port = process.env.PITHYX_E2E_PORT ?? '7484';
 // The installer of the live system runs as a second daemon on the next port.

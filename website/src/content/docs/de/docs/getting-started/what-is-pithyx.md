@@ -1,7 +1,7 @@
 ---
 title: 'Was ist Pithyx'
 description: 'Pithyx in wenigen Minuten: ein NAS- und Server-Betriebssystem mit Web-Desktop, das nur auf deiner eigenen Hardware läuft.'
-status: draft
+status: ready
 audience: user
 sidebar:
   order: 1
@@ -19,7 +19,7 @@ Pithyx ist Pre-Release-Software. Lege noch keine Daten darauf ab, die dir wichti
 - **Speicher mit ZFS.** Du baust in der App „Speicher“ aus deinen Festplatten Pools und legst darauf freigegebene Ordner an. Neue Pools nutzen Kompression und sind nicht verschlüsselt. Siehe [Speicher und Pools](/de/docs/admin/storage/).
 - **Dateifreigabe.** Freigegebene Ordner sind über SMB, SFTP, WebDAV und FTP erreichbar. SMB ist standardmäßig an; die anderen schaltest du in den Einstellungen ein. Siehe [Von anderen Geräten zugreifen](/de/docs/user/file-access/).
 - **Benutzer und Gruppen.** Jeder Benutzer ist ein echtes Konto auf der Box. Rechte werden an Benutzer und Gruppen vergeben; ein Benutzer erhält die Vereinigung aller seiner Rechte. Administratoren dürfen alles. Siehe [Benutzer und Gruppen](/de/docs/admin/users-and-groups/).
-- **Apps.** Apps öffnen sich in Fenstern auf dem Desktop. Eine App ist ein Frontend mit einem optionalen Backend in Containern. Administratoren installieren Apps aus einer Datei oder aus einem Katalog im Store. Siehe [Apps benutzen](/de/docs/user/apps/).
+- **Apps.** Apps öffnen sich in Fenstern auf dem Desktop. Eine App ist ein Frontend mit einem optionalen Backend in Containern. Administratoren installieren Apps aus einer Datei oder aus einem Katalog im Store; der offizielle und der Community-Katalog sind standardmäßig an. Siehe [Apps benutzen](/de/docs/user/apps/).
 - **Backup der Konfiguration.** Einstellungen, Benutzer und die Definitionen der freigegebenen Ordner lassen sich in einer verschlüsselten Datei sichern und nach einer Neuinstallation wiederherstellen. Siehe [Konfigurationsbackup](/de/docs/admin/backup/).
 - **Netzwerkeinstellungen im Browser**, auch Bonds und VLANs, mit einem Bestätigungs-Timer, der eine Änderung zurücknimmt, die dich aussperren würde. Siehe [Netzwerk](/de/docs/admin/network/).
 

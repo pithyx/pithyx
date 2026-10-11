@@ -1,7 +1,7 @@
 ---
 title: 'Hardware requirements'
 description: 'The hardware Pithyx needs, the reference machine and what is not supported.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 2
@@ -55,6 +55,7 @@ New pools are created with 4 KiB sectors (`ashift=12`), `lz4` compression and `a
 
 - Every wired network card asks for an address by DHCP (IPv4 and IPv6) on first boot. You can set a fixed address in the installer.
 - The web desktop is served over plain HTTP on port 7484. Port 80 redirects to it. HTTPS is not built yet.
+- The box has a firewall that lets in only the web interface and the file services you switch on. See [Security](/docs/admin/security/#open-ports).
 - Wi-Fi is not supported.
 - The box does not announce a name on the network. Use its IP address, which the console shows after boot.
 

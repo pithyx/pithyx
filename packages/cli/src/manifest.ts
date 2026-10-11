@@ -9,17 +9,6 @@ export const SUPPORTED_MANIFEST_VERSION = 1;
 /** The namespace of the system apps and the official catalog; the box never accepts it from a sideload. */
 export const RESERVED_ID_PREFIX = 'org.pithyx.';
 
-/** Capabilities that reach the host's secrets (D71); never granted on their own. */
-const BLOCKED_CAPABILITIES = new Set([
-  'ALL',
-  'SYS_ADMIN',
-  'SYS_PTRACE',
-  'SYS_MODULE',
-  'SYS_RAWIO',
-  'DAC_READ_SEARCH',
-  'BPF',
-]);
-
 const validateSchema = compileSchema(schema);
 
 export interface ManifestValidation {
@@ -29,15 +18,11 @@ export interface ManifestValidation {
   manifest?: AppManifest;
 }
 
-/** Whether this version of Pithyx can grant an elevated right the schema accepts (D71, D304). */
-export function isSupportedElevatedRight(right: string): boolean {
-  return (
-    right !== 'docker.socket' &&
-    right !== 'host.full' &&
-    !(
-      right.startsWith('capability:') && BLOCKED_CAPABILITIES.has(right.slice('capability:'.length))
-    )
-  );
+/** Whether this version of Pithyx can grant an elevated right the schema accepts: none (D345, A16 follows). */
+// The parameter stays for the day A16 grants rights again.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function isSupportedElevatedRight(_right: string): boolean {
+  return false;
 }
 
 /**

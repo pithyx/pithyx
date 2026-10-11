@@ -1,7 +1,7 @@
 ---
 title: 'Das Manifest'
 description: 'Jedes Feld von pithyx.json: Identität, Fenster, Berechtigungen, Backend und Lebenszyklus.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 3
@@ -52,7 +52,7 @@ Pflichtfelder: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, `s
 - `instances`: `single` fokussiert das vorhandene Fenster des Benutzers auf diesem Gerät und übergibt Startargumente; `multi` öffnet jedes Mal ein neues Fenster.
 - `defaultSize` und `minSize`: `width` und `height` als ganze Zahlen von 100 bis 8192 CSS-Pixel. `minSize` darf in keiner Richtung größer sein als `defaultSize`. Die Standardgröße gilt, wenn der Benutzer keine gemerkte Größe hat; das Minimum gilt auf Bildschirmen, auf die es passt.
 
-`fileHandlers` (optional, bis zu 32) lässt die App bei Dateitypen unter "Öffnen mit …" erscheinen. Jeder Handler hat `extensions` (1 bis 32 Erweiterungen in Kleinbuchstaben ohne Punkt, etwa `png` oder `tar.gz`), `mimeTypes` (1 bis 32) und `isDefault`. Eine Erweiterung kann nur zu einem Handler gehören. Die Datei erreicht die App über das Ereignis `launch` oder `openFile`.
+`fileHandlers` (optional, bis zu 32) lässt die App bei Dateitypen unter "Öffnen mit …" erscheinen. Jeder Handler hat `extensions` (1 bis 32 Erweiterungen in Kleinbuchstaben ohne Punkt, etwa `png` oder `tar.gz`), und optional `mimeTypes` (1 bis 32) und `isDefault`. Eine Erweiterung kann nur zu einem Handler gehören. Die Datei erreicht die App über das Ereignis `launch` oder `openFile`.
 
 ## Berechtigungen
 
@@ -82,7 +82,7 @@ Ein Administrator bestätigt die Liste bei der Installation und kann jede Berech
 - `root`: `true` führt die Services im Container als root aus (auf dem Host ohne Rechte); Standard `false`. Der Installationsdialog warnt davor.
 - `health`: `{ "endpoint": "api", "path": "/health" }`. Der Daemon ruft dort `GET` auf; eine 2xx-Antwort bedeutet, dass das Backend läuft.
 - `schedules`: bis zu 16 Einträge der Form `{ id, cron, endpoint, path }`. Der Daemon startet das Backend und ruft `POST path` auf. Der Cron-Ausdruck hat fünf Felder (Minute 0 bis 59, Stunde 0 bis 23, Tag des Monats 1 bis 31, Monat 1 bis 12, Wochentag 0 bis 7) in der Zeitzone der Box, mit `*`, Zahlen, Bereichen, Listen und Schritten; Namen sind nicht erlaubt ([`app.manifest.cron_invalid`](/de/docs/reference/errors/#app.manifest.cron_invalid)).
-- `elevated`: eine Liste zusätzlicher Rechte (`host.network`, `host.pid`, `device:/dev/<path>`, `capability:<NAME>`, `docker.socket`, `host.full`), bis zu 32. Diese Version der Box lehnt `docker.socket`, `host.full` und die gefährlichen Capabilities (`ALL`, `SYS_ADMIN`, `SYS_PTRACE`, `SYS_MODULE`, `SYS_RAWIO`, `DAC_READ_SEARCH`, `BPF`) mit [`app.elevated.unsupported`](/de/docs/reference/errors/#app.elevated.unsupported) ab. Die Compose-Datei muss genau die hier deklarierten Rechte nutzen.
+- `elevated`: eine Liste zusätzlicher Rechte (`host.network`, `host.pid`, `device:/dev/<path>`, `capability:<NAME>`, `docker.socket`, `host.full`), bis zu 32. Erhöhte Rechte werden noch nicht vergeben: Pithyx 1.0.0-beta.1 lehnt jeden Eintrag mit [`app.elevated.unsupported`](/de/docs/reference/errors/#app.elevated.unsupported) ab.
 
 Über das Schema hinaus prüft die Box, dass Service- und Endpunkt-Namen existieren ([`app.manifest.reference_unknown`](/de/docs/reference/errors/#app.manifest.reference_unknown)) und dass die Speicheranforderungen zu den Compose-Mounts passen.
 

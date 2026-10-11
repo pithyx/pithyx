@@ -1,7 +1,7 @@
 ---
 title: 'Der Desktop'
 description: 'Fenster, Taskleiste, Desktop-Elemente, Andocken, Tastenkürzel und das Layout, das sich jedes Gerät merkt.'
-status: draft
+status: ready
 audience: user
 sidebar:
   order: 1
@@ -23,7 +23,7 @@ Du brauchst das Recht **Am Desktop anmelden**. Ist dein Konto deaktiviert oder f
 
 Nach fünf falschen Versuchen für denselben Benutzernamen von derselben Adresse innerhalb von fünf Minuten pausiert die Anmeldung für kurze Zeit und sagt dir, wie viele Sekunden du warten musst.
 
-Zum Abmelden öffnest du das Pithyx-Menü, klickst auf deinen Namen und wählst **Abmelden**.
+Zum Abmelden öffnest du das Pithyx-Menü und klickst unten neben dem Ein/Aus-Knopf auf **Abmelden**.
 
 Passwort vergessen? Klicke auf der Anmeldeseite auf **Passwort vergessen?**. Pithyx kann ein Passwort nicht per E-Mail zurücksetzen: Bitte einen Administrator, ein neues zu setzen. Administratoren können den Wiederherstellungsschlüssel nutzen. Siehe [Wiederherstellen und neu installieren](/de/docs/install/recovery/).
 
@@ -72,18 +72,17 @@ Standardmäßig liegt die Taskleiste am unteren Bildschirmrand. Von links nach r
 
 Klicke auf eine laufende App, um sie nach vorn zu holen. Klicke noch einmal auf die aktive App, um sie zu minimieren. Klicke mit der rechten Maustaste auf eine laufende App (oder drücke darauf **Umschalt+F10**) für **Minimieren** oder **Wiederherstellen**, **Zum Desktop hinzufügen** und **Schließen**.
 
-Um die Taskleiste zu verschieben, öffne das Pithyx-Menü, klicke auf deinen Namen, wähle **Position der Taskleiste** und dann **Unten**, **Oben**, **Links** oder **Rechts**. Auf Handys bleibt die Taskleiste immer unten.
+Um die Taskleiste zu verschieben, öffne das Pithyx-Menü, klicke auf deinen Namen, wähle **Position der Taskleiste** und dann **Unten**, **Oben**, **Links** oder **Rechts**. Auf Handys bleibt die Taskleiste immer unten und der Eintrag fehlt.
 
-**Das Pithyx-Menü** öffnest du mit der Schaltfläche links in der Taskleiste oder indem du die Windows- oder Befehlstaste (Command) drückst und loslässt. Es listet deine Apps auf und hat ein Suchfeld. Die Suche findet Apps nur nach ihrem Namen; Einstellungen und Dateien findet sie dort nicht. Dein Kontomenü (klicke auf deinen Namen) enthält:
+**Das Pithyx-Menü** öffnest du mit der Schaltfläche links in der Taskleiste oder indem du die Windows- oder Befehlstaste (Command) drückst und loslässt. Es listet deine Apps auf und hat ein Suchfeld. Die Suche findet Apps nur nach ihrem Namen; Einstellungen und Dateien findet sie dort nicht, und die Liste der zuletzt benutzten Dateien bleibt leer. Dein Kontomenü (klicke auf deinen Namen) enthält:
 
 - **Zwei-Faktor-Authentifizierung**
 - **Sprache**
 - **Darstellung**, **Akzentfarbe** und **Hintergrundbild**
 - **Desktop holen von**
-- **Position der Taskleiste**
-- **Abmelden**
+- **Position der Taskleiste** (nicht auf Handys)
 
-Administratoren und Benutzer mit dem Recht **Neu starten und herunterfahren** finden hier außerdem **Neu starten** und **Herunterfahren**. Beides meldet alle Benutzer ab und beendet Dateiübertragungen.
+Unten im Pithyx-Menü, neben deinem Namen, stehen der Knopf **Abmelden** und, für Administratoren und Benutzer mit dem Recht **Neu starten und herunterfahren**, der Knopf **Ein/Aus** mit **Neu starten** und **Herunterfahren**. Beides meldet alle Benutzer ab und beendet Dateiübertragungen.
 
 **Benachrichtigungen.** Die Glocke öffnet ein Fenster mit **Laufende Aufgaben** und **Neueste** Benachrichtigungen. Nutze **Verwerfen**, **Stummschalten** oder **Alle löschen**. Drücke **Esc**, um das Fenster zu schließen.
 
@@ -109,11 +108,13 @@ Der Desktop fasst höchstens 200 Elemente. Symbole rasten an einem Raster ein. A
 
 Diese Fenster-Tastenkürzel funktionieren überall auf dem Desktop, außer während du in ein Textfeld tippst:
 
-| Tasten                              | Aktion                                                                               |
-| ----------------------------------- | ------------------------------------------------------------------------------------ |
-| **Alt+Umschalt+Links** / **Rechts** | Das Fenster links oder rechts andocken                                               |
-| **Alt+Umschalt+Hoch**               | Maximieren                                                                           |
-| **Alt+Umschalt+Runter**             | Ein angedocktes oder maximiertes Fenster wiederherstellen oder ein freies minimieren |
+| Tasten                                  | Aktion                                                                               |
+| --------------------------------------- | ------------------------------------------------------------------------------------ |
+| **Alt+Umschalt+Links** / **Rechts**     | Das Fenster links oder rechts andocken                                               |
+| **Alt+Umschalt+Hoch**                   | Maximieren                                                                           |
+| **Alt+Umschalt+Runter**                 | Ein angedocktes oder maximiertes Fenster wiederherstellen oder ein freies minimieren |
+| **Alt+Umschalt+Leertaste**              | Das Fenstermenü des aktiven Fensters öffnen                                          |
+| **Alt+Umschalt+Bild auf** / **Bild ab** | Zum vorherigen oder nächsten Fenster wechseln                                        |
 
 Weitere Tasten:
 

@@ -1,7 +1,7 @@
 ---
 title: 'Backup und Wiederherstellung'
 description: 'Die Konfiguration der Box in einer verschlüsselten Datei sichern und wiederherstellen, und was das Backup nicht abdeckt.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 11

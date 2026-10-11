@@ -19,7 +19,7 @@ namespace Pithyx.Daemon.Updates;
 /// <param name="Simulated">Simulation: no system is touched; an install walks through its steps and succeeds.</param>
 /// <param name="SourceFile">The update source configuration (<c>/etc/pithyx/update-source.json</c>).</param>
 /// <param name="Keyring">The keys signatures are checked against.</param>
-/// <param name="InstalledVersion">The running version when the release file is not there (simulation, development).</param>
+/// <param name="InstalledVersion">The running version when the release file is not there (development).</param>
 /// <param name="DefaultSource">The source without a configuration file: the project's releases on a box, a folder in simulation.</param>
 public sealed record UpdateOptions(bool Simulated, string SourceFile, IReadOnlyList<TrustedKey> Keyring, string InstalledVersion, UpdateSourceConfig DefaultSource);
 
@@ -77,7 +77,7 @@ public sealed partial class UpdateService(
     /// <summary>What the last check found, kept in <c>updates.status</c> across restarts.</summary>
     private sealed record CheckState(DateTimeOffset? At, UpdateChannelDocument? Channel, DebianUpdates? Debian, UpdateProblem? Problem, string? Announced);
 
-    private string InstalledVersion => options.Simulated ? options.InstalledVersion : system.InstalledVersion() is "0.0.0" ? options.InstalledVersion : system.InstalledVersion();
+    private string InstalledVersion => system.InstalledVersion() is "0.0.0" ? options.InstalledVersion : system.InstalledVersion();
 
     /// <summary>Unsigned files only on a development box (D338).</summary>
     private bool AllowUnsigned => environment.Kind == DeploymentKind.Dev;
