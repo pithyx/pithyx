@@ -1,7 +1,7 @@
 ---
 title: 'Apps im Überblick'
 description: 'Was eine Pithyx-App ist: ein statisches Frontend, ein optionales Backend, ein Manifest und ein Paket.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 1

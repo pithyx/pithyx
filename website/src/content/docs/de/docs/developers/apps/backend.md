@@ -1,7 +1,7 @@
 ---
 title: 'Backends'
 description: 'Container hinter dem Proxy: das Compose-Subset, Endpunkte, Benutzer, Speicher und Netzwerk.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 4
@@ -20,8 +20,8 @@ Die Datei ist `backend/compose.yaml`. Die Regeln stehen in `sdk/schema/compose.v
 **Pro Service:**
 
 - `image` ist Pflicht und per Digest festgelegt (`name@sha256:...`).
-- Erlaubt: `command`, `entrypoint`, `environment`, `working_dir`, `volumes`, `tmpfs`, `depends_on`, `healthcheck`, `expose`, `read_only`, `init`, `stop_signal`, `stop_grace_period`, `shm_size`, `mem_limit`, `cpus` und `labels` (nicht mit den Präfixen `com.pithyx` oder `com.docker`).
-- Nur mit einem passenden erhöhten Recht: `network_mode: host`, `pid: host`, `devices`, `cap_add`, `cap_drop` und `privileged`.
+- Erlaubt: `command`, `entrypoint`, `environment`, `working_dir`, `volumes`, `tmpfs`, `depends_on`, `healthcheck`, `expose`, `read_only`, `init`, `stop_signal`, `stop_grace_period`, `shm_size`, `mem_limit`, `cpus`, `cap_drop` und `labels` (nicht mit den Präfixen `com.pithyx` oder `com.docker`).
+- Nur mit einem passenden erhöhten Recht: `network_mode: host`, `pid: host`, `devices`, `cap_add` und `privileged`.
 - Mounts sind benannte Volumes oder `tmpfs`. Bind-Mounts werden abgelehnt, weil Host-Pfade nie eingehängt werden. Die Ziele `/proc`, `/sys` und `/dev` sowie die Docker-Sockets werden abgelehnt.
 - Mit einer Begründung im Fehlertext abgelehnt: `ports` (Backends sind nur über den Proxy erreichbar), `build` (die Box baut nie), `networks`, `links`, `env_file`, `secrets`, `configs`, `user` (die Box setzt die Benutzer-ID), `restart` (die Box steuert den Lebenszyklus), `logging`, `deploy` (nutze `mem_limit` und `cpus`), `security_opt`, `sysctls`, `ulimits`, `container_name`, `extends`, `profiles` und mehr.
 
@@ -90,7 +90,7 @@ Ein Backend kann diesen Headern nur vertrauen, weil es ausschließlich über den
 - Auf dem Host werden keine Ports veröffentlicht, und eine nftables-Regel verwirft neue Verbindungen aus den App-Netzwerken zum Host.
 - Jede App hat ihre eigene Benutzer-ID (und Gruppen-ID) von 40000 bis 49999. Mit `root: true` ist der Benutzer im Container root, aber die Remapping-Funktion der User-Namespaces hält ihn auf dem Host ohne Rechte.
 - Die Härtung ist immer aktiv: `no-new-privileges`, ein Prozesslimit von 1024, ein erhöhter Out-of-Memory-Score.
-- Docker-Socket, `privileged` und Host-Netzwerk werden in dieser Version abgelehnt.
+- Docker-Socket und `privileged` (die Rechte `docker.socket` und `host.full`) werden in dieser Version abgelehnt. Host-Netzwerk, Host-PID, Geräte und Capabilities brauchen das passende erhöhte Recht, das der Installationsdialog anzeigt.
 
 ## Lebenszyklus
 

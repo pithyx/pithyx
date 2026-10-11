@@ -1,7 +1,7 @@
 ---
 title: 'API'
 description: 'The REST and WebSocket API, authentication, topics and the generated client.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 2
@@ -55,7 +55,7 @@ Client messages are `sub` and `unsub` with an id and a topic. The server answers
 | 4401       | Session ended    | show the sign-in     |
 | 4403       | Forbidden        | stop                 |
 
-Topic patterns may use `+` for one level and `#` for the rest. Permissions are checked for every snapshot and event. Topics today: `system/info`, `system/resources`, `system/processes`, `system/network`, `storage/disks`, `storage/pools`, `storage/alerts`, `shares/list`, `jobs`, `jobs/+`, `notifications`, `session/permissions`, `files/+/+`, `thumbnails/+/+`, `apps`, `apps/admin`, `apps/+/context` and `store/admin`.
+Topic patterns may use `+` for one level and `#` for the rest. Permissions are checked for every snapshot and event. Topics today: `system/info`, `system/resources`, `system/processes`, `system/network`, `system/updates`, `storage/disks`, `storage/pools`, `storage/alerts`, `shares/list`, `jobs`, `jobs/+`, `notifications`, `session/permissions`, `files/+/+`, `thumbnails/+/+`, `apps`, `apps/admin`, `apps/+/context` and `store/admin`.
 
 ## Generated client
 

@@ -1,7 +1,7 @@
 ---
 title: 'Am Daemon entwickeln'
 description: 'Bauen, in der Simulation starten, Tests und die Integrationssuiten, die root brauchen.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 4
@@ -20,7 +20,7 @@ pnpm build              # builds every package
 pnpm generate           # builds the daemon, then regenerates the clients
 ```
 
-Die Hooks führen vor einem Commit Prettier, ESLint, die Repository-Prüfungen, shellcheck und `dotnet format whitespace` aus. Ein Pre-Push-Hook lehnt Pushes auf `master` und `dev` ab. Warnungen sind in C# und TypeScript Fehler.
+Die Hooks führen vor einem Commit Prettier, ESLint, die Repository-Prüfungen, shellcheck und `dotnet format whitespace` aus, beim Commit zusätzlich eine Prüfung der Commit-Nachricht (Gitmoji-Format). Ein Pre-Push-Hook lehnt Pushes auf `master` und `dev` ab. Warnungen sind in C# und TypeScript Fehler.
 
 Der Dev-Server des Desktops läuft mit `pnpm dev` auf `http://localhost:5173` und leitet `/api` und `/ws` an einen Daemon auf `http://localhost:7484` weiter. `PITHYX_DAEMON_URL` ändert das Ziel.
 
@@ -51,7 +51,7 @@ Wenn deine Entwicklungsmaschine selbst Pithyx betreibt (`/etc/pithyx/environment
 
 ## Tests
 
-- **Daemon:** `dotnet test` in `daemon/` (xUnit). Die Ordner unter `daemon/tests/Pithyx.Daemon.Tests` spiegeln die Module. `DaemonFactory` startet den Daemon im Speicher mit einem temporären Datenordner, eingeschalteter Simulation und einem `FakeTimeProvider`; `CreateApiClient()` fügt den CSRF-Header hinzu.
+- **Daemon:** `dotnet test --solution daemon/Pithyx.slnx` (xUnit). Die Ordner unter `daemon/tests/Pithyx.Daemon.Tests` spiegeln die Module. `DaemonFactory` startet den Daemon im Speicher mit einem temporären Datenordner, eingeschalteter Simulation und einem `FakeTimeProvider`; `CreateApiClient()` fügt den CSRF-Header hinzu.
 - **Frontend:** `pnpm lint`, `pnpm typecheck`, `pnpm test` (Vitest).
 - **Ende zu Ende:** `pnpm --filter @pithyx/e2e exec playwright install chromium`, dann `pnpm build && pnpm e2e`. Das startet einen eigenen Daemon in der Simulation mit einer frischen Datenbank.
 - **Layout-Prüfungen:** `pnpm design:test` prüft jeden Bildschirm auf Überlauf in den Größen Smartphone, Tablet und Laptop in Englisch und Deutsch.

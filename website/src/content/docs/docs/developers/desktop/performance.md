@@ -1,7 +1,7 @@
 ---
 title: 'Performance and budgets'
 description: 'Bundle and timing budgets, the perf gate and how to stay inside them.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 4

@@ -1,7 +1,7 @@
 ---
 title: 'Architektur des Daemons'
 description: 'Der einzige privilegierte Prozess: seine Module, der Command Runner, Storage-Backends und Pfade.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 1
@@ -52,7 +52,7 @@ Der Speicherzustand erreicht die Clients über die Topics `storage/disks`, `stor
 
 Der Daemon nutzt SQLite über Dapper mit explizitem SQL, ohne ORM und ohne Repository-Schicht. Die Datenbank ist `/var/lib/pithyx/pithyx.db` oder der Pfad in `PITHYX_DB`. Sie läuft im WAL-Modus. Logs liegen in einer eigenen `logs.db`.
 
-- Migrationen sind eingebettete Dateien `daemon/src/Pithyx.Daemon/Database/Migrations/NNNN_name.sql` (heute 27). Jede läuft in einer eigenen Transaktion; ein Fehler beendet mit Code 1. Die Tabelle `schema_version` hält fest, was gelaufen ist.
+- Migrationen sind eingebettete Dateien `daemon/src/Pithyx.Daemon/Database/Migrations/NNNN_name.sql` (heute 28). Jede läuft in einer eigenen Transaktion; ein Fehler beendet mit Code 1. Die Tabelle `schema_version` hält fest, was gelaufen ist.
 - Bevor eine nicht leere Datenbank migriert wird, schreibt der Daemon mit `VACUUM INTO` eine Kopie namens `pithyx.db.pre-<NNNN>-<time>.bak`, wobei `NNNN` die erste ausstehende Version ist.
 - Enthält die Datenbank Versionen, die der Daemon nicht kennt, loggt er eine kritische Meldung und beendet sich mit 65. Starte einen neueren Daemon oder richte `PITHYX_DB` auf eine andere Datenbank.
 - Daten werden als UTC-Text nach ISO 8601 gespeichert.

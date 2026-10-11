@@ -1,7 +1,7 @@
 ---
 title: 'Architektur des Desktops'
 description: 'Der React-Web-Desktop: Shell, Fenstermanager, Kern-Apps und wie er mit dem Daemon spricht.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 1

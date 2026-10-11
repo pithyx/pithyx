@@ -1,7 +1,7 @@
 ---
 title: 'Errors, tracing and logging'
 description: 'Error codes and problem details, request ids, structured logs and masking secrets.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 3
@@ -50,7 +50,7 @@ The daemon logs with Serilog as compact JSON, with the rendered message, to thre
 
 The default level is Information; ASP.NET Core and the proxy log from Warning. Each entry has the property `RequestId`.
 
-The Log Center keeps entries in memory (20,000 entries) and writes them in batches every second. Sources are `daemon`, `system/<unit>` (read from the journal) and `app/<id>` (app logs and container output). Defaults: 30 days retention (1 to 365 days), 4 GiB maximum size, an optional daily archive copy to an app pool. Endpoints are `GET /api/logs`, `/api/logs/sources`, `/api/logs/export` and, for administrators, `GET` and `PUT /api/logs/settings`. Nothing is sent anywhere.
+The Log Center queues up to 20,000 entries in memory (further entries are dropped while the queue is full) and writes them in batches every second. Sources are `daemon`, `system/<unit>` (read from the journal) and `app/<id>` (app logs and container output). Defaults: 30 days retention (1 to 365 days), 4 GiB maximum size (adjustable from 64 MiB to 4 GiB), an optional daily archive copy to an app pool. Endpoints are `GET /api/logs`, `/api/logs/sources`, `/api/logs/export` and, for administrators, `GET` and `PUT /api/logs/settings`. Nothing is sent anywhere.
 
 App log entries are rate limited per app: a burst of 200, then 20 per second.
 

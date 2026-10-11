@@ -1,7 +1,7 @@
 ---
 title: 'Backends'
 description: 'Containers behind the proxy: the Compose subset, endpoints, users, storage and network.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 4
@@ -20,8 +20,8 @@ The file is `backend/compose.yaml`. The rules are in `sdk/schema/compose.v1.rule
 **Per service:**
 
 - `image` is required and pinned by digest (`name@sha256:...`).
-- Allowed: `command`, `entrypoint`, `environment`, `working_dir`, `volumes`, `tmpfs`, `depends_on`, `healthcheck`, `expose`, `read_only`, `init`, `stop_signal`, `stop_grace_period`, `shm_size`, `mem_limit`, `cpus` and `labels` (not with the prefixes `com.pithyx` or `com.docker`).
-- Only with a matching elevated right: `network_mode: host`, `pid: host`, `devices`, `cap_add`, `cap_drop` and `privileged`.
+- Allowed: `command`, `entrypoint`, `environment`, `working_dir`, `volumes`, `tmpfs`, `depends_on`, `healthcheck`, `expose`, `read_only`, `init`, `stop_signal`, `stop_grace_period`, `shm_size`, `mem_limit`, `cpus`, `cap_drop` and `labels` (not with the prefixes `com.pithyx` or `com.docker`).
+- Only with a matching elevated right: `network_mode: host`, `pid: host`, `devices`, `cap_add` and `privileged`.
 - Mounts are named volumes or `tmpfs`. Bind mounts are refused because host paths are never mounted. The targets `/proc`, `/sys` and `/dev` and the Docker sockets are refused.
 - Refused with a reason in the error text: `ports` (backends are reached only through the proxy), `build` (the box never builds), `networks`, `links`, `env_file`, `secrets`, `configs`, `user` (the box sets the user id), `restart` (the box runs the lifecycle), `logging`, `deploy` (use `mem_limit` and `cpus`), `security_opt`, `sysctls`, `ulimits`, `container_name`, `extends`, `profiles` and more.
 
@@ -90,7 +90,7 @@ A backend can trust these headers only because it is reachable solely through th
 - No ports are published on the host, and an nftables rule drops new connections from the app networks to the host.
 - Each app has its own user id (and group id) from 40000 to 49999. With `root: true` the user inside the container is root, but user namespace remapping keeps it unprivileged on the host.
 - Hardening is always on: `no-new-privileges`, a process limit of 1024, a raised out-of-memory score.
-- Docker socket, `privileged` and host networking are refused in this version.
+- Docker socket and `privileged` (the rights `docker.socket` and `host.full`) are refused in this version. Host networking, host PID, devices and capabilities need the matching elevated right, which the install dialog shows.
 
 ## Lifecycle
 

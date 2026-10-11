@@ -1,7 +1,7 @@
 ---
 title: 'Developing the daemon'
 description: 'Building, running in simulation, tests and the integration suites that need root.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 4
@@ -20,7 +20,7 @@ pnpm build              # builds every package
 pnpm generate           # builds the daemon, then regenerates the clients
 ```
 
-The hooks run Prettier, ESLint, the repository checks, shellcheck and `dotnet format whitespace` before a commit. A pre-push hook refuses pushes to `master` and `dev`. Warnings are errors in C# and TypeScript.
+The hooks run Prettier, ESLint, the repository checks, shellcheck and `dotnet format whitespace` before a commit, and a commit message check (gitmoji format) when you commit. A pre-push hook refuses pushes to `master` and `dev`. Warnings are errors in C# and TypeScript.
 
 The desktop dev server runs with `pnpm dev` on `http://localhost:5173` and proxies `/api` and `/ws` to a daemon on `http://localhost:7484`. `PITHYX_DAEMON_URL` changes the target.
 
@@ -51,7 +51,7 @@ If your development machine itself runs Pithyx (`/etc/pithyx/environment` exists
 
 ## Tests
 
-- **Daemon:** `dotnet test` in `daemon/` (xUnit). The folders under `daemon/tests/Pithyx.Daemon.Tests` mirror the modules. `DaemonFactory` starts the daemon in memory with a temporary data folder, simulation on and a `FakeTimeProvider`; `CreateApiClient()` adds the CSRF header.
+- **Daemon:** `dotnet test --solution daemon/Pithyx.slnx` (xUnit). The folders under `daemon/tests/Pithyx.Daemon.Tests` mirror the modules. `DaemonFactory` starts the daemon in memory with a temporary data folder, simulation on and a `FakeTimeProvider`; `CreateApiClient()` adds the CSRF header.
 - **Frontend:** `pnpm lint`, `pnpm typecheck`, `pnpm test` (Vitest).
 - **End to end:** `pnpm --filter @pithyx/e2e exec playwright install chromium`, then `pnpm build && pnpm e2e`. It starts its own daemon in simulation with a fresh database.
 - **Layout checks:** `pnpm design:test` checks every screen for overflow at phone, tablet and laptop sizes in English and German.

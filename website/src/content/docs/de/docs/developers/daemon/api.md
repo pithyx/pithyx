@@ -1,7 +1,7 @@
 ---
 title: 'API'
 description: 'Die REST- und WebSocket-API, Authentifizierung, Topics und der generierte Client.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 2
@@ -55,7 +55,7 @@ Client-Nachrichten sind `sub` und `unsub` mit einer ID und einem Topic. Der Serv
 | 4401       | Sitzung beendet      | Anmeldung anzeigen    |
 | 4403       | Verboten             | anhalten              |
 
-Topic-Muster dürfen `+` für eine Ebene und `#` für den Rest nutzen. Berechtigungen werden für jeden Snapshot und jedes Ereignis geprüft. Topics heute: `system/info`, `system/resources`, `system/processes`, `system/network`, `storage/disks`, `storage/pools`, `storage/alerts`, `shares/list`, `jobs`, `jobs/+`, `notifications`, `session/permissions`, `files/+/+`, `thumbnails/+/+`, `apps`, `apps/admin`, `apps/+/context` und `store/admin`.
+Topic-Muster dürfen `+` für eine Ebene und `#` für den Rest nutzen. Berechtigungen werden für jeden Snapshot und jedes Ereignis geprüft. Topics heute: `system/info`, `system/resources`, `system/processes`, `system/network`, `system/updates`, `storage/disks`, `storage/pools`, `storage/alerts`, `shares/list`, `jobs`, `jobs/+`, `notifications`, `session/permissions`, `files/+/+`, `thumbnails/+/+`, `apps`, `apps/admin`, `apps/+/context` und `store/admin`.
 
 ## Generierter Client
 

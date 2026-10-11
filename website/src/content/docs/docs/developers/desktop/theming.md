@@ -1,7 +1,7 @@
 ---
 title: 'Theming and design tokens'
 description: 'The token file, light and dark, accent presets and fonts.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 3
