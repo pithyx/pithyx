@@ -2,6 +2,7 @@
 import { execFileSync } from 'node:child_process';
 import { existsSync, readFileSync } from 'node:fs';
 import { basename, extname, join, relative } from 'node:path';
+import { inputsHash } from '../licenses/generate-notices.ts';
 
 interface Problem {
   file: string;
@@ -250,6 +251,21 @@ function checkPackageVersions(): Problem[] {
     }));
 }
 
+function checkThirdPartyNotices(): Problem[] {
+  const file = 'desktop/public/third-party-packages.json';
+  const recorded = (JSON.parse(readFileSync(file, 'utf8')) as { inputsHash?: string }).inputsHash;
+  return recorded === inputsHash()
+    ? []
+    : [
+        {
+          file,
+          line: 1,
+          message:
+            'third-party notices are out of date, run node tools/licenses/generate-notices.ts',
+        },
+      ];
+}
+
 const problems: Problem[] = [];
 for (const file of listFiles()) {
   // YAML files use the extension .yaml everywhere (the owner's wish of 2026-10-10).
@@ -277,6 +293,7 @@ problems.push(
   ...(await checkGenerated()),
   ...(await checkManifestTypes()),
   ...checkPackageVersions(),
+  ...checkThirdPartyNotices(),
 );
 
 for (const { file, line, message } of problems) {
