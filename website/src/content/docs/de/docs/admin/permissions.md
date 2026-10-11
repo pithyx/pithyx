@@ -1,7 +1,7 @@
 ---
 title: 'Berechtigungen'
 description: 'Wie Rechte an Benutzer und Gruppen vergeben werden, wie sich der Zugriff auf freigegebene Ordner, Protokolle und Apps verbindet und wann eine Änderung wirkt.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 6

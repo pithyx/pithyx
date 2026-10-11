@@ -1,7 +1,7 @@
 ---
 title: 'Logs and monitoring'
 description: 'The Log Center, the Resource Monitor and notifications: what they show, how long data is kept and what they cost.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 12

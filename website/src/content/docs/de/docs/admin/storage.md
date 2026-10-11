@@ -1,7 +1,7 @@
 ---
 title: 'Speicher und Pools'
 description: 'Festplatten, ZFS-Pools, Datasets, einen Pool importieren und erweitern, und warum manche Platten abgelehnt werden.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 3
@@ -53,7 +53,7 @@ Der Assistent empfiehlt einen Aufbau: bei einer Platte einzeln, bei zwei Platten
 
 Der Pool-Name beginnt mit einem Kleinbuchstaben, danach folgen Kleinbuchstaben, Ziffern, `-` oder `_`, höchstens 32 Zeichen. Die Namen `mirror`, `raidz`, `raidz1` bis `raidz3`, `draid`, `spare`, `log`, `cache`, `special`, `dedup` und `pithyx` sowie Namen, die mit `c0` beginnen, sind reserviert.
 
-Jeder neue Pool bekommt dieselben Optionen: `ashift=12`, `compression=lz4`, `xattr=sa`, `acltype=posixacl`, `atime=off`, `normalization=formD`. Danach legt Pithyx seine Dataset-Struktur unter `<pool>/pithyx` an: `shares`, `homes`, `apps`, `system` und `cache` (Kontingent 2,5 GB, keine Kompression, keine automatischen Snapshots). Ein Pool, den Pithyx nicht angelegt hat, hat kein Dataset `pithyx`, und Pithyx legt darauf nichts an ([`storage.pool.not_prepared`](/de/docs/reference/errors/#storage.pool.not_prepared)).
+Jeder neue Pool bekommt dieselben Optionen: `ashift=12`, `compression=lz4`, `xattr=sa`, `acltype=posixacl`, `atime=off`, `normalization=formD`. Danach legt Pithyx seine Dataset-Struktur unter `<pool>/pithyx` an: `shares`, `homes`, `apps`, `system` und `cache` (Kontingent 2,5 GiB, keine Kompression, keine automatischen Snapshots). Ein Pool, den Pithyx nicht angelegt hat, hat kein Dataset `pithyx`, und Pithyx legt darauf nichts an ([`storage.pool.not_prepared`](/de/docs/reference/errors/#storage.pool.not_prepared)).
 
 Weitere Pool-Aktionen: **Ersetzen…** (fragt immer nach der Seriennummer), **Hot Spare hinzufügen…**, **Spare entfernen**, **Offline nehmen**, **Online bringen** und **Pool löschen…**.
 
@@ -73,7 +73,7 @@ Unter **Erweitert** listet **Datasets** > **Datasets anzeigen** die Datasets mit
 
 Datasets für Home-Ordner, Apps und das System lassen sich weder umbenennen noch löschen ([`storage.dataset.managed`](/de/docs/reference/errors/#storage.dataset.managed)), und ein Dataset, das ein freigegebener Ordner nutzt, muss zuerst diesen freigegebenen Ordner verlieren. **Volume anlegen…** erstellt ein Block-Volume auf Pools, die Pithyx eingerichtet hat; die Größe beträgt mindestens 1 MiB und wird auf 16-KiB-Blöcke aufgerundet. Ein Sparse-Volume kann Schreibzugriffe verlieren, wenn der Pool voll wird.
 
-Die Speicher-App hat keinen Bereich für Snapshots. Snapshots erscheinen in der Oberfläche als Wiederherstellungspunkte: ein Schalter pro freigegebenem Ordner unter Einstellungen > **Freigegebene Ordner**, der einmal am Tag einen Snapshot des Datasets des Ordners macht und jeden 7 Tage behält, und **Frühere Versionen** in Dateien, um ältere Versionen zurückzuholen. Siehe [Freigegebene Ordner](/de/docs/admin/shared-folders/). Snapshots von Hand, Festhalten, das Zurücksetzen eines Datasets und andere Zeitpläne gibt es in der Oberfläche nicht.
+Die Speicher-App hat keinen Bereich für Snapshots. Snapshots erscheinen in der Oberfläche als Wiederherstellungspunkte: ein Schalter pro freigegebenem Ordner unter Einstellungen > **Freigegebene Ordner**, der einmal am Tag einen Snapshot des Datasets des Ordners macht und die neuesten 7 behält, und **Frühere Versionen** in Dateien, um ältere Versionen zurückzuholen. Siehe [Freigegebene Ordner](/de/docs/admin/shared-folders/). Snapshots von Hand, Festhalten, das Zurücksetzen eines Datasets und andere Zeitpläne gibt es in der Oberfläche nicht.
 
 ## Importieren und exportieren
 

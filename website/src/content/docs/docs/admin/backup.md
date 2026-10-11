@@ -1,7 +1,7 @@
 ---
 title: 'Backup and restore'
 description: 'Save the configuration of the box in an encrypted file and restore it, and what the backup does not cover.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 11

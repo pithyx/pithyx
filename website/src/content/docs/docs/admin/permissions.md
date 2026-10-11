@@ -1,7 +1,7 @@
 ---
 title: 'Permissions'
 description: 'How rights are given to users and groups, how shared folder, protocol and app access combine, and when a change takes effect.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 6

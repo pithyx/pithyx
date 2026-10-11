@@ -1,7 +1,7 @@
 ---
 title: 'Dateidienste'
 description: 'SMB, SFTP, WebDAV und FTP ein- oder ausschalten, mit ihren Ports, Standardwerten und Grenzen.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 7
@@ -13,7 +13,7 @@ Welcher Benutzer welchen Dienst nutzen darf, wird pro Benutzer oder Gruppe festg
 
 ## SMB
 
-Schalte **Freigegebene Ordner über SMB anbieten** ein; die Standard-Arbeitsgruppe ist `WORKGROUP` (1 bis 15 Zeichen: Buchstaben, Ziffern, Punkt, Bindestrich, Unterstrich, beginnend mit einem Buchstaben oder einer Ziffer). SMB stellt Windows, macOS und Linux Netzlaufwerke auf Port 445 bereit. Es werden nur signierte Verbindungen aktueller Systeme (SMB 3) akzeptiert, verschlüsselt, sobald der Client es kann, und immer verschlüsselt bei freigegebenen Ordnern mit **Verschlüsselung über SMB verlangen** (siehe [Freigegebene Ordner](/de/docs/admin/shared-folders/#verschlüsselung-über-smb)); Gäste werden abgelehnt, und NetBIOS ist aus. Pithyx schreibt `/etc/samba/smb.conf` bei jeder Änderung selbst; eigene Samba-Einstellungen gehören in `/etc/samba/pithyx.local.conf`, die Pithyx einbindet und nie beschreibt. Die Datei wird mit `testparm` geprüft, bevor Samba neu lädt.
+Schalte **Freigegebene Ordner über SMB anbieten** ein; die Standard-Arbeitsgruppe ist `WORKGROUP` (1 bis 15 Zeichen: Buchstaben, Ziffern, Punkt, Bindestrich, Unterstrich, beginnend mit einem Buchstaben oder einer Ziffer; wird in Großbuchstaben gespeichert). SMB stellt Windows, macOS und Linux Netzlaufwerke auf Port 445 bereit. Es werden nur signierte Verbindungen aktueller Systeme (SMB 3) akzeptiert, verschlüsselt, wenn der Client es verlangt, und immer verschlüsselt bei freigegebenen Ordnern mit **Verschlüsselung über SMB verlangen** (siehe [Freigegebene Ordner](/de/docs/admin/shared-folders/#verschlüsselung-über-smb)); Gäste werden abgelehnt, und NetBIOS ist aus. Pithyx schreibt `/etc/samba/smb.conf` bei jeder Änderung selbst; eigene Samba-Einstellungen gehören in `/etc/samba/pithyx.local.conf`, die Pithyx einbindet und nie beschreibt. Die Datei wird mit `testparm` geprüft, bevor Samba neu lädt.
 
 Verbinde dich im Windows-Explorer mit `\\<adresse>\<freigabe>`, unter macOS oder Linux mit `smb://<adresse>`. Die Box macht sich im Netzwerk nicht bekannt (kein WS-Discovery, kein mDNS), daher verbinden sich Clients über die Adresse. Gelöschtes geht in den Papierkorb, und die täglichen Wiederherstellungspunkte erscheinen in Windows als „Vorgängerversionen“.
 

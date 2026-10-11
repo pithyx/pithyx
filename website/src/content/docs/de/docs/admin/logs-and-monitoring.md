@@ -1,7 +1,7 @@
 ---
 title: 'Logs und Überwachung'
 description: 'Das Protokoll-Center, der Ressourcenmonitor und Benachrichtigungen: was sie zeigen, wie lange Daten bleiben und was sie kosten.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 12
