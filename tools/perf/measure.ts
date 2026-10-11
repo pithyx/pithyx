@@ -2,7 +2,7 @@
 // to a usable sign-in screen, click to visible feedback, sign-in to a usable desktop and the reloads. The CI budgets
 // (e2e/tests/budgets.spec.ts) use the same measurements.
 //
-//   node tools/perf/measure.ts --url http://192.168.168.40:7484 [--user admin --password '...'] [--runs 5]
+//   node tools/perf/measure.ts --url http://box.local:7484 [--user admin --password '...'] [--runs 5]
 import { chromium } from '@playwright/test';
 import { parseArgs } from 'node:util';
 import { MIN_RUNS, measureRound, median, type Round } from '../../e2e/tests/performance.ts';

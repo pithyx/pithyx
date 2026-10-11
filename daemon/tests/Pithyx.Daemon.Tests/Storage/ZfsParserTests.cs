@@ -79,7 +79,7 @@ public sealed class ZfsParserTests
         Assert.True(dataset.AvailableBytes > dataset.UsedBytes);
     }
 
-    // Recorded on dev01 from the owner's test pool, read-only.
+    // Recorded on a dev VM from a test pool, read-only.
     [Fact]
     public void DatasetsCarryLimitsCompressionAndBlockSizes()
     {

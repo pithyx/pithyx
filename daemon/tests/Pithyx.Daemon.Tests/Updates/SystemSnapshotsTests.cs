@@ -63,7 +63,7 @@ public sealed class SystemSnapshotsTests
 
     [Fact]
     public void ADevelopmentMachineIsNot() =>
-        Assert.Equal("not_btrfs", SystemSnapshots.CheckLayout(Fixture("dev01-root.json"), null).Reason);
+        Assert.Equal("not_btrfs", SystemSnapshots.CheckLayout(Fixture("devbox-root.json"), null).Reason);
 
     [Fact]
     public void AnotherDeviceIsNotTheSystemArray() =>

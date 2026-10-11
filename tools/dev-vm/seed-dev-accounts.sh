@@ -3,8 +3,9 @@
 #
 #   tools/dev-vm/seed-dev-accounts.sh
 #
-# The owner account comes from ~/.config/pithyx-dev/owner.env (mode 600, never in the repo). When the file is missing,
-# it is created with the user name gabriel and a random password. On a fresh database the script runs the setup with
+# The config folder is ~/.config/pithyx-dev (override: PITHYX_DEV_CONFIG).
+# The owner account comes from owner.env there (mode 600, never in the repo). When the file is missing,
+# it is created with the user name admin (override: PITHYX_OWNER_USERNAME) and a random password. On a fresh database the script runs the setup with
 # it and stores the recovery key in the same file; otherwise it only checks that the owner can sign in. The owner
 # account is never changed.
 #
@@ -13,7 +14,7 @@
 set -euo pipefail
 
 readonly URL=http://127.0.0.1:7484
-readonly CONFIG="$HOME/.config/pithyx-dev"
+readonly CONFIG="${PITHYX_DEV_CONFIG:-$HOME/.config/pithyx-dev}"
 readonly OWNER_ENV="$CONFIG/owner.env"
 readonly E2E_ENV="$CONFIG/e2e.env"
 jar="$(mktemp)"
@@ -59,7 +60,7 @@ json_credentials() {
 
 install -d -m 0700 "$CONFIG"
 if [[ ! -f "$OWNER_ENV" ]]; then
-  set_value "$OWNER_ENV" PITHYX_OWNER_USERNAME gabriel
+  set_value "$OWNER_ENV" PITHYX_OWNER_USERNAME "${PITHYX_OWNER_USERNAME:-admin}"
   set_value "$OWNER_ENV" PITHYX_OWNER_PASSWORD "$(random_password)"
   echo "created $OWNER_ENV"
 fi

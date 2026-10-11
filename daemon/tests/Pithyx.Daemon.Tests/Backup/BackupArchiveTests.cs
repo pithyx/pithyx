@@ -87,7 +87,7 @@ public sealed class BackupArchiveTests
     {
         var at = new DateTimeOffset(2026, 10, 3, 18, 5, 0, TimeSpan.FromHours(2));
 
-        Assert.Equal("pithyx-config-dev01-20261003-1605.pithyxbackup", ConfigBackupService.FileName("DEV01", at));
+        Assert.Equal("pithyx-config-devbox-20261003-1605.pithyxbackup", ConfigBackupService.FileName("DEVBOX", at));
         Assert.Equal("pithyx-config-my-nas-local-20261003-1605.pithyxbackup", ConfigBackupService.FileName("my nas.local", at));
         Assert.Equal("pithyx-config-box-20261003-1605.pithyxbackup", ConfigBackupService.FileName("", at));
     }

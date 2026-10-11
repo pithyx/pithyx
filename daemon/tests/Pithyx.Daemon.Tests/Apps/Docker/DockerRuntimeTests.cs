@@ -107,11 +107,11 @@ public sealed class DockerRuntimeTests
     [Fact]
     public void SubordinateIdsOfTheRemapUserAreReplacedAndOthersKept()
     {
-        var existing = "gabriel:100000:65536\npithyx-docker:1:2\nbackup:165536:65536\n";
+        var existing = "alice:100000:65536\npithyx-docker:1:2\nbackup:165536:65536\n";
         var written = DockerHost.SubIds(existing, DockerHost.SubuidLines);
 
         Assert.Equal(
-            "gabriel:100000:65536\nbackup:165536:65536\npithyx-docker:1000000000:40000\npithyx-docker:40000:10000\npithyx-docker:1000050000:15536\n",
+            "alice:100000:65536\nbackup:165536:65536\npithyx-docker:1000000000:40000\npithyx-docker:40000:10000\npithyx-docker:1000050000:15536\n",
             written);
         Assert.Equal(written, DockerHost.SubIds(written, DockerHost.SubuidLines));
         Assert.Equal(

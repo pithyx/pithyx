@@ -174,9 +174,9 @@ public sealed class NetworkApiTests
     [Fact]
     public void ParsesTheKernelsAndNetworkdsState()
     {
-        // Recorded on dev01: DHCP through ifupdown gives the default route metric 1002.
+        // Recorded on a dev VM: DHCP through ifupdown gives the default route metric 1002.
         var routes = NetworkParsers.Ipv4DefaultRoutes(Fixture("proc-net-route"));
-        Assert.Equal([new DefaultRoute("ens18", IPAddress.Parse("192.168.168.1"), 1002)], routes);
+        Assert.Equal([new DefaultRoute("ens18", IPAddress.Parse("192.168.1.1"), 1002)], routes);
         Assert.Empty(NetworkParsers.Ipv6DefaultRoutes(Fixture("proc-net-ipv6_route")));
         var ipv6 = NetworkParsers.Ipv6DefaultRoutes(Fixture("proc-net-ipv6_route-gateway"));
         Assert.Equal([new DefaultRoute("ptest0", IPAddress.Parse("fd77::1"), 1024)], ipv6);

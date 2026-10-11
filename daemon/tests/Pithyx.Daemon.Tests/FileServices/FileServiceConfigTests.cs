@@ -36,8 +36,8 @@ public sealed class FileServiceConfigTests
     [Fact]
     public void ParsesGroupsWithTheirMembers()
     {
-        var dev01 = GroupParser.Parse(Fixture("etc-group", "dev01"));
-        Assert.Contains(dev01, group => group.Name == "users" && group.Gid == 100 && group.Members.SequenceEqual(["gabriel"]));
+        var devbox = GroupParser.Parse(Fixture("etc-group", "devbox"));
+        Assert.Contains(devbox, group => group.Name == "users" && group.Gid == 100 && group.Members.SequenceEqual(["alice"]));
 
         var handwritten = GroupParser.Parse(Fixture("etc-group", "handwritten-pithyx"));
         Assert.Equal(["root", "users", "pithyx-users", "pithyx-sftp"], handwritten.Select(group => group.Name));

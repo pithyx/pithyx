@@ -16,10 +16,10 @@ public sealed class AccountReconcilerTests
     [Fact]
     public void ParsesRealAndHandwrittenPasswdFiles()
     {
-        var dev01 = Passwd("dev01");
-        Assert.Contains(dev01, entry => entry is { Name: "root", Uid: 0, Gid: 0, Home: "/root" });
-        Assert.Contains(dev01, entry => entry is { Name: "nobody", Uid: 65534 });
-        Assert.DoesNotContain(dev01, entry => AccountReconciler.IsManaged(entry.Uid));
+        var devbox = Passwd("devbox");
+        Assert.Contains(devbox, entry => entry is { Name: "root", Uid: 0, Gid: 0, Home: "/root" });
+        Assert.Contains(devbox, entry => entry is { Name: "nobody", Uid: 65534 });
+        Assert.DoesNotContain(devbox, entry => AccountReconciler.IsManaged(entry.Uid));
 
         var managed = Passwd("handwritten-managed");
         Assert.Equal(["root", "daemon", "owner", "admin", "rita", "gone", "backup", "appuser"], managed.Select(entry => entry.Name));

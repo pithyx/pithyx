@@ -176,7 +176,7 @@ nic_name() {
   json "[l['name'] for l in d['$2'] if l['macAddress'] == '$1'][0]"
 }
 
-# --update: the VM's disks on dev01 through qemu-nbd for a moment, while the VM is off. udev may assemble the VM's arrays
+# --update: the VM's disks through qemu-nbd for a moment, while the VM is off. udev may assemble the VM's arrays
 # by itself; they are stopped and the system array is assembled under a name of the test's.
 nbd_attach() {
   local index=0 disk md

@@ -5,7 +5,7 @@
 #
 #   tools/release/sign-update.sh <file.pithyxupdate> --key <pem file> --key-id <id> [--append]
 #
-# Keys (tools/release/create-key.sh): pithyx-beta-1 signs beta files and lives on dev01 in ~/.config/pithyx-dev/;
+# Keys (tools/release/create-key.sh): pithyx-beta-1 signs beta files and lives on the maintainer's dev machine in ~/.config/pithyx-dev/;
 # pithyx-release-1 signs stable files and only the owner holds it. --append keeps the signatures already in the file
 # (signing with an old and a new key during a rotation); otherwise a signature by another key is replaced. A key the
 # box does not trust yet (missing from tools/release/keys.json) is checked with its own public half and named.

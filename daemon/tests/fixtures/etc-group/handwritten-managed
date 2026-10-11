@@ -1,5 +1,5 @@
 root:x:0:
-users:x:100:gabriel
+users:x:100:alice
 staff:x:50:
 engineering:x:30000:ada,rita
 stale:x:30001:tom

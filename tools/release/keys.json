@@ -1,5 +1,5 @@
 {
-  "$comment": "The public halves of the keys that sign update files and channels (D338), with the channels a box trusts each for. UpdateKeys in the daemon builds in the same keys; a test compares them. pithyx-release-1 (stable and beta) and its offline reserve pithyx-release-2 are the owner's; pithyx-beta-1 lives on dev01.",
+  "$comment": "The public halves of the keys that sign update files and channels (D338), with the channels a box trusts each for. UpdateKeys in the daemon builds in the same keys; a test compares them. pithyx-release-1 (stable and beta) and its offline reserve pithyx-release-2 are held offline by the maintainer; pithyx-beta-1 lives on the maintainer's dev machine.",
   "keys": [
     {
       "keyId": "pithyx-release-1",

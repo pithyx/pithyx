@@ -5,7 +5,7 @@
 #   tools/release/create-key.sh <key id> <file>
 #
 # The private key goes to <file> as PEM with mode 600 and never into the repository, a chat or a log. pithyx-beta-1
-# lives on dev01 in ~/.config/pithyx-dev/; pithyx-release-1 (stable) only the owner holds. The script refuses to
+# lives on the maintainer's dev machine in ~/.config/pithyx-dev/; pithyx-release-1 (stable) only the owner holds. The script refuses to
 # overwrite an existing file.
 set -euo pipefail
 

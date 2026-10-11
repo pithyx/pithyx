@@ -7,7 +7,7 @@ public sealed class CredentialRulesTests
 {
     [Theory]
     [InlineData("admin", "admin")]
-    [InlineData(" Gabriel ", "gabriel")]
+    [InlineData(" Alice ", "alice")]
     [InlineData("_svc-backup_1", "_svc-backup_1")]
     [InlineData("abcdefghijklmnopqrstuvwxyz012345", "abcdefghijklmnopqrstuvwxyz012345")]
     public void AcceptsLinuxUserNamesInLowerCase(string input, string expected) =>
