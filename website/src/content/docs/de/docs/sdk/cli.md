@@ -1,7 +1,7 @@
 ---
 title: '@pithyx/cli'
 description: 'Der Befehl pithyx: validate, lock, build, pack, dev und die Katalog-Befehle.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 4
@@ -63,4 +63,4 @@ Der Signaturschlüssel wird nie als Flag akzeptiert. Siehe [In einem Katalog ver
 
 ## JavaScript-API
 
-`@pithyx/cli` exportiert die Validatoren auch zur Verwendung in Skripten: `validateManifest`, `validateCompose`, `validateIcon`, `checkLayout`, `isSafePath`, `pack`, `packageName`, `readProject`, `resolveLock`, `formatLock`, `isValidCron` und `describe`, sowie die Konstanten `MANIFEST_FILE`, `ICON_FILE`, `LOCK_FILE`, `CHECKSUMS_FILE`, `ARCHITECTURES`, `SUPPORTED_MANIFEST_VERSION` und `RESERVED_ID_PREFIX`.
+`@pithyx/cli` exportiert die Validatoren auch zur Verwendung in Skripten, unter anderem: `validateManifest`, `validateCompose`, `validateIcon`, `checkLayout`, `isSafePath`, `pack`, `packageName`, `readProject`, `resolveLock`, `formatLock`, `isValidCron` und `describe`, sowie die Konstanten `MANIFEST_FILE`, `ICON_FILE`, `LOCK_FILE`, `CHECKSUMS_FILE`, `ARCHITECTURES`, `SUPPORTED_MANIFEST_VERSION` und `RESERVED_ID_PREFIX`.

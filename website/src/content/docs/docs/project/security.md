@@ -1,7 +1,7 @@
 ---
 title: 'Reporting a vulnerability'
 description: 'How to report a security issue privately and what happens next.'
-status: draft
+status: ready
 sidebar:
   order: 4
 ---
@@ -16,4 +16,4 @@ Report a security problem privately through GitHub security advisories, not in a
 
 ## What happens next
 
-The project answers as soon as possible and coordinates a fix and its disclosure with you. There are no fixed response times and no supported-versions table yet: Pithyx is pre-alpha and has no released versions.
+The project answers as soon as possible and coordinates a fix and its disclosure with you. There are no fixed response times and no supported-versions table yet: Pithyx has not been released yet; the first release will be 1.0.0-beta.1.

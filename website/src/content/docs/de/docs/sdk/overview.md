@@ -1,7 +1,7 @@
 ---
 title: 'SDK im Überblick'
 description: 'Die drei npm-Pakete, ihre Versionen und wie sie zusammenspielen.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 1

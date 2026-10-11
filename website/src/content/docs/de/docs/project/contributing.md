@@ -1,13 +1,13 @@
 ---
 title: 'Mitmachen'
 description: 'Wie du Fehler meldest, Änderungen vorschlägst und Pull Requests schickst.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 3
 ---
 
-Pithyx wird offen auf GitHub entwickelt, unter `pithyx/pithyx`. Pull Requests gehen an den Branch `dev`, Commits tragen ein Sign-off, und jeder Pull Request folgt einer kurzen Checkliste. Das Projekt ist Pre-Alpha: Es gibt noch kein Release.
+Pithyx wird offen auf GitHub entwickelt, unter `pithyx/pithyx`. Pull Requests gehen an den Branch `dev`, Commits tragen ein Sign-off, und jeder Pull Request folgt einer kurzen Checkliste. Das erste Release wird 1.0.0-beta.1; es gibt noch kein Release.
 
 ## Fehler melden
 

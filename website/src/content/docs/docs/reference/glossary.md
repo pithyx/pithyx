@@ -1,7 +1,7 @@
 ---
 title: 'Glossary'
 description: 'The words Pithyx uses and what each one means.'
-status: draft
+status: ready
 sidebar:
   order: 4
 ---
