@@ -1,7 +1,7 @@
 ---
 title: 'Fehler, Tracing und Logging'
 description: 'Fehlercodes und Problem Details, Request-IDs, strukturierte Logs und das Maskieren von Geheimnissen.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 3
@@ -50,7 +50,7 @@ Der Daemon loggt mit Serilog als kompaktes JSON, mit der gerenderten Meldung, an
 
 Die Standardstufe ist Information; ASP.NET Core und der Proxy loggen ab Warning. Jeder Eintrag hat die Eigenschaft `RequestId`.
 
-Das Protokoll-Center hält Einträge im Speicher (20.000 Einträge) und schreibt sie im Sekundentakt in Stapeln. Quellen sind `daemon`, `system/<unit>` (aus dem Journal gelesen) und `app/<id>` (App-Logs und Container-Ausgabe). Standardwerte: 30 Tage Aufbewahrung (1 bis 365 Tage), 4 GiB Höchstgröße, eine optionale tägliche Archivkopie auf einen App-Pool. Die Endpunkte sind `GET /api/logs`, `/api/logs/sources`, `/api/logs/export` und, für Administratoren, `GET` und `PUT /api/logs/settings`. Nichts wird irgendwohin gesendet.
+Das Protokoll-Center reiht bis zu 20.000 Einträge im Speicher ein (weitere Einträge werden verworfen, solange die Warteschlange voll ist) und schreibt sie im Sekundentakt in Stapeln. Quellen sind `daemon`, `system/<unit>` (aus dem Journal gelesen) und `app/<id>` (App-Logs und Container-Ausgabe). Standardwerte: 30 Tage Aufbewahrung (1 bis 365 Tage), 4 GiB Höchstgröße (einstellbar von 64 MiB bis 4 GiB), eine optionale tägliche Archivkopie auf einen App-Pool. Die Endpunkte sind `GET /api/logs`, `/api/logs/sources`, `/api/logs/export` und, für Administratoren, `GET` und `PUT /api/logs/settings`. Nichts wird irgendwohin gesendet.
 
 Log-Einträge von Apps sind pro App ratenbegrenzt: ein Burst von 200, danach 20 pro Sekunde.
 

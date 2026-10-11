@@ -1,7 +1,7 @@
 ---
 title: 'Deine erste App'
 description: 'Von einer Vorlage zur laufenden App mit pithyx dev, dann ein Paket zum Installieren.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 2

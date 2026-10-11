@@ -1,7 +1,7 @@
 ---
 title: 'In einem Katalog veröffentlichen'
 description: 'Eine App in den offiziellen oder den Community-Katalog bringen oder einen eigenen Katalog betreiben.'
-status: draft
+status: ready
 audience: developer
 sidebar:
   order: 5
@@ -26,7 +26,7 @@ Jeder Pull Request an einen Projektkatalog wird vom Projekt geprüft: Die App-ID
 Maschinelle Regeln laufen bei jedem Pull Request (`pithyx catalog check`, siehe unten):
 
 - Jede App hat eine `maintainers.json` mit 1 bis 20 GitHub-Logins. Ein Pull Request, der eine App ändert, muss von einem der Maintainer kommen, wie die Datei vor der Änderung aussah. Die Datei einer neuen App muss ihren Autor nennen.
-- Workflows: `check.yml` (Pull Requests, nur lesend), `publish.yml` (Pushes auf `master` schreiben `catalog-next`) und `promote.yml` (manuell, schreibt `catalog` nach der Freigabe in der Umgebung `catalog-release`). Läufe von externen Mitwirkenden warten auf eine Freigabe.
+- Workflows: `check.yaml` (Pull Requests, nur lesend), `publish.yaml` (Pushes auf `master` schreiben `catalog-next`) und `promote.yaml` (manuell, schreibt `catalog` nach der Freigabe in der Umgebung `catalog-release`). Läufe von externen Mitwirkenden warten auf eine Freigabe.
 
 ## Regeln
 
