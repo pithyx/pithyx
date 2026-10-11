@@ -1,7 +1,7 @@
 ---
 title: 'Users and groups'
 description: 'Create users and groups, give them rights, deactivate or delete accounts, and what happens to home folders.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 5
@@ -28,11 +28,11 @@ Choose **Create group** in Settings > **Groups**. A group has a name (same rules
 
 ## Special rights
 
-The rights dialog of a user or group has four special rights: "Administrator (may change everything)", "Sign in to the desktop", "Sign in over SSH with a shell" and "Restart and shut down". Further sections cover file services, apps and shared folders. How rights combine is on [Permissions](/docs/admin/permissions/). Without "Sign in to the desktop" a user cannot sign in to the web desktop; revoking it ends open sessions.
+The rights dialog of a user or group has four special rights: "Administrator (may change everything)", "Sign in to the desktop", "Sign in over SSH with a shell" and "Restart and shut down". Further sections cover file services, apps and shared folders. How rights combine is on [Permissions](/docs/admin/permissions/). Without "Sign in to the desktop" a user cannot sign in to the web desktop; a user who loses it is signed out with the next request.
 
 ## Deactivating and deleting
 
-**Deactivate** gives the user no rights at all and signs them out. You cannot deactivate yourself ([`users.user.self`](/docs/reference/errors/#users.user.self)), and the last administrator can neither be deactivated, deleted nor lose the right ([`users.user.last_admin`](/docs/reference/errors/#users.user.last_admin)).
+**Deactivate** gives the user no rights at all and signs them out; **Activate** gives the rights back. You cannot deactivate yourself ([`users.user.self`](/docs/reference/errors/#users.user.self)), and the last administrator can neither be deactivated, deleted nor lose the right ([`users.user.last_admin`](/docs/reference/errors/#users.user.last_admin)).
 
 **Delete** asks you to type the user name. The account goes; the user's files and home folder stay, and the user id is never given to anyone else. Grants, group memberships and the user's jobs and notifications are removed.
 

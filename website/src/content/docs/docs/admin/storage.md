@@ -1,7 +1,7 @@
 ---
 title: 'Storage and pools'
 description: 'Disks, ZFS pools, datasets, importing and growing a pool, and why some disks are refused.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 3
@@ -53,7 +53,7 @@ The wizard recommends a layout: one disk single, two disks mirror, three to five
 
 The pool name starts with a lowercase letter, then lowercase letters, digits, `-` or `_`, at most 32 characters. The names `mirror`, `raidz`, `raidz1` to `raidz3`, `draid`, `spare`, `log`, `cache`, `special`, `dedup` and `pithyx`, and names that start with `c0`, are reserved.
 
-Every new pool gets the same options: `ashift=12`, `compression=lz4`, `xattr=sa`, `acltype=posixacl`, `atime=off`, `normalization=formD`. Pithyx then creates its dataset layout below `<pool>/pithyx`: `shares`, `homes`, `apps`, `system` and `cache` (quota 2.5 GB, no compression, no automatic snapshots). A pool that Pithyx did not create has no `pithyx` dataset, and Pithyx creates nothing on it ([`storage.pool.not_prepared`](/docs/reference/errors/#storage.pool.not_prepared)).
+Every new pool gets the same options: `ashift=12`, `compression=lz4`, `xattr=sa`, `acltype=posixacl`, `atime=off`, `normalization=formD`. Pithyx then creates its dataset layout below `<pool>/pithyx`: `shares`, `homes`, `apps`, `system` and `cache` (quota 2.5 GiB, no compression, no automatic snapshots). A pool that Pithyx did not create has no `pithyx` dataset, and Pithyx creates nothing on it ([`storage.pool.not_prepared`](/docs/reference/errors/#storage.pool.not_prepared)).
 
 Other pool actions: **Replace…** (always asks for the serial), **Add hot spare…**, **Remove spare**, **Take offline**, **Bring online** and **Destroy pool…**.
 
@@ -73,7 +73,7 @@ Under **Advanced**, **Datasets** > **Show datasets** lists datasets with Name, U
 
 Datasets of homes, apps and the system cannot be renamed or deleted ([`storage.dataset.managed`](/docs/reference/errors/#storage.dataset.managed)), and a dataset used by a shared folder must lose that shared folder first. **Create volume…** makes a block volume on pools that Pithyx set up; the size is at least 1 MiB, rounded up to 16 KiB blocks. A sparse volume can fail writes when the pool fills up.
 
-The Storage app has no snapshot section. Snapshots reach the interface as restore points: one switch per shared folder in Settings > **Shared folders**, which takes a snapshot of the folder's dataset once a day and keeps each for 7 days, and **Previous versions** in Files to get older versions back. See [Shared folders](/docs/admin/shared-folders/). Manual snapshots, holds, rolling back a dataset and other schedules are not in the interface.
+The Storage app has no snapshot section. Snapshots reach the interface as restore points: one switch per shared folder in Settings > **Shared folders**, which takes a snapshot of the folder's dataset once a day and keeps the newest 7, and **Previous versions** in Files to get older versions back. See [Shared folders](/docs/admin/shared-folders/). Manual snapshots, holds, rolling back a dataset and other schedules are not in the interface.
 
 ## Importing and exporting
 
