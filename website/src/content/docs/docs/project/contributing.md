@@ -17,7 +17,7 @@ Open an issue in the repository and choose **Bug report** or **Feature request**
 
 1. Set up the build as described in [Developing the daemon](/docs/developers/daemon/development/). `pnpm install` also installs the git hooks.
 2. Branch from `dev` as `feature/<name>`, `fix/<name>` or `hotfix/<name>`. `master` is stable and receives only release pull requests and hotfixes. Never push directly to `master` or `dev`; the pre-push hook refuses it.
-3. Open the pull request against `dev`. Its title follows the commit format below. The pull request template asks for a summary, how it was tested, and the checklist below.
+3. Open the pull request against `dev`. Its title follows the commit format below. The pull request template asks for a summary, how it was tested, and the checklist below. CI on a pull request from a fork starts only after a maintainer approved the run, and it runs on GitHub-hosted runners.
 
 Checklist:
 
