@@ -520,6 +520,47 @@
         }
       }
     },
+    "/api/proxy/tickets": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "description": "Signed-in users. A one-time ticket (30 seconds) into a proxy host behind the Pithyx sign-in, for the address the browser asked for; the answer is the address to open on that host. Refused with proxy.access.denied when the host does not let the user in.",
+        "operationId": "CreateProxyTicket",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProxyTicketRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProxyTicket"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/system/power": {
       "post": {
         "tags": [
@@ -4922,6 +4963,519 @@
         }
       }
     },
+    "/api/system/proxy": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. The ports proxy hosts answer on, what unknown names get, the sign-in address, and every proxy host, redirect host and stream.",
+        "operationId": "GetProxySettings",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProxySettings"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/proxy/options": {
+      "put": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. What a name no enabled host has gets on 443 and 80 (a redirect to 7484, or 404), and where the Pithyx sign-in of a host sends visitors.",
+        "operationId": "SetProxyOptions",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProxyOptionsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProxySettings"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/proxy/hosts": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. A proxy host: domains on 443 and 80 forwarded to a target. Applies to the next request.",
+        "operationId": "CreateProxyHost",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProxyHostRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProxySettings"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/proxy/hosts/{id}": {
+      "put": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Replaces a proxy host's settings; Basic Auth users without a password keep theirs, an uploaded certificate stays unless a new one comes along.",
+        "operationId": "UpdateProxyHost",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProxyHostRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProxySettings"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Removes a proxy host with its uploaded certificate; its names become unknown.",
+        "operationId": "DeleteProxyHost",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProxySettings"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/proxy/hosts/{id}/check": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Whether a proxy host's target answers one request, with the host's TLS settings.",
+        "operationId": "CheckProxyTarget",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProxyTargetStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/proxy/redirects": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. A redirect host: domains on 443 and 80 redirected to an address.",
+        "operationId": "CreateProxyRedirect",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProxyRedirectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProxySettings"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/proxy/redirects/{id}": {
+      "put": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Replaces a redirect host's settings.",
+        "operationId": "UpdateProxyRedirect",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProxyRedirectRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProxySettings"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Removes a redirect host.",
+        "operationId": "DeleteProxyRedirect",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProxySettings"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/proxy/streams": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. A stream: a TCP and/or UDP port of the box forwarded to a host and port; the firewall opens the port.",
+        "operationId": "CreateProxyStream",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProxyStreamRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProxySettings"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/proxy/streams/{id}": {
+      "put": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Replaces a stream's settings.",
+        "operationId": "UpdateProxyStream",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProxyStreamRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProxySettings"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Removes a stream; the firewall closes its port.",
+        "operationId": "DeleteProxyStream",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProxySettings"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/system/updates": {
       "get": {
         "tags": [
@@ -9207,7 +9761,8 @@
           "storage",
           "system",
           "certificates",
-          "apps"
+          "apps",
+          "reverseProxy"
         ],
         "description": "A part of the configuration that can be restored on its own."
       },
@@ -10644,6 +11199,44 @@
           "notifications.message.invalid",
           "notifications.notification.not_found",
           "permissions.grant.invalid",
+          "proxy.access.denied",
+          "proxy.address.denied",
+          "proxy.address.invalid",
+          "proxy.auth.required",
+          "proxy.basic_auth.invalid",
+          "proxy.basic_auth.password_missing",
+          "proxy.certificate.missing",
+          "proxy.certificate.name_mismatch",
+          "proxy.domain.invalid",
+          "proxy.domain.taken",
+          "proxy.domains.missing",
+          "proxy.domains.too_many",
+          "proxy.header.invalid",
+          "proxy.headers.too_many",
+          "proxy.host.not_found",
+          "proxy.host.unknown",
+          "proxy.limit.out_of_range",
+          "proxy.loop.detected",
+          "proxy.redirect.not_found",
+          "proxy.redirect.status_invalid",
+          "proxy.redirect.target_invalid",
+          "proxy.sign_in.address_invalid",
+          "proxy.sign_in.group_not_found",
+          "proxy.sign_in.user_not_found",
+          "proxy.stream.name_invalid",
+          "proxy.stream.not_found",
+          "proxy.stream.port_in_use",
+          "proxy.stream.port_privileged",
+          "proxy.stream.port_reserved",
+          "proxy.stream.port_taken",
+          "proxy.stream.protocol_missing",
+          "proxy.target.invalid",
+          "proxy.target.loop",
+          "proxy.target.on_box",
+          "proxy.target.timeout",
+          "proxy.target.unavailable",
+          "proxy.ticket.target_invalid",
+          "proxy.websockets.disabled",
           "realtime.message.invalid",
           "realtime.topic.invalid",
           "realtime.topic.unknown",
@@ -13933,6 +14526,844 @@
         },
         "description": "Snapshot and event of `system/processes`."
       },
+      "ProxyBasicAuthUser": {
+        "required": [
+          "username"
+        ],
+        "type": "object",
+        "properties": {
+          "username": {
+            "type": "string",
+            "description": "1 to 64 characters without a colon."
+          },
+          "password": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The password; leave it out to keep the stored one of an existing user."
+          }
+        },
+        "description": "A user of the host's Basic Auth."
+      },
+      "ProxyCertificateSource": {
+        "enum": [
+          "box",
+          "custom"
+        ],
+        "description": "Which certificate a host presents on 443."
+      },
+      "ProxyHeader": {
+        "required": [
+          "name",
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The header's name, letters, digits and `-`; never one the proxy controls itself."
+          },
+          "value": {
+            "type": "string",
+            "description": "Its value, at most 4096 characters, without line breaks."
+          }
+        },
+        "description": "A header the proxy sets; an empty value removes it."
+      },
+      "ProxyHost": {
+        "required": [
+          "id",
+          "domains",
+          "enabled",
+          "target",
+          "webSockets",
+          "http2",
+          "certificate",
+          "presented",
+          "forceHttps",
+          "hsts",
+          "forwardedHeaders",
+          "preserveHost",
+          "hostHeader",
+          "requestHeaders",
+          "responseHeaders",
+          "maxBodyMegabytes",
+          "connectTimeoutSeconds",
+          "responseTimeoutSeconds",
+          "allowAddresses",
+          "denyAddresses",
+          "basicAuthUsers",
+          "signIn",
+          "accessLog",
+          "logSource",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Its number on the box.",
+            "format": "int64"
+          },
+          "domains": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The names it answers."
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "It answers."
+          },
+          "target": {
+            "description": "Where requests go.",
+            "$ref": "#/components/schemas/ProxyTarget"
+          },
+          "webSockets": {
+            "type": "boolean",
+            "description": "WebSocket upgrades pass."
+          },
+          "http2": {
+            "type": "boolean",
+            "description": "HTTP/2 is offered on 443."
+          },
+          "certificate": {
+            "description": "Which certificate it presents.",
+            "$ref": "#/components/schemas/ProxyCertificateSource"
+          },
+          "presented": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "The certificate it presents now; none when the box cannot make one (a name outside the authority's scope).",
+                "$ref": "#/components/schemas/CertificateInfo"
+              }
+            ],
+            "description": "One certificate as Settings shows it."
+          },
+          "forceHttps": {
+            "type": "boolean",
+            "description": "Plain HTTP is redirected to HTTPS."
+          },
+          "hsts": {
+            "type": "boolean",
+            "description": "HTTPS answers carry `Strict-Transport-Security`."
+          },
+          "forwardedHeaders": {
+            "type": "boolean",
+            "description": "`X-Forwarded-*` go to the target."
+          },
+          "preserveHost": {
+            "type": "boolean",
+            "description": "The browser's `Host` goes to the target."
+          },
+          "hostHeader": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The `Host` of the administrator's choice, if any."
+          },
+          "requestHeaders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProxyHeader"
+            },
+            "description": "Headers set on requests."
+          },
+          "responseHeaders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProxyHeader"
+            },
+            "description": "Headers set on answers."
+          },
+          "maxBodyMegabytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The upload limit in MB, or none.",
+            "format": "int32"
+          },
+          "connectTimeoutSeconds": {
+            "type": "integer",
+            "description": "The connect timeout.",
+            "format": "int32"
+          },
+          "responseTimeoutSeconds": {
+            "type": "integer",
+            "description": "The idle timeout of an answer.",
+            "format": "int32"
+          },
+          "allowAddresses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Only these get in, or everybody when empty."
+          },
+          "denyAddresses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "These never get in."
+          },
+          "basicAuthUsers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The user names of the Basic Auth; passwords are never shown."
+          },
+          "signIn": {
+            "description": "The Pithyx sign-in in front of the host.",
+            "$ref": "#/components/schemas/ProxySignInRule"
+          },
+          "accessLog": {
+            "type": "boolean",
+            "description": "Requests are logged."
+          },
+          "logSource": {
+            "type": "string",
+            "description": "The Log Center's source of its requests."
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "When it was made.",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "When it was last saved.",
+            "format": "date-time"
+          }
+        },
+        "description": "A proxy host as Settings shows it."
+      },
+      "ProxyHostRequest": {
+        "required": [
+          "domains",
+          "enabled",
+          "target",
+          "webSockets",
+          "http2",
+          "certificate",
+          "forceHttps",
+          "hsts",
+          "forwardedHeaders",
+          "preserveHost",
+          "hostHeader",
+          "requestHeaders",
+          "responseHeaders",
+          "maxBodyMegabytes",
+          "connectTimeoutSeconds",
+          "responseTimeoutSeconds",
+          "allowAddresses",
+          "denyAddresses",
+          "basicAuth",
+          "signIn",
+          "accessLog"
+        ],
+        "type": "object",
+        "properties": {
+          "domains": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "1 to 50 DNS names, a leading `*.` for any one label in front; no name of another host."
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "The host answers; a disabled one is treated as unknown."
+          },
+          "target": {
+            "description": "Where requests go.",
+            "$ref": "#/components/schemas/ProxyTarget"
+          },
+          "webSockets": {
+            "type": "boolean",
+            "description": "Pass WebSocket upgrades through."
+          },
+          "http2": {
+            "type": "boolean",
+            "description": "Offer HTTP/2 to browsers on 443."
+          },
+          "certificate": {
+            "description": "Which certificate the host presents on 443.",
+            "$ref": "#/components/schemas/ProxyCertificateSource"
+          },
+          "forceHttps": {
+            "type": "boolean",
+            "description": "Redirect plain HTTP on 80 to HTTPS on 443."
+          },
+          "hsts": {
+            "type": "boolean",
+            "description": "Send `Strict-Transport-Security` on HTTPS; browsers then refuse plain HTTP and any certificate warning for a year."
+          },
+          "forwardedHeaders": {
+            "type": "boolean",
+            "description": "Send `X-Forwarded-For`, `-Proto` and `-Host`; incoming ones are always dropped."
+          },
+          "preserveHost": {
+            "type": "boolean",
+            "description": "Send the browser's `Host` instead of the target's."
+          },
+          "hostHeader": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "A `Host` of your own; overrides PreserveHost."
+          },
+          "requestHeaders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProxyHeader"
+            },
+            "description": "Headers set on the request to the target, at most 20."
+          },
+          "responseHeaders": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProxyHeader"
+            },
+            "description": "Headers set on the answer to the browser, at most 20."
+          },
+          "maxBodyMegabytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The largest upload in MB (1 to 1048576); none for no limit.",
+            "format": "int32"
+          },
+          "connectTimeoutSeconds": {
+            "type": "integer",
+            "description": "How long connecting to the target may take, 1 to 300 seconds.",
+            "format": "int32"
+          },
+          "responseTimeoutSeconds": {
+            "type": "integer",
+            "description": "How long the target may stay silent, 1 to 86400 seconds.",
+            "format": "int32"
+          },
+          "allowAddresses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Only these addresses or CIDR ranges get in; empty for everybody."
+          },
+          "denyAddresses": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "These addresses or ranges never get in."
+          },
+          "basicAuth": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProxyBasicAuthUser"
+            },
+            "description": "Users of Basic Auth, at most 20; empty for none."
+          },
+          "signIn": {
+            "description": "The Pithyx sign-in in front of the host.",
+            "$ref": "#/components/schemas/ProxySignInRule"
+          },
+          "accessLog": {
+            "type": "boolean",
+            "description": "Log every request in the Log Center under `proxy/&lt;first domain&gt;`."
+          },
+          "certificatePem": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "With ProxyCertificateSource.Custom: the certificate and its chain in PEM; leave it out to keep the uploaded one."
+          },
+          "privateKeyPem": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Its unencrypted private key in PEM."
+          }
+        },
+        "description": "A proxy host as an administrator saves it."
+      },
+      "ProxyOptionsRequest": {
+        "required": [
+          "unknownHosts"
+        ],
+        "type": "object",
+        "properties": {
+          "unknownHosts": {
+            "description": "What a name no enabled host has gets.",
+            "$ref": "#/components/schemas/UnknownHostAction"
+          },
+          "signInAddress": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "An `https://` or `http://` origin the box's sign-in answers at, such as a proxy host in front of 7484; none for the requested name on 7484."
+          }
+        },
+        "description": "The settings that apply to every host."
+      },
+      "ProxyRedirect": {
+        "required": [
+          "id",
+          "domains",
+          "enabled",
+          "target",
+          "status",
+          "preservePath",
+          "certificate",
+          "presented",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Its number on the box.",
+            "format": "int64"
+          },
+          "domains": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The names it answers."
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "It answers."
+          },
+          "target": {
+            "type": "string",
+            "description": "Where it sends browsers."
+          },
+          "status": {
+            "type": "integer",
+            "description": "The redirect's status code.",
+            "format": "int32"
+          },
+          "preservePath": {
+            "type": "boolean",
+            "description": "The path and query are kept."
+          },
+          "certificate": {
+            "description": "Which certificate it presents.",
+            "$ref": "#/components/schemas/ProxyCertificateSource"
+          },
+          "presented": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "The certificate it presents now, if the box can make one.",
+                "$ref": "#/components/schemas/CertificateInfo"
+              }
+            ],
+            "description": "One certificate as Settings shows it."
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "When it was made.",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "When it was last saved.",
+            "format": "date-time"
+          }
+        },
+        "description": "A redirect host as Settings shows it."
+      },
+      "ProxyRedirectRequest": {
+        "required": [
+          "domains",
+          "enabled",
+          "target",
+          "status",
+          "preservePath",
+          "certificate"
+        ],
+        "type": "object",
+        "properties": {
+          "domains": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "1 to 50 DNS names, as for a proxy host."
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "The host answers."
+          },
+          "target": {
+            "type": "string",
+            "description": "An absolute `http` or `https` URL."
+          },
+          "status": {
+            "type": "integer",
+            "description": "301, 302, 307 or 308.",
+            "format": "int32"
+          },
+          "preservePath": {
+            "type": "boolean",
+            "description": "Append the request's path and query to Target."
+          },
+          "certificate": {
+            "description": "Which certificate the host presents on 443.",
+            "$ref": "#/components/schemas/ProxyCertificateSource"
+          },
+          "certificatePem": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "With ProxyCertificateSource.Custom: the certificate and chain; leave it out to keep the uploaded one."
+          },
+          "privateKeyPem": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Its unencrypted private key."
+          }
+        },
+        "description": "A redirect host as an administrator saves it."
+      },
+      "ProxySettings": {
+        "required": [
+          "plainPort",
+          "tlsPort",
+          "unknownHosts",
+          "signInAddress",
+          "hosts",
+          "redirects",
+          "streams"
+        ],
+        "type": "object",
+        "properties": {
+          "plainPort": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The port proxy hosts answer plain HTTP on (80 on a box); none in development unless set.",
+            "format": "int32"
+          },
+          "tlsPort": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The port proxy hosts answer HTTPS on (443 on a box); none without HTTPS.",
+            "format": "int32"
+          },
+          "unknownHosts": {
+            "description": "What a name no enabled host has gets.",
+            "$ref": "#/components/schemas/UnknownHostAction"
+          },
+          "signInAddress": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Where the Pithyx sign-in of a host sends visitors; none for the requested name on 7484."
+          },
+          "hosts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProxyHost"
+            },
+            "description": "The proxy hosts."
+          },
+          "redirects": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProxyRedirect"
+            },
+            "description": "The redirect hosts."
+          },
+          "streams": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ProxyStream"
+            },
+            "description": "The streams."
+          }
+        },
+        "description": "Settings &gt; Reverse proxy."
+      },
+      "ProxySignInRule": {
+        "required": [
+          "required",
+          "users",
+          "groups"
+        ],
+        "type": "object",
+        "properties": {
+          "required": {
+            "type": "boolean",
+            "description": "Visitors sign in with their account on the box first."
+          },
+          "users": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "User names allowed besides the groups; administrators always are."
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Group names whose members are allowed. With no users and no groups, everybody who may sign in is."
+          }
+        },
+        "description": "Who may pass the host's Pithyx sign-in."
+      },
+      "ProxyStream": {
+        "required": [
+          "id",
+          "name",
+          "enabled",
+          "port",
+          "tcp",
+          "udp",
+          "targetHost",
+          "targetPort",
+          "listening",
+          "createdAt",
+          "updatedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Its number on the box.",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "description": "What it is for."
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "The port is open."
+          },
+          "port": {
+            "type": "integer",
+            "description": "The box's port.",
+            "format": "int32"
+          },
+          "tcp": {
+            "type": "boolean",
+            "description": "TCP is forwarded."
+          },
+          "udp": {
+            "type": "boolean",
+            "description": "UDP is forwarded."
+          },
+          "targetHost": {
+            "type": "string",
+            "description": "Where it forwards to."
+          },
+          "targetPort": {
+            "type": "integer",
+            "description": "The target's port.",
+            "format": "int32"
+          },
+          "listening": {
+            "type": "boolean",
+            "description": "The box listens on the port now; false while disabled or when another program holds it."
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "When it was made.",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "When it was last saved.",
+            "format": "date-time"
+          }
+        },
+        "description": "A stream as Settings shows it."
+      },
+      "ProxyStreamRequest": {
+        "required": [
+          "name",
+          "enabled",
+          "port",
+          "tcp",
+          "udp",
+          "targetHost",
+          "targetPort"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "What it is for, at most 100 characters."
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "The port is open and forwards."
+          },
+          "port": {
+            "type": "integer",
+            "description": "The box's port; not one of the box's own services, below 1024 only with PrivilegedPort.",
+            "format": "int32"
+          },
+          "tcp": {
+            "type": "boolean",
+            "description": "Forward TCP."
+          },
+          "udp": {
+            "type": "boolean",
+            "description": "Forward UDP."
+          },
+          "targetHost": {
+            "type": "string",
+            "description": "A DNS name or IP address."
+          },
+          "targetPort": {
+            "type": "integer",
+            "description": "1 to 65535.",
+            "format": "int32"
+          },
+          "privilegedPort": {
+            "type": "boolean",
+            "description": "The administrator confirmed a port below 1024.",
+            "default": false
+          }
+        },
+        "description": "A stream as an administrator saves it."
+      },
+      "ProxyTarget": {
+        "required": [
+          "scheme",
+          "host",
+          "port",
+          "tls",
+          "onBox"
+        ],
+        "type": "object",
+        "properties": {
+          "scheme": {
+            "type": "string",
+            "description": "`http` or `https`."
+          },
+          "host": {
+            "type": "string",
+            "description": "A DNS name or IP address."
+          },
+          "port": {
+            "type": "integer",
+            "description": "1 to 65535.",
+            "format": "int32"
+          },
+          "tls": {
+            "description": "How an HTTPS target's certificate is checked.",
+            "$ref": "#/components/schemas/ProxyTargetTls"
+          },
+          "onBox": {
+            "type": "boolean",
+            "description": "The administrator confirmed that the target is a service of this box itself."
+          }
+        },
+        "description": "Where a proxy host forwards to."
+      },
+      "ProxyTargetStatus": {
+        "required": [
+          "reachable",
+          "status",
+          "error",
+          "milliseconds"
+        ],
+        "type": "object",
+        "properties": {
+          "reachable": {
+            "type": "boolean",
+            "description": "The target answered with any HTTP status."
+          },
+          "status": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Its status code, if it answered.",
+            "format": "int32"
+          },
+          "error": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Why not: `timeout`, `refused`, `dns`, `tls` or `other`."
+          },
+          "milliseconds": {
+            "type": "integer",
+            "description": "How long the check took.",
+            "format": "int64"
+          }
+        },
+        "description": "Whether a proxy host's target answers."
+      },
+      "ProxyTargetTls": {
+        "enum": [
+          "system",
+          "box",
+          "none"
+        ],
+        "description": "How the proxy checks the certificate of an HTTPS target."
+      },
+      "ProxyTicket": {
+        "required": [
+          "url"
+        ],
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The address to open."
+          }
+        },
+        "description": "Where the browser goes next: the proxy host's sign-in address with a one-time ticket."
+      },
+      "ProxyTicketRequest": {
+        "required": [
+          "url"
+        ],
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The address it asked for."
+          }
+        },
+        "description": "A browser wants into a proxy host with the Pithyx sign-in."
+      },
       "RecoverRequest": {
         "required": [
           "username",
@@ -17131,6 +18562,13 @@
             "format": "int32"
           }
         }
+      },
+      "UnknownHostAction": {
+        "enum": [
+          "redirect",
+          "notFound"
+        ],
+        "description": "What 443 and 80 do with a name no enabled host has."
       },
       "UnmountedDataset": {
         "required": [

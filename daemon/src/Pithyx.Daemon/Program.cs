@@ -20,6 +20,7 @@ using Pithyx.Daemon.Network;
 using Pithyx.Daemon.Notifications;
 using Pithyx.Daemon.Permissions;
 using Pithyx.Daemon.Realtime;
+using Pithyx.Daemon.ReverseProxy;
 using Pithyx.Daemon.Shares;
 using Pithyx.Daemon.Storage;
 using Pithyx.Daemon.Storage.Health;
@@ -63,9 +64,15 @@ var httpPort = builder.Environment.IsDevelopment() && int.TryParse(builder.Confi
     : HttpPort;
 var installer = InstallerEnvironment.Resolve(builder.Configuration, mode, Path.GetDirectoryName(paths.DatabasePath) ?? ".");
 // HTTPS in real mode (D346); the live system's installer and simulation stay on plain HTTP. A box (production build)
-// also listens on 80 and, with HTTPS, on 443; both redirect to 7484 (WebTransport).
+// also listens on 80 and, with HTTPS, on 443 for the reverse proxy, which redirects unknown names to 7484
+// (WebTransport, D347). A development build takes those ports from PITHYX_DEV_PROXY_PORTS.
 var https = mode == DaemonMode.Real && !installer.Active && !BuildTimeDocument.IsGenerating;
-var transport = WebTransport.For(httpPort, https, box: mode == DaemonMode.Real && !builder.Environment.IsDevelopment());
+var transport = WebTransport.For(
+    httpPort,
+    https,
+    box: mode == DaemonMode.Real && !builder.Environment.IsDevelopment(),
+    builder.Environment.IsDevelopment() && !installer.Active ? builder.Configuration["PITHYX_DEV_PROXY_PORTS"] : null);
+builder.Services.AddSingleton(transport);
 builder.WebHost.ConfigureKestrel(transport.Listen);
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
@@ -113,6 +120,7 @@ builder.Services.AddPithyxMonitoring();
 builder.Services.AddPithyxSystemSettings(mode);
 builder.Services.AddPithyxNetwork(mode);
 builder.Services.AddPithyxTls(new TlsOptions(Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "tls"), https, ReadHost: mode == DaemonMode.Real));
+builder.Services.AddPithyxReverseProxy();
 builder.Services.AddSingleton(services => new DaemonRestart(services.GetRequiredService<IHostApplicationLifetime>(), mode, services.GetRequiredService<TimeProvider>()));
 builder.Services.AddPithyxInstaller(installer);
 builder.Services.AddPithyxBackup(mode == DaemonMode.Real
@@ -155,6 +163,8 @@ if (!BuildTimeDocument.IsGenerating)
     {
         builder.Services.AddHostedService(services => services.GetRequiredService<BoxCertificates>());
         builder.Services.AddHostedService(services => services.GetRequiredService<Pithyx.Daemon.FileServices.Ftp.FtpServer>());
+        builder.Services.AddHostedService(services => services.GetRequiredService<ProxyService>());
+        builder.Services.AddHostedService(services => services.GetRequiredService<StreamForwarder>());
     }
 }
 builder.Services.AddPithyxOpenApi();
@@ -212,6 +222,7 @@ if (!BuildTimeDocument.IsGenerating)
     if (!installer.Active)
     {
         await app.Services.GetRequiredService<BoxCertificates>().LoadAsync(CancellationToken.None);
+        await app.Services.GetRequiredService<ProxyService>().LoadAsync(CancellationToken.None);
     }
     if (!https)
     {
@@ -220,6 +231,11 @@ if (!BuildTimeDocument.IsGenerating)
 }
 
 app.UseMiddleware<RequestIdMiddleware>();
+// The reverse proxy answers its names on 80 and 443 before anything else of the daemon sees the request.
+if (!installer.Active)
+{
+    app.UseMiddleware<HostProxy>();
+}
 app.UseMiddleware<TransportRedirect>(transport);
 app.UseSerilogRequestLogging(options => options.Logger = app.Services.GetRequiredService<Serilog.ILogger>());
 app.UseExceptionHandler();
@@ -277,6 +293,7 @@ if (!installer.Active)
     api.MapSystemSettingsEndpoints();
     api.MapNetworkEndpoints();
     api.MapTlsEndpoints();
+    api.MapProxyEndpoints();
     api.MapUpdateEndpoints();
     api.MapPowerEndpoint();
     api.MapBackupEndpoints();

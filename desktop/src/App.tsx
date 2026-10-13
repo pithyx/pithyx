@@ -3,6 +3,7 @@ import type { components } from '@pithyx/api-client';
 import { lazy, Suspense, useEffect, useState, useSyncExternalStore } from 'react';
 import { fetchSession, fetchSetupStatus, queryKeys } from './api/queries';
 import { LoginScreen } from './auth/LoginScreen';
+import { continueHost, dropContinue, ProxyContinue, proxyContinue } from './auth/ProxyContinue';
 import { initialsOf, WelcomeCard } from './auth/parts';
 import { clearSessionHint, readSessionHint, writeSessionHint } from './auth/sessionHint';
 import { SetupScreen } from './auth/SetupScreen';
@@ -125,6 +126,8 @@ export function App() {
   const realtime = useRealtime((state) => state.status);
   const hasError = useErrorStore((state) => state.current !== null);
   const [intro, setIntro] = useState<Intro>('none');
+  // A proxy host behind the Pithyx sign-in sent the browser here; after signing in it goes back there.
+  const [continuing, setContinuing] = useState(proxyContinue);
 
   function signedIn(user: User) {
     if (setup.data?.required === true) {
@@ -158,6 +161,17 @@ export function App() {
         <InstallerScreen />
       </Suspense>
     );
+  } else if (continuing !== null && session.data !== undefined && !sessionEnded) {
+    screen =
+      confirmedUser === undefined ? null : (
+        <ProxyContinue
+          url={continuing}
+          onDesktop={() => {
+            dropContinue();
+            setContinuing(null);
+          }}
+        />
+      );
   } else if (session.data !== undefined && !sessionEnded) {
     const name = session.data.displayName ?? session.data.username;
     screen = (
@@ -195,7 +209,11 @@ export function App() {
         {setup.data.required ? (
           <SetupScreen hostname={setup.data.hostname} onSignedIn={signedIn} />
         ) : (
-          <LoginScreen hostname={setup.data.hostname} onSignedIn={signedIn} />
+          <LoginScreen
+            hostname={setup.data.hostname}
+            continueTo={continuing === null ? undefined : continueHost(continuing)}
+            onSignedIn={signedIn}
+          />
         )}
         <PrefetchDesktop />
       </>

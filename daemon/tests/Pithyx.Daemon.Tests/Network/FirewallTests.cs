@@ -79,7 +79,7 @@ public sealed class FirewallTests : IDisposable
         Assert.False(initial.GetProperty("privateNetworksOnly").GetBoolean());
         Assert.False(initial.GetProperty("firewallActive").GetBoolean());
         // SMB is on from the first boot.
-        Assert.Equal(new FirewallPlan(Smb: true, Ssh: false, Ftp: false, PrivateNetworksOnly: false), await firewall.WantedAsync(Token));
+        Assert.Equal(new FirewallPlan(Smb: true, Ssh: false, Ftp: false, PrivateNetworksOnly: false), WithoutStreams(await firewall.WantedAsync(Token)));
 
         using (var changed = await _admin.PutAsJsonAsync("/api/file-services", new { smbEnabled = false, sftpEnabled = true, ftpEnabled = true }, Token))
         {
@@ -92,10 +92,21 @@ public sealed class FirewallTests : IDisposable
         using (await _admin.PutAsJsonAsync("/api/file-services", new { sftpEnabled = false, sshEnabled = true, ftpEnabled = false }, Token))
         {
         }
-        Assert.Equal(new FirewallPlan(Smb: false, Ssh: true, Ftp: false, PrivateNetworksOnly: false), await firewall.WantedAsync(Token));
+        Assert.Equal(new FirewallPlan(Smb: false, Ssh: true, Ftp: false, PrivateNetworksOnly: false), WithoutStreams(await firewall.WantedAsync(Token)));
 
         using var limited = await _admin.PutAsJsonAsync("/api/file-services", new { privateNetworksOnly = true }, Token);
         Assert.True((await limited.JsonAsync()).GetProperty("privateNetworksOnly").GetBoolean());
         Assert.Contains("ip6 saddr { fc00::/7, fe80::/10 } tcp dport { 22 } accept", firewall.Rules, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void StreamsOpenTheirPortsToEverySource()
+    {
+        var lines = Firewall.Render(new FirewallPlan(Smb: true, Ssh: false, Ftp: false, PrivateNetworksOnly: true, TcpStreams: [25565, 2222], UdpStreams: [51820])).Split('\n');
+
+        Assert.Contains("add rule inet pithyx input tcp dport { 2222, 25565 } accept", lines);
+        Assert.Contains("add rule inet pithyx input udp dport { 51820 } accept", lines);
+    }
+
+    private static FirewallPlan WithoutStreams(FirewallPlan plan) => plan with { TcpStreams = null, UdpStreams = null };
 }

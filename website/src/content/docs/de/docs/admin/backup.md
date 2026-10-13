@@ -29,7 +29,8 @@ Kategorien, die du bei der Wiederherstellung wählen kannst:
 - **Freigegebene Ordner und Dateidienste**: freigegebene Ordner mit ihren Rechten und die Einstellungen für SMB, SFTP, WebDAV und FTP.
 - **Speicher-Einstellungen**: Snapshot-Zeitpläne (Wiederherstellungspunkte), Scrub- und Selbsttest-Zeitpläne.
 - **Systemeinstellungen**: Sprache, Formate, Zeitzone, Zeitserver und Aufbewahrung der Logs.
-- **Zertifikate und Schlüssel**: das FTP-Zertifikat und die SSH-Host-Schlüssel, soweit vorhanden.
+- **Zertifikate und Schlüssel**: die Zertifizierungsstelle und die Zertifikate der Box, hochgeladene Zertifikate von Hosts des Reverse Proxys und die SSH-Host-Schlüssel, soweit vorhanden.
+- **Reverse Proxy**: Proxy-Hosts (mit Basic-Auth-Benutzern als Hashes), Weiterleitungs-Hosts, Streams, was unbekannte Namen bekommen, und die Anmeldeadresse.
 - **Apps**: die App-Registry, Berechtigungen, Ordnerzuordnungen, Kataloge und der App-Pool. Die Dateien und Daten der Apps bleiben auf dem Pool.
 
 Nicht enthalten: Dateien auf Pools, App-Daten, Logs, Docker-Daten, Sitzungen, Jobs, Benachrichtigungen, der Index des Papierkorbs und die Netzwerkeinstellungen (Karten heißen auf anderer Hardware anders).

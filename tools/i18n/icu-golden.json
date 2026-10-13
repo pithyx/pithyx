@@ -855,6 +855,215 @@
       },
       "expected": "The right “share:7” cannot be given like this: it is unknown, given twice, or the level does not fit (read or read and write for a shared folder)."
     },
+    "proxy.access.denied": {
+      "params": {
+        "host": "jellyfin.home.arpa"
+      },
+      "expected": "You may not open jellyfin.home.arpa. An administrator can let you in on the proxy host."
+    },
+    "proxy.address.denied": {
+      "params": {},
+      "expected": "Your address may not open this page."
+    },
+    "proxy.address.invalid": {
+      "params": {
+        "value": "300.1.1.1"
+      },
+      "expected": "“300.1.1.1” is no IP address and no range such as 192.168.1.0/24."
+    },
+    "proxy.auth.required": {
+      "params": {},
+      "expected": "Sign in first."
+    },
+    "proxy.basic_auth.invalid": {
+      "params": {
+        "username": "a:b"
+      },
+      "expected": "The Basic Auth user “a:b” is not valid: the name needs 1 to 64 characters without a colon and may appear only once, the password 1 to 1024 characters."
+    },
+    "proxy.basic_auth.password_missing": {
+      "params": {
+        "username": "guest"
+      },
+      "expected": "Enter a password for the new user “guest”."
+    },
+    "proxy.certificate.missing": {
+      "params": {},
+      "expected": "Upload the certificate and its private key."
+    },
+    "proxy.certificate.name_mismatch": {
+      "params": {
+        "name": "media.home.arpa"
+      },
+      "expected": "The certificate does not cover media.home.arpa."
+    },
+    "proxy.domain.invalid": {
+      "params": {
+        "name": "bad_name"
+      },
+      "expected": "“bad_name” is no valid domain."
+    },
+    "proxy.domain.taken": {
+      "params": {
+        "name": "media.home.arpa"
+      },
+      "expected": "Another host already answers media.home.arpa."
+    },
+    "proxy.domains.missing": {
+      "params": {},
+      "expected": "Enter at least one domain."
+    },
+    "proxy.domains.too_many": {
+      "params": {
+        "max": 50
+      },
+      "expected": "Enter at most 50 domains."
+    },
+    "proxy.header.invalid": {
+      "params": {
+        "name": "Host"
+      },
+      "expected": "The header “Host” is not allowed. Check its name and value; the proxy sets some headers itself, and each may appear only once."
+    },
+    "proxy.headers.too_many": {
+      "params": {
+        "max": 20
+      },
+      "expected": "Set at most 20 headers."
+    },
+    "proxy.host.not_found": {
+      "params": {
+        "id": 42
+      },
+      "expected": "There is no proxy host with the number 42."
+    },
+    "proxy.host.unknown": {
+      "params": {},
+      "expected": "This name is not set up on this box."
+    },
+    "proxy.limit.out_of_range": {
+      "params": {
+        "limit": "connectTimeoutSeconds",
+        "min": 1,
+        "max": 300
+      },
+      "expected": "The value must be between 1 and 300."
+    },
+    "proxy.loop.detected": {
+      "params": {},
+      "expected": "The proxy host leads back to itself."
+    },
+    "proxy.redirect.not_found": {
+      "params": {
+        "id": 7
+      },
+      "expected": "There is no redirect host with the number 7."
+    },
+    "proxy.redirect.status_invalid": {
+      "params": {
+        "status": 200
+      },
+      "expected": "200 is no redirect status. Use 301, 302, 307 or 308."
+    },
+    "proxy.redirect.target_invalid": {
+      "params": {
+        "target": "example.com"
+      },
+      "expected": "“example.com” is no complete http or https address."
+    },
+    "proxy.sign_in.address_invalid": {
+      "params": {
+        "address": "ftp://nas"
+      },
+      "expected": "“ftp://nas” is no address like https://nas.home.arpa:7484."
+    },
+    "proxy.sign_in.group_not_found": {
+      "params": {
+        "name": "family"
+      },
+      "expected": "There is no group named family."
+    },
+    "proxy.sign_in.user_not_found": {
+      "params": {
+        "name": "anna"
+      },
+      "expected": "There is no user named anna."
+    },
+    "proxy.stream.name_invalid": {
+      "params": {
+        "max": 100
+      },
+      "expected": "The name may have at most 100 characters and no control characters."
+    },
+    "proxy.stream.not_found": {
+      "params": {
+        "id": 3
+      },
+      "expected": "There is no stream with the number 3."
+    },
+    "proxy.stream.port_in_use": {
+      "params": {
+        "port": 993
+      },
+      "expected": "Another program already uses port 993."
+    },
+    "proxy.stream.port_privileged": {
+      "params": {
+        "port": 25
+      },
+      "expected": "Port 25 is below 1024. Confirm that you want to use it."
+    },
+    "proxy.stream.port_reserved": {
+      "params": {
+        "port": 445
+      },
+      "expected": "Port 445 belongs to a service of the box."
+    },
+    "proxy.stream.port_taken": {
+      "params": {
+        "port": 993
+      },
+      "expected": "Another stream already uses port 993."
+    },
+    "proxy.stream.protocol_missing": {
+      "params": {},
+      "expected": "Choose TCP, UDP or both."
+    },
+    "proxy.target.invalid": {
+      "params": {
+        "host": "*.lan"
+      },
+      "expected": "“*.lan” is no valid host name or IP address."
+    },
+    "proxy.target.loop": {
+      "params": {
+        "port": 443
+      },
+      "expected": "The target is this box on port 443, where the proxy itself answers."
+    },
+    "proxy.target.on_box": {
+      "params": {
+        "host": "localhost",
+        "port": 8096
+      },
+      "expected": "localhost:8096 is this box. Confirm that the host should lead to one of the box's own services."
+    },
+    "proxy.target.timeout": {
+      "params": {},
+      "expected": "The target did not answer in time."
+    },
+    "proxy.target.unavailable": {
+      "params": {},
+      "expected": "The target cannot be reached."
+    },
+    "proxy.ticket.target_invalid": {
+      "params": {},
+      "expected": "This address does not belong to a proxy host with the Pithyx sign-in."
+    },
+    "proxy.websockets.disabled": {
+      "params": {},
+      "expected": "This host does not pass WebSockets on."
+    },
     "realtime.message.invalid": {
       "params": {},
       "expected": "The live connection received a message it does not understand."

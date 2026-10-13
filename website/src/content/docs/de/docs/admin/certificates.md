@@ -8,7 +8,7 @@ sidebar:
   order: 10
 ---
 
-Die Box spricht HTTPS auf Port 7484 mit einem Zertifikat ihrer eigenen Zertifizierungsstelle; die Ports 80 und 443 leiten nur dorthin um. Installiere das Root-Zertifikat der Zertifizierungsstelle einmal auf jedem Gerät, dann vertraut der Browser der Box, lädt aus seinem Cache, und FTPS-Programme akzeptieren sie. Alles auf dieser Seite findest du unter Einstellungen > **Zertifikate** (nur Administratoren).
+Die Box spricht HTTPS auf Port 7484 mit einem Zertifikat ihrer eigenen Zertifizierungsstelle; die Ports 80 und 443 leiten dorthin um, außer für die Domains des [Reverse Proxys](/de/docs/admin/reverse-proxy/), die eigene Zertifikate vorzeigen. Installiere das Root-Zertifikat der Zertifizierungsstelle einmal auf jedem Gerät, dann vertraut der Browser der Box, lädt aus seinem Cache, und FTPS-Programme akzeptieren sie. Alles auf dieser Seite findest du unter Einstellungen > **Zertifikate** (nur Administratoren).
 
 ## Warum der Browser warnt
 
@@ -47,7 +47,7 @@ Das Zertifikat der Box gilt für ihren Hostnamen, `<host>.local`, den Hostnamen 
 
 ## Hinter einem Reverse Proxy
 
-Ein Reverse Proxy vor der Box verbindet sich mit `https://<box-adresse>:7484`. Lass ihn dem Root-Zertifikat der Box vertrauen (oder, weniger streng, die Prüfung für dieses eine Backend auslassen), WebSocket-Upgrades für `/ws` und App-Sockets durchreichen und seine Anfragen mit dem Hostnamen senden, den der Browser benutzt hat. Die Box sieht die Adresse des Proxys als Client, daher gilt die Grenze für fehlgeschlagene Anmeldungen pro Adresse für alle hinter dem Proxy gemeinsam.
+Um andere Dienste hinter die Box zu stellen, nimm ihren eigenen [Reverse Proxy](/de/docs/admin/reverse-proxy/). Ein Reverse Proxy anderswo vor der Box verbindet sich mit `https://<box-adresse>:7484`. Lass ihn dem Root-Zertifikat der Box vertrauen (oder, weniger streng, die Prüfung für dieses eine Backend auslassen), WebSocket-Upgrades für `/ws` und App-Sockets durchreichen und seine Anfragen mit dem Hostnamen senden, den der Browser benutzt hat. Die Box sieht die Adresse des Proxys als Client, daher gilt die Grenze für fehlgeschlagene Anmeldungen pro Adresse für alle hinter dem Proxy gemeinsam.
 
 ## Sicherung
 

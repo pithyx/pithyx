@@ -4,21 +4,21 @@ using Microsoft.AspNetCore.Connections;
 using Microsoft.AspNetCore.Connections.Features;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.AspNetCore.Server.Kestrel.Https;
-using Pithyx.Daemon.Tls;
 
 namespace Pithyx.Daemon.Hosting;
 
 /// <summary>
-/// The ports of the web interface (D346). 7484 is the one address of the box. With HTTPS it speaks TLS and answers
-/// a plain HTTP request on the same port with a redirect to <c>https://</c>; 443 (TLS) and 80 (plain) only redirect
-/// to 7484, and port 80 also answers <c>/api/install-id</c> for the installer. Without HTTPS (development,
-/// simulation, the installer of the live system) 7484 is plain HTTP.
+/// The ports of the web interface (D346) and the reverse proxy (D347). 7484 is the one address of the box. With HTTPS
+/// it speaks TLS and answers a plain HTTP request on the same port with a redirect to <c>https://</c>. 443 (TLS) and
+/// 80 (plain) serve the reverse proxy's hosts by name and redirect every other name to 7484; port 80 also answers
+/// <c>/api/install-id</c> for the installer. Without HTTPS (development, simulation, the installer of the live system)
+/// 7484 is plain HTTP. Every handshake gets the certificate for its server name: a proxy host's own, or the box's.
 /// </summary>
 /// <param name="WebPort">7484, or <c>PITHYX_DEV_PORT</c> in a development build.</param>
 /// <param name="Https">The web port speaks TLS.</param>
-/// <param name="PlainRedirectPort">80 on a box, otherwise none.</param>
-/// <param name="TlsRedirectPort">443 on a box with HTTPS, otherwise none.</param>
-public sealed record WebTransport(int WebPort, bool Https, int? PlainRedirectPort, int? TlsRedirectPort)
+/// <param name="ProxyPlainPort">80 on a box, otherwise none (or the first port of <c>PITHYX_DEV_PROXY_PORTS</c>).</param>
+/// <param name="ProxyTlsPort">443 on a box with HTTPS, otherwise none (or the second port of <c>PITHYX_DEV_PROXY_PORTS</c>).</param>
+public sealed record WebTransport(int WebPort, bool Https, int? ProxyPlainPort, int? ProxyTlsPort)
 {
     public const int PlainPort = 80;
     public const int TlsPort = 443;
@@ -29,18 +29,38 @@ public sealed record WebTransport(int WebPort, bool Https, int? PlainRedirectPor
     // A client that opens a connection and sends nothing is dropped after this, like a stalled TLS handshake.
     private static readonly TimeSpan _firstByteTimeout = TimeSpan.FromSeconds(10);
 
-    public static WebTransport For(int webPort, bool https, bool box) =>
-        new(webPort, https, box ? PlainPort : null, box && https ? TlsPort : null);
+    /// <summary>
+    /// The ports of a box (80 and, with HTTPS, 443), or in a development build the plain and TLS ports of
+    /// <paramref name="developmentProxyPorts"/> (<c>PITHYX_DEV_PROXY_PORTS=8080,8443</c>) to try the proxy next to the dev unit.
+    /// </summary>
+    public static WebTransport For(int webPort, bool https, bool box, string? developmentProxyPorts = null)
+    {
+        if (box)
+        {
+            return new(webPort, https, PlainPort, https ? TlsPort : null);
+        }
+        var ports = (developmentProxyPorts ?? "").Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+            .Select(port => int.TryParse(port, System.Globalization.CultureInfo.InvariantCulture, out var value) && value is > 0 and <= 65535 ? value : (int?)null)
+            .ToList();
+        return new(webPort, https, ports.ElementAtOrDefault(0), https ? ports.ElementAtOrDefault(1) : null);
+    }
 
-    /// <summary>The listeners on every address, IPv4 and IPv6, with the box's certificates.</summary>
+    /// <summary>The listeners on every address, IPv4 and IPv6, with the reverse proxy's and the box's certificates.</summary>
     public void Listen(KestrelServerOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
-        Listen(options, () => options.ApplicationServices.GetRequiredService<BoxCertificates>().ServerOptions);
+        Listen(options, name => options.ApplicationServices.GetRequiredService<ReverseProxy.ProxyService>().ServerOptions(name));
     }
 
-    /// <summary>The listeners with the TLS settings <paramref name="serverOptions"/> gives for every handshake.</summary>
+    /// <summary>The listeners with the same TLS settings for every handshake.</summary>
     public void Listen(KestrelServerOptions options, Func<SslServerAuthenticationOptions> serverOptions)
+    {
+        ArgumentNullException.ThrowIfNull(serverOptions);
+        Listen(options, _ => serverOptions());
+    }
+
+    /// <summary>The listeners with the TLS settings <paramref name="serverOptions"/> gives for the server name of every handshake.</summary>
+    public void Listen(KestrelServerOptions options, Func<string?, SslServerAuthenticationOptions> serverOptions)
     {
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(serverOptions);
@@ -51,11 +71,11 @@ public sealed record WebTransport(int WebPort, bool Https, int? PlainRedirectPor
                 UseTls(listen, serverOptions, sniffPlain: true);
             }
         });
-        if (PlainRedirectPort is { } plain)
+        if (ProxyPlainPort is { } plain)
         {
             options.ListenAnyIP(plain);
         }
-        if (TlsRedirectPort is { } tls)
+        if (ProxyTlsPort is { } tls)
         {
             options.ListenAnyIP(tls, listen => UseTls(listen, serverOptions, sniffPlain: false));
         }
@@ -66,7 +86,7 @@ public sealed record WebTransport(int WebPort, bool Https, int? PlainRedirectPor
     /// <paramref name="sniffPlain"/> a connection whose first byte is no TLS handshake record (0x16) skips TLS and is
     /// marked, so <see cref="TransportRedirect"/> sends it to <c>https://</c>.
     /// </summary>
-    private static void UseTls(ListenOptions listen, Func<SslServerAuthenticationOptions> serverOptions, bool sniffPlain)
+    private static void UseTls(ListenOptions listen, Func<string?, SslServerAuthenticationOptions> serverOptions, bool sniffPlain)
     {
         listen.Protocols = HttpProtocols.Http1AndHttp2;
         ConnectionDelegate? plain = null;
@@ -76,7 +96,7 @@ public sealed record WebTransport(int WebPort, bool Https, int? PlainRedirectPor
         }
         listen.UseHttps(new TlsHandshakeCallbackOptions
         {
-            OnConnection = _ => ValueTask.FromResult(serverOptions()),
+            OnConnection = context => ValueTask.FromResult(serverOptions(context.ClientHelloInfo.ServerName)),
             HandshakeTimeout = _firstByteTimeout,
         });
         if (sniffPlain)
@@ -128,9 +148,9 @@ public sealed record WebTransport(int WebPort, bool Https, int? PlainRedirectPor
 }
 
 /// <summary>
-/// Sends requests on the redirect ports, and plain HTTP on the web port, to the same path on
-/// <c>https://&lt;host&gt;:7484</c> (<c>http://</c> without HTTPS). Only <c>/api/install-id</c> is answered on port 80
-/// itself: the installer page finds the rebooted box with it, and a redirect would turn its cross-origin request into
+/// Sends requests on the proxy ports that no proxy host took (<see cref="ReverseProxy.HostProxy"/> runs first), and
+/// plain HTTP on the web port, to the same path on <c>https://&lt;host&gt;:7484</c> (<c>http://</c> without HTTPS).
+/// Only <c>/api/install-id</c> is answered on port 80 itself: the installer page finds the rebooted box with it, and a redirect would turn its cross-origin request into
 /// a failure. No HSTS: a browser refuses to let anyone pass a certificate warning on an HSTS host, and the box's
 /// certificate is untrusted until a device trusts the box's authority.
 /// </summary>
@@ -141,7 +161,7 @@ public sealed class TransportRedirect(RequestDelegate next, WebTransport transpo
         ArgumentNullException.ThrowIfNull(context);
         var port = context.Connection.LocalPort;
         int target;
-        if (port == transport.PlainRedirectPort)
+        if (port == transport.ProxyPlainPort)
         {
             if (context.Request.Path.Equals("/api/install-id", StringComparison.OrdinalIgnoreCase))
             {
@@ -149,7 +169,7 @@ public sealed class TransportRedirect(RequestDelegate next, WebTransport transpo
             }
             target = transport.WebPort;
         }
-        else if (port == transport.TlsRedirectPort)
+        else if (port == transport.ProxyTlsPort)
         {
             target = transport.WebPort;
         }
@@ -170,11 +190,18 @@ public sealed class TransportRedirect(RequestDelegate next, WebTransport transpo
     public static string Target(HttpRequest request, string scheme, int port)
     {
         ArgumentNullException.ThrowIfNull(request);
+        return $"{Origin(request, scheme, port)}{request.PathBase}{request.Path}{request.QueryString}";
+    }
+
+    /// <summary>The request's host name with <paramref name="scheme"/> on <paramref name="port"/>.</summary>
+    public static string Origin(HttpRequest request, string scheme, int port)
+    {
+        ArgumentNullException.ThrowIfNull(request);
         var host = request.Host.HasValue ? request.Host.Host : request.HttpContext.Connection.LocalIpAddress?.ToString() ?? "localhost";
         if (host.Contains(':', StringComparison.Ordinal) && !host.StartsWith('['))
         {
             host = $"[{host}]";
         }
-        return $"{scheme}://{host}:{port}{request.PathBase}{request.Path}{request.QueryString}";
+        return string.Create(System.Globalization.CultureInfo.InvariantCulture, $"{scheme}://{host}:{port}");
     }
 }

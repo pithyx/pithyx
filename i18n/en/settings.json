@@ -152,6 +152,11 @@
       "description": "HTTPS, the box's certificate authority and certificates for other devices",
       "keywords": "https tls ssl certificate authority ca root trust warning reverse proxy pem key domain"
     },
+    "reverseProxy": {
+      "title": "Reverse proxy",
+      "description": "Your own domains on ports 443 and 80, redirects and forwarded ports",
+      "keywords": "reverse proxy domain host name vhost https tls sni certificate redirect forward port stream tcp udp websocket basic auth sign-in hsts"
+    },
     "regional": {
       "title": "Regional settings",
       "description": "System language, formats, date and time, time zone and time servers",
@@ -382,7 +387,7 @@
     }
   },
   "certificates": {
-    "intro": "The box speaks HTTPS on port 7484; ports 80 and 443 send every visitor there. It is its own certificate authority: install its root once on a device, and the device trusts the box and every certificate the box issues.",
+    "intro": "The box speaks HTTPS on port 7484; ports 80 and 443 send every visitor there, unless a host of the reverse proxy has the name. It is its own certificate authority: install its root once on a device, and the device trusts the box and every certificate the box issues.",
     "save": "Save",
     "cancel": "Cancel",
     "close": "Close",
@@ -501,6 +506,174 @@
       "unused": "This certificate is not valid now, so the box presents its own."
     }
   },
+  "proxy": {
+    "intro": "Make other services reachable under their own names on ports 443 and 80: the box forwards each name to its target and presents a certificate for it. The box itself stays on port 7484; names nobody set up go there as before.",
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "schemes": {
+      "http": "http",
+      "https": "https"
+    },
+    "protocols": {
+      "tcp": "TCP",
+      "udp": "UDP"
+    },
+    "options": {
+      "title": "Ports and unknown names",
+      "ports": "Proxy hosts answer HTTPS on port {tls} and plain HTTP on port {plain}.",
+      "plainOnly": "Proxy hosts answer plain HTTP on port {plain}; this daemon has no HTTPS.",
+      "noPorts": "This daemon does not listen on ports 443 and 80 (development or simulation). You can set up hosts, but they only answer on a box.",
+      "unknown": "Names without a host",
+      "unknownRedirect": "Redirect to the web interface on port 7484",
+      "unknownNotFound": "Answer “not found” (404)",
+      "signInAddress": "Sign-in address",
+      "signInAddressHint": "Where hosts with the Pithyx sign-in send visitors, such as https://nas.home.arpa:7484. Leave it empty to use the requested name on port 7484."
+    },
+    "badges": {
+      "disabled": "Off",
+      "signIn": "Pithyx sign-in",
+      "basicAuth": "Basic Auth",
+      "noCertificate": "No certificate",
+      "notListening": "Port not available"
+    },
+    "hosts": {
+      "title": "Proxy hosts",
+      "explain": "A proxy host forwards requests for its domains to a service in your network or on this box. Point the domains at the box in your DNS or router.",
+      "add": "Add proxy host",
+      "none": "No proxy hosts yet.",
+      "target": "Forwards to {target}",
+      "log": "Access log in the Log Center under {source}"
+    },
+    "status": {
+      "check": "Check target",
+      "reachable": "Reachable ({status})",
+      "unreachable": {
+        "timeout": "No answer in time",
+        "refused": "Connection refused",
+        "dns": "Name not found",
+        "tls": "Certificate not accepted",
+        "other": "Not reachable"
+      }
+    },
+    "redirects": {
+      "title": "Redirect hosts",
+      "explain": "A redirect host sends browsers from its domains to another address, for example from an old name to a new one.",
+      "add": "Add redirect host",
+      "none": "No redirect hosts yet.",
+      "target": "Redirects with {status} to {target}"
+    },
+    "streams": {
+      "title": "Streams",
+      "explain": "A stream forwards a TCP or UDP port of the box byte for byte to another host, for services that do not speak HTTP. The firewall opens the port.",
+      "add": "Add stream",
+      "none": "No streams yet.",
+      "unnamed": "Stream",
+      "route": "Port {port} ({protocols}) to {target}"
+    },
+    "remove": {
+      "action": "Remove",
+      "confirm": "Remove",
+      "hostTitle": "Remove the proxy host {name}?",
+      "hostExplain": "Its names are unknown afterwards. An uploaded certificate is deleted with it.",
+      "redirectTitle": "Remove the redirect host {name}?",
+      "redirectExplain": "Its names are unknown afterwards.",
+      "streamTitle": "Remove the stream on port {port}?",
+      "streamExplain": "The box stops forwarding and the firewall closes the port."
+    },
+    "hostDialog": {
+      "addTitle": "Add proxy host",
+      "editTitle": "Edit proxy host",
+      "target": "Target",
+      "https": "HTTPS",
+      "access": "Access",
+      "headers": "Headers",
+      "limits": "Limits and logging"
+    },
+    "redirectDialog": {
+      "addTitle": "Add redirect host",
+      "editTitle": "Edit redirect host"
+    },
+    "streamDialog": {
+      "addTitle": "Add stream",
+      "editTitle": "Edit stream"
+    },
+    "certificate": {
+      "label": "Certificate",
+      "box": "From the box's certificate authority",
+      "custom": "Upload my own",
+      "boxHint": "The box makes a certificate for the domains. They must lie in its authority's scope (Settings > Certificates); devices that trust the box's root accept it.",
+      "customHint": "A certificate with its chain and unencrypted private key in PEM that covers every domain, for example for a public domain.",
+      "stored": "A certificate is uploaded. Choose new files only to replace it."
+    },
+    "tls": {
+      "system": "Check against trusted authorities",
+      "box": "Check against the box's authority",
+      "none": "Do not check",
+      "systemHint": "For targets with a certificate from a public authority.",
+      "boxHint": "For devices with a certificate the box issued.",
+      "noneHint": "For targets with a self-signed certificate. The connection is encrypted, but anyone in between could pose as the target."
+    },
+    "statuses": {
+      "301": "301 Moved permanently",
+      "302": "302 Found (temporary)",
+      "307": "307 Temporary, keeps the method",
+      "308": "308 Permanent, keeps the method"
+    },
+    "fields": {
+      "domains": "Domains",
+      "domainsHint": "Separated by commas or spaces, for example media.home.arpa or *.apps.home.arpa (a wildcard covers one level).",
+      "enabled": "Enabled",
+      "scheme": "Protocol",
+      "targetHost": "Host",
+      "targetHostHint": "A host name or IP address in your network.",
+      "targetPort": "Port",
+      "tls": "Certificate of the target",
+      "onBox": "The target is a service on this box itself",
+      "webSockets": "Pass WebSockets on",
+      "forceHttps": "Redirect HTTP to HTTPS",
+      "http2": "Offer HTTP/2",
+      "hsts": "Send HSTS",
+      "hstsWarning": "With HSTS browsers refuse plain HTTP and every certificate warning for this name for a year, even after you switch it off. Use it only with a certificate all devices trust.",
+      "allow": "Allowed addresses",
+      "allowHint": "IP addresses or ranges such as 192.168.1.0/24, separated by commas. Empty lets everybody in.",
+      "deny": "Denied addresses",
+      "signIn": "Require Pithyx sign-in",
+      "signInExplain": "Visitors sign in with their account on the box first. Signing out of the box ends their access. The target gets the user in X-Pithyx-User and X-Pithyx-Groups.",
+      "users": "Users",
+      "groups": "Groups",
+      "usersHint": "Names separated by commas. With no users and no groups, everybody who may sign in gets in; administrators always do.",
+      "basicAuth": "Basic Auth",
+      "basicAuthHint": "Asks the browser for a name and password before anything else, also for apps without a sign-in of their own.",
+      "basicUser": "User name",
+      "basicPassword": "Password",
+      "basicPasswordKeep": "Leave it empty to keep the password.",
+      "basicAdd": "Add user",
+      "basicRemove": "Remove user",
+      "forwardedHeaders": "Send X-Forwarded-For, -Proto and -Host",
+      "preserveHost": "Send the requested name as Host",
+      "hostHeader": "Host header",
+      "hostHeaderHint": "Optional. Sends this Host to the target instead.",
+      "requestHeaders": "Request headers",
+      "responseHeaders": "Response headers",
+      "headersHint": "One per line as Name: value. Name: alone removes the header.",
+      "maxBody": "Largest upload in MB",
+      "maxBodyHint": "Empty for no limit.",
+      "connectTimeout": "Connect timeout in seconds",
+      "responseTimeout": "Answer timeout in seconds",
+      "accessLog": "Write an access log",
+      "redirectTarget": "Target address",
+      "redirectTargetHint": "A complete address such as https://new.example.org.",
+      "status": "Status",
+      "preservePath": "Keep path and query",
+      "streamName": "Name",
+      "streamEnabled": "Enabled (the firewall opens the port)",
+      "port": "Port of the box",
+      "portHint": "Not one of the box's own ports (21, 22, 80, 443, 445, 7484, 50000 to 50099).",
+      "privileged": "Use this port below 1024 anyway",
+      "protocols": "Protocols"
+    }
+  },
   "regional": {
     "intro": "Language, formats and time of the box. Everyone can still choose their own language in the user menu.",
     "languageTitle": "Language and formats",
@@ -603,6 +776,10 @@
       "apps": {
         "title": "Apps",
         "description": "Installed apps with their permissions, who may use them and the app pool; the apps' files and data stay on the pool"
+      },
+      "reverseProxy": {
+        "title": "Reverse proxy",
+        "description": "Proxy hosts, redirect hosts, streams and what unknown names get; uploaded certificates come with the certificates"
       }
     },
     "steps": {

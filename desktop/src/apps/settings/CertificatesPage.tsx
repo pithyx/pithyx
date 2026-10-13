@@ -569,7 +569,7 @@ function RemoveIssuedDialog({
   );
 }
 
-function PemFile({
+export function PemFile({
   label,
   accept,
   file,

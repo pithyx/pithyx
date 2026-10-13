@@ -14,13 +14,15 @@ namespace Pithyx.Daemon.Network;
 /// <param name="Ssh">SFTP or SSH logins are switched on (TCP 22).</param>
 /// <param name="Ftp">FTP is switched on (TCP 21 and the passive ports).</param>
 /// <param name="PrivateNetworksOnly">The file services answer only sources in private networks (RFC 1918, ULA, link-local).</param>
-public sealed record FirewallPlan(bool Smb, bool Ssh, bool Ftp, bool PrivateNetworksOnly);
+/// <param name="TcpStreams">The TCP ports of the reverse proxy's enabled streams (D347), open to every source.</param>
+/// <param name="UdpStreams">The UDP ports of the enabled streams.</param>
+public sealed record FirewallPlan(bool Smb, bool Ssh, bool Ftp, bool PrivateNetworksOnly, IReadOnlyList<int>? TcpStreams = null, IReadOnlyList<int>? UdpStreams = null);
 
 /// <summary>
 /// The box's firewall (D342): the chain <c>input</c> of the table <c>inet pithyx</c> with policy drop, next to the
 /// <c>apps-input</c> chain of <see cref="Apps.Docker.DockerHost"/>. It lets in loopback, answers, the ICMP and ICMPv6
-/// messages IPv4 and IPv6 need, DHCP replies, the web ports and only the file services that are switched on (WebDAV
-/// goes through the web port). One <c>nft -f -</c> replaces the rules in a single transaction whenever a service is
+/// messages IPv4 and IPv6 need, DHCP replies, the web ports, only the file services that are switched on (WebDAV
+/// goes through the web port) and the ports of the reverse proxy's enabled streams. One <c>nft -f -</c> replaces the rules in a single transaction whenever a service is
 /// switched. On a development machine and in simulation the rules are only rendered, so the machine a session runs on
 /// never firewalls its own management interface.
 /// </summary>
@@ -36,7 +38,7 @@ public sealed partial class Firewall(
     public const int SshPort = 22;
     public const int FtpPort = 21;
 
-    /// <summary>The ports of the web interface: 80 and 443, which redirect, and 7484 (D346).</summary>
+    /// <summary>The ports of the web interface and the reverse proxy: 80 and 443 (D347) and 7484 (D346).</summary>
     public static IReadOnlyList<int> WebPorts { get; } = [80, 443, 7484];
 
     public static IReadOnlyList<string> PrivateIpv4 { get; } = ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "169.254.0.0/16"];
@@ -114,16 +116,31 @@ public sealed partial class Firewall(
                 text.Append(CultureInfo.InvariantCulture, $"{Rule} {accept}\n");
             }
         }
+        if (plan.TcpStreams is { Count: > 0 } tcp)
+        {
+            text.Append(CultureInfo.InvariantCulture, $"{Rule} tcp dport {{ {string.Join(", ", tcp.Order())} }} accept\n");
+        }
+        if (plan.UdpStreams is { Count: > 0 } udp)
+        {
+            text.Append(CultureInfo.InvariantCulture, $"{Rule} udp dport {{ {string.Join(", ", udp.Order())} }} accept\n");
+        }
         return text.ToString();
     }
 
-    /// <summary>The plan from the stored file service settings.</summary>
+    /// <summary>The plan from the stored file service settings and the enabled streams.</summary>
     public async Task<FirewallPlan> WantedAsync(CancellationToken cancellationToken)
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
         var row = await connection.QuerySingleAsync<(long Smb, long Sftp, long Ssh, long Ftp, long PrivateOnly)>(
             "SELECT smb_enabled, sftp_enabled, ssh_enabled, ftp_enabled, private_networks_only FROM file_services WHERE id = 1");
-        return new FirewallPlan(row.Smb == 1, row.Sftp == 1 || row.Ssh == 1, row.Ftp == 1, row.PrivateOnly == 1);
+        var streams = (await connection.QueryAsync<(long Port, long Tcp, long Udp)>("SELECT port, tcp, udp FROM proxy_streams WHERE enabled = 1")).ToList();
+        return new FirewallPlan(
+            row.Smb == 1,
+            row.Sftp == 1 || row.Ssh == 1,
+            row.Ftp == 1,
+            row.PrivateOnly == 1,
+            [.. streams.Where(stream => stream.Tcp == 1).Select(stream => (int)stream.Port).Distinct()],
+            [.. streams.Where(stream => stream.Udp == 1).Select(stream => (int)stream.Port).Distinct()]);
     }
 
     /// <summary>Writes the rules for the stored settings; on a development machine and in simulation it only renders them.</summary>
