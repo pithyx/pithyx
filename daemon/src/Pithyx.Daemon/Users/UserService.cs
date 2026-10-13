@@ -27,6 +27,8 @@ public sealed class UserService(
     JobService jobs,
     PermissionService permissions,
     FileServicePasswords passwords,
+    Homes homes,
+    HomeService homeService,
     TimeProvider time)
 {
     public async Task<IReadOnlyList<UserSummary>> ListAsync(ClaimsPrincipal caller, CancellationToken cancellationToken)
@@ -76,7 +78,8 @@ public sealed class UserService(
             await transaction.CommitAsync(cancellationToken);
         }
         permissions.Invalidate();
-        var home = await accounts.CreateHomeAsync(username, uid, cancellationToken);
+        // The home first, so the account gets it as its home directory.
+        await homes.ReconcileAsync(cancellationToken);
         var problems = await accounts.ReconcileAsync(cancellationToken);
         if (problems.TryGetValue(username, out var reason))
         {
@@ -88,7 +91,7 @@ public sealed class UserService(
         }
         // SMB and SFTP check the Linux and Samba accounts, which get the password now that the account exists.
         await passwords.SetAsync(username, request.Password, cancellationToken);
-        return (await FindAsync(id, cancellationToken))! with { Home = home ?? HomeOrNull(username) };
+        return (await FindAsync(id, cancellationToken))!;
     }
 
     public async Task<UserSummary> UpdateAsync(ClaimsPrincipal caller, long id, UserUpdate request, CancellationToken cancellationToken)
@@ -150,21 +153,26 @@ public sealed class UserService(
     }
 
     /// <summary>
-    /// Deletes the user and its Linux account. Its files and home stay; its uid is never given out again. Its queued
-    /// and running jobs are cancelled, and its jobs and notifications leave memory.
+    /// Deletes the user and its Linux account; its uid is never given out again. Its home stays under
+    /// <c>&lt;name&gt;.deleted-&lt;uid&gt;</c>, is deleted after the user name was typed, or moves into a shared folder as a
+    /// job (D348); its other files stay. Its queued and running jobs are cancelled, and its jobs and notifications
+    /// leave memory.
     /// </summary>
-    public async Task DeleteAsync(ClaimsPrincipal caller, long id, CancellationToken cancellationToken)
+    public async Task<UserDeletion> DeleteAsync(ClaimsPrincipal caller, long id, HomeDataChoice home, long? shareId, string? confirm, CancellationToken cancellationToken)
     {
         RequireAdmin(caller);
         if (id == CurrentUser.Id(caller))
         {
             throw new PithyxException(ErrorCodes.UsersUserSelf);
         }
-        _ = await FindAsync(id, cancellationToken) ?? throw NotFound();
+        var user = await FindAsync(id, cancellationToken) ?? throw NotFound();
+        await homeService.CheckChoiceAsync(user.Username, home, shareId, confirm, cancellationToken);
+        long? homeId;
         await using (var connection = await connections.OpenAsync(cancellationToken))
         await using (var transaction = await connection.BeginTransactionAsync(cancellationToken))
         {
-            // Its grants and memberships go with it.
+            homeId = await connection.ExecuteScalarAsync<long?>("SELECT id FROM shares WHERE home = 1 AND home_user_id = @id", new { id }, transaction);
+            // Its grants and memberships go with it; its home loses its user.
             await connection.ExecuteAsync("DELETE FROM users WHERE id = @id", new { id }, transaction);
             await PermissionService.EnsureAdministratorRemainsAsync(connection, transaction);
             await transaction.CommitAsync(cancellationToken);
@@ -173,6 +181,11 @@ public sealed class UserService(
         notifications.Forget(id);
         await accounts.ReconcileAsync(cancellationToken);
         permissions.Invalidate();
+        if (homeId is not { } homeShare || user.Uid is not { } uid)
+        {
+            return new UserDeletion(null);
+        }
+        return new UserDeletion(await homeService.UserDeletedAsync(caller, homeShare, user.Username, uid, home, shareId, cancellationToken));
     }
 
     private async Task<UserSummary?> FindAsync(long id, CancellationToken cancellationToken)
@@ -183,7 +196,7 @@ public sealed class UserService(
 
     private async Task<IReadOnlyList<UserSummary>> SummariesAsync(System.Data.Common.DbConnection connection, long? id)
     {
-        var rows = await connection.QueryAsync<Row>(Select + " WHERE @id IS NULL OR id = @id ORDER BY username", new { id });
+        var rows = await connection.QueryAsync<Row>(Select + " WHERE @id IS NULL OR users.id = @id ORDER BY users.username", new { id });
         var linux = passwords.LinuxWithPassword();
         var groups = (await connection.QueryAsync<(long UserId, long GroupId)>("SELECT user_id, group_id FROM group_members ORDER BY group_id"))
             .ToLookup(member => member.UserId, member => member.GroupId);
@@ -191,8 +204,6 @@ public sealed class UserService(
         var rights = (await PermissionService.AllUsersAsync(connection, null, asIfActive: true)).ToDictionary(user => user.Id, user => user.Permissions);
         return [.. rows.Select(row => ToSummary(row, linux, [.. groups[row.Id]], rights[row.Id]))];
     }
-
-    private string? HomeOrNull(string username) => accounts.HomeOf(username) is var home && home != AccountReconciler.NoHome ? home : null;
 
     private UserSummary ToSummary(Row row, IReadOnlySet<string> linuxWithPassword, IReadOnlyList<long> groupIds, EffectivePermissions rights)
     {
@@ -205,7 +216,7 @@ public sealed class UserService(
             row.Uid,
             row.TotpEnabledAt is not null,
             DateTimeOffset.Parse(row.CreatedAt, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal),
-            HomeOrNull(row.Username),
+            row.Home,
             row.DisabledAt is not null,
             session.Rights,
             session.Protocols,
@@ -223,7 +234,12 @@ public sealed class UserService(
         }
     }
 
-    private const string Select = "SELECT id, username, display_name AS displayName, uid, totp_enabled_at AS totpEnabledAt, created_at AS createdAt, disabled_at AS disabledAt FROM users";
+    private const string Select =
+        """
+        SELECT users.id, users.username, users.display_name AS displayName, users.uid, users.totp_enabled_at AS totpEnabledAt,
+            users.created_at AS createdAt, users.disabled_at AS disabledAt, shares.path AS home, users.home_quota_bytes AS homeQuotaBytes
+        FROM users LEFT JOIN shares ON shares.home = 1 AND shares.home_user_id = users.id
+        """;
 
-    private sealed record Row(long Id, string Username, string? DisplayName, long? Uid, string? TotpEnabledAt, string CreatedAt, string? DisabledAt);
+    private sealed record Row(long Id, string Username, string? DisplayName, long? Uid, string? TotpEnabledAt, string CreatedAt, string? DisabledAt, string? Home, long? HomeQuotaBytes);
 }

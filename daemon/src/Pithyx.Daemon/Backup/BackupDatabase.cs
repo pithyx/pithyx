@@ -64,6 +64,7 @@ public static class BackupDatabase
     {
         [BackupCategory.Users] = [Auth.AuthService.RecoveryKeySetting],
         [BackupCategory.System] = [Logs.LogService.SettingsKey],
+        [BackupCategory.SharedFolders] = [Users.Homes.PoolSetting, Users.Homes.QuotaSetting],
         [BackupCategory.Certificates] = [Tls.BoxCertificates.ExtraNamesSetting],
         [BackupCategory.Apps] = [Apps.AppRegistry.PoolSetting, .. Apps.Catalog.StoreService.BackupSettings],
         [BackupCategory.ReverseProxy] = [ReverseProxy.ProxyService.UnknownHostsSetting, ReverseProxy.ProxyService.SignInAddressSetting],
@@ -173,6 +174,13 @@ public static class BackupDatabase
             {
                 await connection.ExecuteAsync(
                     "DELETE FROM main.app_storage WHERE NOT EXISTS (SELECT 1 FROM main.users u JOIN temp.restore_users o ON o.id = u.id AND o.username = u.username WHERE u.id = app_storage.user_id)",
+                    transaction: transaction);
+            }
+            if (users || shares)
+            {
+                // A home keeps its user only while a user of that id has its name (D348); the homes find their users again after the restore.
+                await connection.ExecuteAsync(
+                    "UPDATE main.shares SET home_user_id = NULL WHERE home_user_id IS NOT NULL AND NOT EXISTS (SELECT 1 FROM main.users u WHERE u.id = shares.home_user_id AND 'home:' || u.username = shares.name)",
                     transaction: transaction);
             }
             if (shares || apps)

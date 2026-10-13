@@ -84,8 +84,11 @@ public sealed partial class FileServiceSync(
         var settings = await connection.QuerySingleAsync<(long Smb, string Workgroup, long Sftp, long Ssh)>("SELECT smb_enabled, smb_workgroup, sftp_enabled, ssh_enabled FROM file_services WHERE id = 1");
         var users = await PermissionService.AllUsersAsync(connection, null);
         var shares = (await connection.QueryAsync<(long Id, string Name, string Path, string Dataset, long Smb, long Sftp, long Encrypt)>(
-            "SELECT id, name, path, dataset, smb, sftp, smb_encrypt FROM shares WHERE dataset IS NOT NULL ORDER BY id")).ToList();
-        return Plan(settings.Smb == 1, settings.Workgroup, settings.Sftp == 1, settings.Ssh == 1, users, shares, pools.Current, pools.Available) with
+            "SELECT id, name, path, dataset, smb, sftp, smb_encrypt FROM shares WHERE dataset IS NOT NULL AND home = 0 ORDER BY id")).ToList();
+        var homeRows = (await Homes.RowsAsync(connection)).Where(row => row.Dataset is not null).ToList();
+        var pool = await connection.ExecuteScalarAsync<string?>("SELECT value FROM settings WHERE key = @key", new { key = Homes.PoolSetting });
+        var homesRoot = pool is null ? null : pools.Current.Datasets.FirstOrDefault(dataset => dataset.Name == Storage.Zfs.HomePlans.HomesDataset(pool)) is { Mounted: true, MountPoint: { } mount } ? mount : null;
+        return Plan(settings.Smb == 1, settings.Workgroup, settings.Sftp == 1, settings.Ssh == 1, users, shares, pools.Current, pools.Available, homeRows, homesRoot) with
         {
             NetbiosName = SmbConfig.NetbiosName(Environment.MachineName),
         };
@@ -95,7 +98,9 @@ public sealed partial class FileServiceSync(
     /// The pure part of <see cref="WantedAsync"/>: who gets which share over which protocol, from the users' effective
     /// rights (<see cref="PermissionResolver"/>). A user needs the protocol and access to the share; the share must
     /// offer the protocol. A user who signs in over SSH with a shell (SSH logins on and the SSH login right) uses SFTP
-    /// as an ordinary SSH user and gets no SFTP view.
+    /// as an ordinary SSH user and gets no SFTP view. Every user with a home gets it as <c>home</c>; administrators also
+    /// get <c>homes</c> with every home (D348): over SMB the folder <paramref name="homesRoot"/>, over SFTP one
+    /// folder per home.
     /// </summary>
     public static FileServicePlan Plan(
         bool smbEnabled,
@@ -105,10 +110,13 @@ public sealed partial class FileServiceSync(
         IReadOnlyList<UserPermissions> users,
         IReadOnlyList<(long Id, string Name, string Path, string Dataset, long Smb, long Sftp, long Encrypt)> shares,
         PoolList current,
-        bool poolsAvailable)
+        bool poolsAvailable,
+        IReadOnlyList<HomeRow>? homes = null,
+        string? homesRoot = null)
     {
         ArgumentNullException.ThrowIfNull(users);
         ArgumentNullException.ThrowIfNull(shares);
+        homes ??= [];
         var managed = users.Where(user => user.Uid is { } uid && AccountReconciler.IsManaged(uid)).OrderBy(user => user.Username, StringComparer.Ordinal).ToList();
         var active = managed.Where(user => !user.Disabled).ToList();
         var sshUsers = sshEnabled ? active.Where(user => user.Permissions.Has(Resources.SshLogin)).ToList() : [];
@@ -121,9 +129,31 @@ public sealed partial class FileServiceSync(
             [.. smbUsers.Where(user => user.Permissions.Share(share.Id) == ShareAccess.Read).Select(user => user.Username)],
             [.. smbUsers.Where(user => user.Permissions.Share(share.Id) == ShareAccess.ReadWrite).Select(user => user.Username)],
             share.Encrypt == 1)).ToList();
-        var entries = available.Where(share => share.Sftp == 1)
+        var entries = available.Where(share => share.Sftp == 1 && !string.Equals(share.Name, Homes.OwnName, StringComparison.OrdinalIgnoreCase) && !string.Equals(share.Name, Homes.AllName, StringComparison.OrdinalIgnoreCase))
             .SelectMany(share => sftpUsers.Where(user => user.Permissions.Share(share.Id) != ShareAccess.None).Select(user => new SftpViewEntry(user.Username, share.Name, share.Path)))
             .ToList();
+        var availableHomes = homes.Where(home => ShareAvailability.Reason(home.Dataset, current, poolsAvailable) is null).ToList();
+        var homeOwners = smbUsers.Where(user => availableHomes.Any(home => home.UserId == user.Id)).Select(user => user.Username).ToList();
+        if (homeOwners.Count > 0)
+        {
+            smbShares.Add(new SmbShare(Homes.OwnName, "%H", [], homeOwners, Encrypt: false, SmbShareKind.Home));
+        }
+        var smbAdmins = smbUsers.Where(user => user.Permissions.IsAdmin).Select(user => user.Username).ToList();
+        if (homesRoot is not null && smbAdmins.Count > 0)
+        {
+            smbShares.Add(new SmbShare(Homes.AllName, homesRoot, [], smbAdmins, Encrypt: false, SmbShareKind.Homes));
+        }
+        foreach (var user in sftpUsers)
+        {
+            if (availableHomes.FirstOrDefault(home => home.UserId == user.Id) is { } own)
+            {
+                entries.Add(new SftpViewEntry(user.Username, Homes.OwnName, own.Path));
+            }
+            if (user.Permissions.IsAdmin)
+            {
+                entries.AddRange(availableHomes.Where(home => home.UserId != user.Id).Select(home => new SftpViewEntry(user.Username, $"{Homes.AllName}/{home.Folder}", home.Path)));
+            }
+        }
         return new FileServicePlan(
             smbEnabled,
             workgroup,
@@ -134,7 +164,7 @@ public sealed partial class FileServiceSync(
             [.. sftpUsers.Select(user => user.Username)],
             [.. sshUsers.Select(user => user.Username)],
             entries,
-            available.ToDictionary(share => share.Id, share => share.Path));
+            available.Select(share => (share.Id, share.Path)).Concat(availableHomes.Select(home => (Id: home.ShareId, home.Path))).ToDictionary(share => share.Id, share => share.Path));
     }
 
     /// <summary>Applies the wanted state when it changed since the last run, or always with <paramref name="force"/>. Never throws but for cancellation.</summary>

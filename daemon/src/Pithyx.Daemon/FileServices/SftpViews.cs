@@ -108,6 +108,31 @@ public sealed partial class SftpViews(ICommandRunner commands, SystemFiles files
         RemoveLeftovers(root, users, wanted);
     }
 
+    /// <summary>
+    /// Unmounts every view that shows <paramref name="source"/>, before its dataset is renamed, moved or destroyed
+    /// (D348); the next run builds again what is still wanted. Real mode only.
+    /// </summary>
+    public async Task ReleaseAsync(string source, CancellationToken cancellationToken)
+    {
+        if (!options.Apply)
+        {
+            return;
+        }
+        var mounts = MountTable.ParseMountInfo(await File.ReadAllTextAsync(files.MountInfo, cancellationToken));
+        if (MountTable.Containing(mounts, source) is not { } origin || origin.Target != source)
+        {
+            return;
+        }
+        var prefix = options.SftpRoot.TrimEnd('/') + "/";
+        foreach (var mount in mounts.Where(mount => mount.Target.StartsWith(prefix, StringComparison.Ordinal) && mount.MajorMinor == origin.MajorMinor).OrderByDescending(mount => mount.Target.Length))
+        {
+            if ((await commands.RunAsync(new CommandRequest("umount", ["--", mount.Target]), cancellationToken)).ExitCode != 0)
+            {
+                await commands.RunAsync(new CommandRequest("umount", ["--lazy", "--", mount.Target]), cancellationToken);
+            }
+        }
+    }
+
     /// <summary>A folder owned by root that nobody else may write, as sshd wants every part of a chroot path.</summary>
     private static void MakeRootFolder(string path)
     {
@@ -123,11 +148,29 @@ public sealed partial class SftpViews(ICommandRunner commands, SystemFiles files
     private void RemoveLeftovers(string root, IReadOnlyCollection<string> users, IReadOnlyList<SftpViewEntry> wanted)
     {
         var keep = wanted.Select(entry => Target(root, entry)).ToHashSet(StringComparer.Ordinal);
+        // Folders that only hold views, such as an administrator's homes (D348), stay while one of them is wanted.
+        var parents = keep.Select(Path.GetDirectoryName).OfType<string>().ToHashSet(StringComparer.Ordinal);
         foreach (var userFolder in Directory.EnumerateDirectories(root))
         {
             var user = Path.GetFileName(userFolder);
             foreach (var shareFolder in Directory.EnumerateDirectories(userFolder).Where(folder => !keep.Contains(folder)))
             {
+                if (parents.Contains(shareFolder))
+                {
+                    foreach (var inner in Directory.EnumerateDirectories(shareFolder).Where(folder => !keep.Contains(folder)))
+                    {
+                        TryRemove(inner);
+                    }
+                    continue;
+                }
+                if (Path.GetFileName(shareFolder) == Users.Homes.AllName)
+                {
+                    // Its views were unmounted; a folder that still is a mount point cannot be removed.
+                    foreach (var inner in Directory.EnumerateDirectories(shareFolder))
+                    {
+                        TryRemove(inner);
+                    }
+                }
                 TryRemove(shareFolder);
             }
             if (!users.Contains(user))

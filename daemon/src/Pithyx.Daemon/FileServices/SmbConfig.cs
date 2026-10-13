@@ -3,13 +3,32 @@ using System.Text;
 
 namespace Pithyx.Daemon.FileServices;
 
+/// <summary>What an SMB share shows (D348).</summary>
+public enum SmbShareKind
+{
+    /// <summary>A shared folder.</summary>
+    Share,
+
+    /// <summary><c>home</c>: every user's own home, the home directory of its account (<c>%H</c>).</summary>
+    Home,
+
+    /// <summary>
+    /// <c>homes</c>: the folder of every home, for administrators. Samba's <c>[homes]</c> with a fixed path is an
+    /// ordinary share; the share it would add per user name is hidden (<c>browseable = no</c> in <c>[global]</c>) and
+    /// open to administrators only. Its homes are datasets of their own, so Samba could not move a deleted file into a
+    /// recycle bin across them: it has none, and what is deleted there is gone.
+    /// </summary>
+    Homes,
+}
+
 /// <summary>A shared folder as SMB offers it.</summary>
 /// <param name="Name">The share name clients see, the shared folder's name.</param>
 /// <param name="Path">The dataset's mount point.</param>
 /// <param name="Readers">User names with read access only.</param>
 /// <param name="Writers">User names with read and write access, administrators included.</param>
 /// <param name="Encrypt">Clients must encrypt.</param>
-public sealed record SmbShare(string Name, string Path, IReadOnlyList<string> Readers, IReadOnlyList<string> Writers, bool Encrypt);
+/// <param name="Kind">A shared folder, the users' homes or the folder of all homes.</param>
+public sealed record SmbShare(string Name, string Path, IReadOnlyList<string> Readers, IReadOnlyList<string> Writers, bool Encrypt, SmbShareKind Kind = SmbShareKind.Share);
 
 /// <summary>
 /// Renders <c>/etc/samba/smb.conf</c> from SQLite (D287): SMB3 only, signing required, no guests, no NetBIOS, no
@@ -34,8 +53,11 @@ public static class SmbConfig
     /// <summary>The syslog identifier of <c>full_audit</c>.</summary>
     public const string AuditIdentifier = "smbd_audit";
 
-    /// <summary>Section names Samba gives a meaning of its own; a shared folder with such a name is not offered over SMB.</summary>
-    public static readonly IReadOnlySet<string> ReservedNames = new HashSet<string>(["global", "homes", "printers", "print$", "ipc$"], StringComparer.OrdinalIgnoreCase);
+    /// <summary>
+    /// Section names Samba gives a meaning of its own, and the names of the homes (D348); a shared folder can never be
+    /// named like this, and one from before is not offered over SMB.
+    /// </summary>
+    public static readonly IReadOnlySet<string> ReservedNames = new HashSet<string>(["global", "home", "homes", "printers", "print$", "ipc$"], StringComparer.OrdinalIgnoreCase);
 
     /// <summary>The longest workgroup name (a NetBIOS name).</summary>
     public const int MaxWorkgroupLength = 15;
@@ -71,6 +93,8 @@ public static class SmbConfig
             Line(text, "netbios name", netbiosName);
         }
         Line(text, "server string", "Pithyx");
+        // Every share says browseable itself; the share Samba adds per user name from [homes] stays hidden.
+        Line(text, "browseable", "no");
         Line(text, "server min protocol", "SMB3");
         Line(text, "server signing", "mandatory");
         Line(text, "map to guest", "never");
@@ -105,7 +129,9 @@ public static class SmbConfig
         Line(text, "fruit:delete_empty_adfiles", "yes");
         // Last in [global], so the owner's settings win; it may add shares of its own too.
         Line(text, "include", LocalInclude);
-        foreach (var share in shares.Where(share => !ReservedNames.Contains(share.Name)).OrderBy(share => share.Name, StringComparer.OrdinalIgnoreCase))
+        var sections = shares.Where(share => share.Kind != SmbShareKind.Share).OrderBy(share => share.Kind)
+            .Concat(shares.Where(share => share.Kind == SmbShareKind.Share && !ReservedNames.Contains(share.Name)).OrderBy(share => share.Name, StringComparer.OrdinalIgnoreCase));
+        foreach (var share in sections)
         {
             text.AppendLine();
             text.Append('[').Append(share.Name).AppendLine("]");
@@ -124,13 +150,20 @@ public static class SmbConfig
             Line(text, "directory mask", "0770");
             Line(text, "veto files", $"/{Files.FsPath.TrashFolder}/");
             Line(text, "delete veto files", "no");
-            Line(text, "vfs objects", "full_audit catia fruit streams_xattr shadow_copy2 recycle");
-            Line(text, "recycle:repository", $"{Files.FsPath.TrashFolder}/{RecycleFolder}/%U");
-            Line(text, "recycle:keeptree", "yes");
-            Line(text, "recycle:versions", "yes");
-            Line(text, "recycle:touch", "no");
-            Line(text, "recycle:directory_mode", "0700");
-            Line(text, "recycle:subdir_mode", "0700");
+            if (share.Kind == SmbShareKind.Homes)
+            {
+                Line(text, "vfs objects", "full_audit catia fruit streams_xattr shadow_copy2");
+            }
+            else
+            {
+                Line(text, "vfs objects", "full_audit catia fruit streams_xattr shadow_copy2 recycle");
+                Line(text, "recycle:repository", $"{Files.FsPath.TrashFolder}/{RecycleFolder}/%U");
+                Line(text, "recycle:keeptree", "yes");
+                Line(text, "recycle:versions", "yes");
+                Line(text, "recycle:touch", "no");
+                Line(text, "recycle:directory_mode", "0700");
+                Line(text, "recycle:subdir_mode", "0700");
+            }
             Line(text, "shadow:snapdir", ".zfs/snapshot");
             Line(text, "shadow:format", $"{Storage.Snapshots.SnapshotNames.Prefix}{Storage.Snapshots.SnapshotKinds.Daily}-%Y%m%dT%H%M%SZ");
             Line(text, "shadow:localtime", "no");

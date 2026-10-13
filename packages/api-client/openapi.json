@@ -2211,7 +2211,7 @@
         "tags": [
           "Users"
         ],
-        "description": "Administrators only. Creates a user with a Linux and a Samba account with the password (a uid from 20000 to 29999 that is never given out again, the group users, no login shell) and a home dataset below the first pool's homes when there is a pool.",
+        "description": "Administrators only. Creates a user with a Linux and a Samba account with the password (a uid from 20000 to 29999 that is never given out again, the group users, no login shell) and its home on the home pool when there is one.",
         "operationId": "CreateUser",
         "requestBody": {
           "content": {
@@ -2302,7 +2302,7 @@
         "tags": [
           "Users"
         ],
-        "description": "Administrators only. Deletes the user and its Linux account; its files and home stay, and its uid is never given out again. Nobody deletes themselves, and the last administrator stays.",
+        "description": "Administrators only. Deletes the user and its Linux account; its uid is never given out again and its other files stay. Its home stays as <name>.deleted-<uid> (home=keep, the default), is deleted with every file (home=delete with confirm set to the user name) or moves into a folder of the shared folder shareId as a job (home=move), which the answer returns. Nobody deletes themselves, and the last administrator stays.",
         "operationId": "DeleteUser",
         "parameters": [
           {
@@ -2313,11 +2313,41 @@
               "type": "integer",
               "format": "int64"
             }
+          },
+          {
+            "name": "home",
+            "in": "query",
+            "schema": {
+              "default": "keep",
+              "$ref": "#/components/schemas/HomeDataChoice"
+            }
+          },
+          {
+            "name": "shareId",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "confirm",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
-          "204": {
-            "description": "No Content"
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserDeletion"
+                }
+              }
+            }
           },
           "default": {
             "description": "Problem details with a stable error code.",
@@ -2363,6 +2393,265 @@
         "responses": {
           "204": {
             "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/homes": {
+      "get": {
+        "tags": [
+          "Users"
+        ],
+        "description": "Administrators only. The home pool, every pool with whether it can take the homes, the default quota and every home with its user, space and quota, the homes of deleted users included.",
+        "operationId": "GetHomes",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeOverview"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/homes/settings": {
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "description": "Administrators only. Sets the quota of every home without its own (at least 1 MiB, null for none).",
+        "operationId": "SetHomeSettings",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HomeSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeOverview"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/homes/users/{userId}/quota": {
+      "put": {
+        "tags": [
+          "Users"
+        ],
+        "description": "Administrators only. Sets a user's own home quota: at least 1 MiB, 0 for none, null for the default.",
+        "operationId": "SetHomeQuota",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HomeQuotaRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HomeOverview"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/homes/move": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "description": "Administrators only. Moves every home to another pool as a job: each home is read-only while it is copied with its files, owners and ACLs, then it is used from the new pool and the old copy is destroyed. A home that fails stays where it was.",
+        "operationId": "MoveHomes",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HomeMoveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/homes/{shareId}": {
+      "delete": {
+        "tags": [
+          "Users"
+        ],
+        "description": "Administrators only. Deletes the home of a deleted user with every file and snapshot, after its folder name was typed (confirm).",
+        "operationId": "DeleteHome",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "confirm",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/homes/{shareId}/release": {
+      "post": {
+        "tags": [
+          "Users"
+        ],
+        "description": "Administrators only. Moves the files of a deleted user's home into a new folder of a shared folder as a job, then deletes the home with its recycle bin.",
+        "operationId": "ReleaseHome",
+        "parameters": [
+          {
+            "name": "shareId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HomeReleaseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
           },
           "default": {
             "description": "Problem details with a stable error code.",
@@ -11152,6 +11441,16 @@
           "fs.version.not_found",
           "fs.volume.full",
           "fs.volume.read_only",
+          "homes.choice.invalid",
+          "homes.home.in_use",
+          "homes.home.name_mismatch",
+          "homes.home.not_found",
+          "homes.move.running",
+          "homes.pool.no_space",
+          "homes.pool.taken",
+          "homes.pool.unavailable",
+          "homes.pool.unchanged",
+          "homes.quota.invalid",
           "installer.check.failed",
           "installer.claim.required",
           "installer.claim.taken",
@@ -12185,6 +12484,237 @@
           },
           "mode": {
             "$ref": "#/components/schemas/DaemonMode"
+          }
+        }
+      },
+      "HomeDataChoice": {
+        "enum": [
+          "keep",
+          "move",
+          "delete"
+        ],
+        "description": "What happens to a user's home when the user is deleted."
+      },
+      "HomeInfo": {
+        "required": [
+          "shareId",
+          "folder",
+          "userId",
+          "username",
+          "displayName",
+          "pool",
+          "usedBytes",
+          "quotaBytes",
+          "ownQuotaBytes",
+          "unavailable"
+        ],
+        "type": "object",
+        "properties": {
+          "shareId": {
+            "type": "integer",
+            "description": "Its id as a share: Files opens it with this id.",
+            "format": "int64"
+          },
+          "folder": {
+            "type": "string",
+            "description": "Its folder below `homes`: the user name, or `&lt;name&gt;.deleted-&lt;uid&gt;` after its user was deleted."
+          },
+          "userId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Its user, or null when the user was deleted.",
+            "format": "int64"
+          },
+          "username": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The user's name, or null."
+          },
+          "displayName": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The user's display name, or null."
+          },
+          "pool": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The pool it is on."
+          },
+          "usedBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Space it uses with its snapshots, or null while it cannot be read.",
+            "format": "int64"
+          },
+          "quotaBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Its quota as set on the pool, or null for none.",
+            "format": "int64"
+          },
+          "ownQuotaBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The user's own quota: null takes the default, 0 means none.",
+            "format": "int64"
+          },
+          "unavailable": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Why its files cannot be reached now, or null when they can."
+          }
+        },
+        "description": "A home."
+      },
+      "HomeMoveRequest": {
+        "required": [
+          "pool"
+        ],
+        "type": "object",
+        "properties": {
+          "pool": {
+            "type": "string",
+            "description": "The pool the homes move to; it needs the Pithyx layout and room for every home."
+          }
+        }
+      },
+      "HomeOverview": {
+        "required": [
+          "pool",
+          "pools",
+          "defaultQuotaBytes",
+          "homes",
+          "moving"
+        ],
+        "type": "object",
+        "properties": {
+          "pool": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The home pool, or null before the first pool that can take homes."
+          },
+          "pools": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HomePool"
+            },
+            "description": "Every pool with whether it can take the homes."
+          },
+          "defaultQuotaBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The quota of every home without its own, or null for none.",
+            "format": "int64"
+          },
+          "homes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/HomeInfo"
+            },
+            "description": "Every home, those of deleted users included."
+          },
+          "moving": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The job that moves the homes to another pool while it runs, otherwise null.",
+            "format": "int64"
+          }
+        },
+        "description": "The homes as Settings shows them. Administrators only."
+      },
+      "HomePool": {
+        "required": [
+          "name",
+          "availableBytes",
+          "unavailable"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The pool."
+          },
+          "availableBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Free space for the homes, or null while it cannot be read.",
+            "format": "int64"
+          },
+          "unavailable": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Why it cannot take the homes (`missing`, `offline`, `read_only`, `not_prepared`, `locked`, `not_mounted`), or null when it can."
+          }
+        }
+      },
+      "HomeQuotaRequest": {
+        "required": [
+          "quotaBytes"
+        ],
+        "type": "object",
+        "properties": {
+          "quotaBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The user's own quota: at least 1 MiB, 0 for none, null for the default.",
+            "format": "int64"
+          }
+        }
+      },
+      "HomeReleaseRequest": {
+        "required": [
+          "shareId"
+        ],
+        "type": "object",
+        "properties": {
+          "shareId": {
+            "type": "integer",
+            "description": "The shared folder that gets a folder with the home's files.",
+            "format": "int64"
+          }
+        }
+      },
+      "HomeSettingsRequest": {
+        "required": [
+          "defaultQuotaBytes"
+        ],
+        "type": "object",
+        "properties": {
+          "defaultQuotaBytes": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The quota of every home without its own: at least 1 MiB, or null for none.",
+            "format": "int64"
           }
         }
       },
@@ -16494,7 +17024,7 @@
           },
           "name": {
             "type": "string",
-            "description": "Name shown to users."
+            "description": "Name shown to users: the shared folder's name, `home` for the caller's home, the folder name for another user's home."
           },
           "access": {
             "description": "The user's access: read or read and write.",
@@ -16513,9 +17043,22 @@
               "string"
             ],
             "description": "Why its files cannot be reached now (ShareAvailability), or null when they can."
+          },
+          "kind": {
+            "description": "A shared folder, the caller's home or another user's home.",
+            "$ref": "#/components/schemas/ShareKind"
           }
         },
         "description": "A share the user can use."
+      },
+      "ShareKind": {
+        "enum": [
+          "share",
+          "home",
+          "userHome"
+        ],
+        "description": "What a share is (D348).",
+        "default": "share"
       },
       "ShareListRevision": {
         "required": [
@@ -18949,6 +19492,27 @@
           }
         },
         "description": "Settings &gt; Updates for administrators (topic `system/updates`).\n    `Supported`: Whether updates and rollbacks apply here; false on a machine not laid out by the installer.\n    `UnsupportedReason`: `not_btrfs`, `not_subvolume`, `not_array` or `findmnt`.\n    `RunningJobId`: The job of an update or rollback that runs now.\n    `Snapshots`: The kept snapshots, newest first; each can be restored.\n    `Source`: The update source the box follows (D339); only the recovery menu switches it.\n    `SourceCandidate`: A source file saved in Settings for the recovery menu, or null."
+      },
+      "UserDeletion": {
+        "required": [
+          "job"
+        ],
+        "type": "object",
+        "properties": {
+          "job": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "The job that moves the home's files into the shared folder (choice `move`), otherwise null.",
+                "$ref": "#/components/schemas/Job"
+              }
+            ],
+            "description": "A long operation of a user, such as copying files. Also the data of the `jobs/{id}` topics."
+          }
+        },
+        "description": "The result of deleting a user."
       },
       "UserGrants": {
         "required": [

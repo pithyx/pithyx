@@ -1,8 +1,6 @@
 using Dapper;
 using Pithyx.Daemon.Commands;
 using Pithyx.Daemon.Database;
-using Pithyx.Daemon.Storage;
-using Pithyx.Daemon.Storage.Zfs;
 
 namespace Pithyx.Daemon.Users;
 
@@ -16,13 +14,12 @@ public sealed record AccountOptions(string PasswdPath, bool Apply, string Shadow
 /// Keeps the Linux accounts in line with the users in SQLite (step 10): at start and after every change, the
 /// difference (<see cref="AccountReconciler"/>) runs as <c>useradd</c>, <c>usermod</c> and <c>userdel</c>, only for
 /// accounts in the Pithyx range, and the groups the same way with <c>groupadd</c>, <c>groupmod</c>, <c>gpasswd</c> and
-/// <c>groupdel</c> (<see cref="GroupReconciler"/>), only for groups in the Pithyx range. A user's home is a dataset below the first pool's <c>homes</c> (D105), created with the
-/// user and never deleted with it.
+/// <c>groupdel</c> (<see cref="GroupReconciler"/>), only for groups in the Pithyx range. A user's home directory is its
+/// home (<see cref="Homes"/>).
 /// </summary>
 public sealed partial class LinuxAccounts(
     SqliteConnectionFactory connections,
     ICommandRunner commands,
-    PoolInventory pools,
     AccountOptions options,
     ILogger<LinuxAccounts> logger,
     TimeProvider? time = null) : IDisposable
@@ -53,21 +50,6 @@ public sealed partial class LinuxAccounts(
         }
     }
 
-    /// <summary>The first writable pool whose <c>homes</c> dataset is mounted, with its mount point.</summary>
-    public static (string Pool, string Mount)? HomesOf(PoolList current)
-    {
-        ArgumentNullException.ThrowIfNull(current);
-        var writable = current.Pools.Where(pool => !pool.ReadOnly && pool.State is "ONLINE" or "DEGRADED").Select(pool => pool.Name).ToHashSet(StringComparer.Ordinal);
-        return current.Datasets
-            .Where(dataset => writable.Contains(dataset.Pool) && dataset.Name == $"{dataset.Pool}/pithyx/homes" && dataset is { Mounted: true, MountPoint: not null })
-            .OrderBy(dataset => dataset.Pool, StringComparer.Ordinal)
-            .Select(dataset => ((string Pool, string Mount)?)(dataset.Pool, dataset.MountPoint!))
-            .FirstOrDefault();
-    }
-
-    /// <summary>The home folder of a user: below the first pool's homes when it is there, otherwise none.</summary>
-    public string HomeOf(string username) => HomesOf(pools.Current) is { } homes ? Path.Combine(homes.Mount, username) : AccountReconciler.NoHome;
-
     /// <summary>
     /// Every user's account. A user with the SSH login right gets a shell while SSH logins are switched on; everybody
     /// else <c>nologin</c>.
@@ -75,15 +57,19 @@ public sealed partial class LinuxAccounts(
     public async Task<IReadOnlyList<WantedAccount>> WantedAsync(CancellationToken cancellationToken)
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
-        var users = await connection.QueryAsync<(long Id, string Username, string? DisplayName, long? Uid, string? DisabledAt)>(
-            "SELECT id, username, display_name, uid, disabled_at FROM users WHERE uid IS NOT NULL ORDER BY uid");
+        var users = await connection.QueryAsync<(long Id, string Username, string? DisplayName, long? Uid, string? DisabledAt, string? Home)>(
+            """
+            SELECT users.id, users.username, users.display_name, users.uid, users.disabled_at, shares.path FROM users
+            LEFT JOIN shares ON shares.home = 1 AND shares.home_user_id = users.id
+            WHERE users.uid IS NOT NULL ORDER BY users.uid
+            """);
         var ssh = await connection.ExecuteScalarAsync<long>("SELECT ssh_enabled FROM file_services WHERE id = 1") == 1;
         var rights = (await Permissions.PermissionService.AllUsersAsync(connection, null)).ToDictionary(user => user.Id, user => user.Permissions);
         return [.. users.Select(user => new WantedAccount(
             user.Username,
             user.Uid!.Value,
             AccountReconciler.Comment(user.DisplayName),
-            HomeOf(user.Username),
+            user.Home ?? AccountReconciler.NoHome,
             ssh && rights[user.Id].Has(Permissions.Resources.SshLogin) ? AccountReconciler.LoginShell : AccountReconciler.NoLogin,
             user.DisabledAt is not null))];
     }
@@ -169,35 +155,6 @@ public sealed partial class LinuxAccounts(
         }
     }
 
-    /// <summary>Creates the user's home dataset on the first pool and gives it to the user, when there is such a pool.</summary>
-    public async Task<string?> CreateHomeAsync(string username, long uid, CancellationToken cancellationToken)
-    {
-        if (!options.Apply || HomesOf(pools.Current) is not { } homes)
-        {
-            return null;
-        }
-        var path = Path.Combine(homes.Mount, username);
-        if (!Directory.Exists(path))
-        {
-            var result = await commands.RunAsync(ZfsPlans.CreateHomeDataset(homes.Pool, username), cancellationToken);
-            if (result.ExitCode != 0 || !Directory.Exists(path))
-            {
-                LogHomeFailed(username, homes.Pool);
-                return null;
-            }
-        }
-        using (var parent = Files.LinuxFs.OpenRoot(homes.Mount))
-        {
-            Files.LinuxFs.ChangeOwnerAt(parent, username, (uint)uid, Files.FileOwner.UsersGroup);
-        }
-        // The daemon runs on Linux only; the analyzer cannot know that.
-        if (OperatingSystem.IsLinux())
-        {
-            File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite | UnixFileMode.UserExecute);
-        }
-        return path;
-    }
-
     [LoggerMessage(Level = LogLevel.Warning, Message = "The Linux account {Name} was not provisioned: {Reason}")]
     private partial void LogRefused(string name, string reason);
 
@@ -206,7 +163,4 @@ public sealed partial class LinuxAccounts(
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "The Linux group {Name} was not provisioned: {Reason}")]
     private partial void LogGroupRefused(string name, string reason);
-
-    [LoggerMessage(Level = LogLevel.Warning, Message = "Could not create the home dataset of {Name} on pool {Pool}")]
-    private partial void LogHomeFailed(string name, string pool);
 }

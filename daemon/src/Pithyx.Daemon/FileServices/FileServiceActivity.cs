@@ -25,7 +25,7 @@ public sealed partial class FileServiceActivity(StorageUsage usage, TimeProvider
     /// <summary>The users with an SFTP view; only their sessions count.</summary>
     public IReadOnlySet<string> SftpUsers { get; set; } = new HashSet<string>(StringComparer.Ordinal);
 
-    /// <summary>Raised with the share name when a file was deleted over SMB.</summary>
+    /// <summary>Raised with the share's name in <c>shares</c> when a file was deleted over SMB.</summary>
     public event Action<string>? SmbDeleted;
 
     /// <summary>Looks at a journal entry; returns false when it should not be kept in the Log Center.</summary>
@@ -37,7 +37,8 @@ public sealed partial class FileServiceActivity(StorageUsage usage, TimeProvider
             Written();
             if (audit.Operation == "unlinkat")
             {
-                SmbDeleted?.Invoke(audit.Share);
+                // Samba names every user's home "home"; its row is named after the user (D348).
+                SmbDeleted?.Invoke(string.Equals(audit.Share, Users.Homes.OwnName, StringComparison.OrdinalIgnoreCase) ? Users.Homes.RowName(audit.User) : audit.Share);
             }
             return false;
         }
