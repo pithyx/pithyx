@@ -6,13 +6,18 @@ namespace Pithyx.Daemon.Commands;
 /// <param name="SensitiveArgumentIndexes">Positions in <paramref name="Arguments"/> that are masked in logs.</param>
 /// <param name="StandardInput">Written to the command's stdin, which is then closed. Never logged: it carries passwords.</param>
 /// <param name="SecretOutput">The command prints secrets: its stdout and stderr are masked in logs.</param>
+/// <param name="PipeTo">
+/// A second command that reads this one's stdout, like <c>zfs send | zfs receive</c>, without a shell. The result is
+/// the second command's output; it fails when either command fails.
+/// </param>
 public sealed record CommandRequest(
     string FileName,
     IReadOnlyList<string> Arguments,
     TimeSpan? Timeout = null,
     IReadOnlySet<int>? SensitiveArgumentIndexes = null,
     string? StandardInput = null,
-    bool SecretOutput = false)
+    bool SecretOutput = false,
+    CommandRequest? PipeTo = null)
 {
     private const int MaxLoggedOutputLength = 4096;
 
