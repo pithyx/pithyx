@@ -15,7 +15,7 @@ tags:
     udp,
   ]
 order: 45
-status: draft
+status: ready
 ---
 
 Ja. Einstellungen > **Reverse Proxy** leitet Domains auf den Ports 443 und 80 an Dienste in deinem Netz oder auf der Box weiter, mit einem Zertifikat der Zertifizierungsstelle der Box oder einem hochgeladenen, auf Wunsch hinter Basic Auth oder der Pithyx-Anmeldung. Lass die Domains vorher in deinem DNS oder Router auf die Box zeigen. Streams leiten einen TCP- oder UDP-Port für Dienste weiter, die kein HTTP sprechen. Die Box selbst bleibt auf Port 7484.

@@ -1,7 +1,7 @@
 ---
 title: 'Security'
 description: 'Transport, open ports, physical access, SSH, two-factor sign-in, the recovery key and what leaves the box.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 9
@@ -19,7 +19,7 @@ The session cookie is `HttpOnly`, `SameSite=Strict` and `Secure`. State-changing
 
 ## Open ports
 
-Pithyx has a firewall that lets in only the web interface and the file services that are switched on, over IPv4 and IPv6: the web desktop and WebDAV on 7484, 80 and 443 for the redirect and the reverse proxy, the ports of enabled reverse proxy streams, SMB on 445 (on from the first start), SFTP and SSH on 22, FTP on 21 with the passive ports 50000 to 50099. Switching a service off in Settings > **File services** also closes its port. Everything else is dropped, except answers to the box's own connections, DHCP replies and the ICMP messages IPv6 needs. App backends publish no ports at all.
+Pithyx has a firewall that lets in only the web interface and the file services that are switched on, over IPv4 and IPv6: the web desktop and WebDAV on 7484, 80 and 443 for the redirect and the reverse proxy, the ports of enabled reverse proxy streams, SMB on 445 (on from the first start), SFTP and SSH on 22, FTP on 21 with the passive ports 50000 to 50099. Switching a service off in Settings > **File services** also closes its port. Everything else is dropped, except answers to the box's own connections, DHCP replies and the usual ICMP messages (ping among them) and those IPv6 needs. App backends publish no ports at all.
 
 With **Only private networks may use the file services** (section **Firewall** on the same page, off by default), SMB, SFTP, SSH and FTP answer only computers in private networks (10.x, 172.16 to 31.x, 192.168.x, link-local and IPv6 ULA); the web interface stays reachable either way. Leave it off if you reach the box through a router from another network or over a VPN with public addresses. If the rules cannot be applied, the setting is still saved and the error is [`network.firewall.failed`](/docs/reference/errors/#network.firewall.failed). Pithyx offers no remote access of its own; keep the box behind a router and reach it from outside over a VPN rather than forwarding these ports.
 
@@ -42,7 +42,7 @@ Switching either off never stops SSH for the system's own accounts; Pithyx never
 
 ## Two-factor sign-in
 
-Every user can turn on two-factor sign-in (TOTP) in the account menu under **Two-factor authentication**: scan the QR code or enter the key, enter a code, choose **Turn on**, and keep the 10 recovery codes shown once; each works once. The codes use SHA-1, 6 digits and 30 seconds. At sign-in, enter the code or choose "Use a recovery code instead"; the challenge is valid for 5 minutes. Turning it off needs the password. After 5 failed attempts per user or 30 per address in 5 minutes, further attempts are refused for a while. Sessions end after 7 days without use or 30 days in total.
+Every user can turn on two-factor sign-in (TOTP) in the account menu under **Two-factor authentication**: scan the QR code or enter the key, enter a code, choose **Turn on**, and keep the 10 recovery codes shown once; each works once. The codes use SHA-1, 6 digits and 30 seconds. At sign-in, enter the code or choose "Use a recovery code instead"; the challenge is valid for 5 minutes. Turning it off needs the password. After 5 failed attempts for one user from one address, or 30 from one address, in 5 minutes, further attempts are refused for a while. Sessions end after 7 days without use or 30 days in total.
 
 SMB, SFTP, WebDAV and FTP use the password only.
 

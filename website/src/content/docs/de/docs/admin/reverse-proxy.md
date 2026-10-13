@@ -1,7 +1,7 @@
 ---
 title: 'Reverse Proxy'
 description: 'Proxy-Hosts und Weiterleitungs-Hosts auf den Ports 443 und 80 nach Domain, mit Zertifikaten, Zugriffsregeln und der Pithyx-Anmeldung, sowie TCP- und UDP-Streams.'
-status: draft
+status: ready
 audience: admin
 since: '1.0.0-beta.1'
 sidebar:
@@ -30,7 +30,7 @@ Antworten fließen ungepuffert durch, Server-Sent Events und große Downloads ko
 - **Zertifikat**: **Von der Zertifizierungsstelle der Box** stellt im Speicher ein Zertifikat für die Domains des Hosts aus (397 Tage, erneuert 30 Tage vor dem Ende und immer, wenn sich die Zertifizierungsstelle ändert). Jede Domain muss im Bereich der Zertifizierungsstelle liegen ([`tls.name.not_permitted`](/de/docs/reference/errors/#tls.name.not_permitted)); deine eigene Domain nimmst du mit einer neuen Zertifizierungsstelle in Einstellungen > **Zertifikate** in den Bereich auf. **Eigenes hochladen** nimmt ein Zertifikat mit Kette und unverschlüsseltem Schlüssel im PEM-Format, das jede Domain abdeckt ([`proxy.certificate.name_mismatch`](/de/docs/reference/errors/#proxy.certificate.name_mismatch)), zum Beispiel eines für eine öffentliche Domain. Ein abgelaufener oder kaputter Upload wird durch das eigene Zertifikat der Box ersetzt, und der Host zeigt **Kein Zertifikat**, wenn er keines hat.
 - Die Box wählt das Zertifikat nach dem Namen, den der Browser beim TLS-Handshake nennt, auf 443 und auf 7484; ein Name ohne Host bekommt das Zertifikat der Box.
 - **HTTP auf HTTPS umleiten** (standardmäßig an) beantwortet einfaches HTTP auf 80 mit einer Umleitung auf 443 (301 für GET und HEAD, sonst 308). Ausgeschaltet antwortet der Host auch auf 80.
-- **HTTP/2 anbieten** lässt Browser auf 443 HTTP/2 nutzen.
+- **HTTP/2 anbieten** (standardmäßig an) lässt Browser auf 443 HTTP/2 nutzen.
 - **HSTS senden** setzt `Strict-Transport-Security: max-age=31536000` auf HTTPS-Antworten.
 
 :::caution[HSTS]
@@ -60,7 +60,7 @@ Die Anmeldung läuft über die Weboberfläche der Box. Erreichst du einen Host v
 
 - **Größter Upload in MB**: leer für keine Grenze.
 - **Verbindungs-Timeout** (1 bis 300 Sekunden, Standard 10) und **Antwort-Timeout** (1 bis 86400 Sekunden, Standard 100: wie lange das Ziel schweigen darf). Ein ruhender WebSocket bleibt bis zu einem Tag offen. Ein unerreichbares Ziel ergibt 502 ([`proxy.target.unavailable`](/de/docs/reference/errors/#proxy.target.unavailable)), ein zu langsames 504 ([`proxy.target.timeout`](/de/docs/reference/errors/#proxy.target.timeout)).
-- **Zugriffslog schreiben**: jede Anfrage im Log Center unter der Quelle `proxy/<erste Domain>`, mit Methode, Name, Pfad (ohne die Abfrage, die Geheimnisse enthalten kann), Status, Dauer, Adresse des Clients und, hinter einer Anmeldung, dem Benutzer.
+- **Zugriffslog schreiben** (standardmäßig an): jede Anfrage im Log Center unter der Quelle `proxy/<erste Domain>`, mit Methode, Name, Pfad (ohne die Abfrage, die Geheimnisse enthalten kann), Status, Dauer, Adresse des Clients und, hinter einer Anmeldung, dem Benutzer.
 
 Die Liste zeigt für jeden Host, ob sein Ziel beim Öffnen der Seite geantwortet hat; **Ziel prüfen** schaut noch einmal nach.
 

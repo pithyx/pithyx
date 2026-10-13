@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- Docs: the pages on security, certificates and the reverse proxy, the error code reference and the FAQ on own domains are checked against the code and no longer marked as drafts, so every docs page is now checked. The security page names the ICMP messages the firewall lets in and that the sign-in limit counts per user and address; the error reference says that `sdk.*` codes come from the SDK.
+
 ### Added
 
 - Reverse proxy (D347): Settings > **Reverse proxy** serves your own domains on ports 443 and 80 while the box stays on 7484. Proxy hosts forward their domains (also `*.` wildcards) to an http or https target, with a certificate per host from the box's authority or uploaded, chosen by SNI; WebSockets, HTTP/2, unbuffered streaming, force HTTPS, optional HSTS, `X-Forwarded-*`, the `Host` to send, own request and response headers, an upload limit and timeouts; allowed and denied addresses, Basic Auth and the Pithyx sign-in (a host behind the box's accounts, users and groups, ended with the box session); a status check of the target and an access log per host in the Log Center (`proxy/<domain>`). Redirect hosts send domains to an address with 301, 302, 307 or 308. Streams forward a TCP or UDP port, and the firewall opens it. Names without a host still go to 7484, or get 404 if you choose so. Applies without a restart; new backup part Reverse proxy. API under `/api/system/proxy/` and `POST /api/proxy/tickets`, migration 0030, error codes `proxy.*`. A development build listens on the proxy ports of `PITHYX_DEV_PROXY_PORTS`.

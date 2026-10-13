@@ -1,7 +1,7 @@
 ---
 title: 'Reverse proxy'
 description: 'Proxy hosts and redirect hosts on ports 443 and 80 by domain, with certificates, access rules and the Pithyx sign-in, and TCP and UDP streams.'
-status: draft
+status: ready
 audience: admin
 since: '1.0.0-beta.1'
 sidebar:
@@ -30,7 +30,7 @@ Answers stream through without buffering, so server-sent events and large downlo
 - **Certificate**: **From the box's certificate authority** makes a certificate for the host's domains in memory (397 days, renewed 30 days before its end and whenever the authority changes). Every domain must lie inside the authority's scope ([`tls.name.not_permitted`](/docs/reference/errors/#tls.name.not_permitted)); add your own domain to the scope with a new authority in Settings > **Certificates**. **Upload my own** takes a certificate with its chain and unencrypted key in PEM that covers every domain ([`proxy.certificate.name_mismatch`](/docs/reference/errors/#proxy.certificate.name_mismatch)), for example one for a public domain. An expired or broken upload is replaced by the box's own certificate, and the host shows **No certificate** when it has none of its own.
 - The box picks the certificate by the name the browser asks for in the TLS handshake, on 443 and on 7484; a name without a host gets the box's own certificate.
 - **Redirect HTTP to HTTPS** (on by default) answers plain HTTP on 80 with a redirect to 443 (301 for GET and HEAD, 308 otherwise). Switched off, the host also answers on 80.
-- **Offer HTTP/2** lets browsers use HTTP/2 on 443.
+- **Offer HTTP/2** (on by default) lets browsers use HTTP/2 on 443.
 - **Send HSTS** adds `Strict-Transport-Security: max-age=31536000` to HTTPS answers.
 
 :::caution[HSTS]
@@ -60,7 +60,7 @@ The sign-in happens on the box's web interface. If you reach a host from outside
 
 - **Largest upload in MB**: empty for no limit.
 - **Connect timeout** (1 to 300 seconds, default 10) and **Answer timeout** (1 to 86400 seconds, default 100: how long the target may stay silent). An idle WebSocket stays open for up to a day. A target that cannot be reached gets 502 ([`proxy.target.unavailable`](/docs/reference/errors/#proxy.target.unavailable)), one that is too slow 504 ([`proxy.target.timeout`](/docs/reference/errors/#proxy.target.timeout)).
-- **Write an access log**: every request in the Log Center under the source `proxy/<first domain>`, with method, name, path (without the query, which may hold secrets), status, duration, client address and, behind a sign-in, the user.
+- **Write an access log** (on by default): every request in the Log Center under the source `proxy/<first domain>`, with method, name, path (without the query, which may hold secrets), status, duration, client address and, behind a sign-in, the user.
 
 The list shows for each host whether its target answered when the page opened; **Check target** looks again.
 

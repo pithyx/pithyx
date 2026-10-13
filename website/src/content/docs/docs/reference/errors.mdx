@@ -1,7 +1,7 @@
 ---
 title: Error codes
-description: Every error code the daemon returns, with its message, generated from the product's translations.
-status: draft
+description: Every error code the daemon and the SDK return, with its message, generated from the product's translations.
+status: ready
 audience: developer
 generated: error-codes
 sidebar:
@@ -10,6 +10,6 @@ sidebar:
 
 import ErrorCodes from '~/components/ErrorCodes.astro';
 
-The API returns errors as RFC 9457 problem details with a stable `code`, `params` and an English `detail`. This list is generated from `i18n/en/errors.json`; `{name}` marks a parameter.
+The API returns errors as RFC 9457 problem details with a stable `code`, `params`, an English `detail` and the `requestId`. Codes starting with `sdk.` come from the SDK's transport in the browser, not from the daemon. This list is generated from `i18n/en/errors.json`; `{name}` marks a parameter.
 
 <ErrorCodes />
