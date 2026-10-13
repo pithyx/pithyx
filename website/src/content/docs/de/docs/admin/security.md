@@ -1,7 +1,7 @@
 ---
 title: 'Sicherheit'
 description: 'Transport, offene Ports, physischer Zugriff, SSH, Zwei-Faktor-Anmeldung, der Wiederherstellungsschlüssel und was die Box verlässt.'
-status: draft
+status: ready
 audience: admin
 sidebar:
   order: 9
@@ -19,7 +19,7 @@ Das Sitzungs-Cookie ist `HttpOnly`, `SameSite=Strict` und `Secure`. Anfragen, di
 
 ## Offene Ports
 
-Pithyx hat eine Firewall, die nur die Weboberfläche und die eingeschalteten Dateidienste hereinlässt, über IPv4 und IPv6: der Web-Desktop und WebDAV auf 7484, 80 und 443 für die Umleitung und den Reverse Proxy, die Ports aktiver Streams des Reverse Proxys, SMB auf 445 (ab dem ersten Start an), SFTP und SSH auf 22, FTP auf 21 mit den passiven Ports 50000 bis 50099. Schaltest du einen Dienst unter Einstellungen > **Dateidienste** aus, ist auch sein Port zu. Alles andere wird verworfen, außer Antworten auf eigene Verbindungen der Box, DHCP-Antworten und den ICMP-Nachrichten, die IPv6 braucht. Die Backends der Apps veröffentlichen gar keine Ports.
+Pithyx hat eine Firewall, die nur die Weboberfläche und die eingeschalteten Dateidienste hereinlässt, über IPv4 und IPv6: der Web-Desktop und WebDAV auf 7484, 80 und 443 für die Umleitung und den Reverse Proxy, die Ports aktiver Streams des Reverse Proxys, SMB auf 445 (ab dem ersten Start an), SFTP und SSH auf 22, FTP auf 21 mit den passiven Ports 50000 bis 50099. Schaltest du einen Dienst unter Einstellungen > **Dateidienste** aus, ist auch sein Port zu. Alles andere wird verworfen, außer Antworten auf eigene Verbindungen der Box, DHCP-Antworten und den üblichen ICMP-Nachrichten (darunter Ping) sowie denen, die IPv6 braucht. Die Backends der Apps veröffentlichen gar keine Ports.
 
 Mit **Nur private Netze dürfen die Dateidienste nutzen** (Abschnitt **Firewall** auf derselben Seite, standardmäßig aus) antworten SMB, SFTP, SSH und FTP nur Computern in privaten Netzen (10.x, 172.16 bis 31.x, 192.168.x, Link-local und IPv6-ULA); die Weboberfläche bleibt in jedem Fall erreichbar. Lass es aus, wenn du die Box über einen Router aus einem anderen Netz oder über ein VPN mit öffentlichen Adressen erreichst. Lassen sich die Regeln nicht anwenden, ist die Einstellung trotzdem gespeichert, und der Fehler ist [`network.firewall.failed`](/de/docs/reference/errors/#network.firewall.failed). Pithyx bietet keinen eigenen Fernzugriff; lass die Box hinter einem Router und erreiche sie von außen lieber über ein VPN, statt diese Ports weiterzuleiten.
 
@@ -42,7 +42,7 @@ Das Ausschalten eines der beiden stoppt SSH für die eigenen Konten des Systems 
 
 ## Zwei-Faktor-Anmeldung
 
-Jeder Benutzer kann die Zwei-Faktor-Anmeldung (TOTP) im Kontomenü unter **Zwei-Faktor-Authentifizierung** einschalten: den QR-Code scannen oder den Schlüssel eingeben, einen Code eingeben, **Einschalten** wählen und die 10 Wiederherstellungscodes aufbewahren, die einmal angezeigt werden; jeder gilt einmal. Die Codes nutzen SHA-1, 6 Stellen und 30 Sekunden. Gib bei der Anmeldung den Code ein oder wähle „Stattdessen einen Wiederherstellungscode verwenden“; die Abfrage ist 5 Minuten gültig. Zum Ausschalten braucht es das Passwort. Nach 5 fehlgeschlagenen Versuchen pro Benutzer oder 30 pro Adresse in 5 Minuten werden weitere Versuche eine Zeit lang abgelehnt. Sitzungen enden nach 7 Tagen ohne Nutzung oder nach insgesamt 30 Tagen.
+Jeder Benutzer kann die Zwei-Faktor-Anmeldung (TOTP) im Kontomenü unter **Zwei-Faktor-Authentifizierung** einschalten: den QR-Code scannen oder den Schlüssel eingeben, einen Code eingeben, **Einschalten** wählen und die 10 Wiederherstellungscodes aufbewahren, die einmal angezeigt werden; jeder gilt einmal. Die Codes nutzen SHA-1, 6 Stellen und 30 Sekunden. Gib bei der Anmeldung den Code ein oder wähle „Stattdessen einen Wiederherstellungscode verwenden“; die Abfrage ist 5 Minuten gültig. Zum Ausschalten braucht es das Passwort. Nach 5 fehlgeschlagenen Versuchen für einen Benutzer von einer Adresse oder 30 von einer Adresse in 5 Minuten werden weitere Versuche eine Zeit lang abgelehnt. Sitzungen enden nach 7 Tagen ohne Nutzung oder nach insgesamt 30 Tagen.
 
 SMB, SFTP, WebDAV und FTP nutzen nur das Passwort.
 

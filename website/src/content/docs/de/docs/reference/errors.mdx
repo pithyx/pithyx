@@ -1,7 +1,7 @@
 ---
 title: Fehlercodes
-description: Alle Fehlercodes, die der Daemon zurückgibt, mit ihrer Meldung, erzeugt aus den Übersetzungen des Produkts.
-status: draft
+description: Alle Fehlercodes, die der Daemon und das SDK zurückgeben, mit ihrer Meldung, erzeugt aus den Übersetzungen des Produkts.
+status: ready
 audience: developer
 generated: error-codes
 sidebar:
@@ -10,6 +10,6 @@ sidebar:
 
 import ErrorCodes from '~/components/ErrorCodes.astro';
 
-Die API gibt Fehler als RFC-9457-Problem-Details mit stabilem `code`, `params` und englischem `detail` zurück. Diese Liste wird aus `i18n/de/errors.json` erzeugt; `{name}` steht für einen Parameter.
+Die API gibt Fehler als RFC-9457-Problem-Details mit stabilem `code`, `params`, englischem `detail` und der `requestId` zurück. Codes, die mit `sdk.` beginnen, kommen vom Transport des SDK im Browser, nicht vom Daemon. Diese Liste wird aus `i18n/de/errors.json` erzeugt; `{name}` steht für einen Parameter.
 
 <ErrorCodes />

@@ -25,7 +25,7 @@ These rules are binding. If a rule blocks you, stop and ask; never work around i
 - Version `1.0.0-beta.1` is in preparation (nothing tagged or published yet); the repository is about to go public.
 - Built: HTTPS on 7484 with the box as its own certificate authority (D346), the reverse proxy on 443 and 80 with redirect hosts and TCP/UDP streams (D347), storage (ZFS pools, disks, SMART, snapshots, scrubs), users, groups and permissions, shared folders with SMB, SFTP, WebDAV and FTP, the web desktop with Files and Settings, the app runtime (SDK, manifest, Docker backends, proxy, Store with signed catalogs), network settings, firewall, config backup, the web installer, the ISO build and signed system updates with automatic rollback.
 - Not built: pool encryption, NFS, VMs, support bundles; app rights that need elevation (`docker.socket`, `host.full`) are refused with `app.elevated.unsupported`.
-- Docs pages under `website/` are mostly `draft` (written from the code, not yet checked line by line); `TODO.md` marks what waits "(after 1.0.0-beta.1)".
+- Docs pages under `website/` are all `ready` (checked against the code); new pages start as `draft` until checked. `TODO.md` marks what waits "(after 1.0.0-beta.1)".
 - The migrations are numbered SQL files in `daemon/`; decisions are logged as D-numbers at the end of `TODO.md`, in number order (it conflicts on every merge; keep all entries sorted).
 
 ## Known pitfalls
