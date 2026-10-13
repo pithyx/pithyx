@@ -13,7 +13,7 @@ In the steps below, `<box-address>` is the name or IP address you use to open th
 
 ## Which protocol to use
 
-![Settings, File services, with SFTP off, WebDAV on, FTP off and the addresses to connect to, such as sftp://pithyx and http://pithyx:7484/webdav/](../../../../assets/screenshots/file-services.webp)
+![Settings, File services, with SFTP off, WebDAV on, FTP off and the addresses to connect to, such as sftp://pithyx and https://pithyx:7484/webdav/](../../../../assets/screenshots/file-services.webp)
 
 _An administrator switches the file services on in Settings > File services; each card shows the address to use._
 
@@ -21,11 +21,11 @@ _An administrator switches the file services on in Settings > File services; eac
 | ---------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | **SMB**    | A network drive on Windows, macOS and Linux for everyday work                         | Needs SMB 3. Older systems cannot connect. Previous versions and the recycle bin work. |
 | **SFTP**   | Encrypted transfers with a program such as FileZilla or WinSCP, or the `sftp` command | You see only your shared folders and get no shell. Password sign-in only.              |
-| **WebDAV** | Programs and file managers that can mount a web folder                                | Address: `http://<box-address>:7484/webdav/`                                           |
+| **WebDAV** | Programs and file managers that can mount a web folder                                | Address: `https://<box-address>:7484/webdav/`                                          |
 | **FTP**    | Devices that know neither SFTP nor WebDAV, such as scanners                           | Only passive mode. Encrypted with TLS; plain FTP only if an administrator allows it.   |
 
 :::caution
-The box serves the desktop and WebDAV over plain HTTP today. A WebDAV password therefore travels unencrypted. Use WebDAV only on a network you trust.
+The desktop and WebDAV use HTTPS. Windows and macOS mount WebDAV only once the computer trusts the box's root certificate; an administrator finds it in Settings > **Certificates**.
 :::
 
 Everyone sees only the shared folders their rights allow, with the access level an administrator gave them: no access, **Read** or **Read and write**. Administrators reach every shared folder.
@@ -45,7 +45,7 @@ The box does not announce itself on the network, so it does not appear under **N
 
 **SFTP and FTP:** install a program such as FileZilla or WinSCP and connect to `<box-address>`.
 
-**WebDAV:** in File Explorer, right-click **This PC**, choose **Map network drive** and enter `http://<box-address>:7484/webdav/`. Windows may refuse a password over plain HTTP. If it does, use SMB or a WebDAV program instead.
+**WebDAV:** in File Explorer, right-click **This PC**, choose **Map network drive** and enter `https://<box-address>:7484/webdav/`. Windows connects only once it trusts the box's root certificate. If it still refuses, use SMB or a WebDAV program instead.
 
 ## macOS
 
@@ -57,7 +57,7 @@ The box does not announce itself on the network, so it does not appear under **N
 
 **SFTP:** Finder cannot browse SFTP. Use an SFTP program and connect to `sftp://<box-address>`.
 
-**WebDAV:** in **Connect to Server**, enter `http://<box-address>:7484/webdav/`. Some macOS versions refuse a password over plain HTTP.
+**WebDAV:** in **Connect to Server**, enter `https://<box-address>:7484/webdav/`. macOS connects once it trusts the box's root certificate.
 
 **FTP:** use a program that supports FTP with TLS, and choose "explicit FTP over TLS".
 
@@ -73,7 +73,7 @@ sftp <user>@<box-address>
 
 SFTP accepts passwords only. Public keys are not used for SFTP users.
 
-**WebDAV:** a file manager with WebDAV support accepts `dav://<box-address>:7484/webdav/`. Pithyx serves plain HTTP today, so this is not encrypted.
+**WebDAV:** a file manager with WebDAV support accepts `davs://<box-address>:7484/webdav/`.
 
 **FTP:** use a client with explicit FTP over TLS, such as `lftp`.
 

@@ -90,6 +90,6 @@ _Der Wiederherstellungsschlüssel erscheint einmal, wenn die Installation endet.
 
 Wenn die Installation endet, zeigt die Seite **Pithyx ist installiert** und deinen Wiederherstellungsschlüssel. Kopiere oder drucke ihn, hake **Ich habe den Wiederherstellungsschlüssel gesichert** an und klicke auf **Weiter**. Dann sagt die Seite **USB-Stick entfernen**. Entferne den Stick und klicke auf **Jetzt neu starten**.
 
-Die Seite zeigt dann **Pithyx startet** und öffnet das neue System von selbst, sobald es antwortet. Das kann ein paar Minuten dauern. Passiert nichts, öffne die Adresse `http://<box-address>:7484` selbst. Die Box behält ihre Adresse meistens, weil sich die Netzwerkkarte auf dieselbe Weise ausweist, aber ein Router könnte eine andere vergeben. Die Konsole der installierten Box zeigt die aktuellen Adressen.
+Die Seite zeigt dann **Pithyx startet** und öffnet das neue System von selbst, sobald es antwortet. Die installierte Box spricht HTTPS mit einem selbst erstellten Zertifikat, deshalb warnt der Browser einmal; fahre zur Seite fort. Das kann ein paar Minuten dauern. Passiert nichts, öffne die Adresse `https://<box-address>:7484` selbst. Die Box behält ihre Adresse meistens, weil sich die Netzwerkkarte auf dieselbe Weise ausweist, aber ein Router könnte eine andere vergeben. Die Konsole der installierten Box zeigt die aktuellen Adressen.
 
 Melde dich mit dem Administratorkonto an, das du angelegt hast. Mach dann weiter mit [Erste Einrichtung](/de/docs/install/first-setup/).

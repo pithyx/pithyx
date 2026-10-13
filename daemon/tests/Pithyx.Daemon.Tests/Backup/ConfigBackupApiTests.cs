@@ -35,7 +35,8 @@ public sealed class ConfigBackupApiTests : IAsyncLifetime
         await _factory.DisposeAsync();
     }
 
-    private string TlsFile => Path.Combine(_factory.DataDirectory, "tls", "ftps.pfx");
+    // A file of its own in the certificate folder, which the box's certificates never read or replace.
+    private string TlsFile => Path.Combine(_factory.DataDirectory, "tls", "probe.bin");
 
     private async Task<T> QueryAsync<T>(string sql)
     {
@@ -149,6 +150,8 @@ public sealed class ConfigBackupApiTests : IAsyncLifetime
     [Fact]
     public async Task ARestoreNeedsTheCheckedBackupAndOnlyPartsItHolds()
     {
+        // A box always has its certificates (D346); without the files the backup holds no certificates part.
+        Directory.Delete(Path.Combine(_factory.DataDirectory, "tls"), recursive: true);
         var archive = await CreateAsync();
         var (_, summary) = await InspectAsync(archive, BackupPassword);
         var restoreId = summary.GetProperty("restoreId").GetString();

@@ -211,7 +211,7 @@ public sealed partial class UpdateHealth(UpdateSystem system, ICommandRunner com
         {
             using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
             timeout.CancelAfter(TimeSpan.FromSeconds(10));
-            using var response = await http.GetAsync(new Uri($"http://127.0.0.1:7484{path}"), timeout.Token);
+            using var response = await http.GetAsync(new Uri($"https://127.0.0.1:7484{path}"), timeout.Token);
             return response.IsSuccessStatusCode
                 && (await response.Content.ReadAsStringAsync(timeout.Token)).Contains(expected, StringComparison.OrdinalIgnoreCase);
         }

@@ -1168,6 +1168,42 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string SystemTimeZoneInvalid = "system.time.zone_invalid";
 
+    /// <summary>The uploaded certificate has not started yet or has ended; <c>params.notAfter</c> is its end.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string TlsCustomExpired = "tls.custom.expired";
+
+    /// <summary>The uploaded certificate is no PEM certificate, is empty or larger than 64 KiB.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string TlsCustomInvalid = "tls.custom.invalid";
+
+    /// <summary>The uploaded key is unreadable, encrypted or does not belong to the certificate.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string TlsCustomKeyMismatch = "tls.custom.key_mismatch";
+
+    /// <summary>No issued certificate has this number; <c>params.id</c> is the number asked for.</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string TlsIssuedNotFound = "tls.issued.not_found";
+
+    /// <summary><c>params.name</c> is no DNS name (a leading <c>*.</c> needs two labels after it) and no IP address.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string TlsNameInvalid = "tls.name.invalid";
+
+    /// <summary><c>params.name</c> lies outside what the box's certificate authority may sign (its Name Constraints).</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string TlsNameNotPermitted = "tls.name.not_permitted";
+
+    /// <summary>A certificate needs at least one name.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string TlsNamesMissing = "tls.names.missing";
+
+    /// <summary>More names than allowed; <c>params.max</c> is the limit.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string TlsNamesTooMany = "tls.names.too_many";
+
+    /// <summary>The validity is outside <c>params.min</c> to <c>params.max</c> days.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string TlsValidityOutOfRange = "tls.validity.out_of_range";
+
     /// <summary>
     /// The update cannot be applied: the step <c>params.step</c> failed with <c>params.command</c> and
     /// <c>params.exitCode</c>. When it failed after the snapshot, the box rolled back to it.

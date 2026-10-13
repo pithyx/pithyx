@@ -18,6 +18,7 @@ export { default as IconBell } from '@tabler/icons-react/dist/esm/icons/IconBell
 export { default as IconBox } from '@tabler/icons-react/dist/esm/icons/IconBox.mjs';
 export { default as IconBuildingStore } from '@tabler/icons-react/dist/esm/icons/IconBuildingStore.mjs';
 export { default as IconCamera } from '@tabler/icons-react/dist/esm/icons/IconCamera.mjs';
+export { default as IconCertificate } from '@tabler/icons-react/dist/esm/icons/IconCertificate.mjs';
 export { default as IconCheck } from '@tabler/icons-react/dist/esm/icons/IconCheck.mjs';
 export { default as IconChevronDown } from '@tabler/icons-react/dist/esm/icons/IconChevronDown.mjs';
 export { default as IconChevronRight } from '@tabler/icons-react/dist/esm/icons/IconChevronRight.mjs';

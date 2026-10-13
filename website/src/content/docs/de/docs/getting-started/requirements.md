@@ -54,7 +54,7 @@ Neue Pools werden mit 4-KiB-Sektoren (`ashift=12`), `lz4`-Kompression und `atime
 ## Netzwerk
 
 - Jede kabelgebundene Netzwerkkarte fragt beim ersten Start per DHCP nach einer Adresse (IPv4 und IPv6). Im Installer kannst du eine feste Adresse einstellen.
-- Der Web-Desktop wird über unverschlüsseltes HTTP auf Port 7484 ausgeliefert. Port 80 leitet dorthin weiter. HTTPS ist noch nicht gebaut.
+- Der Web-Desktop wird über HTTPS auf Port 7484 ausgeliefert; die Ports 80 und 443 leiten dorthin weiter. Browser warnen vor dem eigenen Zertifikat der Box, bis ein Gerät ihrem Root-Zertifikat vertraut.
 - Die Box hat eine Firewall, die nur die Weboberfläche und die Dateidienste durchlässt, die du einschaltest. Siehe [Sicherheit](/de/docs/admin/security/#offene-ports).
 - WLAN wird nicht unterstützt.
 - Die Box kündigt keinen Namen im Netzwerk an. Nutze ihre IP-Adresse, die die Konsole nach dem Start anzeigt.

@@ -526,6 +526,27 @@
       "zone_invalid": "The system does not know the time zone “{zone}”."
     }
   },
+  "tls": {
+    "custom": {
+      "expired": "The certificate is not valid now: it has not started yet or has already ended.",
+      "invalid": "That is no certificate in PEM format, or it is larger than 64 KiB.",
+      "key_mismatch": "The private key is unreadable, protected by a password or does not belong to the certificate."
+    },
+    "issued": {
+      "not_found": "There is no issued certificate with the number {id}."
+    },
+    "name": {
+      "invalid": "{name} is no valid DNS name or IP address.",
+      "not_permitted": "The box's certificate authority may not sign {name}. Create a new authority that includes it, or use a certificate of your own."
+    },
+    "names": {
+      "missing": "Enter at least one name or address.",
+      "too_many": "{max, plural, one {Enter at most # name.} other {Enter at most # names.}}"
+    },
+    "validity": {
+      "out_of_range": "The validity must be between {min} and {max} days."
+    }
+  },
   "users": {
     "account": {
       "refused": "The Linux account {username} cannot be created ({reason}). A system account may already use this name."

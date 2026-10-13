@@ -69,7 +69,7 @@ why:
       }
     - {
         title: 'Von Haus aus vorsichtig',
-        text: 'Platten mit Daten brauchen ihre Seriennummer, Netzwerkänderungen gehen zurück, wenn du sie nicht bestätigst, App-Backends laufen ohne Root-Rechte auf dem Host, und SSH bleibt aus, bis du es einschaltest. Der Desktop läuft noch über unverschlüsseltes HTTP, also lass die Box in einem Netz, dem du vertraust.',
+        text: 'Platten mit Daten brauchen ihre Seriennummer, Netzwerkänderungen gehen zurück, wenn du sie nicht bestätigst, App-Backends laufen ohne Root-Rechte auf dem Host, und SSH bleibt aus, bis du es einschaltest. Der Desktop spricht HTTPS mit einem Zertifikat der eigenen, lokal begrenzten Zertifizierungsstelle der Box.',
       }
 specs:
   title: Auf einen Blick

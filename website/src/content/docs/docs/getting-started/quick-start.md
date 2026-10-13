@@ -7,7 +7,7 @@ sidebar:
   order: 3
 ---
 
-The short path: write the Pithyx image to a USB stick, start the computer from it, finish the installer in a browser on another device, then sign in at `http://<box-address>:7484`. This page lists the steps and links to the pages that explain each one.
+The short path: write the Pithyx image to a USB stick, start the computer from it, finish the installer in a browser on another device, then sign in at `https://<box-address>:7484`. This page lists the steps and links to the pages that explain each one.
 
 ## Download the image
 

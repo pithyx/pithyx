@@ -6,6 +6,7 @@ import { backupHost } from '../sdk/backup';
 import { adminStorageHost } from '../sdk/internal';
 import { networkHost } from '../sdk/network';
 import { systemHost } from '../sdk/system';
+import { tlsHost } from '../sdk/tls';
 import { updatesHost } from '../sdk/updates';
 import { usersHost } from '../sdk/users';
 import { SettingsApp } from './SettingsApp';
@@ -30,6 +31,7 @@ export function SettingsWindow({ windowId }: AppProps) {
             ...usersHost(),
             ...systemHost(queryClient),
             ...backupHost(),
+            ...tlsHost(),
           },
           close: () => {
             storage.close();

@@ -488,6 +488,38 @@
         }
       }
     },
+    "/api/system/tls/root-ca.crt": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "description": "Anyone, also before signing in. The root of the box's certificate authority in PEM, to install on a device so it trusts the box.",
+        "operationId": "GetRootCertificate",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/x-x509-ca-cert": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/system/power": {
       "post": {
         "tags": [
@@ -4588,6 +4620,308 @@
         }
       }
     },
+    "/api/system/tls": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Whether the web interface speaks HTTPS, the certificate it presents, the box's certificate authority with its scope, the names of the box's own certificate, an uploaded certificate and the certificates issued for other devices.",
+        "operationId": "GetTlsSettings",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TlsSettings"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/tls/names": {
+      "put": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Names (such as a domain pointing at the box) the box's own certificate covers besides its host name and addresses; they must lie inside the authority's scope. The certificate is issued again at once.",
+        "operationId": "SetTlsNames",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TlsNamesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TlsSettings"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/tls/authority": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Replaces the certificate authority with a new root and intermediate and issues the box's certificate from them. Every device has to trust the new root; certificates issued for other devices stay valid only where the old root is still trusted.",
+        "operationId": "CreateCertificateAuthority",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAuthorityRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TlsSettings"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/tls/issued": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Issues a server certificate for another device from the box's authority. The answer holds the private key; the box does not keep it.",
+        "operationId": "IssueCertificate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/IssueCertificateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IssuedCertificateFiles"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/tls/issued/{id}/certificate.pem": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. An issued certificate with the intermediate it was issued under, without its key.",
+        "operationId": "GetIssuedCertificate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/x-pem-file": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/tls/issued/{id}": {
+      "delete": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Removes an issued certificate from the list. The box keeps no revocation list, so the certificate stays valid until it ends.",
+        "operationId": "DeleteIssuedCertificate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/tls/custom": {
+      "put": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Presents a certificate of your own (with its chain and unencrypted key, in PEM) on the web ports and for FTPS while it is valid; after it ends the box presents its own again.",
+        "operationId": "SetCustomCertificate",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CustomCertificateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TlsSettings"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Removes the uploaded certificate; the box presents its own again.",
+        "operationId": "RemoveCustomCertificate",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TlsSettings"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/system/updates": {
       "get": {
         "tags": [
@@ -7437,6 +7771,13 @@
         },
         "description": "Confirms a `sub` or `unsub`. For `sub`, the snapshots of matching topics follow."
       },
+      "ActiveCertificateSource": {
+        "enum": [
+          "authority",
+          "custom"
+        ],
+        "description": "Which certificate the web interface and FTPS present."
+      },
       "AddCatalogRequest": {
         "required": [
           "url"
@@ -8786,6 +9127,45 @@
         },
         "description": "How the desktop looks for the user on every device. The theme (light, dark) is a choice of each device."
       },
+      "AuthorityInfo": {
+        "required": [
+          "root",
+          "intermediate",
+          "restricted",
+          "domains",
+          "addressRanges"
+        ],
+        "type": "object",
+        "properties": {
+          "root": {
+            "description": "The root that devices trust; download it from `/api/system/tls/root-ca.crt`.",
+            "$ref": "#/components/schemas/CertificateInfo"
+          },
+          "intermediate": {
+            "description": "The intermediate that signs every certificate; it is renewed a year before it ends.",
+            "$ref": "#/components/schemas/CertificateInfo"
+          },
+          "restricted": {
+            "type": "boolean",
+            "description": "Name Constraints limit what the authority may sign."
+          },
+          "domains": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The DNS suffixes it may sign, each with every name below it; empty when unrestricted."
+          },
+          "addressRanges": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The address ranges it may sign; empty when unrestricted."
+          }
+        },
+        "description": "The box's certificate authority."
+      },
       "AvailableUpdate": {
         "required": [
           "version",
@@ -9106,6 +9486,56 @@
         ],
         "description": "A catalog's state for the Store's settings."
       },
+      "CertificateInfo": {
+        "required": [
+          "subject",
+          "issuer",
+          "names",
+          "notBefore",
+          "notAfter",
+          "fingerprint"
+        ],
+        "type": "object",
+        "properties": {
+          "subject": {
+            "type": "string",
+            "description": "The subject's distinguished name."
+          },
+          "issuer": {
+            "type": "string",
+            "description": "The issuer's distinguished name."
+          },
+          "names": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The DNS names and addresses it covers."
+          },
+          "notBefore": {
+            "type": "string",
+            "description": "The start of its validity.",
+            "format": "date-time"
+          },
+          "notAfter": {
+            "type": "string",
+            "description": "The end of its validity.",
+            "format": "date-time"
+          },
+          "fingerprint": {
+            "type": "string",
+            "description": "SHA-256 as hex pairs with colons."
+          }
+        },
+        "description": "One certificate as Settings shows it."
+      },
+      "CertificateKeyType": {
+        "enum": [
+          "ecdsa",
+          "rsa"
+        ],
+        "description": "The key of a certificate the authority issues."
+      },
       "ClientMessage": {
         "required": [
           "type",
@@ -9154,6 +9584,27 @@
           }
         }
       },
+      "CreateAuthorityRequest": {
+        "required": [
+          "restricted",
+          "domains"
+        ],
+        "type": "object",
+        "properties": {
+          "restricted": {
+            "type": "boolean",
+            "description": "Limit the authority to local names and private addresses (recommended)."
+          },
+          "domains": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "With Restricted: DNS suffixes besides the suggested ones, such as a domain of your own."
+          }
+        },
+        "description": "A new authority; every device has to trust its root again."
+      },
       "CreateBackupRequest": {
         "required": [
           "password"
@@ -9165,6 +9616,24 @@
             "description": "The backup password: needed to restore, never stored. The same rules as for an account password."
           }
         }
+      },
+      "CustomCertificateRequest": {
+        "required": [
+          "certificatePem",
+          "privateKeyPem"
+        ],
+        "type": "object",
+        "properties": {
+          "certificatePem": {
+            "type": "string",
+            "description": "The certificate, followed by its intermediates, in PEM."
+          },
+          "privateKeyPem": {
+            "type": "string",
+            "description": "Its private key in PEM (PKCS #8, PKCS #1 or SEC 1), unencrypted."
+          }
+        },
+        "description": "A certificate of your own for the web interface and FTPS."
       },
       "DaemonMode": {
         "enum": [
@@ -10272,6 +10741,15 @@
           "system.time.server_invalid",
           "system.time.servers_too_many",
           "system.time.zone_invalid",
+          "tls.custom.expired",
+          "tls.custom.invalid",
+          "tls.custom.key_mismatch",
+          "tls.issued.not_found",
+          "tls.name.invalid",
+          "tls.name.not_permitted",
+          "tls.names.missing",
+          "tls.names.too_many",
+          "tls.validity.out_of_range",
           "update.apply.failed",
           "update.apply.running",
           "update.channel.invalid",
@@ -11765,6 +12243,99 @@
         ],
         "description": "How an interface gets its IPv6 address: automatically (router advertisements and DHCPv6), static or none.",
         "default": "auto"
+      },
+      "IssueCertificateRequest": {
+        "required": [
+          "names",
+          "validityDays",
+          "keyType"
+        ],
+        "type": "object",
+        "properties": {
+          "names": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "DNS names (a leading `*.` for a wildcard) and addresses, 1 to 100, inside the authority's scope."
+          },
+          "validityDays": {
+            "type": "integer",
+            "description": "1 to 825 days, never past the intermediate's end.",
+            "format": "int32"
+          },
+          "keyType": {
+            "description": "ECDSA (default) or RSA for devices that take nothing else.",
+            "$ref": "#/components/schemas/CertificateKeyType"
+          }
+        },
+        "description": "A certificate for another device."
+      },
+      "IssuedCertificate": {
+        "required": [
+          "id",
+          "certificate",
+          "keyType",
+          "createdAt",
+          "createdBy",
+          "currentAuthority"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Its number on the box.",
+            "format": "int64"
+          },
+          "certificate": {
+            "description": "The certificate.",
+            "$ref": "#/components/schemas/CertificateInfo"
+          },
+          "keyType": {
+            "description": "The key it was made with.",
+            "$ref": "#/components/schemas/CertificateKeyType"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "When it was issued.",
+            "format": "date-time"
+          },
+          "createdBy": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The administrator who issued it, if the account still had that name."
+          },
+          "currentAuthority": {
+            "type": "boolean",
+            "description": "It chains to the current root; false after a new authority replaced the old one."
+          }
+        },
+        "description": "A certificate the authority issued for another device. Its key was handed out once and is not kept."
+      },
+      "IssuedCertificateFiles": {
+        "required": [
+          "certificate",
+          "certificatePem",
+          "privateKeyPem"
+        ],
+        "type": "object",
+        "properties": {
+          "certificate": {
+            "description": "The entry in the list.",
+            "$ref": "#/components/schemas/IssuedCertificate"
+          },
+          "certificatePem": {
+            "type": "string",
+            "description": "The certificate followed by the intermediate, as servers take it."
+          },
+          "privateKeyPem": {
+            "type": "string",
+            "description": "The private key (PKCS #8, unencrypted)."
+          }
+        },
+        "description": "A newly issued certificate with its files; the private key is in this answer only."
       },
       "Job": {
         "required": [
@@ -16113,6 +16684,95 @@
             "description": "At most eight host names or addresses; empty for the distribution's defaults."
           }
         }
+      },
+      "TlsNamesRequest": {
+        "required": [
+          "extraNames"
+        ],
+        "type": "object",
+        "properties": {
+          "extraNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "DNS names or addresses inside the authority's scope, at most 20."
+          }
+        },
+        "description": "Names the box's own certificate covers besides its host name and addresses."
+      },
+      "TlsSettings": {
+        "required": [
+          "https",
+          "source",
+          "active",
+          "authority",
+          "boxNames",
+          "extraNames",
+          "suggestedDomains",
+          "custom",
+          "issued"
+        ],
+        "type": "object",
+        "properties": {
+          "https": {
+            "type": "boolean",
+            "description": "The web interface speaks HTTPS on 7484 (80 and 443 redirect there); false only in development and simulation."
+          },
+          "source": {
+            "description": "Which certificate the box presents.",
+            "$ref": "#/components/schemas/ActiveCertificateSource"
+          },
+          "active": {
+            "description": "The certificate the box presents now.",
+            "$ref": "#/components/schemas/CertificateInfo"
+          },
+          "authority": {
+            "description": "The box's own authority.",
+            "$ref": "#/components/schemas/AuthorityInfo"
+          },
+          "boxNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The names and addresses the box's own certificate covers."
+          },
+          "extraNames": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Names an administrator added to the box's own certificate."
+          },
+          "suggestedDomains": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The DNS suffixes a new restricted authority starts with: the local ones, the host name and the network's search domains."
+          },
+          "custom": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "The uploaded certificate, if any; it is presented while it is valid.",
+                "$ref": "#/components/schemas/CertificateInfo"
+              }
+            ],
+            "description": "One certificate as Settings shows it."
+          },
+          "issued": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/IssuedCertificate"
+            },
+            "description": "The certificates issued for other devices, newest first."
+          }
+        },
+        "description": "Settings &gt; Certificates."
       },
       "TopicEvents": {
         "required": [

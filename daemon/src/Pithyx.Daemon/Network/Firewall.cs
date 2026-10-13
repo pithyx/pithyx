@@ -36,8 +36,8 @@ public sealed partial class Firewall(
     public const int SshPort = 22;
     public const int FtpPort = 21;
 
-    /// <summary>The ports of the web interface: 80 (redirect) and 7484; 443 joins once TLS lands.</summary>
-    public static IReadOnlyList<int> WebPorts { get; } = [80, 7484];
+    /// <summary>The ports of the web interface: 80 and 443, which redirect, and 7484 (D346).</summary>
+    public static IReadOnlyList<int> WebPorts { get; } = [80, 443, 7484];
 
     public static IReadOnlyList<string> PrivateIpv4 { get; } = ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16", "169.254.0.0/16"];
 

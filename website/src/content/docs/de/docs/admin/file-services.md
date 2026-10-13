@@ -23,15 +23,15 @@ Schalte **Freigegebene Ordner über SFTP anbieten** ein. Es ist verschlüsselte 
 
 ## WebDAV
 
-Wird vom Daemon selbst unter `/webdav/` auf der Webadresse der Box angeboten (`http://<box-adresse>:7484/webdav/`), mit Basic-Authentifizierung über Pithyx-Name und -Passwort. Die Wurzel listet die freigegebenen Ordner, die der Benutzer nutzen darf; Gelöschtes geht in den Papierkorb. Ein Benutzer braucht das WebDAV-Recht und den Ordnerschalter **Über WebDAV anbieten**.
+Wird vom Daemon selbst unter `/webdav/` auf der Webadresse der Box angeboten (`https://<box-adresse>:7484/webdav/`), mit Basic-Authentifizierung über Pithyx-Name und -Passwort. Die Wurzel listet die freigegebenen Ordner, die der Benutzer nutzen darf; Gelöschtes geht in den Papierkorb. Ein Benutzer braucht das WebDAV-Recht und den Ordnerschalter **Über WebDAV anbieten**.
 
 :::caution[Noch keine Verschlüsselung]
-Die Box liefert heute reines HTTP aus, daher läuft das WebDAV-Passwort unverschlüsselt durchs Netz. Nutze WebDAV nur in einem Netzwerk, dem du vertraust. Siehe [Sicherheit](/de/docs/admin/security/#https-und-zertifikate).
+WebDAV läuft über das HTTPS der Box. Programme, die Zertifikate prüfen (Windows, macOS), verbinden sich, sobald das Gerät dem Root-Zertifikat der Box vertraut; siehe [Zertifikate](/de/docs/admin/certificates/).
 :::
 
 ## FTP
 
-Für Geräte und Programme, die weder SFTP noch WebDAV kennen, etwa Scanner. **Freigegebene Ordner über FTP mit TLS anbieten** nutzt explizites FTPS (`AUTH TLS`); die Box erzeugt ein selbstsigniertes Zertifikat, und die Seite zeigt dessen SHA-256-Fingerabdruck. **Auch unverschlüsseltes FTP erlauben** ist standardmäßig aus und trägt eine Warnung; wird es wieder ausgeschaltet, enden unverschlüsselte Sitzungen.
+Für Geräte und Programme, die weder SFTP noch WebDAV kennen, etwa Scanner. **Freigegebene Ordner über FTP mit TLS anbieten** nutzt explizites FTPS (`AUTH TLS`); es zeigt das Zertifikat der Box (siehe [Zertifikate](/de/docs/admin/certificates/)), und die Seite zeigt dessen SHA-256-Fingerabdruck. **Auch unverschlüsseltes FTP erlauben** ist standardmäßig aus und trägt eine Warnung; wird es wieder ausgeschaltet, enden unverschlüsselte Sitzungen.
 
 - Steuerport 21, passive Datenports 50000 bis 50099. Nur der passive Modus funktioniert (`PORT` und `EPRT` werden mit „502 Only passive mode“ beantwortet).
 - Leerlauf-Zeitlimit 10 Minuten, Daten-Zeitlimit 30 Sekunden.

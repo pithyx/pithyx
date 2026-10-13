@@ -7,7 +7,7 @@ sidebar:
   order: 3
 ---
 
-Der kurze Weg: Schreibe das Pithyx-Image auf einen USB-Stick, starte den Computer davon, beende den Installer in einem Browser auf einem anderen Gerät und melde dich dann unter `http://<box-address>:7484` an. Diese Seite listet die Schritte auf und verlinkt auf die Seiten, die jeden davon erklären.
+Der kurze Weg: Schreibe das Pithyx-Image auf einen USB-Stick, starte den Computer davon, beende den Installer in einem Browser auf einem anderen Gerät und melde dich dann unter `https://<box-address>:7484` an. Diese Seite listet die Schritte auf und verlinkt auf die Seiten, die jeden davon erklären.
 
 ## Das Image herunterladen
 

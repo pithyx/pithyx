@@ -6,6 +6,6 @@ order: 30
 status: ready
 ---
 
-Web-Desktop und WebDAV nutzen Port 7484 (unverschlüsseltes HTTP), Port 80 leitet dorthin weiter. SMB nutzt 445, SFTP 22 und FTP 21 mit den passiven Datenports 50000 bis 50099. Die Firewall der Box lässt nur die Web-Ports und die eingeschalteten Dateidienste herein, und unter Einstellungen > **Dateidienste** kannst du die Dateidienste auf private Netze beschränken. Einen eigenen Fernzugriff bietet Pithyx nicht; weil der Desktop noch nicht verschlüsselt ist, leite diese Ports nicht von deinem Router ins Internet weiter.
+Der Web-Desktop und WebDAV nutzen Port 7484 (HTTPS); die Ports 80 und 443 leiten nur dorthin um. SMB nutzt 445, SFTP 22 und FTP 21 mit den passiven Datenports 50000 bis 50099. Die Firewall der Box lässt nur die Webports und die eingeschalteten Dateidienste herein, und unter Einstellungen > **Dateidienste** lassen sich die Dateidienste auf private Netze begrenzen. Pithyx bietet keinen eigenen Fernzugriff; erreiche die Box von außen lieber über ein VPN, statt diese Ports in deinem Router weiterzuleiten.
 
 Details: [Dateidienste](/de/docs/admin/file-services/).

@@ -147,6 +147,11 @@
       "description": "Netzwerkkarten, Bonds, VLANs, Adressen und Hostname",
       "keywords": "ip adresse dhcp statisch gateway dns lan ethernet schnittstelle bond lacp vlan mtu hostname"
     },
+    "certificates": {
+      "title": "Zertifikate",
+      "description": "HTTPS, die Zertifizierungsstelle der Box und Zertifikate für andere Geräte",
+      "keywords": "https tls ssl zertifikat zertifizierungsstelle ca root vertrauen warnung reverse proxy pem schlüssel domain"
+    },
     "regional": {
       "title": "Regionale Einstellungen",
       "description": "Systemsprache, Formate, Datum und Uhrzeit, Zeitzone und Zeitserver",
@@ -374,6 +379,126 @@
       "connectionWarning": "Dieser Browser erreicht die Box über {name}, und das ändert sich. Die Seite antwortet vielleicht nicht mehr; öffne die neue Adresse oder warte 60 Sekunden, bis die alten Einstellungen zurück sind.",
       "addresses": "Die Box antwortet dann auch unter:",
       "confirm": "Anwenden"
+    }
+  },
+  "certificates": {
+    "intro": "Die Box spricht HTTPS auf Port 7484; die Ports 80 und 443 schicken jeden dorthin. Sie ist ihre eigene Zertifizierungsstelle: Installiere ihr Root-Zertifikat einmal auf einem Gerät, dann vertraut das Gerät der Box und jedem Zertifikat, das sie ausstellt.",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "close": "Schließen",
+    "source": {
+      "authority": "Das eigene Zertifikat der Box",
+      "custom": "Dein hochgeladenes Zertifikat"
+    },
+    "keyType": {
+      "ecdsa": "ECDSA",
+      "rsa": "RSA"
+    },
+    "facts": {
+      "source": "Verwendet",
+      "subject": "Name",
+      "names": "Gilt für",
+      "validUntil": "Gültig bis",
+      "fingerprint": "SHA-256-Fingerabdruck"
+    },
+    "connection": {
+      "title": "Verbindung",
+      "explain": "Die Weboberfläche und FTPS zeigen dieses Zertifikat. Ein Browser warnt davor, bis das Gerät dem Root-Zertifikat der Box vertraut.",
+      "plain": "Dieser Daemon liefert reines HTTP: Er läuft zur Entwicklung oder Simulation. Eine Box nutzt immer HTTPS."
+    },
+    "trust": {
+      "title": "Dieser Box vertrauen",
+      "explain": "Lade das Root-Zertifikat herunter und installiere es auf jedem Gerät, das die Box nutzt. Danach zeigt der Browser keine Warnung mehr, lädt aus seinem Cache, und FTPS-Programme akzeptieren die Box.",
+      "download": "Root-Zertifikat herunterladen",
+      "compare": "Bevor du der Datei auf einem Gerät vertraust, vergleiche ihren Fingerabdruck mit dem oben.",
+      "devices": {
+        "windows": {
+          "name": "Windows:",
+          "steps": "Öffne die Datei, wähle Zertifikat installieren, Lokaler Computer und dann den Speicher Vertrauenswürdige Stammzertifizierungsstellen."
+        },
+        "macos": {
+          "name": "macOS:",
+          "steps": "Öffne die Datei in der Schlüsselbundverwaltung (Schlüsselbund System), öffne das Zertifikat und stelle Vertrauen auf Immer vertrauen."
+        },
+        "ios": {
+          "name": "iPhone und iPad:",
+          "steps": "Öffne die Datei in Safari, installiere das Profil unter Einstellungen, Allgemein, VPN und Geräteverwaltung und schalte es unter Einstellungen, Allgemein, Info, Zertifikatsvertrauenseinstellungen ein."
+        },
+        "android": {
+          "name": "Android:",
+          "steps": "Einstellungen, Sicherheit, Verschlüsselung und Anmeldedaten, Zertifikat installieren, CA-Zertifikat, dann die Datei wählen."
+        },
+        "linux": {
+          "name": "Linux:",
+          "steps": "Kopiere die Datei nach /usr/local/share/ca-certificates/ und führe sudo update-ca-certificates aus; Browser mit eigenem Speicher brauchen den Schritt darunter."
+        },
+        "firefox": {
+          "name": "Firefox:",
+          "steps": "Einstellungen, Datenschutz und Sicherheit, Zertifikate, Zertifikate anzeigen, Zertifizierungsstellen, Importieren, und ihm für Websites vertrauen."
+        }
+      }
+    },
+    "authority": {
+      "title": "Zertifizierungsstelle",
+      "explain": "Ein Root-Zertifikat, dem Geräte vertrauen, und eine Zwischenzertifizierungsstelle, die jedes Zertifikat signiert. Die Zwischenstelle erneuert sich ein Jahr vor ihrem Ende selbst, ohne dass Geräte es merken.",
+      "domains": "Darf signieren",
+      "addresses": "Adressbereiche",
+      "unrestricted": "Diese Zertifizierungsstelle darf jeden Namen signieren. Ein Gerät, das ihr vertraut, würde auch ein gefälschtes Zertifikat für jede Website akzeptieren, wenn jemand die Box übernimmt.",
+      "intermediate": "Die Zwischenstelle ist gültig bis {date}.",
+      "create": "Neue Zertifizierungsstelle anlegen…",
+      "dialog": {
+        "title": "Neue Zertifizierungsstelle anlegen?",
+        "explain": "Jedes Gerät muss dem neuen Root-Zertifikat erneut vertrauen. Für andere Geräte ausgestellte Zertifikate bleiben nur dort gültig, wo das alte Root-Zertifikat noch vertraut wird.",
+        "restricted": "Nur lokale Namen und private Adressen (empfohlen)",
+        "suggested": "Immer dabei: {domains} und die privaten Adressbereiche.",
+        "domains": "Eigene Domains",
+        "domainsHint": "Optional, getrennt durch Leerzeichen oder Kommas, etwa home.example.org. Jede gilt für alle Namen darunter.",
+        "unrestrictedWarning": "Ohne die Grenze akzeptiert ein Gerät, das der Box vertraut, jedes Zertifikat, das sie signiert, auch für Banken und andere Websites. Wähle das nur, wenn du es brauchst, und halte die Box sicher.",
+        "confirm": "Zertifizierungsstelle anlegen"
+      }
+    },
+    "names": {
+      "title": "Namen des Box-Zertifikats",
+      "explain": "Das Zertifikat der Box gilt für ihren Hostnamen, ihre Adressen und diese Namen und wird neu ausgestellt, sobald sich einer davon ändert.",
+      "extra": "Weitere Namen",
+      "extraHint": "Zum Beispiel eine Domain, die auf die Box zeigt, getrennt durch Leerzeichen oder Kommas. Sie muss in dem liegen, was die Zertifizierungsstelle signieren darf."
+    },
+    "issued": {
+      "title": "Zertifikate für andere Geräte",
+      "explain": "Stelle Zertifikate für Drucker, Router oder andere Server in deinem Netz aus. Jedes Gerät, das dem Root-Zertifikat der Box vertraut, vertraut auch ihnen.",
+      "issue": "Zertifikat ausstellen…",
+      "none": "Noch keine Zertifikate ausgestellt.",
+      "earlier": "Frühere Zertifizierungsstelle",
+      "details": "Gültig bis {until} · {key} · ausgestellt am {created} von {by}",
+      "download": "Zertifikat herunterladen",
+      "remove": "Entfernen"
+    },
+    "issueDialog": {
+      "title": "Zertifikat ausstellen",
+      "explain": "Das Zertifikat und sein privater Schlüssel werden als zwei Dateien heruntergeladen. Die Box behält den Schlüssel nicht, bewahre ihn also sicher auf.",
+      "names": "Namen und Adressen",
+      "namesHint": "Getrennt durch Leerzeichen oder Kommas, etwa printer.lan 192.168.1.30. *.media.lan gilt für jeden Namen unter media.lan.",
+      "days": "Gültig für (Tage)",
+      "daysHint": "1 bis 825 Tage. Apple-Geräte lehnen längere Laufzeiten ab.",
+      "rsa": "RSA-Schlüssel für Geräte ohne ECDSA",
+      "confirm": "Ausstellen und herunterladen",
+      "done": "Fertig. Die Dateien .crt und .key liegen in deinen Downloads."
+    },
+    "removeDialog": {
+      "title": "Zertifikat für {names} entfernen?",
+      "explain": "Es verschwindet nur aus dieser Liste. Die Box führt keine Sperrliste, das Zertifikat bleibt also gültig, bis es endet.",
+      "confirm": "Entfernen"
+    },
+    "custom": {
+      "title": "Eigenes Zertifikat",
+      "explain": "Statt des eigenen Zertifikats der Box kannst du eines zeigen, das du anderswo bekommen hast, etwa für deine eigene Domain. Die Box nutzt es, solange es gültig ist, und kehrt danach zu ihrem eigenen zurück.",
+      "certificate": "Zertifikat (PEM, mit seinen Zwischenzertifikaten)",
+      "key": "Privater Schlüssel (PEM, ohne Passwort)",
+      "choose": "Datei wählen",
+      "noFile": "Keine Datei gewählt",
+      "upload": "Dieses Zertifikat verwenden",
+      "remove": "Eigenes Zertifikat entfernen",
+      "unused": "Dieses Zertifikat ist gerade nicht gültig, deshalb zeigt die Box ihr eigenes."
     }
   },
   "regional": {

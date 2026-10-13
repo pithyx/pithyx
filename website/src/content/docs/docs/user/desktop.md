@@ -7,16 +7,16 @@ sidebar:
   order: 1
 ---
 
-The Pithyx desktop is the page you open in your browser at `http://<box-address>:7484`. It works like a normal computer desktop: apps open in windows, a taskbar shows what is running, and you can put shortcuts and sticky notes on the desktop. The box remembers your windows for each device you use.
+The Pithyx desktop is the page you open in your browser at `https://<box-address>:7484`. It works like a normal computer desktop: apps open in windows, a taskbar shows what is running, and you can put shortcuts and sticky notes on the desktop. The box remembers your windows for each device you use.
 
 ## Signing in
 
-1. Open `http://<box-address>:7484` in your browser. Port 80 forwards to it.
+1. Open `https://<box-address>:7484` in your browser. Port 80 forwards to it.
 2. Type your **User name** and **Password** and click **Sign in**.
 3. If you turned on two-factor sign-in, type the code from your authenticator app and click **Verify**. If you lost your phone, click **Use a recovery code instead**.
 
 :::caution
-The box serves plain HTTP today, so your password travels unencrypted. Use it only on a network you trust.
+The first time, the browser warns about the box's own certificate; continue to the page. An administrator can make the warning go away for good with the box's root certificate ([Certificates](/docs/admin/certificates/)).
 :::
 
 You need the right **Sign in to the desktop**. If your account is deactivated or lacks the right, an administrator has to change that.

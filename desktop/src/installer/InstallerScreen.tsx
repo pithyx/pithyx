@@ -1105,7 +1105,8 @@ function Installation({
     retry: false,
   });
   const installed = rebooting && probe.data != null && probe.data === status.installId;
-  const target = `http://${host}:7484/`;
+  // The installed box speaks HTTPS on 7484 with its own certificate (D346).
+  const target = `https://${host}:7484/`;
 
   // Leaving the page for the installed system is a side effect of the probe's answer.
   useEffect(() => {
@@ -1179,6 +1180,7 @@ function Installation({
   if (rebooting) {
     return (
       <Message title={t('rebooting.title')} intro={t('rebooting.intro')}>
+        <p className={own.hint}>{t('rebooting.certificate')}</p>
         <p className={own.hint}>{t('rebooting.manual', { url: target })}</p>
       </Message>
     );

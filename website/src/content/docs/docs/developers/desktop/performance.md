@@ -46,7 +46,7 @@ Rules of thumb: show no spinner before 300 ms, open apps with dynamic `import()`
 ## Measuring
 
 ```sh
-node tools/perf/measure.ts --url http://<box-address>:7484 --user <name> --password '<password>' --runs 5
+node tools/perf/measure.ts --url https://<box-address>:7484 --user <name> --password '<password>' --runs 5
 ```
 
 The script needs a Chromium installed through the end-to-end dependencies and an existing user. It runs an unthrottled profile and a Fast 4G profile with a 4x CPU slowdown, with a cold context for each run, and prints the median of cold start, click feedback, sign-in to desktop, first reload, warm reload, and the time the password hash takes. Put the table in your pull request.

@@ -526,6 +526,27 @@
       "zone_invalid": "Das System kennt die Zeitzone „{zone}“ nicht."
     }
   },
+  "tls": {
+    "custom": {
+      "expired": "Das Zertifikat ist gerade nicht gültig: Es hat noch nicht begonnen oder ist schon abgelaufen.",
+      "invalid": "Das ist kein Zertifikat im PEM-Format, oder es ist größer als 64 KiB.",
+      "key_mismatch": "Der private Schlüssel ist nicht lesbar, mit einem Passwort geschützt oder gehört nicht zum Zertifikat."
+    },
+    "issued": {
+      "not_found": "Es gibt kein ausgestelltes Zertifikat mit der Nummer {id}."
+    },
+    "name": {
+      "invalid": "{name} ist kein gültiger DNS-Name und keine IP-Adresse.",
+      "not_permitted": "Die Zertifizierungsstelle der Box darf {name} nicht signieren. Lege eine neue Zertifizierungsstelle an, die den Namen einschließt, oder nutze ein eigenes Zertifikat."
+    },
+    "names": {
+      "missing": "Gib mindestens einen Namen oder eine Adresse ein.",
+      "too_many": "{max, plural, one {Gib höchstens # Namen ein.} other {Gib höchstens # Namen ein.}}"
+    },
+    "validity": {
+      "out_of_range": "Die Gültigkeit muss zwischen {min} und {max} Tagen liegen."
+    }
+  },
   "users": {
     "account": {
       "refused": "Das Linux-Konto {username} kann nicht angelegt werden ({reason}). Vielleicht nutzt ein Systemkonto diesen Namen schon."

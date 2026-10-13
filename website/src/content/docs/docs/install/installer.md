@@ -90,6 +90,6 @@ _The recovery key appears once, when the installation ends. This one belongs to 
 
 When the installation ends, the page shows **Pithyx is installed** and your recovery key. Copy or print it, tick **I have stored the recovery key** and click **Continue**. Then the page says **Remove the USB stick**. Remove the stick and click **Restart now**.
 
-The page then shows **Pithyx is starting** and opens the new system by itself as soon as it answers. This can take a few minutes. If nothing happens, open the address `http://<box-address>:7484` yourself. The box usually keeps its address, because the network card identifies itself in the same way, but a router could hand out a different one. The console of the installed box shows the current addresses.
+The page then shows **Pithyx is starting** and opens the new system by itself as soon as it answers. The installed box speaks HTTPS with a certificate it made itself, so the browser warns once; continue to the page. This can take a few minutes. If nothing happens, open the address `https://<box-address>:7484` yourself. The box usually keeps its address, because the network card identifies itself in the same way, but a router could hand out a different one. The console of the installed box shows the current addresses.
 
 Sign in with the administrator account you created. Then continue with [First setup](/docs/install/first-setup/).

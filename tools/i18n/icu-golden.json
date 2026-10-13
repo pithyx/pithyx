@@ -1469,6 +1469,55 @@
       },
       "expected": "The system does not know the time zone “Mars/Olympus”."
     },
+    "tls.custom.expired": {
+      "params": {
+        "notAfter": "2026-01-01T00:00:00.0000000+00:00"
+      },
+      "expected": "The certificate is not valid now: it has not started yet or has already ended."
+    },
+    "tls.custom.invalid": {
+      "params": {},
+      "expected": "That is no certificate in PEM format, or it is larger than 64 KiB."
+    },
+    "tls.custom.key_mismatch": {
+      "params": {},
+      "expected": "The private key is unreadable, protected by a password or does not belong to the certificate."
+    },
+    "tls.issued.not_found": {
+      "params": {
+        "id": 4711
+      },
+      "expected": "There is no issued certificate with the number 4711."
+    },
+    "tls.name.invalid": {
+      "params": {
+        "name": "nas..lan"
+      },
+      "expected": "nas..lan is no valid DNS name or IP address."
+    },
+    "tls.name.not_permitted": {
+      "params": {
+        "name": "bank.example"
+      },
+      "expected": "The box's certificate authority may not sign bank.example. Create a new authority that includes it, or use a certificate of your own."
+    },
+    "tls.names.missing": {
+      "params": {},
+      "expected": "Enter at least one name or address."
+    },
+    "tls.names.too_many": {
+      "params": {
+        "max": 20
+      },
+      "expected": "Enter at most 20 names."
+    },
+    "tls.validity.out_of_range": {
+      "params": {
+        "min": 1,
+        "max": 825
+      },
+      "expected": "The validity must be between 1 and 825 days."
+    },
     "update.apply.failed": {
       "params": {
         "step": "install",

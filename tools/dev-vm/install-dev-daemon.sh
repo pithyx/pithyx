@@ -177,8 +177,8 @@ as_root systemctl reset-failed "$UNIT" 2>/dev/null || true
 as_root systemctl enable --now "$UNIT"
 
 for _ in $(seq 150); do
-  if curl -fsS "http://127.0.0.1:$PORT/api/health" >/dev/null 2>&1; then
-    echo "$UNIT runs $commit on http://$(hostname -I | awk '{ print $1 }'):$PORT (real mode)"
+  if curl --insecure -fsS "https://127.0.0.1:$PORT/api/health" >/dev/null 2>&1; then
+    echo "$UNIT runs $commit on https://$(hostname -I | awk '{ print $1 }'):$PORT (real mode)"
     as_builder "$script_repo/tools/dev-vm/seed-dev-accounts.sh"
     exit 0
   fi

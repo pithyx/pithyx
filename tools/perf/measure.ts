@@ -34,6 +34,8 @@ try {
       const context = await browser.newContext({
         viewport: { width: 1440, height: 900 },
         locale: 'en-US',
+        // A box presents a certificate of its own authority, which this browser does not trust (D346).
+        ignoreHTTPSErrors: true,
       });
       runs.push(
         await measureRound(context, {

@@ -6,6 +6,6 @@ order: 30
 status: ready
 ---
 
-It depends on the service. SFTP and FTP with TLS are encrypted, and SMB 3 is always signed, and encrypted when the client asks for it or an administrator requires it for a shared folder. The web desktop and WebDAV use plain HTTP today and are not encrypted.
+Yes, for every service but plain FTP. The web desktop and WebDAV use HTTPS, SFTP and FTP with TLS are encrypted, and SMB 3 is always signed, and encrypted when the client asks for it or an administrator requires it for a shared folder. Plain FTP is off unless an administrator allows it. Only the live system of the installer speaks plain HTTP.
 
 Details: [Security](/docs/admin/security/).

@@ -126,6 +126,7 @@
   "rebooting": {
     "title": "Pithyx is starting",
     "intro": "This page opens the new system as soon as it answers. This can take a few minutes.",
+    "certificate": "The new system answers over HTTPS with a certificate it made itself, so your browser warns once. That is expected: continue to the page. Settings > Certificates explains how to trust the box on your devices.",
     "manual": "If nothing happens, open {url} yourself."
   }
 }

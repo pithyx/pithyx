@@ -7,21 +7,21 @@ sidebar:
   order: 9
 ---
 
-Pithyx behält alles auf der Box: keine Telemetrie, kein Cloud-Konto, kein Nach-Hause-Telefonieren. Eines solltest du vor der Nutzung wissen: Der Web-Desktop wird heute über reines HTTP ausgeliefert. Diese Seite behandelt Transport, offene Ports, physischen Zugriff, SSH, Zwei-Faktor-Anmeldung, den Wiederherstellungsschlüssel und die wenigen Verbindungen, die die Box von sich aus aufbaut.
+Pithyx behält alles auf der Box: keine Telemetrie, kein Cloud-Konto, kein Nach-Hause-Telefonieren. Der Web-Desktop spricht HTTPS mit einem Zertifikat der eigenen Zertifizierungsstelle der Box. Diese Seite behandelt Transport, offene Ports, physischen Zugriff, SSH, Zwei-Faktor-Anmeldung, den Wiederherstellungsschlüssel und die wenigen Verbindungen, die die Box von sich aus aufbaut.
 
 ## HTTPS und Zertifikate
 
-:::caution[Reines HTTP]
-Die Box liefert den Desktop unter `http://<box-adresse>:7484` aus, und Port 80 leitet dorthin um. HTTPS ist nicht eingebaut, daher laufen das Anmeldepasswort, das Sitzungs-Cookie und die Basic-Authentifizierung von WebDAV unverschlüsselt durchs Netz. Nutze die Box nur in einem Netzwerk, dem du vertraust.
-:::
+Die Box liefert den Desktop und WebDAV unter `https://<box-adresse>:7484` aus, über TLS 1.2 oder 1.3 mit HTTP/2. Die Ports 80 und 443 leiten nur dorthin um, und eine Anfrage mit reinem `http://` auf 7484 wird auf `https://` am selben Port umgeleitet. Die Box ist ihre eigene Zertifizierungsstelle, deshalb warnt ein Browser vor ihrem Zertifikat, bis das Gerät dem Root-Zertifikat der Box vertraut: Lade es unter Einstellungen > **Zertifikate** herunter und installiere es einmal pro Gerät (siehe [Zertifikate](/de/docs/admin/certificates/)). FTP über TLS zeigt dasselbe Zertifikat.
 
-Das Sitzungs-Cookie ist `HttpOnly` und `SameSite=Strict`, und es bekommt das Flag `Secure` nur, wenn eine Anfrage über HTTPS eintrifft. Anfragen, die etwas ändern, brauchen den Header `X-Pithyx-Request`. Das einzige TLS, das die Box heute hat, ist das selbstsignierte Zertifikat von FTP über TLS (siehe [Dateidienste](/de/docs/admin/file-services/#ftp)). SMB 3 und SFTP verschlüsseln ihren Verkehr selbst.
+Die Zertifizierungsstelle darf nur lokale Namen und private Adressen signieren, außer ein Administrator legt eine ohne diese Grenze an. Ein Gerät, das ihr vertraut, akzeptiert von der Box also nie ein Zertifikat für eine öffentliche Website. Die Box sendet keinen HSTS-Header: Browser lassen niemanden an einer Zertifikatswarnung vorbei, wenn ein Host HSTS nutzt, und das Zertifikat der Box ist so lange nicht vertrauenswürdig, bis ein Gerät ihrem Root-Zertifikat vertraut.
+
+Das Sitzungs-Cookie ist `HttpOnly`, `SameSite=Strict` und `Secure`. Anfragen, die etwas ändern, brauchen den Header `X-Pithyx-Request`. SMB 3 und SFTP verschlüsseln ihren Verkehr selbst. Die einzige Ausnahme ist das Live-System des Installers: Es spricht reines HTTP, weil es noch kein Zertifikat hat und nach keinem Passwort fragt.
 
 ## Offene Ports
 
-Pithyx hat eine Firewall, die nur die Weboberfläche und die eingeschalteten Dateidienste hereinlässt, über IPv4 und IPv6: der Web-Desktop und WebDAV auf 7484 und 80, SMB auf 445 (ab dem ersten Start an), SFTP und SSH auf 22, FTP auf 21 mit den passiven Ports 50000 bis 50099. Schaltest du einen Dienst unter Einstellungen > **Dateidienste** aus, ist auch sein Port zu. Alles andere wird verworfen, außer Antworten auf eigene Verbindungen der Box, DHCP-Antworten und den ICMP-Nachrichten, die IPv6 braucht. Die Backends der Apps veröffentlichen gar keine Ports.
+Pithyx hat eine Firewall, die nur die Weboberfläche und die eingeschalteten Dateidienste hereinlässt, über IPv4 und IPv6: der Web-Desktop und WebDAV auf 7484 sowie 80 und 443, die dorthin umleiten, SMB auf 445 (ab dem ersten Start an), SFTP und SSH auf 22, FTP auf 21 mit den passiven Ports 50000 bis 50099. Schaltest du einen Dienst unter Einstellungen > **Dateidienste** aus, ist auch sein Port zu. Alles andere wird verworfen, außer Antworten auf eigene Verbindungen der Box, DHCP-Antworten und den ICMP-Nachrichten, die IPv6 braucht. Die Backends der Apps veröffentlichen gar keine Ports.
 
-Mit **Nur private Netze dürfen die Dateidienste nutzen** (Abschnitt **Firewall** auf derselben Seite, standardmäßig aus) antworten SMB, SFTP, SSH und FTP nur Computern in privaten Netzen (10.x, 172.16 bis 31.x, 192.168.x, Link-local und IPv6-ULA); die Weboberfläche bleibt in jedem Fall erreichbar. Lass es aus, wenn du die Box über einen Router aus einem anderen Netz oder über ein VPN mit öffentlichen Adressen erreichst. Lassen sich die Regeln nicht anwenden, ist die Einstellung trotzdem gespeichert, und der Fehler ist [`network.firewall.failed`](/de/docs/reference/errors/#network.firewall.failed). Der Desktop ist noch nicht verschlüsselt, also lass die Box hinter einem Router und leite diese Ports nicht ins Internet weiter.
+Mit **Nur private Netze dürfen die Dateidienste nutzen** (Abschnitt **Firewall** auf derselben Seite, standardmäßig aus) antworten SMB, SFTP, SSH und FTP nur Computern in privaten Netzen (10.x, 172.16 bis 31.x, 192.168.x, Link-local und IPv6-ULA); die Weboberfläche bleibt in jedem Fall erreichbar. Lass es aus, wenn du die Box über einen Router aus einem anderen Netz oder über ein VPN mit öffentlichen Adressen erreichst. Lassen sich die Regeln nicht anwenden, ist die Einstellung trotzdem gespeichert, und der Fehler ist [`network.firewall.failed`](/de/docs/reference/errors/#network.firewall.failed). Pithyx bietet keinen eigenen Fernzugriff; lass die Box hinter einem Router und erreiche sie von außen lieber über ein VPN, statt diese Ports weiterzuleiten.
 
 ## Physischer Zugriff
 

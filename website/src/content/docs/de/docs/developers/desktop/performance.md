@@ -46,7 +46,7 @@ Faustregeln: keinen Spinner vor 300 ms zeigen, Apps mit dynamischem `import()` �
 ## Messen
 
 ```sh
-node tools/perf/measure.ts --url http://<box-address>:7484 --user <name> --password '<password>' --runs 5
+node tools/perf/measure.ts --url https://<box-address>:7484 --user <name> --password '<password>' --runs 5
 ```
 
 Das Skript braucht ein Chromium, das 체ber die Ende-zu-Ende-Abh채ngigkeiten installiert wurde, und einen vorhandenen Benutzer. Es f체hrt ein ungedrosseltes Profil und ein Fast-4G-Profil mit 4-facher CPU-Drosselung aus, mit einem kalten Kontext pro Lauf, und gibt den Median von Kaltstart, Klick-R체ckmeldung, Anmeldung bis Desktop, erstem Neuladen, warmem Neuladen und der Zeit f체r den Passwort-Hash aus. F체ge die Tabelle in deinen Pull Request ein.

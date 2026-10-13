@@ -147,6 +147,11 @@
       "description": "Network cards, bonds, VLANs, addresses and host name",
       "keywords": "ip address dhcp static gateway dns lan ethernet interface bond lacp vlan mtu host name"
     },
+    "certificates": {
+      "title": "Certificates",
+      "description": "HTTPS, the box's certificate authority and certificates for other devices",
+      "keywords": "https tls ssl certificate authority ca root trust warning reverse proxy pem key domain"
+    },
     "regional": {
       "title": "Regional settings",
       "description": "System language, formats, date and time, time zone and time servers",
@@ -374,6 +379,126 @@
       "connectionWarning": "This browser reaches the box through {name}, which changes. The page may stop answering; open the new address or wait 60 seconds for the old settings to come back.",
       "addresses": "The box will also answer at:",
       "confirm": "Apply"
+    }
+  },
+  "certificates": {
+    "intro": "The box speaks HTTPS on port 7484; ports 80 and 443 send every visitor there. It is its own certificate authority: install its root once on a device, and the device trusts the box and every certificate the box issues.",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "source": {
+      "authority": "The box's own certificate",
+      "custom": "Your uploaded certificate"
+    },
+    "keyType": {
+      "ecdsa": "ECDSA",
+      "rsa": "RSA"
+    },
+    "facts": {
+      "source": "In use",
+      "subject": "Name",
+      "names": "Covers",
+      "validUntil": "Valid until",
+      "fingerprint": "SHA-256 fingerprint"
+    },
+    "connection": {
+      "title": "Connection",
+      "explain": "The web interface and FTPS present this certificate. A browser warns about it until the device trusts the box's root.",
+      "plain": "This daemon serves plain HTTP: it runs for development or simulation. A box always uses HTTPS."
+    },
+    "trust": {
+      "title": "Trust this box",
+      "explain": "Download the root certificate and install it on every device that uses the box. Afterwards the browser shows no warning, reloads come from its cache and FTPS clients accept the box.",
+      "download": "Download root certificate",
+      "compare": "Before you trust the file on a device, compare its fingerprint with the one above.",
+      "devices": {
+        "windows": {
+          "name": "Windows:",
+          "steps": "Open the file, choose Install Certificate, Local Machine, then the store Trusted Root Certification Authorities."
+        },
+        "macos": {
+          "name": "macOS:",
+          "steps": "Open the file in Keychain Access (keychain System), open the certificate and set Trust to Always Trust."
+        },
+        "ios": {
+          "name": "iPhone and iPad:",
+          "steps": "Open the file in Safari and install the profile under Settings, General, VPN and Device Management, then switch it on under Settings, General, About, Certificate Trust Settings."
+        },
+        "android": {
+          "name": "Android:",
+          "steps": "Settings, Security, Encryption and credentials, Install a certificate, CA certificate, then pick the file."
+        },
+        "linux": {
+          "name": "Linux:",
+          "steps": "Copy the file to /usr/local/share/ca-certificates/ and run sudo update-ca-certificates; browsers with their own store need the step below."
+        },
+        "firefox": {
+          "name": "Firefox:",
+          "steps": "Settings, Privacy and Security, Certificates, View Certificates, Authorities, Import, and trust it to identify websites."
+        }
+      }
+    },
+    "authority": {
+      "title": "Certificate authority",
+      "explain": "A root, which devices trust, and an intermediate, which signs every certificate. The intermediate renews itself a year before it ends, without devices noticing.",
+      "domains": "May sign",
+      "addresses": "Address ranges",
+      "unrestricted": "This authority may sign any name. A device that trusts it would also accept a forged certificate for any website if someone took over the box.",
+      "intermediate": "The intermediate is valid until {date}.",
+      "create": "Create new authority…",
+      "dialog": {
+        "title": "Create a new certificate authority?",
+        "explain": "Every device has to trust the new root again. Certificates issued for other devices stay valid only where the old root is still trusted.",
+        "restricted": "Only local names and private addresses (recommended)",
+        "suggested": "Always included: {domains}, and the private address ranges.",
+        "domains": "Own domains",
+        "domainsHint": "Optional, separated by spaces or commas, such as home.example.org. Each covers every name below it.",
+        "unrestrictedWarning": "Without the limit, a device that trusts the box accepts any certificate it signs, also for banks and other websites. Choose this only if you need it and keep the box secure.",
+        "confirm": "Create authority"
+      }
+    },
+    "names": {
+      "title": "Names of the box's certificate",
+      "explain": "The box's certificate covers its host name, its addresses and these names, and is issued again when one of them changes.",
+      "extra": "More names",
+      "extraHint": "For example a domain that points at the box, separated by spaces or commas. It has to lie inside what the authority may sign."
+    },
+    "issued": {
+      "title": "Certificates for other devices",
+      "explain": "Issue certificates for printers, routers or other servers in your network. Every device that trusts the box's root trusts them too.",
+      "issue": "Issue certificate…",
+      "none": "No certificates issued yet.",
+      "earlier": "Earlier authority",
+      "details": "Valid until {until} · {key} · issued {created} by {by}",
+      "download": "Download certificate",
+      "remove": "Remove"
+    },
+    "issueDialog": {
+      "title": "Issue a certificate",
+      "explain": "The certificate and its private key are downloaded as two files. The box does not keep the key, so store it safely.",
+      "names": "Names and addresses",
+      "namesHint": "Separated by spaces or commas, such as printer.lan 192.168.1.30. *.media.lan covers every name below media.lan.",
+      "days": "Valid for (days)",
+      "daysHint": "1 to 825 days. Apple devices refuse longer validities.",
+      "rsa": "RSA key for devices that do not support ECDSA",
+      "confirm": "Issue and download",
+      "done": "Done. Check your downloads for the .crt and .key files."
+    },
+    "removeDialog": {
+      "title": "Remove the certificate for {names}?",
+      "explain": "It only leaves this list. The box keeps no revocation list, so the certificate stays valid until it ends.",
+      "confirm": "Remove"
+    },
+    "custom": {
+      "title": "Your own certificate",
+      "explain": "Instead of the box's own certificate, present one you got elsewhere, for example for your own domain. The box uses it while it is valid and then goes back to its own.",
+      "certificate": "Certificate (PEM, with its intermediates)",
+      "key": "Private key (PEM, without password)",
+      "choose": "Choose file",
+      "noFile": "No file chosen",
+      "upload": "Use this certificate",
+      "remove": "Remove own certificate",
+      "unused": "This certificate is not valid now, so the box presents its own."
     }
   },
   "regional": {
