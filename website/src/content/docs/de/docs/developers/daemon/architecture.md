@@ -14,7 +14,7 @@ Der Daemon (`pithyxd`) ist der einzige privilegierte Prozess auf einer Pithyx-Bo
 Der Daemon ist ein modularer Monolith. Jedes Modul ist ein Ordner unter `daemon/src/Pithyx.Daemon`: Apps, Auth, Backup, Commands, Database, Errors, FileServices, Files, Health, Hosting, Installer, Jobs, Layouts, Localization, Logs, Monitoring, Network, Notifications, Permissions, Realtime, Shares, Storage, SystemSettings, Updates und Users. Die Solution ist `daemon/Pithyx.slnx`, die Tests liegen in `daemon/tests/Pithyx.Daemon.Tests`.
 
 - **Prozess.** `pithyx.service` startet `/usr/lib/pithyx/daemon/pithyxd`. Die Unit startet ihn bei einem Fehler nach 2 Sekunden neu, erlaubt 5 Starts in 120 Sekunden und startet bei den Exit-Codes 65 und 78 nicht neu.
-- **Ports.** Kestrel lauscht auf 7484. Auf einer echten Box (Produktions-Build) lauscht er zusätzlich auf Port 80, der alles auf 7484 umleitet. Der Daemon liefert heute nur reines HTTP aus; HTTPS ist noch nicht gebaut.
+- **Ports.** Kestrel lauscht auf 7484. Im echten Modus spricht 7484 TLS (`Hosting/WebTransport`): Eine Verbindung, deren erstes Byte kein TLS-Handshake ist, geht an reines HTTP und wird auf `https://` umgeleitet. Auf einer echten Box (Produktions-Build) lauscht er zusätzlich auf 443 (TLS) und 80, die auf 7484 umleiten, außer `/api/install-id` auf 80. Simulation und das Live-System des Installers liefern reines HTTP. Die Zertifikate kommen aus `Tls/BoxCertificates` (D346).
 - **Anfragen.** Jeder `/api`-Endpunkt verlangt eine Sitzung, sofern er nicht als anonym markiert ist. Die Richtlinien heißen `admin`, `power` und `appToken`.
 - **Statische Dateien.** Der Daemon liefert den Desktop aus `/usr/lib/pithyx/desktop` (oder `PITHYX_DESKTOP_DIR`) aus, mit einem Fallback auf die Single-Page-App.
 - **Modi.** Der echte Modus spricht mit dem System. Der Simulationsmodus (`PITHYX_SIMULATE=1`) antwortet aus Fixtures; siehe [Am Daemon entwickeln](/de/docs/developers/daemon/development/).
@@ -64,7 +64,7 @@ Der Daemon nutzt SQLite über Dapper mit explizitem SQL, ohne ORM und ohne Repos
 | ----------------------------- | ---------------------------------------------------------------------- |
 | `/var/lib/pithyx/pithyx.db`   | Die Datenbank (überschreibbar mit `PITHYX_DB`)                         |
 | `/var/lib/pithyx/catalogs/`   | Ein Klon pro aktiviertem Katalog                                       |
-| `/var/lib/pithyx/tls/`        | TLS-Zertifikate (heute das FTPS-Zertifikat `ftps.pfx`)                 |
+| `/var/lib/pithyx/tls/`        | Die Zertifizierungsstelle der Box, ihr eigenes und ein hochgeladenes Zertifikat (PEM, nur für root lesbar)                 |
 | `/var/log/pithyx/`            | `daemon.json` und `logs.db` (überschreibbar mit `PITHYX_LOG_DIR`)      |
 | `/var/cache/pithyx/`          | Caches (überschreibbar mit `PITHYX_CACHE_DIR`)                         |
 | `/usr/lib/pithyx/desktop/`    | Der gebaute Desktop                                                    |

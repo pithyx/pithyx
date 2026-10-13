@@ -81,9 +81,9 @@ api() {
   # api <method> <path> [json body]
   local method="$1" path="$2" body="${3:-}"
   if [[ -n "$body" ]]; then
-    curl -s -b "$jar" -c "$jar" -X "$method" -H 'Content-Type: application/json' -H 'X-Pithyx-Request: 1' --data "$body" "http://127.0.0.1:$PORT$path"
+    curl --insecure -s -b "$jar" -c "$jar" -X "$method" -H 'Content-Type: application/json' -H 'X-Pithyx-Request: 1' --data "$body" "https://127.0.0.1:$PORT$path"
   else
-    curl -s -b "$jar" -c "$jar" -X "$method" -H 'X-Pithyx-Request: 1' "http://127.0.0.1:$PORT$path"
+    curl --insecure -s -b "$jar" -c "$jar" -X "$method" -H 'X-Pithyx-Request: 1' "https://127.0.0.1:$PORT$path"
   fi
 }
 
@@ -156,9 +156,9 @@ mkdir -p "$work/logs" "$work/cache"
     ASPNETCORE_ENVIRONMENT=Development dotnet pithyxd.dll >"$work/daemon.log" 2>&1
 ) &
 daemon_pid=$!
-wait_for 60 curl -sf "http://127.0.0.1:$PORT/api/health" >/dev/null || die "the daemon did not start; see $work/daemon.log"
+wait_for 60 curl --insecure -sf "https://127.0.0.1:$PORT/api/health" >/dev/null || die "the daemon did not start; see $work/daemon.log"
 api POST /api/setup '{"username":"disktest","password":"disk failure test on the dev VM"}' >/dev/null
-check "The test daemon runs in real mode" bash -c "curl -s http://127.0.0.1:$PORT/api/health | grep -q '\"real\"'"
+check "The test daemon runs in real mode" bash -c "curl --insecure -s https://127.0.0.1:$PORT/api/health | grep -q '\"real\"'"
 check "Pool $POOL (mirror on $KEEP and $PULL) is ONLINE" state_is "$POOL" ONLINE
 
 line ""

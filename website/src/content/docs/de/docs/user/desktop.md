@@ -7,16 +7,16 @@ sidebar:
   order: 1
 ---
 
-Der Pithyx-Desktop ist die Seite, die du im Browser unter `http://<box-address>:7484` öffnest. Er funktioniert wie ein gewöhnlicher Computer-Desktop: Apps öffnen sich in Fenstern, eine Taskleiste zeigt, was läuft, und du kannst Verknüpfungen und Notizzettel auf den Desktop legen. Die Box merkt sich deine Fenster für jedes Gerät, das du benutzt.
+Der Pithyx-Desktop ist die Seite, die du im Browser unter `https://<box-address>:7484` öffnest. Er funktioniert wie ein gewöhnlicher Computer-Desktop: Apps öffnen sich in Fenstern, eine Taskleiste zeigt, was läuft, und du kannst Verknüpfungen und Notizzettel auf den Desktop legen. Die Box merkt sich deine Fenster für jedes Gerät, das du benutzt.
 
 ## Anmelden
 
-1. Öffne `http://<box-address>:7484` in deinem Browser. Port 80 leitet dorthin weiter.
+1. Öffne `https://<box-address>:7484` in deinem Browser. Port 80 leitet dorthin weiter.
 2. Gib deinen **Benutzernamen** und dein **Passwort** ein und klicke auf **Anmelden**.
 3. Wenn du die Zwei-Faktor-Anmeldung eingeschaltet hast, gib den Code aus deiner Authenticator-App ein und klicke auf **Bestätigen**. Wenn du dein Handy verloren hast, klicke auf **Stattdessen einen Wiederherstellungscode verwenden**.
 
 :::caution
-Die Box liefert heute unverschlüsseltes HTTP aus, dein Passwort wird also unverschlüsselt übertragen. Nutze sie nur in einem Netzwerk, dem du vertraust.
+Beim ersten Mal warnt der Browser vor dem eigenen Zertifikat der Box; fahre zur Seite fort. Ein Administrator kann die Warnung mit dem Root-Zertifikat der Box dauerhaft beseitigen ([Zertifikate](/de/docs/admin/certificates/)).
 :::
 
 Du brauchst das Recht **Am Desktop anmelden**. Ist dein Konto deaktiviert oder fehlt das Recht, muss ein Administrator das ändern.

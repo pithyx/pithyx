@@ -26,6 +26,7 @@ using Pithyx.Daemon.Storage.Health;
 using Pithyx.Daemon.Storage.Snapshots;
 using Pithyx.Daemon.Storage.Zfs;
 using Pithyx.Daemon.SystemSettings;
+using Pithyx.Daemon.Tls;
 using Pithyx.Daemon.Updates;
 using Pithyx.Daemon.Users;
 using Scalar.AspNetCore;
@@ -61,16 +62,11 @@ var httpPort = builder.Environment.IsDevelopment() && int.TryParse(builder.Confi
     ? devPort
     : HttpPort;
 var installer = InstallerEnvironment.Resolve(builder.Configuration, mode, Path.GetDirectoryName(paths.DatabasePath) ?? ".");
-// A box (production build, real mode) also listens on port 80, which redirects to 7484 (PlainHttpRedirect).
-var redirectPort = mode == DaemonMode.Real && !builder.Environment.IsDevelopment() ? PlainHttpRedirect.Port : (int?)null;
-builder.WebHost.ConfigureKestrel(options =>
-{
-    options.ListenAnyIP(httpPort);
-    if (redirectPort is { } port)
-    {
-        options.ListenAnyIP(port);
-    }
-});
+// HTTPS in real mode (D346); the live system's installer and simulation stay on plain HTTP. A box (production build)
+// also listens on 80 and, with HTTPS, on 443; both redirect to 7484 (WebTransport).
+var https = mode == DaemonMode.Real && !installer.Active && !BuildTimeDocument.IsGenerating;
+var transport = WebTransport.For(httpPort, https, box: mode == DaemonMode.Real && !builder.Environment.IsDevelopment());
+builder.WebHost.ConfigureKestrel(transport.Listen);
 builder.Services.ConfigureHttpJsonOptions(options =>
 {
     options.SerializerOptions.RespectNullableAnnotations = true;
@@ -116,6 +112,7 @@ builder.Services.AddSingleton<TopicHub>();
 builder.Services.AddPithyxMonitoring();
 builder.Services.AddPithyxSystemSettings(mode);
 builder.Services.AddPithyxNetwork(mode);
+builder.Services.AddPithyxTls(new TlsOptions(Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "tls"), https, ReadHost: mode == DaemonMode.Real));
 builder.Services.AddSingleton(services => new DaemonRestart(services.GetRequiredService<IHostApplicationLifetime>(), mode, services.GetRequiredService<TimeProvider>()));
 builder.Services.AddPithyxInstaller(installer);
 builder.Services.AddPithyxBackup(mode == DaemonMode.Real
@@ -156,6 +153,7 @@ if (!BuildTimeDocument.IsGenerating)
     }
     if (!installer.Active)
     {
+        builder.Services.AddHostedService(services => services.GetRequiredService<BoxCertificates>());
         builder.Services.AddHostedService(services => services.GetRequiredService<Pithyx.Daemon.FileServices.Ftp.FtpServer>());
     }
 }
@@ -210,15 +208,19 @@ if (!BuildTimeDocument.IsGenerating)
         return DaemonExitCode.DatabaseFailed;
     }
 
-    // Plain HTTP is the development transport. HTTPS on 443 arrives with the TLS work in M5.
-    HostLog.PlainHttp(app.Logger, httpPort, mode);
+    // The certificates exist before the first handshake; the live system's installer has none.
+    if (!installer.Active)
+    {
+        await app.Services.GetRequiredService<BoxCertificates>().LoadAsync(CancellationToken.None);
+    }
+    if (!https)
+    {
+        HostLog.PlainHttp(app.Logger, httpPort, mode);
+    }
 }
 
 app.UseMiddleware<RequestIdMiddleware>();
-if (redirectPort is { } plainPort)
-{
-    app.UseMiddleware<PlainHttpRedirect>(plainPort, HttpPort);
-}
+app.UseMiddleware<TransportRedirect>(transport);
 app.UseSerilogRequestLogging(options => options.Logger = app.Services.GetRequiredService<Serilog.ILogger>());
 app.UseExceptionHandler();
 // Only the API answers bare status codes with problem details. Every other path belongs to the desktop,
@@ -274,6 +276,7 @@ if (!installer.Active)
     api.MapLogEndpoints();
     api.MapSystemSettingsEndpoints();
     api.MapNetworkEndpoints();
+    api.MapTlsEndpoints();
     api.MapUpdateEndpoints();
     api.MapPowerEndpoint();
     api.MapBackupEndpoints();

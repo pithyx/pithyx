@@ -7,7 +7,7 @@ sidebar:
   order: 4
 ---
 
-The installer creates the owner account, so a freshly installed box has no separate setup wizard: you sign in at `http://<box-address>:7484`. What is left is to keep the recovery key safe, create a pool for your data and add users. A pool does not exist yet after the installation.
+The installer creates the owner account, so a freshly installed box has no separate setup wizard: you sign in at `https://<box-address>:7484`. The browser warns once about the box's own certificate; continue, and see [Certificates](/docs/admin/certificates/) to trust the box on your devices. What is left is to keep the recovery key safe, create a pool for your data and add users. A pool does not exist yet after the installation.
 
 ## The owner account
 

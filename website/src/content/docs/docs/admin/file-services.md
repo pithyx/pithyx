@@ -23,15 +23,15 @@ Switch **Offer shared folders over SFTP**. It is encrypted file transfer over SS
 
 ## WebDAV
 
-Served by the daemon itself at `/webdav/` on the box's web address (`http://<box-address>:7484/webdav/`), with Basic authentication using the Pithyx name and password. The root lists the shared folders the user may use; deletes go to the recycle bin. A user needs the WebDAV right and the folder switch **Offer over WebDAV**.
+Served by the daemon itself at `/webdav/` on the box's web address (`https://<box-address>:7484/webdav/`), with Basic authentication using the Pithyx name and password. The root lists the shared folders the user may use; deletes go to the recycle bin. A user needs the WebDAV right and the folder switch **Offer over WebDAV**.
 
 :::caution[No encryption yet]
-The box serves plain HTTP today, so the WebDAV password travels unencrypted. Use WebDAV only on a network you trust. See [Security](/docs/admin/security/#https-and-certificates).
+WebDAV runs over the box's HTTPS. Clients that check certificates (Windows, macOS) connect once the device trusts the box's root; see [Certificates](/docs/admin/certificates/).
 :::
 
 ## FTP
 
-For devices and programs that know neither SFTP nor WebDAV, such as scanners. **Offer shared folders over FTP with TLS** uses explicit FTPS (`AUTH TLS`); the box makes a self-signed certificate and the page shows its SHA-256 fingerprint. **Also allow plain FTP without encryption** is off by default and carries a warning; switching it off again ends plain sessions.
+For devices and programs that know neither SFTP nor WebDAV, such as scanners. **Offer shared folders over FTP with TLS** uses explicit FTPS (`AUTH TLS`); it presents the box's certificate (see [Certificates](/docs/admin/certificates/)) and the page shows its SHA-256 fingerprint. **Also allow plain FTP without encryption** is off by default and carries a warning; switching it off again ends plain sessions.
 
 - Control port 21, passive data ports 50000 to 50099. Only passive mode works (`PORT` and `EPRT` are answered with "502 Only passive mode").
 - Idle timeout 10 minutes, data timeout 30 seconds.

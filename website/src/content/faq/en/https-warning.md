@@ -6,6 +6,6 @@ order: 20
 status: ready
 ---
 
-The box serves the desktop over plain HTTP on port 7484 today; HTTPS is not built yet. Your password and session cookie therefore travel unencrypted, so use the box only on a network you trust and do not expose it to the internet.
+The box makes its own certificate, and your browser does not know who signed it yet. The connection is encrypted all the same. Continue to the page, then download the box's root in Settings > **Certificates** and install it on the device; after that the warning is gone.
 
-Details: [HTTPS and certificates](/docs/admin/security/#https-and-certificates).
+Details: [Certificates](/docs/admin/certificates/).

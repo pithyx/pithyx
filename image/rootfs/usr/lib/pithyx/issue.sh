@@ -16,17 +16,20 @@ fi
 # shellcheck source=/dev/null
 . /usr/lib/pithyx/release
 
-# IPv4 first: it is what most people type.
+# IPv4 first: it is what most people type. The live system's installer speaks plain HTTP, an installed box HTTPS (D346).
 urls() {
-  local family device address
+  local family device address scheme=https
+  if [[ "$installer" == true ]]; then
+    scheme=http
+  fi
   for family in -4 -6; do
     ip -o "$family" address show scope global | while read -r _ device _ address _; do
       case "$device" in docker* | veth* | br-*) continue ;; esac
       address="${address%/*}"
       if [[ "$family" == -6 ]]; then
-        echo "http://[$address]:$PORT"
+        echo "$scheme://[$address]:$PORT"
       else
-        echo "http://$address:$PORT"
+        echo "$scheme://$address:$PORT"
       fi
     done
   done
@@ -64,6 +67,9 @@ render() {
       if [[ -n "$first" ]]; then
         echo "  Open in a browser:"
         printf '    %s\n' "${addresses[@]}"
+        echo
+        echo "  The browser warns about the box's own certificate until a device trusts it"
+        echo "  (Settings > Certificates)."
       else
         echo "  No network address yet."
       fi

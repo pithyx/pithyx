@@ -39,7 +39,7 @@ readonly SPIKE_RUN_DIR=/run/pithyx-docker-spike
 readonly DROP_IN_DIR=/run/systemd/system/docker.service.d
 readonly DROP_IN=$DROP_IN_DIR/pithyx-spike.conf
 readonly NFT_TABLE=pithyx-spike
-readonly DEV_URL=http://localhost:7484/
+readonly DEV_URL=https://localhost:7484/
 
 repo="$(cd "$(dirname "$0")/../.." && pwd)"
 disk_serial=VYXTEST06
@@ -104,7 +104,7 @@ mkdir -p "$fixtures"
 
 dev_status() {
   printf '%s %s %s %s' "$(systemctl is-active pithyx-dev.service || true)" \
-    "$(curl -s -o /dev/null -m 5 -w '%{http_code}' "$DEV_URL" || true)" \
+    "$(curl --insecure -s -o /dev/null -m 5 -w '%{http_code}' "$DEV_URL" || true)" \
     "$(systemctl is-active ssh.service || true)" "$(systemctl is-active smbd.service || true)"
 }
 dev_before="$(dev_status)"
@@ -440,7 +440,8 @@ check_network() {
   # The host's own address on the bridge is in the network, so containers reach the host's services there unless an
   # input rule for the app bridges (px-*) drops new connections.
   gateway="$(ip -4 -o addr show dev px-spike0 | awk '{ print $4 }' | cut -d/ -f1)"
-  local probe="wget -q -T 3 -O /dev/null http://$gateway:7484/ 2>/dev/null && echo reachable || echo blocked"
+  # Any HTTP answer counts, also the redirect 7484 sends plain HTTP to https:// with (D346).
+  local probe="wget -S -T 3 -O /dev/null http://$gateway:7484/ 2>&1 | grep -q 'HTTP/' && echo reachable || echo blocked"
   if [[ "$(dk run --rm --network "${PROJECT}_app" "$image_id" sh -c "$probe")" == reachable ]]; then
     note "host services from an app network" "without a rule a container reaches 7484 on the bridge address $gateway"
   fi
@@ -526,9 +527,9 @@ check_host() {
   local now
   now="$(dev_status)"
   if [[ "$now" == "$dev_before" && "$now" == "active 200 active active" ]]; then
-    pass "host services unchanged" "pithyx-dev, http 200 on 7484, ssh and smbd as before ($now)"
+    pass "host services unchanged" "pithyx-dev, https 200 on 7484, ssh and smbd as before ($now)"
   else
-    fail "host services unchanged" "before: $dev_before, now: $now (pithyx-dev, http on 7484, ssh, smbd)"
+    fail "host services unchanged" "before: $dev_before, now: $now (pithyx-dev, https on 7484, ssh, smbd)"
   fi
   sudo nft list ruleset 2>/dev/null | cat >"$work/nft-after.txt"
   local changes

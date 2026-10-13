@@ -1,9 +1,9 @@
 using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
-using System.Security.Cryptography.X509Certificates;
 using Dapper;
 using Pithyx.Daemon.Database;
+using Pithyx.Daemon.Tls;
 
 namespace Pithyx.Daemon.FileServices.Ftp;
 
@@ -20,6 +20,7 @@ public sealed partial class FtpServer(
     ProtocolFiles files,
     FileServiceChanges changes,
     FileServiceOptions options,
+    BoxCertificates certificates,
     TimeProvider time,
     ILoggerFactory loggers) : BackgroundService
 {
@@ -31,7 +32,6 @@ public sealed partial class FtpServer(
     private readonly ConcurrentDictionary<Guid, FtpSession> _sessions = new();
     private TcpListener? _listener;
     private CancellationTokenSource? _listening;
-    private X509Certificate2? _certificate;
     private volatile bool _plainAllowed;
 
     public FileServiceState State { get; private set; } = FileServiceState.Off;
@@ -39,8 +39,8 @@ public sealed partial class FtpServer(
     /// <summary>The port it listens on while it runs; the configured one otherwise.</summary>
     public int Port { get; private set; } = options.FtpPort;
 
-    /// <summary>The certificate's fingerprint once it was loaded or made.</summary>
-    public string? Fingerprint => _certificate is null ? null : TlsCertificate.Fingerprint(_certificate);
+    /// <summary>The fingerprint of the certificate FTPS presents: the box's (D346), the same as on the web ports.</summary>
+    public string? Fingerprint => certificates.ActiveOrNull is { } active ? CertificateAuthority.Fingerprint(active) : null;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -117,7 +117,6 @@ public sealed partial class FtpServer(
 
     private void Start()
     {
-        _certificate ??= TlsCertificate.LoadOrCreate(options.TlsDirectory!, Dns.GetHostName(), time);
         var listener = new TcpListener(IPAddress.IPv6Any, options.FtpPort);
         listener.Server.DualMode = true;
         listener.Start();
@@ -156,7 +155,7 @@ public sealed partial class FtpServer(
             {
                 return;
             }
-            var session = new FtpSession(client, _certificate!, signIn, files, options.FtpPassivePorts ?? (options.FtpPort == 0 ? (0, 0) : DefaultPassivePorts), () => _plainAllowed, time, loggers.CreateLogger<FtpSession>());
+            var session = new FtpSession(client, certificates.Context, signIn, files, options.FtpPassivePorts ?? (options.FtpPort == 0 ? (0, 0) : DefaultPassivePorts), () => _plainAllowed, time, loggers.CreateLogger<FtpSession>());
             _sessions[session.Id] = session;
             _ = Task.Run(async () =>
             {
@@ -177,7 +176,6 @@ public sealed partial class FtpServer(
     {
         Stop();
         _switching.Dispose();
-        _certificate?.Dispose();
         base.Dispose();
     }
 

@@ -2316,6 +2316,143 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/system/tls": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. Whether the web interface speaks HTTPS, the certificate it presents, the box's certificate authority with its scope, the names of the box's own certificate, an uploaded certificate and the certificates issued for other devices. */
+        get: operations["GetTlsSettings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/tls/authority": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Replaces the certificate authority with a new root and intermediate and issues the box's certificate from them. Every device has to trust the new root; certificates issued for other devices stay valid only where the old root is still trusted. */
+        post: operations["CreateCertificateAuthority"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/tls/custom": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description Administrators only. Presents a certificate of your own (with its chain and unencrypted key, in PEM) on the web ports and for FTPS while it is valid; after it ends the box presents its own again. */
+        put: operations["SetCustomCertificate"];
+        post?: never;
+        /** @description Administrators only. Removes the uploaded certificate; the box presents its own again. */
+        delete: operations["RemoveCustomCertificate"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/tls/issued": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Issues a server certificate for another device from the box's authority. The answer holds the private key; the box does not keep it. */
+        post: operations["IssueCertificate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/tls/issued/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description Administrators only. Removes an issued certificate from the list. The box keeps no revocation list, so the certificate stays valid until it ends. */
+        delete: operations["DeleteIssuedCertificate"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/tls/issued/{id}/certificate.pem": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. An issued certificate with the intermediate it was issued under, without its key. */
+        get: operations["GetIssuedCertificate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/tls/names": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description Administrators only. Names (such as a domain pointing at the box) the box's own certificate covers besides its host name and addresses; they must lie inside the authority's scope. The certificate is issued again at once. */
+        put: operations["SetTlsNames"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/tls/root-ca.crt": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Anyone, also before signing in. The root of the box's certificate authority in PEM, to install on a device so it trusts the box. */
+        get: operations["GetRootCertificate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/system/updates": {
         parameters: {
             query?: never;
@@ -2522,6 +2659,11 @@ export type components = {
              */
             type: "ack";
         };
+        /**
+         * @description Which certificate the web interface and FTPS present.
+         * @enum {unknown}
+         */
+        ActiveCertificateSource: "authority" | "custom";
         AddCatalogRequest: {
             /** @description https://host/owner/repository.git, or for a private catalog git@host:owner/repository.git. */
             url: string;
@@ -3048,6 +3190,19 @@ export type components = {
             /** @description The version's snapshot, as listed. */
             snapshot: string;
         };
+        /** @description The box's certificate authority. */
+        AuthorityInfo: {
+            /** @description The address ranges it may sign; empty when unrestricted. */
+            addressRanges: string[];
+            /** @description The DNS suffixes it may sign, each with every name below it; empty when unrestricted. */
+            domains: string[];
+            /** @description The intermediate that signs every certificate; it is renewed a year before it ends. */
+            intermediate: components["schemas"]["CertificateInfo"];
+            /** @description Name Constraints limit what the authority may sign. */
+            restricted: boolean;
+            /** @description The root that devices trust; download it from `/api/system/tls/root-ca.crt`. */
+            root: components["schemas"]["CertificateInfo"];
+        };
         /**
          * @description The newest version of the box's channel when it is newer than the installed one.
          *         `Installable`: False when the box is older than MinimumVersion and needs a version in between first.
@@ -3186,6 +3341,32 @@ export type components = {
          * @enum {unknown}
          */
         CatalogStatus: "off" | "new" | "ok" | "failed";
+        /** @description One certificate as Settings shows it. */
+        CertificateInfo: {
+            /** @description SHA-256 as hex pairs with colons. */
+            fingerprint: string;
+            /** @description The issuer's distinguished name. */
+            issuer: string;
+            /** @description The DNS names and addresses it covers. */
+            names: string[];
+            /**
+             * Format: date-time
+             * @description The end of its validity.
+             */
+            notAfter: string;
+            /**
+             * Format: date-time
+             * @description The start of its validity.
+             */
+            notBefore: string;
+            /** @description The subject's distinguished name. */
+            subject: string;
+        };
+        /**
+         * @description The key of a certificate the authority issues.
+         * @enum {unknown}
+         */
+        CertificateKeyType: "ecdsa" | "rsa";
         /** @description A message from the client: `sub` or `unsub` for a topic or pattern. */
         ClientMessage: {
             /** @description Chosen by the client; echoed in the ack, snapshots and errors that answer this message. */
@@ -3200,9 +3381,23 @@ export type components = {
         CopyLayoutRequest: {
             deviceId: string;
         };
+        /** @description A new authority; every device has to trust its root again. */
+        CreateAuthorityRequest: {
+            /** @description With Restricted: DNS suffixes besides the suggested ones, such as a domain of your own. */
+            domains: string[];
+            /** @description Limit the authority to local names and private addresses (recommended). */
+            restricted: boolean;
+        };
         CreateBackupRequest: {
             /** @description The backup password: needed to restore, never stored. The same rules as for an account password. */
             password: string;
+        };
+        /** @description A certificate of your own for the web interface and FTPS. */
+        CustomCertificateRequest: {
+            /** @description The certificate, followed by its intermediates, in PEM. */
+            certificatePem: string;
+            /** @description Its private key in PEM (PKCS #8, PKCS #1 or SEC 1), unencrypted. */
+            privateKeyPem: string;
         };
         /** @enum {unknown} */
         DaemonMode: "real" | "simulated";
@@ -3540,7 +3735,7 @@ export type components = {
             }[];
         };
         /** @enum {string} */
-        ErrorCode: "app.app.busy" | "app.app.no_previous" | "app.app.not_found" | "app.backend.endpoint_unknown" | "app.backend.missing" | "app.backend.start_failed" | "app.backend.storage_unavailable" | "app.backend.unavailable" | "app.backend.unsupported" | "app.compose.key_unsupported" | "app.compose.reference_unknown" | "app.compose.right_missing" | "app.compose.right_unused" | "app.compose.storage_mismatch" | "app.compose.value_invalid" | "app.compose.yaml_invalid" | "app.docker.unavailable" | "app.elevated.unsupported" | "app.icon.invalid" | "app.image.mismatch" | "app.image.unavailable" | "app.manifest.cron_invalid" | "app.manifest.duplicate" | "app.manifest.id_invalid" | "app.manifest.id_reserved" | "app.manifest.invalid_json" | "app.manifest.pithyx_invalid" | "app.manifest.reference_unknown" | "app.manifest.schema_violation" | "app.manifest.sdk_invalid" | "app.manifest.version_unsupported" | "app.manifest.window_size_invalid" | "app.mapping.invalid" | "app.package.box_too_old" | "app.package.downgrade_unsupported" | "app.package.invalid" | "app.package.layout_invalid" | "app.package.lock_invalid" | "app.package.not_found" | "app.package.too_large" | "app.permission.denied" | "app.permission.not_requested" | "app.pool.fixed" | "app.pool.required" | "app.pool.unavailable" | "app.storage.key_invalid" | "app.storage.not_found" | "app.storage.too_large" | "app.token.invalid" | "auth.account.disabled" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.desktop.not_allowed" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fileservices.service.unavailable" | "fileservices.workgroup.invalid" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.share.unavailable" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "installer.check.failed" | "installer.claim.required" | "installer.claim.taken" | "installer.disk.count" | "installer.disk.unsuitable" | "installer.erase.not_confirmed" | "installer.hostname.invalid" | "installer.install.failed" | "installer.install.running" | "installer.keyboard.invalid" | "installer.reboot.not_ready" | "jobs.job.not_found" | "logs.app.invalid" | "logs.archive.pool_unavailable" | "logs.batch.too_large" | "logs.query.invalid" | "logs.settings.invalid" | "network.address.invalid" | "network.apply.failed" | "network.bond.member_invalid" | "network.bond.members_missing" | "network.bond.primary_invalid" | "network.change.empty" | "network.change.not_found" | "network.change.pending" | "network.config.unreachable" | "network.default_interface.invalid" | "network.dns.invalid" | "network.dns.too_many" | "network.firewall.failed" | "network.gateway.invalid" | "network.global.not_changeable" | "network.host_name.invalid" | "network.interface.duplicate" | "network.interface.kind_invalid" | "network.interface.name_invalid" | "network.interface.not_changeable" | "network.interface.unknown" | "network.mtu.invalid" | "network.search_domain.invalid" | "network.search_domain.too_many" | "network.vlan.duplicate" | "network.vlan.id_invalid" | "network.vlan.parent_invalid" | "notifications.message.invalid" | "notifications.notification.not_found" | "permissions.grant.invalid" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.command.timed_out" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.disks_missing" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.pool.suspended" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "storage.zfs.unavailable" | "store.app.not_found" | "store.catalog.architecture_missing" | "store.catalog.built_in" | "store.catalog.busy" | "store.catalog.data_version_decreased" | "store.catalog.exists" | "store.catalog.id_reserved" | "store.catalog.invalid_json" | "store.catalog.mismatch" | "store.catalog.not_found" | "store.catalog.rule_violation" | "store.catalog.schema_violation" | "store.catalog.sequence_old" | "store.catalog.signature_invalid" | "store.catalog.unreachable" | "store.catalog.url_invalid" | "store.catalog.version_unsupported" | "store.package.hash_mismatch" | "system.backup.category_missing" | "system.backup.invalid" | "system.backup.password_wrong" | "system.backup.restore_expired" | "system.backup.restore_failed" | "system.backup.restore_running" | "system.backup.too_large" | "system.backup.too_new" | "system.internal.unexpected" | "system.origin.forbidden" | "system.time.apply_failed" | "system.time.server_invalid" | "system.time.servers_too_many" | "system.time.zone_invalid" | "update.apply.failed" | "update.apply.running" | "update.channel.invalid" | "update.channel.mismatch" | "update.channel.sequence_old" | "update.channel.signature_invalid" | "update.download.mismatch" | "update.file.architecture" | "update.file.channel" | "update.file.hash_mismatch" | "update.file.invalid" | "update.file.minimum" | "update.file.missing_entry" | "update.file.not_found" | "update.file.older" | "update.file.signature_invalid" | "update.file.too_large" | "update.file.unexpected_entry" | "update.none.available" | "update.rollback.unconfirmed" | "update.snapshot.not_found" | "update.source.invalid" | "update.source.unreachable" | "update.space.insufficient" | "update.system.unsupported" | "users.account.refused" | "users.gid.exhausted" | "users.group.builtin" | "users.group.description_invalid" | "users.group.exists" | "users.group.name_invalid" | "users.group.name_reserved" | "users.group.not_found" | "users.group.refused" | "users.uid.exhausted" | "users.user.exists" | "users.user.last_admin" | "users.user.not_found" | "users.user.self";
+        ErrorCode: "app.app.busy" | "app.app.no_previous" | "app.app.not_found" | "app.backend.endpoint_unknown" | "app.backend.missing" | "app.backend.start_failed" | "app.backend.storage_unavailable" | "app.backend.unavailable" | "app.backend.unsupported" | "app.compose.key_unsupported" | "app.compose.reference_unknown" | "app.compose.right_missing" | "app.compose.right_unused" | "app.compose.storage_mismatch" | "app.compose.value_invalid" | "app.compose.yaml_invalid" | "app.docker.unavailable" | "app.elevated.unsupported" | "app.icon.invalid" | "app.image.mismatch" | "app.image.unavailable" | "app.manifest.cron_invalid" | "app.manifest.duplicate" | "app.manifest.id_invalid" | "app.manifest.id_reserved" | "app.manifest.invalid_json" | "app.manifest.pithyx_invalid" | "app.manifest.reference_unknown" | "app.manifest.schema_violation" | "app.manifest.sdk_invalid" | "app.manifest.version_unsupported" | "app.manifest.window_size_invalid" | "app.mapping.invalid" | "app.package.box_too_old" | "app.package.downgrade_unsupported" | "app.package.invalid" | "app.package.layout_invalid" | "app.package.lock_invalid" | "app.package.not_found" | "app.package.too_large" | "app.permission.denied" | "app.permission.not_requested" | "app.pool.fixed" | "app.pool.required" | "app.pool.unavailable" | "app.storage.key_invalid" | "app.storage.not_found" | "app.storage.too_large" | "app.token.invalid" | "auth.account.disabled" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.desktop.not_allowed" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fileservices.service.unavailable" | "fileservices.workgroup.invalid" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.share.unavailable" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "installer.check.failed" | "installer.claim.required" | "installer.claim.taken" | "installer.disk.count" | "installer.disk.unsuitable" | "installer.erase.not_confirmed" | "installer.hostname.invalid" | "installer.install.failed" | "installer.install.running" | "installer.keyboard.invalid" | "installer.reboot.not_ready" | "jobs.job.not_found" | "logs.app.invalid" | "logs.archive.pool_unavailable" | "logs.batch.too_large" | "logs.query.invalid" | "logs.settings.invalid" | "network.address.invalid" | "network.apply.failed" | "network.bond.member_invalid" | "network.bond.members_missing" | "network.bond.primary_invalid" | "network.change.empty" | "network.change.not_found" | "network.change.pending" | "network.config.unreachable" | "network.default_interface.invalid" | "network.dns.invalid" | "network.dns.too_many" | "network.firewall.failed" | "network.gateway.invalid" | "network.global.not_changeable" | "network.host_name.invalid" | "network.interface.duplicate" | "network.interface.kind_invalid" | "network.interface.name_invalid" | "network.interface.not_changeable" | "network.interface.unknown" | "network.mtu.invalid" | "network.search_domain.invalid" | "network.search_domain.too_many" | "network.vlan.duplicate" | "network.vlan.id_invalid" | "network.vlan.parent_invalid" | "notifications.message.invalid" | "notifications.notification.not_found" | "permissions.grant.invalid" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.command.timed_out" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.disks_missing" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.pool.suspended" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "storage.zfs.unavailable" | "store.app.not_found" | "store.catalog.architecture_missing" | "store.catalog.built_in" | "store.catalog.busy" | "store.catalog.data_version_decreased" | "store.catalog.exists" | "store.catalog.id_reserved" | "store.catalog.invalid_json" | "store.catalog.mismatch" | "store.catalog.not_found" | "store.catalog.rule_violation" | "store.catalog.schema_violation" | "store.catalog.sequence_old" | "store.catalog.signature_invalid" | "store.catalog.unreachable" | "store.catalog.url_invalid" | "store.catalog.version_unsupported" | "store.package.hash_mismatch" | "system.backup.category_missing" | "system.backup.invalid" | "system.backup.password_wrong" | "system.backup.restore_expired" | "system.backup.restore_failed" | "system.backup.restore_running" | "system.backup.too_large" | "system.backup.too_new" | "system.internal.unexpected" | "system.origin.forbidden" | "system.time.apply_failed" | "system.time.server_invalid" | "system.time.servers_too_many" | "system.time.zone_invalid" | "tls.custom.expired" | "tls.custom.invalid" | "tls.custom.key_mismatch" | "tls.issued.not_found" | "tls.name.invalid" | "tls.name.not_permitted" | "tls.names.missing" | "tls.names.too_many" | "tls.validity.out_of_range" | "update.apply.failed" | "update.apply.running" | "update.channel.invalid" | "update.channel.mismatch" | "update.channel.sequence_old" | "update.channel.signature_invalid" | "update.download.mismatch" | "update.file.architecture" | "update.file.channel" | "update.file.hash_mismatch" | "update.file.invalid" | "update.file.minimum" | "update.file.missing_entry" | "update.file.not_found" | "update.file.older" | "update.file.signature_invalid" | "update.file.too_large" | "update.file.unexpected_entry" | "update.none.available" | "update.rollback.unconfirmed" | "update.snapshot.not_found" | "update.source.invalid" | "update.source.unreachable" | "update.space.insufficient" | "update.system.unsupported" | "users.account.refused" | "users.gid.exhausted" | "users.group.builtin" | "users.group.description_invalid" | "users.group.exists" | "users.group.name_invalid" | "users.group.name_reserved" | "users.group.not_found" | "users.group.refused" | "users.uid.exhausted" | "users.user.exists" | "users.user.last_admin" | "users.user.not_found" | "users.user.self";
         /** @description A failed client message. `id` is empty when the message could not be parsed. */
         ErrorMessage: {
             code: components["schemas"]["ErrorCode"];
@@ -4088,6 +4283,48 @@ export type components = {
          * @enum {unknown}
          */
         Ipv6Mode: "auto" | "static" | "off";
+        /** @description A certificate for another device. */
+        IssueCertificateRequest: {
+            /** @description ECDSA (default) or RSA for devices that take nothing else. */
+            keyType: components["schemas"]["CertificateKeyType"];
+            /** @description DNS names (a leading `*.` for a wildcard) and addresses, 1 to 100, inside the authority's scope. */
+            names: string[];
+            /**
+             * Format: int32
+             * @description 1 to 825 days, never past the intermediate's end.
+             */
+            validityDays: number;
+        };
+        /** @description A certificate the authority issued for another device. Its key was handed out once and is not kept. */
+        IssuedCertificate: {
+            /** @description The certificate. */
+            certificate: components["schemas"]["CertificateInfo"];
+            /**
+             * Format: date-time
+             * @description When it was issued.
+             */
+            createdAt: string;
+            /** @description The administrator who issued it, if the account still had that name. */
+            createdBy: null | string;
+            /** @description It chains to the current root; false after a new authority replaced the old one. */
+            currentAuthority: boolean;
+            /**
+             * Format: int64
+             * @description Its number on the box.
+             */
+            id: number;
+            /** @description The key it was made with. */
+            keyType: components["schemas"]["CertificateKeyType"];
+        };
+        /** @description A newly issued certificate with its files; the private key is in this answer only. */
+        IssuedCertificateFiles: {
+            /** @description The entry in the list. */
+            certificate: components["schemas"]["IssuedCertificate"];
+            /** @description The certificate followed by the intermediate, as servers take it. */
+            certificatePem: string;
+            /** @description The private key (PKCS #8, unencrypted). */
+            privateKeyPem: string;
+        };
         /** @description A long operation of a user, such as copying files. Also the data of the `jobs/{id}` topics. */
         Job: {
             /**
@@ -5942,6 +6179,32 @@ export type components = {
             ntpServers: string[];
             /** @description IANA name of the new time zone. */
             timeZone: string;
+        };
+        /** @description Names the box's own certificate covers besides its host name and addresses. */
+        TlsNamesRequest: {
+            /** @description DNS names or addresses inside the authority's scope, at most 20. */
+            extraNames: string[];
+        };
+        /** @description Settings &gt; Certificates. */
+        TlsSettings: {
+            /** @description The certificate the box presents now. */
+            active: components["schemas"]["CertificateInfo"];
+            /** @description The box's own authority. */
+            authority: components["schemas"]["AuthorityInfo"];
+            /** @description The names and addresses the box's own certificate covers. */
+            boxNames: string[];
+            /** @description One certificate as Settings shows it. */
+            custom: null | components["schemas"]["CertificateInfo"];
+            /** @description Names an administrator added to the box's own certificate. */
+            extraNames: string[];
+            /** @description The web interface speaks HTTPS on 7484 (80 and 443 redirect there); false only in development and simulation. */
+            https: boolean;
+            /** @description The certificates issued for other devices, newest first. */
+            issued: components["schemas"]["IssuedCertificate"][];
+            /** @description Which certificate the box presents. */
+            source: components["schemas"]["ActiveCertificateSource"];
+            /** @description The DNS suffixes a new restricted authority starts with: the local ones, the host name and the network's search domains. */
+            suggestedDomains: string[];
         };
         TopicEvents: {
             apps: components["schemas"]["AppList"];
@@ -11569,6 +11832,285 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TimeSettings"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetTlsSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TlsSettings"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    CreateCertificateAuthority: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CreateAuthorityRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TlsSettings"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SetCustomCertificate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomCertificateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TlsSettings"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    RemoveCustomCertificate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TlsSettings"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    IssueCertificate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["IssueCertificateRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["IssuedCertificateFiles"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    DeleteIssuedCertificate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetIssuedCertificate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/x-pem-file": string;
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SetTlsNames: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TlsNamesRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TlsSettings"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetRootCertificate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/x-x509-ca-cert": string;
                 };
             };
             /** @description Problem details with a stable error code. */

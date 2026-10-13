@@ -4,6 +4,7 @@ import { useEffect, useState, type ComponentType } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   IconArrowLeft,
+  IconCertificate,
   IconCloudDownload,
   IconFolders,
   IconInfoCircle,
@@ -21,6 +22,7 @@ import { onInternal, SHARES_CHANGED, STORAGE_CHANGED } from '../sdk/internal';
 import { GroupsPage } from '../users/GroupsPage';
 import { UsersPage } from '../users/UsersPage';
 import { BackupPage } from './BackupPage';
+import { CertificatesPage } from './CertificatesPage';
 import { FileServicesPage } from './FileServicesPage';
 import { InfoCenterPage } from './InfoCenterPage';
 import { NetworkPage } from './NetworkPage';
@@ -33,6 +35,7 @@ import { UpdatesPage } from './UpdatesPage';
 type PageId =
   | 'info'
   | 'network'
+  | 'certificates'
   | 'regional'
   | 'updates'
   | 'backup'
@@ -52,6 +55,7 @@ interface SettingsPage {
 const PAGES: readonly SettingsPage[] = [
   { id: 'info', category: 'system', icon: IconInfoCircle, Component: InfoCenterPage },
   { id: 'network', category: 'system', icon: IconNetwork, Component: NetworkPage },
+  { id: 'certificates', category: 'system', icon: IconCertificate, Component: CertificatesPage },
   { id: 'regional', category: 'system', icon: IconWorld, Component: RegionalPage },
   { id: 'updates', category: 'system', icon: IconCloudDownload, Component: UpdatesPage },
   { id: 'backup', category: 'system', icon: IconRestore, Component: BackupPage },

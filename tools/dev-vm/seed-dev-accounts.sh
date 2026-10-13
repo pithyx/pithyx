@@ -13,7 +13,8 @@
 # API; while the daemon has none, the script says so and skips them.
 set -euo pipefail
 
-readonly URL=http://127.0.0.1:7484
+# HTTPS with the box's own certificate (D346); its root is not trusted here, the connection stays on loopback.
+readonly URL=https://127.0.0.1:7484
 readonly CONFIG="${PITHYX_DEV_CONFIG:-$HOME/.config/pithyx-dev}"
 readonly OWNER_ENV="$CONFIG/owner.env"
 readonly E2E_ENV="$CONFIG/e2e.env"
@@ -49,7 +50,7 @@ json_field() {
 # Prints the HTTP status; the body goes to $body.
 api() {
   local method="$1" path="$2" data="${3:-}"
-  local args=(-sS -o "$body" -w '%{http_code}' -b "$jar" -c "$jar" -X "$method" -H 'X-Pithyx-Request: 1')
+  local args=(--insecure -sS -o "$body" -w '%{http_code}' -b "$jar" -c "$jar" -X "$method" -H 'X-Pithyx-Request: 1')
   [[ -z "$data" ]] || args+=(-H 'Content-Type: application/json' --data "$data")
   curl "${args[@]}" "$URL$path"
 }
@@ -76,7 +77,7 @@ source "$OWNER_ENV"
 # shellcheck source=/dev/null
 source "$E2E_ENV"
 
-curl -fsS "$URL/api/health" >/dev/null || die "the dev unit does not answer on $URL"
+curl --insecure -fsS "$URL/api/health" >/dev/null || die "the dev unit does not answer on $URL"
 
 [[ "$(api GET /api/setup)" == 200 ]] || die "GET /api/setup failed: $(cat "$body")"
 owner_session=0

@@ -7,21 +7,21 @@ sidebar:
   order: 9
 ---
 
-Pithyx keeps everything on the box: no telemetry, no cloud account, no phone-home. The one thing to know before you use it: the web desktop is served over plain HTTP today. This page covers transport, open ports, physical access, SSH, two-factor sign-in, the recovery key and the few connections the box makes on its own.
+Pithyx keeps everything on the box: no telemetry, no cloud account, no phone-home. The web desktop speaks HTTPS with a certificate from the box's own certificate authority. This page covers transport, open ports, physical access, SSH, two-factor sign-in, the recovery key and the few connections the box makes on its own.
 
 ## HTTPS and certificates
 
-:::caution[Plain HTTP]
-The box serves the desktop on `http://<box-address>:7484`, and port 80 redirects there. HTTPS is not built, so the sign-in password, the session cookie and WebDAV Basic authentication travel unencrypted. Use the box only on a network you trust.
-:::
+The box serves the desktop and WebDAV on `https://<box-address>:7484`, over TLS 1.2 or 1.3 with HTTP/2. Ports 80 and 443 only redirect there, and a request with plain `http://` on 7484 is redirected to `https://` on the same port. The box is its own certificate authority, so a browser warns about its certificate until the device trusts the box's root: download it in Settings > **Certificates** and install it once per device (see [Certificates](/docs/admin/certificates/)). FTP over TLS presents the same certificate.
 
-The session cookie is `HttpOnly` and `SameSite=Strict`, and it gets the `Secure` flag only when a request arrives over HTTPS. State-changing requests need the header `X-Pithyx-Request`. The only TLS the box has today is the self-signed certificate of FTP over TLS (see [File services](/docs/admin/file-services/#ftp)). SMB 3 and SFTP encrypt their own traffic.
+The authority may sign only local names and private addresses unless an administrator creates one without that limit, so a device that trusts it never accepts a certificate from the box for a public website. The box sends no HSTS header: browsers do not let anyone pass a certificate warning on an HSTS host, and the box's certificate is untrusted until a device trusts its root.
+
+The session cookie is `HttpOnly`, `SameSite=Strict` and `Secure`. State-changing requests need the header `X-Pithyx-Request`. SMB 3 and SFTP encrypt their own traffic. The live system of the installer is the one exception: it speaks plain HTTP, because it has no certificate yet and asks for no password.
 
 ## Open ports
 
-Pithyx has a firewall that lets in only the web interface and the file services that are switched on, over IPv4 and IPv6: the web desktop and WebDAV on 7484 and 80, SMB on 445 (on from the first start), SFTP and SSH on 22, FTP on 21 with the passive ports 50000 to 50099. Switching a service off in Settings > **File services** also closes its port. Everything else is dropped, except answers to the box's own connections, DHCP replies and the ICMP messages IPv6 needs. App backends publish no ports at all.
+Pithyx has a firewall that lets in only the web interface and the file services that are switched on, over IPv4 and IPv6: the web desktop and WebDAV on 7484, and 80 and 443, which redirect there, SMB on 445 (on from the first start), SFTP and SSH on 22, FTP on 21 with the passive ports 50000 to 50099. Switching a service off in Settings > **File services** also closes its port. Everything else is dropped, except answers to the box's own connections, DHCP replies and the ICMP messages IPv6 needs. App backends publish no ports at all.
 
-With **Only private networks may use the file services** (section **Firewall** on the same page, off by default), SMB, SFTP, SSH and FTP answer only computers in private networks (10.x, 172.16 to 31.x, 192.168.x, link-local and IPv6 ULA); the web interface stays reachable either way. Leave it off if you reach the box through a router from another network or over a VPN with public addresses. If the rules cannot be applied, the setting is still saved and the error is [`network.firewall.failed`](/docs/reference/errors/#network.firewall.failed). The desktop is not encrypted yet, so keep the box behind a router and do not forward these ports to the internet.
+With **Only private networks may use the file services** (section **Firewall** on the same page, off by default), SMB, SFTP, SSH and FTP answer only computers in private networks (10.x, 172.16 to 31.x, 192.168.x, link-local and IPv6 ULA); the web interface stays reachable either way. Leave it off if you reach the box through a router from another network or over a VPN with public addresses. If the rules cannot be applied, the setting is still saved and the error is [`network.firewall.failed`](/docs/reference/errors/#network.firewall.failed). Pithyx offers no remote access of its own; keep the box behind a router and reach it from outside over a VPN rather than forwarding these ports.
 
 ## Physical access
 

@@ -29,7 +29,7 @@ sudo systemctl reset-failed "$UNIT" 2>/dev/null || true
 sudo systemctl start "$UNIT"
 
 for _ in $(seq 150); do
-  if curl -fsS "http://127.0.0.1:$PORT/api/health" >/dev/null 2>&1; then
+  if curl --insecure -fsS "https://127.0.0.1:$PORT/api/health" >/dev/null 2>&1; then
     echo "reset $DATABASE"
     exec "$repo/tools/dev-vm/seed-dev-accounts.sh"
   fi

@@ -4,7 +4,6 @@ using System.Net.Security;
 using System.Net.Sockets;
 using System.Security.Authentication;
 using System.Security.Claims;
-using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using Pithyx.Daemon.Errors;
 using Pithyx.Daemon.Files;
@@ -20,7 +19,7 @@ namespace Pithyx.Daemon.FileServices.Ftp;
 /// </summary>
 public sealed partial class FtpSession(
     TcpClient client,
-    X509Certificate2 certificate,
+    SslStreamCertificateContext certificate,
     ProtocolSignIn signIn,
     ProtocolFiles files,
     (int First, int Last) passivePorts,
@@ -513,7 +512,7 @@ public sealed partial class FtpSession(
 
     private SslServerAuthenticationOptions Options() => new()
     {
-        ServerCertificate = certificate,
+        ServerCertificateContext = certificate,
         EnabledSslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13,
         ClientCertificateRequired = false,
     };

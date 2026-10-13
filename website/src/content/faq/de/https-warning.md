@@ -6,6 +6,6 @@ order: 20
 status: ready
 ---
 
-Die Box liefert den Desktop heute über unverschlüsseltes HTTP auf Port 7484 aus; HTTPS ist noch nicht gebaut. Dein Passwort und das Sitzungs-Cookie gehen deshalb unverschlüsselt übers Netz, also nutz die Box nur in einem Netzwerk, dem du vertraust, und mach sie nicht aus dem Internet erreichbar.
+Die Box erstellt ihr eigenes Zertifikat, und dein Browser weiß noch nicht, wer es signiert hat. Verschlüsselt ist die Verbindung trotzdem. Fahre zur Seite fort, lade dann unter Einstellungen > **Zertifikate** das Root-Zertifikat der Box herunter und installiere es auf dem Gerät; danach ist die Warnung weg.
 
-Details: [Sicherheit](/de/docs/admin/security/).
+Details: [Zertifikate](/de/docs/admin/certificates/).

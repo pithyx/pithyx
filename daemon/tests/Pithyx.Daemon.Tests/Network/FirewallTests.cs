@@ -39,7 +39,7 @@ public sealed class FirewallTests : IDisposable
             add rule inet pithyx input icmpv6 type { destination-unreachable, packet-too-big, time-exceeded, parameter-problem, echo-request, nd-router-advert, nd-neighbor-solicit, nd-neighbor-advert, nd-redirect, mld-listener-query } accept
             add rule inet pithyx input udp sport 67 udp dport 68 accept
             add rule inet pithyx input ip6 saddr fe80::/10 udp sport 547 udp dport 546 accept
-            add rule inet pithyx input tcp dport { 80, 7484 } accept
+            add rule inet pithyx input tcp dport { 80, 443, 7484 } accept
 
             """,
             rules);
@@ -66,7 +66,7 @@ public sealed class FirewallTests : IDisposable
         Assert.Equal("add rule inet pithyx input ip saddr { 10.0.0.0/8, 172.16.0.0/12, 192.168.0.0/16, 169.254.0.0/16 } tcp dport { 22, 445 } accept", lines[^3]);
         Assert.Equal("add rule inet pithyx input ip6 saddr { fc00::/7, fe80::/10 } tcp dport { 22, 445 } accept", lines[^2]);
         // The web interface stays reachable from everywhere.
-        Assert.Contains("add rule inet pithyx input tcp dport { 80, 7484 } accept", lines);
+        Assert.Contains("add rule inet pithyx input tcp dport { 80, 443, 7484 } accept", lines);
     }
 
     [Fact]

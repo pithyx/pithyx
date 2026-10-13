@@ -23,8 +23,8 @@ These rules are binding. If a rule blocks you, stop and ask; never work around i
 ## Current state
 
 - Version `1.0.0-beta.1` is in preparation (nothing tagged or published yet); the repository is about to go public.
-- Built: storage (ZFS pools, disks, SMART, snapshots, scrubs), users, groups and permissions, shared folders with SMB, SFTP, WebDAV and FTP, the web desktop with Files and Settings, the app runtime (SDK, manifest, Docker backends, proxy, Store with signed catalogs), network settings, firewall, config backup, the web installer, the ISO build and signed system updates with automatic rollback.
-- Not built: HTTPS (HTTP on 7484 only), pool encryption, NFS, VMs, support bundles; app rights that need elevation (`docker.socket`, `host.full`) are refused with `app.elevated.unsupported`.
+- Built: HTTPS on 7484 with the box as its own certificate authority (D346), storage (ZFS pools, disks, SMART, snapshots, scrubs), users, groups and permissions, shared folders with SMB, SFTP, WebDAV and FTP, the web desktop with Files and Settings, the app runtime (SDK, manifest, Docker backends, proxy, Store with signed catalogs), network settings, firewall, config backup, the web installer, the ISO build and signed system updates with automatic rollback.
+- Not built: pool encryption, the reverse proxy, NFS, VMs, support bundles; app rights that need elevation (`docker.socket`, `host.full`) are refused with `app.elevated.unsupported`.
 - Docs pages under `website/` are mostly `draft` (written from the code, not yet checked line by line); `TODO.md` marks what waits "(after 1.0.0-beta.1)".
 - The migrations are numbered SQL files in `daemon/`; decisions are logged as D-numbers at the end of `TODO.md`, in number order (it conflicts on every merge; keep all entries sorted).
 
@@ -94,8 +94,8 @@ website/  landing page and docs at pithyx.org (Astro + Starlight, GitHub Pages, 
 
 ## Network
 
-- HTTPS on 443, 80 redirects. Fixed alternative port 7484; never change it.
-- Self-signed certificate by default; a settings wizard makes it trusted (local CA download, or own domain with Let's Encrypt DNS-01 wildcard). Everything works on the untrusted default; passkeys and the service worker switch on only after the trust step.
+- HTTPS only on the fixed port 7484 (D346); never change it. Ports 80 and 443 only redirect to `https://<host>:7484`, and plain HTTP on 7484 is redirected to `https://`. No HSTS. The installer's live system and simulation stay on plain HTTP.
+- The box is its own certificate authority (root and intermediate with Name Constraints to local names and private addresses unless an administrator lifts them); Settings > Certificates offers the root with per-device instructions, certificates for other devices and an own certificate. Let's Encrypt comes later. Everything works on the untrusted default; passkeys and the service worker switch on only after the trust step.
 - The UI never assumes a secure context (plain HTTP by IP must work). `crypto.randomUUID`, `crypto.subtle`, Clipboard, service workers, WebAuthn, notifications only through `desktop/src/platform/browser.ts` (fallback or "missing"); ESLint refuses them elsewhere.
 - No subdomains for the core system. IPv6 everywhere IPv4 works.
 

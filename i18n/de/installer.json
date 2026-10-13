@@ -126,6 +126,7 @@
   "rebooting": {
     "title": "Pithyx startet",
     "intro": "Diese Seite öffnet das neue System, sobald es antwortet. Das kann ein paar Minuten dauern.",
+    "certificate": "Das neue System antwortet über HTTPS mit einem Zertifikat, das es selbst erstellt hat, deshalb warnt dein Browser einmal. Das ist so gewollt: Fahre zur Seite fort. Einstellungen > Zertifikate erklärt, wie deine Geräte der Box vertrauen.",
     "manual": "Wenn nichts passiert, öffne {url} selbst."
   }
 }

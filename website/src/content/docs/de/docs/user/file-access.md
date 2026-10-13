@@ -13,7 +13,7 @@ In den folgenden Schritten ist `<box-address>` der Name oder die IP-Adresse, mit
 
 ## Welches Protokoll du nutzen solltest
 
-![Einstellungen, Dateidienste, mit SFTP aus, WebDAV an, FTP aus und den Adressen zum Verbinden, etwa sftp://pithyx und http://pithyx:7484/webdav/](../../../../../assets/screenshots/file-services.de.webp)
+![Einstellungen, Dateidienste, mit SFTP aus, WebDAV an, FTP aus und den Adressen zum Verbinden, etwa sftp://pithyx und https://pithyx:7484/webdav/](../../../../../assets/screenshots/file-services.de.webp)
 
 _Ein Administrator schaltet die Dateidienste unter Einstellungen > Dateidienste ein; jede Karte zeigt die Adresse dafür._
 
@@ -21,11 +21,11 @@ _Ein Administrator schaltet die Dateidienste unter Einstellungen > Dateidienste 
 | ---------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
 | **SMB**    | Ein Netzlaufwerk unter Windows, macOS und Linux für die tägliche Arbeit                          | Braucht SMB 3. Ältere Systeme können sich nicht verbinden. Frühere Versionen und der Papierkorb funktionieren. |
 | **SFTP**   | Verschlüsselte Übertragungen mit einem Programm wie FileZilla oder WinSCP oder dem Befehl `sftp` | Du siehst nur deine freigegebenen Ordner und bekommst keine Shell. Nur Anmeldung per Passwort.                 |
-| **WebDAV** | Programme und Dateimanager, die einen Web-Ordner einbinden können                                | Adresse: `http://<box-address>:7484/webdav/`                                                                   |
+| **WebDAV** | Programme und Dateimanager, die einen Web-Ordner einbinden können                                | Adresse: `https://<box-address>:7484/webdav/`                                                                  |
 | **FTP**    | Geräte, die weder SFTP noch WebDAV kennen, etwa Scanner                                          | Nur der passive Modus. Mit TLS verschlüsselt; unverschlüsseltes FTP nur, wenn ein Administrator es erlaubt.    |
 
 :::caution
-Die Box liefert den Desktop und WebDAV heute über unverschlüsseltes HTTP aus. Ein WebDAV-Passwort wird deshalb unverschlüsselt übertragen. Nutze WebDAV nur in einem Netzwerk, dem du vertraust.
+Der Desktop und WebDAV nutzen HTTPS. Windows und macOS binden WebDAV erst ein, wenn der Computer dem Root-Zertifikat der Box vertraut; ein Administrator findet es unter Einstellungen > **Zertifikate**.
 :::
 
 Jeder sieht nur die freigegebenen Ordner, die seine Rechte erlauben, mit der Zugriffsstufe, die ein Administrator ihm gegeben hat: kein Zugriff, **Lesen** oder **Lesen und schreiben**. Administratoren erreichen jeden freigegebenen Ordner.
@@ -45,7 +45,7 @@ Die Box kündigt sich nicht im Netzwerk an, deshalb erscheint sie im Explorer ni
 
 **SFTP und FTP:** Installiere ein Programm wie FileZilla oder WinSCP und verbinde dich mit `<box-address>`.
 
-**WebDAV:** Klicke im Datei-Explorer mit der rechten Maustaste auf **Dieser PC**, wähle **Netzlaufwerk verbinden** und gib `http://<box-address>:7484/webdav/` ein. Windows kann ein Passwort über unverschlüsseltes HTTP verweigern. Wenn das passiert, nutze SMB oder ein WebDAV-Programm.
+**WebDAV:** Klicke im Datei-Explorer mit der rechten Maustaste auf **Dieser PC**, wähle **Netzlaufwerk verbinden** und gib `https://<box-address>:7484/webdav/` ein. Windows verbindet sich erst, wenn es dem Root-Zertifikat der Box vertraut. Verweigert es trotzdem, nutze SMB oder ein WebDAV-Programm.
 
 ## macOS
 
@@ -57,7 +57,7 @@ Die Box kündigt sich nicht im Netzwerk an, deshalb erscheint sie im Explorer ni
 
 **SFTP:** Der Finder kann SFTP nicht durchsuchen. Nutze ein SFTP-Programm und verbinde dich mit `sftp://<box-address>`.
 
-**WebDAV:** Gib unter **Mit Server verbinden** `http://<box-address>:7484/webdav/` ein. Manche macOS-Versionen verweigern ein Passwort über unverschlüsseltes HTTP.
+**WebDAV:** Gib unter **Mit Server verbinden** `https://<box-address>:7484/webdav/` ein. macOS verbindet sich, sobald es dem Root-Zertifikat der Box vertraut.
 
 **FTP:** Nutze ein Programm, das FTP mit TLS unterstützt, und wähle „explizites FTP über TLS“.
 
@@ -73,7 +73,7 @@ sftp <user>@<box-address>
 
 SFTP akzeptiert nur Passwörter. Öffentliche Schlüssel werden für SFTP-Benutzer nicht verwendet.
 
-**WebDAV:** Ein Dateimanager mit WebDAV-Unterstützung akzeptiert `dav://<box-address>:7484/webdav/`. Pithyx liefert heute unverschlüsseltes HTTP aus, deshalb ist das nicht verschlüsselt.
+**WebDAV:** Ein Dateimanager mit WebDAV-Unterstützung akzeptiert `davs://<box-address>:7484/webdav/`.
 
 **FTP:** Nutze einen Client mit explizitem FTP über TLS, etwa `lftp`.
 

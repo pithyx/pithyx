@@ -70,7 +70,7 @@ why:
       }
     - {
         title: 'Careful by default',
-        text: 'Disks with data need their serial number, network changes roll back unless you confirm them, app backends run unprivileged and SSH stays off until you switch it on. The desktop still uses plain HTTP, so keep the box on a network you trust.',
+        text: "Disks with data need their serial number, network changes roll back unless you confirm them, app backends run unprivileged and SSH stays off until you switch it on. The desktop speaks HTTPS with a certificate from the box's own, locally limited authority.",
       }
 specs:
   title: At a glance

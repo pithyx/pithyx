@@ -48,7 +48,7 @@ public static class BackupDatabase
         [BackupCategory.SharedFolders] = ["shares", "file_services"],
         [BackupCategory.Storage] = ["snapshot_schedules", "storage_schedules"],
         [BackupCategory.System] = ["system_region"],
-        [BackupCategory.Certificates] = [],
+        [BackupCategory.Certificates] = ["tls_issued"],
         [BackupCategory.Apps] = ["apps", "app_permissions", "storage_mappings", "app_storage", "catalogs"],
     }.ToFrozenDictionary();
 
@@ -57,6 +57,7 @@ public static class BackupDatabase
     {
         [BackupCategory.Users] = [Auth.AuthService.RecoveryKeySetting],
         [BackupCategory.System] = [Logs.LogService.SettingsKey],
+        [BackupCategory.Certificates] = [Tls.BoxCertificates.ExtraNamesSetting],
         [BackupCategory.Apps] = [Apps.AppRegistry.PoolSetting, .. Apps.Catalog.StoreService.BackupSettings],
     }.ToFrozenDictionary();
 

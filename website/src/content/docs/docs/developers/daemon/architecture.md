@@ -14,7 +14,7 @@ The daemon (`pithyxd`) is the only privileged process on a Pithyx box: one C# bi
 The daemon is a modular monolith. Each module is a folder under `daemon/src/Pithyx.Daemon`: Apps, Auth, Backup, Commands, Database, Errors, FileServices, Files, Health, Hosting, Installer, Jobs, Layouts, Localization, Logs, Monitoring, Network, Notifications, Permissions, Realtime, Shares, Storage, SystemSettings, Updates and Users. The solution is `daemon/Pithyx.slnx`, the tests are in `daemon/tests/Pithyx.Daemon.Tests`.
 
 - **Process.** `pithyx.service` runs `/usr/lib/pithyx/daemon/pithyxd`. The unit restarts it on failure after 2 seconds, allows 5 starts in 120 seconds and does not restart on exit codes 65 and 78.
-- **Ports.** Kestrel listens on 7484. On a real box (production build) it also listens on port 80, which redirects everything to 7484. The daemon serves plain HTTP only today; HTTPS is not built yet.
+- **Ports.** Kestrel listens on 7484. In real mode 7484 speaks TLS (`Hosting/WebTransport`): a connection whose first byte is no TLS handshake goes to plain HTTP and is redirected to `https://`. On a real box (production build) it also listens on 443 (TLS) and 80, which redirect to 7484, except `/api/install-id` on 80. Simulation and the installer's live system serve plain HTTP. The certificates come from `Tls/BoxCertificates` (D346).
 - **Requests.** Every `/api` endpoint requires a session unless it is marked anonymous. The policies are `admin`, `power` and `appToken`.
 - **Static files.** The daemon serves the desktop from `/usr/lib/pithyx/desktop` (or `PITHYX_DESKTOP_DIR`), with a fallback to the single-page app.
 - **Modes.** Real mode talks to the system. Simulation mode (`PITHYX_SIMULATE=1`) answers from fixtures; see [Developing the daemon](/docs/developers/daemon/development/).
@@ -64,7 +64,7 @@ The daemon uses SQLite through Dapper with explicit SQL, no ORM and no repositor
 | ----------------------------- | -------------------------------------------------------------- |
 | `/var/lib/pithyx/pithyx.db`   | The database (override with `PITHYX_DB`)                       |
 | `/var/lib/pithyx/catalogs/`   | One clone per enabled catalog                                  |
-| `/var/lib/pithyx/tls/`        | TLS certificates (today the FTPS certificate `ftps.pfx`)       |
+| `/var/lib/pithyx/tls/`        | The box's certificate authority, its own certificate and an uploaded one (PEM, readable by root only)       |
 | `/var/log/pithyx/`            | `daemon.json` and `logs.db` (override with `PITHYX_LOG_DIR`)   |
 | `/var/cache/pithyx/`          | Caches (override with `PITHYX_CACHE_DIR`)                      |
 | `/usr/lib/pithyx/desktop/`    | The built desktop                                              |

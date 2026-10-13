@@ -7,7 +7,7 @@ sidebar:
   order: 4
 ---
 
-Der Installer legt das Owner-Konto an, deshalb hat eine frisch installierte Box keinen eigenen Einrichtungsassistenten: Du meldest dich unter `http://<box-address>:7484` an. Übrig bleibt, den Wiederherstellungsschlüssel sicher aufzubewahren, einen Pool für deine Daten anzulegen und Benutzer hinzuzufügen. Einen Pool gibt es nach der Installation noch nicht.
+Der Installer legt das Owner-Konto an, deshalb hat eine frisch installierte Box keinen eigenen Einrichtungsassistenten: Du meldest dich unter `https://<box-address>:7484` an. Der Browser warnt einmal vor dem eigenen Zertifikat der Box; fahre fort und lies unter [Zertifikate](/de/docs/admin/certificates/), wie deine Geräte der Box vertrauen. Übrig bleibt, den Wiederherstellungsschlüssel sicher aufzubewahren, einen Pool für deine Daten anzulegen und Benutzer hinzuzufügen. Einen Pool gibt es nach der Installation noch nicht.
 
 ## Das Owner-Konto
 

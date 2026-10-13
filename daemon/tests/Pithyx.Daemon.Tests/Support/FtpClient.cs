@@ -18,7 +18,7 @@ internal sealed class FtpClient : IAsyncDisposable
 
     private static bool Validate(object sender, System.Security.Cryptography.X509Certificates.X509Certificate? certificate, System.Security.Cryptography.X509Certificates.X509Chain? chain, SslPolicyErrors errors) =>
         certificate is not null
-        && Pithyx.Daemon.FileServices.TlsCertificate.Fingerprint(new System.Security.Cryptography.X509Certificates.X509Certificate2(certificate)) == Pinned;
+        && Pithyx.Daemon.Tls.CertificateAuthority.Fingerprint(new System.Security.Cryptography.X509Certificates.X509Certificate2(certificate)) == Pinned;
 
     private readonly TcpClient _client;
     private Stream _stream;

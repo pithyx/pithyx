@@ -101,9 +101,16 @@ free_port() {
 }
 port="$(free_port)"
 plain="$(free_port)"
+tls="$(free_port)"
 ssh_port="$(free_port)"
 bonded="$(free_port)"
-api="http://127.0.0.1:$port/api"
+# The live system's installer speaks plain HTTP; the installed box HTTPS with a certificate of its own authority,
+# which this test does not trust (D346), hence --insecure on every curl.
+live="http://127.0.0.1:$port/api"
+api="https://127.0.0.1:$port/api"
+curl() {
+  command curl --insecure "$@"
+}
 # The network cards with --network: the first one carries the test's connection, the other two share one network.
 readonly NIC0_MAC=52:54:00:12:34:56 NIC1_MAC=52:54:00:12:34:61 NIC2_MAC=52:54:00:12:34:62
 readonly BOND_ADDRESS=10.0.3.50
@@ -135,7 +142,7 @@ start_vm() {
     -drive if=pflash,format=raw,readonly=on,file="$OVMF_CODE" \
     -drive if=pflash,format=raw,file="$vm/vars.fd" \
     -device ahci,id=ahci -device usb-ehci,id=usb "${drives[@]}" \
-    -netdev user,id=net0,hostfwd=tcp:127.0.0.1:"$port"-:7484,hostfwd=tcp:127.0.0.1:"$plain"-:80,hostfwd=tcp:127.0.0.1:"$ssh_port"-:22 \
+    -netdev user,id=net0,hostfwd=tcp:127.0.0.1:"$port"-:7484,hostfwd=tcp:127.0.0.1:"$plain"-:80,hostfwd=tcp:127.0.0.1:"$tls"-:443,hostfwd=tcp:127.0.0.1:"$ssh_port"-:22 \
     -device virtio-net-pci,netdev=net0,id=nic0,mac=$NIC0_MAC,addr=0x10 "${nics[@]}" \
     -display none -chardev "socket,id=serial0,path=$vm/serial.sock,server=on,wait=off,logfile=$serial_log" -serial chardev:serial0 \
     -monitor unix:"$vm/monitor.sock",server,nowait \
@@ -398,7 +405,12 @@ check_installed() {
   [[ "$answer" == "$install_id" ]] || die "the installed system answers install id $answer, expected $install_id"
   local redirect
   redirect="$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' "http://127.0.0.1:$plain/")"
-  [[ "$redirect" == "307 http://127.0.0.1:7484/" ]] || die "port 80 does not redirect to 7484: $redirect"
+  [[ "$redirect" == "307 https://127.0.0.1:7484/" ]] || die "port 80 does not redirect to 7484: $redirect"
+  redirect="$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' "https://127.0.0.1:$tls/settings")"
+  [[ "$redirect" == "307 https://127.0.0.1:7484/settings" ]] || die "port 443 does not redirect to 7484: $redirect"
+  redirect="$(curl -s -o /dev/null -w '%{http_code} %{redirect_url}' "http://127.0.0.1:$port/")"
+  [[ "$redirect" == "307 https://127.0.0.1:$port/" ]] || die "plain HTTP on 7484 does not go to HTTPS: $redirect"
+  [[ "$(curl -fsS -o /dev/null -w '%{http_version}' --http2 "$api/health")" == 2 ]] || die "7484 does not speak HTTP/2"
   local setup
   setup="$(curl -fsS "$api/setup")"
   [[ "$(json 'd["installer"] or d["required"]' <<<"$setup")" == False ]] || die "the installed system is not set up: $setup"
@@ -465,14 +477,14 @@ storage_action() {
 install_box() {
   step "booting the installer from $(basename "$iso")"
   start_vm stick disk1 disk2
-  wait_for "$api/health" 240
-  [[ "$(call "$api/setup" | json 'd["installer"]')" == True ]] || die "the live system does not run the installer"
+  wait_for "$live/health" 240
+  [[ "$(call "$live/setup" | json 'd["installer"]')" == True ]] || die "the live system does not run the installer"
 
   step "claiming the installation and checking the requirements"
-  status="$(call -X POST "$api/installer/claim")"
+  status="$(call -X POST "$live/installer/claim")"
   failed="$(json '[c["id"] for c in d["checks"] if not c["passed"]]' <<<"$status")"
   [[ "$failed" == "[]" ]] || die "requirements not met: $failed"
-  options="$(call "$api/installer/options")"
+  options="$(call "$live/installer/options")"
   mapfile -t disks < <(json '"\n".join(x["disk"]["id"] for x in d["disks"] if x["suitable"])' <<<"$options")
   # --reinstall keeps its pool on disk3 (serial PITHYXVM03), which no installation may take.
   mapfile -t disks < <(printf '%s\n' "${disks[@]}" | grep -v PITHYXVM03 || true)
@@ -488,9 +500,9 @@ install_box() {
     network_request="{\"interfaces\": [{\"name\": \"$nic0\", \"kind\": \"ethernet\", \"ipv4\": \"static\",
       \"ipv4Address\": \"10.0.2.15/24\", \"ipv4Gateway\": \"10.0.2.2\", \"ipv6\": \"off\"}],
       \"global\": {\"hostName\": \"pithyx-test\", \"dnsServers\": [\"10.0.2.3\"], \"searchDomains\": []}}"
-    call -X POST -H 'Content-Type: application/json' "$api/installer/network/test" -o /dev/null --data "$network_request"
+    call -X POST -H 'Content-Type: application/json' "$live/installer/network/test" -o /dev/null --data "$network_request"
     deadline=$((SECONDS + 60))
-    until result="$(call "$api/installer/network/test" 2>/dev/null)" && [[ "$(json 'd["running"]' <<<"$result")" == False ]]; do
+    until result="$(call "$live/installer/network/test" 2>/dev/null)" && [[ "$(json 'd["running"]' <<<"$result")" == False ]]; do
       ((SECONDS < deadline)) || die "the connection test did not finish within 60 seconds"
       sleep 2
     done
@@ -509,7 +521,7 @@ install_box() {
   fi
 
   step "installing onto $chosen"
-  call -X POST -H 'Content-Type: application/json' "$api/installer/install" -o /dev/null --data @- <<EOF
+  call -X POST -H 'Content-Type: application/json' "$live/installer/install" -o /dev/null --data @- <<EOF
 {"hostname": "pithyx-test", "language": "en", "region": null, "timeZone": "Europe/Berlin", "ntpServers": [],
  "keyboardLayout": "$keyboard", "diskIds": $chosen, "username": "admin", "password": "correct horse battery staple",
  "displayName": null, "eraseConfirmed": true, "network": $network_request}
@@ -519,7 +531,7 @@ EOF
   while :; do
     ((SECONDS < deadline)) || die "the installation did not finish within 15 minutes"
     # Under the load of the installation a request can take long; the next one tries again.
-    if ! status="$(call "$api/installer")"; then
+    if ! status="$(call "$live/installer")"; then
       slow=$((slow + 1))
       sleep 5
       continue
@@ -534,7 +546,7 @@ EOF
   echo "installed in $((SECONDS - deadline + 900))s, install id $install_id ($slow status requests timed out)"
 
   step "restarting without the USB stick"
-  call -X POST "$api/installer/reboot" -o /dev/null
+  call -X POST "$live/installer/reboot" -o /dev/null
   sleep 5
   stop_vm
   if [[ -n "$updates" ]]; then
@@ -552,7 +564,7 @@ echo "the installed system answers and the administrator signs in"
 admin() {
   local base="$api"
   if [[ "$1" == --via-bond ]]; then
-    base="http://127.0.0.1:$bonded/api"
+    base="https://127.0.0.1:$bonded/api"
     shift
   fi
   local path="$1" answer
@@ -622,14 +634,14 @@ print(json.dumps(config))")"
   change="$(admin /system/network -X PUT -H 'Content-Type: application/json' --data "$config")"
   admin "/system/network/changes/$(json 'd["id"]' <<<"$change")/confirm" -X POST -o /dev/null
   wait_network "any(l['name'] == 'bond0' and '$BOND_ADDRESS/24' in l['addresses'] for l in d['links']) and any(l['name'] == 'bond0.20' and l['vlanId'] == 20 and l['mtu'] == 1400 and '192.168.20.5/24' in l['addresses'] for l in d['links']) and sum(1 for l in d['links'] if l['master'] == 'bond0') == 2 and d['pending'] is None" 60
-  wait_for "http://127.0.0.1:$bonded/api/health" 30
+  wait_for "https://127.0.0.1:$bonded/api/health" 30
   echo "bond0 answers at $BOND_ADDRESS, bond0.20 has VLAN 20 with MTU 1400"
 
   step "taking the link of $nic1 away: the bond goes on through $nic2"
   monitor "set_link nic1 off"
   wait_network "any(l['name'] == '$nic1' and not l['carrier'] for l in d['links'])" 30 --via-bond
   for _ in 1 2 3; do
-    curl -fsS --max-time 5 "http://127.0.0.1:$bonded/api/health" -o /dev/null || die "the bond does not answer without $nic1"
+    curl -fsS --max-time 5 "https://127.0.0.1:$bonded/api/health" -o /dev/null || die "the bond does not answer without $nic1"
     sleep 1
   done
   monitor "set_link nic1 on"
@@ -858,5 +870,5 @@ fi
 
 step "done"
 if [[ "$keep" == true ]]; then
-  echo "VM kept: http://127.0.0.1:$port, monitor $vm/monitor.sock (pid $(cat "$vm/qemu.pid"))"
+  echo "VM kept: https://127.0.0.1:$port, monitor $vm/monitor.sock (pid $(cat "$vm/qemu.pid"))"
 fi

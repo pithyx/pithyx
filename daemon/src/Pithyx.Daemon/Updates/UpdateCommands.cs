@@ -59,6 +59,25 @@ public static class UpdateCommands
         return progress.State == "restarting" ? 0 : 1;
     }
 
+    /// <summary>The SHA-256 hashes of the certificates the daemon may present: its own and an uploaded one.</summary>
+    private static HashSet<string> PinnedCertificates(string tlsDirectory)
+    {
+        var pinned = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var file in new[] { Tls.BoxCertificates.ServerFile, Tls.BoxCertificates.CustomFile })
+        {
+            try
+            {
+                using var certificate = System.Security.Cryptography.X509Certificates.X509Certificate2.CreateFromPem(File.ReadAllText(Path.Combine(tlsDirectory, file)));
+                pinned.Add(certificate.GetCertHashString(System.Security.Cryptography.HashAlgorithmName.SHA256));
+            }
+            catch (Exception exception) when (exception is IOException or System.Security.Cryptography.CryptographicException or UnauthorizedAccessException)
+            {
+                // Missing or unreadable: that certificate is not presented.
+            }
+        }
+        return pinned;
+    }
+
     /// <summary>The health check after an update's restart; nothing to do without <c>trial.json</c>.</summary>
     private static async Task<int> HealthAsync(UpdateSystem system, ICommandRunner commands, ILoggerFactory loggers, CancellationToken cancellationToken)
     {
@@ -66,7 +85,19 @@ public static class UpdateCommands
         {
             return 0;
         }
-        using var http = new HttpClient();
+        // The daemon on loopback presents the box's own or the uploaded certificate (D346); an uploaded one names no
+        // 127.0.0.1, so the check pins both files instead of asking for the name.
+        var pinned = PinnedCertificates(Path.Combine(Path.GetDirectoryName(DatabasePath) ?? ".", "tls"));
+        using var handler = new SocketsHttpHandler
+        {
+            SslOptions =
+            {
+                RemoteCertificateValidationCallback = (_, certificate, _, errors) =>
+                    errors == System.Net.Security.SslPolicyErrors.None
+                    || (certificate is not null && pinned.Contains(certificate.GetCertHashString(System.Security.Cryptography.HashAlgorithmName.SHA256))),
+            },
+        };
+        using var http = new HttpClient(handler);
         var health = new UpdateHealth(system, commands, http, TimeProvider.System, loggers.CreateLogger<UpdateHealth>());
         var failed = await health.CheckAsync(trial, MigrationsCurrentAsync, cancellationToken);
         await health.FinishAsync(trial, failed, await HistoryAsync(DatabasePath, cancellationToken), cancellationToken);
