@@ -5,6 +5,7 @@
    workgroup = WORKGROUP
    netbios name = NAS-IN-THE-BASE
    server string = Pithyx
+   browseable = no
    server min protocol = SMB3
    server signing = mandatory
    map to guest = never
@@ -37,6 +38,60 @@
    fruit:wipe_intentionally_left_blank_rfork = yes
    fruit:delete_empty_adfiles = yes
    include = /etc/samba/pithyx.local.conf
+
+[home]
+   path = %H
+   browseable = yes
+   access based share enum = yes
+   valid users = "ada" "rita"
+   read only = yes
+   write list = "ada" "rita"
+   server smb encrypt = if_required
+   inherit acls = no
+   create mask = 0660
+   directory mask = 0770
+   veto files = /.pithyx-trash/
+   delete veto files = no
+   vfs objects = full_audit catia fruit streams_xattr shadow_copy2 recycle
+   recycle:repository = .pithyx-trash/.smb/%U
+   recycle:keeptree = yes
+   recycle:versions = yes
+   recycle:touch = no
+   recycle:directory_mode = 0700
+   recycle:subdir_mode = 0700
+   shadow:snapdir = .zfs/snapshot
+   shadow:format = pithyx-daily-%Y%m%dT%H%M%SZ
+   shadow:localtime = no
+   shadow:sort = desc
+   full_audit:prefix = %U|%S
+   full_audit:success = pwrite_send unlinkat renameat mkdirat
+   full_audit:failure = none
+   full_audit:facility = LOCAL5
+   full_audit:priority = DEBUG
+
+[homes]
+   path = /tank/homes
+   browseable = yes
+   access based share enum = yes
+   valid users = "ada"
+   read only = yes
+   write list = "ada"
+   server smb encrypt = if_required
+   inherit acls = no
+   create mask = 0660
+   directory mask = 0770
+   veto files = /.pithyx-trash/
+   delete veto files = no
+   vfs objects = full_audit catia fruit streams_xattr shadow_copy2
+   shadow:snapdir = .zfs/snapshot
+   shadow:format = pithyx-daily-%Y%m%dT%H%M%SZ
+   shadow:localtime = no
+   shadow:sort = desc
+   full_audit:prefix = %U|%S
+   full_audit:success = pwrite_send unlinkat renameat mkdirat
+   full_audit:failure = none
+   full_audit:facility = LOCAL5
+   full_audit:priority = DEBUG
 
 [Media]
    path = /tank/pithyx/shares/media

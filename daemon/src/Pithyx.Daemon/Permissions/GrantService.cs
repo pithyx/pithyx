@@ -296,7 +296,8 @@ public sealed class GrantService(SqliteConnectionFactory connections, Permission
 
     private static async Task RequireShareAsync(DbConnection connection, DbTransaction? transaction, long shareId)
     {
-        if (await connection.ExecuteScalarAsync<long>("SELECT count(*) FROM shares WHERE id = @shareId", new { shareId }, transaction) == 0)
+        // Homes are never granted (D348): their owner and the administrators have them, nobody else.
+        if (await connection.ExecuteScalarAsync<long>("SELECT count(*) FROM shares WHERE id = @shareId AND home = 0", new { shareId }, transaction) == 0)
         {
             throw new PithyxException(ErrorCodes.FsShareNotFound);
         }

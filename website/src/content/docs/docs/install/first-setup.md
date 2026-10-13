@@ -52,7 +52,7 @@ Notes:
 - Pool names start with a lowercase letter and may contain lowercase letters, digits, hyphens and underscores.
 - You can close the window while the pool is created; a notification tells you when it is done.
 
-Users get a home folder on the first pool once one exists. Apps need an app pool, which an administrator picks when installing the first app. Shared folders live on a pool as well. See [Storage](/docs/admin/storage/) and [Shared folders](/docs/admin/shared-folders/).
+Users get a home folder on the first pool with the Pithyx layout once one exists ([Home folders](/docs/admin/home-folders/)). Apps need an app pool, which an administrator picks when installing the first app. Shared folders live on a pool as well. See [Storage](/docs/admin/storage/) and [Shared folders](/docs/admin/shared-folders/).
 
 ## Adding users
 

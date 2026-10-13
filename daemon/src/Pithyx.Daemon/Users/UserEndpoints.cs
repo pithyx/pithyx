@@ -1,8 +1,7 @@
 using System.Globalization;
 using System.Threading.Channels;
-using Dapper;
 using Pithyx.Daemon.Auth;
-using Pithyx.Daemon.Database;
+using Pithyx.Daemon.Errors;
 using Pithyx.Daemon.FileServices;
 using Pithyx.Daemon.Realtime;
 using Pithyx.Daemon.Shares;
@@ -13,9 +12,12 @@ namespace Pithyx.Daemon.Users;
 /// <summary>User management for administrators.</summary>
 public static class UserEndpoints
 {
-    public static IServiceCollection AddPithyxUsers(this IServiceCollection services, AccountOptions options)
+    public static IServiceCollection AddPithyxUsers(this IServiceCollection services, AccountOptions options, HomeStorageOptions homes)
     {
         services.AddSingleton(options);
+        services.AddSingleton(homes);
+        services.AddSingleton<Homes>();
+        services.AddSingleton<HomeService>();
         services.AddSingleton<LinuxAccounts>();
         services.AddSingleton<ShareAcls>();
         services.AddSingleton<UserService>();
@@ -35,7 +37,7 @@ public static class UserEndpoints
                 TypedResults.Created((string?)null, await service.CreateAsync(context.User, request, cancellationToken)))
             .RequireAuthorization(Policies.Admin)
             .WithName("CreateUser")
-            .WithDescription("Administrators only. Creates a user with a Linux and a Samba account with the password (a uid from 20000 to 29999 that is never given out again, the group users, no login shell) and a home dataset below the first pool's homes when there is a pool.");
+            .WithDescription("Administrators only. Creates a user with a Linux and a Samba account with the password (a uid from 20000 to 29999 that is never given out again, the group users, no login shell) and its home on the home pool when there is one.");
         users.MapPatch("/{userId:long}", async (long userId, UserUpdate request, UserService service, TopicHub hub, HttpContext context, CancellationToken cancellationToken) =>
             {
                 var user = await service.UpdateAsync(context.User, userId, request, cancellationToken);
@@ -57,15 +59,57 @@ public static class UserEndpoints
             .RequireAuthorization(Policies.Admin)
             .WithName("ResetUserPassword")
             .WithDescription("Administrators only. Sets a new password, for SMB and SFTP as well, and ends every session of the user.");
-        users.MapDelete("/{userId:long}", async (long userId, UserService service, TopicHub hub, HttpContext context, CancellationToken cancellationToken) =>
+        users.MapDelete("/{userId:long}", async (long userId, UserService service, TopicHub hub, HttpContext context, CancellationToken cancellationToken, string? home = null, long? shareId = null, string? confirm = null) =>
             {
-                await service.DeleteAsync(context.User, userId, cancellationToken);
+                var choice = home switch
+                {
+                    null or "keep" => HomeDataChoice.Keep,
+                    "move" => HomeDataChoice.Move,
+                    "delete" => HomeDataChoice.Delete,
+                    _ => throw new PithyxException(ErrorCodes.HomesChoiceInvalid),
+                };
+                var deletion = await service.DeleteAsync(context.User, userId, choice, shareId, confirm, cancellationToken);
                 hub.CloseUser(userId.ToString(CultureInfo.InvariantCulture));
-                return TypedResults.NoContent();
+                return TypedResults.Ok(deletion);
             })
             .RequireAuthorization(Policies.Admin)
             .WithName("DeleteUser")
-            .WithDescription("Administrators only. Deletes the user and its Linux account; its files and home stay, and its uid is never given out again. Nobody deletes themselves, and the last administrator stays.");
+            .WithDescription("Administrators only. Deletes the user and its Linux account; its uid is never given out again and its other files stay. Its home stays as <name>.deleted-<uid> (home=keep, the default), is deleted with every file (home=delete with confirm set to the user name) or moves into a folder of the shared folder shareId as a job (home=move), which the answer returns. Nobody deletes themselves, and the last administrator stays.");
+
+        var homes = api.MapGroup("/homes").WithTags("Users").RequireAuthorization(Policies.Admin);
+        homes.MapGet("", async (HomeService service, HttpContext context, CancellationToken cancellationToken) =>
+                TypedResults.Ok(await service.OverviewAsync(context.User, cancellationToken)))
+            .WithName("GetHomes")
+            .WithDescription("Administrators only. The home pool, every pool with whether it can take the homes, the default quota and every home with its user, space and quota, the homes of deleted users included.");
+        homes.MapPut("/settings", async (HomeSettingsRequest request, HomeService service, HttpContext context, CancellationToken cancellationToken) =>
+                TypedResults.Ok(await service.SetDefaultQuotaAsync(context.User, request, cancellationToken)))
+            .WithName("SetHomeSettings")
+            .WithDescription("Administrators only. Sets the quota of every home without its own (at least 1 MiB, null for none).");
+        homes.MapPut("/users/{userId:long}/quota", async (long userId, HomeQuotaRequest request, HomeService service, HttpContext context, CancellationToken cancellationToken) =>
+                TypedResults.Ok(await service.SetUserQuotaAsync(context.User, userId, request, cancellationToken)))
+            .WithName("SetHomeQuota")
+            .WithDescription("Administrators only. Sets a user's own home quota: at least 1 MiB, 0 for none, null for the default.");
+        homes.MapPost("/move", async (HomeMoveRequest request, HomeService service, HttpContext context, CancellationToken cancellationToken) =>
+            {
+                var job = await service.StartMoveAsync(context.User, request, cancellationToken);
+                return TypedResults.Accepted($"/api/jobs/{job.Id}", job);
+            })
+            .WithName("MoveHomes")
+            .WithDescription("Administrators only. Moves every home to another pool as a job: each home is read-only while it is copied with its files, owners and ACLs, then it is used from the new pool and the old copy is destroyed. A home that fails stays where it was.");
+        homes.MapDelete("/{shareId:long}", async (long shareId, string? confirm, HomeService service, HttpContext context, CancellationToken cancellationToken) =>
+            {
+                await service.DeleteAsync(context.User, shareId, confirm, cancellationToken);
+                return TypedResults.NoContent();
+            })
+            .WithName("DeleteHome")
+            .WithDescription("Administrators only. Deletes the home of a deleted user with every file and snapshot, after its folder name was typed (confirm).");
+        homes.MapPost("/{shareId:long}/release", async (long shareId, HomeReleaseRequest request, HomeService service, HttpContext context, CancellationToken cancellationToken) =>
+            {
+                var job = await service.StartReleaseAsync(context.User, shareId, request, cancellationToken);
+                return TypedResults.Accepted($"/api/jobs/{job.Id}", job);
+            })
+            .WithName("ReleaseHome")
+            .WithDescription("Administrators only. Moves the files of a deleted user's home into a new folder of a shared folder as a job, then deletes the home with its recycle bin.");
 
         var groups = api.MapGroup("/groups").WithTags("Users");
         groups.MapGet("", async (GroupService service, HttpContext context, CancellationToken cancellationToken) =>
@@ -102,12 +146,12 @@ public static class UserEndpoints
 /// </summary>
 public sealed partial class LinuxAccountSync(
     LinuxAccounts accounts,
+    Homes homes,
     ShareAcls shareAcls,
     FileServiceSync fileServices,
     PoolInventory pools,
     ShareChanges shareChanges,
     FileServiceChanges fileServiceChanges,
-    SqliteConnectionFactory connections,
     ILogger<LinuxAccountSync> logger) : BackgroundService
 {
     public const string LoginDefsPath = "/etc/login.defs";
@@ -133,13 +177,7 @@ public sealed partial class LinuxAccountSync(
             {
                 try
                 {
-                    await using (var connection = await connections.OpenAsync(stoppingToken))
-                    {
-                        foreach (var (username, uid) in await connection.QueryAsync<(string, long)>("SELECT username, uid FROM users WHERE uid IS NOT NULL"))
-                        {
-                            await accounts.CreateHomeAsync(username, uid, stoppingToken);
-                        }
-                    }
+                    await homes.ReconcileAsync(stoppingToken);
                     await accounts.ReconcileAsync(stoppingToken);
                     await shareAcls.ReconcileAsync(stoppingToken);
                     // The first run checks every file and service, whatever changed while the daemon was not running.
@@ -170,4 +208,37 @@ public sealed partial class LinuxAccountSync(
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "/etc/login.defs lets useradd outside Pithyx allocate ids in 20000 to 49999 ({Settings}); accounts made that way could collide with Pithyx users")]
     private partial void LogLoginDefsOverlap(string settings);
+}
+
+/// <summary>
+/// Simulation only: brings the homes in line at start, when the pools change and when users or rights change, which
+/// <see cref="LinuxAccountSync"/> does on a box.
+/// </summary>
+public sealed class SimulatedHomeSync(Homes homes, PoolInventory pools, Permissions.PermissionService permissions) : BackgroundService
+{
+    private readonly Channel<bool> _changes = Channel.CreateBounded<bool>(new BoundedChannelOptions(1) { FullMode = BoundedChannelFullMode.DropWrite });
+
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    {
+        void Signal() => _changes.Writer.TryWrite(true);
+        pools.Changed += Signal;
+        permissions.Changed += Signal;
+        try
+        {
+            Signal();
+            await foreach (var _ in _changes.Reader.ReadAllAsync(stoppingToken))
+            {
+                await homes.ReconcileAsync(stoppingToken);
+            }
+        }
+        catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
+        {
+            // Shutting down.
+        }
+        finally
+        {
+            pools.Changed -= Signal;
+            permissions.Changed -= Signal;
+        }
+    }
 }

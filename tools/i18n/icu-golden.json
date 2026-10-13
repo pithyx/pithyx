@@ -604,6 +604,58 @@
       "params": {},
       "expected": "The storage is read-only."
     },
+    "homes.choice.invalid": {
+      "params": {},
+      "expected": "Choose what happens to the home folder: a shared folder to move its files into, or type the user name to delete it."
+    },
+    "homes.home.in_use": {
+      "params": {},
+      "expected": "This home folder still belongs to a user. Only the home folder of a deleted user can be deleted or moved on its own, and a user's home folder only while its pool is gone."
+    },
+    "homes.home.name_mismatch": {
+      "params": {
+        "name": "rita.deleted-20001"
+      },
+      "expected": "Type rita.deleted-20001 exactly to confirm."
+    },
+    "homes.home.not_found": {
+      "params": {},
+      "expected": "This home folder does not exist (anymore)."
+    },
+    "homes.move.running": {
+      "params": {},
+      "expected": "The home folders are moving to another pool already. Wait until the move has finished."
+    },
+    "homes.pool.no_space": {
+      "params": {
+        "neededBytes": 5368709120,
+        "availableBytes": 1073741824
+      },
+      "expected": "The pool has too little free space for the home folders: 5,368,709,120 bytes are needed, 1,073,741,824 are free."
+    },
+    "homes.pool.taken": {
+      "params": {
+        "folder": "rita"
+      },
+      "expected": "The target pool has a home folder named rita already."
+    },
+    "homes.pool.unavailable": {
+      "params": {
+        "pool": "tank",
+        "reason": "not_prepared"
+      },
+      "expected": "The pool tank cannot hold home folders now: it was not set up by Pithyx."
+    },
+    "homes.pool.unchanged": {
+      "params": {},
+      "expected": "The home folders are on this pool already."
+    },
+    "homes.quota.invalid": {
+      "params": {
+        "minBytes": 1048576
+      },
+      "expected": "A quota is at least 1 MiB, or no limit."
+    },
     "installer.check.failed": {
       "params": {},
       "expected": "This computer does not meet a requirement of Pithyx. The first page of the installer shows which."

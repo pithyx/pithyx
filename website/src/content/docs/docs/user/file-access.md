@@ -20,7 +20,7 @@ _An administrator switches the file services on in Settings > File services; eac
 | Protocol   | Use it for                                                                            | Notes                                                                                  |
 | ---------- | ------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
 | **SMB**    | A network drive on Windows, macOS and Linux for everyday work                         | Needs SMB 3. Older systems cannot connect. Previous versions and the recycle bin work. |
-| **SFTP**   | Encrypted transfers with a program such as FileZilla or WinSCP, or the `sftp` command | You see only your shared folders and get no shell. Password sign-in only.              |
+| **SFTP**   | Encrypted transfers with a program such as FileZilla or WinSCP, or the `sftp` command | You see only your home and shared folders and get no shell. Password sign-in only.     |
 | **WebDAV** | Programs and file managers that can mount a web folder                                | Address: `https://<box-address>:7484/webdav/`                                          |
 | **FTP**    | Devices that know neither SFTP nor WebDAV, such as scanners                           | Only passive mode. Encrypted with TLS; plain FTP only if an administrator allows it.   |
 
@@ -29,6 +29,10 @@ The desktop and WebDAV use HTTPS. Windows and macOS mount WebDAV only once the c
 :::
 
 Everyone sees only the shared folders their rights allow, with the access level an administrator gave them: no access, **Read** or **Read and write**. Administrators reach every shared folder.
+
+## Your home folder
+
+Besides the shared folders, every user has a private home folder that only they and the administrators can open. It is the share `home` over SMB (`\\<box-address>\home` on Windows, `smb://<box-address>/home` on macOS and Linux) and the folder `home` at the top over SFTP, WebDAV and FTP. Administrators also find every user's home in the share or folder `homes`. Files you delete in your home go to its recycle bin, except in the SMB share `homes`, where they are gone at once. See [Home folders](/docs/admin/home-folders/).
 
 Two-factor sign-in does not apply here. These services ask for your password only.
 

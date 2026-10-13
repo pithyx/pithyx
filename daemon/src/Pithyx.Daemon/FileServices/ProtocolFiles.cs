@@ -8,21 +8,28 @@ using Pithyx.Daemon.Shares;
 
 namespace Pithyx.Daemon.FileServices;
 
-/// <summary>A place in the tree WebDAV and FTP show: the root (no share), a shared folder's root (empty path) or below it.</summary>
-/// <param name="ShareId">The shared folder, or null for the root that lists them.</param>
+/// <summary>
+/// A place in the tree WebDAV and FTP show: the root (no share), the folder <c>homes</c> of administrators (no share),
+/// a shared folder's or a home's root (empty path) or below it.
+/// </summary>
+/// <param name="ShareId">The shared folder or home, or null for the root and <c>homes</c>.</param>
 /// <param name="ShareName">Its name as the tree shows it.</param>
 /// <param name="Path">The path below the shared folder, "" for its root.</param>
-public sealed record ProtocolPath(long? ShareId, string ShareName, string Path)
+/// <param name="IsHomes">The folder <c>homes</c> that lists every other home.</param>
+public sealed record ProtocolPath(long? ShareId, string ShareName, string Path, bool IsHomes = false)
 {
     public static readonly ProtocolPath Root = new(null, "", "");
 
-    public bool IsRoot => ShareId is null;
+    public static readonly ProtocolPath Homes = new(null, Users.Homes.AllName, "", IsHomes: true);
+
+    public bool IsRoot => ShareId is null && !IsHomes;
 }
 
 /// <summary>
-/// The file tree of WebDAV and FTP (D291): the root lists the shared folders the user may use and that offer the
-/// protocol, and below them everything goes through the file service and the file operations, with their rights,
-/// owners (<c>fchownat</c>) and recycle bin. Nothing here touches a file itself.
+/// The file tree of WebDAV and FTP (D291): the root lists the user's home as <c>home</c>, for administrators
+/// <c>homes</c> with every other home (D348), and the shared folders the user may use and that offer the protocol;
+/// below them everything goes through the file service and the file operations, with their rights, owners
+/// (<c>fchownat</c>) and recycle bin. Nothing here touches a file itself.
 /// </summary>
 public sealed class ProtocolFiles(SqliteConnectionFactory connections, PermissionService permissions, FileService files, FileOperations operations)
 {
@@ -40,17 +47,67 @@ public sealed class ProtocolFiles(SqliteConnectionFactory connections, Permissio
         var rights = await permissions.ForUserAsync(Auth.CurrentUser.Id(user), cancellationToken);
         await using var connection = await connections.OpenAsync(cancellationToken);
         var shares = await connection.QueryAsync<(long Id, string Name)>(
-            $"SELECT id, name FROM shares WHERE {Column(protocol)} = 1 ORDER BY name COLLATE NOCASE");
-        return [.. shares.Where(share => rights.Share(share.Id) != ShareAccess.None)];
+            $"SELECT id, name FROM shares WHERE {Column(protocol)} = 1 AND home = 0 ORDER BY name COLLATE NOCASE");
+        return [.. shares.Where(share => rights.Share(share.Id) != ShareAccess.None && !IsHomeName(share.Name))];
     }
 
-    /// <summary>Splits a path of the tree (<c>/Media/photos/a.jpg</c>) into its shared folder and the path below it.</summary>
+    /// <summary>The user's own home, or null.</summary>
+    public async Task<long?> OwnHomeAsync(ClaimsPrincipal user, string protocol, CancellationToken cancellationToken)
+    {
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        return await connection.ExecuteScalarAsync<long?>(
+            $"SELECT id FROM shares WHERE home = 1 AND home_user_id = @userId AND {Column(protocol)} = 1", new { userId = Auth.CurrentUser.Id(user) });
+    }
+
+    /// <summary>Every other home by folder name, for administrators; nobody else gets any.</summary>
+    public async Task<IReadOnlyList<(long Id, string Folder)>> OtherHomesAsync(ClaimsPrincipal user, string protocol, CancellationToken cancellationToken)
+    {
+        if (!(await permissions.ForUserAsync(Auth.CurrentUser.Id(user), cancellationToken)).IsAdmin)
+        {
+            return [];
+        }
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        var homes = await connection.QueryAsync<(long Id, string Name)>(
+            $"SELECT id, name FROM shares WHERE home = 1 AND home_user_id IS NOT @userId AND {Column(protocol)} = 1 ORDER BY name",
+            new { userId = Auth.CurrentUser.Id(user) });
+        return [.. homes.Select(home => (home.Id, home.Name[Users.Homes.RowPrefix.Length..]))];
+    }
+
+    private static bool IsHomeName(string name) =>
+        string.Equals(name, Users.Homes.OwnName, StringComparison.OrdinalIgnoreCase) || string.Equals(name, Users.Homes.AllName, StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Splits a path of the tree (<c>/Media/photos/a.jpg</c>, <c>/home/a.txt</c>, <c>/homes/rita/a.txt</c>) into its
+    /// shared folder or home and the path below it.
+    /// </summary>
     public async Task<ProtocolPath> ResolveAsync(ClaimsPrincipal user, string protocol, string path, CancellationToken cancellationToken)
     {
         var segments = (path ?? "").Split('/', StringSplitOptions.RemoveEmptyEntries);
         if (segments.Length == 0)
         {
             return ProtocolPath.Root;
+        }
+        if (string.Equals(segments[0], Users.Homes.OwnName, StringComparison.OrdinalIgnoreCase))
+        {
+            return await OwnHomeAsync(user, protocol, cancellationToken) is { } own
+                ? new ProtocolPath(own, Users.Homes.OwnName, string.Join('/', segments[1..]))
+                : throw new PithyxException(ErrorCodes.FsShareNotFound);
+        }
+        if (string.Equals(segments[0], Users.Homes.AllName, StringComparison.OrdinalIgnoreCase))
+        {
+            var homes = await OtherHomesAsync(user, protocol, cancellationToken);
+            if (homes.Count == 0)
+            {
+                throw new PithyxException(ErrorCodes.FsShareNotFound);
+            }
+            if (segments.Length == 1)
+            {
+                return ProtocolPath.Homes;
+            }
+            var home = homes.FirstOrDefault(candidate => string.Equals(candidate.Folder, segments[1], StringComparison.OrdinalIgnoreCase));
+            return home.Folder is null
+                ? throw new PithyxException(ErrorCodes.FsShareNotFound)
+                : new ProtocolPath(home.Id, home.Folder, string.Join('/', segments[2..]));
         }
         var share = (await SharesAsync(user, protocol, cancellationToken))
             .FirstOrDefault(candidate => string.Equals(candidate.Name, segments[0], StringComparison.OrdinalIgnoreCase));
@@ -69,6 +126,10 @@ public sealed class ProtocolFiles(SqliteConnectionFactory connections, Permissio
         {
             return new FileEntry("", FileKind.Folder, 0, DateTimeOffset.UnixEpoch);
         }
+        if (path.IsHomes)
+        {
+            return new FileEntry(Users.Homes.AllName, FileKind.Folder, 0, DateTimeOffset.UnixEpoch);
+        }
         if (path.Path.Length == 0)
         {
             // Listing the root of the share checks the access and that it is available.
@@ -84,7 +145,21 @@ public sealed class ProtocolFiles(SqliteConnectionFactory connections, Permissio
         ArgumentNullException.ThrowIfNull(path);
         if (path.IsRoot)
         {
-            return [.. (await SharesAsync(user, protocol, cancellationToken)).Select(share => new FileEntry(share.Name, FileKind.Folder, 0, DateTimeOffset.UnixEpoch))];
+            var root = new List<FileEntry>();
+            if (await OwnHomeAsync(user, protocol, cancellationToken) is not null)
+            {
+                root.Add(Folder(Users.Homes.OwnName));
+            }
+            if ((await OtherHomesAsync(user, protocol, cancellationToken)).Count > 0)
+            {
+                root.Add(Folder(Users.Homes.AllName));
+            }
+            root.AddRange((await SharesAsync(user, protocol, cancellationToken)).Select(share => Folder(share.Name)));
+            return root;
+        }
+        if (path.IsHomes)
+        {
+            return [.. (await OtherHomesAsync(user, protocol, cancellationToken)).Select(home => Folder(home.Folder))];
         }
         var entries = new List<FileEntry>();
         string? cursor = null;
@@ -97,6 +172,8 @@ public sealed class ProtocolFiles(SqliteConnectionFactory connections, Permissio
         while (cursor is not null);
         return entries;
     }
+
+    private static FileEntry Folder(string name) => new(name, FileKind.Folder, 0, DateTimeOffset.UnixEpoch);
 
     public Task<(FileStream Stream, FsStat Stat, string Name)> OpenReadAsync(ClaimsPrincipal user, ProtocolPath path, CancellationToken cancellationToken) =>
         files.OpenReadAsync(user, InShare(path).ShareId!.Value, path.Path, cancellationToken);
@@ -178,7 +255,7 @@ public sealed class ProtocolFiles(SqliteConnectionFactory connections, Permissio
         }
     }
 
-    /// <summary>A path inside a shared folder; the root and a shared folder itself cannot be written, moved or deleted.</summary>
+    /// <summary>A path inside a shared folder or home; the root, <c>homes</c> and a shared folder itself cannot be written, moved or deleted.</summary>
     private static ProtocolPath InShare(ProtocolPath path)
     {
         ArgumentNullException.ThrowIfNull(path);

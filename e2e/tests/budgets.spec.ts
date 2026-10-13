@@ -3,7 +3,7 @@ import { join } from 'node:path';
 import type { Page } from '@playwright/test';
 import { expect, test } from './fixtures';
 import { MIN_RUNS, measureRound, median, type Round } from './performance';
-import { admin, openFromStart, signInAsAdmin } from './session';
+import { admin, openFilesInShared, signInAsAdmin } from './session';
 
 // Performance budgets against the production build the daemon serves, on Chrome's "Fast 4G" with the CPU slowed
 // down four times. Tracing is off: its snapshots would slow the page down. Every budget is the median of five
@@ -104,7 +104,7 @@ test('Files shows a visited folder within a frame and a new one quickly', async 
   }
   await page.setViewportSize({ width: 1440, height: 900 });
   await signInAsAdmin(page);
-  await openFromStart(page, 'Files');
+  await openFilesInShared(page);
   const window = page.getByRole('region', { name: /Files$/ });
   const grid = window.getByRole('grid', { name: 'Folder contents' });
 

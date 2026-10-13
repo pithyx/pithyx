@@ -79,7 +79,7 @@ internal sealed class FileVdevs : IAsyncDisposable
     public async Task CreateLayoutPoolAsync()
     {
         System.IO.Directory.CreateDirectory(AltRoot);
-        await RunAsync("zpool", ["create", "-R", AltRoot, "-O", "canmount=off", PoolName, .. Files]);
+        await RunAsync("zpool", ["create", "-R", AltRoot, .. ZfsPlans.CreateOptions, PoolName, .. Files]);
         foreach (var arguments in ZfsPlans.Datasets(PoolName))
         {
             await RunAsync("zfs", ["create", .. arguments]);

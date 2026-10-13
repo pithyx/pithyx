@@ -44,6 +44,7 @@ function shareOf(share: AppShareInfo): ShareInfo {
     ...(share.unavailable == null
       ? {}
       : { unavailable: share.unavailable as NonNullable<ShareInfo['unavailable']> }),
+    ...(share.kind === 'home' ? { kind: 'home' as const } : {}),
   };
 }
 

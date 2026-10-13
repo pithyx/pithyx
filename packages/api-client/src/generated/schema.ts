@@ -1240,6 +1240,108 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/homes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. The home pool, every pool with whether it can take the homes, the default quota and every home with its user, space and quota, the homes of deleted users included. */
+        get: operations["GetHomes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/homes/{shareId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description Administrators only. Deletes the home of a deleted user with every file and snapshot, after its folder name was typed (confirm). */
+        delete: operations["DeleteHome"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/homes/{shareId}/release": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Moves the files of a deleted user's home into a new folder of a shared folder as a job, then deletes the home with its recycle bin. */
+        post: operations["ReleaseHome"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/homes/move": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Moves every home to another pool as a job: each home is read-only while it is copied with its files, owners and ACLs, then it is used from the new pool and the old copy is destroyed. A home that fails stays where it was. */
+        post: operations["MoveHomes"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/homes/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description Administrators only. Sets the quota of every home without its own (at least 1 MiB, null for none). */
+        put: operations["SetHomeSettings"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/homes/users/{userId}/quota": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description Administrators only. Sets a user's own home quota: at least 1 MiB, 0 for none, null for the default. */
+        put: operations["SetHomeQuota"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/install-id": {
         parameters: {
             query?: never;
@@ -2757,7 +2859,7 @@ export type paths = {
         /** @description Administrators only. Every user with its Linux uid and home folder. */
         get: operations["GetUsers"];
         put?: never;
-        /** @description Administrators only. Creates a user with a Linux and a Samba account with the password (a uid from 20000 to 29999 that is never given out again, the group users, no login shell) and a home dataset below the first pool's homes when there is a pool. */
+        /** @description Administrators only. Creates a user with a Linux and a Samba account with the password (a uid from 20000 to 29999 that is never given out again, the group users, no login shell) and its home on the home pool when there is one. */
         post: operations["CreateUser"];
         delete?: never;
         options?: never;
@@ -2775,7 +2877,7 @@ export type paths = {
         get?: never;
         put?: never;
         post?: never;
-        /** @description Administrators only. Deletes the user and its Linux account; its files and home stay, and its uid is never given out again. Nobody deletes themselves, and the last administrator stays. */
+        /** @description Administrators only. Deletes the user and its Linux account; its uid is never given out again and its other files stay. Its home stays as <name>.deleted-<uid> (home=keep, the default), is deleted with every file (home=delete with confirm set to the user name) or moves into a folder of the shared folder shareId as a job (home=move), which the answer returns. Nobody deletes themselves, and the last administrator stays. */
         delete: operations["DeleteUser"];
         options?: never;
         head?: never;
@@ -3219,6 +3321,8 @@ export type components = {
             access: components["schemas"]["ShareAccess"];
             /** @description The location `{ share: id }`. */
             id: string;
+            /** @description A shared folder, or the user's own home (`home`, D348). Apps never get other users' homes. */
+            kind?: components["schemas"]["ShareKind"];
             /** @description Name shown to users. */
             name: string;
             /** @description Why its files cannot be reached now (`poolMissing`, `poolUnavailable`, `notMounted`), or null. */
@@ -3908,7 +4012,7 @@ export type components = {
             }[];
         };
         /** @enum {string} */
-        ErrorCode: "app.app.busy" | "app.app.no_previous" | "app.app.not_found" | "app.backend.endpoint_unknown" | "app.backend.missing" | "app.backend.start_failed" | "app.backend.storage_unavailable" | "app.backend.unavailable" | "app.backend.unsupported" | "app.compose.key_unsupported" | "app.compose.reference_unknown" | "app.compose.right_missing" | "app.compose.right_unused" | "app.compose.storage_mismatch" | "app.compose.value_invalid" | "app.compose.yaml_invalid" | "app.docker.unavailable" | "app.elevated.unsupported" | "app.icon.invalid" | "app.image.mismatch" | "app.image.unavailable" | "app.manifest.cron_invalid" | "app.manifest.duplicate" | "app.manifest.id_invalid" | "app.manifest.id_reserved" | "app.manifest.invalid_json" | "app.manifest.pithyx_invalid" | "app.manifest.reference_unknown" | "app.manifest.schema_violation" | "app.manifest.sdk_invalid" | "app.manifest.version_unsupported" | "app.manifest.window_size_invalid" | "app.mapping.invalid" | "app.package.box_too_old" | "app.package.downgrade_unsupported" | "app.package.invalid" | "app.package.layout_invalid" | "app.package.lock_invalid" | "app.package.not_found" | "app.package.too_large" | "app.permission.denied" | "app.permission.not_requested" | "app.pool.fixed" | "app.pool.required" | "app.pool.unavailable" | "app.storage.key_invalid" | "app.storage.not_found" | "app.storage.too_large" | "app.token.invalid" | "auth.account.disabled" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.desktop.not_allowed" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fileservices.service.unavailable" | "fileservices.workgroup.invalid" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.share.unavailable" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "installer.check.failed" | "installer.claim.required" | "installer.claim.taken" | "installer.disk.count" | "installer.disk.unsuitable" | "installer.erase.not_confirmed" | "installer.hostname.invalid" | "installer.install.failed" | "installer.install.running" | "installer.keyboard.invalid" | "installer.reboot.not_ready" | "jobs.job.not_found" | "logs.app.invalid" | "logs.archive.pool_unavailable" | "logs.batch.too_large" | "logs.query.invalid" | "logs.settings.invalid" | "network.address.invalid" | "network.apply.failed" | "network.bond.member_invalid" | "network.bond.members_missing" | "network.bond.primary_invalid" | "network.change.empty" | "network.change.not_found" | "network.change.pending" | "network.config.unreachable" | "network.default_interface.invalid" | "network.dns.invalid" | "network.dns.too_many" | "network.firewall.failed" | "network.gateway.invalid" | "network.global.not_changeable" | "network.host_name.invalid" | "network.interface.duplicate" | "network.interface.kind_invalid" | "network.interface.name_invalid" | "network.interface.not_changeable" | "network.interface.unknown" | "network.mtu.invalid" | "network.search_domain.invalid" | "network.search_domain.too_many" | "network.vlan.duplicate" | "network.vlan.id_invalid" | "network.vlan.parent_invalid" | "notifications.message.invalid" | "notifications.notification.not_found" | "permissions.grant.invalid" | "proxy.access.denied" | "proxy.address.denied" | "proxy.address.invalid" | "proxy.auth.required" | "proxy.basic_auth.invalid" | "proxy.basic_auth.password_missing" | "proxy.certificate.missing" | "proxy.certificate.name_mismatch" | "proxy.domain.invalid" | "proxy.domain.taken" | "proxy.domains.missing" | "proxy.domains.too_many" | "proxy.header.invalid" | "proxy.headers.too_many" | "proxy.host.not_found" | "proxy.host.unknown" | "proxy.limit.out_of_range" | "proxy.loop.detected" | "proxy.redirect.not_found" | "proxy.redirect.status_invalid" | "proxy.redirect.target_invalid" | "proxy.sign_in.address_invalid" | "proxy.sign_in.group_not_found" | "proxy.sign_in.user_not_found" | "proxy.stream.name_invalid" | "proxy.stream.not_found" | "proxy.stream.port_in_use" | "proxy.stream.port_privileged" | "proxy.stream.port_reserved" | "proxy.stream.port_taken" | "proxy.stream.protocol_missing" | "proxy.target.invalid" | "proxy.target.loop" | "proxy.target.on_box" | "proxy.target.timeout" | "proxy.target.unavailable" | "proxy.ticket.target_invalid" | "proxy.websockets.disabled" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.command.timed_out" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.disks_missing" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.pool.suspended" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "storage.zfs.unavailable" | "store.app.not_found" | "store.catalog.architecture_missing" | "store.catalog.built_in" | "store.catalog.busy" | "store.catalog.data_version_decreased" | "store.catalog.exists" | "store.catalog.id_reserved" | "store.catalog.invalid_json" | "store.catalog.mismatch" | "store.catalog.not_found" | "store.catalog.rule_violation" | "store.catalog.schema_violation" | "store.catalog.sequence_old" | "store.catalog.signature_invalid" | "store.catalog.unreachable" | "store.catalog.url_invalid" | "store.catalog.version_unsupported" | "store.package.hash_mismatch" | "system.backup.category_missing" | "system.backup.invalid" | "system.backup.password_wrong" | "system.backup.restore_expired" | "system.backup.restore_failed" | "system.backup.restore_running" | "system.backup.too_large" | "system.backup.too_new" | "system.internal.unexpected" | "system.origin.forbidden" | "system.time.apply_failed" | "system.time.server_invalid" | "system.time.servers_too_many" | "system.time.zone_invalid" | "tls.custom.expired" | "tls.custom.invalid" | "tls.custom.key_mismatch" | "tls.issued.not_found" | "tls.name.invalid" | "tls.name.not_permitted" | "tls.names.missing" | "tls.names.too_many" | "tls.validity.out_of_range" | "update.apply.failed" | "update.apply.running" | "update.channel.invalid" | "update.channel.mismatch" | "update.channel.sequence_old" | "update.channel.signature_invalid" | "update.download.mismatch" | "update.file.architecture" | "update.file.channel" | "update.file.hash_mismatch" | "update.file.invalid" | "update.file.minimum" | "update.file.missing_entry" | "update.file.not_found" | "update.file.older" | "update.file.signature_invalid" | "update.file.too_large" | "update.file.unexpected_entry" | "update.none.available" | "update.rollback.unconfirmed" | "update.snapshot.not_found" | "update.source.invalid" | "update.source.unreachable" | "update.space.insufficient" | "update.system.unsupported" | "users.account.refused" | "users.gid.exhausted" | "users.group.builtin" | "users.group.description_invalid" | "users.group.exists" | "users.group.name_invalid" | "users.group.name_reserved" | "users.group.not_found" | "users.group.refused" | "users.uid.exhausted" | "users.user.exists" | "users.user.last_admin" | "users.user.not_found" | "users.user.self";
+        ErrorCode: "app.app.busy" | "app.app.no_previous" | "app.app.not_found" | "app.backend.endpoint_unknown" | "app.backend.missing" | "app.backend.start_failed" | "app.backend.storage_unavailable" | "app.backend.unavailable" | "app.backend.unsupported" | "app.compose.key_unsupported" | "app.compose.reference_unknown" | "app.compose.right_missing" | "app.compose.right_unused" | "app.compose.storage_mismatch" | "app.compose.value_invalid" | "app.compose.yaml_invalid" | "app.docker.unavailable" | "app.elevated.unsupported" | "app.icon.invalid" | "app.image.mismatch" | "app.image.unavailable" | "app.manifest.cron_invalid" | "app.manifest.duplicate" | "app.manifest.id_invalid" | "app.manifest.id_reserved" | "app.manifest.invalid_json" | "app.manifest.pithyx_invalid" | "app.manifest.reference_unknown" | "app.manifest.schema_violation" | "app.manifest.sdk_invalid" | "app.manifest.version_unsupported" | "app.manifest.window_size_invalid" | "app.mapping.invalid" | "app.package.box_too_old" | "app.package.downgrade_unsupported" | "app.package.invalid" | "app.package.layout_invalid" | "app.package.lock_invalid" | "app.package.not_found" | "app.package.too_large" | "app.permission.denied" | "app.permission.not_requested" | "app.pool.fixed" | "app.pool.required" | "app.pool.unavailable" | "app.storage.key_invalid" | "app.storage.not_found" | "app.storage.too_large" | "app.token.invalid" | "auth.account.disabled" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.desktop.not_allowed" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fileservices.service.unavailable" | "fileservices.workgroup.invalid" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.share.unavailable" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "homes.choice.invalid" | "homes.home.in_use" | "homes.home.name_mismatch" | "homes.home.not_found" | "homes.move.running" | "homes.pool.no_space" | "homes.pool.taken" | "homes.pool.unavailable" | "homes.pool.unchanged" | "homes.quota.invalid" | "installer.check.failed" | "installer.claim.required" | "installer.claim.taken" | "installer.disk.count" | "installer.disk.unsuitable" | "installer.erase.not_confirmed" | "installer.hostname.invalid" | "installer.install.failed" | "installer.install.running" | "installer.keyboard.invalid" | "installer.reboot.not_ready" | "jobs.job.not_found" | "logs.app.invalid" | "logs.archive.pool_unavailable" | "logs.batch.too_large" | "logs.query.invalid" | "logs.settings.invalid" | "network.address.invalid" | "network.apply.failed" | "network.bond.member_invalid" | "network.bond.members_missing" | "network.bond.primary_invalid" | "network.change.empty" | "network.change.not_found" | "network.change.pending" | "network.config.unreachable" | "network.default_interface.invalid" | "network.dns.invalid" | "network.dns.too_many" | "network.firewall.failed" | "network.gateway.invalid" | "network.global.not_changeable" | "network.host_name.invalid" | "network.interface.duplicate" | "network.interface.kind_invalid" | "network.interface.name_invalid" | "network.interface.not_changeable" | "network.interface.unknown" | "network.mtu.invalid" | "network.search_domain.invalid" | "network.search_domain.too_many" | "network.vlan.duplicate" | "network.vlan.id_invalid" | "network.vlan.parent_invalid" | "notifications.message.invalid" | "notifications.notification.not_found" | "permissions.grant.invalid" | "proxy.access.denied" | "proxy.address.denied" | "proxy.address.invalid" | "proxy.auth.required" | "proxy.basic_auth.invalid" | "proxy.basic_auth.password_missing" | "proxy.certificate.missing" | "proxy.certificate.name_mismatch" | "proxy.domain.invalid" | "proxy.domain.taken" | "proxy.domains.missing" | "proxy.domains.too_many" | "proxy.header.invalid" | "proxy.headers.too_many" | "proxy.host.not_found" | "proxy.host.unknown" | "proxy.limit.out_of_range" | "proxy.loop.detected" | "proxy.redirect.not_found" | "proxy.redirect.status_invalid" | "proxy.redirect.target_invalid" | "proxy.sign_in.address_invalid" | "proxy.sign_in.group_not_found" | "proxy.sign_in.user_not_found" | "proxy.stream.name_invalid" | "proxy.stream.not_found" | "proxy.stream.port_in_use" | "proxy.stream.port_privileged" | "proxy.stream.port_reserved" | "proxy.stream.port_taken" | "proxy.stream.protocol_missing" | "proxy.target.invalid" | "proxy.target.loop" | "proxy.target.on_box" | "proxy.target.timeout" | "proxy.target.unavailable" | "proxy.ticket.target_invalid" | "proxy.websockets.disabled" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.command.timed_out" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.disks_missing" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.pool.suspended" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "storage.zfs.unavailable" | "store.app.not_found" | "store.catalog.architecture_missing" | "store.catalog.built_in" | "store.catalog.busy" | "store.catalog.data_version_decreased" | "store.catalog.exists" | "store.catalog.id_reserved" | "store.catalog.invalid_json" | "store.catalog.mismatch" | "store.catalog.not_found" | "store.catalog.rule_violation" | "store.catalog.schema_violation" | "store.catalog.sequence_old" | "store.catalog.signature_invalid" | "store.catalog.unreachable" | "store.catalog.url_invalid" | "store.catalog.version_unsupported" | "store.package.hash_mismatch" | "system.backup.category_missing" | "system.backup.invalid" | "system.backup.password_wrong" | "system.backup.restore_expired" | "system.backup.restore_failed" | "system.backup.restore_running" | "system.backup.too_large" | "system.backup.too_new" | "system.internal.unexpected" | "system.origin.forbidden" | "system.time.apply_failed" | "system.time.server_invalid" | "system.time.servers_too_many" | "system.time.zone_invalid" | "tls.custom.expired" | "tls.custom.invalid" | "tls.custom.key_mismatch" | "tls.issued.not_found" | "tls.name.invalid" | "tls.name.not_permitted" | "tls.names.missing" | "tls.names.too_many" | "tls.validity.out_of_range" | "update.apply.failed" | "update.apply.running" | "update.channel.invalid" | "update.channel.mismatch" | "update.channel.sequence_old" | "update.channel.signature_invalid" | "update.download.mismatch" | "update.file.architecture" | "update.file.channel" | "update.file.hash_mismatch" | "update.file.invalid" | "update.file.minimum" | "update.file.missing_entry" | "update.file.not_found" | "update.file.older" | "update.file.signature_invalid" | "update.file.too_large" | "update.file.unexpected_entry" | "update.none.available" | "update.rollback.unconfirmed" | "update.snapshot.not_found" | "update.source.invalid" | "update.source.unreachable" | "update.space.insufficient" | "update.system.unsupported" | "users.account.refused" | "users.gid.exhausted" | "users.group.builtin" | "users.group.description_invalid" | "users.group.exists" | "users.group.name_invalid" | "users.group.name_reserved" | "users.group.not_found" | "users.group.refused" | "users.uid.exhausted" | "users.user.exists" | "users.user.last_admin" | "users.user.not_found" | "users.user.self";
         /** @description A failed client message. `id` is empty when the message could not be parsed. */
         ErrorMessage: {
             code: components["schemas"]["ErrorCode"];
@@ -4225,6 +4329,99 @@ export type components = {
         HealthResponse: {
             mode: components["schemas"]["DaemonMode"];
             status: string;
+        };
+        /** @description A home. */
+        HomeInfo: {
+            /** @description The user's display name, or null. */
+            displayName: null | string;
+            /** @description Its folder below `homes`: the user name, or `&lt;name&gt;.deleted-&lt;uid&gt;` after its user was deleted. */
+            folder: string;
+            /**
+             * Format: int64
+             * @description The user's own quota: null takes the default, 0 means none.
+             */
+            ownQuotaBytes: null | number;
+            /** @description The pool it is on. */
+            pool: null | string;
+            /**
+             * Format: int64
+             * @description Its quota as set on the pool, or null for none.
+             */
+            quotaBytes: null | number;
+            /**
+             * Format: int64
+             * @description Its id as a share: Files opens it with this id.
+             */
+            shareId: number;
+            /** @description Why its files cannot be reached now, or null when they can. */
+            unavailable: null | string;
+            /**
+             * Format: int64
+             * @description Space it uses with its snapshots, or null while it cannot be read.
+             */
+            usedBytes: null | number;
+            /**
+             * Format: int64
+             * @description Its user, or null when the user was deleted.
+             */
+            userId: null | number;
+            /** @description The user's name, or null. */
+            username: null | string;
+        };
+        HomeMoveRequest: {
+            /** @description The pool the homes move to; it needs the Pithyx layout and room for every home. */
+            pool: string;
+        };
+        /** @description The homes as Settings shows them. Administrators only. */
+        HomeOverview: {
+            /**
+             * Format: int64
+             * @description The quota of every home without its own, or null for none.
+             */
+            defaultQuotaBytes: null | number;
+            /** @description Every home, those of deleted users included. */
+            homes: components["schemas"]["HomeInfo"][];
+            /**
+             * Format: int64
+             * @description The job that moves the homes to another pool while it runs, otherwise null.
+             */
+            moving: null | number;
+            /** @description The home pool, or null before the first pool that can take homes. */
+            pool: null | string;
+            /** @description Every pool with whether it can take the homes. */
+            pools: components["schemas"]["HomePool"][];
+        };
+        HomePool: {
+            /**
+             * Format: int64
+             * @description Free space for the homes, or null while it cannot be read.
+             */
+            availableBytes: null | number;
+            /** @description The pool. */
+            name: string;
+            /** @description Why it cannot take the homes (`missing`, `offline`, `read_only`, `not_prepared`, `locked`, `not_mounted`), or null when it can. */
+            unavailable: null | string;
+        };
+        HomeQuotaRequest: {
+            /**
+             * Format: int64
+             * @description The user's own quota: at least 1 MiB, 0 for none, null for the default.
+             */
+            quotaBytes: null | number;
+        };
+        HomeReleaseRequest: {
+            /**
+             * Format: int64
+             * @description The shared folder that gets a folder with the home's files.
+             */
+            shareId: number;
+        };
+        HomeSettingsRequest: {
+            /**
+             * Format: int64
+             * @description The quota of every home without its own: at least 1 MiB, or null for none.
+             */
+            defaultQuotaBytes: null | number;
         };
         ImportablePool: {
             /** @description What ZFS says can be done, in English. */
@@ -6017,13 +6214,21 @@ export type components = {
              * @description Stable id; file paths are relative to the share.
              */
             id: number;
-            /** @description Name shown to users. */
+            /** @description A shared folder, the caller's home or another user's home. */
+            kind?: components["schemas"]["ShareKind"];
+            /** @description Name shown to users: the shared folder's name, `home` for the caller's home, the folder name for another user's home. */
             name: string;
             /** @description The share root on the host. Only administrators get it. */
             path: null | string;
             /** @description Why its files cannot be reached now (ShareAvailability), or null when they can. */
             unavailable?: null | string;
         };
+        /**
+         * @description What a share is (D348).
+         * @default share
+         * @enum {unknown}
+         */
+        ShareKind: "share" | "home" | "userHome";
         /** @description Snapshot and event of `shares/list`. */
         ShareListRevision: {
             /**
@@ -6986,6 +7191,11 @@ export type components = {
             staged: null | components["schemas"]["StagedUpdate"];
             supported: boolean;
             unsupportedReason: null | string;
+        };
+        /** @description The result of deleting a user. */
+        UserDeletion: {
+            /** @description A long operation of a user, such as copying files. Also the data of the `jobs/{id}` topics. */
+            job: null | components["schemas"]["Job"];
         };
         /** @description The rights of a user for the editor. Administrators only. */
         UserGrants: {
@@ -9943,6 +10153,202 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HealthResponse"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetHomes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HomeOverview"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    DeleteHome: {
+        parameters: {
+            query?: {
+                confirm?: string;
+            };
+            header?: never;
+            path: {
+                shareId: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    ReleaseHome: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                shareId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HomeReleaseRequest"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    MoveHomes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HomeMoveRequest"];
+            };
+        };
+        responses: {
+            /** @description Accepted */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Job"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SetHomeSettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HomeSettingsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HomeOverview"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SetHomeQuota: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["HomeQuotaRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HomeOverview"];
                 };
             };
             /** @description Problem details with a stable error code. */
@@ -13424,7 +13830,11 @@ export interface operations {
     };
     DeleteUser: {
         parameters: {
-            query?: never;
+            query?: {
+                confirm?: string;
+                home?: string;
+                shareId?: number;
+            };
             header?: never;
             path: {
                 userId: number;
@@ -13433,12 +13843,14 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description No Content */
-            204: {
+            /** @description OK */
+            200: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content?: never;
+                content: {
+                    "application/json": components["schemas"]["UserDeletion"];
+                };
             };
             /** @description Problem details with a stable error code. */
             default: {

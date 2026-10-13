@@ -34,7 +34,7 @@ public sealed class ProtocolOwnerIntegrationTests : IDisposable
         using var admin = _factory.CreateApiClient();
         await admin.SetupAdminAsync();
         (await admin.PutAsJsonAsync("/api/file-services", new { webDavEnabled = true, ftpEnabled = true }, Token)).EnsureSuccessStatusCode();
-        var shared = (await admin.GetFromJsonAsync<JsonElement>("/api/shares", Token)).EnumerateArray().Single();
+        var shared = (await admin.GetFromJsonAsync<JsonElement>("/api/shares", Token)).EnumerateArray().Single(share => share.GetProperty("kind").GetString() == "share");
         var sharedId = shared.GetProperty("id").GetInt64();
         var folder = shared.GetProperty("path").GetString()!;
         using var created = await admin.PostAsJsonAsync("/api/users", new { username = "rita", password = Password, grants = new[] { new { resource = "protocol:webdav", level = "allow" }, new { resource = "protocol:ftp", level = "allow" } } }, Token);

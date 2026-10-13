@@ -128,22 +128,30 @@ public sealed class PermissionService(SqliteConnectionFactory connections)
         }
         var groups = (await GroupsOfAsync(connection, transaction, userId))[userId];
         var grants = await connection.QueryAsync<GrantRow>(
-            """
+            $"""
             SELECT subject_kind AS SubjectKind, subject_id AS SubjectId, resource AS Resource, level AS Level FROM grants
             WHERE (subject_kind = 'user' AND subject_id = @userId)
                 OR (subject_kind = 'group' AND (subject_id = @builtin OR subject_id IN (SELECT group_id FROM group_members WHERE user_id = @userId)))
+            UNION ALL {HomeGrants} WHERE home_user_id = @userId
             """,
             new { userId, builtin = GroupReconciler.UsersGid },
             transaction);
         return PermissionResolver.Resolve(Principal(userId, groups, active: true), grants.Select(row => row.ToGrant()));
     }
 
-    /// <summary>Every grant in the database.</summary>
+    /// <summary>
+    /// Every user reads and writes its own home (D348). The grant is not stored: it follows the home's row, so it
+    /// cannot be granted, changed or revoked, and nobody else gets one.
+    /// </summary>
+    private const string HomeGrants =
+        "SELECT 'user' AS SubjectKind, home_user_id AS SubjectId, 'share:' || id AS Resource, 'readWrite' AS Level FROM shares";
+
+    /// <summary>Every grant in the database, and the grant of every user on its own home.</summary>
     public static async Task<IReadOnlyList<Grant>> GrantsAsync(DbConnection connection, DbTransaction? transaction)
     {
         ArgumentNullException.ThrowIfNull(connection);
         var rows = await connection.QueryAsync<GrantRow>(
-            "SELECT subject_kind AS SubjectKind, subject_id AS SubjectId, resource AS Resource, level AS Level FROM grants",
+            $"SELECT subject_kind AS SubjectKind, subject_id AS SubjectId, resource AS Resource, level AS Level FROM grants UNION ALL {HomeGrants} WHERE home_user_id IS NOT NULL",
             transaction: transaction);
         return [.. rows.Select(row => row.ToGrant())];
     }

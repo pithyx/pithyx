@@ -13,7 +13,8 @@
   },
   "shares": {
     "title": "Shares",
-    "unavailable": "Not available"
+    "unavailable": "Not available",
+    "homes": "homes"
   },
   "columns": {
     "name": "Name",

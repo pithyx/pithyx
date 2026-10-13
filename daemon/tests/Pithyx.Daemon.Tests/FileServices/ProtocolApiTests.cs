@@ -34,7 +34,7 @@ public sealed class ProtocolApiTests : IDisposable
     {
         await _admin.SetupAdminAsync();
         (await _admin.PutAsJsonAsync("/api/file-services", services, Token)).EnsureSuccessStatusCode();
-        var shared = (await _admin.GetFromJsonAsync<JsonElement>("/api/shares", Token)).EnumerateArray().Single().GetProperty("id").GetInt64();
+        var shared = (await _admin.GetFromJsonAsync<JsonElement>("/api/shares", Token)).EnumerateArray().Single(share => share.GetProperty("kind").GetString() == "share").GetProperty("id").GetInt64();
         foreach (var (name, rights) in new[] { ("rita", new[] { "protocol:webdav", "protocol:ftp" }), ("tom", ["protocol:webdav", "protocol:ftp"]), ("eve", Array.Empty<string>()) })
         {
             using var created = await _admin.PostAsJsonAsync("/api/users", new { username = name, password = Password, grants = rights.Select(resource => new { resource, level = "allow" }) }, Token);

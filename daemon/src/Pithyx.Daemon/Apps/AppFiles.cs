@@ -43,7 +43,8 @@ public sealed class AppFiles(
     public async Task<IReadOnlyList<AppShareInfo>> SharesAsync(InstalledApp app, ClaimsPrincipal user, CancellationToken cancellationToken)
     {
         Require(app, SharesPermission);
-        return [.. (await shares.ListAsync(user, cancellationToken)).Select(share => new AppShareInfo(
+        // An administrator's list has every user's home too; an app sees only the user's own (D348).
+        return [.. (await shares.ListAsync(user, cancellationToken)).Where(share => share.Kind != ShareKind.UserHome).Select(share => new AppShareInfo(
             share.Id.ToString(CultureInfo.InvariantCulture),
             share.Name,
             share.Access,
@@ -53,7 +54,8 @@ public sealed class AppFiles(
                 ShareAvailability.PoolUnavailable => "poolUnavailable",
                 ShareAvailability.NotMounted => "notMounted",
                 _ => null,
-            }))];
+            },
+            share.Kind))];
     }
 
     public async Task<AppFolderPage> ListAsync(InstalledApp app, ClaimsPrincipal user, AppFileLocation location, string? path, FileSort sort, SortOrder order, int? limit, string? cursor, CancellationToken cancellationToken)

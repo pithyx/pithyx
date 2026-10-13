@@ -164,7 +164,8 @@ public sealed class ShareApiTests : IAsyncLifetime
         Assert.Equal("storage.share.delete", job.GetProperty("kind").GetString());
         await _factory.Services.GetRequiredService<JobService>().WaitForStateAsync(job.GetProperty("id").GetInt64(), JobState.Succeeded);
 
-        Assert.Empty((await (await _admin.GetAsync("/api/shares", Token)).JsonAsync()).EnumerateArray());
+        // Only the administrator's own home is left (D348).
+        Assert.All((await (await _admin.GetAsync("/api/shares", Token)).JsonAsync()).EnumerateArray(), share => Assert.Equal("home", share.GetProperty("kind").GetString()));
         // Keep means keep: the folder and its files are still there.
         Assert.True(Directory.Exists(Path.Combine(_factory.DataDirectory, "shares", "shared")));
     }

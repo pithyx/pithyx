@@ -7,6 +7,7 @@ import {
   appWindow,
   openAccountMenu,
   openFromDesktop,
+  openFilesInShared,
   openFromStart,
   signInAsAdmin,
 } from './session';
@@ -92,7 +93,7 @@ test('the Files app, its menu and its recycle bin have no accessibility violatio
   writeFileSync(join(folder, 'notes.txt'), 'n');
   writeFileSync(join(folder, 'old.txt'), 'o');
   await signInAsAdmin(page);
-  await openFromStart(page, 'Files');
+  await openFilesInShared(page);
   const files = page.getByRole('region', { name: /Files$/ });
   await files.getByRole('row', { name: /^a11y/ }).dblclick();
   await files.getByRole('row', { name: /^notes\.txt/ }).click();

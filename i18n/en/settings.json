@@ -167,6 +167,11 @@
       "description": "Folders on your pools, their space, who may use them and their restore points",
       "keywords": "share folder dataset access rights permissions restore points snapshots previous versions"
     },
+    "homes": {
+      "title": "Home folders",
+      "description": "Each user's own folder, its pool and its quota",
+      "keywords": "home homes user folder quota pool move"
+    },
     "fileServices": {
       "title": "File services",
       "description": "SMB and SFTP for access from other computers",
@@ -897,6 +902,91 @@
       "savedBy": "Saved by {user} on {date}. Nothing changes until it is chosen at the console.",
       "next": "To switch: restart the box, choose \"Pithyx recovery\" in the boot menu (key r), then \"Change the update source\" and \"Use the file saved in Settings\", and type the source’s name.",
       "discard": "Remove"
+    }
+  },
+  "homes": {
+    "intro": "Every user has a home folder of their own. They see it as home in Files, over SMB, SFTP, WebDAV and FTP; administrators also see every home below homes. Only the user and administrators can open a home.",
+    "loading": "Loading home folders…",
+    "save": "Save",
+    "empty": "There are no home folders yet. They appear once a pool has the Pithyx layout.",
+    "caption": "Home folders",
+    "unknown": "Not available",
+    "unavailable": "Not available now",
+    "deletedUser": "{folder}, user deleted",
+    "columns": {
+      "home": "Home folder",
+      "pool": "Pool",
+      "used": "Used",
+      "quota": "Quota",
+      "actions": "Actions"
+    },
+    "pool": {
+      "title": "Pool",
+      "current": "The home folders are on {pool}.",
+      "none": "No pool can take home folders yet. The first pool with the Pithyx layout becomes the home pool.",
+      "explain": "New users get their home folder here. Moving copies every home folder with its files, owners and rights to the other pool.",
+      "target": "Move to",
+      "move": "Move home folders",
+      "moving": "The home folders are moving to another pool. The job shows how far it is.",
+      "unavailable": "{pool} ({reason})"
+    },
+    "reasons": {
+      "missing": "missing",
+      "offline": "offline",
+      "read_only": "read only",
+      "not_prepared": "no Pithyx layout",
+      "locked": "locked",
+      "not_mounted": "not mounted"
+    },
+    "move": {
+      "title": "Move the home folders to {pool}?",
+      "submit": "Move",
+      "oneByOne": "The home folders move one after the other, each with its files, owners, rights and recycle bin.",
+      "readOnly": "While a home folder is copied, it can be read but not changed.",
+      "kept": "Once a home folder arrived, it is used from the new pool and the old copy is deleted.",
+      "failure": "If a home folder cannot be moved, it stays where it was and can be changed again; the ones moved before stay moved."
+    },
+    "quota": {
+      "title": "Quota",
+      "default": "Default quota",
+      "defaultHint": "For every home folder without its own quota. Leave empty for no limit.",
+      "invalid": "Enter a number, for example 50 or 1.5.",
+      "unit": "Unit of {field}",
+      "none": "No limit",
+      "own": "Own quota",
+      "fromDefault": "Default quota",
+      "fromDefaultNone": "Default: no limit",
+      "edit": "Quota",
+      "editLabel": "Quota of {name}",
+      "dialogTitle": "Quota of {name}",
+      "size": "Quota",
+      "choice": {
+        "default": "Use the default quota",
+        "none": "No limit",
+        "own": "Own quota"
+      }
+    },
+    "units": {
+      "mb": "MB",
+      "gb": "GB",
+      "tb": "TB"
+    },
+    "release": {
+      "button": "Move into shared folder",
+      "label": "Move the files of {folder} into a shared folder",
+      "title": "Move the files of {folder}?",
+      "explain": "A new folder in the shared folder gets every file of {folder}. Then the home folder is deleted with its recycle bin.",
+      "share": "Shared folder",
+      "noShares": "There is no shared folder to move the files into.",
+      "submit": "Move files"
+    },
+    "delete": {
+      "button": "Delete",
+      "label": "Delete {folder}",
+      "title": "Delete {folder}?",
+      "explain": "The home folder goes with every file, its recycle bin and its snapshots. This cannot be undone. If it belongs to a user whose pool is gone, the user gets a new, empty home folder.",
+      "confirm": "Type {folder} to confirm",
+      "submit": "Delete home folder"
     }
   }
 }

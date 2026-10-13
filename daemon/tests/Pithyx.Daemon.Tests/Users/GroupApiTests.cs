@@ -87,7 +87,7 @@ public sealed class GroupApiTests : IDisposable
         // A deleted user leaves its groups.
         using (var deleted = await _admin.DeleteAsync($"/api/users/{rita}", Token))
         {
-            Assert.Equal(HttpStatusCode.NoContent, deleted.StatusCode);
+            Assert.Equal(HttpStatusCode.OK, deleted.StatusCode);
         }
         Assert.Empty((await GroupsAsync()).EnumerateArray().Single(group => group.GetProperty("name").GetString() == "media").GetProperty("memberIds").EnumerateArray());
     }

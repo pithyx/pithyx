@@ -17,7 +17,7 @@ A shared folder is a ZFS dataset of its own on a pool, with its own space, right
 
 If no pool exists, the dialog says "No pool is ready for shared folders yet. Create a pool in Storage first."
 
-The name has 1 to 64 characters: letters, digits, spaces, dots, dashes and underscores, not starting with a dot, unique without regard to case ([`fs.share.invalid`](/docs/reference/errors/#fs.share.invalid), [`fs.share.exists`](/docs/reference/errors/#fs.share.exists)). The description has at most 200 characters on one line. The names `global`, `homes`, `printers`, `print$` and `ipc$` are reserved. The dataset gets a name derived from the folder name (lowercase, accents folded, other characters turned into `-`) at `<pool>/pithyx/shares/<name>`, mounted at `/<pool>/<dataset-name>`.
+The name has 1 to 64 characters: letters, digits, spaces, dots, dashes and underscores, not starting with a dot, unique without regard to case ([`fs.share.invalid`](/docs/reference/errors/#fs.share.invalid), [`fs.share.exists`](/docs/reference/errors/#fs.share.exists)). The description has at most 200 characters on one line. The names `global`, `home`, `homes`, `printers`, `print$` and `ipc$` are reserved ([`fs.share.name_reserved`](/docs/reference/errors/#fs.share.name_reserved)); `home` and `homes` are the [home folders](/docs/admin/home-folders/). The dataset gets a name derived from the folder name (lowercase, accents folded, other characters turned into `-`) at `<pool>/pithyx/shares/<name>`, mounted at `/<pool>/<dataset-name>`.
 
 New folders start with restore points on. To limit the size of a shared folder, set a quota on its dataset in Storage (**Limits…**); the dialog has no size field.
 

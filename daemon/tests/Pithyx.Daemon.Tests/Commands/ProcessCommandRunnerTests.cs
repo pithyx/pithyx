@@ -31,6 +31,27 @@ public sealed class ProcessCommandRunnerTests
     }
 
     [Fact]
+    public async Task PipesOneCommandIntoAnother()
+    {
+        var result = await _runner.RunAsync(
+            new CommandRequest("printf", ["home"], PipeTo: new CommandRequest("tr", ["a-z", "A-Z"])),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal((0, "HOME"), (result.ExitCode, result.StandardOutput));
+    }
+
+    [Fact]
+    public async Task APipeWhoseConsumerEndsEarlyFailsWithItsExitCode()
+    {
+        // zfs receive refusing a stream: the producer still writes while the consumer is gone.
+        var result = await _runner.RunAsync(
+            new CommandRequest("head", ["-c", "8388608", "/dev/zero"], PipeTo: new CommandRequest("sh", ["-c", "echo refused >&2; exit 4"])),
+            TestContext.Current.CancellationToken);
+
+        Assert.Equal((4, "refused\n"), (result.ExitCode, result.StandardError));
+    }
+
+    [Fact]
     public async Task KillsCommandAfterTimeout()
     {
         var started = DateTime.UtcNow;

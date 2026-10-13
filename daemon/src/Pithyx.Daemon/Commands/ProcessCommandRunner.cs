@@ -11,6 +11,10 @@ public sealed partial class ProcessCommandRunner(ILogger<ProcessCommandRunner> l
     public async Task<CommandResult> RunAsync(CommandRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+        if (request.PipeTo is not null)
+        {
+            return await RunPipeAsync(request, request.PipeTo, cancellationToken);
+        }
         var startInfo = CreateStartInfo(request);
 
         var timeout = request.Timeout ?? DefaultTimeout;
@@ -46,6 +50,88 @@ public sealed partial class ProcessCommandRunner(ILogger<ProcessCommandRunner> l
         var result = new CommandResult(process.ExitCode, await standardOutput, await standardError, stopwatch.Elapsed);
         CommandLog.Finished(logger, request, result);
         return result;
+    }
+
+    /// <summary>
+    /// Runs <paramref name="producer"/> with its stdout copied into <paramref name="consumer"/>'s stdin. Each command is
+    /// logged on its own; the result carries the consumer's output and the exit code and stderr of the command that failed
+    /// first.
+    /// </summary>
+    private async Task<CommandResult> RunPipeAsync(CommandRequest producer, CommandRequest consumer, CancellationToken cancellationToken)
+    {
+        if (producer.StandardInput is not null || consumer.StandardInput is not null || consumer.PipeTo is not null)
+        {
+            throw new ArgumentException("A pipe has two commands without stdin of their own.", nameof(producer));
+        }
+        var timeout = producer.Timeout ?? DefaultTimeout;
+        using var timeoutSource = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutSource.CancelAfter(timeout);
+        using var first = new Process { StartInfo = CreateStartInfo(producer) };
+        using var second = new Process { StartInfo = CreateStartInfo(consumer) };
+        var stopwatch = Stopwatch.StartNew();
+        second.Start();
+        try
+        {
+            first.Start();
+        }
+        catch
+        {
+            second.Kill(entireProcessTree: true);
+            throw;
+        }
+        first.StandardInput.Close();
+        var firstError = first.StandardError.ReadToEndAsync(CancellationToken.None);
+        var secondOutput = second.StandardOutput.ReadToEndAsync(CancellationToken.None);
+        var secondError = second.StandardError.ReadToEndAsync(CancellationToken.None);
+        var consumerQuit = false;
+        try
+        {
+            try
+            {
+                await first.StandardOutput.BaseStream.CopyToAsync(second.StandardInput.BaseStream, timeoutSource.Token);
+            }
+            catch (IOException)
+            {
+                // The consumer exited early and broke the pipe; the producer would wait on a full pipe forever.
+                consumerQuit = true;
+                first.Kill(entireProcessTree: true);
+            }
+            finally
+            {
+                try
+                {
+                    second.StandardInput.Close();
+                }
+                catch (IOException)
+                {
+                    consumerQuit = true;
+                }
+            }
+            await first.WaitForExitAsync(timeoutSource.Token);
+            await second.WaitForExitAsync(timeoutSource.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            first.Kill(entireProcessTree: true);
+            second.Kill(entireProcessTree: true);
+            LogCommandAborted(producer.FileName, producer.LoggableArguments, stopwatch.Elapsed);
+            if (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            throw new TimeoutException($"{producer.FileName} did not finish within {timeout}.");
+        }
+        var produced = new CommandResult(first.ExitCode, "", await firstError, stopwatch.Elapsed);
+        CommandLog.Finished(logger, producer, produced);
+        var consumed = new CommandResult(second.ExitCode, await secondOutput, await secondError, stopwatch.Elapsed);
+        CommandLog.Finished(logger, consumer, consumed);
+        // The command that failed first tells why: the consumer when it quit early, otherwise the producer.
+        var producerFailed = first.ExitCode != 0 && !(consumerQuit && second.ExitCode != 0);
+        return consumed with
+        {
+            ExitCode = producerFailed ? first.ExitCode : second.ExitCode,
+            StandardError = producerFailed ? produced.StandardError : consumed.StandardError,
+        };
     }
 
     public async IAsyncEnumerable<string> StreamLinesAsync(CommandRequest request, [EnumeratorCancellation] CancellationToken cancellationToken)

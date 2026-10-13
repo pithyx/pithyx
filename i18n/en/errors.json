@@ -218,6 +218,28 @@
       "read_only": "The storage is read-only."
     }
   },
+  "homes": {
+    "choice": {
+      "invalid": "Choose what happens to the home folder: a shared folder to move its files into, or type the user name to delete it."
+    },
+    "home": {
+      "in_use": "This home folder still belongs to a user. Only the home folder of a deleted user can be deleted or moved on its own, and a user's home folder only while its pool is gone.",
+      "name_mismatch": "Type {name} exactly to confirm.",
+      "not_found": "This home folder does not exist (anymore)."
+    },
+    "move": {
+      "running": "The home folders are moving to another pool already. Wait until the move has finished."
+    },
+    "pool": {
+      "no_space": "The pool has too little free space for the home folders: {neededBytes, number} bytes are needed, {availableBytes, number} are free.",
+      "taken": "The target pool has a home folder named {folder} already.",
+      "unavailable": "The pool {pool} cannot hold home folders now: {reason, select, missing {it is not imported} offline {it is not online} read_only {it is read-only} locked {it is locked} not_prepared {it was not set up by Pithyx} not_mounted {its home folders are not mounted} other {it is not available}}.",
+      "unchanged": "The home folders are on this pool already."
+    },
+    "quota": {
+      "invalid": "A quota is at least 1 MiB, or no limit."
+    }
+  },
   "installer": {
     "check": {
       "failed": "This computer does not meet a requirement of Pithyx. The first page of the installer shows which."

@@ -111,6 +111,26 @@ public sealed class FileOperations(ShareService shares, JobService jobs, TrashSe
         return new FileOperationResult(run.Done, run.Skipped);
     }
 
+    /// <summary>
+    /// Runs a file operation as part of another module's job (moving a deleted user's home into a shared folder, D348),
+    /// with the same checks as <see cref="StartAsync"/> and that job's progress.
+    /// </summary>
+    internal async Task<FileOperationResult> RunInJobAsync(ClaimsPrincipal user, FileOperationRequest request, JobContext context)
+    {
+        ArgumentNullException.ThrowIfNull(context);
+        var plan = await PrepareAsync(user, request, context.Cancellation);
+        var run = new Progress(context, plan.Owner, context.Cancellation);
+        try
+        {
+            await Task.Run(() => Run(request.Kind, plan.ToTrash, plan.UserId, plan.Sources, plan.Target, plan.Policy, run), context.Cancellation);
+        }
+        finally
+        {
+            usage?.Written();
+        }
+        return new FileOperationResult(run.Done, run.Skipped);
+    }
+
     private sealed record Prepared(
         long UserId,
         List<(ResolvedShare Share, string Path)> Sources,

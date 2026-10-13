@@ -47,7 +47,8 @@ public sealed record DirectoryGroup(long Id, string Name, string Description);
 /// <param name="Name">Name shown to users.</param>
 /// <param name="Access">The user's access: <c>read</c> or <c>readWrite</c>.</param>
 /// <param name="Unavailable">Why its files cannot be reached now (<c>poolMissing</c>, <c>poolUnavailable</c>, <c>notMounted</c>), or null.</param>
-public sealed record AppShareInfo(string Id, string Name, Shares.ShareAccess Access, string? Unavailable);
+/// <param name="Kind">A shared folder, or the user's own home (<c>home</c>, D348). Apps never get other users' homes.</param>
+public sealed record AppShareInfo(string Id, string Name, Shares.ShareAccess Access, string? Unavailable, Shares.ShareKind Kind = Shares.ShareKind.Share);
 
 /// <summary>One page of a folder, relative to its location.</summary>
 /// <param name="Path">The folder ("" for the location's root).</param>

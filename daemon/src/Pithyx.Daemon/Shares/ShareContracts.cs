@@ -7,20 +7,39 @@ public enum ShareAccess
     ReadWrite,
 }
 
+/// <summary>What a share is (D348).</summary>
+public enum ShareKind
+{
+    /// <summary>A shared folder.</summary>
+    Share,
+
+    /// <summary>The caller's own home, named <c>home</c>.</summary>
+    Home,
+
+    /// <summary>Another user's home, or one whose user was deleted, named after its folder. Administrators only.</summary>
+    UserHome,
+}
+
 /// <summary>A share the user can use.</summary>
 /// <param name="Id">Stable id; file paths are relative to the share.</param>
-/// <param name="Name">Name shown to users.</param>
+/// <param name="Name">Name shown to users: the shared folder's name, <c>home</c> for the caller's home, the folder name for another user's home.</param>
 /// <param name="Access">The user's access: read or read and write.</param>
 /// <param name="Path">The share root on the host. Only administrators get it.</param>
 /// <param name="Unavailable">Why its files cannot be reached now (<see cref="ShareAvailability"/>), or null when they can.</param>
-public sealed record ShareInfo(long Id, string Name, ShareAccess Access, string? Path, string? Unavailable = null);
+/// <param name="Kind">A shared folder, the caller's home or another user's home.</param>
+public sealed record ShareInfo(long Id, string Name, ShareAccess Access, string? Path, string? Unavailable = null, ShareKind Kind = ShareKind.Share);
 
 /// <param name="Name">Letters, digits, spaces, dots, dashes and underscores, 1 to 64 characters, not starting with a dot.</param>
 /// <param name="Path">An existing folder on the host: absolute, without symlinks, outside the system directories and not overlapping another share.</param>
 public sealed record NewShare(string Name, string Path);
 
 /// <summary>A share resolved for one request, with the caller's access.</summary>
-public sealed record ResolvedShare(long Id, string Name, string Path, ShareAccess Access);
+/// <param name="Id">Stable id.</param>
+/// <param name="Name">Name shown to the caller.</param>
+/// <param name="Path">The share root on the host.</param>
+/// <param name="Access">The caller's access.</param>
+/// <param name="Kind">A shared folder or a home, named as <see cref="ShareInfo"/> names it.</param>
+public sealed record ResolvedShare(long Id, string Name, string Path, ShareAccess Access, ShareKind Kind = ShareKind.Share);
 
 /// <summary>A share with what the Shared folders page shows. Administrators only.</summary>
 /// <param name="Id">Stable id.</param>

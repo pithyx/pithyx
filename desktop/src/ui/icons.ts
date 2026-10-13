@@ -43,6 +43,7 @@ export { default as IconFileZip } from '@tabler/icons-react/dist/esm/icons/IconF
 export { default as IconFolder } from '@tabler/icons-react/dist/esm/icons/IconFolder.mjs';
 export { default as IconFolderFilled } from '@tabler/icons-react/dist/esm/icons/IconFolderFilled.mjs';
 export { default as IconFolderPlus } from '@tabler/icons-react/dist/esm/icons/IconFolderPlus.mjs';
+export { default as IconFolderShare } from '@tabler/icons-react/dist/esm/icons/IconFolderShare.mjs';
 export { default as IconFolders } from '@tabler/icons-react/dist/esm/icons/IconFolders.mjs';
 export { default as IconGripHorizontal } from '@tabler/icons-react/dist/esm/icons/IconGripHorizontal.mjs';
 export { default as IconHelpCircle } from '@tabler/icons-react/dist/esm/icons/IconHelpCircle.mjs';

@@ -98,7 +98,10 @@ builder.Services.AddPithyxUsers(mode == DaemonMode.Real
         Path.Combine(builder.Configuration["PITHYX_FIXTURES"] ?? Path.Combine(builder.Environment.ContentRootPath, "..", "..", "tests", "fixtures"), "etc", "passwd"),
         Apply: false,
         ShadowPath: Path.Combine(builder.Configuration["PITHYX_FIXTURES"] ?? Path.Combine(builder.Environment.ContentRootPath, "..", "..", "tests", "fixtures"), "etc", "shadow"),
-        GroupPath: Path.Combine(builder.Configuration["PITHYX_FIXTURES"] ?? Path.Combine(builder.Environment.ContentRootPath, "..", "..", "tests", "fixtures"), "etc", "group")));
+        GroupPath: Path.Combine(builder.Configuration["PITHYX_FIXTURES"] ?? Path.Combine(builder.Environment.ContentRootPath, "..", "..", "tests", "fixtures"), "etc", "group")),
+    mode == DaemonMode.Real
+        ? new HomeStorageOptions(UseZfs: true, FolderRoot: "/")
+        : new HomeStorageOptions(UseZfs: false, FolderRoot: Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "pools")));
 builder.Services.AddPithyxFileServices(new FileServiceOptions(
     Apply: mode == DaemonMode.Real,
     TlsDirectory: Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "tls"),
@@ -158,6 +161,10 @@ if (!BuildTimeDocument.IsGenerating)
         builder.Services.AddHostedService<LinuxAccountSync>();
         builder.Services.AddHostedService(services => services.GetRequiredService<FileServiceSync>());
         builder.Services.AddHostedService(services => services.GetRequiredService<Pithyx.Daemon.Network.Firewall>());
+    }
+    if (mode == DaemonMode.Simulated && !installer.Active)
+    {
+        builder.Services.AddHostedService<SimulatedHomeSync>();
     }
     if (!installer.Active)
     {

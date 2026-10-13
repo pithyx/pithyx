@@ -549,6 +549,57 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string FsVolumeReadOnly = "fs.volume.read_only";
 
+    /// <summary>
+    /// The choice for a deleted user's home is incomplete: <c>move</c> needs a shared folder (<c>shareId</c>),
+    /// <c>delete</c> the user name typed (<c>confirm</c>).
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string HomesChoiceInvalid = "homes.choice.invalid";
+
+    /// <summary>
+    /// The home still has its user; only the home of a deleted user is deleted or moved on its own, and a user's home
+    /// only while its pool is gone.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string HomesHomeInUse = "homes.home.in_use";
+
+    /// <summary>The typed name is not the home's folder or the user's name; <c>params.name</c> is the expected one.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string HomesHomeNameMismatch = "homes.home.name_mismatch";
+
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string HomesHomeNotFound = "homes.home.not_found";
+
+    /// <summary>The homes are moving to another pool already; the next change waits until the move ended.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string HomesMoveRunning = "homes.move.running";
+
+    /// <summary>
+    /// The pool has too little free space for the homes: <c>params.neededBytes</c> and <c>params.availableBytes</c>
+    /// say how much.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string HomesPoolNoSpace = "homes.pool.no_space";
+
+    /// <summary>The target pool has a home of this name already; <c>params.folder</c> names it.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string HomesPoolTaken = "homes.pool.taken";
+
+    /// <summary>
+    /// The pool cannot take the homes: <c>params.pool</c> names it, <c>params.reason</c> is <c>missing</c>,
+    /// <c>offline</c>, <c>read_only</c>, <c>not_prepared</c> (no Pithyx layout), <c>locked</c> or <c>not_mounted</c>.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string HomesPoolUnavailable = "homes.pool.unavailable";
+
+    /// <summary>The homes are on this pool already.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string HomesPoolUnchanged = "homes.pool.unchanged";
+
+    /// <summary>A quota is 0 or at least 1 MiB (<c>params.minBytes</c>); a negative one is refused.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string HomesQuotaInvalid = "homes.quota.invalid";
+
     /// <summary>The box misses a requirement of the installer; <c>params.check</c> names it (see <c>InstallerCheck</c>).</summary>
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string InstallerCheckFailed = "installer.check.failed";
