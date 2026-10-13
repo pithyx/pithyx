@@ -52,6 +52,9 @@ public static partial class HomePlans
     public static CommandRequest SendReceive(string dataset, string snapshot, string target) =>
         new("zfs", ["send", Full(dataset, snapshot)], MoveTimeout, PipeTo: new CommandRequest("zfs", ["receive", "-u", Home(target)], MoveTimeout));
 
+    /// <summary>Exits with 0 when the home dataset exists.</summary>
+    public static CommandRequest Exists(string dataset) => new("zfs", ["list", "-H", "-o", "name", Home(dataset)]);
+
     public static CommandRequest Mount(string dataset) => new("zfs", ["mount", Home(dataset)]);
 
     private static string Full(string dataset, string name) =>

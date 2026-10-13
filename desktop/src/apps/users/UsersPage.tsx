@@ -12,8 +12,10 @@ import {
   usersCall,
   type GrantEntry,
   type GroupSummary,
+  type HomeChoice,
   type UserSummary,
 } from '../sdk/users';
+import { useShares } from '../settings/shares';
 import { FormDialog } from './FormDialog';
 import { GrantEditor, protocolKey } from './GrantEditor';
 import { groupsKey, useGroups, usersKey, useUsers } from './queries';
@@ -197,7 +199,7 @@ function DisableButton({ app, user }: { app: PithyxApp; user: UserSummary }) {
   );
 }
 
-function useChange<T>(run: () => Promise<T>, onClose: () => void) {
+function useChange<T, V = void>(run: (value: V) => Promise<T>, onClose: () => void) {
   const client = useQueryClient();
   return useMutation({
     mutationFn: run,
@@ -438,8 +440,21 @@ function DeleteDialog({
 }) {
   const { t } = useTranslation('users');
   const [typed, setTyped] = useState('');
+  const [home, setHome] = useState<HomeChoice['home']>('keep');
+  const shares = useShares(app);
+  const [shareId, setShareId] = useState<number | null>(null);
+  const target = shareId ?? shares.data?.[0]?.id ?? null;
+  const choice: HomeChoice | null =
+    home === 'keep'
+      ? { home }
+      : home === 'move'
+        ? target === null
+          ? null
+          : { home, shareId: target }
+        : { home, confirm: typed };
   const remove = useChange(
-    () => usersCall(app, 'internal.admin.users.delete', { userId: user.id }),
+    (chosen: HomeChoice) =>
+      usersCall(app, 'internal.admin.users.delete', { userId: user.id, ...chosen }),
     onClose,
   );
   return (
@@ -447,14 +462,60 @@ function DeleteDialog({
       title={t('delete.title', { name: user.username })}
       submit={t('delete.submit')}
       danger
-      disabled={typed !== user.username}
+      disabled={typed !== user.username || choice === null}
       onClose={onClose}
       onSubmit={(event) => {
         event.preventDefault();
-        remove.mutate();
+        if (choice !== null) {
+          remove.mutate(choice);
+        }
       }}
     >
       <p>{t('delete.intro')}</p>
+      {user.home != null && (
+        <fieldset className={styles.fieldset}>
+          <legend className={styles.legend}>{t('delete.home.title')}</legend>
+          {(['keep', 'move', 'delete'] as const).map((option) => (
+            <label key={option} className={styles.choice}>
+              <input
+                type="radio"
+                name="home"
+                checked={home === option}
+                onChange={() => {
+                  setHome(option);
+                }}
+              />
+              <span>
+                {t(`delete.home.${option}`, { name: user.username })}
+                <span className={styles.hint}>
+                  {t(`delete.home.${option}Hint`, {
+                    folder: `${user.username}.deleted-${String(user.uid ?? '')}`,
+                  })}
+                </span>
+              </span>
+            </label>
+          ))}
+          {home === 'move' &&
+            (shares.data?.length === 0 ? (
+              <p className={styles.muted}>{t('delete.home.noShares')}</p>
+            ) : (
+              <select
+                className={styles.select}
+                aria-label={t('delete.home.share')}
+                value={target ?? ''}
+                onChange={(event) => {
+                  setShareId(Number(event.currentTarget.value));
+                }}
+              >
+                {(shares.data ?? []).map((share) => (
+                  <option key={share.id} value={share.id}>
+                    {share.name}
+                  </option>
+                ))}
+              </select>
+            ))}
+        </fieldset>
+      )}
       <TextField
         label={t('delete.confirm', { name: user.username })}
         value={typed}

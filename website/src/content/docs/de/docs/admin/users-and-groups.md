@@ -34,10 +34,10 @@ Der Rechte-Dialog eines Benutzers oder einer Gruppe hat vier Sonderrechte: „Ad
 
 **Deaktivieren** nimmt dem Benutzer alle Rechte und meldet ihn ab; **Aktivieren** gibt die Rechte zurück. Du kannst dich nicht selbst deaktivieren ([`users.user.self`](/de/docs/reference/errors/#users.user.self)), und der letzte Administrator kann weder deaktiviert noch gelöscht werden noch das Recht verlieren ([`users.user.last_admin`](/de/docs/reference/errors/#users.user.last_admin)).
 
-**Löschen** verlangt die Eingabe des Benutzernamens. Das Konto verschwindet; die Dateien und der Home-Ordner des Benutzers bleiben, und die Benutzer-ID wird nie an jemand anderen vergeben. Rechte, Gruppenmitgliedschaften sowie die Jobs und Benachrichtigungen des Benutzers werden entfernt.
+**Löschen** verlangt die Eingabe des Benutzernamens und fragt, was mit dem Home-Ordner des Benutzers passiert: **Behalten** (die Vorgabe), **Dateien in einen freigegebenen Ordner verschieben** oder **Mit allen Dateien löschen**, siehe [Home-Ordner](/de/docs/admin/home-folders/#wenn-ein-benutzer-gelöscht-wird). Das Konto verschwindet, Dateien, die der Benutzer in freigegebenen Ordnern angelegt hat, bleiben, und die Benutzer-ID wird nie an jemand anderen vergeben. Rechte, Gruppenmitgliedschaften sowie die Jobs und Benachrichtigungen des Benutzers werden entfernt.
 
 Um ein Passwort zurückzusetzen, nutze **Neues Passwort** beim Benutzer: Der Benutzer wird überall abgemeldet, und SMB und SFTP verwenden ebenfalls das neue Passwort. Pithyx hat kein Zurücksetzen per E-Mail. Hat der einzige Administrator sein Passwort vergessen, ist der Wiederherstellungsschlüssel aus der Ersteinrichtung der einzige Weg, siehe [Sicherheit](/de/docs/admin/security/#der-wiederherstellungsschlüssel).
 
 ## Home-Ordner
 
-Jeder Benutzer bekommt ein Dataset `<erster Pool>/pithyx/homes/<benutzer>` unter `/<pool>/homes/<benutzer>`, Modus 0700, im Besitz des Benutzers. Ohne Pool zeigt die Liste „Noch kein Pool“, und der Ordner wird angelegt, sobald ein Pool existiert. Home-Ordner bleiben erhalten, wenn ein Benutzer gelöscht wird.
+Jeder Benutzer bekommt einen privaten Home-Ordner, ein Dataset `<Home-Pool>/pithyx/homes/<benutzer>` unter `/<pool>/homes/<benutzer>`, im Besitz des Benutzers. Die Liste zeigt seinen Pfad oder „Noch kein Pool“, bis es einen Pool mit dem Pithyx-Layout gibt. Sein Pool, die Quotas und die Homes gelöschter Benutzer stehen unter [Home-Ordner](/de/docs/admin/home-folders/).

@@ -556,7 +556,10 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string HomesChoiceInvalid = "homes.choice.invalid";
 
-    /// <summary>The home still has its user; only the home of a deleted user is deleted or moved on its own.</summary>
+    /// <summary>
+    /// The home still has its user; only the home of a deleted user is deleted or moved on its own, and a user's home
+    /// only while its pool is gone.
+    /// </summary>
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string HomesHomeInUse = "homes.home.in_use";
 

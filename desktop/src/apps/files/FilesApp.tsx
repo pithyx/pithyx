@@ -11,7 +11,7 @@ import {
   type SortOrder,
   type PithyxApp,
 } from '@pithyx/sdk';
-import { useEffect, useEffectEvent, useRef, useState } from 'react';
+import { Fragment, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStore } from 'zustand';
 import { Button, cx, Dialog, IconButton } from '@pithyx/ui';
@@ -21,6 +21,7 @@ import {
   IconArrowUp,
   IconChevronRight,
   IconFolderPlus,
+  IconHome,
   IconLayoutGrid,
   IconListDetails,
   IconMenu2,
@@ -156,6 +157,10 @@ export function FilesApp({ app }: { app: PithyxApp }) {
   const share: ShareInfo | undefined =
     shareList.find((candidate) => candidate.id === place.share) ?? shareList[0];
   const shareId = share?.id ?? null;
+  // The own home first, then the shared folders; administrators also see every other home (D348).
+  const ownHomes = shareList.filter((candidate) => candidate.kind === 'home');
+  const sharedFolders = shareList.filter((candidate) => candidate.kind === undefined);
+  const userHomes = shareList.filter((candidate) => candidate.kind === 'userHome');
   const path = share?.id === place.share ? place.path : '';
   const view = share?.id === place.share ? place.view : 'folder';
   const writable = share?.access === 'readWrite';
@@ -734,25 +739,37 @@ export function FilesApp({ app }: { app: PithyxApp }) {
       <div className={styles.split} data-sidebar-open={sidebarOpen ? '' : undefined}>
         <nav className={styles.sidebar} aria-label={t('sidebar')}>
           <h3 className={styles.sideTitle}>{t('shares.title')}</h3>
-          {shareList.map((candidate) => (
-            <button
-              key={candidate.id}
-              type="button"
-              className={styles.sideItem}
-              aria-current={candidate.id === shareId && view === 'folder' ? 'page' : undefined}
-              onClick={() => {
-                go({ share: candidate.id, path: '', view: 'folder' });
-              }}
-            >
-              <IconServer2 size={16} stroke={1.75} aria-hidden />
-              {candidate.name}
-              {candidate.unavailable !== undefined && (
-                <span className={styles.sideNote}>{t('shares.unavailable')}</span>
+          {[ownHomes, sharedFolders, userHomes].map((section, index) => (
+            <Fragment key={index}>
+              {index === 2 && section.length > 0 && (
+                <h3 className={styles.sideTitle}>{t('shares.homes')}</h3>
               )}
-            </button>
+              {section.map((candidate) => {
+                const Icon = candidate.kind === undefined ? IconServer2 : IconHome;
+                return (
+                  <button
+                    key={candidate.id}
+                    type="button"
+                    className={styles.sideItem}
+                    aria-current={
+                      candidate.id === shareId && view === 'folder' ? 'page' : undefined
+                    }
+                    onClick={() => {
+                      go({ share: candidate.id, path: '', view: 'folder' });
+                    }}
+                  >
+                    <Icon size={16} stroke={1.75} aria-hidden />
+                    {candidate.name}
+                    {candidate.unavailable !== undefined && (
+                      <span className={styles.sideNote}>{t('shares.unavailable')}</span>
+                    )}
+                  </button>
+                );
+              })}
+            </Fragment>
           ))}
           {shareList.length > 0 && <h3 className={styles.sideTitle}>{t('trash')}</h3>}
-          {shareList.map((candidate) => (
+          {[...ownHomes, ...sharedFolders].map((candidate) => (
             <button
               key={candidate.id}
               type="button"

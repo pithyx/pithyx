@@ -252,7 +252,7 @@ public sealed class ShareService(SqliteConnectionFactory connections, TimeProvid
     public async Task SeedSimulationAsync(string directory, CancellationToken cancellationToken)
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
-        if (await connection.ExecuteScalarAsync<long>("SELECT COUNT(*) FROM shares") > 0)
+        if (await connection.ExecuteScalarAsync<long>("SELECT COUNT(*) FROM shares WHERE home = 0") > 0)
         {
             return;
         }

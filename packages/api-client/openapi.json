@@ -2318,8 +2318,7 @@
             "name": "home",
             "in": "query",
             "schema": {
-              "default": "keep",
-              "$ref": "#/components/schemas/HomeDataChoice"
+              "type": "string"
             }
           },
           {
@@ -9605,6 +9604,10 @@
               "string"
             ],
             "description": "Why its files cannot be reached now (`poolMissing`, `poolUnavailable`, `notMounted`), or null."
+          },
+          "kind": {
+            "description": "A shared folder, or the user's own home (`home`, D348). Apps never get other users' homes.",
+            "$ref": "#/components/schemas/ShareKind"
           }
         },
         "description": "A shared folder the user can use, as an app with `files.shares` sees it: never its place on the host."
@@ -12486,14 +12489,6 @@
             "$ref": "#/components/schemas/DaemonMode"
           }
         }
-      },
-      "HomeDataChoice": {
-        "enum": [
-          "keep",
-          "move",
-          "delete"
-        ],
-        "description": "What happens to a user's home when the user is deleted."
       },
       "HomeInfo": {
         "required": [

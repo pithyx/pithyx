@@ -54,7 +54,8 @@ public sealed partial class ProcessCommandRunner(ILogger<ProcessCommandRunner> l
 
     /// <summary>
     /// Runs <paramref name="producer"/> with its stdout copied into <paramref name="consumer"/>'s stdin. Each command is
-    /// logged on its own; the result carries the consumer's output and the first failing exit code.
+    /// logged on its own; the result carries the consumer's output and the exit code and stderr of the command that failed
+    /// first.
     /// </summary>
     private async Task<CommandResult> RunPipeAsync(CommandRequest producer, CommandRequest consumer, CancellationToken cancellationToken)
     {
@@ -82,6 +83,7 @@ public sealed partial class ProcessCommandRunner(ILogger<ProcessCommandRunner> l
         var firstError = first.StandardError.ReadToEndAsync(CancellationToken.None);
         var secondOutput = second.StandardOutput.ReadToEndAsync(CancellationToken.None);
         var secondError = second.StandardError.ReadToEndAsync(CancellationToken.None);
+        var consumerQuit = false;
         try
         {
             try
@@ -90,11 +92,20 @@ public sealed partial class ProcessCommandRunner(ILogger<ProcessCommandRunner> l
             }
             catch (IOException)
             {
-                // The consumer exited early and broke the pipe; both exit codes tell why.
+                // The consumer exited early and broke the pipe; the producer would wait on a full pipe forever.
+                consumerQuit = true;
+                first.Kill(entireProcessTree: true);
             }
             finally
             {
-                second.StandardInput.Close();
+                try
+                {
+                    second.StandardInput.Close();
+                }
+                catch (IOException)
+                {
+                    consumerQuit = true;
+                }
             }
             await first.WaitForExitAsync(timeoutSource.Token);
             await second.WaitForExitAsync(timeoutSource.Token);
@@ -114,10 +125,12 @@ public sealed partial class ProcessCommandRunner(ILogger<ProcessCommandRunner> l
         CommandLog.Finished(logger, producer, produced);
         var consumed = new CommandResult(second.ExitCode, await secondOutput, await secondError, stopwatch.Elapsed);
         CommandLog.Finished(logger, consumer, consumed);
+        // The command that failed first tells why: the consumer when it quit early, otherwise the producer.
+        var producerFailed = first.ExitCode != 0 && !(consumerQuit && second.ExitCode != 0);
         return consumed with
         {
-            ExitCode = first.ExitCode != 0 ? first.ExitCode : second.ExitCode,
-            StandardError = first.ExitCode != 0 ? produced.StandardError : consumed.StandardError,
+            ExitCode = producerFailed ? first.ExitCode : second.ExitCode,
+            StandardError = producerFailed ? produced.StandardError : consumed.StandardError,
         };
     }
 

@@ -1,6 +1,6 @@
 ---
 title: 'Users and groups'
-description: 'Create users and groups, give them rights, deactivate or delete accounts, and what happens to home folders.'
+description: 'Create users and groups, give them rights, deactivate or delete accounts, and what happens to their home folders.'
 status: ready
 audience: admin
 sidebar:
@@ -34,10 +34,10 @@ The rights dialog of a user or group has four special rights: "Administrator (ma
 
 **Deactivate** gives the user no rights at all and signs them out; **Activate** gives the rights back. You cannot deactivate yourself ([`users.user.self`](/docs/reference/errors/#users.user.self)), and the last administrator can neither be deactivated, deleted nor lose the right ([`users.user.last_admin`](/docs/reference/errors/#users.user.last_admin)).
 
-**Delete** asks you to type the user name. The account goes; the user's files and home folder stay, and the user id is never given to anyone else. Grants, group memberships and the user's jobs and notifications are removed.
+**Delete** asks you to type the user name and what happens to the user's home folder: **Keep it** (the default), **Move its files into a shared folder** or **Delete it with every file**, see [Home folders](/docs/admin/home-folders/#when-a-user-is-deleted). The account goes, files the user created in shared folders stay, and the user id is never given to anyone else. Grants, group memberships and the user's jobs and notifications are removed.
 
 To reset a password, use **New password** on the user: the user is signed out everywhere, and SMB and SFTP use the new password as well. Pithyx has no reset by email. If the only administrator forgot the password, the recovery key from first setup is the only way, see [Security](/docs/admin/security/#the-recovery-key).
 
 ## Home folders
 
-Each user gets a dataset `<first pool>/pithyx/homes/<user>` at `/<pool>/homes/<user>`, mode 0700, owned by the user. Without a pool the list shows "No pool yet" and the folder is created once a pool exists. Home folders are kept when a user is deleted.
+Each user gets a private home folder, a dataset `<home pool>/pithyx/homes/<user>` at `/<pool>/homes/<user>`, owned by the user. The list shows its path, or "No pool yet" until a pool with the Pithyx layout exists. Its pool, quotas and the homes of deleted users are on [Home folders](/docs/admin/home-folders/).

@@ -45,7 +45,7 @@ public sealed class UserApiTests : IDisposable
         Assert.Equal(20001, rita.GetProperty("uid").GetInt64());
         using (var deleted = await _admin.DeleteAsync($"/api/users/{rita.GetProperty("id").GetInt64()}", Token))
         {
-            Assert.Equal(HttpStatusCode.NoContent, deleted.StatusCode);
+            Assert.Equal(HttpStatusCode.OK, deleted.StatusCode);
         }
         var again = await CreateAsync("rita");
 
@@ -90,7 +90,7 @@ public sealed class UserApiTests : IDisposable
 
         using (var deleted = await _admin.DeleteAsync($"/api/users/{ritaId}", Token))
         {
-            Assert.Equal(HttpStatusCode.NoContent, deleted.StatusCode);
+            Assert.Equal(HttpStatusCode.OK, deleted.StatusCode);
         }
 
         await cancelled.Task.WaitAsync(TimeSpan.FromSeconds(10), Token);

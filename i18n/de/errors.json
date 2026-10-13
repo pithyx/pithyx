@@ -218,6 +218,28 @@
       "read_only": "Der Speicher ist schreibgeschützt."
     }
   },
+  "homes": {
+    "choice": {
+      "invalid": "Wähle, was mit dem Home-Ordner passiert: einen freigegebenen Ordner für seine Dateien, oder gib zum Löschen den Benutzernamen ein."
+    },
+    "home": {
+      "in_use": "Dieser Home-Ordner gehört noch einem Benutzer. Nur der Home-Ordner eines gelöschten Benutzers lässt sich allein löschen oder verschieben, und der Home-Ordner eines Benutzers nur, solange sein Pool fehlt.",
+      "name_mismatch": "Gib zur Bestätigung genau {name} ein.",
+      "not_found": "Diesen Home-Ordner gibt es nicht (mehr)."
+    },
+    "move": {
+      "running": "Die Home-Ordner ziehen schon auf einen anderen Pool um. Warte, bis der Umzug fertig ist."
+    },
+    "pool": {
+      "no_space": "Der Pool hat zu wenig freien Platz für die Home-Ordner: {neededBytes, number} Bytes werden gebraucht, {availableBytes, number} sind frei.",
+      "taken": "Auf dem Ziel-Pool gibt es schon einen Home-Ordner namens {folder}.",
+      "unavailable": "Der Pool {pool} kann gerade keine Home-Ordner aufnehmen: {reason, select, missing {er ist nicht importiert} offline {er ist nicht online} read_only {er ist nur lesbar} locked {er ist gesperrt} not_prepared {er wurde nicht von Pithyx eingerichtet} not_mounted {seine Home-Ordner sind nicht eingehängt} other {er ist nicht verfügbar}}.",
+      "unchanged": "Die Home-Ordner liegen schon auf diesem Pool."
+    },
+    "quota": {
+      "invalid": "Eine Quota ist mindestens 1 MiB groß, oder es gibt keine Grenze."
+    }
+  },
   "installer": {
     "check": {
       "failed": "Dieser Computer erfüllt eine Voraussetzung von Pithyx nicht. Die erste Seite des Installers zeigt, welche."

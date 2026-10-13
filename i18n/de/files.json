@@ -13,7 +13,8 @@
   },
   "shares": {
     "title": "Freigaben",
-    "unavailable": "Nicht verfügbar"
+    "unavailable": "Nicht verfügbar",
+    "homes": "homes"
   },
   "columns": {
     "name": "Name",

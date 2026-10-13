@@ -52,7 +52,7 @@ Hinweise:
 - Pool-Namen beginnen mit einem Kleinbuchstaben und dürfen Kleinbuchstaben, Ziffern, Bindestriche und Unterstriche enthalten.
 - Du kannst das Fenster schließen, während der Pool angelegt wird; eine Benachrichtigung sagt dir, wann er fertig ist.
 
-Benutzer bekommen einen Home-Ordner auf dem ersten Pool, sobald es einen gibt. Apps brauchen einen App-Pool, den ein Administrator bei der Installation der ersten App wählt. Auch freigegebene Ordner liegen auf einem Pool. Siehe [Speicher und Pools](/de/docs/admin/storage/) und [Freigaben](/de/docs/admin/shared-folders/).
+Benutzer bekommen einen Home-Ordner auf dem ersten Pool mit dem Pithyx-Layout, sobald es einen gibt ([Home-Ordner](/de/docs/admin/home-folders/)). Apps brauchen einen App-Pool, den ein Administrator bei der Installation der ersten App wählt. Auch freigegebene Ordner liegen auf einem Pool. Siehe [Speicher und Pools](/de/docs/admin/storage/) und [Freigaben](/de/docs/admin/shared-folders/).
 
 ## Benutzer hinzufügen
 

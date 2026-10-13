@@ -26,7 +26,7 @@
   "create": {
     "button": "Benutzer anlegen",
     "title": "Benutzer anlegen",
-    "intro": "Der Benutzer bekommt einen Home-Ordner auf dem ersten Pool, sobald es einen gibt.",
+    "intro": "Der Benutzer bekommt einen Home-Ordner auf dem Home-Pool, sobald es einen gibt.",
     "submit": "Anlegen"
   },
   "edit": {
@@ -44,9 +44,20 @@
   "delete": {
     "button": "Löschen",
     "title": "{name} löschen?",
-    "intro": "Das Konto wird entfernt. Dateien und Home-Ordner des Benutzers bleiben, und seine Benutzer-ID bekommt nie jemand anderes.",
+    "intro": "Das Konto wird gelöscht, und die Benutzer-ID bekommt nie wieder jemand anderes. Dateien, die der Benutzer in freigegebenen Ordnern angelegt hat, bleiben.",
     "confirm": "Gib {name} ein, um zu bestätigen",
-    "submit": "Benutzer löschen"
+    "submit": "Benutzer löschen",
+    "home": {
+      "title": "Home-Ordner",
+      "keep": "Behalten",
+      "keepHint": "Er bleibt für Administratoren unter homes als {folder}, bis du ihn unter Einstellungen > Home-Ordner löschst.",
+      "move": "Dateien in einen freigegebenen Ordner verschieben",
+      "moveHint": "Ein Ordner mit dem Namen des Benutzers bekommt die Dateien, danach wird der Home-Ordner samt Papierkorb gelöscht.",
+      "delete": "Mit allen Dateien löschen",
+      "deleteHint": "Die Dateien und der Papierkorb des Homes sind endgültig weg.",
+      "share": "Freigegebener Ordner",
+      "noShares": "Es gibt keinen freigegebenen Ordner, in den die Dateien verschoben werden können."
+    }
   },
   "cancel": "Abbrechen",
   "disable": {

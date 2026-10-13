@@ -7,6 +7,7 @@ import {
   IconCertificate,
   IconCloudDownload,
   IconFolders,
+  IconHome,
   IconInfoCircle,
   IconNetwork,
   IconRestore,
@@ -25,6 +26,7 @@ import { UsersPage } from '../users/UsersPage';
 import { BackupPage } from './BackupPage';
 import { CertificatesPage } from './CertificatesPage';
 import { FileServicesPage } from './FileServicesPage';
+import { HomesPage } from './HomesPage';
 import { InfoCenterPage } from './InfoCenterPage';
 import { NetworkPage } from './NetworkPage';
 import { RegionalPage } from './RegionalPage';
@@ -43,6 +45,7 @@ type PageId =
   | 'updates'
   | 'backup'
   | 'shares'
+  | 'homes'
   | 'fileServices'
   | 'users'
   | 'groups';
@@ -64,6 +67,7 @@ const PAGES: readonly SettingsPage[] = [
   { id: 'updates', category: 'system', icon: IconCloudDownload, Component: UpdatesPage },
   { id: 'backup', category: 'system', icon: IconRestore, Component: BackupPage },
   { id: 'shares', category: 'sharing', icon: IconFolders, Component: SharesPage },
+  { id: 'homes', category: 'sharing', icon: IconHome, Component: HomesPage },
   { id: 'fileServices', category: 'sharing', icon: IconServer2, Component: FileServicesPage },
   { id: 'users', category: 'accounts', icon: IconUsers, Component: UsersPage },
   { id: 'groups', category: 'accounts', icon: IconUsersGroup, Component: GroupsPage },

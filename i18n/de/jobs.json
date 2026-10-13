@@ -69,6 +69,8 @@
     "store_sync": "Katalog wird abgerufen",
     "unknown": "Aufgabe",
     "system_update": "Pithyx wird aktualisiert",
-    "system_rollback": "Pithyx wird zurückgesetzt"
+    "system_rollback": "Pithyx wird zurückgesetzt",
+    "homes_move": "Home-Ordner ziehen auf einen anderen Pool um",
+    "homes_release": "Home-Ordner wird in einen freigegebenen Ordner verschoben"
   }
 }

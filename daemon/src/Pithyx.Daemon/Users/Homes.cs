@@ -66,6 +66,29 @@ public sealed partial class Homes(
 
     public void Dispose() => _running.Dispose();
 
+    /// <summary>
+    /// Holds off <see cref="ReconcileAsync"/> while a change renames, moves or removes a home, so it never registers a
+    /// half-done change as a home without a row. Never call <see cref="ReconcileAsync"/> while holding it.
+    /// </summary>
+    public async Task<IDisposable> LockAsync(CancellationToken cancellationToken)
+    {
+        await _running.WaitAsync(cancellationToken);
+        return new Releaser(_running);
+    }
+
+    private sealed class Releaser(SemaphoreSlim semaphore) : IDisposable
+    {
+        private int _released;
+
+        public void Dispose()
+        {
+            if (Interlocked.Exchange(ref _released, 1) == 0)
+            {
+                semaphore.Release();
+            }
+        }
+    }
+
     public static string RowName(string folder) => RowPrefix + folder;
 
     /// <summary>The folder a deleted user's home is renamed to, so the user name is free again; uids are never reused.</summary>

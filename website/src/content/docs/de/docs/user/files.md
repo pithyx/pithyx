@@ -15,7 +15,7 @@ Dateien ist die App, mit der du in den freigegebenen Ordnern arbeitest, die du n
 
 _Dateien in der Listenansicht. Ein Rechtsklick auf einen Eintrag öffnet sein Kontextmenü._
 
-Öffne **Dateien** im Pithyx-Menü. Die Seitenleiste listet deine freigegebenen Ordner unter **Freigaben** auf. Klicke auf einen, um ihn zu öffnen. Ein Ordner, der gerade nicht erreichbar ist (zum Beispiel weil sein Pool offline ist), zeigt **Nicht verfügbar**. Ist die Liste leer, hast du noch keine freigegebenen Ordner, und ein Administrator muss sie anlegen. Ein freigegebener Ordner mit der Markierung **Nur lesen** lässt dich ansehen und herunterladen, aber nichts ändern.
+Öffne **Dateien** im Pithyx-Menü. Die Seitenleiste listet unter **Freigaben** zuerst deinen Home-Ordner **home** und darunter deine freigegebenen Ordner auf; Dateien öffnet sich in deinem Home. Dein Home ist privat: Nur du und die Administratoren können es öffnen. Administratoren sehen zusätzlich das Home jedes Benutzers unter **homes**. Klicke auf einen, um ihn zu öffnen. Ein Ordner, der gerade nicht erreichbar ist (zum Beispiel weil sein Pool offline ist), zeigt **Nicht verfügbar**. Ist die Liste leer, hast du noch keine freigegebenen Ordner, und ein Administrator muss sie anlegen. Ein freigegebener Ordner mit der Markierung **Nur lesen** lässt dich ansehen und herunterladen, aber nichts ändern.
 
 So bewegst du dich:
 
@@ -81,7 +81,7 @@ Zum Herunterladen wählst du **Herunterladen** oder öffnest eine Datei, die der
 
 _Jede Freigabe hat ihren eigenen Papierkorb mit dem Datum, an dem ein Eintrag endgültig gelöscht wird._
 
-**In den Papierkorb** (die Taste **Entf**) löscht eine Datei nicht. Sie verschiebt sie in den Papierkorb ihres freigegebenen Ordners. Dateien über SMB, WebDAV oder FTP zu löschen, tut dasselbe.
+**In den Papierkorb** (die Taste **Entf**) löscht eine Datei nicht. Sie verschiebt sie in den Papierkorb ihres freigegebenen Ordners oder deines Homes. Dateien über SMB, WebDAV oder FTP zu löschen, tut dasselbe.
 
 Um einen Papierkorb zu sehen, klicke in der Seitenleiste auf **Papierkorb** und wähle den freigegebenen Ordner. Jeder Eintrag zeigt, woher er kam und wann er gelöscht wurde. Mit **Wiederherstellen** bekommst du ihn in seinem ursprünglichen Ordner zurück; fehlende übergeordnete Ordner werden angelegt. **Endgültig löschen** entfernt einzelne Elemente. **Papierkorb leeren** entfernt alles im Papierkorb dieses Ordners. Beides fragt vorher nach, und du brauchst Schreibzugriff.
 

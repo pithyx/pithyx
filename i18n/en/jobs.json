@@ -69,6 +69,8 @@
     "store_sync": "Fetching a catalog",
     "unknown": "Task",
     "system_update": "Updating Pithyx",
-    "system_rollback": "Rolling back Pithyx"
+    "system_rollback": "Rolling back Pithyx",
+    "homes_move": "Moving home folders to another pool",
+    "homes_release": "Moving a home folder into a shared folder"
   }
 }

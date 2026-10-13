@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { crc32, deflateSync } from 'node:zlib';
 import type { Locator, Page } from '@playwright/test';
 import { expect, test } from './fixtures';
-import { appWindow, openFromStart, signInAsAdmin } from './session';
+import { appWindow, openFilesInShared, signInAsAdmin } from './session';
 
 // The simulated share "Shared" lives in the daemon's data directory (playwright.config.ts).
 const shared = join(process.env.PITHYX_E2E_DATA ?? '', 'shares', 'shared');
@@ -68,7 +68,7 @@ function grid(page: Page): Locator {
 
 async function openFolder(page: Page, folder: string) {
   await signInAsAdmin(page);
-  await openFromStart(page, 'Files');
+  await openFilesInShared(page);
   await grid(page)
     .getByRole('row', { name: new RegExp(`^${folder}`) })
     .dblclick();

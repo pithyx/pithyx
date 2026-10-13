@@ -11,7 +11,7 @@ namespace Pithyx.Daemon.Tests.Storage;
 public sealed partial class CommandSafetyTests
 {
     private const string ImportPlans = "Storage/Zfs/ImportPlans.cs";
-    private static readonly string[] _planBuilders = ["Storage/Zfs/ZfsPlans.cs", "Storage/Zfs/ZfsDatasetPlans.cs", "Storage/Zfs/SnapshotPlans.cs", ImportPlans, "Installer/InstallPlans.cs"];
+    private static readonly string[] _planBuilders = ["Storage/Zfs/ZfsPlans.cs", "Storage/Zfs/ZfsDatasetPlans.cs", "Storage/Zfs/SnapshotPlans.cs", "Storage/Zfs/HomePlans.cs", ImportPlans, "Installer/InstallPlans.cs"];
 
     private static IEnumerable<(string File, string Text)> DaemonSources()
     {

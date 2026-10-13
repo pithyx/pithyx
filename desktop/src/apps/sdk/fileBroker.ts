@@ -81,6 +81,7 @@ export function fileBrokerFor(target: FileBrokerTarget): {
         ...(share.unavailable == null
           ? {}
           : { unavailable: UNAVAILABLE[share.unavailable] ?? 'notMounted' }),
+        ...(share.kind === 'home' || share.kind === 'userHome' ? { kind: share.kind } : {}),
       }));
     },
     'files.list': async ({ location, path, cursor, limit, sort, order }) => {

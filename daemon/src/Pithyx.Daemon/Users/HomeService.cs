@@ -143,7 +143,10 @@ public sealed partial class HomeService(
         {
             throw new PithyxException(ErrorCodes.HomesPoolUnchanged);
         }
-        var moving = (await homes.RowsAsync(cancellationToken)).Where(row => row.Pool != target || !options.UseZfs).ToList();
+        // A home on a pool that is gone cannot be copied; it stays where it is and can be deleted on its own.
+        var moving = (await homes.RowsAsync(cancellationToken))
+            .Where(row => (row.Pool != target || !options.UseZfs) && !OnMissingPool(row, current))
+            .ToList();
         var root = homes.RootOf(current, target)!;
         if (moving.FirstOrDefault(row => Directory.Exists(Path.Combine(root, row.Folder))) is { } taken)
         {
@@ -207,29 +210,20 @@ public sealed partial class HomeService(
         await ReleaseAsync(row.Path, cancellationToken);
         if (!options.UseZfs)
         {
-            Directory.CreateDirectory(root);
-            Directory.Move(row.Path, path);
-            await PointAsync(row, path, null);
+            using (await homes.LockAsync(cancellationToken))
+            {
+                Directory.CreateDirectory(root);
+                Directory.Move(row.Path, path);
+                await PointAsync(row, path, null);
+            }
             return;
         }
         var source = row.Dataset!;
         var dataset = HomePlans.Dataset(target, row.Folder);
         var snapshot = SnapshotNames.For(SnapshotKinds.Move, time.GetUtcNow());
-        await RunAsync(HomePlans.SetReadOnly(source, true), cancellationToken);
-        try
-        {
-            await RunAsync(HomePlans.Snapshot(source, snapshot), cancellationToken);
-            await RunAsync(HomePlans.SendReceive(source, snapshot, dataset), cancellationToken);
-            await RunAsync(HomePlans.Mount(dataset), cancellationToken);
-        }
-        catch
-        {
-            // Nothing of this home changed but what the move added; it stays on its pool, writable again.
-            await commands.RunAsync(HomePlans.Destroy(dataset), CancellationToken.None);
-            await commands.RunAsync(HomePlans.SetReadOnly(source, false), CancellationToken.None);
-            await commands.RunAsync(HomePlans.DestroySnapshot(source, snapshot), CancellationToken.None);
-            throw;
-        }
+        await CopyAsync(commands, source, dataset, snapshot, cancellationToken);
+        // From here until the old copy is gone, a check of the homes would take it for a home without a row.
+        using var held = await homes.LockAsync(CancellationToken.None);
         await PointAsync(row, path, dataset);
         await commands.RunAsync(HomePlans.DestroySnapshot(dataset, snapshot), CancellationToken.None);
         // The views of the old place go before it is destroyed; nothing writes there since it is read-only.
@@ -237,6 +231,35 @@ public sealed partial class HomeService(
         if ((await commands.RunAsync(HomePlans.Destroy(source), CancellationToken.None)).ExitCode != 0)
         {
             LogLeftover(source);
+        }
+    }
+
+    /// <summary>
+    /// Copies a home's dataset to <paramref name="dataset"/> on another pool and mounts it there: the old one turns
+    /// read-only first, so nothing written after its snapshot is lost, and stays so. When a step fails, what the copy
+    /// added goes, the old one is writable again and the error is thrown.
+    /// </summary>
+    internal static async Task CopyAsync(ICommandRunner commands, string source, string dataset, string snapshot, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(commands);
+        // A dataset there already is never touched, not even by the clean-up of a failed copy.
+        if ((await commands.RunAsync(HomePlans.Exists(dataset), cancellationToken)).ExitCode == 0)
+        {
+            throw new PithyxException(ErrorCodes.HomesPoolTaken, new Dictionary<string, object?> { ["folder"] = dataset.Split('/')[^1] });
+        }
+        await RunAsync(commands, HomePlans.SetReadOnly(source, true), cancellationToken);
+        try
+        {
+            await RunAsync(commands, HomePlans.Snapshot(source, snapshot), cancellationToken);
+            await RunAsync(commands, HomePlans.SendReceive(source, snapshot, dataset), cancellationToken);
+            await RunAsync(commands, HomePlans.Mount(dataset), cancellationToken);
+        }
+        catch
+        {
+            await commands.RunAsync(HomePlans.Destroy(dataset), CancellationToken.None);
+            await commands.RunAsync(HomePlans.SetReadOnly(source, false), CancellationToken.None);
+            await commands.RunAsync(HomePlans.DestroySnapshot(source, snapshot), CancellationToken.None);
+            throw;
         }
     }
 
@@ -288,17 +311,31 @@ public sealed partial class HomeService(
         return choice == HomeDataChoice.Move ? await StartReleaseAsync(caller, kept.ShareId, new HomeReleaseRequest(targetShareId!.Value), cancellationToken, username) : null;
     }
 
-    /// <summary>Deletes the home of a deleted user with every file, after its folder name was typed.</summary>
+    /// <summary>
+    /// Deletes the home of a deleted user with every file, after its folder name was typed; also a user's home whose
+    /// pool is gone, so the user gets a new one on the home pool.
+    /// </summary>
     public async Task DeleteAsync(ClaimsPrincipal caller, long shareId, string? confirm, CancellationToken cancellationToken)
     {
         RequireAdmin(caller);
-        var row = await OrphanAsync(shareId, cancellationToken);
+        var row = (await homes.RowsAsync(cancellationToken)).FirstOrDefault(candidate => candidate.ShareId == shareId) ?? throw new PithyxException(ErrorCodes.HomesHomeNotFound);
+        if (row.UserId is not null && !OnMissingPool(row, pools.Current))
+        {
+            throw new PithyxException(ErrorCodes.HomesHomeInUse);
+        }
         if (confirm != row.Folder)
         {
             throw new PithyxException(ErrorCodes.HomesHomeNameMismatch, new Dictionary<string, object?> { ["name"] = row.Folder });
         }
         await DestroyAsync(row, cancellationToken);
+        if (row.UserId is not null)
+        {
+            await homes.ReconcileAsync(cancellationToken);
+        }
     }
+
+    private bool OnMissingPool(HomeRow row, PoolList current) =>
+        ShareAvailability.Reason(row.Dataset, current, pools.Available) == ShareAvailability.PoolMissing;
 
     /// <summary>
     /// Moves the files of a deleted user's home into a new folder of a shared folder as a job, then deletes the home.
@@ -363,6 +400,7 @@ public sealed partial class HomeService(
         var path = Path.Combine(parent, folder);
         string? dataset = null;
         await ReleaseAsync(row.Path, cancellationToken);
+        using var held = await homes.LockAsync(cancellationToken);
         if (options.UseZfs && row.Pool is { } pool)
         {
             if ((await commands.RunAsync(HomePlans.Rename(pool, row.Folder, folder), cancellationToken)).ExitCode != 0)
@@ -391,6 +429,7 @@ public sealed partial class HomeService(
     private async Task DestroyAsync(HomeRow row, CancellationToken cancellationToken)
     {
         await ReleaseAsync(row.Path, cancellationToken);
+        using var held = await homes.LockAsync(cancellationToken);
         if (options.UseZfs && row.Dataset is { } dataset)
         {
             if (pools.Current.Datasets.Any(candidate => candidate.Name == dataset))
@@ -419,7 +458,9 @@ public sealed partial class HomeService(
         await views.ReleaseAsync(path, cancellationToken);
     }
 
-    private async Task RunAsync(CommandRequest request, CancellationToken cancellationToken)
+    private Task RunAsync(CommandRequest request, CancellationToken cancellationToken) => RunAsync(commands, request, cancellationToken);
+
+    private static async Task RunAsync(ICommandRunner commands, CommandRequest request, CancellationToken cancellationToken)
     {
         var result = await commands.RunAsync(request, cancellationToken);
         if (result.ExitCode != 0)

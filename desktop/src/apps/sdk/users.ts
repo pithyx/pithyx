@@ -14,6 +14,13 @@ export type GrantEntry = components['schemas']['GrantEntry'];
 export type UserGrants = components['schemas']['UserGrants'];
 export type GroupGrants = components['schemas']['GroupGrants'];
 export type PermissionCatalog = components['schemas']['PermissionCatalog'];
+export type HomeOverview = components['schemas']['HomeOverview'];
+export type HomeInfo = components['schemas']['HomeInfo'];
+export type Job = components['schemas']['Job'];
+
+/** What happens to a deleted user's home: kept, moved into a shared folder or deleted after the name was typed. */
+export type HomeChoice =
+  { home: 'keep' } | { home: 'move'; shareId: number } | { home: 'delete'; confirm: string };
 
 /** User management for administrators, outside the public SDK; the daemon checks the right on every request. */
 interface UserMethods {
@@ -24,7 +31,25 @@ interface UserMethods {
     params: { userId: number; password: string };
     result: null;
   };
-  'internal.admin.users.delete': { params: { userId: number }; result: null };
+  'internal.admin.users.delete': {
+    params: { userId: number } & HomeChoice;
+    result: { job?: Job | null };
+  };
+  'internal.admin.homes.overview': { params: Record<string, never>; result: HomeOverview };
+  'internal.admin.homes.setDefaultQuota': {
+    params: { defaultQuotaBytes: number | null };
+    result: HomeOverview;
+  };
+  'internal.admin.homes.setQuota': {
+    params: { userId: number; quotaBytes: number | null };
+    result: HomeOverview;
+  };
+  'internal.admin.homes.move': { params: { pool: string }; result: Job };
+  'internal.admin.homes.delete': { params: { shareId: number; confirm: string }; result: null };
+  'internal.admin.homes.release': {
+    params: { shareId: number; targetShareId: number };
+    result: Job;
+  };
   'internal.admin.groups.list': { params: Record<string, never>; result: GroupSummary[] };
   'internal.admin.groups.create': { params: NewGroup; result: GroupSummary };
   'internal.admin.groups.update': {
@@ -122,13 +147,98 @@ export function usersHost(): HostExtensions {
       },
     },
     'internal.admin.users.delete': {
-      validate: hasUserId,
+      validate: (value) =>
+        hasUserId(value) &&
+        (value.home === 'keep' ||
+          (value.home === 'move' && Number.isSafeInteger(value.shareId)) ||
+          (value.home === 'delete' && typeof value.confirm === 'string')),
+      handle: (params) => {
+        const { userId, ...choice } = params as { userId: number } & HomeChoice;
+        return daemon(async () =>
+          unwrap(
+            await api.DELETE('/api/users/{userId}', {
+              params: { path: { userId }, query: choice },
+            }),
+          ),
+        );
+      },
+    },
+    'internal.admin.homes.overview': {
+      validate: isRecord,
+      handle: () => daemon(async () => unwrap(await api.GET('/api/homes'))),
+    },
+    'internal.admin.homes.setDefaultQuota': {
+      validate: (value) =>
+        isRecord(value) &&
+        (value.defaultQuotaBytes === null || Number.isSafeInteger(value.defaultQuotaBytes)),
+      handle: (params) =>
+        daemon(async () =>
+          unwrap(
+            await api.PUT('/api/homes/settings', {
+              body: {
+                defaultQuotaBytes: (params as { defaultQuotaBytes: number | null })
+                  .defaultQuotaBytes,
+              },
+            }),
+          ),
+        ),
+    },
+    'internal.admin.homes.setQuota': {
+      validate: (value) =>
+        hasUserId(value) && (value.quotaBytes === null || Number.isSafeInteger(value.quotaBytes)),
+      handle: (params) => {
+        const { userId, quotaBytes } = params as { userId: number; quotaBytes: number | null };
+        return daemon(async () =>
+          unwrap(
+            await api.PUT('/api/homes/users/{userId}/quota', {
+              params: { path: { userId } },
+              body: { quotaBytes },
+            }),
+          ),
+        );
+      },
+    },
+    'internal.admin.homes.move': {
+      validate: (value) => isRecord(value) && typeof value.pool === 'string',
+      handle: (params) =>
+        daemon(async () =>
+          unwrap(
+            await api.POST('/api/homes/move', {
+              body: { pool: (params as { pool: string }).pool },
+            }),
+          ),
+        ),
+    },
+    'internal.admin.homes.delete': {
+      validate: (value) =>
+        isRecord(value) && Number.isSafeInteger(value.shareId) && typeof value.confirm === 'string',
       handle: async (params) => {
-        const { userId } = params as { userId: number };
+        const { shareId, confirm } = params as { shareId: number; confirm: string };
         await daemon(async () => {
-          unwrap(await api.DELETE('/api/users/{userId}', { params: { path: { userId } } }));
+          unwrap(
+            await api.DELETE('/api/homes/{shareId}', {
+              params: { path: { shareId }, query: { confirm } },
+            }),
+          );
         });
         return null;
+      },
+    },
+    'internal.admin.homes.release': {
+      validate: (value) =>
+        isRecord(value) &&
+        Number.isSafeInteger(value.shareId) &&
+        Number.isSafeInteger(value.targetShareId),
+      handle: (params) => {
+        const { shareId, targetShareId } = params as { shareId: number; targetShareId: number };
+        return daemon(async () =>
+          unwrap(
+            await api.POST('/api/homes/{shareId}/release', {
+              params: { path: { shareId } },
+              body: { shareId: targetShareId },
+            }),
+          ),
+        );
       },
     },
     'internal.admin.groups.list': {

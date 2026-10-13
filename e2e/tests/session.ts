@@ -60,6 +60,20 @@ export async function openFromStart(page: Page, name: string) {
   await page.getByRole('dialog', { name: 'Pithyx menu' }).getByRole('row', { name }).click();
 }
 
+/**
+ * Opens Files in the simulated shared folder "Shared": Files starts in the user's home (D348), which the specs that
+ * prepare files on disk do not use.
+ */
+export async function openFilesInShared(page: Page) {
+  await openFromStart(page, 'Files');
+  const files = page.getByRole('region', { name: /Files$/ });
+  await files
+    .getByRole('navigation', { name: 'Shares and recycle bin' })
+    .getByRole('button', { name: 'Shared', exact: true })
+    .click();
+  await expect(files.getByRole('navigation', { name: 'Path' })).toContainText('Shared');
+}
+
 export function appWindow(page: Page, name: string) {
   return page.getByRole('region', { name, exact: true });
 }

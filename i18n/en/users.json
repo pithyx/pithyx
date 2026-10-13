@@ -26,7 +26,7 @@
   "create": {
     "button": "Create user",
     "title": "Create user",
-    "intro": "The user gets a home folder on the first pool when there is one.",
+    "intro": "The user gets a home folder on the home pool when there is one.",
     "submit": "Create"
   },
   "edit": {
@@ -44,9 +44,20 @@
   "delete": {
     "button": "Delete",
     "title": "Delete {name}?",
-    "intro": "The account goes. The user's files and home folder stay, and the user id is never given to anyone else.",
+    "intro": "The account goes and the user id is never given to anyone else. Files the user created in shared folders stay.",
     "confirm": "Type {name} to confirm",
-    "submit": "Delete user"
+    "submit": "Delete user",
+    "home": {
+      "title": "Home folder",
+      "keep": "Keep it",
+      "keepHint": "It stays for administrators below homes as {folder} until you delete it in Settings > Home folders.",
+      "move": "Move its files into a shared folder",
+      "moveHint": "A folder named after the user gets the files, then the home folder goes with its recycle bin.",
+      "delete": "Delete it with every file",
+      "deleteHint": "The files and the home's recycle bin are gone for good.",
+      "share": "Shared folder",
+      "noShares": "There is no shared folder to move the files into."
+    }
   },
   "cancel": "Cancel",
   "disable": {

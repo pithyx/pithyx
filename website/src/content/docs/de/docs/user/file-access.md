@@ -20,7 +20,7 @@ _Ein Administrator schaltet die Dateidienste unter Einstellungen > Dateidienste 
 | Protokoll  | Wofür                                                                                            | Hinweise                                                                                                       |
 | ---------- | ------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
 | **SMB**    | Ein Netzlaufwerk unter Windows, macOS und Linux für die tägliche Arbeit                          | Braucht SMB 3. Ältere Systeme können sich nicht verbinden. Frühere Versionen und der Papierkorb funktionieren. |
-| **SFTP**   | Verschlüsselte Übertragungen mit einem Programm wie FileZilla oder WinSCP oder dem Befehl `sftp` | Du siehst nur deine freigegebenen Ordner und bekommst keine Shell. Nur Anmeldung per Passwort.                 |
+| **SFTP**   | Verschlüsselte Übertragungen mit einem Programm wie FileZilla oder WinSCP oder dem Befehl `sftp` | Du siehst nur dein Home und deine freigegebenen Ordner und bekommst keine Shell. Nur Anmeldung per Passwort.   |
 | **WebDAV** | Programme und Dateimanager, die einen Web-Ordner einbinden können                                | Adresse: `https://<box-address>:7484/webdav/`                                                                  |
 | **FTP**    | Geräte, die weder SFTP noch WebDAV kennen, etwa Scanner                                          | Nur der passive Modus. Mit TLS verschlüsselt; unverschlüsseltes FTP nur, wenn ein Administrator es erlaubt.    |
 
@@ -29,6 +29,10 @@ Der Desktop und WebDAV nutzen HTTPS. Windows und macOS binden WebDAV erst ein, w
 :::
 
 Jeder sieht nur die freigegebenen Ordner, die seine Rechte erlauben, mit der Zugriffsstufe, die ein Administrator ihm gegeben hat: kein Zugriff, **Lesen** oder **Lesen und schreiben**. Administratoren erreichen jeden freigegebenen Ordner.
+
+## Dein Home-Ordner
+
+Neben den freigegebenen Ordnern hat jeder Benutzer einen privaten Home-Ordner, den nur er und die Administratoren öffnen können. Über SMB ist er die Freigabe `home` (`\\<box-address>\home` unter Windows, `smb://<box-address>/home` unter macOS und Linux), über SFTP, WebDAV und FTP der Ordner `home` ganz oben. Administratoren finden zusätzlich das Home jedes Benutzers in der Freigabe oder dem Ordner `homes`. Dateien, die du in deinem Home löschst, landen in seinem Papierkorb, außer in der SMB-Freigabe `homes`, wo sie sofort weg sind. Siehe [Home-Ordner](/de/docs/admin/home-folders/).
 
 Die Zwei-Faktor-Anmeldung gilt hier nicht. Diese Dienste fragen nur nach deinem Passwort.
 

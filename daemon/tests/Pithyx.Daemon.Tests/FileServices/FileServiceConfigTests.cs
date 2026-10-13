@@ -72,12 +72,18 @@ public sealed class FileServiceConfigTests
             new SmbShare("Media", "/tank/pithyx/shares/media", ["tom"], ["ada", "rita"], Encrypt: false),
             new SmbShare("Private Files", "/tank/pithyx/shares/private_files", [], [], Encrypt: true),
             new SmbShare("homes", "/tank/pithyx/shares/homes", [], ["ada"], Encrypt: false),
+            new SmbShare("homes", "/tank/homes", [], ["ada"], Encrypt: false, SmbShareKind.Homes),
+            new SmbShare("home", "%H", [], ["ada", "rita"], Encrypt: false, SmbShareKind.Home),
         ], SmbConfig.NetbiosName("nas-in-the-basement"));
 
         Assert.StartsWith(SmbConfig.Header, config, StringComparison.Ordinal);
         Assert.Equal("NAS-IN-THE-BASE", SmbConfig.NetbiosName("nas-in-the-basement"));
         Assert.Equal("NAS-01", SmbConfig.NetbiosName("nas-01"));
-        Assert.DoesNotContain("[homes]", config, StringComparison.Ordinal);
+        // A shared folder named like the homes is never offered; the homes are, home first.
+        Assert.DoesNotContain("/tank/pithyx/shares/homes", config, StringComparison.Ordinal);
+        Assert.True(config.IndexOf("[home]", StringComparison.Ordinal) < config.IndexOf("[homes]", StringComparison.Ordinal));
+        var homes = config[config.IndexOf("[homes]", StringComparison.Ordinal)..config.IndexOf("[Media]", StringComparison.Ordinal)];
+        Assert.DoesNotContain("recycle", homes, StringComparison.Ordinal);
         AssertGolden(config, "samba", "smb.conf.golden");
     }
 
@@ -172,6 +178,43 @@ public sealed class FileServiceConfigTests
         var off = FileServiceSync.Plan(true, "WORKGROUP", sftpEnabled: false, sshEnabled: false, [User(20000, "ada", admin: true)], _shares, _pools, true);
         Assert.Empty(off.SftpUsers);
         Assert.Empty(off.SftpEntries);
+    }
+
+    [Fact]
+    public void EveryUserGetsTheOwnHomeAndAdministratorsEveryHome()
+    {
+        IReadOnlyList<UserPermissions> users =
+        [
+            User(20000, "ada", admin: true),
+            User(20001, "rita", allowed: [Resources.Smb, Resources.Sftp]),
+            User(20002, "tom", allowed: [Resources.Smb]),
+            User(20003, "eve"),
+        ];
+        Dataset Home(string folder) =>
+            new($"tank/pithyx/homes/{folder}", "tank", "filesystem", 1, 1, 1, $"/tank/homes/{folder}", true, "off", null, null, null, null, "lz4", 131072, null, null, 0);
+        var pools = _pools with { Datasets = [.. _pools.Datasets, Home("ada"), Home("rita"), Home("tom"), Home("eve"), Home("old.deleted-20009")] };
+        IReadOnlyList<HomeRow> homes =
+        [
+            new(10, "ada", "/tank/homes/ada", "tank/pithyx/homes/ada", 20000),
+            new(11, "rita", "/tank/homes/rita", "tank/pithyx/homes/rita", 20001),
+            new(12, "tom", "/tank/homes/tom", "tank/pithyx/homes/tom", 20002),
+            new(13, "eve", "/tank/homes/eve", "tank/pithyx/homes/eve", 20003),
+            new(14, "old.deleted-20009", "/tank/homes/old.deleted-20009", "tank/pithyx/homes/old.deleted-20009", null),
+            // On a pool that is gone: offered nowhere.
+            new(15, "lost", "/lost/homes/lost", "lost/pithyx/homes/lost", null),
+        ];
+
+        var plan = FileServiceSync.Plan(true, "WORKGROUP", sftpEnabled: true, sshEnabled: false, users, _shares, pools, true, homes, "/tank/homes");
+
+        var home = Assert.Single(plan.SmbShares, share => share.Kind == SmbShareKind.Home);
+        Assert.Equal(("home", "%H"), (home.Name, home.Path));
+        Assert.Equal(["ada", "rita", "tom"], home.Writers.Order());
+        var all = Assert.Single(plan.SmbShares, share => share.Kind == SmbShareKind.Homes);
+        Assert.Equal(("homes", "/tank/homes", "ada"), (all.Name, all.Path, Assert.Single(all.Writers)));
+        Assert.Equal(
+            ["ada/Docs", "ada/Media", "ada/home", "ada/homes/eve", "ada/homes/old.deleted-20009", "ada/homes/rita", "ada/homes/tom", "rita/home"],
+            plan.SftpEntries.Select(entry => $"{entry.User}/{entry.Share}").Order(StringComparer.Ordinal));
+        Assert.Equal([1L, 2L, 10L, 11L, 12L, 13L, 14L], plan.SharePaths.Keys.Order());
     }
 
     [Fact]

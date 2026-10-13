@@ -35,8 +35,9 @@ Rules for `daemon/`; the root `CLAUDE.md` applies as well.
 /var/lib/pithyx/catalogs/<id>/  a catalog's shallow git repository (repo.git) and its verified copy per channel (stable, beta)
 /var/cache/pithyx/   rebuildable, safe to delete
 /var/log/pithyx/     logs: daemon.json files and logs.db (the Log Center, capped at 4 GB)
-/run/pithyx/sftp/    SFTP views: one chroot per user with bind mounts of its shared folders, rebuilt at start
+/run/pithyx/sftp/    SFTP views: one chroot per user with bind mounts of its shared folders and homes (home, for administrators homes/<folder>), rebuilt at start
 /run/pithyx/backup/  a checked configuration backup's database until it is restored (tmpfs, never on a disk)
+/<pool>/homes/<user>  a user's home (dataset <pool>/pithyx/homes/<user> on the home pool, setting homes.pool, D348); a deleted user's kept home is <user>.deleted-<uid>
 /<pool>/.pithyx/     app data, volumes
 /<pool>/.pithyx/apps/<id>/  one app (dataset <pool>/pithyx/apps/<id>): versions/<version>, current, volumes/, run/
 /<pool>/.pithyx/docker/     Docker's data root on the app pool (setting apps.pool, chosen at the first install)

@@ -3321,6 +3321,8 @@ export type components = {
             access: components["schemas"]["ShareAccess"];
             /** @description The location `{ share: id }`. */
             id: string;
+            /** @description A shared folder, or the user's own home (`home`, D348). Apps never get other users' homes. */
+            kind?: components["schemas"]["ShareKind"];
             /** @description Name shown to users. */
             name: string;
             /** @description Why its files cannot be reached now (`poolMissing`, `poolUnavailable`, `notMounted`), or null. */
@@ -4328,11 +4330,6 @@ export type components = {
             mode: components["schemas"]["DaemonMode"];
             status: string;
         };
-        /**
-         * @description What happens to a user's home when the user is deleted.
-         * @enum {unknown}
-         */
-        HomeDataChoice: "keep" | "move" | "delete";
         /** @description A home. */
         HomeInfo: {
             /** @description The user's display name, or null. */
@@ -13835,7 +13832,7 @@ export interface operations {
         parameters: {
             query?: {
                 confirm?: string;
-                home?: components["schemas"]["HomeDataChoice"];
+                home?: string;
                 shareId?: number;
             };
             header?: never;

@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Locator, Page } from '@playwright/test';
 import { expect, test } from './fixtures';
-import { openFromStart, signInAsAdmin } from './session';
+import { openFilesInShared, signInAsAdmin } from './session';
 
 // The simulated share "Shared" lives in the daemon's data directory (playwright.config.ts).
 const shared = join(process.env.PITHYX_E2E_DATA ?? '', 'shares', 'shared');
@@ -43,8 +43,7 @@ async function enter(page: Page, name: string) {
 /** Opens Files and goes into a folder at the share root. */
 async function openFolder(page: Page, folder: string) {
   await signInAsAdmin(page);
-  await openFromStart(page, 'Files');
-  await expect(filesWindow(page)).toBeVisible();
+  await openFilesInShared(page);
   await row(page, folder).dblclick();
   await expect(filesWindow(page).getByRole('navigation', { name: 'Path' })).toContainText(folder);
 }

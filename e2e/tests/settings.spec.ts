@@ -36,6 +36,7 @@ test('Settings opens as an overview of categories with a search', async ({ page 
     'Regional settings',
     'Backup and restore',
     'Shared folders',
+    'Home folders',
     'File services',
     'Users',
   ]) {

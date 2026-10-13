@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Threading.Channels;
 using Pithyx.Daemon.Auth;
+using Pithyx.Daemon.Errors;
 using Pithyx.Daemon.FileServices;
 using Pithyx.Daemon.Realtime;
 using Pithyx.Daemon.Shares;
@@ -58,9 +59,16 @@ public static class UserEndpoints
             .RequireAuthorization(Policies.Admin)
             .WithName("ResetUserPassword")
             .WithDescription("Administrators only. Sets a new password, for SMB and SFTP as well, and ends every session of the user.");
-        users.MapDelete("/{userId:long}", async (long userId, UserService service, TopicHub hub, HttpContext context, CancellationToken cancellationToken, HomeDataChoice home = HomeDataChoice.Keep, long? shareId = null, string? confirm = null) =>
+        users.MapDelete("/{userId:long}", async (long userId, UserService service, TopicHub hub, HttpContext context, CancellationToken cancellationToken, string? home = null, long? shareId = null, string? confirm = null) =>
             {
-                var deletion = await service.DeleteAsync(context.User, userId, home, shareId, confirm, cancellationToken);
+                var choice = home switch
+                {
+                    null or "keep" => HomeDataChoice.Keep,
+                    "move" => HomeDataChoice.Move,
+                    "delete" => HomeDataChoice.Delete,
+                    _ => throw new PithyxException(ErrorCodes.HomesChoiceInvalid),
+                };
+                var deletion = await service.DeleteAsync(context.User, userId, choice, shareId, confirm, cancellationToken);
                 hub.CloseUser(userId.ToString(CultureInfo.InvariantCulture));
                 return TypedResults.Ok(deletion);
             })

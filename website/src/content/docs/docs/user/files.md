@@ -15,7 +15,7 @@ Files is the app for working with the shared folders you may use: open folders, 
 
 _Files in list view. Right-click an entry for its context menu._
 
-Open **Files** from the Pithyx menu. The sidebar lists your shared folders under **Shares**. Click one to open it. A folder that cannot be reached right now (for example because its pool is offline) shows **Not available**. If the list is empty, you have no shared folders yet and an administrator has to create them. A shared folder marked **Read only** lets you look and download, but not change anything.
+Open **Files** from the Pithyx menu. The sidebar lists your home folder **home** first and your shared folders under it, under **Shares**; Files opens in your home. Your home is private: only you and the administrators can open it. Administrators also see every user's home below **homes**. Click one to open it. A folder that cannot be reached right now (for example because its pool is offline) shows **Not available**. If the list is empty, you have no shared folders yet and an administrator has to create them. A shared folder marked **Read only** lets you look and download, but not change anything.
 
 To move around:
 
@@ -81,7 +81,7 @@ To download, choose **Download** or open a file that the Viewer cannot show.
 
 _Each shared folder has its own recycle bin with the date an entry is deleted for good._
 
-**Move to recycle bin** (the **Del** key) does not delete a file. It moves it into the recycle bin of its shared folder. Deleting files over SMB, WebDAV or FTP does the same.
+**Move to recycle bin** (the **Del** key) does not delete a file. It moves it into the recycle bin of its shared folder, or of your home. Deleting files over SMB, WebDAV or FTP does the same.
 
 To see a bin, click **Recycle bin** in the sidebar and choose the shared folder. Each entry shows where it came from and when it was deleted. With **Restore** you get it back in its original folder; missing parent folders are created. **Delete for good** removes single items. **Empty recycle bin** removes everything in the bin of that folder. Both ask first, and you need write access.
 

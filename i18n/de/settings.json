@@ -167,6 +167,11 @@
       "description": "Ordner auf deinen Pools, ihr Platz, wer sie nutzen darf und ihre Wiederherstellungspunkte",
       "keywords": "freigabe ordner dataset zugriff rechte berechtigungen wiederherstellungspunkte snapshots frühere versionen"
     },
+    "homes": {
+      "title": "Home-Ordner",
+      "description": "Der eigene Ordner jedes Benutzers, sein Pool und seine Quota",
+      "keywords": "home homes benutzer ordner quota pool umziehen"
+    },
     "fileServices": {
       "title": "Dateidienste",
       "description": "SMB und SFTP für den Zugriff von anderen Computern",
@@ -897,6 +902,91 @@
       "savedBy": "Gespeichert von {user} am {date}. Es ändert sich nichts, bis sie an der Konsole gewählt wird.",
       "next": "Zum Wechseln: Starte die Box neu, wähle im Bootmenü „Pithyx recovery“ (Taste r), dann „Change the update source“ und „Use the file saved in Settings“, und tippe den Namen der Quelle.",
       "discard": "Entfernen"
+    }
+  },
+  "homes": {
+    "intro": "Jeder Benutzer hat einen eigenen Home-Ordner. Er sieht ihn als home in Files, über SMB, SFTP, WebDAV und FTP; Administratoren sehen zusätzlich jeden Home-Ordner unter homes. Nur der Benutzer und Administratoren können ein Home öffnen.",
+    "loading": "Home-Ordner werden geladen…",
+    "save": "Speichern",
+    "empty": "Es gibt noch keine Home-Ordner. Sie entstehen, sobald ein Pool das Pithyx-Layout hat.",
+    "caption": "Home-Ordner",
+    "unknown": "Nicht verfügbar",
+    "unavailable": "Gerade nicht verfügbar",
+    "deletedUser": "{folder}, Benutzer gelöscht",
+    "columns": {
+      "home": "Home-Ordner",
+      "pool": "Pool",
+      "used": "Belegt",
+      "quota": "Quota",
+      "actions": "Aktionen"
+    },
+    "pool": {
+      "title": "Pool",
+      "current": "Die Home-Ordner liegen auf {pool}.",
+      "none": "Noch kann kein Pool Home-Ordner aufnehmen. Der erste Pool mit dem Pithyx-Layout wird zum Home-Pool.",
+      "explain": "Neue Benutzer bekommen ihren Home-Ordner hier. Beim Umzug wird jeder Home-Ordner mit seinen Dateien, Eigentümern und Rechten auf den anderen Pool kopiert.",
+      "target": "Umziehen nach",
+      "move": "Home-Ordner umziehen",
+      "moving": "Die Home-Ordner ziehen gerade auf einen anderen Pool um. Der Job zeigt, wie weit er ist.",
+      "unavailable": "{pool} ({reason})"
+    },
+    "reasons": {
+      "missing": "fehlt",
+      "offline": "offline",
+      "read_only": "nur lesbar",
+      "not_prepared": "kein Pithyx-Layout",
+      "locked": "gesperrt",
+      "not_mounted": "nicht eingehängt"
+    },
+    "move": {
+      "title": "Home-Ordner nach {pool} umziehen?",
+      "submit": "Umziehen",
+      "oneByOne": "Die Home-Ordner ziehen nacheinander um, jeder mit seinen Dateien, Eigentümern, Rechten und seinem Papierkorb.",
+      "readOnly": "Während ein Home-Ordner kopiert wird, kann man ihn lesen, aber nicht ändern.",
+      "kept": "Sobald ein Home-Ordner angekommen ist, wird er vom neuen Pool genutzt und die alte Kopie gelöscht.",
+      "failure": "Kann ein Home-Ordner nicht umziehen, bleibt er, wo er war, und lässt sich wieder ändern; die vorher umgezogenen bleiben umgezogen."
+    },
+    "quota": {
+      "title": "Quota",
+      "default": "Standard-Quota",
+      "defaultHint": "Für jeden Home-Ordner ohne eigene Quota. Leer lassen für keine Grenze.",
+      "invalid": "Gib eine Zahl ein, zum Beispiel 50 oder 1,5.",
+      "unit": "Einheit von {field}",
+      "none": "Keine Grenze",
+      "own": "Eigene Quota",
+      "fromDefault": "Standard-Quota",
+      "fromDefaultNone": "Standard: keine Grenze",
+      "edit": "Quota",
+      "editLabel": "Quota von {name}",
+      "dialogTitle": "Quota von {name}",
+      "size": "Quota",
+      "choice": {
+        "default": "Standard-Quota verwenden",
+        "none": "Keine Grenze",
+        "own": "Eigene Quota"
+      }
+    },
+    "units": {
+      "mb": "MB",
+      "gb": "GB",
+      "tb": "TB"
+    },
+    "release": {
+      "button": "In Freigabe verschieben",
+      "label": "Dateien von {folder} in einen freigegebenen Ordner verschieben",
+      "title": "Dateien von {folder} verschieben?",
+      "explain": "Ein neuer Ordner im freigegebenen Ordner bekommt alle Dateien von {folder}. Danach wird der Home-Ordner samt Papierkorb gelöscht.",
+      "share": "Freigegebener Ordner",
+      "noShares": "Es gibt keinen freigegebenen Ordner, in den die Dateien verschoben werden können.",
+      "submit": "Dateien verschieben"
+    },
+    "delete": {
+      "button": "Löschen",
+      "label": "{folder} löschen",
+      "title": "{folder} löschen?",
+      "explain": "Der Home-Ordner wird mit allen Dateien, seinem Papierkorb und seinen Snapshots gelöscht. Das lässt sich nicht rückgängig machen. Gehört er einem Benutzer, dessen Pool fehlt, bekommt der Benutzer einen neuen, leeren Home-Ordner.",
+      "confirm": "Gib {folder} zur Bestätigung ein",
+      "submit": "Home-Ordner löschen"
     }
   }
 }
