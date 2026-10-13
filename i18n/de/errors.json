@@ -341,6 +341,82 @@
       "invalid": "Das Recht „{resource}“ lässt sich so nicht vergeben: Es ist unbekannt, doppelt angegeben oder die Stufe passt nicht (Lesen oder Lesen und Schreiben für einen freigegebenen Ordner)."
     }
   },
+  "proxy": {
+    "access": {
+      "denied": "Du darfst {host} nicht öffnen. Ein Administrator kann dich beim Proxy-Host zulassen."
+    },
+    "address": {
+      "denied": "Deine Adresse darf diese Seite nicht öffnen.",
+      "invalid": "„{value}“ ist keine IP-Adresse und kein Bereich wie 192.168.1.0/24."
+    },
+    "auth": {
+      "required": "Melde dich zuerst an."
+    },
+    "basic_auth": {
+      "invalid": "Der Basic-Auth-Benutzer „{username}“ ist ungültig: Der Name braucht 1 bis 64 Zeichen ohne Doppelpunkt und darf nur einmal vorkommen, das Passwort 1 bis 1024 Zeichen.",
+      "password_missing": "Gib ein Passwort für den neuen Benutzer „{username}“ ein."
+    },
+    "certificate": {
+      "missing": "Lade das Zertifikat und seinen privaten Schlüssel hoch.",
+      "name_mismatch": "Das Zertifikat deckt {name} nicht ab."
+    },
+    "domain": {
+      "invalid": "„{name}“ ist keine gültige Domain.",
+      "taken": "Ein anderer Host beantwortet {name} bereits."
+    },
+    "domains": {
+      "missing": "Gib mindestens eine Domain ein.",
+      "too_many": "{max, plural, one {Gib höchstens # Domain ein.} other {Gib höchstens # Domains ein.}}"
+    },
+    "header": {
+      "invalid": "Der Header „{name}“ ist nicht erlaubt. Prüfe Name und Wert; manche Header setzt der Proxy selbst, und jeder darf nur einmal vorkommen."
+    },
+    "headers": {
+      "too_many": "{max, plural, one {Setze höchstens # Header.} other {Setze höchstens # Header.}}"
+    },
+    "host": {
+      "not_found": "Es gibt keinen Proxy-Host mit der Nummer {id}.",
+      "unknown": "Dieser Name ist auf dieser Box nicht eingerichtet."
+    },
+    "limit": {
+      "out_of_range": "Der Wert muss zwischen {min} und {max} liegen."
+    },
+    "loop": {
+      "detected": "Der Proxy-Host führt auf sich selbst zurück."
+    },
+    "redirect": {
+      "not_found": "Es gibt keinen Weiterleitungs-Host mit der Nummer {id}.",
+      "status_invalid": "{status} ist kein Weiterleitungsstatus. Nimm 301, 302, 307 oder 308.",
+      "target_invalid": "„{target}“ ist keine vollständige http- oder https-Adresse."
+    },
+    "sign_in": {
+      "address_invalid": "„{address}“ ist keine Adresse wie https://nas.home.arpa:7484.",
+      "group_not_found": "Es gibt keine Gruppe namens {name}.",
+      "user_not_found": "Es gibt keinen Benutzer namens {name}."
+    },
+    "stream": {
+      "name_invalid": "{max, plural, one {Der Name darf höchstens # Zeichen und keine Steuerzeichen haben.} other {Der Name darf höchstens # Zeichen und keine Steuerzeichen haben.}}",
+      "not_found": "Es gibt keinen Stream mit der Nummer {id}.",
+      "port_in_use": "Ein anderes Programm nutzt Port {port} bereits.",
+      "port_privileged": "Port {port} liegt unter 1024. Bestätige, dass du ihn nutzen willst.",
+      "port_reserved": "Port {port} gehört zu einem Dienst der Box.",
+      "port_taken": "Ein anderer Stream nutzt Port {port} bereits.",
+      "protocol_missing": "Wähle TCP, UDP oder beides."
+    },
+    "target": {
+      "invalid": "„{host}“ ist kein gültiger Hostname und keine IP-Adresse.",
+      "loop": "Das Ziel ist diese Box auf Port {port}, auf dem der Proxy selbst antwortet.",
+      "on_box": "{host}:{port} ist diese Box. Bestätige, dass der Host zu einem Dienst der Box selbst führen soll.",
+      "timeout": "Das Ziel hat nicht rechtzeitig geantwortet.",
+      "unavailable": "Das Ziel ist nicht erreichbar."
+    },
+    "ticket": {
+      "target_invalid": "Diese Adresse gehört zu keinem Proxy-Host mit der Pithyx-Anmeldung."
+    },
+    "websockets": {
+      "disabled": "Dieser Host leitet keine WebSockets weiter."
+    }
+  },
   "realtime": {
     "message": {
       "invalid": "Die Live-Verbindung hat eine unverständliche Nachricht erhalten."

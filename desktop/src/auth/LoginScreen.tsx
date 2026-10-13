@@ -31,9 +31,12 @@ type Step =
  */
 export function LoginScreen({
   hostname,
+  continueTo,
   onSignedIn,
 }: {
   hostname: string;
+  /** The proxy host the browser goes on to after signing in, if any. */
+  continueTo?: string | undefined;
   onSignedIn: (user: User) => void;
 }) {
   const [step, setStep] = useState<Step>({ kind: 'password' });
@@ -48,6 +51,7 @@ export function LoginScreen({
     case 'password':
       content = (
         <PasswordStep
+          continueTo={continueTo}
           username={username}
           onUsername={setUsername}
           onTotp={(challenge) => {
@@ -100,12 +104,14 @@ export function LoginScreen({
 type PasswordFieldName = 'username' | 'password';
 
 function PasswordStep({
+  continueTo,
   username,
   onUsername,
   onTotp,
   onSignedIn,
   onForgot,
 }: {
+  continueTo: string | undefined;
   username: string;
   onUsername: (value: string) => void;
   onTotp: (challenge: string) => void;
@@ -154,6 +160,9 @@ function PasswordStep({
       <h1 id="login-title" className={styles.title}>
         {t('login.heading')}
       </h1>
+      {continueTo !== undefined && (
+        <p className={styles.intro}>{t('login.continueTo', { host: continueTo })}</p>
+      )}
       <Field
         {...usernameField}
         label={t('login.username')}

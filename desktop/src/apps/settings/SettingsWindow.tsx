@@ -5,6 +5,7 @@ import { CoreSdkApp } from '../sdk/CoreSdkApp';
 import { backupHost } from '../sdk/backup';
 import { adminStorageHost } from '../sdk/internal';
 import { networkHost } from '../sdk/network';
+import { proxyHost } from '../sdk/proxy';
 import { systemHost } from '../sdk/system';
 import { tlsHost } from '../sdk/tls';
 import { updatesHost } from '../sdk/updates';
@@ -32,6 +33,7 @@ export function SettingsWindow({ windowId }: AppProps) {
             ...systemHost(queryClient),
             ...backupHost(),
             ...tlsHost(),
+            ...proxyHost(),
           },
           close: () => {
             storage.close();

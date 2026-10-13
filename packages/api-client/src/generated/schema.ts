@@ -1558,6 +1558,23 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/proxy/tickets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Signed-in users. A one-time ticket (30 seconds) into a proxy host behind the Pithyx sign-in, for the address the browser asked for; the answer is the address to open on that host. Refused with proxy.access.denied when the host does not let the user in. */
+        post: operations["CreateProxyTicket"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/setup": {
         parameters: {
             query?: never;
@@ -2275,6 +2292,162 @@ export type paths = {
         /** @description Users with the right to restart and shut down, and administrators. Restarts or shuts the box down a few seconds after the answer. */
         post: operations["PowerSystem"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/proxy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. The ports proxy hosts answer on, what unknown names get, the sign-in address, and every proxy host, redirect host and stream. */
+        get: operations["GetProxySettings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/proxy/hosts": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. A proxy host: domains on 443 and 80 forwarded to a target. Applies to the next request. */
+        post: operations["CreateProxyHost"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/proxy/hosts/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description Administrators only. Replaces a proxy host's settings; Basic Auth users without a password keep theirs, an uploaded certificate stays unless a new one comes along. */
+        put: operations["UpdateProxyHost"];
+        post?: never;
+        /** @description Administrators only. Removes a proxy host with its uploaded certificate; its names become unknown. */
+        delete: operations["DeleteProxyHost"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/proxy/hosts/{id}/check": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Whether a proxy host's target answers one request, with the host's TLS settings. */
+        post: operations["CheckProxyTarget"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/proxy/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description Administrators only. What a name no enabled host has gets on 443 and 80 (a redirect to 7484, or 404), and where the Pithyx sign-in of a host sends visitors. */
+        put: operations["SetProxyOptions"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/proxy/redirects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. A redirect host: domains on 443 and 80 redirected to an address. */
+        post: operations["CreateProxyRedirect"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/proxy/redirects/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description Administrators only. Replaces a redirect host's settings. */
+        put: operations["UpdateProxyRedirect"];
+        post?: never;
+        /** @description Administrators only. Removes a redirect host. */
+        delete: operations["DeleteProxyRedirect"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/proxy/streams": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. A stream: a TCP and/or UDP port of the box forwarded to a host and port; the firewall opens the port. */
+        post: operations["CreateProxyStream"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/proxy/streams/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description Administrators only. Replaces a stream's settings. */
+        put: operations["UpdateProxyStream"];
+        post?: never;
+        /** @description Administrators only. Removes a stream; the firewall closes its port. */
+        delete: operations["DeleteProxyStream"];
         options?: never;
         head?: never;
         patch?: never;
@@ -3221,7 +3394,7 @@ export type components = {
          * @description A part of the configuration that can be restored on its own.
          * @enum {unknown}
          */
-        BackupCategory: "users" | "sharedFolders" | "storage" | "system" | "certificates" | "apps";
+        BackupCategory: "users" | "sharedFolders" | "storage" | "system" | "certificates" | "apps" | "reverseProxy";
         /** @description A backup the daemon decrypted and checked, kept for a restore for 15 minutes. */
         BackupSummary: {
             /** @description What it holds and can restore. */
@@ -3735,7 +3908,7 @@ export type components = {
             }[];
         };
         /** @enum {string} */
-        ErrorCode: "app.app.busy" | "app.app.no_previous" | "app.app.not_found" | "app.backend.endpoint_unknown" | "app.backend.missing" | "app.backend.start_failed" | "app.backend.storage_unavailable" | "app.backend.unavailable" | "app.backend.unsupported" | "app.compose.key_unsupported" | "app.compose.reference_unknown" | "app.compose.right_missing" | "app.compose.right_unused" | "app.compose.storage_mismatch" | "app.compose.value_invalid" | "app.compose.yaml_invalid" | "app.docker.unavailable" | "app.elevated.unsupported" | "app.icon.invalid" | "app.image.mismatch" | "app.image.unavailable" | "app.manifest.cron_invalid" | "app.manifest.duplicate" | "app.manifest.id_invalid" | "app.manifest.id_reserved" | "app.manifest.invalid_json" | "app.manifest.pithyx_invalid" | "app.manifest.reference_unknown" | "app.manifest.schema_violation" | "app.manifest.sdk_invalid" | "app.manifest.version_unsupported" | "app.manifest.window_size_invalid" | "app.mapping.invalid" | "app.package.box_too_old" | "app.package.downgrade_unsupported" | "app.package.invalid" | "app.package.layout_invalid" | "app.package.lock_invalid" | "app.package.not_found" | "app.package.too_large" | "app.permission.denied" | "app.permission.not_requested" | "app.pool.fixed" | "app.pool.required" | "app.pool.unavailable" | "app.storage.key_invalid" | "app.storage.not_found" | "app.storage.too_large" | "app.token.invalid" | "auth.account.disabled" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.desktop.not_allowed" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fileservices.service.unavailable" | "fileservices.workgroup.invalid" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.share.unavailable" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "installer.check.failed" | "installer.claim.required" | "installer.claim.taken" | "installer.disk.count" | "installer.disk.unsuitable" | "installer.erase.not_confirmed" | "installer.hostname.invalid" | "installer.install.failed" | "installer.install.running" | "installer.keyboard.invalid" | "installer.reboot.not_ready" | "jobs.job.not_found" | "logs.app.invalid" | "logs.archive.pool_unavailable" | "logs.batch.too_large" | "logs.query.invalid" | "logs.settings.invalid" | "network.address.invalid" | "network.apply.failed" | "network.bond.member_invalid" | "network.bond.members_missing" | "network.bond.primary_invalid" | "network.change.empty" | "network.change.not_found" | "network.change.pending" | "network.config.unreachable" | "network.default_interface.invalid" | "network.dns.invalid" | "network.dns.too_many" | "network.firewall.failed" | "network.gateway.invalid" | "network.global.not_changeable" | "network.host_name.invalid" | "network.interface.duplicate" | "network.interface.kind_invalid" | "network.interface.name_invalid" | "network.interface.not_changeable" | "network.interface.unknown" | "network.mtu.invalid" | "network.search_domain.invalid" | "network.search_domain.too_many" | "network.vlan.duplicate" | "network.vlan.id_invalid" | "network.vlan.parent_invalid" | "notifications.message.invalid" | "notifications.notification.not_found" | "permissions.grant.invalid" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.command.timed_out" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.disks_missing" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.pool.suspended" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "storage.zfs.unavailable" | "store.app.not_found" | "store.catalog.architecture_missing" | "store.catalog.built_in" | "store.catalog.busy" | "store.catalog.data_version_decreased" | "store.catalog.exists" | "store.catalog.id_reserved" | "store.catalog.invalid_json" | "store.catalog.mismatch" | "store.catalog.not_found" | "store.catalog.rule_violation" | "store.catalog.schema_violation" | "store.catalog.sequence_old" | "store.catalog.signature_invalid" | "store.catalog.unreachable" | "store.catalog.url_invalid" | "store.catalog.version_unsupported" | "store.package.hash_mismatch" | "system.backup.category_missing" | "system.backup.invalid" | "system.backup.password_wrong" | "system.backup.restore_expired" | "system.backup.restore_failed" | "system.backup.restore_running" | "system.backup.too_large" | "system.backup.too_new" | "system.internal.unexpected" | "system.origin.forbidden" | "system.time.apply_failed" | "system.time.server_invalid" | "system.time.servers_too_many" | "system.time.zone_invalid" | "tls.custom.expired" | "tls.custom.invalid" | "tls.custom.key_mismatch" | "tls.issued.not_found" | "tls.name.invalid" | "tls.name.not_permitted" | "tls.names.missing" | "tls.names.too_many" | "tls.validity.out_of_range" | "update.apply.failed" | "update.apply.running" | "update.channel.invalid" | "update.channel.mismatch" | "update.channel.sequence_old" | "update.channel.signature_invalid" | "update.download.mismatch" | "update.file.architecture" | "update.file.channel" | "update.file.hash_mismatch" | "update.file.invalid" | "update.file.minimum" | "update.file.missing_entry" | "update.file.not_found" | "update.file.older" | "update.file.signature_invalid" | "update.file.too_large" | "update.file.unexpected_entry" | "update.none.available" | "update.rollback.unconfirmed" | "update.snapshot.not_found" | "update.source.invalid" | "update.source.unreachable" | "update.space.insufficient" | "update.system.unsupported" | "users.account.refused" | "users.gid.exhausted" | "users.group.builtin" | "users.group.description_invalid" | "users.group.exists" | "users.group.name_invalid" | "users.group.name_reserved" | "users.group.not_found" | "users.group.refused" | "users.uid.exhausted" | "users.user.exists" | "users.user.last_admin" | "users.user.not_found" | "users.user.self";
+        ErrorCode: "app.app.busy" | "app.app.no_previous" | "app.app.not_found" | "app.backend.endpoint_unknown" | "app.backend.missing" | "app.backend.start_failed" | "app.backend.storage_unavailable" | "app.backend.unavailable" | "app.backend.unsupported" | "app.compose.key_unsupported" | "app.compose.reference_unknown" | "app.compose.right_missing" | "app.compose.right_unused" | "app.compose.storage_mismatch" | "app.compose.value_invalid" | "app.compose.yaml_invalid" | "app.docker.unavailable" | "app.elevated.unsupported" | "app.icon.invalid" | "app.image.mismatch" | "app.image.unavailable" | "app.manifest.cron_invalid" | "app.manifest.duplicate" | "app.manifest.id_invalid" | "app.manifest.id_reserved" | "app.manifest.invalid_json" | "app.manifest.pithyx_invalid" | "app.manifest.reference_unknown" | "app.manifest.schema_violation" | "app.manifest.sdk_invalid" | "app.manifest.version_unsupported" | "app.manifest.window_size_invalid" | "app.mapping.invalid" | "app.package.box_too_old" | "app.package.downgrade_unsupported" | "app.package.invalid" | "app.package.layout_invalid" | "app.package.lock_invalid" | "app.package.not_found" | "app.package.too_large" | "app.permission.denied" | "app.permission.not_requested" | "app.pool.fixed" | "app.pool.required" | "app.pool.unavailable" | "app.storage.key_invalid" | "app.storage.not_found" | "app.storage.too_large" | "app.token.invalid" | "auth.account.disabled" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.desktop.not_allowed" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fileservices.service.unavailable" | "fileservices.workgroup.invalid" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.share.unavailable" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "installer.check.failed" | "installer.claim.required" | "installer.claim.taken" | "installer.disk.count" | "installer.disk.unsuitable" | "installer.erase.not_confirmed" | "installer.hostname.invalid" | "installer.install.failed" | "installer.install.running" | "installer.keyboard.invalid" | "installer.reboot.not_ready" | "jobs.job.not_found" | "logs.app.invalid" | "logs.archive.pool_unavailable" | "logs.batch.too_large" | "logs.query.invalid" | "logs.settings.invalid" | "network.address.invalid" | "network.apply.failed" | "network.bond.member_invalid" | "network.bond.members_missing" | "network.bond.primary_invalid" | "network.change.empty" | "network.change.not_found" | "network.change.pending" | "network.config.unreachable" | "network.default_interface.invalid" | "network.dns.invalid" | "network.dns.too_many" | "network.firewall.failed" | "network.gateway.invalid" | "network.global.not_changeable" | "network.host_name.invalid" | "network.interface.duplicate" | "network.interface.kind_invalid" | "network.interface.name_invalid" | "network.interface.not_changeable" | "network.interface.unknown" | "network.mtu.invalid" | "network.search_domain.invalid" | "network.search_domain.too_many" | "network.vlan.duplicate" | "network.vlan.id_invalid" | "network.vlan.parent_invalid" | "notifications.message.invalid" | "notifications.notification.not_found" | "permissions.grant.invalid" | "proxy.access.denied" | "proxy.address.denied" | "proxy.address.invalid" | "proxy.auth.required" | "proxy.basic_auth.invalid" | "proxy.basic_auth.password_missing" | "proxy.certificate.missing" | "proxy.certificate.name_mismatch" | "proxy.domain.invalid" | "proxy.domain.taken" | "proxy.domains.missing" | "proxy.domains.too_many" | "proxy.header.invalid" | "proxy.headers.too_many" | "proxy.host.not_found" | "proxy.host.unknown" | "proxy.limit.out_of_range" | "proxy.loop.detected" | "proxy.redirect.not_found" | "proxy.redirect.status_invalid" | "proxy.redirect.target_invalid" | "proxy.sign_in.address_invalid" | "proxy.sign_in.group_not_found" | "proxy.sign_in.user_not_found" | "proxy.stream.name_invalid" | "proxy.stream.not_found" | "proxy.stream.port_in_use" | "proxy.stream.port_privileged" | "proxy.stream.port_reserved" | "proxy.stream.port_taken" | "proxy.stream.protocol_missing" | "proxy.target.invalid" | "proxy.target.loop" | "proxy.target.on_box" | "proxy.target.timeout" | "proxy.target.unavailable" | "proxy.ticket.target_invalid" | "proxy.websockets.disabled" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.command.timed_out" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.disks_missing" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.pool.suspended" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "storage.zfs.unavailable" | "store.app.not_found" | "store.catalog.architecture_missing" | "store.catalog.built_in" | "store.catalog.busy" | "store.catalog.data_version_decreased" | "store.catalog.exists" | "store.catalog.id_reserved" | "store.catalog.invalid_json" | "store.catalog.mismatch" | "store.catalog.not_found" | "store.catalog.rule_violation" | "store.catalog.schema_violation" | "store.catalog.sequence_old" | "store.catalog.signature_invalid" | "store.catalog.unreachable" | "store.catalog.url_invalid" | "store.catalog.version_unsupported" | "store.package.hash_mismatch" | "system.backup.category_missing" | "system.backup.invalid" | "system.backup.password_wrong" | "system.backup.restore_expired" | "system.backup.restore_failed" | "system.backup.restore_running" | "system.backup.too_large" | "system.backup.too_new" | "system.internal.unexpected" | "system.origin.forbidden" | "system.time.apply_failed" | "system.time.server_invalid" | "system.time.servers_too_many" | "system.time.zone_invalid" | "tls.custom.expired" | "tls.custom.invalid" | "tls.custom.key_mismatch" | "tls.issued.not_found" | "tls.name.invalid" | "tls.name.not_permitted" | "tls.names.missing" | "tls.names.too_many" | "tls.validity.out_of_range" | "update.apply.failed" | "update.apply.running" | "update.channel.invalid" | "update.channel.mismatch" | "update.channel.sequence_old" | "update.channel.signature_invalid" | "update.download.mismatch" | "update.file.architecture" | "update.file.channel" | "update.file.hash_mismatch" | "update.file.invalid" | "update.file.minimum" | "update.file.missing_entry" | "update.file.not_found" | "update.file.older" | "update.file.signature_invalid" | "update.file.too_large" | "update.file.unexpected_entry" | "update.none.available" | "update.rollback.unconfirmed" | "update.snapshot.not_found" | "update.source.invalid" | "update.source.unreachable" | "update.space.insufficient" | "update.system.unsupported" | "users.account.refused" | "users.gid.exhausted" | "users.group.builtin" | "users.group.description_invalid" | "users.group.exists" | "users.group.name_invalid" | "users.group.name_reserved" | "users.group.not_found" | "users.group.refused" | "users.uid.exhausted" | "users.user.exists" | "users.user.last_admin" | "users.user.not_found" | "users.user.self";
         /** @description A failed client message. `id` is empty when the message could not be parsed. */
         ErrorMessage: {
             code: components["schemas"]["ErrorCode"];
@@ -4991,6 +5164,368 @@ export type components = {
                 /** @description Owner's user name, or the numeric id when `/etc/passwd` does not know it. */
                 user: string;
             }[];
+        };
+        /** @description A user of the host's Basic Auth. */
+        ProxyBasicAuthUser: {
+            /** @description The password; leave it out to keep the stored one of an existing user. */
+            password?: null | string;
+            /** @description 1 to 64 characters without a colon. */
+            username: string;
+        };
+        /**
+         * @description Which certificate a host presents on 443.
+         * @enum {unknown}
+         */
+        ProxyCertificateSource: "box" | "custom";
+        /** @description A header the proxy sets; an empty value removes it. */
+        ProxyHeader: {
+            /** @description The header's name, letters, digits and `-`; never one the proxy controls itself. */
+            name: string;
+            /** @description Its value, at most 4096 characters, without line breaks. */
+            value: string;
+        };
+        /** @description A proxy host as Settings shows it. */
+        ProxyHost: {
+            /** @description Requests are logged. */
+            accessLog: boolean;
+            /** @description Only these get in, or everybody when empty. */
+            allowAddresses: string[];
+            /** @description The user names of the Basic Auth; passwords are never shown. */
+            basicAuthUsers: string[];
+            /** @description Which certificate it presents. */
+            certificate: components["schemas"]["ProxyCertificateSource"];
+            /**
+             * Format: int32
+             * @description The connect timeout.
+             */
+            connectTimeoutSeconds: number;
+            /**
+             * Format: date-time
+             * @description When it was made.
+             */
+            createdAt: string;
+            /** @description These never get in. */
+            denyAddresses: string[];
+            /** @description The names it answers. */
+            domains: string[];
+            /** @description It answers. */
+            enabled: boolean;
+            /** @description Plain HTTP is redirected to HTTPS. */
+            forceHttps: boolean;
+            /** @description `X-Forwarded-*` go to the target. */
+            forwardedHeaders: boolean;
+            /** @description The `Host` of the administrator's choice, if any. */
+            hostHeader: null | string;
+            /** @description HTTPS answers carry `Strict-Transport-Security`. */
+            hsts: boolean;
+            /** @description HTTP/2 is offered on 443. */
+            http2: boolean;
+            /**
+             * Format: int64
+             * @description Its number on the box.
+             */
+            id: number;
+            /** @description The Log Center's source of its requests. */
+            logSource: string;
+            /**
+             * Format: int32
+             * @description The upload limit in MB, or none.
+             */
+            maxBodyMegabytes: null | number;
+            /** @description One certificate as Settings shows it. */
+            presented: null | components["schemas"]["CertificateInfo"];
+            /** @description The browser's `Host` goes to the target. */
+            preserveHost: boolean;
+            /** @description Headers set on requests. */
+            requestHeaders: components["schemas"]["ProxyHeader"][];
+            /** @description Headers set on answers. */
+            responseHeaders: components["schemas"]["ProxyHeader"][];
+            /**
+             * Format: int32
+             * @description The idle timeout of an answer.
+             */
+            responseTimeoutSeconds: number;
+            /** @description The Pithyx sign-in in front of the host. */
+            signIn: components["schemas"]["ProxySignInRule"];
+            /** @description Where requests go. */
+            target: components["schemas"]["ProxyTarget"];
+            /**
+             * Format: date-time
+             * @description When it was last saved.
+             */
+            updatedAt: string;
+            /** @description WebSocket upgrades pass. */
+            webSockets: boolean;
+        };
+        /** @description A proxy host as an administrator saves it. */
+        ProxyHostRequest: {
+            /** @description Log every request in the Log Center under `proxy/&lt;first domain&gt;`. */
+            accessLog: boolean;
+            /** @description Only these addresses or CIDR ranges get in; empty for everybody. */
+            allowAddresses: string[];
+            /** @description Users of Basic Auth, at most 20; empty for none. */
+            basicAuth: components["schemas"]["ProxyBasicAuthUser"][];
+            /** @description Which certificate the host presents on 443. */
+            certificate: components["schemas"]["ProxyCertificateSource"];
+            /** @description With ProxyCertificateSource.Custom: the certificate and its chain in PEM; leave it out to keep the uploaded one. */
+            certificatePem?: null | string;
+            /**
+             * Format: int32
+             * @description How long connecting to the target may take, 1 to 300 seconds.
+             */
+            connectTimeoutSeconds: number;
+            /** @description These addresses or ranges never get in. */
+            denyAddresses: string[];
+            /** @description 1 to 50 DNS names, a leading `*.` for any one label in front; no name of another host. */
+            domains: string[];
+            /** @description The host answers; a disabled one is treated as unknown. */
+            enabled: boolean;
+            /** @description Redirect plain HTTP on 80 to HTTPS on 443. */
+            forceHttps: boolean;
+            /** @description Send `X-Forwarded-For`, `-Proto` and `-Host`; incoming ones are always dropped. */
+            forwardedHeaders: boolean;
+            /** @description A `Host` of your own; overrides PreserveHost. */
+            hostHeader: null | string;
+            /** @description Send `Strict-Transport-Security` on HTTPS; browsers then refuse plain HTTP and any certificate warning for a year. */
+            hsts: boolean;
+            /** @description Offer HTTP/2 to browsers on 443. */
+            http2: boolean;
+            /**
+             * Format: int32
+             * @description The largest upload in MB (1 to 1048576); none for no limit.
+             */
+            maxBodyMegabytes: null | number;
+            /** @description Send the browser's `Host` instead of the target's. */
+            preserveHost: boolean;
+            /** @description Its unencrypted private key in PEM. */
+            privateKeyPem?: null | string;
+            /** @description Headers set on the request to the target, at most 20. */
+            requestHeaders: components["schemas"]["ProxyHeader"][];
+            /** @description Headers set on the answer to the browser, at most 20. */
+            responseHeaders: components["schemas"]["ProxyHeader"][];
+            /**
+             * Format: int32
+             * @description How long the target may stay silent, 1 to 86400 seconds.
+             */
+            responseTimeoutSeconds: number;
+            /** @description The Pithyx sign-in in front of the host. */
+            signIn: components["schemas"]["ProxySignInRule"];
+            /** @description Where requests go. */
+            target: components["schemas"]["ProxyTarget"];
+            /** @description Pass WebSocket upgrades through. */
+            webSockets: boolean;
+        };
+        /** @description The settings that apply to every host. */
+        ProxyOptionsRequest: {
+            /** @description An `https://` or `http://` origin the box's sign-in answers at, such as a proxy host in front of 7484; none for the requested name on 7484. */
+            signInAddress?: null | string;
+            /** @description What a name no enabled host has gets. */
+            unknownHosts: components["schemas"]["UnknownHostAction"];
+        };
+        /** @description A redirect host as Settings shows it. */
+        ProxyRedirect: {
+            /** @description Which certificate it presents. */
+            certificate: components["schemas"]["ProxyCertificateSource"];
+            /**
+             * Format: date-time
+             * @description When it was made.
+             */
+            createdAt: string;
+            /** @description The names it answers. */
+            domains: string[];
+            /** @description It answers. */
+            enabled: boolean;
+            /**
+             * Format: int64
+             * @description Its number on the box.
+             */
+            id: number;
+            /** @description One certificate as Settings shows it. */
+            presented: null | components["schemas"]["CertificateInfo"];
+            /** @description The path and query are kept. */
+            preservePath: boolean;
+            /**
+             * Format: int32
+             * @description The redirect's status code.
+             */
+            status: number;
+            /** @description Where it sends browsers. */
+            target: string;
+            /**
+             * Format: date-time
+             * @description When it was last saved.
+             */
+            updatedAt: string;
+        };
+        /** @description A redirect host as an administrator saves it. */
+        ProxyRedirectRequest: {
+            /** @description Which certificate the host presents on 443. */
+            certificate: components["schemas"]["ProxyCertificateSource"];
+            /** @description With ProxyCertificateSource.Custom: the certificate and chain; leave it out to keep the uploaded one. */
+            certificatePem?: null | string;
+            /** @description 1 to 50 DNS names, as for a proxy host. */
+            domains: string[];
+            /** @description The host answers. */
+            enabled: boolean;
+            /** @description Append the request's path and query to Target. */
+            preservePath: boolean;
+            /** @description Its unencrypted private key. */
+            privateKeyPem?: null | string;
+            /**
+             * Format: int32
+             * @description 301, 302, 307 or 308.
+             */
+            status: number;
+            /** @description An absolute `http` or `https` URL. */
+            target: string;
+        };
+        /** @description Settings &gt; Reverse proxy. */
+        ProxySettings: {
+            /** @description The proxy hosts. */
+            hosts: components["schemas"]["ProxyHost"][];
+            /**
+             * Format: int32
+             * @description The port proxy hosts answer plain HTTP on (80 on a box); none in development unless set.
+             */
+            plainPort: null | number;
+            /** @description The redirect hosts. */
+            redirects: components["schemas"]["ProxyRedirect"][];
+            /** @description Where the Pithyx sign-in of a host sends visitors; none for the requested name on 7484. */
+            signInAddress: null | string;
+            /** @description The streams. */
+            streams: components["schemas"]["ProxyStream"][];
+            /**
+             * Format: int32
+             * @description The port proxy hosts answer HTTPS on (443 on a box); none without HTTPS.
+             */
+            tlsPort: null | number;
+            /** @description What a name no enabled host has gets. */
+            unknownHosts: components["schemas"]["UnknownHostAction"];
+        };
+        /** @description Who may pass the host's Pithyx sign-in. */
+        ProxySignInRule: {
+            /** @description Group names whose members are allowed. With no users and no groups, everybody who may sign in is. */
+            groups: string[];
+            /** @description Visitors sign in with their account on the box first. */
+            required: boolean;
+            /** @description User names allowed besides the groups; administrators always are. */
+            users: string[];
+        };
+        /** @description A stream as Settings shows it. */
+        ProxyStream: {
+            /**
+             * Format: date-time
+             * @description When it was made.
+             */
+            createdAt: string;
+            /** @description The port is open. */
+            enabled: boolean;
+            /**
+             * Format: int64
+             * @description Its number on the box.
+             */
+            id: number;
+            /** @description The box listens on the port now; false while disabled or when another program holds it. */
+            listening: boolean;
+            /** @description What it is for. */
+            name: string;
+            /**
+             * Format: int32
+             * @description The box's port.
+             */
+            port: number;
+            /** @description Where it forwards to. */
+            targetHost: string;
+            /**
+             * Format: int32
+             * @description The target's port.
+             */
+            targetPort: number;
+            /** @description TCP is forwarded. */
+            tcp: boolean;
+            /** @description UDP is forwarded. */
+            udp: boolean;
+            /**
+             * Format: date-time
+             * @description When it was last saved.
+             */
+            updatedAt: string;
+        };
+        /** @description A stream as an administrator saves it. */
+        ProxyStreamRequest: {
+            /** @description The port is open and forwards. */
+            enabled: boolean;
+            /** @description What it is for, at most 100 characters. */
+            name: string;
+            /**
+             * Format: int32
+             * @description The box's port; not one of the box's own services, below 1024 only with PrivilegedPort.
+             */
+            port: number;
+            /**
+             * @description The administrator confirmed a port below 1024.
+             * @default false
+             */
+            privilegedPort: boolean;
+            /** @description A DNS name or IP address. */
+            targetHost: string;
+            /**
+             * Format: int32
+             * @description 1 to 65535.
+             */
+            targetPort: number;
+            /** @description Forward TCP. */
+            tcp: boolean;
+            /** @description Forward UDP. */
+            udp: boolean;
+        };
+        /** @description Where a proxy host forwards to. */
+        ProxyTarget: {
+            /** @description A DNS name or IP address. */
+            host: string;
+            /** @description The administrator confirmed that the target is a service of this box itself. */
+            onBox: boolean;
+            /**
+             * Format: int32
+             * @description 1 to 65535.
+             */
+            port: number;
+            /** @description `http` or `https`. */
+            scheme: string;
+            /** @description How an HTTPS target's certificate is checked. */
+            tls: components["schemas"]["ProxyTargetTls"];
+        };
+        /** @description Whether a proxy host's target answers. */
+        ProxyTargetStatus: {
+            /** @description Why not: `timeout`, `refused`, `dns`, `tls` or `other`. */
+            error: null | string;
+            /**
+             * Format: int64
+             * @description How long the check took.
+             */
+            milliseconds: number;
+            /** @description The target answered with any HTTP status. */
+            reachable: boolean;
+            /**
+             * Format: int32
+             * @description Its status code, if it answered.
+             */
+            status: null | number;
+        };
+        /**
+         * @description How the proxy checks the certificate of an HTTPS target.
+         * @enum {unknown}
+         */
+        ProxyTargetTls: "system" | "box" | "none";
+        /** @description Where the browser goes next: the proxy host's sign-in address with a one-time ticket. */
+        ProxyTicket: {
+            /** @description The address to open. */
+            url: string;
+        };
+        /** @description A browser wants into a proxy host with the Pithyx sign-in. */
+        ProxyTicketRequest: {
+            /** @description The address it asked for. */
+            url: string;
         };
         RecoverRequest: {
             newPassword: string;
@@ -6322,6 +6857,11 @@ export type components = {
              */
             retentionDays: number;
         };
+        /**
+         * @description What 443 and 80 do with a name no enabled host has.
+         * @enum {unknown}
+         */
+        UnknownHostAction: "redirect" | "notFound";
         UnmountedDataset: {
             /** @description Its mount point. */
             mountPoint: string;
@@ -10090,6 +10630,39 @@ export interface operations {
             };
         };
     };
+    CreateProxyTicket: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProxyTicketRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProxyTicket"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
     GetSetupStatus: {
         parameters: {
             query?: never;
@@ -11709,6 +12282,396 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetProxySettings: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProxySettings"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    CreateProxyHost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProxyHostRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProxySettings"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    UpdateProxyHost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProxyHostRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProxySettings"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    DeleteProxyHost: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProxySettings"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    CheckProxyTarget: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProxyTargetStatus"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SetProxyOptions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProxyOptionsRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProxySettings"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    CreateProxyRedirect: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProxyRedirectRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProxySettings"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    UpdateProxyRedirect: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProxyRedirectRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProxySettings"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    DeleteProxyRedirect: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProxySettings"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    CreateProxyStream: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProxyStreamRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProxySettings"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    UpdateProxyStream: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProxyStreamRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProxySettings"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    DeleteProxyStream: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProxySettings"];
+                };
             };
             /** @description Problem details with a stable error code. */
             default: {

@@ -341,6 +341,82 @@
       "invalid": "The right “{resource}” cannot be given like this: it is unknown, given twice, or the level does not fit (read or read and write for a shared folder)."
     }
   },
+  "proxy": {
+    "access": {
+      "denied": "You may not open {host}. An administrator can let you in on the proxy host."
+    },
+    "address": {
+      "denied": "Your address may not open this page.",
+      "invalid": "“{value}” is no IP address and no range such as 192.168.1.0/24."
+    },
+    "auth": {
+      "required": "Sign in first."
+    },
+    "basic_auth": {
+      "invalid": "The Basic Auth user “{username}” is not valid: the name needs 1 to 64 characters without a colon and may appear only once, the password 1 to 1024 characters.",
+      "password_missing": "Enter a password for the new user “{username}”."
+    },
+    "certificate": {
+      "missing": "Upload the certificate and its private key.",
+      "name_mismatch": "The certificate does not cover {name}."
+    },
+    "domain": {
+      "invalid": "“{name}” is no valid domain.",
+      "taken": "Another host already answers {name}."
+    },
+    "domains": {
+      "missing": "Enter at least one domain.",
+      "too_many": "{max, plural, one {Enter at most # domain.} other {Enter at most # domains.}}"
+    },
+    "header": {
+      "invalid": "The header “{name}” is not allowed. Check its name and value; the proxy sets some headers itself, and each may appear only once."
+    },
+    "headers": {
+      "too_many": "{max, plural, one {Set at most # header.} other {Set at most # headers.}}"
+    },
+    "host": {
+      "not_found": "There is no proxy host with the number {id}.",
+      "unknown": "This name is not set up on this box."
+    },
+    "limit": {
+      "out_of_range": "The value must be between {min} and {max}."
+    },
+    "loop": {
+      "detected": "The proxy host leads back to itself."
+    },
+    "redirect": {
+      "not_found": "There is no redirect host with the number {id}.",
+      "status_invalid": "{status} is no redirect status. Use 301, 302, 307 or 308.",
+      "target_invalid": "“{target}” is no complete http or https address."
+    },
+    "sign_in": {
+      "address_invalid": "“{address}” is no address like https://nas.home.arpa:7484.",
+      "group_not_found": "There is no group named {name}.",
+      "user_not_found": "There is no user named {name}."
+    },
+    "stream": {
+      "name_invalid": "{max, plural, one {The name may have at most # character and no control characters.} other {The name may have at most # characters and no control characters.}}",
+      "not_found": "There is no stream with the number {id}.",
+      "port_in_use": "Another program already uses port {port}.",
+      "port_privileged": "Port {port} is below 1024. Confirm that you want to use it.",
+      "port_reserved": "Port {port} belongs to a service of the box.",
+      "port_taken": "Another stream already uses port {port}.",
+      "protocol_missing": "Choose TCP, UDP or both."
+    },
+    "target": {
+      "invalid": "“{host}” is no valid host name or IP address.",
+      "loop": "The target is this box on port {port}, where the proxy itself answers.",
+      "on_box": "{host}:{port} is this box. Confirm that the host should lead to one of the box's own services.",
+      "timeout": "The target did not answer in time.",
+      "unavailable": "The target cannot be reached."
+    },
+    "ticket": {
+      "target_invalid": "This address does not belong to a proxy host with the Pithyx sign-in."
+    },
+    "websockets": {
+      "disabled": "This host does not pass WebSockets on."
+    }
+  },
   "realtime": {
     "message": {
       "invalid": "The live connection received a message it does not understand."

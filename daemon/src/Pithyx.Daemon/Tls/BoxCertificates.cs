@@ -79,6 +79,32 @@ public sealed partial class BoxCertificates(
 
     private Loaded Current => _loaded ?? throw new InvalidOperationException("The certificates are not loaded yet.");
 
+    /// <summary>Raised after the certificates were loaded or renewed; the authority may have changed.</summary>
+    public event Action? Changed;
+
+    /// <summary>The root of the box's authority, for checking certificates it issued.</summary>
+    public X509Certificate2 Root => Current.Root.Certificate;
+
+    /// <summary>Whether the box's authority may sign <paramref name="name"/>.</summary>
+    public bool Permits(string name) => NameScope.FromCertificate(Current.Root.Certificate).Permits(name);
+
+    /// <summary>
+    /// A server certificate for <paramref name="names"/> from the box's authority with the chain to present, kept in
+    /// memory only (the reverse proxy's hosts, D347); null when a name lies outside the authority's scope.
+    /// </summary>
+    public (X509Certificate2 Certificate, X509Certificate2Collection Chain)? IssueServer(IReadOnlyList<string> names)
+    {
+        ArgumentNullException.ThrowIfNull(names);
+        var loaded = Current;
+        var scope = NameScope.FromCertificate(loaded.Root.Certificate);
+        if (names.Count == 0 || !names.All(scope.Permits))
+        {
+            return null;
+        }
+        var issued = CertificateAuthority.Issue(loaded.Intermediate, names, CertificateAuthority.ServerDays, CertificateKeyType.Ecdsa, time.GetUtcNow());
+        return (issued.Certificate, new X509Certificate2Collection(new[] { loaded.Intermediate.Certificate, loaded.Root.Certificate }));
+    }
+
     /// <summary>Loads the certificates, making what is missing, invalid or due; also after a restore.</summary>
     public async Task LoadAsync(CancellationToken cancellationToken)
     {
@@ -91,6 +117,7 @@ public sealed partial class BoxCertificates(
         {
             _lock.Release();
         }
+        Changed?.Invoke();
     }
 
     public async Task<TlsSettings> SettingsAsync(CancellationToken cancellationToken)
@@ -177,6 +204,7 @@ public sealed partial class BoxCertificates(
         {
             _lock.Release();
         }
+        Changed?.Invoke();
     }
 
     public async Task<IssuedCertificateFiles> IssueAsync(IssueCertificateRequest request, string? username, CancellationToken cancellationToken)
@@ -578,7 +606,7 @@ public sealed partial class BoxCertificates(
         }
     }
 
-    private static CertificateInfo Info(X509Certificate2 certificate) => new(
+    public static CertificateInfo Info(X509Certificate2 certificate) => new(
         certificate.Subject,
         certificate.Issuer,
         CertificateAuthority.Names(certificate),

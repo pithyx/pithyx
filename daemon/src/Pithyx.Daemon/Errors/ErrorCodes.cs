@@ -734,6 +734,158 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string PermissionsGrantInvalid = "permissions.grant.invalid";
 
+    /// <summary>The signed-in user may not use the proxy host <c>params.host</c>, which lets in only some users and groups.</summary>
+    [ErrorStatus(HttpStatusCode.Forbidden)]
+    public const string ProxyAccessDenied = "proxy.access.denied";
+
+    /// <summary>The proxy host does not let the client's address in (its allowed or denied addresses).</summary>
+    [ErrorStatus(HttpStatusCode.Forbidden)]
+    public const string ProxyAddressDenied = "proxy.address.denied";
+
+    /// <summary><c>params.value</c> is no IP address and no CIDR range such as <c>192.168.1.0/24</c>.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string ProxyAddressInvalid = "proxy.address.invalid";
+
+    /// <summary>The proxy host needs its Basic Auth or the Pithyx sign-in first (a page gets a redirect to the sign-in instead).</summary>
+    [ErrorStatus(HttpStatusCode.Unauthorized)]
+    public const string ProxyAuthRequired = "proxy.auth.required";
+
+    /// <summary>The Basic Auth user <c>params.username</c> is empty, longer than 64 characters, has a colon or appears twice, or its password is empty or longer than 1024 characters.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string ProxyBasicAuthInvalid = "proxy.basic_auth.invalid";
+
+    /// <summary>The new Basic Auth user <c>params.username</c> needs a password.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string ProxyBasicAuthPasswordMissing = "proxy.basic_auth.password_missing";
+
+    /// <summary>A host with its own certificate needs the certificate and its key in PEM.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string ProxyCertificateMissing = "proxy.certificate.missing";
+
+    /// <summary>The uploaded certificate does not cover the host's domain <c>params.name</c>.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string ProxyCertificateNameMismatch = "proxy.certificate.name_mismatch";
+
+    /// <summary><c>params.name</c> is no DNS name (an IP address is none either); a leading <c>*.</c> needs two labels after it.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string ProxyDomainInvalid = "proxy.domain.invalid";
+
+    /// <summary>Another proxy or redirect host already answers <c>params.name</c>.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string ProxyDomainTaken = "proxy.domain.taken";
+
+    /// <summary>A host needs at least one domain.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string ProxyDomainsMissing = "proxy.domains.missing";
+
+    /// <summary>More domains than allowed; <c>params.max</c> is the limit.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string ProxyDomainsTooMany = "proxy.domains.too_many";
+
+    /// <summary>The header <c>params.name</c> has an invalid name, appears twice, is one the proxy sets itself or has a value with a line break or longer than 4096 characters.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string ProxyHeaderInvalid = "proxy.header.invalid";
+
+    /// <summary>More headers than allowed; <c>params.max</c> is the limit.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string ProxyHeadersTooMany = "proxy.headers.too_many";
+
+    /// <summary>No proxy host has the number <c>params.id</c>.</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string ProxyHostNotFound = "proxy.host.not_found";
+
+    /// <summary>No enabled proxy or redirect host answers this name, and the administrator chose 404 for unknown names.</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string ProxyHostUnknown = "proxy.host.unknown";
+
+    /// <summary>The value of <c>params.limit</c> lies outside <c>params.min</c> to <c>params.max</c>.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string ProxyLimitOutOfRange = "proxy.limit.out_of_range";
+
+    /// <summary>The proxy host's target is the proxy itself; the request would go round in circles.</summary>
+    [ErrorStatus(HttpStatusCode.LoopDetected)]
+    public const string ProxyLoopDetected = "proxy.loop.detected";
+
+    /// <summary>No redirect host has the number <c>params.id</c>.</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string ProxyRedirectNotFound = "proxy.redirect.not_found";
+
+    /// <summary><c>params.status</c> is no redirect status; use 301, 302, 307 or 308.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string ProxyRedirectStatusInvalid = "proxy.redirect.status_invalid";
+
+    /// <summary><c>params.target</c> is no absolute http or https address (without a user name).</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string ProxyRedirectTargetInvalid = "proxy.redirect.target_invalid";
+
+    /// <summary><c>params.address</c> is no http or https address without a path, such as <c>https://nas.home.arpa:7484</c>.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string ProxySignInAddressInvalid = "proxy.sign_in.address_invalid";
+
+    /// <summary>The sign-in of the host names the group <c>params.name</c>, which does not exist.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string ProxySignInGroupNotFound = "proxy.sign_in.group_not_found";
+
+    /// <summary>The sign-in of the host names the user <c>params.name</c>, who does not exist.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string ProxySignInUserNotFound = "proxy.sign_in.user_not_found";
+
+    /// <summary>A stream's name is longer than <c>params.max</c> characters or has control characters.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string ProxyStreamNameInvalid = "proxy.stream.name_invalid";
+
+    /// <summary>No stream has the number <c>params.id</c>.</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string ProxyStreamNotFound = "proxy.stream.not_found";
+
+    /// <summary>Another program already listens on port <c>params.port</c>.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string ProxyStreamPortInUse = "proxy.stream.port_in_use";
+
+    /// <summary>Port <c>params.port</c> is below 1024; confirm it explicitly.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string ProxyStreamPortPrivileged = "proxy.stream.port_privileged";
+
+    /// <summary>Port <c>params.port</c> belongs to a service of the box (FTP, SSH, the web ports, SMB, 7484 or FTP's passive ports).</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string ProxyStreamPortReserved = "proxy.stream.port_reserved";
+
+    /// <summary>Another stream already uses port <c>params.port</c> with the same protocol.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string ProxyStreamPortTaken = "proxy.stream.port_taken";
+
+    /// <summary>A stream needs TCP, UDP or both.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string ProxyStreamProtocolMissing = "proxy.stream.protocol_missing";
+
+    /// <summary><c>params.host</c> is no DNS name or IP address, or the scheme is not http or https.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string ProxyTargetInvalid = "proxy.target.invalid";
+
+    /// <summary>The target is this box on port <c>params.port</c>, where the proxy itself answers.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string ProxyTargetLoop = "proxy.target.loop";
+
+    /// <summary>The target <c>params.host</c>:<c>params.port</c> is this box; confirm that the host should lead to one of its own services.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string ProxyTargetOnBox = "proxy.target.on_box";
+
+    /// <summary>The proxy host's target did not answer in time.</summary>
+    [ErrorStatus(HttpStatusCode.GatewayTimeout)]
+    public const string ProxyTargetTimeout = "proxy.target.timeout";
+
+    /// <summary>The proxy host's target cannot be reached or broke off its answer.</summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string ProxyTargetUnavailable = "proxy.target.unavailable";
+
+    /// <summary>The address belongs to no enabled proxy host with the Pithyx sign-in.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string ProxyTicketTargetInvalid = "proxy.ticket.target_invalid";
+
+    /// <summary>The proxy host does not pass WebSockets on.</summary>
+    [ErrorStatus(HttpStatusCode.Forbidden)]
+    public const string ProxyWebSocketsDisabled = "proxy.websockets.disabled";
+
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string RealtimeMessageInvalid = "realtime.message.invalid";
 

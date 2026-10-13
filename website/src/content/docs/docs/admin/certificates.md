@@ -8,7 +8,7 @@ sidebar:
   order: 10
 ---
 
-The box speaks HTTPS on port 7484 with a certificate from its own certificate authority; ports 80 and 443 only redirect there. Install the authority's root once on each device and the browser trusts the box, its reloads come from the cache and FTPS clients accept it. Everything on this page is in Settings > **Certificates** (administrators only).
+The box speaks HTTPS on port 7484 with a certificate from its own certificate authority; ports 80 and 443 redirect there, except for the domains of the [reverse proxy](/docs/admin/reverse-proxy/), which present certificates of their own. Install the authority's root once on each device and the browser trusts the box, its reloads come from the cache and FTPS clients accept it. Everything on this page is in Settings > **Certificates** (administrators only).
 
 ## Why the browser warns
 
@@ -47,7 +47,7 @@ The box's certificate covers its host name, `<host>.local`, the host name in eac
 
 ## Behind a reverse proxy
 
-A reverse proxy in front of the box connects to `https://<box-address>:7484`. Let it trust the box's root (or, less strictly, skip the check for this one backend), pass WebSocket upgrades through for `/ws` and app sockets, and send its own requests with the host name the browser used. The box sees the proxy's address as the client, so the limit of failed sign-ins per address applies to everyone behind the proxy together.
+To put other services behind the box, use its own [reverse proxy](/docs/admin/reverse-proxy/). A reverse proxy elsewhere in front of the box connects to `https://<box-address>:7484`. Let it trust the box's root (or, less strictly, skip the check for this one backend), pass WebSocket upgrades through for `/ws` and app sockets, and send its own requests with the host name the browser used. The box sees the proxy's address as the client, so the limit of failed sign-ins per address applies to everyone behind the proxy together.
 
 ## Backup
 

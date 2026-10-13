@@ -29,7 +29,8 @@ Categories you can choose when restoring:
 - **Shared folders and file services**: shared folders with their rights and the SMB, SFTP, WebDAV and FTP settings.
 - **Storage settings**: snapshot schedules (restore points), scrub and self-test schedules.
 - **System settings**: language, formats, time zone, time servers and log retention.
-- **Certificates and keys**: the FTP certificate and the SSH host keys, when present.
+- **Certificates and keys**: the box's certificate authority and certificates, uploaded certificates of reverse proxy hosts, and the SSH host keys, when present.
+- **Reverse proxy**: proxy hosts (with Basic Auth users as hashes), redirect hosts, streams, what unknown names get and the sign-in address.
 - **Apps**: the app registry, permissions, folder mappings, catalogs and the app pool. The apps' files and data stay on the pool.
 
 Not included: files on pools, app data, logs, Docker data, sessions, jobs, notifications, the recycle bin index, and the network settings (cards are named differently on other hardware).

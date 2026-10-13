@@ -54,7 +54,7 @@ New pools are created with 4 KiB sectors (`ashift=12`), `lz4` compression and `a
 ## Network
 
 - Every wired network card asks for an address by DHCP (IPv4 and IPv6) on first boot. You can set a fixed address in the installer.
-- The web desktop is served over HTTPS on port 7484; ports 80 and 443 redirect to it. Browsers warn about the box's own certificate until a device trusts its root.
+- The web desktop is served over HTTPS on port 7484; ports 80 and 443 redirect to it, except for domains you set up in the reverse proxy. Browsers warn about the box's own certificate until a device trusts its root.
 - The box has a firewall that lets in only the web interface and the file services you switch on. See [Security](/docs/admin/security/#open-ports).
 - Wi-Fi is not supported.
 - The box does not announce a name on the network. Use its IP address, which the console shows after boot.

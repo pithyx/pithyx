@@ -152,6 +152,11 @@
       "description": "HTTPS, die Zertifizierungsstelle der Box und Zertifikate für andere Geräte",
       "keywords": "https tls ssl zertifikat zertifizierungsstelle ca root vertrauen warnung reverse proxy pem schlüssel domain"
     },
+    "reverseProxy": {
+      "title": "Reverse Proxy",
+      "description": "Eigene Domains auf den Ports 443 und 80, Weiterleitungen und weitergeleitete Ports",
+      "keywords": "reverse proxy domain hostname vhost https tls sni zertifikat weiterleitung redirect port stream tcp udp websocket basic auth anmeldung hsts"
+    },
     "regional": {
       "title": "Regionale Einstellungen",
       "description": "Systemsprache, Formate, Datum und Uhrzeit, Zeitzone und Zeitserver",
@@ -382,7 +387,7 @@
     }
   },
   "certificates": {
-    "intro": "Die Box spricht HTTPS auf Port 7484; die Ports 80 und 443 schicken jeden dorthin. Sie ist ihre eigene Zertifizierungsstelle: Installiere ihr Root-Zertifikat einmal auf einem Gerät, dann vertraut das Gerät der Box und jedem Zertifikat, das sie ausstellt.",
+    "intro": "Die Box spricht HTTPS auf Port 7484; die Ports 80 und 443 schicken jeden dorthin, außer ein Host des Reverse Proxys hat den Namen. Sie ist ihre eigene Zertifizierungsstelle: Installiere ihr Root-Zertifikat einmal auf einem Gerät, dann vertraut das Gerät der Box und jedem Zertifikat, das sie ausstellt.",
     "save": "Speichern",
     "cancel": "Abbrechen",
     "close": "Schließen",
@@ -501,6 +506,174 @@
       "unused": "Dieses Zertifikat ist gerade nicht gültig, deshalb zeigt die Box ihr eigenes."
     }
   },
+  "proxy": {
+    "intro": "Mach andere Dienste unter eigenen Namen auf den Ports 443 und 80 erreichbar: Die Box leitet jeden Namen an sein Ziel weiter und zeigt ein Zertifikat dafür vor. Die Box selbst bleibt auf Port 7484; Namen, die niemand eingerichtet hat, gehen wie bisher dorthin.",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "edit": "Bearbeiten",
+    "schemes": {
+      "http": "http",
+      "https": "https"
+    },
+    "protocols": {
+      "tcp": "TCP",
+      "udp": "UDP"
+    },
+    "options": {
+      "title": "Ports und unbekannte Namen",
+      "ports": "Proxy-Hosts antworten mit HTTPS auf Port {tls} und mit einfachem HTTP auf Port {plain}.",
+      "plainOnly": "Proxy-Hosts antworten mit einfachem HTTP auf Port {plain}; dieser Daemon hat kein HTTPS.",
+      "noPorts": "Dieser Daemon lauscht nicht auf den Ports 443 und 80 (Entwicklung oder Simulation). Du kannst Hosts einrichten, sie antworten aber nur auf einer Box.",
+      "unknown": "Namen ohne Host",
+      "unknownRedirect": "Auf die Weboberfläche auf Port 7484 umleiten",
+      "unknownNotFound": "Mit „nicht gefunden“ (404) antworten",
+      "signInAddress": "Anmeldeadresse",
+      "signInAddressHint": "Wohin Hosts mit Pithyx-Anmeldung Besucher schicken, zum Beispiel https://nas.home.arpa:7484. Leer lassen, um den aufgerufenen Namen auf Port 7484 zu nehmen."
+    },
+    "badges": {
+      "disabled": "Aus",
+      "signIn": "Pithyx-Anmeldung",
+      "basicAuth": "Basic Auth",
+      "noCertificate": "Kein Zertifikat",
+      "notListening": "Port nicht verfügbar"
+    },
+    "hosts": {
+      "title": "Proxy-Hosts",
+      "explain": "Ein Proxy-Host leitet Anfragen für seine Domains an einen Dienst in deinem Netz oder auf dieser Box weiter. Lass die Domains in deinem DNS oder Router auf die Box zeigen.",
+      "add": "Proxy-Host hinzufügen",
+      "none": "Noch keine Proxy-Hosts.",
+      "target": "Leitet weiter an {target}",
+      "log": "Zugriffslog im Log Center unter {source}"
+    },
+    "status": {
+      "check": "Ziel prüfen",
+      "reachable": "Erreichbar ({status})",
+      "unreachable": {
+        "timeout": "Keine Antwort in der Zeit",
+        "refused": "Verbindung abgelehnt",
+        "dns": "Name nicht gefunden",
+        "tls": "Zertifikat nicht akzeptiert",
+        "other": "Nicht erreichbar"
+      }
+    },
+    "redirects": {
+      "title": "Weiterleitungs-Hosts",
+      "explain": "Ein Weiterleitungs-Host schickt Browser von seinen Domains zu einer anderen Adresse, zum Beispiel von einem alten Namen auf einen neuen.",
+      "add": "Weiterleitungs-Host hinzufügen",
+      "none": "Noch keine Weiterleitungs-Hosts.",
+      "target": "Leitet mit {status} weiter an {target}"
+    },
+    "streams": {
+      "title": "Streams",
+      "explain": "Ein Stream leitet einen TCP- oder UDP-Port der Box Byte für Byte an einen anderen Host weiter, für Dienste, die kein HTTP sprechen. Die Firewall öffnet den Port.",
+      "add": "Stream hinzufügen",
+      "none": "Noch keine Streams.",
+      "unnamed": "Stream",
+      "route": "Port {port} ({protocols}) an {target}"
+    },
+    "remove": {
+      "action": "Entfernen",
+      "confirm": "Entfernen",
+      "hostTitle": "Proxy-Host {name} entfernen?",
+      "hostExplain": "Seine Namen sind danach unbekannt. Ein hochgeladenes Zertifikat wird mit gelöscht.",
+      "redirectTitle": "Weiterleitungs-Host {name} entfernen?",
+      "redirectExplain": "Seine Namen sind danach unbekannt.",
+      "streamTitle": "Stream auf Port {port} entfernen?",
+      "streamExplain": "Die Box leitet nicht mehr weiter und die Firewall schließt den Port."
+    },
+    "hostDialog": {
+      "addTitle": "Proxy-Host hinzufügen",
+      "editTitle": "Proxy-Host bearbeiten",
+      "target": "Ziel",
+      "https": "HTTPS",
+      "access": "Zugriff",
+      "headers": "Header",
+      "limits": "Grenzen und Protokoll"
+    },
+    "redirectDialog": {
+      "addTitle": "Weiterleitungs-Host hinzufügen",
+      "editTitle": "Weiterleitungs-Host bearbeiten"
+    },
+    "streamDialog": {
+      "addTitle": "Stream hinzufügen",
+      "editTitle": "Stream bearbeiten"
+    },
+    "certificate": {
+      "label": "Zertifikat",
+      "box": "Von der Zertifizierungsstelle der Box",
+      "custom": "Eigenes hochladen",
+      "boxHint": "Die Box stellt ein Zertifikat für die Domains aus. Sie müssen im Bereich ihrer Zertifizierungsstelle liegen (Einstellungen > Zertifikate); Geräte, die der Root der Box vertrauen, akzeptieren es.",
+      "customHint": "Ein Zertifikat mit Kette und unverschlüsseltem privatem Schlüssel im PEM-Format, das jede Domain abdeckt, zum Beispiel für eine öffentliche Domain.",
+      "stored": "Ein Zertifikat ist hochgeladen. Wähle nur dann neue Dateien, wenn du es ersetzen willst."
+    },
+    "tls": {
+      "system": "Gegen vertrauenswürdige Stellen prüfen",
+      "box": "Gegen die Zertifizierungsstelle der Box prüfen",
+      "none": "Nicht prüfen",
+      "systemHint": "Für Ziele mit einem Zertifikat einer öffentlichen Stelle.",
+      "boxHint": "Für Geräte mit einem Zertifikat, das die Box ausgestellt hat.",
+      "noneHint": "Für Ziele mit selbstsigniertem Zertifikat. Die Verbindung ist verschlüsselt, aber jemand dazwischen könnte sich als Ziel ausgeben."
+    },
+    "statuses": {
+      "301": "301 Dauerhaft verschoben",
+      "302": "302 Gefunden (vorübergehend)",
+      "307": "307 Vorübergehend, behält die Methode",
+      "308": "308 Dauerhaft, behält die Methode"
+    },
+    "fields": {
+      "domains": "Domains",
+      "domainsHint": "Getrennt durch Kommas oder Leerzeichen, zum Beispiel media.home.arpa oder *.apps.home.arpa (ein Platzhalter deckt eine Ebene ab).",
+      "enabled": "Aktiv",
+      "scheme": "Protokoll",
+      "targetHost": "Host",
+      "targetHostHint": "Ein Hostname oder eine IP-Adresse in deinem Netz.",
+      "targetPort": "Port",
+      "tls": "Zertifikat des Ziels",
+      "onBox": "Das Ziel ist ein Dienst auf dieser Box selbst",
+      "webSockets": "WebSockets weiterleiten",
+      "forceHttps": "HTTP auf HTTPS umleiten",
+      "http2": "HTTP/2 anbieten",
+      "hsts": "HSTS senden",
+      "hstsWarning": "Mit HSTS lehnen Browser für diesen Namen ein Jahr lang einfaches HTTP und jede Zertifikatswarnung ab, auch wenn du es wieder ausschaltest. Nutze es nur mit einem Zertifikat, dem alle Geräte vertrauen.",
+      "allow": "Erlaubte Adressen",
+      "allowHint": "IP-Adressen oder Bereiche wie 192.168.1.0/24, durch Kommas getrennt. Leer lässt alle herein.",
+      "deny": "Gesperrte Adressen",
+      "signIn": "Pithyx-Anmeldung verlangen",
+      "signInExplain": "Besucher melden sich zuerst mit ihrem Konto auf der Box an. Abmelden von der Box beendet ihren Zugang. Das Ziel bekommt den Benutzer in X-Pithyx-User und X-Pithyx-Groups.",
+      "users": "Benutzer",
+      "groups": "Gruppen",
+      "usersHint": "Namen durch Kommas getrennt. Ohne Benutzer und Gruppen kommt jeder herein, der sich anmelden darf; Administratoren immer.",
+      "basicAuth": "Basic Auth",
+      "basicAuthHint": "Fragt den Browser vor allem anderen nach Name und Passwort, auch für Apps ohne eigene Anmeldung.",
+      "basicUser": "Benutzername",
+      "basicPassword": "Passwort",
+      "basicPasswordKeep": "Leer lassen, um das Passwort zu behalten.",
+      "basicAdd": "Benutzer hinzufügen",
+      "basicRemove": "Benutzer entfernen",
+      "forwardedHeaders": "X-Forwarded-For, -Proto und -Host senden",
+      "preserveHost": "Den aufgerufenen Namen als Host senden",
+      "hostHeader": "Host-Header",
+      "hostHeaderHint": "Optional. Sendet stattdessen diesen Host an das Ziel.",
+      "requestHeaders": "Anfrage-Header",
+      "responseHeaders": "Antwort-Header",
+      "headersHint": "Einer pro Zeile als Name: Wert. Name: allein entfernt den Header.",
+      "maxBody": "Größter Upload in MB",
+      "maxBodyHint": "Leer für keine Grenze.",
+      "connectTimeout": "Verbindungs-Timeout in Sekunden",
+      "responseTimeout": "Antwort-Timeout in Sekunden",
+      "accessLog": "Zugriffslog schreiben",
+      "redirectTarget": "Zieladresse",
+      "redirectTargetHint": "Eine vollständige Adresse wie https://new.example.org.",
+      "status": "Status",
+      "preservePath": "Pfad und Abfrage behalten",
+      "streamName": "Name",
+      "streamEnabled": "Aktiv (die Firewall öffnet den Port)",
+      "port": "Port der Box",
+      "portHint": "Keiner der Ports der Box selbst (21, 22, 80, 443, 445, 7484, 50000 bis 50099).",
+      "privileged": "Diesen Port unter 1024 trotzdem nutzen",
+      "protocols": "Protokolle"
+    }
+  },
   "regional": {
     "intro": "Sprache, Formate und Uhrzeit der Box. Deine eigene Sprache wählst du weiterhin im Benutzermenü.",
     "languageTitle": "Sprache und Formate",
@@ -603,6 +776,10 @@
       "apps": {
         "title": "Apps",
         "description": "Installierte Apps mit ihren Berechtigungen, wer sie nutzen darf, und der App-Pool; Dateien und Daten der Apps bleiben auf dem Pool"
+      },
+      "reverseProxy": {
+        "title": "Reverse Proxy",
+        "description": "Proxy-Hosts, Weiterleitungs-Hosts, Streams und was unbekannte Namen bekommen; hochgeladene Zertifikate kommen mit den Zertifikaten"
       }
     },
     "steps": {

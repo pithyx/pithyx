@@ -27,6 +27,12 @@ public enum BackupCategory
     /// files and data stay on the app pool.
     /// </summary>
     Apps,
+
+    /// <summary>
+    /// The reverse proxy (D347): proxy hosts, redirect hosts, streams and what unknown names get. Uploaded certificates
+    /// of the hosts are files of the part Certificates.
+    /// </summary>
+    ReverseProxy,
 }
 
 /// <summary>
@@ -50,6 +56,7 @@ public static class BackupDatabase
         [BackupCategory.System] = ["system_region"],
         [BackupCategory.Certificates] = ["tls_issued"],
         [BackupCategory.Apps] = ["apps", "app_permissions", "storage_mappings", "app_storage", "catalogs"],
+        [BackupCategory.ReverseProxy] = ["proxy_hosts", "proxy_redirects", "proxy_streams"],
     }.ToFrozenDictionary();
 
     /// <summary>Rows of the <c>settings</c> table by category.</summary>
@@ -59,6 +66,7 @@ public static class BackupDatabase
         [BackupCategory.System] = [Logs.LogService.SettingsKey],
         [BackupCategory.Certificates] = [Tls.BoxCertificates.ExtraNamesSetting],
         [BackupCategory.Apps] = [Apps.AppRegistry.PoolSetting, .. Apps.Catalog.StoreService.BackupSettings],
+        [BackupCategory.ReverseProxy] = [ReverseProxy.ProxyService.UnknownHostsSetting, ReverseProxy.ProxyService.SignInAddressSetting],
     }.ToFrozenDictionary();
 
     /// <summary>Tables a restore handles on their own: rights are rebuilt, allocations merged, settings go by key.</summary>
@@ -71,7 +79,7 @@ public static class BackupDatabase
     public static readonly FrozenSet<string> NotBackedUp = new[]
     {
         "sessions", "jobs", "notifications", "storage_alert_notices", "storage_schedule_runs", "trash_items",
-        "network_config", "network_pending", "system_updates",
+        "network_config", "network_pending", "system_updates", "proxy_sessions",
     }.ToFrozenSet();
 
     /// <summary>Copies the live database to <paramref name="path"/> without its runtime state.</summary>
@@ -128,6 +136,11 @@ public static class BackupDatabase
                 await connection.ExecuteAsync("INSERT OR IGNORE INTO main.id_allocations (id, kind, name, allocated_at) SELECT id, kind, name, allocated_at FROM backup.id_allocations", transaction: transaction);
             }
             await connection.ExecuteAsync(RebuildGrants, new { users, shares, coreApps = Apps.CoreApps.All.Select(Permissions.Resources.App).ToList() }, transaction);
+            if (users || categories.Contains(BackupCategory.ReverseProxy))
+            {
+                // Signed-in browsers of proxy hosts belong to a box session and a host that may be gone.
+                await connection.ExecuteAsync("DELETE FROM main.proxy_sessions", transaction: transaction);
+            }
             if (users)
             {
                 await connection.ExecuteAsync(
