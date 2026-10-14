@@ -19,8 +19,8 @@ export interface DialogProps extends Omit<ModalOverlayProps, 'className' | 'chil
   tone?: 'default' | 'danger';
   /** `alertdialog` for a question that interrupts the user; `dialog` when left out. */
   role?: 'dialog' | 'alertdialog';
-  /** Wide dialogs for side-by-side content such as the pool wizard's layout cards. */
-  size?: 'default' | 'large';
+  /** `medium` for longer forms such as a user with its rights; `large` for side-by-side content (the pool wizard). */
+  size?: 'default' | 'medium' | 'large';
   /** The content. */
   children: ReactNode;
   /** The buttons at the bottom, usually a `Button` each. */
@@ -60,7 +60,13 @@ export function Dialog({
 }: DialogProps) {
   return (
     <ModalOverlay {...props} className={styles.overlay}>
-      <Modal className={cx(styles.modal, size === 'large' && styles.large)}>
+      <Modal
+        className={cx(
+          styles.modal,
+          size === 'medium' && styles.medium,
+          size === 'large' && styles.large,
+        )}
+      >
         <AriaDialog role={role} className={cx(styles.dialog, tone === 'danger' && styles.danger)}>
           <div className={styles.header}>
             {icon !== undefined && <span className={styles.icon}>{icon}</span>}

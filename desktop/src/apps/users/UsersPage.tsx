@@ -259,6 +259,7 @@ function CreateDialog({
   }
   return (
     <FormDialog
+      size="medium"
       title={t('create.title')}
       submit={t('create.submit')}
       onClose={onClose}
@@ -329,6 +330,7 @@ function EditDialog({
   );
   return (
     <FormDialog
+      size="medium"
       title={t('edit.title', { name: user.username })}
       submit={t('edit.submit')}
       onClose={onClose}

@@ -80,7 +80,7 @@ The boot menu entry **Pithyx recovery** (key `r`) starts a menu on the box's scr
 - **[1] Roll back to a snapshot**, confirmed by typing the version.
 - **[2] Install an update file from a USB stick**: the file must lie in the stick's top folder. The menu checks it like an upload and installs after you type `install`.
 - **[3] Reset the network to DHCP**: every network card back to DHCP, bonds, VLANs and name servers removed, applied at the next start.
-- **[5] Change the update source**, see [Switching the update source](/docs/install/update-source/).
-- **[4] Restart**.
+- **[4] Change the update source**, see [Switching the update source](/docs/install/update-source/).
+- **[0] Restart**.
 
 The menu has no password. Whoever can use the box's console, in person or through remote management (BMC, IPMI), controls the box anyway; see [Security](/docs/admin/security/#physical-access). Secure the console and any remote management of the machine. Every action of the menu is logged.

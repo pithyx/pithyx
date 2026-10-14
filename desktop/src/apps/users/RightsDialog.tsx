@@ -94,6 +94,7 @@ export function RightsDialog({
     catalog.data !== undefined && shares.data !== undefined && current.data !== undefined;
   return (
     <FormDialog
+      size="medium"
       title={t(subject.kind === 'user' ? 'grants.userTitle' : 'grants.groupTitle', { name })}
       submit={t('grants.save')}
       disabled={!ready || save.isPending}

@@ -1,3 +1,9 @@
+.card,
+.job {
+  /* File names without spaces break anywhere instead of leaving the card. */
+  overflow-wrap: anywhere;
+}
+
 .card {
   position: relative;
   display: grid;
@@ -179,6 +185,7 @@
 
 .job {
   display: grid;
+  min-width: 0;
   gap: var(--space-1);
   padding: var(--space-3);
   border: 1px solid var(--color-border);

@@ -17,6 +17,30 @@ Step-by-step plan for building the Pithyx foundation. Read `CLAUDE.md` before st
 
 Set by the owner on 2026-09-29. This section is the roadmap from now on: work through it top to bottom. Everything else below (including the parts of steps 9 to 14 that are not listed here) comes after it. M4 was pulled into 1.0 on 2026-10-05 as "Apps 1.0 (SDK and runtime)" (D300); store catalogs, updates and signatures were pulled in on 2026-10-08 as "Store 1.0 (catalogs and updates)" (D328, D329). The release blockers apply to 1.0 as far as its scope reaches; a blocker about a feature 1.0 does not ship (NFS) is met by not shipping it and moves to the release that does. Third-party apps ship with 1.0, so their blockers hold for it.
 
+### Findings from the owner's ISO test on 2026-10-14
+
+The owner went through `pithyx-1.0.0-beta.1-amd64.iso` on a VM. Quick fixes (`fix/beta-feedback`):
+
+- [x] The stick's GRUB menu offered "Install Pithyx (show boot messages)" next to the quiet default, but the console shows the logo either way: the entry is gone (press `e` and remove `quiet` to see the messages).
+- [x] Installer language: it follows the browser (English for every language but German); the welcome page now has the sign-in page's language switch, and the choice carries over to step 1.
+- [x] Installer step 2, "Test connection" with the default settings: the daemon answered `network.change.empty` (nothing to apply), and the page showed every test error as "The daemon is not reachable". The test now checks the cards as they are when nothing changes, and the page shows the real error (regression test in `InstallerApiTests`).
+- [x] Installer, "Another browser owns this installation" after "Test connection" and at "Install Pithyx", gone after a restart of the installer. Not reproduced in QEMU (the claim survived the test). The claim lives only in the daemon's memory, so the likely cause is a page left open across a restart of the live system or of its daemon. The page now claims again when nobody owns the installation (its status says `claimed: false`), also after a request failed with `installer.claim.required`.
+- [x] Installer with many disks: the wallpaper scrolled with the card; it stays fixed now (all sign-in screens).
+- [x] Installer, user name `root`: the daemon refuses reserved names (`auth.username.reserved`), but the summary only jumped back to step 4 without a word. The step now shows the error that sent the user back.
+- [x] Installer step 5, "Install Pithyx" without the erase confirmation did nothing; it now says that the confirmation is missing.
+- [x] The dialogs for creating and editing users and groups and for rights were too narrow: `@pithyx/ui`'s `Dialog` gets `size="medium"` (640 px).
+- [x] Log Center: three errors "Failed to query local AF_VSOCK CID: Cannot assign requested address" at every start, from systemd's SSH generator (logged through the kernel log, so shown as `kernel`). The `pithyx` package masks the generator: the daemon alone decides whether sshd runs.
+- [x] Notifications with a long file name without spaces overflowed their card; text now breaks anywhere.
+- [x] "Pithyx is restarting now..." stayed after the restart; the dialog closes once the connection is back.
+- [x] Recovery menu numbered 1, 2, 3, 5, 4 and the source menu 1, 3, 0: now 1 to 4 and **[0] Restart**, and the source menu always lists [1] to [4] (a choice that does not apply says why).
+
+Open, each its own PR:
+
+- [ ] Home folders for administrators: today Files shows every user's home as its own entry under "Homes", which works for five users and not for a hundred. Wanted: one share `homes` (like the SMB share) that lists the users' folders when opened.
+- [ ] Permissions and SMB, found on the ISO: (a) a file uploaded in Files did not appear over SMB for another user with access, also after a reload; (b) after granting that user read-write and reconnecting, the user could not create files; (c) in the user's own home over SMB, a newly created file appeared only after a reload of the folder. Reproduce on 7484 with `e2e-user` and `smbclient`, find the cause, fix with an integration test. Leads from a first look: (c) Files learns of changes only from the daemon's own writes, and the SMB audit feed (`FileServiceActivity`, `full_audit` with `pwrite_send`, `unlinkat`, `renameat`, `mkdirat`) only refreshes the used space and the recycle bin; an empty new file (Explorer's "New") logs nothing at all. Publishing folder changes from the audit lines (plus `create_file` with the disposition `create`) would close it. (a) and (b) may be the SMB session: smbd reads the user's groups (`pithyx-s<n>-r`, `-rw`) once per session, so a grant applies only after a new session (sign out of Windows or `net use * /delete`), which a reload in Explorer does not do; check whether the daemon should close the user's sessions on a grant change (`smbcontrol close-share` or `smbstatus` plus `kill`).
+- [ ] [DECISION] Administrators over SSH have no root: `sudo` is not installed and root is locked (D341), so an administrator signed in over SSH cannot do anything privileged. Options: (a) administrators get `sudo` with their password (group `sudo`, kept in sync with the admin right), recommended; (b) only the first administrator from the installer; (c) no root over SSH, everything through the web interface. Also preinstall `sudo`, `nano`, `htop`, `curl`, `wget` and `git`?
+- [ ] [DECISION] Storage > Advanced offers volumes (zvols), but nothing in 1.0 uses them (no iSCSI, no VMs). Hide volumes until a feature consumes them (recommended), or keep them for administrators who use them over SSH.
+
 ### Findings from the owner's test on 2026-09-29
 
 Core bugs first, each in its own PR with a regression test:

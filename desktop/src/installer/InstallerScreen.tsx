@@ -1,10 +1,10 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import type { TFunction } from 'i18next';
 import { unwrap, type components, type ErrorCode } from '@pithyx/api-client';
 import { useEffect, useId, useState, type ReactNode, type SyntheticEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
-import { Button, Checkbox, Field, PasswordField } from '../auth/controls';
+import { Button, Checkbox, Field, LanguageSelect, PasswordField } from '../auth/controls';
 import styles from '../auth/Auth.module.css';
 import { useFormErrors } from '../auth/formErrors';
 import { NewPasswordField } from '../auth/password/NewPasswordField';
@@ -113,7 +113,11 @@ export function InstallerScreen() {
   });
   const status = useQuery({
     queryKey: statusKey,
-    queryFn: async ({ signal }) => unwrap(await api.GET('/api/installer', { signal })),
+    // A live system that restarted since the page claimed it has no owner; this page takes it again.
+    queryFn: async ({ signal }) => {
+      const current = unwrap(await api.GET('/api/installer', { signal }));
+      return current.claimed ? current : unwrap(await api.POST('/api/installer/claim'));
+    },
     enabled: claim.isSuccess,
     initialData: claim.data,
     refetchInterval: (query) => (query.state.data?.phase === 'installing' ? 1000 : false),
@@ -124,6 +128,7 @@ export function InstallerScreen() {
     enabled: claim.isSuccess,
   });
   const [step, setStep] = useState(0);
+  const [returned, setReturned] = useState<{ step: number; error: DescribedError }>();
   // After a failed installation the user may go back through the steps and start it again.
   const [editing, setEditing] = useState(false);
   const [choices, setChoices] = useState<Choices>(() => {
@@ -170,6 +175,7 @@ export function InstallerScreen() {
         )}
         onChange={() => {
           setEditing(true);
+          setReturned(undefined);
           setStep(5);
         }}
       />
@@ -180,12 +186,22 @@ export function InstallerScreen() {
     const update = (next: Partial<Choices>) => {
       setChoices((previous) => ({ ...previous, ...next }));
     };
+    // Leaving a step drops the daemon's error that sent the user back to it.
+    const go = (next: number) => {
+      setReturned(undefined);
+      setStep(next);
+    };
     const pages = [
       <Welcome
         key="welcome"
         status={current}
         onNext={() => {
-          setStep(1);
+          // The language picked on the welcome page carries into the region step.
+          if ((languages as readonly string[]).includes(i18n.language)) {
+            const language = i18n.language as Language;
+            update({ language, keyboardLayout: keyboardFor(choices.region, language) });
+          }
+          go(1);
         }}
       />,
       <RegionStep
@@ -194,10 +210,10 @@ export function InstallerScreen() {
         options={offered}
         update={update}
         onBack={() => {
-          setStep(0);
+          go(0);
         }}
         onNext={() => {
-          setStep(2);
+          go(2);
         }}
       />,
       <NetworkStep
@@ -208,10 +224,10 @@ export function InstallerScreen() {
           update({ network });
         }}
         onBack={() => {
-          setStep(1);
+          go(1);
         }}
         onNext={() => {
-          setStep(3);
+          go(3);
         }}
       />,
       <DiskStep
@@ -220,10 +236,10 @@ export function InstallerScreen() {
         options={offered}
         update={update}
         onBack={() => {
-          setStep(2);
+          go(2);
         }}
         onNext={() => {
-          setStep(4);
+          go(4);
         }}
       />,
       <AdminStep
@@ -231,10 +247,10 @@ export function InstallerScreen() {
         choices={choices}
         update={update}
         onBack={() => {
-          setStep(3);
+          go(3);
         }}
         onNext={() => {
-          setStep(5);
+          go(5);
         }}
       />,
       <Summary
@@ -242,19 +258,30 @@ export function InstallerScreen() {
         choices={choices}
         options={offered}
         onBack={() => {
-          setStep(4);
+          go(4);
         }}
-        onFieldError={setStep}
+        onFieldError={(next, error) => {
+          setStep(next);
+          setReturned({ step: next, error });
+        }}
         onStarted={() => {
           setEditing(false);
         }}
       />,
     ];
-    content = pages[step];
+    content =
+      returned?.step === step ? (
+        <>
+          <ErrorNotice error={returned.error} />
+          {pages[step]}
+        </>
+      ) : (
+        pages[step]
+      );
   }
 
   return (
-    <AuthLayout wide>
+    <AuthLayout wide footer={step === 0 && !claim.isError ? <LanguageSelect /> : undefined}>
       <AuthHeader host={choices.hostname} motion={step === 0 ? 'welcome' : 'loop'} />
       {content}
     </AuthLayout>
@@ -561,6 +588,9 @@ function NetworkStep({
     onSuccess: (result) => {
       queryClient.setQueryData(networkTestKey, result);
     },
+    onError: (failure) => {
+      reclaimIfLost(queryClient, failure);
+    },
   });
   // The page may lose its connection while the live system tries the settings; it asks again until the test ends.
   const test = useQuery({
@@ -653,7 +683,11 @@ function NetworkStep({
       {start.isError && <ErrorNotice error={describeError(start.error)} />}
       {result !== undefined && !result.running && result.errorCode !== null && (
         <ErrorNotice
-          error={describeError({ code: result.errorCode, params: result.errorParams })}
+          error={{
+            code: result.errorCode as ErrorCode,
+            params: result.errorParams,
+            requestId: '',
+          }}
         />
       )}
       {result !== undefined && !result.running && (
@@ -924,6 +958,13 @@ function AdminStep({
   );
 }
 
+/** After a restart of the live system nobody owns it; reading the status claims it again (see the status query). */
+function reclaimIfLost(queryClient: QueryClient, failure: unknown) {
+  if (describeError(failure).code === 'installer.claim.required') {
+    void queryClient.invalidateQueries({ queryKey: statusKey });
+  }
+}
+
 /** The step a daemon error sends the user back to. */
 function stepOf(code: string): number | undefined {
   if (code.startsWith('auth.')) {
@@ -955,13 +996,14 @@ function Summary({
   choices: Choices;
   options: Options;
   onBack: () => void;
-  onFieldError: (step: number) => void;
+  onFieldError: (step: number, error: DescribedError) => void;
   onStarted: () => void;
 }) {
   const { t } = useTranslation('installer');
   const queryClient = useQueryClient();
   const locale = useFormatLocale();
   const [confirmed, setConfirmed] = useState(false);
+  const [confirmMissing, setConfirmMissing] = useState(false);
   const [error, setError] = useState<DescribedError>();
   const diskIds = [choices.firstDisk, choices.mirror ? choices.secondDisk : null].filter(
     (id): id is string => id !== null,
@@ -995,12 +1037,13 @@ function Summary({
       onStarted();
     },
     onError: (failure) => {
+      reclaimIfLost(queryClient, failure);
       const described = describeError(failure);
       const step = stepOf(described.code);
       if (step === undefined) {
         setError(described);
       } else {
-        onFieldError(step);
+        onFieldError(step, described);
       }
     },
   });
@@ -1027,6 +1070,8 @@ function Summary({
         if (confirmed) {
           setError(undefined);
           install.mutate();
+        } else {
+          setConfirmMissing(true);
         }
       }}
     >
@@ -1055,9 +1100,20 @@ function Summary({
           </li>
         ))}
       </ul>
-      <Checkbox checked={confirmed} onChange={setConfirmed}>
+      <Checkbox
+        checked={confirmed}
+        onChange={(checked) => {
+          setConfirmed(checked);
+          setConfirmMissing(false);
+        }}
+      >
         {t('summary.confirm')}
       </Checkbox>
+      {confirmMissing && (
+        <p className={own.error} role="alert">
+          {t('summary.confirmRequired')}
+        </p>
+      )}
       {error !== undefined && <ErrorNotice error={error} />}
     </StepForm>
   );

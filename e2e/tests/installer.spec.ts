@@ -20,6 +20,10 @@ test('the first browser installs Pithyx on a mirror and restarts into it', async
   await page.getByRole('button', { name: 'Next' }).click();
 
   await expect(page.getByRole('heading', { name: 'Network' })).toBeVisible();
+  // The default settings (DHCP everywhere) are tested as they are.
+  await page.getByRole('button', { name: 'Test connection' }).click();
+  await expect(page.getByText(/ works: /).first()).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole('alert')).toHaveCount(0);
   await page.getByRole('button', { name: 'Next' }).click();
 
   await expect(page.getByRole('heading', { name: 'System disk' })).toBeVisible();
@@ -38,7 +42,8 @@ test('the first browser installs Pithyx on a mirror and restarts into it', async
   await page.getByRole('button', { name: 'Next' }).click();
 
   await expect(page.getByRole('heading', { name: 'Administrator' })).toBeVisible();
-  await page.getByLabel('User name').fill('admin');
+  // A reserved name passes the step; the daemon refuses it at the end and the page comes back here to say so.
+  await page.getByLabel('User name').fill('root');
   await page.getByLabel('Password', { exact: true }).fill('correct horse battery staple');
   await page.getByLabel('Repeat password').fill('correct horse battery staple');
   await page.getByRole('button', { name: 'Next' }).click();
@@ -47,6 +52,17 @@ test('the first browser installs Pithyx on a mirror and restarts into it', async
   await expect(page.locator('dd').filter({ hasText: 'nas-e2e' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'These disks will be erased' })).toBeVisible();
   await expect(page.locator('ul li').filter({ hasText: 'serial' })).toHaveCount(2);
+  await page.getByRole('button', { name: 'Install Pithyx' }).click();
+  await expect(page.getByRole('alert')).toHaveText(
+    'Confirm that the data on these disks will be erased.',
+  );
+  await page.getByText('All data on these disks will be erased').click();
+  await page.getByRole('button', { name: 'Install Pithyx' }).click();
+  await expect(page.getByRole('heading', { name: 'Administrator' })).toBeVisible();
+  await expect(page.getByText('The user name root is reserved for the system.')).toBeVisible();
+  await page.getByLabel('User name').fill('admin');
+  await page.getByRole('button', { name: 'Next' }).click();
+  await expect(page.getByRole('heading', { name: 'Summary' })).toBeVisible();
   await page.getByText('All data on these disks will be erased').click();
 
   // Someone else who opens the page now only learns that the installation is taken.

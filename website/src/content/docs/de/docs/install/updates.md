@@ -80,7 +80,7 @@ Der Bootmenü-Eintrag **Pithyx recovery** (Taste `r`) startet ein Menü auf dem 
 - **[1] Roll back to a snapshot**: zu einem Snapshot zurück, bestätigt durch Eingabe der Version.
 - **[2] Install an update file from a USB stick**: Die Datei muss im obersten Ordner des Sticks liegen. Das Menü prüft sie wie ein Hochladen und installiert, nachdem du `install` eingibst.
 - **[3] Reset the network to DHCP**: jede Netzwerkkarte zurück auf DHCP, Bonds, VLANs und Nameserver entfernt, wirksam beim nächsten Start.
-- **[5] Change the update source**: siehe [Die Update-Quelle wechseln](/de/docs/install/update-source/).
-- **[4] Restart**: Neustart.
+- **[4] Change the update source**: siehe [Die Update-Quelle wechseln](/de/docs/install/update-source/).
+- **[0] Restart**: Neustart.
 
 Das Menü hat kein Passwort. Wer die Konsole der Box bedienen kann, vor Ort oder über die Fernwartung (BMC, IPMI), hat die Box ohnehin in der Hand; siehe [Sicherheit](/de/docs/admin/security/#physischer-zugriff). Sichere die Konsole und jede Fernwartung der Maschine. Jede Aktion des Menüs wird protokolliert.

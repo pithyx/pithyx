@@ -30,10 +30,10 @@ Du brauchst die `pithyx-source.json` der Quelle, die der Fork zusammen mit seine
 Dann:
 
 1. Starte die Box neu und wähle im Bootmenü **Pithyx recovery** (Taste `r`).
-2. Wähle **[5] Change the update source**, dann **[1] Read pithyx-source.json from a USB stick**, **[2] Use the file saved in Settings** oder **[3] Type the source**.
+2. Wähle **[4] Change the update source**, dann **[1] Read pithyx-source.json from a USB stick**, **[2] Use the file saved in Settings** oder **[3] Type the source**.
 3. Das Menü zeigt den Namen, die Kanal-URL und jeden öffentlichen Schlüssel vollständig. Vergleiche jeden Schlüssel mit dem, den die Quelle veröffentlicht.
 4. Tippe den Namen der Quelle, um zu wechseln. Alles andere ändert nichts.
-5. Starte mit **[4] Restart** neu. Ab diesem Start folgt die Box der neuen Quelle.
+5. Starte mit **[0] Restart** neu. Ab diesem Start folgt die Box der neuen Quelle.
 
 Nach dem Neustart bekommen die Administratoren die Benachrichtigung „Die Update-Quelle ist jetzt {name}“, und Einstellungen > **Updates** zeigt die Quelle mit dem Hinweis „Diese Box folgt {name}, nicht dem Pithyx-Projekt.“ Wenn bei dir niemand gewechselt hat, wechsle sofort zurück.
 
@@ -41,7 +41,7 @@ Eine Datei, die die Prüfung nicht besteht, wird mit [`update.source.invalid`](/
 
 ### Der Weg zurück
 
-Wähle im Recovery-Menü **[5] Change the update source**, dann **[4] Back to the Pithyx project**, und tippe `Pithyx`. Nach dem Neustart vertraut die Box wieder nur den eingebauten Schlüsseln des Projekts und liest seine Releases. Updates installieren sich nur, wenn sie neuer als die installierte Version sind: Eine Box, die einen Fork mit höherer Versionsnummer hatte, wartet also auf ein neueres Pithyx-Release, und ein Fork, der die Datenbank geändert hat, kann eine Neuinstallation nötig machen (siehe [Wiederherstellung und Neuinstallation](/de/docs/install/recovery/)).
+Wähle im Recovery-Menü **[4] Change the update source**, dann **[4] Back to the Pithyx project**, und tippe `Pithyx`. Nach dem Neustart vertraut die Box wieder nur den eingebauten Schlüsseln des Projekts und liest seine Releases. Updates installieren sich nur, wenn sie neuer als die installierte Version sind: Eine Box, die einen Fork mit höherer Versionsnummer hatte, wartet also auf ein neueres Pithyx-Release, und ein Fork, der die Datenbank geändert hat, kann eine Neuinstallation nötig machen (siehe [Wiederherstellung und Neuinstallation](/de/docs/install/recovery/)).
 
 ## Für Betreiber eines Forks
 

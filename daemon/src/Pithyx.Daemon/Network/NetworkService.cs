@@ -325,11 +325,25 @@ public sealed partial class NetworkService(
 
     private async Task<IReadOnlyList<NetworkTestInterface>> TestAsync(NetworkConfig requested)
     {
-        var change = await ChangeAsync(requested, NetworkChangeOrigin.Web, CancellationToken.None);
+        // Settings that are already in place (DHCP everywhere on a fresh live system) are checked as they are.
+        PendingNetworkChange? change;
+        try
+        {
+            change = await ChangeAsync(requested, NetworkChangeOrigin.Web, CancellationToken.None);
+        }
+        catch (PithyxException exception) when (exception.Code == ErrorCodes.NetworkChangeEmpty)
+        {
+            change = null;
+        }
         try
         {
             var config = await ConfigAsync(CancellationToken.None);
-            var expected = config.Interfaces.Where(item => item.HasAddress).ToList();
+            // A card without settings gets DHCP; it counts when it has a cable.
+            var expected = config.Interfaces.Where(item => item.HasAddress)
+                .Concat(Links(config)
+                    .Where(link => link.Kind == InterfaceKind.Ethernet && link.Carrier && link.Master is null && !config.Interfaces.Any(item => item.Name == link.Name))
+                    .Select(link => new InterfaceConfig(link.Name, InterfaceKind.Ethernet)))
+                .ToList();
             var until = time.GetUtcNow() + _testWait;
             IReadOnlyList<NetworkLink> links = Links(config);
             while (time.GetUtcNow() < until && !expected.All(item => Ready(item, links)))
@@ -348,7 +362,7 @@ public sealed partial class NetworkService(
         }
         finally
         {
-            if (confirmation.Pending?.Id == change.Id)
+            if (change is not null && confirmation.Pending?.Id == change.Id)
             {
                 await confirmation.RevertAsync(change.Id);
             }

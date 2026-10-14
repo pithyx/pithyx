@@ -92,6 +92,7 @@
     "administrator": "Administrator",
     "erased": "These disks will be erased",
     "confirm": "All data on these disks will be erased",
+    "confirmRequired": "Confirm that the data on these disks will be erased.",
     "install": "Install Pithyx"
   },
   "progress": {

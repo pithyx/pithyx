@@ -109,6 +109,38 @@ public sealed class InstallerApiTests : IAsyncDisposable
         using var reboot = await owner.PostAsync("/api/installer/reboot", null, Token);
         Assert.Equal(HttpStatusCode.NoContent, reboot.StatusCode);
     }
+
+    [Fact]
+    public async Task TheConnectionTestChecksTheCardsAsTheyAreWhenNothingChanged()
+    {
+        using var owner = _factory.CreateApiClient();
+        using (var claim = await owner.PostAsync("/api/installer/claim", null, Token))
+        {
+            Assert.Equal(HttpStatusCode.OK, claim.StatusCode);
+        }
+        var options = await (await owner.GetAsync("/api/installer/options", Token)).JsonAsync();
+        var config = options.GetProperty("networkConfig");
+        Assert.Empty(config.GetProperty("interfaces").EnumerateArray());
+
+        using (var started = await owner.PostAsJsonAsync("/api/installer/network/test", config, Token))
+        {
+            Assert.Equal(HttpStatusCode.Accepted, started.StatusCode);
+        }
+        var test = await (await owner.GetAsync("/api/installer/network/test", Token)).JsonAsync();
+        for (var attempt = 0; attempt < 200 && test.GetProperty("running").GetBoolean(); attempt++)
+        {
+            await Task.Delay(50, Token);
+            test = await (await owner.GetAsync("/api/installer/network/test", Token)).JsonAsync();
+        }
+
+        Assert.Equal(System.Text.Json.JsonValueKind.Null, test.GetProperty("errorCode").ValueKind);
+        var cards = options.GetProperty("network").EnumerateArray()
+            .Where(link => link.GetProperty("kind").GetString() == "ethernet" && link.GetProperty("carrier").GetBoolean())
+            .Select(link => link.GetProperty("name").GetString())
+            .ToList();
+        Assert.NotEmpty(cards);
+        Assert.Equal(cards, test.GetProperty("interfaces").EnumerateArray().Select(item => item.GetProperty("name").GetString()));
+    }
 }
 
 /// <summary>The installed system answers the id the installer gave it, readable from the installer page on another port.</summary>

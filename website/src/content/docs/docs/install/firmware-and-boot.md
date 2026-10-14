@@ -28,8 +28,7 @@ Pithyx does not support enrolling keys for Secure Boot. On some computers, the f
 
 The stick starts a boot menu (GRUB) that waits 5 seconds and then picks the first entry:
 
-- **Install Pithyx** `<version>`: starts the installer quietly.
-- **Install Pithyx** `<version>` **(show boot messages)**: the same with boot messages, useful when something does not start.
+- **Install Pithyx** `<version>`: starts the installer; the console shows the Pithyx logo instead of the boot messages.
 - **UEFI firmware settings**: restarts into the firmware settings.
 
 The installed system has a boot menu of its own that waits 3 seconds. It has no password. Besides the system it lists **Pithyx recovery** (key `r`) and one entry per kept system snapshot; see [Recovery and reinstall](/docs/install/recovery/).

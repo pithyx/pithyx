@@ -6,6 +6,11 @@
   background: var(--color-desktop);
 }
 
+/* The wallpaper stays put while a long card (the installer with many disks) scrolls. */
+.auth > svg {
+  position: fixed;
+}
+
 .leaving {
   pointer-events: none;
   animation: leave var(--duration-fast) var(--ease-exit) forwards;

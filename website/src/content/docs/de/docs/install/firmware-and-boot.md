@@ -28,8 +28,7 @@ Pithyx unterstützt es nicht, Schlüssel für Secure Boot einzutragen. Bei manch
 
 Der Stick startet ein Bootmenü (GRUB), das 5 Sekunden wartet und dann den ersten Eintrag wählt:
 
-- **Install Pithyx** `<version>`: startet den Installer ohne Bootmeldungen.
-- **Install Pithyx** `<version>` **(show boot messages)**: dasselbe mit Bootmeldungen, nützlich, wenn etwas nicht startet.
+- **Install Pithyx** `<version>`: startet den Installer; die Konsole zeigt das Pithyx-Logo statt der Bootmeldungen.
 - **UEFI firmware settings**: startet neu in die Firmware-Einstellungen.
 
 Das installierte System hat ein eigenes Bootmenü, das 3 Sekunden wartet. Es hat kein Passwort. Neben dem System listet es **Pithyx recovery** (Taste `r`) und einen Eintrag je aufbewahrtem System-Snapshot; siehe [Wiederherstellen und neu installieren](/de/docs/install/recovery/).

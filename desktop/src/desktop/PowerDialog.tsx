@@ -1,10 +1,12 @@
 import { unwrap } from '@pithyx/api-client';
 import { useMutation } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { runBeforeUnload } from '../apps/lifecycle';
 import { describeError } from '../errors/describe';
 import { ErrorNotice } from '../errors/ErrorNotice';
+import { useRealtime } from '../realtime/connection';
 import { Button, Dialog } from '@pithyx/ui';
 
 export type PowerAction = 'restart' | 'shutdown';
@@ -19,6 +21,18 @@ export function PowerDialog({ action, onClose }: { action: PowerAction; onClose:
       unwrap(await api.POST('/api/system/power', { body: { action } }));
     },
   });
+  // The restart is over once the connection that dropped with it is back.
+  const status = useRealtime((state) => state.status);
+  const [dropped, setDropped] = useState(false);
+  if (power.isSuccess && status !== 'open' && !dropped) {
+    setDropped(true);
+  }
+  const back = action === 'restart' && dropped && status === 'open';
+  useEffect(() => {
+    if (back) {
+      onClose();
+    }
+  }, [back, onClose]);
   return (
     <Dialog
       isOpen

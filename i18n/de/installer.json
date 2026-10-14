@@ -92,6 +92,7 @@
     "administrator": "Administrator",
     "erased": "Diese Festplatten werden gelöscht",
     "confirm": "Alle Daten auf diesen Festplatten werden gelöscht",
+    "confirmRequired": "Bestätige, dass die Daten auf diesen Festplatten gelöscht werden.",
     "install": "Pithyx installieren"
   },
   "progress": {
