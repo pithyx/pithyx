@@ -9,6 +9,7 @@ export function FormDialog({
   submit,
   danger = false,
   disabled = false,
+  size = 'default',
   onClose,
   onSubmit,
   children,
@@ -17,6 +18,8 @@ export function FormDialog({
   submit: string;
   danger?: boolean;
   disabled?: boolean;
+  /** `medium` for the forms with memberships and rights. */
+  size?: 'default' | 'medium';
   onClose: () => void;
   onSubmit: (event: SyntheticEvent<HTMLFormElement>) => void;
   children: ReactNode;
@@ -27,6 +30,7 @@ export function FormDialog({
     <Dialog
       isOpen
       isDismissable
+      size={size}
       tone={danger ? 'danger' : 'default'}
       onOpenChange={(open) => {
         if (!open) {

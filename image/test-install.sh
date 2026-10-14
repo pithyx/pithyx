@@ -771,7 +771,7 @@ print(json.dumps(config))")"
     --url 'https://example.invalid/pithyx/channel-{channel}/channel.json' --key "fork-test-1:$fork_key:stable,beta" >"$vm/pithyx-source.json"
   admin /system/updates/source -X PUT -H 'Content-Type: application/json' --data-binary @"$vm/pithyx-source.json" -o /dev/null
   [[ "$(admin /system/updates | json 'd["sourceCandidate"]["name"]')" == "Test fork" ]] || die "the source file was not saved"
-  recovery_menu $'5\n' $'2\n' $'Test fork\n' $'\n' $'4\n'
+  recovery_menu $'4\n' $'2\n' $'Test fork\n' $'\n' $'0\n'
   wait_updates "d['source']['name'] == 'Test fork' and not d['source']['official'] and d['sourceCandidate'] is None" 600
   fork_version="${second_version%.*}.$((${second_version##*.} + 2))"
   make_update "$second" "$fork_version" "$vm/pithyx-$fork_version-amd64.pithyxupdate" "$vm/fork.pem" fork-test-1
@@ -785,10 +785,10 @@ print(json.dumps(config))")"
   echo "the box follows Test fork: its file verifies, the project's is refused, administrators were told"
 
   step "typing a source in the recovery menu, then going back to the Pithyx project"
-  recovery_menu $'5\n' $'3\n' $'Typed fork\n' $'https://example.invalid/typed/channel-{channel}/channel.json\n' \
-    $'fork-test-1\n' "$fork_key"$'\n' $'\n' $'\n' $'Typed fork\n' $'\n' $'4\n'
+  recovery_menu $'4\n' $'3\n' $'Typed fork\n' $'https://example.invalid/typed/channel-{channel}/channel.json\n' \
+    $'fork-test-1\n' "$fork_key"$'\n' $'\n' $'\n' $'Typed fork\n' $'\n' $'0\n'
   wait_updates "d['source']['name'] == 'Typed fork' and d['source']['keys'][0]['publicKey'] == '$fork_key'" 600
-  recovery_menu $'5\n' $'4\n' $'Pithyx\n' $'\n' $'4\n'
+  recovery_menu $'4\n' $'4\n' $'Pithyx\n' $'\n' $'0\n'
   wait_updates "d['source']['official']" 600
   upload_update "$vm/pithyx-$broken_version-amd64.pithyxupdate" || die "the project's file was refused after going back"
   admin /system/updates/file -X DELETE -o /dev/null

@@ -185,6 +185,7 @@ function GroupDialog({
   );
   return (
     <FormDialog
+      size="medium"
       title={
         group === undefined
           ? t('groups.create.title')

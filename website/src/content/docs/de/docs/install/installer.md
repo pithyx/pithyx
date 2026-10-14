@@ -14,7 +14,7 @@ Der Installer läuft in einem Browser auf einem anderen Gerät, nicht auf dem Co
 1. Starte den Computer vom Stick (siehe [Firmware und Boot](/de/docs/install/firmware-and-boot/)).
 2. Lies die Adresse auf der Konsole ab, zum Beispiel `http://192.168.1.50:7484`. IPv6-Adressen erscheinen als `http://[address]:7484`. Port 80 leitet auf Port 7484 weiter.
 3. Öffne die Adresse in einem Browser auf einem Handy, Tablet oder Computer im selben Netzwerk. Die Konsole zeigt auch einen QR-Code für die erste Adresse.
-4. Die Seite öffnet sich mit **Willkommen bei Pithyx** auf Englisch oder Deutsch, je nach deinem Browser. Prüfe die Voraussetzungen und klicke auf **Los geht's**. Die Sprache der Box wählst du in Schritt 1.
+4. Die Seite öffnet sich mit **Willkommen bei Pithyx** auf Englisch oder Deutsch, je nach deinem Browser; die Sprachauswahl unter der Karte ändert sie. Prüfe die Voraussetzungen und klicke auf **Los geht's**. Die gewählte Sprache übernimmt Schritt 1, wo du die Sprache der Box wählst.
 
 Der erste Browser, der die Seite öffnet, besitzt die Installation. Ein anderer Browser sieht **Installation läuft woanders** und kann nicht weitermachen. Die Konsole nennt die Adresse, der die Installation gehört. Um neu zu beginnen, starte den Computer erneut vom Stick. Schließe den Browser während der Installation nicht.
 
@@ -47,7 +47,7 @@ Jede fehlgeschlagene Prüfung zeigt, was zu tun ist. Siehe [Hardware-Anforderung
 
 ## Netzwerk (Schritt 2)
 
-Die Seite listet jede Netzwerkkarte mit ihrem Zustand: **Verbunden**, **Kein Kabel** oder **Noch keine Adresse**. Standardmäßig bekommt jede verbundene Karte ihre Adresse per DHCP. Öffne bei einer Karte **Einstellungen von** und den Namen der Karte, um **Feste Adresse** und bei Bedarf **Nameserver (optional)** zu wählen. Klicke auf **Verbindung testen**, um die Einstellungen kurz auszuprobieren: Die Seite kann für ein paar Sekunden die Verbindung verlieren, und das Ergebnis sagt, ob das Gateway antwortet. Die Einstellungen werden nach dem Test immer zurückgenommen, egal ob er gelungen ist oder nicht. Darunter zeigt **Nach der Installation antwortet die Box unter** die Adresse, die du benutzen wirst.
+Die Seite listet jede Netzwerkkarte mit ihrem Zustand: **Verbunden**, **Kein Kabel** oder **Noch keine Adresse**. Standardmäßig bekommt jede verbundene Karte ihre Adresse per DHCP. Öffne bei einer Karte **Einstellungen von** und den Namen der Karte, um **Feste Adresse** und bei Bedarf **Nameserver (optional)** zu wählen. Klicke auf **Verbindung testen**, um die Einstellungen kurz auszuprobieren: Die Seite kann für ein paar Sekunden die Verbindung verlieren, und das Ergebnis sagt, ob das Gateway antwortet. Die Einstellungen werden nach dem Test immer zurückgenommen, egal ob er gelungen ist oder nicht. Ohne Änderungen prüft der Test die Karten so, wie sie sind. Darunter zeigt **Nach der Installation antwortet die Box unter** die Adresse, die du benutzen wirst.
 
 Bonds, VLANs und weitere Optionen kommen nach der Installation, in den Einstellungen unter Netzwerk. Siehe [Netzwerk](/de/docs/admin/network/).
 

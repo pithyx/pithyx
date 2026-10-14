@@ -112,7 +112,7 @@ public sealed class UpdateSourceTests : IDisposable
         using var output = new StringWriter();
 
         // Change the update source, type it, confirm with its name; then the menu ends with the input.
-        await Menu($"5\n3\nMy fork\nhttps://example.org/channel-{{channel}}/channel.json\nmy-key\n{Release}\n\n\nMy fork\n\n", output).RunAsync(Token);
+        await Menu($"4\n3\nMy fork\nhttps://example.org/channel-{{channel}}/channel.json\nmy-key\n{Release}\n\n\nMy fork\n\n", output).RunAsync(Token);
 
         var written = UpdateSourceConfig.Load(sourceFile, UpdateSourceConfig.Default);
         Assert.Equal(("My fork", "https://example.org/channel-{channel}/channel.json"), (written.Name, written.Url));
@@ -122,7 +122,7 @@ public sealed class UpdateSourceTests : IDisposable
             Assert.Equal(UnixFileMode.UserRead | UnixFileMode.UserWrite, File.GetUnixFileMode(sourceFile));
         }
 
-        await Menu("5\n4\nPithyx\n\n", output).RunAsync(Token);
+        await Menu("4\n4\nPithyx\n\n", output).RunAsync(Token);
 
         Assert.False(File.Exists(sourceFile));
         Assert.Contains("The box follows the Pithyx project from its next start.", output.ToString(), StringComparison.Ordinal);
@@ -136,11 +136,11 @@ public sealed class UpdateSourceTests : IDisposable
         await UpdateSources.SaveCandidateAsync(candidate, File.ReadAllBytes(Corpus("valid.json")), "admin", DateTimeOffset.UnixEpoch, Token);
         using var output = new StringWriter();
 
-        await Menu("5\n2\nexample fork\n\n", output).RunAsync(Token);
+        await Menu("4\n2\nexample fork\n\n", output).RunAsync(Token);
         Assert.False(File.Exists(sourceFile));
         Assert.Contains("The name did not match; nothing changed.", output.ToString(), StringComparison.Ordinal);
 
-        await Menu("5\n2\nExample fork\n\n", output).RunAsync(Token);
+        await Menu("4\n2\nExample fork\n\n", output).RunAsync(Token);
         Assert.Equal("Example fork", UpdateSourceConfig.Load(sourceFile, UpdateSourceConfig.Default).Name);
         Assert.False(File.Exists(candidate));
     }
@@ -150,7 +150,7 @@ public sealed class UpdateSourceTests : IDisposable
     {
         using var output = new StringWriter();
 
-        await Menu($"5\n3\nMy fork\nhttp://example.org/channel-{{channel}}/channel.json\nmy-key\n{Release}\n\n\n\n", output).RunAsync(Token);
+        await Menu($"4\n3\nMy fork\nhttp://example.org/channel-{{channel}}/channel.json\nmy-key\n{Release}\n\n\n\n", output).RunAsync(Token);
 
         Assert.False(File.Exists(Path.Combine(_root, "update-source.json")));
         Assert.Contains("update.source.invalid", output.ToString(), StringComparison.Ordinal);

@@ -30,10 +30,10 @@ You need the source's `pithyx-source.json`, which the fork publishes together wi
 Then:
 
 1. Restart the box and choose **Pithyx recovery** in the boot menu (key `r`).
-2. Choose **[5] Change the update source**, then **[1] Read pithyx-source.json from a USB stick**, **[2] Use the file saved in Settings** or **[3] Type the source**.
+2. Choose **[4] Change the update source**, then **[1] Read pithyx-source.json from a USB stick**, **[2] Use the file saved in Settings** or **[3] Type the source**.
 3. The menu shows the name, the channel URL and every public key in full. Compare every key with the one the source publishes.
 4. Type the source's name to switch. Anything else changes nothing.
-5. Restart with **[4] Restart**. The box follows the new source from this start.
+5. Restart with **[0] Restart**. The box follows the new source from this start.
 
 After the restart the administrators get the notification "The update source is now {name}", and Settings > **Updates** shows the source with the notice "This box follows {name}, not the Pithyx project." If nobody on your side made the switch, switch back at once.
 
@@ -41,7 +41,7 @@ A file that does not pass the check is refused with [`update.source.invalid`](/d
 
 ### The way back
 
-In the recovery menu choose **[5] Change the update source**, then **[4] Back to the Pithyx project**, and type `Pithyx`. After the restart the box trusts only the built-in keys of the project again and reads its releases. Updates install only when they are newer than the installed version, so a box that ran a fork with a higher version number waits for a newer Pithyx release, and a fork that changed the database may need a reinstall (see [Recovery and reinstall](/docs/install/recovery/)).
+In the recovery menu choose **[4] Change the update source**, then **[4] Back to the Pithyx project**, and type `Pithyx`. After the restart the box trusts only the built-in keys of the project again and reads its releases. Updates install only when they are newer than the installed version, so a box that ran a fork with a higher version number waits for a newer Pithyx release, and a fork that changed the database may need a reinstall (see [Recovery and reinstall](/docs/install/recovery/)).
 
 ## For fork maintainers
 

@@ -60,9 +60,9 @@ public sealed partial class RecoveryMenu(
             {
                 await LineAsync("  [2] Install an update file from a USB stick");
                 await LineAsync("  [3] Reset the network to DHCP");
-                await LineAsync("  [5] Change the update source");
+                await LineAsync("  [4] Change the update source");
             }
-            await LineAsync("  [4] Restart");
+            await LineAsync("  [0] Restart");
             await LineAsync("");
             await output.WriteAsync("Choice: ");
             switch ((await input.ReadLineAsync(cancellationToken))?.Trim())
@@ -76,10 +76,10 @@ public sealed partial class RecoveryMenu(
                 case "3" when !fromSnapshot:
                     await ResetNetworkAsync(cancellationToken);
                     break;
-                case "5" when !fromSnapshot:
+                case "4" when !fromSnapshot:
                     await ChangeSourceAsync(cancellationToken);
                     break;
-                case "4":
+                case "0":
                     LogAction("restart", "");
                     await system.RebootAsync();
                     return 0;
@@ -327,15 +327,12 @@ public sealed partial class RecoveryMenu(
         await LineAsync($"This box follows the update source {current.Name}{(current.Official ? " (the Pithyx project)" : "")}: {current.Url}");
         await LineAsync("Whoever signs a source's updates can change everything on this box. Switch only to a source you trust.");
         await LineAsync("  [1] Read pithyx-source.json from a USB stick");
-        if (candidate is var (saved, savedBy, savedAt))
-        {
-            await LineAsync($"  [2] Use the file saved in Settings: {saved.Name} (by {savedBy}, {savedAt:yyyy-MM-dd HH:mm} UTC)");
-        }
+        // Options that do not apply stay listed with the reason, so the numbers never change.
+        await LineAsync(candidate is var (saved, savedBy, savedAt)
+            ? $"  [2] Use the file saved in Settings: {saved.Name} (by {savedBy}, {savedAt:yyyy-MM-dd HH:mm} UTC)"
+            : "  [2] Use the file saved in Settings (none saved)");
         await LineAsync("  [3] Type the source");
-        if (!current.Official)
-        {
-            await LineAsync("  [4] Back to the Pithyx project");
-        }
+        await LineAsync(current.Official ? "  [4] Back to the Pithyx project (already followed)" : "  [4] Back to the Pithyx project");
         await LineAsync("  [0] Back");
         await output.WriteAsync("Choice: ");
         switch ((await input.ReadLineAsync(cancellationToken))?.Trim())
@@ -359,7 +356,7 @@ public sealed partial class RecoveryMenu(
                 }
                 await UpdateSources.SwitchAsync(sourceFile, CandidateFile, null, cancellationToken);
                 LogAction("source", UpdateSources.ProjectName);
-                await PauseAsync("The box follows the Pithyx project from its next start. Restart with [4].");
+                await PauseAsync("The box follows the Pithyx project from its next start. Restart with [0].");
                 break;
             default:
                 break;
@@ -450,7 +447,7 @@ public sealed partial class RecoveryMenu(
         }
         await UpdateSources.SwitchAsync(sourceFile, CandidateFile, source, cancellationToken);
         LogAction("source", $"{source.Name} {source.Url}");
-        await PauseAsync($"The box follows {source.Name} from its next start. Restart with [4].");
+        await PauseAsync($"The box follows {source.Name} from its next start. Restart with [0].");
     }
 
     private Task LineAsync(string text) => output.WriteLineAsync(text);
