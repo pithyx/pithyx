@@ -341,6 +341,42 @@
   background: var(--pithyx-color-border);
 }
 
+.homes {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 2px;
+  margin: 0;
+  padding: var(--pithyx-space);
+  list-style: none;
+  overflow: auto;
+}
+
+.home {
+  display: flex;
+  align-items: center;
+  gap: var(--pithyx-space);
+  width: 100%;
+  min-height: 36px;
+  padding: 0 var(--pithyx-space);
+  border: 0;
+  border-radius: var(--pithyx-radius);
+  background: transparent;
+  color: var(--pithyx-color-text);
+  font: inherit;
+  text-align: start;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.home:hover {
+  background: var(--pithyx-color-hover);
+}
+
+.home:focus-visible {
+  outline: 2px solid var(--pithyx-color-focus);
+  outline-offset: -2px;
+}
+
 .empty {
   display: grid;
   place-items: center;

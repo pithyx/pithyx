@@ -40,6 +40,8 @@ SSH is off by default. Two separate switches on the **File services** page:
 
 Switching either off never stops SSH for the system's own accounts; Pithyx never stops `sshd`. A shell sign-in greets with the Pithyx logo, the version and a warning that changes made by hand in the shell can break the box or be undone by Pithyx or an update (in English for now). The host keys are made on the first boot and are part of the configuration backup.
 
+The administrator you created in the installer is in the group `sudo` and gets root with `sudo` and its own password (it needs to have signed in to the web interface once since the installation, so the system knows the password). Other administrators get no `sudo`. Root itself stays locked; what you do with it is up to you. `sudo`, `nano`, `htop`, `curl`, `wget` and `git` are installed.
+
 ## Two-factor sign-in
 
 Every user can turn on two-factor sign-in (TOTP) in the account menu under **Two-factor authentication**: scan the QR code or enter the key, enter a code, choose **Turn on**, and keep the 10 recovery codes shown once; each works once. The codes use SHA-1, 6 digits and 30 seconds. At sign-in, enter the code or choose "Use a recovery code instead"; the challenge is valid for 5 minutes. Turning it off needs the password. After 5 failed attempts for one user from one address, or 30 from one address, in 5 minutes, further attempts are refused for a while. Sessions end after 7 days without use or 30 days in total.

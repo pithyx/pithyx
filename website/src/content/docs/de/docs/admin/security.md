@@ -40,6 +40,8 @@ SSH ist standardmäßig aus. Zwei getrennte Schalter auf der Seite **Dateidienst
 
 Das Ausschalten eines der beiden stoppt SSH für die eigenen Konten des Systems nie; Pithyx hält `sshd` nie an. Eine Anmeldung mit Shell begrüßt dich mit dem Pithyx-Logo, der Version und einem Hinweis, dass Änderungen von Hand in der Shell die Box beschädigen oder von Pithyx oder einem Update rückgängig gemacht werden können (vorerst auf Englisch). Die Host-Schlüssel entstehen beim ersten Start und gehören zum Konfigurationsbackup.
 
+Der Administrator, den du im Installer angelegt hast, ist in der Gruppe `sudo` und bekommt mit `sudo` und seinem eigenen Passwort root (er muss sich seit der Installation einmal an der Weboberfläche angemeldet haben, damit das System das Passwort kennt). Andere Administratoren bekommen kein `sudo`. Root selbst bleibt gesperrt; was du damit machst, entscheidest du. `sudo`, `nano`, `htop`, `curl`, `wget` und `git` sind installiert.
+
 ## Zwei-Faktor-Anmeldung
 
 Jeder Benutzer kann die Zwei-Faktor-Anmeldung (TOTP) im Kontomenü unter **Zwei-Faktor-Authentifizierung** einschalten: den QR-Code scannen oder den Schlüssel eingeben, einen Code eingeben, **Einschalten** wählen und die 10 Wiederherstellungscodes aufbewahren, die einmal angezeigt werden; jeder gilt einmal. Die Codes nutzen SHA-1, 6 Stellen und 30 Sekunden. Gib bei der Anmeldung den Code ein oder wähle „Stattdessen einen Wiederherstellungscode verwenden“; die Abfrage ist 5 Minuten gültig. Zum Ausschalten braucht es das Passwort. Nach 5 fehlgeschlagenen Versuchen für einen Benutzer von einer Adresse oder 30 von einer Adresse in 5 Minuten werden weitere Versuche eine Zeit lang abgelehnt. Sitzungen enden nach 7 Tagen ohne Nutzung oder nach insgesamt 30 Tagen.

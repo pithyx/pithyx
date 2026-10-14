@@ -254,17 +254,7 @@
       "tb": "TB"
     },
     "volume": {
-      "label": "Volume",
-      "button": "Volume anlegen…",
-      "unprepared": "Pithyx hat diesen Pool nicht eingerichtet, deshalb legt es darauf keine Volumes an.",
-      "title": "Volume auf {pool} anlegen",
-      "explain": "Ein Volume ist ein Blockgerät, zum Beispiel die Festplatte einer virtuellen Maschine. Es entsteht in {parent}.",
-      "name": "Name",
-      "size": "Größe",
-      "sizeHint": "Wird auf ganze Blöcke zu 16 KiB aufgerundet, mindestens 1 MiB.",
-      "sparse": "Sparse-Volume",
-      "sparseHint": "Reserviert vorab keinen Platz. Wird der Pool voll, kann ihm der Platz ausgehen, und was es nutzt, bekommt dann Schreibfehler.",
-      "run": "Volume anlegen"
+      "label": "Volume"
     },
     "rename": {
       "button": "Umbenennen…",
@@ -539,9 +529,7 @@
     "intro": "Aufgaben, die die meisten Boxen nie brauchen. Bei jeder steht, was sie tut und wann du sie brauchst.",
     "volumes": {
       "title": "Volumes",
-      "explain": "Ein Volume ist ein Blockgerät auf einem Pool, zum Beispiel die Festplatte einer virtuellen Maschine. Freigegebene Ordner brauchen keins.",
-      "create": "Volume auf {pool} anlegen…",
-      "unprepared": "Volumes brauchen einen Pool, den Pithyx angelegt hat."
+      "explain": "Ein Volume ist ein Blockgerät auf einem Pool, zum Beispiel die Festplatte einer virtuellen Maschine. Freigegebene Ordner brauchen keins."
     },
     "export": {
       "title": "Pool exportieren",

@@ -388,6 +388,9 @@ public sealed partial class SystemInstaller(
         {
             await WriteTargetAsync(path.TrimStart('/'), content, cancellationToken);
         }
+        // The administrator of the installation gets full sudo with its own password; root stays locked until it decides otherwise.
+        var groupFile = Path.Combine(Target, "etc/group");
+        await File.WriteAllTextAsync(groupFile, InstallerFiles.WithGroupMember(await File.ReadAllTextAsync(groupFile, cancellationToken), "sudo", CredentialRules.NormalizeUsername(request.Username)), cancellationToken);
         var recoveryKey = await PrepareDatabaseAsync(request, networkConfig, cancellationToken);
         var dataDirectory = Path.Combine(Target, "var/lib/pithyx");
         Directory.CreateDirectory(dataDirectory);
@@ -621,6 +624,30 @@ public static class InstallerFiles
 
     public static string Keyboard(string layout) =>
         Header + $"XKBMODEL=\"pc105\"\nXKBLAYOUT=\"{layout}\"\nXKBVARIANT=\"\"\nXKBOPTIONS=\"\"\nBACKSPACE=\"guess\"\n";
+
+    /// <summary>
+    /// <c>/etc/group</c> with <paramref name="user"/> added to the members of <paramref name="group"/>. The account itself
+    /// comes later, when the daemon first starts, so <c>gpasswd</c> cannot do it here; <c>userdel</c> drops the name again.
+    /// </summary>
+    public static string WithGroupMember(string groupFile, string group, string user)
+    {
+        ArgumentNullException.ThrowIfNull(groupFile);
+        var lines = groupFile.Split('\n');
+        var index = Array.FindIndex(lines, line => line.StartsWith(group + ":", StringComparison.Ordinal));
+        if (index < 0)
+        {
+            throw new PithyxException(ErrorCodes.InstallerInstallFailed, new Dictionary<string, object?> { ["step"] = "configure", ["command"] = "group" });
+        }
+        var fields = lines[index].Split(':');
+        var members = fields[3].Split(',', StringSplitOptions.RemoveEmptyEntries).ToList();
+        if (!members.Contains(user, StringComparer.Ordinal))
+        {
+            members.Add(user);
+        }
+        fields[3] = string.Join(',', members);
+        lines[index] = string.Join(':', fields);
+        return string.Join('\n', lines);
+    }
 
     public static string GrubDefaults() =>
         Header + "GRUB_DISTRIBUTOR=\"Pithyx\"\nGRUB_TIMEOUT=3\nGRUB_CMDLINE_LINUX_DEFAULT=\"quiet\"\n";

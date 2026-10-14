@@ -22,6 +22,7 @@ public sealed partial class LinuxAccounts(
     ICommandRunner commands,
     AccountOptions options,
     ILogger<LinuxAccounts> logger,
+    FileServices.SmbSessions smbSessions,
     TimeProvider? time = null) : IDisposable
 {
     private readonly SemaphoreSlim _running = new(1, 1);
@@ -126,7 +127,9 @@ public sealed partial class LinuxAccounts(
                 }
             }
             var accounts = Actual().Select(entry => entry.Name).ToHashSet(StringComparer.Ordinal);
-            foreach (var action in GroupReconciler.Plan(await WantedGroupsAsync(accounts, cancellationToken), ActualGroups()))
+            var actualGroups = ActualGroups();
+            var groupActions = GroupReconciler.Plan(await WantedGroupsAsync(accounts, cancellationToken), actualGroups);
+            foreach (var action in groupActions)
             {
                 if (action is RefuseGroup refusal)
                 {
@@ -146,6 +149,10 @@ public sealed partial class LinuxAccounts(
                         break;
                     }
                 }
+            }
+            if (options.Apply)
+            {
+                await smbSessions.CloseAsync(GroupReconciler.ChangedMembers(groupActions, actualGroups), cancellationToken);
             }
             return problems;
         }

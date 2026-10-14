@@ -17,6 +17,8 @@ Switch **Offer shared folders over SMB**; the default workgroup is `WORKGROUP` (
 
 Connect from Windows File Explorer with `\\<address>\<share>`, from macOS or Linux with `smb://<address>`. The box does not announce itself on the network (no WS-Discovery, no mDNS), so clients connect by address. Deletes go to the recycle bin, and the daily restore points show as "Previous versions" in Windows.
 
+When a user's access changes (a right on a shared folder, a group membership), Pithyx ends that user's open SMB connections. The computer reconnects by itself within seconds and gets the new rights at once; files the user had open over SMB are closed, as after a short network outage.
+
 ## SFTP
 
 Switch **Offer shared folders over SFTP**. It is encrypted file transfer over SSH, for example with FileZilla, WinSCP or the `sftp` command: `sftp://<address>`. Users see only their shared folders and get no shell. It uses the system's `sshd` through a drop-in file, with password sign-in only. Switching SFTP off only stops letting Pithyx users in; it does not stop SSH for other accounts. Turning it on runs `systemctl enable --now ssh.service`. The sshd configuration is checked with `sshd -t` and reverted if refused. SSH with a shell is a separate switch, see [Security](/docs/admin/security/#ssh).

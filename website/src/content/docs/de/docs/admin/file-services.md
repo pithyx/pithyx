@@ -17,6 +17,8 @@ Schalte **Freigegebene Ordner über SMB anbieten** ein; die Standard-Arbeitsgrup
 
 Verbinde dich im Windows-Explorer mit `\\<adresse>\<freigabe>`, unter macOS oder Linux mit `smb://<adresse>`. Die Box macht sich im Netzwerk nicht bekannt (kein WS-Discovery, kein mDNS), daher verbinden sich Clients über die Adresse. Gelöschtes geht in den Papierkorb, und die täglichen Wiederherstellungspunkte erscheinen in Windows als „Vorgängerversionen“.
 
+Ändert sich der Zugriff eines Benutzers (ein Recht auf einen freigegebenen Ordner, eine Gruppenmitgliedschaft), beendet Pithyx seine offenen SMB-Verbindungen. Der Computer verbindet sich innerhalb von Sekunden von selbst neu und hat sofort die neuen Rechte; Dateien, die der Benutzer über SMB offen hatte, werden geschlossen, wie nach einem kurzen Netzwerkausfall.
+
 ## SFTP
 
 Schalte **Freigegebene Ordner über SFTP anbieten** ein. Es ist verschlüsselte Dateiübertragung über SSH, zum Beispiel mit FileZilla, WinSCP oder dem Befehl `sftp`: `sftp://<adresse>`. Benutzer sehen nur ihre freigegebenen Ordner und bekommen keine Shell. SFTP nutzt das `sshd` des Systems über eine Drop-in-Datei, nur mit Passwort-Anmeldung. Das Ausschalten von SFTP hindert nur Pithyx-Benutzer daran, hereinzukommen; SSH für andere Konten wird nicht gestoppt. Das Einschalten führt `systemctl enable --now ssh.service` aus. Die sshd-Konfiguration wird mit `sshd -t` geprüft und zurückgesetzt, wenn sie abgelehnt wird. SSH mit einer Shell ist ein eigener Schalter, siehe [Sicherheit](/de/docs/admin/security/#ssh).

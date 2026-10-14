@@ -6,6 +6,8 @@ dbus udev kmod grub-efi-amd64 efibootmgr gdisk dosfstools mdadm btrfs-progs squa
 intel-microcode amd64-microcode firmware-linux-free firmware-realtek
 # What the daemon needs (TODO.md, Image build 1.0).
 zfsutils-linux samba openssh-server smartmontools acl
+# Administration over SSH: the administrator of the installation is in the group sudo.
+sudo htop curl wget
 # App backends (D309): Debian's Docker, disabled until the daemon starts it for a backend app, and nftables for the
 # rule that keeps containers away from the host's services.
 docker.io docker-cli docker-compose nftables

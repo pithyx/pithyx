@@ -254,17 +254,7 @@
       "tb": "TB"
     },
     "volume": {
-      "label": "volume",
-      "button": "Create volume…",
-      "unprepared": "Pithyx did not set up this pool, so it creates no volumes on it.",
-      "title": "Create a volume on {pool}",
-      "explain": "A volume is a block device, for example the disk of a virtual machine. It is created in {parent}.",
-      "name": "Name",
-      "size": "Size",
-      "sizeHint": "Rounded up to whole 16 KiB blocks, at least 1 MiB.",
-      "sparse": "Sparse volume",
-      "sparseHint": "Reserves no space up front. It can run out of space when the pool fills up, and whatever uses it then sees write errors.",
-      "run": "Create volume"
+      "label": "volume"
     },
     "rename": {
       "button": "Rename…",
@@ -539,9 +529,7 @@
     "intro": "Tasks most boxes never need. Each says what it does and when you need it.",
     "volumes": {
       "title": "Volumes",
-      "explain": "A volume is a block device on a pool, for example the disk of a virtual machine. Shared folders do not need one.",
-      "create": "Create a volume on {pool}…",
-      "unprepared": "Volumes need a pool that Pithyx created."
+      "explain": "A volume is a block device on a pool, for example the disk of a virtual machine. Shared folders do not need one."
     },
     "export": {
       "title": "Export a pool",

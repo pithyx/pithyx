@@ -172,9 +172,8 @@ test('the Datasets section lists every dataset and explains pools without the Pi
       .getByRole('table', { name: 'Datasets and volumes of pithyxtests' })
       .getByRole('rowheader', { name: 'pithyxtests', exact: true }),
   ).toBeVisible();
-  // The simulated pools were not created by Pithyx: no volumes, and their roots are never renamed or deleted.
+  // Nothing creates volumes in 1.0 (D352), and pool roots are never renamed or deleted.
   await expect(storage.getByRole('button', { name: 'Create volume…' })).toHaveCount(0);
-  await expect(storage.getByText('Pithyx did not set up this pool').first()).toBeVisible();
   await expect(storage.getByRole('button', { name: 'Delete pithyxtestm' })).toHaveCount(0);
   await expect(storage.getByRole('button', { name: 'Rename pithyxtestm' })).toHaveCount(0);
 });
@@ -225,7 +224,7 @@ test('deleting a dataset needs its full name typed', async ({ page }) => {
   await expect(dialog.getByRole('button', { name: 'Delete', exact: true })).toHaveCount(0);
 });
 
-test('Advanced explains volumes, export and import, and Storage has no snapshot section', async ({
+test('Advanced explains export and import, hides volumes, and Storage has no snapshot section', async ({
   page,
 }) => {
   const storage = await openStorage(page);
@@ -239,7 +238,8 @@ test('Advanced explains volumes, export and import, and Storage has no snapshot 
 
   await openAdvanced(storage);
   await expect(storage).toContainText('Export a pool to move its disks to another computer.');
-  await expect(storage).toContainText('Volumes need a pool that Pithyx created.');
+  // Volumes show only when a pool has one, to delete it (D352).
+  await expect(storage.getByRole('heading', { name: 'Volumes' })).toHaveCount(0);
   await storage.getByRole('button', { name: 'Export pithyxtests…' }).click();
   const dialog = page.getByRole('dialog', { name: 'Export pithyxtests' });
   await expect(dialog).toBeVisible();

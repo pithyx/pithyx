@@ -30,7 +30,6 @@ export type DatasetAction =
   | { kind: 'rename'; dataset: Dataset }
   | { kind: 'limits'; dataset: Dataset }
   | { kind: 'destroy'; dataset: Dataset }
-  | { kind: 'volume'; pool: string }
   | { kind: 'snapshotDestroy'; dataset: Dataset; snapshot: Snapshot }
   | { kind: 'rollback'; dataset: Dataset; snapshot: Snapshot; newer: number };
 
@@ -68,7 +67,7 @@ export function DatasetDialog({
   const { run, job } = useRunPlan(app);
   const destroy =
     action.kind === 'destroy' || action.kind === 'snapshotDestroy' || action.kind === 'rollback';
-  const target = action.kind === 'volume' ? action.pool : action.dataset.name;
+  const target = action.dataset.name;
   const change = (next: StoragePlanRequest | null) => {
     setRequest(next);
     plan.reset();
@@ -122,7 +121,6 @@ export function DatasetDialog({
         {action.kind === 'rename' && <RenameFields dataset={action.dataset} onChange={change} />}
         {action.kind === 'limits' && <LimitFields dataset={action.dataset} onChange={change} />}
         {action.kind === 'destroy' && <DestroyFields dataset={action.dataset} onChange={change} />}
-        {action.kind === 'volume' && <VolumeFields pool={action.pool} onChange={change} />}
         {action.kind === 'snapshotDestroy' && (
           <p>
             {t('datasets.snapshotDestroy.explain', {
@@ -394,74 +392,6 @@ function RollbackFields({
         spellCheck="false"
         inputClassName={styles.mono}
       />
-    </>
-  );
-}
-
-function VolumeFields({ pool, onChange }: { pool: string; onChange: OnChange }) {
-  const { t } = useTranslation('storage');
-  const [name, setName] = useState('');
-  const [size, setSize] = useState<{ text: string; unit: SizeUnit }>({ text: '', unit: 'gb' });
-  const [sparse, setSparse] = useState(false);
-  const sparseHint = useId();
-  const bytes = parseSize(size.text, size.unit);
-  const update = (next: { name: string; size: typeof size; sparse: boolean }) => {
-    const nextBytes = parseSize(next.size.text, next.size.unit);
-    onChange(
-      next.name.trim() === '' || nextBytes === null || nextBytes === undefined || nextBytes === 0
-        ? null
-        : {
-            action: 'volume.create',
-            pool,
-            name: next.name.trim(),
-            sizeBytes: nextBytes,
-            sparse: next.sparse,
-          },
-    );
-  };
-  return (
-    <>
-      <p>{t('datasets.volume.explain', { parent: `${pool}/pithyx/volumes` })}</p>
-      <TextField
-        label={t('datasets.volume.name')}
-        value={name}
-        onChange={(value) => {
-          setName(value);
-          update({ name: value, size, sparse });
-        }}
-        autoCapitalize="none"
-        autoComplete="off"
-        spellCheck="false"
-        inputClassName={styles.mono}
-      />
-      <SizeField
-        label={t('datasets.volume.size')}
-        description={t('datasets.volume.sizeHint')}
-        value={size}
-        invalid={bytes === undefined || bytes === 0}
-        onChange={(value) => {
-          setSize(value);
-          update({ name, size: value, sparse });
-        }}
-      />
-      <div>
-        <label className={styles.check}>
-          <input
-            type="checkbox"
-            checked={sparse}
-            aria-describedby={sparseHint}
-            onChange={(event) => {
-              const value = event.currentTarget.checked;
-              setSparse(value);
-              update({ name, size, sparse: value });
-            }}
-          />
-          {t('datasets.volume.sparse')}
-        </label>
-        <p id={sparseHint} className={styles.muted}>
-          {t('datasets.volume.sparseHint')}
-        </p>
-      </div>
     </>
   );
 }

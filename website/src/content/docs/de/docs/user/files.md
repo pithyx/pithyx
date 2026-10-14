@@ -15,7 +15,7 @@ Dateien ist die App, mit der du in den freigegebenen Ordnern arbeitest, die du n
 
 _Dateien in der Listenansicht. Ein Rechtsklick auf einen Eintrag öffnet sein Kontextmenü._
 
-Öffne **Dateien** im Pithyx-Menü. Die Seitenleiste listet unter **Freigaben** zuerst deinen Home-Ordner **home** und darunter deine freigegebenen Ordner auf; Dateien öffnet sich in deinem Home. Dein Home ist privat: Nur du und die Administratoren können es öffnen. Administratoren sehen zusätzlich das Home jedes Benutzers unter **homes**. Klicke auf einen, um ihn zu öffnen. Ein Ordner, der gerade nicht erreichbar ist (zum Beispiel weil sein Pool offline ist), zeigt **Nicht verfügbar**. Ist die Liste leer, hast du noch keine freigegebenen Ordner, und ein Administrator muss sie anlegen. Ein freigegebener Ordner mit der Markierung **Nur lesen** lässt dich ansehen und herunterladen, aber nichts ändern.
+Öffne **Dateien** im Pithyx-Menü. Die Seitenleiste listet unter **Freigaben** zuerst deinen Home-Ordner **home** und darunter deine freigegebenen Ordner auf; Dateien öffnet sich in deinem Home. Dein Home ist privat: Nur du und die Administratoren können es öffnen. Administratoren sehen zusätzlich **homes**, das das Home jedes anderen Benutzers als Ordner auflistet. Klicke auf einen Eintrag, um ihn zu öffnen. Ein Ordner, der gerade nicht erreichbar ist (zum Beispiel weil sein Pool offline ist), zeigt **Nicht verfügbar**. Ist die Liste leer, hast du noch keine freigegebenen Ordner, und ein Administrator muss sie anlegen. Ein freigegebener Ordner mit der Markierung **Nur lesen** lässt dich ansehen und herunterladen, aber nichts ändern.
 
 So bewegst du dich:
 

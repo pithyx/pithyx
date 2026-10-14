@@ -34,6 +34,16 @@ public sealed class FileServiceConfigTests
     }
 
     [Fact]
+    public void FindsTheSmbdProcessesOfTheUsersSessions()
+    {
+        var status = Fixture("samba", "smbstatus-json");
+
+        Assert.Equal([2738326], SmbSessions.Processes(status, new HashSet<string>(["e2e-user", "ada"], StringComparer.Ordinal)));
+        Assert.Empty(SmbSessions.Processes(status, new HashSet<string>(["ada"], StringComparer.Ordinal)));
+        Assert.Empty(SmbSessions.Processes("""{"sessions": {}, "tcons": {}}""", new HashSet<string>(["e2e-user"], StringComparer.Ordinal)));
+    }
+
+    [Fact]
     public void ParsesGroupsWithTheirMembers()
     {
         var devbox = GroupParser.Parse(Fixture("etc-group", "devbox"));

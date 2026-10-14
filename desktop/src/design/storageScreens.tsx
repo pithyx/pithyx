@@ -189,18 +189,6 @@ export const storageScreens: ScreenDefinition[] = [
     ]),
   },
   {
-    id: 'storage-volume-create',
-    group: 'storage',
-    title: 'Create a volume',
-    description: 'A block device for a virtual machine, thick or sparse, with its exact command.',
-    render: storage('datasets', [
-      { press: 'storage:datasets.volume.button', inside: 'tank/pithyx/volumes/vm-disk' },
-      { fill: 'storage:datasets.volume.name', value: 'windows-11' },
-      { fill: 'storage:datasets.volume.size', value: '128' },
-      { press: 'storage:create.preview' },
-    ]),
-  },
-  {
     id: 'storage-import-scan',
     group: 'storage',
     title: 'Import a pool: scan',
