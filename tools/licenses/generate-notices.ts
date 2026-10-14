@@ -27,6 +27,20 @@ const notShipped = new Set([
   'SkiaSharp.NativeAssets.Win32',
 ]);
 
+// Packages that ship no license file get the standard text of their license; MIT also names the copyright holder.
+const standardLicenses = ['Apache-2.0', 'MIT'];
+
+function standardText(license: string, holder: string): string | undefined {
+  if (!standardLicenses.includes(license)) {
+    return undefined;
+  }
+  const copyright = /^(copyright|\(c\)|©)/i.test(holder) ? holder : `Copyright ${holder}`;
+  const text = readFileSync(join(root, `tools/licenses/texts/${license}.txt`), 'utf8');
+  return text.includes('{copyright}')
+    ? text.replace('{copyright}', copyright)
+    : `${copyright}\n\n${text}`;
+}
+
 export interface Entry {
   name: string;
   version: string;
@@ -41,6 +55,7 @@ export function inputsHash(): string {
     'daemon/Directory.Packages.props',
     daemonProject,
     'tools/licenses/generate-notices.ts',
+    ...standardLicenses.map((id) => `tools/licenses/texts/${id}.txt`),
   ];
   const hash = createHash('sha256');
   for (const file of files) {
@@ -68,6 +83,7 @@ interface NpmLicense {
   versions: string[];
   paths: string[];
   license: string;
+  author?: string;
   homepage?: string;
 }
 
@@ -88,7 +104,9 @@ function npmEntries(): { entry: Entry; text?: string | undefined }[] {
           license: pkg.license,
           source: pkg.homepage ?? `https://www.npmjs.com/package/${pkg.name}`,
         },
-        text: findLicenseText(pkg.paths[0] ?? ''),
+        text:
+          findLicenseText(pkg.paths[0] ?? '') ??
+          standardText(pkg.license, pkg.author ?? `the ${pkg.name} authors`),
       });
     }
   }
@@ -125,19 +143,24 @@ function nugetEntries(): { entry: Entry; text?: string | undefined }[] {
     const expression = /<license type="expression">([^<]+)<\/license>/.exec(nuspec)?.[1];
     const licenseFile = /<license type="file">([^<]+)<\/license>/.exec(nuspec)?.[1];
     const project = /<projectUrl>([^<]+)<\/projectUrl>/.exec(nuspec)?.[1];
-    const text =
+    const holder =
+      /<copyright>([^<]+)<\/copyright>/.exec(nuspec)?.[1] ??
+      /<authors>([^<]+)<\/authors>/.exec(nuspec)?.[1] ??
+      `the ${pkg.id} authors`;
+    const shipped =
       licenseFile !== undefined && existsSync(join(folder, licenseFile))
         ? readFileSync(join(folder, licenseFile), 'utf8')
         : findLicenseText(folder);
-    const fromText = text?.trimStart().startsWith('MIT License') === true ? 'MIT' : undefined;
+    const fromText = shipped?.trimStart().startsWith('MIT License') === true ? 'MIT' : undefined;
+    const license = expression ?? fromText ?? 'unknown';
     result.push({
       entry: {
         name: pkg.id,
         version: pkg.resolvedVersion,
-        license: expression ?? fromText ?? 'unknown',
+        license,
         source: project ?? `https://www.nuget.org/packages/${pkg.id}/${pkg.resolvedVersion}`,
       },
-      text,
+      text: shipped ?? standardText(license, holder.trim()),
     });
   }
   return result;
