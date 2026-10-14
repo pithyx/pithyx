@@ -101,4 +101,24 @@ public sealed class GroupReconcilerTests
 
         private static string Describe(WantedGroup group) => $"{group.Name}:{group.Gid}:{string.Join(',', group.Members.Order(StringComparer.Ordinal))}";
     }
+
+    [Fact]
+    public void TheUsersWhoseGroupsChangeAreTheOnesAddedDroppedCreatedOrRemoved()
+    {
+        IReadOnlyList<GroupEntry> actual =
+        [
+            new("pithyx-s3-r", 30001, ["ada", "bob"]),
+            new("pithyx-s3-rw", 30002, ["cleo"]),
+            new("old", 30005, ["dan"]),
+        ];
+        var actions = GroupReconciler.Plan(
+            [
+                new WantedGroup("pithyx-s3-r", 30001, ["ada", "eve"]),
+                new WantedGroup("pithyx-s3-rw", 30002, ["cleo"]),
+                new WantedGroup("pithyx-s4-r", 30003, ["fay"]),
+            ],
+            actual);
+
+        Assert.Equal(["bob", "dan", "eve", "fay"], GroupReconciler.ChangedMembers(actions, actual).Order(StringComparer.Ordinal));
+    }
 }

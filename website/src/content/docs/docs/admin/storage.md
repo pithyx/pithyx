@@ -71,7 +71,7 @@ Under **Advanced**, **Datasets** > **Show datasets** lists datasets with Name, U
 - **Limits…** sets Quota, Reservation, Compression and Record size. An empty quota or reservation means no limit. Compression: off, lz4, zle, zstd (levels 1 to 19) or gzip (1 to 9). Record size: a power of two from 4 KiB to 1 MiB, default 128 KiB.
 - **Delete…** asks for the full dataset name and lists child datasets and snapshots.
 
-Datasets of homes, apps and the system cannot be renamed or deleted ([`storage.dataset.managed`](/docs/reference/errors/#storage.dataset.managed)), and a dataset used by a shared folder must lose that shared folder first. **Create volume…** makes a block volume on pools that Pithyx set up; the size is at least 1 MiB, rounded up to 16 KiB blocks. A sparse volume can fail writes when the pool fills up.
+Datasets of homes, apps and the system cannot be renamed or deleted ([`storage.dataset.managed`](/docs/reference/errors/#storage.dataset.managed)), and a dataset used by a shared folder must lose that shared folder first. Pithyx creates no volumes (block devices) yet: nothing in this version uses one, since iSCSI and virtual machines are not built. Volumes that exist on a pool show in the table and under Advanced, where you can delete them.
 
 The Storage app has no snapshot section. Snapshots reach the interface as restore points: one switch per shared folder in Settings > **Shared folders**, which takes a snapshot of the folder's dataset once a day and keeps the newest 7, and **Previous versions** in Files to get older versions back. See [Shared folders](/docs/admin/shared-folders/). Manual snapshots, holds, rolling back a dataset and other schedules are not in the interface.
 

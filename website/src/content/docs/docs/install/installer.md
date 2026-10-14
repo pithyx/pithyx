@@ -72,7 +72,7 @@ This is the first user of the box. Fill in:
 - **Display name (optional)**
 - **Password** and **Repeat password**: at least 8 characters, and not a widely used password.
 
-Root stays locked. This account gets administrator rights and is the owner account. See [First setup](/docs/install/first-setup/).
+Root stays locked. This account gets administrator rights, is the owner account and may use `sudo` over SSH. See [First setup](/docs/install/first-setup/).
 
 ## Summary and installation (step 5)
 

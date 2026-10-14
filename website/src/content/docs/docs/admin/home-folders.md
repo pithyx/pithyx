@@ -11,12 +11,12 @@ Every user gets a home folder of their own: a private place for files that only 
 
 ## Where users find it
 
-| Where          | The user's own home            | Every home (administrators only)           |
-| -------------- | ------------------------------ | ------------------------------------------ |
-| Files          | **home**, first in the sidebar | Below the heading **homes** in the sidebar |
-| SMB            | `\\<box-address>\home`         | `\\<box-address>\homes`                    |
-| SFTP           | The folder `home`              | The folder `homes`, one folder per user    |
-| WebDAV and FTP | The folder `home` at the top   | The folder `homes`, one folder per user    |
+| Where          | The user's own home            | Every home (administrators only)                             |
+| -------------- | ------------------------------ | ------------------------------------------------------------ |
+| Files          | **home**, first in the sidebar | **homes** in the sidebar, which lists every home as a folder |
+| SMB            | `\\<box-address>\home`         | `\\<box-address>\homes`                                      |
+| SFTP           | The folder `home`              | The folder `homes`, one folder per user                      |
+| WebDAV and FTP | The folder `home` at the top   | The folder `homes`, one folder per user                      |
 
 A home is used like a shared folder: it has its own [recycle bin](/docs/user/files/#the-recycle-bin), files created there belong to the user, and the user needs the right for a protocol to reach it over that protocol (see [File services](/docs/admin/file-services/)). Nobody else can be given access to a home, and it never appears in Settings > **Shared folders**. Apps that may read the user's shared folders see the user's own home as well, never anybody else's.
 

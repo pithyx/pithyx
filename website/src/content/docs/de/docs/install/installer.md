@@ -72,7 +72,7 @@ Das ist der erste Benutzer der Box. Fülle aus:
 - **Anzeigename (optional)**
 - **Passwort** und **Passwort wiederholen**: mindestens 8 Zeichen und kein weit verbreitetes Passwort.
 
-Root bleibt gesperrt. Dieses Konto bekommt Administratorrechte und ist das Owner-Konto. Siehe [Erste Einrichtung](/de/docs/install/first-setup/).
+Root bleibt gesperrt. Dieses Konto bekommt Administratorrechte, ist das Owner-Konto und darf über SSH `sudo` verwenden. Siehe [Erste Einrichtung](/de/docs/install/first-setup/).
 
 ## Zusammenfassung und Installation (Schritt 5)
 

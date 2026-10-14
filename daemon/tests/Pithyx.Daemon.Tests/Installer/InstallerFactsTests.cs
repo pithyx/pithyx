@@ -1,4 +1,5 @@
 using System.Runtime.InteropServices;
+using Pithyx.Daemon.Errors;
 using Pithyx.Daemon.Installer;
 using Pithyx.Daemon.Storage;
 
@@ -117,5 +118,15 @@ public sealed class InstallerFactsTests
         Assert.StartsWith(InstallerFiles.Header, conf, StringComparison.Ordinal);
         Assert.Equal(2, conf.Split('\n').Count(line => line.StartsWith("ARRAY ", StringComparison.Ordinal)));
         Assert.DoesNotContain("warning", conf, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void TheAdministratorJoinsTheSudoGroupOnce()
+    {
+        const string Group = "root:x:0:\nsudo:x:27:ada\nusers:x:100:\n";
+
+        Assert.Equal("root:x:0:\nsudo:x:27:ada,admin\nusers:x:100:\n", InstallerFiles.WithGroupMember(Group, "sudo", "admin"));
+        Assert.Equal(Group, InstallerFiles.WithGroupMember(Group, "sudo", "ada"));
+        Assert.Equal(ErrorCodes.InstallerInstallFailed, Assert.Throws<PithyxException>(() => InstallerFiles.WithGroupMember("root:x:0:\n", "sudo", "admin")).Code);
     }
 }

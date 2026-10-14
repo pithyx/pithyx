@@ -2,7 +2,7 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Locator, Page } from '@playwright/test';
 import { expect, test } from './fixtures';
-import { openFilesInShared, signInAsAdmin } from './session';
+import { openFilesInShared, openFromStart, signInAsAdmin } from './session';
 
 // The simulated share "Shared" lives in the daemon's data directory (playwright.config.ts).
 const shared = join(process.env.PITHYX_E2E_DATA ?? '', 'shares', 'shared');
@@ -306,4 +306,27 @@ test('a right-click while the menu is open moves the menu to the new row', async
     await page.evaluate(() => (window as unknown as { rightClicks: boolean[] }).rightClicks),
   ).toEqual([true, true]);
   await page.keyboard.press('Escape');
+});
+
+test('administrators find every other home in one list under homes', async ({ page }) => {
+  await signInAsAdmin(page);
+  const user = await page.request.post('/api/users', {
+    headers,
+    data: { username: 'e2e-homes', password: 'river-candle-orbit-7' },
+  });
+  expect(user.ok()).toBe(true);
+  await openFromStart(page, 'Files');
+  const files = filesWindow(page);
+  const sidebar = files.getByRole('navigation', { name: 'Shares and recycle bin' });
+  await expect(sidebar.getByRole('button', { name: 'e2e-homes' })).toHaveCount(0);
+
+  await sidebar.getByRole('button', { name: 'homes', exact: true }).click();
+  const homes = files.getByRole('list', { name: 'homes' });
+  await homes.getByRole('button', { name: 'e2e-homes' }).click();
+  const path = files.getByRole('navigation', { name: 'Path' });
+  await expect(path).toContainText('homes');
+  await expect(path).toContainText('e2e-homes');
+
+  await files.getByRole('button', { name: 'Up one level' }).click();
+  await expect(homes.getByRole('button', { name: 'e2e-homes' })).toBeVisible();
 });

@@ -11,12 +11,12 @@ Jeder Benutzer bekommt einen eigenen Home-Ordner: einen privaten Ort für Dateie
 
 ## Wo Benutzer ihn finden
 
-| Wo             | Das eigene Home                         | Alle Homes (nur Administratoren)                    |
-| -------------- | --------------------------------------- | --------------------------------------------------- |
-| Dateien        | **home**, ganz oben in der Seitenleiste | Unter der Überschrift **homes** in der Seitenleiste |
-| SMB            | `\\<box-address>\home`                  | `\\<box-address>\homes`                             |
-| SFTP           | Der Ordner `home`                       | Der Ordner `homes`, ein Ordner pro Benutzer         |
-| WebDAV und FTP | Der Ordner `home` ganz oben             | Der Ordner `homes`, ein Ordner pro Benutzer         |
+| Wo             | Das eigene Home                         | Alle Homes (nur Administratoren)                                   |
+| -------------- | --------------------------------------- | ------------------------------------------------------------------ |
+| Dateien        | **home**, ganz oben in der Seitenleiste | **homes** in der Seitenleiste, das jedes Home als Ordner auflistet |
+| SMB            | `\\<box-address>\home`                  | `\\<box-address>\homes`                                            |
+| SFTP           | Der Ordner `home`                       | Der Ordner `homes`, ein Ordner pro Benutzer                        |
+| WebDAV und FTP | Der Ordner `home` ganz oben             | Der Ordner `homes`, ein Ordner pro Benutzer                        |
 
 Ein Home wird wie ein freigegebener Ordner benutzt: Es hat seinen eigenen [Papierkorb](/de/docs/user/files/#der-papierkorb), Dateien darin gehören dem Benutzer, und der Benutzer braucht das Recht für ein Protokoll, um es darüber zu erreichen (siehe [Dateidienste](/de/docs/admin/file-services/)). Niemand sonst kann Zugriff auf ein Home bekommen, und es erscheint nie unter Einstellungen > **Freigegebene Ordner**. Apps, die die freigegebenen Ordner des Benutzers lesen dürfen, sehen auch sein eigenes Home, nie das eines anderen.
 

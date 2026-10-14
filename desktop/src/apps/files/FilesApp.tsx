@@ -20,6 +20,7 @@ import {
   IconArrowRight,
   IconArrowUp,
   IconChevronRight,
+  IconFolder,
   IconFolderPlus,
   IconHome,
   IconLayoutGrid,
@@ -28,6 +29,7 @@ import {
   IconServer2,
   IconTrash,
   IconUpload,
+  IconUsers,
   IconX,
 } from '../../ui/icons';
 import { randomId } from '../../platform/browser';
@@ -64,6 +66,9 @@ interface Place {
 }
 
 type Layout = 'list' | 'grid';
+
+/** The place of the administrators' list of every other user's home; real share ids are numbers. */
+const HOMES = 'homes';
 
 function restoreLayout(saved: unknown): Layout {
   return typeof saved === 'object' &&
@@ -154,13 +159,17 @@ export function FilesApp({ app }: { app: PithyxApp }) {
 
   const shares = useQuery({ queryKey: ['files', 'shares'], queryFn: () => app.files.shares() });
   const shareList = shares.data ?? [];
-  const share: ShareInfo | undefined =
-    shareList.find((candidate) => candidate.id === place.share) ?? shareList[0];
-  const shareId = share?.id ?? null;
-  // The own home first, then the shared folders; administrators also see every other home (D348).
+  // The own home first, then the shared folders; administrators also see every other home (D348), gathered in one
+  // entry "homes" that lists them as folders, so a box with a hundred users keeps a short sidebar.
   const ownHomes = shareList.filter((candidate) => candidate.kind === 'home');
   const sharedFolders = shareList.filter((candidate) => candidate.kind === undefined);
   const userHomes = shareList.filter((candidate) => candidate.kind === 'userHome');
+  const atHomes = place.share === HOMES && userHomes.length > 0;
+  const share: ShareInfo | undefined = atHomes
+    ? undefined
+    : (shareList.find((candidate) => candidate.id === place.share) ?? shareList[0]);
+  const shareId = share?.id ?? null;
+  const inUserHome = share?.kind === 'userHome';
   const path = share?.id === place.share ? place.path : '';
   const view = share?.id === place.share ? place.view : 'folder';
   const writable = share?.access === 'readWrite';
@@ -191,7 +200,13 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     },
   });
   const location = { share: shareId ?? '' };
-  const title = view === 'trash' ? t('trash') : path === '' ? (share?.name ?? '') : nameOf(path);
+  const title = atHomes
+    ? t('shares.homes')
+    : view === 'trash'
+      ? t('trash')
+      : path === ''
+        ? (share?.name ?? '')
+        : nameOf(path);
 
   // The window title and the saved place follow the folder on screen (the window manager and the layout live
   // outside React).
@@ -250,10 +265,17 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     }
   }
 
+  const canGoUp = !atHomes && view === 'folder' && (path !== '' || inUserHome);
+
   function up() {
-    if (view === 'folder' && path !== '') {
-      go({ share: shareId, path: parentOf(path), view: 'folder' });
+    if (!canGoUp) {
+      return;
     }
+    go(
+      path === ''
+        ? { share: HOMES, path: '', view: 'folder' }
+        : { share: shareId, path: parentOf(path), view: 'folder' },
+    );
   }
 
   async function report(error: unknown) {
@@ -652,15 +674,24 @@ export function FilesApp({ app }: { app: PithyxApp }) {
         >
           <IconArrowRight size={18} stroke={1.75} />
         </IconButton>
-        <IconButton
-          label={t('up')}
-          size="sm"
-          isDisabled={view !== 'folder' || path === ''}
-          onPress={up}
-        >
+        <IconButton label={t('up')} size="sm" isDisabled={!canGoUp} onPress={up}>
           <IconArrowUp size={18} stroke={1.75} />
         </IconButton>
         <nav className={styles.breadcrumb} aria-label={t('path')}>
+          {(atHomes || inUserHome) && (
+            <button
+              type="button"
+              className={styles.crumb}
+              aria-current={atHomes ? 'page' : undefined}
+              onClick={() => {
+                if (!atHomes) {
+                  go({ share: HOMES, path: '', view: 'folder' });
+                }
+              }}
+            >
+              {t('shares.homes')}
+            </button>
+          )}
           {share !== undefined && (
             <button
               type="button"
@@ -670,6 +701,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
                 go({ share: shareId, path: '', view: 'folder' });
               }}
             >
+              {inUserHome && <IconChevronRight size={14} stroke={1.75} aria-hidden />}
               {share.name}
             </button>
           )}
@@ -739,11 +771,8 @@ export function FilesApp({ app }: { app: PithyxApp }) {
       <div className={styles.split} data-sidebar-open={sidebarOpen ? '' : undefined}>
         <nav className={styles.sidebar} aria-label={t('sidebar')}>
           <h3 className={styles.sideTitle}>{t('shares.title')}</h3>
-          {[ownHomes, sharedFolders, userHomes].map((section, index) => (
+          {[ownHomes, sharedFolders].map((section, index) => (
             <Fragment key={index}>
-              {index === 2 && section.length > 0 && (
-                <h3 className={styles.sideTitle}>{t('shares.homes')}</h3>
-              )}
               {section.map((candidate) => {
                 const Icon = candidate.kind === undefined ? IconServer2 : IconHome;
                 return (
@@ -768,6 +797,19 @@ export function FilesApp({ app }: { app: PithyxApp }) {
               })}
             </Fragment>
           ))}
+          {userHomes.length > 0 && (
+            <button
+              type="button"
+              className={styles.sideItem}
+              aria-current={atHomes || inUserHome ? 'page' : undefined}
+              onClick={() => {
+                go({ share: HOMES, path: '', view: 'folder' });
+              }}
+            >
+              <IconUsers size={16} stroke={1.75} aria-hidden />
+              {t('shares.homes')}
+            </button>
+          )}
           {shareList.length > 0 && <h3 className={styles.sideTitle}>{t('trash')}</h3>}
           {[...ownHomes, ...sharedFolders].map((candidate) => (
             <button
@@ -788,6 +830,26 @@ export function FilesApp({ app }: { app: PithyxApp }) {
         <div className={styles.main}>
           {shares.isSuccess && shareList.length === 0 ? (
             <p className={styles.empty}>{t('noShares')}</p>
+          ) : atHomes ? (
+            <ul className={styles.homes} aria-label={t('shares.homes')}>
+              {userHomes.map((home) => (
+                <li key={home.id}>
+                  <button
+                    type="button"
+                    className={styles.home}
+                    onClick={() => {
+                      go({ share: home.id, path: '', view: 'folder' });
+                    }}
+                  >
+                    <IconFolder size={20} stroke={1.75} aria-hidden />
+                    {home.name}
+                    {home.unavailable !== undefined && (
+                      <span className={styles.sideNote}>{t('shares.unavailable')}</span>
+                    )}
+                  </button>
+                </li>
+              ))}
+            </ul>
           ) : share === undefined ? null : view === 'trash' ? (
             <TrashView
               key={share.id}
@@ -864,10 +926,12 @@ export function FilesApp({ app }: { app: PithyxApp }) {
       <StatusBar
         transfers={transfers}
         text={
-          view === 'trash'
-            ? ''
-            : (announcement ??
-              (count > 0 ? t('selected', { count }) : t('items', { count: folder.total })))
+          atHomes
+            ? t('items', { count: userHomes.length })
+            : view === 'trash'
+              ? ''
+              : (announcement ??
+                (count > 0 ? t('selected', { count }) : t('items', { count: folder.total })))
         }
         onCancel={(job) => {
           void app.jobs.cancel(job).catch(report);

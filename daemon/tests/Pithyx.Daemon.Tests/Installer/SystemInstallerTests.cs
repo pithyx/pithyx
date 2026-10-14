@@ -47,6 +47,7 @@ public sealed class SystemInstallerTests : IAsyncLifetime
         ]);
         _commands.Handler = request => request switch
         {
+            { FileName: "unsquashfs" } => Unpacked(request.Arguments[^2]),
             { FileName: "blkid" } => new CommandResult(0, $"uuid-of-{Path.GetFileName(request.Arguments[^1])}\n", "", TimeSpan.Zero),
             { FileName: "mdadm", Arguments: ["--detail", "--scan"] } => new CommandResult(0, "ARRAY /dev/md/pithyx-system metadata=1.2 name=pithyx-system UUID=a:b:c:d\nARRAY /dev/md/pithyx-swap metadata=1.2 name=pithyx-swap UUID=e:f:0:1\n", "", TimeSpan.Zero),
             _ => new CommandResult(0, "", "", TimeSpan.Zero),
@@ -59,6 +60,14 @@ public sealed class SystemInstallerTests : IAsyncLifetime
         var host = new NetworkHost(_commands, DaemonMode.Simulated, DeploymentEnvironment.Prod, NullLogger<NetworkHost>.Instance);
         _network = new NetworkService(_live, host, _confirmation, hub, new FileServiceChanges(), TimeProvider.System, NullLogger<NetworkService>.Instance);
         _installer = new SystemInstaller(environment, _commands, _inventory, _system, _network, _hasher, TimeProvider.System, NullLogger<SystemInstaller>.Instance);
+    }
+
+    /// <summary>What the image brings that the installer changes: the group file with Debian's <c>sudo</c> group.</summary>
+    private static CommandResult Unpacked(string target)
+    {
+        Directory.CreateDirectory(Path.Combine(target, "etc"));
+        File.WriteAllText(Path.Combine(target, "etc", "group"), "root:x:0:\nsudo:x:27:\nusers:x:100:\n");
+        return new CommandResult(0, "", "", TimeSpan.Zero);
     }
 
     public async ValueTask InitializeAsync() =>
@@ -152,6 +161,7 @@ public sealed class SystemInstallerTests : IAsyncLifetime
         Assert.Contains("UUID=uuid-of-nvme0n1p1\t/boot/efi2\tvfat\tumask=0077,nofail,x-systemd.device-timeout=10s", File.ReadAllText(Target("etc/fstab")), StringComparison.Ordinal);
         Assert.Contains("ARRAY /dev/md/pithyx-swap", File.ReadAllText(Target("etc/mdadm/mdadm.conf")), StringComparison.Ordinal);
         Assert.Equal("nas\n", File.ReadAllText(Target("etc/hostname")));
+        Assert.Contains("\nsudo:x:27:admin\n", File.ReadAllText(Target("etc/group")), StringComparison.Ordinal);
         Assert.Equal("/usr/share/zoneinfo/Europe/Berlin", new FileInfo(Target("etc/localtime")).LinkTarget);
         Assert.Contains("XKBLAYOUT=\"de\"", File.ReadAllText(Target("etc/default/keyboard")), StringComparison.Ordinal);
         Assert.Contains("ptbtime1.ptb.de", File.ReadAllText(Target("etc/systemd/timesyncd.conf.d/pithyx.conf")), StringComparison.Ordinal);

@@ -1,0 +1,67 @@
+{
+    "timestamp": "2026-10-14T22:06:56.031341+0200",
+    "version": "4.22.11-Debian-4.22.11+dfsg-0+deb13u1",
+    "smb_conf": "/etc/samba/smb.conf",
+    "sessions": {
+        "4258240662": {
+            "session_id": "4258240662",
+            "server_id": {
+                "pid": "2738326",
+                "task_id": "0",
+                "vnn": "4294967295",
+                "unique_id": "17641842291234345459"
+            },
+            "uid": 20002,
+            "gid": 100,
+            "username": "e2e-user",
+            "groupname": "users",
+            "creation_time": "2026-10-14T22:06:54.007399+02:00",
+            "expiration_time": "30828-09-14T04:48:05.477581+02:00",
+            "auth_time": "2026-10-14T22:06:54.034708+02:00",
+            "remote_machine": "127.0.0.1",
+            "hostname": "ipv4:127.0.0.1:36786",
+            "session_dialect": "SMB3_11",
+            "client_guid": "549914d6-9b4d-423d-bfe9-35916a7c3928",
+            "encryption": {
+                "cipher": "-",
+                "degree": "none"
+            },
+            "signing": {
+                "cipher": "AES-128-GMAC",
+                "degree": "full"
+            },
+            "channels": {
+                "1": {
+                    "channel_id": "1",
+                    "creation_time": "2026-10-14T22:06:54.007399+02:00",
+                    "local_address": "ipv4:127.0.0.1:445",
+                    "remote_address": "ipv4:127.0.0.1:36786"
+                }
+            }
+        }
+    },
+    "tcons": {
+        "1267652142": {
+            "service": "FS Test",
+            "server_id": {
+                "pid": "2738326",
+                "task_id": "0",
+                "vnn": "4294967295",
+                "unique_id": "17641842291234345459"
+            },
+            "tcon_id": "1267652142",
+            "session_id": "4258240662",
+            "machine": "127.0.0.1",
+            "connected_at": "2026-10-14T22:06:54.112946+02:00",
+            "encryption": {
+                "cipher": "-",
+                "degree": "none"
+            },
+            "signing": {
+                "cipher": "AES-128-GMAC",
+                "degree": "full"
+            }
+        }
+    },
+    "open_files": {}
+}

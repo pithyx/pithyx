@@ -101,6 +101,35 @@ public static class GroupReconciler
         return actions;
     }
 
+    /// <summary>
+    /// The users whose groups the actions change: added to or dropped from a group, or members of a group that is created
+    /// or removed. Their open SMB sessions still carry the old groups (<see cref="FileServices.SmbSessions"/>).
+    /// </summary>
+    public static IReadOnlySet<string> ChangedMembers(IReadOnlyList<GroupAction> actions, IReadOnlyList<GroupEntry> actual)
+    {
+        ArgumentNullException.ThrowIfNull(actions);
+        ArgumentNullException.ThrowIfNull(actual);
+        var changed = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var action in actions)
+        {
+            switch (action)
+            {
+                case CreateGroup create:
+                    changed.UnionWith(create.Group.Members);
+                    break;
+                case RemoveGroup remove:
+                    changed.UnionWith(remove.Entry.Members);
+                    break;
+                case SetGroupMembers set:
+                    var difference = (actual.FirstOrDefault(entry => entry.Gid == set.Group.Gid)?.Members ?? []).ToHashSet(StringComparer.Ordinal);
+                    difference.SymmetricExceptWith(set.Group.Members);
+                    changed.UnionWith(difference);
+                    break;
+            }
+        }
+        return changed;
+    }
+
     private static bool SameMembers(IReadOnlyList<string> actual, IReadOnlyList<string> wanted) =>
         actual.ToHashSet(StringComparer.Ordinal).SetEquals(wanted);
 

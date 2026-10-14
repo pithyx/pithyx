@@ -31,8 +31,6 @@ export function DatasetsSection({ app }: { app: PithyxApp }) {
         const own = datasets.filter(
           (dataset) => dataset.pool === pool.name && !isHiddenDataset(pool.name, dataset.name),
         );
-        // Volumes go below <pool>/pithyx, which only pools Pithyx created have.
-        const prepared = own.some((dataset) => dataset.name === `${pool.name}/pithyx`);
         return (
           <section
             key={pool.name}
@@ -43,18 +41,6 @@ export function DatasetsSection({ app }: { app: PithyxApp }) {
               <h3 id={`datasets-${pool.name}`} className={styles.sectionTitle}>
                 {pool.name}
               </h3>
-              {prepared ? (
-                <Button
-                  size="sm"
-                  onPress={() => {
-                    setAction({ kind: 'volume', pool: pool.name });
-                  }}
-                >
-                  {t('datasets.volume.button')}
-                </Button>
-              ) : (
-                <p className={styles.muted}>{t('datasets.volume.unprepared')}</p>
-              )}
             </div>
             <DatasetTable pool={pool.name} datasets={own} onAction={setAction} />
           </section>

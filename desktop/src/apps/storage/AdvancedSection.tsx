@@ -30,11 +30,6 @@ export function AdvancedSection({ app, onDatasets }: { app: PithyxApp; onDataset
   const volumes = datasets.filter(
     (dataset) => dataset.type === 'volume' && datasetRole(dataset.pool, dataset.name) === 'volume',
   );
-  // Volumes go below <pool>/pithyx, which only pools Pithyx created have.
-  const prepared = writable.filter((pool) =>
-    datasets.some((dataset) => dataset.name === `${pool.name}/pithyx`),
-  );
-
   return (
     <div className={styles.storage}>
       <header className={styles.pageHeader}>
@@ -45,12 +40,13 @@ export function AdvancedSection({ app, onDatasets }: { app: PithyxApp; onDataset
       </header>
       {pools.isError && <ErrorNotice error={describeProblem(pools.error)} />}
 
-      <section className={styles.section} aria-labelledby="advanced-volumes">
-        <h3 id="advanced-volumes" className={styles.sectionTitle}>
-          {t('advanced.volumes.title')}
-        </h3>
-        <p className={styles.muted}>{t('advanced.volumes.explain')}</p>
-        {volumes.length > 0 && (
+      {/* Nothing in 1.0 uses a volume (no iSCSI, no virtual machines), so only existing ones show, to delete them. */}
+      {volumes.length > 0 && (
+        <section className={styles.section} aria-labelledby="advanced-volumes">
+          <h3 id="advanced-volumes" className={styles.sectionTitle}>
+            {t('advanced.volumes.title')}
+          </h3>
+          <p className={styles.muted}>{t('advanced.volumes.explain')}</p>
           <ul className={styles.plainList} aria-label={t('advanced.volumes.title')}>
             {volumes.map((volume) => (
               <li key={volume.name} className={styles.advancedItem}>
@@ -73,25 +69,8 @@ export function AdvancedSection({ app, onDatasets }: { app: PithyxApp; onDataset
               </li>
             ))}
           </ul>
-        )}
-        {prepared.length === 0 ? (
-          <p className={styles.muted}>{t('advanced.volumes.unprepared')}</p>
-        ) : (
-          <div className={styles.buttons}>
-            {prepared.map((pool) => (
-              <Button
-                key={pool.name}
-                size="sm"
-                onPress={() => {
-                  setAction({ kind: 'volume', pool: pool.name });
-                }}
-              >
-                {t('advanced.volumes.create', { pool: pool.name })}
-              </Button>
-            ))}
-          </div>
-        )}
-      </section>
+        </section>
+      )}
 
       <section className={styles.section} aria-labelledby="advanced-export">
         <h3 id="advanced-export" className={styles.sectionTitle}>

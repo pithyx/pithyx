@@ -18,6 +18,7 @@ public static class UserEndpoints
         services.AddSingleton(homes);
         services.AddSingleton<Homes>();
         services.AddSingleton<HomeService>();
+        services.AddSingleton<FileServices.SmbSessions>();
         services.AddSingleton<LinuxAccounts>();
         services.AddSingleton<ShareAcls>();
         services.AddSingleton<UserService>();
