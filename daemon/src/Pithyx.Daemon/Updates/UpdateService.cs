@@ -89,11 +89,18 @@ public sealed partial class UpdateService(
         async (_, cancellationToken) => await service().StatusAsync(cancellationToken),
         (user, _) => user.IsInRole(SessionAuthenticationHandler.AdminRole));
 
+    public override async Task StartAsync(CancellationToken cancellationToken)
+    {
+        // The layout and the snapshots are known before the daemon accepts requests, so a request right after the start
+        // is never refused as unsupported.
+        await InitializeAsync(cancellationToken);
+        await base.StartAsync(cancellationToken);
+    }
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         try
         {
-            await InitializeAsync(stoppingToken);
             while (!stoppingToken.IsCancellationRequested)
             {
                 CancellationTokenSource reschedule;

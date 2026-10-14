@@ -48,8 +48,9 @@ function failuresIn(directory: string): Failure[] {
         methods.set(id, { className: unescape(className), method: unescape(method) });
       }
     }
+    // Passed results are self-closing; matching them up to the next closing tag would swallow the failure after them.
     for (const [, attributes, body] of trx.matchAll(
-      /<UnitTestResult ([^>]*)>([\s\S]*?)<\/UnitTestResult>/g,
+      /<UnitTestResult ([^>]*?)(?:\/>|>([\s\S]*?)<\/UnitTestResult>)/g,
     )) {
       if (!/\boutcome="Failed"/.test(attributes ?? '')) {
         continue;
