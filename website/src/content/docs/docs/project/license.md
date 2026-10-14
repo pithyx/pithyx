@@ -10,19 +10,20 @@ The Pithyx system (daemon, desktop, installer, image tooling and this website) i
 
 ## The system
 
-The `LICENSE` file in the repository is the GNU AGPL v3. The `NOTICE` file adds terms under section 7(b) of that license, which allows "requiring preservation of specified reasonable legal notices or author attributions". The `NOTICE` file has not been reviewed by a lawyer yet.
+The `LICENSE` file in the repository is the GNU AGPL v3. The `NOTICE` file adds three terms under section 7 of that license: an attribution (7(b)), marking modified versions (7(c)) and no rights to the name and logo (7(e)).
 
 ## Attribution in forks and redistributions
 
-Pithyx was originally created by [Schecher1](https://github.com/Schecher1). Anyone may fork, change and redistribute it under the AGPL, but a fork or redistribution must not hide the name Pithyx or that it comes from Schecher1. It keeps this attribution:
+Pithyx was originally created by [Schecher1](https://github.com/Schecher1). Anyone may fork, change and redistribute it under the AGPL. Copies and modified versions keep this attribution:
 
 > Based on Pithyx (https://github.com/pithyx/pithyx), originally created by Schecher1 (https://github.com/Schecher1), licensed under the GNU AGPL-3.0.
 
-- **Source**: the `NOTICE` file with the attribution and its terms, and the README.
+- **Source and docs**: the `NOTICE` file, and wherever the attribution appears in the source and the documentation, such as the README and this page.
 - **User interface**: the **About Pithyx** app (or an equivalent, reasonably visible place); a faithful translation is allowed, as the desktop shows it in German.
-- **Docs**: wherever the derived work describes its license, origin or authors.
 
-A fork may use its own product name, logo and branding, but where it names itself in these places it states that it is based on Pithyx by Schecher1, and it marks itself as modified (section 5(a) of the AGPL). These terms apply to the system only, not to the MIT-licensed npm packages.
+## Name and logo
+
+The license grants no rights to the name "Pithyx" or the Pithyx logo as a trademark. A modified version that is passed on needs a product name of its own and must not use the Pithyx logo; it must not present itself as Pithyx or as a release of the project, and it says that it is based on Pithyx (the attribution above). Passing on unmodified copies of Pithyx under its name is fine. These terms apply to the system only, not to the MIT-licensed npm packages.
 
 ## The npm packages
 

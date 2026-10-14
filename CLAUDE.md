@@ -1,6 +1,6 @@
 # Pithyx
 
-Free, self-hosted NAS and server OS with a web desktop. Debian 13, C# daemon, React desktop, apps as containers. AGPL-3.0 with the attribution term in `NOTICE` (section 7(b), D344: forks keep "Based on Pithyx, originally created by Schecher1" in source, About page and docs); the npm packages (`@pithyx/sdk`, `@pithyx/ui`, `@pithyx/cli`) MIT without it. GitHub org `pithyx`, npm org `pithyx`.
+Free, self-hosted NAS and server OS with a web desktop. Debian 13, C# daemon, React desktop, apps as containers. AGPL-3.0 with the terms in `NOTICE` (section 7, D344, D349: forks keep "Based on Pithyx, originally created by Schecher1" in `NOTICE`, source, docs and About page; a modified version needs its own name and logo); the npm packages (`@pithyx/sdk`, `@pithyx/ui`, `@pithyx/cli`) MIT without it. GitHub org `pithyx`, npm org `pithyx`.
 
 These rules are binding. If a rule blocks you, stop and ask; never work around it.
 

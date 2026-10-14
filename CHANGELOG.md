@@ -200,6 +200,7 @@ The first beta, codename Pyxis (D345): the NAS core, the file services, the app 
 
 ### Changed
 
+- `NOTICE` (D349): the additional terms rest on sections 7(b), 7(c) and 7(e) of the AGPL. Copies and forks keep the attribution in `NOTICE`, wherever it appears in the source and docs, and on their About page; a modified version must be marked as such and needs a product name and logo of its own, since the license grants no rights to the name Pithyx or its logo. The note that the file awaits a lawyer's review is gone.
 - Docs: the pages on security, certificates and the reverse proxy, the error code reference and the FAQ on own domains are checked against the code and no longer marked as drafts, so every docs page is now checked. The security page names the ICMP messages the firewall lets in and that the sign-in limit counts per user and address; the error reference says that `sdk.*` codes come from the SDK.
 - The daemon's version is `1.0.0-beta.1`; the updater orders it after `0.1.0-dev.x` and before `1.0.0`, and `tools/release/build-update.sh` uses it as the default minimum version.
 - The daemon and the CLI refuse every elevated app right with `app.elevated.unsupported` (before, only `docker.socket`, `host.full` and the capabilities that reach the host's secrets); the manifest schema, the shared fixture corpus and the docs say so.
