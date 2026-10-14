@@ -23,6 +23,11 @@ export function pseudonym(value: string): string {
   if (/^0x[0-9a-f]+$/i.test(value)) {
     return `0x${hex.slice(0, Math.max(value.length - 2, 8))}`;
   }
+  // NVMe and SCSI name identifiers (eui.0025..., nvme.1b36-..., naa.5000...) keep their type prefix.
+  const typed = /^(eui|naa|nvme|t10)\.(.+)$/i.exec(value);
+  if (typed?.[1] !== undefined && typed[2] !== undefined) {
+    return `${typed[1]}.${hex.slice(0, Math.max(typed[2].length, 8))}`;
+  }
   return hex.slice(0, Math.max(value.length, 8)).toUpperCase();
 }
 

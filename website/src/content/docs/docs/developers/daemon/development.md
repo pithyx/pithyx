@@ -45,7 +45,7 @@ Simulation works on any Linux, including WSL; native Windows and macOS are not s
 | `PITHYX_DEV_PORT`          | Port override, only in Development builds                  |
 | `PITHYX_FTP_PORT`          | FTP port (21 on a box, 0 in simulation)                    |
 
-Simulation reads fake account files from the fixtures and applies nothing to the system. If a command has no fixture, the daemon says "No simulation fixture for: ..."; record one with `tools/fixtures/record.sh`.
+Simulation reads fake account files from the fixtures and applies nothing to the system. If a command has no fixture, the daemon says "No simulation fixture for: ..."; record one with `tools/fixtures/record.sh`. Disks you do not have (SATA, NVMe, USB) come from `tools/fixtures/record-lsblk-qemu.sh`, which boots a throwaway QEMU VM with one such disk and records `lsblk` there; model and vendor are then QEMU's.
 
 If your development machine itself runs Pithyx (`/etc/pithyx/environment` exists) and you start a daemon without `PITHYX_DB`, it exits with code 78. Set `PITHYX_DB`.
 
