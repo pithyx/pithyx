@@ -1,5 +1,5 @@
 {
-  "inputsHash": "24b4d34a286bd4f5f3ebcbef2f54dd894d736be7e8bad4a97e1aaa5178c11835",
+  "inputsHash": "3d80240dba8f557461ea451a1215f490af444740af92eb56f313cad4ba50660e",
   "entries": [
     {
       "name": "@babel/runtime",
@@ -110,7 +110,8 @@
       "name": "client-only",
       "version": "0.0.1",
       "license": "MIT",
-      "source": "https://reactjs.org/"
+      "source": "https://reactjs.org/",
+      "licenseFile": "licenses/generated/2451a37c0982.txt"
     },
     {
       "name": "clsx",
@@ -144,7 +145,8 @@
       "name": "qrcode-generator",
       "version": "2.0.4",
       "license": "MIT",
-      "source": "https://github.com/kazuhikoarase/qrcode-generator#readme"
+      "source": "https://github.com/kazuhikoarase/qrcode-generator#readme",
+      "licenseFile": "licenses/generated/1908d3ec3bb9.txt"
     },
     {
       "name": "react",
@@ -213,13 +215,15 @@
       "name": "Dapper",
       "version": "2.1.89",
       "license": "Apache-2.0",
-      "source": "https://dapperlib.dev/"
+      "source": "https://dapperlib.dev/",
+      "licenseFile": "licenses/generated/94e43ffa7562.txt"
     },
     {
       "name": "Humanizer.Core",
       "version": "3.0.1",
       "license": "MIT",
-      "source": "https://github.com/Humanizr/Humanizer"
+      "source": "https://github.com/Humanizr/Humanizer",
+      "licenseFile": "licenses/generated/baebca030909.txt"
     },
     {
       "name": "Json.More.Net",
@@ -253,31 +257,36 @@
       "name": "Microsoft.AspNetCore.OpenApi",
       "version": "10.0.12",
       "license": "MIT",
-      "source": "https://asp.net/"
+      "source": "https://asp.net/",
+      "licenseFile": "licenses/generated/fcc7466b3a24.txt"
     },
     {
       "name": "Microsoft.Data.Sqlite",
       "version": "10.0.12",
       "license": "MIT",
-      "source": "https://docs.microsoft.com/dotnet/standard/data/sqlite/"
+      "source": "https://docs.microsoft.com/dotnet/standard/data/sqlite/",
+      "licenseFile": "licenses/generated/fcc7466b3a24.txt"
     },
     {
       "name": "Microsoft.Data.Sqlite.Core",
       "version": "10.0.12",
       "license": "MIT",
-      "source": "https://docs.microsoft.com/dotnet/standard/data/sqlite/"
+      "source": "https://docs.microsoft.com/dotnet/standard/data/sqlite/",
+      "licenseFile": "licenses/generated/fcc7466b3a24.txt"
     },
     {
       "name": "Microsoft.Extensions.DependencyModel",
       "version": "10.0.0",
       "license": "MIT",
-      "source": "https://dot.net/"
+      "source": "https://dot.net/",
+      "licenseFile": "licenses/generated/fcc7466b3a24.txt"
     },
     {
       "name": "Microsoft.OpenApi",
       "version": "2.12.0",
       "license": "MIT",
-      "source": "https://github.com/Microsoft/OpenAPI.NET"
+      "source": "https://github.com/Microsoft/OpenAPI.NET",
+      "licenseFile": "licenses/generated/fcc7466b3a24.txt"
     },
     {
       "name": "NSec.Cryptography",
@@ -297,61 +306,71 @@
       "name": "Scalar.AspNetCore",
       "version": "2.17.10",
       "license": "MIT",
-      "source": "https://scalar.com/"
+      "source": "https://scalar.com/",
+      "licenseFile": "licenses/generated/9e1c26d04fef.txt"
     },
     {
       "name": "Serilog",
       "version": "4.3.0",
       "license": "Apache-2.0",
-      "source": "https://serilog.net/"
+      "source": "https://serilog.net/",
+      "licenseFile": "licenses/generated/25b105afcc38.txt"
     },
     {
       "name": "Serilog.AspNetCore",
       "version": "10.0.0",
       "license": "Apache-2.0",
-      "source": "https://github.com/serilog/serilog-aspnetcore"
+      "source": "https://github.com/serilog/serilog-aspnetcore",
+      "licenseFile": "licenses/generated/2e1c92d5aab9.txt"
     },
     {
       "name": "Serilog.Extensions.Hosting",
       "version": "10.0.0",
       "license": "Apache-2.0",
-      "source": "https://github.com/serilog/serilog-extensions-hosting"
+      "source": "https://github.com/serilog/serilog-extensions-hosting",
+      "licenseFile": "licenses/generated/2e1c92d5aab9.txt"
     },
     {
       "name": "Serilog.Extensions.Logging",
       "version": "10.0.0",
       "license": "Apache-2.0",
-      "source": "https://github.com/serilog/serilog-extensions-logging"
+      "source": "https://github.com/serilog/serilog-extensions-logging",
+      "licenseFile": "licenses/generated/2e1c92d5aab9.txt"
     },
     {
       "name": "Serilog.Formatting.Compact",
       "version": "3.0.0",
       "license": "Apache-2.0",
-      "source": "https://github.com/serilog/serilog-formatting-compact"
+      "source": "https://github.com/serilog/serilog-formatting-compact",
+      "licenseFile": "licenses/generated/ffab514bfb44.txt"
     },
     {
       "name": "Serilog.Settings.Configuration",
       "version": "10.0.0",
       "license": "Apache-2.0",
-      "source": "https://github.com/serilog/serilog-settings-configuration"
+      "source": "https://github.com/serilog/serilog-settings-configuration",
+      "licenseFile": "licenses/generated/ffab514bfb44.txt"
     },
     {
       "name": "Serilog.Sinks.Console",
       "version": "6.1.1",
       "license": "Apache-2.0",
-      "source": "https://github.com/serilog/serilog-sinks-console"
+      "source": "https://github.com/serilog/serilog-sinks-console",
+      "licenseFile": "licenses/generated/ffab514bfb44.txt"
     },
     {
       "name": "Serilog.Sinks.Debug",
       "version": "3.0.0",
       "license": "Apache-2.0",
-      "source": "https://github.com/serilog/serilog-sinks-debug"
+      "source": "https://github.com/serilog/serilog-sinks-debug",
+      "licenseFile": "licenses/generated/ffab514bfb44.txt"
     },
     {
       "name": "Serilog.Sinks.File",
       "version": "7.0.0",
       "license": "Apache-2.0",
-      "source": "https://github.com/serilog/serilog-sinks-file"
+      "source": "https://github.com/serilog/serilog-sinks-file",
+      "licenseFile": "licenses/generated/ffab514bfb44.txt"
     },
     {
       "name": "SkiaSharp.NativeAssets.Linux.NoDependencies",
@@ -364,25 +383,29 @@
       "name": "SQLitePCLRaw.bundle_e_sqlite3",
       "version": "2.1.12",
       "license": "Apache-2.0",
-      "source": "https://www.nuget.org/packages/SQLitePCLRaw.bundle_e_sqlite3/2.1.12"
+      "source": "https://www.nuget.org/packages/SQLitePCLRaw.bundle_e_sqlite3/2.1.12",
+      "licenseFile": "licenses/generated/380b21c5bb45.txt"
     },
     {
       "name": "SQLitePCLRaw.core",
       "version": "2.1.12",
       "license": "Apache-2.0",
-      "source": "https://www.nuget.org/packages/SQLitePCLRaw.core/2.1.12"
+      "source": "https://www.nuget.org/packages/SQLitePCLRaw.core/2.1.12",
+      "licenseFile": "licenses/generated/380b21c5bb45.txt"
     },
     {
       "name": "SQLitePCLRaw.lib.e_sqlite3",
       "version": "2.1.12",
       "license": "Apache-2.0",
-      "source": "https://www.nuget.org/packages/SQLitePCLRaw.lib.e_sqlite3/2.1.12"
+      "source": "https://www.nuget.org/packages/SQLitePCLRaw.lib.e_sqlite3/2.1.12",
+      "licenseFile": "licenses/generated/380b21c5bb45.txt"
     },
     {
       "name": "SQLitePCLRaw.provider.e_sqlite3",
       "version": "2.1.12",
       "license": "Apache-2.0",
-      "source": "https://www.nuget.org/packages/SQLitePCLRaw.provider.e_sqlite3/2.1.12"
+      "source": "https://www.nuget.org/packages/SQLitePCLRaw.provider.e_sqlite3/2.1.12",
+      "licenseFile": "licenses/generated/380b21c5bb45.txt"
     },
     {
       "name": "System.IO.Hashing",
@@ -395,13 +418,15 @@
       "name": "YamlDotNet",
       "version": "18.1.0",
       "license": "MIT",
-      "source": "https://github.com/aaubry/YamlDotNet/wiki"
+      "source": "https://github.com/aaubry/YamlDotNet/wiki",
+      "licenseFile": "licenses/generated/783c8a7f2943.txt"
     },
     {
       "name": "Yarp.ReverseProxy",
       "version": "2.3.0",
       "license": "MIT",
-      "source": "https://github.com/dotnet/yarp"
+      "source": "https://github.com/dotnet/yarp",
+      "licenseFile": "licenses/generated/fcc7466b3a24.txt"
     }
   ]
 }
