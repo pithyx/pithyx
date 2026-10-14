@@ -12,36 +12,31 @@ The npm packages @pithyx/sdk (sdk/), @pithyx/ui (packages/ui/) and @pithyx/cli
 additional terms below. See sdk/LICENSE, packages/ui/LICENSE and
 packages/cli/LICENSE.
 
-Additional terms under section 7(b) of the GNU Affero General Public License:
+Additional terms under section 7 of the GNU Affero General Public License:
 
-1. Attribution. Pithyx was originally created by Schecher1. Copies of this
-   program and of modified versions ("derived works") must preserve the
+1. Attribution (section 7(b)). Pithyx was originally created by Schecher1.
+   Copies of this program and of modified versions must preserve the
    following attribution:
 
        Based on Pithyx (https://github.com/pithyx/pithyx), originally created
        by Schecher1 (https://github.com/Schecher1), licensed under the
        GNU AGPL-3.0.
 
-   It must stay visible in each of these places:
+   It must be preserved in this NOTICE file, wherever it appears in the
+   program's source and documentation (such as the README and the license
+   page of the documentation), and in the Appropriate Legal Notices the
+   program displays (its "About" page, or an equivalent, reasonably visible
+   place if it has none). A faithful translation into the language of the
+   interface is allowed next to or instead of the English text.
 
-   a) the source code: this NOTICE file with its attribution and these
-      additional terms, and the README or the equivalent first document of
-      the source;
-   b) any interactive user interface: the "About" page, or an equivalent,
-      reasonably visible location if there is no About page; a faithful
-      translation into the language of the interface is allowed next to or
-      instead of the English text;
-   c) the documentation: wherever it describes the product's license, origin
-      or authors.
+2. Marking modified versions (section 7(c)). A modified version must be
+   marked as different from the original. It must not present itself as
+   Pithyx or as a release of the Pithyx project.
 
-2. Name of a derived work. A derived work may use its own product name, logo
-   and branding. It must not hide that it is based on Pithyx or that Pithyx
-   comes from Schecher1: wherever it names itself in the places of term 1, it
-   states that it is based on Pithyx by Schecher1. It must not remove, obscure
-   or reword the attribution so that the name Pithyx or the original author
-   is lost, and it must mark itself as modified as section 5(a) requires.
+3. Name and logo (section 7(e)). This license grants no rights to use the
+   name "Pithyx" or the Pithyx logo as a trademark. A modified version that
+   is conveyed must carry a product name of its own and must not use the
+   Pithyx logo. It may and, under term 1, must say that it is based on
+   Pithyx.
 
 Derived works may add their own notices and attributions next to these terms.
-
-REVIEW REQUIRED: this notice has not been checked by a lawyer yet. It must be
-reviewed before the first public release.

@@ -67,6 +67,13 @@ public sealed class CommandPlanRunner(ICommandRunner commands, SystemStateServic
             }
 
             var result = await RunStepAsync(step.Command, cancellationToken);
+            for (var retry = 0; retry < BusyRetries && PoolIsBusy(step.Command, result); retry++)
+            {
+                // Any zfs or zpool call holds the pool while it runs, also the daemon's own reads after a state change
+                // (a snapshot listing right after the import step's refresh), so ZFS refuses to export for a moment.
+                await Task.Delay(BusyRetryDelay, time, cancellationToken);
+                result = await RunStepAsync(step.Command, cancellationToken);
+            }
             if (result.ExitCode != 0 && Zfs.ImportPlans.AsksForForce(step.Command, result))
             {
                 // ZFS found the pool in use by another system after all; only a new plan with the typed name may force it.
@@ -76,7 +83,12 @@ public sealed class CommandPlanRunner(ICommandRunner commands, SystemStateServic
             {
                 throw new PithyxException(
                     ErrorCodes.StorageCommandFailed,
-                    new Dictionary<string, object?> { ["command"] = step.Command.FileName, ["exitCode"] = result.ExitCode });
+                    new Dictionary<string, object?>
+                    {
+                        ["command"] = step.Command.FileName,
+                        ["exitCode"] = result.ExitCode,
+                        ["stderr"] = Truncate(result.StandardError.Trim(), MaxStderrLength),
+                    });
             }
             touched.UnionWith(step.DiskIds);
         }
@@ -87,6 +99,21 @@ public sealed class CommandPlanRunner(ICommandRunner commands, SystemStateServic
             await afterRun(cancellationToken);
         }
     }
+
+    /// <summary>How often an export or destroy is tried again while ZFS calls the pool busy, and how long it waits in between.</summary>
+    internal const int BusyRetries = 5;
+
+    internal static readonly TimeSpan BusyRetryDelay = TimeSpan.FromSeconds(1);
+
+    private const int MaxStderrLength = 500;
+
+    private static bool PoolIsBusy(CommandRequest command, CommandResult result) =>
+        result.ExitCode != 0
+        && command.FileName == "zpool"
+        && command.Arguments is ["export" or "destroy", ..]
+        && result.StandardError.Contains("pool is busy", StringComparison.Ordinal);
+
+    private static string Truncate(string text, int length) => text.Length <= length ? text : text[..length];
 
     /// <summary>
     /// A command that waits in the kernel, like a <c>zpool destroy</c> on a pool whose disks stopped answering, cannot be

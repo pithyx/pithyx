@@ -15,7 +15,6 @@ The first beta, codename Pyxis (D345): the NAS core, the file services, the app 
 - The box's certificate authority keeps no revocation list, and Let's Encrypt is not built in; the setup step "Trust this device", passkeys and the service worker come later.
 - Pool encryption (ZFS native, key vault) is not built, so no real data belongs on a beta box that needs encryption.
 - Every elevated app right is refused with `app.elevated.unsupported`: an app that asks for `host.network`, `host.pid`, a device, a capability, `docker.socket` or `host.full` cannot be installed.
-- Importing a pool after a reinstall fails at `zpool export` when the pool was first imported read-only and then switched to read-write.
 
 ### Added
 
@@ -201,6 +200,7 @@ The first beta, codename Pyxis (D345): the NAS core, the file services, the app 
 
 ### Changed
 
+- `NOTICE` (D349): the additional terms rest on sections 7(b), 7(c) and 7(e) of the AGPL. Copies and forks keep the attribution in `NOTICE`, wherever it appears in the source and docs, and on their About page; a modified version must be marked as such and needs a product name and logo of its own, since the license grants no rights to the name Pithyx or its logo. The note that the file awaits a lawyer's review is gone.
 - Docs: the pages on security, certificates and the reverse proxy, the error code reference and the FAQ on own domains are checked against the code and no longer marked as drafts, so every docs page is now checked. The security page names the ICMP messages the firewall lets in and that the sign-in limit counts per user and address; the error reference says that `sdk.*` codes come from the SDK.
 - The daemon's version is `1.0.0-beta.1`; the updater orders it after `0.1.0-dev.x` and before `1.0.0`, and `tools/release/build-update.sh` uses it as the default minimum version.
 - The daemon and the CLI refuse every elevated app right with `app.elevated.unsupported` (before, only `docker.socket`, `host.full` and the capabilities that reach the host's secrets); the manifest schema, the shared fixture corpus and the docs say so.
@@ -254,6 +254,7 @@ The first beta, codename Pyxis (D345): the NAS core, the file services, the app 
 
 ### Fixed
 
+- Importing a pool for use after its read-only preview no longer fails with `storage.command.failed` at `zpool export`: the daemon's own reads right after the preview (the snapshot listing) held the pool for a moment, and ZFS refused the export as busy. An export or destroy is now tried again for up to five seconds while ZFS calls the pool busy, and a failed storage command names ZFS's message in its error parameters (`stderr`).
 - The About app now has a license text for every bundled package: the 25 npm and NuGet packages that ship without a license file get the standard text of their license (Apache-2.0 or MIT) with their copyright holder.
 - Files for third-party apps: `files.read`, `files.write`, `files.pick` and `files.saveAs` no longer fail after 15 seconds (`sdk.request.timeout`); `files.upload` sends `uploadProgress` events.
 - After a restart of the box, `app.backend.fetch` got `app.token.invalid` for minutes: when the proxy refuses the backend token, the SDK now drops it, gets a new one and repeats the request once.
