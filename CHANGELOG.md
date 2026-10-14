@@ -15,7 +15,6 @@ The first beta, codename Pyxis (D345): the NAS core, the file services, the app 
 - The box's certificate authority keeps no revocation list, and Let's Encrypt is not built in; the setup step "Trust this device", passkeys and the service worker come later.
 - Pool encryption (ZFS native, key vault) is not built, so no real data belongs on a beta box that needs encryption.
 - Every elevated app right is refused with `app.elevated.unsupported`: an app that asks for `host.network`, `host.pid`, a device, a capability, `docker.socket` or `host.full` cannot be installed.
-- Importing a pool after a reinstall fails at `zpool export` when the pool was first imported read-only and then switched to read-write.
 
 ### Added
 
@@ -254,6 +253,7 @@ The first beta, codename Pyxis (D345): the NAS core, the file services, the app 
 
 ### Fixed
 
+- Importing a pool for use after its read-only preview no longer fails with `storage.command.failed` at `zpool export`: the daemon's own reads right after the preview (the snapshot listing) held the pool for a moment, and ZFS refused the export as busy. An export or destroy is now tried again for up to five seconds while ZFS calls the pool busy, and a failed storage command names ZFS's message in its error parameters (`stderr`).
 - The About app now has a license text for every bundled package: the 25 npm and NuGet packages that ship without a license file get the standard text of their license (Apache-2.0 or MIT) with their copyright holder.
 - Files for third-party apps: `files.read`, `files.write`, `files.pick` and `files.saveAs` no longer fail after 15 seconds (`sdk.request.timeout`); `files.upload` sends `uploadProgress` events.
 - After a restart of the box, `app.backend.fetch` got `app.token.invalid` for minutes: when the proxy refuses the backend token, the SDK now drops it, gets a new one and repeats the request once.
