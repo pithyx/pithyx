@@ -10,19 +10,20 @@ Das Pithyx-System (Daemon, Desktop, Installer, Image-Werkzeuge und diese Webseit
 
 ## Das System
 
-Die Datei `LICENSE` im Repository ist die GNU AGPL v3. Die Datei `NOTICE` ergänzt Bedingungen nach Abschnitt 7(b) dieser Lizenz, der erlaubt, die Erhaltung bestimmter angemessener rechtlicher Hinweise oder Urheberangaben zu verlangen („requiring preservation of specified reasonable legal notices or author attributions“). Die Datei `NOTICE` wurde noch von keinem Anwalt geprüft.
+Die Datei `LICENSE` im Repository ist die GNU AGPL v3. Die Datei `NOTICE` ergänzt drei Bedingungen nach Abschnitt 7 dieser Lizenz: eine Urheberangabe (7(b)), die Kennzeichnung geänderter Versionen (7(c)) und keine Rechte an Name und Logo (7(e)).
 
 ## Urheberangabe in Forks und Weitergaben
 
-Pithyx wurde ursprünglich von [Schecher1](https://github.com/Schecher1) entwickelt. Jeder darf es unter der AGPL forken, ändern und weitergeben, aber ein Fork oder eine Weitergabe darf weder den Namen Pithyx noch die Herkunft von Schecher1 verbergen. Er behält diese Urheberangabe:
+Pithyx wurde ursprünglich von [Schecher1](https://github.com/Schecher1) entwickelt. Jeder darf es unter der AGPL forken, ändern und weitergeben. Kopien und geänderte Versionen behalten diese Urheberangabe:
 
 > Based on Pithyx (https://github.com/pithyx/pithyx), originally created by Schecher1 (https://github.com/Schecher1), licensed under the GNU AGPL-3.0.
 
-- **Quellcode**: die Datei `NOTICE` mit der Urheberangabe und ihren Bedingungen sowie die README.
+- **Quellcode und Dokumentation**: die Datei `NOTICE` und überall, wo die Urheberangabe im Quellcode und in der Dokumentation steht, etwa in der README und auf dieser Seite.
 - **Benutzeroberfläche**: die App **Über Pithyx** (oder eine gleichwertige, gut sichtbare Stelle); eine getreue Übersetzung ist erlaubt, so wie der Desktop sie auf Deutsch zeigt.
-- **Dokumentation**: überall, wo das abgeleitete Werk seine Lizenz, Herkunft oder Urheber beschreibt.
 
-Ein Fork darf einen eigenen Produktnamen, ein eigenes Logo und eigenes Branding verwenden, aber wo er sich an diesen Stellen nennt, sagt er, dass er auf Pithyx von Schecher1 basiert, und er kennzeichnet sich als geändert (Abschnitt 5(a) der AGPL). Diese Bedingungen gelten nur für das System, nicht für die npm-Pakete unter MIT.
+## Name und Logo
+
+Die Lizenz gibt keine Rechte am Namen „Pithyx“ oder am Pithyx-Logo als Marke. Eine geänderte Version, die weitergegeben wird, braucht einen eigenen Produktnamen und darf das Pithyx-Logo nicht verwenden; sie darf sich nicht als Pithyx oder als Release des Projekts ausgeben und sagt, dass sie auf Pithyx basiert (die Urheberangabe oben). Unveränderte Kopien von Pithyx unter seinem Namen weiterzugeben ist in Ordnung. Diese Bedingungen gelten nur für das System, nicht für die npm-Pakete unter MIT.
 
 ## Die npm-Pakete
 
