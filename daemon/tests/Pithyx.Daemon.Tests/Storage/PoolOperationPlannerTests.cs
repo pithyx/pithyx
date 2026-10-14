@@ -307,6 +307,52 @@ public sealed class PoolOperationPlannerTests : IDisposable
         Assert.Contains(_commands.Calls, call => call.FileName == "wipefs");
     }
 
+    // Found by image/test-install.sh --reinstall and on 7484: the snapshot listing after the import step's refresh held
+    // the pool read-only imported a moment before, so the export step got "pool is busy".
+    [Fact]
+    public async Task AReadWriteImportWaitsForAPoolThatIsBusyForAMoment()
+    {
+        Pools("zfs-import-handwritten-readonly");
+        var plan = (await PlanAsync(new StoragePlanRequest("pool.import", "oldtank", ConfirmName: "oldtank"))).Plan!;
+        _commands.Calls.Clear();
+        var busy = 2;
+        _commands.Handler = call => call.Arguments is ["export", ..] && busy-- > 0 ? Busy("oldtank") : null;
+
+        await RunAdvancingTimeAsync(plan);
+
+        Assert.Equal(3, _commands.Calls.Count(call => call.Arguments is ["export", ..]));
+        Assert.Contains(_commands.Calls, call => call.Arguments is ["import", "-N", ..]);
+    }
+
+    [Fact]
+    public async Task APoolThatStaysBusyFailsTheImportWithZfsMessage()
+    {
+        Pools("zfs-import-handwritten-readonly");
+        var plan = (await PlanAsync(new StoragePlanRequest("pool.import", "oldtank", ConfirmName: "oldtank"))).Plan!;
+        _commands.Calls.Clear();
+        _commands.Handler = call => call.Arguments is ["export", ..] ? Busy("oldtank") : null;
+
+        var error = await Assert.ThrowsAsync<PithyxException>(() => RunAdvancingTimeAsync(plan));
+
+        Assert.Equal((ErrorCodes.StorageCommandFailed, "cannot export 'oldtank': pool is busy"), (error.Code, error.Parameters["stderr"]));
+        Assert.Equal(CommandPlanRunner.BusyRetries + 1, _commands.Calls.Count(call => call.Arguments is ["export", ..]));
+        Assert.DoesNotContain(_commands.Calls, call => call.Arguments is ["import", "-N", ..]);
+    }
+
+    private static CommandResult Busy(string pool) => new(1, "", $"cannot export '{pool}': pool is busy\n", TimeSpan.Zero);
+
+    /// <summary>Runs a plan while the fake clock moves on, so the runner's pauses between retries pass.</summary>
+    private async Task RunAdvancingTimeAsync(CommandPlan plan)
+    {
+        var run = _runner.RunAsync(plan, null, Token);
+        while (!run.IsCompleted)
+        {
+            _time.Advance(CommandPlanRunner.BusyRetryDelay);
+            await Task.Delay(TimeSpan.FromMilliseconds(5), Token);
+        }
+        await run;
+    }
+
     [Fact]
     public async Task AnImportThatZfsWantsForcedFailsWithTheForceCode()
     {
