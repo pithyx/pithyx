@@ -25,6 +25,10 @@ Pithyx was originally created by [Schecher1](https://github.com/Schecher1). Anyo
 
 The license grants no rights to the name "Pithyx" or the Pithyx logo as a trademark. A modified version that is passed on needs a product name of its own and must not use the Pithyx logo; it must not present itself as Pithyx or as a release of the project, and it says that it is based on Pithyx (the attribution above). Passing on unmodified copies of Pithyx under its name is fine. These terms apply to the system only, not to the MIT-licensed npm packages.
 
+## Source code
+
+The source of Pithyx itself is the repository at the release's tag. An image (ISO or update file) also contains Debian packages, many of them under the GPL. Their source packages, in exactly the versions of the image, are attached to each release as `pithyx-<version>-sources-<n>.tar`; `sources.tsv` in the first part says which source package covers which binary package. The ZFS module is built from Debian's `zfs-linux` of the same version, and the boot loader of the ISO from Debian's `grub2`; both are in the archives too. The maintainers collect them with `tools/release/collect-sources.ts` from snapshot.debian.org.
+
 ## The npm packages
 
 `sdk/`, `packages/ui` and `packages/cli` each contain their own `LICENSE` file (MIT, copyright "Pithyx contributors") and declare `MIT` in their `package.json`. You can build apps of any license with them. The manifest and Compose schemas under `sdk/schema/` are part of `@pithyx/sdk`. Apps themselves keep the license their authors choose; catalogs require an SPDX license expression in the manifest.

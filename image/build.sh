@@ -115,6 +115,7 @@ if [[ "$rootfs_build" == 1 ]]; then
     --customize-hook="sync-in '$out/debs' /tmp/pithyx/debs" \
     --customize-hook='chroot "$1" sh -c "DEBIAN_FRONTEND=noninteractive apt-get install --yes --no-install-recommends /tmp/pithyx/debs/*.deb"' \
     --customize-hook='chroot "$1" dpkg-query --show --showformat="\${Package}\t\${Version}\t\${Architecture}\n" >"$1/tmp/pithyx-out/packages"' \
+    --customize-hook='chroot "$1" dpkg-query --show --showformat="\${Package}\t\${Built-Using}\n" >"$1/tmp/pithyx-out/built-using"' \
     --customize-hook="sync-out /tmp/pithyx-out '$work/manifest'" \
     --customize-hook="sync-out /var/cache/apt/archives '$work/archives'" \
     --customize-hook="copy-in '$repo/image/customize.sh' /tmp/pithyx" \
@@ -124,6 +125,8 @@ if [[ "$rootfs_build" == 1 ]]; then
     "deb $debian $SUITE-updates main contrib non-free-firmware" \
     "deb $security $SUITE-security main contrib non-free-firmware"
   LC_ALL=C sort "$work/manifest/packages" >"$out/pithyx-$version-$ARCH.packages"
+  # Sources a package was built with (the kernel for linux-signed-amd64, Go libraries), for collect-sources.ts.
+  awk -F '\t' '$2 != ""' "$work/manifest/built-using" | LC_ALL=C sort >"$out/pithyx-$version-$ARCH.built-using"
 fi
 [[ -f "$work/rootfs.tar" ]] || die "no root file system in $work; run without --reuse-rootfs"
 
@@ -151,6 +154,10 @@ sed -e "s/@MARKER@/$marker/g" -e "s/@VERSION@/$version/g" "$repo/image/grub/grub
 grub-mkstandalone --format=x86_64-efi --output="$work/BOOTX64.EFI" --locales="" --fonts="" \
   --modules="part_gpt part_msdos fat iso9660 search search_fs_file linux normal configfile echo test all_video gfxterm efifwsetup" \
   "boot/grub/grub.cfg=$work/grub.cfg"
+# BOOTX64.EFI is this host's GRUB, so tools/release/collect-sources.ts needs these versions (and their Built-Using) for
+# the GPL source too.
+dpkg-query --show --showformat='${Package}\t${Version}\t${Architecture}\t${Built-Using}\n' grub-common grub-efi-amd64-bin \
+  >"$out/pithyx-$version-$ARCH.host-packages"
 truncate -s 8M "$work/efi.img"
 "$mkfs_fat" -n PITHYX-EFI -i "${SOURCE_DATE_EPOCH: -8}" "$work/efi.img" >/dev/null
 mmd -i "$work/efi.img" ::/EFI ::/EFI/BOOT
