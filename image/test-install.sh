@@ -607,6 +607,19 @@ if SSHPASS="$REMOTE_PASSWORD" sshpass -e ssh "${remote[@]/-P/-p}" sftptest@127.0
 fi
 echo "SFTP and SSH answer on port 22"
 
+# The administrator of the installation gets root through sudo with its own password; other users do not (D351).
+as_admin=(sshpass -e ssh "${remote[@]/-P/-p}" admin@127.0.0.1)
+root_name="$(SSHPASS="$REMOTE_PASSWORD" "${as_admin[@]}" "printf '%s\\n' '$REMOTE_PASSWORD' | sudo -S -p '' id -un")" \
+  || die "the administrator of the installation cannot use sudo"
+[[ "$root_name" == root ]] || die "sudo of the administrator answered $root_name"
+[[ "$(SSHPASS="$REMOTE_PASSWORD" "${as_admin[@]}" "printf '%s\\n' '$REMOTE_PASSWORD' | sudo -S -p '' passwd --status root" | cut -d' ' -f2)" == L ]] \
+  || die "root is not locked"
+SSHPASS="$REMOTE_PASSWORD" "${as_admin[@]}" "command -v sudo nano htop curl wget git" >/dev/null || die "an administration tool is missing"
+if SSHPASS="$REMOTE_PASSWORD" sshpass -e ssh "${remote[@]/-P/-p}" sshtest@127.0.0.1 "printf '%s\\n' '$REMOTE_PASSWORD' | sudo -S -p '' true" 2>/dev/null; then
+  die "a user without the installer's administrator got sudo"
+fi
+echo "the administrator of the installation has sudo, root stays locked, other users get none"
+
 # Waits until a Python expression over GET /api/system/network is true.
 wait_network() {
   local expression="$1" seconds="$2" via=("${@:3}") deadline=$((SECONDS + $2)) state=""
