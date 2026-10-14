@@ -16,6 +16,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Reverse proxy (D347): Settings > **Reverse proxy** serves your own domains on ports 443 and 80 while the box stays on 7484. Proxy hosts forward their domains (also `*.` wildcards) to an http or https target, with a certificate per host from the box's authority or uploaded, chosen by SNI; WebSockets, HTTP/2, unbuffered streaming, force HTTPS, optional HSTS, `X-Forwarded-*`, the `Host` to send, own request and response headers, an upload limit and timeouts; allowed and denied addresses, Basic Auth and the Pithyx sign-in (a host behind the box's accounts, users and groups, ended with the box session); a status check of the target and an access log per host in the Log Center (`proxy/<domain>`). Redirect hosts send domains to an address with 301, 302, 307 or 308. Streams forward a TCP or UDP port, and the firewall opens it. Names without a host still go to 7484, or get 404 if you choose so. Applies without a restart; new backup part Reverse proxy. API under `/api/system/proxy/` and `POST /api/proxy/tickets`, migration 0030, error codes `proxy.*`. A development build listens on the proxy ports of `PITHYX_DEV_PROXY_PORTS`.
 
+### Fixed
+
+- The About app now has a license text for every bundled package: the 25 npm and NuGet packages that ship without a license file get the standard text of their license (Apache-2.0 or MIT) with their copyright holder.
+
 ## [1.0.0-beta.1] - 2026-10-11
 
 The first beta, codename Pyxis (D345): the NAS core, the file services, the app runtime with the Store, the installer and the updater.
@@ -26,7 +30,6 @@ The first beta, codename Pyxis (D345): the NAS core, the file services, the app 
 - Pool encryption (ZFS native, key vault) is not built, so no real data belongs on a beta box that needs encryption.
 - Every elevated app right is refused with `app.elevated.unsupported`: an app that asks for `host.network`, `host.pid`, a device, a capability, `docker.socket` or `host.full` cannot be installed.
 - Importing a pool after a reinstall fails at `zpool export` when the pool was first imported read-only and then switched to read-write.
-- Most pages of the documentation are still drafts, written from the code and not yet checked line by line.
 
 ### Added
 
