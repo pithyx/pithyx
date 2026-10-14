@@ -73,7 +73,9 @@ jobs:
           DOTNET_INSTALL_DIR: ${{ runner.tool_cache }}/dotnet
         with:
           global-json-file: global.json
-          cache: true
+          # The packages cache only on GitHub-hosted runners: on the self-hosted ones, downloading the 645 MB archive took
+          # 35 s to 3 min, a restore from nuget.org about 10 s (D350).
+          cache: ${{ runner.environment == 'github-hosted' }}
           cache-dependency-path: daemon/**/packages.lock.json
       - run: dotnet restore daemon/Pithyx.slnx
       - run: dotnet build daemon/Pithyx.slnx --configuration Release --no-restore
@@ -86,7 +88,9 @@ jobs:
       - run: >-
           node tools/checks/dotnet-test-retry.ts -- --solution daemon/Pithyx.slnx --configuration Release --no-build
           --filter-not-trait "Category=StorageIntegration" --filter-not-trait "Category=DockerIntegration" --filter-not-trait "Category=NetworkIntegration" --filter-not-trait "Category=TimingBudget"
-      - run: dotnet format daemon/Pithyx.slnx --verify-no-changes --no-restore
+      # Only whitespace: the build already fails on every style and analyzer warning (EnforceCodeStyleInBuild), and the full
+      # format run compiled the solution a second time (D350).
+      - run: dotnet format whitespace daemon/Pithyx.slnx --verify-no-changes
 
   frontend:
     needs: changes
@@ -180,7 +184,9 @@ jobs:
           DOTNET_INSTALL_DIR: ${{ runner.tool_cache }}/dotnet
         with:
           global-json-file: global.json
-          cache: true
+          # The packages cache only on GitHub-hosted runners: on the self-hosted ones, downloading the 645 MB archive took
+          # 35 s to 3 min, a restore from nuget.org about 10 s (D350).
+          cache: ${{ runner.environment == 'github-hosted' }}
           cache-dependency-path: daemon/**/packages.lock.json
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7

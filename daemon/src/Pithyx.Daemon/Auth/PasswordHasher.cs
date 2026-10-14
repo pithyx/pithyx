@@ -26,11 +26,24 @@ public sealed class PasswordHasher : IDisposable
 
     private readonly SemaphoreSlim _slots = new(2);
     private readonly Lazy<Task<string>> _dummyHash;
+    private readonly long _memoryKib;
+    private readonly long _passes;
 
-    public PasswordHasher() => _dummyHash = new Lazy<Task<string>>(() => HashAsync(Convert.ToBase64String(RandomNumberGenerator.GetBytes(24)), CancellationToken.None));
+    public PasswordHasher()
+        : this(MemoryKib, Passes)
+    {
+    }
+
+    /// <summary>Weaker parameters for the in-memory test daemon, where hundreds of sign-ins would otherwise dominate.</summary>
+    internal PasswordHasher(long memoryKib, long passes)
+    {
+        _memoryKib = memoryKib;
+        _passes = passes;
+        _dummyHash = new Lazy<Task<string>>(() => HashAsync(Convert.ToBase64String(RandomNumberGenerator.GetBytes(24)), CancellationToken.None));
+    }
 
     public Task<string> HashAsync(string password, CancellationToken cancellationToken) =>
-        HashAsync(password, MemoryKib, Passes, cancellationToken);
+        HashAsync(password, _memoryKib, _passes, cancellationToken);
 
     internal async Task<string> HashAsync(string password, long memoryKib, long passes, CancellationToken cancellationToken)
     {
@@ -48,7 +61,7 @@ public sealed class PasswordHasher : IDisposable
         }
         var actual = await DeriveAsync(password, salt, memory, passes, cancellationToken);
         var valid = CryptographicOperations.FixedTimeEquals(actual, expected);
-        return (valid, valid && (memory < MemoryKib || passes < Passes));
+        return (valid, valid && (memory < _memoryKib || passes < _passes));
     }
 
     /// <summary>Spends the same time as a real check, so unknown user names cannot be told apart by timing.</summary>

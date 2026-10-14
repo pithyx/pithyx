@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Time.Testing;
+using Pithyx.Daemon.Auth;
 
 namespace Pithyx.Daemon.Tests.Support;
 
@@ -39,7 +40,12 @@ public class DaemonFactory : WebApplicationFactory<Program>
         builder.UseSetting("PITHYX_LOG_DIR", Path.Combine(DataDirectory, "logs"));
         builder.UseSetting("PITHYX_DB", Path.Combine(DataDirectory, "pithyx.db"));
         builder.UseSetting("PITHYX_CACHE_DIR", Path.Combine(DataDirectory, "cache"));
-        builder.ConfigureTestServices(services => services.AddSingleton<TimeProvider>(Time));
+        builder.ConfigureTestServices(services =>
+        {
+            services.AddSingleton<TimeProvider>(Time);
+            // Argon2id with 64 KiB and one pass: sign-ins stay real, without the production cost in every test.
+            services.AddSingleton(_ => new PasswordHasher(memoryKib: 64, passes: 1));
+        });
     }
 
     protected override void Dispose(bool disposing)

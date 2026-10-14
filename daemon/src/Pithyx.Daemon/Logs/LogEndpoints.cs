@@ -29,17 +29,18 @@ public static class LogEndpoints
     public static void MapLogEndpoints(this RouteGroupBuilder api)
     {
         var logs = api.MapGroup("/logs").WithTags("Logs");
+        // The filters are optional with defaults, so the generated request delegates do not mark the arrays required.
         logs.MapGet("", async (
-                [FromQuery] DateTimeOffset? from,
-                [FromQuery] DateTimeOffset? to,
-                [FromQuery] string[]? level,
-                [FromQuery] string[]? source,
-                [FromQuery] string? search,
-                [FromQuery] string? cursor,
-                [FromQuery] int? limit,
                 LogService service,
                 HttpContext context,
-                CancellationToken cancellationToken) =>
+                CancellationToken cancellationToken,
+                [FromQuery] DateTimeOffset? from = null,
+                [FromQuery] DateTimeOffset? to = null,
+                [FromQuery] string[]? level = null,
+                [FromQuery] string[]? source = null,
+                [FromQuery] string? search = null,
+                [FromQuery] string? cursor = null,
+                [FromQuery] int? limit = null) =>
             {
                 RequireAdmin(context.User);
                 return TypedResults.Ok(await service.QueryAsync(Query(from, to, level, source, search, cursor, limit ?? LogService.DefaultLimit), cancellationToken));
@@ -56,15 +57,15 @@ public static class LogEndpoints
             .WithName("GetLogSources")
             .WithDescription("Administrators only. Every source with entries in the current logs or the archive: daemon, system/<service>, app/<id>.");
         logs.MapGet("/export", async (
-                [FromQuery] DateTimeOffset? from,
-                [FromQuery] DateTimeOffset? to,
-                [FromQuery] string[]? level,
-                [FromQuery] string[]? source,
-                [FromQuery] string? search,
-                [FromQuery] string? format,
                 LogService service,
                 TimeProvider time,
-                HttpContext context) =>
+                HttpContext context,
+                [FromQuery] DateTimeOffset? from = null,
+                [FromQuery] DateTimeOffset? to = null,
+                [FromQuery] string[]? level = null,
+                [FromQuery] string[]? source = null,
+                [FromQuery] string? search = null,
+                [FromQuery] string? format = null) =>
             {
                 RequireAdmin(context.User);
                 var query = Query(from, to, level, source, search, null, LogService.MaxLimit);

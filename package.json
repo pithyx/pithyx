@@ -12,7 +12,7 @@
     "design": "pnpm --filter @pithyx/desktop design",
     "design:shots": "node tools/design-shots/render.ts",
     "design:test": "playwright test -c tools/design-shots/playwright.config.ts",
-    "lint": "pnpm --filter @pithyx/desktop css-types && pnpm --filter @pithyx/website sync && eslint .",
+    "lint": "pnpm --filter @pithyx/desktop css-types && pnpm --filter @pithyx/website sync && eslint . --concurrency auto",
     "typecheck": "tsc -p tsconfig.json && pnpm -r --parallel typecheck",
     "test": "pnpm -r test",
     "e2e": "pnpm --filter @pithyx/e2e e2e",
