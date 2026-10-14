@@ -69,9 +69,11 @@ public sealed class FolderWatchTests : IDisposable
     }
 
     /// <summary>Moves the daemon's clock past the batch delay until the folder event arrives.</summary>
+    /// <remarks>A deadline, not a number of attempts: on a runner busy with the whole suite, five seconds were too few.</remarks>
     private async Task<JsonElement> NextEventAsync(WebSocket socket)
     {
-        for (var attempt = 0; attempt < 100; attempt++)
+        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(20);
+        while (DateTime.UtcNow < deadline)
         {
             _factory.Time.Advance(FolderWatches.BatchDelay);
             if (await ReceiveAsync(socket, TimeSpan.FromMilliseconds(50)) is { } message)

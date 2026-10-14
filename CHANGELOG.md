@@ -201,6 +201,7 @@ The first beta, codename Pyxis (D345): the NAS core, the file services, the app 
 
 ### Changed
 
+- The daemon generates its API request handlers at build time instead of on start, so it answers its first request sooner. Development: the daemon tests run about four times faster (the test daemon hashes passwords with cheap Argon2id parameters), and CI checks only whitespace with `dotnet format`, lints with several threads and no longer downloads a NuGet cache on the self-hosted runners (D350).
 - `NOTICE` (D349): the additional terms rest on sections 7(b), 7(c) and 7(e) of the AGPL. Copies and forks keep the attribution in `NOTICE`, wherever it appears in the source and docs, and on their About page; a modified version must be marked as such and needs a product name and logo of its own, since the license grants no rights to the name Pithyx or its logo. The note that the file awaits a lawyer's review is gone.
 - Docs: the pages on security, certificates and the reverse proxy, the error code reference and the FAQ on own domains are checked against the code and no longer marked as drafts, so every docs page is now checked. The security page names the ICMP messages the firewall lets in and that the sign-in limit counts per user and address; the error reference says that `sdk.*` codes come from the SDK.
 - The daemon's version is `1.0.0-beta.1`; the updater orders it after `0.1.0-dev.x` and before `1.0.0`, and `tools/release/build-update.sh` uses it as the default minimum version.
@@ -255,6 +256,7 @@ The first beta, codename Pyxis (D345): the NAS core, the file services, the app 
 
 ### Fixed
 
+- Settings > Updates no longer reports the system as unsupported for a request right after the daemon started: the daemon reads the system layout and its snapshots before it accepts requests. CI: the rerun of known flaky daemon tests now finds the failed tests in a full run (D350).
 - Importing a pool for use after its read-only preview no longer fails with `storage.command.failed` at `zpool export`: the daemon's own reads right after the preview (the snapshot listing) held the pool for a moment, and ZFS refused the export as busy. An export or destroy is now tried again for up to five seconds while ZFS calls the pool busy, and a failed storage command names ZFS's message in its error parameters (`stderr`).
 - The About app now has a license text for every bundled package: the 25 npm and NuGet packages that ship without a license file get the standard text of their license (Apache-2.0 or MIT) with their copyright holder.
 - Files for third-party apps: `files.read`, `files.write`, `files.pick` and `files.saveAs` no longer fail after 15 seconds (`sdk.request.timeout`); `files.upload` sends `uploadProgress` events.

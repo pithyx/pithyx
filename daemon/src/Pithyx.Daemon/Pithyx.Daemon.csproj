@@ -6,6 +6,7 @@
     <OpenApiGenerateDocumentsOptions>--file-name openapi</OpenApiGenerateDocumentsOptions>
     <!-- Source-generated P/Invoke for the Linux file calls (Files/LinuxFs.cs). -->
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <EnableRequestDelegateGenerator>true</EnableRequestDelegateGenerator>
     <!-- The image publishes the daemon self-contained for these (image/build.sh); restoring them always keeps packages.lock.json the same everywhere. -->
     <RuntimeIdentifiers>linux-x64;linux-arm64</RuntimeIdentifiers>
   </PropertyGroup>
