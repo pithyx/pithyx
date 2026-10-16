@@ -258,6 +258,7 @@ The first beta, codename Pyxis (D345): the NAS core, the file services, the app 
 
 ### Fixed
 
+- A backend's schedule call now carries a `traceparent` like every request through the proxy; the backend docs say what a schedule call holds (`X-Pithyx-Schedule`, no user headers, an empty body) and that a backend can rely on its header.
 - The SDK event `appUpdated` never reached an open app window on the box (only `pithyx dev` sent it); the desktop now sends it when an update or a rollback installs another version.
 - `pithyx pack --images` failed with Docker's containerd image store (the default since Docker 29): it saves images from the local Docker by their manifest digest too, checks the archive against the lock, never pulls an image of `pithyx build` (`pithyx.local/...`) and names every failed attempt. `pack --out` creates a folder that does not exist yet.
 - Website: the Markdown twins and `llms*.txt` dropped every line inside code blocks that looked like MDX (`import`, `export`, `<App />`), so the examples there were broken; fenced code now stays as written, the source comments `<!-- example: ... -->` and `<!-- generated:... -->` are gone from the output, and the build fails when a code line of a page is missing in its twin.
