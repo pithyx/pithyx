@@ -262,13 +262,12 @@
     },
     "WindowLoading": {
       "title": "WindowLoading",
-      "description": "What a window shows before the app is ready. The desktop always draws the app's icon and name in a new window and an indicator after 300 ms, until the app connected (or, with `untilReady`, until it called `app.window.ready()`). While the backend starts, a line of text says so; without `text` it is the desktop's own, such as \"Starting Lists ...\".",
+      "description": "What a window shows before the app is ready. The desktop always draws the app's icon and name in a new window and an indicator after 300 ms, until the app connected (or, with `untilReady`, until it called `app.window.ready()`). While the backend starts, a line of text says so; without `text` it is the desktop's own, such as \"Starting Lists ...\". `text` is the line shown while the backend starts, in the user's language, for example \"Opening your lists ...\": say what happens in plain words, without technical terms.",
       "type": "object",
       "additionalProperties": false,
       "properties": {
         "text": {
-          "$ref": "#/$defs/LocalizedName",
-          "description": "The line shown while the backend starts, in the user's language, for example \"Opening your lists ...\". Say what happens in plain words, without technical terms."
+          "$ref": "#/$defs/LocalizedName"
         },
         "untilReady": {
           "description": "Whether the window keeps the placeholder after the app connected until it calls `app.window.ready()`, for an app that first loads its data. The desktop removes it after 30 seconds in any case. Default false.",
