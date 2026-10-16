@@ -124,6 +124,18 @@ describe('daemon context changes', () => {
     });
   });
 
+  it('tells the app when another version was installed, by an update or a rollback', () => {
+    expect(contextChanges({ ...base, version: '1.0.0' }, { ...base, version: '1.0.1' })).toEqual({
+      events: [{ event: 'appUpdated', data: { version: '1.0.1' } }],
+    });
+    expect(contextChanges({ ...base, version: '1.0.1' }, { ...base, version: '1.0.0' })).toEqual({
+      events: [{ event: 'appUpdated', data: { version: '1.0.0' } }],
+    });
+    expect(contextChanges({ ...base, version: '1.0.0' }, { ...base, version: '1.0.0' })).toEqual({
+      events: [],
+    });
+  });
+
   it('tells the app when its backend starts, runs or stops', () => {
     const stopped = { ...base, backend: { status: 'stopped' } };
     expect(contextChanges(stopped, { ...base, backend: { status: 'starting' } })).toEqual({
