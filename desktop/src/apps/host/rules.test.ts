@@ -7,6 +7,7 @@ import {
   isOnline,
   isWindowVisible,
   launchOf,
+  loadingPhase,
   pagePoint,
   sessionOf,
   withArgs,
@@ -133,5 +134,30 @@ describe('daemon context changes', () => {
     expect(contextChanges({ ...base, backend: null }, { ...base, backend: null })).toEqual({
       events: [],
     });
+  });
+});
+
+describe('loading placeholder', () => {
+  const base = {
+    connected: false,
+    appReady: false,
+    untilReady: false,
+    timedOut: false,
+    backendStatus: undefined,
+  };
+
+  it('stays until the app connected and names a starting backend meanwhile', () => {
+    expect(loadingPhase(base)).toBe('loading');
+    expect(loadingPhase({ ...base, backendStatus: 'stopped' })).toBe('loading');
+    expect(loadingPhase({ ...base, backendStatus: 'starting' })).toBe('starting');
+    expect(loadingPhase({ ...base, connected: true, backendStatus: 'starting' })).toBe('ready');
+  });
+
+  it('waits for window.ready when the manifest asks for it, but never longer than its time', () => {
+    const waiting = { ...base, untilReady: true, connected: true };
+    expect(loadingPhase(waiting)).toBe('loading');
+    expect(loadingPhase({ ...waiting, appReady: true })).toBe('ready');
+    expect(loadingPhase({ ...waiting, timedOut: true })).toBe('ready');
+    expect(loadingPhase({ ...base, appReady: true })).toBe('loading');
   });
 });

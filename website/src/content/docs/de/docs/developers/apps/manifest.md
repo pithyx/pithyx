@@ -51,6 +51,7 @@ Pflichtfelder: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, `s
 
 - `instances`: `single` fokussiert das vorhandene Fenster des Benutzers auf diesem Gerät und übergibt Startargumente; `multi` öffnet jedes Mal ein neues Fenster.
 - `defaultSize` und `minSize`: `width` und `height` als ganze Zahlen von 100 bis 8192 CSS-Pixel. `minSize` darf in keiner Richtung größer sein als `defaultSize`. Die Standardgröße gilt, wenn der Benutzer keine gemerkte Größe hat; das Minimum gilt auf Bildschirmen, auf die es passt.
+- `loading` (optional): `text`, die Zeile, die ein neues Fenster zeigt, während das Backend startet, übersetzt wie `name` (bis zu 60 Zeichen; ohne sie schreibt der Desktop "<Name> wird gestartet ..."), und `untilReady`, ob der Platzhalter nach dem Verbinden der App auf `app.window.ready()` wartet. Siehe [Ereignisse und Kontext](/de/docs/sdk/guides/events-and-context/#laden).
 
 `fileHandlers` (optional, bis zu 32) lässt die App bei Dateitypen unter "Öffnen mit …" erscheinen. Jeder Handler hat `extensions` (1 bis 32 Erweiterungen in Kleinbuchstaben ohne Punkt, etwa `png` oder `tar.gz`), und optional `mimeTypes` (1 bis 32) und `isDefault`. Eine Erweiterung kann nur zu einem Handler gehören. Die Datei erreicht die App über das Ereignis `launch` oder `openFile`.
 

@@ -109,6 +109,9 @@ export interface LocalizedName {
    *
    * This interface was referenced by `LocalizedName`'s JSON-Schema definition
    * via the `patternProperty` "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$".
+   *
+   * This interface was referenced by `LocalizedName1`'s JSON-Schema definition
+   * via the `patternProperty` "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$".
    */
   [k: string]: string;
 }
@@ -151,6 +154,7 @@ export interface WindowManifest {
   instances: 'single' | 'multi';
   defaultSize: WindowSize;
   minSize: WindowSize;
+  loading?: WindowLoading;
 }
 /**
  * A size in CSS pixels.
@@ -164,6 +168,35 @@ export interface WindowSize {
    * The height in CSS pixels.
    */
   height: number;
+}
+/**
+ * What a window shows before the app is ready. The desktop always draws the app's icon and name in a new window and an indicator after 300 ms, until the app connected (or, with `untilReady`, until it called `app.window.ready()`). While the backend starts, a line of text says so; without `text` it is the desktop's own, such as "Starting Lists ...".
+ */
+export interface WindowLoading {
+  text?: LocalizedName1;
+  /**
+   * Whether the window keeps the placeholder after the app connected until it calls `app.window.ready()`, for an app that first loads its data. The desktop removes it after 30 seconds in any case. Default false.
+   */
+  untilReady?: boolean;
+}
+/**
+ * A short text in several languages, keyed by BCP 47 language tag, for example the app's name or a storage request's name. `en` is required and used when nothing else matches. One line, at most 60 characters per language.
+ */
+export interface LocalizedName1 {
+  /**
+   * The English text, shown when no other language matches. One line, at most 60 characters.
+   */
+  en: string;
+  /**
+   * The text in the language of the key, a BCP 47 language tag such as `de` or `pt-BR`. One line, at most 60 characters.
+   *
+   * This interface was referenced by `LocalizedName`'s JSON-Schema definition
+   * via the `patternProperty` "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$".
+   *
+   * This interface was referenced by `LocalizedName1`'s JSON-Schema definition
+   * via the `patternProperty` "^[a-z]{2,3}(-[A-Za-z0-9]{1,8})*$".
+   */
+  [k: string]: string;
 }
 /**
  * A place for files the app needs, declared by name and shown to the administrator with its `name`, for example "Photo library". At install an administrator maps it to a folder in a shared folder (and can change that later). The app only ever sees the name and paths inside it: the window reaches it through the SDK file API as `{ storage: id }`, the backend services listed in `services` find it as the Compose volume named `id`. Users reach it with their own rights on the mapped folder, never with more than `access`.

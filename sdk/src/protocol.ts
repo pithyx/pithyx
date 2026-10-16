@@ -334,6 +334,11 @@ export interface Methods {
    * takes the focus.
    */
   'window.requestAttention': { params: Record<string, never>; result: undefined };
+  /**
+   * Ends the desktop's loading placeholder of the window. Only needed with the manifest's `window.loading.untilReady`;
+   * otherwise the placeholder goes when the app connects. Calling it again does nothing.
+   */
+  'window.ready': { params: Record<string, never>; result: undefined };
   /** Asks for a new free size. The desktop may clamp it; the result is the size the window got. */
   'window.setSize': {
     params: { width: number; height: number };
