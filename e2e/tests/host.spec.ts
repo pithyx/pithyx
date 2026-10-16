@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import AxeBuilder from '@axe-core/playwright';
 import type { Page, WebSocketRoute } from '@playwright/test';
 import { expect, test } from './fixtures';
@@ -256,6 +258,31 @@ test.describe('clipboard and new tabs', () => {
     expect(await tab.evaluate(() => window.opener === null)).toBe(true);
     await tab.close();
   });
+});
+
+test('the desktop draws the file dialog for an app and saves its file where the user chose', async ({
+  page,
+}) => {
+  const name = `sdk-demo-${String(Date.now())}.txt`;
+  await signInAsAdmin(page);
+  const { app } = await openDemo(page);
+
+  await app.getByRole('button', { name: 'Save a file' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Save for SDK demo' });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole('button', { name: 'Cancel' }).click();
+  await expect(dialog).toBeHidden();
+  await expect(app.locator('[data-fact="saved"]')).toHaveText('cancelled');
+
+  await app.getByRole('button', { name: 'Save a file' }).click();
+  await dialog.getByRole('button', { name: 'Shared' }).click();
+  await dialog.getByRole('textbox', { name: 'File name' }).fill(name);
+  await dialog.getByRole('button', { name: 'Save', exact: true }).click();
+  await expect(dialog).toBeHidden();
+  await expect(app.locator('[data-fact="saved"]')).toHaveText(name);
+  // The simulated share "Shared" lives in the daemon's data directory (playwright.config.ts).
+  const file = join(process.env.PITHYX_E2E_DATA ?? '', 'shares', 'shared', name);
+  expect(readFileSync(file, 'utf8')).toMatch(/^Counter of the SDK demo: \d+$/);
 });
 
 test('every app log entry also reaches the browser console', async ({ page }) => {
