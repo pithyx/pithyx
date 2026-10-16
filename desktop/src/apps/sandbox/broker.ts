@@ -50,6 +50,8 @@ export interface BrokerTarget {
   permissions: readonly string[];
   /** The element that shows the app's content (the iframe, or the root of a core app); menus are placed from it. */
   content: () => Element | null;
+  /** The app called `window.ready`: its loading placeholder goes. Core apps have none. */
+  onReady?: () => void;
 }
 
 /**
@@ -98,6 +100,9 @@ export function brokerFor(target: BrokerTarget): MethodHandlers {
     },
     'window.requestAttention': () => {
       requestAttention(target.windowId);
+    },
+    'window.ready': () => {
+      target.onReady?.();
     },
     setBadge: ({ count }) => {
       setBadge(target.app, count);

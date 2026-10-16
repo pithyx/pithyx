@@ -162,6 +162,7 @@
     "by": "by {author}",
     "size": "{files, plural, one {# file} other {# files}}, {size}",
     "unverified": "This package comes from a file and is not verified. Install only apps from developers you trust.",
+    "keptData": "This app was installed before and its data was kept. It gets that data and its user id back.",
     "permissions": "Permissions it asks for",
     "noPermissions": "The app asks for no permissions.",
     "newPermission": "New",

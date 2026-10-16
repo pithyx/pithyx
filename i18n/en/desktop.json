@@ -275,6 +275,10 @@
       "name": "File name",
       "readOnly": "You can only read this shared folder. Choose another one to save here.",
       "exists": "A file with this name exists. Saving replaces it."
+    },
+    "loading": {
+      "label": "{name} is loading",
+      "starting": "Starting {name} ..."
     }
   }
 }

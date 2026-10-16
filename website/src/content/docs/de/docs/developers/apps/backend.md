@@ -72,6 +72,8 @@ Der Proxy entfernt aus der eingehenden Anfrage `Cookie`, `Authorization`, `Proxy
 
 Ein Backend kann diesen Headern nur vertrauen, weil es ausschließlich über den Proxy erreichbar ist.
 
+**Zeitpläne.** Der Aufruf eines Zeitplans kommt nicht über den Proxy und hat keinen Benutzer: Der Daemon sendet `POST <path>` mit leerem Body und nur `X-Pithyx-Schedule: <ID des Zeitplans>` und `traceparent`, ohne Benutzer-Header. Weil der Proxy jeden eingehenden `X-Pithyx-*`-Header entfernt, kann eine Anfrage aus einem Fenster nie `X-Pithyx-Schedule` tragen; ein Backend kann sich also darauf verlassen: Nimm einen Zeitplan-Pfad nur mit diesem Header an und beantworte ihn ohne mit 403. Ein Lauf erscheint im Log Center (Quelle `daemon`, mit seinem Statuscode), nicht in der Auftragsliste.
+
 **Tokens.** Der Desktop fordert sie mit `POST /api/apps/{appId}/tokens` an (Cookie und CSRF-Header). Ein Token gilt 5 Minuten, hat 256 Zufallsbits und ist an Benutzer, Sitzung, App und Fenster gebunden. `host`-Tokens funktionieren nur für `/api/app/**`, `backend`-Tokens nur für den Proxy. Ein Ticket gilt 30 Sekunden und für eine Verwendung. Jede Verwendung prüft Sitzung, Benutzer und Berechtigung erneut; wird eine Berechtigung entzogen oder meldet sich der Benutzer ab, werden die weitergeleiteten Sockets geschlossen. Tokens und Tickets werden in Logs maskiert.
 
 ## Speicher

@@ -51,6 +51,7 @@ Required fields: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, 
 
 - `instances`: `single` focuses the user's existing window on this device and passes launch arguments; `multi` opens a new window each time.
 - `defaultSize` and `minSize`: `width` and `height` as integers from 100 to 8192 CSS pixels. `minSize` may not be larger than `defaultSize` in either direction. The default size is used when the user has no remembered size; the minimum applies on screens that can fit it.
+- `loading` (optional): `text`, the line a new window shows while the backend starts, localized like `name` (up to 60 characters; without it the desktop says "Starting <name> ..."), and `untilReady`, whether the placeholder waits for `app.window.ready()` after the app connected. See [Events and context](/docs/sdk/guides/events-and-context/#loading).
 
 `fileHandlers` (optional, up to 32) makes the app appear under "Open with" for file types. Each handler has `extensions` (1 to 32 lowercase extensions without a dot, such as `png` or `tar.gz`), and optionally `mimeTypes` (1 to 32) and `isDefault`. An extension can belong to one handler only. The file reaches the app through the `launch` or `openFile` event.
 
@@ -83,7 +84,7 @@ An app that asks for `directory.read`, runs a container as root (`backend.root`)
 - `idleTimeout`: seconds from 60 to 86400, default 600; ignored for `always`.
 - `root`: `true` runs the services as root inside the container (unprivileged on the host); default `false`. The install dialog warns.
 - `health`: `{ "endpoint": "api", "path": "/health" }`. The daemon calls `GET` on it; a 2xx answer means the backend is running.
-- `schedules`: up to 16 entries of `{ id, cron, endpoint, path }`. The daemon starts the backend and calls `POST path`. The cron expression has five fields (minute 0 to 59, hour 0 to 23, day of month 1 to 31, month 1 to 12, weekday 0 to 7) in the box's time zone, with `*`, numbers, ranges, lists and steps; names are not allowed ([`app.manifest.cron_invalid`](/docs/reference/errors/#app.manifest.cron_invalid)).
+- `schedules`: up to 16 entries of `{ id, cron, endpoint, path }`. The daemon starts the backend and calls `POST path` with `X-Pithyx-Schedule` (see [Who is calling](/docs/developers/apps/backend/#who-is-calling)). The cron expression has five fields (minute 0 to 59, hour 0 to 23, day of month 1 to 31, month 1 to 12, weekday 0 to 7) in the box's time zone, with `*`, numbers, ranges, lists and steps; names are not allowed ([`app.manifest.cron_invalid`](/docs/reference/errors/#app.manifest.cron_invalid)).
 - `elevated`: a list of extra rights (`host.network`, `host.pid`, `device:/dev/<path>`, `capability:<NAME>`, `docker.socket`, `host.full`), up to 32. Elevated rights are not granted yet: Pithyx 1.0.0-beta.1 refuses every entry with [`app.elevated.unsupported`](/docs/reference/errors/#app.elevated.unsupported).
 
 Beyond the schema the box checks that service and endpoint names exist ([`app.manifest.reference_unknown`](/docs/reference/errors/#app.manifest.reference_unknown)) and that the storage requests match the Compose mounts.
