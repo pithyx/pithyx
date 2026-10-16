@@ -118,14 +118,44 @@ function absolute(site: URL, path: string): string {
 
 /**
  * MDX bodies turned into plain Markdown for the twins and bundles: imports go, Starlight components become lists and
- * bold labels, asides become quotes, and site links become absolute. Authors write plain Markdown where they can;
- * scripts/check-build.ts fails when a component survives.
+ * bold labels, asides become quotes, source comments go, and site links become absolute. Fenced code stays exactly as
+ * written. Authors write plain Markdown where they can; scripts/check-build.ts fails when a component survives or a
+ * code line of the page is missing.
  */
 export function toPlainMarkdown(body: string, site: URL): string {
   const lines: string[] = [];
+  const code = (line: string) => {
+    lines.push(line);
+  };
+  const prose = (...added: string[]) => {
+    for (const line of added) {
+      const blank = line.trim() === '' || line.trim() === '>';
+      if (blank && (lines.length === 0 || lines.at(-1) === line)) {
+        continue;
+      }
+      lines.push(
+        line.replace(/\]\((\/[^)\s]*)\)/g, (_, path: string) => `](${absolute(site, path)})`),
+      );
+    }
+  };
   let inAside = false;
+  let fence: string | undefined;
   for (const line of body.split('\n')) {
-    if (/^(import|export)\s.+$/.test(line)) {
+    const marker = /^\s*(`{3,}|~{3,})/.exec(line)?.[1];
+    if (fence !== undefined || marker !== undefined) {
+      if (fence === undefined) {
+        fence = marker;
+      } else if (
+        marker !== undefined &&
+        marker.startsWith(fence.charAt(0)) &&
+        marker.length >= fence.length
+      ) {
+        fence = undefined;
+      }
+      code(inAside ? `> ${line}` : line);
+      continue;
+    }
+    if (/^(import|export)\s.+$/.test(line) || /^\s*<!--.*-->\s*$/.test(line)) {
       continue;
     }
     const asideStart = /^:::(note|tip|caution|danger)(?:\[(.*)\])?\s*$/.exec(line);
@@ -133,7 +163,7 @@ export function toPlainMarkdown(body: string, site: URL): string {
       inAside = true;
       const kind = asideStart[1] ?? '';
       const label = asideStart[2] ?? kind.charAt(0).toUpperCase() + kind.slice(1);
-      lines.push(`> **${label}:**`, '>');
+      prose(`> **${label}:**`, '>');
       continue;
     }
     if (inAside && /^:::\s*$/.test(line)) {
@@ -141,7 +171,7 @@ export function toPlainMarkdown(body: string, site: URL): string {
       continue;
     }
     if (inAside) {
-      lines.push(line.trim() === '' ? '>' : `> ${line}`);
+      prose(line.trim() === '' ? '>' : `> ${line}`);
       continue;
     }
     const linkCard = /^\s*<LinkCard\s+(.*?)\/>\s*$/.exec(line);
@@ -149,14 +179,14 @@ export function toPlainMarkdown(body: string, site: URL): string {
       const attributes = linkCard[1] ?? '';
       const attr = (name: string) => new RegExp(`${name}="([^"]*)"`).exec(attributes)?.[1];
       const description = attr('description');
-      lines.push(
+      prose(
         `- [${attr('title') ?? ''}](${attr('href') ?? ''})${description ? `: ${description}` : ''}`,
       );
       continue;
     }
     const titled = /^\s*<(Card|TabItem)\s+(?:title|label)="([^"]*)"[^>]*>\s*$/.exec(line);
     if (titled) {
-      lines.push(`**${titled[2] ?? ''}**`, '');
+      prose(`**${titled[2] ?? ''}**`, '');
       continue;
     }
     if (/^\s*<\/?(CardGrid|Card|Steps|Tabs|TabItem)\b[^>]*>\s*$/.test(line)) {
@@ -166,13 +196,9 @@ export function toPlainMarkdown(body: string, site: URL): string {
     if (/^\s*<[A-Z]\w*\b[^>]*\/>\s*$/.test(line)) {
       continue;
     }
-    lines.push(line);
+    prose(line);
   }
-  return lines
-    .join('\n')
-    .replace(/\]\((\/[^)\s]*)\)/g, (_, path: string) => `](${absolute(site, path)})`)
-    .replace(/\n{3,}/g, '\n\n')
-    .trim();
+  return lines.join('\n').trim();
 }
 
 async function overviewMarkdown(locale: Locale, site: URL): Promise<string> {

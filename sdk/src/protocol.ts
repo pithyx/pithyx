@@ -552,7 +552,7 @@ export interface Events {
     /** The file to open. */
     file: FileRef;
   };
-  /** A new version of the app is installed; reload to use it (unsaved work first). */
+  /** Another version of the app is installed, by an update or a rollback; reload to use it (unsaved work first). */
   appUpdated: {
     /** The new version. */
     version: string;

@@ -1,5 +1,5 @@
 // Checks the built site (dist/) for what language models rely on: the llms files, a Markdown twin for every docs
-// page, and twins that are plain Markdown without leftover MDX components.
+// page, and twins that are plain Markdown without leftover MDX components and with every code line of the page.
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
@@ -11,6 +11,24 @@ function walk(dir: string): string[] {
     const path = join(dir, name);
     return statSync(path).isDirectory() ? walk(path) : [path];
   });
+}
+
+function decode(html: string): string {
+  return html
+    .replace(/<[^>]*>/g, '')
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex: string) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, decimal: string) => String.fromCodePoint(Number(decimal)))
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&amp;/g, '&');
+}
+
+/** The text of every line in the page's code blocks, as Expressive Code renders them. */
+function codeLines(html: string): string[] {
+  return [...html.matchAll(/<div class="ec-line[^"]*"><div class="code">(.*?)<\/div><\/div>/g)]
+    .map(([, line]) => decode(line ?? '').trim())
+    .filter((line) => line !== '');
 }
 
 const files = walk(dist).map((path) => relative(dist, path));
@@ -48,6 +66,12 @@ for (const file of files) {
   const prose = markdown.replace(/^(```|~~~)[^\n]*\n[\s\S]*?^\1\s*$/gm, '');
   if (/^\s*<\/?[A-Z][A-Za-z]*[\s/>]/m.test(prose) || /^import\s/m.test(prose)) {
     problems.push(`${twin} still contains an MDX component or import`);
+  }
+  const missing = codeLines(readFileSync(join(dist, file), 'utf8')).filter(
+    (line) => !markdown.includes(line),
+  );
+  if (missing.length > 0) {
+    problems.push(`${twin} lacks code lines of the page: ${missing.slice(0, 3).join(' | ')}`);
   }
   if (/^Status: placeholder$/m.test(markdown)) {
     placeholders++;
