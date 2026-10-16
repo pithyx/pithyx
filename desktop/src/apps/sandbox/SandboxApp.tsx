@@ -3,6 +3,9 @@ import type { components } from '@pithyx/api-client';
 import { portEndpoint } from '@pithyx/sdk';
 import { serveApp, type AppConnection } from '@pithyx/sdk/host';
 import { useEffect, useEffectEvent, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { AppIcon } from '../../shell/AppIcon';
+import { manifestText } from '../installed';
 import { useDesktop } from '../../wm/store';
 import { queryKeys } from '../../api/queries';
 import { realtime } from '../../realtime/connection';
@@ -13,12 +16,21 @@ import { brokerFor } from './broker';
 import { appApiFor } from './appApi';
 import { appBrokerFor } from './appBroker';
 import { registerFileAdopter, setReady } from '../host/connections';
-import { contextChanges, launchOf, pendingFileOf } from '../host/rules';
+import { contextChanges, launchOf, loadingPhase, pendingFileOf } from '../host/rules';
 import styles from './SandboxApp.module.css';
 import { appContext, storageOf, type DaemonAppContext } from '../sdk/context';
 import { useAppLifecycle } from '../sdk/useAppLifecycle';
 
 type User = components['schemas']['UserInfo'];
+
+/** The manifest's `window.loading`: the text while the backend starts, and whether to wait for `window.ready`. */
+export interface WindowLoading {
+  text: Readonly<Record<string, string>> | undefined;
+  untilReady: boolean;
+}
+
+/** The longest the placeholder covers a window that does not call `window.ready` (D354). */
+const READY_TIMEOUT = 30_000;
 
 /**
  * A third-party app in a sandboxed iframe from the same host. `allow-scripts allow-forms` without
@@ -31,7 +43,13 @@ type User = components['schemas']['UserInfo'];
  * `permissionsChange`, `logLevelChange` or `storageChange`. When the user loses the app (a revoked grant, a disabled or
  * removed app) its events stop and the app leaves the topic `apps`, which closes the window. Calls that reach data go to `/api/app/**` with this window's host token.
  */
-export function SandboxApp({ windowId, app, entry }: AppProps & { app: string; entry: string }) {
+export function SandboxApp({
+  windowId,
+  app,
+  entry,
+  icon,
+  loading,
+}: AppProps & { app: string; entry: string; icon: string | null; loading: WindowLoading }) {
   const frame = useRef<HTMLIFrameElement>(null);
   const connection = useRef<AppConnection | null>(null);
   const broker = useRef<ReturnType<typeof appBrokerFor> | null>(null);
@@ -42,6 +60,18 @@ export function SandboxApp({ windowId, app, entry }: AppProps & { app: string; e
   const client = useQueryClient();
   const appName = useAppName();
   const sizeClass = useSizeClass();
+  const { t, i18n } = useTranslation();
+  const [connected, setConnected] = useState(false);
+  const [appReady, setAppReady] = useState(false);
+  const [timedOut, setTimedOut] = useState(false);
+  const [backendStatus, setBackendStatus] = useState<string | undefined>(undefined);
+  const phase = loadingPhase({
+    connected,
+    appReady,
+    untilReady: loading.untilReady,
+    timedOut,
+    backendStatus,
+  });
 
   async function connect() {
     const target = frame.current?.contentWindow;
@@ -95,11 +125,15 @@ export function SandboxApp({ windowId, app, entry }: AppProps & { app: string; e
           user: user?.id ?? 0,
           permissions: context.permissions,
           content: () => frame.current,
+          onReady: () => {
+            setAppReady(true);
+          },
         }),
         ...broker.current.methods,
       },
       onReady: () => {
         setReady(windowId, true);
+        setConnected(true);
       },
     });
     // The iframe has an opaque origin, so no target origin can be named; the transferred port carries the trust.
@@ -110,6 +144,7 @@ export function SandboxApp({ windowId, app, entry }: AppProps & { app: string; e
     const next = data as DaemonAppContext;
     const previous = daemonContext.current;
     daemonContext.current = next;
+    setBackendStatus(next.backend?.status);
     if (previous === undefined) {
       if (waiting.current) {
         void connect();
@@ -142,6 +177,16 @@ export function SandboxApp({ windowId, app, entry }: AppProps & { app: string; e
     [windowId],
   );
 
+  // The placeholder never covers a window for good, also when the app forgets to call window.ready.
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setTimedOut(true);
+    }, READY_TIMEOUT);
+    return () => {
+      clearTimeout(timer);
+    };
+  }, []);
+
   // The window's folder watches, jobs and share list end with the window.
   useEffect(
     () => () => {
@@ -151,17 +196,38 @@ export function SandboxApp({ windowId, app, entry }: AppProps & { app: string; e
     [],
   );
 
+  const name = appName(app);
   return (
-    <iframe
-      ref={frame}
-      className={styles.frame}
-      src={entry}
-      title={appName(app)}
-      sandbox="allow-scripts allow-forms"
-      referrerPolicy="no-referrer"
-      onLoad={() => {
-        void connect();
-      }}
-    />
+    <div className={styles.host}>
+      <iframe
+        ref={frame}
+        className={styles.frame}
+        src={entry}
+        title={name}
+        sandbox="allow-scripts allow-forms"
+        referrerPolicy="no-referrer"
+        onLoad={() => {
+          void connect();
+        }}
+      />
+      {phase !== 'ready' && (
+        <div
+          className={styles.loading}
+          role="status"
+          aria-label={t('appHost.loading.label', { name })}
+        >
+          <AppIcon app={{ icon, tone: 'graphite' }} size={56} />
+          <p className={styles.name}>{name}</p>
+          <span className={styles.indicator} aria-hidden />
+          {phase === 'starting' && (
+            <p className={styles.text}>
+              {loading.text === undefined
+                ? t('appHost.loading.starting', { name })
+                : manifestText(loading.text, i18n.language)}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

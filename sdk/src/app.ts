@@ -218,6 +218,11 @@ export interface PithyxApp {
     setDirty(dirty: boolean): Promise<void>;
     /** Makes the taskbar entry pulse until the user looks; never takes the focus. */
     requestAttention(): Promise<void>;
+    /**
+     * Ends the desktop's loading placeholder, for an app whose manifest sets `window.loading.untilReady` because it
+     * first loads its data. Without that setting the placeholder goes when the app connects, and this does nothing.
+     */
+    ready(): Promise<void>;
   };
   /**
    * Shows a notification and resolves with its id. Needs `notifications`. A click on one of its `actions` (or on the
@@ -1045,6 +1050,9 @@ export function createApp(endpoint: Endpoint, options: CreateAppOptions = {}): P
         },
         requestAttention: async () => {
           await typed('window.requestAttention', {});
+        },
+        ready: async () => {
+          await typed('window.ready', {});
         },
       },
       notify: async (notification) => typed('notify', notification),

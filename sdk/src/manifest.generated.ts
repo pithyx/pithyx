@@ -151,6 +151,7 @@ export interface WindowManifest {
   instances: 'single' | 'multi';
   defaultSize: WindowSize;
   minSize: WindowSize;
+  loading?: WindowLoading;
 }
 /**
  * A size in CSS pixels.
@@ -164,6 +165,16 @@ export interface WindowSize {
    * The height in CSS pixels.
    */
   height: number;
+}
+/**
+ * What a window shows before the app is ready. The desktop always draws the app's icon and name in a new window and an indicator after 300 ms, until the app connected (or, with `untilReady`, until it called `app.window.ready()`). While the backend starts, a line of text says so; without `text` it is the desktop's own, such as "Starting Lists ...". `text` is the line shown while the backend starts, in the user's language, for example "Opening your lists ...": say what happens in plain words, without technical terms.
+ */
+export interface WindowLoading {
+  text?: LocalizedName;
+  /**
+   * Whether the window keeps the placeholder after the app connected until it calls `app.window.ready()`, for an app that first loads its data. The desktop removes it after 30 seconds in any case. Default false.
+   */
+  untilReady?: boolean;
 }
 /**
  * A place for files the app needs, declared by name and shown to the administrator with its `name`, for example "Photo library". At install an administrator maps it to a folder in a shared folder (and can change that later). The app only ever sees the name and paths inside it: the window reaches it through the SDK file API as `{ storage: id }`, the backend services listed in `services` find it as the Compose volume named `id`. Users reach it with their own rights on the mapped folder, never with more than `access`.

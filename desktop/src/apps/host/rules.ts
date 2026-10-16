@@ -178,3 +178,23 @@ export function contextChanges(
   }
   return permissionsChanged ? { permissions, events } : { events };
 }
+
+/** What the loading placeholder of an app window shows: nothing, the app's icon and name, or also the backend's start. */
+export type LoadingPhase = 'ready' | 'loading' | 'starting';
+
+/**
+ * The placeholder stays until the app connected, or with the manifest's `window.loading.untilReady` until it called
+ * `window.ready`, and at most until its time is up (D354). While it shows, a starting backend gets its line of text.
+ */
+export function loadingPhase(state: {
+  connected: boolean;
+  appReady: boolean;
+  untilReady: boolean;
+  timedOut: boolean;
+  backendStatus: string | undefined;
+}): LoadingPhase {
+  if (state.timedOut || (state.connected && (!state.untilReady || state.appReady))) {
+    return 'ready';
+  }
+  return state.backendStatus === 'starting' ? 'starting' : 'loading';
+}

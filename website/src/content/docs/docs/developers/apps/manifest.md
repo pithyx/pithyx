@@ -51,6 +51,7 @@ Required fields: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, 
 
 - `instances`: `single` focuses the user's existing window on this device and passes launch arguments; `multi` opens a new window each time.
 - `defaultSize` and `minSize`: `width` and `height` as integers from 100 to 8192 CSS pixels. `minSize` may not be larger than `defaultSize` in either direction. The default size is used when the user has no remembered size; the minimum applies on screens that can fit it.
+- `loading` (optional): `text`, the line a new window shows while the backend starts, localized like `name` (up to 60 characters; without it the desktop says "Starting <name> ..."), and `untilReady`, whether the placeholder waits for `app.window.ready()` after the app connected. See [Events and context](/docs/sdk/guides/events-and-context/#loading).
 
 `fileHandlers` (optional, up to 32) makes the app appear under "Open with" for file types. Each handler has `extensions` (1 to 32 lowercase extensions without a dot, such as `png` or `tar.gz`), and optionally `mimeTypes` (1 to 32) and `isDefault`. An extension can belong to one handler only. The file reaches the app through the `launch` or `openFile` event.
 
