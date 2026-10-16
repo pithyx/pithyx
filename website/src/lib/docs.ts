@@ -145,7 +145,11 @@ export function toPlainMarkdown(body: string, site: URL): string {
     if (fence !== undefined || marker !== undefined) {
       if (fence === undefined) {
         fence = marker;
-      } else if (marker !== undefined && marker[0] === fence[0] && marker.length >= fence.length) {
+      } else if (
+        marker !== undefined &&
+        marker.startsWith(fence.charAt(0)) &&
+        marker.length >= fence.length
+      ) {
         fence = undefined;
       }
       code(inAside ? `> ${line}` : line);
