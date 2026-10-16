@@ -273,7 +273,7 @@ public sealed class DesktopItemApiTests : IDisposable
             await connection.ExecuteAsync(
                 """
                 WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < @count)
-                INSERT INTO desktop_items (user_id, kind, data, created_at, updated_at) SELECT 1, 'note', '{"text":""}', 'x', 'x' FROM n
+                INSERT INTO desktop_items (user_id, kind, data, created_at, updated_at) SELECT (SELECT id FROM users WHERE username = 'admin'), 'note', '{"text":""}', 'x', 'x' FROM n
                 """,
                 new { count = DesktopItemService.MaxItems - DesktopItemService.DefaultAdminShortcuts.Count });
         }

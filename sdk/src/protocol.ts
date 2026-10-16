@@ -132,7 +132,7 @@ export interface AppContext {
    * `X-Pithyx-User` headers the proxy sets (see `backend.token`), never by anything the window sends.
    */
   user: {
-    /** Stable id of the user (the Linux uid). */
+    /** Stable id of the user: the Linux uid, also `X-Pithyx-User-Id` for the backend; never given to another user. */
     id: number;
     /** The user name, lower case. */
     name: string;
@@ -250,7 +250,7 @@ export interface BackendTicket {
 
 /** A user of the box, as `directory.users` lists it. Deactivated users are left out. */
 export interface DirectoryUser {
-  /** Stable id of the user (the Linux uid). */
+  /** Stable id of the user: the Linux uid, also `X-Pithyx-User-Id` for the backend; never given to another user. */
   id: number;
   /** The user name, lower case. */
   name: string;

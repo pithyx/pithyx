@@ -258,6 +258,7 @@ The first beta, codename Pyxis (D345): the NAS core, the file services, the app 
 
 ### Fixed
 
+- The administrator created in the setup got account id 1 while every other account's id is its Linux uid; it now gets its uid too, so `X-Pithyx-User-Id`, `context.user.id` and `DirectoryUser.id` are always the uid, which is never given to another user.
 - `pithyx pack --images` failed with Docker's containerd image store (the default since Docker 29): it saves images from the local Docker by their manifest digest too, checks the archive against the lock, never pulls an image of `pithyx build` (`pithyx.local/...`) and names every failed attempt. `pack --out` creates a folder that does not exist yet.
 - Website: the Markdown twins and `llms*.txt` dropped every line inside code blocks that looked like MDX (`import`, `export`, `<App />`), so the examples there were broken; fenced code now stays as written, the source comments `<!-- example: ... -->` and `<!-- generated:... -->` are gone from the output, and the build fails when a code line of a page is missing in its twin.
 - `files.pick` and `files.saveAs` of third-party apps showed no file dialog: the desktop loaded its app dialogs only for an app that does not answer and for a refused copy. The E2E probe now saves a file through the dialog.

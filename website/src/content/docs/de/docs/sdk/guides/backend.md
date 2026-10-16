@@ -272,15 +272,15 @@ Ein Pfad, der den Endpunkt verlassen würde (etwa mit `..`), scheitert mit [`sdk
 
 Der Proxy entfernt `Cookie`, `Authorization`, `Proxy-Authorization`, `Referer`, `Forwarded`, `traceparent`, `tracestate`, alle eingehenden `X-Pithyx-*`- und `X-Forwarded-*`-Header und alle `pithyx-*`-Query-Parameter. Dann setzt er:
 
-| Header                               | Wert                                                                         |
-| ------------------------------------ | ---------------------------------------------------------------------------- |
-| `X-Pithyx-User`                      | der Benutzername, kleingeschrieben                                           |
-| `X-Pithyx-User-Id`                   | die Benutzer-ID                                                              |
-| `X-Pithyx-Groups`                    | die Namen der Gruppen des Benutzers, durch Kommas getrennt, leer ohne Gruppe |
-| `X-Pithyx-Admin`                     | `true` oder `false`                                                          |
-| `traceparent`                        | der Trace der Anfrage, für deine Logs                                        |
-| `X-Forwarded-Prefix`                 | `/apps/<id>/api` oder `/apps/<id>/api-<name>`                                |
-| `X-Forwarded-For`, `-Host`, `-Proto` | die Client-Adresse, der Host und `http` oder `https`                         |
+| Header                               | Wert                                                                                                                          |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `X-Pithyx-User`                      | der Benutzername, kleingeschrieben                                                                                            |
+| `X-Pithyx-User-Id`                   | die Benutzer-ID: die Linux-UID, dieselbe wie `context.user.id` und `DirectoryUser.id`, nie an einen anderen Benutzer vergeben |
+| `X-Pithyx-Groups`                    | die Namen der Gruppen des Benutzers, durch Kommas getrennt, leer ohne Gruppe                                                  |
+| `X-Pithyx-Admin`                     | `true` oder `false`                                                                                                           |
+| `traceparent`                        | der Trace der Anfrage, für deine Logs                                                                                         |
+| `X-Forwarded-Prefix`                 | `/apps/<id>/api` oder `/apps/<id>/api-<name>`                                                                                 |
+| `X-Forwarded-For`, `-Host`, `-Proto` | die Client-Adresse, der Host und `http` oder `https`                                                                          |
 
 WebSocket-Upgrades bekommen dieselben Header. Antworten verlieren `Set-Cookie`, `Clear-Site-Data`, `Strict-Transport-Security` und andere Header, die auf die ganze Box wirken, und bekommen die Sandbox-Header des Frontends. Request-Bodys haben am Proxy keine Größengrenze: Das Backend entscheidet. Die vollständige Liste steht unter [Backends](/de/docs/developers/apps/backend/#wer-ruft-auf).
 
