@@ -5,7 +5,7 @@ import { useDesktop } from '../../wm/store';
 import { useAppName } from '../names';
 import { closeMenu, useHost, type AppMenu } from './store';
 
-// The dialogs for an app that does not answer and for a copy the browser refused are rare; they load when needed.
+// The dialogs for an app that does not answer, a copy the browser refused and an app's file dialog load when needed.
 const HostDialogs = lazy(() =>
   import('./HostDialogs').then(({ HostDialogs }) => ({ default: HostDialogs })),
 );
@@ -61,7 +61,9 @@ function AppMenuPopover({ menu }: { menu: AppMenu }) {
 /** What the desktop draws for app windows above everything else: their context menus and questions. */
 export function AppHostLayer() {
   const menu = useHost((state) => state.menu);
-  const dialogs = useHost((state) => state.unresponsive.length > 0 || state.copy !== null);
+  const dialogs = useHost(
+    (state) => state.unresponsive.length > 0 || state.copy !== null || state.fileDialog !== null,
+  );
   return (
     <>
       {menu !== null && (
