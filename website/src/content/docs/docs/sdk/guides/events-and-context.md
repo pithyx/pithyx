@@ -154,20 +154,20 @@ A click on a notification or one of its buttons while a window of the app is ope
 
 ## Events
 
-| Event                          | When                                                                         |
-| ------------------------------ | ---------------------------------------------------------------------------- |
-| `focus`, `blur`                | the window gained or lost the focus                                          |
-| `minimize`, `restore`          | the window was minimized or shown again                                      |
-| `visibilityChange`             | the window can or cannot be seen: minimized, or the browser tab hidden       |
-| `connectionChange`             | the desktop lost or regained the connection to the box                       |
-| `sizeClassChange`              | the window crossed 600 or 1024 px                                            |
-| `themeChange`, `localeChange`  | see [Languages and theming](/docs/sdk/guides/i18n-and-theming/)              |
-| `permissionsChange`            | see [Permissions](/docs/sdk/guides/permissions/)                             |
-| `storageChange`                | a storage mapping changed or its pool was locked or came back                |
-| `backendStatus`                | the backend is `stopped`, `starting`, `running`, `updating` or `unavailable` |
-| `logLevelChange`               | an administrator switched debug logging for the app                          |
-| `appUpdated`                   | a new version is installed; reload to use it, after saving                   |
-| `launch`, `notificationAction` | see above                                                                    |
+| Event                          | When                                                                                   |
+| ------------------------------ | -------------------------------------------------------------------------------------- |
+| `focus`, `blur`                | the window gained or lost the focus                                                    |
+| `minimize`, `restore`          | the window was minimized or shown again                                                |
+| `visibilityChange`             | the window can or cannot be seen: minimized, or the browser tab hidden                 |
+| `connectionChange`             | the desktop lost or regained the connection to the box                                 |
+| `sizeClassChange`              | the window crossed 600 or 1024 px                                                      |
+| `themeChange`, `localeChange`  | see [Languages and theming](/docs/sdk/guides/i18n-and-theming/)                        |
+| `permissionsChange`            | see [Permissions](/docs/sdk/guides/permissions/)                                       |
+| `storageChange`                | a storage mapping changed or its pool was locked or came back                          |
+| `backendStatus`                | the backend is `stopped`, `starting`, `running`, `updating` or `unavailable`           |
+| `logLevelChange`               | an administrator switched debug logging for the app                                    |
+| `appUpdated`                   | another version is installed (an update or a rollback); reload to use it, after saving |
+| `launch`, `notificationAction` | see above                                                                              |
 
 `app.on` returns a function that removes the handler. Handlers run in the order they were added. Events the app does not know are ignored, so new events never break an app.
 
