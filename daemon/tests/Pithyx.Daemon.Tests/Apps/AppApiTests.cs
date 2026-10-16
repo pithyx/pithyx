@@ -82,6 +82,7 @@ public sealed class AppApiTests : IDisposable
             Assert.Equal("install", body.GetProperty("action").GetString());
             Assert.Equal(["notifications"], body.GetProperty("addedPermissions").EnumerateArray().Select(value => value.GetString()));
             Assert.Equal(JsonValueKind.Null, body.GetProperty("pool").ValueKind);
+            Assert.False(body.GetProperty("keptData").GetBoolean());
         }
 
         var install = await _admin.PostAsJsonAsync($"/api/apps/packages/{await CheckedAsync(Package())}/install", new { }, Token);
@@ -119,8 +120,12 @@ public sealed class AppApiTests : IDisposable
             AssertSandboxed(gone);
         }
 
-        // The same app again gets its uid back.
+        // The same app again gets its uid back, and the preview says so before the install.
         var uid = app.GetProperty("uid").GetInt64();
+        using (var again = await UploadAsync(Package()))
+        {
+            Assert.True((await again.JsonAsync()).GetProperty("keptData").GetBoolean());
+        }
         await InstallAsync(Package());
         Assert.Equal(uid, (await _admin.GetFromJsonAsync<JsonElement>("/api/apps", Token)).GetProperty("apps")[0].GetProperty("uid").GetInt64());
         using (var remove = await _admin.DeleteAsync($"/api/apps/{AppId}?data=delete", Token))
@@ -322,6 +327,79 @@ public sealed class AppApiTests : IDisposable
         using var disabled = await anonymous.GetAsync($"/apps/{AppId}/index.html", Token);
         Assert.Equal(HttpStatusCode.NotFound, disabled.StatusCode);
         AssertSandboxed(disabled);
+    }
+
+    [Fact]
+    public async Task TextFilesGoOutCompressedAndOnlyHashedAssetsAreCachedForAYear()
+    {
+        await _admin.SetupAdminAsync();
+        var script = string.Concat(Enumerable.Repeat("console.log('a long line of the bundle');\n", 200));
+        await InstallAsync(TarBuilder.MinimalPackage(AppId, "1.0.0", TarBuilder.Manifest(AppId, "1.0.0", "\"notifications\""))
+            .File("frontend/assets/index-B4kz_x9Q.js", script)
+            .File("frontend/plain.js", script)
+            .End().Gzip());
+        Assert.True(File.Exists(Path.Combine(AppFolder, "versions", "1.0.0", ".encoded", "assets", "index-B4kz_x9Q.js.br")));
+
+        using var anonymous = _factory.CreateClient();
+        async Task<HttpResponseMessage> GetAsync(string path, string? acceptEncoding)
+        {
+            using var request = new HttpRequestMessage(HttpMethod.Get, $"/apps/{AppId}/{path}");
+            if (acceptEncoding is not null)
+            {
+                request.Headers.TryAddWithoutValidation("Accept-Encoding", acceptEncoding);
+            }
+            return await anonymous.SendAsync(request, Token);
+        }
+
+        using (var brotli = await GetAsync("assets/index-B4kz_x9Q.js", "gzip, deflate, br"))
+        {
+            Assert.Equal(["br"], brotli.Content.Headers.ContentEncoding);
+            Assert.Equal("public, max-age=31536000, immutable", brotli.Headers.CacheControl!.ToString());
+            Assert.Equal("text/javascript; charset=utf-8", brotli.Content.Headers.ContentType!.ToString());
+            AssertSandboxed(brotli);
+            var bytes = await brotli.Content.ReadAsByteArrayAsync(Token);
+            Assert.True(bytes.Length < script.Length / 5, $"{bytes.Length} bytes");
+            await using var decoded = new System.IO.Compression.BrotliStream(new MemoryStream(bytes), System.IO.Compression.CompressionMode.Decompress);
+            using var reader = new StreamReader(decoded);
+            Assert.Equal(script, await reader.ReadToEndAsync(Token));
+        }
+        using (var gzip = await GetAsync("plain.js", "gzip;q=1, br;q=0"))
+        {
+            Assert.Equal(["gzip"], gzip.Content.Headers.ContentEncoding);
+            Assert.Equal("no-cache", gzip.Headers.CacheControl!.ToString());
+            Assert.Contains("Accept-Encoding", gzip.Headers.Vary);
+        }
+        using (var identity = await GetAsync("plain.js", null))
+        {
+            Assert.Empty(identity.Content.Headers.ContentEncoding);
+            Assert.Equal(script, await identity.Content.ReadAsStringAsync(Token));
+        }
+        // Too small to be worth it: index.html of the minimal package has no copy.
+        using var small = await GetAsync("index.html", "br");
+        Assert.Empty(small.Content.Headers.ContentEncoding);
+        Assert.Equal("no-cache", small.Headers.CacheControl!.ToString());
+    }
+
+    [Fact]
+    public async Task AVersionInstalledWithoutCopiesGetsThemAtItsFirstRequest()
+    {
+        await _admin.SetupAdminAsync();
+        var script = string.Concat(Enumerable.Repeat("console.log('a long line of the bundle');\n", 200));
+        await InstallAsync(TarBuilder.MinimalPackage(AppId, "1.0.0", TarBuilder.Manifest(AppId, "1.0.0", "\"notifications\""))
+            .File("frontend/plain.js", script)
+            .End().Gzip());
+        var encoded = Path.Combine(AppFolder, "versions", "1.0.0", ".encoded");
+        Directory.Delete(encoded, recursive: true);
+
+        using var anonymous = _factory.CreateClient();
+        using var request = new HttpRequestMessage(HttpMethod.Get, $"/apps/{AppId}/plain.js");
+        request.Headers.TryAddWithoutValidation("Accept-Encoding", "br");
+        using (var first = await anonymous.SendAsync(request, Token))
+        {
+            Assert.Empty(first.Content.Headers.ContentEncoding);
+            Assert.Equal(script, await first.Content.ReadAsStringAsync(Token));
+        }
+        await JobTestSupport.WaitUntilAsync(() => Task.FromResult(File.Exists(Path.Combine(encoded, "plain.js.br"))), "the copies");
     }
 
     [Fact]

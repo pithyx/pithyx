@@ -169,20 +169,20 @@ Ein Klick auf eine Benachrichtigung oder einen ihrer Knöpfe, während ein Fenst
 
 ## Ereignisse
 
-| Ereignis                       | Wann                                                                               |
-| ------------------------------ | ---------------------------------------------------------------------------------- |
-| `focus`, `blur`                | das Fenster bekam oder verlor den Fokus                                            |
-| `minimize`, `restore`          | das Fenster wurde minimiert oder wieder gezeigt                                    |
-| `visibilityChange`             | das Fenster ist sichtbar oder nicht: minimiert, oder der Browser-Tab verborgen     |
-| `connectionChange`             | der Desktop verlor oder bekam die Verbindung zur Box zurück                        |
-| `sizeClassChange`              | das Fenster überschritt 600 oder 1024 px                                           |
-| `themeChange`, `localeChange`  | siehe [Sprachen und Darstellung](/de/docs/sdk/guides/i18n-and-theming/)            |
-| `permissionsChange`            | siehe [Berechtigungen](/de/docs/sdk/guides/permissions/)                           |
-| `storageChange`                | eine Speicherzuordnung änderte sich oder ihr Pool wurde gesperrt oder kam zurück   |
-| `backendStatus`                | das Backend ist `stopped`, `starting`, `running`, `updating` oder `unavailable`    |
-| `logLevelChange`               | ein Administrator schaltete das Debug-Logging der App um                           |
-| `appUpdated`                   | eine neue Version ist installiert; neu laden, um sie zu nutzen, nach dem Speichern |
-| `launch`, `notificationAction` | siehe oben                                                                         |
+| Ereignis                       | Wann                                                                                                            |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| `focus`, `blur`                | das Fenster bekam oder verlor den Fokus                                                                         |
+| `minimize`, `restore`          | das Fenster wurde minimiert oder wieder gezeigt                                                                 |
+| `visibilityChange`             | das Fenster ist sichtbar oder nicht: minimiert, oder der Browser-Tab verborgen                                  |
+| `connectionChange`             | der Desktop verlor oder bekam die Verbindung zur Box zurück                                                     |
+| `sizeClassChange`              | das Fenster überschritt 600 oder 1024 px                                                                        |
+| `themeChange`, `localeChange`  | siehe [Sprachen und Darstellung](/de/docs/sdk/guides/i18n-and-theming/)                                         |
+| `permissionsChange`            | siehe [Berechtigungen](/de/docs/sdk/guides/permissions/)                                                        |
+| `storageChange`                | eine Speicherzuordnung änderte sich oder ihr Pool wurde gesperrt oder kam zurück                                |
+| `backendStatus`                | das Backend ist `stopped`, `starting`, `running`, `updating` oder `unavailable`                                 |
+| `logLevelChange`               | ein Administrator schaltete das Debug-Logging der App um                                                        |
+| `appUpdated`                   | eine andere Version ist installiert (Update oder Zurücksetzen); neu laden, um sie zu nutzen, nach dem Speichern |
+| `launch`, `notificationAction` | siehe oben                                                                                                      |
 
 `app.on` liefert eine Funktion, die den Handler wieder entfernt. Handler laufen in der Reihenfolge, in der sie hinzugefügt wurden. Ereignisse, die die App nicht kennt, werden ignoriert; neue Ereignisse brechen also keine App.
 

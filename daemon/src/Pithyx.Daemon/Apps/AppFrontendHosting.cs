@@ -13,9 +13,12 @@ namespace Pithyx.Daemon.Apps;
 /// CORS mode from that opaque origin. The files are public like the desktop's own: a sandboxed window sends no cookie,
 /// so who may use an app is decided where it is launched and where its tokens come from, not here. Paths follow the
 /// package rules (<see cref="PackageLayout.IsSafe"/>), so no encoded or dotted path reaches the file system; a disabled
-/// or unavailable app, a folder, a link and <c>api</c>/<c>api-*</c> (the backend's URLs) are 404.
+/// or unavailable app, a folder, a link and <c>api</c>/<c>api-*</c> (the backend's URLs) are 404. Text files go out as
+/// their Brotli or gzip copy (<see cref="AppFrontendEncodings"/>); build-hashed files under <c>assets/</c> may be cached
+/// for a year, everything else is <c>no-cache</c>. Chromium keeps the cached files of a sandboxed frame, but it never
+/// revalidates a <c>no-cache</c> file there, so an <c>ETag</c> would not help.
 /// </summary>
-public sealed class AppFrontendHosting(RequestDelegate next, AppRegistry registry)
+public sealed partial class AppFrontendHosting(RequestDelegate next, AppRegistry registry, ILogger<AppFrontendHosting> logger)
 {
     public const string Prefix = "/apps";
 
@@ -23,6 +26,8 @@ public sealed class AppFrontendHosting(RequestDelegate next, AppRegistry registr
         "sandbox allow-scripts allow-forms; default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; "
         + "img-src 'self' data: blob:; font-src 'self' data:; media-src 'self' data: blob:; worker-src 'self' blob:; "
         + "object-src 'none'; base-uri 'none'; form-action 'self'; frame-ancestors 'self'; connect-src 'self'";
+
+    private const string ImmutableCache = "public, max-age=31536000, immutable";
 
     private static readonly FileExtensionContentTypeProvider _types = new();
 
@@ -62,14 +67,25 @@ public sealed class AppFrontendHosting(RequestDelegate next, AppRegistry registr
             context.Response.StatusCode = StatusCodes.Status405MethodNotAllowed;
             return;
         }
-        if (app is null || File(app, segments[1]) is not { } file)
+        var path = segments.Length == 2 ? segments[1] : "";
+        if (app is null || registry.FrontendOf(app.Id) is not { } frontend || File(frontend, path) is not { } file)
         {
             context.Response.StatusCode = StatusCodes.Status404NotFound;
             return;
         }
+        if (AppFrontendEncodings.IsHashed(path))
+        {
+            headers[HeaderNames.CacheControl] = ImmutableCache;
+        }
         context.Response.ContentType = _types.TryGetContentType(file.Name, out var type)
             ? type is "text/html" or "text/css" or "text/javascript" or "application/javascript" ? type + "; charset=utf-8" : type
             : "application/octet-stream";
+        headers[HeaderNames.Vary] = HeaderNames.AcceptEncoding;
+        if (AppFrontendEncodings.Find(frontend, path, context.Request.Headers.AcceptEncoding.ToString(), exception => LogCompressionFailed(logger, app.Id, exception)) is var (copy, encoding))
+        {
+            headers[HeaderNames.ContentEncoding] = encoding;
+            file = copy;
+        }
         context.Response.ContentLength = file.Length;
         if (HttpMethods.IsGet(context.Request.Method))
         {
@@ -77,10 +93,10 @@ public sealed class AppFrontendHosting(RequestDelegate next, AppRegistry registr
         }
     }
 
-    private FileInfo? File(InstalledApp app, string path)
+    private static FileInfo? File(string frontend, string path)
     {
         // Kestrel decoded the path except %2F; whatever is left that a package could not contain is not a file.
-        if (!PackageLayout.IsSafe(path) || PackageLayout.IsReservedFrontendPath(path) || registry.FrontendOf(app.Id) is not { } frontend)
+        if (!PackageLayout.IsSafe(path) || PackageLayout.IsReservedFrontendPath(path))
         {
             return null;
         }
@@ -88,4 +104,7 @@ public sealed class AppFrontendHosting(RequestDelegate next, AppRegistry registr
         // The daemon wrote every file itself; a link or a folder is never served.
         return file is { Exists: true, LinkTarget: null } && !file.Attributes.HasFlag(FileAttributes.Directory) ? file : null;
     }
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Could not compress the frontend of {AppId}")]
+    private static partial void LogCompressionFailed(ILogger logger, string appId, Exception exception);
 }

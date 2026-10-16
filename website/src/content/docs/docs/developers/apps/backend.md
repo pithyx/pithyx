@@ -72,6 +72,8 @@ The proxy strips `Cookie`, `Authorization`, `Proxy-Authorization`, `Referer`, `F
 
 A backend can trust these headers only because it is reachable solely through the proxy.
 
+**Schedules.** A schedule's call does not come through the proxy and has no user: the daemon sends `POST <path>` with an empty body and only `X-Pithyx-Schedule: <schedule id>` and `traceparent`, without any user header. Because the proxy strips every incoming `X-Pithyx-*` header, a request from a window can never carry `X-Pithyx-Schedule`, so a backend can rely on it: accept a schedule path only with that header, and answer it without one with 403. A run shows in the Log Center (source `daemon`, with its status code), not in the job list.
+
 **Tokens.** The desktop requests them with `POST /api/apps/{appId}/tokens` (cookie and CSRF header). A token lasts 5 minutes, has 256 random bits and is bound to the user, session, app and window. `host` tokens work only for `/api/app/**`, `backend` tokens only for the proxy. A ticket is valid for 30 seconds and one use. Every use checks the session, user and grant again; revoking a permission or signing out closes proxied sockets. Tokens and tickets are masked in logs.
 
 ## Storage

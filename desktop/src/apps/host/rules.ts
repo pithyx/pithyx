@@ -130,6 +130,8 @@ export function answerStep(answer: { allow: boolean } | undefined): 'close' | 'k
 
 /** The parts of the daemon's app context (`apps/<id>/context`) that reach a running app as events. */
 export interface ContextState {
+  /** The installed version; an update or a rollback changes it. */
+  version?: string;
   permissions: readonly string[];
   logLevel: 'debug' | 'info';
   storage: readonly StorageInfo[];
@@ -139,7 +141,8 @@ export interface ContextState {
 
 /**
  * What a change of the daemon's context means for a running window: `permissionsChange`, `logLevelChange`,
- * `storageChange` and `backendStatus` for what differs, in that order. Unchanged parts send nothing.
+ * `storageChange`, `backendStatus` and `appUpdated` (another version installed, by an update or a rollback) for what
+ * differs, in that order. Unchanged parts send nothing.
  */
 export function contextChanges(
   previous: ContextState,
@@ -165,6 +168,13 @@ export function contextChanges(
   const status = next.backend?.status;
   if (status !== undefined && status !== previous.backend?.status) {
     events.push({ event: 'backendStatus', data: { status } });
+  }
+  if (
+    next.version !== undefined &&
+    previous.version !== undefined &&
+    next.version !== previous.version
+  ) {
+    events.push({ event: 'appUpdated', data: { version: next.version } });
   }
   return permissionsChanged ? { permissions, events } : { events };
 }
