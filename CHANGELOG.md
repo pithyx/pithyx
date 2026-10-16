@@ -258,6 +258,7 @@ The first beta, codename Pyxis (D345): the NAS core, the file services, the app 
 
 ### Fixed
 
+- CI: a pull request that changes the website's code (scripts, components, configuration) now runs the `frontend` job with the root lint and typecheck, and a change of `openapi.json` runs the `website` job that builds the API reference from it.
 - The SDK event `appUpdated` never reached an open app window on the box (only `pithyx dev` sent it); the desktop now sends it when an update or a rollback installs another version.
 - `pithyx pack --images` failed with Docker's containerd image store (the default since Docker 29): it saves images from the local Docker by their manifest digest too, checks the archive against the lock, never pulls an image of `pithyx build` (`pithyx.local/...`) and names every failed attempt. `pack --out` creates a folder that does not exist yet.
 - Website: the Markdown twins and `llms*.txt` dropped every line inside code blocks that looked like MDX (`import`, `export`, `<App />`), so the examples there were broken; fenced code now stays as written, the source comments `<!-- example: ... -->` and `<!-- generated:... -->` are gone from the output, and the build fails when a code line of a page is missing in its twin.
