@@ -58,7 +58,7 @@ Product bugs:
 - [x] (N4) `appUpdated` did not reach an open window on an update or a rollback from a file (no reload, no log). Find out when it is sent; fix or narrow the docs. Cause: only the mock desktop sent it. The desktop now sends it when the version in the app's context topic changes (update or rollback, from a file or a catalog); the events guide says so.
 - [x] (F5) Schedule calls carry no `traceparent` (every call to a backend should have a request id). Fixed: each run is an activity `apps.schedule`, and its call carries its `traceparent`.
 - [ ] (N6) Backend output always lands as level Info in the Log Center; decide how stderr or a JSON `level` maps, then document it.
-- [ ] (N12) Installing an app again after "Keep the data" reuses its data and uid, but neither the dialog nor the `PUT /api/apps/packages` preview says so.
+- [x] (N12) Installing an app again after "Keep the data" reuses its data and uid, but neither the dialog nor the `PUT /api/apps/packages` preview says so. Fixed: the preview has `keptData`, and the install dialog says the app gets its data and user id back.
 
 Docs (developer area; `website/CLAUDE.md`, en and de, D340):
 
