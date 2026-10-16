@@ -321,6 +321,7 @@ function Preview({
             ? t('install.fromCatalog', { catalog: preview.catalog })
             : t('install.fromCustomCatalog', { catalog: preview.catalog })}
       </p>
+      {preview.keptData && <p className={styles.notice}>{t('install.keptData')}</p>}
       {facts.root && <p className={styles.warning}>{t('install.root')}</p>}
       {facts.elevated.length > 0 && (
         <p className={styles.warning}>

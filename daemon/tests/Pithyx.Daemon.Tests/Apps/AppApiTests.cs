@@ -82,6 +82,7 @@ public sealed class AppApiTests : IDisposable
             Assert.Equal("install", body.GetProperty("action").GetString());
             Assert.Equal(["notifications"], body.GetProperty("addedPermissions").EnumerateArray().Select(value => value.GetString()));
             Assert.Equal(JsonValueKind.Null, body.GetProperty("pool").ValueKind);
+            Assert.False(body.GetProperty("keptData").GetBoolean());
         }
 
         var install = await _admin.PostAsJsonAsync($"/api/apps/packages/{await CheckedAsync(Package())}/install", new { }, Token);
@@ -119,8 +120,12 @@ public sealed class AppApiTests : IDisposable
             AssertSandboxed(gone);
         }
 
-        // The same app again gets its uid back.
+        // The same app again gets its uid back, and the preview says so before the install.
         var uid = app.GetProperty("uid").GetInt64();
+        using (var again = await UploadAsync(Package()))
+        {
+            Assert.True((await again.JsonAsync()).GetProperty("keptData").GetBoolean());
+        }
         await InstallAsync(Package());
         Assert.Equal(uid, (await _admin.GetFromJsonAsync<JsonElement>("/api/apps", Token)).GetProperty("apps")[0].GetProperty("uid").GetInt64());
         using (var remove = await _admin.DeleteAsync($"/api/apps/{AppId}?data=delete", Token))
