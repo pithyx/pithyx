@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // The pithyx command: validate, lock, build, pack and dev for an app project, and the CI of catalog repositories.
-import { mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join, resolve } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { parseArgs } from 'node:util';
 import { version } from '../package.json' with { type: 'json' };
 import { build } from './build';
@@ -74,7 +74,7 @@ Options:
   --catalog <file>      catalog: the catalog.json (default: catalog.json)
   --out <path>          pack: the package file, or a folder for it (default: the project)
   --images              pack: add backend/images/<arch>/<id>.tar for offline installs, saved
-                        with the local docker (pull and save per architecture of the lock).
+                        with the local docker (save, or pull first, per architecture of the lock).
                         Needs Docker with access to the registries; the images make the
                         package large, and their bytes depend on Docker's save format.
   --port <port>         dev: the port (default: 7400)
@@ -222,6 +222,11 @@ async function main(): Promise<number> {
       if (values.out !== undefined) {
         const out = resolve(values.out);
         target = out.endsWith('.pithyxapp') ? out : join(out, name);
+        // A folder that does not exist yet is made, also the folder of a .pithyxapp path.
+        const outFolder = out.endsWith('.pithyxapp') ? dirname(out) : out;
+        if (statSync(outFolder, { throwIfNoEntry: false }) === undefined) {
+          mkdirSync(outFolder, { recursive: true });
+        }
         if (
           !out.endsWith('.pithyxapp') &&
           !statSync(out, { throwIfNoEntry: false })?.isDirectory()

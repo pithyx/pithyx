@@ -23,15 +23,15 @@ pithyx pack [project folder] [--frontend <folder>] [--out <path>] [--images]
 
 <!-- generated:cli-options pack -->
 
-| Option       | Wert       | Typ     | Standard    | Beschreibung                                                                                                                                                                                                                                                                  |
-| ------------ | ---------- | ------- | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `--frontend` | `<folder>` | string  | `dist`      | The built frontend                                                                                                                                                                                                                                                            |
-| `--out`      | `<path>`   | string  | the project | The package file, or a folder for it                                                                                                                                                                                                                                          |
-| `--images`   | –          | boolean | aus         | Add backend/images/&lt;arch&gt;/&lt;id&gt;.tar for offline installs, saved with the local docker (pull and save per architecture of the lock). Needs Docker with access to the registries; the images make the package large, and their bytes depend on Docker's save format. |
+| Option       | Wert       | Typ     | Standard    | Beschreibung                                                                                                                                                                                                                                                                         |
+| ------------ | ---------- | ------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--frontend` | `<folder>` | string  | `dist`      | The built frontend                                                                                                                                                                                                                                                                   |
+| `--out`      | `<path>`   | string  | the project | The package file, or a folder for it                                                                                                                                                                                                                                                 |
+| `--images`   | –          | boolean | aus         | Add backend/images/&lt;arch&gt;/&lt;id&gt;.tar for offline installs, saved with the local docker (save, or pull first, per architecture of the lock). Needs Docker with access to the registries; the images make the package large, and their bytes depend on Docker's save format. |
 
 <!-- /generated -->
 
-Ein `--out`, das auf `.pithyxapp` endet, ist die Paketdatei selbst (ihr Ordner muss existieren); alles andere muss ein vorhandener Ordner sein, der `<id>-<version>.pithyxapp` bekommt.
+Ein `--out`, das auf `.pithyxapp` endet, ist die Paketdatei selbst; alles andere ist ein Ordner, der `<id>-<version>.pithyxapp` bekommt. Ein Ordner, den es noch nicht gibt, wird angelegt, auch der Ordner eines `.pithyxapp`-Pfads.
 
 ## Das Paket
 
@@ -40,7 +40,7 @@ Ein `--out`, das auf `.pithyxapp` endet, ist die Paketdatei selbst (ihr Ordner m
 - `README.md`, `README`, `LICENSE`, `LICENSE.md`, `LICENSE.txt`, wenn sie im Projektordner liegen.
 - Mit Backend: seine Compose-Datei und `backend/images.lock.json`.
 - `CHECKSUMS`: der SHA-256 jeder anderen Datei im Format von `sha256sum`, sodass `sha256sum -c CHECKSUMS` ein entpacktes Paket prüft.
-- Mit `--images`: `backend/images/<arch>/<image id>.tar` für jedes Image und jede Architektur des Locks. Jedes Image kommt aus deinem Docker, wenn es dort liegt (Images von `pithyx build`), sonst wird es mit `docker pull --platform` über seinen Digest geholt und dann mit `docker save` gespeichert; die Image-ID nach dem Pull muss zum Lock passen. Die Archive machen das Paket groß, und ihre Bytes hängen vom Speicherformat von Docker ab.
+- Mit `--images`: `backend/images/<arch>/<image id>.tar` für jedes Image und jede Architektur des Locks. Jedes Image wird mit `docker save` aus deinem Docker gespeichert, wenn es dort liegt (Images von `pithyx build`): über seine Image-ID beim klassischen Image-Store, über seinen Manifest-Digest beim containerd-Image-Store (Standard seit Docker 29), mit `--platform`, wo Docker es kennt. Jedes andere Image wird zuerst mit `docker pull --platform` über seinen Digest geholt; ein Image von `pithyx build` (`pithyx.local/...`) wird nie geholt. Das gespeicherte Archiv muss die Image-Konfiguration des Locks enthalten. Klappt nichts, nennt der Fehler jeden Versuch. Die Archive machen das Paket groß, und ihre Bytes hängen vom Speicherformat von Docker ab.
 
 Feste Modi, Besitzer und Zeiten und keine Zeit im gzip-Header machen das Archiv deterministisch.
 
@@ -54,11 +54,11 @@ Feste Modi, Besitzer und Zeiten und keine Zeit im gzip-Header machen das Archiv 
 
 ## Exit-Codes
 
-| Code | Wann                                                                                                                                                                  |
-| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0    | Gepackt: `Packed <path> (<n> bytes).`                                                                                                                                 |
-| 1    | Ein Befund der Stufe Fehler (`Not packed: fix the errors above first.`), keine gültige `pithyx.json`, oder Docker scheitert mit `--images`.                           |
-| 2    | `--out` ist weder eine `.pithyxapp`-Datei noch ein vorhandener Ordner, `--images` für eine App ohne Backend oder ohne gültigen Lock, oder mehr als ein Projektordner. |
+| Code | Wann                                                                                                                                                      |
+| ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0    | Gepackt: `Packed <path> (<n> bytes).`                                                                                                                     |
+| 1    | Ein Befund der Stufe Fehler (`Not packed: fix the errors above first.`), keine gültige `pithyx.json`, oder Docker scheitert mit `--images`.               |
+| 2    | `--out` ist weder eine `.pithyxapp`-Datei noch ein Ordner, `--images` für eine App ohne Backend oder ohne gültigen Lock, oder mehr als ein Projektordner. |
 
 ## Befunde
 
@@ -68,7 +68,7 @@ Dieselben wie bei [`pithyx validate`](/de/docs/reference/cli/validate/#befunde);
 
 ```sh
 pithyx pack                          # ./com.example.notes-1.0.0.pithyxapp
-pithyx pack --out dist-packages/     # in einen vorhandenen Ordner
+pithyx pack --out dist-packages/     # in einen Ordner, bei Bedarf angelegt
 pithyx pack --out notes.pithyxapp    # ein eigener Dateiname
 pithyx pack --images                 # mit den Backend-Images für Offline-Installationen
 ```
