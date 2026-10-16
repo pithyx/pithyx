@@ -69,6 +69,8 @@ Required fields: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, 
 
 An administrator confirms the list at install and can revoke each permission later; the app then receives a `permissionsChange` event. A permission that is new in an update waits for the administrator, and a revoked permission stays revoked across updates. Calling something without the permission fails with [`app.permission.denied`](/docs/reference/errors/#app.permission.denied).
 
+An app that asks for `directory.read`, runs a container as root (`backend.root`) or asks for special rights (`backend.elevated`) is suggested for administrators only: the install dialog preselects **Administrators only** and says why. The administrator can still let everybody use it.
+
 `storage` (optional, up to 16) asks for folders. Each request has an `id`, a `name`, an optional `description`, `access` (`read` or `readWrite`), `required` and, for backends, `services` (the services that get the folder). An administrator maps each request to a folder in a shared folder. The window addresses it as `{ storage: id }` in the SDK file API; a backend service sees a Compose volume with that name. An app cannot start until its required requests are mapped.
 
 ## Backend

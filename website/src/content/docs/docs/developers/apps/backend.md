@@ -96,9 +96,11 @@ A backend can trust these headers only because it is reachable solely through th
 
 - **always:** runs whenever it can.
 - **onDemand:** runs while a user holds a window lease, a request or a schedule holds it, and for `idleTimeout` seconds (default 600) after the last one. The desktop subscribes to the topic `apps/<id>/context` once per app and tab; closing the last window ends the lease at once, and a lost connection keeps it for 2 minutes.
+- Installing or updating an app starts an `onDemand` backend once, so a broken backend fails the install; it then idles out after `idleTimeout` like after a closed window.
 - A failed start is retried after 1 minute; opening a window retries at once.
 - Start timeouts: Compose `up --wait` waits up to 10 minutes, then the manifest's health check up to 60 seconds.
-- Stop: `docker compose down --timeout 30`. Containers get SIGTERM and are killed after 30 seconds; volumes and images stay.
+- Stop: `docker compose down --timeout 30`. Containers get their `stop_signal` (SIGTERM by default) and are killed after 30 seconds; the timeout replaces a `stop_grace_period` of the Compose file. Volumes and images stay.
+- Health: prefer the manifest's `health` (an HTTP check the daemon makes) to a Compose `healthcheck`. A Compose check starts a process in the container at every interval; in the docs test it was almost all of an idle backend's CPU time.
 - Schedules wake the backend without a window, call `POST path` (holding the backend for up to 10 minutes) and then let it idle.
 - The window sees the status `stopped`, `starting`, `running`, `updating` or `unavailable` (SDK event `backendStatus`).
 - Docker starts only while a backend app is installed and its pool is mounted.

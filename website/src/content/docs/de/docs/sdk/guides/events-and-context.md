@@ -152,6 +152,8 @@ render();
 
 Ein Klick auf eine Benachrichtigung oder einen ihrer Knöpfe, während ein Fenster der App offen ist, holt dieses Fenster nach vorn und sendet `notificationAction` mit der ID der Benachrichtigung, der `id` des Knopfs (oder `null` für die Benachrichtigung selbst) und den `data`, die du `notify` mitgegeben hast. Das Fenster, das die Benachrichtigung gesendet hat, bekommt es, wenn es noch verbunden ist, sonst das oberste Fenster der App.
 
+Der Desktop fügt jeder Benachrichtigung einer App einen eigenen Knopf **Öffnen** neben deinen `actions` hinzu. Nenne keine Aktion "Öffnen"; benenne die Knöpfe nach dem, was sie tun ("Antworten", "Liste zeigen").
+
 ## Ereignisse
 
 | Ereignis                       | Wann                                                                               |
