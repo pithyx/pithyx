@@ -258,6 +258,7 @@ The first beta, codename Pyxis (D345): the NAS core, the file services, the app 
 
 ### Fixed
 
+- A third-party app with `@pithyx/ui` kept the default accent and colors: `tokens.css` now takes the desktop's look from the SDK's `--pithyx-*` properties once the SDK connected, including the user's accent.
 - Website: the Markdown twins and `llms*.txt` dropped every line inside code blocks that looked like MDX (`import`, `export`, `<App />`), so the examples there were broken; fenced code now stays as written, the source comments `<!-- example: ... -->` and `<!-- generated:... -->` are gone from the output, and the build fails when a code line of a page is missing in its twin.
 - `files.pick` and `files.saveAs` of third-party apps showed no file dialog: the desktop loaded its app dialogs only for an app that does not answer and for a refused copy. The E2E probe now saves a file through the dialog.
 - Installer: "Test connection" with the default settings (DHCP on every card) reported "The daemon is not reachable"; it now checks the cards as they are, and a failed test shows its real error. An error that sends the summary back to a step (a reserved user name such as `root`) is shown on that step. "Install Pithyx" without the erase confirmation says what is missing. A page left open across a restart of the live system takes the installation again instead of saying another browser owns it. The installer's wallpaper stays in place while a long list of disks scrolls.

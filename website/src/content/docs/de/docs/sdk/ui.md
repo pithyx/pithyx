@@ -36,7 +36,7 @@ export function App() {
 
 `@pithyx/ui/tokens.css` ist die einzige Token-Datei von Pithyx und braucht kein JavaScript. Die Farben folgen der hellen oder dunklen Einstellung des Systems (`light-dark()`); erzwinge eine mit `<html data-theme="light">` oder `"dark"`. Wähle eine Akzentfarbe mit `<html data-accent="...">`: `petrol` (Standard), `ocean`, `indigo`, `plum`, `moss` oder `graphite`. Jede Voreinstellung ist in beiden Themes auf Kontrast geprüft. Die Token-Namen stehen unter [Themes und Design-Tokens](/de/docs/developers/desktop/theming/).
 
-Die Komponenten lesen die Tokens `--color-*`, `--space-*`, `--radius-*` und `--control-height`, nicht die `--pithyx-*`-Eigenschaften des SDK. Eine App, die die Komponenten nutzt, importiert deshalb `tokens.css`.
+Die Komponenten lesen die Tokens `--color-*`, `--space-*`, `--radius-*` und `--control-height`, nicht die `--pithyx-*`-Eigenschaften des SDK. Eine App, die die Komponenten nutzt, importiert deshalb `tokens.css`. Sobald das SDK verbunden ist, folgen die Komponenten dem Desktop ohne Code: Das SDK setzt das Farbschema und `data-pithyx-theme` auf dem Wurzelelement, und `tokens.css` übernimmt dann Farben und Schriften des Desktops aus den `--pithyx-*`-Eigenschaften, auch den Akzent des Benutzers; Hover- und Pressed-Töne des Akzents werden daraus abgeleitet.
 
 `@pithyx/ui/native` exportiert Klassennamen für native Elemente, die wie die Komponenten aussehen, ohne React Aria: `buttonStyles`, `controlStyles` und `textFieldStyles`, dazu `cx` und `uiTexts`. Es ist für Code gedacht, der klein bleiben muss.
 
