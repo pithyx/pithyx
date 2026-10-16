@@ -66,6 +66,7 @@ async function main(root: HTMLElement) {
   let hang = false;
   let attention = false;
   let picked = '';
+  let saved = '';
   let activation: NotificationActivation | null = app.context.launch.notification ?? null;
   const events: string[] = [];
 
@@ -111,6 +112,7 @@ async function main(root: HTMLElement) {
         'activation',
       ],
       [t('picked'), picked === '' ? '-' : picked, 'picked'],
+      [t('saved'), saved === '' ? '-' : saved, 'saved'],
     ] as const) {
       facts.append(element('dt', {}, label), element('dd', { 'data-fact': key }, value));
     }
@@ -187,7 +189,27 @@ async function main(root: HTMLElement) {
       app.log.warn('demo warn entry', { count });
       app.log.error('demo error entry', { count });
     });
-    actions.append(setTitle, notify, increment, notifyActions, badge, menu, copy, website, log);
+    const save = element('button', { type: 'button' }, t('save'));
+    save.addEventListener('click', () => {
+      void app.files
+        .saveAs('sdk-demo.txt', new Blob([t('copied', { count })], { type: 'text/plain' }))
+        .then((file) => {
+          saved = file?.name ?? t('cancelled');
+          render();
+        });
+    });
+    actions.append(
+      setTitle,
+      notify,
+      increment,
+      notifyActions,
+      badge,
+      menu,
+      copy,
+      website,
+      log,
+      save,
+    );
     root.append(
       actions,
       element('p', {}, `${t('counter')}: `),
