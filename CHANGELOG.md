@@ -258,6 +258,7 @@ The first beta, codename Pyxis (D345): the NAS core, the file services, the app 
 
 ### Fixed
 
+- Website: the Markdown twins and `llms*.txt` dropped every line inside code blocks that looked like MDX (`import`, `export`, `<App />`), so the examples there were broken; fenced code now stays as written, the source comments `<!-- example: ... -->` and `<!-- generated:... -->` are gone from the output, and the build fails when a code line of a page is missing in its twin.
 - Installer: "Test connection" with the default settings (DHCP on every card) reported "The daemon is not reachable"; it now checks the cards as they are, and a failed test shows its real error. An error that sends the summary back to a step (a reserved user name such as `root`) is shown on that step. "Install Pithyx" without the erase confirmation says what is missing. A page left open across a restart of the live system takes the installation again instead of saying another browser owns it. The installer's wallpaper stays in place while a long list of disks scrolls.
 - The restart dialog closes once the box is back instead of staying open. Notifications break long file names instead of overflowing their card.
 - Settings > Updates no longer reports the system as unsupported for a request right after the daemon started: the daemon reads the system layout and its snapshots before it accepts requests. CI: the rerun of known flaky daemon tests now finds the failed tests in a full run (D350).
