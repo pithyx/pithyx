@@ -45,7 +45,7 @@ Baut die Services aus `backend/compose.dev.yaml`, die `build:` haben. Es braucht
 
 - `pithyx validate [folder]` prüft `pithyx.json`, `icon.svg`, den Einstieg im gebauten Frontend, das Paketlayout, `backend/compose.yaml` und `backend/images.lock.json`. Es warnt, solange `icon.svg` das Vorlagen-Icon ist. Bei Erfolg gibt es `<id> <version> is valid.` aus.
 - `pithyx lock [folder]` löst die Images aus `backend/compose.yaml` auf und schreibt `backend/images.lock.json`. Es braucht das Netzwerk.
-- `pithyx pack [folder] [--out <file or folder>] [--images]` validiert und schreibt dann `<id>-<version>.pithyxapp`. `--out` muss auf `.pithyxapp` enden oder ein Ordner sein. `--images` fügt die Images für Offline-Installationen hinzu und braucht Docker.
+- `pithyx pack [folder] [--out <file or folder>] [--images]` validiert und schreibt dann `<id>-<version>.pithyxapp`. `--out` ist eine `.pithyxapp`-Datei oder ein Ordner, der bei Bedarf angelegt wird. `--images` fügt die Images für Offline-Installationen hinzu und braucht Docker.
 
 ## pithyx catalog
 
