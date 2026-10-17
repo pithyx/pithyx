@@ -17,6 +17,7 @@
 # The file is unsigned: a dev file that only a box whose /etc/pithyx/environment says dev installs. Sign it with
 # tools/release/sign-update.sh. --channel (default beta) is written into the manifest; a box on the stable channel
 # installs only stable files. Debian security updates are not part of the file; the box gets them from Debian.
+# --out is the folder of the image build (default image/out): the packages come from its debs/ and the file goes there.
 set -euo pipefail
 export LC_ALL=C.UTF-8
 

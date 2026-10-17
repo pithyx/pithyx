@@ -60,6 +60,8 @@ Baue und signiere sie mit den Release-Skripten des Repositorys:
 3. `tools/release/sign-update.sh <file> --key <pem file> --key-id <id>` signiert das Manifest und prüft die Datei so, wie eine Box es tut.
 4. `tools/release/build-channel.sh <file> --key <pem file> --key-id <id> --sequence <n> [--url <url>]` schreibt und signiert `channel.json` und `channel.json.sig`.
 
+Um ein Update vor dem Veröffentlichen auszuprobieren, installiere das Image der älteren Version auf einer Testbox, stelle sie in Einstellungen > **Updates** auf den Kanal **Beta** und lade die mit einem Beta-Schlüssel signierte Datei unter **Aus einer Datei installieren** hoch. `build-update.sh` liest die Pakete des letzten Laufs von `image/build.sh`; baue also zuerst das Image der Version und gleich danach die Update-Datei.
+
 Veröffentliche `channel.json` und `channel.json.sig` unter deiner Kanal-URL, mit `stable` oder `beta` anstelle von `{channel}`, und die Update-Datei dort, wohin `channel.json` zeigt (ihre URL ist relativ zu `channel.json`). Mit GitHub-Releases passen die Vorgaben von `build-channel.sh` zum Aufbau des Projekts: `channel.json` auf einem Release `channel-<channel>`, die Datei auf `beta-<version>` oder `v<version>`. Alles muss über https ohne Zugangsdaten erreichbar sein.
 
 Die Regeln, die die Box anwendet:
