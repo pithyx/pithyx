@@ -63,15 +63,17 @@ The proxy strips `Cookie`, `Authorization`, `Proxy-Authorization`, `Referer`, `F
 
 | Header                               | Value                                                                                                         |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
-| `X-Pithyx-User`                      | the user name                                                                                                 |
+| `X-Pithyx-User`                      | the user name, the Linux user name in lower case                                                              |
 | `X-Pithyx-User-Id`                   | the user id: the Linux uid, the same as `context.user.id` and `DirectoryUser.id`, never given to another user |
-| `X-Pithyx-Groups`                    | the group names, comma separated                                                                              |
+| `X-Pithyx-Groups`                    | the group names, comma separated; empty for a user in no group                                                |
 | `X-Pithyx-Admin`                     | `true` or `false`                                                                                             |
 | `traceparent`                        | the trace of the request                                                                                      |
 | `X-Forwarded-Prefix`                 | `/apps/<id>/api` or `/apps/<id>/api-<name>`                                                                   |
 | `X-Forwarded-For`, `-Host`, `-Proto` | the original client and host                                                                                  |
 
-A backend can trust these headers only because it is reachable solely through the proxy.
+An incoming `traceparent` or `tracestate` is dropped as well: the proxy writes the trace of its own request, so a window cannot choose it. Every endpoint and every WebSocket upgrade gets the same headers. A backend can trust these headers only because it is reachable solely through the proxy.
+
+**Time limits of the proxy.** It gives up connecting to a backend after 5 seconds and waits up to 100 seconds for each read of the answer (a long-running answer that keeps sending stays open); then the window gets 502 or 504. An idle WebSocket stays open for 24 hours.
 
 **Schedules.** A schedule's call does not come through the proxy and has no user: the daemon sends `POST <path>` with an empty body and only `X-Pithyx-Schedule: <schedule id>` and `traceparent`, without any user header. Because the proxy strips every incoming `X-Pithyx-*` header, a request from a window can never carry `X-Pithyx-Schedule`, so a backend can rely on it: accept a schedule path only with that header, and answer it without one with 403. A run shows in the Log Center (source `daemon`, with its status code), not in the job list.
 
@@ -85,6 +87,27 @@ A backend can trust these headers only because it is reachable solely through th
 - If the pool is locked or missing, the backend does not start, the Store says why, and the window sees `unavailable` with the reason `pool`.
 - An update snapshots the dataset; a rollback restores it. On uninstall the administrator chooses whether to keep the data.
 - The SDK's `app.storage` (per user key/value) is separate: keys up to 128 characters, values up to 64 KB, 1 MB per user and app.
+
+A storage request in the manifest and its volume in Compose, for one service:
+
+```json
+"storage": [{ "id": "clips", "name": { "en": "Clips" }, "access": "readWrite", "required": true, "services": ["api"] }]
+```
+
+```yaml
+services:
+  api:
+    volumes:
+      - clips:/clips
+volumes:
+  clips:
+```
+
+What the backend sees in such a folder:
+
+- **It cannot tell mapped from unmapped.** An optional request nobody mapped is a folder inside the app's dataset, and the service sees an empty or app-owned folder either way. Only the window knows (`app.context.storage`, `storageChange`); a backend that must know asks its frontend or keeps a marker file of its own.
+- **Mapping later starts over.** When an administrator maps an optional request later, the backend restarts with the new folder. What it wrote into the internal folder stays there and is not moved; copy it over yourself if it matters.
+- **Files belong to the app and follow the shared folder's rights.** A file the backend writes into a mapped folder is owned by the app's user id and inherits the folder's default ACL, so users with write access to the shared folder can change and delete it over SMB, SFTP, WebDAV and FTP. Never keep the app's own state in a mapped folder; use a named volume for that.
 
 ## Network
 
@@ -105,6 +128,7 @@ A backend can trust these headers only because it is reachable solely through th
 - A failed start is retried after 1 minute; opening a window retries at once.
 - Start timeouts: Compose `up --wait` waits up to 10 minutes, then the manifest's health check up to 60 seconds.
 - Stop: `docker compose down --timeout 30`. Containers get their `stop_signal` (SIGTERM by default) and are killed after 30 seconds; the timeout replaces a `stop_grace_period` of the Compose file. Volumes and images stay.
+- The health call is a plain `GET <path>` on its endpoint without user headers. Each try may take 5 seconds; it runs only while the backend starts, not afterwards.
 - Health: prefer the manifest's `health` (an HTTP check the daemon makes, every 100 ms while the backend starts) to a Compose `healthcheck`. A Compose check starts a process in the container at every interval, and `up --wait` waits for its first pass. Measured with a small Node backend on the box: a cold start took 2.5 seconds with a Node health check every second during `start_period` and 1.05 seconds with the manifest's `health` only; running idle, the Compose check cost about 2 percent of a core (in the container and in Docker), without it about 0.15 percent. `pithyx validate` warns about a Compose healthcheck next to `health` (`cli.compose.healthcheck_redundant`). An image's own `HEALTHCHECK` also runs; switch it off with `healthcheck: { disable: true }`.
 - A browser on the box itself sees every backend start as a change of the network (Docker attaches the container to the app's bridge), and Chromium aborts the requests in flight with `net::ERR_NETWORK_CHANGED`. Browsers on other devices do not see it. Load again when `backendStatus` becomes `running` (see the edge cases of the [backend guide](/docs/sdk/guides/backend/)).
 - Schedules wake the backend without a window, call `POST path` (holding the backend for up to 10 minutes) and then let it idle.

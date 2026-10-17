@@ -26,6 +26,7 @@ import type {
   ConflictPolicy,
   FileEntry,
   FileLocation,
+  ShareLocation,
   FileOperation,
   FileVersion,
   FolderChange,
@@ -492,20 +493,20 @@ export interface Methods {
    * deleted since. A file is listed once per distinct content and not while it equals the current file. Empty when
    * the share has no snapshots. Needs read access to the share.
    */
-  'files.versions': { params: { location: FileLocation; path: string }; result: FileVersion[] };
+  'files.versions': { params: { location: ShareLocation; path: string }; result: FileVersion[] };
   /**
    * Copies a version back as a job: next to the current entry as "name (version date)", or over it with
    * `overwrite` (files are replaced, folders merged). Needs write access to the share.
    */
   'files.restoreVersion': {
-    params: { location: FileLocation; path: string; snapshot: string; overwrite?: boolean };
+    params: { location: ShareLocation; path: string; snapshot: string; overwrite?: boolean };
     result: JobInfo;
   };
   /** Cancels a job the app started; a finished job stays as it is. */
   'jobs.cancel': { params: { job: number }; result: undefined };
   /** One page of a share's recycle bin, newest first. Needs read access to the share. */
   'trash.list': {
-    params: { location: FileLocation; cursor?: string; limit?: number };
+    params: { location: ShareLocation; cursor?: string; limit?: number };
     result: TrashPage;
   };
   /**
@@ -513,13 +514,13 @@ export interface Methods {
    * `onConflict` says otherwise.
    */
   'trash.restore': {
-    params: { location: FileLocation; ids: number[]; onConflict?: ConflictPolicy };
+    params: { location: ShareLocation; ids: number[]; onConflict?: ConflictPolicy };
     result: JobInfo;
   };
   /** Deletes items of the recycle bin for good, as a job. Only after the user confirmed it. */
-  'trash.delete': { params: { location: FileLocation; ids: number[] }; result: JobInfo };
+  'trash.delete': { params: { location: ShareLocation; ids: number[] }; result: JobInfo };
   /** Deletes everything in the recycle bin for good, as a job. Only after the user confirmed it. */
-  'trash.empty': { params: { location: FileLocation }; result: JobInfo };
+  'trash.empty': { params: { location: ShareLocation }; result: JobInfo };
   /**
    * Shows the desktop's error dialog for a problem, with its translated text and the request id to copy. Use it for
    * failures the user has to know about; the app does not need its own error texts for daemon codes.

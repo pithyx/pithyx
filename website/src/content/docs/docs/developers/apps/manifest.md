@@ -41,7 +41,7 @@ Required fields: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, 
 - `license`: optional SPDX expression. Catalogs require it.
 - `homepage`: optional http or https URL.
 - `entry`: the HTML page, `frontend/<path>.html`, at most 200 characters, no segment starting with a dot.
-- `sdk`: required npm-style version range for the SDK, for example `^1.0.0`. The box checks its syntax ([`app.manifest.sdk_invalid`](/docs/reference/errors/#app.manifest.sdk_invalid)); it does not compare it with the desktop's protocol today.
+- `sdk`: required npm-style version range for the SDK, for example `^1.0.0`. The box checks its syntax ([`app.manifest.sdk_invalid`](/docs/reference/errors/#app.manifest.sdk_invalid)); it does not compare it with the desktop's protocol today. With a release candidate, declare the version you installed, for example `^1.0.0-rc.8`: that range also covers 1.0.0 and every later 1.x, while `^1.0.0` would not match a candidate.
 - `pithyx`: optional range of box versions the app works with. The box installs the app only if its own version is inside. Catalogs require it. Prerelease versions match by plain SemVer ordering, so `>=0.1.0` includes `0.2.0-beta.1`, but `^0.1.0` does not.
 - `dataVersion`: optional integer from 1 to 2147483647. A catalog downgrade is allowed only between versions with the same `dataVersion`. A rollback to the previous version after an update does not depend on it.
 
@@ -87,7 +87,7 @@ An app that asks for `directory.read`, runs a container as root (`backend.root`)
 - `network`: `{ "services": ["fetcher"] }` names the services that get the network out of the box which `network.internet` and `network.lan` open; the others stay on the app's internal network. Without it every service gets it. Each name must be a service of the Compose file ([`app.compose.reference_unknown`](/docs/reference/errors/#app.compose.reference_unknown)).
 - `health`: `{ "endpoint": "api", "path": "/health" }`. The daemon calls `GET` on it; a 2xx answer means the backend is running.
 - `schedules`: up to 16 entries of `{ id, cron, endpoint, path }`. The daemon starts the backend and calls `POST path` with `X-Pithyx-Schedule` (see [Who is calling](/docs/developers/apps/backend/#who-is-calling)). The cron expression has five fields (minute 0 to 59, hour 0 to 23, day of month 1 to 31, month 1 to 12, weekday 0 to 7) in the box's time zone, with `*`, numbers, ranges, lists and steps; names are not allowed ([`app.manifest.cron_invalid`](/docs/reference/errors/#app.manifest.cron_invalid)).
-- `elevated`: a list of extra rights (`host.network`, `host.pid`, `device:/dev/<path>`, `capability:<NAME>`, `docker.socket`, `host.full`), up to 32. Elevated rights are not granted yet: Pithyx 1.0.0-beta.1 refuses every entry with [`app.elevated.unsupported`](/docs/reference/errors/#app.elevated.unsupported).
+- `elevated`: a list of extra rights (`host.network`, `host.pid`, `device:/dev/<path>`, `capability:<NAME>`, `docker.socket`, `host.full`), up to 32. Elevated rights are not granted yet: the box in its first beta (Pithyx 1.0.0-beta.1, not the version of the npm packages) refuses every entry with [`app.elevated.unsupported`](/docs/reference/errors/#app.elevated.unsupported).
 
 Beyond the schema the box checks that service and endpoint names exist ([`app.manifest.reference_unknown`](/docs/reference/errors/#app.manifest.reference_unknown)) and that the storage requests match the Compose mounts.
 

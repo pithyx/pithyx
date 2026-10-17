@@ -269,7 +269,8 @@
 /*
  * In a third-party app the SDK sets data-pithyx-theme on the root and the desktop's look as --pithyx-* properties
  * (applyTheme). The components then take the desktop's colors and fonts, so an app follows its accent and surfaces
- * without code; the scheme already follows through color-scheme. Tokens built from these with var() follow as well.
+ * without code. The SDK also sets data-theme to the desktop's scheme, so the light-dark() tokens follow it, also after a
+ * bundler compiled light-dark() into variables keyed on the data-theme rules above. Tokens built with var() follow too.
  */
 :root[data-pithyx-theme] {
   --color-bg: var(--pithyx-color-background);

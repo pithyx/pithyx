@@ -61,7 +61,7 @@ Mit Strg+C beendest du es; das CLI führt `docker compose down` aus und behält 
 ## Das Paket bauen
 
 1. Baue das Frontend (zum Beispiel `vite build`).
-2. `pithyx validate` prüft `pithyx.json`, das Icon, das Layout, die Entry-Datei im gebauten Frontend, die Compose-Datei und die Image-Sperrdatei. Es gibt `<level> <code>: <text>` aus und endet bei Fehlern mit 1. Es nutzt dieselben Validatoren wie die Box und dieselben Fehlercodes.
+2. `pithyx validate` prüft `pithyx.json`, das Icon, das Layout, die Entry-Datei im gebauten Frontend, die Compose-Datei und die Image-Sperrdatei. Es gibt `<level> <code>: <text>` aus und endet bei Fehlern mit 1. Es nutzt dieselben Validatoren wie die Box und dieselben Fehlercodes. Vor `pithyx build` (das Docker braucht) prüft es stattdessen `backend/compose.dev.yaml` und warnt mit `cli.backend.unbuilt`.
 3. Mit einem Backend machst du die Compose-Datei per Digest fest: entweder mit `pithyx lock` (löst die Images aus `backend/compose.yaml` auf und schreibt `backend/images.lock.json` für amd64 und arm64; die Registries werden anonym oder mit den Zugangsdaten aus `~/.docker/config.json` gefragt) oder mit `pithyx build` (baut die Services aus `backend/compose.dev.yaml`, die `build:` haben, und schreibt beide Dateien).
 4. `pithyx pack [--out <file.pithyxapp or folder>] [--images]` validiert noch einmal und schreibt das Paket. `--images` fügt die Images für Offline-Installationen hinzu und braucht Docker.
 

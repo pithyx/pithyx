@@ -72,12 +72,18 @@
       "unmap": "Ordner von {storage} entfernen",
       "dialogTitle": "Ordner für {storage}",
       "share": "Freigegebener Ordner",
-      "path": "Ordner darin",
-      "pathHint": "Lass das Feld leer für den freigegebenen Ordner selbst. Der Ordner muss existieren.",
+      "path": "Ordner",
       "accessLabel": "Zugriff",
       "save": "Speichern",
       "cancel": "Abbrechen",
-      "noShares": "Es gibt noch keine freigegebenen Ordner. Lege zuerst einen in den Einstellungen an."
+      "noShares": "Es gibt noch keine freigegebenen Ordner. Lege zuerst einen in den Einstellungen an.",
+      "up": "Eine Ebene höher",
+      "newFolder": "Neuer Ordner",
+      "newFolderName": "Name des neuen Ordners",
+      "create": "Erstellen",
+      "loadingFolders": "Die Ordner werden geladen",
+      "noFolders": "Dieser Ordner enthält keine Ordner. Speichere, um ihn zu nutzen, oder erstelle einen.",
+      "folders": "Ordner darin"
     },
     "access": {
       "title": "Wer sie nutzen darf",

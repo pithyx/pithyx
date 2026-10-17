@@ -34,9 +34,11 @@ export function App() {
 
 ## Tokens without React
 
-`@pithyx/ui/tokens.css` is the only token file of Pithyx and needs no JavaScript. Colors follow the system's light or dark setting (`light-dark()`); force one with `<html data-theme="light">` or `"dark"`. Choose an accent with `<html data-accent="...">`: `petrol` (the default), `ocean`, `indigo`, `plum`, `moss` or `graphite`. Every preset is contrast-checked in both themes. The token names are on [Theming and design tokens](/docs/developers/desktop/theming/).
+`@pithyx/ui/tokens.css` is the only token file of Pithyx and needs no JavaScript. Colors follow the system's light or dark setting (`light-dark()`); force one with `<html data-theme="light">` or `"dark"`. In an app the SDK sets `data-theme` to the desktop's scheme on connect and on every theme change, so the components follow the desktop, not the browser. Choose an accent with `<html data-accent="...">`: `petrol` (the default), `ocean`, `indigo`, `plum`, `moss` or `graphite`. Every preset is contrast-checked in both themes. The token names are on [Theming and design tokens](/docs/developers/desktop/theming/).
 
 The components read the `--color-*`, `--space-*`, `--radius-*` and `--control-height` tokens, not the SDK's `--pithyx-*` properties. An app that uses the components therefore imports `tokens.css`. Once the SDK connected, the components follow the desktop without code: the SDK sets the scheme and `data-pithyx-theme` on the root, and `tokens.css` then takes the desktop's colors and fonts from the `--pithyx-*` properties, including the user's accent; hover and pressed shades of the accent are derived from it.
+
+For your own CSS next to the components, use the same tokens of `tokens.css` (`--color-*`, `--space-*`, `--radius-*`, `--font-*`, `--control-height`); their names belong to the API of `@pithyx/ui` and follow its SemVer, so a rename is a major version. An app without `@pithyx/ui` uses the SDK's `--pithyx-*` properties instead, a stable contract of the SDK.
 
 `@pithyx/ui/native` exports class names for native elements that look like the components, without React Aria: `buttonStyles`, `controlStyles` and `textFieldStyles`, plus `cx` and `uiTexts`. It is meant for code that has to stay small.
 
@@ -48,10 +50,12 @@ The components read the `--color-*`, `--space-*`, `--radius-*` and `--control-he
 - Overlays: `Dialog`, `Menu`, `MenuItem`, `MenuTrigger`, `MenuPopover`, `MenuSeparator`, `ContextMenuPopover`, `Tooltip` and `TooltipTrigger`.
 - Helpers: `UiProvider`, `useDeliberatePress`, `cx` and `uiTexts`.
 
+There is no select or list box component yet. For a choice from a list use a native `<select>` styled with the tokens (`min-height: var(--control-height)`, `border: 1px solid var(--color-border)`, `border-radius: var(--radius-sm)`, `background: var(--color-surface-1)`, `color: var(--color-text)`), or a list of `Button variant="quiet"` for choices that open something.
+
 `Checkbox` and `Switch` take their label as children (`<Checkbox isSelected={done} onChange={setDone}>Done</Checkbox>`), `ProgressBar` as `label`.
 
 The [API reference](/docs/reference/sdk/) has a page per component, generated from its TSDoc (for example [Button](/docs/reference/sdk/ui/button/) and [Dialog](/docs/reference/sdk/ui/dialog/)), and every token with its value on [tokens](/docs/reference/sdk/ui/tokens/).
 
 ## Icons
 
-`@pithyx/ui` exports no icons. The desktop uses Tabler Icons (MIT); to look the same, add `@tabler/icons-react` to your app and import each icon you use, for example `import { IconTrash } from '@tabler/icons-react';`. Give an `IconButton` its `label`, which is also its tooltip and accessible name.
+`@pithyx/ui` exports no icons. The desktop uses Tabler Icons (MIT); to look the same, add `@tabler/icons-react` to your app with the range `@pithyx/ui` itself depends on (`^3.48.0`, so your bundle keeps one copy) and import each icon you use, for example `import { IconTrash } from '@tabler/icons-react';`. Give an `IconButton` its `label`, which is also its tooltip and accessible name.

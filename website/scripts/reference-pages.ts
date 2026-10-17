@@ -93,6 +93,7 @@ export const pages: ReferencePage[] = [
         'FolderPage',
         'FileItems',
         'FileSelection',
+        'ShareLocation',
         'ConflictPolicy',
         'FileOperation',
         'JobState',

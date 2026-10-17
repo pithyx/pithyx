@@ -409,7 +409,7 @@
       "properties": {
         "id": {
           "$ref": "#/$defs/Name",
-          "description": "Stable name, unique within the app, shown in the jobs list."
+          "description": "Stable name, unique within the app; the Log Center names it with each run."
         },
         "cron": {
           "description": "Five fields separated by single spaces (minute 0-59, hour 0-23, day of month 1-31, month 1-12, day of week 0-7 with 0 and 7 for Sunday), in the box's time zone. Each field is a comma list of `*`, numbers and ranges `a-b`; `*` and ranges may take a step `/n`. No names.",

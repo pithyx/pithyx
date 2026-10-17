@@ -125,7 +125,7 @@ Das SDK setzt diese Eigenschaften auf `document.documentElement` (oder auf `them
 - Farben: `--pithyx-color-background`, `-surface`, `-surface-raised`, `-hover`, `-selected`, `-text`, `-text-muted`, `-border`, `-accent`, `-accent-text`, `-focus`, `-success`, `-warning`, `-danger`,
 - Schrift und Form: `--pithyx-font-ui`, `--pithyx-font-mono`, `--pithyx-font-size`, `--pithyx-radius`, `--pithyx-space`, `--pithyx-control-height`.
 
-Außerdem setzt es `color-scheme`, `data-pithyx-theme` (`light` oder `dark`) und `data-pithyx-density` (`comfortable` oder `compact`; compact verkleinert `--pithyx-space` und `--pithyx-control-height` schon). Bei `themeChange` ändern sich die Eigenschaften, bevor dein Handler läuft; CSS folgt ohne Code. Nur Zeichnungen in einem Canvas oder mit WebGL brauchen die Werte aus `theme.tokens`.
+Außerdem setzt es `color-scheme`, `data-theme` und `data-pithyx-theme` (beide `light` oder `dark`) und `data-pithyx-density` (`comfortable` oder `compact`; compact verkleinert `--pithyx-space` und `--pithyx-control-height` schon). Bei `themeChange` ändern sich die Eigenschaften, bevor dein Handler läuft; CSS folgt ohne Code, auch wenn dein Bundler `light-dark()` für ältere Browser übersetzt hat (Vite tut das: Das übersetzte CSS folgt `data-theme` und der Einstellung des Browsers, nicht einem per Skript gesetzten `color-scheme`, entferne `data-theme` also nicht). Nur Zeichnungen in einem Canvas oder mit WebGL brauchen die Werte aus `theme.tokens`.
 
 Fertige Komponenten im Aussehen des Desktops findest du in [@pithyx/ui](/de/docs/sdk/ui/); sie folgen demselben Theme von selbst, sobald das SDK verbunden ist.
 

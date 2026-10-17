@@ -269,6 +269,21 @@ let instance = 0;
 let loadingElement: HTMLElement | null = null;
 let loadingTimer: ReturnType<typeof setTimeout> | undefined;
 
+/**
+ * As on the box, a file dialog opens only for the window the user works in: the app's frame has the focus. A fresh
+ * click is not needed, so an `await` before the call is fine.
+ */
+function windowFocused(method: string): boolean {
+  const focused =
+    !state.minimized &&
+    document.activeElement instanceof HTMLIFrameElement &&
+    frameHost.contains(document.activeElement);
+  if (!focused) {
+    addLog('method', t('log.unfocused', { method }));
+  }
+  return focused;
+}
+
 function addLog(kind: string, text: string): void {
   const time = new Date().toLocaleTimeString(state.locale);
   log.prepend(h('li', { class: `entry ${kind}` }, h('time', {}, time), ` ${text}`));
@@ -526,6 +541,9 @@ const methods: MethodHandlers = {
     if (!state.permissions.has('files.read')) {
       throw denied('files.read');
     }
+    if (!windowFocused('files.pick')) {
+      return [];
+    }
     return (await pickFiles(multiple === true, extensions)).map(fileRef);
   },
   'files.read': ({ file }) => {
@@ -547,6 +565,9 @@ const methods: MethodHandlers = {
   'files.saveAs': ({ suggestedName, data }) => {
     if (!state.permissions.has('files.write')) {
       throw denied('files.write');
+    }
+    if (!windowFocused('files.saveAs')) {
+      return null;
     }
     const link = h('a', { href: URL.createObjectURL(data), download: suggestedName });
     link.click();

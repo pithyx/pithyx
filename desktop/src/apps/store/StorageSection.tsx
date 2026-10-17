@@ -1,5 +1,5 @@
 import type { PithyxApp } from '@pithyx/sdk';
-import { Button, Dialog, TextField } from '@pithyx/ui';
+import { Button, Dialog } from '@pithyx/ui';
 import { useQuery } from '@tanstack/react-query';
 import { useId, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -8,6 +8,7 @@ import { manifestText } from '../installed';
 import { storeCall, type AppDetails, type AppStorageAccess, type ShareDetails } from '../sdk/store';
 import { describeProblem } from '../storage/shared';
 import { useAppChange } from './AppPage';
+import { FolderPicker } from './FolderPicker';
 import { folderPath, type StorageRequest } from './model';
 import styles from './Store.module.css';
 
@@ -205,6 +206,7 @@ function MappingDialog({
               value={shareId ?? ''}
               onChange={(event) => {
                 setShareId(Number(event.target.value));
+                setPath('');
                 map.reset();
               }}
             >
@@ -216,18 +218,18 @@ function MappingDialog({
             </select>
           </div>
         )}
-        <TextField
-          label={t('detail.storage.path')}
-          description={t('detail.storage.pathHint')}
-          value={path}
-          onChange={(value) => {
-            setPath(value);
-            map.reset();
-          }}
-          autoCapitalize="none"
-          autoComplete="off"
-          spellCheck="false"
-        />
+        {shareId !== null && (
+          <FolderPicker
+            app={app}
+            shareId={shareId}
+            shareName={shares.find((share) => share.id === shareId)?.name ?? String(shareId)}
+            path={path}
+            onChange={(next) => {
+              setPath(next);
+              map.reset();
+            }}
+          />
+        )}
         <fieldset className={styles.choices}>
           <legend className={styles.fieldLabel}>{t('detail.storage.accessLabel')}</legend>
           {(['read', 'readWrite'] as const).map((choice) => (

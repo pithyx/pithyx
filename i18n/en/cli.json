@@ -7,7 +7,8 @@
     },
     "log": {
       "connected": "The app connected (SDK {sdk}).",
-      "userChanged": "Signed in as {user}; the window opens again."
+      "userChanged": "Signed in as {user}; the window opens again.",
+      "unfocused": "{method} opened no dialog: the app's window does not have the focus."
     },
     "window": {
       "reopen": "Open the app again",

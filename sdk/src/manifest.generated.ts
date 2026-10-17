@@ -306,7 +306,7 @@ export interface BackendHealth {
  */
 export interface BackendSchedule {
   /**
-   * Stable name, unique within the app, shown in the jobs list.
+   * Stable name, unique within the app; the Log Center names it with each run.
    */
   id: string;
   /**

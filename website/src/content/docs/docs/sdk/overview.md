@@ -43,4 +43,4 @@ npm install @pithyx/ui@next react react-dom
 npm install --save-dev @pithyx/cli@next
 ```
 
-The packages ship TypeScript types with TSDoc comments; in the repository, `pnpm docs:api` builds an API reference of `@pithyx/sdk` and `@pithyx/ui` with TypeDoc. Start with [Your first app](/docs/developers/apps/first-app/).
+The packages are release candidates of 1.0 under the npm dist-tag `next`, which these commands name; `latest` may still point to an older candidate until 1.0.0 is out. The packages ship TypeScript types with TSDoc comments; in the repository, `pnpm docs:api` builds an API reference of `@pithyx/sdk` and `@pithyx/ui` with TypeDoc. Start with [Your first app](/docs/developers/apps/first-app/).

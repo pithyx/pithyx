@@ -34,9 +34,11 @@ export function App() {
 
 ## Tokens ohne React
 
-`@pithyx/ui/tokens.css` ist die einzige Token-Datei von Pithyx und braucht kein JavaScript. Die Farben folgen der hellen oder dunklen Einstellung des Systems (`light-dark()`); erzwinge eine mit `<html data-theme="light">` oder `"dark"`. Wähle eine Akzentfarbe mit `<html data-accent="...">`: `petrol` (Standard), `ocean`, `indigo`, `plum`, `moss` oder `graphite`. Jede Voreinstellung ist in beiden Themes auf Kontrast geprüft. Die Token-Namen stehen unter [Themes und Design-Tokens](/de/docs/developers/desktop/theming/).
+`@pithyx/ui/tokens.css` ist die einzige Token-Datei von Pithyx und braucht kein JavaScript. Die Farben folgen der hellen oder dunklen Einstellung des Systems (`light-dark()`); erzwinge eine mit `<html data-theme="light">` oder `"dark"`. In einer App setzt das SDK `data-theme` beim Verbinden und bei jedem Wechsel des Themes auf das Schema des Desktops, sodass die Komponenten dem Desktop folgen, nicht dem Browser. Wähle eine Akzentfarbe mit `<html data-accent="...">`: `petrol` (Standard), `ocean`, `indigo`, `plum`, `moss` oder `graphite`. Jede Voreinstellung ist in beiden Themes auf Kontrast geprüft. Die Token-Namen stehen unter [Themes und Design-Tokens](/de/docs/developers/desktop/theming/).
 
 Die Komponenten lesen die Tokens `--color-*`, `--space-*`, `--radius-*` und `--control-height`, nicht die `--pithyx-*`-Eigenschaften des SDK. Eine App, die die Komponenten nutzt, importiert deshalb `tokens.css`. Sobald das SDK verbunden ist, folgen die Komponenten dem Desktop ohne Code: Das SDK setzt das Farbschema und `data-pithyx-theme` auf dem Wurzelelement, und `tokens.css` übernimmt dann Farben und Schriften des Desktops aus den `--pithyx-*`-Eigenschaften, auch den Akzent des Benutzers; Hover- und Pressed-Töne des Akzents werden daraus abgeleitet.
+
+Für dein eigenes CSS neben den Komponenten nimmst du dieselben Tokens aus `tokens.css` (`--color-*`, `--space-*`, `--radius-*`, `--font-*`, `--control-height`); ihre Namen gehören zur API von `@pithyx/ui` und folgen deren SemVer, eine Umbenennung ist also eine Major-Version. Eine App ohne `@pithyx/ui` nimmt stattdessen die `--pithyx-*`-Eigenschaften des SDK, einen stabilen Vertrag des SDK.
 
 `@pithyx/ui/native` exportiert Klassennamen für native Elemente, die wie die Komponenten aussehen, ohne React Aria: `buttonStyles`, `controlStyles` und `textFieldStyles`, dazu `cx` und `uiTexts`. Es ist für Code gedacht, der klein bleiben muss.
 
@@ -48,10 +50,12 @@ Die Komponenten lesen die Tokens `--color-*`, `--space-*`, `--radius-*` und `--c
 - Überlagerungen: `Dialog`, `Menu`, `MenuItem`, `MenuTrigger`, `MenuPopover`, `MenuSeparator`, `ContextMenuPopover`, `Tooltip` und `TooltipTrigger`.
 - Helfer: `UiProvider`, `useDeliberatePress`, `cx` und `uiTexts`.
 
+Eine Auswahl- oder Listenkomponente gibt es noch nicht. Für eine Auswahl aus einer Liste nimm ein natives `<select>`, gestaltet mit den Tokens (`min-height: var(--control-height)`, `border: 1px solid var(--color-border)`, `border-radius: var(--radius-sm)`, `background: var(--color-surface-1)`, `color: var(--color-text)`), oder eine Liste von `Button variant="quiet"` für Einträge, die etwas öffnen.
+
 `Checkbox` und `Switch` bekommen ihre Beschriftung als Kinder (`<Checkbox isSelected={done} onChange={setDone}>Erledigt</Checkbox>`), `ProgressBar` als `label`.
 
 Die [API-Referenz](/de/docs/reference/sdk/) hat eine Seite pro Komponente, erzeugt aus ihrem TSDoc (zum Beispiel [Button](/de/docs/reference/sdk/ui/button/) und [Dialog](/de/docs/reference/sdk/ui/dialog/)), und jedes Token mit seinem Wert unter [Tokens](/de/docs/reference/sdk/ui/tokens/).
 
 ## Icons
 
-`@pithyx/ui` exportiert keine Icons. Der Desktop nutzt Tabler Icons (MIT); damit deine App gleich aussieht, nimm `@tabler/icons-react` in deine App auf und importiere jedes Icon, das du nutzt, etwa `import { IconTrash } from '@tabler/icons-react';`. Gib einem `IconButton` sein `label`, das zugleich Tooltip und zugänglicher Name ist.
+`@pithyx/ui` exportiert keine Icons. Der Desktop nutzt Tabler Icons (MIT); damit deine App gleich aussieht, nimm `@tabler/icons-react` mit dem Bereich in deine App auf, von dem `@pithyx/ui` selbst abhängt (`^3.48.0`, damit dein Bundle nur eine Kopie enthält), und importiere jedes Icon, das du nutzt, etwa `import { IconTrash } from '@tabler/icons-react';`. Gib einem `IconButton` sein `label`, das zugleich Tooltip und zugänglicher Name ist.
