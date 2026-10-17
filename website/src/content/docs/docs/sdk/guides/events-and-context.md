@@ -167,6 +167,8 @@ Reading `app.context` needs no permission and no call. The SDK updates these fie
 
 A click on a notification or one of its buttons while a window of the app is open brings that window to the front and sends `notificationAction` with the notification id, the button's `id` (or `null` for the notification itself) and the `data` you passed to `notify`. The window that sent the notification gets it if it is still connected, otherwise the top-most window of the app.
 
+The desktop adds its own **Open** button to every notification of an app, next to your `actions`. Do not name an action "Open"; give the buttons what they do instead ("Reply", "Show the list").
+
 ## Events
 
 | Event                          | When                                                                                   |

@@ -186,21 +186,21 @@ export const pages: ReferencePage[] = [
     id: 'checkbox',
     package: 'ui',
     exports: {
-      '@pithyx/ui': ['Checkbox'],
+      '@pithyx/ui': ['Checkbox', 'CheckboxProps'],
     },
   },
   {
     id: 'switch',
     package: 'ui',
     exports: {
-      '@pithyx/ui': ['Switch'],
+      '@pithyx/ui': ['Switch', 'SwitchProps'],
     },
   },
   {
     id: 'progress-bar',
     package: 'ui',
     exports: {
-      '@pithyx/ui': ['ProgressBar'],
+      '@pithyx/ui': ['ProgressBar', 'ProgressBarProps'],
     },
   },
   {

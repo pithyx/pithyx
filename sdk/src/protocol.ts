@@ -116,7 +116,7 @@ export interface StorageInfo {
 /** Whether `debug` entries of `app.log` go to the daemon (`debug`) or only to the browser console (`info`). */
 export type AppLogLevel = 'debug' | 'info';
 
-/** Everything an app needs to start, sent once in `init`. No permission is needed for any of it (D304). */
+/** Everything an app needs to start, sent once in `init`. No permission is needed for any of it. */
 export interface AppContext {
   /** The app itself. */
   app: {
@@ -132,7 +132,7 @@ export interface AppContext {
    * `X-Pithyx-User` headers the proxy sets (see `backend.token`), never by anything the window sends.
    */
   user: {
-    /** Stable id of the user (the Linux uid). */
+    /** Stable id of the user: the Linux uid, also `X-Pithyx-User-Id` for the backend; never given to another user. */
     id: number;
     /** The user name, lower case. */
     name: string;
@@ -250,7 +250,7 @@ export interface BackendTicket {
 
 /** A user of the box, as `directory.users` lists it. Deactivated users are left out. */
 export interface DirectoryUser {
-  /** Stable id of the user (the Linux uid). */
+  /** Stable id of the user: the Linux uid, also `X-Pithyx-User-Id` for the backend; never given to another user. */
   id: number;
   /** The user name, lower case. */
   name: string;
@@ -347,7 +347,7 @@ export interface Methods {
   /**
    * Writes entries to the app's log in the Log Center (source `app/<id>`, with the signed-in user). The SDK batches
    * `app.log` calls into this method; apps do not call it directly. At most 100 entries per call; the
-   * daemon keeps each app within a rate limit and drops the rest. No permission needed (D257).
+   * daemon keeps each app within a rate limit and drops the rest. No permission needed.
    */
   'log.write': { params: { entries: LogRecord[] }; result: undefined };
   /** Shows a notification and resolves with its id. Needs the `notifications` permission. */

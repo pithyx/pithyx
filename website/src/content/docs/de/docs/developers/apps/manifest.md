@@ -70,6 +70,8 @@ Pflichtfelder: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, `s
 
 Ein Administrator bestätigt die Liste bei der Installation und kann jede Berechtigung später entziehen; die App bekommt dann ein `permissionsChange`-Ereignis. Eine Berechtigung, die in einem Update neu ist, wartet auf den Administrator, und eine entzogene Berechtigung bleibt über Updates hinweg entzogen. Ein Aufruf ohne die nötige Berechtigung schlägt mit [`app.permission.denied`](/de/docs/reference/errors/#app.permission.denied) fehl.
 
+Eine App, die `directory.read` verlangt, einen Container als root betreibt (`backend.root`) oder Sonderrechte verlangt (`backend.elevated`), wird nur für Administratoren vorgeschlagen: Der Installationsdialog wählt **Nur Administratoren** vor und sagt warum. Der Administrator kann sie trotzdem allen erlauben.
+
 `storage` (optional, bis zu 16) fordert Ordner an. Jede Anforderung hat eine `id`, einen `name`, eine optionale `description`, `access` (`read` oder `readWrite`), `required` und, für Backends, `services` (die Services, die den Ordner bekommen). Ein Administrator ordnet jede Anforderung einem Ordner in einem freigegebenen Ordner zu. Das Fenster adressiert ihn in der Datei-API des SDK als `{ storage: id }`; ein Backend-Service sieht ein Compose-Volume mit diesem Namen. Eine App kann erst starten, wenn ihre erforderlichen Anforderungen zugeordnet sind.
 
 ## Backend

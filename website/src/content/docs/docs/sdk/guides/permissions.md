@@ -22,6 +22,8 @@ An app gets exactly the permissions it declares in `pithyx.json` and an administ
 
 Everything else needs no permission: the context, window calls, `app.storage`, `app.session`, logs, the backend and storage requests the administrator mapped. Which users may open the app at all is a separate grant per user and group, not a permission of the app.
 
+Asking for `directory.read` makes the install dialog suggest the app for administrators only, as root containers and special rights do; ask for it only when the app really needs everybody's names.
+
 ## Example
 
 The manifest declares `"permissions": ["notifications", "directory.read"]`. The board works without either and offers more with them:

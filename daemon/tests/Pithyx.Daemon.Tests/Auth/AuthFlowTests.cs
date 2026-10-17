@@ -30,6 +30,8 @@ public sealed class AuthFlowTests : IDisposable
         Assert.Matches("^PTHX-[0-9A-HJKMNP-TV-Z]{4}(-[0-9A-HJKMNP-TV-Z]{4}){5}-[0-9A-HJKMNP-TV-Z]{2}$", body.GetProperty("recoveryKey").GetString());
         Assert.Equal("admin", body.GetProperty("user").GetProperty("username").GetString());
         Assert.Equal("Alice Ä.", body.GetProperty("user").GetProperty("displayName").GetString());
+        // The administrator's id is its uid like every account's, so ids are never given out twice.
+        Assert.Equal(20000, body.GetProperty("user").GetProperty("id").GetInt64());
         Assert.Equal(HttpStatusCode.OK, (await _client.GetAsync("/api/auth/session", Token)).StatusCode);
         Assert.False((await (await _client.GetAsync("/api/setup", Token)).JsonAsync()).GetProperty("required").GetBoolean());
 
