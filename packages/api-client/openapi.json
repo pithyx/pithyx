@@ -9509,6 +9509,11 @@
               "string"
             ],
             "description": "The catalog the package comes from; null for an uploaded file (a sideload, unverified)."
+          },
+          "keptData": {
+            "type": "boolean",
+            "description": "For an install: an earlier installation was removed with \"Keep the data\", and the app gets its data and its user id again.",
+            "default": false
           }
         },
         "description": "A checked package, kept for 15 minutes for its installation by the administrator who uploaded it."

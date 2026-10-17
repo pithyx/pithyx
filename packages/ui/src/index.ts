@@ -8,7 +8,15 @@ export {
   type IconButtonProps,
 } from './Button';
 export { ContextMenuPopover } from './ContextMenu';
-export { Badge, Checkbox, ProgressBar, Switch } from './Controls';
+export {
+  Badge,
+  Checkbox,
+  ProgressBar,
+  Switch,
+  type CheckboxProps,
+  type ProgressBarProps,
+  type SwitchProps,
+} from './Controls';
 export { cx } from './cx';
 export { Dialog, type DialogProps } from './Dialog';
 export {

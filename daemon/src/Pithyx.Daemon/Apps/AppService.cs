@@ -605,7 +605,8 @@ public sealed partial class AppService(
             package.Package.CompressedBytes,
             package.Package.Sha256,
             SuggestedAccess(package.Manifest),
-            package.Origin?.Catalog);
+            package.Origin?.Catalog,
+            installed is null && registry.Pool is { } pool && storage.RootOf(pool, package.AppId) is not null);
     }
 
     /// <summary>
