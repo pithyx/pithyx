@@ -116,7 +116,7 @@ export interface StorageInfo {
 /** Whether `debug` entries of `app.log` go to the daemon (`debug`) or only to the browser console (`info`). */
 export type AppLogLevel = 'debug' | 'info';
 
-/** Everything an app needs to start, sent once in `init`. No permission is needed for any of it (D304). */
+/** Everything an app needs to start, sent once in `init`. No permission is needed for any of it. */
 export interface AppContext {
   /** The app itself. */
   app: {
@@ -334,6 +334,11 @@ export interface Methods {
    * takes the focus.
    */
   'window.requestAttention': { params: Record<string, never>; result: undefined };
+  /**
+   * Ends the desktop's loading placeholder of the window. Only needed with the manifest's `window.loading.untilReady`;
+   * otherwise the placeholder goes when the app connects. Calling it again does nothing.
+   */
+  'window.ready': { params: Record<string, never>; result: undefined };
   /** Asks for a new free size. The desktop may clamp it; the result is the size the window got. */
   'window.setSize': {
     params: { width: number; height: number };
@@ -342,7 +347,7 @@ export interface Methods {
   /**
    * Writes entries to the app's log in the Log Center (source `app/<id>`, with the signed-in user). The SDK batches
    * `app.log` calls into this method; apps do not call it directly. At most 100 entries per call; the
-   * daemon keeps each app within a rate limit and drops the rest. No permission needed (D257).
+   * daemon keeps each app within a rate limit and drops the rest. No permission needed.
    */
   'log.write': { params: { entries: LogRecord[] }; result: undefined };
   /** Shows a notification and resolves with its id. Needs the `notifications` permission. */
@@ -552,7 +557,7 @@ export interface Events {
     /** The file to open. */
     file: FileRef;
   };
-  /** A new version of the app is installed; reload to use it (unsaved work first). */
+  /** Another version of the app is installed, by an update or a rollback; reload to use it (unsaved work first). */
   appUpdated: {
     /** The new version. */
     version: string;

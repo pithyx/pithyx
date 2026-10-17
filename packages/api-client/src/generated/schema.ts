@@ -3269,6 +3269,11 @@ export type components = {
             id: string;
             /** @description The installed version, if the app is installed. */
             installedVersion: null | string;
+            /**
+             * @description For an install: an earlier installation was removed with "Keep the data", and the app gets its data and its user id again.
+             * @default false
+             */
+            keptData: boolean;
             /** @description The whole manifest (`pithyx.json`). */
             manifest: components["schemas"]["JsonElement"];
             /**

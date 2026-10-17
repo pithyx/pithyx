@@ -1,7 +1,82 @@
+.host {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
 .frame {
   display: block;
   width: 100%;
   height: 100%;
   border: 0;
   background: var(--color-bg);
+}
+
+/* Drawn by the desktop until the app is ready (D354); the indicator appears only after 300 ms. */
+.loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-bg);
+  color: var(--color-text);
+  text-align: center;
+}
+
+.name {
+  margin: 0;
+  font-weight: 600;
+}
+
+.text {
+  margin: 0;
+  color: var(--color-text-muted);
+}
+
+.indicator {
+  width: 120px;
+  height: 3px;
+  overflow: hidden;
+  border-radius: 2px;
+  background: var(--color-border);
+  opacity: 0;
+  animation: appear 0s linear 300ms forwards;
+}
+
+.indicator::after {
+  display: block;
+  width: 40%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--color-accent);
+  animation: slide 1.2s ease-in-out 300ms infinite;
+  content: '';
+}
+
+@keyframes appear {
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slide {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(250%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .indicator::after {
+    width: 100%;
+    animation: none;
+    opacity: 0.6;
+  }
 }

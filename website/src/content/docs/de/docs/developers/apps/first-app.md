@@ -82,3 +82,23 @@ Nur ein Administrator kann ein Paket installieren.
 5. Bestätige. Die Installation läuft als Job.
 
 Nach der Installation ordnet ein Administrator die Speicheranforderungen der App freigegebenen Ordnern zu und kann Berechtigungen entziehen. Ein Update, das eine neue Berechtigung anfordert, wartet auf die Bestätigung des Administrators, und die alte Version läuft weiter. Ein Update erstellt einen Snapshot der App-Daten; ein Rollback kehrt mit den Daten zur vorherigen Version zurück. Siehe [Apps und der Store](/de/docs/admin/apps-and-store/).
+
+### Aus einem Skript installieren
+
+Der Store tut nichts, was ein Skript nicht auch mit der [REST-API](/de/docs/reference/api/apps/) kann. Melde dich als Administrator an, lade das Paket hoch und installiere es dann als Job:
+
+```sh
+BOX=https://box.local:7484
+curl -sS --cacert root-ca.crt -c cookies -H 'X-Pithyx-Request: 1' -H 'Content-Type: application/json' \
+  -d '{"username":"admin","password":"..."}' "$BOX/api/auth/login"
+curl -sS --cacert root-ca.crt -b cookies -H 'X-Pithyx-Request: 1' -H 'Content-Type: application/gzip' \
+  -X PUT --data-binary @com.example.notes-1.0.0.pithyxapp "$BOX/api/apps/packages"
+# The answer is the preview: packageId, action, permissions, keptData, suggestedAccess, pool.
+curl -sS --cacert root-ca.crt -b cookies -H 'X-Pithyx-Request: 1' -H 'Content-Type: application/json' \
+  -d '{"pool":"tank","access":"everybody"}' "$BOX/api/apps/packages/<packageId>/install"
+# 202 with the job; follow it with GET /api/jobs/<id> until its state is succeeded or failed.
+```
+
+- `root-ca.crt` ist die eigene Zertifizierungsstelle der Box unter `$BOX/api/system/tls/root-ca.crt` (siehe [Zertifikate](/de/docs/admin/certificates/)).
+- Ein Konto mit Zwei-Faktor-Anmeldung bekommt vom ersten Aufruf eine `challenge` und schließt sie mit `POST /api/auth/login/totp` ab.
+- `pool` braucht es nur für die erste App der Box; `access` (`everybody` oder `admins`) ist ohne Angabe der `suggestedAccess` der Vorschau. Ein geprüftes Paket wartet 15 Minuten auf seine Installation.

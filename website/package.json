@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "node scripts/generate-sdk-reference.ts && node scripts/generate-cli-reference.ts && astro dev",
     "reference": "node scripts/generate-sdk-reference.ts && node scripts/generate-cli-reference.ts",
-    "build:site": "node scripts/generate-sdk-reference.ts && node scripts/generate-cli-reference.ts && astro build && node scripts/check-build.ts",
+    "build:site": "node scripts/generate-sdk-reference.ts && node scripts/generate-api-reference.ts && node scripts/generate-cli-reference.ts && astro build && node scripts/check-build.ts",
     "preview": "astro preview",
     "sync": "astro sync",
     "check": "astro check && tsc -p examples && node scripts/check-examples.ts",

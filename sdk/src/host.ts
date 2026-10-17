@@ -317,6 +317,7 @@ const validators: Record<MethodName, (params: unknown) => boolean> = {
   'window.setSize': isSize,
   'window.setDirty': (p) => isRecord(p) && typeof p.dirty === 'boolean',
   'window.requestAttention': isRecord,
+  'window.ready': isRecord,
   'log.write': (p) =>
     isRecord(p) &&
     Array.isArray(p.entries) &&

@@ -11,7 +11,7 @@ Only administrators install apps, in the Store app. An app is a frontend that th
 
 ## The Store
 
-The Store has the tabs **Installed**, **Official**, **Community**, **Own** and **Updates** (with the number of waiting updates), and a gear for **Store settings**. Official apps are reviewed, built and signed by the Pithyx project; community apps are from developers outside the project and reviewed by it before they are published; **Own** shows apps of catalogs you added, which the project does not verify. Badges read "Pithyx", "Community" and "Unverified" (also for apps installed from a file). Search covers name, description and developer. Users open installed apps from the Pithyx menu; see [Apps](/docs/user/apps/).
+The Store has the tab **Installed**, **Updates** while updates wait (with their number), **Official** and **Community** while that catalog is on, and **Own** while you added a catalog of your own, and a gear for **Store settings**. Official apps are reviewed, built and signed by the Pithyx project; community apps are from developers outside the project and reviewed by it before they are published; **Own** shows apps of catalogs you added, which the project does not verify. Badges read "Pithyx", "Community" and "Unverified" (also for apps installed from a file). Search covers name, description and developer. Users open installed apps from the Pithyx menu; see [Apps](/docs/user/apps/).
 
 ## Installing from a file
 
@@ -19,7 +19,7 @@ Choose **Install from file** on the **Installed** tab (or **Update from file** i
 
 Limits of an upload: the file at most 256 MB, unpacked at most 512 MB and 10 000 entries, the manifest at most 64 KB ([`app.package.too_large`](/docs/reference/errors/#app.package.too_large)). A checked package waits 15 minutes for you to confirm. The ids `org.pithyx.*` are refused from files. A version can be installed, updated, reinstalled (replaces its files) or downgraded; a downgrade may be refused ([`app.package.downgrade_unsupported`](/docs/reference/errors/#app.package.downgrade_unsupported)), then use **Back to the previous version**.
 
-**Uninstall** asks you to **Keep the data** (installing again finds it) or **Delete the data** (databases, settings, files and snapshots; irreversible). Shared folders mapped into the app stay either way. Disabling an app ("Users can open the app" off) keeps its data and access. An app asks for storage; you map each requested folder to a folder in a shared folder, read only or read and write, and required ones must be mapped or the backend does not start. The switch "Send debug messages to the Log Center" turns on debug logging for one app.
+**Uninstall** asks you to **Keep the data** (installing again finds it, with the app's user id; the install dialog then says so) or **Delete the data** (databases, settings, files and snapshots; irreversible). Shared folders mapped into the app stay either way. Disabling an app ("Users can open the app" off) keeps its data and access. An app asks for storage; you map each requested folder to a folder in a shared folder, read only or read and write, and required ones must be mapped or the backend does not start. The switch "Send debug messages to the Log Center" turns on debug logging for one app.
 
 ## The app pool
 
@@ -49,6 +49,6 @@ Indexes of the official and community catalogs carry an Ed25519 signature checke
 
 ## Backends and Docker
 
-A backend is a Compose subset with images pinned by digest, checked against a fixed allowlist. The box runs it in Docker (Debian's `docker.io`), which the daemon starts only while a backend app is installed and its pool is available. Containers run in a user namespace, on an own internal network without internet unless the app has the permission "Internet", and cannot reach host services. Version 0.1 refuses the Docker socket and host-wide rights ([`app.elevated.unsupported`](/docs/reference/errors/#app.elevated.unsupported)). A container as root is only allowed when the app declares it, and the install dialog warns.
+A backend is a Compose subset with images pinned by digest, checked against a fixed allowlist. The box runs it in Docker (Debian's `docker.io`), which the daemon starts only while a backend app is installed and its pool is available. Containers run in a user namespace, on an own internal network without internet unless the app has the permission "Internet", and cannot reach host services. Pithyx 1.0.0-beta.1 refuses the Docker socket and host-wide rights ([`app.elevated.unsupported`](/docs/reference/errors/#app.elevated.unsupported)). A container as root is only allowed when the app declares it, and the install dialog warns.
 
 A backend with lifecycle `always` runs whenever it can; `onDemand` starts when a user opens the app (a request waits up to 30 seconds) and stops 10 minutes after the last window closed. A failed start is retried after 1 minute. Container output goes to the Log Center as source `app/<id>`.
