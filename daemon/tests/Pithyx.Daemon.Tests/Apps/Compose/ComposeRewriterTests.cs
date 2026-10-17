@@ -47,6 +47,23 @@ public sealed class ComposeRewriterTests
     }
 
     [Fact]
+    public void ARootServiceKeepsDockersCapabilities()
+    {
+        var (document, manifest, host) = Load("full");
+        var backend = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(manifest.GetProperty("backend").GetRawText())!;
+        backend["root"] = JsonSerializer.SerializeToElement(true);
+        var fields = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(manifest.GetRawText())!;
+        fields["backend"] = JsonSerializer.SerializeToElement(backend);
+
+        using var output = JsonDocument.Parse(ComposeRewriter.Rewrite(document, JsonSerializer.SerializeToElement(fields), host));
+
+        var services = output.RootElement.GetProperty("services");
+        Assert.Equal("0:0", services.GetProperty("db").GetProperty("user").GetString());
+        Assert.False(services.GetProperty("db").TryGetProperty("cap_drop", out _));
+        Assert.Equal(["ALL"], services.GetProperty("server").GetProperty("cap_drop").EnumerateArray().Select(item => item.GetString()!));
+    }
+
+    [Fact]
     public void ARequiredStorageMustBeMapped()
     {
         var (document, manifest, host) = Load("storage");

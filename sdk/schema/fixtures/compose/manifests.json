@@ -1,8 +1,10 @@
 {
+  "invalid/network-service-missing.yaml": "network.json",
   "invalid/right-unsupported.yaml": "elevated.json",
   "invalid/storage-not-listed.yaml": "storage.json",
   "invalid/storage-not-mounted.yaml": "storage.json",
   "invalid/storage-read-write.yaml": "storage.json",
   "invalid/storage-service-missing.yaml": "storage.json",
+  "valid/network.yaml": "network.json",
   "valid/storage.yaml": "storage.json"
 }

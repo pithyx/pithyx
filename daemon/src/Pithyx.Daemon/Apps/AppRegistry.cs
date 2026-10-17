@@ -49,6 +49,9 @@ public sealed record InstalledApp(
     /// <summary>Whether the app may reach the internet (<c>connect-src https:</c> for its frontend).</summary>
     public bool HasInternet => Permissions.Any(permission => permission.Granted && permission.Permission == "network.internet");
 
+    /// <summary>Whether the app's backend may reach the local network (D358).</summary>
+    public bool HasLan => Permissions.Any(permission => permission.Granted && permission.Permission == "network.lan");
+
     public IReadOnlyList<string> Granted => [.. Permissions.Where(permission => permission.Granted).Select(permission => permission.Permission)];
 
     /// <summary>Whether the app holds a permission of its manifest that no administrator revoked.</summary>

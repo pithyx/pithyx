@@ -143,6 +143,10 @@
       "internet": {
         "title": "Internet",
         "description": "Verbindet sich mit Servern im Internet. Ohne diese Berechtigung bleibt die App auf dieser Box."
+      },
+      "lan": {
+        "title": "Lokales Netzwerk",
+        "description": "Ihr Hintergrunddienst verbindet sich mit anderen Geräten in deinem Netzwerk, etwa einem Router, einem Drucker oder einem anderen Server."
       }
     }
   },

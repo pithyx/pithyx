@@ -5,7 +5,7 @@
  */
 export type AppId = string;
 /**
- * A permission an app declares. Nothing is granted by using an API: the install dialog lists every declared permission, an administrator confirms them for the app, and each one can be revoked later (the app gets `permissionsChange`). Which users may use the app at all is a separate grant per user and group. The daemon checks every permission on every call that reaches data or leaves the window. An update that declares a new permission waits until an administrator confirms it; the old version keeps running. `files.read`: read files the user opens with the app or picks in a desktop file dialog. `files.write`: write those files, and save new files where the user chooses in a desktop save dialog. `files.shares`: browse every shared folder the user may access, with the user's own rights. `notifications`: show notifications. `directory.read`: list all users and groups of the box. `network.internet`: outgoing connections to the internet, from the window (`connect-src https:`) and from the backend.
+ * A permission an app declares. Nothing is granted by using an API: the install dialog lists every declared permission, an administrator confirms them for the app, and each one can be revoked later (the app gets `permissionsChange`). Which users may use the app at all is a separate grant per user and group. The daemon checks every permission on every call that reaches data or leaves the window. An update that declares a new permission waits until an administrator confirms it; the old version keeps running. `files.read`: read files the user opens with the app or picks in a desktop file dialog. `files.write`: write those files, and save new files where the user chooses in a desktop save dialog. `files.shares`: browse every shared folder the user may access, with the user's own rights. `notifications`: show notifications. `directory.read`: list all users and groups of the box. `network.internet`: outgoing connections to the internet, from the window (`connect-src https:`) and from the backend. `network.lan`: outgoing connections from the backend to the local network (private, shared and link-local addresses such as `192.168.0.0/16`); without it the backend reaches no other device in the LAN, also with `network.internet`. The box itself is never reachable.
  */
 export type Permission =
   | 'files.read'
@@ -13,7 +13,8 @@ export type Permission =
   | 'files.shares'
   | 'notifications'
   | 'directory.read'
-  | 'network.internet';
+  | 'network.internet'
+  | 'network.lan';
 /**
  * A service of `backend/compose.yaml`.
  */
@@ -251,6 +252,18 @@ export interface BackendManifest {
    * The containers run as root inside the container (unprivileged on the host through user namespaces). The install dialog warns about it. Default false: they run as the app's own user.
    */
   root?: boolean;
+  /**
+   * Which services get the network out of the box that `network.internet` and `network.lan` open. Without it every service gets it; the others stay on the app's internal network only. No effect without one of the two permissions.
+   */
+  network?: {
+    /**
+     * The services of the Compose file that may connect out, for example only the one that fetches.
+     *
+     * @minItems 1
+     * @maxItems 32
+     */
+    services: ServiceName[];
+  };
   health?: BackendHealth;
   /**
    * Recurring jobs that call the backend on a cron schedule, also without an open window.

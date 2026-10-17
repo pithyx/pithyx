@@ -59,14 +59,15 @@ Pflichtfelder: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, `s
 
 `permissions` ist eine Pflichtliste (sie kann leer sein) eindeutiger Werte aus dieser Menge:
 
-| Berechtigung       | Erlaubt der App                                                                                        |
-| ------------------ | ------------------------------------------------------------------------------------------------------ |
-| `files.read`       | Dateien lesen, die der Benutzer mit ihr öffnet oder in einem Dateidialog des Desktops wählt            |
-| `files.write`      | diese Dateien schreiben und neue Dateien über den Speichern-Dialog des Desktops speichern              |
-| `files.shares`     | alle freigegebenen Ordner durchsuchen, auf die der Benutzer zugreifen darf, mit dessen eigenen Rechten |
-| `notifications`    | Benachrichtigungen anzeigen                                                                            |
-| `directory.read`   | alle Benutzer und Gruppen auflisten                                                                    |
-| `network.internet` | ausgehende Verbindungen aus ihrem Fenster (`connect-src https:`) und ihrem Backend aufbauen            |
+| Berechtigung       | Erlaubt der App                                                                                                                                           |
+| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `files.read`       | Dateien lesen, die der Benutzer mit ihr öffnet oder in einem Dateidialog des Desktops wählt                                                               |
+| `files.write`      | diese Dateien schreiben und neue Dateien über den Speichern-Dialog des Desktops speichern                                                                 |
+| `files.shares`     | alle freigegebenen Ordner durchsuchen, auf die der Benutzer zugreifen darf, mit dessen eigenen Rechten                                                    |
+| `notifications`    | Benachrichtigungen anzeigen                                                                                                                               |
+| `directory.read`   | alle Benutzer und Gruppen auflisten                                                                                                                       |
+| `network.internet` | ausgehende Verbindungen ins Internet aus ihrem Fenster (`connect-src https:`) und ihrem Backend aufbauen                                                  |
+| `network.lan`      | ausgehende Verbindungen aus ihrem Backend zu anderen Geräten im lokalen Netzwerk aufbauen (private, geteilte und Link-local-Adressen); nie zur Box selbst |
 
 Ein Administrator bestätigt die Liste bei der Installation und kann jede Berechtigung später entziehen; die App bekommt dann ein `permissionsChange`-Ereignis. Eine Berechtigung, die in einem Update neu ist, wartet auf den Administrator, und eine entzogene Berechtigung bleibt über Updates hinweg entzogen. Ein Aufruf ohne die nötige Berechtigung schlägt mit [`app.permission.denied`](/de/docs/reference/errors/#app.permission.denied) fehl.
 
@@ -82,7 +83,8 @@ Eine App, die `directory.read` verlangt, einen Container als root betreibt (`bac
 - `endpoints`: ein Objekt vom Endpunkt-Namen auf `{ "service": "...", "port": 8080 }`, bis zu 16. Der Endpunkt `api` ist Pflicht und der Standard. Namen entsprechen `^[a-z][a-z0-9-]{0,31}$`, haben also höchstens 32 Zeichen; das ist die Grenze, die die Box durchsetzt. Das SDK akzeptiert längere Namen, die Box würde sie aber ablehnen. `port` (1 bis 65535) ist der Port des Containers im App-Netzwerk und wird nie veröffentlicht.
 - `lifecycle`: `always` oder `onDemand`.
 - `idleTimeout`: Sekunden von 60 bis 86400, Standard 600; bei `always` wird er ignoriert.
-- `root`: `true` führt die Services im Container als root aus (auf dem Host ohne Rechte); Standard `false`. Der Installationsdialog warnt davor.
+- `root`: `true` führt die Services im Container als root aus (auf dem Host ohne Rechte); Standard `false`. Der Installationsdialog warnt davor. Services ohne root verlieren jede Linux-Capability.
+- `network`: `{ "services": ["fetcher"] }` nennt die Services, die das Netzwerk aus der Box hinaus bekommen, das `network.internet` und `network.lan` öffnen; die anderen bleiben im internen Netzwerk der App. Ohne die Angabe bekommt es jeder Service. Jeder Name muss ein Service der Compose-Datei sein ([`app.compose.reference_unknown`](/de/docs/reference/errors/#app.compose.reference_unknown)).
 - `health`: `{ "endpoint": "api", "path": "/health" }`. Der Daemon ruft dort `GET` auf; eine 2xx-Antwort bedeutet, dass das Backend läuft.
 - `schedules`: bis zu 16 Einträge der Form `{ id, cron, endpoint, path }`. Der Daemon startet das Backend und ruft `POST path` mit `X-Pithyx-Schedule` auf (siehe [Wer ruft auf](/de/docs/developers/apps/backend/#wer-ruft-auf)). Der Cron-Ausdruck hat fünf Felder (Minute 0 bis 59, Stunde 0 bis 23, Tag des Monats 1 bis 31, Monat 1 bis 12, Wochentag 0 bis 7) in der Zeitzone der Box, mit `*`, Zahlen, Bereichen, Listen und Schritten; Namen sind nicht erlaubt ([`app.manifest.cron_invalid`](/de/docs/reference/errors/#app.manifest.cron_invalid)).
 - `elevated`: eine Liste zusätzlicher Rechte (`host.network`, `host.pid`, `device:/dev/<path>`, `capability:<NAME>`, `docker.socket`, `host.full`), bis zu 32. Erhöhte Rechte werden noch nicht vergeben: Pithyx 1.0.0-beta.1 lehnt jeden Eintrag mit [`app.elevated.unsupported`](/de/docs/reference/errors/#app.elevated.unsupported) ab.

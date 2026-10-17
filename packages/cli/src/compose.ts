@@ -911,6 +911,15 @@ class Checker {
       }
     }
 
+    backend?.network?.services.forEach((service, index) => {
+      if (!names.has(service)) {
+        this.add('app.compose.reference_unknown', {
+          path: `/backend/network/services/${String(index)}`,
+          name: service,
+        });
+      }
+    });
+
     this.manifest.storage?.forEach((request, index) => {
       const listed = request.services ?? [];
       listed.forEach((name, serviceIndex) => {

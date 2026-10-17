@@ -25,6 +25,7 @@
     "notifications",
     "directory.read",
     "network.internet",
+    "network.lan",
     "files.read"
   ],
   "window": {
@@ -84,6 +85,11 @@
     "lifecycle": "onDemand",
     "idleTimeout": 600,
     "root": false,
+    "network": {
+      "services": [
+        "server"
+      ]
+    },
     "health": {
       "endpoint": "api",
       "path": "/healthz"
