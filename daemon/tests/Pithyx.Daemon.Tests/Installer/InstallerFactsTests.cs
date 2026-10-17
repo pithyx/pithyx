@@ -37,27 +37,38 @@ public sealed class InstallerFactsTests
     [Fact]
     public void EveryCheckFailsOnABoxThatMissesEverything()
     {
-        var checks = InstallerFacts.Checks("flags : fpu", 2 * Gb, uefi: false, secureBootVariable: [6, 0, 0, 0, 1], [], Architecture.X64);
+        var checks = InstallerFacts.Checks("flags : fpu", 1 * Gb, uefi: false, secureBootVariable: [6, 0, 0, 0, 1], [], Architecture.X64);
 
         Assert.All(checks, check => Assert.False(check.Passed));
         Assert.Equal(["cpu", "uefi", "memory", "secure_boot", "disk"], checks.Select(check => check.Id));
     }
 
     [Fact]
-    public void A4GbBoxPassesAlthoughTheKernelKeepsSomeMemory()
+    public void A2GbBoxPassesWithAHintAndA4GbBoxWithoutAlthoughTheKernelKeepsSomeMemory()
     {
-        var checks = InstallerFacts.Checks("", 3_900_000_000, uefi: true, secureBootVariable: null, [], Architecture.Arm64);
+        var small = InstallerFacts.Checks("", 1_900_000_000, uefi: true, secureBootVariable: null, [], Architecture.Arm64).Single(check => check.Id == "memory");
+        var normal = InstallerFacts.Checks("", 3_900_000_000, uefi: true, secureBootVariable: null, [], Architecture.Arm64);
 
-        Assert.True(checks.Single(check => check.Id == "memory").Passed);
-        Assert.True(checks.Single(check => check.Id == "cpu").Passed);
+        Assert.Equal((true, true), (small.Passed, small.Params["low"]));
+        Assert.Equal((true, false), (normal.Single(check => check.Id == "memory").Passed, normal.Single(check => check.Id == "memory").Params["low"]));
+        Assert.True(normal.Single(check => check.Id == "cpu").Passed);
     }
+
+    [Theory]
+    [InlineData(500_000_000_000, 32 * 1024, 4 * 1024)]
+    [InlineData(40_000_000_000, 32 * 1024, 4 * 1024)]
+    [InlineData(32_000_000_000, 27_954, 2 * 1024)]
+    [InlineData(30_000_000_000, 26_047, 2 * 1024)]
+    public void ASmallDiskGetsASmallerSystemAndSwap(long diskBytes, long systemMiB, long swapMiB) =>
+        Assert.Equal(new InstallPlans.PartitionSizes(systemMiB, swapMiB), InstallPlans.SizesFor(diskBytes));
 
     [Fact]
     public void TheBootStickUsbAndSmallDisksAreRefused()
     {
         var stick = Disk("sdc", 16 * Gb, transport: "usb", removable: true);
         var isoInVm = Disk("sr0", 64 * Gb, transport: "sata");
-        var small = Disk("sdb", 32 * Gb);
+        var small = Disk("sdb", 29 * Gb);
+        var sold32 = Disk("sde", 31 * Gb);
         var card = Disk("mmcblk0", 64 * Gb, transport: "mmc");
         var mounted = Disk("sdd", 500 * Gb);
         var good = Disk("nvme0n1", 500 * Gb, transport: "nvme", partitions: new Partition("nvme0n1p1", "/dev/nvme0n1p1", 100 * Gb, "ntfs", null, []));
@@ -68,11 +79,12 @@ public sealed class InstallerFactsTests
             [good.Id] = Device(good, ("nvme0n1p1", "ntfs", [])),
         };
 
-        var verdicts = InstallerFacts.EvaluateDisks([stick, isoInVm, small, card, mounted, good], devices).ToDictionary(disk => disk.Disk.Name);
+        var verdicts = InstallerFacts.EvaluateDisks([stick, isoInVm, small, sold32, card, mounted, good], devices).ToDictionary(disk => disk.Disk.Name);
 
         Assert.Equal("usb", verdicts["sdc"].Reason);
         Assert.Equal("boot_medium", verdicts["sr0"].Reason);
         Assert.Equal("too_small", verdicts["sdb"].Reason);
+        Assert.True(verdicts["sde"].Suitable);
         Assert.Equal("removable", verdicts["mmcblk0"].Reason);
         Assert.Equal("in_use", verdicts["sdd"].Reason);
         Assert.True(verdicts["nvme0n1"].Suitable);

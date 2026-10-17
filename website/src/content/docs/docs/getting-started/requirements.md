@@ -7,19 +7,19 @@ sidebar:
   order: 2
 ---
 
-Pithyx installs on a 64-bit x86 computer with UEFI firmware, at least 4 GB of memory and an internal system disk of at least 40 GB. The installer checks all of this before it lets you begin. Your data goes on additional disks, which you turn into pools after the installation.
+Pithyx installs on a 64-bit x86 computer with UEFI firmware, at least 2 GB of memory and an internal system disk of at least 32 GB. The installer checks all of this before it lets you begin. Your data goes on additional disks, which you turn into pools after the installation.
 
 ## Supported platforms
 
 The installer checks five things on its first page and refuses to start if one fails:
 
-| Check       | Requirement                                                                                            |
-| ----------- | ------------------------------------------------------------------------------------------------------ |
-| Processor   | 64-bit x86 with x86-64-v2 (needs among others SSE4.2 and POPCNT)                                       |
-| Firmware    | Started in UEFI mode. Legacy BIOS and CSM mode do not work.                                            |
-| Memory      | At least 4 GB (the check allows about 400 MB of tolerance for memory the firmware reserves)            |
-| Secure Boot | Switched off. The ZFS module is not signed. See [Firmware and boot](/docs/install/firmware-and-boot/). |
-| System disk | At least one suitable internal disk of 40 GB or more                                                   |
+| Check       | Requirement                                                                                                           |
+| ----------- | --------------------------------------------------------------------------------------------------------------------- |
+| Processor   | 64-bit x86 with x86-64-v2 (needs among others SSE4.2 and POPCNT)                                                      |
+| Firmware    | Started in UEFI mode. Legacy BIOS and CSM mode do not work.                                                           |
+| Memory      | At least 2 GB (the check allows about 400 MB of tolerance for memory the firmware reserves); 4 GB or more recommended |
+| Secure Boot | Switched off. The ZFS module is not signed. See [Firmware and boot](/docs/install/firmware-and-boot/).                |
+| System disk | At least one suitable internal disk sold as 32 GB or more (the check allows 2 GB of tolerance)                        |
 
 The base system is Debian 13. There is no 32-bit version.
 
@@ -31,7 +31,8 @@ The reference machine is an Intel N100 or N305 with 8 GB of memory. The daemon i
 
 **System disk.** The installer writes the system to one disk, or to two disks as a mirror (btrfs on an mdadm RAID 1). It never uses more than two.
 
-- The disk must be at least 40 GB. Of it, Pithyx uses 36.5 GiB (a 512 MiB boot partition, 32 GiB for the system and 4 GiB of swap). The rest stays unused.
+- The disk must be at least 32 GB. From 40 GB on, Pithyx uses 36.5 GiB of it (a 512 MiB boot partition, 32 GiB for the system and 4 GiB of swap) and leaves the rest unused. On a smaller disk the swap has 2 GiB and the system gets what remains, about 26 GiB on a 32 GB disk; that is enough for the system, its update snapshots and the logs. With two disks the smaller one decides.
+- With 2 to 4 GB of memory a box runs a few users and apps; the installer says so. ZFS keeps less in its cache then, and large app images or updates may use the swap.
 - USB disks, removable media, SD cards, read-only disks, disks in use and the installer stick itself are not offered.
 - A hard disk is allowed, but the installer hints that an SSD is faster, quieter and uses less power.
 - A disk that already holds data is shown with a warning. Installing erases it.

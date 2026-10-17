@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+# The release tool (D364); see pithyx-release.ts or `pithyx-release help`.
+exec node "$(dirname "$(readlink -f "${BASH_SOURCE[0]}")")/pithyx-release.ts" "$@"

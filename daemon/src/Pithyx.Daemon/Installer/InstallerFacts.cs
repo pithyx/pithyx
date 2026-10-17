@@ -6,13 +6,20 @@ namespace Pithyx.Daemon.Installer;
 /// <summary>Pure decisions of the installer: whether the box meets the requirements and which disks may hold the system.</summary>
 public static class InstallerFacts
 {
-    public const long MinMemoryBytes = 4L * 1000 * 1000 * 1000;
+    /// <summary>Enough for the system, the daemon and a few apps (D363).</summary>
+    public const long MinMemoryBytes = 2L * 1000 * 1000 * 1000;
 
-    /// <summary>ESP, system and swap partition (System layout 1.0) with room to spare.</summary>
-    public const long MinDiskBytes = 40L * 1000 * 1000 * 1000;
+    /// <summary>Below this a box works, but ZFS caches less; the installer says so instead of refusing.</summary>
+    public const long RecommendedMemoryBytes = 4L * 1000 * 1000 * 1000;
 
-    // The kernel reserves some memory, so a 4 GB box reports a little less.
+    /// <summary>A disk sold as 32 GB (D363); <see cref="InstallPlans.SizesFor"/> shrinks the system and swap partitions on it.</summary>
+    public const long MinDiskBytes = 32L * 1000 * 1000 * 1000;
+
+    // The kernel reserves some memory, so a 2 GB box reports a little less.
     private const long MemoryTolerance = 400L * 1000 * 1000;
+
+    // A disk sold as 32 GB often holds a little less.
+    private const long DiskTolerance = 2L * 1000 * 1000 * 1000;
 
     private static readonly string[] _x8664V2Flags = ["cx16", "lahf_lm", "popcnt", "sse4_1", "sse4_2", "ssse3"];
 
@@ -54,6 +61,8 @@ public static class InstallerFacts
             {
                 ["minGb"] = MinMemoryBytes / 1_000_000_000,
                 ["foundGb"] = Math.Round(memoryBytes / 1e9, 1),
+                ["recommendedGb"] = RecommendedMemoryBytes / 1_000_000_000,
+                ["low"] = memoryBytes + MemoryTolerance < RecommendedMemoryBytes,
             }),
             new("secure_boot", secureBootVariable is null || !IsSecureBootOn(secureBootVariable), new Dictionary<string, object?>()),
             new("disk", disks.Any(disk => disk.Suitable), new Dictionary<string, object?> { ["minGb"] = MinDiskBytes / 1_000_000_000 }),
@@ -82,7 +91,7 @@ public static class InstallerFacts
                     : disk.Removable || string.Equals(disk.Transport, "mmc", StringComparison.Ordinal) ? "removable"
                     : disk.ReadOnly ? "read_only"
                     : tree.Any(device => device.MountPoints.Count > 0) ? "in_use"
-                    : disk.SizeBytes < MinDiskBytes ? "too_small"
+                    : disk.SizeBytes + DiskTolerance < MinDiskBytes ? "too_small"
                     : null;
                 var hasData = disk.Partitions.Count > 0 || tree.Any(device => device.FileSystem is not null);
                 return new InstallerDisk(disk, reason is null, reason, hasData);

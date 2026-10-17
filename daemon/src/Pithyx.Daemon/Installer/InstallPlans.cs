@@ -21,14 +21,33 @@ public static class InstallPlans
     /// <summary>The arrays for <c>mdadm.conf</c> of the installed system.</summary>
     public static CommandRequest ScanArrays() => new("mdadm", ["--detail", "--scan"], _timeout);
 
+    /// <summary>The members of the system and the swap array on every disk, in MiB.</summary>
+    public sealed record PartitionSizes(long SystemMiB, long SwapMiB);
+
+    private const long Mib = 1024 * 1024;
+    private const long EspMiB = 512;
+    private const long FullSystemMiB = 32 * 1024;
+
     /// <summary>
-    /// Wipes every disk (its old partitions first) and gives it an ESP of 512 MiB, a 32 GiB member of the system array
-    /// and a 4 GiB member of the swap array; then wipes the new partitions, since old signatures at the same offsets
-    /// would otherwise come back inside them.
+    /// The system and swap members for the smallest disk (D363): 32 GiB and 4 GiB from 40 GB on; on a smaller disk
+    /// (from 32 GB) 2 GiB of swap and the rest for the system, after the ESP, the first MiB and the backup table.
+    /// </summary>
+    public static PartitionSizes SizesFor(long smallestDiskBytes)
+    {
+        var swapMiB = smallestDiskBytes >= 40L * 1000 * 1000 * 1000 ? 4 * 1024 : 2 * 1024;
+        var systemMiB = Math.Min(FullSystemMiB, (smallestDiskBytes / Mib) - 1 - EspMiB - swapMiB - 2);
+        return new PartitionSizes(systemMiB, swapMiB);
+    }
+
+    /// <summary>
+    /// Wipes every disk (its old partitions first) and gives it an ESP of 512 MiB, a member of the system array and a
+    /// member of the swap array of the sizes <see cref="SizesFor"/> gives for the smallest disk; then wipes the new
+    /// partitions, since old signatures at the same offsets would otherwise come back inside them.
     /// </summary>
     public static IReadOnlyList<CommandRequest> Partition(IReadOnlyList<Disk> disks)
     {
         ArgumentNullException.ThrowIfNull(disks);
+        var sizes = SizesFor(disks.Min(disk => disk.SizeBytes));
         var commands = new List<CommandRequest>();
         foreach (var disk in disks)
         {
@@ -38,8 +57,8 @@ public static class InstallPlans
             commands.Add(new CommandRequest("sgdisk",
             [
                 "--new=1:1MiB:+512MiB", "--typecode=1:EF00", "--change-name=1:pithyx-esp",
-                "--new=2:0:+32GiB", "--typecode=2:FD00", "--change-name=2:pithyx-system",
-                "--new=3:0:+4GiB", "--typecode=3:FD00", "--change-name=3:pithyx-swap",
+                $"--new=2:0:+{sizes.SystemMiB}MiB", "--typecode=2:FD00", "--change-name=2:pithyx-system",
+                $"--new=3:0:+{sizes.SwapMiB}MiB", "--typecode=3:FD00", "--change-name=3:pithyx-swap",
                 disk.Path,
             ], _timeout));
         }

@@ -7,19 +7,19 @@ sidebar:
   order: 2
 ---
 
-Pithyx lässt sich auf einem 64-Bit-x86-Computer mit UEFI-Firmware, mindestens 4 GB Arbeitsspeicher und einer internen Systemfestplatte von mindestens 40 GB installieren. Der Installer prüft das alles, bevor du anfangen darfst. Deine Daten kommen auf zusätzliche Festplatten, aus denen du nach der Installation Pools machst.
+Pithyx lässt sich auf einem 64-Bit-x86-Computer mit UEFI-Firmware, mindestens 2 GB Arbeitsspeicher und einer internen Systemfestplatte von mindestens 32 GB installieren. Der Installer prüft das alles, bevor du anfangen darfst. Deine Daten kommen auf zusätzliche Festplatten, aus denen du nach der Installation Pools machst.
 
 ## Unterstützte Plattformen
 
 Der Installer prüft auf seiner ersten Seite fünf Dinge und startet nicht, wenn eine davon fehlschlägt:
 
-| Prüfung         | Voraussetzung                                                                                                    |
-| --------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Prozessor       | 64-Bit-x86 mit x86-64-v2 (braucht unter anderem SSE4.2 und POPCNT)                                               |
-| Firmware        | Im UEFI-Modus gestartet. Legacy-BIOS und CSM-Modus funktionieren nicht.                                          |
-| Arbeitsspeicher | Mindestens 4 GB (die Prüfung lässt etwa 400 MB Toleranz für Speicher zu, den die Firmware reserviert)            |
-| Secure Boot     | Ausgeschaltet. Das ZFS-Modul ist nicht signiert. Siehe [Firmware und Boot](/de/docs/install/firmware-and-boot/). |
-| Systemplatte    | Mindestens eine passende interne Festplatte mit 40 GB oder mehr                                                  |
+| Prüfung         | Voraussetzung                                                                                                                        |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------ |
+| Prozessor       | 64-Bit-x86 mit x86-64-v2 (braucht unter anderem SSE4.2 und POPCNT)                                                                   |
+| Firmware        | Im UEFI-Modus gestartet. Legacy-BIOS und CSM-Modus funktionieren nicht.                                                              |
+| Arbeitsspeicher | Mindestens 2 GB (die Prüfung lässt etwa 400 MB Toleranz für Speicher zu, den die Firmware reserviert); empfohlen sind 4 GB oder mehr |
+| Secure Boot     | Ausgeschaltet. Das ZFS-Modul ist nicht signiert. Siehe [Firmware und Boot](/de/docs/install/firmware-and-boot/).                     |
+| Systemplatte    | Mindestens eine passende interne Festplatte, verkauft als 32 GB oder mehr (die Prüfung lässt 2 GB Toleranz zu)                       |
 
 Das Basissystem ist Debian 13. Es gibt keine 32-Bit-Version.
 
@@ -31,7 +31,8 @@ Die Referenzmaschine ist ein Intel N100 oder N305 mit 8 GB Arbeitsspeicher. Der 
 
 **Systemplatte.** Der Installer schreibt das System auf eine Festplatte oder auf zwei Festplatten als Spiegel (btrfs auf einem mdadm-RAID-1). Er nutzt nie mehr als zwei.
 
-- Die Festplatte muss mindestens 40 GB groß sein. Davon belegt Pithyx 36,5 GiB (eine Boot-Partition mit 512 MiB, 32 GiB für das System und 4 GiB Swap). Der Rest bleibt ungenutzt.
+- Die Festplatte muss mindestens 32 GB groß sein. Ab 40 GB belegt Pithyx davon 36,5 GiB (eine Boot-Partition mit 512 MiB, 32 GiB für das System und 4 GiB Swap) und lässt den Rest frei. Auf einer kleineren Platte hat der Swap 2 GiB und das System bekommt den Rest, auf einer 32-GB-Platte etwa 26 GiB; das reicht für das System, seine Update-Snapshots und die Protokolle. Bei zwei Platten entscheidet die kleinere.
+- Mit 2 bis 4 GB Arbeitsspeicher trägt eine Box wenige Benutzer und Apps; der Installer sagt das. ZFS hält dann weniger im Cache, und große App-Images oder Updates nutzen eventuell den Swap.
 - USB-Festplatten, Wechseldatenträger, SD-Karten, schreibgeschützte Festplatten, Festplatten in Benutzung und der Installer-Stick selbst werden nicht angeboten.
 - Eine Festplatte mit Magnetscheiben ist erlaubt, aber der Installer weist darauf hin, dass eine SSD schneller und leiser ist und weniger Strom braucht.
 - Eine Festplatte, auf der schon Daten liegen, wird mit einer Warnung angezeigt. Die Installation löscht sie.

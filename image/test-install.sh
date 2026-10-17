@@ -4,6 +4,7 @@
 # and asks for the sign-in, not the setup. Without root; needs qemu-system-x86, qemu-utils, ovmf and /dev/kvm.
 #
 #   image/test-install.sh [--iso <file>] [--mirror] [--network] [--update <folder>] [--reinstall] [--keep]
+#                         [--memory <MiB>] [--disk-size <size>]
 #
 # Every run checks that tty2 shows no login prompt (D341). --reinstall (D341, root is asked for through qemu-nbd) gives
 # the VM a third disk with the pool tank, reads the ZFS host id of the installed system, installs again onto the same
@@ -14,6 +15,8 @@
 # the step's connection test; the other two share one network and become an active-backup bond with a VLAN, reached
 # through that bond while their primary card loses its link, and a wrong address on the first card rolls back after
 # 60 seconds. --keep leaves the installed VM running.
+# --memory and --disk-size give the VM another memory size in MiB (default 4096) and system disks of another size in
+# qemu-img's syntax (default 64G), for example --memory 2048 --disk-size 32000000000 for the smallest box (D363).
 #
 # --update (D338, implies --mirror) takes a folder with two signed beta update files newer than the ISO, the older one
 # N+1 and the newer one N+2 (tools/release/build-update.sh and sign-update.sh). Before the first start of the installed
@@ -35,6 +38,8 @@ mirror=false
 network=false
 updates=""
 keep=false
+memory=4096
+disk_size=64G
 reinstall=false
 keyboard=de
 extra_disks=()
@@ -56,7 +61,9 @@ while [[ $# -gt 0 ]]; do
     --update) updates="$(realpath "$2")"; mirror=true; keyboard=us; shift 2 ;;
     --reinstall) reinstall=true; shift ;;
     --keep) keep=true; shift ;;
-    -h | --help) sed -n '2,24p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    --memory) memory="$2"; shift 2 ;;
+    --disk-size) disk_size="$2"; shift 2 ;;
+    -h | --help) sed -n '2,31p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) die "unknown argument $1" ;;
   esac
 done
@@ -90,8 +97,8 @@ cleanup() {
 trap 'if [[ $keep == false ]]; then cleanup; fi' EXIT
 
 cp "$OVMF_VARS" "$vm/vars.fd"
-qemu-img create -q -f qcow2 "$vm/disk1.qcow2" 64G
-qemu-img create -q -f qcow2 "$vm/disk2.qcow2" 64G
+qemu-img create -q -f qcow2 "$vm/disk1.qcow2" "$disk_size"
+qemu-img create -q -f qcow2 "$vm/disk2.qcow2" "$disk_size"
 if [[ "$reinstall" == true ]]; then
   qemu-img create -q -f qcow2 "$vm/disk3.qcow2" 8G
   extra_disks=(disk3)
@@ -138,7 +145,7 @@ start_vm() {
       -netdev "hubport,id=port1,hubid=1" -device "virtio-net-pci,netdev=port1,id=nic1,mac=$NIC1_MAC,addr=0x11"
       -netdev "hubport,id=port2,hubid=1" -device "virtio-net-pci,netdev=port2,id=nic2,mac=$NIC2_MAC,addr=0x12")
   fi
-  qemu-system-x86_64 -name pithyx-install -machine q35,accel=kvm -cpu host -smp 2 -m 4096 \
+  qemu-system-x86_64 -name pithyx-install -machine q35,accel=kvm -cpu host -smp 2 -m "$memory" \
     -drive if=pflash,format=raw,readonly=on,file="$OVMF_CODE" \
     -drive if=pflash,format=raw,file="$vm/vars.fd" \
     -device ahci,id=ahci -device usb-ehci,id=usb "${drives[@]}" \
