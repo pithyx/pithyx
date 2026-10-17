@@ -209,7 +209,7 @@ function schemaSection(lang: Lang, name: string, schema: Schema): string {
       '',
     );
   } else {
-    lines.push(`${text(lang, 'type')}: ${typeOf(lang, { ...schema, description: undefined })}`, '');
+    lines.push(`${text(lang, 'type')}: ${typeOf(lang, schema)}`, '');
   }
   return lines.join('\n');
 }
