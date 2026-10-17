@@ -12,7 +12,7 @@ Die Box spricht HTTPS auf Port 7484 mit einem Zertifikat ihrer eigenen Zertifizi
 
 ## Warum der Browser warnt
 
-Beim ersten Öffnen von `https://<box-adresse>:7484` warnt der Browser, dass die Verbindung nicht privat ist: Er kennt nicht, wer das Zertifikat der Box signiert hat. Das ist so gewollt. Fahre zur Seite fort, melde dich an und vertraue der Box wie unten beschrieben; danach ist die Warnung auf diesem Gerät weg. Bis dahin laden Chromium-basierte Browser den Desktop außerdem bei jedem Neuladen komplett neu statt aus ihrem Cache.
+Beim ersten Öffnen von `https://<box-adresse>:7484` warnt der Browser, dass die Verbindung nicht privat ist: Er kennt nicht, wer das Zertifikat der Box signiert hat. Das ist so gewollt. Fahre zur Seite fort, melde dich an und vertraue der Box wie unten beschrieben; danach ist die Warnung auf diesem Gerät weg. Bis dahin behalten Chromium-basierte Browser nichts von der Box in ihrem Cache: Jedes Neuladen lädt den Desktop neu, und jedes App-Fenster lädt seine App neu.
 
 ## Der Box auf einem Gerät vertrauen
 
