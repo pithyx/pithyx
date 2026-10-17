@@ -159,7 +159,7 @@ Eine Speicheranfrage benennt einen Ort, den die App braucht. Bei der Installatio
 - `app.context.storage` listet jede Anfrage mit `state` (`ready`, `unmapped`, `locked`, `unavailable`) und `access` (`read`, `readWrite` oder `null`, solange nichts zugeordnet ist). Das Ereignis `storageChange` ersetzt die Liste, wenn sich eine Zuordnung ändert oder ein Pool gesperrt wird oder zurückkommt.
 - Eine Speicheranfrage braucht keine `files.*`-Berechtigung. Die App bekommt nie mehr, als `access` der Anfrage und die Zuordnung erlauben, und die eigenen Rechte des Benutzers auf den Ordner gelten weiterhin.
 - Eine nicht zugeordnete Anfrage scheitert mit [`app.storage.not_found`](/de/docs/reference/errors/#app.storage.not_found). Schreiben, wo Zuordnung oder Benutzer nur Lesen erlauben, scheitert mit [`fs.share.read_only`](/de/docs/reference/errors/#fs.share.read_only). Ein gesperrter oder fehlender Pool scheitert mit [`fs.share.unavailable`](/de/docs/reference/errors/#fs.share.unavailable).
-- Eine Pflichtanfrage (`required`) verhindert den Start der App, bis sie zugeordnet ist; eine optionale darf `unmapped` bleiben, prüfe also zuerst den Zustand.
+- Eine Pflichtanfrage (`required`) mit `services` verhindert den Start des Backends, bis sie zugeordnet ist: `app.context.backend` ist dann `unavailable` mit `reason: 'storage'`. Eine optionale darf `unmapped` bleiben, prüfe also zuerst den Zustand.
 
 ## Dateien in freigegebenen Ordnern
 

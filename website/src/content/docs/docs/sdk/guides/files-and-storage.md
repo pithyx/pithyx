@@ -159,7 +159,7 @@ A storage request names a place the app needs. At install an administrator maps 
 - `app.context.storage` lists each request with its `state` (`ready`, `unmapped`, `locked`, `unavailable`) and `access` (`read`, `readWrite` or `null` while unmapped). The `storageChange` event replaces the list when a mapping changes or a pool is locked or comes back.
 - A storage request needs no `files.*` permission. The app never gets more than the request's `access` and the mapping allow, and the user's own rights on the folder still apply.
 - An unmapped request fails with [`app.storage.not_found`](/docs/reference/errors/#app.storage.not_found). Writing where the mapping or the user allows only reading fails with [`fs.share.read_only`](/docs/reference/errors/#fs.share.read_only). A locked or missing pool fails with [`fs.share.unavailable`](/docs/reference/errors/#fs.share.unavailable).
-- A required request keeps the app from starting until it is mapped; an optional one may stay `unmapped`, so check the state first.
+- A required request with `services` keeps the backend from starting until it is mapped: `app.context.backend` is then `unavailable` with `reason: 'storage'`. An optional one may stay `unmapped`, so check the state first.
 
 ## Files in shared folders
 

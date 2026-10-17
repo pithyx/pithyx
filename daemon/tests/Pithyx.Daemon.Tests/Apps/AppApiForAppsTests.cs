@@ -575,6 +575,31 @@ public sealed class AppApiForAppsTests : IAsyncLifetime
         socket.Dispose();
     }
 
+    [Fact]
+    public async Task ABackendWaitingForARequiredFolderIsUnavailableWithItsReason()
+    {
+        await InstallAsync(AppA, "");
+        await _factory.ScalarAsync<long>("UPDATE apps SET manifest = json_set(manifest, '$.backend', json(@Backend), '$.storage', json(@Clips)) WHERE id = @AppA RETURNING 1",
+            new { Backend, AppA, Clips = """[{ "id": "clips", "name": { "en": "Clips" }, "access": "readWrite", "required": true, "services": ["web"] }]""" });
+        await Registry.ReloadAsync(Token);
+        var contexts = _factory.Services.GetRequiredService<AppContexts>();
+        var admin = JobTestSupport.Principal(_adminId, admin: true);
+
+        var waiting = contexts.For(admin, contexts.SourceOf(AppA))!.Backend!;
+        Assert.Equal((Pithyx.Daemon.Apps.Proxy.AppBackends.Unavailable, Pithyx.Daemon.Apps.Proxy.AppBackends.ReasonStorage), (waiting.Status, waiting.Reason));
+
+        var root = Directory.CreateDirectory(Path.Combine(_factory.DataDirectory, "pool", "clips")).FullName;
+        long share;
+        using (var created = await _admin.PostAsJsonAsync("/api/shares", new { name = "Clips", path = root }, Token))
+        {
+            share = (await created.JsonAsync()).GetProperty("id").GetInt64();
+        }
+        await _factory.ScalarAsync<long>("INSERT INTO storage_mappings (app_id, storage_id, share_id, path, access) VALUES (@AppA, 'clips', @share, '', 'readWrite') RETURNING 1", new { AppA, share });
+        await Registry.ReloadAsync(Token);
+        var ready = contexts.For(admin, contexts.SourceOf(AppA))!.Backend!;
+        Assert.Equal((Pithyx.Daemon.Apps.Proxy.AppBackends.Stopped, (string?)null), (ready.Status, ready.Reason));
+    }
+
     private async Task<System.Net.WebSockets.WebSocket> ConnectAsync(string cookie)
     {
         var client = _factory.Server.CreateWebSocketClient();

@@ -455,7 +455,7 @@ describe.each(transports)('over the %s transport', (_, pair) => {
     const { host, app } = connectTo(
       {},
       {
-        backend: { status: 'stopped', endpoints: ['api'] },
+        backend: { status: 'unavailable', reason: 'storage', endpoints: ['api'] },
         storage: [{ id: 'library', state: 'unmapped', access: null }],
       },
     );
@@ -484,6 +484,7 @@ describe.each(transports)('over the %s transport', (_, pair) => {
       storage: [{ id: 'library', state: 'ready', access: 'read' }],
       permissions: ['notifications', 'directory.read'],
     });
+    expect(connected.context.backend).toEqual({ status: 'running', endpoints: ['api'] });
 
     const { host: other, app: withoutBackend } = connectTo({});
     const plain = await withoutBackend;

@@ -25,7 +25,7 @@ Open `http://127.0.0.1:7400/`. After a change, rebuild the frontend and reload; 
 - **Theme, accent, locale and time zone:** sends `themeChange` or `localeChange`. Locales are `en-US`, `en-GB`, `de-DE`, `de-AT`, `fr-FR` and `ja-JP`.
 - **Size class:** `compact`, `medium` or `expanded`, with `sizeClassChange`.
 - **Online and debug log:** `connectionChange` and `logLevelChange`.
-- **Backend status and storage states:** `backendStatus` and `storageChange`.
+- **Backend status and storage states:** `backendStatus` (also `unavailable` with the reasons `storage` and `pool`) and `storageChange`.
 - **Permissions:** one switch per permission of the manifest, each sends `permissionsChange`.
 - **Window:** close (asks `beforeClose`), reload, `focus`, `blur`, open a file (`openFile`), the four `beforeUnload` reasons, and minimize from the title bar.
 - **Events:** every event with editable sample data, to send what the box would.

@@ -135,7 +135,7 @@ render();
 
 ## Laden
 
-Bis deine App verbunden ist, zeigt ihr Fenster einen Platzhalter, den der Desktop zeichnet: dein Icon und deinen Namen und nach 300 ms einen laufenden Balken. Dafür schreibst du keinen Code. Während dein Backend startet (`backend.status` ist `starting`, etwa beim ersten Öffnen, nachdem es sich im Leerlauf beendet hat), sagt eine Zeile das: "<Name> wird gestartet ..." in der Sprache des Benutzers, oder dein eigener `window.loading.text` aus dem Manifest.
+Bis deine App verbunden ist, zeigt ihr Fenster einen Platzhalter, den der Desktop zeichnet: dein Icon und deinen Namen und nach 300 ms einen laufenden Balken. Dafür schreibst du keinen Code. Während dein Backend startet (`backend.status` ist `starting`, etwa beim ersten Öffnen, nachdem es sich im Leerlauf beendet hat), sagt eine Zeile das: "<Name> wird gestartet ..." in der Sprache des Benutzers, oder dein eigener `window.loading.text` aus dem Manifest. Ein Backend, das nicht starten kann, sagt stattdessen warum (`backend.reason`): Es wartet darauf, dass ein Administrator einen Pflichtordner zuordnet, oder sein Pool ist gesperrt oder fehlt.
 
 Wenn deine App zuerst Daten lädt und ein leeres Fenster zeigen würde, setze `window.loading.untilReady` auf `true` und rufe `app.window.ready()` auf, sobald es etwas zu sehen gibt. Der Desktop entfernt den Platzhalter in jedem Fall nach 30 Sekunden, auch wenn `ready` nie kommt. Ohne `untilReady` tut `ready()` nichts. `pithyx dev` zeigt denselben Platzhalter.
 
@@ -150,7 +150,7 @@ Wenn deine App zuerst Daten lädt und ein leeres Fenster zeigen würde, setze `w
 
 ## Der Kontext
 
-`app.context` zu lesen braucht keine Berechtigung und keinen Aufruf. Das SDK aktualisiert diese Felder, bevor es deine Handler aufruft: `theme` (`themeChange`), `language`, `locale`, `timeZone` (`localeChange`), `sizeClass` (`sizeClassChange`), `permissions` (`permissionsChange`), `visible` (`visibilityChange`), `online` (`connectionChange`), `logLevel` (`logLevelChange`), `backend.status` (`backendStatus`) und `storage` (`storageChange`). Lies das Feld, statt eine eigene Kopie zu führen.
+`app.context` zu lesen braucht keine Berechtigung und keinen Aufruf. Das SDK aktualisiert diese Felder, bevor es deine Handler aufruft: `theme` (`themeChange`), `language`, `locale`, `timeZone` (`localeChange`), `sizeClass` (`sizeClassChange`), `permissions` (`permissionsChange`), `visible` (`visibilityChange`), `online` (`connectionChange`), `logLevel` (`logLevelChange`), `backend.status` und `backend.reason` (`backendStatus`) und `storage` (`storageChange`). Lies das Feld, statt eine eigene Kopie zu führen.
 
 - `instance` ist die ID dieses Fensters, eindeutig pro Desktop-Tab.
 - `user` hat `id`, `name`, `displayName`, `groups`, `isAdmin` und `twoFactor`. Das ist zur Anzeige da; ein Backend nutzt stattdessen die Header des Proxys.
@@ -171,20 +171,20 @@ Der Desktop fügt jeder Benachrichtigung einer App einen eigenen Knopf **Öffnen
 
 ## Ereignisse
 
-| Ereignis                       | Wann                                                                                                            |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------------- |
-| `focus`, `blur`                | das Fenster bekam oder verlor den Fokus                                                                         |
-| `minimize`, `restore`          | das Fenster wurde minimiert oder wieder gezeigt                                                                 |
-| `visibilityChange`             | das Fenster ist sichtbar oder nicht: minimiert, oder der Browser-Tab verborgen                                  |
-| `connectionChange`             | der Desktop verlor oder bekam die Verbindung zur Box zurück                                                     |
-| `sizeClassChange`              | das Fenster überschritt 600 oder 1024 px                                                                        |
-| `themeChange`, `localeChange`  | siehe [Sprachen und Darstellung](/de/docs/sdk/guides/i18n-and-theming/)                                         |
-| `permissionsChange`            | siehe [Berechtigungen](/de/docs/sdk/guides/permissions/)                                                        |
-| `storageChange`                | eine Speicherzuordnung änderte sich oder ihr Pool wurde gesperrt oder kam zurück                                |
-| `backendStatus`                | das Backend ist `stopped`, `starting`, `running`, `updating` oder `unavailable`                                 |
-| `logLevelChange`               | ein Administrator schaltete das Debug-Logging der App um                                                        |
-| `appUpdated`                   | eine andere Version ist installiert (Update oder Zurücksetzen); neu laden, um sie zu nutzen, nach dem Speichern |
-| `launch`, `notificationAction` | siehe oben                                                                                                      |
+| Ereignis                       | Wann                                                                                                                                            |
+| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| `focus`, `blur`                | das Fenster bekam oder verlor den Fokus                                                                                                         |
+| `minimize`, `restore`          | das Fenster wurde minimiert oder wieder gezeigt                                                                                                 |
+| `visibilityChange`             | das Fenster ist sichtbar oder nicht: minimiert, oder der Browser-Tab verborgen                                                                  |
+| `connectionChange`             | der Desktop verlor oder bekam die Verbindung zur Box zurück                                                                                     |
+| `sizeClassChange`              | das Fenster überschritt 600 oder 1024 px                                                                                                        |
+| `themeChange`, `localeChange`  | siehe [Sprachen und Darstellung](/de/docs/sdk/guides/i18n-and-theming/)                                                                         |
+| `permissionsChange`            | siehe [Berechtigungen](/de/docs/sdk/guides/permissions/)                                                                                        |
+| `storageChange`                | eine Speicherzuordnung änderte sich oder ihr Pool wurde gesperrt oder kam zurück                                                                |
+| `backendStatus`                | das Backend ist `stopped`, `starting`, `running`, `updating` oder `unavailable`, mit `reason` `storage` oder `pool`, wenn es nicht starten kann |
+| `logLevelChange`               | ein Administrator schaltete das Debug-Logging der App um                                                                                        |
+| `appUpdated`                   | eine andere Version ist installiert (Update oder Zurücksetzen); neu laden, um sie zu nutzen, nach dem Speichern                                 |
+| `launch`, `notificationAction` | siehe oben                                                                                                                                      |
 
 `app.on` liefert eine Funktion, die den Handler wieder entfernt. Handler laufen in der Reihenfolge, in der sie hinzugefügt wurden. Ereignisse, die die App nicht kennt, werden ignoriert; neue Ereignisse brechen also keine App.
 

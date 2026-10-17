@@ -82,16 +82,24 @@ export interface GroupRef {
 
 /**
  * The state of the app's backend: `stopped` (not running, for example an `onDemand` backend without windows),
- * `starting`, `running`, `updating` (a new version is being installed) or `unavailable` (it failed or its pool is
- * locked or missing). A request to a `stopped` or `starting` backend wakes it and waits until it runs (at most 30
+ * `starting`, `running`, `updating` (a new version is being installed) or `unavailable` (it failed, or it cannot start
+ * and `reason` says why). A request to a `stopped` or `starting` backend wakes it and waits until it runs (at most 30
  * seconds); while it is `updating` or `unavailable` the proxy answers 503 `app.backend.unavailable`.
  */
 export type BackendStatus = 'stopped' | 'starting' | 'running' | 'updating' | 'unavailable';
+
+/**
+ * Why an `unavailable` backend cannot start until an administrator acts: `storage` (a required storage request has no
+ * folder yet; `context.storage` shows it as `unmapped`) or `pool` (the app pool is locked or missing).
+ */
+export type BackendUnavailableReason = 'storage' | 'pool';
 
 /** The app's backend, as the window sees it. */
 export interface BackendInfo {
   /** Whether the backend runs; `backendStatus` follows it. */
   status: BackendStatus;
+  /** Why the backend cannot start, only while it is `unavailable` for that reason; `backendStatus` follows it. */
+  reason?: BackendUnavailableReason;
   /** The names of the endpoints the manifest declares under `backend.endpoints`; `api` is the default one. */
   endpoints: string[];
 }
@@ -575,10 +583,12 @@ export interface Events {
     /** Whether the desktop reaches the box. */
     online: boolean;
   };
-  /** The backend's status changed. The SDK updates `context.backend.status`. */
+  /** The backend's status changed. The SDK updates `context.backend.status` and `context.backend.reason`. */
   backendStatus: {
     /** The new status. */
     status: BackendStatus;
+    /** Why the backend cannot start, only while it is `unavailable` for that reason. */
+    reason?: BackendUnavailableReason;
   };
   /**
    * An administrator granted or revoked permissions of the app; `permissions` is the complete new list. The SDK

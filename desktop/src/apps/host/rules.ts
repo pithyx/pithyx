@@ -135,8 +135,8 @@ export interface ContextState {
   permissions: readonly string[];
   logLevel: 'debug' | 'info';
   storage: readonly StorageInfo[];
-  /** The backend's status, or null for an app without a backend. */
-  backend?: { status: string } | null;
+  /** The backend's status and why it cannot start, or null for an app without a backend. */
+  backend?: { status: string; reason?: string | null } | null;
 }
 
 /**
@@ -166,8 +166,13 @@ export function contextChanges(
     });
   }
   const status = next.backend?.status;
-  if (status !== undefined && status !== previous.backend?.status) {
-    events.push({ event: 'backendStatus', data: { status } });
+  const reason = next.backend?.reason ?? undefined;
+  const previousReason = previous.backend?.reason ?? undefined;
+  if (status !== undefined && (status !== previous.backend?.status || reason !== previousReason)) {
+    events.push({
+      event: 'backendStatus',
+      data: reason === undefined ? { status } : { status, reason },
+    });
   }
   if (
     next.version !== undefined &&
@@ -179,12 +184,16 @@ export function contextChanges(
   return permissionsChanged ? { permissions, events } : { events };
 }
 
-/** What the loading placeholder of an app window shows: nothing, the app's icon and name, or also the backend's start. */
-export type LoadingPhase = 'ready' | 'loading' | 'starting';
+/**
+ * What the loading placeholder of an app window shows: nothing, the app's icon and name, also the backend's start, or
+ * why the backend cannot start (D360).
+ */
+export type LoadingPhase = 'ready' | 'loading' | 'starting' | 'storage' | 'pool';
 
 /**
  * The placeholder stays until the app connected, or with the manifest's `window.loading.untilReady` until it called
- * `window.ready`, and at most until its time is up (D354). While it shows, a starting backend gets its line of text.
+ * `window.ready`, and at most until its time is up (D354). While it shows, a starting backend gets its line of text,
+ * and one that cannot start says why.
  */
 export function loadingPhase(state: {
   connected: boolean;
@@ -192,9 +201,16 @@ export function loadingPhase(state: {
   untilReady: boolean;
   timedOut: boolean;
   backendStatus: string | undefined;
+  backendReason?: string | null | undefined;
 }): LoadingPhase {
   if (state.timedOut || (state.connected && (!state.untilReady || state.appReady))) {
     return 'ready';
+  }
+  if (
+    state.backendStatus === 'unavailable' &&
+    (state.backendReason === 'storage' || state.backendReason === 'pool')
+  ) {
+    return state.backendReason;
   }
   return state.backendStatus === 'starting' ? 'starting' : 'loading';
 }

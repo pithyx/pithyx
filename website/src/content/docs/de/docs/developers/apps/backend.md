@@ -81,8 +81,8 @@ Ein Backend kann diesen Headern nur vertrauen, weil es ausschließlich über den
 
 - Jede App hat ein Dataset auf dem App-Pool, den der Administrator bei der ersten Installation gewählt hat: `/<pool>/.pithyx/apps/<id>/` mit `versions/<version>`, `volumes/` und Laufzeitdateien. Die eigenen Daten von Docker liegen auf demselben Pool. Auf der Systemfestplatte wird nichts gespeichert.
 - Deklariere `volumes:` auf oberster Ebene in Compose und hänge sie per Namen ein; sie werden zu Ordnern, die der Benutzer-ID der App gehören.
-- Speicheranforderungen aus dem Manifest erscheinen als Compose-Volume mit der `id` der Anforderung. Eine optionale Anforderung, die niemand zugeordnet hat, wird zu einem Ordner im Dataset der App. Eine erforderliche, nicht zugeordnete Anforderung verhindert den Start des Backends.
-- Ist der Pool gesperrt oder fehlt er, startet das Backend nicht, und der Store nennt den Grund.
+- Speicheranforderungen aus dem Manifest erscheinen als Compose-Volume mit der `id` der Anforderung. Eine optionale Anforderung, die niemand zugeordnet hat, wird zu einem Ordner im Dataset der App. Eine erforderliche, nicht zugeordnete Anforderung verhindert den Start des Backends; das Fenster sieht dann `unavailable` mit dem Grund `storage`.
+- Ist der Pool gesperrt oder fehlt er, startet das Backend nicht, der Store nennt den Grund, und das Fenster sieht `unavailable` mit dem Grund `pool`.
 - Ein Update erstellt einen Snapshot des Datasets; ein Rollback stellt ihn wieder her. Bei der Deinstallation wählt der Administrator, ob die Daten behalten werden.
 - `app.storage` des SDK (Schlüssel-Wert-Speicher pro Benutzer) ist davon getrennt: Schlüssel bis 128 Zeichen, Werte bis 64 KB, 1 MB pro Benutzer und App.
 
@@ -108,7 +108,7 @@ Ein Backend kann diesen Headern nur vertrauen, weil es ausschließlich über den
 - Health: Nimm lieber den `health` des Manifests (eine HTTP-Prüfung durch den Daemon, während des Starts alle 100 ms) als einen Compose-`healthcheck`. Eine Compose-Prüfung startet bei jedem Intervall einen Prozess im Container, und `up --wait` wartet auf ihren ersten Erfolg. Gemessen mit einem kleinen Node-Backend auf der Box: Ein Kaltstart dauerte 2,5 Sekunden mit einer Node-Prüfung jede Sekunde während `start_period` und 1,05 Sekunden nur mit dem `health` des Manifests; im Leerlauf kostete die Compose-Prüfung etwa 2 Prozent eines Kerns (im Container und in Docker), ohne sie etwa 0,15 Prozent. `pithyx validate` warnt vor einem Compose-`healthcheck` neben `health` (`cli.compose.healthcheck_redundant`). Ein `HEALTHCHECK` des Images läuft ebenfalls; schalte ihn mit `healthcheck: { disable: true }` ab.
 - Ein Browser auf der Box selbst sieht jeden Start eines Backends als Änderung des Netzwerks (Docker hängt den Container an die Bridge der App), und Chromium bricht laufende Anfragen mit `net::ERR_NETWORK_CHANGED` ab. Browser auf anderen Geräten sehen das nicht. Lade neu, wenn `backendStatus` zu `running` wird (siehe die Sonderfälle im [Backend-Guide](/de/docs/sdk/guides/backend/)).
 - Zeitpläne wecken das Backend ohne Fenster, rufen `POST path` auf (das Backend bleibt dafür bis zu 10 Minuten gehalten) und lassen es dann leerlaufen.
-- Das Fenster sieht den Status `stopped`, `starting`, `running`, `updating` oder `unavailable` (SDK-Ereignis `backendStatus`).
+- Das Fenster sieht den Status `stopped`, `starting`, `running`, `updating` oder `unavailable`, mit dem Grund `storage` oder `pool`, wenn es nicht starten kann (SDK-Ereignis `backendStatus`).
 - Docker startet nur, solange eine Backend-App installiert und ihr Pool eingehängt ist.
 
 Pithyx hat kein Keep-alive-Lease für Hintergrundarbeit; nutze `always` oder Zeitpläne.

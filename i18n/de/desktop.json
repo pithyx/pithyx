@@ -278,7 +278,9 @@
     },
     "loading": {
       "label": "{name} wird geladen",
-      "starting": "{name} wird gestartet ..."
+      "starting": "{name} wird gestartet ...",
+      "storage": "{name} kann erst starten, wenn ein Administrator im Store einen Ordner dafür wählt.",
+      "pool": "{name} kann nicht starten, weil sein Pool gesperrt ist oder fehlt."
     }
   }
 }

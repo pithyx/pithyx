@@ -5,6 +5,7 @@ import {
   SDK_VERSION,
   type AppContext,
   type BackendStatus,
+  type BackendUnavailableReason,
   type SizeClass,
 } from '@pithyx/sdk';
 import i18next from 'i18next';
@@ -81,6 +82,9 @@ export function appContext(options: {
         ? null
         : {
             status: options.daemon.backend.status as BackendStatus,
+            ...(options.daemon.backend.reason == null
+              ? {}
+              : { reason: options.daemon.backend.reason as BackendUnavailableReason }),
             endpoints: [...options.daemon.backend.endpoints],
           },
     storage: options.daemon === undefined ? [] : storageOf(options.daemon),

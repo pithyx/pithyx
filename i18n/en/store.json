@@ -172,7 +172,7 @@
     "newPermission": "New",
     "dropped": "No longer asked for: {permissions}",
     "storage": "Folders it asks for",
-    "storageHint": "Map them to folders after the install.",
+    "storageHint": "You map them to folders when the app is installed.",
     "backend": {
       "yes": "Brings its own background service in containers.",
       "no": "Runs in the browser only, without a background service."
@@ -193,6 +193,7 @@
     "running": "Installing {name}",
     "updating": "Updating {name}",
     "installed": "{name} is installed.",
+    "mapFolders": "{name} cannot start until each required folder is mapped. Map them now or later on the app's page.",
     "updated": "{name} is updated.",
     "stopped": "The installation stopped.",
     "fromCatalog": "From the catalog {catalog}, checked against its signature.",

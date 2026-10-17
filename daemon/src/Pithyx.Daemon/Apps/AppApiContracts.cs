@@ -127,9 +127,13 @@ public enum AppStorageState
 public sealed record AppStorageInfo(string Id, AppStorageState State, Shares.ShareAccess? Access);
 
 /// <summary>The app's backend: the state of its containers and the names of its endpoints.</summary>
-/// <param name="Status"><c>stopped</c>, <c>starting</c>, <c>running</c>, <c>updating</c> or <c>unavailable</c> (a start failed, or a container is unhealthy or ended); the proxy reaches the backend while it is <c>running</c> or <c>unavailable</c> after a health check.</param>
+/// <param name="Status"><c>stopped</c>, <c>starting</c>, <c>running</c>, <c>updating</c> or <c>unavailable</c> (a start failed, a container is unhealthy or ended, or it cannot start, see <paramref name="Reason"/>); the proxy reaches the backend while it is <c>running</c> or <c>unavailable</c> after a health check.</param>
 /// <param name="Endpoints">The endpoint names of the manifest, sorted.</param>
-public sealed record AppBackendInfo(string Status, IReadOnlyList<string> Endpoints);
+/// <param name="Reason">
+/// Why a backend that is not running cannot start, which makes it <c>unavailable</c> (D360): <c>storage</c> (a required
+/// storage request is not mapped) or <c>pool</c> (the app pool is locked or missing); null otherwise.
+/// </param>
+public sealed record AppBackendInfo(string Status, IReadOnlyList<string> Endpoints, string? Reason = null);
 
 /// <summary>
 /// The per-user topic <c>apps/&lt;id&gt;/context</c>: what the daemon decides about an app for the subscriber, who may
