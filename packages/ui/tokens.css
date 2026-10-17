@@ -265,3 +265,39 @@
   --color-accent-contrast: light-dark(#ffffff, #14191e);
   --color-accent-subtle: light-dark(#eef0f2, #2c343c);
 }
+
+/*
+ * In a third-party app the SDK sets data-pithyx-theme on the root and the desktop's look as --pithyx-* properties
+ * (applyTheme). The components then take the desktop's colors and fonts, so an app follows its accent and surfaces
+ * without code; the scheme already follows through color-scheme. Tokens built from these with var() follow as well.
+ */
+:root[data-pithyx-theme] {
+  --color-bg: var(--pithyx-color-background);
+  --color-surface-1: var(--pithyx-color-surface);
+  --color-menu-solid: var(--pithyx-color-surface-raised);
+  --color-surface-hover: var(--pithyx-color-hover);
+  --color-selection: var(--pithyx-color-selected);
+  --color-text: var(--pithyx-color-text);
+  --color-text-muted: var(--pithyx-color-text-muted);
+  --color-border: var(--pithyx-color-border);
+  --color-accent: var(--pithyx-color-accent);
+  --color-accent-contrast: var(--pithyx-color-accent-text);
+  /* The presets' hover, pressed and subtle shades, derived: toward the text color, which is dark in light and light in dark. */
+  --color-accent-hover: color-mix(
+    in oklab,
+    var(--pithyx-color-accent) 85%,
+    var(--pithyx-color-text)
+  );
+  --color-accent-pressed: color-mix(
+    in oklab,
+    var(--pithyx-color-accent) 70%,
+    var(--pithyx-color-text)
+  );
+  --color-accent-subtle: var(--pithyx-color-selected);
+  --color-focus: var(--pithyx-color-focus);
+  --color-success: var(--pithyx-color-success);
+  --color-warning: var(--pithyx-color-warning);
+  --color-danger: var(--pithyx-color-danger);
+  --font-sans: var(--pithyx-font-ui);
+  --font-mono: var(--pithyx-font-mono);
+}

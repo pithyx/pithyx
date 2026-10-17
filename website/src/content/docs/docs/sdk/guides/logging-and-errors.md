@@ -158,7 +158,7 @@ A timed-out call may still have happened on the box. Retry only calls that are s
 
 The app translates the codes it expects with its own texts, using `params` for the placeholders, and falls back to a general message. `detail` is English and meant for logs. Log the `requestId` instead of showing it: it lets an administrator find the request in the Log Center.
 
-`app.ui.showError(error)` shows the desktop's own error dialog with the translated text. Check `app.supports('ui.showError')` as the example does: an older desktop may not serve it and answers [`sdk.method.unknown`](/docs/reference/errors/#sdk.method.unknown). The mock desktop of `pithyx dev` serves it and writes the code to its log.
+`app.ui.showError(error)` shows the desktop's own error dialog with the translated text. The desktop translates the daemon's and the SDK's codes; for a code of your own it shows the error's `detail`, so give it one in the user's language (`new PithyxError({ code: 'lists.list.full', params: {}, detail: t('errors.listFull') })`). The request id goes to the browser console, never into the dialog. Check `app.supports('ui.showError')` as the example does: an older desktop may not serve it and answers [`sdk.method.unknown`](/docs/reference/errors/#sdk.method.unknown). The mock desktop of `pithyx dev` serves it and writes the code to its log.
 
 ## Edge cases
 

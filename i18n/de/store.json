@@ -162,6 +162,7 @@
     "by": "von {author}",
     "size": "{files, plural, one {# Datei} other {# Dateien}}, {size}",
     "unverified": "Dieses Paket stammt aus einer Datei und ist nicht geprüft. Installiere nur Apps von Entwicklern, denen du vertraust.",
+    "keptData": "Diese App war schon einmal installiert, und ihre Daten wurden behalten. Sie bekommt diese Daten und ihre Benutzer-ID zurück.",
     "permissions": "Berechtigungen, nach denen sie fragt",
     "noPermissions": "Die App fragt nach keinen Berechtigungen.",
     "newPermission": "Neu",

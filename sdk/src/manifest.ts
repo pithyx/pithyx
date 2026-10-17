@@ -27,6 +27,7 @@ export type {
   LocalizedText,
   Permission,
   StorageRequest,
+  WindowLoading,
   WindowManifest,
   WindowSize,
 } from './manifest.generated';

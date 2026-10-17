@@ -22,6 +22,8 @@ Eine App bekommt genau die Berechtigungen, die sie in `pithyx.json` deklariert u
 
 Alles andere braucht keine Berechtigung: der Kontext, Fensteraufrufe, `app.storage`, `app.session`, Logs, das Backend und Speicheranfragen, die der Administrator zugeordnet hat. Welche Benutzer die App überhaupt öffnen dürfen, ist eine eigene Freigabe pro Benutzer und Gruppe, keine Berechtigung der App.
 
+Wer `directory.read` verlangt, bekommt im Installationsdialog den Vorschlag "nur Administratoren", wie bei root-Containern und Sonderrechten; verlange es nur, wenn die App wirklich die Namen aller braucht.
+
 ## Beispiel
 
 Das Manifest deklariert `"permissions": ["notifications", "directory.read"]`. Das Board funktioniert ohne beide und bietet mit ihnen mehr:

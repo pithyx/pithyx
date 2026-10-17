@@ -60,17 +60,19 @@ The path after the prefix is forwarded. The SDK offers `app.backend.fetch(path, 
 
 The proxy strips `Cookie`, `Authorization`, `Proxy-Authorization`, `Referer`, `Forwarded`, any `X-Pithyx-*` and `X-Forwarded-*` header and the `pithyx-token` and `pithyx-ticket` query parameters from the incoming request. It then sets:
 
-| Header                               | Value                                       |
-| ------------------------------------ | ------------------------------------------- |
-| `X-Pithyx-User`                      | the user name                               |
-| `X-Pithyx-User-Id`                   | the user id                                 |
-| `X-Pithyx-Groups`                    | the group names, comma separated            |
-| `X-Pithyx-Admin`                     | `true` or `false`                           |
-| `traceparent`                        | the trace of the request                    |
-| `X-Forwarded-Prefix`                 | `/apps/<id>/api` or `/apps/<id>/api-<name>` |
-| `X-Forwarded-For`, `-Host`, `-Proto` | the original client and host                |
+| Header                               | Value                                                                                                         |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| `X-Pithyx-User`                      | the user name                                                                                                 |
+| `X-Pithyx-User-Id`                   | the user id: the Linux uid, the same as `context.user.id` and `DirectoryUser.id`, never given to another user |
+| `X-Pithyx-Groups`                    | the group names, comma separated                                                                              |
+| `X-Pithyx-Admin`                     | `true` or `false`                                                                                             |
+| `traceparent`                        | the trace of the request                                                                                      |
+| `X-Forwarded-Prefix`                 | `/apps/<id>/api` or `/apps/<id>/api-<name>`                                                                   |
+| `X-Forwarded-For`, `-Host`, `-Proto` | the original client and host                                                                                  |
 
 A backend can trust these headers only because it is reachable solely through the proxy.
+
+**Schedules.** A schedule's call does not come through the proxy and has no user: the daemon sends `POST <path>` with an empty body and only `X-Pithyx-Schedule: <schedule id>` and `traceparent`, without any user header. Because the proxy strips every incoming `X-Pithyx-*` header, a request from a window can never carry `X-Pithyx-Schedule`, so a backend can rely on it: accept a schedule path only with that header, and answer it without one with 403. A run shows in the Log Center (source `daemon`, with its status code), not in the job list.
 
 **Tokens.** The desktop requests them with `POST /api/apps/{appId}/tokens` (cookie and CSRF header). A token lasts 5 minutes, has 256 random bits and is bound to the user, session, app and window. `host` tokens work only for `/api/app/**`, `backend` tokens only for the proxy. A ticket is valid for 30 seconds and one use. Every use checks the session, user and grant again; revoking a permission or signing out closes proxied sockets. Tokens and tickets are masked in logs.
 
@@ -96,9 +98,11 @@ A backend can trust these headers only because it is reachable solely through th
 
 - **always:** runs whenever it can.
 - **onDemand:** runs while a user holds a window lease, a request or a schedule holds it, and for `idleTimeout` seconds (default 600) after the last one. The desktop subscribes to the topic `apps/<id>/context` once per app and tab; closing the last window ends the lease at once, and a lost connection keeps it for 2 minutes.
+- Installing or updating an app starts an `onDemand` backend once, so a broken backend fails the install; it then idles out after `idleTimeout` like after a closed window.
 - A failed start is retried after 1 minute; opening a window retries at once.
 - Start timeouts: Compose `up --wait` waits up to 10 minutes, then the manifest's health check up to 60 seconds.
-- Stop: `docker compose down --timeout 30`. Containers get SIGTERM and are killed after 30 seconds; volumes and images stay.
+- Stop: `docker compose down --timeout 30`. Containers get their `stop_signal` (SIGTERM by default) and are killed after 30 seconds; the timeout replaces a `stop_grace_period` of the Compose file. Volumes and images stay.
+- Health: prefer the manifest's `health` (an HTTP check the daemon makes) to a Compose `healthcheck`. A Compose check starts a process in the container at every interval; in the docs test it was almost all of an idle backend's CPU time.
 - Schedules wake the backend without a window, call `POST path` (holding the backend for up to 10 minutes) and then let it idle.
 - The window sees the status `stopped`, `starting`, `running`, `updating` or `unavailable` (SDK event `backendStatus`).
 - Docker starts only while a backend app is installed and its pool is mounted.
