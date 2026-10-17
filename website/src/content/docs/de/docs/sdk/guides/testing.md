@@ -25,7 +25,7 @@ npx pithyx dev --no-docker                           # kein Backend; seine Endpu
 - **Darstellung, Akzent, Locale und Zeitzone:** sendet `themeChange` oder `localeChange`. Locales sind `en-US`, `en-GB`, `de-DE`, `de-AT`, `fr-FR` und `ja-JP`.
 - **Größenklasse:** `compact`, `medium` oder `expanded`, mit `sizeClassChange`.
 - **Online und Debug-Log:** `connectionChange` und `logLevelChange`.
-- **Backend-Zustand und Speicherzustände:** `backendStatus` und `storageChange`.
+- **Backend-Zustand und Speicherzustände:** `backendStatus` (auch `unavailable` mit den Gründen `storage` und `pool`) und `storageChange`.
 - **Berechtigungen:** ein Schalter pro Berechtigung des Manifests, jeder sendet `permissionsChange`.
 - **Fenster:** schließen (fragt `beforeClose`), neu laden, `focus`, `blur`, eine Datei öffnen (`openFile`), die vier Gründe von `beforeUnload` und minimieren in der Titelleiste.
 - **Ereignisse:** jedes Ereignis mit bearbeitbaren Beispieldaten, um zu senden, was die Box senden würde.

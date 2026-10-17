@@ -135,7 +135,7 @@ render();
 
 ## Loading
 
-Until your app connects, its window shows a placeholder that the desktop draws: your icon and name, and after 300 ms a moving bar. You write no code for it. While your backend starts (`backend.status` is `starting`, for example on the first open after it idled out), a line says so: "Starting <name> ..." in the user's language, or your own `window.loading.text` from the manifest.
+Until your app connects, its window shows a placeholder that the desktop draws: your icon and name, and after 300 ms a moving bar. You write no code for it. While your backend starts (`backend.status` is `starting`, for example on the first open after it idled out), a line says so: "Starting <name> ..." in the user's language, or your own `window.loading.text` from the manifest. A backend that cannot start says why instead (`backend.reason`): it waits for an administrator to map a required folder, or its pool is locked or missing.
 
 If your app first loads data and would show an empty window, set `window.loading.untilReady` to `true` and call `app.window.ready()` once there is something to see. The desktop removes the placeholder after 30 seconds in any case, also when `ready` never comes. Without `untilReady`, `ready()` does nothing. `pithyx dev` shows the same placeholder.
 
@@ -150,7 +150,7 @@ If your app first loads data and would show an empty window, set `window.loading
 
 ## The context
 
-Reading `app.context` needs no permission and no call. The SDK updates these fields before it calls your handlers: `theme` (`themeChange`), `language`, `locale`, `timeZone` (`localeChange`), `sizeClass` (`sizeClassChange`), `permissions` (`permissionsChange`), `visible` (`visibilityChange`), `online` (`connectionChange`), `logLevel` (`logLevelChange`), `backend.status` (`backendStatus`) and `storage` (`storageChange`). Read the field instead of keeping your own copy.
+Reading `app.context` needs no permission and no call. The SDK updates these fields before it calls your handlers: `theme` (`themeChange`), `language`, `locale`, `timeZone` (`localeChange`), `sizeClass` (`sizeClassChange`), `permissions` (`permissionsChange`), `visible` (`visibilityChange`), `online` (`connectionChange`), `logLevel` (`logLevelChange`), `backend.status` and `backend.reason` (`backendStatus`) and `storage` (`storageChange`). Read the field instead of keeping your own copy.
 
 - `instance` is the id of this window, unique per desktop tab.
 - `user` has `id`, `name`, `displayName`, `groups`, `isAdmin` and `twoFactor`. It is for display; a backend must use the proxy's headers instead.
@@ -171,20 +171,20 @@ The desktop adds its own **Open** button to every notification of an app, next t
 
 ## Events
 
-| Event                          | When                                                                                   |
-| ------------------------------ | -------------------------------------------------------------------------------------- |
-| `focus`, `blur`                | the window gained or lost the focus                                                    |
-| `minimize`, `restore`          | the window was minimized or shown again                                                |
-| `visibilityChange`             | the window can or cannot be seen: minimized, or the browser tab hidden                 |
-| `connectionChange`             | the desktop lost or regained the connection to the box                                 |
-| `sizeClassChange`              | the window crossed 600 or 1024 px                                                      |
-| `themeChange`, `localeChange`  | see [Languages and theming](/docs/sdk/guides/i18n-and-theming/)                        |
-| `permissionsChange`            | see [Permissions](/docs/sdk/guides/permissions/)                                       |
-| `storageChange`                | a storage mapping changed or its pool was locked or came back                          |
-| `backendStatus`                | the backend is `stopped`, `starting`, `running`, `updating` or `unavailable`           |
-| `logLevelChange`               | an administrator switched debug logging for the app                                    |
-| `appUpdated`                   | another version is installed (an update or a rollback); reload to use it, after saving |
-| `launch`, `notificationAction` | see above                                                                              |
+| Event                          | When                                                                                                                                 |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
+| `focus`, `blur`                | the window gained or lost the focus                                                                                                  |
+| `minimize`, `restore`          | the window was minimized or shown again                                                                                              |
+| `visibilityChange`             | the window can or cannot be seen: minimized, or the browser tab hidden                                                               |
+| `connectionChange`             | the desktop lost or regained the connection to the box                                                                               |
+| `sizeClassChange`              | the window crossed 600 or 1024 px                                                                                                    |
+| `themeChange`, `localeChange`  | see [Languages and theming](/docs/sdk/guides/i18n-and-theming/)                                                                      |
+| `permissionsChange`            | see [Permissions](/docs/sdk/guides/permissions/)                                                                                     |
+| `storageChange`                | a storage mapping changed or its pool was locked or came back                                                                        |
+| `backendStatus`                | the backend is `stopped`, `starting`, `running`, `updating` or `unavailable`, with `reason` `storage` or `pool` when it cannot start |
+| `logLevelChange`               | an administrator switched debug logging for the app                                                                                  |
+| `appUpdated`                   | another version is installed (an update or a rollback); reload to use it, after saving                                               |
+| `launch`, `notificationAction` | see above                                                                                                                            |
 
 `app.on` returns a function that removes the handler. Handlers run in the order they were added. Events the app does not know are ignored, so new events never break an app.
 

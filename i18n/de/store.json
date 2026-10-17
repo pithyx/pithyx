@@ -172,7 +172,7 @@
     "newPermission": "Neu",
     "dropped": "Nicht mehr gefragt: {permissions}",
     "storage": "Ordner, nach denen sie fragt",
-    "storageHint": "Ordne sie nach der Installation Ordnern zu.",
+    "storageHint": "Du ordnest sie Ordnern zu, sobald die App installiert ist.",
     "backend": {
       "yes": "Bringt einen eigenen Hintergrunddienst in Containern mit.",
       "no": "Läuft nur im Browser, ohne Hintergrunddienst."
@@ -193,6 +193,7 @@
     "running": "{name} wird installiert",
     "updating": "{name} wird aktualisiert",
     "installed": "{name} ist installiert.",
+    "mapFolders": "{name} kann erst starten, wenn jeder nötige Ordner zugeordnet ist. Ordne sie jetzt zu oder später auf der Seite der App.",
     "updated": "{name} ist aktualisiert.",
     "stopped": "Die Installation wurde abgebrochen.",
     "fromCatalog": "Aus dem Katalog {catalog}, gegen seine Signatur geprüft.",

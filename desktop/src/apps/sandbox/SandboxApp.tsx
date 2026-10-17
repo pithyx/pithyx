@@ -64,13 +64,14 @@ export function SandboxApp({
   const [connected, setConnected] = useState(false);
   const [appReady, setAppReady] = useState(false);
   const [timedOut, setTimedOut] = useState(false);
-  const [backendStatus, setBackendStatus] = useState<string | undefined>(undefined);
+  const [backend, setBackend] = useState<DaemonAppContext['backend'] | undefined>(undefined);
   const phase = loadingPhase({
     connected,
     appReady,
     untilReady: loading.untilReady,
     timedOut,
-    backendStatus,
+    backendStatus: backend?.status,
+    backendReason: backend?.reason,
   });
 
   async function connect() {
@@ -144,7 +145,7 @@ export function SandboxApp({
     const next = data as DaemonAppContext;
     const previous = daemonContext.current;
     daemonContext.current = next;
-    setBackendStatus(next.backend?.status);
+    setBackend(next.backend);
     if (previous === undefined) {
       if (waiting.current) {
         void connect();
@@ -226,6 +227,10 @@ export function SandboxApp({
                 : manifestText(loading.text, i18n.language)}
             </p>
           )}
+          {phase === 'storage' && (
+            <p className={styles.text}>{t('appHost.loading.storage', { name })}</p>
+          )}
+          {phase === 'pool' && <p className={styles.text}>{t('appHost.loading.pool', { name })}</p>}
         </div>
       )}
     </div>

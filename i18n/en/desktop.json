@@ -278,7 +278,9 @@
     },
     "loading": {
       "label": "{name} is loading",
-      "starting": "Starting {name} ..."
+      "starting": "Starting {name} ...",
+      "storage": "{name} cannot start until an administrator picks a folder for it in the Store.",
+      "pool": "{name} cannot start because its pool is locked or missing."
     }
   }
 }

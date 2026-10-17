@@ -147,6 +147,23 @@ describe('daemon context changes', () => {
       events: [],
     });
   });
+
+  it('tells the app why its backend cannot start and when that ends', () => {
+    const waiting = { ...base, backend: { status: 'unavailable', reason: 'storage' } };
+    expect(
+      contextChanges({ ...base, backend: { status: 'stopped', reason: null } }, waiting),
+    ).toEqual({
+      events: [{ event: 'backendStatus', data: { status: 'unavailable', reason: 'storage' } }],
+    });
+    expect(
+      contextChanges(waiting, { ...base, backend: { status: 'unavailable', reason: 'pool' } }),
+    ).toEqual({
+      events: [{ event: 'backendStatus', data: { status: 'unavailable', reason: 'pool' } }],
+    });
+    expect(contextChanges(waiting, { ...base, backend: { status: 'unavailable' } })).toEqual({
+      events: [{ event: 'backendStatus', data: { status: 'unavailable' } }],
+    });
+  });
 });
 
 describe('loading placeholder', () => {
@@ -163,6 +180,14 @@ describe('loading placeholder', () => {
     expect(loadingPhase({ ...base, backendStatus: 'stopped' })).toBe('loading');
     expect(loadingPhase({ ...base, backendStatus: 'starting' })).toBe('starting');
     expect(loadingPhase({ ...base, connected: true, backendStatus: 'starting' })).toBe('ready');
+  });
+
+  it('says why a backend cannot start', () => {
+    const blocked = { ...base, backendStatus: 'unavailable' };
+    expect(loadingPhase({ ...blocked, backendReason: 'storage' })).toBe('storage');
+    expect(loadingPhase({ ...blocked, backendReason: 'pool' })).toBe('pool');
+    expect(loadingPhase({ ...blocked, backendReason: null })).toBe('loading');
+    expect(loadingPhase({ ...blocked, backendReason: 'storage', connected: true })).toBe('ready');
   });
 
   it('waits for window.ready when the manifest asks for it, but never longer than its time', () => {

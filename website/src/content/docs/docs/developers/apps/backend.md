@@ -81,8 +81,8 @@ A backend can trust these headers only because it is reachable solely through th
 
 - Each app has a dataset on the app pool the administrator picked at the first install: `/<pool>/.pithyx/apps/<id>/` with `versions/<version>`, `volumes/` and run files. Docker's own data is on the same pool. Nothing is stored on the system disk.
 - Declare top-level `volumes:` in Compose and mount them by name; they become folders owned by the app's user id.
-- Manifest `storage` requests appear as a Compose volume with the request's `id`. An optional request that nobody mapped becomes a folder inside the app's dataset. A required, unmapped request stops the backend from starting.
-- If the pool is locked or missing, the backend does not start and the Store says why.
+- Manifest `storage` requests appear as a Compose volume with the request's `id`. An optional request that nobody mapped becomes a folder inside the app's dataset. A required, unmapped request stops the backend from starting; the window then sees `unavailable` with the reason `storage`.
+- If the pool is locked or missing, the backend does not start, the Store says why, and the window sees `unavailable` with the reason `pool`.
 - An update snapshots the dataset; a rollback restores it. On uninstall the administrator chooses whether to keep the data.
 - The SDK's `app.storage` (per user key/value) is separate: keys up to 128 characters, values up to 64 KB, 1 MB per user and app.
 
@@ -108,7 +108,7 @@ A backend can trust these headers only because it is reachable solely through th
 - Health: prefer the manifest's `health` (an HTTP check the daemon makes, every 100 ms while the backend starts) to a Compose `healthcheck`. A Compose check starts a process in the container at every interval, and `up --wait` waits for its first pass. Measured with a small Node backend on the box: a cold start took 2.5 seconds with a Node health check every second during `start_period` and 1.05 seconds with the manifest's `health` only; running idle, the Compose check cost about 2 percent of a core (in the container and in Docker), without it about 0.15 percent. `pithyx validate` warns about a Compose healthcheck next to `health` (`cli.compose.healthcheck_redundant`). An image's own `HEALTHCHECK` also runs; switch it off with `healthcheck: { disable: true }`.
 - A browser on the box itself sees every backend start as a change of the network (Docker attaches the container to the app's bridge), and Chromium aborts the requests in flight with `net::ERR_NETWORK_CHANGED`. Browsers on other devices do not see it. Load again when `backendStatus` becomes `running` (see the edge cases of the [backend guide](/docs/sdk/guides/backend/)).
 - Schedules wake the backend without a window, call `POST path` (holding the backend for up to 10 minutes) and then let it idle.
-- The window sees the status `stopped`, `starting`, `running`, `updating` or `unavailable` (SDK event `backendStatus`).
+- The window sees the status `stopped`, `starting`, `running`, `updating` or `unavailable`, with the reason `storage` or `pool` when it cannot start (SDK event `backendStatus`).
 - Docker starts only while a backend app is installed and its pool is mounted.
 
 Pithyx has no keep-alive lease for background work; use `always` or schedules.

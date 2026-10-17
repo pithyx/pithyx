@@ -2981,7 +2981,12 @@ export type components = {
             backend: null | {
                 /** @description The endpoint names of the manifest, sorted. */
                 endpoints: string[];
-                /** @description `stopped`, `starting`, `running`, `updating` or `unavailable` (a start failed, or a container is unhealthy or ended); the proxy reaches the backend while it is `running` or `unavailable` after a health check. */
+                /**
+                 * @description Why a backend that is not running cannot start, which makes it `unavailable` (D360): `storage` (a required
+                 *     storage request is not mapped) or `pool` (the app pool is locked or missing); null otherwise.
+                 */
+                reason?: null | string;
+                /** @description `stopped`, `starting`, `running`, `updating` or `unavailable` (a start failed, a container is unhealthy or ended, or it cannot start, see Reason); the proxy reaches the backend while it is `running` or `unavailable` after a health check. */
                 status: string;
             };
             /**

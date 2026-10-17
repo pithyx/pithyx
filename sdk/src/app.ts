@@ -26,6 +26,7 @@ import {
   REQUEST_TIMEOUT,
   UNTIMED_METHODS,
   type AppContext,
+  type BackendInfo,
   type BackendToken,
   type ContextMenuItem,
   type DirectoryGroup,
@@ -111,6 +112,15 @@ function mirrorToConsole(level: LogLevel, message: string, data?: LogData) {
   }
 }
 
+/** The backend after `backendStatus`: a reason holds only while the event names one. */
+function backendOf(backend: BackendInfo, change: Events['backendStatus']): BackendInfo {
+  return {
+    status: change.status,
+    ...(change.reason === undefined ? {} : { reason: change.reason }),
+    endpoints: backend.endpoints,
+  };
+}
+
 /** The context after an event: the SDK keeps the values an event changes current. */
 function updatedContext(context: AppContext, event: string, data: unknown): AppContext {
   switch (event) {
@@ -137,7 +147,7 @@ function updatedContext(context: AppContext, event: string, data: unknown): AppC
         ? context
         : {
             ...context,
-            backend: { ...context.backend, status: (data as Events['backendStatus']).status },
+            backend: backendOf(context.backend, data as Events['backendStatus']),
           };
     default:
       return context;

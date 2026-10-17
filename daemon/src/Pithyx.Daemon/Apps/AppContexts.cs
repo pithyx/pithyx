@@ -84,8 +84,29 @@ public sealed class AppContexts(AppRegistry registry, PermissionService permissi
         {
             return null;
         }
-        var backend = app.Manifest.TryGetProperty("backend", out _) ? new AppBackendInfo(backends.StatusOf(app.Id), app.Endpoints) : null;
+        var backend = app.Manifest.TryGetProperty("backend", out _) ? Backend(app) : null;
         return new AppContextState(app.Version, app.Granted, app.LogLevel, backend, StorageStates(app, rights, source.ShareUnavailable));
+    }
+
+    /// <summary>
+    /// The backend as a window sees it (D360): one that is not running and cannot start is <c>unavailable</c> with the
+    /// reason, so an app can tell "a folder is missing" from "it starts when called".
+    /// </summary>
+    private AppBackendInfo Backend(InstalledApp app)
+    {
+        var status = backends.StatusOf(app.Id);
+        if (status is Proxy.AppBackends.Stopped or Proxy.AppBackends.Unavailable && !backends.IsRunning(app.Id))
+        {
+            if (!registry.IsAvailable(app.Id))
+            {
+                return new(Proxy.AppBackends.Unavailable, app.Endpoints, Proxy.AppBackends.ReasonPool);
+            }
+            if (Docker.AppBackendRuntime.UnmappedRequired(Docker.BackendApp.Of(app)).Count > 0)
+            {
+                return new(Proxy.AppBackends.Unavailable, app.Endpoints, Proxy.AppBackends.ReasonStorage);
+            }
+        }
+        return new(status, app.Endpoints);
     }
 
     /// <summary>Each storage request of the manifest with its state and access for a user with these rights.</summary>

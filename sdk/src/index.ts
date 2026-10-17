@@ -47,6 +47,7 @@ export {
   type BackendInfo,
   type BackendStatus,
   type BackendTicket,
+  type BackendUnavailableReason,
   type BackendToken,
   type ConnectMessage,
   type ContextMenuItem,

@@ -17,7 +17,9 @@
       "reload": "Reload",
       "openFile": "Open a file with the app",
       "minimize": "Minimize",
-      "starting": "Starting {name} ..."
+      "starting": "Starting {name} ...",
+      "storage": "{name} cannot start until an administrator picks a folder for it in the Store.",
+      "pool": "{name} cannot start because its pool is locked or missing."
     },
     "events": {
       "invalidJson": "The data of {event} is not valid JSON.",

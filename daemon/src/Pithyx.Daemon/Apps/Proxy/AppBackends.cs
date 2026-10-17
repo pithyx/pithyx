@@ -16,6 +16,12 @@ public sealed class AppBackends
     public const string Updating = "updating";
     public const string Unavailable = "unavailable";
 
+    /// <summary>The reason of an <see cref="Unavailable"/> backend whose required storage request is not mapped.</summary>
+    public const string ReasonStorage = "storage";
+
+    /// <summary>The reason of an <see cref="Unavailable"/> backend whose app pool is locked or missing.</summary>
+    public const string ReasonPool = "pool";
+
     private readonly ConcurrentDictionary<string, IReadOnlyDictionary<string, Uri>> _running = new(StringComparer.Ordinal);
     private readonly ConcurrentDictionary<string, string> _status = new(StringComparer.Ordinal);
 

@@ -13,6 +13,8 @@ import { describeProblem } from '../storage/shared';
 import { JobProgress, useAppJob } from './jobs';
 import { appPools, manifestFacts } from './model';
 import { PermissionText } from './PermissionText';
+import { StorageSection } from './StorageSection';
+import { useInstalled } from './StoreApp';
 import styles from './Store.module.css';
 
 /** A version of a catalog app to install instead of a package file. */
@@ -88,9 +90,20 @@ export function InstallDialog({
       }),
     onSuccess: start,
   });
-  const name =
-    preview === undefined ? '' : manifestText(manifestFacts(preview.manifest).name, i18n.language);
+  const facts = preview === undefined ? undefined : manifestFacts(preview.manifest);
+  const name = facts === undefined ? '' : manifestText(facts.name, i18n.language);
   const isUpdate = preview !== undefined && preview.action !== 'install';
+  // Once installed, the folders it asks for are mapped here; a backend waits for its required ones (D360).
+  const installed = useInstalled(app);
+  const details =
+    job?.state === 'succeeded' && preview !== undefined
+      ? installed.data?.apps.find((entry) => entry.id === preview.id)
+      : undefined;
+  const requests = facts?.storage ?? [];
+  const waitsForFolders = requests.some(
+    (request) =>
+      request.required && !details?.storage.some((entry) => entry.storageId === request.id),
+  );
 
   function close() {
     // A checked package nobody installs is discarded at once instead of after 15 minutes.
@@ -104,7 +117,7 @@ export function InstallDialog({
 
   const actions = (
     <>
-      {job?.state === 'succeeded' && preview !== undefined && (
+      {job?.state === 'succeeded' && preview !== undefined && !waitsForFolders && (
         <Button
           onPress={() => {
             void storeCall(app, 'internal.admin.apps.open', { appId: preview.id });
@@ -200,7 +213,11 @@ export function InstallDialog({
         {upload.isError && <ErrorNotice error={describeProblem(upload.error)} />}
         {staged.isError && <ErrorNotice error={describeProblem(staged.error)} />}
         {preview !== undefined && (
-          <Preview preview={preview} verified={catalog?.verified ?? false}>
+          <Preview
+            preview={preview}
+            verified={catalog?.verified ?? false}
+            storage={details === undefined}
+          >
             {job === null && preview.action === 'install' && (
               <fieldset className={styles.choices}>
                 <legend className={styles.fieldLabel}>{t('install.access')}</legend>
@@ -269,6 +286,14 @@ export function InstallDialog({
             stopped={t('install.stopped')}
           />
         )}
+        {details !== undefined && requests.length > 0 && (
+          <>
+            {waitsForFolders && (
+              <p className={styles.notice}>{t('install.mapFolders', { name })}</p>
+            )}
+            <StorageSection app={app} details={details} requests={requests} />
+          </>
+        )}
       </div>
     </Dialog>
   );
@@ -278,10 +303,13 @@ export function InstallDialog({
 function Preview({
   preview,
   verified,
+  storage,
   children,
 }: {
   preview: AppPackagePreview;
   verified: boolean;
+  /** Lists the folders it asks for; once installed, the dialog maps them instead. */
+  storage: boolean;
   children: ReactNode;
 }) {
   const { t, i18n } = useTranslation('store');
@@ -355,7 +383,7 @@ function Preview({
           </p>
         )}
       </section>
-      {facts.storage.length > 0 && (
+      {storage && facts.storage.length > 0 && (
         <section className={styles.group} aria-labelledby="install-storage">
           <h4 id="install-storage" className={styles.subTitle}>
             {t('install.storage')}

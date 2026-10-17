@@ -118,6 +118,7 @@ export const pages: ReferencePage[] = [
         'BackendStatus',
         'BackendToken',
         'BackendTicket',
+        'BackendUnavailableReason',
         'BackendManifest',
         'BackendEndpoint',
         'BackendHealth',

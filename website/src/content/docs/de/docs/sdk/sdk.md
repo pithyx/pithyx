@@ -68,7 +68,7 @@ Eine App aus einem Paket oder einem Katalog bekommt jeden Dateiaufruf des SDK. `
 - `app.backend.socket(path)` öffnet einen WebSocket mit einem Einmal-Ticket (`wss` bei HTTPS, `ws` bei HTTP).
 - `app.backend.token()` liefert das Token und sein Ablaufdatum.
 - Jede akzeptiert `{ endpoint: 'name' }`; der Standard ist `api`. Ein unbekannter Endpunkt ist `sdk.backend.endpoint_unknown`. Endpunktnamen im SDK dürfen länger sein als die 32 Zeichen, die die Box in einem Manifest akzeptiert; nutze bis zu 32.
-- `app.context.backend.status` und das Ereignis `backendStatus` melden `stopped`, `starting`, `running`, `updating` oder `unavailable`.
+- `app.context.backend.status` und das Ereignis `backendStatus` melden `stopped`, `starting`, `running`, `updating` oder `unavailable`; `reason` sagt, warum ein `unavailable` Backend nicht starten kann (`storage`: ein Pflichtordner ist nicht zugeordnet, `pool`: der App-Pool ist gesperrt oder fehlt).
 
 Siehe [Backends](/de/docs/developers/apps/backend/) für Routen und Header.
 

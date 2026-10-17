@@ -10,6 +10,7 @@ import {
   type AppContext,
   type AppLogLevel,
   type BackendStatus,
+  type BackendUnavailableReason,
   type EventName,
   type Events,
   type FileRef,
@@ -57,12 +58,16 @@ const ACCENTS = ['petrol', 'ocean', 'indigo', 'plum', 'moss', 'graphite'];
 const LOCALES = ['en-US', 'en-GB', 'de-DE', 'de-AT', 'fr-FR', 'ja-JP'];
 const TIME_ZONES = ['Europe/Berlin', 'UTC', 'America/New_York', 'Asia/Tokyo'];
 const SIZE_WIDTHS: Record<SizeClass, number> = { compact: 390, medium: 820, expanded: 0 };
-const BACKEND_STATES: BackendStatus[] = [
+/** A backend status, or `unavailable` with the reason it cannot start. */
+type ShellBackend = BackendStatus | `unavailable:${BackendUnavailableReason}`;
+const BACKEND_STATES: ShellBackend[] = [
   'stopped',
   'starting',
   'running',
   'updating',
   'unavailable',
+  'unavailable:storage',
+  'unavailable:pool',
 ];
 const STORAGE_STATES: StorageState[] = ['ready', 'unmapped', 'locked', 'unavailable'];
 const UNLOAD_REASONS: UnloadReason[] = ['logout', 'shutdown', 'restart', 'update'];
@@ -78,7 +83,7 @@ interface State {
   permissions: Set<string>;
   online: boolean;
   logLevel: AppLogLevel;
-  backend: BackendStatus;
+  backend: ShellBackend;
   storage: StorageInfo[];
   minimized: boolean;
   open: boolean;
@@ -299,7 +304,7 @@ function context(): Omit<AppContext, 'capabilities'> {
     backend:
       manifest.backend === undefined
         ? null
-        : { status: state.backend, endpoints: Object.keys(manifest.backend.endpoints) },
+        : { ...backendOf(state.backend), endpoints: Object.keys(manifest.backend.endpoints) },
     storage: state.storage,
     host: { version: SDK_VERSION, protocol: PROTOCOL_VERSION },
   };
@@ -606,7 +611,17 @@ function openWindow(): void {
               : (text[state.locale] ?? text[language] ?? text.en),
           ),
         ]
-      : []),
+      : state.backend === 'unavailable:storage' || state.backend === 'unavailable:pool'
+        ? [
+            h(
+              'span',
+              {},
+              t(state.backend === 'unavailable:storage' ? 'window.storage' : 'window.pool', {
+                name: appName(),
+              }),
+            ),
+          ]
+        : []),
   );
   clearTimeout(loadingTimer);
   loadingTimer = setTimeout(hideLoading, 30_000);
@@ -695,6 +710,11 @@ function renderWindow(): void {
   taskbarEntry.setAttribute('aria-pressed', String(!state.minimized && state.open));
 }
 
+function backendOf(value: ShellBackend): Events['backendStatus'] {
+  const [status, reason] = value.split(':') as [BackendStatus, BackendUnavailableReason?];
+  return reason === undefined ? { status } : { status, reason };
+}
+
 function select<T extends string>(
   label: string,
   values: readonly T[],
@@ -755,7 +775,7 @@ function samples(): { [E in EventName]: Events[E] } {
     appUpdated: { version: manifest.version },
     visibilityChange: { visible: !state.minimized },
     connectionChange: { online: state.online },
-    backendStatus: { status: state.backend },
+    backendStatus: backendOf(state.backend),
     permissionsChange: { permissions: [...state.permissions] },
     storageChange: { storage: state.storage },
     notificationAction: { notification: 'n1', action: null, data: null },
@@ -886,10 +906,16 @@ function renderPanel(): void {
         emit('logLevelChange', { level: state.logLevel });
       }),
       manifest.backend !== undefined &&
-        select(t('panel.backend'), BACKEND_STATES, state.backend, (value) => {
-          state.backend = value;
-          emit('backendStatus', { status: value });
-        }),
+        select(
+          t('panel.backend'),
+          BACKEND_STATES,
+          state.backend,
+          (value) => {
+            state.backend = value;
+            emit('backendStatus', backendOf(value));
+          },
+          (value) => value.replace(':', ' · '),
+        ),
       permissions.length > 0 &&
         h(
           'fieldset',

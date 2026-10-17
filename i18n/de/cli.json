@@ -17,7 +17,9 @@
       "reload": "Neu laden",
       "openFile": "Eine Datei mit der App öffnen",
       "minimize": "Minimieren",
-      "starting": "{name} wird gestartet ..."
+      "starting": "{name} wird gestartet ...",
+      "storage": "{name} kann erst starten, wenn ein Administrator im Store einen Ordner dafür wählt.",
+      "pool": "{name} kann nicht starten, weil sein Pool gesperrt ist oder fehlt."
     },
     "events": {
       "invalidJson": "Die Daten von {event} sind kein gültiges JSON.",
