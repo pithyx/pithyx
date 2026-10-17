@@ -16,7 +16,8 @@
       "close": "Schließen",
       "reload": "Neu laden",
       "openFile": "Eine Datei mit der App öffnen",
-      "minimize": "Minimieren"
+      "minimize": "Minimieren",
+      "starting": "{name} wird gestartet ..."
     },
     "events": {
       "invalidJson": "Die Daten von {event} sind kein gültiges JSON.",

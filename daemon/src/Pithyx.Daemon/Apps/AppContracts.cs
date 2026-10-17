@@ -56,6 +56,7 @@ public enum AppPackageAction
 /// <param name="Sha256">SHA-256 of the package file, lowercase hex.</param>
 /// <param name="SuggestedAccess">Who should use the app after an install (D304): administrators only when it asks for elevated rights, root in a container or <c>directory.read</c>, everybody otherwise. An install without access takes it.</param>
 /// <param name="Catalog">The catalog the package comes from; null for an uploaded file (a sideload, unverified).</param>
+/// <param name="KeptData">For an install: an earlier installation was removed with "Keep the data", and the app gets its data and its user id again.</param>
 public sealed record AppPackagePreview(
     string PackageId,
     DateTimeOffset ExpiresAt,
@@ -72,7 +73,8 @@ public sealed record AppPackagePreview(
     long PackageBytes,
     string Sha256,
     AppAccess SuggestedAccess,
-    string? Catalog = null);
+    string? Catalog = null,
+    bool KeptData = false);
 
 /// <param name="Pool">The pool for the app data; required for the first app, and then always the app pool.</param>
 /// <param name="Access">Who may use the app after an install; an update keeps who may use it. Defaults to the preview's suggested access.</param>

@@ -82,3 +82,23 @@ Only an administrator can install a package.
 5. Confirm. Installing runs as a job.
 
 After the install, an administrator maps the app's storage requests to shared folders and can revoke permissions. An update that asks for a new permission waits for the administrator's confirmation and the old version keeps running. An update takes a snapshot of the app's data; a rollback returns to the previous version with its data. See [Apps and the Store](/docs/admin/apps-and-store/).
+
+### Install from a script
+
+The Store does nothing a script cannot do with the [REST API](/docs/reference/api/apps/). Sign in as an administrator, upload the package, then install it as a job:
+
+```sh
+BOX=https://box.local:7484
+curl -sS --cacert root-ca.crt -c cookies -H 'X-Pithyx-Request: 1' -H 'Content-Type: application/json' \
+  -d '{"username":"admin","password":"..."}' "$BOX/api/auth/login"
+curl -sS --cacert root-ca.crt -b cookies -H 'X-Pithyx-Request: 1' -H 'Content-Type: application/gzip' \
+  -X PUT --data-binary @com.example.notes-1.0.0.pithyxapp "$BOX/api/apps/packages"
+# The answer is the preview: packageId, action, permissions, keptData, suggestedAccess, pool.
+curl -sS --cacert root-ca.crt -b cookies -H 'X-Pithyx-Request: 1' -H 'Content-Type: application/json' \
+  -d '{"pool":"tank","access":"everybody"}' "$BOX/api/apps/packages/<packageId>/install"
+# 202 with the job; follow it with GET /api/jobs/<id> until its state is succeeded or failed.
+```
+
+- `root-ca.crt` is the box's own certificate authority from `$BOX/api/system/tls/root-ca.crt` (see [Certificates](/docs/admin/certificates/)).
+- An account with two-factor sign-in gets a `challenge` from the first call and completes it with `POST /api/auth/login/totp`.
+- `pool` is needed only for the first app of the box; `access` (`everybody` or `admins`) defaults to the preview's `suggestedAccess`. A checked package waits 15 minutes for its install.

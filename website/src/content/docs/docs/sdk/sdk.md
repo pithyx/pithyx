@@ -41,7 +41,7 @@ console.log(app.context.user.displayName);
 
 `app.context` is kept current by events and holds the app (`id`, `version`), the window instance, the user (`id`, `name`, `displayName`, `groups`, `isAdmin`, `twoFactor`), `language`, `locale` (for example `de-AT`), `timeZone`, `theme`, `sizeClass` (`compact` below 600 px, `medium` up to 1023 px, `expanded`), launch arguments, `permissions`, `capabilities`, the box (`name`, `version`), `visible`, `online`, `logLevel`, the backend status and endpoints, and the state of each storage request.
 
-- `app.window`: `setTitle` (up to 200 characters), `close`, `setSize`, `setDirty(true)` (asks the app before closing) and `requestAttention`. They act on the app's own window only.
+- `app.window`: `setTitle` (up to 200 characters), `close`, `setSize`, `setDirty(true)` (asks the app before closing), `requestAttention` and `ready` (ends the loading placeholder when the manifest sets `window.loading.untilReady`). They act on the app's own window only.
 - `app.notify({ title, body?, level?, actions?, data?, tag? })` needs `notifications`. The title is 1 to 200 characters, the body up to 1000, at most 2 actions. Returns `{ id }`.
 - `app.setBadge(count | null)`, `app.openUrl(url)` (http, https or mailto, in a new tab), `app.clipboard.writeText`, `app.contextMenu.show` and `app.ui.showError(error)`.
 - `app.directory.users()` and `groups()` need `directory.read`.

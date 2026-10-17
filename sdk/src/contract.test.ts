@@ -536,6 +536,7 @@ describe.each(transports)('over the %s transport', (_, pair) => {
       setBadge: vi.fn(),
       'window.setDirty': vi.fn(),
       'window.requestAttention': vi.fn(),
+      'window.ready': vi.fn(),
       'contextMenu.show': vi.fn(() => 'copy'),
       'clipboard.writeText': vi.fn(),
       openUrl: vi.fn(),
@@ -558,6 +559,8 @@ describe.each(transports)('over the %s transport', (_, pair) => {
     await connected.setBadge(null);
     await connected.window.setDirty(true);
     await connected.window.requestAttention();
+    await connected.window.ready();
+    expect(handlers['window.ready']).toHaveBeenCalledOnce();
     expect(
       await connected.contextMenu.show({ x: 10, y: 20 }, [
         { id: 'copy', label: 'Copy', shortcut: 'Ctrl+C' },

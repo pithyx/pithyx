@@ -16,7 +16,8 @@
       "close": "Close",
       "reload": "Reload",
       "openFile": "Open a file with the app",
-      "minimize": "Minimize"
+      "minimize": "Minimize",
+      "starting": "Starting {name} ..."
     },
     "events": {
       "invalidJson": "The data of {event} is not valid JSON.",

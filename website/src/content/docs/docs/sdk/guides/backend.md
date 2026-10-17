@@ -272,21 +272,21 @@ A path that would leave the endpoint (for example with `..`) fails with [`sdk.re
 
 The proxy removes `Cookie`, `Authorization`, `Proxy-Authorization`, `Referer`, `Forwarded`, `traceparent`, `tracestate`, every incoming `X-Pithyx-*` and `X-Forwarded-*` header and every `pithyx-*` query parameter. Then it sets:
 
-| Header                               | Value                                                           |
-| ------------------------------------ | --------------------------------------------------------------- |
-| `X-Pithyx-User`                      | the user name, lower case                                       |
-| `X-Pithyx-User-Id`                   | the user id                                                     |
-| `X-Pithyx-Groups`                    | the names of the user's groups, comma separated, empty for none |
-| `X-Pithyx-Admin`                     | `true` or `false`                                               |
-| `traceparent`                        | the trace of the request, for your logs                         |
-| `X-Forwarded-Prefix`                 | `/apps/<id>/api` or `/apps/<id>/api-<name>`                     |
-| `X-Forwarded-For`, `-Host`, `-Proto` | the client address, the host and `http` or `https`              |
+| Header                               | Value                                                                                                         |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------- |
+| `X-Pithyx-User`                      | the user name, lower case                                                                                     |
+| `X-Pithyx-User-Id`                   | the user id: the Linux uid, the same as `context.user.id` and `DirectoryUser.id`, never given to another user |
+| `X-Pithyx-Groups`                    | the names of the user's groups, comma separated, empty for none                                               |
+| `X-Pithyx-Admin`                     | `true` or `false`                                                                                             |
+| `traceparent`                        | the trace of the request, for your logs                                                                       |
+| `X-Forwarded-Prefix`                 | `/apps/<id>/api` or `/apps/<id>/api-<name>`                                                                   |
+| `X-Forwarded-For`, `-Host`, `-Proto` | the client address, the host and `http` or `https`                                                            |
 
 WebSocket upgrades get the same headers. Answers lose `Set-Cookie`, `Clear-Site-Data`, `Strict-Transport-Security` and other headers that act on the whole box, and get the sandbox headers of the frontend. Request bodies have no size limit at the proxy: the backend decides. See [Backends](/docs/developers/apps/backend/#who-is-calling) for the full list.
 
 ## Edge cases
 
-- **Stopped backend.** A request to a `stopped` or `starting` backend wakes it and waits up to 30 seconds. While it is `updating` or `unavailable` the proxy answers 503 [`app.backend.unavailable`](/docs/reference/errors/#app.backend.unavailable). `app.context.backend.status` and the `backendStatus` event tell the window.
+- **Stopped backend.** A request to a `stopped` or `starting` backend wakes it and waits up to 30 seconds. While it is `updating` or `unavailable` the proxy answers 503 [`app.backend.unavailable`](/docs/reference/errors/#app.backend.unavailable). `app.context.backend.status` and the `backendStatus` event tell the window. Load your data again when the status becomes `running`: a call made while the backend started may have failed.
 - **No backend.** `app.context.backend` is `null`; `fetch`, `url` and `socket` fail with [`sdk.backend.endpoint_unknown`](/docs/reference/errors/#sdk.backend.endpoint_unknown), and `token()` with [`app.backend.missing`](/docs/reference/errors/#app.backend.missing).
 - **Unknown endpoint.** A name that is not in `context.backend.endpoints` fails with `sdk.backend.endpoint_unknown` before anything is sent. Endpoint names in a manifest have at most 32 characters.
 - **401.** The proxy answers [`app.token.invalid`](/docs/reference/errors/#app.token.invalid) when the token or ticket is wrong, expired, used up or for another app, and when the session ended, the user may no longer sign in to the desktop or lost access to the app. Every use checks this again. A restart of the box ends all tokens. `fetch` handles this itself: when the proxy answers `app.token.invalid`, the SDK drops its token, gets a new one and repeats the request once (not for a body that is a stream). If the new token is refused too, the 401 is the answer, and retrying does not help; reopening the window gets new tokens. `url` cannot know: ask again for a URL when an `<img>` fails to load. A WebSocket ticket is fetched anew for every `socket` call.
