@@ -776,8 +776,10 @@ export interface PithyxApp {
   /** The desktop's own dialogs. Needs no permission. */
   readonly ui: {
     /**
-     * Shows the desktop's error dialog for a failure, with the translated text of its code and the request id to
-     * copy, so the app needs no texts of its own for daemon errors.
+     * Shows the desktop's error dialog for a failure, with the translated text of its code, so the app needs no texts
+     * of its own for daemon and SDK errors. A code the desktop does not know (the app's own) shows the error's
+     * `detail` instead, so give such an error a `detail` in the user's language. The request id goes to the browser
+     * console, never into the dialog.
      *
      * @param error - A {@link PithyxError}, a problem, or anything else, which shows as an unexpected error.
      */

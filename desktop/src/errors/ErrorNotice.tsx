@@ -6,14 +6,20 @@ import { IconAlertCircle } from '../ui/icons';
 import type { DescribedError } from './describe';
 import styles from './ErrorNotice.module.css';
 
-/** The translated message of an error code; network failures have no code from the daemon. */
+/**
+ * The translated message of an error code; network failures have no code from the daemon. The daemon's and the SDK's
+ * codes all have a key (checked by i18n.test.ts); an app's own code (`app.ui.showError`) has none and shows the
+ * problem's `detail` instead.
+ */
 export function translateError(t: TFunction, error: DescribedError): string {
   return error.code === 'network'
     ? t('error.network')
-    : // Error codes come from the generated union, so every one has a key (checked by i18n.test.ts).
-      (t as unknown as (key: string, options: object) => string)(error.code, {
+    : (t as unknown as (key: string, options: object) => string)(error.code, {
         ns: 'errors',
         ...error.params,
+        ...(error.detail === undefined || error.detail === ''
+          ? {}
+          : { defaultValue: error.detail }),
       });
 }
 

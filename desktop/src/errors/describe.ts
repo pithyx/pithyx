@@ -7,6 +7,8 @@ export interface DescribedError {
   requestId: string;
   /** HTTP status of a daemon answer, if known. */
   status?: number;
+  /** The problem's English text, shown only for a code the desktop has no translation for (an app's own code). */
+  detail?: string;
 }
 
 export function describeError(error: unknown): DescribedError {
@@ -16,6 +18,7 @@ export function describeError(error: unknown): DescribedError {
       params: error.params,
       requestId: error.requestId,
       status: error.status,
+      detail: error.message,
     };
   }
   // fetch rejects with a TypeError when the daemon cannot be reached at all.

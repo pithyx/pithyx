@@ -158,7 +158,7 @@ Ein Aufruf mit Zeitüberschreitung kann auf der Box trotzdem passiert sein. Wied
 
 Die App übersetzt die Codes, die sie erwartet, mit eigenen Texten, nutzt `params` für die Platzhalter und fällt auf eine allgemeine Meldung zurück. `detail` ist Englisch und für Logs gedacht. Logge die `requestId`, statt sie zu zeigen: Mit ihr findet ein Administrator die Anfrage im Protokoll-Center.
 
-`app.ui.showError(error)` zeigt den eigenen Fehlerdialog des Desktops mit dem übersetzten Text. Prüfe `app.supports('ui.showError')` wie im Beispiel: Ein älterer Desktop bedient ihn vielleicht nicht und antwortet mit [`sdk.method.unknown`](/de/docs/reference/errors/#sdk.method.unknown). Der Mock-Desktop von `pithyx dev` bedient ihn und schreibt den Code in sein Log.
+`app.ui.showError(error)` zeigt den eigenen Fehlerdialog des Desktops mit dem übersetzten Text. Der Desktop übersetzt die Codes des Daemons und des SDK; bei einem eigenen Code zeigt er das `detail` des Fehlers, also gib ihm eins in der Sprache des Benutzers (`new PithyxError({ code: 'lists.list.full', params: {}, detail: t('errors.listFull') })`). Die Request-ID landet in der Konsole des Browsers, nie im Dialog. Prüfe `app.supports('ui.showError')` wie im Beispiel: Ein älterer Desktop bedient ihn vielleicht nicht und antwortet mit [`sdk.method.unknown`](/de/docs/reference/errors/#sdk.method.unknown). Der Mock-Desktop von `pithyx dev` bedient ihn und schreibt den Code in sein Log.
 
 ## Sonderfälle
 
