@@ -262,6 +262,7 @@ The first beta, codename Pyxis (D345): the NAS core, the file services, the app 
 
 ### Fixed
 
+- A third-party app with `@pithyx/ui` kept the default accent and colors: `tokens.css` now takes the desktop's look from the SDK's `--pithyx-*` properties once the SDK connected, including the user's accent.
 - Developer docs: the install dialog's suggestion "Administrators only", an `onDemand` backend started once by its install, the 30-second stop that replaces `stop_grace_period`, the manifest `health` over Compose health checks, reloading data once the backend runs, the desktop's own **Open** button on notifications, the name of offline image archives and the Store tabs that appear only when needed; no internal decision numbers in website texts.
 - A backend's schedule call now carries a `traceparent` like every request through the proxy; the backend docs say what a schedule call holds (`X-Pithyx-Schedule`, no user headers, an empty body) and that a backend can rely on its header.
 - The SDK event `appUpdated` never reached an open app window on the box (only `pithyx dev` sent it); the desktop now sends it when an update or a rollback installs another version.
