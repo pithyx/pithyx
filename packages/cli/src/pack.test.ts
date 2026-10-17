@@ -325,5 +325,13 @@ describe('a backend in its source form', () => {
     expect(relaxed.findings.map((finding) => finding.code)).toContain('cli.backend.unbuilt');
     const strict = readProject(root, { frontend: 'build' });
     expect(strict.findings.some((finding) => finding.level === 'error')).toBe(true);
+
+    // The source form is checked too: a host port is refused before anything is built.
+    writeFileSync(
+      join(root, 'backend', 'compose.dev.yaml'),
+      'services:\n  server:\n    build: ./server\n    ports: ["8080:8080"]\n',
+    );
+    const refused = readProject(root, { frontend: 'build', allowUnbuiltBackend: true });
+    expect(refused.findings.some((finding) => finding.level === 'error')).toBe(true);
   });
 });

@@ -63,15 +63,17 @@ Der Proxy entfernt aus der eingehenden Anfrage `Cookie`, `Authorization`, `Proxy
 
 | Header                               | Wert                                                                                                                          |
 | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| `X-Pithyx-User`                      | der Benutzername                                                                                                              |
+| `X-Pithyx-User`                      | der Benutzername, der Linux-Benutzername in Kleinbuchstaben                                                                   |
 | `X-Pithyx-User-Id`                   | die Benutzer-ID: die Linux-UID, dieselbe wie `context.user.id` und `DirectoryUser.id`, nie an einen anderen Benutzer vergeben |
-| `X-Pithyx-Groups`                    | die Gruppennamen, durch Kommas getrennt                                                                                       |
+| `X-Pithyx-Groups`                    | die Gruppennamen, durch Kommas getrennt; leer für einen Benutzer ohne Gruppe                                                  |
 | `X-Pithyx-Admin`                     | `true` oder `false`                                                                                                           |
 | `traceparent`                        | der Trace der Anfrage                                                                                                         |
 | `X-Forwarded-Prefix`                 | `/apps/<id>/api` oder `/apps/<id>/api-<name>`                                                                                 |
 | `X-Forwarded-For`, `-Host`, `-Proto` | der ursprüngliche Client und Host                                                                                             |
 
-Ein Backend kann diesen Headern nur vertrauen, weil es ausschließlich über den Proxy erreichbar ist.
+Ein eingehendes `traceparent` oder `tracestate` fällt ebenfalls weg: Der Proxy schreibt den Trace seiner eigenen Anfrage, ein Fenster kann ihn also nicht wählen. Jeder Endpunkt und jedes WebSocket-Upgrade bekommt dieselben Header. Ein Backend kann diesen Headern nur vertrauen, weil es ausschließlich über den Proxy erreichbar ist.
+
+**Zeitlimits des Proxys.** Er gibt den Verbindungsaufbau zu einem Backend nach 5 Sekunden auf und wartet bei jedem Lesen der Antwort bis zu 100 Sekunden (eine lange Antwort, die weiter sendet, bleibt offen); danach bekommt das Fenster 502 oder 504. Ein ruhender WebSocket bleibt 24 Stunden offen.
 
 **Zeitpläne.** Der Aufruf eines Zeitplans kommt nicht über den Proxy und hat keinen Benutzer: Der Daemon sendet `POST <path>` mit leerem Body und nur `X-Pithyx-Schedule: <ID des Zeitplans>` und `traceparent`, ohne Benutzer-Header. Weil der Proxy jeden eingehenden `X-Pithyx-*`-Header entfernt, kann eine Anfrage aus einem Fenster nie `X-Pithyx-Schedule` tragen; ein Backend kann sich also darauf verlassen: Nimm einen Zeitplan-Pfad nur mit diesem Header an und beantworte ihn ohne mit 403. Ein Lauf erscheint im Log Center (Quelle `daemon`, mit seinem Statuscode), nicht in der Auftragsliste.
 
@@ -85,6 +87,27 @@ Ein Backend kann diesen Headern nur vertrauen, weil es ausschließlich über den
 - Ist der Pool gesperrt oder fehlt er, startet das Backend nicht, der Store nennt den Grund, und das Fenster sieht `unavailable` mit dem Grund `pool`.
 - Ein Update erstellt einen Snapshot des Datasets; ein Rollback stellt ihn wieder her. Bei der Deinstallation wählt der Administrator, ob die Daten behalten werden.
 - `app.storage` des SDK (Schlüssel-Wert-Speicher pro Benutzer) ist davon getrennt: Schlüssel bis 128 Zeichen, Werte bis 64 KB, 1 MB pro Benutzer und App.
+
+Eine Speicheranfrage im Manifest und ihr Volume in Compose, für einen Dienst:
+
+```json
+"storage": [{ "id": "clips", "name": { "en": "Clips" }, "access": "readWrite", "required": true, "services": ["api"] }]
+```
+
+```yaml
+services:
+  api:
+    volumes:
+      - clips:/clips
+volumes:
+  clips:
+```
+
+Was das Backend in einem solchen Ordner sieht:
+
+- **Es erkennt nicht, ob zugeordnet ist.** Eine optionale Anfrage, die niemand zugeordnet hat, ist ein Ordner im Dataset der App, und der Dienst sieht in beiden Fällen einen leeren oder der App gehörenden Ordner. Nur das Fenster weiß es (`app.context.storage`, `storageChange`); ein Backend, das es wissen muss, fragt sein Frontend oder legt sich eine eigene Markierungsdatei an.
+- **Späteres Zuordnen fängt neu an.** Ordnet ein Administrator eine optionale Anfrage später zu, startet das Backend mit dem neuen Ordner neu. Was es in den internen Ordner geschrieben hat, bleibt dort und wird nicht verschoben; kopiere es selbst, wenn es wichtig ist.
+- **Dateien gehören der App und folgen den Rechten der Freigabe.** Eine Datei, die das Backend in einen zugeordneten Ordner schreibt, gehört der Benutzer-ID der App und erbt die Standard-ACL des Ordners. Benutzer mit Schreibrecht auf die Freigabe können sie also über SMB, SFTP, WebDAV und FTP ändern und löschen. Lege den eigenen Zustand der App nie in einen zugeordneten Ordner, sondern in ein benanntes Volume.
 
 ## Netzwerk
 
@@ -105,6 +128,7 @@ Ein Backend kann diesen Headern nur vertrauen, weil es ausschließlich über den
 - Ein fehlgeschlagener Start wird nach 1 Minute wiederholt; das Öffnen eines Fensters wiederholt ihn sofort.
 - Start-Timeouts: Compose `up --wait` wartet bis zu 10 Minuten, danach der Health-Check des Manifests bis zu 60 Sekunden.
 - Stopp: `docker compose down --timeout 30`. Container bekommen ihr `stop_signal` (standardmäßig SIGTERM) und werden nach 30 Sekunden beendet; der Timeout ersetzt ein `stop_grace_period` der Compose-Datei. Volumes und Images bleiben.
+- Der Health-Aufruf ist ein einfaches `GET <path>` an seinen Endpunkt ohne Benutzer-Header. Jeder Versuch darf 5 Sekunden dauern; er läuft nur, während das Backend startet, nicht danach.
 - Health: Nimm lieber den `health` des Manifests (eine HTTP-Prüfung durch den Daemon, während des Starts alle 100 ms) als einen Compose-`healthcheck`. Eine Compose-Prüfung startet bei jedem Intervall einen Prozess im Container, und `up --wait` wartet auf ihren ersten Erfolg. Gemessen mit einem kleinen Node-Backend auf der Box: Ein Kaltstart dauerte 2,5 Sekunden mit einer Node-Prüfung jede Sekunde während `start_period` und 1,05 Sekunden nur mit dem `health` des Manifests; im Leerlauf kostete die Compose-Prüfung etwa 2 Prozent eines Kerns (im Container und in Docker), ohne sie etwa 0,15 Prozent. `pithyx validate` warnt vor einem Compose-`healthcheck` neben `health` (`cli.compose.healthcheck_redundant`). Ein `HEALTHCHECK` des Images läuft ebenfalls; schalte ihn mit `healthcheck: { disable: true }` ab.
 - Ein Browser auf der Box selbst sieht jeden Start eines Backends als Änderung des Netzwerks (Docker hängt den Container an die Bridge der App), und Chromium bricht laufende Anfragen mit `net::ERR_NETWORK_CHANGED` ab. Browser auf anderen Geräten sehen das nicht. Lade neu, wenn `backendStatus` zu `running` wird (siehe die Sonderfälle im [Backend-Guide](/de/docs/sdk/guides/backend/)).
 - Zeitpläne wecken das Backend ohne Fenster, rufen `POST path` auf (das Backend bleibt dafür bis zu 10 Minuten gehalten) und lassen es dann leerlaufen.

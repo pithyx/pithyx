@@ -72,12 +72,18 @@
       "unmap": "Remove folder of {storage}",
       "dialogTitle": "Folder for {storage}",
       "share": "Shared folder",
-      "path": "Folder in it",
-      "pathHint": "Leave it empty for the shared folder itself. The folder must exist.",
+      "path": "Folder",
       "accessLabel": "Access",
       "save": "Save",
       "cancel": "Cancel",
-      "noShares": "There are no shared folders yet. Create one in Settings first."
+      "noShares": "There are no shared folders yet. Create one in Settings first.",
+      "up": "Up one folder",
+      "newFolder": "New folder",
+      "newFolderName": "Name of the new folder",
+      "create": "Create",
+      "loadingFolders": "Loading the folders",
+      "noFolders": "This folder has no folders inside. Save to use it, or create one.",
+      "folders": "Folders in it"
     },
     "access": {
       "title": "Who may use it",

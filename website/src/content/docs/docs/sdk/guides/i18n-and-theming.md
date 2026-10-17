@@ -125,7 +125,7 @@ The SDK sets these properties on `document.documentElement` (or the `themeRoot` 
 - colors: `--pithyx-color-background`, `-surface`, `-surface-raised`, `-hover`, `-selected`, `-text`, `-text-muted`, `-border`, `-accent`, `-accent-text`, `-focus`, `-success`, `-warning`, `-danger`,
 - type and shape: `--pithyx-font-ui`, `--pithyx-font-mono`, `--pithyx-font-size`, `--pithyx-radius`, `--pithyx-space`, `--pithyx-control-height`.
 
-It also sets `color-scheme`, `data-pithyx-theme` (`light` or `dark`) and `data-pithyx-density` (`comfortable` or `compact`; compact already shrinks `--pithyx-space` and `--pithyx-control-height`). On `themeChange` the properties change before your handler runs; CSS follows without code. Only drawings on a canvas or in WebGL need the values from `theme.tokens`.
+It also sets `color-scheme`, `data-theme` and `data-pithyx-theme` (both `light` or `dark`) and `data-pithyx-density` (`comfortable` or `compact`; compact already shrinks `--pithyx-space` and `--pithyx-control-height`). On `themeChange` the properties change before your handler runs; CSS follows without code, also when your bundler compiled `light-dark()` for older browsers (Vite does: the compiled CSS follows `data-theme` and the browser's setting, not a `color-scheme` set by script, so do not remove `data-theme`). Only drawings on a canvas or in WebGL need the values from `theme.tokens`.
 
 For ready components in the desktop's look, see [@pithyx/ui](/docs/sdk/ui/); they follow the same theme by themselves once the SDK connected.
 

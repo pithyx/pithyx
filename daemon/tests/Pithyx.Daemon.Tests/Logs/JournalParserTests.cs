@@ -101,6 +101,26 @@ public sealed class JournalParserTests
         Assert.Equal(expected, JournalParser.AppLevelOf(priority, message));
 
     [Fact]
+    public void AJsonLineShowsItsMessageWithTheOtherFieldsAsDataAndItsTraceAsRequest()
+    {
+        var line = JournalParser.AppLineOf("6", """{"level":"info","message":"Clip saved","file":"a.md","bytes":336,"tags":["x"],"traceparent":"00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"}""");
+        Assert.Equal((LogLevelName.Info, "Clip saved", "4bf92f3577b34da6a3ce929d0e0e4736"), (line.Level, line.Message, line.RequestId));
+        Assert.Equal(new Dictionary<string, string> { ["file"] = "a.md", ["bytes"] = "336", ["tags"] = "[\"x\"]", ["traceparent"] = "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01" }, line.Fields);
+
+        var pino = JournalParser.AppLineOf("6", """{"level":"warn","msg":"slow","traceparent":"garbage"}""");
+        Assert.Equal((LogLevelName.Warn, "slow", (string?)null), (pino.Level, pino.Message, pino.RequestId));
+
+        const string NoMessage = """{"level":"error","code":7}""";
+        var whole = JournalParser.AppLineOf("6", NoMessage);
+        Assert.Equal((LogLevelName.Error, NoMessage), (whole.Level, whole.Message));
+        Assert.Empty(whole.Fields);
+
+        var many = JournalParser.AppLineOf("6", "{\"message\":\"m\"," + string.Join(',', Enumerable.Range(0, 40).Select(i => $"\"f{i}\":\"{new string('v', 1100)}\"")) + "}");
+        Assert.Equal(32, many.Fields.Count);
+        Assert.All(many.Fields.Values, value => Assert.Equal(1024, value.Length));
+    }
+
+    [Fact]
     public void OnlyDockerLinesWithAValidAppLabelAreAppLines()
     {
         var line = Lines("docker-app.jsonl")[0];

@@ -11,6 +11,7 @@ import type {
   ConflictPolicy,
   FileEntry,
   FileLocation,
+  ShareLocation,
   FileOperation,
   FolderPage,
   JobInfo,
@@ -490,7 +491,8 @@ export interface PithyxApp {
    * Files. The first group works on files the user handed to the app (`files.read`, `files.write`); the second is the
    * file manager API over shares and named storage (`files.shares` for shares). See {@link Methods} for every call.
    *
-   * A `FileLocation` is `{ storage: id }` for a storage request of the manifest or `{ share: id }` for a share. The
+   * A `FileLocation` is `{ storage: id }` for a storage request of the manifest or `{ share: id }` for a share;
+   * `run`, `versions`, `restoreVersion` and `trash` take only a share (`ShareLocation`). The
    * daemon checks the app's permissions and the user's own rights on every call: a share needs `files.shares`, its
    * content also `files.read` or `files.write`, and changes need write access to the share (`fs.share.read_only`
    * otherwise). Common failures: `app.permission.denied`, `fs.share.not_found`, `fs.share.unavailable` (its pool is
@@ -692,6 +694,7 @@ export interface PithyxApp {
      * @returns The job as it started; failures of single entries end up in its `problem`.
      * @throws `fs.operation.invalid` when the operation does not fit (a target for delete, none for copy).
      * @throws `fs.operation.into_itself` when a folder would be copied or moved into itself.
+     * @throws `sdk.request.invalid` for a storage request as source or target: copy its files with `read` and `write`.
      */
     run(operation: FileOperation): Promise<JobInfo>;
     /**
@@ -702,7 +705,7 @@ export interface PithyxApp {
      * @param path - The entry, relative to the share; not its root.
      * @returns The versions, newest first.
      */
-    versions(location: FileLocation, path: string): Promise<FileVersion[]>;
+    versions(location: ShareLocation, path: string): Promise<FileVersion[]>;
     /**
      * Copies a version back as a job: next to the current entry as "name (version date)", or over it with
      * `overwrite` (files are replaced, folders merged), which only an explicit request of the user may set. Needs
@@ -716,7 +719,7 @@ export interface PithyxApp {
      * @throws `fs.version.not_found` when the snapshot or the entry in it is gone.
      */
     restoreVersion(
-      location: FileLocation,
+      location: ShareLocation,
       path: string,
       snapshot: string,
       options?: {
@@ -749,7 +752,7 @@ export interface PithyxApp {
      * @throws `app.permission.denied` without the `files.shares` permission.
      */
     list(
-      location: FileLocation,
+      location: ShareLocation,
       page?: {
         /** The `nextCursor` of the previous page. */
         cursor?: string;
@@ -766,7 +769,7 @@ export interface PithyxApp {
      * @param onConflict - What to do with a taken name; `rename` when left out.
      * @returns The job as it started.
      */
-    restore(location: FileLocation, ids: number[], onConflict?: ConflictPolicy): Promise<JobInfo>;
+    restore(location: ShareLocation, ids: number[], onConflict?: ConflictPolicy): Promise<JobInfo>;
     /**
      * Deletes items of the bin for good, as a job. Only after the user confirmed it.
      *
@@ -774,14 +777,14 @@ export interface PithyxApp {
      * @param ids - 1 to 1000 item ids from `list`.
      * @returns The job as it started.
      */
-    delete(location: FileLocation, ids: number[]): Promise<JobInfo>;
+    delete(location: ShareLocation, ids: number[]): Promise<JobInfo>;
     /**
      * Deletes everything in the bin for good, as a job. Only after the user confirmed it.
      *
      * @param location - A share.
      * @returns The job as it started.
      */
-    empty(location: FileLocation): Promise<JobInfo>;
+    empty(location: ShareLocation): Promise<JobInfo>;
   };
   /** The desktop's own dialogs. Needs no permission. */
   readonly ui: {

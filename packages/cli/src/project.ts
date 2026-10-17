@@ -42,8 +42,9 @@ export interface ProjectOptions {
   /** The built frontend, relative to the project root; default `dist`. */
   frontend?: string | undefined;
   /**
-   * A backend that has only its source form `compose.dev.yaml` yet is a warning instead of an error: `vite build` of
-   * an app in a catalog runs before the catalog builds the images and writes `compose.yaml` (D330).
+   * A backend that has only its source form `compose.dev.yaml` yet is a warning instead of an error, and the source
+   * form is checked instead: `vite build` of an app in a catalog runs before the catalog builds the images and writes
+   * `compose.yaml` (D330), and `pithyx validate` works before `pithyx build`, which needs Docker.
    */
   allowUnbuiltBackend?: boolean | undefined;
 }
@@ -180,6 +181,11 @@ export function readProject(root: string, options: ProjectOptions = {}): Project
     existsSync(at(devComposePath(declared)));
   if (unbuilt) {
     findings.push({ level: 'warning', code: 'cli.backend.unbuilt', params: { path: declared } });
+    // The source form is still checked, with build in place of image.
+    if (manifest !== undefined && lstatSync(at(devComposePath(declared))).isFile()) {
+      const source = readFileSync(at(devComposePath(declared)));
+      findings.push(...validateCompose(source, manifest, { dev: true }).issues.map(error));
+    }
   }
   const compose = unbuilt ? undefined : declared;
   if (compose !== undefined) {

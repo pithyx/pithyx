@@ -9,7 +9,7 @@ import type {
   Problem,
   TrashPage,
 } from '@pithyx/sdk';
-import { PithyxError } from '@pithyx/sdk/host';
+import { PithyxError, sdkError } from '@pithyx/sdk/host';
 import { showError } from '../../errors/errorStore';
 import { realtime } from '../../realtime/connection';
 import { endTransfer, reportProgress, startTransfer } from '../../shell/transfers';
@@ -96,7 +96,7 @@ export function query(values: Record<string, string | undefined>): string {
 /** The selection of a `files.run` call as the daemon's operation request wants it, for shares. */
 export function operationBody(params: FileOperation) {
   const { kind, source, target: destination, onConflict, permanent } = params;
-  const shareId = shareIdOf(source.location);
+  const shareId = shareIdOf(source.location, 'files.run');
   const join = (name: string) => (source.folder === '' ? name : `${source.folder}/${name}`);
   const selection =
     'names' in source.items
@@ -107,15 +107,23 @@ export function operationBody(params: FileOperation) {
     ...selection,
     ...(destination === undefined
       ? {}
-      : { target: { shareId: shareIdOf(destination.location), path: destination.path } }),
+      : {
+          target: { shareId: shareIdOf(destination.location, 'files.run'), path: destination.path },
+        }),
     ...(onConflict === undefined ? {} : { onConflict }),
     permanent: permanent === true,
   };
 }
 
-/** The daemon's share id of a location. Named storage has no share id of its own and is refused. */
-export function shareIdOf(location: FileLocation): number {
-  const id = 'share' in location ? Number(location.share) : Number.NaN;
+/**
+ * The daemon's share id of a location. A storage request has no share id of its own: a method that takes only shares
+ * refuses it as an invalid request (an app without types may still send one), a malformed id as an unknown share.
+ */
+export function shareIdOf(location: FileLocation, method = 'files'): number {
+  if (!('share' in location)) {
+    throw sdkError('sdk.request.invalid', { method });
+  }
+  const id = Number(location.share);
   if (!Number.isSafeInteger(id)) {
     throw new PithyxError({ code: 'fs.share.not_found', params: {} });
   }

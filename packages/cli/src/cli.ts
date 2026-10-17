@@ -165,7 +165,8 @@ async function main(): Promise<number> {
   const projectOptions = { frontend: values.frontend };
   switch (command) {
     case 'validate': {
-      const project = readProject(folder, projectOptions);
+      // Before pithyx build there is only compose.dev.yaml: validate checks it and warns; pack still needs the build.
+      const project = readProject(folder, { ...projectOptions, allowUnbuiltBackend: true });
       print(project.findings);
       if (hasErrors(project)) {
         return 1;

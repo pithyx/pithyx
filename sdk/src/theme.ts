@@ -1,8 +1,9 @@
 /**
  * The desktop hands its look to apps as CSS custom properties. Only the `--pithyx-*` names below are public; the
  * desktop maps its internal tokens onto them, so internal renames never break an app. The SDK sets them on the
- * app document's root element and sets `color-scheme`, so plain CSS like `color: var(--pithyx-color-text)` follows
- * light, dark, the user's accent color and density. `themeChange` tells the app when any of them changed.
+ * app document's root element and sets `color-scheme` and `data-theme`, so plain CSS like
+ * `color: var(--pithyx-color-text)` follows light, dark, the user's accent color and density. `themeChange` tells
+ * the app when any of them changed.
  *
  * The SDK brings no components. An optional `@pithyx/ui` package with components in the desktop's look may follow;
  * apps may use it, any framework, or plain HTML and CSS.
@@ -53,14 +54,18 @@ export interface Theme {
 
 /**
  * Applies a theme to a document (the SDK does this on connect and on every `themeChange`): sets `color-scheme`,
- * `data-pithyx-theme`, `data-pithyx-density` and every public token. Values with `;`, braces or angle brackets are
- * skipped, so a theme cannot inject other CSS.
+ * `data-theme`, `data-pithyx-theme`, `data-pithyx-density` and every public token. `data-theme` matters for CSS a
+ * bundler compiled for older browsers: Vite turns `light-dark()` into variables that follow the `color-scheme` rules of
+ * the style sheet (such as `:root[data-theme='dark']` in `@pithyx/ui/tokens.css`) and the browser's preference, not a
+ * `color-scheme` set by script. Values with `;`, braces or angle brackets are skipped, so a theme cannot inject other
+ * CSS.
  *
  * @param theme - The theme from the context or from `themeChange`.
  * @param root - The element that gets the properties, usually `document.documentElement`.
  */
 export function applyTheme(theme: Theme, root: HTMLElement): void {
   root.style.colorScheme = theme.scheme;
+  root.dataset.theme = theme.scheme;
   root.dataset.pithyxTheme = theme.scheme;
   root.dataset.pithyxDensity = theme.density;
   for (const name of themeTokenNames) {

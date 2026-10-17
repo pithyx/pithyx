@@ -148,7 +148,7 @@ export function appBrokerFor(target: {
     );
     return { url: new URL(created.url, window.location.origin).href, expiresAt: created.expiresAt };
   };
-  const shareBody = (location: FileLocation) => String(shareIdOf(location));
+  const shareBody = (location: FileLocation, method: string) => String(shareIdOf(location, method));
   const started = async (call: () => Promise<components['schemas']['Job']>) =>
     jobs.follow(toJob(await daemon(call)));
 
@@ -415,7 +415,7 @@ export function appBrokerFor(target: {
           await client.call((headers) =>
             api.GET('/api/app/files/versions', {
               headers,
-              params: { query: { share: shareBody(location), path } },
+              params: { query: { share: shareBody(location, 'files.versions'), path } },
             }),
           ),
         ),
@@ -425,7 +425,12 @@ export function appBrokerFor(target: {
         client.call((headers) =>
           api.POST('/api/app/files/versions/restore', {
             headers,
-            body: { share: shareBody(location), path, snapshot, overwrite: overwrite === true },
+            body: {
+              share: shareBody(location, 'files.restoreVersion'),
+              path,
+              snapshot,
+              overwrite: overwrite === true,
+            },
           }),
         ),
       ),
@@ -444,7 +449,7 @@ export function appBrokerFor(target: {
               headers,
               params: {
                 query: {
-                  share: shareBody(location),
+                  share: shareBody(location, 'trash.list'),
                   ...(cursor === undefined ? {} : { cursor }),
                   ...(limit === undefined ? {} : { limit }),
                 },
@@ -459,7 +464,7 @@ export function appBrokerFor(target: {
           api.POST('/api/app/files/trash/restore', {
             headers,
             body: {
-              share: shareBody(location),
+              share: shareBody(location, 'trash.restore'),
               ids,
               ...(onConflict === undefined ? {} : { onConflict }),
             },
@@ -471,7 +476,7 @@ export function appBrokerFor(target: {
         client.call((headers) =>
           api.POST('/api/app/files/trash/delete', {
             headers,
-            body: { share: shareBody(location), ids },
+            body: { share: shareBody(location, 'trash.delete'), ids },
           }),
         ),
       ),
@@ -480,7 +485,7 @@ export function appBrokerFor(target: {
         client.call((headers) =>
           api.POST('/api/app/files/trash/empty', {
             headers,
-            body: { share: shareBody(location) },
+            body: { share: shareBody(location, 'trash.empty') },
           }),
         ),
       ),
