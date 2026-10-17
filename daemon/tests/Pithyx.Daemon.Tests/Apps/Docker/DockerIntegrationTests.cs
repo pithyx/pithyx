@@ -68,8 +68,11 @@ public sealed class DockerIntegrationTests
         using var host = new DockerHost(vdevs.Commands, engine, options, pools, state, TimeProvider.System, NullLogger<DockerHost>.Instance);
         var backends = new AppBackends();
         var staging = Directory.CreateTempSubdirectory("pithyxci-docker-").FullName;
+        // The runtime looks up a catalog's registry token for the app; this app is a sideload without a row.
+        var connections = new SqliteConnectionFactory(Path.Combine(staging, "pithyx.db"));
+        await new MigrationRunner(connections, TimeProvider.System, NullLogger<MigrationRunner>.Instance).RunAsync(Migration.Embedded(), Token);
         var runtime = new AppBackendRuntime(host, engine, options, vdevs.Commands, storage, backends,
-            new SqliteConnectionFactory(Path.Combine(staging, "unused.db")), pools, NullLogger<AppBackendRuntime>.Instance);
+            connections, pools, NullLogger<AppBackendRuntime>.Instance);
         string? imageId = null;
         try
         {

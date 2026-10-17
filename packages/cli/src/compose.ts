@@ -1,5 +1,6 @@
 import type { AppManifest } from '@pithyx/sdk';
 import rules from '@pithyx/sdk/schema/compose.v1.rules.json' with { type: 'json' };
+import { parse } from 'yaml';
 import {
   escapePointer,
   readComposeYaml,
@@ -88,6 +89,28 @@ export function validateCompose(
     return { issues: yaml.issues };
   }
   return { issues: new Checker(manifest, options.dev ?? false).check(yaml.root) };
+}
+
+/**
+ * The services of a valid Compose file whose healthcheck starts a process in the container: every test but `NONE`,
+ * unless `disable` is set. Docker runs it every `interval` while the backend runs, and the box's start waits for its
+ * first pass, so next to the manifest's `health` it only makes the start slower and the idle backend busier.
+ */
+export function processHealthchecks(bytes: Uint8Array): string[] {
+  const root = parse(new TextDecoder().decode(bytes)) as {
+    services?: Record<string, { healthcheck?: { test?: unknown; disable?: unknown } } | null>;
+  } | null;
+  return Object.entries(root?.services ?? {})
+    .filter(([, service]) => {
+      const check = service?.healthcheck;
+      if (check === undefined || check.disable === true) {
+        return false;
+      }
+      const test: unknown = Array.isArray(check.test) ? (check.test as unknown[])[0] : check.test;
+      return test !== 'NONE';
+    })
+    .map(([name]) => name)
+    .sort();
 }
 
 /** The path of the source form next to a manifest's `backend.compose`: `backend/compose.yaml` gives `backend/compose.dev.yaml`. */

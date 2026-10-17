@@ -106,6 +106,7 @@ Nur die CLI meldet diese. `cli.backend.unbuilt` kommt vom Vite-Plugin nach `vite
 <!-- generated:cli-findings cli -->
 
 - `cli.backend.unbuilt` (Warnung): {path} is not built yet: run pithyx build, or let the catalog build it from the source form.
+- `cli.compose.healthcheck_redundant` (Warnung): Service {service} has a Compose healthcheck next to the health of the manifest. Docker starts a process in the container for every check, which delays every start and keeps the idle backend busy. Remove it and let health decide.
 - `cli.frontend.missing` (Fehler): The frontend build {folder} does not exist. Build the app first, or name the folder with --frontend.
 - `cli.frontend.skipped` (Warnung): {path} is left out of the package: hidden files and folders cannot be in an app package.
 - `cli.icon.template` (Warnung): icon.svg is still the template icon (the Pithyx box). Replace it with the icon of your app.
