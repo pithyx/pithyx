@@ -123,7 +123,7 @@ export async function loadDashboard(app: PithyxApp, show: (text: string) => void
 
 - `app.log.debug`, `info`, `warn`, `error` and `log` (the same as `info`) take a message and optional `data`, a flat object of strings, numbers, booleans and `null`. They return at once and never throw.
 - Every entry appears in the browser console at its level. `info`, `warn` and `error` also go to the daemon; `debug` only while an administrator switched on debug logging for the app (`context.logLevel` is `debug`, `logLevelChange` follows it).
-- In the Log Center entries appear under the source `app/<id>` with the signed-in user. Output of the backend's containers lands in the same source.
+- In the Log Center entries appear under the source `app/<id>` with the signed-in user. Output of the backend's containers lands in the same source. A line on stdout is info, a line on stderr a warning, and a line that is a JSON object with a string `level` (`debug` or `trace`, `info`, `warn` or `warning`, `error`, `fatal` or `critical`) keeps that level. So log errors of a backend to stderr or as JSON with a `level`; plain `console.log` output is always info.
 - The SDK collects entries for 250 ms and sends up to 100 at a time.
 
 **Limits:** a message is cut at 4000 characters; `data` keeps 20 fields with keys of up to 100 and values of up to 1000 characters, all turned into text. The SDK buffers at most 500 entries and drops newer ones while it is full; the daemon accepts bursts of 200 and then 20 per second for each app, all its users together, drops the rest and reports the dropped count once a minute as one warning. Never log passwords, tokens or file contents.

@@ -21,7 +21,7 @@ Logs are stored in a database on the system disk under `/var/log/pithyx/`, so th
 
 The daemon also writes JSON files `/var/log/pithyx/daemon.json*`, rolling at 20 MB with 10 files. Secrets are masked in logs.
 
-App messages arrive through the SDK: `info`, `warn` and `error` always, `debug` only while an administrator turned it on in the app's detail. A message is at most 4000 characters, with at most 20 data fields; an app may log 20 messages per second (burst 200). Backend container output lands in the source `app/<id>`.
+App messages arrive through the SDK: `info`, `warn` and `error` always, `debug` only while an administrator turned it on in the app's detail. A message is at most 4000 characters, with at most 20 data fields; an app may log 20 messages per second (burst 200). Backend container output lands in the source `app/<id>`. A line on stdout is info, a line on stderr a warning, and a line that is a JSON object with a string `level` (`debug` or `trace`, `info`, `warn` or `warning`, `error`, `fatal` or `critical`) keeps that level.
 
 ## The Resource Monitor
 
