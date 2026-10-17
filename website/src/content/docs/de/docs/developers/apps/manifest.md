@@ -51,6 +51,7 @@ Pflichtfelder: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, `s
 
 - `instances`: `single` fokussiert das vorhandene Fenster des Benutzers auf diesem Gerät und übergibt Startargumente; `multi` öffnet jedes Mal ein neues Fenster.
 - `defaultSize` und `minSize`: `width` und `height` als ganze Zahlen von 100 bis 8192 CSS-Pixel. `minSize` darf in keiner Richtung größer sein als `defaultSize`. Die Standardgröße gilt, wenn der Benutzer keine gemerkte Größe hat; das Minimum gilt auf Bildschirmen, auf die es passt.
+- `loading` (optional): `text`, die Zeile, die ein neues Fenster zeigt, während das Backend startet, übersetzt wie `name` (bis zu 60 Zeichen; ohne sie schreibt der Desktop "<Name> wird gestartet ..."), und `untilReady`, ob der Platzhalter nach dem Verbinden der App auf `app.window.ready()` wartet. Siehe [Ereignisse und Kontext](/de/docs/sdk/guides/events-and-context/#laden).
 
 `fileHandlers` (optional, bis zu 32) lässt die App bei Dateitypen unter "Öffnen mit …" erscheinen. Jeder Handler hat `extensions` (1 bis 32 Erweiterungen in Kleinbuchstaben ohne Punkt, etwa `png` oder `tar.gz`), und optional `mimeTypes` (1 bis 32) und `isDefault`. Eine Erweiterung kann nur zu einem Handler gehören. Die Datei erreicht die App über das Ereignis `launch` oder `openFile`.
 
@@ -69,6 +70,8 @@ Pflichtfelder: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, `s
 
 Ein Administrator bestätigt die Liste bei der Installation und kann jede Berechtigung später entziehen; die App bekommt dann ein `permissionsChange`-Ereignis. Eine Berechtigung, die in einem Update neu ist, wartet auf den Administrator, und eine entzogene Berechtigung bleibt über Updates hinweg entzogen. Ein Aufruf ohne die nötige Berechtigung schlägt mit [`app.permission.denied`](/de/docs/reference/errors/#app.permission.denied) fehl.
 
+Eine App, die `directory.read` verlangt, einen Container als root betreibt (`backend.root`) oder Sonderrechte verlangt (`backend.elevated`), wird nur für Administratoren vorgeschlagen: Der Installationsdialog wählt **Nur Administratoren** vor und sagt warum. Der Administrator kann sie trotzdem allen erlauben.
+
 `storage` (optional, bis zu 16) fordert Ordner an. Jede Anforderung hat eine `id`, einen `name`, eine optionale `description`, `access` (`read` oder `readWrite`), `required` und, für Backends, `services` (die Services, die den Ordner bekommen). Ein Administrator ordnet jede Anforderung einem Ordner in einem freigegebenen Ordner zu. Das Fenster adressiert ihn in der Datei-API des SDK als `{ storage: id }`; ein Backend-Service sieht ein Compose-Volume mit diesem Namen. Eine App kann erst starten, wenn ihre erforderlichen Anforderungen zugeordnet sind.
 
 ## Backend
@@ -81,7 +84,7 @@ Ein Administrator bestätigt die Liste bei der Installation und kann jede Berech
 - `idleTimeout`: Sekunden von 60 bis 86400, Standard 600; bei `always` wird er ignoriert.
 - `root`: `true` führt die Services im Container als root aus (auf dem Host ohne Rechte); Standard `false`. Der Installationsdialog warnt davor.
 - `health`: `{ "endpoint": "api", "path": "/health" }`. Der Daemon ruft dort `GET` auf; eine 2xx-Antwort bedeutet, dass das Backend läuft.
-- `schedules`: bis zu 16 Einträge der Form `{ id, cron, endpoint, path }`. Der Daemon startet das Backend und ruft `POST path` auf. Der Cron-Ausdruck hat fünf Felder (Minute 0 bis 59, Stunde 0 bis 23, Tag des Monats 1 bis 31, Monat 1 bis 12, Wochentag 0 bis 7) in der Zeitzone der Box, mit `*`, Zahlen, Bereichen, Listen und Schritten; Namen sind nicht erlaubt ([`app.manifest.cron_invalid`](/de/docs/reference/errors/#app.manifest.cron_invalid)).
+- `schedules`: bis zu 16 Einträge der Form `{ id, cron, endpoint, path }`. Der Daemon startet das Backend und ruft `POST path` mit `X-Pithyx-Schedule` auf (siehe [Wer ruft auf](/de/docs/developers/apps/backend/#wer-ruft-auf)). Der Cron-Ausdruck hat fünf Felder (Minute 0 bis 59, Stunde 0 bis 23, Tag des Monats 1 bis 31, Monat 1 bis 12, Wochentag 0 bis 7) in der Zeitzone der Box, mit `*`, Zahlen, Bereichen, Listen und Schritten; Namen sind nicht erlaubt ([`app.manifest.cron_invalid`](/de/docs/reference/errors/#app.manifest.cron_invalid)).
 - `elevated`: eine Liste zusätzlicher Rechte (`host.network`, `host.pid`, `device:/dev/<path>`, `capability:<NAME>`, `docker.socket`, `host.full`), bis zu 32. Erhöhte Rechte werden noch nicht vergeben: Pithyx 1.0.0-beta.1 lehnt jeden Eintrag mit [`app.elevated.unsupported`](/de/docs/reference/errors/#app.elevated.unsupported) ab.
 
 Über das Schema hinaus prüft die Box, dass Service- und Endpunkt-Namen existieren ([`app.manifest.reference_unknown`](/de/docs/reference/errors/#app.manifest.reference_unknown)) und dass die Speicheranforderungen zu den Compose-Mounts passen.

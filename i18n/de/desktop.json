@@ -275,6 +275,10 @@
       "name": "Dateiname",
       "readOnly": "Diese Freigabe kannst du nur lesen. Wähle eine andere, um hier zu speichern.",
       "exists": "Eine Datei mit diesem Namen gibt es schon. Speichern ersetzt sie."
+    },
+    "loading": {
+      "label": "{name} wird geladen",
+      "starting": "{name} wird gestartet ..."
     }
   }
 }

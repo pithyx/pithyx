@@ -2,7 +2,7 @@ import { version } from '../package.json';
 
 /**
  * The version of this SDK package, from its `package.json`. The npm packages `@pithyx/sdk`, `@pithyx/ui` and
- * `@pithyx/cli` share one SemVer line of their own, separate from the Pithyx product version (D306): a new method,
+ * `@pithyx/cli` share one SemVer line of their own, separate from the Pithyx product version: a new method,
  * event or optional field is a minor release, a removed or changed one a major release.
  *
  * Deprecations last one major version: anything marked `@deprecated` in major N keeps working through all of major

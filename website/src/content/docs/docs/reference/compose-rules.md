@@ -304,7 +304,7 @@ Keys that are refused on purpose, with the reason from the rules file. Any other
 | `stdin_open`          | no terminal                                                  |
 | `attach`              | no terminal                                                  |
 | `annotations`         | not needed                                                   |
-| `develop`             | no development mode on the box (D307)                        |
+| `develop`             | no development mode on the box                               |
 | `post_start`          | not in Compose 2.26                                          |
 | `pre_stop`            | not in Compose 2.26                                          |
 | `x-*`                 | useless without anchors, which are refused                   |

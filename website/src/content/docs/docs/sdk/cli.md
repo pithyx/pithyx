@@ -45,7 +45,7 @@ Builds the services of `backend/compose.dev.yaml` that have `build:`. It needs a
 
 - `pithyx validate [folder]` checks `pithyx.json`, `icon.svg`, the entry in the built frontend, the package layout, `backend/compose.yaml` and `backend/images.lock.json`. It warns while `icon.svg` is the template icon. On success it prints `<id> <version> is valid.`
 - `pithyx lock [folder]` resolves the images of `backend/compose.yaml` and writes `backend/images.lock.json`. It needs the network.
-- `pithyx pack [folder] [--out <file or folder>] [--images]` validates, then writes `<id>-<version>.pithyxapp`. `--out` must end in `.pithyxapp` or be a folder. `--images` adds the images for offline installs and needs Docker.
+- `pithyx pack [folder] [--out <file or folder>] [--images]` validates, then writes `<id>-<version>.pithyxapp`. `--out` is a `.pithyxapp` file or a folder, created if needed. `--images` adds the images for offline installs and needs Docker.
 
 ## pithyx catalog
 
