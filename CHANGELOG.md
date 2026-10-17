@@ -18,6 +18,7 @@ The first beta, codename Pyxis (D345): the NAS core, the file services, the app 
 
 ### Added
 
+- `@pithyx/ui` exports `CheckboxProps`, `SwitchProps` and `ProgressBarProps`, so the reference lists their label props; the UI page explains that the package has no icons and how to add Tabler Icons.
 - App windows show a loading placeholder until the app connected (D354): the app's icon and name, a moving bar after 300 ms and, while its backend starts, "Starting <name> ..." or the app's own text. The manifest's new optional `window.loading` sets that text (localized) and `untilReady`, which keeps the placeholder until the app calls the new SDK method `app.window.ready()` (at most 30 seconds). `pithyx dev` shows it too.
 - GPL source for every image: `tools/release/collect-sources.ts` fetches the Debian source package of every package in an image (also the sources named in `Built-Using`, such as the kernel behind the signed kernel package and the Go and Rust libraries, and the build host's GRUB in the ISO's boot loader; `image/build.sh` now records them as `pithyx-<version>-<arch>.built-using` and `.host-packages`) from snapshot.debian.org, checks each file's SHA-1 and packs them as release parts; the license page says where they are.
 - Development: `tools/fixtures/record-lsblk-qemu.sh` records `lsblk` fixtures for a SATA, an NVMe and a USB disk from emulated controllers in a throwaway QEMU VM, and the parser tests cover all three. The fixture anonymizer keeps the type prefix of NVMe and SCSI name identifiers (`eui.`, `nvme.`, `naa.`).

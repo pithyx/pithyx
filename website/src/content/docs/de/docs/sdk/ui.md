@@ -48,4 +48,10 @@ Die Komponenten lesen die Tokens `--color-*`, `--space-*`, `--radius-*` und `--c
 - Überlagerungen: `Dialog`, `Menu`, `MenuItem`, `MenuTrigger`, `MenuPopover`, `MenuSeparator`, `ContextMenuPopover`, `Tooltip` und `TooltipTrigger`.
 - Helfer: `UiProvider`, `useDeliberatePress`, `cx` und `uiTexts`.
 
+`Checkbox` und `Switch` bekommen ihre Beschriftung als Kinder (`<Checkbox isSelected={done} onChange={setDone}>Erledigt</Checkbox>`), `ProgressBar` als `label`.
+
 Die [API-Referenz](/de/docs/reference/sdk/) hat eine Seite pro Komponente, erzeugt aus ihrem TSDoc (zum Beispiel [Button](/de/docs/reference/sdk/ui/button/) und [Dialog](/de/docs/reference/sdk/ui/dialog/)), und jedes Token mit seinem Wert unter [Tokens](/de/docs/reference/sdk/ui/tokens/).
+
+## Icons
+
+`@pithyx/ui` exportiert keine Icons. Der Desktop nutzt Tabler Icons (MIT); damit deine App gleich aussieht, nimm `@tabler/icons-react` in deine App auf und importiere jedes Icon, das du nutzt, etwa `import { IconTrash } from '@tabler/icons-react';`. Gib einem `IconButton` sein `label`, das zugleich Tooltip und zugänglicher Name ist.
