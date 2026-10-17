@@ -22,9 +22,8 @@ export type FileLocation =
   | ShareLocation;
 
 /**
- * A share from `files.shares`, the only location `files.run`, the versions and the recycle bin take: a storage
- * request is a folder inside a share, without a bin of its own. To copy out of a storage request, read the file and
- * write it to the share.
+ * A share from `files.shares`, the only location the versions and the recycle bin take: a storage request is a folder
+ * inside a share, without snapshots or a bin of its own.
  */
 export interface ShareLocation {
   /** The `id` of a share from `files.shares`. */
@@ -101,8 +100,8 @@ export type FileItems =
 
 /** A selection in one folder. */
 export interface FileSelection {
-  /** The share the folder is in. */
-  location: ShareLocation;
+  /** Where the folder is: a share, or a storage request of the manifest. */
+  location: FileLocation;
   /** The folder the names are in. */
   folder: string;
   /** The entries of the folder that are meant. */
@@ -124,8 +123,8 @@ export interface FileOperation {
   source: FileSelection;
   /** The folder to copy or move into. Required for copy and move, not allowed for delete. */
   target?: {
-    /** The share the target folder is in. */
-    location: ShareLocation;
+    /** Where the target folder is: a share, or a storage request of the manifest. */
+    location: FileLocation;
     /** The target folder, relative to its location. */
     path: string;
   };

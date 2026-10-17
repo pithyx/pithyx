@@ -492,7 +492,7 @@ export interface PithyxApp {
    * file manager API over shares and named storage (`files.shares` for shares). See {@link Methods} for every call.
    *
    * A `FileLocation` is `{ storage: id }` for a storage request of the manifest or `{ share: id }` for a share;
-   * `run`, `versions`, `restoreVersion` and `trash` take only a share (`ShareLocation`). The
+   * `versions`, `restoreVersion` and `trash` take only a share (`ShareLocation`). The
    * daemon checks the app's permissions and the user's own rights on every call: a share needs `files.shares`, its
    * content also `files.read` or `files.write`, and changes need write access to the share (`fs.share.read_only`
    * otherwise). Common failures: `app.permission.denied`, `fs.share.not_found`, `fs.share.unavailable` (its pool is
@@ -687,14 +687,15 @@ export interface PithyxApp {
     /**
      * Starts a copy, move or delete as a job and resolves with it at once; `jobChanged` events follow its progress
      * until it finishes. A whole folder is named with `{ all: true, except }`, never with every name. Deleting moves
-     * to the share's recycle bin unless `permanent`, which only an explicit request of the user may set. Needs
-     * `files.shares` and write access.
+     * to the share's recycle bin unless `permanent`, which only an explicit request of the user may set. Source and
+     * target may each be a share or a storage request: a share needs `files.shares`, `files.read` where entries are
+     * copied or moved from and `files.write` where anything changes; a storage request needs its mapping, for changes
+     * one for reading and writing, and never reaches beyond the mapped folder. The user needs the access too.
      *
      * @param operation - What to do with which entries, and where to.
      * @returns The job as it started; failures of single entries end up in its `problem`.
      * @throws `fs.operation.invalid` when the operation does not fit (a target for delete, none for copy).
      * @throws `fs.operation.into_itself` when a folder would be copied or moved into itself.
-     * @throws `sdk.request.invalid` for a storage request as source or target: copy its files with `read` and `write`.
      */
     run(operation: FileOperation): Promise<JobInfo>;
     /**

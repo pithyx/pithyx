@@ -11,7 +11,6 @@ import { toPithyxError } from '../sdk/daemonError';
 import {
   folderWatcher,
   jobFollower,
-  operationBody,
   shareIdOf,
   sharesWatcher,
   showProblem,
@@ -21,7 +20,7 @@ import {
   toVersions,
   type Emit,
 } from '../sdk/fileMapping';
-import { locationQuery, type AppApi } from './appApi';
+import { appOperationBody, locationQuery, type AppApi } from './appApi';
 
 type AppFileEntry = components['schemas']['AppFileEntry'];
 type AppShareInfo = components['schemas']['AppShareInfo'];
@@ -406,7 +405,7 @@ export function appBrokerFor(target: {
     'files.run': async (params) =>
       started(() =>
         client.call((headers) =>
-          api.POST('/api/app/files/operations', { headers, body: operationBody(params) }),
+          api.POST('/api/app/files/operations', { headers, body: appOperationBody(params) }),
         ),
       ),
     'files.versions': async ({ location, path }) =>

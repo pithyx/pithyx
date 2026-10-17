@@ -2,6 +2,8 @@
   position: relative;
   display: grid;
   grid-template-rows: minmax(0, 1fr) auto;
+  /* Without a bounded column the taskbar would widen it with every running app and push the clock off screen. */
+  grid-template-columns: minmax(0, 1fr);
   grid-template-areas:
     'workspace'
     'taskbar';

@@ -4,6 +4,9 @@
   grid-area: taskbar;
   align-items: center;
   gap: var(--space-1);
+  /* However many apps run, the bar never grows past the screen: the apps scroll, start and status stay. */
+  min-width: 0;
+  min-height: 0;
   height: var(--taskbar-size);
   padding: 0 var(--space-2);
   border-top: 1px solid var(--color-taskbar-border);
@@ -56,6 +59,7 @@
 }
 
 .start {
+  flex-shrink: 0;
   width: 48px;
   height: 46px;
   padding: 0;
@@ -76,8 +80,14 @@
   min-width: 0;
   margin: 0 0 0 var(--space-2);
   padding: 0;
-  overflow: hidden;
+  overflow: auto hidden;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
   list-style: none;
+}
+
+.apps::-webkit-scrollbar {
+  display: none;
 }
 
 .apps > li {
@@ -186,6 +196,7 @@
 
 .status {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 2px;
   margin-left: auto;
@@ -271,6 +282,7 @@
   flex-direction: column;
   align-items: center;
   margin: var(--space-2) 0 0;
+  overflow: hidden auto;
 }
 
 .taskbar:is([data-position='left'], [data-position='right']) .apps > li {

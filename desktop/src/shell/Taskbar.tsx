@@ -7,7 +7,7 @@ import {
   IconSquare,
   IconX,
 } from '../ui/icons';
-import { useState, type Ref } from 'react';
+import { useEffect, useRef, useState, type Ref } from 'react';
 import { Button as AriaButton } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
 import {
@@ -103,6 +103,18 @@ export function Taskbar({
   const [menu, setMenu] = useState<{ id: string; x: number; y: number } | null>(null);
   const menuApp = menu === null ? undefined : apps.find((app) => app.id === menu.id);
   const icon = { size: 18, stroke: 1.75 };
+  const list = useRef<HTMLUListElement>(null);
+  const focusedApp = apps.find((app) => app.state === 'focused')?.id;
+  const vertical = position === 'left' || position === 'right';
+
+  // More apps than fit scroll inside their list; the focused one (also a newly opened one) is brought into view.
+  useEffect(() => {
+    if (focusedApp !== undefined) {
+      list.current
+        ?.querySelector(`[data-app="${CSS.escape(focusedApp)}"]`)
+        ?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    }
+  }, [focusedApp]);
 
   return (
     <nav
@@ -164,9 +176,19 @@ export function Taskbar({
         </Tooltip>
       </TooltipTrigger>
 
-      <ul className={styles.apps} aria-label={t('taskbar.runningApps')}>
+      <ul
+        ref={list}
+        className={styles.apps}
+        aria-label={t('taskbar.runningApps')}
+        // A mouse wheel scrolls up and down; along a horizontal bar it moves the apps sideways.
+        onWheel={(event) => {
+          if (!vertical && Math.abs(event.deltaY) > Math.abs(event.deltaX)) {
+            event.currentTarget.scrollLeft += event.deltaY;
+          }
+        }}
+      >
         {apps.map((app) => (
-          <li key={app.id}>
+          <li key={app.id} data-app={app.id}>
             <AriaButton
               className={cx(styles.button, styles.app)}
               data-state={app.state}
