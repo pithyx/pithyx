@@ -94,9 +94,6 @@
       "shm_size": "64m",
       "mem_limit": "512m",
       "cpus": 1.5,
-      "cap_drop": [
-        "ALL"
-      ],
       "pull_policy": "never",
       "user": "40001:40001",
       "networks": [
@@ -115,6 +112,9 @@
       "oom_score_adj": 500,
       "security_opt": [
         "no-new-privileges:true"
+      ],
+      "cap_drop": [
+        "ALL"
       ],
       "labels": {
         "org.opencontainers.image.title": "Chat",
@@ -170,6 +170,9 @@
       "oom_score_adj": 500,
       "security_opt": [
         "no-new-privileges:true"
+      ],
+      "cap_drop": [
+        "ALL"
       ],
       "labels": {
         "com.pithyx.app": "com.example.chat",

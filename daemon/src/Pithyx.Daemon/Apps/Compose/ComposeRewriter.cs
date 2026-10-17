@@ -18,8 +18,9 @@ public sealed record StorageMapping(string HostPath, bool ReadOnly, int? Gid);
 /// <param name="ImageIds">Each image reference of the Compose file and the id (<c>sha256:</c> config digest) the box checked against <c>images.lock.json</c>.</param>
 /// <param name="Storage">The mapped storage requests by id; an optional one may be missing.</param>
 /// <param name="InternetBridgeName">
-/// For an app holding <c>network.internet</c>: the bridge of a second network that is not internal (<c>px-i&lt;n&gt;</c>), which
-/// every service on the app's network joins as well; null keeps the backend without a way out.
+/// For an app holding <c>network.internet</c> or <c>network.lan</c>: the bridge of a second network that is not internal
+/// (<c>px-i&lt;n&gt;</c>), which the services named in the manifest's <c>backend.network</c> (all without it) join as well; the
+/// box's firewall decides where it leads (D358). Null keeps the backend without a way out.
 /// </param>
 public sealed record ComposeHost(
     int Uid,
@@ -64,6 +65,11 @@ public static class ComposeRewriter
         var backend = manifest.GetProperty("backend");
         var root = backend.TryGetProperty("root", out var rootFlag) && rootFlag.GetBoolean();
         var storage = Storage(manifest, host);
+        var outside = host.InternetBridgeName is null
+            ? new HashSet<string>(StringComparer.Ordinal)
+            : backend.TryGetProperty("network", out var network)
+                ? network.GetProperty("services").EnumerateArray().Select(service => service.GetString()!).ToHashSet(StringComparer.Ordinal)
+                : null;
 
         using var buffer = new MemoryStream();
         using (var writer = new Utf8JsonWriter(buffer, _writerOptions))
@@ -73,10 +79,13 @@ public static class ComposeRewriter
             writer.WritePropertyName("services");
             writer.WriteStartObject();
             var attached = false;
+            var leaves = false;
             foreach (var (name, node) in ((ComposeMap)document.Get("services")!).Entries)
             {
                 writer.WritePropertyName(name);
-                attached |= Service(writer, name, (ComposeMap)node, appId, version, root, storage, host);
+                var goesOut = outside is null || outside.Contains(name);
+                attached |= Service(writer, name, (ComposeMap)node, appId, version, root, goesOut, storage, host);
+                leaves |= goesOut && ((ComposeMap)node).Get("network_mode") is null;
             }
             writer.WriteEndObject();
             if (attached)
@@ -84,7 +93,7 @@ public static class ComposeRewriter
                 writer.WritePropertyName("networks");
                 writer.WriteStartObject();
                 Network(writer, NetworkKey, ProjectName(appId), host.BridgeName, appId, isInternal: true);
-                if (host.InternetBridgeName is { } internet)
+                if (host.InternetBridgeName is { } internet && leaves)
                 {
                     Network(writer, InternetKey, ProjectName(appId) + "-internet", internet, appId, isInternal: false);
                 }
@@ -144,6 +153,7 @@ public static class ComposeRewriter
         string appId,
         string version,
         bool root,
+        bool goesOut,
         Dictionary<string, StorageRequest> storage,
         ComposeHost host)
     {
@@ -164,6 +174,8 @@ public static class ComposeRewriter
                     Mounts(writer, (ComposeSequence)value, storage, groups, host);
                     break;
                 case "labels":
+                    break;
+                case "cap_drop" when !root:
                     break;
                 case "cpus":
                     writer.WriteNumber("cpus", double.Parse(((ComposeScalar)value).Value, CultureInfo.InvariantCulture));
@@ -193,7 +205,7 @@ public static class ComposeRewriter
             writer.WritePropertyName("networks");
             writer.WriteStartArray();
             writer.WriteStringValue(NetworkKey);
-            if (host.InternetBridgeName is not null)
+            if (host.InternetBridgeName is not null && goesOut)
             {
                 writer.WriteStringValue(InternetKey);
             }
@@ -215,6 +227,15 @@ public static class ComposeRewriter
         writer.WriteStartArray();
         writer.WriteStringValue("no-new-privileges:true");
         writer.WriteEndArray();
+        // Without root a service keeps no capability unless it adds one with an elevated right (D359); a root service
+        // keeps Docker's set, which images need that start as root and switch to their own user.
+        if (!root)
+        {
+            writer.WritePropertyName("cap_drop");
+            writer.WriteStartArray();
+            writer.WriteStringValue("ALL");
+            writer.WriteEndArray();
+        }
         writer.WritePropertyName("labels");
         writer.WriteStartObject();
         foreach (var (label, text) in Labels(service.Get("labels")))

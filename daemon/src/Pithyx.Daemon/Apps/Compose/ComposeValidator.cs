@@ -998,6 +998,19 @@ public static partial class ComposeValidator
                     }
                 }
             }
+            if (backend?.TryGetProperty("network", out var network) == true)
+            {
+                var index = 0;
+                foreach (var listed in network.GetProperty("services").EnumerateArray())
+                {
+                    var service = listed.GetString()!;
+                    if (!names.Contains(service))
+                    {
+                        Add(ErrorCodes.AppComposeReferenceUnknown, ("path", Child("/backend/network/services", index.ToString(CultureInfo.InvariantCulture))), ("name", service));
+                    }
+                    index++;
+                }
+            }
 
             if (manifest.TryGetProperty("storage", out var storage))
             {

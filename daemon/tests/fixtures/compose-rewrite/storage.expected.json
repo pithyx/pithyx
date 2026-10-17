@@ -54,6 +54,9 @@
       "security_opt": [
         "no-new-privileges:true"
       ],
+      "cap_drop": [
+        "ALL"
+      ],
       "labels": {
         "com.pithyx.app": "com.example.chat",
         "com.pithyx.service": "server",
@@ -93,6 +96,9 @@
       "oom_score_adj": 500,
       "security_opt": [
         "no-new-privileges:true"
+      ],
+      "cap_drop": [
+        "ALL"
       ],
       "labels": {
         "com.pithyx.app": "com.example.chat",

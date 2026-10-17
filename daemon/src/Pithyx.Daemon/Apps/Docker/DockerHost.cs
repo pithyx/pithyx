@@ -1,3 +1,6 @@
+using System.Globalization;
+using System.Net;
+using System.Net.Sockets;
 using System.Text;
 using System.Text.Json;
 using Pithyx.Daemon.Commands;
@@ -102,19 +105,108 @@ public sealed partial class DockerHost(
     }
 
     /// <summary>
-    /// The nftables rules of D309: new connections from the app bridges (<c>px-*</c>) to the host are dropped, so a
-    /// container reaches no host service (7484, SSH, SMB) through its gateway address; the proxy's connections to the
-    /// containers and their answers keep working. Only the chain <c>apps-input</c> of the table <c>inet pithyx</c> is
-    /// rewritten.
+    /// Destinations an app's backend reaches only with <c>network.lan</c> (D358): private, shared (CGNAT), loopback,
+    /// link-local, multicast and reserved IPv4 ranges. Everything else counts as the internet.
+    /// </summary>
+    public static IReadOnlyList<string> LocalIpv4 { get; } =
+        ["0.0.0.0/8", "10.0.0.0/8", "100.64.0.0/10", "127.0.0.0/8", "169.254.0.0/16", "172.16.0.0/12", "192.168.0.0/16", "224.0.0.0/4", "240.0.0.0/4"];
+
+    /// <summary>The IPv6 ranges of <see cref="LocalIpv4"/>: unspecified, loopback, unique local, link-local and multicast.</summary>
+    public static IReadOnlyList<string> LocalIpv6 { get; } = ["::/128", "::1/128", "fc00::/7", "fe80::/10", "ff00::/8"];
+
+    /// <summary>
+    /// The nftables rules of D309 and D358. Chain <c>apps-input</c>: new connections from the app bridges (<c>px-*</c>) to
+    /// the host are dropped, so a container reaches no host service (7484, SSH, SMB) through its gateway address; the
+    /// proxy's connections to the containers and their answers keep working. Chain <c>apps-forward</c>, before Docker's
+    /// own rules: what leaves an app's outside network (<c>px-i*</c>) for the local ranges passes only from a bridge in the
+    /// set <c>apps-lan</c>, anything else only from one in <c>apps-internet</c>; DNS to the resolvers Docker forwards to
+    /// always passes, so names resolve without <c>network.lan</c>. A bridge in neither set gets nowhere. Only the two
+    /// chains are rewritten; the sets keep their elements, which <see cref="NetworkRules"/> sets per app.
     /// </summary>
     public static string NftRules =>
-        """
+        $$"""
         add table inet pithyx
         add chain inet pithyx apps-input { type filter hook input priority filter; policy accept; }
         flush chain inet pithyx apps-input
         add rule inet pithyx apps-input iifname "px-*" ct state new drop
+        add set inet pithyx {{LanSet}} { type ifname; }
+        add set inet pithyx {{InternetSet}} { type ifname; }
+        add set inet pithyx {{Resolvers4Set}} { type ipv4_addr; }
+        add set inet pithyx {{Resolvers6Set}} { type ipv6_addr; }
+        add chain inet pithyx apps-forward { type filter hook forward priority -1; policy accept; }
+        flush chain inet pithyx apps-forward
+        add rule inet pithyx apps-forward iifname "px-i*" oifname "px-*" accept
+        add rule inet pithyx apps-forward iifname "px-i*" ip daddr @{{Resolvers4Set}} meta l4proto { tcp, udp } th dport 53 accept
+        add rule inet pithyx apps-forward iifname "px-i*" ip6 daddr @{{Resolvers6Set}} meta l4proto { tcp, udp } th dport 53 accept
+        add rule inet pithyx apps-forward iifname "px-i*" iifname != @{{LanSet}} ip daddr { {{string.Join(", ", LocalIpv4)}} } drop
+        add rule inet pithyx apps-forward iifname "px-i*" iifname != @{{LanSet}} ip6 daddr { {{string.Join(", ", LocalIpv6)}} } drop
+        add rule inet pithyx apps-forward iifname "px-i*" iifname != @{{InternetSet}} ip daddr != { {{string.Join(", ", LocalIpv4)}} } drop
+        add rule inet pithyx apps-forward iifname "px-i*" iifname != @{{InternetSet}} ip6 daddr != { {{string.Join(", ", LocalIpv6)}} } drop
 
         """;
+
+    /// <summary>The bridges whose app may reach the local network.</summary>
+    public const string LanSet = "apps-lan";
+
+    /// <summary>The bridges whose app may reach the internet.</summary>
+    public const string InternetSet = "apps-internet";
+
+    /// <summary>The resolvers Docker's embedded DNS forwards to, IPv4.</summary>
+    public const string Resolvers4Set = "apps-dns4";
+
+    /// <summary>The resolvers, IPv6.</summary>
+    public const string Resolvers6Set = "apps-dns6";
+
+    /// <summary>
+    /// One transaction for an app's outside network before its backend starts: its bridge in or out of the two sets as
+    /// its permissions say (an element is added before it is deleted, so a missing one is no error), and the resolvers
+    /// as Docker reads them now.
+    /// </summary>
+    public static string NetworkRules(string bridge, bool internet, bool lan, IReadOnlyList<IPAddress> resolvers)
+    {
+        ArgumentNullException.ThrowIfNull(bridge);
+        ArgumentNullException.ThrowIfNull(resolvers);
+        var script = new StringBuilder();
+        foreach (var (set, allowed) in new[] { (LanSet, lan), (InternetSet, internet) })
+        {
+            script.Append(CultureInfo.InvariantCulture, $"add element inet pithyx {set} {{ \"{bridge}\" }}\n");
+            script.Append(CultureInfo.InvariantCulture, $"delete element inet pithyx {set} {{ \"{bridge}\" }}\n");
+            if (allowed)
+            {
+                script.Append(CultureInfo.InvariantCulture, $"add element inet pithyx {set} {{ \"{bridge}\" }}\n");
+            }
+        }
+        foreach (var (set, family) in new[] { (Resolvers4Set, AddressFamily.InterNetwork), (Resolvers6Set, AddressFamily.InterNetworkV6) })
+        {
+            script.Append(CultureInfo.InvariantCulture, $"flush set inet pithyx {set}\n");
+            var addresses = resolvers.Where(address => address.AddressFamily == family).Select(address => address.ToString()).ToList();
+            if (addresses.Count > 0)
+            {
+                script.Append(CultureInfo.InvariantCulture, $"add element inet pithyx {set} {{ {string.Join(", ", addresses)} }}\n");
+            }
+        }
+        return script.ToString();
+    }
+
+    /// <summary>
+    /// The name servers of a <c>resolv.conf</c> that Docker's embedded DNS forwards to: every <c>nameserver</c> address
+    /// except loopback ones (a zone index of a link-local address is dropped).
+    /// </summary>
+    public static IReadOnlyList<IPAddress> Resolvers(string resolvConf)
+    {
+        ArgumentNullException.ThrowIfNull(resolvConf);
+        var addresses = new List<IPAddress>();
+        foreach (var line in resolvConf.Split('\n'))
+        {
+            var parts = line.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length >= 2 && parts[0] == "nameserver"
+                && IPAddress.TryParse(parts[1].Split('%')[0], out var address) && !IPAddress.IsLoopback(address) && !addresses.Contains(address))
+            {
+                addresses.Add(address);
+            }
+        }
+        return addresses;
+    }
 
     /// <summary>
     /// Makes Docker run with the box's configuration on the app pool: the dataset, the remap user and its ids, the files,
@@ -176,6 +268,25 @@ public sealed partial class DockerHost(
             _lock.Release();
         }
         Started?.Invoke();
+    }
+
+    /// <summary>
+    /// Sets where an app's outside network leads (D358) before its backend starts. Docker takes the name servers of
+    /// <c>/etc/resolv.conf</c>, or those systemd-resolved uses when that file names only its local stub, and the
+    /// containers' DNS queries go to them through the bridge, so the same addresses are let through.
+    /// </summary>
+    public async Task AllowNetworkAsync(string bridge, bool internet, bool lan, CancellationToken cancellationToken)
+    {
+        if (!options.Apply)
+        {
+            return;
+        }
+        var resolvers = Resolvers(Read(options.ResolvConfPath));
+        if (resolvers.Count == 0)
+        {
+            resolvers = Resolvers(Read(options.ResolvedConfPath));
+        }
+        await RunAsync(new CommandRequest("nft", ["-f", "-"], StandardInput: NetworkRules(bridge, internet, lan, resolvers)), cancellationToken);
     }
 
     /// <summary>Stops Docker and containerd when no backend app is left; their configuration stays for the next app.</summary>

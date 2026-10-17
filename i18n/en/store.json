@@ -143,6 +143,10 @@
       "internet": {
         "title": "Internet",
         "description": "Connects to servers on the internet. Without it, the app stays on this box."
+      },
+      "lan": {
+        "title": "Local network",
+        "description": "Its background service connects to other devices in your network, such as a router, a printer or another server."
       }
     }
   },

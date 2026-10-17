@@ -32,7 +32,8 @@ Die Datei ist `backend/compose.yaml`. Die Regeln stehen in `sdk/schema/compose.v
 **Was die Box beim Umschreiben der Datei hinzufügt:**
 
 - `user: <uid>:<uid>` (oder `0:0` mit `backend.root`) und die Gruppen-IDs zugeordneter freigegebener Ordner,
-- ein privates Netzwerk für die App und ein zweites mit Internetzugang nur, wenn die App `network.internet` hat,
+- ein privates Netzwerk für die App und ein zweites aus der Box hinaus nur, wenn die App `network.internet` oder `network.lan` hat (für die Services in `backend.network`, ohne die Angabe für alle),
+- `cap_drop: [ALL]` für jeden Service, außer die App läuft als root (`backend.root`), dann bleibt Dockers Standardsatz; ein eigenes `cap_drop` wird ersetzt,
 - `restart: "no"` (der Daemon startet und stoppt das Backend), Logging nach journald, `pids_limit: 1024`, `oom_score_adj: 500`, `no-new-privileges`,
 - die Labels `com.pithyx.app`, `com.pithyx.service` und `com.pithyx.version`,
 - benannte Volumes als Ordner unter `<pool>/.pithyx/apps/<id>/volumes/<name>` und zugeordnete freigegebene Ordner als Bind-Mounts (schreibgeschützt, wenn der Administrator weniger erlaubt hat).
@@ -88,10 +89,12 @@ Ein Backend kann diesen Headern nur vertrauen, weil es ausschließlich über den
 ## Netzwerk
 
 - Jede App bekommt ein eigenes internes Docker-Bridge-Netzwerk ohne Internet. Services erreichen sich über den Service-Namen.
-- Mit `network.internet` tritt jeder Service zusätzlich einem zweiten, nicht internen Netzwerk bei.
-- Auf dem Host werden keine Ports veröffentlicht, und eine nftables-Regel verwirft neue Verbindungen aus den App-Netzwerken zum Host.
+- Mit `network.internet` oder `network.lan` treten die Services aus `backend.network.services` des Manifests (ohne die Angabe jeder Service) zusätzlich einem zweiten, nicht internen Netzwerk bei. Halte die anderen davon fern: In einer App, die Seiten abruft, braucht nur der abrufende Service den Weg nach draußen.
+- Wohin dieses Netzwerk führt, entscheidet die Firewall der Box: mit `network.internet` ins Internet, mit `network.lan` ins lokale Netzwerk (private, geteilte und Link-local-Bereiche: `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `100.64.0.0/10`, `169.254.0.0/16`, `fc00::/7`, `fe80::/10`, dazu Loopback und Multicast), mit beiden zu beidem. `network.internet` allein erreicht weder Router noch Drucker noch andere Server. DNS zu den Resolvern der Box geht immer, Namen lösen sich also auch ohne `network.lan` auf.
+- Eine App, die Adressen abruft, die Benutzer eintippen, sollte sie trotzdem prüfen: Mit `network.lan` könnte ein Benutzer sie auf jedes Gerät im Netzwerk richten.
+- Auf dem Host werden keine Ports veröffentlicht, und eine nftables-Regel verwirft neue Verbindungen aus den App-Netzwerken zum Host, auch mit `network.lan`.
 - Jede App hat ihre eigene Benutzer-ID (und Gruppen-ID) von 40000 bis 49999. Mit `root: true` ist der Benutzer im Container root, aber die Remapping-Funktion der User-Namespaces hält ihn auf dem Host ohne Rechte.
-- Die Härtung ist immer aktiv: `no-new-privileges`, ein Prozesslimit von 1024, ein erhöhter Out-of-Memory-Score.
+- Die Härtung ist immer aktiv: `no-new-privileges`, ein Prozesslimit von 1024, ein erhöhter Out-of-Memory-Score und keine Linux-Capabilities für Services, die nicht als root laufen.
 - Docker-Socket und `privileged` (die Rechte `docker.socket` und `host.full`) werden in dieser Version abgelehnt. Host-Netzwerk, Host-PID, Geräte und Capabilities brauchen das passende erhöhte Recht, das der Installationsdialog anzeigt.
 
 ## Lebenszyklus

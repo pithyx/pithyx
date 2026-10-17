@@ -59,14 +59,15 @@ Required fields: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, 
 
 `permissions` is a required list (it can be empty) of unique values from this set:
 
-| Permission         | Lets the app                                                                     |
-| ------------------ | -------------------------------------------------------------------------------- |
-| `files.read`       | read files the user opens with it or picks in a desktop file dialog              |
-| `files.write`      | write those files and save new files through the desktop save dialog             |
-| `files.shares`     | browse every shared folder the user may access, with the user's own rights       |
-| `notifications`    | show notifications                                                               |
-| `directory.read`   | list all users and groups                                                        |
-| `network.internet` | make outgoing connections from its window (`connect-src https:`) and its backend |
+| Permission         | Lets the app                                                                                                                                         |
+| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `files.read`       | read files the user opens with it or picks in a desktop file dialog                                                                                  |
+| `files.write`      | write those files and save new files through the desktop save dialog                                                                                 |
+| `files.shares`     | browse every shared folder the user may access, with the user's own rights                                                                           |
+| `notifications`    | show notifications                                                                                                                                   |
+| `directory.read`   | list all users and groups                                                                                                                            |
+| `network.internet` | make outgoing connections to the internet from its window (`connect-src https:`) and its backend                                                     |
+| `network.lan`      | make outgoing connections from its backend to other devices in the local network (private, shared and link-local addresses); never to the box itself |
 
 An administrator confirms the list at install and can revoke each permission later; the app then receives a `permissionsChange` event. A permission that is new in an update waits for the administrator, and a revoked permission stays revoked across updates. Calling something without the permission fails with [`app.permission.denied`](/docs/reference/errors/#app.permission.denied).
 
@@ -82,7 +83,8 @@ An app that asks for `directory.read`, runs a container as root (`backend.root`)
 - `endpoints`: an object from endpoint name to `{ "service": "...", "port": 8080 }`, up to 16. The endpoint `api` is required and is the default. Names match `^[a-z][a-z0-9-]{0,31}$`, so at most 32 characters; that is the limit the box enforces. The SDK accepts longer names, but the box would refuse them. `port` (1 to 65535) is the container's port inside the app network and is never published.
 - `lifecycle`: `always` or `onDemand`.
 - `idleTimeout`: seconds from 60 to 86400, default 600; ignored for `always`.
-- `root`: `true` runs the services as root inside the container (unprivileged on the host); default `false`. The install dialog warns.
+- `root`: `true` runs the services as root inside the container (unprivileged on the host); default `false`. The install dialog warns. Services without root lose every Linux capability.
+- `network`: `{ "services": ["fetcher"] }` names the services that get the network out of the box which `network.internet` and `network.lan` open; the others stay on the app's internal network. Without it every service gets it. Each name must be a service of the Compose file ([`app.compose.reference_unknown`](/docs/reference/errors/#app.compose.reference_unknown)).
 - `health`: `{ "endpoint": "api", "path": "/health" }`. The daemon calls `GET` on it; a 2xx answer means the backend is running.
 - `schedules`: up to 16 entries of `{ id, cron, endpoint, path }`. The daemon starts the backend and calls `POST path` with `X-Pithyx-Schedule` (see [Who is calling](/docs/developers/apps/backend/#who-is-calling)). The cron expression has five fields (minute 0 to 59, hour 0 to 23, day of month 1 to 31, month 1 to 12, weekday 0 to 7) in the box's time zone, with `*`, numbers, ranges, lists and steps; names are not allowed ([`app.manifest.cron_invalid`](/docs/reference/errors/#app.manifest.cron_invalid)).
 - `elevated`: a list of extra rights (`host.network`, `host.pid`, `device:/dev/<path>`, `capability:<NAME>`, `docker.socket`, `host.full`), up to 32. Elevated rights are not granted yet: Pithyx 1.0.0-beta.1 refuses every entry with [`app.elevated.unsupported`](/docs/reference/errors/#app.elevated.unsupported).

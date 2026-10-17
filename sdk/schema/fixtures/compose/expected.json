@@ -654,6 +654,15 @@
       }
     }
   ],
+  "network-service-missing.yaml": [
+    {
+      "code": "app.compose.reference_unknown",
+      "params": {
+        "path": "/backend/network/services/0",
+        "name": "fetcher"
+      }
+    }
+  ],
   "non-specific-tag.yaml": [
     {
       "code": "app.compose.yaml_invalid",

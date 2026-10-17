@@ -8,6 +8,7 @@ export const KNOWN_PERMISSIONS = [
   'notifications',
   'directory.read',
   'network.internet',
+  'network.lan',
 ] as const;
 
 export type KnownPermission = (typeof KNOWN_PERMISSIONS)[number];

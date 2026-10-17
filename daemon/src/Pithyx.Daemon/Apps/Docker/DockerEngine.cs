@@ -31,13 +31,17 @@ public sealed record DockerEvent(string Action, string? Detail, string Container
 /// <param name="DropInPath">The systemd drop-in of <c>docker.service</c>.</param>
 /// <param name="SubuidPath"><c>/etc/subuid</c>.</param>
 /// <param name="SubgidPath"><c>/etc/subgid</c>.</param>
+/// <param name="ResolvConfPath">The resolver configuration Docker reads for its embedded DNS.</param>
+/// <param name="ResolvedConfPath">The one systemd-resolved writes, which Docker takes when the first names only the local stub.</param>
 public sealed record DockerOptions(
     bool Apply,
     string SocketPath = "/run/docker.sock",
     string ConfigPath = "/etc/docker/daemon.json",
     string DropInPath = "/etc/systemd/system/docker.service.d/pithyx.conf",
     string SubuidPath = "/etc/subuid",
-    string SubgidPath = "/etc/subgid");
+    string SubgidPath = "/etc/subgid",
+    string ResolvConfPath = "/etc/resolv.conf",
+    string ResolvedConfPath = "/run/systemd/resolve/resolv.conf");
 
 /// <summary>
 /// The Docker Engine API on its Unix socket (D309: API 1.45 of Debian's Docker 26.1), never the CLI's output: listing an

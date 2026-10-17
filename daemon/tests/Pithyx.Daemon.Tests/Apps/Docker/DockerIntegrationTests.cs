@@ -198,7 +198,7 @@ public sealed class DockerIntegrationTests
             .End().Gzip();
         var package = await PackageReader.UnpackAsync(new MemoryStream(bytes), Path.Combine(staging, "package-" + version + "-" + Guid.NewGuid().ToString("N")), PackageLimits.Default, Token);
         var (checkedManifest, _) = AppPackages.Check(package);
-        var app = new BackendApp(AppId, version, checkedManifest, Uid, false, []);
+        var app = new BackendApp(AppId, version, checkedManifest, Uid, false, false, []);
         // As AppService does it: a backend that fails goes before the dataset rolls back.
         await AppVersions.InstallAsync(storage, pool, AppId, package, version, update, async (_, token) =>
         {

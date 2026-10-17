@@ -262,10 +262,12 @@ public sealed partial class AppService(
                 throw new PithyxException(ErrorCodes.AppPermissionNotRequested, new Dictionary<string, object?> { ["permission"] = Shorten(change?.Permission ?? "") });
             }
         }
-        // Only the internet decides how a backend runs: its second network comes or goes with a restart.
+        // Only the network permissions decide how a backend runs: its outside network and its firewall change with a restart.
         var app = RequireInstalled(appId);
-        var internet = (request.Permissions ?? []).FirstOrDefault(change => change?.Permission == "network.internet") is { } wanted && wanted.Granted != app.HasInternet;
-        await ChangeAsync(appId, internet && RunsBackend(app), async () =>
+        bool Changes(string permission, bool held) =>
+            (request.Permissions ?? []).FirstOrDefault(change => change?.Permission == permission) is { } wanted && wanted.Granted != held;
+        var network = Changes("network.internet", app.HasInternet) || Changes("network.lan", app.HasLan);
+        await ChangeAsync(appId, network && RunsBackend(app), async () =>
         {
             await using (var connection = await connections.OpenAsync(cancellationToken))
             await using (var transaction = await connection.BeginTransactionAsync(cancellationToken))
@@ -625,11 +627,12 @@ public sealed partial class AppService(
         }
         var revoked = installed?.Permissions.Where(state => !state.Granted).Select(state => state.Permission).ToHashSet(StringComparer.Ordinal) ?? [];
         var internet = package.Permissions.Contains("network.internet") && !revoked.Contains("network.internet");
+        var lan = package.Permissions.Contains("network.lan") && !revoked.Contains("network.lan");
         var storageIds = package.Manifest.TryGetProperty("storage", out var requests)
             ? requests.EnumerateArray().Select(request => request.GetProperty("id").GetString()!).ToHashSet(StringComparer.Ordinal)
             : [];
         var mappings = installed?.Storage.Where(mapping => storageIds.Contains(mapping.StorageId)).ToList() ?? [];
-        return new Docker.BackendApp(package.AppId, package.Version, package.Manifest, uid, internet, mappings);
+        return new Docker.BackendApp(package.AppId, package.Version, package.Manifest, uid, internet, lan, mappings);
     }
 
     /// <summary>

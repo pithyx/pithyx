@@ -11,14 +11,15 @@ An app gets exactly the permissions it declares in `pithyx.json` and an administ
 
 ## The permissions
 
-| Permission         | Lets the app                                                                                 |
-| ------------------ | -------------------------------------------------------------------------------------------- |
-| `files.read`       | read files in shared folders (with `files.shares`) and files the user hands to it            |
-| `files.write`      | write those files                                                                            |
-| `files.shares`     | list the shared folders the user can use and browse them with the user's rights              |
-| `notifications`    | show notifications with `app.notify`                                                         |
-| `directory.read`   | list all users and groups with `app.directory.users()` and `groups()`                        |
-| `network.internet` | open connections to the internet from the window (`connect-src https:`) and from the backend |
+| Permission         | Lets the app                                                                                                             |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| `files.read`       | read files in shared folders (with `files.shares`) and files the user hands to it                                        |
+| `files.write`      | write those files                                                                                                        |
+| `files.shares`     | list the shared folders the user can use and browse them with the user's rights                                          |
+| `notifications`    | show notifications with `app.notify`                                                                                     |
+| `directory.read`   | list all users and groups with `app.directory.users()` and `groups()`                                                    |
+| `network.internet` | open connections to the internet from the window (`connect-src https:`) and from the backend                             |
+| `network.lan`      | open connections from the backend to other devices in the local network; the window and the box itself stay out of reach |
 
 Everything else needs no permission: the context, window calls, `app.storage`, `app.session`, logs, the backend and storage requests the administrator mapped. Which users may open the app at all is a separate grant per user and group, not a permission of the app.
 
@@ -100,7 +101,7 @@ export function follow(app: PithyxApp, render: (features: Features) => void): ()
 ## Edge cases
 
 - **Race.** A permission can go between your check and your call. Handle `app.permission.denied` on every call that needs one, as the example does.
-- **`network.internet`** is part of the window's Content-Security-Policy, which the browser fixes when the page loads. A change applies to the window after a reload. A backend gets or loses its internet network with a restart.
+- **`network.internet`** is part of the window's Content-Security-Policy, which the browser fixes when the page loads. A change applies to the window after a reload. A backend gets or loses its internet network with a restart. **`network.lan`** works the same way for the backend.
 - **Admins** have every app, but an app still holds only the permissions confirmed for it.
 - **Shared folders** need `files.shares` for the list and `files.read` or `files.write` for content; the user's own access to each shared folder applies on top. See [Files and app storage](/docs/sdk/guides/files-and-storage/).
 - **Mock desktop.** The panel of `pithyx dev` lists the manifest's permissions as switches; each switch sends `permissionsChange`. The mock refuses `notifications`, `directory.*` and its file calls without the permission, like the box.

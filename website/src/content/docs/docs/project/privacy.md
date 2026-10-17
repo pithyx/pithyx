@@ -16,7 +16,7 @@ Pithyx is built to run entirely on your own machine: it has no telemetry, does n
   - **System updates.** Once a day the box reads the channel file of its update source (by default the project's releases on GitHub) and Debian's package lists; an update you install downloads its file from there.
   - **Catalogs.** The Store fetches each enabled catalog with Git (by default the project's official catalog on GitHub, checked daily) and pulls app images from the registry named in the catalog.
   - **Time servers.** If the list of time servers in Settings > **Regional settings** is empty, the system time service (systemd-timesyncd) uses its Debian defaults, which are public servers.
-  - **Apps.** An app with the permission `network.internet` can reach the internet; apps without it cannot.
+  - **Apps.** An app with the permission `network.internet` can reach the internet; apps without it cannot. Other devices in your network are reachable only for an app with the permission `network.lan`.
 - An administrator can switch the daily update check and catalogs off and set own time servers. See [What leaves the box](/docs/admin/security/#what-leaves-the-box) and [Apps and the Store](/docs/admin/apps-and-store/).
 
 ## This website

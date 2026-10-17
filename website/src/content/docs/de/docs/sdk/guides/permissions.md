@@ -11,14 +11,15 @@ Eine App bekommt genau die Berechtigungen, die sie in `pithyx.json` deklariert u
 
 ## Die Berechtigungen
 
-| Berechtigung       | Erlaubt der App                                                                                     |
-| ------------------ | --------------------------------------------------------------------------------------------------- |
-| `files.read`       | Dateien in freigegebenen Ordnern (mit `files.shares`) und Dateien, die der Benutzer ihr gibt, lesen |
-| `files.write`      | diese Dateien schreiben                                                                             |
-| `files.shares`     | die freigegebenen Ordner des Benutzers listen und mit seinen Rechten durchsuchen                    |
-| `notifications`    | Benachrichtigungen mit `app.notify` zeigen                                                          |
-| `directory.read`   | alle Benutzer und Gruppen mit `app.directory.users()` und `groups()` listen                         |
-| `network.internet` | Verbindungen ins Internet aus dem Fenster (`connect-src https:`) und aus dem Backend öffnen         |
+| Berechtigung       | Erlaubt der App                                                                                                                 |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| `files.read`       | Dateien in freigegebenen Ordnern (mit `files.shares`) und Dateien, die der Benutzer ihr gibt, lesen                             |
+| `files.write`      | diese Dateien schreiben                                                                                                         |
+| `files.shares`     | die freigegebenen Ordner des Benutzers listen und mit seinen Rechten durchsuchen                                                |
+| `notifications`    | Benachrichtigungen mit `app.notify` zeigen                                                                                      |
+| `directory.read`   | alle Benutzer und Gruppen mit `app.directory.users()` und `groups()` listen                                                     |
+| `network.internet` | Verbindungen ins Internet aus dem Fenster (`connect-src https:`) und aus dem Backend öffnen                                     |
+| `network.lan`      | Verbindungen aus dem Backend zu anderen Geräten im lokalen Netzwerk öffnen; das Fenster und die Box selbst bleiben unerreichbar |
 
 Alles andere braucht keine Berechtigung: der Kontext, Fensteraufrufe, `app.storage`, `app.session`, Logs, das Backend und Speicheranfragen, die der Administrator zugeordnet hat. Welche Benutzer die App überhaupt öffnen dürfen, ist eine eigene Freigabe pro Benutzer und Gruppe, keine Berechtigung der App.
 
@@ -100,7 +101,7 @@ export function follow(app: PithyxApp, render: (features: Features) => void): ()
 ## Sonderfälle
 
 - **Wettlauf.** Eine Berechtigung kann zwischen deiner Prüfung und deinem Aufruf verschwinden. Behandle `app.permission.denied` bei jedem Aufruf, der eine braucht, wie das Beispiel.
-- **`network.internet`** steckt in der Content-Security-Policy des Fensters, die der Browser beim Laden der Seite festlegt. Eine Änderung gilt für das Fenster nach einem Neuladen. Ein Backend bekommt oder verliert sein Internet-Netzwerk mit einem Neustart.
+- **`network.internet`** steckt in der Content-Security-Policy des Fensters, die der Browser beim Laden der Seite festlegt. Eine Änderung gilt für das Fenster nach einem Neuladen. Ein Backend bekommt oder verliert sein Internet-Netzwerk mit einem Neustart. **`network.lan`** wirkt für das Backend genauso.
 - **Administratoren** haben jede App, aber eine App hält trotzdem nur die Berechtigungen, die für sie bestätigt sind.
 - **Freigegebene Ordner** brauchen `files.shares` für die Liste und `files.read` oder `files.write` für den Inhalt; der eigene Zugriff des Benutzers auf jeden freigegebenen Ordner gilt zusätzlich. Siehe [Dateien und App-Speicher](/de/docs/sdk/guides/files-and-storage/).
 - **Mock-Desktop.** Das Panel von `pithyx dev` listet die Berechtigungen des Manifests als Schalter; jeder Schalter sendet `permissionsChange`. Der Mock lehnt `notifications`, `directory.*` und seine Dateiaufrufe ohne die Berechtigung ab, wie die Box.

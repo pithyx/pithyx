@@ -17,17 +17,21 @@ namespace Pithyx.Daemon.Apps.Docker;
 /// <param name="Version">The installed version, whose files are in <c>versions/&lt;version&gt;</c>.</param>
 /// <param name="Manifest">That version's manifest.</param>
 /// <param name="Uid">The app's uid (and gid) from 40000 to 49999.</param>
-/// <param name="Internet">Whether the app holds <c>network.internet</c>, which gives its services a second network with a way out.</param>
+/// <param name="Internet">Whether the app holds <c>network.internet</c>: its outside network reaches the internet.</param>
+/// <param name="Lan">Whether the app holds <c>network.lan</c>: its outside network reaches the local network (D358).</param>
 /// <param name="Storage">The folders the administrator mapped to its storage requests.</param>
-public sealed record BackendApp(string AppId, string Version, JsonElement Manifest, long Uid, bool Internet, IReadOnlyList<AppStorageMapping> Storage)
+public sealed record BackendApp(string AppId, string Version, JsonElement Manifest, long Uid, bool Internet, bool Lan, IReadOnlyList<AppStorageMapping> Storage)
 {
     public static BackendApp Of(InstalledApp app)
     {
         ArgumentNullException.ThrowIfNull(app);
-        return new(app.Id, app.Version, app.Manifest, app.Uid, app.HasInternet, app.Storage);
+        return new(app.Id, app.Version, app.Manifest, app.Uid, app.HasInternet, app.HasLan, app.Storage);
     }
 
     public bool HasBackend => Manifest.TryGetProperty("backend", out _);
+
+    /// <summary>Whether the services get a network out of the box at all: one with a way to the internet, the LAN or both.</summary>
+    public bool Outside => Internet || Lan;
 }
 
 /// <summary>
@@ -77,7 +81,7 @@ public sealed partial class AppBackendRuntime(
     /// <summary>The Linux bridge of an app's internal network: <c>px-</c> and the app's uid without 40000 (D309, at most 15 characters).</summary>
     public static string BridgeName(long uid) => "px-" + (uid - Users.UidAllocator.MinAppUid).ToString(CultureInfo.InvariantCulture);
 
-    /// <summary>The bridge of the second network of an app with <c>network.internet</c>, which is not internal.</summary>
+    /// <summary>The bridge of the outside network of an app with <c>network.internet</c> or <c>network.lan</c>, which is not internal.</summary>
     public static string InternetBridgeName(long uid) => "px-i" + (uid - Users.UidAllocator.MinAppUid).ToString(CultureInfo.InvariantCulture);
 
     /// <summary>
@@ -111,6 +115,7 @@ public sealed partial class AppBackendRuntime(
         backends.SetStatus(app.AppId, AppBackends.Starting);
         progress?.Invoke(new Jobs.JobProgress(0, 3, 0, 0, "docker"));
         await host.EnsureRunningAsync(pool, cancellationToken);
+        await host.AllowNetworkAsync(InternetBridgeName(app.Uid), app.Internet, app.Lan, cancellationToken);
 
         var version = Path.Combine(root, AppStorage.VersionsFolder, app.Version);
         var composePath = app.Manifest.GetProperty("backend").GetProperty("compose").GetString()!;
@@ -130,7 +135,7 @@ public sealed partial class AppBackendRuntime(
             BridgeName(app.Uid),
             images,
             mappings,
-            app.Internet ? InternetBridgeName(app.Uid) : null);
+            app.Outside ? InternetBridgeName(app.Uid) : null);
         var rewritten = ComposeRewriter.Rewrite(validation.Document!, app.Manifest, composeHost);
         var run = Path.Combine(root, AppStorage.RunFolder);
         Directory.CreateDirectory(run);

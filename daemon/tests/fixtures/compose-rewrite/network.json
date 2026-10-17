@@ -1,0 +1,14 @@
+{
+  "compose": "valid/network.yaml",
+  "manifest": "network.json",
+  "host": {
+    "uid": 40001,
+    "appDirectory": "/tank/.pithyx/apps/com.example.chat",
+    "bridgeName": "px-1",
+    "imageIds": {
+      "ghcr.io/example/chat-server:1.2.0@sha256:a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5a3f5": "sha256:1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c1c"
+    },
+    "storage": {},
+    "internetBridgeName": "px-i1"
+  }
+}
