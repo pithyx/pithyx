@@ -70,6 +70,8 @@ Standardmäßig liegt die Taskleiste am unteren Bildschirmrand. Von links nach r
 - die Benachrichtigungsglocke mit einem Zähler für ungelesene Benachrichtigungen,
 - die Uhr.
 
+Laufen mehr Apps, als Platz haben, werden ihre Schaltflächen schmaler und lassen sich dann verschieben: Drehe das Mausrad über ihnen oder wische, und die aktive App kommt immer ins Bild. Die Menü-Schaltfläche und alles von den Übertragungen bis zur Uhr bleiben an ihrem Platz.
+
 Klicke auf eine laufende App, um sie nach vorn zu holen. Klicke noch einmal auf die aktive App, um sie zu minimieren. Klicke mit der rechten Maustaste auf eine laufende App (oder drücke darauf **Umschalt+F10**) für **Minimieren** oder **Wiederherstellen**, **Zum Desktop hinzufügen** und **Schließen**.
 
 Um die Taskleiste zu verschieben, öffne das Pithyx-Menü, klicke auf deinen Namen, wähle **Position der Taskleiste** und dann **Unten**, **Oben**, **Links** oder **Rechts**. Auf Handys bleibt die Taskleiste immer unten und der Eintrag fehlt.

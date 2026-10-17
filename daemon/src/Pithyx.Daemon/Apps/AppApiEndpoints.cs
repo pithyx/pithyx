@@ -117,13 +117,16 @@ public static class AppApiEndpoints
                 TypedResults.Ok(await files.RenameAsync(Caller(context, registry).App, context.User, new AppFileLocation(Required(request).Share, request.Storage), request.Path, request.Name, cancellationToken)))
             .WithName("AppRenameFileEntry")
             .WithDescription("Renames a file or folder within its folder; an existing name is never replaced. Needs the permissions of writing: files.shares and files.write for a shared folder.");
-        app.MapPost("/files/operations", async (FileOperationRequest request, AppFiles files, AppRegistry registry, HttpContext context, CancellationToken cancellationToken) =>
+        app.MapPost("/files/operations", async (AppFileOperationRequest request, AppFiles files, AppRegistry registry, HttpContext context, CancellationToken cancellationToken) =>
             {
                 var job = await files.StartOperationAsync(Caller(context, registry).App, context.User, request, cancellationToken);
                 return TypedResults.Accepted($"/api/jobs/{job.Id}", job);
             })
             .WithName("AppStartFileOperation")
-            .WithDescription("As POST /api/files/operations, for shared folders. Needs files.shares and files.write, and files.read for copy and move. Follow the job on jobs/<id>.");
+            .WithDescription(
+                "As POST /api/files/operations, with each place a shared folder (share, needs files.shares, files.read where entries are "
+                + "copied or moved from and files.write where anything changes) or a storage request (storage, needs a mapping for reading "
+                + "and writing where anything changes). Follow the job on jobs/<id>.");
         app.MapGet("/files/versions", async ([FromQuery] string? share, [FromQuery] string? path, AppFiles files, AppRegistry registry, HttpContext context, CancellationToken cancellationToken) =>
                 TypedResults.Ok(await files.VersionsAsync(Caller(context, registry).App, context.User, share, path, cancellationToken)))
             .WithName("AppListFileVersions")

@@ -1,5 +1,6 @@
-import type { FileLocation, FileOperation } from '@pithyx/sdk';
+import type { FileOperation } from '@pithyx/sdk';
 import { describe, expect, it } from 'vitest';
+import { appOperationBody } from '../sandbox/appApi';
 import { operationBody, shareIdOf } from './fileMapping';
 
 describe('share locations', () => {
@@ -28,9 +29,39 @@ describe('share locations', () => {
       target: { shareId: 4, path: 'Inbox' },
       permanent: false,
     });
-    const storage = { storage: 'clips' } as FileLocation as { share: string };
-    expect(() => operationBody({ ...copy, source: { ...copy.source, location: storage } })).toThrow(
+    expect(() =>
+      operationBody({ ...copy, source: { ...copy.source, location: { storage: 'clips' } } }),
+    ).toThrow(
       expect.objectContaining({ code: 'sdk.request.invalid', params: { method: 'files.run' } }),
     );
+  });
+
+  it('sends files.run of a third-party app with storage requests as places of their own', () => {
+    expect(
+      appOperationBody({
+        kind: 'copy',
+        source: { location: { storage: 'clips' }, folder: '', items: { names: ['a.md'] } },
+        target: { location: { share: '4' }, path: 'Inbox' },
+      }),
+    ).toEqual({
+      kind: 'copy',
+      items: [{ storage: 'clips', path: 'a.md' }],
+      target: { share: '4', path: 'Inbox' },
+      permanent: false,
+    });
+    expect(
+      appOperationBody({
+        kind: 'delete',
+        source: {
+          location: { share: '3' },
+          folder: 'Old',
+          items: { all: true, except: ['keep.md'] },
+        },
+      }),
+    ).toEqual({
+      kind: 'delete',
+      allIn: { folder: { share: '3', path: 'Old' }, except: ['keep.md'] },
+      permanent: false,
+    });
   });
 });

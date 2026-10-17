@@ -485,7 +485,8 @@ export interface Methods {
   };
   /**
    * Starts a copy, move or delete as a job and resolves with it at once; `jobChanged` events follow its progress
-   * until it finishes. Deleting moves to the share's recycle bin unless `permanent`.
+   * until it finishes. Deleting moves to the share's recycle bin unless `permanent`. Source and target may each be a
+   * share or a storage request.
    */
   'files.run': { params: FileOperation; result: JobInfo };
   /**

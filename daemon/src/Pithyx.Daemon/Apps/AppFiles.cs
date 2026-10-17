@@ -13,6 +13,35 @@ namespace Pithyx.Daemon.Apps;
 /// <param name="Storage">The id of a storage request of the manifest.</param>
 public sealed record AppFileLocation(string? Share, string? Storage);
 
+/// <summary>An entry or folder of an app's file operation, in a shared folder or a storage request of its manifest.</summary>
+/// <param name="Share">The shared folder's id, as the app got it from <c>files/shares</c>.</param>
+/// <param name="Storage">The id of a storage request of the manifest.</param>
+/// <param name="Path">The path relative to the shared folder or the mapped folder.</param>
+public sealed record AppFileRef(string? Share = null, string? Storage = null, string? Path = null);
+
+/// <summary>Every entry of an app's folder except some names.</summary>
+/// <param name="Folder">The folder whose entries are meant.</param>
+/// <param name="Except">Names left out, at most 1000.</param>
+public sealed record AppFolderSelection(AppFileRef Folder, IReadOnlyList<string>? Except = null);
+
+/// <summary>
+/// An app's copy, move or delete (D362): as <see cref="FileOperationRequest"/>, with each place a shared folder or a
+/// storage request.
+/// </summary>
+/// <param name="Kind">copy, move or delete.</param>
+/// <param name="Items">The entries to work on, at most 1000. Leave out when <c>AllIn</c> is given.</param>
+/// <param name="Target">The folder to copy or move into; not used for delete.</param>
+/// <param name="OnConflict">For copy and move; fail when left out.</param>
+/// <param name="Permanent">For delete: remove for good instead of moving to the shared folder's recycle bin.</param>
+/// <param name="AllIn">Instead of <c>Items</c>: every entry of a folder except the listed names.</param>
+public sealed record AppFileOperationRequest(
+    FileOperationKind Kind,
+    IReadOnlyList<AppFileRef>? Items = null,
+    AppFileRef? Target = null,
+    ConflictPolicy? OnConflict = null,
+    bool Permanent = false,
+    AppFolderSelection? AllIn = null);
+
 /// <summary>
 /// Files for third-party apps (D69, D70, D318): always as the user, through the same file service as the desktop, so
 /// the user's own rights on the shared folder and the kernel's beneath-the-root check apply. On top of that the app
@@ -113,16 +142,66 @@ public sealed class AppFiles(
         await stream.DisposeAsync();
     }
 
-    public async Task<Job> StartOperationAsync(InstalledApp app, ClaimsPrincipal user, FileOperationRequest request, CancellationToken cancellationToken)
+    /// <summary>
+    /// Starts a copy, move or delete (D362). A shared folder needs <c>files.shares</c>, <c>files.read</c> where entries
+    /// are copied or moved from and <c>files.write</c> where anything changes; a storage request needs its mapping, for
+    /// changes one for reading and writing, and never reaches beyond the mapped folder. The user's rights apply on top.
+    /// </summary>
+    public async Task<Job> StartOperationAsync(InstalledApp app, ClaimsPrincipal user, AppFileOperationRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
-        Require(app, SharesPermission);
-        if (request.Kind != FileOperationKind.Delete)
+        var changesSource = request.Kind != FileOperationKind.Copy;
+        var readsSource = request.Kind != FileOperationKind.Delete;
+        List<FileLocation>? items = null;
+        if (request.Items is not null)
         {
-            Require(app, ReadPermission);
+            items = [];
+            foreach (var item in request.Items.Take(FileOperations.MaxItems + 1))
+            {
+                items.Add(await PlaceAsync(app, user, item, changesSource, readsSource, cancellationToken));
+            }
         }
-        Require(app, WritePermission);
-        return Started(app, user, await operations.StartAsync(user, request, cancellationToken));
+        var allIn = request.AllIn is null
+            ? null
+            : new FolderSelection(await PlaceAsync(app, user, request.AllIn.Folder, changesSource, readsSource, cancellationToken), request.AllIn.Except ?? []);
+        var target = request.Target is null ? null : await PlaceAsync(app, user, request.Target, write: true, reads: false, cancellationToken);
+        var operation = new FileOperationRequest(request.Kind, items, target, request.OnConflict, request.Permanent, allIn);
+        return Started(app, user, await operations.StartAsync(user, operation, cancellationToken));
+    }
+
+    /// <summary>
+    /// Where an entry of an operation lies in its shared folder, after the app's own checks. An entry of a storage
+    /// request is opened beneath the mapped folder first, so neither <c>..</c> nor a symbolic link takes the operation
+    /// out of it.
+    /// </summary>
+    private async Task<FileLocation> PlaceAsync(InstalledApp app, ClaimsPrincipal user, AppFileRef? reference, bool write, bool reads, CancellationToken cancellationToken)
+    {
+        if (reference is null)
+        {
+            throw new PithyxException(ErrorCodes.FsOperationInvalid);
+        }
+        var location = new AppFileLocation(reference.Share, reference.Storage);
+        if (location.Share is not null)
+        {
+            Require(app, SharesPermission);
+            if (reads)
+            {
+                Require(app, ReadPermission);
+            }
+            if (write)
+            {
+                Require(app, WritePermission);
+            }
+        }
+        var target = Resolve(app, null, location, null, write, content: false);
+        var path = FsPath.Normalize(reference.Path);
+        if (target.Within.Length > 0)
+        {
+            var share = await shares.ResolveAsync(user, target.ShareId, write: false, cancellationToken);
+            using var root = FileService.OpenRoot(share, target.Within);
+            using var entry = FileService.Open(root, path, LinuxFs.Path);
+        }
+        return new FileLocation(target.ShareId, path.Length == 0 ? target.Within : FsPath.Join(target.Within, path));
     }
 
     public async Task<FileVersionList> VersionsAsync(InstalledApp app, ClaimsPrincipal user, string? share, string? path, CancellationToken cancellationToken)

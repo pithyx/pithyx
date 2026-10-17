@@ -93,7 +93,7 @@ export function query(values: Record<string, string | undefined>): string {
   return search.toString();
 }
 
-/** The selection of a `files.run` call as the daemon's operation request wants it, for shares. */
+/** The selection of a core app's `files.run` call as `/api/files/operations` wants it, for shares only. */
 export function operationBody(params: FileOperation) {
   const { kind, source, target: destination, onConflict, permanent } = params;
   const shareId = shareIdOf(source.location, 'files.run');
