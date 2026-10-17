@@ -42,6 +42,7 @@ public static class AppVersions
         {
             var incoming = Path.Combine(versions, ".incoming-" + Guid.NewGuid().ToString("N"));
             Copy(package, incoming, cancellationToken);
+            AppFrontendEncodings.Write(incoming, cancellationToken);
             if (Directory.Exists(target))
             {
                 replaced = Path.Combine(versions, ".replaced-" + Guid.NewGuid().ToString("N"));

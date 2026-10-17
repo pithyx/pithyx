@@ -23,7 +23,7 @@ Pithyx does not support web apps with their own port, apps that talk to other ap
 
 A third-party app runs in `<iframe sandbox="allow-scripts allow-forms">` on the same host as the desktop, without `allow-same-origin`. The app has an opaque origin, receives no cookies, and cannot use `localStorage` or IndexedDB meaningfully. It stores data through the SDK (`app.storage`) and files through `app.files`.
 
-The daemon adds these headers to every answer under `/apps/<id>/`, including 404 and proxied backend answers:
+The daemon adds these headers to every answer under `/apps/<id>/`, including 404 and proxied backend answers (frontend files also get `Cache-Control`, see below):
 
 ```
 Content-Security-Policy: sandbox allow-scripts allow-forms; default-src 'self'; script-src 'self';
@@ -33,7 +33,6 @@ Content-Security-Policy: sandbox allow-scripts allow-forms; default-src 'self'; 
 X-Content-Type-Options: nosniff
 Access-Control-Allow-Origin: *
 Referrer-Policy: no-referrer
-Cache-Control: no-cache
 ```
 
 With the permission `network.internet` the policy ends in `connect-src 'self' https:`. Consequences:
@@ -45,6 +44,16 @@ With the permission `network.internet` the policy ends in `connect-src 'self' ht
 `pithyx dev` serves the same policy, so a blocked request shows up during development.
 
 Frontend files are as public as the desktop's own files; access is decided when the window gets its tokens. Permissions are checked by the daemon on every call.
+
+### Compression and caching
+
+At install the box writes a Brotli and a gzip copy of every text file of the frontend from 1 KB on (JavaScript, CSS, HTML, JSON, source maps, SVG, text, XML, WebAssembly) and serves the copy the browser accepts, with `Content-Encoding` and `Vary: Accept-Encoding`. It compresses only what the package holds; it never builds.
+
+A file under `assets/` whose name ends in a build hash as Vite writes it (`assets/index-B4kz_x9Q.js`: a hyphen, eight characters of letters, digits, `_` or `-`, at least one of them not a lowercase letter) gets `Cache-Control: public, max-age=31536000, immutable`; every other file keeps `no-cache`. The browser keeps hashed files across windows and reloads, but it does not revalidate `no-cache` files of a sandboxed window, so those load again for every window. So:
+
+- Keep Vite's default file names under `assets/`; everything the entry page loads should be hashed.
+- Never put a file under `assets/` whose name looks like a hash but whose content changes between versions: users would keep the old file for a year.
+- Keep the entry page small; it loads with every window.
 
 ## App ids
 
@@ -61,7 +70,7 @@ A package is named `<id>-<version>.pithyxapp`. It is a gzip-compressed tar archi
 
 - `pithyx.json` and `icon.svg`,
 - `frontend/` with the built frontend,
-- optionally `backend/compose.yaml` and `backend/images.lock.json`, and `backend/images/<arch>/<digest>.tar` for offline installs,
+- optionally `backend/compose.yaml` and `backend/images.lock.json`, and `backend/images/<arch>/<config digest>.tar` for offline installs (named after the image config's digest, which is the image id in Docker's classic image store, not after the manifest digest that `compose.yaml` pins),
 - the README and LICENSE files if they exist,
 - `CHECKSUMS` in `sha256sum -c` format.
 

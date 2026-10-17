@@ -39,6 +39,7 @@ describe('the public SDK', () => {
       | 'directory.groups'
       | 'setBadge'
       | 'window.requestAttention'
+      | 'window.ready'
       | 'window.setDirty'
       | 'contextMenu.show'
       | 'clipboard.writeText'

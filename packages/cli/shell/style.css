@@ -116,9 +116,36 @@ h2 {
 }
 
 .frame-host {
+  position: relative;
   min-height: 12rem;
   resize: vertical;
   overflow: hidden;
+}
+
+.loading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: var(--color-bg);
+}
+
+.loading .indicator {
+  width: 120px;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--color-accent);
+  opacity: 0;
+  animation: appear 0s linear 300ms forwards;
+}
+
+@keyframes appear {
+  to {
+    opacity: 1;
+  }
 }
 
 .frame-host iframe {

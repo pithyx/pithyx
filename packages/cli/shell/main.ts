@@ -260,6 +260,9 @@ const taskbarEntry = h('button', { class: 'task', type: 'button' });
 const panel = h('aside', { class: 'panel' });
 let connection: AppConnection | null = null;
 let instance = 0;
+// The placeholder the box draws until the app is ready (D354), and its 30-second limit.
+let loadingElement: HTMLElement | null = null;
+let loadingTimer: ReturnType<typeof setTimeout> | undefined;
 
 function addLog(kind: string, text: string): void {
   const time = new Date().toLocaleTimeString(state.locale);
@@ -441,6 +444,10 @@ const methods: MethodHandlers = {
     renderWindow();
     return undefined;
   },
+  'window.ready': () => {
+    hideLoading();
+    return undefined;
+  },
   'log.write': ({ entries }) => {
     for (const entry of entries) {
       if (entry.level !== 'debug' || state.logLevel === 'debug') {
@@ -558,6 +565,9 @@ function connect(frame: HTMLIFrameElement): void {
     methods,
     onReady: ({ sdk }) => {
       addLog('event', t('log.connected', { sdk }));
+      if (manifest.window.loading?.untilReady !== true) {
+        hideLoading();
+      }
     },
   });
   // The frame has an opaque origin, so no target origin can be named; the transferred port carries the trust.
@@ -579,13 +589,41 @@ function openWindow(): void {
   frame.addEventListener('load', () => {
     connect(frame);
   });
-  frameHost.append(frame);
+  const language = state.locale.split('-')[0] ?? 'en';
+  const text = manifest.window.loading?.text;
+  loadingElement = h(
+    'div',
+    { class: 'loading', role: 'status' },
+    h('strong', {}, appName()),
+    h('span', { class: 'indicator', 'aria-hidden': 'true' }),
+    ...(state.backend === 'starting'
+      ? [
+          h(
+            'span',
+            {},
+            text === undefined
+              ? t('window.starting', { name: appName() })
+              : (text[state.locale] ?? text[language] ?? text.en),
+          ),
+        ]
+      : []),
+  );
+  clearTimeout(loadingTimer);
+  loadingTimer = setTimeout(hideLoading, 30_000);
+  frameHost.append(frame, loadingElement);
   renderWindow();
+}
+
+function hideLoading(): void {
+  clearTimeout(loadingTimer);
+  loadingElement?.remove();
+  loadingElement = null;
 }
 
 function closeWindow(): void {
   connection?.close();
   connection = null;
+  hideLoading();
   state.open = false;
   state.badge = null;
   frameHost.replaceChildren(
