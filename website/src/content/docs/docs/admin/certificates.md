@@ -12,7 +12,7 @@ The box speaks HTTPS on port 7484 with a certificate from its own certificate au
 
 ## Why the browser warns
 
-The first time you open `https://<box-address>:7484`, the browser warns that the connection is not private: it does not know who signed the box's certificate. That is expected. Continue to the page, sign in and trust the box as described below; the warning is gone on that device afterwards. Until then, Chromium-based browsers also load the desktop again on every reload instead of from their cache.
+The first time you open `https://<box-address>:7484`, the browser warns that the connection is not private: it does not know who signed the box's certificate. That is expected. Continue to the page, sign in and trust the box as described below; the warning is gone on that device afterwards. Until then, Chromium-based browsers keep nothing from the box in their cache: every reload loads the desktop again, and every app window loads its app again.
 
 ## Trusting the box on a device
 
