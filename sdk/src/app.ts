@@ -102,7 +102,7 @@ const consoleMethods: Record<LogLevel, (...data: unknown[]) => void> = {
   },
 };
 
-/** Every `app.log` entry also appears in the browser console, at its own level (D305). */
+/** Every `app.log` entry also appears in the browser console, at its own level. */
 function mirrorToConsole(level: LogLevel, message: string, data?: LogData) {
   if (data === undefined) {
     consoleMethods[level](message);
@@ -218,6 +218,11 @@ export interface PithyxApp {
     setDirty(dirty: boolean): Promise<void>;
     /** Makes the taskbar entry pulse until the user looks; never takes the focus. */
     requestAttention(): Promise<void>;
+    /**
+     * Ends the desktop's loading placeholder, for an app whose manifest sets `window.loading.untilReady` because it
+     * first loads its data. Without that setting the placeholder goes when the app connects, and this does nothing.
+     */
+    ready(): Promise<void>;
   };
   /**
    * Shows a notification and resolves with its id. Needs `notifications`. A click on one of its `actions` (or on the
@@ -343,7 +348,7 @@ export interface PithyxApp {
     keys(): Promise<string[]>;
   };
   /**
-   * The app's own backend, through the daemon's proxy (D303). Paths are relative to an endpoint: the default `api` at
+   * The app's own backend, through the daemon's proxy. Paths are relative to an endpoint: the default `api` at
    * `/apps/<id>/api/`, any other endpoint `<name>` at `/apps/<id>/api-<name>/`. The SDK adds a token for the signed-in
    * user; the backend learns the user from the proxy's `X-Pithyx-*` headers. A name the manifest does not declare
    * fails with `sdk.backend.endpoint_unknown`. Needs no permission; an app without a backend has no endpoint.
@@ -1045,6 +1050,9 @@ export function createApp(endpoint: Endpoint, options: CreateAppOptions = {}): P
         },
         requestAttention: async () => {
           await typed('window.requestAttention', {});
+        },
+        ready: async () => {
+          await typed('window.ready', {});
         },
       },
       notify: async (notification) => typed('notify', notification),

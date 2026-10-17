@@ -1,5 +1,7 @@
 using System.Collections.Concurrent;
+using System.Diagnostics;
 using Pithyx.Daemon.Apps.Proxy;
+using Pithyx.Daemon.Hosting;
 using Pithyx.Daemon.Storage;
 
 namespace Pithyx.Daemon.Apps.Docker;
@@ -389,8 +391,26 @@ public sealed partial class AppBackendSupervisor(
     }
 
     /// <summary>Wakes the backend for a schedule and calls it; the backend then idles as after a closed window.</summary>
+    /// <summary>
+    /// The call of a schedule: <c>POST</c> to its path with <c>X-Pithyx-Schedule</c> and the <c>traceparent</c> of the
+    /// current activity (a new one when there is none), like every request the proxy forwards.
+    /// </summary>
+    internal static HttpRequestMessage ScheduleRequest(Uri address, string path, string scheduleId)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, new Uri(address, path.TrimStart('/')));
+        request.Headers.TryAddWithoutValidation(ScheduleHeader, scheduleId);
+        request.Headers.TryAddWithoutValidation("traceparent", Activity.Current is { IdFormat: ActivityIdFormat.W3C } current
+            ? current.Id
+            : $"00-{ActivityTraceId.CreateRandom()}-{ActivitySpanId.CreateRandom()}-01");
+        return request;
+    }
+
     private async Task RunScheduleAsync(InstalledApp app, (string Id, string Endpoint, string Path) schedule, CancellationToken stoppingToken)
     {
+        // A schedule has no request of its own; its run gets the request id it carries to the backend.
+        using var activity = Tracing.Source.StartActivity("apps.schedule");
+        activity?.SetTag("app", app.Id);
+        activity?.SetTag("schedule", schedule.Id);
         var state = StateOf(app.Id);
         var hold = Guid.NewGuid();
         lock (state)
@@ -404,8 +424,7 @@ public sealed partial class AppBackendSupervisor(
                 LogScheduleSkipped(app.Id, schedule.Id);
                 return;
             }
-            using var request = new HttpRequestMessage(HttpMethod.Post, new Uri(address, schedule.Path.TrimStart('/')));
-            request.Headers.TryAddWithoutValidation(ScheduleHeader, schedule.Id);
+            using var request = ScheduleRequest(address, schedule.Path, schedule.Id);
             using var response = await _scheduleClient.SendAsync(request, stoppingToken);
             LogScheduleRan(app.Id, schedule.Id, (int)response.StatusCode);
         }

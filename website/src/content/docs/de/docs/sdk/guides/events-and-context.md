@@ -133,6 +133,21 @@ if (app.context.visible) {
 render();
 ```
 
+## Laden
+
+Bis deine App verbunden ist, zeigt ihr Fenster einen Platzhalter, den der Desktop zeichnet: dein Icon und deinen Namen und nach 300 ms einen laufenden Balken. Dafür schreibst du keinen Code. Während dein Backend startet (`backend.status` ist `starting`, etwa beim ersten Öffnen, nachdem es sich im Leerlauf beendet hat), sagt eine Zeile das: "<Name> wird gestartet ..." in der Sprache des Benutzers, oder dein eigener `window.loading.text` aus dem Manifest.
+
+Wenn deine App zuerst Daten lädt und ein leeres Fenster zeigen würde, setze `window.loading.untilReady` auf `true` und rufe `app.window.ready()` auf, sobald es etwas zu sehen gibt. Der Desktop entfernt den Platzhalter in jedem Fall nach 30 Sekunden, auch wenn `ready` nie kommt. Ohne `untilReady` tut `ready()` nichts. `pithyx dev` zeigt denselben Platzhalter.
+
+```json
+"window": {
+  "instances": "single",
+  "defaultSize": { "width": 800, "height": 600 },
+  "minSize": { "width": 360, "height": 400 },
+  "loading": { "text": { "en": "Opening your lists ...", "de": "Deine Listen werden geöffnet ..." }, "untilReady": true }
+}
+```
+
 ## Der Kontext
 
 `app.context` zu lesen braucht keine Berechtigung und keinen Aufruf. Das SDK aktualisiert diese Felder, bevor es deine Handler aufruft: `theme` (`themeChange`), `language`, `locale`, `timeZone` (`localeChange`), `sizeClass` (`sizeClassChange`), `permissions` (`permissionsChange`), `visible` (`visibilityChange`), `online` (`connectionChange`), `logLevel` (`logLevelChange`), `backend.status` (`backendStatus`) und `storage` (`storageChange`). Lies das Feld, statt eine eigene Kopie zu führen.
@@ -152,22 +167,24 @@ render();
 
 Ein Klick auf eine Benachrichtigung oder einen ihrer Knöpfe, während ein Fenster der App offen ist, holt dieses Fenster nach vorn und sendet `notificationAction` mit der ID der Benachrichtigung, der `id` des Knopfs (oder `null` für die Benachrichtigung selbst) und den `data`, die du `notify` mitgegeben hast. Das Fenster, das die Benachrichtigung gesendet hat, bekommt es, wenn es noch verbunden ist, sonst das oberste Fenster der App.
 
+Der Desktop fügt jeder Benachrichtigung einer App einen eigenen Knopf **Öffnen** neben deinen `actions` hinzu. Nenne keine Aktion "Öffnen"; benenne die Knöpfe nach dem, was sie tun ("Antworten", "Liste zeigen").
+
 ## Ereignisse
 
-| Ereignis                       | Wann                                                                               |
-| ------------------------------ | ---------------------------------------------------------------------------------- |
-| `focus`, `blur`                | das Fenster bekam oder verlor den Fokus                                            |
-| `minimize`, `restore`          | das Fenster wurde minimiert oder wieder gezeigt                                    |
-| `visibilityChange`             | das Fenster ist sichtbar oder nicht: minimiert, oder der Browser-Tab verborgen     |
-| `connectionChange`             | der Desktop verlor oder bekam die Verbindung zur Box zurück                        |
-| `sizeClassChange`              | das Fenster überschritt 600 oder 1024 px                                           |
-| `themeChange`, `localeChange`  | siehe [Sprachen und Darstellung](/de/docs/sdk/guides/i18n-and-theming/)            |
-| `permissionsChange`            | siehe [Berechtigungen](/de/docs/sdk/guides/permissions/)                           |
-| `storageChange`                | eine Speicherzuordnung änderte sich oder ihr Pool wurde gesperrt oder kam zurück   |
-| `backendStatus`                | das Backend ist `stopped`, `starting`, `running`, `updating` oder `unavailable`    |
-| `logLevelChange`               | ein Administrator schaltete das Debug-Logging der App um                           |
-| `appUpdated`                   | eine neue Version ist installiert; neu laden, um sie zu nutzen, nach dem Speichern |
-| `launch`, `notificationAction` | siehe oben                                                                         |
+| Ereignis                       | Wann                                                                                                            |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------- |
+| `focus`, `blur`                | das Fenster bekam oder verlor den Fokus                                                                         |
+| `minimize`, `restore`          | das Fenster wurde minimiert oder wieder gezeigt                                                                 |
+| `visibilityChange`             | das Fenster ist sichtbar oder nicht: minimiert, oder der Browser-Tab verborgen                                  |
+| `connectionChange`             | der Desktop verlor oder bekam die Verbindung zur Box zurück                                                     |
+| `sizeClassChange`              | das Fenster überschritt 600 oder 1024 px                                                                        |
+| `themeChange`, `localeChange`  | siehe [Sprachen und Darstellung](/de/docs/sdk/guides/i18n-and-theming/)                                         |
+| `permissionsChange`            | siehe [Berechtigungen](/de/docs/sdk/guides/permissions/)                                                        |
+| `storageChange`                | eine Speicherzuordnung änderte sich oder ihr Pool wurde gesperrt oder kam zurück                                |
+| `backendStatus`                | das Backend ist `stopped`, `starting`, `running`, `updating` oder `unavailable`                                 |
+| `logLevelChange`               | ein Administrator schaltete das Debug-Logging der App um                                                        |
+| `appUpdated`                   | eine andere Version ist installiert (Update oder Zurücksetzen); neu laden, um sie zu nutzen, nach dem Speichern |
+| `launch`, `notificationAction` | siehe oben                                                                                                      |
 
 `app.on` liefert eine Funktion, die den Handler wieder entfernt. Handler laufen in der Reihenfolge, in der sie hinzugefügt wurden. Ereignisse, die die App nicht kennt, werden ignoriert; neue Ereignisse brechen also keine App.
 

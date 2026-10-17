@@ -14,19 +14,19 @@ import {
 import styles from './Controls.module.css';
 import { cx } from './cx';
 
+/** The props of {@link Checkbox}: React Aria's checkbox field props plus the label. */
+export interface CheckboxProps extends Omit<CheckboxFieldProps, 'className' | 'children'> {
+  /** The label, also the accessible name. */
+  children: ReactNode;
+}
+
 /**
  * A checkbox with its label.
  *
  * @param props - React Aria's checkbox field props (`isSelected`, `onChange`, `isDisabled`) plus the label.
  * @returns The checkbox with its label.
  */
-export function Checkbox({
-  children,
-  ...props
-}: Omit<CheckboxFieldProps, 'className' | 'children'> & {
-  /** The label, also the accessible name. */
-  children: ReactNode;
-}) {
+export function Checkbox({ children, ...props }: CheckboxProps) {
   return (
     <CheckboxField {...props} className={styles.field}>
       <CheckboxButton className={styles.checkbox}>
@@ -39,19 +39,19 @@ export function Checkbox({
   );
 }
 
+/** The props of {@link Switch}: React Aria's switch field props plus the label. */
+export interface SwitchProps extends Omit<SwitchFieldProps, 'className' | 'children'> {
+  /** The label, also the accessible name. */
+  children: ReactNode;
+}
+
 /**
  * An on and off switch with its label, for settings that apply at once.
  *
  * @param props - React Aria's switch field props (`isSelected`, `onChange`, `isDisabled`) plus the label.
  * @returns The switch with its label.
  */
-export function Switch({
-  children,
-  ...props
-}: Omit<SwitchFieldProps, 'className' | 'children'> & {
-  /** The label, also the accessible name. */
-  children: ReactNode;
-}) {
+export function Switch({ children, ...props }: SwitchProps) {
   return (
     <SwitchField {...props} className={styles.field}>
       <SwitchButton className={styles.switch}>
@@ -64,6 +64,16 @@ export function Switch({
   );
 }
 
+/** The props of {@link ProgressBar}: React Aria's progress bar props plus the label. */
+export interface ProgressBarProps extends Omit<AriaProgressBarProps, 'className' | 'children'> {
+  /** The label above the bar, also the accessible name. */
+  label: ReactNode;
+  /** Whether the value is shown as text next to the label; true when left out. */
+  showValue?: boolean;
+  /** Extra class names, added after the bar's own. */
+  className?: string;
+}
+
 /**
  * A labelled progress bar that shows its value as text unless `showValue` is false. Without `value` it is
  * indeterminate only when `isIndeterminate` is set.
@@ -71,19 +81,7 @@ export function Switch({
  * @param props - React Aria's progress bar props (`value`, `minValue`, `maxValue`, `formatOptions`) plus the label.
  * @returns The progress bar with its label.
  */
-export function ProgressBar({
-  label,
-  showValue = true,
-  className,
-  ...props
-}: Omit<AriaProgressBarProps, 'className' | 'children'> & {
-  /** The label above the bar, also the accessible name. */
-  label: ReactNode;
-  /** Whether the value is shown as text next to the label; true when left out. */
-  showValue?: boolean;
-  /** Extra class names, added after the bar's own. */
-  className?: string;
-}) {
+export function ProgressBar({ label, showValue = true, className, ...props }: ProgressBarProps) {
   return (
     <AriaProgressBar {...props} className={cx(styles.progress, className)}>
       {({ percentage, valueText }) => (

@@ -629,5 +629,23 @@
         "keyword": "additionalProperties"
       }
     }
+  ],
+  "loading-text-without-en.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/window/loading/text/en",
+        "keyword": "required"
+      }
+    }
+  ],
+  "loading-until-ready-not-boolean.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/window/loading/untilReady",
+        "keyword": "type"
+      }
+    }
   ]
 }

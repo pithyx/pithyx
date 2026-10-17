@@ -130,6 +130,8 @@ export function answerStep(answer: { allow: boolean } | undefined): 'close' | 'k
 
 /** The parts of the daemon's app context (`apps/<id>/context`) that reach a running app as events. */
 export interface ContextState {
+  /** The installed version; an update or a rollback changes it. */
+  version?: string;
   permissions: readonly string[];
   logLevel: 'debug' | 'info';
   storage: readonly StorageInfo[];
@@ -139,7 +141,8 @@ export interface ContextState {
 
 /**
  * What a change of the daemon's context means for a running window: `permissionsChange`, `logLevelChange`,
- * `storageChange` and `backendStatus` for what differs, in that order. Unchanged parts send nothing.
+ * `storageChange`, `backendStatus` and `appUpdated` (another version installed, by an update or a rollback) for what
+ * differs, in that order. Unchanged parts send nothing.
  */
 export function contextChanges(
   previous: ContextState,
@@ -166,5 +169,32 @@ export function contextChanges(
   if (status !== undefined && status !== previous.backend?.status) {
     events.push({ event: 'backendStatus', data: { status } });
   }
+  if (
+    next.version !== undefined &&
+    previous.version !== undefined &&
+    next.version !== previous.version
+  ) {
+    events.push({ event: 'appUpdated', data: { version: next.version } });
+  }
   return permissionsChanged ? { permissions, events } : { events };
+}
+
+/** What the loading placeholder of an app window shows: nothing, the app's icon and name, or also the backend's start. */
+export type LoadingPhase = 'ready' | 'loading' | 'starting';
+
+/**
+ * The placeholder stays until the app connected, or with the manifest's `window.loading.untilReady` until it called
+ * `window.ready`, and at most until its time is up (D354). While it shows, a starting backend gets its line of text.
+ */
+export function loadingPhase(state: {
+  connected: boolean;
+  appReady: boolean;
+  untilReady: boolean;
+  timedOut: boolean;
+  backendStatus: string | undefined;
+}): LoadingPhase {
+  if (state.timedOut || (state.connected && (!state.untilReady || state.appReady))) {
+    return 'ready';
+  }
+  return state.backendStatus === 'starting' ? 'starting' : 'loading';
 }
