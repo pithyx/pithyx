@@ -8134,13 +8134,13 @@
         "tags": [
           "App API"
         ],
-        "description": "As POST /api/files/operations, for shared folders. Needs files.shares and files.write, and files.read for copy and move. Follow the job on jobs/<id>.",
+        "description": "As POST /api/files/operations, with each place a shared folder (share, needs files.shares, files.read where entries are copied or moved from and files.write where anything changes) or a storage request (storage, needs a mapping for reading and writing where anything changes). Follow the job on jobs/<id>.",
         "operationId": "AppStartFileOperation",
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/FileOperationRequest"
+                "$ref": "#/components/schemas/AppFileOperationRequest"
               }
             }
           },
@@ -8954,6 +8954,96 @@
         },
         "description": "A file or folder an app reaches, with whether the app may write it."
       },
+      "AppFileOperationRequest": {
+        "required": [
+          "kind"
+        ],
+        "type": "object",
+        "properties": {
+          "kind": {
+            "description": "copy, move or delete.",
+            "$ref": "#/components/schemas/FileOperationKind"
+          },
+          "items": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/AppFileRef"
+            },
+            "description": "The entries to work on, at most 1000. Leave out when `AllIn` is given."
+          },
+          "target": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "The folder to copy or move into; not used for delete.",
+                "$ref": "#/components/schemas/AppFileRef"
+              }
+            ],
+            "description": "An entry or folder of an app's file operation, in a shared folder or a storage request of its manifest."
+          },
+          "onConflict": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "For copy and move; fail when left out.",
+                "$ref": "#/components/schemas/ConflictPolicy"
+              }
+            ]
+          },
+          "permanent": {
+            "type": "boolean",
+            "description": "For delete: remove for good instead of moving to the shared folder's recycle bin.",
+            "default": false
+          },
+          "allIn": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "Instead of `Items`: every entry of a folder except the listed names.",
+                "$ref": "#/components/schemas/AppFolderSelection"
+              }
+            ],
+            "description": "Every entry of an app's folder except some names."
+          }
+        },
+        "description": "An app's copy, move or delete (D362): as FileOperationRequest, with each place a shared folder or a\nstorage request."
+      },
+      "AppFileRef": {
+        "type": "object",
+        "properties": {
+          "share": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The shared folder's id, as the app got it from `files/shares`."
+          },
+          "storage": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The id of a storage request of the manifest."
+          },
+          "path": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The path relative to the shared folder or the mapped folder."
+          }
+        },
+        "description": "An entry or folder of an app's file operation, in a shared folder or a storage request of its manifest."
+      },
       "AppFileUrl": {
         "required": [
           "url",
@@ -9044,6 +9134,29 @@
           }
         },
         "description": "One page of a folder, relative to its location."
+      },
+      "AppFolderSelection": {
+        "required": [
+          "folder"
+        ],
+        "type": "object",
+        "properties": {
+          "folder": {
+            "description": "The folder whose entries are meant.",
+            "$ref": "#/components/schemas/AppFileRef"
+          },
+          "except": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Names left out, at most 1000."
+          }
+        },
+        "description": "Every entry of an app's folder except some names."
       },
       "AppGrants": {
         "required": [

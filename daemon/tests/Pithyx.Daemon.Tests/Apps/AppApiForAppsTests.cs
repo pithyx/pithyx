@@ -792,7 +792,7 @@ public sealed class AppApiForAppsTests : IAsyncLifetime
         var share = $"share={media}";
 
         Task<HttpResponseMessage> Rename(HttpClient app) => app.PostAsJsonAsync("/api/app/files/rename", new { share = id, path = "a.txt", name = "c.txt" }, Token);
-        Task<HttpResponseMessage> Operation(HttpClient app, string path) => app.PostAsJsonAsync("/api/app/files/operations", new { kind = "delete", items = new[] { new { shareId = media, path } } }, Token);
+        Task<HttpResponseMessage> Operation(HttpClient app, string path) => app.PostAsJsonAsync("/api/app/files/operations", new { kind = "delete", items = new[] { new { share = id, path } } }, Token);
 
         Assert.Equal("app.permission.denied", await ErrorAsync(await Rename(weak)));
         Assert.Equal("app.permission.denied", await ErrorAsync(await Operation(weak, "b.txt")));
@@ -817,6 +817,71 @@ public sealed class AppApiForAppsTests : IAsyncLifetime
         Assert.Equal("jobs.job.not_found", await ErrorAsync(await strong.PostAsync("/api/app/jobs/9999/cancel", null, Token)));
         using var cancelled = await strong.PostAsync($"/api/app/jobs/{job}/cancel", null, Token);
         Assert.Equal(HttpStatusCode.NoContent, cancelled.StatusCode);
+    }
+
+    [Fact]
+    public async Task FileOperationsTakeAStorageRequestWithinItsMappedFolder()
+    {
+        var root = Directory.CreateDirectory(Path.Combine(_factory.DataDirectory, "pool", "clips")).FullName;
+        var inbox = Directory.CreateDirectory(Path.Combine(root, "inbox")).FullName;
+        Directory.CreateDirectory(Path.Combine(root, "private"));
+        await File.WriteAllTextAsync(Path.Combine(inbox, "clip.md"), "clip", Token);
+        await File.WriteAllTextAsync(Path.Combine(inbox, "old.md"), "old", Token);
+        await File.WriteAllTextAsync(Path.Combine(root, "private", "diary.txt"), "dear diary", Token);
+        File.CreateSymbolicLink(Path.Combine(inbox, "escape"), "../private");
+        long share;
+        using (var created = await _admin.PostAsJsonAsync("/api/shares", new { name = "Clips", path = root }, Token))
+        {
+            share = (await created.JsonAsync()).GetProperty("id").GetInt64();
+        }
+        const string Inbox = ",\n  \"storage\": [{ \"id\": \"inbox\", \"name\": { \"en\": \"Inbox\" }, \"access\": \"readWrite\", \"required\": false }]";
+        await InstallAsync(AppA, "", extra: Inbox);
+        await InstallAsync(AppB, "\"files.shares\", \"files.write\"", extra: Inbox);
+        foreach (var app in new[] { AppA, AppB })
+        {
+            using var mapped = await _admin.PutAsJsonAsync($"/api/apps/{app}/storage/inbox", new { shareId = share, path = "inbox", access = "readWrite" }, Token);
+            Assert.Equal(HttpStatusCode.OK, mapped.StatusCode);
+        }
+        var (rita, ritaId, _) = await UserAsync("rita", AppA, AppB);
+        await _admin.SetShareAccessAsync(share, ritaId, "readWrite");
+        var storageOnly = App(await TokenAsync(rita, AppA));
+        var withShares = App(await TokenAsync(rita, AppB));
+        var id = share.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        Task<HttpResponseMessage> Run(HttpClient app, object body) => app.PostAsJsonAsync("/api/app/files/operations", body, Token);
+
+        // Out of the storage request into the shared folder: the shared folder needs files.shares and files.write.
+        object copyOut = new { kind = "copy", items = new[] { new { storage = "inbox", path = "clip.md" } }, target = new { share = id, path = "" } };
+        Assert.Equal("app.permission.denied", await ErrorAsync(await Run(storageOnly, copyOut)));
+        using (var copied = await Run(withShares, copyOut))
+        {
+            Assert.Equal(HttpStatusCode.Accepted, copied.StatusCode);
+            await FinishedAsync(await copied.JsonAsync());
+        }
+        Assert.Equal("clip", await File.ReadAllTextAsync(Path.Combine(root, "clip.md"), Token));
+
+        // Within the storage request no files.* permission is needed; a delete goes to the shared folder's bin.
+        using (var deleted = await Run(storageOnly, new { kind = "delete", items = new[] { new { storage = "inbox", path = "old.md" } } }))
+        {
+            Assert.Equal(HttpStatusCode.Accepted, deleted.StatusCode);
+            await FinishedAsync(await deleted.JsonAsync());
+        }
+        Assert.False(File.Exists(Path.Combine(inbox, "old.md")));
+
+        // Neither .. nor a symbolic link leaves the mapped folder, and the folder itself is the request's root.
+        Assert.Equal("fs.path.invalid", await ErrorAsync(await Run(withShares, new { kind = "copy", items = new[] { new { storage = "inbox", path = "../private/diary.txt" } }, target = new { share = id, path = "" } })));
+        using (var escaped = await Run(withShares, new { kind = "copy", items = new[] { new { storage = "inbox", path = "escape/diary.txt" } }, target = new { share = id, path = "" } }))
+        {
+            Assert.NotEqual(HttpStatusCode.Accepted, escaped.StatusCode);
+        }
+        Assert.False(File.Exists(Path.Combine(root, "diary.txt")));
+        Assert.Equal("app.storage.not_found", await ErrorAsync(await Run(withShares, new { kind = "delete", items = new[] { new { storage = "other", path = "x" } } })));
+
+        // A read-only mapping refuses every change in it.
+        using (var readOnly = await _admin.PutAsJsonAsync($"/api/apps/{AppA}/storage/inbox", new { shareId = share, path = "inbox", access = "read" }, Token))
+        {
+            Assert.Equal(HttpStatusCode.OK, readOnly.StatusCode);
+        }
+        Assert.Equal("fs.share.read_only", await ErrorAsync(await Run(storageOnly, new { kind = "delete", items = new[] { new { storage = "inbox", path = "clip.md" } } })));
     }
 
     [Fact]

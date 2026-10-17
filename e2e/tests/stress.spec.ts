@@ -135,9 +135,14 @@ test('25 windows restore, stack and close', async ({ page }) => {
     elements.map((element) => Number(getComputedStyle(element).zIndex)),
   );
   expect(new Set(layers).size).toBe(25);
-  expect(
-    await page.getByRole('navigation', { name: 'Taskbar' }).getByRole('listitem').count(),
-  ).toBe(25);
+  const taskbar = page.getByRole('navigation', { name: 'Taskbar' });
+  expect(await taskbar.getByRole('listitem').count()).toBe(25);
+  // However many apps run, the bar stays on screen with the clock in it; the apps scroll.
+  const width = page.viewportSize()?.width ?? 0;
+  const clock = await taskbar.locator('time').boundingBox();
+  const bar = await taskbar.boundingBox();
+  expect((clock?.x ?? Infinity) + (clock?.width ?? 0)).toBeLessThanOrEqual(width);
+  expect(bar?.width ?? Infinity).toBeLessThanOrEqual(width);
 
   // The bottom window shows only a 20 px strip; a click on it brings it to the top.
   await page.mouse.click(300, 10);

@@ -70,6 +70,8 @@ By default the taskbar is at the bottom of the screen. From the left it has:
 - the notifications bell, with a badge for unread notifications,
 - the clock.
 
+When more apps run than fit, their buttons get narrower and then scroll: turn the mouse wheel over them or swipe, and the active app always comes into view. The menu button and everything from the transfers button to the clock stay in place.
+
 Click a running app to bring it to the front. Click the active app again to minimize it. Right-click a running app (or press **Shift+F10** on it) for **Minimize** or **Restore**, **Add to desktop** and **Close**.
 
 To move the taskbar, open the Pithyx menu, click your name, choose **Taskbar position** and pick **Bottom**, **Top**, **Left** or **Right**. On phones the taskbar always stays at the bottom and the entry is missing.

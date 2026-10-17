@@ -147,7 +147,7 @@ export type paths = {
         };
         get?: never;
         put?: never;
-        /** @description As POST /api/files/operations, for shared folders. Needs files.shares and files.write, and files.read for copy and move. Follow the job on jobs/<id>. */
+        /** @description As POST /api/files/operations, with each place a shared folder (share, needs files.shares, files.read where entries are copied or moved from and files.write where anything changes) or a storage request (storage, needs a mapping for reading and writing where anything changes). Follow the job on jobs/<id>. */
         post: operations["AppStartFileOperation"];
         delete?: never;
         options?: never;
@@ -3082,6 +3082,35 @@ export type components = {
             /** @description The app holds `files.write` (or the storage is mapped read and write) and the user may write there. */
             writable: boolean;
         };
+        /**
+         * @description An app's copy, move or delete (D362): as FileOperationRequest, with each place a shared folder or a
+         *     storage request.
+         */
+        AppFileOperationRequest: {
+            /** @description Every entry of an app's folder except some names. */
+            allIn?: null | components["schemas"]["AppFolderSelection"];
+            /** @description The entries to work on, at most 1000. Leave out when `AllIn` is given. */
+            items?: null | components["schemas"]["AppFileRef"][];
+            /** @description copy, move or delete. */
+            kind: components["schemas"]["FileOperationKind"];
+            onConflict?: null | components["schemas"]["ConflictPolicy"];
+            /**
+             * @description For delete: remove for good instead of moving to the shared folder's recycle bin.
+             * @default false
+             */
+            permanent: boolean;
+            /** @description An entry or folder of an app's file operation, in a shared folder or a storage request of its manifest. */
+            target?: null | components["schemas"]["AppFileRef"];
+        };
+        /** @description An entry or folder of an app's file operation, in a shared folder or a storage request of its manifest. */
+        AppFileRef: {
+            /** @description The path relative to the shared folder or the mapped folder. */
+            path?: null | string;
+            /** @description The shared folder's id, as the app got it from `files/shares`. */
+            share?: null | string;
+            /** @description The id of a storage request of the manifest. */
+            storage?: null | string;
+        };
         /** @description A short-lived address of one file, usable without the desktop's session. */
         AppFileUrl: {
             /**
@@ -3118,6 +3147,13 @@ export type components = {
              * @description Entries in the folder when the page was read.
              */
             total: number;
+        };
+        /** @description Every entry of an app's folder except some names. */
+        AppFolderSelection: {
+            /** @description Names left out, at most 1000. */
+            except?: null | string[];
+            /** @description The folder whose entries are meant. */
+            folder: components["schemas"]["AppFileRef"];
         };
         /** @description Who may use an app. Administrators only. */
         AppGrants: {
@@ -7661,7 +7697,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["FileOperationRequest"];
+                "application/json": components["schemas"]["AppFileOperationRequest"];
             };
         };
         responses: {

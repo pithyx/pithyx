@@ -1,5 +1,5 @@
 import { CSRF_HEADER, PithyxApiError, unwrap, type components } from '@pithyx/api-client';
-import type { BackendToken, FileLocation } from '@pithyx/sdk';
+import type { BackendToken, FileLocation, FileOperation } from '@pithyx/sdk';
 import { PithyxError } from '@pithyx/sdk/host';
 import { api } from '../../api/client';
 import { putFile } from '../sdk/fileMapping';
@@ -46,6 +46,26 @@ function tokenCache(app: string, instance: string, kind: TokenKind) {
 /** The query of a file location: `share=<id>` or `storage=<id>`. */
 export function locationQuery(location: FileLocation): { share?: string; storage?: string } {
   return 'share' in location ? { share: location.share } : { storage: location.storage };
+}
+
+/** A `files.run` call as the daemon's API for apps takes it: each place a shared folder or a storage request (D362). */
+export function appOperationBody(params: FileOperation) {
+  const { kind, source, target, onConflict, permanent } = params;
+  const place = locationQuery(source.location);
+  const join = (name: string) => (source.folder === '' ? name : `${source.folder}/${name}`);
+  const selection =
+    'names' in source.items
+      ? { items: source.items.names.map((name) => ({ ...place, path: join(name) })) }
+      : { allIn: { folder: { ...place, path: source.folder }, except: source.items.except } };
+  return {
+    kind,
+    ...selection,
+    ...(target === undefined
+      ? {}
+      : { target: { ...locationQuery(target.location), path: target.path } }),
+    ...(onConflict === undefined ? {} : { onConflict }),
+    permanent: permanent === true,
+  };
 }
 
 /**
