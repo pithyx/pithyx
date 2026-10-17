@@ -60,15 +60,15 @@ Der Pfad nach dem Präfix wird weitergeleitet. Das SDK bietet `app.backend.fetch
 
 Der Proxy entfernt aus der eingehenden Anfrage `Cookie`, `Authorization`, `Proxy-Authorization`, `Referer`, `Forwarded`, jeden `X-Pithyx-*`- und `X-Forwarded-*`-Header sowie die Query-Parameter `pithyx-token` und `pithyx-ticket`. Danach setzt er:
 
-| Header                               | Wert                                          |
-| ------------------------------------ | --------------------------------------------- |
-| `X-Pithyx-User`                      | der Benutzername                              |
-| `X-Pithyx-User-Id`                   | die Benutzer-ID                               |
-| `X-Pithyx-Groups`                    | die Gruppennamen, durch Kommas getrennt       |
-| `X-Pithyx-Admin`                     | `true` oder `false`                           |
-| `traceparent`                        | der Trace der Anfrage                         |
-| `X-Forwarded-Prefix`                 | `/apps/<id>/api` oder `/apps/<id>/api-<name>` |
-| `X-Forwarded-For`, `-Host`, `-Proto` | der ursprüngliche Client und Host             |
+| Header                               | Wert                                                                                                                          |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `X-Pithyx-User`                      | der Benutzername                                                                                                              |
+| `X-Pithyx-User-Id`                   | die Benutzer-ID: die Linux-UID, dieselbe wie `context.user.id` und `DirectoryUser.id`, nie an einen anderen Benutzer vergeben |
+| `X-Pithyx-Groups`                    | die Gruppennamen, durch Kommas getrennt                                                                                       |
+| `X-Pithyx-Admin`                     | `true` oder `false`                                                                                                           |
+| `traceparent`                        | der Trace der Anfrage                                                                                                         |
+| `X-Forwarded-Prefix`                 | `/apps/<id>/api` oder `/apps/<id>/api-<name>`                                                                                 |
+| `X-Forwarded-For`, `-Host`, `-Proto` | der ursprüngliche Client und Host                                                                                             |
 
 Ein Backend kann diesen Headern nur vertrauen, weil es ausschließlich über den Proxy erreichbar ist.
 

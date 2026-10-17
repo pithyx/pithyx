@@ -263,6 +263,7 @@ The first beta, codename Pyxis (D345): the NAS core, the file services, the app 
 
 ### Fixed
 
+- The administrator created in the setup got account id 1 while every other account's id is its Linux uid; it now gets its uid too, so `X-Pithyx-User-Id`, `context.user.id` and `DirectoryUser.id` are always the uid, which is never given to another user.
 - `app.ui.showError` with an app's own error code showed only the raw code; the dialog now shows the error's `detail` for codes the desktop has no translation for.
 - A third-party app with `@pithyx/ui` kept the default accent and colors: `tokens.css` now takes the desktop's look from the SDK's `--pithyx-*` properties once the SDK connected, including the user's accent.
 - Developer docs: the install dialog's suggestion "Administrators only", an `onDemand` backend started once by its install, the 30-second stop that replaces `stop_grace_period`, the manifest `health` over Compose health checks, reloading data once the backend runs, the desktop's own **Open** button on notifications, the name of offline image archives and the Store tabs that appear only when needed; no internal decision numbers in website texts.

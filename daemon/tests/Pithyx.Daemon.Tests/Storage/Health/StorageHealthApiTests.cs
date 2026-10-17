@@ -170,10 +170,11 @@ public sealed class StorageHealthApiTests : IAsyncLifetime
         await SetPoolsAsync(Pool(state: "DEGRADED"));
         (await _admin.PostAsync("/api/storage/alerts/pool.degraded%3Atank/mute", new { })).EnsureSuccessStatusCode();
         var hub = _factory.Services.GetRequiredService<TopicHub>();
+        // The administrator from the setup has the first uid as its id.
         static ClaimsPrincipal Principal(long id, bool admin) => new(new ClaimsIdentity(
             [new Claim(ClaimTypes.NameIdentifier, id.ToString(System.Globalization.CultureInfo.InvariantCulture)), .. admin ? [new Claim(ClaimTypes.Role, SessionAuthenticationHandler.AdminRole)] : Array.Empty<Claim>()],
             "test"));
-        var admin = hub.Connect(Principal(1, admin: true), "a");
+        var admin = hub.Connect(Principal(20000, admin: true), "a");
         var second = hub.Connect(Principal(carol, admin: true), "b");
         var user = hub.Connect(Principal(99, admin: false), "c");
 
