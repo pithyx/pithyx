@@ -18,6 +18,8 @@ The first beta, codename Pyxis (D345): the NAS core, the file services, the app 
 
 ### Added
 
+- Website: a generated REST API reference under `/docs/reference/api/` with every endpoint of the daemon (one page per area with parameters, bodies and responses, and a page with every schema), built from `openapi.json`, in English and German; "Your first app" shows how to install a package from a script.
+- `@pithyx/ui` exports `CheckboxProps`, `SwitchProps` and `ProgressBarProps`, so the reference lists their label props; the UI page explains that the package has no icons and how to add Tabler Icons.
 - App windows show a loading placeholder until the app connected (D354): the app's icon and name, a moving bar after 300 ms and, while its backend starts, "Starting <name> ..." or the app's own text. The manifest's new optional `window.loading` sets that text (localized) and `untilReady`, which keeps the placeholder until the app calls the new SDK method `app.window.ready()` (at most 30 seconds). `pithyx dev` shows it too.
 - GPL source for every image: `tools/release/collect-sources.ts` fetches the Debian source package of every package in an image (also the sources named in `Built-Using`, such as the kernel behind the signed kernel package and the Go and Rust libraries, and the build host's GRUB in the ISO's boot loader; `image/build.sh` now records them as `pithyx-<version>-<arch>.built-using` and `.host-packages`) from snapshot.debian.org, checks each file's SHA-1 and packs them as release parts; the license page says where they are.
 - Development: `tools/fixtures/record-lsblk-qemu.sh` records `lsblk` fixtures for a SATA, an NVMe and a USB disk from emulated controllers in a throwaway QEMU VM, and the parser tests cover all three. The fixture anonymizer keeps the type prefix of NVMe and SCSI name identifiers (`eui.`, `nvme.`, `naa.`).
@@ -261,6 +263,11 @@ The first beta, codename Pyxis (D345): the NAS core, the file services, the app 
 
 ### Fixed
 
+- CI: a pull request that changes the website's code (scripts, components, configuration) now runs the `frontend` job with the root lint and typecheck, and a change of `openapi.json` runs the `website` job that builds the API reference from it.
+- The administrator created in the setup got account id 1 while every other account's id is its Linux uid; it now gets its uid too, so `X-Pithyx-User-Id`, `context.user.id` and `DirectoryUser.id` are always the uid, which is never given to another user.
+- `app.ui.showError` with an app's own error code showed only the raw code; the dialog now shows the error's `detail` for codes the desktop has no translation for.
+- A third-party app with `@pithyx/ui` kept the default accent and colors: `tokens.css` now takes the desktop's look from the SDK's `--pithyx-*` properties once the SDK connected, including the user's accent.
+- Developer docs: the install dialog's suggestion "Administrators only", an `onDemand` backend started once by its install, the 30-second stop that replaces `stop_grace_period`, the manifest `health` over Compose health checks, reloading data once the backend runs, the desktop's own **Open** button on notifications, the name of offline image archives and the Store tabs that appear only when needed; no internal decision numbers in website texts.
 - A backend's schedule call now carries a `traceparent` like every request through the proxy; the backend docs say what a schedule call holds (`X-Pithyx-Schedule`, no user headers, an empty body) and that a backend can rely on its header.
 - The SDK event `appUpdated` never reached an open app window on the box (only `pithyx dev` sent it); the desktop now sends it when an update or a rollback installs another version.
 - `pithyx pack --images` failed with Docker's containerd image store (the default since Docker 29): it saves images from the local Docker by their manifest digest too, checks the archive against the lock, never pulls an image of `pithyx build` (`pithyx.local/...`) and names every failed attempt. `pack --out` creates a folder that does not exist yet.

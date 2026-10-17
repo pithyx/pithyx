@@ -60,15 +60,15 @@ Der Pfad nach dem Präfix wird weitergeleitet. Das SDK bietet `app.backend.fetch
 
 Der Proxy entfernt aus der eingehenden Anfrage `Cookie`, `Authorization`, `Proxy-Authorization`, `Referer`, `Forwarded`, jeden `X-Pithyx-*`- und `X-Forwarded-*`-Header sowie die Query-Parameter `pithyx-token` und `pithyx-ticket`. Danach setzt er:
 
-| Header                               | Wert                                          |
-| ------------------------------------ | --------------------------------------------- |
-| `X-Pithyx-User`                      | der Benutzername                              |
-| `X-Pithyx-User-Id`                   | die Benutzer-ID                               |
-| `X-Pithyx-Groups`                    | die Gruppennamen, durch Kommas getrennt       |
-| `X-Pithyx-Admin`                     | `true` oder `false`                           |
-| `traceparent`                        | der Trace der Anfrage                         |
-| `X-Forwarded-Prefix`                 | `/apps/<id>/api` oder `/apps/<id>/api-<name>` |
-| `X-Forwarded-For`, `-Host`, `-Proto` | der ursprüngliche Client und Host             |
+| Header                               | Wert                                                                                                                          |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `X-Pithyx-User`                      | der Benutzername                                                                                                              |
+| `X-Pithyx-User-Id`                   | die Benutzer-ID: die Linux-UID, dieselbe wie `context.user.id` und `DirectoryUser.id`, nie an einen anderen Benutzer vergeben |
+| `X-Pithyx-Groups`                    | die Gruppennamen, durch Kommas getrennt                                                                                       |
+| `X-Pithyx-Admin`                     | `true` oder `false`                                                                                                           |
+| `traceparent`                        | der Trace der Anfrage                                                                                                         |
+| `X-Forwarded-Prefix`                 | `/apps/<id>/api` oder `/apps/<id>/api-<name>`                                                                                 |
+| `X-Forwarded-For`, `-Host`, `-Proto` | der ursprüngliche Client und Host                                                                                             |
 
 Ein Backend kann diesen Headern nur vertrauen, weil es ausschließlich über den Proxy erreichbar ist.
 
@@ -98,9 +98,11 @@ Ein Backend kann diesen Headern nur vertrauen, weil es ausschließlich über den
 
 - **always:** läuft, sobald es kann.
 - **onDemand:** läuft, solange ein Benutzer ein Fenster-Lease hält, eine Anfrage oder ein Zeitplan es hält, und `idleTimeout` Sekunden (Standard 600) nach dem letzten davon. Der Desktop abonniert das Topic `apps/<id>/context` einmal pro App und Tab; das Schließen des letzten Fensters beendet das Lease sofort, und eine verlorene Verbindung hält es noch 2 Minuten.
+- Installieren oder Aktualisieren startet ein `onDemand`-Backend einmal, damit ein kaputtes Backend die Installation scheitern lässt; danach läuft es nach `idleTimeout` leer wie nach einem geschlossenen Fenster.
 - Ein fehlgeschlagener Start wird nach 1 Minute wiederholt; das Öffnen eines Fensters wiederholt ihn sofort.
 - Start-Timeouts: Compose `up --wait` wartet bis zu 10 Minuten, danach der Health-Check des Manifests bis zu 60 Sekunden.
-- Stopp: `docker compose down --timeout 30`. Container bekommen SIGTERM und werden nach 30 Sekunden beendet; Volumes und Images bleiben.
+- Stopp: `docker compose down --timeout 30`. Container bekommen ihr `stop_signal` (standardmäßig SIGTERM) und werden nach 30 Sekunden beendet; der Timeout ersetzt ein `stop_grace_period` der Compose-Datei. Volumes und Images bleiben.
+- Health: Nimm lieber den `health` des Manifests (eine HTTP-Prüfung durch den Daemon) als einen Compose-`healthcheck`. Eine Compose-Prüfung startet bei jedem Intervall einen Prozess im Container; im Doku-Test war das fast die ganze CPU-Zeit eines Backends im Leerlauf.
 - Zeitpläne wecken das Backend ohne Fenster, rufen `POST path` auf (das Backend bleibt dafür bis zu 10 Minuten gehalten) und lassen es dann leerlaufen.
 - Das Fenster sieht den Status `stopped`, `starting`, `running`, `updating` oder `unavailable` (SDK-Ereignis `backendStatus`).
 - Docker startet nur, solange eine Backend-App installiert und ihr Pool eingehängt ist.

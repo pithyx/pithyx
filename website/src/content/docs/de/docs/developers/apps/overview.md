@@ -70,7 +70,7 @@ Ein Paket heißt `<id>-<version>.pithyxapp`. Es ist ein gzip-komprimiertes tar-A
 
 - `pithyx.json` und `icon.svg`,
 - `frontend/` mit dem gebauten Frontend,
-- optional `backend/compose.yaml` und `backend/images.lock.json` sowie `backend/images/<arch>/<digest>.tar` für Offline-Installationen,
+- optional `backend/compose.yaml` und `backend/images.lock.json` sowie `backend/images/<arch>/<config digest>.tar` für Offline-Installationen (benannt nach dem Digest der Image-Konfiguration, der im klassischen Image-Store von Docker die Image-ID ist, nicht nach dem Manifest-Digest, den `compose.yaml` festlegt),
 - die Dateien README und LICENSE, falls vorhanden,
 - `CHECKSUMS` im Format von `sha256sum -c`.
 

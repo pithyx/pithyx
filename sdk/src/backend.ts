@@ -1,5 +1,5 @@
 /**
- * Addresses of an app's backend (D303). The default endpoint `api` is served at `/apps/<id>/api/`, every other
+ * Addresses of an app's backend. The default endpoint `api` is served at `/apps/<id>/api/`, every other
  * endpoint `<name>` at `/apps/<id>/api-<name>/`; container ports never appear in a URL. The box's address comes from
  * the window's own URL, so the same app works on 443 and on 7484.
  */

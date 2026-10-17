@@ -127,7 +127,7 @@ Das SDK setzt diese Eigenschaften auf `document.documentElement` (oder auf `them
 
 Außerdem setzt es `color-scheme`, `data-pithyx-theme` (`light` oder `dark`) und `data-pithyx-density` (`comfortable` oder `compact`; compact verkleinert `--pithyx-space` und `--pithyx-control-height` schon). Bei `themeChange` ändern sich die Eigenschaften, bevor dein Handler läuft; CSS folgt ohne Code. Nur Zeichnungen in einem Canvas oder mit WebGL brauchen die Werte aus `theme.tokens`.
 
-Fertige Komponenten im Aussehen des Desktops findest du in [@pithyx/ui](/de/docs/sdk/ui/).
+Fertige Komponenten im Aussehen des Desktops findest du in [@pithyx/ui](/de/docs/sdk/ui/); sie folgen demselben Theme von selbst, sobald das SDK verbunden ist.
 
 ## Sonderfälle
 

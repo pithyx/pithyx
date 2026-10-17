@@ -2,8 +2,8 @@
 # Decides which CI jobs a pull request needs, from the files it changes, and writes the answers to $GITHUB_OUTPUT:
 #   code      anything besides Markdown and website/ changed (E2E runs)
 #   daemon    the daemon, its translations, the OpenAPI document, the shared schemas or the CI setup changed
-#   frontend  anything besides docs and daemon/ changed
-#   website   website/ or what it reads (the error texts, the design tokens, the sources its references and examples are made from, the lockfile) changed
+#   frontend  anything besides docs and daemon/ changed, including the website's code (the root lint and typecheck cover it)
+#   website   website/ or what it reads (the error texts, the design tokens, the sources its references and examples are made from, the OpenAPI document, the lockfile) changed
 # Pushes to dev and master run everything; so does a range git cannot resolve.
 set -euo pipefail
 
@@ -21,10 +21,15 @@ website=false
 while IFS= read -r file; do
   [[ -z "$file" ]] && continue
   case "$file" in
-    website/* | i18n/* | packages/ui/tokens.css | packages/ui/src/* | packages/cli/src/* | sdk/src/* | sdk/schema/* | pnpm-lock.yaml | .github/workflows/*) website=true ;;
+    website/* | i18n/* | packages/ui/tokens.css | packages/ui/src/* | packages/cli/src/* | sdk/src/* | sdk/schema/* | packages/api-client/openapi.json | pnpm-lock.yaml | .github/workflows/*) website=true ;;
   esac
   case "$file" in
-    *.md | website/* | .github/ISSUE_TEMPLATE/*) continue ;;
+    # The website's pages and pictures; its scripts, components and configuration are code for the root lint.
+    *.md | website/src/content/* | website/src/assets/* | website/public/* | .github/ISSUE_TEMPLATE/*) continue ;;
+    website/*)
+      frontend=true
+      continue
+      ;;
   esac
   code=true
   case "$file" in

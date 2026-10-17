@@ -123,7 +123,7 @@ export async function loadDashboard(app: PithyxApp, show: (text: string) => void
 
 - `app.log.debug`, `info`, `warn`, `error` und `log` (dasselbe wie `info`) nehmen eine Nachricht und optional `data`, ein flaches Objekt aus Texten, Zahlen, Wahrheitswerten und `null`. Sie kehren sofort zurück und werfen nie.
 - Jeder Eintrag erscheint in der Browser-Konsole auf seiner Stufe. `info`, `warn` und `error` gehen auch an den Daemon; `debug` nur, solange ein Administrator das Debug-Logging der App eingeschaltet hat (`context.logLevel` ist `debug`, `logLevelChange` folgt ihm).
-- Im Protokoll-Center erscheinen die Einträge unter der Quelle `app/<id>` mit dem angemeldeten Benutzer. Die Ausgabe der Container des Backends landet in derselben Quelle.
+- Im Protokoll-Center erscheinen die Einträge unter der Quelle `app/<id>` mit dem angemeldeten Benutzer. Die Ausgabe der Container des Backends landet in derselben Quelle. Eine Zeile auf stdout ist Info, eine Zeile auf stderr eine Warnung, und eine Zeile, die ein JSON-Objekt mit einem Text `level` ist (`debug` oder `trace`, `info`, `warn` oder `warning`, `error`, `fatal` oder `critical`), behält diese Stufe. Schreibe Fehler eines Backends also auf stderr oder als JSON mit `level`; einfache `console.log`-Ausgaben sind immer Info.
 - Das SDK sammelt Einträge 250 ms lang und sendet bis zu 100 auf einmal.
 
 **Grenzen:** Eine Nachricht wird bei 4000 Zeichen abgeschnitten; `data` behält 20 Felder mit Schlüsseln bis 100 und Werten bis 1000 Zeichen, alle als Text. Das SDK puffert höchstens 500 Einträge und verwirft neuere, solange der Puffer voll ist; der Daemon nimmt Schübe von 200 und dann 20 pro Sekunde pro App an, für alle ihre Benutzer zusammen, verwirft den Rest und meldet die verworfene Anzahl einmal pro Minute als eine Warnung. Logge nie Passwörter, Tokens oder Dateiinhalte.
@@ -158,7 +158,7 @@ Ein Aufruf mit Zeitüberschreitung kann auf der Box trotzdem passiert sein. Wied
 
 Die App übersetzt die Codes, die sie erwartet, mit eigenen Texten, nutzt `params` für die Platzhalter und fällt auf eine allgemeine Meldung zurück. `detail` ist Englisch und für Logs gedacht. Logge die `requestId`, statt sie zu zeigen: Mit ihr findet ein Administrator die Anfrage im Protokoll-Center.
 
-`app.ui.showError(error)` zeigt den eigenen Fehlerdialog des Desktops mit dem übersetzten Text. Prüfe `app.supports('ui.showError')` wie im Beispiel: Ein älterer Desktop bedient ihn vielleicht nicht und antwortet mit [`sdk.method.unknown`](/de/docs/reference/errors/#sdk.method.unknown). Der Mock-Desktop von `pithyx dev` bedient ihn und schreibt den Code in sein Log.
+`app.ui.showError(error)` zeigt den eigenen Fehlerdialog des Desktops mit dem übersetzten Text. Der Desktop übersetzt die Codes des Daemons und des SDK; bei einem eigenen Code zeigt er das `detail` des Fehlers, also gib ihm eins in der Sprache des Benutzers (`new PithyxError({ code: 'lists.list.full', params: {}, detail: t('errors.listFull') })`). Die Request-ID landet in der Konsole des Browsers, nie im Dialog. Prüfe `app.supports('ui.showError')` wie im Beispiel: Ein älterer Desktop bedient ihn vielleicht nicht und antwortet mit [`sdk.method.unknown`](/de/docs/reference/errors/#sdk.method.unknown). Der Mock-Desktop von `pithyx dev` bedient ihn und schreibt den Code in sein Log.
 
 ## Sonderfälle
 

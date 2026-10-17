@@ -11,7 +11,7 @@ Only administrators install apps, in the Store app. An app is a frontend that th
 
 ## The Store
 
-The Store has the tabs **Installed**, **Official**, **Community**, **Own** and **Updates** (with the number of waiting updates), and a gear for **Store settings**. Official apps are reviewed, built and signed by the Pithyx project; community apps are from developers outside the project and reviewed by it before they are published; **Own** shows apps of catalogs you added, which the project does not verify. Badges read "Pithyx", "Community" and "Unverified" (also for apps installed from a file). Search covers name, description and developer. Users open installed apps from the Pithyx menu; see [Apps](/docs/user/apps/).
+The Store has the tab **Installed**, **Updates** while updates wait (with their number), **Official** and **Community** while that catalog is on, and **Own** while you added a catalog of your own, and a gear for **Store settings**. Official apps are reviewed, built and signed by the Pithyx project; community apps are from developers outside the project and reviewed by it before they are published; **Own** shows apps of catalogs you added, which the project does not verify. Badges read "Pithyx", "Community" and "Unverified" (also for apps installed from a file). Search covers name, description and developer. Users open installed apps from the Pithyx menu; see [Apps](/docs/user/apps/).
 
 ## Installing from a file
 
@@ -49,6 +49,6 @@ Indexes of the official and community catalogs carry an Ed25519 signature checke
 
 ## Backends and Docker
 
-A backend is a Compose subset with images pinned by digest, checked against a fixed allowlist. The box runs it in Docker (Debian's `docker.io`), which the daemon starts only while a backend app is installed and its pool is available. Containers run in a user namespace, on an own internal network without internet unless the app has the permission "Internet", and cannot reach host services. Version 0.1 refuses the Docker socket and host-wide rights ([`app.elevated.unsupported`](/docs/reference/errors/#app.elevated.unsupported)). A container as root is only allowed when the app declares it, and the install dialog warns.
+A backend is a Compose subset with images pinned by digest, checked against a fixed allowlist. The box runs it in Docker (Debian's `docker.io`), which the daemon starts only while a backend app is installed and its pool is available. Containers run in a user namespace, on an own internal network without internet unless the app has the permission "Internet", and cannot reach host services. Pithyx 1.0.0-beta.1 refuses the Docker socket and host-wide rights ([`app.elevated.unsupported`](/docs/reference/errors/#app.elevated.unsupported)). A container as root is only allowed when the app declares it, and the install dialog warns.
 
 A backend with lifecycle `always` runs whenever it can; `onDemand` starts when a user opens the app (a request waits up to 30 seconds) and stops 10 minutes after the last window closed. A failed start is retried after 1 minute. Container output goes to the Log Center as source `app/<id>`.

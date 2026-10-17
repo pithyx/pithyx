@@ -272,21 +272,21 @@ Ein Pfad, der den Endpunkt verlassen würde (etwa mit `..`), scheitert mit [`sdk
 
 Der Proxy entfernt `Cookie`, `Authorization`, `Proxy-Authorization`, `Referer`, `Forwarded`, `traceparent`, `tracestate`, alle eingehenden `X-Pithyx-*`- und `X-Forwarded-*`-Header und alle `pithyx-*`-Query-Parameter. Dann setzt er:
 
-| Header                               | Wert                                                                         |
-| ------------------------------------ | ---------------------------------------------------------------------------- |
-| `X-Pithyx-User`                      | der Benutzername, kleingeschrieben                                           |
-| `X-Pithyx-User-Id`                   | die Benutzer-ID                                                              |
-| `X-Pithyx-Groups`                    | die Namen der Gruppen des Benutzers, durch Kommas getrennt, leer ohne Gruppe |
-| `X-Pithyx-Admin`                     | `true` oder `false`                                                          |
-| `traceparent`                        | der Trace der Anfrage, für deine Logs                                        |
-| `X-Forwarded-Prefix`                 | `/apps/<id>/api` oder `/apps/<id>/api-<name>`                                |
-| `X-Forwarded-For`, `-Host`, `-Proto` | die Client-Adresse, der Host und `http` oder `https`                         |
+| Header                               | Wert                                                                                                                          |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
+| `X-Pithyx-User`                      | der Benutzername, kleingeschrieben                                                                                            |
+| `X-Pithyx-User-Id`                   | die Benutzer-ID: die Linux-UID, dieselbe wie `context.user.id` und `DirectoryUser.id`, nie an einen anderen Benutzer vergeben |
+| `X-Pithyx-Groups`                    | die Namen der Gruppen des Benutzers, durch Kommas getrennt, leer ohne Gruppe                                                  |
+| `X-Pithyx-Admin`                     | `true` oder `false`                                                                                                           |
+| `traceparent`                        | der Trace der Anfrage, für deine Logs                                                                                         |
+| `X-Forwarded-Prefix`                 | `/apps/<id>/api` oder `/apps/<id>/api-<name>`                                                                                 |
+| `X-Forwarded-For`, `-Host`, `-Proto` | die Client-Adresse, der Host und `http` oder `https`                                                                          |
 
 WebSocket-Upgrades bekommen dieselben Header. Antworten verlieren `Set-Cookie`, `Clear-Site-Data`, `Strict-Transport-Security` und andere Header, die auf die ganze Box wirken, und bekommen die Sandbox-Header des Frontends. Request-Bodys haben am Proxy keine Größengrenze: Das Backend entscheidet. Die vollständige Liste steht unter [Backends](/de/docs/developers/apps/backend/#wer-ruft-auf).
 
 ## Sonderfälle
 
-- **Gestopptes Backend.** Eine Anfrage an ein Backend im Zustand `stopped` oder `starting` weckt es und wartet bis zu 30 Sekunden. Solange es `updating` oder `unavailable` ist, antwortet der Proxy mit 503 [`app.backend.unavailable`](/de/docs/reference/errors/#app.backend.unavailable). `app.context.backend.status` und das Ereignis `backendStatus` sagen es dem Fenster.
+- **Gestopptes Backend.** Eine Anfrage an ein Backend im Zustand `stopped` oder `starting` weckt es und wartet bis zu 30 Sekunden. Solange es `updating` oder `unavailable` ist, antwortet der Proxy mit 503 [`app.backend.unavailable`](/de/docs/reference/errors/#app.backend.unavailable). `app.context.backend.status` und das Ereignis `backendStatus` sagen es dem Fenster. Lade deine Daten neu, wenn der Status `running` wird: Ein Aufruf, während das Backend startete, kann gescheitert sein.
 - **Kein Backend.** `app.context.backend` ist `null`; `fetch`, `url` und `socket` scheitern mit [`sdk.backend.endpoint_unknown`](/de/docs/reference/errors/#sdk.backend.endpoint_unknown), `token()` mit [`app.backend.missing`](/de/docs/reference/errors/#app.backend.missing).
 - **Unbekannter Endpunkt.** Ein Name, der nicht in `context.backend.endpoints` steht, scheitert mit `sdk.backend.endpoint_unknown`, bevor etwas gesendet wird. Endpunktnamen im Manifest haben höchstens 32 Zeichen.
 - **401.** Der Proxy antwortet mit [`app.token.invalid`](/de/docs/reference/errors/#app.token.invalid), wenn Token oder Ticket falsch, abgelaufen, verbraucht oder für eine andere App sind, und wenn die Sitzung endete, der Benutzer sich nicht mehr am Desktop anmelden darf oder den Zugriff auf die App verlor. Jede Nutzung prüft das erneut. Ein Neustart der Box beendet alle Tokens. `fetch` fängt das selbst ab: Antwortet der Proxy mit `app.token.invalid`, verwirft das SDK sein Token, holt ein neues und wiederholt die Anfrage einmal (nicht bei einem Body, der ein Stream ist). Wird auch das neue Token abgelehnt, ist die 401 die Antwort, und erneut versuchen hilft nicht; das Fenster neu zu öffnen holt neue Tokens. `url` kann das nicht wissen: Frage eine neue URL an, wenn ein `<img>` nicht lädt. Ein WebSocket-Ticket wird bei jedem `socket`-Aufruf neu geholt.

@@ -48,11 +48,12 @@ public sealed class AuthService(SqliteConnectionFactory connections, PasswordHas
         {
             throw new PithyxException(ErrorCodes.AuthSetupAlreadyDone);
         }
+        // The account id is the uid, as for every other user: never given out again, so apps can key data by it.
         var uid = await Users.UidAllocator.AllocateUserAsync(connection, transaction, username, now);
         var id = await connection.ExecuteScalarAsync<long?>(
             """
-            INSERT INTO users (username, display_name, password_hash, uid, created_at, updated_at)
-            SELECT @username, @displayName, @passwordHash, @uid, @now, @now
+            INSERT INTO users (id, username, display_name, password_hash, uid, created_at, updated_at)
+            SELECT @uid, @username, @displayName, @passwordHash, @uid, @now, @now
             WHERE NOT EXISTS (SELECT 1 FROM users)
             RETURNING id
             """,
