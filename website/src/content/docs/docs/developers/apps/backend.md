@@ -98,11 +98,12 @@ A backend can trust these headers only because it is reachable solely through th
 
 - **always:** runs whenever it can.
 - **onDemand:** runs while a user holds a window lease, a request or a schedule holds it, and for `idleTimeout` seconds (default 600) after the last one. The desktop subscribes to the topic `apps/<id>/context` once per app and tab; closing the last window ends the lease at once, and a lost connection keeps it for 2 minutes.
-- Installing or updating an app starts an `onDemand` backend once, so a broken backend fails the install; it then idles out after `idleTimeout` like after a closed window.
+- Installing, updating or enabling an app starts an `onDemand` backend once, so a broken backend fails the install; it then idles out after `idleTimeout` like after a closed window.
 - A failed start is retried after 1 minute; opening a window retries at once.
 - Start timeouts: Compose `up --wait` waits up to 10 minutes, then the manifest's health check up to 60 seconds.
 - Stop: `docker compose down --timeout 30`. Containers get their `stop_signal` (SIGTERM by default) and are killed after 30 seconds; the timeout replaces a `stop_grace_period` of the Compose file. Volumes and images stay.
-- Health: prefer the manifest's `health` (an HTTP check the daemon makes) to a Compose `healthcheck`. A Compose check starts a process in the container at every interval; in the docs test it was almost all of an idle backend's CPU time.
+- Health: prefer the manifest's `health` (an HTTP check the daemon makes, every 100 ms while the backend starts) to a Compose `healthcheck`. A Compose check starts a process in the container at every interval, and `up --wait` waits for its first pass. Measured with a small Node backend on the box: a cold start took 2.5 seconds with a Node health check every second during `start_period` and 1.05 seconds with the manifest's `health` only; running idle, the Compose check cost about 2 percent of a core (in the container and in Docker), without it about 0.15 percent. `pithyx validate` warns about a Compose healthcheck next to `health` (`cli.compose.healthcheck_redundant`). An image's own `HEALTHCHECK` also runs; switch it off with `healthcheck: { disable: true }`.
+- A browser on the box itself sees every backend start as a change of the network (Docker attaches the container to the app's bridge), and Chromium aborts the requests in flight with `net::ERR_NETWORK_CHANGED`. Browsers on other devices do not see it. Load again when `backendStatus` becomes `running` (see the edge cases of the [backend guide](/docs/sdk/guides/backend/)).
 - Schedules wake the backend without a window, call `POST path` (holding the backend for up to 10 minutes) and then let it idle.
 - The window sees the status `stopped`, `starting`, `running`, `updating` or `unavailable` (SDK event `backendStatus`).
 - Docker starts only while a backend app is installed and its pool is mounted.

@@ -226,6 +226,49 @@ describe('pithyx validate', () => {
       );
     });
 
+    it('warns about a Compose healthcheck next to the manifest health', () => {
+      const root = backendProject();
+      writeFileSync(
+        join(root, LOCK_FILE),
+        formatLock({
+          lockVersion: 1,
+          images: {
+            [image]: {
+              amd64: { manifest: digest('1'), config: digest('2') },
+              arm64: { manifest: digest('3'), config: digest('4') },
+            },
+          },
+        }),
+      );
+      const compose = (healthcheck: string) => {
+        writeFileSync(
+          join(root, 'backend', 'compose.yaml'),
+          `services:\n  server:\n    image: ${image}\n${healthcheck}`,
+        );
+      };
+      compose('    healthcheck:\n      test: [CMD, node, check.js]\n      interval: 30s\n');
+      expect(codes(root)).toEqual([]);
+
+      const manifest = JSON.parse(readFileSync(join(root, 'pithyx.json'), 'utf8')) as {
+        backend: Record<string, unknown>;
+      };
+      manifest.backend.health = { endpoint: 'api', path: '/health' };
+      writeFileSync(join(root, 'pithyx.json'), JSON.stringify(manifest));
+      expect(readProject(root, { frontend: 'build' }).findings).toEqual([
+        {
+          level: 'warning',
+          code: 'cli.compose.healthcheck_redundant',
+          params: { service: 'server' },
+        },
+      ]);
+      compose('    healthcheck:\n      test: curl -f http://127.0.0.1:8080/health\n');
+      expect(codes(root)).toEqual(['warning cli.compose.healthcheck_redundant']);
+      compose('    healthcheck:\n      test: [NONE]\n');
+      expect(codes(root)).toEqual([]);
+      compose('    healthcheck:\n      disable: true\n');
+      expect(codes(root)).toEqual([]);
+    });
+
     it('refuses a lock that does not match the Compose file', () => {
       const root = backendProject();
       const other = `ghcr.io/example/other:1@sha256:${'b'.repeat(64)}`;

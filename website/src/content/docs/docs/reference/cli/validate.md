@@ -35,7 +35,7 @@ pithyx validate [project folder] [--frontend <folder>]
 2. `icon.svg` with the box's icon rules. A warning `cli.icon.template` while it is still the template icon of `@pithyx/cli`.
 3. The built frontend folder. Hidden files and folders (names starting with `.`) stay out of the package with a warning `cli.frontend.skipped`; links and special files are errors (`app.package.invalid`, reason `entry_type`); a missing folder is the error `cli.frontend.missing`.
 4. The package layout as `pack` would write it, for example that the manifest's `entry` exists below `frontend/`.
-5. With a backend: the Compose file named in `backend.compose` against the [Compose rules](/docs/reference/compose-rules/) and the manifest, then `backend/images.lock.json`: it must exist (`cli.lock.missing`), parse (`cli.lock.invalid`) and list exactly the images of the Compose file (`cli.lock.stale`). An image without an amd64 or an arm64 entry is a warning (`cli.lock.platform_missing`): the app will not install on boxes of that architecture.
+5. With a backend: the Compose file named in `backend.compose` against the [Compose rules](/docs/reference/compose-rules/) and the manifest, then `backend/images.lock.json`: it must exist (`cli.lock.missing`), parse (`cli.lock.invalid`) and list exactly the images of the Compose file (`cli.lock.stale`). An image without an amd64 or an arm64 entry is a warning (`cli.lock.platform_missing`): the app will not install on boxes of that architecture. A Compose `healthcheck` next to the manifest's `health` is a warning (`cli.compose.healthcheck_redundant`): it delays every start and keeps the idle backend busy.
 
 The lock is checked only when the Compose file passes. Warnings never change the exit code.
 

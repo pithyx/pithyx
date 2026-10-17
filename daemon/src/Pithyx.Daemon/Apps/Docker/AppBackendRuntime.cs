@@ -59,6 +59,13 @@ public sealed partial class AppBackendRuntime(
     /// <summary>How long the manifest's health check may take after Compose reported the services healthy.</summary>
     public static readonly TimeSpan HealthTimeout = TimeSpan.FromSeconds(60);
 
+    /// <summary>
+    /// The pause between two tries of the manifest's health check while a backend starts. Without a Compose healthcheck the
+    /// containers count as started before the server listens, so the first tries often fail; a short pause keeps the start
+    /// close to the moment the server answers (N16: a small Node server about 0.4 seconds after its container).
+    /// </summary>
+    public static readonly TimeSpan HealthPollInterval = TimeSpan.FromMilliseconds(100);
+
     private static readonly HttpClient _healthClient = new(new SocketsHttpHandler { UseProxy = false, AllowAutoRedirect = false })
     {
         Timeout = TimeSpan.FromSeconds(5),
@@ -206,7 +213,7 @@ public sealed partial class AppBackendRuntime(
                 {
                     // Not listening yet, or a single slow answer: the next try decides.
                 }
-                await Task.Delay(TimeSpan.FromMilliseconds(500), deadline.Token);
+                await Task.Delay(HealthPollInterval, deadline.Token);
             }
         }
         catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)

@@ -3,7 +3,7 @@ import { existsSync, lstatSync, readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { AppManifest } from '@pithyx/sdk';
-import { devComposePath, validateCompose } from './compose';
+import { devComposePath, processHealthchecks, validateCompose } from './compose';
 import { error, type Finding } from './findings';
 import { validateIcon } from './icon';
 import { checkLayout, ICON_FILE, MANIFEST_FILE } from './layout';
@@ -260,6 +260,15 @@ function checkBackend(manifest: AppManifest, compose: string, entries: PackageEn
           params: { image, arch },
         });
       }
+    }
+  }
+  if (manifest.backend?.health !== undefined) {
+    for (const service of processHealthchecks(composeBytes)) {
+      findings.push({
+        level: 'warning',
+        code: 'cli.compose.healthcheck_redundant',
+        params: { service },
+      });
     }
   }
   return findings;

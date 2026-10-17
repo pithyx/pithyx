@@ -12,6 +12,7 @@ export type CliCode =
   | 'cli.lock.invalid'
   | 'cli.lock.stale'
   | 'cli.lock.platform_missing'
+  | 'cli.compose.healthcheck_redundant'
   | 'cli.backend.unbuilt';
 
 /** What `pithyx validate` reports: an error stops `pithyx pack`, a warning does not. */
@@ -36,6 +37,8 @@ const cliTexts: Record<CliCode, string> = {
     '{path} does not match the Compose file ({reason, select, missing {{image} is not locked} unused {{image} is not used} other {{image} differs}}). Run pithyx lock.',
   'cli.lock.platform_missing':
     '{image} has no image for {arch}; the app will not install on {arch} boxes.',
+  'cli.compose.healthcheck_redundant':
+    'Service {service} has a Compose healthcheck next to the health of the manifest. Docker starts a process in the container for every check, which delays every start and keeps the idle backend busy. Remove it and let health decide.',
   'cli.backend.unbuilt':
     '{path} is not built yet: run pithyx build, or let the catalog build it from the source form.',
 };
