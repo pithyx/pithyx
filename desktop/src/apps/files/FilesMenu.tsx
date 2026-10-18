@@ -41,6 +41,7 @@ export function FilesMenu({
   viewable,
   writable,
   canPaste,
+  openOnly = false,
   onAction,
   onClose,
 }: {
@@ -54,6 +55,8 @@ export function FilesMenu({
   viewable: boolean;
   writable: boolean;
   canPaste: boolean;
+  /** Only "Open": the homes of every user, which open as shares of their own. */
+  openOnly?: boolean;
   onAction: (action: FilesAction) => void;
   onClose: () => void;
 }) {
@@ -69,7 +72,11 @@ export function FilesMenu({
         }}
         onClose={onClose}
       >
-        {kind === 'entries' ? (
+        {openOnly ? (
+          <MenuItem id="open" icon={<IconExternalLink {...icon} />}>
+            {t('actions.open')}
+          </MenuItem>
+        ) : kind === 'entries' ? (
           <>
             {single === 'folder' && (
               <MenuItem id="open" icon={<IconExternalLink {...icon} />}>

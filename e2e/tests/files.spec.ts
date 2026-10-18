@@ -321,12 +321,13 @@ test('administrators find every other home in one list under homes', async ({ pa
   await expect(sidebar.getByRole('button', { name: 'e2e-homes' })).toHaveCount(0);
 
   await sidebar.getByRole('button', { name: 'homes', exact: true }).click();
-  const homes = files.getByRole('list', { name: 'homes' });
-  await homes.getByRole('button', { name: 'e2e-homes' }).click();
+  // The homes are listed like the folders of any folder and open with a double click.
+  const home = files.getByRole('row', { name: /^e2e-homes/ });
+  await home.dblclick();
   const path = files.getByRole('navigation', { name: 'Path' });
   await expect(path).toContainText('homes');
   await expect(path).toContainText('e2e-homes');
 
   await files.getByRole('button', { name: 'Up one level' }).click();
-  await expect(homes.getByRole('button', { name: 'e2e-homes' })).toBeVisible();
+  await expect(home).toBeVisible();
 });

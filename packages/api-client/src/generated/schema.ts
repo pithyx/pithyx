@@ -4552,11 +4552,13 @@ export type components = {
         };
         /** @description A disk as the installer offers it. */
         InstallerDisk: {
+            /** @description Flash that wears out under the system's writes: `usb` (a USB stick or disk) or `card` (a memory card or other removable medium); null otherwise, also for eMMC. */
+            caution: null | string;
             /** @description The disk. */
             disk: components["schemas"]["Disk"];
             /** @description Whether it holds partitions or file systems that the installation erases. */
             hasData: boolean;
-            /** @description Why not: `usb`, `removable`, `boot_medium`, `read_only`, `in_use` (mounted or swap) or `too_small`. */
+            /** @description Why not: `boot_medium`, `read_only`, `in_use` (mounted or swap) or `too_small`. */
             reason: null | string;
             /** @description Whether the system may be installed on it. */
             suitable: boolean;

@@ -70,13 +70,15 @@ public static class InstallerFacts
     }
 
     /// <summary>
-    /// Which disks may hold the system: internal disks of at least <see cref="MinDiskBytes"/>, never a USB or removable
-    /// disk, never the medium the live system runs from and never a disk with something mounted or active swap. SSDs and
-    /// HDDs both pass; the page hints at HDDs.
+    /// Which disks may hold the system: disks of at least <see cref="MinDiskBytes"/>, never the medium the live system runs
+    /// from and never a disk with something mounted or active swap. The user decides (D365): USB disks and memory cards
+    /// pass with a caution because they wear out under the system's writes, eMMC passes without one, and the page hints
+    /// at HDDs.
     /// </summary>
     /// <param name="disks">Every disk.</param>
     /// <param name="devices">Device trees by disk id, to find the boot medium and data on a disk.</param>
-    public static IReadOnlyList<InstallerDisk> EvaluateDisks(IReadOnlyList<Disk> disks, IReadOnlyDictionary<string, BlockDevice> devices)
+    /// <param name="memoryCards">Names of <c>mmc</c> disks that are SD cards, not soldered eMMC.</param>
+    public static IReadOnlyList<InstallerDisk> EvaluateDisks(IReadOnlyList<Disk> disks, IReadOnlyDictionary<string, BlockDevice> devices, IReadOnlySet<string>? memoryCards = null)
     {
         ArgumentNullException.ThrowIfNull(disks);
         ArgumentNullException.ThrowIfNull(devices);
@@ -87,14 +89,16 @@ public static class InstallerFacts
                 var tree = devices.GetValueOrDefault(disk.Id)?.SelfAndDescendants().ToList() ?? [];
                 var reason =
                     tree.Any(device => device.MountPoints.Any(IsLiveMount)) || disk.Partitions.Any(part => part.MountPoints.Any(IsLiveMount)) ? "boot_medium"
-                    : string.Equals(disk.Transport, "usb", StringComparison.Ordinal) ? "usb"
-                    : disk.Removable || string.Equals(disk.Transport, "mmc", StringComparison.Ordinal) ? "removable"
                     : disk.ReadOnly ? "read_only"
                     : tree.Any(device => device.MountPoints.Count > 0) ? "in_use"
                     : disk.SizeBytes + DiskTolerance < MinDiskBytes ? "too_small"
                     : null;
                 var hasData = disk.Partitions.Count > 0 || tree.Any(device => device.FileSystem is not null);
-                return new InstallerDisk(disk, reason is null, reason, hasData);
+                var caution =
+                    string.Equals(disk.Transport, "usb", StringComparison.Ordinal) ? "usb"
+                    : disk.Removable || memoryCards?.Contains(disk.Name) == true ? "card"
+                    : null;
+                return new InstallerDisk(disk, reason is null, reason, hasData, caution);
             })];
     }
 

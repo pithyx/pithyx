@@ -26,13 +26,13 @@ _The installer lists its five checks before the first step._
 
 The first page, **Requirements**, shows five checks. **Begin** stays disabled until all pass.
 
-| Check                              | What it needs                                          |
-| ---------------------------------- | ------------------------------------------------------ |
-| 64-bit processor with x86-64-v2    | A processor with SSE4.2 and POPCNT                     |
-| Started with UEFI                  | Firmware in UEFI mode, not legacy (BIOS) mode          |
-| At least 2 GB of memory            | The page shows how much it found, and hints below 4 GB |
-| Secure Boot is off                 | Switch it off in the firmware                          |
-| An internal disk of at least 32 GB | USB disks and the stick itself do not count            |
+| Check                           | What it needs                                          |
+| ------------------------------- | ------------------------------------------------------ |
+| 64-bit processor with x86-64-v2 | A processor with SSE4.2 and POPCNT                     |
+| Started with UEFI               | Firmware in UEFI mode, not legacy (BIOS) mode          |
+| At least 2 GB of memory         | The page shows how much it found, and hints below 4 GB |
+| Secure Boot is off              | Switch it off in the firmware                          |
+| A disk of at least 32 GB        | The stick of this installer does not count             |
 
 Each failed check shows what to do. See [Hardware requirements](/docs/getting-started/requirements/).
 
@@ -57,7 +57,7 @@ Bonds, VLANs and further options come after the installation, in Settings under 
 
 _Step 3 with the mirror switched on: the second disk is chosen from the same list._
 
-Pick the disk for the system. Each disk is listed with its model, size and serial number. Disks that cannot be used are greyed out with the reason (USB disk, removable medium, the stick of this installer, read only, in use, too small). A disk that holds data shows "This disk holds data that will be erased."
+Pick the disk for the system. Each disk is listed with its model, size and serial number. Disks that cannot be used are greyed out with the reason (the stick of this installer, read only, in use, too small). A disk that holds data shows "This disk holds data that will be erased." A USB disk or a memory card can be chosen but carries a warning that it wears out quickly under the system's writes (see [Hardware requirements](/docs/getting-started/requirements/#disks-and-pools)); built-in eMMC carries none.
 
 - To install on two disks as a mirror, switch on **Mirror on two disks** and choose a **Second disk**. The system is written to both disks and the box keeps running when one fails. The option only appears when two usable disks exist.
 - With one disk, the system is still built as a mirror with one member.

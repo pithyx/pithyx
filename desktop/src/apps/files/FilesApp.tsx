@@ -20,7 +20,6 @@ import {
   IconArrowRight,
   IconArrowUp,
   IconChevronRight,
-  IconFolder,
   IconFolderPlus,
   IconHome,
   IconLayoutGrid,
@@ -41,6 +40,7 @@ import { useAppName } from '../names';
 import styles from './FilesApp.module.css';
 import { FilesMenu, type FilesAction } from './FilesMenu';
 import { FolderView } from './FolderView';
+import { compareEntries } from './order';
 import { crumbsOf, freeName, joinPath, nameOf, parentOf } from './paths';
 import {
   emptySelection,
@@ -165,6 +165,10 @@ export function FilesApp({ app }: { app: PithyxApp }) {
   const sharedFolders = shareList.filter((candidate) => candidate.kind === undefined);
   const userHomes = shareList.filter((candidate) => candidate.kind === 'userHome');
   const atHomes = place.share === HOMES && userHomes.length > 0;
+  // Each home is a share of its own (its trash, versions and pool), so the homes are listed as folders that open it.
+  const homeEntries: FileEntry[] = userHomes
+    .map((home): FileEntry => ({ name: home.name, kind: 'folder', size: 0, modified: '' }))
+    .sort((a, b) => compareEntries(a, b, sort.key, sort.order));
   const share: ShareInfo | undefined = atHomes
     ? undefined
     : (shareList.find((candidate) => candidate.id === place.share) ?? shareList[0]);
@@ -518,6 +522,13 @@ export function FilesApp({ app }: { app: PithyxApp }) {
   }
 
   async function open(entry: FileEntry) {
+    if (atHomes) {
+      const home = userHomes.find((candidate) => candidate.name === entry.name);
+      if (home !== undefined) {
+        go({ share: home.id, path: '', view: 'folder' });
+      }
+      return;
+    }
     const target = joinPath(path, entry.name);
     const action = defaultAction(entry);
     if (action.kind === 'download') {
@@ -544,7 +555,9 @@ export function FilesApp({ app }: { app: PithyxApp }) {
 
   function selectedEntry(): FileEntry | undefined {
     const name = single(selection);
-    return name === null ? undefined : folder.entries.find((entry) => entry.name === name);
+    return name === null
+      ? undefined
+      : (atHomes ? homeEntries : folder.entries).find((entry) => entry.name === name);
   }
 
   function act(action: FilesAction) {
@@ -635,7 +648,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     });
   }
 
-  const count = selectedCount(selection, folder.total);
+  const count = selectedCount(selection, atHomes ? homeEntries.length : folder.total);
   const menuEntry = menu?.entry ?? null;
   const cut =
     clipboard?.mode === 'cut' &&
@@ -831,25 +844,44 @@ export function FilesApp({ app }: { app: PithyxApp }) {
           {shares.isSuccess && shareList.length === 0 ? (
             <p className={styles.empty}>{t('noShares')}</p>
           ) : atHomes ? (
-            <ul className={styles.homes} aria-label={t('shares.homes')}>
-              {userHomes.map((home) => (
-                <li key={home.id}>
-                  <button
-                    type="button"
-                    className={styles.home}
-                    onClick={() => {
-                      go({ share: home.id, path: '', view: 'folder' });
-                    }}
-                  >
-                    <IconFolder size={20} stroke={1.75} aria-hidden />
-                    {home.name}
-                    {home.unavailable !== undefined && (
-                      <span className={styles.sideNote}>{t('shares.unavailable')}</span>
-                    )}
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <FolderView
+              entries={homeEntries}
+              total={homeEntries.length}
+              loading={false}
+              hasMore={false}
+              loadMore={() => undefined}
+              sort={sort.key}
+              order={sort.order}
+              onSort={(key) => {
+                setSort((current) => ({
+                  key,
+                  order: current.key === key && current.order === 'asc' ? 'desc' : 'asc',
+                }));
+              }}
+              selection={selection}
+              onSelect={setSelection}
+              cut={cut}
+              renaming={null}
+              onRenamed={() => undefined}
+              onOpen={(entry) => void open(entry)}
+              layout={layout}
+              thumbnail={() => null}
+              onVisible={() => undefined}
+              onUp={up}
+              onKey={() => undefined}
+              onMenu={(x, y, entry) => {
+                if (entry !== null) {
+                  setMenu({ x, y, entry });
+                }
+              }}
+              onDropFiles={() => undefined}
+              dragData={dragData}
+              onDropEntries={() => undefined}
+              onShown={() => undefined}
+              folderKey={here}
+              format={app.format}
+              fixed
+            />
           ) : share === undefined ? null : view === 'trash' ? (
             <TrashView
               key={share.id}
@@ -927,7 +959,9 @@ export function FilesApp({ app }: { app: PithyxApp }) {
         transfers={transfers}
         text={
           atHomes
-            ? t('items', { count: userHomes.length })
+            ? count > 0
+              ? t('selected', { count })
+              : t('items', { count: userHomes.length })
             : view === 'trash'
               ? ''
               : (announcement ??
@@ -959,6 +993,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
           }
           viewable={menuEntry !== null && defaultAction(menuEntry).kind === 'view'}
           writable={writable}
+          openOnly={atHomes}
           canPaste={clipboard !== null}
           onAction={act}
           onClose={() => {

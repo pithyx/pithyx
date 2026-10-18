@@ -16,8 +16,8 @@
     "memoryLow": "At least {minGb} GB of memory ({foundGb} GB found). Enough for a few users and apps; with less than {recommendedGb} GB, ZFS keeps less in its cache.",
     "secure_boot": "Secure Boot is off",
     "secure_bootFailed": "Secure Boot is on. Pithyx uses a ZFS module that is not signed: switch Secure Boot off in the firmware settings (often under Security or Boot), then start from the USB stick again.",
-    "disk": "An internal disk of at least {minGb} GB",
-    "diskFailed": "No internal disk of at least {minGb} GB was found. USB disks and the USB stick cannot hold the system."
+    "disk": "A disk of at least {minGb} GB",
+    "diskFailed": "No disk of at least {minGb} GB was found. The USB stick of this installer cannot hold the system."
   },
   "taken": {
     "title": "Installation in use",
@@ -59,7 +59,7 @@
   },
   "disks": {
     "title": "System disk",
-    "intro": "Pithyx is installed on one internal disk. Your data goes on other disks later, in Storage.",
+    "intro": "Pithyx is installed on one disk. Your data goes on other disks later, in Storage.",
     "first": "Disk",
     "mirror": "Mirror on two disks",
     "mirrorHint": "The system is written to both disks; the box keeps running when one of them fails.",
@@ -70,10 +70,12 @@
     "noSerial": "no serial",
     "hdd": "Hard disk: it works, but an SSD is faster and quieter and uses less power.",
     "hasData": "This disk holds data that will be erased.",
+    "caution": {
+      "usb": "USB disk: Pithyx writes logs and its database to the system disk all the time, and a cheap USB stick wears out within months. Use a USB SSD or a fast USB 3 stick of a known brand, best two as a mirror.",
+      "card": "Memory card: Pithyx writes to the system disk all the time, and a memory card wears out quickly. Use one only if nothing else fits, best a card made for continuous use."
+    },
     "unsuitable": "Not offered: {reason}",
     "reason": {
-      "usb": "USB disk",
-      "removable": "removable medium",
       "boot_medium": "the USB stick of this installer",
       "read_only": "read only",
       "in_use": "in use",

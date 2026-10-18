@@ -6,6 +6,6 @@ order: 20
 status: ready
 ---
 
-Ja, für deine Daten. Das System kommt auf eine interne Platte oder gespiegelt auf zwei, und Pithyx legt nie einen Pool auf der Systemplatte an. Deine Dateien liegen auf Pools, die du in der App Speicher auf weiteren Platten anlegst.
+Ja, für deine Daten. Das System kommt auf eine Platte oder gespiegelt auf zwei, und Pithyx legt nie einen Pool auf der Systemplatte an. Deine Dateien liegen auf Pools, die du in der App Speicher auf weiteren Platten anlegst.
 
 Details: [Hardware-Anforderungen](/de/docs/getting-started/requirements/).
