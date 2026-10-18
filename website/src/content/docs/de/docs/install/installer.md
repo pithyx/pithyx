@@ -26,13 +26,13 @@ _Der Installer zeigt seine fünf Prüfungen vor dem ersten Schritt._
 
 Die erste Seite, **Voraussetzungen**, zeigt fünf Prüfungen. **Los geht's** bleibt deaktiviert, bis alle bestanden sind.
 
-| Prüfung                                      | Was sie braucht                                                             |
-| -------------------------------------------- | --------------------------------------------------------------------------- |
-| 64-Bit-Prozessor mit x86-64-v2               | Einen Prozessor mit SSE4.2 und POPCNT                                       |
-| Mit UEFI gestartet                           | Firmware im UEFI-Modus, nicht im Legacy-Modus (BIOS)                        |
-| Mindestens 2 GB Arbeitsspeicher              | Die Seite zeigt, wie viel sie gefunden hat, und weist unter 4 GB darauf hin |
-| Secure Boot ist aus                          | Schalte es in der Firmware aus                                              |
-| Eine interne Festplatte mit mindestens 32 GB | USB-Festplatten und der Stick selbst zählen nicht                           |
+| Prüfung                              | Was sie braucht                                                             |
+| ------------------------------------ | --------------------------------------------------------------------------- |
+| 64-Bit-Prozessor mit x86-64-v2       | Einen Prozessor mit SSE4.2 und POPCNT                                       |
+| Mit UEFI gestartet                   | Firmware im UEFI-Modus, nicht im Legacy-Modus (BIOS)                        |
+| Mindestens 2 GB Arbeitsspeicher      | Die Seite zeigt, wie viel sie gefunden hat, und weist unter 4 GB darauf hin |
+| Secure Boot ist aus                  | Schalte es in der Firmware aus                                              |
+| Eine Festplatte mit mindestens 32 GB | Der Stick dieses Installers zählt nicht                                     |
 
 Jede fehlgeschlagene Prüfung zeigt, was zu tun ist. Siehe [Hardware-Anforderungen](/de/docs/getting-started/requirements/).
 
@@ -57,7 +57,7 @@ Bonds, VLANs und weitere Optionen kommen nach der Installation, in den Einstellu
 
 _Schritt 3 mit eingeschaltetem Spiegel: Die zweite Festplatte wählst du aus derselben Liste._
 
-Wähle die Festplatte für das System. Jede Festplatte wird mit Modell, Größe und Seriennummer aufgelistet. Festplatten, die nicht genutzt werden können, sind ausgegraut und nennen den Grund (USB-Festplatte, Wechseldatenträger, der USB-Stick dieses Installers, schreibgeschützt, in Benutzung, zu klein). Eine Festplatte mit Daten zeigt „Auf dieser Festplatte liegen Daten, die gelöscht werden.“
+Wähle die Festplatte für das System. Jede Festplatte wird mit Modell, Größe und Seriennummer aufgelistet. Festplatten, die nicht genutzt werden können, sind ausgegraut und nennen den Grund (der USB-Stick dieses Installers, schreibgeschützt, in Benutzung, zu klein). Eine Festplatte mit Daten zeigt „Auf dieser Festplatte liegen Daten, die gelöscht werden.“ Eine USB-Festplatte oder eine Speicherkarte lässt sich wählen, trägt aber eine Warnung, dass sie sich unter den Schreibzugriffen des Systems schnell abnutzt (siehe [Hardware-Anforderungen](/de/docs/getting-started/requirements/)); eingebauter eMMC-Speicher trägt keine.
 
 - Um auf zwei Festplatten als Spiegel zu installieren, schalte **Auf zwei Festplatten spiegeln** ein und wähle eine **Zweite Festplatte**. Das System wird auf beide Festplatten geschrieben, und die Box läuft weiter, wenn eine ausfällt. Die Option erscheint nur, wenn zwei nutzbare Festplatten vorhanden sind.
 - Mit einer Festplatte wird das System trotzdem als Spiegel mit einem Mitglied gebaut.

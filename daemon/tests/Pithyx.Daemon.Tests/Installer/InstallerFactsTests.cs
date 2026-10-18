@@ -63,13 +63,14 @@ public sealed class InstallerFactsTests
         Assert.Equal(new InstallPlans.PartitionSizes(systemMiB, swapMiB), InstallPlans.SizesFor(diskBytes));
 
     [Fact]
-    public void TheBootStickUsbAndSmallDisksAreRefused()
+    public void TheBootStickAndSmallDisksAreRefusedAndFlashThatWearsOutPassesWithACaution()
     {
-        var stick = Disk("sdc", 16 * Gb, transport: "usb", removable: true);
+        var stick = Disk("sdc", 64 * Gb, transport: "usb", removable: true);
         var isoInVm = Disk("sr0", 64 * Gb, transport: "sata");
         var small = Disk("sdb", 29 * Gb);
         var sold32 = Disk("sde", 31 * Gb);
         var card = Disk("mmcblk0", 64 * Gb, transport: "mmc");
+        var emmc = Disk("mmcblk1", 64 * Gb, transport: "mmc");
         var mounted = Disk("sdd", 500 * Gb);
         var good = Disk("nvme0n1", 500 * Gb, transport: "nvme", partitions: new Partition("nvme0n1p1", "/dev/nvme0n1p1", 100 * Gb, "ntfs", null, []));
         var devices = new Dictionary<string, BlockDevice>
@@ -79,15 +80,17 @@ public sealed class InstallerFactsTests
             [good.Id] = Device(good, ("nvme0n1p1", "ntfs", [])),
         };
 
-        var verdicts = InstallerFacts.EvaluateDisks([stick, isoInVm, small, sold32, card, mounted, good], devices).ToDictionary(disk => disk.Disk.Name);
+        var verdicts = InstallerFacts.EvaluateDisks([stick, isoInVm, small, sold32, card, emmc, mounted, good], devices, new HashSet<string> { "mmcblk0" }).ToDictionary(disk => disk.Disk.Name);
 
-        Assert.Equal("usb", verdicts["sdc"].Reason);
+        Assert.Equal((true, "usb"), (verdicts["sdc"].Suitable, verdicts["sdc"].Caution));
+        Assert.Equal((true, "card"), (verdicts["mmcblk0"].Suitable, verdicts["mmcblk0"].Caution));
+        Assert.Equal((true, null), (verdicts["mmcblk1"].Suitable, verdicts["mmcblk1"].Caution));
         Assert.Equal("boot_medium", verdicts["sr0"].Reason);
         Assert.Equal("too_small", verdicts["sdb"].Reason);
         Assert.True(verdicts["sde"].Suitable);
-        Assert.Equal("removable", verdicts["mmcblk0"].Reason);
         Assert.Equal("in_use", verdicts["sdd"].Reason);
         Assert.True(verdicts["nvme0n1"].Suitable);
+        Assert.Null(verdicts["nvme0n1"].Caution);
         Assert.True(verdicts["nvme0n1"].HasData);
         Assert.False(verdicts["sdb"].HasData);
     }

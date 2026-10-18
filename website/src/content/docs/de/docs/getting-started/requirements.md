@@ -7,7 +7,7 @@ sidebar:
   order: 2
 ---
 
-Pithyx lässt sich auf einem 64-Bit-x86-Computer mit UEFI-Firmware, mindestens 2 GB Arbeitsspeicher und einer internen Systemfestplatte von mindestens 32 GB installieren. Der Installer prüft das alles, bevor du anfangen darfst. Deine Daten kommen auf zusätzliche Festplatten, aus denen du nach der Installation Pools machst.
+Pithyx lässt sich auf einem 64-Bit-x86-Computer mit UEFI-Firmware, mindestens 2 GB Arbeitsspeicher und einer Systemfestplatte von mindestens 32 GB installieren. Der Installer prüft das alles, bevor du anfangen darfst. Deine Daten kommen auf zusätzliche Festplatten, aus denen du nach der Installation Pools machst.
 
 ## Unterstützte Plattformen
 
@@ -19,13 +19,13 @@ Der Installer prüft auf seiner ersten Seite fünf Dinge und startet nicht, wenn
 | Firmware        | Im UEFI-Modus gestartet. Legacy-BIOS und CSM-Modus funktionieren nicht.                                                              |
 | Arbeitsspeicher | Mindestens 2 GB (die Prüfung lässt etwa 400 MB Toleranz für Speicher zu, den die Firmware reserviert); empfohlen sind 4 GB oder mehr |
 | Secure Boot     | Ausgeschaltet. Das ZFS-Modul ist nicht signiert. Siehe [Firmware und Boot](/de/docs/install/firmware-and-boot/).                     |
-| Systemplatte    | Mindestens eine passende interne Festplatte, verkauft als 32 GB oder mehr (die Prüfung lässt 2 GB Toleranz zu)                       |
+| Systemplatte    | Mindestens eine passende Festplatte, verkauft als 32 GB oder mehr (die Prüfung lässt 2 GB Toleranz zu)                               |
 
 Das Basissystem ist Debian 13. Es gibt keine 32-Bit-Version.
 
 ## Referenzhardware
 
-Die Referenzmaschine ist ein Intel N100 oder N305 mit 8 GB Arbeitsspeicher. Der Daemon bleibt im Leerlauf unter 200 MB Speicher und unter 1 Prozent CPU. Diese Zahlen sind Budgets für die eigenen Tests des Projekts, keine Voraussetzungen. Der Installer erzwingt nur das Minimum von 4 GB.
+Die Referenzmaschine ist ein Intel N100 oder N305 mit 8 GB Arbeitsspeicher. Der Daemon bleibt im Leerlauf unter 200 MB Speicher und unter 1 Prozent CPU. Diese Zahlen sind Budgets für die eigenen Tests des Projekts, keine Voraussetzungen. Der Installer erzwingt nur das Minimum von 2 GB.
 
 ## Festplatten und Pools
 
@@ -33,7 +33,9 @@ Die Referenzmaschine ist ein Intel N100 oder N305 mit 8 GB Arbeitsspeicher. Der 
 
 - Die Festplatte muss mindestens 32 GB groß sein. Ab 40 GB belegt Pithyx davon 36,5 GiB (eine Boot-Partition mit 512 MiB, 32 GiB für das System und 4 GiB Swap) und lässt den Rest frei. Auf einer kleineren Platte hat der Swap 2 GiB und das System bekommt den Rest, auf einer 32-GB-Platte etwa 26 GiB; das reicht für das System, seine Update-Snapshots und die Protokolle. Bei zwei Platten entscheidet die kleinere.
 - Mit 2 bis 4 GB Arbeitsspeicher trägt eine Box wenige Benutzer und Apps; der Installer sagt das. ZFS hält dann weniger im Cache, und große App-Images oder Updates nutzen eventuell den Swap.
-- USB-Festplatten, Wechseldatenträger, SD-Karten, schreibgeschützte Festplatten, Festplatten in Benutzung und der Installer-Stick selbst werden nicht angeboten.
+- Schreibgeschützte Festplatten, Festplatten in Benutzung und der Installer-Stick selbst werden nicht angeboten.
+- Eingebauter eMMC-Speicher (häufig in kleinen Computern) funktioniert wie eine interne Festplatte.
+- Ein USB-Stick, eine USB-Festplatte oder eine Speicherkarte kann das System aufnehmen, und der Installer warnt davor: Das System schreibt ständig Logs und seine Datenbank auf die Systemplatte, und billiger Flash-Speicher ist nach wenigen Monaten kaputt. Wenn du so etwas wählst, nimm eine USB-SSD oder einen schnellen USB-3-Stick eines bekannten Herstellers (bei einer Karte eine für den Dauerbetrieb), am besten zwei davon als Spiegel, und halte eine [Konfigurationssicherung](/de/docs/admin/backup/) bereit. Der Stick muss eingesteckt bleiben.
 - Eine Festplatte mit Magnetscheiben ist erlaubt, aber der Installer weist darauf hin, dass eine SSD schneller und leiser ist und weniger Strom braucht.
 - Eine Festplatte, auf der schon Daten liegen, wird mit einer Warnung angezeigt. Die Installation löscht sie.
 - Mit einer Festplatte wird das System trotzdem als Spiegel mit einem Mitglied gebaut. Die zweite Festplatte später hinzuzufügen ist in der Oberfläche noch nicht möglich.

@@ -207,7 +207,14 @@ public sealed partial class SystemInstaller(
         _ownerToken is not null && token is not null
         && CryptographicOperations.FixedTimeEquals(Encoding.ASCII.GetBytes(_ownerToken), Encoding.ASCII.GetBytes(token));
 
-    private IReadOnlyList<InstallerDisk> Disks() => InstallerFacts.EvaluateDisks(inventory.Current.Disks, inventory.Devices);
+    private IReadOnlyList<InstallerDisk> Disks() => InstallerFacts.EvaluateDisks(inventory.Current.Disks, inventory.Devices, MemoryCards(inventory.Current.Disks));
+
+    // The kernel names SD cards and soldered eMMC alike (mmcblk0); only sysfs tells them apart.
+    private static HashSet<string> MemoryCards(IReadOnlyList<Storage.Disk> disks) =>
+        [.. disks
+            .Where(disk => string.Equals(disk.Transport, "mmc", StringComparison.Ordinal))
+            .Where(disk => File.Exists($"/sys/block/{disk.Name}/device/type") && File.ReadAllText($"/sys/block/{disk.Name}/device/type").Trim() == "SD")
+            .Select(disk => disk.Name)];
 
     private IReadOnlyList<InstallerCheck> Checks(IReadOnlyList<InstallerDisk> disks)
     {

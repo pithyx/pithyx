@@ -765,8 +765,14 @@ function DiskOption({
         {reason !== undefined && (
           <span className={own.itemDetail}>
             {t('disks.unsuitable', {
-              reason: t(`disks.reason.${reason}` as 'disks.reason.usb', { minGb }),
+              reason: t(`disks.reason.${reason}` as 'disks.reason.too_small', { minGb }),
             })}
+          </span>
+        )}
+        {disk.suitable && disk.caution !== null && (
+          <span className={own.warning}>
+            <IconAlertTriangle size={16} stroke={2} aria-hidden />
+            {t(`disks.caution.${disk.caution}` as 'disks.caution.usb')}
           </span>
         )}
         {disk.suitable && disk.disk.rotational && (

@@ -45,9 +45,10 @@ public sealed record InstallerStatus(
 /// <summary>A disk as the installer offers it.</summary>
 /// <param name="Disk">The disk.</param>
 /// <param name="Suitable">Whether the system may be installed on it.</param>
-/// <param name="Reason">Why not: <c>usb</c>, <c>removable</c>, <c>boot_medium</c>, <c>read_only</c>, <c>in_use</c> (mounted or swap) or <c>too_small</c>.</param>
+/// <param name="Reason">Why not: <c>boot_medium</c>, <c>read_only</c>, <c>in_use</c> (mounted or swap) or <c>too_small</c>.</param>
 /// <param name="HasData">Whether it holds partitions or file systems that the installation erases.</param>
-public sealed record InstallerDisk(Storage.Disk Disk, bool Suitable, string? Reason, bool HasData);
+/// <param name="Caution">Flash that wears out under the system's writes: <c>usb</c> (a USB stick or disk) or <c>card</c> (a memory card or other removable medium); null otherwise, also for eMMC.</param>
+public sealed record InstallerDisk(Storage.Disk Disk, bool Suitable, string? Reason, bool HasData, string? Caution);
 
 /// <summary>Response of <c>GET /api/installer/options</c>: what the steps offer.</summary>
 /// <param name="Disks">Every disk, suitable or not.</param>

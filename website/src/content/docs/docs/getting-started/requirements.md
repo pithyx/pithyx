@@ -7,7 +7,7 @@ sidebar:
   order: 2
 ---
 
-Pithyx installs on a 64-bit x86 computer with UEFI firmware, at least 2 GB of memory and an internal system disk of at least 32 GB. The installer checks all of this before it lets you begin. Your data goes on additional disks, which you turn into pools after the installation.
+Pithyx installs on a 64-bit x86 computer with UEFI firmware, at least 2 GB of memory and a system disk of at least 32 GB. The installer checks all of this before it lets you begin. Your data goes on additional disks, which you turn into pools after the installation.
 
 ## Supported platforms
 
@@ -19,13 +19,13 @@ The installer checks five things on its first page and refuses to start if one f
 | Firmware    | Started in UEFI mode. Legacy BIOS and CSM mode do not work.                                                           |
 | Memory      | At least 2 GB (the check allows about 400 MB of tolerance for memory the firmware reserves); 4 GB or more recommended |
 | Secure Boot | Switched off. The ZFS module is not signed. See [Firmware and boot](/docs/install/firmware-and-boot/).                |
-| System disk | At least one suitable internal disk sold as 32 GB or more (the check allows 2 GB of tolerance)                        |
+| System disk | At least one suitable disk sold as 32 GB or more (the check allows 2 GB of tolerance)                                 |
 
 The base system is Debian 13. There is no 32-bit version.
 
 ## Reference hardware
 
-The reference machine is an Intel N100 or N305 with 8 GB of memory. The daemon is held to below 200 MB of memory and below 1 percent of CPU when idle. These numbers are budgets for the project's own tests, not requirements. The installer only enforces the 4 GB minimum.
+The reference machine is an Intel N100 or N305 with 8 GB of memory. The daemon is held to below 200 MB of memory and below 1 percent of CPU when idle. These numbers are budgets for the project's own tests, not requirements. The installer only enforces the 2 GB minimum.
 
 ## Disks and pools
 
@@ -33,7 +33,9 @@ The reference machine is an Intel N100 or N305 with 8 GB of memory. The daemon i
 
 - The disk must be at least 32 GB. From 40 GB on, Pithyx uses 36.5 GiB of it (a 512 MiB boot partition, 32 GiB for the system and 4 GiB of swap) and leaves the rest unused. On a smaller disk the swap has 2 GiB and the system gets what remains, about 26 GiB on a 32 GB disk; that is enough for the system, its update snapshots and the logs. With two disks the smaller one decides.
 - With 2 to 4 GB of memory a box runs a few users and apps; the installer says so. ZFS keeps less in its cache then, and large app images or updates may use the swap.
-- USB disks, removable media, SD cards, read-only disks, disks in use and the installer stick itself are not offered.
+- Read-only disks, disks in use and the installer stick itself are not offered.
+- Built-in eMMC (common in small computers) works like any internal disk.
+- A USB stick, a USB disk or a memory card can hold the system, and the installer warns about it: the system writes logs and its database to the system disk all the time, and cheap flash wears out within months. If you choose one, use a USB SSD or a fast USB 3 stick of a known brand (for a card, one made for continuous use), best two of them as a mirror, and keep a [configuration backup](/docs/admin/backup/). The stick has to stay plugged in.
 - A hard disk is allowed, but the installer hints that an SSD is faster, quieter and uses less power.
 - A disk that already holds data is shown with a warning. Installing erases it.
 - With one disk the system is still built as a mirror with one member. Adding the second disk later is not possible in the interface yet.

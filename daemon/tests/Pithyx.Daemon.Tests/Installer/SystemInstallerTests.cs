@@ -126,7 +126,7 @@ public sealed class SystemInstallerTests : IAsyncLifetime
     {
         var exception = await Assert.ThrowsAsync<PithyxException>(() => _installer.StartAsync(Request("serial-S"), CancellationToken.None));
         Assert.Equal(ErrorCodes.InstallerDiskUnsuitable, exception.Code);
-        Assert.Equal("usb", exception.Parameters["reason"]);
+        Assert.Equal("too_small", exception.Parameters["reason"]);
         Assert.Equal(ErrorCodes.InstallerDiskCount, (await Assert.ThrowsAsync<PithyxException>(() => _installer.StartAsync(Request(), CancellationToken.None))).Code);
         Assert.Equal(ErrorCodes.InstallerDiskCount, (await Assert.ThrowsAsync<PithyxException>(() => _installer.StartAsync(Request("serial-A", "serial-A"), CancellationToken.None))).Code);
         Assert.Equal(ErrorCodes.InstallerEraseNotConfirmed, (await Assert.ThrowsAsync<PithyxException>(() => _installer.StartAsync(Request("serial-A") with { EraseConfirmed = false }, CancellationToken.None))).Code);

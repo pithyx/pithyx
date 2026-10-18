@@ -16,8 +16,8 @@
     "memoryLow": "Mindestens {minGb} GB Arbeitsspeicher ({foundGb} GB gefunden). Das reicht für wenige Benutzer und Apps; unter {recommendedGb} GB hält ZFS weniger im Cache.",
     "secure_boot": "Secure Boot ist aus",
     "secure_bootFailed": "Secure Boot ist an. Pithyx nutzt ein ZFS-Modul, das nicht signiert ist: Schalte Secure Boot in den Firmware-Einstellungen aus (oft unter Security oder Boot) und starte dann erneut vom USB-Stick.",
-    "disk": "Eine interne Festplatte mit mindestens {minGb} GB",
-    "diskFailed": "Es wurde keine interne Festplatte mit mindestens {minGb} GB gefunden. USB-Festplatten und der USB-Stick können das System nicht aufnehmen."
+    "disk": "Eine Festplatte mit mindestens {minGb} GB",
+    "diskFailed": "Es wurde keine Festplatte mit mindestens {minGb} GB gefunden. Der USB-Stick dieses Installers kann das System nicht aufnehmen."
   },
   "taken": {
     "title": "Installation läuft woanders",
@@ -59,7 +59,7 @@
   },
   "disks": {
     "title": "Systemfestplatte",
-    "intro": "Pithyx wird auf einer internen Festplatte installiert. Deine Daten kommen später in Speicher auf andere Festplatten.",
+    "intro": "Pithyx wird auf einer Festplatte installiert. Deine Daten kommen später in Speicher auf andere Festplatten.",
     "first": "Festplatte",
     "mirror": "Auf zwei Festplatten spiegeln",
     "mirrorHint": "Das System wird auf beide Festplatten geschrieben; die Box läuft weiter, wenn eine davon ausfällt.",
@@ -70,10 +70,12 @@
     "noSerial": "keine Seriennummer",
     "hdd": "Festplatte mit Magnetscheiben: Das geht, aber eine SSD ist schneller, leiser und braucht weniger Strom.",
     "hasData": "Auf dieser Festplatte liegen Daten, die gelöscht werden.",
+    "caution": {
+      "usb": "USB-Platte: Pithyx schreibt ständig Logs und seine Datenbank auf die Systemplatte, und ein billiger USB-Stick ist nach wenigen Monaten kaputt. Nimm eine USB-SSD oder einen schnellen USB-3-Stick eines bekannten Herstellers, am besten zwei als Spiegel.",
+      "card": "Speicherkarte: Pithyx schreibt ständig auf die Systemplatte, und eine Speicherkarte nutzt sich schnell ab. Nimm eine nur, wenn nichts anderes passt, am besten eine Karte für den Dauerbetrieb."
+    },
     "unsuitable": "Nicht angeboten: {reason}",
     "reason": {
-      "usb": "USB-Festplatte",
-      "removable": "Wechseldatenträger",
       "boot_medium": "der USB-Stick dieses Installers",
       "read_only": "schreibgeschützt",
       "in_use": "in Benutzung",
