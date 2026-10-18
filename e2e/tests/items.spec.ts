@@ -438,10 +438,15 @@ test('the desktop with items and their menus has no accessibility violations', a
   await page.getByRole('menuitem', { name: 'New note' }).click();
   await page.getByRole('textbox', { name: 'Sticky note' }).fill('Order disks');
   await icon(page, 'Storage').click();
-  const scan = () =>
-    new AxeBuilder({ page })
+  // Axe measures colors as drawn, so a dialog that is still fading in reads as low contrast.
+  const scan = async () => {
+    await page.waitForFunction(() =>
+      document.getAnimations().every((animation) => animation.playState !== 'running'),
+    );
+    return new AxeBuilder({ page })
       .withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'])
       .analyze();
+  };
   expect((await scan()).violations).toEqual([]);
 
   await icon(page, 'Storage').click({ button: 'right' });

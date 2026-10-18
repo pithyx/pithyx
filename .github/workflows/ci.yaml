@@ -15,12 +15,9 @@ on:
 permissions:
   contents: read
 
-# Every job runs on the runners named by the repository variable CI_RUNNER (the owner's self-hosted runners, label
-# pithyx-ci; the E2E job on CI_RUNNER_E2E, label pithyx-e2e, when that is set) and on GitHub-hosted runners when it is
-# unset. A pull request from a fork never runs on them: its jobs use ubuntu-latest, and only after a maintainer approved
-# the run (repository setting "Fork pull request workflows"; see CLAUDE.md, CI). The self-hosted runner has no Docker and
-# no root: no job uses services or containers, and nothing here needs ZFS, real disks or root. Those tests run on a dev VM
-# (tools/dev-vm/integration.sh).
+# Every job runs on GitHub-hosted runners (D368); a pull request from a fork runs only after a maintainer approved the
+# run (repository setting "Fork pull request workflows"; see CLAUDE.md, CI). No job uses services or containers, and
+# nothing here needs ZFS, real disks or root: those tests run on a dev VM (tools/dev-vm/integration.sh).
 
 # One run per branch: a new push to a pull request cancels the run it replaces. Runs on dev, beta and stable always finish,
 # so every merge is checked.
@@ -41,7 +38,7 @@ jobs:
     if: >-
       (github.event.action != 'labeled' || github.event.label.name == 'e2e')
       && (github.event_name != 'schedule' || github.repository == 'pithyx/pithyx')
-    runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true) && 'ubuntu-latest' || vars.CI_RUNNER || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     outputs:
       code: ${{ steps.areas.outputs.code }}
       daemon: ${{ steps.areas.outputs.daemon }}
@@ -62,7 +59,7 @@ jobs:
   daemon:
     needs: changes
     if: needs.changes.outputs.daemon == 'true'
-    runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true) && 'ubuntu-latest' || vars.CI_RUNNER || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     env:
       PITHYX_SKIP_BUDGETS: ${{ github.event_name == 'push' && github.ref_name == 'dev' && '1' || '' }}
     steps:
@@ -77,9 +74,7 @@ jobs:
           DOTNET_INSTALL_DIR: ${{ runner.tool_cache }}/dotnet
         with:
           global-json-file: global.json
-          # The packages cache only on GitHub-hosted runners: on the self-hosted ones, downloading the 645 MB archive took
-          # 35 s to 3 min, a restore from nuget.org about 10 s (D350).
-          cache: ${{ runner.environment == 'github-hosted' }}
+          cache: true
           cache-dependency-path: daemon/**/packages.lock.json
       - run: dotnet restore daemon/Pithyx.slnx
       - run: dotnet build daemon/Pithyx.slnx --configuration Release --no-restore
@@ -99,7 +94,7 @@ jobs:
   frontend:
     needs: changes
     if: needs.changes.outputs.frontend == 'true'
-    runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true) && 'ubuntu-latest' || vars.CI_RUNNER || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
         with:
@@ -123,7 +118,7 @@ jobs:
   website:
     needs: changes
     if: needs.changes.outputs.website == 'true'
-    runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true) && 'ubuntu-latest' || vars.CI_RUNNER || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
         with:
@@ -139,7 +134,7 @@ jobs:
 
   repo:
     needs: changes
-    runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true) && 'ubuntu-latest' || vars.CI_RUNNER || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
         with:
@@ -174,16 +169,14 @@ jobs:
   # The E2E suite, the performance gate and the design checks take minutes, so they run only when asked (D278): the
   # label e2e on a pull request, a manual run, the nightly run, and every pull request or push to beta and stable.
   e2e:
-    # It waits for the daemon job, whose tests skew the timing budgets even on pinned cores, and runs whether that job
-    # passed, failed or was skipped (D280).
+    # It waits for the daemon job and runs whether that job passed, failed or was skipped (D280).
     needs: [changes, daemon]
     if: >-
       always() && !cancelled() && needs.changes.result == 'success' && needs.changes.outputs.code == 'true'
       && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.ref_name == 'stable' || github.base_ref == 'stable'
       || github.ref_name == 'beta' || github.base_ref == 'beta'
       || contains(github.event.pull_request.labels.*.name, 'e2e'))
-    # Its own runner with pinned cores (label pithyx-e2e), so no other job's build skews the timing budgets (D280).
-    runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true) && 'ubuntu-latest' || vars.CI_RUNNER_E2E || vars.CI_RUNNER || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     env:
       # The performance gate guards pull requests; after the merge, dev runs the other E2E tests only.
       PITHYX_SKIP_BUDGETS: ${{ github.event_name == 'push' && github.ref_name == 'dev' && '1' || '' }}
@@ -196,9 +189,7 @@ jobs:
           DOTNET_INSTALL_DIR: ${{ runner.tool_cache }}/dotnet
         with:
           global-json-file: global.json
-          # The packages cache only on GitHub-hosted runners: on the self-hosted ones, downloading the 645 MB archive took
-          # 35 s to 3 min, a restore from nuget.org about 10 s (D350).
-          cache: ${{ runner.environment == 'github-hosted' }}
+          cache: true
           cache-dependency-path: daemon/**/packages.lock.json
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
@@ -209,13 +200,11 @@ jobs:
       # The suite runs the daemon only; its tests are the daemon job's.
       - run: dotnet build daemon/src/Pithyx.Daemon
       - run: pnpm --filter "@pithyx/desktop..." build
-      - if: runner.environment == 'github-hosted'
-        uses: actions/cache@v5
+      - uses: actions/cache@v5
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
-      # Only a GitHub-hosted runner may install system packages; the self-hosted runner has the libraries already.
-      - run: pnpm --filter @pithyx/e2e exec playwright install ${{ runner.environment == 'github-hosted' && '--with-deps' || '' }} chromium
+      - run: pnpm --filter @pithyx/e2e exec playwright install --with-deps chromium
       - run: pnpm e2e
       - run: pnpm design:test
       # The daemon's timing budgets, measured in a Release build like the daemon job's tests.
