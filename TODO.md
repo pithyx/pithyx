@@ -606,7 +606,7 @@ Planned with the owner on 2026-10-04 (D294); built after the items above, in thi
 - [ ] Audit: security, licenses, secrets. (after 1.0.0)
 - [ ] Code and UI review by the owner. `[REVIEW]` (after 1.0.0)
 - [ ] Cleanup. (after 1.0.0)
-- [ ] Release 1.0.0 (codename Pyxis) on the stable channel, marked beta (D345, D366; decided by the owner on 2026-10-18): the tag `v1.0.0` on `master`, the GitHub release marked as a pre-release with the ISO, its checksum and the GPL sources; fixes come as 1.0.x.
+- [x] Release 1.0.0 (codename Pyxis) on the stable channel, marked beta (D345, D366; decided by the owner on 2026-10-18): the tag `v1.0.0` on `master`, the GitHub release marked as a pre-release with the ISO, its checksum and the GPL sources; fixes come as 1.0.x. (Done on 2026-10-18: `master` and `v1.0.0` on 10444e6, the release "Pithyx 1.0.0 Pyxis (beta)"; the ISO passed `image/test-install.sh --mirror`.)
 - [ ] Make the repository public (branch protection, GitHub-hosted runners; see "Release blockers"). (after 1.0.0)
 
 ### Not in 1.0
@@ -719,7 +719,7 @@ The first release, v1.0.0, carries the constellation codename Pyxis: the mariner
 - [x] Two docs pages say "WebDAV on 7484 and 80"; port 80 only redirects to 7484. Fix both pages in English and German. (Fixed with HTTPS, #128; no page says so any more.)
 - [x] Remove the "There is no public download yet" sentences (quick start, FAQ "download", USB stick page, English and German) once the first image is published. (They link the releases on GitHub since D366.)
 - [x] `image/baseline/`: record the package list of the first release image, the base for the first update file (`build-update.sh --since`). (`image/baseline/pithyx-1.0.0-amd64.packages`, from the ISO of `dev` 10444e6.)
-- [ ] GPL source with every published image (owner's wish of 2026-10-14): run `node tools/release/collect-sources.ts --version <v> --pack` after `image/build.sh` and attach the `pithyx-<v>-sources-<n>.tar` parts to the same release as the ISO and the update file, before the first public download. `image.yaml` does it once it exists.
+- [x] GPL source with every published image (owner's wish of 2026-10-14): run `node tools/release/collect-sources.ts --version <v> --pack` after `image/build.sh` and attach the `pithyx-<v>-sources-<n>.tar` parts to the same release as the ISO and the update file, before the first public download. `image.yaml` does it once it exists. (1.0.0: `pithyx-1.0.0-sources-1.tar`, 360 source packages, on the release.)
 
 ---
 
