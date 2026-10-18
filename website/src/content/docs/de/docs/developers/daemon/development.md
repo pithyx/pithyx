@@ -20,7 +20,7 @@ pnpm build              # builds every package
 pnpm generate           # builds the daemon, then regenerates the clients
 ```
 
-Die Hooks führen vor einem Commit Prettier, ESLint, die Repository-Prüfungen, shellcheck und `dotnet format whitespace` aus, beim Commit zusätzlich eine Prüfung der Commit-Nachricht (Gitmoji-Format). Ein Pre-Push-Hook lehnt Pushes auf `master` und `dev` ab. Warnungen sind in C# und TypeScript Fehler.
+Die Hooks führen vor einem Commit Prettier, ESLint, die Repository-Prüfungen, shellcheck und `dotnet format whitespace` aus, beim Commit zusätzlich eine Prüfung der Commit-Nachricht (Gitmoji-Format). Ein Pre-Push-Hook lehnt Pushes auf `stable` und `beta` ab, die sich nur über Pull Requests ändern. Warnungen sind in C# und TypeScript Fehler.
 
 Der Dev-Server des Desktops läuft mit `pnpm dev` auf `http://localhost:5173` und leitet `/api` und `/ws` an einen Daemon auf `http://localhost:7484` weiter. `PITHYX_DAEMON_URL` ändert das Ziel.
 
