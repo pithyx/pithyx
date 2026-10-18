@@ -204,6 +204,8 @@ The first beta, codename Pyxis (D345): the NAS core, the file services, the app 
 
 ### Changed
 
+- The README only keeps the status, contributing and the license; the development setup, the design gallery, the dev VM and the common problems moved to the docs page "Developing the daemon", and the name and its pronunciation to a new FAQ answer and the organization's profile.
+
 - Apps reach the local network only with the new permission **Local network** (`network.lan`, D358): **Internet** (`network.internet`) no longer reaches the router, printers or other servers, and the manifest's `backend.network.services` names the services that get the way out (all without it). Services that do not run as root have no Linux capabilities (`cap_drop: [ALL]`, D359).
 - Development: the release tool `tools/release/pithyx-release` runs the release scripts as one command with `status`, a release `checklist`, `iso`, `update` (with the right baseline and `--sign`), `sign`, `channel`, `publish-beta`, `publish-sdk` (`--latest`), `sources`, `baseline`, `templates` and `key`, with `--dry-run` and a menu without arguments (D364); `image/test-install.sh` takes `--memory` and `--disk-size`.
 - The installer offers USB disks and memory cards for the system (D365): they carry a warning that cheap flash wears out within months under the system's writes, and the user decides; built-in eMMC counts as an internal disk. `InstallerDisk` has a new field `caution` (`usb`, `card`), and the reasons `usb` and `removable` are gone.

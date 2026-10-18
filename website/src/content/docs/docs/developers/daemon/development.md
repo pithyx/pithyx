@@ -49,6 +49,12 @@ Simulation reads fake account files from the fixtures and applies nothing to the
 
 If your development machine itself runs Pithyx (`/etc/pithyx/environment` exists) and you start a daemon without `PITHYX_DB`, it exits with code 78. Set `PITHYX_DB`.
 
+While a development build runs, the interactive API reference is at `http://localhost:7484/api/docs` and the OpenAPI document at `/api/openapi.json`. The logs are JSON lines in `.pithyx-dev/logs/daemon.json`; every entry carries the `RequestId` that error responses return, so `grep <request id> .pithyx-dev/logs/daemon.json` finds everything that happened for one request.
+
+## Design gallery
+
+`pnpm design` starts a Vite server on port 5174 (all interfaces) with every screen of the desktop at `/design.html`: phone, tablet and laptop width, light and dark, with switches for accent, taskbar position and language. It is a development tool; the production build contains only `index.html`. `pnpm design:shots` renders every screen as `<screen>_<viewport>_<theme>_<lang>.png` into `tools/design-shots/out/` (`--screens login,tokens` limits the run, `--base-url` uses a running server).
+
 ## Tests
 
 - **Daemon:** `dotnet test --solution daemon/Pithyx.slnx` (xUnit). The folders under `daemon/tests/Pithyx.Daemon.Tests` mirror the modules. `DaemonFactory` starts the daemon in memory with a temporary data folder, simulation on and a `FakeTimeProvider`; `CreateApiClient()` adds the CSRF header.
@@ -63,10 +69,20 @@ The categories `StorageIntegration`, `DockerIntegration`, `NetworkIntegration` a
 
 ## Integration tests
 
-These suites need root, real ZFS, loop devices, `scsi_debug`, Docker or systemd-networkd, so they run in a Debian 13 virtual machine, not on your workstation. The VM described in the README has 4 vCPUs, 8 GB RAM, UEFI, a 32 GB system disk and six 10 GB data disks with the serials `VYXTEST01` to `VYXTEST06`.
+These suites need root, real ZFS, loop devices, `scsi_debug`, Docker or systemd-networkd, so they run in a Debian 13 virtual machine, not on your workstation. Give the VM 4 vCPUs, 8 GB RAM, UEFI, a 32 GB system disk and six 10 GB data disks with the serials `VYXTEST01` to `VYXTEST06` (in Proxmox: `serial=VYXTEST01` on each disk). Only disks with these serials are ever used for tests; take a VM snapshot before destructive runs.
 
 - `sudo tools/dev-vm/provision.sh` prepares the machine (safe to repeat; exit code 2 means reboot and run again). It writes `dev` to `/etc/pithyx/environment` and the test serials to `/etc/pithyx/test-disks`.
 - `tools/dev-vm/testpool.sh create|destroy|wipe` manages test pools and refuses disks that are not test disks. After `zpool destroy`, run `testpool.sh wipe`.
 - `tools/dev-vm/integration.sh [--filter <class>] [--disk-pulls] [--docker] [--network]` runs the suites as a normal user and builds in Release first. `--disk-pulls` pulls virtual disks out of a running pool; run it only on a freshly booted machine. `--docker` and `--network` exclude each other.
 
 Load spoils timing budgets: check `uptime` before trusting a failure.
+
+A dev VM has exactly one installation, like a box: the unit `pithyx-dev.service` runs the checkout as root in real mode on port 7484, with the database `/var/lib/pithyx/pithyx.db` on the system disk and its pools on the test disks. `tools/dev-vm/install-dev-daemon.sh` fast-forwards the checkout to `origin/dev`, builds, checks that the build knows every schema version in the database and restarts the unit (`--yes` skips the question, `--no-build` reuses the build, `--uninstall` removes the unit). `tools/dev-vm/reset-dev-db.sh` starts over with an empty database.
+
+## Common problems
+
+- **Port 7484 is already in use:** another daemon still runs. Find it with `ss -ltnp | grep 7484`.
+- **`pnpm: command not found`:** run `corepack enable` (with `sudo` if Node was installed system-wide).
+- **"Simulation fixtures not found":** the daemon was started from an unusual folder. Set `PITHYX_FIXTURES` to `daemon/tests/fixtures`.
+- **The desktop shows "Daemon not reachable":** the daemon does not run, or `PITHYX_DAEMON_URL` points to the wrong place.
+- **`modprobe zfs` fails after provisioning:** reboot so the DKMS module matches the running kernel, then run `provision.sh` again. Secure Boot must be off, because the ZFS module is not signed.
