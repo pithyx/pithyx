@@ -82,6 +82,37 @@ until curl -fsS --max-time 2 "http://127.0.0.1:$port/api/health" >"$vm/health.js
 done
 echo "daemon answers after $((timeout - deadline + SECONDS))s: $(cat "$vm/health.json")"
 
+# How many pixels of tty1 differ from its most common colour, from a screenshot through the QEMU monitor. The menu
+# line alone draws about 800, the greeting with the logo, the address and the QR code about 30000.
+tty1_pixels() {
+  python3 - "$vm/monitor.sock" "$vm/tty1.ppm" <<'PY'
+import collections, os, socket, sys, time
+s = socket.socket(socket.AF_UNIX)
+s.connect(sys.argv[1])
+time.sleep(0.3)
+s.recv(65536)
+s.sendall(("screendump " + sys.argv[2] + "\n").encode())
+for _ in range(20):
+    time.sleep(0.25)
+    if os.path.exists(sys.argv[2]) and os.path.getsize(sys.argv[2]) > 0:
+        break
+time.sleep(0.5)
+pixels = open(sys.argv[2], "rb").read().split(b"\n", 3)[3]
+colours = collections.Counter(pixels[i:i + 3] for i in range(0, len(pixels), 3))
+print(sum(colours.values()) - colours.most_common(1)[0][1])
+PY
+}
+
+drawn=0
+for _ in $(seq 18); do
+  rm -f "$vm/tty1.ppm"
+  drawn="$(tty1_pixels)"
+  ((drawn > 2500)) && break
+  sleep 5
+done
+((drawn > 2500)) || die "tty1 shows no greeting ($drawn pixels drawn, the menu alone is about 800); screenshot $vm/tty1.ppm"
+echo "tty1 shows the greeting ($drawn pixels drawn)"
+
 if [[ "$keep" == true ]]; then
   echo "VM kept: http://127.0.0.1:$port, serial log $vm/serial.log, monitor socket $vm/monitor.sock (pid $(cat "$vm/qemu.pid"))"
 fi
