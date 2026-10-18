@@ -4,9 +4,10 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, labeled]
   push:
-    branches: [dev, master]
+    branches: [dev, beta, stable]
   workflow_dispatch:
-  # The nightly run: the whole suite including E2E on dev (the default branch, where scheduled runs start).
+  # The nightly run: the whole suite including E2E. Scheduled runs start on the default branch (stable), so every
+  # checkout below takes dev for them (D367).
   schedule:
     - cron: '17 1 * * *'
 
@@ -21,7 +22,7 @@ permissions:
 # no root: no job uses services or containers, and nothing here needs ZFS, real disks or root. Those tests run on a dev VM
 # (tools/dev-vm/integration.sh).
 
-# One run per branch: a new push to a pull request cancels the run it replaces. Runs on dev and master always finish,
+# One run per branch: a new push to a pull request cancels the run it replaces. Runs on dev, beta and stable always finish,
 # so every merge is checked.
 concurrency:
   group: ci-${{ github.head_ref || github.ref_name }}
@@ -49,6 +50,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ github.event_name == 'schedule' && 'dev' || '' }}
           fetch-depth: 0
       - id: areas
         run: tools/checks/changed-areas.sh
@@ -65,6 +67,8 @@ jobs:
       PITHYX_SKIP_BUDGETS: ${{ github.event_name == 'push' && github.ref_name == 'dev' && '1' || '' }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'schedule' && 'dev' || '' }}
       - uses: actions/setup-node@v7
         with:
           node-version-file: .nvmrc
@@ -98,6 +102,8 @@ jobs:
     runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true) && 'ubuntu-latest' || vars.CI_RUNNER || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'schedule' && 'dev' || '' }}
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
@@ -120,6 +126,8 @@ jobs:
     runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true) && 'ubuntu-latest' || vars.CI_RUNNER || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'schedule' && 'dev' || '' }}
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
@@ -135,6 +143,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
         with:
+          ref: ${{ github.event_name == 'schedule' && 'dev' || '' }}
           fetch-depth: 0
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
@@ -163,14 +172,15 @@ jobs:
           HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
   # The E2E suite, the performance gate and the design checks take minutes, so they run only when asked (D278): the
-  # label e2e on a pull request, a manual run, the nightly run, and every pull request or push to master.
+  # label e2e on a pull request, a manual run, the nightly run, and every pull request or push to beta and stable.
   e2e:
     # It waits for the daemon job, whose tests skew the timing budgets even on pinned cores, and runs whether that job
     # passed, failed or was skipped (D280).
     needs: [changes, daemon]
     if: >-
       always() && !cancelled() && needs.changes.result == 'success' && needs.changes.outputs.code == 'true'
-      && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.ref_name == 'master' || github.base_ref == 'master'
+      && (github.event_name == 'workflow_dispatch' || github.event_name == 'schedule' || github.ref_name == 'stable' || github.base_ref == 'stable'
+      || github.ref_name == 'beta' || github.base_ref == 'beta'
       || contains(github.event.pull_request.labels.*.name, 'e2e'))
     # Its own runner with pinned cores (label pithyx-e2e), so no other job's build skews the timing budgets (D280).
     runs-on: ${{ (github.event_name == 'pull_request' && github.event.pull_request.head.repo.fork == true) && 'ubuntu-latest' || vars.CI_RUNNER_E2E || vars.CI_RUNNER || 'ubuntu-latest' }}
@@ -179,6 +189,8 @@ jobs:
       PITHYX_SKIP_BUDGETS: ${{ github.event_name == 'push' && github.ref_name == 'dev' && '1' || '' }}
     steps:
       - uses: actions/checkout@v7
+        with:
+          ref: ${{ github.event_name == 'schedule' && 'dev' || '' }}
       - uses: actions/setup-dotnet@v6
         env:
           DOTNET_INSTALL_DIR: ${{ runner.tool_cache }}/dotnet

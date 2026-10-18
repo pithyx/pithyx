@@ -38,7 +38,7 @@ Rules of thumb: show no spinner before 300 ms, open apps with dynamic `import()`
 ## The perf gate
 
 - The job `e2e` in `.github/workflows/ci.yaml` builds the daemon and the desktop, runs `pnpm e2e` (which includes the budgets), `pnpm design:test` and the daemon `TimingBudget` tests.
-- It runs only on request: with the pull request label `e2e`, by starting the workflow manually, or for any pull request to `master`. Add the label for changes to user flows, the shell, the window manager, sign-in, setup, SDK transport, the API contract, the loading path or the bundle.
+- It runs only on request: with the pull request label `e2e`, by starting the workflow manually, or for any pull request or push to `beta` and `stable`. Add the label for changes to user flows, the shell, the window manager, sign-in, setup, SDK transport, the API contract, the loading path or the bundle.
 - It starts after the daemon tests finish, because parallel load skews the timings. On pushes to `dev` the budgets are skipped (`PITHYX_SKIP_BUDGETS=1`).
 - Timings vary with machine load. If a budget fails but nothing slow is in your change, check `uptime` and run once more.
 - `pnpm design:test` opens every screen of the design gallery at 390x844, 820x1180 and 1440x900 in English and German and fails on overflow or a covered title bar. Accessibility is checked with axe in `e2e/tests/a11y.spec.ts`, and token contrast in `packages/ui/src/contrast.test.ts`.

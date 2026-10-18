@@ -4,11 +4,12 @@ Thanks for your interest. Pithyx is in beta, so expect things to move fast.
 
 ## Branches
 
-- `master` is stable. It only receives release pull requests from `dev` and hotfixes.
-- `dev` is the integration branch for beta builds.
+- `stable` is the stable, default branch; releases are tagged there. It only receives release pull requests from `beta` and hotfixes.
+- `beta` is the beta channel. It only receives pull requests from `dev`.
+- `dev` is the integration branch, where changes are tested first.
 - Work happens in `feature/<name>`, `fix/<name>` or `hotfix/<name>`. Pull requests target `dev`.
-- Hotfixes branch from `master` and are merged back into both `master` and `dev`.
-- Never push directly to `master` or `dev`. The pre-push hook refuses it.
+- Hotfixes branch from `stable` and are merged back into `stable`, `beta` and `dev`.
+- Never push directly to `stable` or `beta`. The branch ruleset and the pre-push hook refuse it.
 
 ## Commit messages
 

@@ -27,7 +27,7 @@
       "$ref": "#/$defs/version"
     },
     "channel": {
-      "description": "`stable` for releases on `master`, `beta` for `dev`. A box on the stable channel accepts only stable files.",
+      "description": "`stable` for releases tagged on the branch `stable`, `beta` for prereleases. A box on the stable channel accepts only stable files.",
       "enum": ["stable", "beta"]
     },
     "minimumVersion": {
