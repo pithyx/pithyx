@@ -271,6 +271,7 @@ The first beta, codename Pyxis (D345): the NAS core, the file services, the app 
 
 ### Fixed
 
+- The installer's console on tty1 shows the logo, the addresses and the QR code again instead of only its menu: the menu drew itself before the greeting existed and waited for a key to draw again (bash goes on waiting in `read` after a signal). It now looks for a new greeting every second, and the QEMU tests check for the greeting, not just the menu.
 - Files lists the homes under **homes** like the folders of any folder (list or tiles, sortable columns, keyboard, double click to open) instead of a loose grid of buttons; the homes themselves cannot be dragged, renamed or deleted there.
 - CI: a pull request that changes the website's code (scripts, components, configuration) now runs the `frontend` job with the root lint and typecheck, and a change of `openapi.json` runs the `website` job that builds the API reference from it.
 - The administrator created in the setup got account id 1 while every other account's id is its Linux uid; it now gets its uid too, so `X-Pithyx-User-Id`, `context.user.id` and `DirectoryUser.id` are always the uid, which is never given to another user.

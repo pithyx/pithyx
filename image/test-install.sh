@@ -838,16 +838,17 @@ sleep 3
 tty2="$(drawn_pixels tty2)"
 monitor "sendkey ctrl-alt-f1"
 sleep 3
-# Right after a start the console menu may not be drawn yet: give it up to 90 seconds.
+# Right after a start the console may not be drawn yet: give it up to 90 seconds. The menu line alone draws about
+# 800 pixels, the greeting with the logo and the addresses above it about 4800.
 tty1="$(drawn_pixels tty1)"
 for _ in $(seq 18); do
-  ((tty1 > 1000)) && break
+  ((tty1 > 2500)) && break
   sleep 5
   tty1="$(drawn_pixels tty1)"
 done
-((tty1 > 1000)) || die "tty1 shows no console menu ($tty1 pixels drawn); screenshots in $vm"
+((tty1 > 2500)) || die "tty1 shows no greeting above the console menu ($tty1 pixels drawn); screenshots in $vm"
 ((tty2 < 200)) || die "tty2 shows something ($tty2 pixels drawn), a login prompt?; screenshots in $vm"
-echo "tty2 is empty ($tty2 pixels drawn), tty1 shows the console menu ($tty1 pixels)"
+echo "tty2 is empty ($tty2 pixels drawn), tty1 shows the greeting and the console menu ($tty1 pixels)"
 
 if [[ "$reinstall" == true ]]; then
   step "creating the pool tank on disk3"

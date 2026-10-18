@@ -13,17 +13,13 @@ readonly REQUEST=$STATE/network-request
 readonly RESULT=$STATE/network-result
 readonly PENDING=$STATE/network-pending
 readonly CARDS=$STATE/network-cards
+# Touched on every draw, outside the folder issue.sh watches: a greeting newer than it is not on the screen yet.
+readonly DRAWN=/run/pithyx/console-drawn
 
 redraw=1
+pending_shown=false
 message=""
-trap 'redraw=1' USR1
 mkdir -p "$STATE" /run/issue.d
-# A new address (issue.sh writes the greeting again) or a change waiting for its confirmation redraws the screen.
-inotifywait -mq -e close_write,moved_to,delete /run/issue.d "$STATE" 2>/dev/null | while read -r _; do
-  kill -USR1 $$ 2>/dev/null || exit 0
-done &
-watcher=$!
-trap 'kill "$watcher" 2>/dev/null' EXIT
 
 pending_deadline() {
   sed -n 's/^deadline=//p' "$PENDING" 2>/dev/null
@@ -31,11 +27,14 @@ pending_deadline() {
 
 show() {
   local deadline left addresses
+  : >"$DRAWN"
+  pending_shown=false
   printf '\033[H\033[2J'
   # agetty's issue escapes backslashes; the logo has some.
   sed 's/\\\\/\\/g' "$ISSUE" 2>/dev/null
   deadline="$(pending_deadline)"
   if [[ -n "$deadline" ]]; then
+    pending_shown=true
     left=$((deadline - $(date +%s)))
     ((left < 0)) && left=0
     addresses="$(sed -n 's/^addresses=//p' "$PENDING")"
@@ -107,16 +106,13 @@ while :; do
     redraw=0
     show
   fi
-  # While a change waits, the countdown moves every second; otherwise the menu waits for a key or an event.
-  if [[ -n "$(pending_deadline)" ]]; then
-    read -rsn1 -t 1 key
-    status=$?
-    ((status > 128)) && redraw=1
-  else
-    read -rsn1 key
-    status=$?
-  fi
-  if ((status != 0)); then
+  # read wakes every second to look for a new greeting (issue.sh writes one for every new address) and for a change
+  # that waits for its confirmation or has just ended, with builtins only. No event can wake it instead: bash runs a
+  # signal's trap but goes on waiting in read, and an event that comes before a watcher is ready is lost.
+  if ! read -rsn1 -t 1 key; then
+    if [[ "$ISSUE" -nt "$DRAWN" || -e "$PENDING" || "$pending_shown" == true ]]; then
+      redraw=1
+    fi
     continue
   fi
   case "$key" in
