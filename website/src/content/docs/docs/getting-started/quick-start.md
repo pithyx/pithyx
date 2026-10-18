@@ -11,7 +11,7 @@ The short path: write the Pithyx image to a USB stick, start the computer from i
 
 ## Download the image
 
-There is no public download yet. The image is a file named `pithyx-<version>-amd64.iso`, with a checksum file next to it. See [Write the USB stick](/docs/install/usb-stick/).
+Download the image from the [releases on GitHub](https://github.com/pithyx/pithyx/releases): a file named `pithyx-<version>-amd64.iso`, with a checksum file next to it. See [Write the USB stick](/docs/install/usb-stick/).
 
 ## Write the USB stick
 

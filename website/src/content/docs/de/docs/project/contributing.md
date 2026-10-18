@@ -7,7 +7,7 @@ sidebar:
   order: 3
 ---
 
-Pithyx wird offen auf GitHub entwickelt, unter `pithyx/pithyx`. Pull Requests gehen an den Branch `dev`, Commits tragen ein Sign-off, und jeder Pull Request folgt einer kurzen Checkliste. Das erste Release wird 1.0.0-beta.1; es gibt noch kein Release.
+Pithyx wird offen auf GitHub entwickelt, unter `pithyx/pithyx`. Pull Requests gehen an den Branch `dev`, Commits tragen ein Sign-off, und jeder Pull Request folgt einer kurzen Checkliste. Das erste Release ist 1.0.0, als Beta gekennzeichnet.
 
 ## Fehler melden
 

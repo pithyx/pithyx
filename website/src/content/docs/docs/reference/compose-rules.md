@@ -18,7 +18,7 @@ The box rewrites the file before it runs it: it sets the project name, the netwo
 - Every image is pinned by digest (`name@sha256:<64 hex>`, a tag may stand before the digest).
 - A value that breaks a rule is [`app.compose.value_invalid`](/docs/reference/errors/#app.compose.value_invalid) with a `reason`: `type`, `format`, `range`, `required`, `duplicate`, `reserved`, `interpolation`, `unpinned`, `host_path`, `anonymous`, `no_value`, `cycle` or `image_and_build`.
 - Names used across files must exist: services in `depends_on`, the manifest's endpoints and storage requests ([`app.compose.reference_unknown`](/docs/reference/errors/#app.compose.reference_unknown)), and every storage request must be mounted exactly by the services it lists, read-only for `read` access ([`app.compose.storage_mismatch`](/docs/reference/errors/#app.compose.storage_mismatch)).
-- A key that needs an elevated right is refused in this version (Pithyx 1.0.0-beta.1) with [`app.elevated.unsupported`](/docs/reference/errors/#app.elevated.unsupported).
+- A key that needs an elevated right is refused in this version (Pithyx 1.0.0) with [`app.elevated.unsupported`](/docs/reference/errors/#app.elevated.unsupported).
 
 ## Top-level keys
 

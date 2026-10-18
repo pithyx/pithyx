@@ -6,6 +6,6 @@ order: 10
 status: ready
 ---
 
-Einen öffentlichen Download gibt es noch nicht. Der Installer ist eine einzelne Image-Datei, `pithyx-<version>-amd64.iso`, daneben liegt die Prüfsummendatei `.sha256`; du schreibst das Image als ganzes Disk-Image auf einen USB-Stick. Das Image trägt keine Signatur, die Prüfsumme zeigt also nur, dass der Download vollständig ist.
+Von den [Releases auf GitHub](https://github.com/pithyx/pithyx/releases). Der Installer ist eine einzelne Image-Datei, `pithyx-<version>-amd64.iso`, daneben liegt die Prüfsummendatei `.sha256`; du schreibst das Image als ganzes Disk-Image auf einen USB-Stick. Das Image trägt keine Signatur, die Prüfsumme zeigt also nur, dass der Download vollständig ist.
 
 Details: [USB-Stick schreiben](/de/docs/install/usb-stick/).

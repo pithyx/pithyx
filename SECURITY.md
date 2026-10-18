@@ -8,4 +8,4 @@ Report vulnerabilities privately through [GitHub security advisories](https://gi
 
 ## Supported versions
 
-Pithyx is in beta (1.0.0-beta.1). Only the latest release is supported; fixes land in the next release.
+Pithyx 1.0 is marked beta. Only the latest release is supported; fixes land in the next release.

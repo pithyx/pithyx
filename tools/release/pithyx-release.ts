@@ -46,7 +46,7 @@ export interface Facts {
 export class PlanError extends Error {}
 
 const BETA_KEY_ID = 'pithyx-beta-1';
-const DEFAULT_MINIMUM = '1.0.0-beta.1';
+const DEFAULT_MINIMUM = '1.0.0';
 const SDK_PACKAGES = ['@pithyx/sdk', '@pithyx/ui', '@pithyx/cli'];
 const VERSION = /^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/;
 

@@ -3,7 +3,7 @@ title: 'Certificates'
 description: 'HTTPS on 7484, the box as its own certificate authority, trusting it on your devices, certificates for other devices and a certificate of your own.'
 status: ready
 audience: admin
-since: '1.0.0-beta.1'
+since: '1.0.0'
 sidebar:
   order: 10
 ---

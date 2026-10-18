@@ -11,7 +11,7 @@ Der kurze Weg: Schreibe das Pithyx-Image auf einen USB-Stick, starte den Compute
 
 ## Das Image herunterladen
 
-Einen öffentlichen Download gibt es noch nicht. Das Image ist eine Datei namens `pithyx-<version>-amd64.iso` mit einer Prüfsummendatei daneben. Siehe [USB-Stick schreiben](/de/docs/install/usb-stick/).
+Lade das Image von den [Releases auf GitHub](https://github.com/pithyx/pithyx/releases) herunter: eine Datei namens `pithyx-<version>-amd64.iso` mit einer Prüfsummendatei daneben. Siehe [USB-Stick schreiben](/de/docs/install/usb-stick/).
 
 ## Den USB-Stick schreiben
 

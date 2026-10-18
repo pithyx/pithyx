@@ -30,7 +30,7 @@ body:
     attributes:
       label: Pithyx version
       description: Settings > Updates or the About Pithyx app shows it.
-      placeholder: 1.0.0-beta.1
+      placeholder: 1.0.0
     validations:
       required: true
   - type: dropdown

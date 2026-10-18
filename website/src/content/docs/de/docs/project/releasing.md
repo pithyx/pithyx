@@ -35,7 +35,7 @@ tools/release/pithyx-release            # das Menü
 ## Was es für dich prüft
 
 - `update` baut aus den Paketen des letzten Laufs von `image/build.sh`. Sind sie von einer anderen Version, hält es an und sagt das; `--build-image` baut zuerst das Image der Version.
-- Die Baseline eines Updates ist `--since <Datei>`, `--full` oder die Paketliste von `--minimum` (Standard `1.0.0-beta.1`) aus `image/baseline/`, sonst aus `image/out/`. Fehlt sie, nennt es den Befehl, der sie aufbewahrt.
+- Die Baseline eines Updates ist `--since <Datei>`, `--full` oder die Paketliste von `--minimum` (Standard `1.0.0`) aus `image/baseline/`, sonst aus `image/out/`. Fehlt sie, nennt es den Befehl, der sie aufbewahrt.
 - Der Kanal ist beta für eine Vorabversion und sonst stable. Eine Beta-Datei wird mit `~/.config/pithyx-dev/pithyx-beta-1.pem` signiert; eine Stable-Datei braucht `--key` und `--key-id pithyx-release-1`, den nur der Owner hat.
 - `publish-sdk.sh` setzt `latest` nie auf eine Vorabversion; `pithyx-release publish-sdk --latest` hängt `npm dist-tag add <paket>@<version> latest` für alle drei Pakete an, mit demselben `--otp`.
 

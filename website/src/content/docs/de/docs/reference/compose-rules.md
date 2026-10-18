@@ -18,7 +18,7 @@ Die Box schreibt die Datei um, bevor sie sie startet: Projektname, Netzwerk, Ben
 - Jedes Image ist per Digest gepinnt (`name@sha256:<64 hex>`, ein Tag darf vor dem Digest stehen).
 - Ein Wert, der eine Regel verletzt, ist [`app.compose.value_invalid`](/de/docs/reference/errors/#app.compose.value_invalid) mit einem `reason`: `type`, `format`, `range`, `required`, `duplicate`, `reserved`, `interpolation`, `unpinned`, `host_path`, `anonymous`, `no_value`, `cycle` oder `image_and_build`.
 - Namen, die über Dateien hinweg genutzt werden, müssen existieren: Dienste in `depends_on`, die Endpunkte und Speicheranfragen des Manifests ([`app.compose.reference_unknown`](/de/docs/reference/errors/#app.compose.reference_unknown)), und jede Speicheranfrage muss genau von den Diensten eingebunden werden, die sie nennt, bei `read`-Zugriff schreibgeschützt ([`app.compose.storage_mismatch`](/de/docs/reference/errors/#app.compose.storage_mismatch)).
-- Ein Schlüssel, der ein erhöhtes Recht braucht, wird in dieser Version (Pithyx 1.0.0-beta.1) mit [`app.elevated.unsupported`](/de/docs/reference/errors/#app.elevated.unsupported) ab.
+- Ein Schlüssel, der ein erhöhtes Recht braucht, wird in dieser Version (Pithyx 1.0.0) mit [`app.elevated.unsupported`](/de/docs/reference/errors/#app.elevated.unsupported) ab.
 
 ## Schlüssel der obersten Ebene
 
