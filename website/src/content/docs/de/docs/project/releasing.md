@@ -1,6 +1,6 @@
 ---
 title: 'Veröffentlichen'
-description: 'Das Release-Werkzeug tools/release/pithyx-release: ISO und Update-Dateien bauen, signieren und die npm-Pakete veröffentlichen.'
+description: 'Die Schritte eines Releases und das Release-Werkzeug tools/release/pithyx-release: ISO und Update-Dateien bauen, signieren und mit den npm-Paketen veröffentlichen.'
 status: ready
 audience: developer
 sidebar:
@@ -40,3 +40,20 @@ tools/release/pithyx-release            # das Menü
 - `publish-sdk.sh` setzt `latest` nie auf eine Vorabversion; `pithyx-release publish-sdk --latest` hängt `npm dist-tag add <paket>@<version> latest` für alle drei Pakete an, mit demselben `--otp`.
 
 Schritte, die einen bestimmten Rechner brauchen, bleiben dort: Images brauchen mmdebstrap und die Build-Pakete (eine Dev-VM), Stable-Signaturen den Release-Schlüssel. Wie du eine Box vor dem Veröffentlichen aus einer Datei aktualisierst, steht unter [Update-Quelle wechseln](/de/docs/install/update-source/).
+
+## Eine Version veröffentlichen
+
+Die Schritte eines Releases `X.Y.Z`, der Reihe nach. Bauen und Testen laufen auf einer Dev-VM; das Mergen nach `beta` und `stable`, der Tag, die Stable-Signaturen und das Veröffentlichen auf npm sind Sache des Maintainers.
+
+1. **Branches.** Die Änderungen liegen auf `dev` mit grüner CI, einschließlich eines E2E-Laufs (`gh workflow run CI --ref dev`). Ein Pull Request `dev` → `beta`, dann `beta` → `stable`; beide brauchen grüne CI (das Ruleset `protected-branches`).
+2. **Version.** Die Version des Daemons in `daemon/Directory.Build.props`, der Abschnitt der Version in `CHANGELOG.md` und die Doku (`since`, Versionsnummern) sind vor Schritt 1 auf `dev`.
+3. **Image.** Auf der Dev-VM, vom Commit auf `stable`: `pithyx-release iso --version X.Y.Z`. Danach installiert `image/test-install.sh --iso image/out/pithyx-X.Y.Z-amd64.iso --mirror` es in QEMU und prüft das installierte System.
+4. **Update-Datei.** `pithyx-release update --version X.Y.Z` baut die `.pithyxupdate` gegen die Baseline (`image/baseline/`), und `pithyx-release baseline --version X.Y.Z` bewahrt die neue Paketliste für das nächste Update auf (committe sie auf `dev`).
+5. **GPL-Quellen.** `pithyx-release sources --version X.Y.Z` packt die Debian-Quellen des Images als `pithyx-X.Y.Z-sources-<n>.tar`.
+6. **Tag.** Der Maintainer taggt den Commit, aus dem das Image gebaut wurde: `git tag -a vX.Y.Z <commit> -m "Pithyx X.Y.Z <Codename>"`, `git push origin vX.Y.Z`.
+7. **Signieren (Maintainer, eigener Rechner).** `pithyx-release sign <datei> --key <pithyx-release-1.pem> --key-id pithyx-release-1`, dann `pithyx-release channel <datei> --key <pem> --key-id pithyx-release-1 --sequence <n>` mit der Sequenz von `channel-stable` plus eins. Der Release-Schlüssel verlässt nie den Rechner des Maintainers; das ISO selbst trägt keine Signatur, nur seine Prüfsumme.
+8. **Veröffentlichen.** Das Release `vX.Y.Z` mit dem ISO, seiner `.sha256`, der Update-Datei mit ihrer `.sha256` und den Quell-Teilen (`gh release create vX.Y.Z --verify-tag ...`); dann `channel.json` und `channel.json.sig` am Release `channel-stable` (`gh release upload channel-stable ... --clobber`). Boxen auf dem Stable-Kanal finden das Update bei ihrer nächsten täglichen Prüfung und benachrichtigen ihre Administratoren.
+9. **Website.** Pushes auf `stable` veröffentlichen die Doku; Actions, Pages, Run workflow auf `stable` veröffentlicht von Hand.
+10. **npm (wenn sich die Pakete geändert haben).** `pithyx-release publish-sdk`, für eine stabile Version mit `--latest`. Mit einem Sicherheitsschlüssel statt Einmalcodes lässt du `--otp` weg: npm zeigt einen Link, den du im Browser bestätigst.
+
+Eine Beta-Version (`X.Y.Z-beta.N`) geht denselben Weg bis `beta` und endet dort: `pithyx-release update --version X.Y.Z-beta.N --sign` signiert mit dem Beta-Schlüssel, und `pithyx-release publish-beta <datei>` veröffentlicht sie auf `beta-X.Y.Z-beta.N` und `channel-beta`.

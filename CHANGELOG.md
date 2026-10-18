@@ -13,6 +13,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Changed
 
 - Branches (D367): `master` is now `stable`, the default branch where releases are tagged; the new `beta` is the beta channel and `dev` the integration branch. Changes go `dev` → `beta` → `stable` through pull requests, and `beta` and `stable` are protected. The nightly CI run tests `dev`, and the website is published from `stable`.
+- CI runs only on GitHub-hosted runners (D368); the self-hosted runners are retired.
+- The release steps from the branches to the published files are on the docs page "Releasing" (English and German).
 
 ## [1.0.0] - 2026-10-18
 
@@ -360,3 +362,6 @@ The first release, codename Pyxis (D345, D366): the NAS core, the file services,
 
 - SMB sessions end when their user's groups change (D353): smbd kept a session's groups from its start, so a new right did not apply and a revoked shared folder stayed usable over SMB until the user signed out of the computer. The daemon now ends the user's sessions after the change, and the client reconnects with the current rights.
 - The command log no longer records the output of commands that print secrets: creating a configuration backup ran `pdbedit -L -w` and wrote every user's NT password hash into the Log Center and the log files at Info level. The output of `pdbedit`, `smbpasswd` and `chpasswd` is now always masked, and other callers mark secret output per command (the catalog deploy key's `ssh-keygen`).
+
+[Unreleased]: https://github.com/pithyx/pithyx/compare/v1.0.0...dev
+[1.0.0]: https://github.com/pithyx/pithyx/releases/tag/v1.0.0
