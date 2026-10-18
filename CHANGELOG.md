@@ -14,6 +14,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Branches (D367): `master` is now `stable`, the default branch where releases are tagged; the new `beta` is the beta channel and `dev` the integration branch. Changes go `dev` → `beta` → `stable` through pull requests, and `beta` and `stable` are protected. The nightly CI run tests `dev`, and the website is published from `stable`.
 - CI runs only on GitHub-hosted runners (D368); the self-hosted runners are retired.
+- The backlog is the GitHub issues with labels and milestones, and the decisions are in `DECISIONS.md`; `TODO.md` is gone (D369).
+- Development: `tools/dev-vm/provision.sh` installs the GitHub CLI `gh`.
 - The release steps from the branches to the published files are on the docs page "Releasing" (English and German).
 
 ## [1.0.0] - 2026-10-18

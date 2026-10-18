@@ -4,7 +4,7 @@
 initramfs-tools live-boot systemd-sysv systemd-resolved systemd-timesyncd
 dbus udev kmod grub-efi-amd64 efibootmgr gdisk dosfstools mdadm btrfs-progs squashfs-tools
 intel-microcode amd64-microcode firmware-linux-free firmware-realtek
-# What the daemon needs (TODO.md, Image build 1.0).
+# What the daemon needs (D296, D338).
 zfsutils-linux samba openssh-server smartmontools acl
 # Administration over SSH: the administrator of the installation is in the group sudo.
 sudo htop curl wget
