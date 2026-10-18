@@ -16,4 +16,4 @@ Melde ein Sicherheitsproblem vertraulich über GitHub Security Advisories, nicht
 
 ## Was danach passiert
 
-Das Projekt antwortet so schnell wie möglich und stimmt einen Fix und seine Veröffentlichung mit dir ab. Es gibt keine festen Reaktionszeiten und noch keine Tabelle unterstützter Versionen: Pithyx ist noch nicht veröffentlicht; das erste Release wird 1.0.0-beta.1.
+Das Projekt antwortet so schnell wie möglich und stimmt einen Fix und seine Veröffentlichung mit dir ab. Es gibt keine festen Reaktionszeiten. Unterstützt wird nur das neueste Release; Fixes kommen mit dem nächsten Release.

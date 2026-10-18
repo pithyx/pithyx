@@ -3,7 +3,7 @@ title: 'Reverse Proxy'
 description: 'Proxy-Hosts und Weiterleitungs-Hosts auf den Ports 443 und 80 nach Domain, mit Zertifikaten, Zugriffsregeln und der Pithyx-Anmeldung, sowie TCP- und UDP-Streams.'
 status: ready
 audience: admin
-since: '1.0.0-beta.1'
+since: '1.0.0'
 sidebar:
   order: 10
 ---

@@ -54,7 +54,7 @@ features:
       }
 why:
   title: Why Pithyx
-  intro: 'Pithyx is for people who want their files and apps on hardware they own, managed in a browser, without an account anywhere. It is pre-release software: try it, but do not trust it with data you cannot lose yet.'
+  intro: 'Pithyx is for people who want their files and apps on hardware they own, managed in a browser, without an account anywhere. Version 1.0 is marked beta: we consider it stable, but it still has to prove itself in everyday use, so keep a backup.'
   items:
     - {
         title: 'Free and open',
@@ -136,6 +136,6 @@ ai:
   copied: Copied
 cta:
   title: Want to try it?
-  text: 'Pithyx is pre-release software. The guide walks you through the image, the USB stick and the web installer. Try it on a spare computer or in a virtual machine, not with data you cannot lose.'
+  text: 'Pithyx 1.0 is marked beta. The guide walks you through the image, the USB stick and the web installer. Keep a backup of data you care about.'
   primary: { label: How to install, href: /docs/install/usb-stick/ }
   secondary: { label: Star on GitHub, href: https://github.com/pithyx/pithyx }

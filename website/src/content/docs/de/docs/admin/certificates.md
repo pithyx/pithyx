@@ -3,7 +3,7 @@ title: 'Zertifikate'
 description: 'HTTPS auf 7484, die Box als eigene Zertifizierungsstelle, ihr auf deinen Geräten vertrauen, Zertifikate für andere Geräte und ein eigenes Zertifikat.'
 status: ready
 audience: admin
-since: '1.0.0-beta.1'
+since: '1.0.0'
 sidebar:
   order: 10
 ---

@@ -10,7 +10,7 @@ sidebar:
 Pithyx ist ein freies, selbst gehostetes Betriebssystem für ein NAS oder einen Heimserver. Du installierst es auf deinem eigenen Computer und verwaltest danach Speicher, Benutzer, Dateifreigaben und Apps in einem Web-Desktop, den du in jedem Browser öffnest. Alles läuft auf deiner Box: Es gibt kein Cloud-Konto, keine Telemetrie und keinen vom Projekt betriebenen Dienst, von dem deine Box abhängt.
 
 :::caution
-Pithyx ist Pre-Release-Software. Lege noch keine Daten darauf ab, die dir wichtig sind.
+Pithyx 1.0 ist als Beta gekennzeichnet: Wir halten es für stabil, aber es hat sich noch nicht im Alltag auf echten Boxen bewährt. Behandle es als Beta und halte von Daten, die dir wichtig sind, eine Kopie auf einem anderen Gerät.
 :::
 
 ## Was du bekommst

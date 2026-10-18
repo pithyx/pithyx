@@ -65,4 +65,4 @@ Der Client umhüllt `openapi-fetch`, fügt den CSRF-Header hinzu und wirft `Pith
 
 ## Stabilität
 
-Die REST- und WebSocket-API, die SDK-API, das Manifest-Schema und die Fehlercodes sind stabile Verträge: Eine inkompatible Änderung braucht eine Major-Version. Pithyx ist in der Beta (1.0.0-beta.1), daher kann sich die API vor 1.0.0 noch ändern.
+Die REST- und WebSocket-API, die SDK-API, das Manifest-Schema und die Fehlercodes sind stabile Verträge: Eine inkompatible Änderung braucht eine Major-Version. Sie folgen ab 1.0.0 SemVer.

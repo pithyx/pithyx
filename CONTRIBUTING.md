@@ -44,7 +44,7 @@ This adds a `Signed-off-by: Your Name <you@example.com>` trailer matching the co
 
 ## Setup
 
-See [Development](README.md#development) in the README. `pnpm install` also installs the git hooks (lefthook).
+See [Developing the daemon](https://pithyx.org/docs/developers/daemon/development/) in the docs (the page is also in the repository at `website/src/content/docs/docs/developers/daemon/development.md`). `pnpm install` also installs the git hooks (lefthook).
 
 ## Pull request checklist
 

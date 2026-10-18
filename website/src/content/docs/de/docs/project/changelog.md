@@ -6,7 +6,7 @@ sidebar:
   order: 5
 ---
 
-Pithyx hat noch kein Release; das erste wird 1.0.0-beta.1, es gibt also keine veröffentlichten Versionen aufzulisten. Alle bisherigen Änderungen stehen unter „Unreleased“ in der Changelog-Datei im Repository.
+Das erste Release ist 1.0.0 (Codename Pyxis), als Beta gekennzeichnet. Seine Änderungen und bekannten Einschränkungen stehen in der Changelog-Datei im Repository.
 
 ## Releases
 

@@ -6,6 +6,6 @@ order: 20
 status: ready
 ---
 
-Noch nicht. Pithyx ist eine Vorabversion, also leg keine Daten darauf ab, deren Verlust du dir nicht leisten kannst. Halte von allem Wichtigen eine Kopie auf einem anderen Gerät.
+Ja, mit einer Sicherung. Pithyx 1.0 ist als Beta gekennzeichnet: Wir halten es für stabil, aber es hat sich noch nicht im Alltag auf echten Boxen bewährt. Behandle es als Beta und halte von allem Wichtigen eine Kopie auf einem anderen Gerät. Pools sind noch nicht verschlüsselt.
 
 Details: [Was ist Pithyx](/de/docs/getting-started/what-is-pithyx/).

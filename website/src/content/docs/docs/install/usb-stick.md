@@ -7,7 +7,7 @@ sidebar:
   order: 1
 ---
 
-The Pithyx installer comes as one image file (`.iso`) that you write to a USB stick and start your computer from. The image is for 64-bit x86 computers with UEFI. There is no public download yet, so this page describes the file and the writing step in general.
+The Pithyx installer comes as one image file (`.iso`) that you write to a USB stick and start your computer from. The image is for 64-bit x86 computers with UEFI. Download it from the [releases on GitHub](https://github.com/pithyx/pithyx/releases).
 
 ## Download
 
