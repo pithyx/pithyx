@@ -15,7 +15,7 @@ Files is the app for working with the shared folders you may use: open folders, 
 
 _Files in list view. Right-click an entry for its context menu._
 
-Open **Files** from the Pithyx menu. The sidebar lists your home folder **home** first and your shared folders under it, under **Shares**; Files opens in your home. Your home is private: only you and the administrators can open it. Administrators also see **homes**, which lists every other user's home as a folder. Click an entry to open it. A folder that cannot be reached right now (for example because its pool is offline) shows **Not available**. If the list is empty, you have no shared folders yet and an administrator has to create them. A shared folder marked **Read only** lets you look and download, but not change anything.
+Open **Files** from the Pithyx menu. The sidebar lists your home folder **home** first and your shared folders under it, under **Shares**; Files opens in your home. Your home is private: only you and the administrators can open it. Administrators also see **homes**, which lists every other user's home as a folder, in the same list or tiles as any folder; a double click opens one. The homes themselves cannot be renamed, moved or deleted there, and their menu only offers **Open**. Click an entry to open it. A folder that cannot be reached right now (for example because its pool is offline) shows **Not available**. If the list is empty, you have no shared folders yet and an administrator has to create them. A shared folder marked **Read only** lets you look and download, but not change anything.
 
 To move around:
 

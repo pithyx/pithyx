@@ -61,6 +61,8 @@ export interface FolderViewProps {
   thumbnail: (entry: FileEntry) => string | null;
   /** The entries on screen changed; thumbnails are asked for these only. */
   onVisible: (entries: FileEntry[]) => void;
+  /** Entries that are neither dragged nor dropped on: the homes of every user, which are shares of their own. */
+  fixed?: boolean;
 }
 
 const ROW_HEIGHT = 36;
@@ -296,7 +298,7 @@ export function FolderView(props: FolderViewProps) {
 
   function onDragOver(event: DragEvent, folder: string | null) {
     const kind = dragKind(event);
-    if (kind === null) {
+    if (kind === null || props.fixed === true) {
       return;
     }
     event.preventDefault();
@@ -363,7 +365,7 @@ export function FolderView(props: FolderViewProps) {
       'data-focused': focused ? '' : undefined,
       'data-cut': props.cut.has(entry.name) ? '' : undefined,
       'data-drop-target': dropTarget === entry.name ? '' : undefined,
-      draggable: props.renaming !== entry.name,
+      draggable: props.fixed !== true && props.renaming !== entry.name,
       onDragStart: (event: DragEvent) => {
         const dragged = selected ? selection : selectOnly(entry.name);
         if (!selected) {
@@ -565,7 +567,7 @@ export function FolderView(props: FolderViewProps) {
                   {isFolder ? '' : format.bytes(entry.size)}
                 </div>
                 <div role="gridcell" className={cx(styles.cell, styles.optional)}>
-                  {format.dateTime(entry.modified)}
+                  {entry.modified === '' ? '' : format.dateTime(entry.modified)}
                 </div>
               </div>
             );
