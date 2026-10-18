@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- `image/baseline/pithyx-1.0.0-amd64.packages`: the package list of the 1.0.0 image, the base that `build-update.sh` and `pithyx-release update` build the first 1.0.x update files against.
+
 ## [1.0.0] - 2026-10-18
 
 The first release, codename Pyxis (D345, D366): the NAS core, the file services, the app runtime with the Store, the installer and the updater. It is marked beta: we consider it stable, but it has not yet proven itself on real boxes in everyday use, so treat it as beta and keep backups. Fixes come as 1.0.x on the stable channel.

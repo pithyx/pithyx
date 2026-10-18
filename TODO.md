@@ -718,7 +718,7 @@ The first release, v1.0.0, carries the constellation codename Pyxis: the mariner
 - [x] Docs page `admin/security` is still `draft`; check it line by line against the code and set it `ready`. (Checked and `ready` since 2026-10-13, with certificates, reverse proxy, the error codes and the FAQ on own domains.)
 - [x] Two docs pages say "WebDAV on 7484 and 80"; port 80 only redirects to 7484. Fix both pages in English and German. (Fixed with HTTPS, #128; no page says so any more.)
 - [x] Remove the "There is no public download yet" sentences (quick start, FAQ "download", USB stick page, English and German) once the first image is published. (They link the releases on GitHub since D366.)
-- [ ] `image/baseline/`: record the package list of the first release image, the base for the first update file (`build-update.sh --since`). (week after 1.0.0)
+- [x] `image/baseline/`: record the package list of the first release image, the base for the first update file (`build-update.sh --since`). (`image/baseline/pithyx-1.0.0-amd64.packages`, from the ISO of `dev` 10444e6.)
 - [ ] GPL source with every published image (owner's wish of 2026-10-14): run `node tools/release/collect-sources.ts --version <v> --pack` after `image/build.sh` and attach the `pithyx-<v>-sources-<n>.tar` parts to the same release as the ISO and the update file, before the first public download. `image.yaml` does it once it exists.
 
 ---
