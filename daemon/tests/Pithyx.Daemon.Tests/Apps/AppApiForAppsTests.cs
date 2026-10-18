@@ -542,9 +542,10 @@ public sealed class AppApiForAppsTests : IAsyncLifetime
         await SendAsync(socket, new { type = "sub", id = "w", topic = AppContexts.Pattern });
         Assert.Equal("ack", (await ReceiveAsync(socket)).GetProperty("type").GetString());
 
+        // The wildcard may deliver an event of the context (the install of AppB, the new lease) at any point from here on.
         await SendAsync(socket, new { type = "sub", id = "1", topic });
-        Assert.Equal("ack", (await ReceiveAsync(socket)).GetProperty("type").GetString());
-        var snapshot = await ReceiveAsync(socket);
+        Assert.Equal("ack", (await ReceiveReplyAsync(socket)).GetProperty("type").GetString());
+        var snapshot = await ReceiveReplyAsync(socket);
         Assert.Equal(("snap", "1"), (snapshot.GetProperty("type").GetString(), snapshot.GetProperty("id").GetString()));
         var data = snapshot.GetProperty("data");
         Assert.Equal(["files.read", "notifications"], data.GetProperty("permissions").EnumerateArray().Select(value => value.GetString()));
@@ -621,6 +622,19 @@ public sealed class AppApiForAppsTests : IAsyncLifetime
         timeout.CancelAfter(TimeSpan.FromSeconds(10));
         var result = await socket.ReceiveAsync(buffer, timeout.Token);
         return JsonDocument.Parse(buffer.AsMemory(0, result.Count)).RootElement.Clone();
+    }
+
+    /// <summary>The next message that is not an event, so a reply to a subscription.</summary>
+    private static async Task<JsonElement> ReceiveReplyAsync(System.Net.WebSockets.WebSocket socket)
+    {
+        while (true)
+        {
+            var message = await ReceiveAsync(socket);
+            if (message.GetProperty("type").GetString() != "event")
+            {
+                return message;
+            }
+        }
     }
 
     /// <summary>The next event of the topic that matches, skipping events of the app's other changes.</summary>

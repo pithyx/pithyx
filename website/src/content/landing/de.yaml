@@ -76,7 +76,7 @@ specs:
   rows:
     - { label: 'Basis', value: 'Debian 13' }
     - { label: 'Plattform', value: '64-Bit x86 (x86-64-v2), UEFI, Secure Boot aus' }
-    - { label: 'Mindestens', value: '4 GB RAM, eine Systemplatte mit 40 GB' }
+    - { label: 'Mindestens', value: '2 GB RAM, eine Systemplatte mit 32 GB' }
     - { label: 'Referenzhardware', value: 'Intel N100 oder N305, 8 GB RAM' }
     - { label: 'Systemplatte', value: 'btrfs auf einer Platte oder einem Spiegel aus zwei' }
     - { label: 'Datenspeicher', value: 'OpenZFS-Pools, von der einzelnen Platte bis RAID-Z3' }

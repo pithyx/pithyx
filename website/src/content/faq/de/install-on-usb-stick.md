@@ -6,6 +6,6 @@ order: 40
 status: ready
 ---
 
-Nein. Der Installer bietet nur interne Platten mit mindestens 40 GB an; USB-Platten, Wechselmedien und SD-Karten tauchen nicht auf. Eine Festplatte geht, der Installer weist aber darauf hin, dass eine SSD schneller, leiser und sparsamer ist.
+Nein. Der Installer bietet nur interne Platten mit mindestens 32 GB an; USB-Platten, Wechselmedien und SD-Karten tauchen nicht auf. Eine Festplatte geht, der Installer weist aber darauf hin, dass eine SSD schneller, leiser und sparsamer ist.
 
 Details: [Hardware-Anforderungen](/de/docs/getting-started/requirements/).

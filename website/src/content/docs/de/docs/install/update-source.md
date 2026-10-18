@@ -53,7 +53,7 @@ Eine Box, die zu deinem Fork wechselt, liest deine Kanäle genau so wie die des 
 
 ### 2. Update-Dateien und Kanäle
 
-Baue und signiere sie mit den Release-Skripten des Repositorys:
+Baue und signiere sie mit den Release-Skripten des Repositorys (das Release-Werkzeug erledigt die Schritte 1 bis 3 mit der richtigen Baseline: `tools/release/pithyx-release update --version <version> --build-image --sign`, siehe [Veröffentlichen](/de/docs/project/releasing/)):
 
 1. `image/build.sh --version <version>` baut das Image und die Liste seiner Pakete.
 2. `tools/release/build-update.sh --version <version> --channel stable|beta [--minimum <version>] [--since <packages file> | --full]` baut `pithyx-<version>-amd64.pithyxupdate` (unsigniert). Sie enthält jedes Paket, dessen Version von der Paketliste der Mindestversion abweicht (`image/build.sh` schreibt sie als `image/out/pithyx-<version>-amd64.packages`; das Skript sucht die Liste der Mindestversion in `image/baseline/pithyx-<minimum>-amd64.packages`, einem Ordner, den es im Repository noch nicht gibt, also nennt `--since` eine direkt), bewahre also die Paketliste jedes Releases auf, das du veröffentlichst. `--full` nimmt jedes Paket auf.

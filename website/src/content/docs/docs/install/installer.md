@@ -26,13 +26,13 @@ _The installer lists its five checks before the first step._
 
 The first page, **Requirements**, shows five checks. **Begin** stays disabled until all pass.
 
-| Check                              | What it needs                                 |
-| ---------------------------------- | --------------------------------------------- |
-| 64-bit processor with x86-64-v2    | A processor with SSE4.2 and POPCNT            |
-| Started with UEFI                  | Firmware in UEFI mode, not legacy (BIOS) mode |
-| At least 4 GB of memory            | The page shows how much it found              |
-| Secure Boot is off                 | Switch it off in the firmware                 |
-| An internal disk of at least 40 GB | USB disks and the stick itself do not count   |
+| Check                              | What it needs                                          |
+| ---------------------------------- | ------------------------------------------------------ |
+| 64-bit processor with x86-64-v2    | A processor with SSE4.2 and POPCNT                     |
+| Started with UEFI                  | Firmware in UEFI mode, not legacy (BIOS) mode          |
+| At least 2 GB of memory            | The page shows how much it found, and hints below 4 GB |
+| Secure Boot is off                 | Switch it off in the firmware                          |
+| An internal disk of at least 32 GB | USB disks and the stick itself do not count            |
 
 Each failed check shows what to do. See [Hardware requirements](/docs/getting-started/requirements/).
 

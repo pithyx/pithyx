@@ -439,9 +439,14 @@ const CHECK_TEXTS = {
 function checkText(t: TFunction<'installer'>, check: Status['checks'][number]): string {
   const texts = CHECK_TEXTS[check.id as keyof typeof CHECK_TEXTS] as
     (typeof CHECK_TEXTS)[keyof typeof CHECK_TEXTS] | undefined;
+  const params = check.params as Record<string, string | number | boolean>;
+  if (check.id === 'memory' && check.passed && params.low === true) {
+    // Enough to install, but less than recommended: a hint, not a refusal (D363).
+    return t('checks.memoryLow', params as Record<string, string | number>);
+  }
   return texts === undefined
     ? check.id
-    : t(texts[check.passed ? 0 : 1], check.params as Record<string, string | number>);
+    : t(texts[check.passed ? 0 : 1], params as Record<string, string | number>);
 }
 
 function RegionStep({

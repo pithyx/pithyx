@@ -13,6 +13,7 @@
     "uefiFailed": "Der Computer ist im Legacy-Modus (BIOS) gestartet. Stelle die Firmware auf UEFI um und starte dann erneut vom USB-Stick.",
     "memory": "Mindestens {minGb} GB Arbeitsspeicher ({foundGb} GB gefunden)",
     "memoryFailed": "Pithyx braucht mindestens {minGb} GB Arbeitsspeicher; dieser Computer hat {foundGb} GB.",
+    "memoryLow": "Mindestens {minGb} GB Arbeitsspeicher ({foundGb} GB gefunden). Das reicht für wenige Benutzer und Apps; unter {recommendedGb} GB hält ZFS weniger im Cache.",
     "secure_boot": "Secure Boot ist aus",
     "secure_bootFailed": "Secure Boot ist an. Pithyx nutzt ein ZFS-Modul, das nicht signiert ist: Schalte Secure Boot in den Firmware-Einstellungen aus (oft unter Security oder Boot) und starte dann erneut vom USB-Stick.",
     "disk": "Eine interne Festplatte mit mindestens {minGb} GB",

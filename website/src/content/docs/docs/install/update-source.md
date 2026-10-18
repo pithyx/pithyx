@@ -53,7 +53,7 @@ A box that switches to your fork reads your channels exactly as it reads the pro
 
 ### 2. Update files and channels
 
-Build and sign them with the release scripts of the repository:
+Build and sign them with the release scripts of the repository (the release tool runs steps 1 to 3 with the right baseline: `tools/release/pithyx-release update --version <version> --build-image --sign`, see [Releasing](/docs/project/releasing/)):
 
 1. `image/build.sh --version <version>` builds the image and the list of its packages.
 2. `tools/release/build-update.sh --version <version> --channel stable|beta [--minimum <version>] [--since <packages file> | --full]` builds `pithyx-<version>-amd64.pithyxupdate` (unsigned). It carries every package whose version differs from the package list of the minimum version (`image/build.sh` writes it as `image/out/pithyx-<version>-amd64.packages`; the script looks for the minimum version's list in `image/baseline/pithyx-<minimum>-amd64.packages`, a folder that does not exist in the repository yet, so `--since` names one directly), so keep the package list of every release you publish. `--full` puts every package in.

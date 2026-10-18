@@ -26,13 +26,13 @@ _Der Installer zeigt seine fünf Prüfungen vor dem ersten Schritt._
 
 Die erste Seite, **Voraussetzungen**, zeigt fünf Prüfungen. **Los geht's** bleibt deaktiviert, bis alle bestanden sind.
 
-| Prüfung                                      | Was sie braucht                                      |
-| -------------------------------------------- | ---------------------------------------------------- |
-| 64-Bit-Prozessor mit x86-64-v2               | Einen Prozessor mit SSE4.2 und POPCNT                |
-| Mit UEFI gestartet                           | Firmware im UEFI-Modus, nicht im Legacy-Modus (BIOS) |
-| Mindestens 4 GB Arbeitsspeicher              | Die Seite zeigt, wie viel sie gefunden hat           |
-| Secure Boot ist aus                          | Schalte es in der Firmware aus                       |
-| Eine interne Festplatte mit mindestens 40 GB | USB-Festplatten und der Stick selbst zählen nicht    |
+| Prüfung                                      | Was sie braucht                                                             |
+| -------------------------------------------- | --------------------------------------------------------------------------- |
+| 64-Bit-Prozessor mit x86-64-v2               | Einen Prozessor mit SSE4.2 und POPCNT                                       |
+| Mit UEFI gestartet                           | Firmware im UEFI-Modus, nicht im Legacy-Modus (BIOS)                        |
+| Mindestens 2 GB Arbeitsspeicher              | Die Seite zeigt, wie viel sie gefunden hat, und weist unter 4 GB darauf hin |
+| Secure Boot ist aus                          | Schalte es in der Firmware aus                                              |
+| Eine interne Festplatte mit mindestens 32 GB | USB-Festplatten und der Stick selbst zählen nicht                           |
 
 Jede fehlgeschlagene Prüfung zeigt, was zu tun ist. Siehe [Hardware-Anforderungen](/de/docs/getting-started/requirements/).
 

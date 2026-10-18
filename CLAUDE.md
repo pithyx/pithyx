@@ -51,7 +51,7 @@ These rules are binding. If a rule blocks you, stop and ask; never work around i
 - One PR run per runner host at a time, and only after the previous merge's `dev` run finished; parallel runs break timing budgets.
 - Generated files (`openapi.json`, `schema.ts`, `error-codes.ts`, `sdk/src/manifest.generated.ts`) are never merged by hand: take one side and regenerate (build the daemon and run `pnpm --filter @pithyx/api-client generate`; the manifest types come from `sdk/schema/manifest.v1.schema.json`).
 - Every user-visible or developer-relevant change adds a line under `Unreleased` in `CHANGELOG.md` (Keep a Changelog).
-- SemVer for the product; releases tagged on `master` as `vX.Y.Z` with a constellation codename. The npm packages (`sdk/`, `packages/ui`, `packages/cli`) have their own SemVer line, all at the same version, tagged `sdk-vX.Y.Z`; release candidates go to the dist-tag `next`, `latest` only after the maintainer's approval. Only the maintainer publishes, with `tools/release/publish-sdk.sh` and npm 2FA; no npm token is stored (D306).
+- SemVer for the product; releases tagged on `master` as `vX.Y.Z` with a constellation codename. The npm packages (`sdk/`, `packages/ui`, `packages/cli`) have their own SemVer line, all at the same version, tagged `sdk-vX.Y.Z`; release candidates go to the dist-tag `next`, `latest` only after the maintainer's approval. Only the maintainer publishes, with `tools/release/publish-sdk.sh` (or `tools/release/pithyx-release publish-sdk`, the release tool over every release script, D364) and npm 2FA; no npm token is stored (D306).
 
 ## Before you commit
 
