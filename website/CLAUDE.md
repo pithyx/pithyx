@@ -24,7 +24,7 @@ The landing page and the docs at https://pithyx.org (D340): Astro with Starlight
 
 - Frontmatter: `title`, `description` (one sentence, required; it is the line in `llms.txt`), `status`, optional `audience` (`user`, `admin`, `developer`), `since` (the Pithyx version) and `sidebar.order`.
 - `status`: `placeholder` (only the outline), `draft` (written, not checked against the code), `ready` (checked against the code as it is). Pages that are not `ready` show a banner and say so in their Markdown twin. Set `ready` only after reading the code the page describes.
-- A placeholder page has a `:::note[Placeholder]` aside that says what belongs on it and where the facts are (`TODO.md` backlog notes "Website user docs for ...", decisions, source folders). Replace the aside when the page is written; keep the planned headings unless the content asks for others.
+- A placeholder page has a `:::note[Placeholder]` aside that says what belongs on it and where the facts are (issues, decisions in `DECISIONS.md`, source folders). Replace the aside when the page is written; keep the planned headings unless the content asks for others.
 - Write plain Markdown (`.md`). Use `.mdx` only where a page needs a component; a component's line disappears from the Markdown twin unless `toPlainMarkdown` in `src/lib/docs.ts` converts it (asides, `LinkCard`, `Card`, `Tabs`, `Steps` are converted). Asides: `:::note`, `:::tip`, `:::caution`, `:::danger`, with an optional `[title]`.
 - Link other pages with site paths (`/docs/admin/storage/`); the twins turn them into absolute links.
 - Describe behavior from the code as it is, not from plans. Name settings and buttons as the UI shows them (the texts in `i18n/<locale>/*.json`). Error codes link to `/docs/reference/errors/#<code>`.

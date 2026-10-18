@@ -2,6 +2,10 @@
 
 Thanks for your interest. Pithyx is in beta, so expect things to move fast.
 
+## Issues
+
+Bugs and ideas are [GitHub issues](https://github.com/pithyx/pithyx/issues); the issue forms ask for what helps. Milestones show what is planned for which version. Security problems never go into a public issue: see [SECURITY.md](SECURITY.md). A pull request names the issue it closes (`Fixes #n`).
+
 ## Branches
 
 - `stable` is the stable, default branch; releases are tagged there. It only receives release pull requests from `beta` and hotfixes.
@@ -53,7 +57,7 @@ See [Developing the daemon](https://pithyx.org/docs/developers/daemon/developmen
 - [ ] Generated clients are up to date.
 - [ ] New visible text has i18n keys in `en` and `de`.
 - [ ] New error codes have translations.
-- [ ] `TODO.md` is checked off and `CHANGELOG.md` is updated.
+- [ ] The pull request closes its issue (`Fixes #n`), and `CHANGELOG.md` is updated.
 - [ ] Docs in `website/` were checked and updated in English and German, or the change was judged not doc-worthy (D340).
 - [ ] No em dashes and no non-English text outside translation files.
 - [ ] Every commit is signed off.

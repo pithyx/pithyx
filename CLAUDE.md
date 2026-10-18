@@ -25,8 +25,8 @@ These rules are binding. If a rule blocks you, stop and ask; never work around i
 - Version `1.0.0` (codename Pyxis) is released: the tag `v1.0.0` on `stable`, a GitHub pre-release with the ISO and the GPL sources, on the stable channel and marked beta (D366); fixes come as 1.0.x. The repositories of the organization are public since 2026-10-18, and the docs are published from `stable` at pithyx.org.
 - Built: HTTPS on 7484 with the box as its own certificate authority (D346), the reverse proxy on 443 and 80 with redirect hosts and TCP/UDP streams (D347), storage (ZFS pools, disks, SMART, snapshots, scrubs), users, groups and permissions, home folders (D348), shared folders with SMB, SFTP, WebDAV and FTP, the web desktop with Files and Settings, the app runtime (SDK, manifest, Docker backends, proxy, Store with signed catalogs), network settings, firewall, config backup, the web installer, the ISO build and signed system updates with automatic rollback.
 - Not built: pool encryption, NFS, VMs, support bundles; app rights that need elevation (`docker.socket`, `host.full`) are refused with `app.elevated.unsupported`.
-- Docs pages under `website/` are all `ready` (checked against the code); new pages start as `draft` until checked. `TODO.md` marks what waits "(after 1.0.0)".
-- The migrations are numbered SQL files in `daemon/`; decisions are logged as D-numbers at the end of `TODO.md`, in number order (it conflicts on every merge; keep all entries sorted).
+- Docs pages under `website/` are all `ready` (checked against the code); new pages start as `draft` until checked.
+- The migrations are numbered SQL files in `daemon/`. Decisions are logged as D-numbers in `DECISIONS.md` (D269 on; earlier ones are in their pull requests), in number order, with the next free number at its top.
 
 ## Known pitfalls
 
@@ -42,12 +42,12 @@ These rules are binding. If a rule blocks you, stop and ask; never work around i
 
 ## Workflow
 
-- Work through `TODO.md` top to bottom, one step at a time; finish its "Done when" before the next. `[DECISION]` and `[REVIEW]` steps need the maintainer: stop and ask. Check items off in the commit that finishes them.
+- The backlog is the GitHub issues of `pithyx/pithyx` (labels by kind: `bug`, `enhancement`, `security`, `documentation`, `chore`, `flaky-test`; by area: `area: storage`, `files`, `apps`, `desktop`, `network`, `system`, `ci`; milestones per version and `later`). Work starts from an issue, also for small bugs: write one first (with `gh issue create` or `gh api`, or ask the maintainer to when the session has no GitHub access), and the pull request closes it with `Fixes #n`. Take the issues of the next milestone first. A choice that needs the maintainer is asked, not guessed; its outcome becomes a decision in `DECISIONS.md`. Security weaknesses never go into a public issue (`SECURITY.md`).
 - Branches (D367): `stable` is stable and the default branch (releases are tagged there; it was `master` until 2026-10-18), `beta` the beta channel, `dev` the owner's test and integration branch. Changes flow feature → `dev` → `beta` → `stable`: `beta` and `stable` change only through pull requests from `dev` and `beta` (a hotfix branches from `stable` and goes back into `beta` and `dev`), guarded by the ruleset and lefthook `pre-push`. Work in `feature/`, `fix/`, `hotfix/<name>`; PRs target `dev`, and small changes may be pushed to `dev` directly. New branches: `git branch --unset-upstream` so a bare `git push` never targets `dev`.
 - Parallel work only in worktrees under `.worktrees/<name>` (`git worktree add .worktrees/<name> -b feature/<name> origin/dev`). Remove worktree and local branch once merged.
 - Commits and PR titles: `<gitmoji> <type>(<scope>): <subject>`, Unicode emoji, English, imperative, no em dashes. E.g. `✨ feat(desktop): add window snapping`, `🐛 fix(daemon): handle missing lsblk serial`, `♻️ refactor(storage): extract zpool parser`, `👷 ci: add DCO check`. Always `git commit -s` (DCO).
 - PR flow: merge `dev` into the branch, push, wait for a green CI run (label `e2e` for larger changes, see CI). Storage, account and command runner changes also attach an `integration.sh` result from a dev VM. Then squash-merge into `dev` (you may once CI is green; `beta` and `stable` always need the maintainer). The squash subject including ` (#n)` stays at or under 100 characters, and the message ends with `Signed-off-by: Schecher_1 <74829802+Schecher1@users.noreply.github.com>`: GitHub makes the owner's profile name the squash commit's author, and the sign-off check wants both equal (the owner's name is Schecher1 everywhere else; once the GitHub profile name is Schecher1, so is this line). A branch with a migration proves its upgrade on a dev VM (the daemon keeps `pithyx.db.pre-<version>-<time>.bak`).
-- Apps waves: one PR per wave, see `TODO.md` "Working rules" (D313).
+- Apps waves: one PR per wave (D313).
 - Generated files (`openapi.json`, `schema.ts`, `error-codes.ts`, `sdk/src/manifest.generated.ts`) are never merged by hand: take one side and regenerate (build the daemon and run `pnpm --filter @pithyx/api-client generate`; the manifest types come from `sdk/schema/manifest.v1.schema.json`).
 - Every user-visible or developer-relevant change adds a line under `Unreleased` in `CHANGELOG.md` (Keep a Changelog).
 - SemVer for the product; releases tagged on `stable` as `vX.Y.Z` with a constellation codename. The npm packages (`sdk/`, `packages/ui`, `packages/cli`) have their own SemVer line, all at the same version, tagged `sdk-vX.Y.Z`; release candidates go to the dist-tag `next`, `latest` only after the maintainer's approval. Only the maintainer publishes, with `tools/release/publish-sdk.sh` (or `tools/release/pithyx-release publish-sdk`, the release tool over every release script, D364) and npm 2FA; no npm token is stored (D306).
@@ -56,7 +56,7 @@ These rules are binding. If a rule blocks you, stop and ask; never work around i
 
 - Build, lint, tests green in CI; generated clients current.
 - New visible text has `en` and `de` keys; new error codes have translations (the website's error reference is generated from them).
-- `TODO.md` checked off, `CHANGELOG.md` updated.
+- The issue named with `Fixes #n`, `CHANGELOG.md` updated, and a decision the change makes added to `DECISIONS.md`.
 - Docs (D340): every change checks whether the docs under `website/src/content/docs/` describe it. If a page is wrong, update it in the same commit, English and German. If nothing describes it and a user, admin or developer would otherwise guess (new feature or setting, changed behavior, new error code, limitation, manual step), add it to the matching page or area or create a page; a question users will likely ask becomes an FAQ file. Refactors and internal details need no page. How to find and write pages: `website/CLAUDE.md`.
 - No em dashes, no non-English text outside translation files.
 
@@ -74,7 +74,7 @@ website/  landing page and docs at pithyx.org (Astro + Starlight, GitHub Pages, 
 ```
 
 - One monorepo, one product version (the npm packages have their own, see Workflow). Nested rules: `daemon/CLAUDE.md` (architecture, paths, operations, VMs), `desktop/CLAUDE.md` (responsive, accessibility, performance, layout memory), `website/CLAUDE.md` (where docs live and how to write them); equally binding.
-- No developer docs in markdown outside `website/`; the code documents itself. Allowed markdown outside `website/`: README, CLAUDE (root and per top-level folder), CONTRIBUTING, TODO, CHANGELOG, SECURITY, and the GitHub templates GitHub needs in `.github/` (`pull_request_template.md`; the issue forms in `.github/ISSUE_TEMPLATE/` are YAML). No other markdown for agents; state lives in this file.
+- No developer docs in markdown outside `website/`; the code documents itself. Allowed markdown outside `website/`: README, CLAUDE (root and per top-level folder), CONTRIBUTING, DECISIONS, CHANGELOG, SECURITY, and the GitHub templates GitHub needs in `.github/` (`pull_request_template.md`; the issue forms in `.github/ISSUE_TEMPLATE/` are YAML). No other markdown for agents; state lives in this file.
 - `website/` publishes every docs page also as Markdown (`<page>.md`), `/llms.txt` (index), `/llms/<area>.txt` (one area) and `/llms-full.txt` (everything). API and SDK references are generated from OpenAPI and TSDoc.
 - An API change updates daemon, generated client, SDK and desktop in the same commit. Never edit generated files.
 - Committed content is English. Only `i18n/` and translated `website/` pages may be otherwise. Chat with maintainers may be German.
