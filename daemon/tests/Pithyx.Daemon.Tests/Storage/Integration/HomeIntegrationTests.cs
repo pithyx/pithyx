@@ -56,6 +56,8 @@ public sealed class HomeIntegrationTests
             await connection.ExecuteAsync(
                 "INSERT INTO users (id, username, password_hash, uid, created_at, updated_at) VALUES (@uid, 'rita', 'x', @uid, '2026-10-13T00:00:00Z', '2026-10-13T00:00:00Z')",
                 new { uid = Uid });
+            // Integration tests run in parallel, so the machine has other tests' pools; left to choose, Homes may take one.
+            await connection.ExecuteAsync("INSERT INTO settings (key, value) VALUES (@key, @pool)", new { key = Homes.PoolSetting, pool = vdevs.PoolName });
         }
         using var homes = new Homes(connections, vdevs.Commands, pools, state, new HomeStorageOptions(UseZfs: true, "/"), new PermissionService(connections), new ShareChanges(), TimeProvider.System, NullLogger<Homes>.Instance);
 

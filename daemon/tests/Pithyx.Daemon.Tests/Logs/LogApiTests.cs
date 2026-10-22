@@ -25,15 +25,19 @@ public sealed class LogApiTests : IDisposable
 
     private static CancellationToken Token => TestContext.Current.CancellationToken;
 
-    /// <summary>Waits until the writer has flushed what is queued (it writes once a second).</summary>
+    /// <summary>
+    /// Waits until the writer has flushed what is queued. It writes once a second, but on a loaded runner the batches of
+    /// the daemon's own start can hold it up for seconds, so the wait is bounded by time, not by a count of attempts.
+    /// </summary>
     private static async Task<System.Text.Json.JsonElement> EntriesAsync(HttpClient client, string query, int atLeast)
     {
-        for (var attempt = 0; ; attempt++)
+        var waited = System.Diagnostics.Stopwatch.StartNew();
+        while (true)
         {
             using var response = await client.GetAsync($"/api/logs?{query}", Token);
             Assert.Equal(HttpStatusCode.OK, response.StatusCode);
             var entries = (await response.JsonAsync()).GetProperty("entries");
-            if (entries.GetArrayLength() >= atLeast || attempt > 50)
+            if (entries.GetArrayLength() >= atLeast || waited.Elapsed > TimeSpan.FromSeconds(30))
             {
                 return entries;
             }

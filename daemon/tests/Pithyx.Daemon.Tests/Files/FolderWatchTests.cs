@@ -69,20 +69,21 @@ public sealed class FolderWatchTests : IDisposable
     }
 
     /// <summary>Moves the daemon's clock past the batch delay until the folder event arrives.</summary>
-    /// <remarks>A deadline, not a number of attempts: on a runner busy with the whole suite, five seconds were too few.</remarks>
+    /// <remarks>
+    /// One receive stays pending the whole time: cancelling a receive aborts the WebSocket, which is how short receive
+    /// timeouts once closed the socket on a busy runner. A deadline, not a number of attempts, bounds the wait.
+    /// </remarks>
     private async Task<JsonElement> NextEventAsync(WebSocket socket)
     {
-        var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(20);
-        while (DateTime.UtcNow < deadline)
+        var receive = ReceiveAsync(socket, TimeSpan.FromSeconds(20));
+        while (!receive.IsCompleted)
         {
             _factory.Time.Advance(FolderWatches.BatchDelay);
-            if (await ReceiveAsync(socket, TimeSpan.FromMilliseconds(50)) is { } message)
-            {
-                Assert.Equal("event", message.GetProperty("type").GetString());
-                return message.GetProperty("data");
-            }
+            await Task.WhenAny(receive, Task.Delay(50, Token));
         }
-        throw new TimeoutException("No folder event arrived.");
+        var message = await receive ?? throw new TimeoutException("No folder event arrived.");
+        Assert.Equal("event", message.GetProperty("type").GetString());
+        return message.GetProperty("data");
     }
 
     private static string[] Names(JsonElement data, string property) =>

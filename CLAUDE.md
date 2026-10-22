@@ -38,6 +38,7 @@ These rules are binding. If a rule blocks you, stop and ask; never work around i
 - A package a workflow pushes to GHCR is private, also from a public repository, until it is made public in the web interface.
 - A fresh worktree needs `pnpm install --frozen-lockfile` before the first commit, or the repo-check hook fails.
 - A test that starts its own `smbd` needs `setsid` and a stdin pipe that stays open.
+- Tests with a fake clock: a loop that reads the clock before it arms its timer misses an `Advance` in between, so wake it or advance until the condition holds. Never cancel a pending WebSocket receive to poll (it aborts the socket); keep one receive pending.
 - An interrupted `image/build.sh` can leave mmdebstrap processes and a root file system in `/tmp/mmdebstrap.*`; the script holds a lock on its work directory, so a second run refuses to start.
 
 ## Workflow

@@ -79,6 +79,20 @@ public sealed class ResourceMonitorTests : IAsyncDisposable
         }
     }
 
+    /// <summary>
+    /// Moves the clock a second at a time until the condition holds. The sampler arms its timer only after the first
+    /// sample, and a periodic timer folds ticks it is late for into one, so a fixed number of seconds can fall short.
+    /// </summary>
+    private async Task AdvanceUntilAsync(Func<bool> condition)
+    {
+        var watch = Stopwatch.StartNew();
+        while (!condition())
+        {
+            Assert.True(watch.Elapsed < TimeSpan.FromSeconds(10), "The condition never held.");
+            await AdvanceAsync(1);
+        }
+    }
+
     [Fact]
     public async Task NobodyWatchingCostsNothing()
     {
@@ -101,8 +115,7 @@ public sealed class ResourceMonitorTests : IAsyncDisposable
         var snapshot = Drain(connection).Single(message => message.GetProperty("type").GetString() == "snap");
         Assert.Equal(4, snapshot.GetProperty("data").GetProperty("cpuCount").GetInt32());
         await WaitForAsync(() => _resources.SampleCount == 1);
-        await AdvanceAsync(3);
-        await WaitForAsync(() => _resources.SampleCount == 4);
+        await AdvanceUntilAsync(() => _resources.SampleCount >= 4);
         var events = Drain(connection).Where(message => message.GetProperty("type").GetString() == "event").ToList();
         Assert.NotEmpty(events);
         Assert.All(events, message => Assert.Equal(ResourceMonitor.ResourcesTopic, message.GetProperty("topic").GetString()));
@@ -123,8 +136,8 @@ public sealed class ResourceMonitorTests : IAsyncDisposable
         var connection = _hub.Connect(_admin, "s");
 
         await _hub.SubscribeAsync(connection, "c1", ResourceMonitor.ProcessesTopic, Token);
-        await AdvanceAsync(2);
-        await WaitForAsync(() => _processes.SampleCount >= 3);
+        await WaitForAsync(() => _processes.SampleCount >= 1);
+        await AdvanceUntilAsync(() => _processes.SampleCount >= 3);
         _hub.Disconnect(connection);
         var count = _processes.SampleCount;
         await AdvanceAsync(3);
