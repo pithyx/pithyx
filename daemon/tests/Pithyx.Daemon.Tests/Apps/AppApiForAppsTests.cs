@@ -559,13 +559,14 @@ public sealed class AppApiForAppsTests : IAsyncLifetime
         {
             Assert.Equal(HttpStatusCode.OK, revoke.StatusCode);
         }
-        var changed = await NextContextAsync(socket, topic);
+        // An event of the lease or of AppB's install may still carry the old permissions, so wait for the revoke's.
+        var changed = await NextContextAsync(socket, topic, data => data.GetProperty("permissions").GetArrayLength() == 1);
         Assert.Equal(["files.read"], changed.GetProperty("permissions").EnumerateArray().Select(value => value.GetString()));
         using (var debug = await _admin.PutAsJsonAsync($"/api/apps/{AppA}/log-level", new { level = "debug" }, Token))
         {
             Assert.Equal(HttpStatusCode.OK, debug.StatusCode);
         }
-        Assert.Equal("debug", (await NextContextAsync(socket, topic)).GetProperty("logLevel").GetString());
+        Assert.Equal("debug", (await NextContextAsync(socket, topic, data => data.GetProperty("logLevel").GetString() == "debug")).GetProperty("logLevel").GetString());
 
         // Losing the app ends the lease at once; the app leaves the user's topic apps, which closes its windows.
         using (var grants = await _admin.PutAsJsonAsync($"/api/users/{ritaId}/grants", new { grants = new[] { new { resource = "right:desktopLogin", level = "allow" } } }, Token))
@@ -907,7 +908,7 @@ public sealed class AppApiForAppsTests : IAsyncLifetime
         await Task.WhenAll(Enumerable.Range(0, 12).Select(async index =>
         {
             using var response = await app.PostAsJsonAsync("/api/app/notifications", new { title = $"Message {index}", tag = "chat" }, Token);
-            Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+            Assert.True(response.StatusCode == HttpStatusCode.Created, $"{(int)response.StatusCode}: {await response.Content.ReadAsStringAsync(Token)}");
         }));
         Assert.Equal(1, await _factory.ScalarAsync<long>("SELECT count(*) FROM notifications WHERE app = @AppA", new { AppA }));
         var items = (await _admin.GetFromJsonAsync<JsonElement>("/api/notifications", Token)).GetProperty("items").EnumerateArray();
@@ -917,7 +918,7 @@ public sealed class AppApiForAppsTests : IAsyncLifetime
         await Task.WhenAll(Enumerable.Range(0, 24).Select(async index =>
         {
             using var response = await app.PutAsJsonAsync($"/api/app/storage/value?key=k{index}", new { value }, Token);
-            Assert.True(response.StatusCode is HttpStatusCode.NoContent or HttpStatusCode.RequestEntityTooLarge);
+            Assert.True(response.StatusCode is HttpStatusCode.NoContent or HttpStatusCode.RequestEntityTooLarge, $"{(int)response.StatusCode}: {await response.Content.ReadAsStringAsync(Token)}");
         }));
         Assert.InRange(
             await _factory.ScalarAsync<long>("SELECT sum(length(CAST(key AS BLOB)) + length(CAST(value AS BLOB))) FROM app_storage WHERE app_id = @AppA", new { AppA }),

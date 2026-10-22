@@ -20,9 +20,10 @@ permissions:
 # nothing here needs ZFS, real disks or root: those tests run on a dev VM (tools/dev-vm/integration.sh).
 
 # One run per branch: a new push to a pull request cancels the run it replaces. Runs on dev, beta and stable always finish,
-# so every merge is checked.
+# so every merge is checked. Adding any label but e2e skips every job, so such a run gets a group of its own and never
+# cancels the real one.
 concurrency:
-  group: ci-${{ github.head_ref || github.ref_name }}
+  group: ci-${{ github.head_ref || github.ref_name }}${{ github.event.action == 'labeled' && github.event.label.name != 'e2e' && format('-label-{0}', github.event.label.name) || '' }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:

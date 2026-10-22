@@ -22,7 +22,7 @@ internal static class AuthApi
     public static async Task<string> SetupAdminAsync(this HttpClient client, string username = "admin")
     {
         using var response = await client.PostAsync("/api/setup", new { username, password = AdminPassword });
-        response.EnsureSuccessStatusCode();
+        Assert.True(response.IsSuccessStatusCode, $"Setup answered {(int)response.StatusCode}: {await response.Content.ReadAsStringAsync(Token)}");
         return (await response.JsonAsync()).GetProperty("recoveryKey").GetString()!;
     }
 
