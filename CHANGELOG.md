@@ -9,12 +9,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 ### Added
 
 - `image/test-install.sh --stable-update <file>`: tests the stable update path from a released ISO with a throwaway key and a local HTTPS channel (online, from a file, automatic rollback, rollback in Settings); 1.0.0 to 1.0.1 passed on 2026-10-24.
+- "Open at sign-in" in the account menu: up to 10 apps that open after each sign-in, for every device; the manifest's optional `window.suggestAtSignIn` marks an app as suggested there (D373).
 - Files: entries and files from the device can be dropped onto a part of the path above the list and onto a share in the sidebar, which the docs already promised for the sidebar.
 - Files opens a file with a double click in the app chosen for its type: "Open with" has "Always open .x files this way", the choices follow the user to every device and are listed under "Default apps" in the account menu; without a choice the only installed app that sets `isDefault` for the type opens it (D371).
 - `image/baseline/pithyx-1.0.0-amd64.packages`: the package list of the 1.0.0 image, the base that `build-update.sh` and `pithyx-release update` build the first 1.0.x update files against.
 
 ### Changed
 
+- Files reads a folder ahead while the mouse rests on it, so opening it shows its contents at once.
 - Storage: the Snapshots section shows a snapshot a schedule or another window took without reopening it, through the new administrator topic `storage/snapshots` (D372).
 - Branches (D367): `master` is now `stable`, the default branch where releases are tagged; the new `beta` is the beta channel and `dev` the integration branch. Changes go `dev` → `beta` → `stable` through pull requests, and `beta` and `stable` are protected. The nightly CI run tests `dev`, and the website is published from `stable`.
 - CI runs only on GitHub-hosted runners (D368); the self-hosted runners are retired.

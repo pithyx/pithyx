@@ -148,6 +148,9 @@
     },
     "note": {
       "too_long": "The note is too long. A note holds at most {maxLength} characters."
+    },
+    "startup_apps": {
+      "invalid": "The apps to open after signing in could not be saved. Choose at most {max} apps, each once."
     }
   },
   "fileservices": {

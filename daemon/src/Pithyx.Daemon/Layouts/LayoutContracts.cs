@@ -9,12 +9,14 @@ namespace Pithyx.Daemon.Layouts;
 /// <param name="Preferences">Window preferences of the user for every app, shared across devices.</param>
 /// <param name="Appearance">Accent color and wallpaper of the user, the same on every device.</param>
 /// <param name="FileDefaults">How the user opens files of an extension, by extension; the same on every device.</param>
+/// <param name="StartupApps">The apps the user opens after signing in, in order (D373); the same on every device.</param>
 public sealed record DesktopState(
     JsonElement? Layout,
     long LayoutVersion,
     IReadOnlyList<WindowPreference> Preferences,
     Appearance Appearance,
-    IReadOnlyList<FileDefault> FileDefaults);
+    IReadOnlyList<FileDefault> FileDefaults,
+    IReadOnlyList<string> StartupApps);
 
 /// <summary>How the user opens files of one extension, chosen with "Always use this app" (D371); the same on every device.</summary>
 /// <param name="Extension">The extension in lowercase without the dot, as in the manifest's <c>fileHandlers</c>, for example <c>pdf</c> or <c>tar.gz</c>.</param>
@@ -35,6 +37,16 @@ public sealed partial record FileDefault(string Extension, string Handler)
 
 /// <param name="Handler"><c>viewer</c>, <c>download</c> or <c>app:</c> and an app id.</param>
 public sealed record FileDefaultRequest(string Handler);
+
+/// <summary>The apps the user opens after signing in (D373); the same on every device.</summary>
+/// <param name="Apps">App ids in the order they open, each once, at most <see cref="Max"/>. Empty opens nothing.</param>
+public sealed record StartupApps(IReadOnlyList<string> Apps)
+{
+    public const int Max = 10;
+
+    public bool IsValid() =>
+        Apps is not null && Apps.Count <= Max && Apps.All(Pithyx.Daemon.Apps.Manifest.AppId.IsValid) && Apps.Distinct(StringComparer.Ordinal).Count() == Apps.Count;
+}
 
 /// <summary>How the desktop looks for the user on every device. The theme (light, dark) is a choice of each device.</summary>
 /// <param name="Accent">One of the accent presets: <c>petrol</c>, <c>ocean</c>, <c>indigo</c>, <c>plum</c>, <c>moss</c>, <c>graphite</c>.</param>

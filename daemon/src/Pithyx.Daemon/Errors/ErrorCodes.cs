@@ -402,6 +402,10 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string DesktopFileDefaultLimitReached = "desktop.file_default.limit_reached";
 
+    /// <summary>The startup apps named an invalid app id, one twice, or more than <c>params.max</c>.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string DesktopStartupAppsInvalid = "desktop.startup_apps.invalid";
+
     /// <summary>A change of a desktop item named an older version (If-Match); <c>params.version</c> is the current one.</summary>
     [ErrorStatus(HttpStatusCode.PreconditionFailed)]
     public const string DesktopItemConflict = "desktop.item.conflict";

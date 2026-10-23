@@ -82,6 +82,7 @@ To move the taskbar, open the Pithyx menu, click your name, choose **Taskbar pos
 - **Language**
 - **Appearance**, **Accent color** and **Wallpaper**
 - **Default apps**: the file types you chose to always open one way in Files, each with **Forget** ([Files](/docs/user/files/))
+- **Open at sign-in**: tick up to 10 apps that open each time you sign in, on every device, in the order you ticked them. A reload of the page only brings back your windows, and an app that is already open is not opened twice. An app may be marked **Suggested by the app**; it is never ticked for you.
 - **Get desktop from**
 - **Taskbar position** (not on phones)
 

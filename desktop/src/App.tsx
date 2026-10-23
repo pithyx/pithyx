@@ -13,6 +13,7 @@ import { useErrorStore } from './errors/errorStore';
 import { loadDesktopTranslations, loadTranslations } from './i18n';
 import { realtime, useRealtime } from './realtime/connection';
 import { AuthLayout } from './shell/AuthLayout';
+import { markSignedIn } from './wm/signIn';
 
 type User = components['schemas']['UserInfo'];
 
@@ -134,6 +135,7 @@ export function App() {
       queryClient.setQueryData(queryKeys.setup, { ...setup.data, required: false });
     }
     queryClient.setQueryData(queryKeys.session, user);
+    markSignedIn();
     setIntro('welcome');
   }
 

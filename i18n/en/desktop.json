@@ -42,7 +42,8 @@
     "unknownOs": "an unknown system",
     "deviceDetail": "{count, plural, one {# window} other {# windows}}, {time}",
     "deviceDetailScreen": "{width} × {height}, {count, plural, one {# window} other {# windows}}, {time}",
-    "fileDefaults": "Default apps"
+    "fileDefaults": "Default apps",
+    "startupApps": "Open at sign-in"
   },
   "error": {
     "title": "Something went wrong",
@@ -293,6 +294,12 @@
     "unavailable": "An app that is no longer available",
     "forget": "Forget",
     "forgetLabel": "Forget the choice for .{extension} files",
+    "close": "Close"
+  },
+  "startupApps": {
+    "title": "Open at sign-in",
+    "intro": "These apps open when you sign in, on every device, in the order you ticked them. Windows you left open stay as they were. At most {max} apps.",
+    "suggested": "Suggested by the app",
     "close": "Close"
   }
 }

@@ -62,4 +62,4 @@ So fügst du eine Kern-App hinzu: Füge ihre ID zu `apps/ids.ts` und zu `CoreApp
 - **Reducer.** `reducers.ts` hat einen Reducer pro Topic und ist durch die generierte Topic-Liste typisiert, sodass ein neues Topic des Daemons den Build brechen lässt, bis der Desktop es behandelt.
 - **Neu verbinden.** Die Wartezeit ist `min(30 s, 0.5 s * 2^attempt)`, zufällig auf 50 bis 100 Prozent verteilt. Close-Code 4401 schickt den Benutzer zur Anmeldung, 4403 hält an, alle anderen verbinden neu. Siehe [API](/de/docs/developers/daemon/api/).
 - **Fehler.** Fehlermeldungen vom Socket gehen in den Fehlerdialog. Request-IDs werden in die Konsole geschrieben, nie angezeigt.
-- **Auflistungen.** Ordnerlisten laden in Cursor-Seiten über REST. Pithyx streamt Auflistungen nicht über den WebSocket und sortiert nicht in einem Web Worker.
+- **Auflistungen.** Ordnerlisten laden in Cursor-Seiten über REST. Pithyx streamt Auflistungen nicht über den WebSocket und sortiert nicht in einem Web Worker. Dateien liest die erste Seite eines Ordners vorab, wenn die Maus 150 ms darauf ruht, sodass ein Doppelklick zwischengespeicherte Zeilen zeigt und sie wie bei einem besuchten Ordner neu prüft.

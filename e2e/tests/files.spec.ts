@@ -202,6 +202,22 @@ test('moves entries onto a breadcrumb segment and uploads onto a share in the si
     .toBe('dropped');
 });
 
+test('reads a folder ahead while the mouse rests on it', async ({ page }) => {
+  prepare('e2e-prefetch/ahead', { 'inside.txt': 'i' });
+  await openFolder(page, 'e2e-prefetch');
+  const ahead = page.waitForRequest(
+    (request) =>
+      request.url().includes('/list') &&
+      new URL(request.url()).searchParams.get('path') === 'e2e-prefetch/ahead',
+  );
+  await row(page, 'ahead').hover();
+  await ahead;
+
+  // Opening it shows the rows read ahead.
+  await enter(page, 'ahead');
+  await expect(row(page, 'inside.txt')).toBeVisible();
+});
+
 test('deletes into the recycle bin, restores, and deletes for good only after asking', async ({
   page,
 }) => {

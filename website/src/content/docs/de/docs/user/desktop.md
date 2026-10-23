@@ -82,6 +82,7 @@ Um die Taskleiste zu verschieben, öffne das Pithyx-Menü, klicke auf deinen Nam
 - **Sprache**
 - **Darstellung**, **Akzentfarbe** und **Hintergrundbild**
 - **Standard-Apps**: die Dateitypen, die sich in Dateien immer auf eine Art öffnen sollen, jeweils mit **Vergessen** ([Dateien](/de/docs/user/files/))
+- **Beim Anmelden öffnen**: hake bis zu 10 Apps an, die sich bei jeder Anmeldung öffnen, auf jedem Gerät, in der Reihenfolge, in der du sie angehakt hast. Ein Neuladen der Seite bringt nur deine Fenster zurück, und eine App, die schon offen ist, öffnet sich nicht doppelt. Eine App kann als **Von der App empfohlen** markiert sein; angehakt wird sie nie für dich.
 - **Desktop holen von**
 - **Position der Taskleiste** (nicht auf Handys)
 
