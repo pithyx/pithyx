@@ -387,6 +387,17 @@ public sealed partial class FtpSession(
             await ReplyAsync("502 Resuming an upload is not offered.", cancellationToken);
             return;
         }
+        // Refused before 150, so the client never sends data into a connection the server would close.
+        try
+        {
+            await files.CheckWriteAsync(user, path, cancellationToken);
+        }
+        catch (PithyxException)
+        {
+            _passive?.Stop();
+            _passive = null;
+            throw;
+        }
         PithyxException? refused = null;
         await TransferAsync(async data =>
         {
