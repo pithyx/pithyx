@@ -1,12 +1,5 @@
 import { useInfiniteQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
-import type {
-  FileLocation,
-  FolderChange,
-  FolderPage,
-  SortKey,
-  SortOrder,
-  PithyxApp,
-} from '@pithyx/sdk';
+import type { FolderChange, FolderPage, SortKey, SortOrder, PithyxApp } from '@pithyx/sdk';
 import { useEffect, useEffectEvent } from 'react';
 import { applyChange, loadedEntries, type FolderPages } from './pages';
 
@@ -19,6 +12,48 @@ export function folderKey(share: string, path: string) {
 
 function pagesKey(share: string, path: string, sort: SortKey, order: SortOrder) {
   return [...folderKey(share, path), sort, order] as const;
+}
+
+/** A prefetched folder younger than this is not read again when the pointer rests on it once more. */
+const PREFETCH_FRESH = 30_000;
+
+function listPage(
+  app: PithyxApp,
+  share: string,
+  path: string,
+  sort: SortKey,
+  order: SortOrder,
+  cursor: string | null,
+): Promise<FolderPage> {
+  return app.files.list({ share }, path, {
+    limit: PAGE_SIZE,
+    sort,
+    order,
+    ...(cursor === null ? {} : { cursor }),
+  });
+}
+
+/**
+ * Reads the first page of a folder ahead, when the pointer rests on it, so opening it shows the cached rows at once
+ * and revalidates them as for a visited folder.
+ */
+export function prefetchFolder(
+  client: QueryClient,
+  app: PithyxApp,
+  share: string,
+  path: string,
+  sort: SortKey,
+  order: SortOrder,
+): void {
+  // A failed read ahead changes nothing: opening the folder reads it again and shows the error there.
+  client
+    .infiniteQuery({
+      queryKey: pagesKey(share, path, sort, order),
+      queryFn: ({ pageParam }) => listPage(app, share, path, sort, order, pageParam),
+      initialPageParam: null as string | null,
+      staleTime: PREFETCH_FRESH,
+    })
+    .catch(() => undefined);
 }
 
 /** Applies a change to every cached order of a folder, so switching the sort column shows it too. */
@@ -77,7 +112,6 @@ export function useFolder(
   handlers: { onRemoved: (names: string[]) => void; onGone: () => void },
 ) {
   const client = useQueryClient();
-  const location: FileLocation = { share: share ?? '' };
   const query = useInfiniteQuery<
     FolderPage,
     Error,
@@ -86,13 +120,7 @@ export function useFolder(
     string | null
   >({
     queryKey: pagesKey(share ?? '', path, sort, order),
-    queryFn: ({ pageParam }) =>
-      app.files.list(location, path, {
-        limit: PAGE_SIZE,
-        sort,
-        order,
-        ...(pageParam === null ? {} : { cursor: pageParam }),
-      }),
+    queryFn: ({ pageParam }) => listPage(app, share ?? '', path, sort, order, pageParam),
     initialPageParam: null as string | null,
     getNextPageParam: (page) => page.nextCursor,
     enabled: share !== null,

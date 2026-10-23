@@ -62,4 +62,4 @@ To add a core app: add its id to `apps/ids.ts` and the daemon's `CoreApps.cs`, a
 - **Reducers.** `reducers.ts` has one reducer per topic and is typed by the generated topic list, so a new daemon topic fails the build until the desktop handles it.
 - **Reconnect.** The delay is `min(30 s, 0.5 s * 2^attempt)`, randomized to 50 to 100 percent. Close code 4401 sends the user to the sign-in, 4403 stops, the others reconnect. See [API](/docs/developers/daemon/api/).
 - **Errors.** Error messages from the socket go to the error dialog. Request ids are written to the console, never shown.
-- **Listings.** Folder listings load in cursor pages over REST. Pithyx does not stream listings over the WebSocket or sort in a Web Worker.
+- **Listings.** Folder listings load in cursor pages over REST. Pithyx does not stream listings over the WebSocket or sort in a Web Worker. Files reads the first page of a folder ahead when the mouse rests on it for 150 ms, so a double click shows cached rows and revalidates them like a visited folder.

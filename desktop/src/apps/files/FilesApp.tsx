@@ -58,7 +58,7 @@ import { createTransfers, type Transfers } from './transfers';
 import { TrashView, trashKey } from './TrashView';
 import { VersionsDialog } from './VersionsDialog';
 import { createThumbnails, thumbnailKey } from './thumbnails';
-import { changeFolder, folderKey, keepOnly, useFolder } from './useFolder';
+import { changeFolder, folderKey, keepOnly, prefetchFolder, useFolder } from './useFolder';
 
 /** Where a window is: a folder of a share, or the share's recycle bin. Saved with the layout. */
 interface Place {
@@ -1012,6 +1012,18 @@ export function FilesApp({ app }: { app: PithyxApp }) {
                 }
               }}
               dragData={dragData}
+              onRest={(entry) => {
+                if (shareId !== null) {
+                  prefetchFolder(
+                    client,
+                    app,
+                    shareId,
+                    joinPath(path, entry.name),
+                    sort.key,
+                    sort.order,
+                  );
+                }
+              }}
               onDropEntries={(data, into, copy) => {
                 if (shareId !== null && writable) {
                   dropEntries(
