@@ -30,6 +30,7 @@
   ],
   "window": {
     "instances": "single",
+    "suggestAtSignIn": true,
     "defaultSize": {
       "width": 900,
       "height": 640

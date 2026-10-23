@@ -52,6 +52,12 @@ public static class LayoutEndpoints
             .WithName("RemoveFileDefault")
             .WithDescription("Forgets the signed-in user's choice for an extension. Forgetting one that does not exist also answers 204.");
 
+        desktop.MapPut("/startup-apps", SetStartupAppsAsync)
+            .WithName("SetStartupApps")
+            .WithDescription(
+                "Replaces the apps the signed-in user opens after signing in, in order, for every device (at most 10). "
+                + "GET /api/desktop returns them as startupApps; the desktop skips apps that are gone or not allowed.");
+
         desktop.MapGet("/items", ListItemsAsync).WithName("ListDesktopItems");
         desktop.MapPost("/items", CreateItemAsync)
             .WithName("CreateDesktopItem")
@@ -154,6 +160,12 @@ public static class LayoutEndpoints
     private static async Task<NoContent> SetFileDefaultAsync(string extension, FileDefaultRequest request, LayoutService layouts, HttpContext context, CancellationToken cancellationToken)
     {
         await layouts.SetFileDefaultAsync(CurrentUser.Id(context.User), new FileDefault(extension, request.Handler), cancellationToken);
+        return TypedResults.NoContent();
+    }
+
+    private static async Task<NoContent> SetStartupAppsAsync(StartupApps request, LayoutService layouts, HttpContext context, CancellationToken cancellationToken)
+    {
+        await layouts.SetStartupAppsAsync(CurrentUser.Id(context.User), request, cancellationToken);
         return TypedResults.NoContent();
     }
 

@@ -83,12 +83,16 @@ public sealed class LayoutService(SqliteConnectionFactory connections, TimeProvi
         var fileDefaults = await connection.QueryAsync<FileDefault>(
             "SELECT extension AS Extension, handler AS Handler FROM user_file_defaults WHERE user_id = @userId ORDER BY extension",
             new { userId });
+        var startupApps = await connection.QueryAsync<string>(
+            "SELECT app_id FROM user_startup_apps WHERE user_id = @userId ORDER BY position",
+            new { userId });
         return new DesktopState(
             layout is null ? null : Parse(layout.Json),
             layout?.Version ?? 0,
             [.. preferences.Select(row => new WindowPreference(row.AppId, (int)row.Width, (int)row.Height))],
             appearance is null ? Appearance.Default : new Appearance(appearance.Accent, appearance.Wallpaper),
-            [.. fileDefaults]);
+            [.. fileDefaults],
+            [.. startupApps]);
     }
 
     /// <summary>Saves how the user opens files of an extension; replaces an earlier choice for it.</summary>
@@ -119,6 +123,24 @@ public sealed class LayoutService(SqliteConnectionFactory connections, TimeProvi
     {
         await using var connection = await connections.OpenAsync(cancellationToken);
         await connection.ExecuteAsync("DELETE FROM user_file_defaults WHERE user_id = @userId AND extension = @extension", new { userId, extension });
+    }
+
+    /// <summary>Replaces the apps the user opens after signing in.</summary>
+    public async Task SetStartupAppsAsync(long userId, StartupApps startup, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(startup);
+        if (!startup.IsValid())
+        {
+            throw new PithyxException(ErrorCodes.DesktopStartupAppsInvalid, new Dictionary<string, object?> { ["max"] = StartupApps.Max });
+        }
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+        await connection.ExecuteAsync("DELETE FROM user_startup_apps WHERE user_id = @userId", new { userId }, transaction);
+        await connection.ExecuteAsync(
+            "INSERT INTO user_startup_apps (user_id, app_id, position) VALUES (@userId, @appId, @position)",
+            startup.Apps.Select((appId, position) => new { userId, appId, position }),
+            transaction);
+        await transaction.CommitAsync(cancellationToken);
     }
 
     /// <summary>Saves the accent color and wallpaper of the user; the same on every device.</summary>

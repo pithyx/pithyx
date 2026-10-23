@@ -148,6 +148,9 @@
     },
     "note": {
       "too_long": "Die Notiz ist zu lang. Eine Notiz fasst höchstens {maxLength} Zeichen."
+    },
+    "startup_apps": {
+      "invalid": "Die Apps zum Öffnen nach der Anmeldung konnten nicht gespeichert werden. Wähle höchstens {max} Apps, jede nur einmal."
     }
   },
   "fileservices": {

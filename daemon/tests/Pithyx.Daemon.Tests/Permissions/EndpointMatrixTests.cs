@@ -52,6 +52,7 @@ public sealed partial class EndpointMatrixTests : IDisposable
         ["SetDesktopAppearance"] = Need.AnyUser,
         ["SetFileDefault"] = Need.AnyUser,
         ["RemoveFileDefault"] = Need.AnyUser,
+        ["SetStartupApps"] = Need.AnyUser,
         ["ListDesktopItems"] = Need.AnyUser,
         ["CreateDesktopItem"] = Need.AnyUser,
         ["ChangeDesktopItem"] = Need.AnyUser,

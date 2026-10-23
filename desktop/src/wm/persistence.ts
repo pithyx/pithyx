@@ -14,6 +14,7 @@ import { clearPreferredSizes, setPreferredSize } from './preferences';
 import { initialState } from './state';
 import { dispatch, useDesktop } from './store';
 import type { DesktopState, WindowOptions } from './types';
+import { applyStartupApps, openStartupApps, startupWaitsForApps } from './startup';
 import { useWindowUi } from './ui';
 
 /** Saves are debounced; a drag or a burst of focus changes becomes one request. */
@@ -230,11 +231,12 @@ export function useLayoutPersistence() {
     layoutVersion = desktop.data.layoutVersion;
     applyAppearance(checkedAppearance(desktop.data.appearance));
     applyFileDefaults(desktop.data.fileDefaults);
+    applyStartupApps(desktop.data.startupApps);
     for (const preference of desktop.data.preferences) {
       setPreferredSize(preference.appId, { width: preference.width, height: preference.height });
     }
     // A window of an installed app waits for the topic apps, which says whether the app is still there for the user.
-    if (!appsKnown && namesUnknownApp(desktop.data.layout)) {
+    if ((!appsKnown && namesUnknownApp(desktop.data.layout)) || startupWaitsForApps(appsKnown)) {
       return;
     }
     // Windows the user opened while the layout was loading win over the saved ones.
@@ -245,6 +247,8 @@ export function useLayoutPersistence() {
       }
     }
     saving = true;
+    // After saving started, so the windows they open are saved like any other.
+    openStartupApps();
   }, [desktop.data, appsKnown]);
 
   useEffect(() => {

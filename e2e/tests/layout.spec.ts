@@ -105,3 +105,40 @@ test('two tabs of one browser do not overwrite each other unnoticed', async ({ b
   await expect(appWindow(first, 'Storage')).toHaveCount(0);
   await context.close();
 });
+
+test('apps chosen in the account menu open after signing in, once', async ({ page }) => {
+  await signInAsAdmin(page);
+  try {
+    await openAccountMenu(page);
+    await page.getByRole('menuitem', { name: 'Open at sign-in' }).click();
+    const dialog = page.getByRole('dialog', { name: 'Open at sign-in' });
+    const saved = page.waitForResponse(
+      (response) =>
+        response.url().endsWith('/api/desktop/startup-apps') && response.status() === 204,
+    );
+    // React Aria hides the input itself; the label takes the click.
+    await dialog.getByText('About Pithyx', { exact: true }).click();
+    await saved;
+    await dialog.getByRole('button', { name: 'Close' }).click();
+
+    await page.getByRole('button', { name: 'Pithyx menu' }).click();
+    await page
+      .getByRole('dialog', { name: 'Pithyx menu' })
+      .getByRole('button', { name: 'Sign out' })
+      .click();
+    await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
+    const opened = layoutSaved(page, 'org.pithyx.about');
+    await signInAsAdmin(page);
+    await expect(appWindow(page, 'About Pithyx')).toBeVisible();
+
+    // A reload is no sign-in: the restored window stays the only one.
+    await opened;
+    await page.reload();
+    await expect(appWindow(page, 'About Pithyx')).toHaveCount(1);
+  } finally {
+    await page.request.put('/api/desktop/startup-apps', {
+      data: { apps: [] },
+      headers: { 'X-Pithyx-Request': '1' },
+    });
+  }
+});
