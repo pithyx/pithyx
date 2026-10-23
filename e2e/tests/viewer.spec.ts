@@ -201,7 +201,11 @@ test('Open with remembers a choice for the file type until it is forgotten', asy
   await todo.click({ button: 'right' });
   await page.getByRole('menuitem', { name: 'Open with…' }).click();
   const dialog = page.getByRole('dialog', { name: 'Open todo.md with' });
-  await dialog.getByRole('checkbox', { name: 'Always open .md files this way' }).check();
+  // The checkbox input is visually hidden behind the drawn box, so a user clicks the label.
+  await dialog.getByText('Always open .md files this way').click();
+  await expect(
+    dialog.getByRole('checkbox', { name: 'Always open .md files this way' }),
+  ).toBeChecked();
   const first = page.waitForEvent('download');
   await dialog.getByRole('button', { name: 'Download' }).click();
   expect((await first).suggestedFilename()).toBe('todo.md');
