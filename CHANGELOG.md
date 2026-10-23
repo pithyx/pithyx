@@ -24,6 +24,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - FTP refuses an upload without the write right with `550` before it opens the data connection, instead of closing it mid-transfer ("Broken pipe" in clients).
 - The daemon releases the event throttle of a topic that went quiet, so finished jobs and closed folders no longer leave one behind for good.
 - `image/build.sh` can run again after a build: the .NET compiler server no longer keeps the lock of `image/out/work`.
+- A busy box no longer answers requests with an internal error because the database was locked: a write waits up to 30 seconds for another one instead of 5 (D370).
 
 ## [1.0.0] - 2026-10-18
 

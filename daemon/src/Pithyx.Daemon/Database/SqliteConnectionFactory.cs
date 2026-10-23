@@ -16,8 +16,9 @@ public sealed class SqliteConnectionFactory
             Mode = SqliteOpenMode.ReadWriteCreate,
             ForeignKeys = true,
             Pooling = true,
-            // Seconds a command waits for a lock held by another connection before failing.
-            DefaultTimeout = 5,
+            // Seconds a write waits for another connection's write lock before failing (D370): long enough that a
+            // busy box (a scrub, a slow system disk, several jobs) makes requests wait instead of answering 500.
+            DefaultTimeout = 30,
         }.ToString();
     }
 
