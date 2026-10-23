@@ -3,28 +3,27 @@ import {
   IconArrowRight,
   IconBaselineDensityMedium,
   IconBaselineDensitySmall,
+  IconCertificate,
   IconChevronRight,
+  IconCloudDownload,
   IconFolderFilled,
+  IconFolders,
   IconHome,
+  IconInfoCircle,
   IconMovie,
+  IconNetwork,
   IconPhoto,
-  IconPhotoPlus,
   IconServer2,
+  IconUsers,
+  IconUsersGroup,
 } from '../ui/icons';
 import { useState } from 'react';
-import {
-  Label,
-  RadioButton,
-  RadioField,
-  RadioGroup,
-  ToggleButton,
-  ToggleButtonGroup,
-} from 'react-aria-components';
+import { ToggleButton, ToggleButtonGroup } from 'react-aria-components';
 import { useTranslation } from 'react-i18next';
 import { formatBytes } from '../desktop/format';
-import { Wallpaper } from '../shell/Wallpaper';
 import { cx, IconButton, ProgressBar, SearchField } from '@pithyx/ui';
-import { accentPresets, filesApp, logLines, storageApp } from './sampleApps';
+import { filesApp, logLines, storageApp } from './sampleApps';
+import settingsStyles from '../apps/settings/Settings.module.css';
 import styles from './SampleApps.module.css';
 import { currentFolder } from './sampleData';
 
@@ -226,88 +225,68 @@ export function LogsContent() {
   );
 }
 
-const settingsSections = ['personalization', 'users', 'network', 'updates', 'about'] as const;
+// The overview of the Settings app (SettingsApp.tsx) with its own styles, as a static sample.
+const settingsTiles = [
+  { id: 'info', category: 'system', icon: IconInfoCircle },
+  { id: 'network', category: 'system', icon: IconNetwork },
+  { id: 'certificates', category: 'system', icon: IconCertificate },
+  { id: 'updates', category: 'system', icon: IconCloudDownload },
+  { id: 'shares', category: 'sharing', icon: IconFolders },
+  { id: 'fileServices', category: 'sharing', icon: IconServer2 },
+  { id: 'users', category: 'accounts', icon: IconUsers },
+  { id: 'groups', category: 'accounts', icon: IconUsersGroup },
+] as const;
+const settingsCategories = ['system', 'sharing', 'accounts'] as const;
 
-export function SettingsContent({ accent }: { accent: string }) {
+export function SettingsContent() {
   const { t } = useTranslation('settings');
   return (
-    <div className={styles.settings}>
-      <nav className={styles.settingsNav} aria-label={t('sections')}>
-        {settingsSections.map((section, index) => (
-          <a
-            key={section}
-            href="#settings"
-            className={cx(styles.sideItem, index === 0 && styles.sideActive)}
+    <div className={settingsStyles.app}>
+      <main className={settingsStyles.overview}>
+        <header className={settingsStyles.overviewHeader}>
+          <h2 className={settingsStyles.pageTitle}>{t('overview.title')}</h2>
+          <SearchField
+            label={t('overview.search')}
+            placeholder={t('overview.search')}
+            className={settingsStyles.search}
+          />
+        </header>
+        {settingsCategories.map((category) => (
+          <section
+            key={category}
+            className={settingsStyles.category}
+            aria-labelledby={`sample-settings-${category}`}
           >
-            {t(`nav.${section}`)}
-          </a>
+            <h3 id={`sample-settings-${category}`} className={settingsStyles.categoryTitle}>
+              {t(`categories.${category}`)}
+            </h3>
+            <ul className={settingsStyles.tiles}>
+              {settingsTiles
+                .filter((entry) => entry.category === category)
+                .map((entry) => {
+                  const Icon = entry.icon;
+                  return (
+                    <li key={entry.id}>
+                      <button type="button" className={settingsStyles.tile}>
+                        <span className={settingsStyles.tileIcon} aria-hidden>
+                          <Icon size={24} stroke={1.75} />
+                        </span>
+                        <span className={settingsStyles.tileText}>
+                          <span className={settingsStyles.tileTitle}>
+                            {t(`pages.${entry.id}.title`)}
+                          </span>
+                          <span className={settingsStyles.tileDescription}>
+                            {t(`pages.${entry.id}.description`)}
+                          </span>
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+            </ul>
+          </section>
         ))}
-      </nav>
-      <div className={styles.settingsBody}>
-        <h3 className={styles.settingsTitle}>{t('nav.personalization')}</h3>
-        <RadioGroup className={styles.setting} defaultValue="system" orientation="horizontal">
-          <Label className={styles.settingLabel}>{t('personalization.theme')}</Label>
-          <div className={styles.segmented}>
-            {(['system', 'light', 'dark'] as const).map((theme) => (
-              <RadioField key={theme} value={theme}>
-                <RadioButton className={styles.segment}>
-                  {t(`personalization.themes.${theme}`)}
-                </RadioButton>
-              </RadioField>
-            ))}
-          </div>
-        </RadioGroup>
-        <RadioGroup className={styles.setting} defaultValue={accent} orientation="horizontal">
-          <Label className={styles.settingLabel}>{t('personalization.accent')}</Label>
-          <div className={styles.swatches}>
-            {accentPresets.map((name) => (
-              <RadioField key={name} value={name} aria-label={t(`personalization.accents.${name}`)}>
-                <RadioButton className={styles.swatch} data-accent={name} />
-              </RadioField>
-            ))}
-          </div>
-        </RadioGroup>
-        <RadioGroup className={styles.setting} defaultValue="bottom" orientation="horizontal">
-          <Label className={styles.settingLabel}>{t('personalization.taskbar')}</Label>
-          <div className={styles.segmented}>
-            {(['bottom', 'top'] as const).map((position) => (
-              <RadioField key={position} value={position}>
-                <RadioButton className={styles.segment}>
-                  {t(`personalization.positions.${position}`)}
-                </RadioButton>
-              </RadioField>
-            ))}
-          </div>
-        </RadioGroup>
-        <RadioGroup className={styles.setting} defaultValue="default" orientation="horizontal">
-          <Label className={styles.settingLabel}>{t('personalization.wallpaper')}</Label>
-          <p className={styles.muted}>{t('personalization.wallpaperHint')}</p>
-          <div className={styles.wallpapers}>
-            <RadioField value="default">
-              <RadioButton className={styles.wallpaperOption}>
-                <span className={styles.wallpaperThumb}>
-                  <Wallpaper />
-                </span>
-                {t('personalization.wallpapers.default')}
-              </RadioButton>
-            </RadioField>
-            <RadioField value="solid">
-              <RadioButton className={styles.wallpaperOption}>
-                <span className={cx(styles.wallpaperThumb, styles.wallpaperSolid)} />
-                {t('personalization.wallpapers.solid')}
-              </RadioButton>
-            </RadioField>
-            <RadioField value="picture">
-              <RadioButton className={styles.wallpaperOption}>
-                <span className={cx(styles.wallpaperThumb, styles.wallpaperPicture)}>
-                  <IconPhotoPlus size={24} stroke={1.5} aria-hidden />
-                </span>
-                {t('personalization.wallpapers.picture')}
-              </RadioButton>
-            </RadioField>
-          </div>
-        </RadioGroup>
-      </div>
+      </main>
     </div>
   );
 }

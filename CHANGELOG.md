@@ -17,6 +17,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The backlog is the GitHub issues with labels and milestones, and the decisions are in `DECISIONS.md`; `TODO.md` is gone (D369).
 - Development: `tools/dev-vm/provision.sh` installs the GitHub CLI `gh`.
 - The release steps from the branches to the published files are on the docs page "Releasing" (English and German).
+- Design gallery: the Settings sample shows the tile overview of the Settings app instead of the old navigation, and the start menu sample finds settings pages by their real names.
 
 ### Fixed
 
