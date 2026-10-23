@@ -80,6 +80,7 @@ export const errorCodes = [
   'desktop.layout.invalid',
   'desktop.layout.too_large',
   'desktop.note.too_long',
+  'desktop.startup_apps.invalid',
   'fileservices.service.unavailable',
   'fileservices.workgroup.invalid',
   'fs.cursor.invalid',
