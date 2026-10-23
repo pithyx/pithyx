@@ -2,6 +2,7 @@ import {
   IconAlertTriangle,
   IconLanguage,
   IconLogout,
+  IconNetwork,
   IconPalette,
   IconShieldLock,
 } from '../ui/icons';
@@ -89,7 +90,7 @@ function useFilesTitle(): string {
   return t('windowTitle', { folder: currentFolder });
 }
 
-function windowsFor(set: WindowSet, apps: Apps, filesTitle: string, accent: string): WindowProps[] {
+function windowsFor(set: WindowSet, apps: Apps, filesTitle: string): WindowProps[] {
   if (set === 'three') {
     return [
       {
@@ -141,7 +142,7 @@ function windowsFor(set: WindowSet, apps: Apps, filesTitle: string, accent: stri
         geometry: { x: 0, y: 0, width: 100, height: 100 },
         compactActive: true,
         layer: 2,
-        children: <SettingsContent accent={accent} />,
+        children: <SettingsContent />,
       },
     ];
   }
@@ -237,7 +238,7 @@ export function DesktopScene({
           </div>
         </>
       )}
-      {windowsFor(windows, apps, filesTitle, context.accent).map((props) => (
+      {windowsFor(windows, apps, filesTitle).map((props) => (
         <Window key={props.title} {...props} />
       ))}
     </DesktopShell>
@@ -253,15 +254,15 @@ function useSearchResults(apps: Apps): StartResults {
     ],
     settings: [
       {
-        id: 's-wallpaper',
-        name: settings('personalization.wallpaper'),
-        detail: t('start.settingsPath', { section: settings('nav.personalization') }),
-        icon: IconPalette,
+        id: 's-network',
+        name: settings('pages.network.title'),
+        detail: t('start.settingsPath', { section: settings('categories.system') }),
+        icon: IconNetwork,
       },
       {
         id: 's-users',
-        name: settings('nav.users'),
-        detail: t('start.settingsPath', { section: settings('nav.users') }),
+        name: settings('pages.users.title'),
+        detail: t('start.settingsPath', { section: settings('categories.accounts') }),
         icon: IconShieldLock,
       },
     ],

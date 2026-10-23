@@ -136,7 +136,7 @@ export const screens: ScreenDefinition[] = [
     group: 'desktop',
     title: 'Maximized window',
     description:
-      'Settings maximized, showing the personalization page (theme, accent presets, taskbar position, wallpaper). Files is minimized.',
+      'Settings maximized, showing its overview of tiles by category. Files is minimized.',
     render: (context) => <DesktopScene context={context} windows="maximized" items={false} />,
   },
   {
