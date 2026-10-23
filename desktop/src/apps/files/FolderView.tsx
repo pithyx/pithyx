@@ -27,6 +27,12 @@ import {
 /** Drag data of entries dragged inside the Files app. */
 export const ENTRIES_TYPE = 'application/x-pithyx-files';
 
+/** Whether a drag carries entries of a Files window, files of the device, or neither. */
+export function dragKindOf(transfer: DataTransfer): 'files' | 'entries' | null {
+  const types = transfer.types;
+  return types.includes(ENTRIES_TYPE) ? 'entries' : types.includes('Files') ? 'files' : null;
+}
+
 export interface FolderViewProps {
   entries: readonly FileEntry[];
   total: number;
@@ -291,13 +297,8 @@ export function FolderView(props: FolderViewProps) {
     }
   }
 
-  function dragKind(event: DragEvent): 'files' | 'entries' | null {
-    const types = event.dataTransfer.types;
-    return types.includes(ENTRIES_TYPE) ? 'entries' : types.includes('Files') ? 'files' : null;
-  }
-
   function onDragOver(event: DragEvent, folder: string | null) {
-    const kind = dragKind(event);
+    const kind = dragKindOf(event.dataTransfer);
     if (kind === null || props.fixed === true) {
       return;
     }
@@ -309,7 +310,7 @@ export function FolderView(props: FolderViewProps) {
   }
 
   function onDrop(event: DragEvent, folder: string | null) {
-    const kind = dragKind(event);
+    const kind = dragKindOf(event.dataTransfer);
     setDropTarget(null);
     if (kind === null) {
       return;
