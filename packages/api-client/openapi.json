@@ -1475,6 +1475,40 @@
         }
       }
     },
+    "/api/desktop/startup-apps": {
+      "put": {
+        "tags": [
+          "Desktop"
+        ],
+        "description": "Replaces the apps the signed-in user opens after signing in, in order, for every device (at most 10). GET /api/desktop returns them as startupApps; the desktop skips apps that are gone or not allowed.",
+        "operationId": "SetStartupApps",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartupApps"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/desktop/items": {
       "get": {
         "tags": [
@@ -10987,7 +11021,8 @@
           "layoutVersion",
           "preferences",
           "appearance",
-          "fileDefaults"
+          "fileDefaults",
+          "startupApps"
         ],
         "type": "object",
         "properties": {
@@ -11024,6 +11059,13 @@
               "$ref": "#/components/schemas/FileDefault"
             },
             "description": "How the user opens files of an extension, by extension; the same on every device."
+          },
+          "startupApps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The apps the user opens after signing in, in order (D373); the same on every device."
           }
         }
       },
@@ -11619,6 +11661,7 @@
           "desktop.layout.invalid",
           "desktop.layout.too_large",
           "desktop.note.too_long",
+          "desktop.startup_apps.invalid",
           "fileservices.service.unavailable",
           "fileservices.workgroup.invalid",
           "fs.cursor.invalid",
@@ -17879,6 +17922,22 @@
           }
         },
         "description": "An uploaded update file that passed every check and waits for \"Install\".\n    `TrustedSignature`: False only for a development file on a development box."
+      },
+      "StartupApps": {
+        "required": [
+          "apps"
+        ],
+        "type": "object",
+        "properties": {
+          "apps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "App ids in the order they open, each once, at most int StartupApps.Max. Empty opens nothing."
+          }
+        },
+        "description": "The apps the user opens after signing in (D373); the same on every device."
       },
       "StorageAlert": {
         "required": [

@@ -5,6 +5,7 @@ export { default as IconActivity } from '@tabler/icons-react/dist/esm/icons/Icon
 export { default as IconAlertCircle } from '@tabler/icons-react/dist/esm/icons/IconAlertCircle.mjs';
 export { default as IconAlertTriangle } from '@tabler/icons-react/dist/esm/icons/IconAlertTriangle.mjs';
 export { default as IconApps } from '@tabler/icons-react/dist/esm/icons/IconApps.mjs';
+export { default as IconLogin } from '@tabler/icons-react/dist/esm/icons/IconLogin.mjs';
 export { default as IconArrowDown } from '@tabler/icons-react/dist/esm/icons/IconArrowDown.mjs';
 export { default as IconArrowLeft } from '@tabler/icons-react/dist/esm/icons/IconArrowLeft.mjs';
 export { default as IconArrowRight } from '@tabler/icons-react/dist/esm/icons/IconArrowRight.mjs';

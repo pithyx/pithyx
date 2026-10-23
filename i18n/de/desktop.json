@@ -42,7 +42,8 @@
     "unknownOs": "einem unbekannten System",
     "deviceDetail": "{count, plural, one {# Fenster} other {# Fenster}}, {time}",
     "deviceDetailScreen": "{width} × {height}, {count, plural, one {# Fenster} other {# Fenster}}, {time}",
-    "fileDefaults": "Standard-Apps"
+    "fileDefaults": "Standard-Apps",
+    "startupApps": "Beim Anmelden öffnen"
   },
   "error": {
     "title": "Etwas ist schiefgelaufen",
@@ -293,6 +294,12 @@
     "unavailable": "Eine App, die es nicht mehr gibt",
     "forget": "Vergessen",
     "forgetLabel": "Die Wahl für .{extension}-Dateien vergessen",
+    "close": "Schließen"
+  },
+  "startupApps": {
+    "title": "Beim Anmelden öffnen",
+    "intro": "Diese Apps öffnen sich, wenn du dich anmeldest, auf jedem Gerät, in der Reihenfolge, in der du sie angehakt hast. Fenster, die du offen gelassen hast, bleiben, wie sie waren. Höchstens {max} Apps.",
+    "suggested": "Von der App empfohlen",
     "close": "Schließen"
   }
 }
