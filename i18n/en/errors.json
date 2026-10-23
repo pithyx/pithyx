@@ -131,6 +131,10 @@
     "device": {
       "not_found": "No saved desktop was found for that device. It may have expired."
     },
+    "file_default": {
+      "invalid": "This way of opening files cannot be saved. Check the file type and the app.",
+      "limit_reached": "You have saved the maximum of {max} default apps. Remove one in the account menu under Default apps first."
+    },
     "item": {
       "conflict": "This desktop item was changed on another device in the meantime.",
       "invalid": "The desktop item could not be saved because it is not in a known format.",

@@ -43,6 +43,15 @@ public static class LayoutEndpoints
             .WithName("SetDesktopAppearance")
             .WithDescription("Saves the accent color and the wallpaper of the signed-in user, for every device. GET /api/desktop returns them.");
 
+        desktop.MapPut("/file-defaults/{extension}", SetFileDefaultAsync)
+            .WithName("SetFileDefault")
+            .WithDescription(
+                "Saves how the signed-in user opens files of an extension (lowercase, without the dot), for every device: "
+                + "viewer, download or app:<id>. GET /api/desktop returns them as fileDefaults.");
+        desktop.MapDelete("/file-defaults/{extension}", RemoveFileDefaultAsync)
+            .WithName("RemoveFileDefault")
+            .WithDescription("Forgets the signed-in user's choice for an extension. Forgetting one that does not exist also answers 204.");
+
         desktop.MapGet("/items", ListItemsAsync).WithName("ListDesktopItems");
         desktop.MapPost("/items", CreateItemAsync)
             .WithName("CreateDesktopItem")
@@ -139,6 +148,18 @@ public static class LayoutEndpoints
     private static async Task<NoContent> SetAppearanceAsync(Appearance appearance, LayoutService layouts, HttpContext context, CancellationToken cancellationToken)
     {
         await layouts.SetAppearanceAsync(CurrentUser.Id(context.User), appearance, cancellationToken);
+        return TypedResults.NoContent();
+    }
+
+    private static async Task<NoContent> SetFileDefaultAsync(string extension, FileDefaultRequest request, LayoutService layouts, HttpContext context, CancellationToken cancellationToken)
+    {
+        await layouts.SetFileDefaultAsync(CurrentUser.Id(context.User), new FileDefault(extension, request.Handler), cancellationToken);
+        return TypedResults.NoContent();
+    }
+
+    private static async Task<NoContent> RemoveFileDefaultAsync(string extension, LayoutService layouts, HttpContext context, CancellationToken cancellationToken)
+    {
+        await layouts.RemoveFileDefaultAsync(CurrentUser.Id(context.User), extension, cancellationToken);
         return TypedResults.NoContent();
     }
 

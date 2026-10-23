@@ -3,38 +3,51 @@ import type { InstalledApp } from '../installed';
 import { viewKindOf } from '../viewer/kinds';
 
 /**
- * What a double click, Enter or a tap does with an entry: the one place that decides. Files the viewer shows open
- * in it; every other file is downloaded. A symlink is opened like a folder; the app downloads it when the daemon
- * says it points to a file.
+ * What a double click, Enter or a tap does with an entry: the one place that decides. A file opens the way the user
+ * chose for its extension ("Always use this app"), else in the only app whose manifest names it as default, else in
+ * the viewer if it shows the file, else it is downloaded. A symlink is opened like a folder; the app downloads it when
+ * the daemon says it points to a file.
  */
 export type DefaultAction =
-  { kind: 'openFolder' } | { kind: 'view' } | { kind: 'download' } | { kind: 'none' };
-
-export function defaultAction(entry: FileEntry): DefaultAction {
-  switch (entry.kind) {
-    case 'folder':
-    case 'symlink':
-      return { kind: 'openFolder' };
-    case 'file':
-      return viewKindOf(entry.name) === null ? { kind: 'download' } : { kind: 'view' };
-    case 'other':
-      return { kind: 'none' };
-  }
-}
+  | { kind: 'openFolder' }
+  | { kind: 'view' }
+  | { kind: 'download' }
+  | { kind: 'app'; id: string }
+  | { kind: 'none' };
 
 /** The ways "Open with" offers for a file: the viewer, a download, and an installed app by its id (`app:<id>`). */
 export type OpenWith = 'viewer' | 'download' | `app:${string}`;
 
+/** The user's choices by extension (lowercase, without the dot), as `GET /api/desktop` returns them. */
+export type FileDefaults = Readonly<Record<string, string>>;
+
+const EXTENSION = /^[a-z0-9]+([.+_-][a-z0-9]+)*$/;
+
+/**
+ * The extension a choice for this file is saved under: the part after the last dot, if the daemon accepts it.
+ * `null` for a name without one, so "Always use this app" is not offered.
+ */
+export function choiceExtension(name: string): string | null {
+  const dot = name.lastIndexOf('.');
+  if (dot <= 0 || dot === name.length - 1) {
+    return null;
+  }
+  const extension = name.slice(dot + 1).toLowerCase();
+  return extension.length <= 32 && EXTENSION.test(extension) ? extension : null;
+}
+
+function handles(app: InstalledApp, name: string, onlyDefault: boolean): boolean {
+  return app.fileHandlers.some(
+    (handler) =>
+      (!onlyDefault || handler.isDefault) &&
+      handler.extensions.some((extension) => name.endsWith(`.${extension}`)),
+  );
+}
+
 /** The installed apps whose `fileHandlers` name the extension of a file. */
 export function appsFor(entry: FileEntry, apps: readonly InstalledApp[]): string[] {
   const name = entry.name.toLowerCase();
-  return apps
-    .filter((app) =>
-      app.fileHandlers.some((handler) =>
-        handler.extensions.some((extension) => name.endsWith(`.${extension}`)),
-      ),
-    )
-    .map((app) => app.id);
+  return apps.filter((app) => handles(app, name, false)).map((app) => app.id);
 }
 
 export function openWithChoices(entry: FileEntry, apps: readonly InstalledApp[] = []): OpenWith[] {
@@ -46,4 +59,44 @@ export function openWithChoices(entry: FileEntry, apps: readonly InstalledApp[] 
     'download',
     ...appsFor(entry, apps).map((id): OpenWith => `app:${id}`),
   ];
+}
+
+function asAction(choice: OpenWith): DefaultAction {
+  if (choice === 'viewer') {
+    return { kind: 'view' };
+  }
+  if (choice === 'download') {
+    return { kind: 'download' };
+  }
+  return { kind: 'app', id: choice.slice('app:'.length) };
+}
+
+export function defaultAction(
+  entry: FileEntry,
+  apps: readonly InstalledApp[] = [],
+  choices: FileDefaults = {},
+): DefaultAction {
+  switch (entry.kind) {
+    case 'folder':
+    case 'symlink':
+      return { kind: 'openFolder' };
+    case 'other':
+      return { kind: 'none' };
+    case 'file':
+      break;
+  }
+  const extension = choiceExtension(entry.name);
+  const chosen = extension === null ? undefined : choices[extension];
+  // A choice of an app that is gone or no longer handles the file counts as no choice.
+  const offered = openWithChoices(entry, apps);
+  const usable = offered.find((choice) => choice === chosen);
+  if (usable !== undefined) {
+    return asAction(usable);
+  }
+  const name = entry.name.toLowerCase();
+  const defaults = apps.filter((app) => handles(app, name, true));
+  if (defaults.length === 1 && defaults[0] !== undefined) {
+    return { kind: 'app', id: defaults[0].id };
+  }
+  return viewKindOf(entry.name) === null ? { kind: 'download' } : { kind: 'view' };
 }

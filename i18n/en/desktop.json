@@ -41,7 +41,8 @@
     "unknownBrowser": "A browser",
     "unknownOs": "an unknown system",
     "deviceDetail": "{count, plural, one {# window} other {# windows}}, {time}",
-    "deviceDetailScreen": "{width} × {height}, {count, plural, one {# window} other {# windows}}, {time}"
+    "deviceDetailScreen": "{width} × {height}, {count, plural, one {# window} other {# windows}}, {time}",
+    "fileDefaults": "Default apps"
   },
   "error": {
     "title": "Something went wrong",
@@ -282,5 +283,16 @@
       "storage": "{name} cannot start until an administrator picks a folder for it in the Store.",
       "pool": "{name} cannot start because its pool is locked or missing."
     }
+  },
+  "fileDefaults": {
+    "title": "Default apps",
+    "intro": "In Files, files of these types open this way. To choose another way, use Open with in Files.",
+    "empty": "You have not chosen a default app yet. In Files, choose Open with and tick \"Always open … files this way\".",
+    "viewer": "Viewer",
+    "download": "Download",
+    "unavailable": "An app that is no longer available",
+    "forget": "Forget",
+    "forgetLabel": "Forget the choice for .{extension} files",
+    "close": "Close"
   }
 }

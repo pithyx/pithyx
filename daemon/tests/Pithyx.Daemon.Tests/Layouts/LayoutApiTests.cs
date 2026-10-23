@@ -362,6 +362,72 @@ public sealed class LayoutApiTests : IDisposable
     }
 
     [Fact]
+    public async Task FileDefaultsFollowTheUserToEveryDeviceAndCanBeForgotten()
+    {
+        var laptop = await SetupAsync();
+        using (var pdf = await SendAsync(HttpMethod.Put, "/api/desktop/file-defaults/pdf", laptop, new { handler = "app:com.example.reader" }))
+        {
+            Assert.Equal(HttpStatusCode.NoContent, pdf.StatusCode);
+        }
+        using (var archive = await SendAsync(HttpMethod.Put, "/api/desktop/file-defaults/tar.gz", laptop, new { handler = "download" }))
+        {
+            Assert.Equal(HttpStatusCode.NoContent, archive.StatusCode);
+        }
+        using (var again = await SendAsync(HttpMethod.Put, "/api/desktop/file-defaults/pdf", laptop, new { handler = "viewer" }))
+        {
+            Assert.Equal(HttpStatusCode.NoContent, again.StatusCode);
+        }
+
+        var phone = await SecondDeviceAsync();
+        using (var state = await SendAsync(HttpMethod.Get, "/api/desktop", phone))
+        {
+            var defaults = (await state.JsonAsync()).GetProperty("fileDefaults").EnumerateArray()
+                .Select(item => (item.GetProperty("extension").GetString(), item.GetProperty("handler").GetString()));
+            Assert.Equal([("pdf", "viewer"), ("tar.gz", "download")], defaults);
+        }
+
+        using var forget = await SendAsync(HttpMethod.Delete, "/api/desktop/file-defaults/pdf", phone);
+        using var forgotten = await SendAsync(HttpMethod.Get, "/api/desktop", laptop);
+        Assert.Equal(HttpStatusCode.NoContent, forget.StatusCode);
+        Assert.Equal(["tar.gz"], (await forgotten.JsonAsync()).GetProperty("fileDefaults").EnumerateArray().Select(item => item.GetProperty("extension").GetString()));
+    }
+
+    [Theory]
+    [InlineData("PDF", "viewer")]
+    [InlineData(".pdf", "viewer")]
+    [InlineData("pdf", "open")]
+    [InlineData("pdf", "app:")]
+    [InlineData("pdf", "app:Not An App")]
+    public async Task InvalidFileDefaultsAreRejected(string extension, string handler)
+    {
+        var cookies = await SetupAsync();
+
+        using var put = await SendAsync(HttpMethod.Put, $"/api/desktop/file-defaults/{Uri.EscapeDataString(extension)}", cookies, new { handler });
+
+        Assert.Equal(HttpStatusCode.BadRequest, put.StatusCode);
+        Assert.Equal("desktop.file_default.invalid", await put.ErrorCodeAsync());
+    }
+
+    [Fact]
+    public async Task FileDefaultsStopAtTheLimitButAnExistingOneCanStillChange()
+    {
+        var cookies = await SetupAsync();
+        var userId = await UserIdAsync("admin");
+        var layouts = _factory.Services.GetRequiredService<LayoutService>();
+        for (var index = 0; index < FileDefault.MaxPerUser; index++)
+        {
+            await layouts.SetFileDefaultAsync(userId, new FileDefault($"x{index}", "download"), Token);
+        }
+
+        using var full = await SendAsync(HttpMethod.Put, "/api/desktop/file-defaults/pdf", cookies, new { handler = "viewer" });
+        using var change = await SendAsync(HttpMethod.Put, "/api/desktop/file-defaults/x0", cookies, new { handler = "viewer" });
+
+        Assert.Equal(HttpStatusCode.Conflict, full.StatusCode);
+        Assert.Equal("desktop.file_default.limit_reached", await full.ErrorCodeAsync());
+        Assert.Equal(HttpStatusCode.NoContent, change.StatusCode);
+    }
+
+    [Fact]
     public async Task TheHourlyCleanupDeletesLayoutsOnlyAfterTheyExpire()
     {
         var cookies = await SetupAsync();

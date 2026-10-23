@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect } from 'react';
 import { api } from '../api/client';
 import { isAppAllowed } from '../apps/access';
 import { useInstalledApps } from '../apps/installed';
+import { applyFileDefaults } from '../apps/files/fileDefaults';
 import { findApp } from '../apps/registry';
 import { describeError, isSessionExpired } from '../errors/describe';
 import { clearToasts, notify } from '../shell/toasts';
@@ -228,6 +229,7 @@ export function useLayoutPersistence() {
     }
     layoutVersion = desktop.data.layoutVersion;
     applyAppearance(checkedAppearance(desktop.data.appearance));
+    applyFileDefaults(desktop.data.fileDefaults);
     for (const preference of desktop.data.preferences) {
       setPreferredSize(preference.appId, { width: preference.width, height: preference.height });
     }

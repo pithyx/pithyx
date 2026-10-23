@@ -1,7 +1,7 @@
 import type { FileEntry, FolderPage } from '@pithyx/sdk';
 import { describe, expect, it } from 'vitest';
 import type { InstalledApp } from '../installed';
-import { defaultAction, openWithChoices } from './defaultAction';
+import { choiceExtension, defaultAction, openWithChoices } from './defaultAction';
 import { compareEntries, naturalKey } from './order';
 import { applyChange, loadedEntries, type FolderPages } from './pages';
 import { crumbsOf, freeName, joinPath, parentOf } from './paths';
@@ -170,6 +170,63 @@ describe('default action', () => {
     expect(openWithChoices(entry('a.zip'), apps)).toEqual(['download']);
     expect(openWithChoices(entry('png', 0, 'folder'), apps)).toEqual([]);
     expect(defaultAction(entry('dev', 0, 'other'))).toEqual({ kind: 'none' });
+  });
+
+  const handler = (id: string, extensions: string[], isDefault: boolean): InstalledApp => ({
+    id,
+    version: '1.0.0',
+    name: { en: id },
+    description: null,
+    entry: '/apps/x/index.html',
+    icon: '',
+    window: {},
+    permissions: [],
+    logLevel: 'info',
+    fileHandlers: [{ extensions, isDefault }],
+  });
+
+  it('opens a file in the only app that is the default for it, else as before', () => {
+    const reader = handler('com.example.reader', ['pdf'], true);
+    const other = handler('com.example.other', ['pdf'], true);
+    const plain = handler('com.example.plain', ['zip'], false);
+    expect(defaultAction(entry('a.PDF'), [reader, plain])).toEqual({
+      kind: 'app',
+      id: 'com.example.reader',
+    });
+    expect(defaultAction(entry('a.pdf'), [reader, other])).toEqual({ kind: 'view' });
+    expect(defaultAction(entry('a.zip'), [plain])).toEqual({ kind: 'download' });
+  });
+
+  it("follows the user's choice while it can still be used", () => {
+    const reader = handler('com.example.reader', ['pdf'], true);
+    const editor = handler('com.example.editor', ['pdf'], false);
+    const apps = [reader, editor];
+    expect(defaultAction(entry('a.pdf'), apps, { pdf: 'app:com.example.editor' })).toEqual({
+      kind: 'app',
+      id: 'com.example.editor',
+    });
+    expect(defaultAction(entry('a.pdf'), apps, { pdf: 'viewer' })).toEqual({ kind: 'view' });
+    expect(defaultAction(entry('a.pdf'), apps, { pdf: 'download' })).toEqual({
+      kind: 'download',
+    });
+    // An app that is gone, or the viewer for a file it cannot show, counts as no choice.
+    expect(defaultAction(entry('a.pdf'), [reader], { pdf: 'app:com.example.editor' })).toEqual({
+      kind: 'app',
+      id: 'com.example.reader',
+    });
+    expect(defaultAction(entry('a.zip'), [], { zip: 'viewer' })).toEqual({ kind: 'download' });
+    expect(defaultAction(entry('dir.pdf', 0, 'folder'), apps, { pdf: 'viewer' })).toEqual({
+      kind: 'openFolder',
+    });
+  });
+
+  it('saves a choice under the last extension the daemon accepts', () => {
+    expect(choiceExtension('Report.PDF')).toBe('pdf');
+    expect(choiceExtension('backup.tar.gz')).toBe('gz');
+    expect(choiceExtension('README')).toBeNull();
+    expect(choiceExtension('.bashrc')).toBeNull();
+    expect(choiceExtension('trailing.')).toBeNull();
+    expect(choiceExtension('odd.ex~t')).toBeNull();
   });
 });
 

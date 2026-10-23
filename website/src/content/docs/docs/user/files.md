@@ -28,7 +28,7 @@ To move around:
 
 The status line shows how many items the folder holds, or how many you selected. Long folders load in pages as you scroll. The window remembers its folder and view for the next time.
 
-Opening a file depends on its type: pictures, PDFs, text, audio and video open in the Viewer; other files download. To choose, right-click and pick **Open with…**, then **Viewer**, **Download** or an installed app that declares it opens this file type. Names that start with `.pithyx-upload-` and the folder `.pithyx-trash` are internal and not shown.
+Opening a file depends on its type: pictures, PDFs, text, audio and video open in the Viewer; other files download. An installed app that is the only one to declare itself the default for a file type opens it instead. To choose, right-click and pick **Open with…**, then **Viewer**, **Download** or an installed app that declares it opens this file type. Tick **Always open .x files this way** before you choose, and every file of that type opens this way from then on, on every device you sign in to. Your choices are in the account menu under **Default apps**, where **Forget** goes back to the usual way. A choice of an app that was removed is ignored. Names that start with `.pithyx-upload-` and the folder `.pithyx-trash` are internal and not shown.
 
 Right-click an item for its menu: **Open**, **Download**, **Open with…**, **Copy**, **Cut**, **Rename**, **Previous versions**, **Move to recycle bin** and **Delete permanently**. Right-click an empty spot for **New folder**, **Upload**, **Paste** (after you copied or cut something) and **Select all**. Actions that change something appear only when you may write to the shared folder.
 

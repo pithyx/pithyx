@@ -70,6 +70,8 @@ export const errorCodes = [
   'auth.username.invalid',
   'auth.username.reserved',
   'desktop.device.not_found',
+  'desktop.file_default.invalid',
+  'desktop.file_default.limit_reached',
   'desktop.item.conflict',
   'desktop.item.invalid',
   'desktop.item.limit_reached',

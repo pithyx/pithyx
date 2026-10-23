@@ -80,11 +80,45 @@ public sealed class LayoutService(SqliteConnectionFactory connections, TimeProvi
         var appearance = await connection.QuerySingleOrDefaultAsync<AppearanceRow>(
             "SELECT accent AS Accent, wallpaper AS Wallpaper FROM user_appearance WHERE user_id = @userId",
             new { userId });
+        var fileDefaults = await connection.QueryAsync<FileDefault>(
+            "SELECT extension AS Extension, handler AS Handler FROM user_file_defaults WHERE user_id = @userId ORDER BY extension",
+            new { userId });
         return new DesktopState(
             layout is null ? null : Parse(layout.Json),
             layout?.Version ?? 0,
             [.. preferences.Select(row => new WindowPreference(row.AppId, (int)row.Width, (int)row.Height))],
-            appearance is null ? Appearance.Default : new Appearance(appearance.Accent, appearance.Wallpaper));
+            appearance is null ? Appearance.Default : new Appearance(appearance.Accent, appearance.Wallpaper),
+            [.. fileDefaults]);
+    }
+
+    /// <summary>Saves how the user opens files of an extension; replaces an earlier choice for it.</summary>
+    public async Task SetFileDefaultAsync(long userId, FileDefault fileDefault, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(fileDefault);
+        if (!fileDefault.IsValid())
+        {
+            throw new PithyxException(ErrorCodes.DesktopFileDefaultInvalid);
+        }
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        var saved = await connection.ExecuteAsync(
+            """
+            INSERT INTO user_file_defaults (user_id, extension, handler, updated_at)
+            SELECT @userId, @Extension, @Handler, @now
+            WHERE (SELECT count(*) FROM user_file_defaults WHERE user_id = @userId AND extension <> @Extension) < @max
+            ON CONFLICT (user_id, extension) DO UPDATE SET handler = excluded.handler, updated_at = excluded.updated_at
+            """,
+            new { userId, fileDefault.Extension, fileDefault.Handler, now = SessionService.Format(time.GetUtcNow()), max = FileDefault.MaxPerUser });
+        if (saved == 0)
+        {
+            throw new PithyxException(ErrorCodes.DesktopFileDefaultLimitReached, new Dictionary<string, object?> { ["max"] = FileDefault.MaxPerUser });
+        }
+    }
+
+    /// <summary>Forgets the user's choice for an extension; files of it open as the manifests say again.</summary>
+    public async Task RemoveFileDefaultAsync(long userId, string extension, CancellationToken cancellationToken)
+    {
+        await using var connection = await connections.OpenAsync(cancellationToken);
+        await connection.ExecuteAsync("DELETE FROM user_file_defaults WHERE user_id = @userId AND extension = @extension", new { userId, extension });
     }
 
     /// <summary>Saves the accent color and wallpaper of the user; the same on every device.</summary>

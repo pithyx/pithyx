@@ -14,7 +14,7 @@ import {
 import { Fragment, useEffect, useEffectEvent, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStore } from 'zustand';
-import { Button, cx, Dialog, IconButton } from '@pithyx/ui';
+import { Button, Checkbox, cx, Dialog, IconButton } from '@pithyx/ui';
 import {
   IconArrowLeft,
   IconArrowRight,
@@ -34,7 +34,8 @@ import {
 import { randomId } from '../../platform/browser';
 import { setClipboard, useFilesClipboard } from './clipboard';
 import { filesCall, onThumbnails, thumbnailUrl } from '../sdk/filesInternal';
-import { defaultAction, openWithChoices, type OpenWith } from './defaultAction';
+import { choiceExtension, defaultAction, openWithChoices, type OpenWith } from './defaultAction';
+import { chooseFileDefault, useFileDefaults } from './fileDefaults';
 import { useInstalledApps } from '../installed';
 import { useAppName } from '../names';
 import styles from './FilesApp.module.css';
@@ -137,6 +138,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
   );
   const thumbnailStates = useStore(thumbnails.store, (state) => state.byKey);
   const [openWith, setOpenWith] = useState<FileEntry | null>(null);
+  const [alwaysUse, setAlwaysUse] = useState(false);
   const installed = useInstalledApps((state) => state.apps);
   const appName = useAppName();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -530,11 +532,13 @@ export function FilesApp({ app }: { app: PithyxApp }) {
       return;
     }
     const target = joinPath(path, entry.name);
-    const action = defaultAction(entry);
+    const action = defaultAction(entry, installed ?? [], useFileDefaults.getState().choices);
     if (action.kind === 'download') {
       await app.files.download(location, target).catch(report);
     } else if (action.kind === 'view') {
       await openIn(entry, 'viewer');
+    } else if (action.kind === 'app') {
+      await openIn(entry, `app:${action.id}`);
     } else if (action.kind === 'openFolder') {
       if (entry.kind === 'symlink') {
         // A link may point to a file; the daemon says which when it is listed.
@@ -576,6 +580,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
         break;
       case 'openWith':
         if (entry !== undefined) {
+          setAlwaysUse(false);
           setOpenWith(entry);
         }
         break;
@@ -1041,7 +1046,11 @@ export function FilesApp({ app }: { app: PithyxApp }) {
                 key={choice}
                 onPress={() => {
                   const entry = openWith;
+                  const extension = choiceExtension(entry.name);
                   setOpenWith(null);
+                  if (alwaysUse && extension !== null) {
+                    chooseFileDefault(extension, choice).catch(report);
+                  }
                   void openIn(entry, choice);
                 }}
               >
@@ -1050,6 +1059,11 @@ export function FilesApp({ app }: { app: PithyxApp }) {
                   : appName(choice.slice('app:'.length))}
               </Button>
             ))}
+          {openWith !== null && choiceExtension(openWith.name) !== null && (
+            <Checkbox isSelected={alwaysUse} onChange={setAlwaysUse}>
+              {t('openWith.always', { extension: choiceExtension(openWith.name) })}
+            </Checkbox>
+          )}
         </div>
       </Dialog>
       <Dialog

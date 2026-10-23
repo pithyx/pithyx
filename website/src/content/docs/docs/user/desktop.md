@@ -81,6 +81,7 @@ To move the taskbar, open the Pithyx menu, click your name, choose **Taskbar pos
 - **Two-factor authentication**
 - **Language**
 - **Appearance**, **Accent color** and **Wallpaper**
+- **Default apps**: the file types you chose to always open one way in Files, each with **Forget** ([Files](/docs/user/files/))
 - **Get desktop from**
 - **Taskbar position** (not on phones)
 
