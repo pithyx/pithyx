@@ -17654,6 +17654,28 @@
           }
         }
       },
+      "SnapshotChanges": {
+        "required": [
+          "revision",
+          "datasets"
+        ],
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "description": "Changes whenever a snapshot came, went or changed; compare it, do not count on it.",
+            "format": "int64"
+          },
+          "datasets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The datasets whose snapshots changed; empty in the snapshot of the topic."
+          }
+        },
+        "description": "Snapshot and event of `storage/snapshots`."
+      },
       "SnapshotCreateRequest": {
         "required": [
           "dataset"
@@ -19006,6 +19028,7 @@
           "storage/alerts",
           "storage/disks",
           "storage/pools",
+          "storage/snapshots",
           "store/admin",
           "system/info",
           "system/network",
@@ -19052,6 +19075,9 @@
           "storage/pools": {
             "$ref": "#/components/schemas/PoolList"
           },
+          "storage/snapshots": {
+            "$ref": "#/components/schemas/SnapshotChanges"
+          },
           "store/admin": {
             "$ref": "#/components/schemas/StoreState"
           },
@@ -19089,6 +19115,7 @@
           "storage/alerts",
           "storage/disks",
           "storage/pools",
+          "storage/snapshots",
           "store/admin",
           "system/info",
           "system/network",
@@ -19134,6 +19161,9 @@
           },
           "storage/pools": {
             "$ref": "#/components/schemas/PoolList"
+          },
+          "storage/snapshots": {
+            "$ref": "#/components/schemas/SnapshotChanges"
           },
           "store/admin": {
             "$ref": "#/components/schemas/StoreState"

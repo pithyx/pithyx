@@ -14,6 +14,8 @@ public static class SnapshotEndpoints
     public static IServiceCollection AddPithyxSnapshots(this IServiceCollection services)
     {
         services.AddSingleton<SnapshotInventory>();
+        services.AddSingleton(provider => provider.GetRequiredService<SnapshotInventory>().Definition());
+        services.AddHostedService<SnapshotChangePublisher>();
         services.AddSingleton<SnapshotService>();
         // The build-time OpenAPI run must not run zfs on the build machine.
         if (!BuildTimeDocument.IsGenerating)

@@ -105,6 +105,9 @@ export type AdminApp = (typeof adminApps)[number];
 /** Sent to the app when pools or disks changed; the app reads them again. */
 export const STORAGE_CHANGED = 'internal.admin.storage.changed';
 
+/** Sent to the app with the datasets whose snapshots changed (the `storage/snapshots` topic). */
+export const SNAPSHOTS_CHANGED = 'internal.admin.storage.snapshots.changed';
+
 /** Sent to the app with every change of a job it started with `internal.admin.storage.run`. */
 export const STORAGE_JOB = 'internal.admin.storage.job';
 
@@ -287,10 +290,18 @@ export function adminStorageHost(emit: (event: string, data?: unknown) => void):
   };
   // The first message is the snapshot the app has already read; later revisions are changes.
   let sharesRevision: number | undefined;
+  let snapshotsRevision: number | undefined;
   const stops = [
     realtime.listen('storage/pools', changed),
     realtime.listen('storage/disks', changed),
     realtime.listen('storage/alerts', changed),
+    realtime.listen('storage/snapshots', (data) => {
+      const { revision, datasets } = data as components['schemas']['SnapshotChanges'];
+      if (snapshotsRevision !== undefined && revision !== snapshotsRevision) {
+        emit(SNAPSHOTS_CHANGED, datasets);
+      }
+      snapshotsRevision = revision;
+    }),
     realtime.listen('shares/list', (data) => {
       const { revision } = data as components['schemas']['ShareListRevision'];
       if (sharesRevision !== undefined && revision !== sharesRevision) {
@@ -529,7 +540,8 @@ export async function internalCall<M extends InternalName>(
 /** Listens for an internal event; returns the function that stops listening. */
 export function onInternal(
   app: PithyxApp,
-  event: typeof STORAGE_CHANGED | typeof STORAGE_JOB | typeof SHARES_CHANGED,
+  event:
+    typeof STORAGE_CHANGED | typeof STORAGE_JOB | typeof SHARES_CHANGED | typeof SNAPSHOTS_CHANGED,
   handler: (data: unknown) => void,
 ): () => void {
   return app.on(event as unknown as EventName, handler);
