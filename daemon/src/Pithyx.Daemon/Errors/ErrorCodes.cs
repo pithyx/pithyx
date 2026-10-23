@@ -394,6 +394,14 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.NotFound)]
     public const string DesktopDeviceNotFound = "desktop.device.not_found";
 
+    /// <summary>A file default named an extension or a way to open files that is not valid.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string DesktopFileDefaultInvalid = "desktop.file_default.invalid";
+
+    /// <summary>A user has <c>params.max</c> file defaults already.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string DesktopFileDefaultLimitReached = "desktop.file_default.limit_reached";
+
     /// <summary>A change of a desktop item named an older version (If-Match); <c>params.version</c> is the current one.</summary>
     [ErrorStatus(HttpStatusCode.PreconditionFailed)]
     public const string DesktopItemConflict = "desktop.item.conflict";

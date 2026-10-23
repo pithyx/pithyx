@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Files opens a file with a double click in the app chosen for its type: "Open with" has "Always open .x files this way", the choices follow the user to every device and are listed under "Default apps" in the account menu; without a choice the only installed app that sets `isDefault` for the type opens it (D371).
 - `image/baseline/pithyx-1.0.0-amd64.packages`: the package list of the 1.0.0 image, the base that `build-update.sh` and `pithyx-release update` build the first 1.0.x update files against.
 
 ### Changed

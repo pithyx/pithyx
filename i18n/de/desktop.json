@@ -41,7 +41,8 @@
     "unknownBrowser": "Ein Browser",
     "unknownOs": "einem unbekannten System",
     "deviceDetail": "{count, plural, one {# Fenster} other {# Fenster}}, {time}",
-    "deviceDetailScreen": "{width} × {height}, {count, plural, one {# Fenster} other {# Fenster}}, {time}"
+    "deviceDetailScreen": "{width} × {height}, {count, plural, one {# Fenster} other {# Fenster}}, {time}",
+    "fileDefaults": "Standard-Apps"
   },
   "error": {
     "title": "Etwas ist schiefgelaufen",
@@ -282,5 +283,16 @@
       "storage": "{name} kann erst starten, wenn ein Administrator im Store einen Ordner dafür wählt.",
       "pool": "{name} kann nicht starten, weil sein Pool gesperrt ist oder fehlt."
     }
+  },
+  "fileDefaults": {
+    "title": "Standard-Apps",
+    "intro": "In Dateien öffnen sich Dateien dieser Typen so. Eine andere Art wählst du in Dateien mit Öffnen mit.",
+    "empty": "Du hast noch keine Standard-App gewählt. Wähle in Dateien Öffnen mit und setze das Häkchen bei „… immer so öffnen“.",
+    "viewer": "Betrachter",
+    "download": "Herunterladen",
+    "unavailable": "Eine App, die es nicht mehr gibt",
+    "forget": "Vergessen",
+    "forgetLabel": "Die Wahl für .{extension}-Dateien vergessen",
+    "close": "Schließen"
   }
 }

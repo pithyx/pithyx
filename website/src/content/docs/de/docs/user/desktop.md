@@ -81,6 +81,7 @@ Um die Taskleiste zu verschieben, öffne das Pithyx-Menü, klicke auf deinen Nam
 - **Zwei-Faktor-Authentifizierung**
 - **Sprache**
 - **Darstellung**, **Akzentfarbe** und **Hintergrundbild**
+- **Standard-Apps**: die Dateitypen, die sich in Dateien immer auf eine Art öffnen sollen, jeweils mit **Vergessen** ([Dateien](/de/docs/user/files/))
 - **Desktop holen von**
 - **Position der Taskleiste** (nicht auf Handys)
 
