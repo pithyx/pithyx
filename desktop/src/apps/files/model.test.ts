@@ -2,6 +2,7 @@ import type { FileEntry, FolderPage } from '@pithyx/sdk';
 import { describe, expect, it } from 'vitest';
 import type { InstalledApp } from '../installed';
 import { choiceExtension, defaultAction, openWithChoices } from './defaultAction';
+import { itemsToDrop, parseDragged } from './drop';
 import { compareEntries, naturalKey } from './order';
 import { applyChange, loadedEntries, type FolderPages } from './pages';
 import { crumbsOf, freeName, joinPath, parentOf } from './paths';
@@ -248,5 +249,40 @@ describe('paths', () => {
     expect(freeName('Report.pdf', (name) => taken.has(name))).toBe('Report (3).pdf');
     expect(freeName('New folder', () => false)).toBe('New folder (2)');
     expect(freeName('.env', () => false)).toBe('.env (2)');
+  });
+});
+
+describe('drop targets', () => {
+  const dragged = { share: 's1', folder: 'a', items: { names: ['b', 'c'] } };
+
+  it('moves entries to another folder or another share', () => {
+    expect(itemsToDrop(dragged, { share: 's1', path: '' })).toEqual({ names: ['b', 'c'] });
+    expect(itemsToDrop(dragged, { share: 's2', path: 'a' })).toEqual({ names: ['b', 'c'] });
+  });
+
+  it('does nothing on the folder the entries are in', () => {
+    expect(itemsToDrop(dragged, { share: 's1', path: 'a' })).toBeNull();
+    expect(itemsToDrop({ ...dragged, share: null }, { share: 's1', path: '' })).toBeNull();
+  });
+
+  it('never moves a folder into itself or below it, but still its siblings', () => {
+    expect(itemsToDrop(dragged, { share: 's1', path: 'a/b' })).toEqual({ names: ['c'] });
+    expect(itemsToDrop(dragged, { share: 's1', path: 'a/b/deep' })).toEqual({ names: ['c'] });
+    expect(
+      itemsToDrop({ ...dragged, items: { names: ['b'] } }, { share: 's1', path: 'a/b' }),
+    ).toBeNull();
+    expect(itemsToDrop(dragged, { share: 's1', path: 'ab' })).toEqual({ names: ['b', 'c'] });
+    expect(
+      itemsToDrop(
+        { ...dragged, folder: '', items: { all: true, except: [] } },
+        { share: 's1', path: 'x/y' },
+      ),
+    ).toEqual({ all: true, except: ['x'] });
+  });
+
+  it('reads only the data of a drag of entries', () => {
+    expect(parseDragged(JSON.stringify(dragged))).toEqual(dragged);
+    expect(parseDragged('not json')).toBeNull();
+    expect(parseDragged('{}')).toBeNull();
   });
 });

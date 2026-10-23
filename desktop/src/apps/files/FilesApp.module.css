@@ -113,7 +113,8 @@
   font-size: 0.85em;
 }
 
-.sideItem:hover {
+.sideItem:hover,
+.sideItem[data-drop-target] {
   background: var(--pithyx-color-hover);
 }
 

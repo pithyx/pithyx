@@ -41,7 +41,7 @@ Wiederherstellungspunkte liegen auf denselben Platten wie die Dateien. Sie erset
 ## Hochladen
 
 1. Öffne den Ordner, in den die Dateien sollen.
-2. Klicke auf **Hochladen** und wähle Dateien aus, oder ziehe Dateien von deinem Computer in das Fenster. Lass sie auf einem Ordner fallen, um sie darin abzulegen.
+2. Klicke auf **Hochladen** und wähle Dateien aus, oder ziehe Dateien von deinem Computer in das Fenster. Lass sie auf einem Ordner, einem Teil des Pfads über der Liste oder einer Freigabe in der Seitenleiste fallen, um sie dort abzulegen.
 3. Verfolge den Fortschritt in der Schaltfläche für Übertragungen in der Taskleiste. Sie zeigt die Geschwindigkeit und die Restzeit und hat eine Schaltfläche, um eine Übertragung abzubrechen.
 
 Gut zu wissen:
@@ -60,7 +60,7 @@ Gut zu wissen:
 _Der Dialog, wenn es die Namen im Zielordner schon gibt._
 
 - **Kopieren und Einfügen:** Wähle Elemente aus, drücke **Strg+C** (oder **Cmd+C**), öffne den Zielordner und drücke **Strg+V**. **Strg+X** schneidet aus, statt zu kopieren.
-- **Ziehen und Ablegen:** Elemente in einen anderen Ordner oder auf eine Freigabe in der Seitenleiste zu ziehen, verschiebt sie. Halte beim Ablegen **Strg** oder **Alt** gedrückt, um zu kopieren.
+- **Ziehen und Ablegen:** Elemente auf einen anderen Ordner, einen Teil des Pfads über der Liste oder eine Freigabe in der Seitenleiste zu ziehen, verschiebt sie dorthin (eine Freigabe, die du nur lesen darfst, nimmt nichts an). Halte beim Ablegen **Strg** oder **Alt** gedrückt, um zu kopieren.
 - **Umbenennen:** Drücke **F2** oder wähle **Umbenennen**. Ein Name darf nicht leer sein, kein `/` enthalten und höchstens 255 Bytes lang sein.
 - **Neuer Ordner:** Wähle **Neuer Ordner** und tippe dann seinen Namen.
 
