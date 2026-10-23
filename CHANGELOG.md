@@ -18,6 +18,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Development: `tools/dev-vm/provision.sh` installs the GitHub CLI `gh`.
 - The release steps from the branches to the published files are on the docs page "Releasing" (English and German).
 
+### Fixed
+
+- FTP refuses an upload without the write right with `550` before it opens the data connection, instead of closing it mid-transfer ("Broken pipe" in clients).
+- The daemon releases the event throttle of a topic that went quiet, so finished jobs and closed folders no longer leave one behind for good.
+- `image/build.sh` can run again after a build: the .NET compiler server no longer keeps the lock of `image/out/work`.
+
 ## [1.0.0] - 2026-10-18
 
 The first release, codename Pyxis (D345, D366): the NAS core, the file services, the app runtime with the Store, the installer and the updater. It is marked beta: we consider it stable, but it has not yet proven itself on real boxes in everyday use, so treat it as beta and keep backups. Fixes come as 1.0.x on the stable channel.

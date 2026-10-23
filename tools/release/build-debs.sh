@@ -71,8 +71,9 @@ flock --nonblock 8 || die "another build of the packages uses $work"
 if [[ "$app_build" == 1 ]]; then
   step "daemon $version ($commit)"
   rm -rf "$work/daemon"
+  # The compiler server and MSBuild nodes outlive the build; without the lock fds they no longer hold the locks.
   dotnet publish "$repo/daemon/src/Pithyx.Daemon" --configuration Release --runtime "$DOTNET_RID" --self-contained \
-    --nologo --verbosity quiet -p:Version="$version" -p:SourceRevisionId="$commit" --output "$work/daemon"
+    --nologo --verbosity quiet -p:Version="$version" -p:SourceRevisionId="$commit" --output "$work/daemon" 8>&- 9>&-
   step "desktop"
   [[ -d "$repo/node_modules" ]] || pnpm --dir "$repo" install --frozen-lockfile
   env -C "$repo/desktop" pnpm exec vite build --logLevel warn

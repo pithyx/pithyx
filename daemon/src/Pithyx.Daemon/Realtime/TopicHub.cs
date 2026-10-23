@@ -284,7 +284,10 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
         var requestId = Tracing.CurrentRequestId is { Length: > 0 } current ? current : ActivityTraceId.CreateRandom().ToHexString();
         if (definition.MinInterval is { } interval)
         {
-            _throttles.GetOrAdd(topic, _ => new Throttle(this, topic, interval)).Offer(data, requestId);
+            // A throttle retires once a whole interval passed without an event; offer to its successor then.
+            while (!_throttles.GetOrAdd(topic, _ => new Throttle(this, topic, interval)).Offer(data, requestId))
+            {
+            }
         }
         else
         {
@@ -326,27 +329,38 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Closing WebSocket connection {ConnectionId}: outbox full")]
     private partial void LogSlowConsumer(Guid connectionId);
 
-    /// <summary>At most one event per interval for a topic; the newest value wins.</summary>
+    /// <summary>The topics with a throttle; a quiet topic loses its throttle after one interval.</summary>
+    internal int ThrottleCount => _throttles.Count;
+
+    /// <summary>
+    /// At most one event per interval for a topic; the newest value wins. After every event a timer runs to the end of
+    /// the interval, and when it finds nothing pending the throttle removes itself, so topics that went quiet (a
+    /// finished job, a closed folder) keep nothing.
+    /// </summary>
     private sealed class Throttle(TopicHub hub, string topic, TimeSpan interval)
     {
         private readonly Lock _lock = new();
-        private DateTimeOffset _lastSent = DateTimeOffset.MinValue;
         private (object Data, string RequestId)? _pending;
         private ITimer? _timer;
+        private bool _retired;
 
-        public void Offer(object data, string requestId)
+        /// <summary>Sends or keeps the event; false when this throttle already retired.</summary>
+        public bool Offer(object data, string requestId)
         {
             lock (_lock)
             {
-                var now = hub._time.GetUtcNow();
-                if (_timer is null && now - _lastSent >= interval)
+                if (_retired)
                 {
-                    _lastSent = now;
+                    return false;
+                }
+                if (_timer is null)
+                {
                     Send(data, requestId);
-                    return;
+                    _timer = hub._time.CreateTimer(_ => Flush(), null, interval, Timeout.InfiniteTimeSpan);
+                    return true;
                 }
                 _pending = (data, requestId);
-                _timer ??= hub._time.CreateTimer(_ => Flush(), null, _lastSent + interval - now, Timeout.InfiniteTimeSpan);
+                return true;
             }
         }
 
@@ -359,9 +373,12 @@ public sealed partial class TopicHub(TopicRegistry registry, TimeProvider time, 
                 if (_pending is { } pending)
                 {
                     _pending = null;
-                    _lastSent = hub._time.GetUtcNow();
                     Send(pending.Data, pending.RequestId);
+                    _timer = hub._time.CreateTimer(_ => Flush(), null, interval, Timeout.InfiniteTimeSpan);
+                    return;
                 }
+                _retired = true;
+                hub._throttles.TryRemove(new KeyValuePair<string, Throttle>(topic, this));
             }
         }
 
