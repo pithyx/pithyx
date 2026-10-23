@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- `image/test-install.sh --stable-update <file>`: tests the stable update path from a released ISO with a throwaway key and a local HTTPS channel (online, from a file, automatic rollback, rollback in Settings); 1.0.0 to 1.0.1 passed on 2026-10-24.
 - "Open at sign-in" in the account menu: up to 10 apps that open after each sign-in, for every device; the manifest's optional `window.suggestAtSignIn` marks an app as suggested there (D373).
 - Files: entries and files from the device can be dropped onto a part of the path above the list and onto a share in the sidebar, which the docs already promised for the sidebar.
 - Files opens a file with a double click in the app chosen for its type: "Open with" has "Always open .x files this way", the choices follow the user to every device and are listed under "Default apps" in the account menu; without a choice the only installed app that sets `isDefault` for the type opens it (D371).
