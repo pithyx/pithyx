@@ -13,6 +13,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- Storage: the Snapshots section shows a snapshot a schedule or another window took without reopening it, through the new administrator topic `storage/snapshots` (D372).
 - Branches (D367): `master` is now `stable`, the default branch where releases are tagged; the new `beta` is the beta channel and `dev` the integration branch. Changes go `dev` → `beta` → `stable` through pull requests, and `beta` and `stable` are protected. The nightly CI run tests `dev`, and the website is published from `stable`.
 - CI runs only on GitHub-hosted runners (D368); the self-hosted runners are retired.
 - The backlog is the GitHub issues with labels and milestones, and the decisions are in `DECISIONS.md`; `TODO.md` is gone (D369).

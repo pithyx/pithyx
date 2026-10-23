@@ -6472,6 +6472,16 @@ export type components = {
              */
             usedBytes: number;
         };
+        /** @description Snapshot and event of `storage/snapshots`. */
+        SnapshotChanges: {
+            /** @description The datasets whose snapshots changed; empty in the snapshot of the topic. */
+            datasets: string[];
+            /**
+             * Format: int64
+             * @description Changes whenever a snapshot came, went or changed; compare it, do not count on it.
+             */
+            revision: number;
+        };
         SnapshotCreateRequest: {
             /** @description The dataset to snapshot. */
             dataset: string;
@@ -7038,6 +7048,7 @@ export type components = {
             "storage/alerts": components["schemas"]["StorageHealth"];
             "storage/disks": components["schemas"]["DisksChanged"];
             "storage/pools": components["schemas"]["PoolList"];
+            "storage/snapshots": components["schemas"]["SnapshotChanges"];
             "store/admin": components["schemas"]["StoreState"];
             "system/info": components["schemas"]["SystemInfo"];
             "system/network": components["schemas"]["NetworkState"];
@@ -7059,6 +7070,7 @@ export type components = {
             "storage/alerts": components["schemas"]["StorageHealth"];
             "storage/disks": components["schemas"]["DiskList"];
             "storage/pools": components["schemas"]["PoolList"];
+            "storage/snapshots": components["schemas"]["SnapshotChanges"];
             "store/admin": components["schemas"]["StoreState"];
             "system/info": components["schemas"]["SystemInfo"];
             "system/network": components["schemas"]["NetworkState"];
