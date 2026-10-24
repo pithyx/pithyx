@@ -84,7 +84,7 @@ public sealed class ConfigBackupApiTests : IAsyncLifetime
         Assert.Equal(HttpStatusCode.OK, status);
         Assert.Equal(2, summary.GetProperty("users").GetInt32());
         Assert.Equal(["users", "sharedFolders", "storage", "system", "certificates", "apps", "reverseProxy"], summary.GetProperty("categories").EnumerateArray().Select(category => category.GetString()));
-        Assert.StartsWith("1.0.0", summary.GetProperty("version").GetString(), StringComparison.Ordinal);
+        Assert.StartsWith("1.1.0", summary.GetProperty("version").GetString(), StringComparison.Ordinal);
 
         using var restore = await _admin.PostAsync("/api/system/backup/restore", new
         {

@@ -21,7 +21,7 @@ Every call can fail with a stable error code, and the box checks the app's permi
 ## Install
 
 ```sh
-npm install @pithyx/sdk@next
+npm install @pithyx/sdk
 ```
 
 ## Related packages

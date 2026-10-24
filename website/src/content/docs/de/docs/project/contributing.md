@@ -16,7 +16,7 @@ Eröffne ein Issue im Repository und wähle **Bug report** oder **Feature reques
 ## Pull Requests
 
 1. Richte den Build ein, wie in [Am Daemon entwickeln](/de/docs/developers/daemon/development/) beschrieben. `pnpm install` installiert auch die Git-Hooks.
-2. Zweige von `dev` ab, als `feature/<name>`, `fix/<name>` oder `hotfix/<name>`. `master` ist stabil und bekommt nur Release-Pull-Requests und Hotfixes. Pushe nie direkt auf `master` oder `dev`; der Pre-Push-Hook verweigert es.
+2. Zweige von `dev` ab, als `feature/<name>`, `fix/<name>` oder `hotfix/<name>`. Änderungen gehen von `dev` (Integration) nach `beta` (der Beta-Kanal) nach `stable` (der Standard-Branch, auf dem Releases getaggt werden); `beta` und `stable` bekommen nur Pull Requests vom Branch davor und Hotfixes. Pushe nie direkt auf `stable` oder `beta`; das Branch-Ruleset und der Pre-Push-Hook verweigern es.
 3. Eröffne den Pull Request gegen `dev`. Sein Titel folgt dem Commit-Format unten. Die Vorlage für Pull Requests fragt nach einer Zusammenfassung, wie getestet wurde, und nach der Checkliste unten. Die CI eines Pull Requests aus einem Fork startet erst, wenn ein Maintainer den Lauf freigegeben hat, und läuft auf GitHub-Runnern.
 
 Checkliste:

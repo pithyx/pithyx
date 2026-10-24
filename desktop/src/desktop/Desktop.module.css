@@ -59,3 +59,42 @@
   border-radius: 50%;
   background: var(--color-accent);
 }
+
+.fileDefaults {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fileDefault {
+  display: grid;
+  grid-template-columns: minmax(4rem, auto) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.startupApps {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.startupApp {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.fileDefaultExtension {
+  font-family: var(--font-mono);
+}
+
+.fileDefaultHandler {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

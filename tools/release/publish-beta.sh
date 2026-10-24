@@ -5,7 +5,7 @@
 #
 #   tools/release/publish-beta.sh <file.pithyxupdate> [--key <pem file>] [--key-id <id>] [--repo <owner/name>] [--yes]
 #
-# Beta only: stable files, their tags v<version> on master and the release channel-stable are the owner's. The key
+# Beta only: stable files, their tags v<version> on stable and the release channel-stable are the owner's. The key
 # defaults to pithyx-beta-1 in ~/.config/pithyx-dev/. Needs gh signed in with write access to the releases; --yes
 # skips the question before anything is uploaded.
 set -euo pipefail

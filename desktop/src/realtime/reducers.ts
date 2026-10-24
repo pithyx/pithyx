@@ -68,6 +68,8 @@ export const reducers: { [K in TopicName]: Reducer<K> } = {
   'storage/pools': (_, event) => event,
   // Alerts and SMART reports are few too; every event is the whole state as this user sees it.
   'storage/alerts': (_, event) => event,
+  // Only a revision and the datasets it concerns: the Storage app reads their snapshots again.
+  'storage/snapshots': (_, event) => event,
   'system/info': (_, event) => event,
   // Every event is the whole state of the network.
   'system/network': (_, event) => event,

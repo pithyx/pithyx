@@ -131,6 +131,10 @@
     "device": {
       "not_found": "Für dieses Gerät wurde kein gespeicherter Desktop gefunden. Er ist vielleicht abgelaufen."
     },
+    "file_default": {
+      "invalid": "Diese Art, Dateien zu öffnen, kann nicht gespeichert werden. Prüfe den Dateityp und die App.",
+      "limit_reached": "Du hast schon die höchstens {max} Standard-Apps gespeichert. Entferne zuerst eine im Benutzermenü unter Standard-Apps."
+    },
     "item": {
       "conflict": "Dieses Desktop-Objekt wurde inzwischen auf einem anderen Gerät geändert.",
       "invalid": "Das Desktop-Objekt konnte nicht gespeichert werden, weil sein Format unbekannt ist.",
@@ -144,6 +148,9 @@
     },
     "note": {
       "too_long": "Die Notiz ist zu lang. Eine Notiz fasst höchstens {maxLength} Zeichen."
+    },
+    "startup_apps": {
+      "invalid": "Die Apps zum Öffnen nach der Anmeldung konnten nicht gespeichert werden. Wähle höchstens {max} Apps, jede nur einmal."
     }
   },
   "fileservices": {

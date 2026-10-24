@@ -187,6 +187,10 @@ public sealed class ProtocolFiles(SqliteConnectionFactory connections, Permissio
         return existed;
     }
 
+    /// <summary>Refuses a write <see cref="WriteAsync"/> would refuse, before any data comes.</summary>
+    public Task CheckWriteAsync(ClaimsPrincipal user, ProtocolPath path, CancellationToken cancellationToken) =>
+        files.CheckUploadAsync(user, InShare(path).ShareId!.Value, path.Path, cancellationToken);
+
     public Task<FileEntry> MakeFolderAsync(ClaimsPrincipal user, ProtocolPath path, CancellationToken cancellationToken) =>
         files.CreateFolderAsync(user, InShare(path).ShareId!.Value, path.Path, cancellationToken);
 

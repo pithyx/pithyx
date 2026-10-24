@@ -4,7 +4,7 @@
 #   tools/release/publish-sdk.sh [--tag <dist-tag>] [--latest] [--otp <code>] [--yes] [--dry-run]
 #
 # The owner runs it by hand, signed in with `npm login`; no npm token is stored anywhere. It refuses a dirty tree and a
-# HEAD that is not on origin/dev or origin/master, builds, type-checks and tests every package, packs it with pnpm
+# HEAD that is not on origin/dev, origin/beta or origin/stable, builds, type-checks and tests every package, packs it with pnpm
 # (which replaces `workspace:` ranges by versions and applies `publishConfig`, so the published `exports` lose the
 # monorepo's `pithyx-source` condition), shows what each tarball contains, asks, publishes the tarballs with npm, and
 # only then creates and pushes the git tag `sdk-v<version>`.
@@ -124,10 +124,11 @@ git_tag="sdk-v$version"
 if [[ -n "$(git status --porcelain)" ]]; then
   refuse "the working tree is not clean; commit or stash first"
 fi
-git fetch --quiet origin dev master
+git fetch --quiet origin dev beta stable
 head="$(git rev-parse HEAD)"
-if ! git merge-base --is-ancestor "$head" origin/dev && ! git merge-base --is-ancestor "$head" origin/master; then
-  refuse "HEAD ($head) is not on origin/dev or origin/master; publish only pushed, merged commits"
+if ! git merge-base --is-ancestor "$head" origin/dev && ! git merge-base --is-ancestor "$head" origin/beta \
+  && ! git merge-base --is-ancestor "$head" origin/stable; then
+  refuse "HEAD ($head) is not on origin/dev, origin/beta or origin/stable; publish only pushed, merged commits"
 fi
 if git rev-parse --quiet --verify "refs/tags/$git_tag" >/dev/null ||
   [[ -n "$(git ls-remote --tags origin "refs/tags/$git_tag")" ]]; then

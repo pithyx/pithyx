@@ -11,10 +11,10 @@ import {
   type SortOrder,
   type PithyxApp,
 } from '@pithyx/sdk';
-import { Fragment, useEffect, useEffectEvent, useRef, useState } from 'react';
+import { Fragment, useEffect, useEffectEvent, useRef, useState, type DragEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useStore } from 'zustand';
-import { Button, cx, Dialog, IconButton } from '@pithyx/ui';
+import { Button, Checkbox, cx, Dialog, IconButton } from '@pithyx/ui';
 import {
   IconArrowLeft,
   IconArrowRight,
@@ -34,12 +34,14 @@ import {
 import { randomId } from '../../platform/browser';
 import { setClipboard, useFilesClipboard } from './clipboard';
 import { filesCall, onThumbnails, thumbnailUrl } from '../sdk/filesInternal';
-import { defaultAction, openWithChoices, type OpenWith } from './defaultAction';
+import { choiceExtension, defaultAction, openWithChoices, type OpenWith } from './defaultAction';
+import { chooseFileDefault, useFileDefaults } from './fileDefaults';
 import { useInstalledApps } from '../installed';
 import { useAppName } from '../names';
 import styles from './FilesApp.module.css';
 import { FilesMenu, type FilesAction } from './FilesMenu';
-import { FolderView } from './FolderView';
+import { isEmpty, itemsToDrop, parseDragged, type DraggedEntries, type DropTarget } from './drop';
+import { dragKindOf, ENTRIES_TYPE, FolderView } from './FolderView';
 import { compareEntries } from './order';
 import { crumbsOf, freeName, joinPath, nameOf, parentOf } from './paths';
 import {
@@ -56,7 +58,7 @@ import { createTransfers, type Transfers } from './transfers';
 import { TrashView, trashKey } from './TrashView';
 import { VersionsDialog } from './VersionsDialog';
 import { createThumbnails, thumbnailKey } from './thumbnails';
-import { changeFolder, folderKey, keepOnly, useFolder } from './useFolder';
+import { changeFolder, folderKey, keepOnly, prefetchFolder, useFolder } from './useFolder';
 
 /** Where a window is: a folder of a share, or the share's recycle bin. Saved with the layout. */
 interface Place {
@@ -78,13 +80,6 @@ function restoreLayout(saved: unknown): Layout {
     : 'list';
 }
 
-/** What a drag of entries carries between Files windows. */
-interface DraggedEntries {
-  share: string | null;
-  folder: string;
-  items: FileItems;
-}
-
 const FINISHED = new Set<JobInfo['state']>(['succeeded', 'failed', 'cancelled', 'interrupted']);
 
 function restorePlace(saved: unknown): Place {
@@ -97,19 +92,12 @@ function restorePlace(saved: unknown): Place {
   return { share: null, path: '', view: 'folder' };
 }
 
+function dropKey(share: string, path: string): string {
+  return JSON.stringify([share, path]);
+}
+
 function codeOf(error: unknown): string | null {
   return isProblem(error) ? error.code : null;
-}
-
-/** The items without one name, whether they are named one by one or a whole folder. */
-function withoutName(items: FileItems, name: string): FileItems {
-  return 'names' in items
-    ? { names: items.names.filter((other) => other !== name) }
-    : { all: true, except: [...items.except, name] };
-}
-
-function isEmpty(items: FileItems): boolean {
-  return 'names' in items && items.names.length === 0;
 }
 
 /**
@@ -137,10 +125,13 @@ export function FilesApp({ app }: { app: PithyxApp }) {
   );
   const thumbnailStates = useStore(thumbnails.store, (state) => state.byKey);
   const [openWith, setOpenWith] = useState<FileEntry | null>(null);
+  const [alwaysUse, setAlwaysUse] = useState(false);
   const installed = useInstalledApps((state) => state.apps);
   const appName = useAppName();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [menu, setMenu] = useState<{ x: number; y: number; entry: FileEntry | null } | null>(null);
+  // The breadcrumb segment or sidebar share a drag is over (dropKey).
+  const [dropOn, setDropOn] = useState<string | null>(null);
   const [confirmPermanent, setConfirmPermanent] = useState<FileItems | null>(null);
   const [versionsOf, setVersionsOf] = useState<{
     share: string;
@@ -149,7 +140,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
   } | null>(null);
   const [conflict, setConflict] = useState<
     | { kind: 'job'; operation: FileOperation }
-    | { kind: 'upload'; files: File[]; folder: string }
+    | { kind: 'upload'; files: File[]; share: string; folder: string }
     | null
   >(null);
   const upload = useRef<HTMLInputElement>(null);
@@ -403,8 +394,13 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     setAnnouncement(t(mode === 'cut' ? 'announce.cut' : 'announce.copied', { count }));
   }
 
-  async function uploadFiles(files: File[], into: string, policy?: ConflictPolicy) {
-    if (shareId === null) {
+  async function uploadFiles(
+    files: File[],
+    into: string,
+    policy?: ConflictPolicy,
+    intoShare: string | null = shareId,
+  ) {
+    if (intoShare === null) {
       return;
     }
     const conflicts: File[] = [];
@@ -416,12 +412,12 @@ export function FilesApp({ app }: { app: PithyxApp }) {
       try {
         for (let attempt = 0; ; attempt++) {
           try {
-            const entry = await app.files.upload(location, into, name, file, {
+            const entry = await app.files.upload({ share: intoShare }, into, name, file, {
               upload: id,
               ...(policy === 'overwrite' ? { overwrite: true } : {}),
             });
-            if (into === path) {
-              changeFolder(client, shareId, path, { changed: [entry], removed: [] });
+            if (intoShare === shareId && into === path) {
+              changeFolder(client, intoShare, path, { changed: [entry], removed: [] });
             }
             break;
           } catch (error) {
@@ -446,7 +442,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
       }
     }
     if (conflicts.length > 0) {
-      setConflict({ kind: 'upload', files: conflicts, folder: into });
+      setConflict({ kind: 'upload', files: conflicts, share: intoShare, folder: into });
     }
   }
 
@@ -530,11 +526,13 @@ export function FilesApp({ app }: { app: PithyxApp }) {
       return;
     }
     const target = joinPath(path, entry.name);
-    const action = defaultAction(entry);
+    const action = defaultAction(entry, installed ?? [], useFileDefaults.getState().choices);
     if (action.kind === 'download') {
       await app.files.download(location, target).catch(report);
     } else if (action.kind === 'view') {
       await openIn(entry, 'viewer');
+    } else if (action.kind === 'app') {
+      await openIn(entry, `app:${action.id}`);
     } else if (action.kind === 'openFolder') {
       if (entry.kind === 'symlink') {
         // A link may point to a file; the daemon says which when it is listed.
@@ -576,6 +574,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
         break;
       case 'openWith':
         if (entry !== undefined) {
+          setAlwaysUse(false);
           setOpenWith(entry);
         }
         break;
@@ -622,29 +621,84 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     return JSON.stringify({ share: shareId, folder: path, items } satisfies DraggedEntries);
   }
 
-  function dropEntries(data: string, into: string | null, copy: boolean) {
-    if (shareId === null || !writable) {
+  /**
+   * Breadcrumb segments and sidebar shares are drop targets, marked with `data-drop-share`, `data-drop-path` and
+   * `data-drop-writable`: entries from a Files window move there (copy with Ctrl or Alt), files from the device are
+   * uploaded there. Their containers handle the drag for all of them.
+   */
+  function zoneOf(event: DragEvent): { key: string; target: DropTarget } | null {
+    const zone = (event.target as Element).closest<HTMLElement>('[data-drop-share]');
+    const share = zone?.dataset.dropShare;
+    const path = zone?.dataset.dropPath ?? '';
+    if (zone === null || share === undefined || zone.dataset.dropWritable === undefined) {
+      return null;
+    }
+    return { key: dropKey(share, path), target: { share, path } };
+  }
+
+  function onZoneDragOver(event: DragEvent) {
+    const zone = zoneOf(event);
+    const kind = dragKindOf(event.dataTransfer);
+    if (zone === null || kind === null) {
+      setDropOn(null);
       return;
     }
-    let dragged: DraggedEntries;
-    try {
-      dragged = JSON.parse(data) as DraggedEntries;
-    } catch {
+    event.preventDefault();
+    event.dataTransfer.dropEffect =
+      kind === 'entries' && !(event.ctrlKey || event.altKey) ? 'move' : 'copy';
+    setDropOn(zone.key);
+  }
+
+  function onZoneDragLeave(event: DragEvent) {
+    if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+      setDropOn(null);
+    }
+  }
+
+  function onZoneDrop(event: DragEvent) {
+    const zone = zoneOf(event);
+    const kind = dragKindOf(event.dataTransfer);
+    setDropOn(null);
+    if (zone === null || kind === null) {
       return;
     }
-    const sameFolder = dragged.share === shareId && dragged.folder === path;
-    if (dragged.share === null || (sameFolder && into === null)) {
-      return;
+    event.preventDefault();
+    if (kind === 'files') {
+      void uploadFiles(
+        [...event.dataTransfer.files],
+        zone.target.path,
+        undefined,
+        zone.target.share,
+      );
+    } else {
+      dropEntries(
+        event.dataTransfer.getData(ENTRIES_TYPE),
+        zone.target,
+        event.ctrlKey || event.altKey,
+      );
     }
-    // A folder never goes into itself.
-    const items = sameFolder && into !== null ? withoutName(dragged.items, into) : dragged.items;
-    if (isEmpty(items)) {
+  }
+
+  /** The attributes of a drop target for the containers' drag handlers. */
+  function dropAttributes(share: string, folder: string, writable: boolean) {
+    return {
+      'data-drop-share': share,
+      'data-drop-path': folder,
+      'data-drop-writable': writable ? '' : undefined,
+      'data-drop-target': dropOn === dropKey(share, folder) ? '' : undefined,
+    };
+  }
+
+  function dropEntries(data: string, target: DropTarget, copy: boolean) {
+    const dragged = parseDragged(data);
+    const items = dragged === null ? null : itemsToDrop(dragged, target);
+    if (dragged?.share == null || items === null) {
       return;
     }
     void run({
       kind: copy ? 'copy' : 'move',
       source: { location: { share: dragged.share }, folder: dragged.folder, items },
-      target: { location, path: into === null ? path : joinPath(path, into) },
+      target: { location: { share: target.share }, path: target.path },
     });
   }
 
@@ -690,7 +744,13 @@ export function FilesApp({ app }: { app: PithyxApp }) {
         <IconButton label={t('up')} size="sm" isDisabled={!canGoUp} onPress={up}>
           <IconArrowUp size={18} stroke={1.75} />
         </IconButton>
-        <nav className={styles.breadcrumb} aria-label={t('path')}>
+        <nav
+          className={styles.breadcrumb}
+          aria-label={t('path')}
+          onDragOver={onZoneDragOver}
+          onDragLeave={onZoneDragLeave}
+          onDrop={onZoneDrop}
+        >
           {(atHomes || inUserHome) && (
             <button
               type="button"
@@ -710,6 +770,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
               type="button"
               className={styles.crumb}
               aria-current={view === 'folder' && path === '' ? 'page' : undefined}
+              {...dropAttributes(share.id, '', writable)}
               onClick={() => {
                 go({ share: shareId, path: '', view: 'folder' });
               }}
@@ -730,6 +791,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
                 type="button"
                 className={styles.crumb}
                 aria-current={crumb.path === path ? 'page' : undefined}
+                {...dropAttributes(shareId ?? '', crumb.path, writable && shareId !== null)}
                 onClick={() => {
                   if (crumb.path !== path) {
                     go({ share: shareId, path: crumb.path, view: 'folder' });
@@ -782,7 +844,13 @@ export function FilesApp({ app }: { app: PithyxApp }) {
         )}
       </div>
       <div className={styles.split} data-sidebar-open={sidebarOpen ? '' : undefined}>
-        <nav className={styles.sidebar} aria-label={t('sidebar')}>
+        <nav
+          className={styles.sidebar}
+          aria-label={t('sidebar')}
+          onDragOver={onZoneDragOver}
+          onDragLeave={onZoneDragLeave}
+          onDrop={onZoneDrop}
+        >
           <h3 className={styles.sideTitle}>{t('shares.title')}</h3>
           {[ownHomes, sharedFolders].map((section, index) => (
             <Fragment key={index}>
@@ -796,6 +864,11 @@ export function FilesApp({ app }: { app: PithyxApp }) {
                     aria-current={
                       candidate.id === shareId && view === 'folder' ? 'page' : undefined
                     }
+                    {...dropAttributes(
+                      candidate.id,
+                      '',
+                      candidate.access === 'readWrite' && candidate.unavailable === undefined,
+                    )}
                     onClick={() => {
                       go({ share: candidate.id, path: '', view: 'folder' });
                     }}
@@ -939,7 +1012,27 @@ export function FilesApp({ app }: { app: PithyxApp }) {
                 }
               }}
               dragData={dragData}
-              onDropEntries={dropEntries}
+              onRest={(entry) => {
+                if (shareId !== null) {
+                  prefetchFolder(
+                    client,
+                    app,
+                    shareId,
+                    joinPath(path, entry.name),
+                    sort.key,
+                    sort.order,
+                  );
+                }
+              }}
+              onDropEntries={(data, into, copy) => {
+                if (shareId !== null && writable) {
+                  dropEntries(
+                    data,
+                    { share: shareId, path: into === null ? path : joinPath(path, into) },
+                    copy,
+                  );
+                }
+              }}
               onShown={() => {
                 const started = navigation.current;
                 if (started !== null) {
@@ -1041,7 +1134,11 @@ export function FilesApp({ app }: { app: PithyxApp }) {
                 key={choice}
                 onPress={() => {
                   const entry = openWith;
+                  const extension = choiceExtension(entry.name);
                   setOpenWith(null);
+                  if (alwaysUse && extension !== null) {
+                    chooseFileDefault(extension, choice).catch(report);
+                  }
                   void openIn(entry, choice);
                 }}
               >
@@ -1050,6 +1147,11 @@ export function FilesApp({ app }: { app: PithyxApp }) {
                   : appName(choice.slice('app:'.length))}
               </Button>
             ))}
+          {openWith !== null && choiceExtension(openWith.name) !== null && (
+            <Checkbox isSelected={alwaysUse} onChange={setAlwaysUse}>
+              {t('openWith.always', { extension: choiceExtension(openWith.name) })}
+            </Checkbox>
+          )}
         </div>
       </Dialog>
       <Dialog
@@ -1114,7 +1216,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
                   if (current?.kind === 'job') {
                     void run({ ...current.operation, onConflict: policy });
                   } else if (current?.kind === 'upload' && policy !== 'skip') {
-                    void uploadFiles(current.files, current.folder, policy);
+                    void uploadFiles(current.files, current.folder, policy, current.share);
                   }
                 }}
               >

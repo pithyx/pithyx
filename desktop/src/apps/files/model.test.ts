@@ -1,7 +1,8 @@
 import type { FileEntry, FolderPage } from '@pithyx/sdk';
 import { describe, expect, it } from 'vitest';
 import type { InstalledApp } from '../installed';
-import { defaultAction, openWithChoices } from './defaultAction';
+import { choiceExtension, defaultAction, openWithChoices } from './defaultAction';
+import { itemsToDrop, parseDragged } from './drop';
 import { compareEntries, naturalKey } from './order';
 import { applyChange, loadedEntries, type FolderPages } from './pages';
 import { crumbsOf, freeName, joinPath, parentOf } from './paths';
@@ -171,6 +172,63 @@ describe('default action', () => {
     expect(openWithChoices(entry('png', 0, 'folder'), apps)).toEqual([]);
     expect(defaultAction(entry('dev', 0, 'other'))).toEqual({ kind: 'none' });
   });
+
+  const handler = (id: string, extensions: string[], isDefault: boolean): InstalledApp => ({
+    id,
+    version: '1.0.0',
+    name: { en: id },
+    description: null,
+    entry: '/apps/x/index.html',
+    icon: '',
+    window: {},
+    permissions: [],
+    logLevel: 'info',
+    fileHandlers: [{ extensions, isDefault }],
+  });
+
+  it('opens a file in the only app that is the default for it, else as before', () => {
+    const reader = handler('com.example.reader', ['pdf'], true);
+    const other = handler('com.example.other', ['pdf'], true);
+    const plain = handler('com.example.plain', ['zip'], false);
+    expect(defaultAction(entry('a.PDF'), [reader, plain])).toEqual({
+      kind: 'app',
+      id: 'com.example.reader',
+    });
+    expect(defaultAction(entry('a.pdf'), [reader, other])).toEqual({ kind: 'view' });
+    expect(defaultAction(entry('a.zip'), [plain])).toEqual({ kind: 'download' });
+  });
+
+  it("follows the user's choice while it can still be used", () => {
+    const reader = handler('com.example.reader', ['pdf'], true);
+    const editor = handler('com.example.editor', ['pdf'], false);
+    const apps = [reader, editor];
+    expect(defaultAction(entry('a.pdf'), apps, { pdf: 'app:com.example.editor' })).toEqual({
+      kind: 'app',
+      id: 'com.example.editor',
+    });
+    expect(defaultAction(entry('a.pdf'), apps, { pdf: 'viewer' })).toEqual({ kind: 'view' });
+    expect(defaultAction(entry('a.pdf'), apps, { pdf: 'download' })).toEqual({
+      kind: 'download',
+    });
+    // An app that is gone, or the viewer for a file it cannot show, counts as no choice.
+    expect(defaultAction(entry('a.pdf'), [reader], { pdf: 'app:com.example.editor' })).toEqual({
+      kind: 'app',
+      id: 'com.example.reader',
+    });
+    expect(defaultAction(entry('a.zip'), [], { zip: 'viewer' })).toEqual({ kind: 'download' });
+    expect(defaultAction(entry('dir.pdf', 0, 'folder'), apps, { pdf: 'viewer' })).toEqual({
+      kind: 'openFolder',
+    });
+  });
+
+  it('saves a choice under the last extension the daemon accepts', () => {
+    expect(choiceExtension('Report.PDF')).toBe('pdf');
+    expect(choiceExtension('backup.tar.gz')).toBe('gz');
+    expect(choiceExtension('README')).toBeNull();
+    expect(choiceExtension('.bashrc')).toBeNull();
+    expect(choiceExtension('trailing.')).toBeNull();
+    expect(choiceExtension('odd.ex~t')).toBeNull();
+  });
 });
 
 describe('paths', () => {
@@ -191,5 +249,40 @@ describe('paths', () => {
     expect(freeName('Report.pdf', (name) => taken.has(name))).toBe('Report (3).pdf');
     expect(freeName('New folder', () => false)).toBe('New folder (2)');
     expect(freeName('.env', () => false)).toBe('.env (2)');
+  });
+});
+
+describe('drop targets', () => {
+  const dragged = { share: 's1', folder: 'a', items: { names: ['b', 'c'] } };
+
+  it('moves entries to another folder or another share', () => {
+    expect(itemsToDrop(dragged, { share: 's1', path: '' })).toEqual({ names: ['b', 'c'] });
+    expect(itemsToDrop(dragged, { share: 's2', path: 'a' })).toEqual({ names: ['b', 'c'] });
+  });
+
+  it('does nothing on the folder the entries are in', () => {
+    expect(itemsToDrop(dragged, { share: 's1', path: 'a' })).toBeNull();
+    expect(itemsToDrop({ ...dragged, share: null }, { share: 's1', path: '' })).toBeNull();
+  });
+
+  it('never moves a folder into itself or below it, but still its siblings', () => {
+    expect(itemsToDrop(dragged, { share: 's1', path: 'a/b' })).toEqual({ names: ['c'] });
+    expect(itemsToDrop(dragged, { share: 's1', path: 'a/b/deep' })).toEqual({ names: ['c'] });
+    expect(
+      itemsToDrop({ ...dragged, items: { names: ['b'] } }, { share: 's1', path: 'a/b' }),
+    ).toBeNull();
+    expect(itemsToDrop(dragged, { share: 's1', path: 'ab' })).toEqual({ names: ['b', 'c'] });
+    expect(
+      itemsToDrop(
+        { ...dragged, folder: '', items: { all: true, except: [] } },
+        { share: 's1', path: 'x/y' },
+      ),
+    ).toEqual({ all: true, except: ['x'] });
+  });
+
+  it('reads only the data of a drag of entries', () => {
+    expect(parseDragged(JSON.stringify(dragged))).toEqual(dragged);
+    expect(parseDragged('not json')).toBeNull();
+    expect(parseDragged('{}')).toBeNull();
   });
 });

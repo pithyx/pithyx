@@ -1,12 +1,18 @@
 import type { PithyxApp } from '@pithyx/sdk';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatBytes } from '../../desktop/format';
 import { ErrorNotice } from '../../errors/ErrorNotice';
 import { Badge, Button } from '@pithyx/ui';
 import { IconCamera } from '../../ui/icons';
-import { internalCall, type Dataset, type SnapshotScheduleList } from '../sdk/internal';
+import {
+  internalCall,
+  onInternal,
+  SNAPSHOTS_CHANGED,
+  type Dataset,
+  type SnapshotScheduleList,
+} from '../sdk/internal';
 import { DatasetDialog, type DatasetAction } from './DatasetDialog';
 import styles from './Storage.module.css';
 import { describeProblem, storageKey, usePools } from './shared';
@@ -79,6 +85,16 @@ function DatasetSnapshots({ app, dataset: target }: { app: PithyxApp; dataset: D
     queryFn: () => internalCall(app, 'internal.admin.storage.snapshots.list', { dataset }),
   });
   const reload = () => client.invalidateQueries({ queryKey: [...snapshotsKey(dataset), 'list'] });
+  // A schedule, a plan or a snapshot taken elsewhere shows up without reopening the section.
+  useEffect(
+    () =>
+      onInternal(app, SNAPSHOTS_CHANGED, (datasets) => {
+        if (Array.isArray(datasets) && datasets.includes(dataset)) {
+          void client.invalidateQueries({ queryKey: [...snapshotsKey(dataset), 'list'] });
+        }
+      }),
+    [app, client, dataset],
+  );
   const action = useMutation({
     mutationFn: (run: () => Promise<unknown>) => run(),
     onSettled: reload,

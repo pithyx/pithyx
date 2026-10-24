@@ -43,5 +43,3 @@ export const logLines = [
   ['14:12:11', 'info', 'apps', 'immich backend healthy'],
   ['13:58:40', 'info', 'shares', 'smb: media mounted by 192.168.1.31'],
 ] as const;
-
-export const accentPresets = ['petrol', 'ocean', 'indigo', 'plum', 'moss', 'graphite'] as const;

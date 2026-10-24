@@ -486,7 +486,7 @@ export function checklist(version: string, facts: Facts): string[] {
     `${mark(facts.out.includes(`pithyx-${version}-amd64.iso`))} ISO: pithyx-release iso --version ${version}`,
     `${mark(sources)} GPL sources: pithyx-release sources --version ${version}`,
     `${mark(facts.baselines.includes(packagesFile(version)))} baseline: pithyx-release baseline --version ${version}, then commit image/baseline`,
-    `${mark(facts.tags.includes(`v${version}`))} tag v${version} on master (the owner)`,
+    `${mark(facts.tags.includes(`v${version}`))} tag v${version} on stable (the owner)`,
     `${mark(facts.tags.includes(`sdk-v${facts.sdkVersion}`))} npm packages ${facts.sdkVersion}: pithyx-release publish-sdk`,
     '[ ] later updates: pithyx-release update --version <next> --minimum ' + version + ' --sign',
   ];

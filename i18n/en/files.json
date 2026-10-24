@@ -144,6 +144,7 @@
   "openWith": {
     "title": "Open {name} with",
     "viewer": "Viewer",
-    "download": "Download"
+    "download": "Download",
+    "always": "Always open .{extension} files this way"
   }
 }

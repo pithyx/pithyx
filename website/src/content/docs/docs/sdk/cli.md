@@ -10,7 +10,7 @@ sidebar:
 The `pithyx` command checks, develops and packages Pithyx apps and runs the CI of catalog repositories. It has six commands: `validate`, `lock`, `build`, `pack`, `dev` and `catalog`. The commands use the same validators as the box, so an error you see locally is the error the box would give.
 
 ```sh
-npm install --save-dev @pithyx/cli@next
+npm install --save-dev @pithyx/cli
 npx pithyx --help
 ```
 

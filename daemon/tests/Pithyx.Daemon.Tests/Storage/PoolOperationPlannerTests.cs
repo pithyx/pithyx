@@ -243,7 +243,7 @@ public sealed class PoolOperationPlannerTests : IDisposable
     public async Task TheRunnerChecksImportStepsWithTheImportRuleAndReadsThePoolsAfterwards()
     {
         var plan = (await PlanAsync(new StoragePlanRequest("pool.import.readonly", "oldtank", PoolGuid: OldTank))).Plan!;
-        _commands.Calls.Clear();
+        _commands.ClearCalls();
 
         await _runner.RunAsync(plan, null, Token);
 
@@ -260,7 +260,7 @@ public sealed class PoolOperationPlannerTests : IDisposable
         var plan = (await PlanAsync(new StoragePlanRequest("pool.import", "oldtank", ConfirmName: "oldtank"))).Plan!;
         // sdb is now a member of pithyxtestr: the import rule allows only the disks of the pool it imports.
         Pools("zfs-raidz1");
-        _commands.Calls.Clear();
+        _commands.ClearCalls();
 
         var error = await Assert.ThrowsAsync<PithyxException>(() => _runner.RunAsync(plan, null, Token));
 
@@ -273,7 +273,7 @@ public sealed class PoolOperationPlannerTests : IDisposable
     {
         Pools("zfs-import-handwritten-readonly");
         var plan = (await PlanAsync(new StoragePlanRequest("pool.import", "oldtank", ConfirmName: "oldtank"))).Plan!;
-        _commands.Calls.Clear();
+        _commands.ClearCalls();
 
         await _runner.RunAsync(plan, null, Token);
 
@@ -289,7 +289,7 @@ public sealed class PoolOperationPlannerTests : IDisposable
     {
         Pools("zfs-import-handwritten-readonly");
         var plan = (await PlanAsync(new StoragePlanRequest("pool.import", "oldtank", ConfirmName: "oldtank"))).Plan!;
-        _commands.Calls.Clear();
+        _commands.ClearCalls();
         _commands.Handler = call =>
         {
             if (call.Arguments is ["export", ..])
@@ -314,7 +314,7 @@ public sealed class PoolOperationPlannerTests : IDisposable
     {
         Pools("zfs-import-handwritten-readonly");
         var plan = (await PlanAsync(new StoragePlanRequest("pool.import", "oldtank", ConfirmName: "oldtank"))).Plan!;
-        _commands.Calls.Clear();
+        _commands.ClearCalls();
         var busy = 2;
         _commands.Handler = call => call.Arguments is ["export", ..] && busy-- > 0 ? Busy("oldtank") : null;
 
@@ -329,7 +329,7 @@ public sealed class PoolOperationPlannerTests : IDisposable
     {
         Pools("zfs-import-handwritten-readonly");
         var plan = (await PlanAsync(new StoragePlanRequest("pool.import", "oldtank", ConfirmName: "oldtank"))).Plan!;
-        _commands.Calls.Clear();
+        _commands.ClearCalls();
         _commands.Handler = call => call.Arguments is ["export", ..] ? Busy("oldtank") : null;
 
         var error = await Assert.ThrowsAsync<PithyxException>(() => RunAdvancingTimeAsync(plan));

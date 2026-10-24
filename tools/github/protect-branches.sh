@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Creates the ruleset that protects master and dev on GitHub: no deletion, no force push, pull request required, and the
+# Creates the ruleset that protects stable and beta on GitHub (D367; dev is the owner's test branch and takes pushes): no deletion, no force push, pull request required, and the
 # CI jobs green. The required contexts are the job names of .github/workflows/ci.yaml; a job skipped by its `if` (no
 # daemon change, no docs change) counts as passed. e2e is not required: it runs on request (D278) and nightly.
 # Run it once, when the repository goes public (rulesets on private repositories need a paid plan). It is not
@@ -15,7 +15,7 @@ gh api --method POST "repos/$repo/rulesets" --input - <<'JSON'
   "target": "branch",
   "enforcement": "active",
   "conditions": {
-    "ref_name": { "include": ["refs/heads/master", "refs/heads/dev"], "exclude": [] }
+    "ref_name": { "include": ["refs/heads/stable", "refs/heads/beta"], "exclude": [] }
   },
   "rules": [
     { "type": "deletion" },

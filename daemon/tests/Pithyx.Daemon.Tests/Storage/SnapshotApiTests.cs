@@ -1,8 +1,14 @@
+using System.Globalization;
 using System.Net;
 using System.Net.Http.Json;
+using System.Net.WebSockets;
+using System.Text;
+using System.Text.Json;
 using Microsoft.Extensions.DependencyInjection;
 using Pithyx.Daemon.Auth;
 using Pithyx.Daemon.Database;
+using Pithyx.Daemon.Storage.Snapshots;
+using Pithyx.Daemon.Tests.Jobs;
 using Pithyx.Daemon.Tests.Support;
 using static Pithyx.Daemon.Tests.Auth.AuthApi;
 
@@ -88,6 +94,32 @@ public sealed class SnapshotApiTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task AdministratorsAreToldWhichDatasetsSnapshotsChangedAndUsersAreRefused()
+    {
+        using var admin = await ConnectAsync(await _factory.SessionCookieAsync(await _factory.InsertUserAsync("ada", admin: true)));
+        using var user = await ConnectAsync(await _factory.SessionCookieAsync(await _factory.InsertUserAsync("carl")));
+
+        await SendAsync(admin, new { type = "sub", id = "a1", topic = "storage/snapshots" });
+        Assert.Equal("ack", (await ReceiveAsync(admin)).GetProperty("type").GetString());
+        var snapshot = await ReceiveAsync(admin);
+        Assert.Equal("snap", snapshot.GetProperty("type").GetString());
+        var revision = snapshot.GetProperty("data").GetProperty("revision").GetInt64();
+        await SendAsync(user, new { type = "sub", id = "u1", topic = "storage/snapshots" });
+        var denied = await ReceiveAsync(user);
+        Assert.Equal(("error", "auth.permission.denied"), (denied.GetProperty("type").GetString(), denied.GetProperty("code").GetString()));
+
+        // As a read after a schedule took one while the Snapshots section is open.
+        var inventory = _factory.Services.GetRequiredService<SnapshotInventory>();
+        inventory.Replace([.. inventory.Current, new Snapshot("pithyxtestm", "pithyx-hourly-20260927T010000Z", DateTimeOffset.Parse("2026-09-27T01:00:00Z", CultureInfo.InvariantCulture), 0, 0, 0, 999)]);
+        inventory.Replace([.. inventory.Current]);
+
+        var changed = await ReceiveAsync(admin);
+        Assert.Equal(("event", "storage/snapshots"), (changed.GetProperty("type").GetString(), changed.GetProperty("topic").GetString()));
+        Assert.NotEqual(revision, changed.GetProperty("data").GetProperty("revision").GetInt64());
+        Assert.Equal(["pithyxtestm"], changed.GetProperty("data").GetProperty("datasets").EnumerateArray().Select(dataset => dataset.GetString()));
+    }
+
+    [Fact]
     public async Task UnknownDatasetsAreNotFound()
     {
         using var response = await _admin.GetAsync("/api/storage/snapshots?dataset=nope", Token);
@@ -159,5 +191,28 @@ public sealed class SnapshotApiTests : IAsyncLifetime
             ["zfs", "rollback", "-r", "pithyxtestm@pithyx-daily-20260926T000000Z"],
             ready.GetProperty("commands")[0].GetProperty("arguments").EnumerateArray().Select(argument => argument.GetString()).Prepend(ready.GetProperty("commands")[0].GetProperty("program").GetString()));
         Assert.NotNull(ready.GetProperty("planId").GetString());
+    }
+
+    private async Task<WebSocket> ConnectAsync(string cookie)
+    {
+        var client = _factory.Server.CreateWebSocketClient();
+        client.ConfigureRequest = request =>
+        {
+            request.Headers.Cookie = cookie;
+            request.Headers.Origin = "http://localhost";
+        };
+        return await client.ConnectAsync(new Uri("ws://localhost/ws"), Token);
+    }
+
+    private static Task SendAsync(WebSocket socket, object message) =>
+        socket.SendAsync(Encoding.UTF8.GetBytes(JsonSerializer.Serialize(message)), WebSocketMessageType.Text, endOfMessage: true, Token);
+
+    private static async Task<JsonElement> ReceiveAsync(WebSocket socket)
+    {
+        var buffer = new byte[64 * 1024];
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(Token);
+        timeout.CancelAfter(TimeSpan.FromSeconds(10));
+        var result = await socket.ReceiveAsync(buffer, timeout.Token);
+        return JsonDocument.Parse(buffer.AsMemory(0, result.Count)).RootElement.Clone();
     }
 }

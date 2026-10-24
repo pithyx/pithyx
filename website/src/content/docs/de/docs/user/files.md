@@ -28,7 +28,7 @@ So bewegst du dich:
 
 Die Statuszeile zeigt, wie viele Elemente der Ordner enthält oder wie viele du ausgewählt hast. Lange Ordner laden beim Scrollen seitenweise nach. Das Fenster merkt sich seinen Ordner und seine Ansicht für das nächste Mal.
 
-Wie sich eine Datei öffnet, hängt von ihrem Typ ab: Bilder, PDFs, Text, Audio und Video öffnen sich im Betrachter; andere Dateien werden heruntergeladen. Um selbst zu wählen, klicke mit der rechten Maustaste, wähle **Öffnen mit …** und dann **Betrachter**, **Herunterladen** oder eine installierte App, die angibt, diesen Dateityp zu öffnen. Namen, die mit `.pithyx-upload-` beginnen, und der Ordner `.pithyx-trash` sind intern und werden nicht angezeigt.
+Wie sich eine Datei öffnet, hängt von ihrem Typ ab: Bilder, PDFs, Text, Audio und Video öffnen sich im Betrachter; andere Dateien werden heruntergeladen. Gibt sich genau eine installierte App als Standard für einen Dateityp an, öffnet stattdessen sie die Datei. Um selbst zu wählen, klicke mit der rechten Maustaste, wähle **Öffnen mit …** und dann **Betrachter**, **Herunterladen** oder eine installierte App, die angibt, diesen Dateityp zu öffnen. Setzt du vorher das Häkchen bei **.x-Dateien immer so öffnen**, öffnet sich jede Datei dieses Typs von da an so, auf jedem Gerät, an dem du dich anmeldest. Deine Wahl findest du im Benutzermenü unter **Standard-Apps**; **Vergessen** stellt das übliche Verhalten wieder her. Die Wahl einer App, die entfernt wurde, wird übergangen. Namen, die mit `.pithyx-upload-` beginnen, und der Ordner `.pithyx-trash` sind intern und werden nicht angezeigt.
 
 Klicke mit der rechten Maustaste auf ein Element für sein Menü: **Öffnen**, **Herunterladen**, **Öffnen mit …**, **Kopieren**, **Ausschneiden**, **Umbenennen**, **Frühere Versionen**, **In den Papierkorb** und **Endgültig löschen**. Klicke mit der rechten Maustaste auf eine freie Stelle für **Neuer Ordner**, **Hochladen**, **Einfügen** (nachdem du etwas kopiert oder ausgeschnitten hast) und **Alles auswählen**. Aktionen, die etwas ändern, erscheinen nur, wenn du im freigegebenen Ordner schreiben darfst.
 
@@ -41,7 +41,7 @@ Wiederherstellungspunkte liegen auf denselben Platten wie die Dateien. Sie erset
 ## Hochladen
 
 1. Öffne den Ordner, in den die Dateien sollen.
-2. Klicke auf **Hochladen** und wähle Dateien aus, oder ziehe Dateien von deinem Computer in das Fenster. Lass sie auf einem Ordner fallen, um sie darin abzulegen.
+2. Klicke auf **Hochladen** und wähle Dateien aus, oder ziehe Dateien von deinem Computer in das Fenster. Lass sie auf einem Ordner, einem Teil des Pfads über der Liste oder einer Freigabe in der Seitenleiste fallen, um sie dort abzulegen.
 3. Verfolge den Fortschritt in der Schaltfläche für Übertragungen in der Taskleiste. Sie zeigt die Geschwindigkeit und die Restzeit und hat eine Schaltfläche, um eine Übertragung abzubrechen.
 
 Gut zu wissen:
@@ -60,7 +60,7 @@ Gut zu wissen:
 _Der Dialog, wenn es die Namen im Zielordner schon gibt._
 
 - **Kopieren und Einfügen:** Wähle Elemente aus, drücke **Strg+C** (oder **Cmd+C**), öffne den Zielordner und drücke **Strg+V**. **Strg+X** schneidet aus, statt zu kopieren.
-- **Ziehen und Ablegen:** Elemente in einen anderen Ordner oder auf eine Freigabe in der Seitenleiste zu ziehen, verschiebt sie. Halte beim Ablegen **Strg** oder **Alt** gedrückt, um zu kopieren.
+- **Ziehen und Ablegen:** Elemente auf einen anderen Ordner, einen Teil des Pfads über der Liste oder eine Freigabe in der Seitenleiste zu ziehen, verschiebt sie dorthin (eine Freigabe, die du nur lesen darfst, nimmt nichts an). Halte beim Ablegen **Strg** oder **Alt** gedrückt, um zu kopieren.
 - **Umbenennen:** Drücke **F2** oder wähle **Umbenennen**. Ein Name darf nicht leer sein, kein `/` enthalten und höchstens 255 Bytes lang sein.
 - **Neuer Ordner:** Wähle **Neuer Ordner** und tippe dann seinen Namen.
 

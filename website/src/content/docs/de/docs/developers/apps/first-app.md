@@ -20,8 +20,8 @@ Der Befehl `pithyx` hat keinen Befehl, der ein Projekt anlegt. Beginne mit einem
 Installiere die Pakete und verbinde dich:
 
 ```sh
-npm install @pithyx/sdk@next
-npm install --save-dev @pithyx/cli@next
+npm install @pithyx/sdk
+npm install --save-dev @pithyx/cli
 ```
 
 ```ts

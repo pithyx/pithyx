@@ -1399,6 +1399,116 @@
         }
       }
     },
+    "/api/desktop/file-defaults/{extension}": {
+      "put": {
+        "tags": [
+          "Desktop"
+        ],
+        "description": "Saves how the signed-in user opens files of an extension (lowercase, without the dot), for every device: viewer, download or app:<id>. GET /api/desktop returns them as fileDefaults.",
+        "operationId": "SetFileDefault",
+        "parameters": [
+          {
+            "name": "extension",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FileDefaultRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Desktop"
+        ],
+        "description": "Forgets the signed-in user's choice for an extension. Forgetting one that does not exist also answers 204.",
+        "operationId": "RemoveFileDefault",
+        "parameters": [
+          {
+            "name": "extension",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/desktop/startup-apps": {
+      "put": {
+        "tags": [
+          "Desktop"
+        ],
+        "description": "Replaces the apps the signed-in user opens after signing in, in order, for every device (at most 10). GET /api/desktop returns them as startupApps; the desktop skips apps that are gone or not allowed.",
+        "operationId": "SetStartupApps",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StartupApps"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/desktop/items": {
       "get": {
         "tags": [
@@ -10910,7 +11020,9 @@
           "layout",
           "layoutVersion",
           "preferences",
-          "appearance"
+          "appearance",
+          "fileDefaults",
+          "startupApps"
         ],
         "type": "object",
         "properties": {
@@ -10940,6 +11052,20 @@
           "appearance": {
             "description": "Accent color and wallpaper of the user, the same on every device.",
             "$ref": "#/components/schemas/Appearance"
+          },
+          "fileDefaults": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/FileDefault"
+            },
+            "description": "How the user opens files of an extension, by extension; the same on every device."
+          },
+          "startupApps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The apps the user opens after signing in, in order (D373); the same on every device."
           }
         }
       },
@@ -11525,6 +11651,8 @@
           "auth.username.invalid",
           "auth.username.reserved",
           "desktop.device.not_found",
+          "desktop.file_default.invalid",
+          "desktop.file_default.limit_reached",
           "desktop.item.conflict",
           "desktop.item.invalid",
           "desktop.item.limit_reached",
@@ -11533,6 +11661,7 @@
           "desktop.layout.invalid",
           "desktop.layout.too_large",
           "desktop.note.too_long",
+          "desktop.startup_apps.invalid",
           "fileservices.service.unavailable",
           "fileservices.workgroup.invalid",
           "fs.cursor.invalid",
@@ -11868,6 +11997,36 @@
           }
         },
         "description": "A change of a topic. `requestId` is the id of the action that caused it, if any."
+      },
+      "FileDefault": {
+        "required": [
+          "extension",
+          "handler"
+        ],
+        "type": "object",
+        "properties": {
+          "extension": {
+            "type": "string",
+            "description": "The extension in lowercase without the dot, as in the manifest's `fileHandlers`, for example `pdf` or `tar.gz`."
+          },
+          "handler": {
+            "type": "string",
+            "description": "`viewer`, `download` or `app:` and an app id. The desktop ignores an app that is gone or no longer handles the extension."
+          }
+        },
+        "description": "How the user opens files of one extension, chosen with \"Always use this app\" (D371); the same on every device."
+      },
+      "FileDefaultRequest": {
+        "required": [
+          "handler"
+        ],
+        "type": "object",
+        "properties": {
+          "handler": {
+            "type": "string",
+            "description": "`viewer`, `download` or `app:` and an app id."
+          }
+        }
       },
       "FileEntry": {
         "required": [
@@ -17538,6 +17697,28 @@
           }
         }
       },
+      "SnapshotChanges": {
+        "required": [
+          "revision",
+          "datasets"
+        ],
+        "type": "object",
+        "properties": {
+          "revision": {
+            "type": "integer",
+            "description": "Changes whenever a snapshot came, went or changed; compare it, do not count on it.",
+            "format": "int64"
+          },
+          "datasets": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The datasets whose snapshots changed; empty in the snapshot of the topic."
+          }
+        },
+        "description": "Snapshot and event of `storage/snapshots`."
+      },
       "SnapshotCreateRequest": {
         "required": [
           "dataset"
@@ -17741,6 +17922,22 @@
           }
         },
         "description": "An uploaded update file that passed every check and waits for \"Install\".\n    `TrustedSignature`: False only for a development file on a development box."
+      },
+      "StartupApps": {
+        "required": [
+          "apps"
+        ],
+        "type": "object",
+        "properties": {
+          "apps": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "App ids in the order they open, each once, at most int StartupApps.Max. Empty opens nothing."
+          }
+        },
+        "description": "The apps the user opens after signing in (D373); the same on every device."
       },
       "StorageAlert": {
         "required": [
@@ -18890,6 +19087,7 @@
           "storage/alerts",
           "storage/disks",
           "storage/pools",
+          "storage/snapshots",
           "store/admin",
           "system/info",
           "system/network",
@@ -18936,6 +19134,9 @@
           "storage/pools": {
             "$ref": "#/components/schemas/PoolList"
           },
+          "storage/snapshots": {
+            "$ref": "#/components/schemas/SnapshotChanges"
+          },
           "store/admin": {
             "$ref": "#/components/schemas/StoreState"
           },
@@ -18973,6 +19174,7 @@
           "storage/alerts",
           "storage/disks",
           "storage/pools",
+          "storage/snapshots",
           "store/admin",
           "system/info",
           "system/network",
@@ -19018,6 +19220,9 @@
           },
           "storage/pools": {
             "$ref": "#/components/schemas/PoolList"
+          },
+          "storage/snapshots": {
+            "$ref": "#/components/schemas/SnapshotChanges"
           },
           "store/admin": {
             "$ref": "#/components/schemas/StoreState"

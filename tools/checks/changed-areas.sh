@@ -4,7 +4,7 @@
 #   daemon    the daemon, its translations, the OpenAPI document, the shared schemas or the CI setup changed
 #   frontend  anything besides docs and daemon/ changed, including the website's code (the root lint and typecheck cover it)
 #   website   website/ or what it reads (the error texts, the design tokens, the sources its references and examples are made from, the OpenAPI document, the lockfile) changed
-# Pushes to dev and master run everything; so does a range git cannot resolve.
+# Pushes to dev, beta and stable run everything; so does a range git cannot resolve.
 set -euo pipefail
 
 out="${GITHUB_OUTPUT:-/dev/stdout}"
