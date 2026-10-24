@@ -73,6 +73,7 @@ Reported by [`validate`](/docs/reference/cli/validate/) and [`pack`](/docs/refer
 - [`app.manifest.id_invalid`](/docs/reference/errors/#app.manifest.id_invalid) (error): The app id {id} is not valid. It is the author's domain reversed plus the app name, for example com.example.chat.
 - [`app.manifest.id_reserved`](/docs/reference/errors/#app.manifest.id_reserved) (error): The app id {id} is reserved for the apps that come with Pithyx.
 - [`app.manifest.invalid_json`](/docs/reference/errors/#app.manifest.invalid_json) (error): The app's manifest (pithyx.json) is not valid JSON.
+- [`app.manifest.permission_missing`](/docs/reference/errors/#app.manifest.permission_missing) (error): The manifest uses {path}, which needs the permission {permission}. Add it to permissions.
 - [`app.manifest.pithyx_invalid`](/docs/reference/errors/#app.manifest.pithyx_invalid) (error): The Pithyx version range {pithyx} in the manifest is not valid.
 - [`app.manifest.reference_unknown`](/docs/reference/errors/#app.manifest.reference_unknown) (error): The manifest refers to {name} at {path}, which it does not declare.
 - [`app.manifest.schema_violation`](/docs/reference/errors/#app.manifest.schema_violation) (error): The app's manifest is not valid at {path} ({keyword}).

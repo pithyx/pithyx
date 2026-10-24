@@ -106,6 +106,7 @@ export const pages: ReferencePage[] = [
         'StorageInfo',
         'StorageState',
         'StorageRequest',
+        'FileAction',
         'FileHandler',
       ],
     },
@@ -133,6 +134,7 @@ export const pages: ReferencePage[] = [
     exports: {
       '@pithyx/sdk': [
         'AppContext',
+        'FileActionLaunch',
         'LaunchArgs',
         'GroupRef',
         'SizeClass',
