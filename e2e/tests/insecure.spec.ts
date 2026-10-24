@@ -46,6 +46,9 @@ test('signs in, uploads and drags files without a secure context', async ({ page
   const box = files.getByRole('textbox', { name: 'Rename New folder' });
   await box.fill('box');
   await box.press('Enter');
+  // Drag only once the new folder is named and listed; a drop during the rename can land on the list instead.
+  await expect(box).toHaveCount(0);
+  await expect(grid.getByRole('row', { name: /^box/ })).toBeVisible();
   await grid
     .getByRole('row', { name: /^picked\.txt/ })
     .dragTo(grid.getByRole('row', { name: /^box/ }));

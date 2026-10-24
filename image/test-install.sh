@@ -3,8 +3,8 @@
 # then starts the VM again without the USB stick and checks the installed system: it answers its install id on port 80
 # and asks for the sign-in, not the setup. Without root; needs qemu-system-x86, qemu-utils, ovmf and /dev/kvm.
 #
-#   image/test-install.sh [--iso <file>] [--mirror] [--network] [--update <folder>] [--reinstall] [--keep]
-#                         [--memory <MiB>] [--disk-size <size>]
+#   image/test-install.sh [--iso <file>] [--mirror] [--network] [--update <folder>] [--stable-update <file>]
+#                         [--reinstall] [--keep] [--memory <MiB>] [--disk-size <size>]
 #
 # Every run checks that tty2 shows no login prompt (D341). --reinstall (D341, root is asked for through qemu-nbd) gives
 # the VM a third disk with the pool tank, reads the ZFS host id of the installed system, installs again onto the same
@@ -29,6 +29,14 @@
 # recovery menu, after which a file of the fork's key verifies and one of the project's is refused; a typed source
 # replaces it, and "Back to the Pithyx project" restores the project's keys. Afterwards both ESPs carry the same GRUB
 # and the trial file of the updater, and the mirror starts from its second disk alone.
+#
+# --stable-update (#187, implies --mirror) tests the stable path of a release before the owner signs it: install the
+# released ISO (--iso, for example 1.0.0) and pass the next version's stable update file (build-update.sh --channel
+# stable --since the ISO's packages file; signed or not). The test signs it with a throwaway key stable-test-1 of its
+# own, serves a channel-stable for it over HTTPS on the host (a throwaway certificate authority, written into the
+# installed system's trust store), and makes the installed system follow that source with only that key, as a fork
+# would (D339). Then: N+1 online from that channel, N+2 made from it from an uploaded file, a broken N+3 rolls back by
+# itself, and a rollback in Settings brings back the ISO's version. Nothing is published and no project key is used.
 set -euo pipefail
 export LC_ALL=C.UTF-8
 
@@ -37,6 +45,7 @@ iso=""
 mirror=false
 network=false
 updates=""
+stable_update=""
 keep=false
 memory=4096
 disk_size=64G
@@ -59,11 +68,12 @@ while [[ $# -gt 0 ]]; do
     --mirror) mirror=true; shift ;;
     --network) network=true; shift ;;
     --update) updates="$(realpath "$2")"; mirror=true; keyboard=us; shift 2 ;;
+    --stable-update) stable_update="$(realpath "$2")"; mirror=true; shift 2 ;;
     --reinstall) reinstall=true; shift ;;
     --keep) keep=true; shift ;;
     --memory) memory="$2"; shift 2 ;;
     --disk-size) disk_size="$2"; shift 2 ;;
-    -h | --help) sed -n '2,31p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
+    -h | --help) sed -n '2,39p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) die "unknown argument $1" ;;
   esac
 done
@@ -92,6 +102,9 @@ stop_vm() {
 }
 cleanup() {
   stop_vm
+  if [[ -f "$vm/https.pid" ]]; then
+    kill "$(cat "$vm/https.pid")" 2>/dev/null || true
+  fi
   rm -rf "$vm"
 }
 trap 'if [[ $keep == false ]]; then cleanup; fi' EXIT
@@ -248,6 +261,73 @@ print("update source written " + ("with" if token else "without") + " a token")'
   nbd_detach
 }
 
+# --stable-update: a throwaway key and certificate authority, the update file signed with that key, a channel-stable
+# for it served over HTTPS on the host, which the VM reaches as 10.0.2.2.
+serve_stable_channel() {
+  local name served="$vm/served"
+  stable_key="$(env -C "$vm" "$repo/tools/release/create-key.sh" stable-test-1 "$vm/stable-test.pem" | sed -n 's/^public key of stable-test-1: //p')"
+  [[ -n "$stable_key" ]] || die "no test key"
+  name="$(basename "$stable_update")"
+  mkdir -p "$served/channel-stable" "$served/files"
+  cp "$stable_update" "$served/files/$name"
+  "$repo/tools/release/sign-update.sh" "$served/files/$name" --key "$vm/stable-test.pem" --key-id stable-test-1 >/dev/null
+  stable_file="$served/files/$name"
+  tar --extract --file="$stable_file" --directory="$vm" manifest.json
+  [[ "$(json 'd["channel"]' <"$vm/manifest.json")" == stable ]] || die "$name is not a stable file; build it with --channel stable"
+  node "$repo/tools/release/update-file.ts" channel "$vm/manifest.json" --name "$name" --url "../files/$name" \
+    --size "$(stat -c %s "$stable_file")" --sha256 "$(sha256sum "$stable_file" | cut -d' ' -f1)" --sequence 1 \
+    >"$served/channel-stable/channel.json"
+  PITHYX_SIGNING_KEY="$(cat "$vm/stable-test.pem")" node "$repo/tools/release/update-file.ts" sign "$served/channel-stable/channel.json" --key-id stable-test-1
+  openssl req -x509 -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -nodes -days 2 -subj "/CN=Pithyx stable test CA" \
+    -addext basicConstraints=critical,CA:TRUE -addext keyUsage=critical,keyCertSign \
+    -keyout "$vm/test-ca.key" -out "$vm/test-ca.crt" 2>/dev/null
+  openssl req -newkey ec -pkeyopt ec_paramgen_curve:prime256v1 -nodes -subj "/CN=10.0.2.2" \
+    -keyout "$vm/server.key" -out "$vm/server.csr" 2>/dev/null
+  openssl x509 -req -in "$vm/server.csr" -CA "$vm/test-ca.crt" -CAkey "$vm/test-ca.key" -CAcreateserial -days 2 \
+    -extfile <(printf 'subjectAltName=IP:10.0.2.2\nextendedKeyUsage=serverAuth\n') -out "$vm/server.crt" 2>/dev/null
+  https_port="$(free_port)"
+  python3 - "$served" "$https_port" "$vm/server.crt" "$vm/server.key" >"$vm/https.log" 2>&1 <<'PY' &
+import functools, http.server, ssl, sys
+root, port, cert, key = sys.argv[1], int(sys.argv[2]), sys.argv[3], sys.argv[4]
+handler = functools.partial(http.server.SimpleHTTPRequestHandler, directory=root)
+server = http.server.ThreadingHTTPServer(("127.0.0.1", port), handler)
+context = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+context.load_cert_chain(cert, key)
+server.socket = context.wrap_socket(server.socket, server_side=True)
+server.serve_forever()
+PY
+  echo $! >"$vm/https.pid"
+  wait_for_https() { command curl -fsS --max-time 3 --cacert "$vm/test-ca.crt" --resolve "10.0.2.2:$https_port:127.0.0.1" "https://10.0.2.2:$https_port/channel-stable/channel.json" -o /dev/null; }
+  local tries=0
+  until wait_for_https; do
+    tries=$((tries + 1))
+    ((tries < 20)) || die "the test channel does not answer ($vm/https.log)"
+    sleep 0.5
+  done
+  echo "channel-stable of $(json 'd["version"]' <"$vm/manifest.json") served on 10.0.2.2:$https_port, signed by stable-test-1"
+}
+
+# --stable-update, before the installed system's first start: the test source with only the test key (as the recovery
+# menu writes a fork's, D339), and the test authority in the system's trust store and its source folder, so a
+# regenerated bundle keeps it.
+prepare_stable_source() {
+  local root="$vm/system-root" members=() index
+  node "$repo/tools/release/update-file.ts" source --name "Stable test" \
+    --url "https://10.0.2.2:$https_port/channel-{channel}/channel.json" --key "stable-test-1:$stable_key:stable" >"$vm/pithyx-source.json"
+  nbd_attach
+  for index in "${!installed[@]}"; do
+    members+=("/dev/nbd${index}p2")
+  done
+  sudo mdadm --assemble --run /dev/md/pithyxvm-system "${members[@]}" >/dev/null
+  mkdir -p "$root"
+  sudo mount -o subvol=@ /dev/md/pithyxvm-system "$root"
+  sudo install -m 600 -o root -g root "$vm/pithyx-source.json" "$root/etc/pithyx/update-source.json"
+  sudo install -m 644 -o root -g root "$vm/test-ca.crt" "$root/usr/local/share/ca-certificates/pithyx-stable-test.crt"
+  sudo sh -c 'cat "$1" >>"$2"' _ "$vm/test-ca.crt" "$root/etc/ssl/certs/ca-certificates.crt"
+  sudo umount "$root"
+  nbd_detach
+}
+
 # Waits until a Python expression over GET /api/system/updates is true; the box restarts in between.
 wait_updates() {
   local expression="$1" seconds="$2" deadline=$((SECONDS + $2)) state=""
@@ -283,9 +363,9 @@ update_version() {
 }
 
 # An update file made from another with a new version, signed with a key of its own; "broken" makes its daemon never
-# start, for the health check's rollback.
+# start, for the health check's rollback. The channel is beta unless named.
 make_update() {
-  local source="$1" version="$2" target="$3" key="$4" key_id="$5" broken="${6:-}" work="$vm/remade" deb_version="${2/-/\~}" deb
+  local source="$1" version="$2" target="$3" key="$4" key_id="$5" broken="${6:-}" channel="${7:-beta}" work="$vm/remade" deb_version="${2/-/\~}" deb
   rm -rf "$work"
   mkdir -p "$work/file" "$work/pithyx" "$work/kernel"
   tar --extract --file="$source" --directory="$work/file"
@@ -308,7 +388,7 @@ make_update() {
     printf 'SHA256:\n %s %s Packages\n' "$(sha256sum Packages | cut -d' ' -f1)" "$(stat -c %s Packages)" >>Release
   )
   read -r minimum commit kernel zfs published < <(python3 -c 'import json, sys; m = json.load(open(sys.argv[1])); print(m["minimumVersion"], m["commit"], m["kernel"]["release"], m["kernel"]["zfs"], m["publishedAt"])' "$work/file/manifest.json")
-  node "$repo/tools/release/update-file.ts" manifest "$work/file" --version "$version" --channel beta --minimum "$minimum" \
+  node "$repo/tools/release/update-file.ts" manifest "$work/file" --version "$version" --channel "$channel" --minimum "$minimum" \
     --commit "$commit" --kernel "$kernel" --zfs "$zfs" --published-at "$published"
   "$repo/tools/release/pack-update.sh" "$work/file" "$target"
   "$repo/tools/release/sign-update.sh" "$target" --key "$key" --key-id "$key_id" >/dev/null
@@ -559,6 +639,11 @@ EOF
   if [[ -n "$updates" ]]; then
     step "writing the update source and a serial GRUB console into the installed system"
     prepare_updates
+  fi
+  if [[ -n "$stable_update" ]]; then
+    step "serving a test channel-stable and writing its source into the installed system"
+    serve_stable_channel
+    prepare_stable_source
   fi
   start_vm "${installed[@]}"
 }
@@ -830,6 +915,50 @@ print(json.dumps(config))")"
   start_vm "${installed[@]}"
   check_installed
   echo "both ESPs carry the same GRUB and pithyx.env"
+fi
+
+if [[ -n "$stable_update" ]]; then
+  installed_version="$(admin /system/updates | json 'd["installedVersion"]')"
+  next_version="$(json 'd["version"]' <"$vm/manifest.json")"
+  status="$(admin /system/updates)"
+  [[ "$(json 'd["supported"]' <<<"$status")" == True ]] || die "the installed system says updates do not apply: $status"
+  [[ "$(json 'd["channel"]' <<<"$status")" == stable ]] || die "a fresh $installed_version box is not on the stable channel: $status"
+  [[ "$(json "d['source']['name'] == 'Stable test' and not d['source']['official']" <<<"$status")" == True ]] \
+    || die "the box does not follow the test source: $(json 'd["source"]' <<<"$status")"
+
+  step "installing $next_version online from the test channel-stable (from $installed_version)"
+  admin /system/updates/check -X POST -o /dev/null
+  wait_updates "d['available'] is not None and d['available']['version'] == '$next_version' and d['available']['installable']" 180
+  install_update online
+  wait_updates "d['installedVersion'] == '$next_version' and d['runningJobId'] is None and d['history'][0]['state'] == 'succeeded' and d['history'][0]['source'] == 'online'" 1500
+  check_installed
+  echo "$next_version runs, snapshots: $(admin /system/updates | json '[s["version"] for s in d["snapshots"]]')"
+
+  file_version="${next_version%.*}.$((${next_version##*.} + 1))"
+  step "installing $file_version from an uploaded stable file"
+  make_update "$stable_file" "$file_version" "$vm/pithyx-$file_version-amd64.pithyxupdate" "$vm/stable-test.pem" stable-test-1 "" stable
+  upload_update "$vm/pithyx-$file_version-amd64.pithyxupdate" || die "the upload of the stable file was refused"
+  [[ "$(admin /system/updates | json 'd["staged"]["version"]')" == "$file_version" ]] || die "the uploaded file is not staged"
+  install_update file
+  wait_updates "d['installedVersion'] == '$file_version' and d['runningJobId'] is None and d['history'][0]['state'] == 'succeeded'" 1500
+  echo "$file_version runs"
+
+  broken_version="${file_version%.*}.$((${file_version##*.} + 1))"
+  step "installing a broken $broken_version whose daemon never starts: the health check rolls back"
+  make_update "$stable_file" "$broken_version" "$vm/pithyx-$broken_version-amd64.pithyxupdate" "$vm/stable-test.pem" stable-test-1 broken stable
+  upload_update "$vm/pithyx-$broken_version-amd64.pithyxupdate" || die "the upload of the broken file was refused"
+  install_update file
+  wait_updates "d['installedVersion'] == '$file_version' and d['runningJobId'] is None and d['history'][0]['toVersion'] == '$broken_version' and d['history'][0]['state'] == 'rolled_back'" 1500
+  echo "the broken update rolled back by itself: $(admin /system/updates | json 'd["history"][0]["errorCode"]')"
+
+  # The box keeps its newest three snapshots; the oldest one left is the version furthest back.
+  read -r snapshot target_version < <(admin /system/updates | json "' '.join(min(d['snapshots'], key=lambda s: s['createdAt']).__getitem__(k) for k in ('name', 'version'))")
+  step "rolling back to $target_version in Settings (snapshot $snapshot)"
+  admin /system/updates/rollback -X POST -H 'Content-Type: application/json' \
+    --data "{\"snapshot\": \"$snapshot\", \"version\": \"$target_version\"}" -o /dev/null
+  wait_updates "d['installedVersion'] == '$target_version' and d['runningJobId'] is None and d['history'][0]['kind'] == 'rollback'" 900
+  check_installed
+  echo "$target_version is back from its snapshot"
 fi
 
 step "checking that tty2 shows no login prompt"

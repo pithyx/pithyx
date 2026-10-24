@@ -25,7 +25,7 @@ Core-Apps und Apps von Dritten nutzen dieselbe SDK-API. Core-Apps verbinden sich
 
 ## Versionen und Kanäle
 
-Alle drei Pakete tragen dieselbe Version, unabhängig von der Pithyx-Version. Es sind Release Candidates von 1.0.0 (`1.0.0-rc.<n>`), deren API sich vor 1.0.0 noch ändern kann. Release Candidates werden unter dem npm-Dist-Tag `next` veröffentlicht.
+Alle drei Pakete tragen dieselbe Version, unabhängig von der Pithyx-Version, und folgen ab 1.0.0 SemVer (Pithyx 1.1.0 kommt mit dem SDK 1.0.0). Releases erscheinen unter dem npm-Dist-Tag `latest`; ein Release Candidate einer späteren Version kommt zuerst nach `next`.
 
 Kompatibilitätsregeln (aus `sdk/src/version.ts`):
 
@@ -38,9 +38,9 @@ Kompatibilitätsregeln (aus `sdk/src/version.ts`):
 ## Installieren
 
 ```sh
-npm install @pithyx/sdk@next
-npm install @pithyx/ui@next react react-dom
-npm install --save-dev @pithyx/cli@next
+npm install @pithyx/sdk
+npm install @pithyx/ui react react-dom
+npm install --save-dev @pithyx/cli
 ```
 
-Die Pakete sind Release Candidates von 1.0 unter dem npm-Dist-Tag `next`, den diese Befehle nennen; `latest` kann noch auf einen älteren Kandidaten zeigen, bis 1.0.0 erscheint. Die Pakete liefern TypeScript-Typen mit TSDoc-Kommentaren; im Repository baut `pnpm docs:api` mit TypeDoc eine API-Referenz von `@pithyx/sdk` und `@pithyx/ui`. Beginne mit [Deine erste App](/de/docs/developers/apps/first-app/).
+Die Pakete liefern TypeScript-Typen mit TSDoc-Kommentaren; im Repository baut `pnpm docs:api` mit TypeDoc eine API-Referenz von `@pithyx/sdk` und `@pithyx/ui`. Beginne mit [Deine erste App](/de/docs/developers/apps/first-app/).

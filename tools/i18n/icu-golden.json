@@ -390,6 +390,22 @@
       "params": {},
       "expected": "No saved desktop was found for that device. It may have expired."
     },
+    "desktop.file_default.invalid": {
+      "params": {},
+      "expected": "This way of opening files cannot be saved. Check the file type and the app."
+    },
+    "desktop.file_default.limit_reached": {
+      "params": {
+        "max": 200
+      },
+      "expected": "You have saved the maximum of 200 default apps. Remove one in the account menu under Default apps first."
+    },
+    "desktop.startup_apps.invalid": {
+      "params": {
+        "max": 10
+      },
+      "expected": "The apps to open after signing in could not be saved. Choose at most 10 apps, each once."
+    },
     "desktop.item.conflict": {
       "params": {},
       "expected": "This desktop item was changed on another device in the meantime."

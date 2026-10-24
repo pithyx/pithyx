@@ -9,6 +9,7 @@ import {
   type DragEvent,
   type KeyboardEvent,
   type MouseEvent,
+  type PointerEvent,
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { cx } from '@pithyx/ui';
@@ -26,6 +27,12 @@ import {
 
 /** Drag data of entries dragged inside the Files app. */
 export const ENTRIES_TYPE = 'application/x-pithyx-files';
+
+/** Whether a drag carries entries of a Files window, files of the device, or neither. */
+export function dragKindOf(transfer: DataTransfer): 'files' | 'entries' | null {
+  const types = transfer.types;
+  return types.includes(ENTRIES_TYPE) ? 'entries' : types.includes('Files') ? 'files' : null;
+}
 
 export interface FolderViewProps {
   entries: readonly FileEntry[];
@@ -63,7 +70,12 @@ export interface FolderViewProps {
   onVisible: (entries: FileEntry[]) => void;
   /** Entries that are neither dragged nor dropped on: the homes of every user, which are shares of their own. */
   fixed?: boolean;
+  /** The mouse rested on a folder, so it can be read ahead of a double click. */
+  onRest?: (entry: FileEntry) => void;
 }
+
+/** How long the mouse rests on a folder before it is read ahead: passing over a folder reads nothing. */
+const REST_DELAY = 150;
 
 const ROW_HEIGHT = 36;
 const COARSE_ROW_HEIGHT = 52;
@@ -89,6 +101,7 @@ export function FolderView(props: FolderViewProps) {
   const [active, setActive] = useState(0);
   const [focused, setFocused] = useState(false);
   const [dropTarget, setDropTarget] = useState<string | null>(null);
+  const rest = useRef<ReturnType<typeof setTimeout>>(undefined);
   const count = Math.max(total, entries.length);
   const [width, setWidth] = useState(0);
   const tiles = props.layout === 'grid';
@@ -291,13 +304,8 @@ export function FolderView(props: FolderViewProps) {
     }
   }
 
-  function dragKind(event: DragEvent): 'files' | 'entries' | null {
-    const types = event.dataTransfer.types;
-    return types.includes(ENTRIES_TYPE) ? 'entries' : types.includes('Files') ? 'files' : null;
-  }
-
   function onDragOver(event: DragEvent, folder: string | null) {
-    const kind = dragKind(event);
+    const kind = dragKindOf(event.dataTransfer);
     if (kind === null || props.fixed === true) {
       return;
     }
@@ -309,7 +317,7 @@ export function FolderView(props: FolderViewProps) {
   }
 
   function onDrop(event: DragEvent, folder: string | null) {
-    const kind = dragKind(event);
+    const kind = dragKindOf(event.dataTransfer);
     setDropTarget(null);
     if (kind === null) {
       return;
@@ -387,6 +395,20 @@ export function FolderView(props: FolderViewProps) {
       onDrop: isFolder
         ? (event: DragEvent) => {
             onDrop(event, entry.name);
+          }
+        : undefined,
+      onPointerEnter:
+        isFolder && props.onRest !== undefined
+          ? (event: PointerEvent) => {
+              if (event.pointerType === 'mouse') {
+                clearTimeout(rest.current);
+                rest.current = setTimeout(() => props.onRest?.(entry), REST_DELAY);
+              }
+            }
+          : undefined,
+      onPointerLeave: isFolder
+        ? () => {
+            clearTimeout(rest.current);
           }
         : undefined,
       onClick: (event: MouseEvent) => {

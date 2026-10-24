@@ -13,7 +13,27 @@ public sealed class ScriptedCommandRunner : ICommandRunner
     /// <summary>Results by program name, or by program and first argument (<c>"zpool status"</c>), which wins.</summary>
     public Dictionary<string, CommandResult> Results { get; } = [];
 
-    public List<CommandRequest> Calls { get; } = [];
+    private readonly List<CommandRequest> _calls = [];
+
+    /// <summary>A copy of the calls so far, safe to read while background services still run commands.</summary>
+    public IReadOnlyList<CommandRequest> Calls
+    {
+        get
+        {
+            lock (_calls)
+            {
+                return [.. _calls];
+            }
+        }
+    }
+
+    public void ClearCalls()
+    {
+        lock (_calls)
+        {
+            _calls.Clear();
+        }
+    }
 
     /// <summary>Commands (program and first argument) that never finish, like a zpool call stuck behind a suspended pool.</summary>
     public HashSet<string> Hanging { get; } = [];
@@ -26,9 +46,9 @@ public sealed class ScriptedCommandRunner : ICommandRunner
 
     public Task<CommandResult> RunAsync(CommandRequest request, CancellationToken cancellationToken)
     {
-        lock (Calls)
+        lock (_calls)
         {
-            Calls.Add(request);
+            _calls.Add(request);
         }
         if (Handler?.Invoke(request) is { } handled)
         {
@@ -53,9 +73,9 @@ public sealed class ScriptedCommandRunner : ICommandRunner
 
     public async IAsyncEnumerable<string> StreamLinesAsync(CommandRequest request, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        lock (Calls)
+        lock (_calls)
         {
-            Calls.Add(request);
+            _calls.Add(request);
         }
         await foreach (var line in Stream(request.FileName).Reader.ReadAllAsync(cancellationToken))
         {

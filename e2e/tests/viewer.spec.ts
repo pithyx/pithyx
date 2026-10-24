@@ -4,7 +4,7 @@ import { join } from 'node:path';
 import { crc32, deflateSync } from 'node:zlib';
 import type { Locator, Page } from '@playwright/test';
 import { expect, test } from './fixtures';
-import { appWindow, openFilesInShared, signInAsAdmin } from './session';
+import { appWindow, openAccountMenu, openFilesInShared, signInAsAdmin } from './session';
 
 // The simulated share "Shared" lives in the daemon's data directory (playwright.config.ts).
 const shared = join(process.env.PITHYX_E2E_DATA ?? '', 'shares', 'shared');
@@ -190,6 +190,41 @@ test('Open with lists the viewer and the download', async ({ page }) => {
   await dialog.getByRole('button', { name: 'Viewer' }).click();
 
   await expect(appWindow(page, 'notes.md').getByText('# Notes')).toBeVisible();
+});
+
+test('Open with remembers a choice for the file type until it is forgotten', async ({ page }) => {
+  prepare('e2e-always', { 'todo.md': '# Todo', 'plan.md': '# Plan' });
+  await openFolder(page, 'e2e-always');
+  const todo = grid(page).getByRole('row', { name: /^todo\.md/ });
+  const plan = grid(page).getByRole('row', { name: /^plan\.md/ });
+
+  await todo.click({ button: 'right' });
+  await page.getByRole('menuitem', { name: 'Open with…' }).click();
+  const dialog = page.getByRole('dialog', { name: 'Open todo.md with' });
+  // The checkbox input is visually hidden behind the drawn box, so a user clicks the label.
+  await dialog.getByText('Always open .md files this way').click();
+  await expect(
+    dialog.getByRole('checkbox', { name: 'Always open .md files this way' }),
+  ).toBeChecked();
+  const first = page.waitForEvent('download');
+  await dialog.getByRole('button', { name: 'Download' }).click();
+  expect((await first).suggestedFilename()).toBe('todo.md');
+
+  // Another file of the type now downloads on a double click instead of opening in the viewer.
+  const second = page.waitForEvent('download');
+  await plan.dblclick();
+  expect((await second).suggestedFilename()).toBe('plan.md');
+
+  await openAccountMenu(page);
+  await page.getByRole('menuitem', { name: 'Default apps' }).click();
+  const defaults = page.getByRole('dialog', { name: 'Default apps' });
+  await expect(defaults.getByText('.md')).toBeVisible();
+  await defaults.getByRole('button', { name: 'Forget the choice for .md files' }).click();
+  await expect(defaults.getByText(/not chosen a default app yet/)).toBeVisible();
+  await defaults.getByRole('button', { name: 'Close' }).click();
+
+  await plan.dblclick();
+  await expect(appWindow(page, 'plan.md').getByText('# Plan')).toBeVisible();
 });
 
 test('PDFs open page by page, with pdf.js loaded only then', async ({ page }) => {

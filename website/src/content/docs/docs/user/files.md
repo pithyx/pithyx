@@ -28,7 +28,7 @@ To move around:
 
 The status line shows how many items the folder holds, or how many you selected. Long folders load in pages as you scroll. The window remembers its folder and view for the next time.
 
-Opening a file depends on its type: pictures, PDFs, text, audio and video open in the Viewer; other files download. To choose, right-click and pick **Open with…**, then **Viewer**, **Download** or an installed app that declares it opens this file type. Names that start with `.pithyx-upload-` and the folder `.pithyx-trash` are internal and not shown.
+Opening a file depends on its type: pictures, PDFs, text, audio and video open in the Viewer; other files download. An installed app that is the only one to declare itself the default for a file type opens it instead. To choose, right-click and pick **Open with…**, then **Viewer**, **Download** or an installed app that declares it opens this file type. Tick **Always open .x files this way** before you choose, and every file of that type opens this way from then on, on every device you sign in to. Your choices are in the account menu under **Default apps**, where **Forget** goes back to the usual way. A choice of an app that was removed is ignored. Names that start with `.pithyx-upload-` and the folder `.pithyx-trash` are internal and not shown.
 
 Right-click an item for its menu: **Open**, **Download**, **Open with…**, **Copy**, **Cut**, **Rename**, **Previous versions**, **Move to recycle bin** and **Delete permanently**. Right-click an empty spot for **New folder**, **Upload**, **Paste** (after you copied or cut something) and **Select all**. Actions that change something appear only when you may write to the shared folder.
 
@@ -41,7 +41,7 @@ Restore points live on the same disks as the files. They do not replace a backup
 ## Uploading
 
 1. Open the folder you want the files in.
-2. Click **Upload** and pick files, or drag files from your computer into the window. Drop them on a folder to put them inside it.
+2. Click **Upload** and pick files, or drag files from your computer into the window. Drop them on a folder, a part of the path above the list or a share in the sidebar to put them there.
 3. Watch the progress in the transfers button on the taskbar. It shows the speed and the time left, and has a button to cancel a transfer.
 
 Things to know:
@@ -60,7 +60,7 @@ Things to know:
 _The dialog when names already exist in the target folder._
 
 - **Copy and paste:** select items, press **Ctrl+C** (or **Cmd+C**), open the target folder and press **Ctrl+V**. **Ctrl+X** cuts instead of copies.
-- **Drag and drop:** dragging items to another folder or to a share in the sidebar moves them. Hold **Ctrl** or **Alt** while dropping to copy.
+- **Drag and drop:** dragging items onto another folder, a part of the path above the list or a share in the sidebar moves them there (a share you may only read takes nothing). Hold **Ctrl** or **Alt** while dropping to copy.
 - **Rename:** press **F2** or choose **Rename**. A name must not be empty, must not contain `/` and may be at most 255 bytes long.
 - **New folder:** choose **New folder**, then type its name.
 

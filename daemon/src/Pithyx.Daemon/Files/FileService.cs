@@ -102,6 +102,16 @@ public sealed class FileService(ShareService shares, FolderCache cache, TimeProv
     }
 
     /// <summary>
+    /// Checks what <see cref="UploadAsync"/> checks before it reads the body: the right to write the share and the
+    /// name, so a protocol can refuse an upload before it accepts any data.
+    /// </summary>
+    public async Task CheckUploadAsync(ClaimsPrincipal user, long shareId, string? path, CancellationToken cancellationToken)
+    {
+        _ = await shares.ResolveAsync(user, shareId, write: true, cancellationToken);
+        FsPath.CheckName(FsPath.Split(NonRoot(path)).Name);
+    }
+
+    /// <summary>
     /// Streams a new file into a hidden temporary file next to its target and renames it into place when the body is
     /// complete, so nobody ever sees half a file. Without <paramref name="overwrite"/> an existing name fails.
     /// </summary>

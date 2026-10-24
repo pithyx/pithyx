@@ -75,12 +75,17 @@ public sealed class StorageHealthMonitorTests : IAsyncDisposable
         Directory.Delete(_directory, recursive: true);
     }
 
-    private List<CommandRequest> Calls(string program, string argument)
+    private List<CommandRequest> Calls(string program, string argument) =>
+        [.. _commands.Calls.Where(call => call.FileName == program && call.Arguments.Contains(argument))];
+
+    /// <summary>
+    /// Moves the clock and wakes the monitor. It reads the clock before it arms its sleep, so a move in between would
+    /// otherwise leave it sleeping up to <see cref="StorageHealthMonitor.MaxSleep"/> past the new time.
+    /// </summary>
+    private void Advance(TimeSpan by)
     {
-        lock (_commands.Calls)
-        {
-            return [.. _commands.Calls.Where(call => call.FileName == program && call.Arguments.Contains(argument))];
-        }
+        _time.Advance(by);
+        _monitor.Wake();
     }
 
     private static async Task UntilAsync(Func<bool> condition)
@@ -176,11 +181,11 @@ public sealed class StorageHealthMonitorTests : IAsyncDisposable
     {
         await StartAsync();
 
-        _time.Advance(_start.AddMonths(1) - _start - TimeSpan.FromMinutes(1));
+        Advance(_start.AddMonths(1) - _start - TimeSpan.FromMinutes(1));
         await Task.Delay(200, TestContext.Current.CancellationToken);
         Assert.Empty(Calls("zpool", "scrub"));
 
-        _time.Advance(TimeSpan.FromMinutes(2));
+        Advance(TimeSpan.FromMinutes(2));
         await UntilAsync(() => Calls("zpool", "scrub").Count == 1);
         Assert.Equal(["scrub", "tank"], Calls("zpool", "scrub")[0].Arguments);
         await UntilRunAsync(runs => runs.TryGetValue(("scrub", "tank"), out var run) && run > _start);
@@ -192,12 +197,12 @@ public sealed class StorageHealthMonitorTests : IAsyncDisposable
         await StartAsync();
         _pools.Replace(new PoolList([Pool(scan: new PoolScan("resilver", "scanning", false, _start, null, 100, 1, 0))], []));
 
-        _time.Advance(TimeSpan.FromDays(40));
+        Advance(TimeSpan.FromDays(40));
         await Task.Delay(200, TestContext.Current.CancellationToken);
         Assert.Empty(Calls("zpool", "scrub"));
 
         _pools.Replace(new PoolList([Pool(scan: new PoolScan("resilver", "finished", false, _start, _start.AddHours(1), 100, 100, 0))], []));
-        _time.Advance(StorageHealthMonitor.RetryDelay);
+        Advance(StorageHealthMonitor.RetryDelay);
         await UntilAsync(() => Calls("zpool", "scrub").Count == 1);
     }
 
@@ -207,19 +212,19 @@ public sealed class StorageHealthMonitorTests : IAsyncDisposable
         await StartAsync();
         _asleep = true;
 
-        _time.Advance(TimeSpan.FromDays(7));
+        Advance(TimeSpan.FromDays(7));
         await UntilAsync(() => Calls("smartctl", "-t").Count == 1);
         Assert.Equal(["-n", "standby", "-j", "-t", "short", "/dev/sdb"], Calls("smartctl", "-t")[0].Arguments);
         Assert.Equal(_start, (await RunsAsync())[("shortSelfTest", Sdb.Id)]);
 
         _asleep = false;
-        _time.Advance(StorageHealthMonitor.RetryDelay);
+        Advance(StorageHealthMonitor.RetryDelay);
         await UntilAsync(() => Calls("smartctl", "-t").Count == 2);
         await UntilRunAsync(runs => runs[("shortSelfTest", Sdb.Id)] == _start.AddDays(7) + StorageHealthMonitor.RetryDelay);
 
         // SMART is read again once the test had time to finish.
         var reads = Calls("smartctl", "-a").Count;
-        _time.Advance(StorageHealthMonitor.ShortTestReadDelay);
+        Advance(StorageHealthMonitor.ShortTestReadDelay);
         await UntilAsync(() => Calls("smartctl", "-a").Count == reads + 1);
         Assert.All(Calls("smartctl", "-j"), call => Assert.Equal(["-n", "standby"], call.Arguments.Take(2)));
     }
@@ -230,7 +235,7 @@ public sealed class StorageHealthMonitorTests : IAsyncDisposable
         await _schedules.SetAsync(new StorageScheduleUpdate(StorageSchedules.ShortSelfTest, "", "monthly"), TestContext.Current.CancellationToken);
         await StartAsync();
 
-        _time.Advance(_start.AddMonths(1) - _start);
+        Advance(_start.AddMonths(1) - _start);
         await UntilAsync(() => Calls("smartctl", "-t").Count == 1);
         await UntilRunAsync(runs => runs[("longSelfTest", Sdb.Id)] > _start && runs[("longSelfTest", Sdb.Id)] == runs[("shortSelfTest", Sdb.Id)]);
 
@@ -245,7 +250,7 @@ public sealed class StorageHealthMonitorTests : IAsyncDisposable
         await _monitor.StartAsync(TestContext.Current.CancellationToken);
         await UntilAsync(() => _smart.Of(Sdb.Id) is not null);
 
-        _time.Advance(TimeSpan.FromDays(70));
+        Advance(TimeSpan.FromDays(70));
         await Task.Delay(200, TestContext.Current.CancellationToken);
 
         Assert.Equal(("unsupported", "virtual"), (_smart.Of(Sdb.Id)!.State, _smart.Of(Sdb.Id)!.Reason));

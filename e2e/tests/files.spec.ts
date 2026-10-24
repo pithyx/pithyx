@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import type { Locator, Page } from '@playwright/test';
 import { expect, test } from './fixtures';
@@ -169,6 +169,53 @@ test('moves entries by dragging them onto a folder', async ({ page }) => {
   await expect(row(page, 'photo.jpg')).toHaveCount(0);
   await row(page, 'box').dblclick();
   await expect(row(page, 'photo.jpg')).toBeVisible();
+});
+
+test('moves entries onto a breadcrumb segment and uploads onto a share in the sidebar', async ({
+  page,
+}) => {
+  prepare('e2e-crumb/inner', { 'photo.jpg': 'p' });
+  await openFolder(page, 'e2e-crumb');
+  await enter(page, 'inner');
+  const path = filesWindow(page).getByRole('navigation', { name: 'Path' });
+  await row(page, 'photo.jpg').dragTo(path.getByRole('button', { name: 'e2e-crumb', exact: true }));
+  await expect(row(page, 'photo.jpg')).toHaveCount(0);
+  await expect.poll(() => existsSync(join(shared, 'e2e-crumb', 'photo.jpg'))).toBe(true);
+
+  // Files from the device dropped on a share land in its root.
+  const dataTransfer = await page.evaluateHandle(() => {
+    const transfer = new DataTransfer();
+    transfer.items.add(new File(['dropped'], 'e2e-sidebar-drop.txt', { type: 'text/plain' }));
+    return transfer;
+  });
+  const target = filesWindow(page)
+    .getByRole('navigation', { name: 'Shares and recycle bin' })
+    .getByRole('button', { name: 'Shared', exact: true });
+  await target.dispatchEvent('dragover', { dataTransfer });
+  await target.dispatchEvent('drop', { dataTransfer });
+  await expect
+    .poll(
+      () =>
+        existsSync(join(shared, 'e2e-sidebar-drop.txt')) &&
+        readFileSync(join(shared, 'e2e-sidebar-drop.txt'), 'utf8'),
+    )
+    .toBe('dropped');
+});
+
+test('reads a folder ahead while the mouse rests on it', async ({ page }) => {
+  prepare('e2e-prefetch/ahead', { 'inside.txt': 'i' });
+  await openFolder(page, 'e2e-prefetch');
+  const ahead = page.waitForRequest(
+    (request) =>
+      request.url().includes('/list') &&
+      new URL(request.url()).searchParams.get('path') === 'e2e-prefetch/ahead',
+  );
+  await row(page, 'ahead').hover();
+  await ahead;
+
+  // Opening it shows the rows read ahead.
+  await enter(page, 'ahead');
+  await expect(row(page, 'inside.txt')).toBeVisible();
 });
 
 test('deletes into the recycle bin, restores, and deletes for good only after asking', async ({

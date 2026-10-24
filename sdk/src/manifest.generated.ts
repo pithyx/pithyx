@@ -153,6 +153,10 @@ export interface WindowManifest {
   defaultSize: WindowSize;
   minSize: WindowSize;
   loading?: WindowLoading;
+  /**
+   * Whether the app suggests opening after sign-in, for an app people keep open all day such as a chat. The desktop marks it as suggested where a user chooses the apps that open after signing in; it never opens the app by itself. Default false.
+   */
+  suggestAtSignIn?: boolean;
 }
 /**
  * A size in CSS pixels.

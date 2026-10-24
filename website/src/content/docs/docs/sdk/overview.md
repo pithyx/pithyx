@@ -25,7 +25,7 @@ Core apps and third-party apps use the same SDK API. Core apps connect in-proces
 
 ## Versions and channels
 
-All three packages carry the same version, independent of the Pithyx version. They are release candidates of 1.0.0 (`1.0.0-rc.<n>`) whose API can still change before 1.0.0. Release candidates are published under the npm dist-tag `next`.
+All three packages carry the same version, independent of the Pithyx version, and follow SemVer from 1.0.0 on (Pithyx 1.1.0 ships with SDK 1.0.0). Releases are published under the npm dist-tag `latest`; a release candidate of a later version goes to `next` first.
 
 Compatibility rules (from `sdk/src/version.ts`):
 
@@ -38,9 +38,9 @@ Compatibility rules (from `sdk/src/version.ts`):
 ## Installing
 
 ```sh
-npm install @pithyx/sdk@next
-npm install @pithyx/ui@next react react-dom
-npm install --save-dev @pithyx/cli@next
+npm install @pithyx/sdk
+npm install @pithyx/ui react react-dom
+npm install --save-dev @pithyx/cli
 ```
 
-The packages are release candidates of 1.0 under the npm dist-tag `next`, which these commands name; `latest` may still point to an older candidate until 1.0.0 is out. The packages ship TypeScript types with TSDoc comments; in the repository, `pnpm docs:api` builds an API reference of `@pithyx/sdk` and `@pithyx/ui` with TypeDoc. Start with [Your first app](/docs/developers/apps/first-app/).
+The packages ship TypeScript types with TSDoc comments; in the repository, `pnpm docs:api` builds an API reference of `@pithyx/sdk` and `@pithyx/ui` with TypeDoc. Start with [Your first app](/docs/developers/apps/first-app/).

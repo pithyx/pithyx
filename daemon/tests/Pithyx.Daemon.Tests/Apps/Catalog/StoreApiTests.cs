@@ -225,10 +225,13 @@ public sealed class StoreApiTests : IDisposable
             Assert.Equal(HttpStatusCode.OK, settings.StatusCode);
         }
         await CheckAsync();
-        await JobTestSupport.WaitUntilAsync(async () => (await AppAsync()).GetProperty("version").GetString() == "1.1.0" && !(await AppAsync()).GetProperty("busy").GetBoolean(), "the automatic update");
+        // The Store lists the update until it read the installed version again, a moment after the app changed.
+        await JobTestSupport.WaitUntilAsync(
+            async () => (await AppAsync()).GetProperty("version").GetString() == "1.1.0" && !(await AppAsync()).GetProperty("busy").GetBoolean()
+                && !(await StoreAsync()).GetProperty("updates").EnumerateArray().Any(),
+            "the automatic update");
         app = await AppAsync();
         Assert.Equal("1.0.0", app.GetProperty("previousVersion").GetString());
-        Assert.Empty((await StoreAsync()).GetProperty("updates").EnumerateArray());
 
         using (var rollback = await _admin.PostAsync($"/api/apps/{AppId}/rollback", null, Token))
         {

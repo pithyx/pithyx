@@ -6,6 +6,37 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-24
+
+Codename Carina (D374). Files opens files in the chosen app and takes drops on the path and the sidebar, apps can open after sign-in, snapshots show up live, and the SDK, UI kit and CLI leave the release candidates as 1.0.0. Like 1.0.0 it is marked beta on the stable channel: we consider it stable, but treat it as beta and keep backups. A box on 1.0.0 updates to it with one file; the path was tested from the 1.0.0 image (#187).
+
+### Added
+
+- `@pithyx/sdk`, `@pithyx/ui` and `@pithyx/cli` are at `1.0.0`, out of the release candidates (#193): from here on they follow SemVer, and the docs install them without `@next`.
+- `image/test-install.sh --stable-update <file>`: tests the stable update path from a released ISO with a throwaway key and a local HTTPS channel (online, from a file, automatic rollback, rollback in Settings); 1.0.0 to 1.0.1 passed on 2026-10-24.
+- "Open at sign-in" in the account menu: up to 10 apps that open after each sign-in, for every device; the manifest's optional `window.suggestAtSignIn` marks an app as suggested there (D373).
+- Files: entries and files from the device can be dropped onto a part of the path above the list and onto a share in the sidebar, which the docs already promised for the sidebar.
+- Files opens a file with a double click in the app chosen for its type: "Open with" has "Always open .x files this way", the choices follow the user to every device and are listed under "Default apps" in the account menu; without a choice the only installed app that sets `isDefault` for the type opens it (D371).
+- `image/baseline/pithyx-1.0.0-amd64.packages`: the package list of the 1.0.0 image, the base that `build-update.sh` and `pithyx-release update` build the first 1.0.x update files against.
+
+### Changed
+
+- Files reads a folder ahead while the mouse rests on it, so opening it shows its contents at once.
+- Storage: the Snapshots section shows a snapshot a schedule or another window took without reopening it, through the new administrator topic `storage/snapshots` (D372).
+- Branches (D367): `master` is now `stable`, the default branch where releases are tagged; the new `beta` is the beta channel and `dev` the integration branch. Changes go `dev` → `beta` → `stable` through pull requests, and `beta` and `stable` are protected. The nightly CI run tests `dev`, and the website is published from `stable`.
+- CI runs only on GitHub-hosted runners (D368); the self-hosted runners are retired.
+- The backlog is the GitHub issues with labels and milestones, and the decisions are in `DECISIONS.md`; `TODO.md` is gone (D369).
+- Development: `tools/dev-vm/provision.sh` installs the GitHub CLI `gh`.
+- The release steps from the branches to the published files are on the docs page "Releasing" (English and German).
+- Design gallery: the Settings sample shows the tile overview of the Settings app instead of the old navigation, and the start menu sample finds settings pages by their real names.
+
+### Fixed
+
+- FTP refuses an upload without the write right with `550` before it opens the data connection, instead of closing it mid-transfer ("Broken pipe" in clients).
+- The daemon releases the event throttle of a topic that went quiet, so finished jobs and closed folders no longer leave one behind for good.
+- `image/build.sh` can run again after a build: the .NET compiler server no longer keeps the lock of `image/out/work`.
+- A busy box no longer answers requests with an internal error because the database was locked: a write waits up to 30 seconds for another one instead of 5 (D370).
+
 ## [1.0.0] - 2026-10-18
 
 The first release, codename Pyxis (D345, D366): the NAS core, the file services, the app runtime with the Store, the installer and the updater. It is marked beta: we consider it stable, but it has not yet proven itself on real boxes in everyday use, so treat it as beta and keep backups. Fixes come as 1.0.x on the stable channel.
@@ -352,3 +383,7 @@ The first release, codename Pyxis (D345, D366): the NAS core, the file services,
 
 - SMB sessions end when their user's groups change (D353): smbd kept a session's groups from its start, so a new right did not apply and a revoked shared folder stayed usable over SMB until the user signed out of the computer. The daemon now ends the user's sessions after the change, and the client reconnects with the current rights.
 - The command log no longer records the output of commands that print secrets: creating a configuration backup ran `pdbedit -L -w` and wrote every user's NT password hash into the Log Center and the log files at Info level. The output of `pdbedit`, `smbpasswd` and `chpasswd` is now always masked, and other callers mark secret output per command (the catalog deploy key's `ssh-keygen`).
+
+[Unreleased]: https://github.com/pithyx/pithyx/compare/v1.1.0...dev
+[1.1.0]: https://github.com/pithyx/pithyx/compare/v1.0.0...v1.1.0
+[1.0.0]: https://github.com/pithyx/pithyx/releases/tag/v1.0.0

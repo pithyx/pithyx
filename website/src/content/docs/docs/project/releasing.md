@@ -1,6 +1,6 @@
 ---
 title: 'Releasing'
-description: 'The release tool tools/release/pithyx-release: building the ISO and update files, signing them and publishing the npm packages.'
+description: 'The steps of a release and the release tool tools/release/pithyx-release: building the ISO and update files, signing them and publishing them and the npm packages.'
 status: ready
 audience: developer
 sidebar:
@@ -40,3 +40,20 @@ tools/release/pithyx-release            # the menu
 - `publish-sdk.sh` never moves `latest` to a prerelease; `pithyx-release publish-sdk --latest` adds `npm dist-tag add <package>@<version> latest` for all three packages, with the same `--otp`.
 
 Steps that need a particular machine stay there: images need mmdebstrap and the build packages (a dev VM), stable signatures the release key. Updating a box from a file before publishing it is described under [Switching the update source](/docs/install/update-source/).
+
+## Releasing a version
+
+The steps of a release `X.Y.Z`, in order. Building and testing run on a dev VM; merging into `beta` and `stable`, the tag, the stable signatures and the npm publish are the maintainer's.
+
+1. **Branches.** The changes are on `dev` with green CI, including an E2E run (`gh workflow run CI --ref dev`). A pull request `dev` → `beta`, then `beta` → `stable`; both need green CI (the ruleset `protected-branches`).
+2. **Version.** The daemon's version in `daemon/Directory.Build.props`, the `CHANGELOG.md` section of the version and the docs (`since`, version numbers) are on `dev` before step 1.
+3. **Image.** On the dev VM, from the commit on `stable`: `pithyx-release iso --version X.Y.Z`. Then `image/test-install.sh --iso image/out/pithyx-X.Y.Z-amd64.iso --mirror` installs it in QEMU and checks the installed system.
+4. **Update file.** `pithyx-release update --version X.Y.Z` builds the `.pithyxupdate` against the baseline (`image/baseline/`), and `pithyx-release baseline --version X.Y.Z` keeps the new package list for the next update (commit it on `dev`). For a stable version, `image/test-install.sh --iso <ISO of the previous release> --stable-update <file>` then installs the previous release and updates it with the file before anyone signs it: it signs a copy with a throwaway test key, serves a test `channel-stable` over HTTPS and checks the update online, a further one from an uploaded file, the automatic rollback of a broken one and a rollback in Settings.
+5. **GPL sources.** `pithyx-release sources --version X.Y.Z` packs the Debian sources of the image as `pithyx-X.Y.Z-sources-<n>.tar`.
+6. **Tag.** The maintainer tags the commit the image was built from: `git tag -a vX.Y.Z <commit> -m "Pithyx X.Y.Z <codename>"`, `git push origin vX.Y.Z`.
+7. **Signing (maintainer, own machine).** `pithyx-release sign <file> --key <pithyx-release-1.pem> --key-id pithyx-release-1`, then `pithyx-release channel <file> --key <pem> --key-id pithyx-release-1 --sequence <n>` with the sequence of `channel-stable` plus one. The release key never leaves the maintainer's machine; the ISO itself carries no signature, only its checksum.
+8. **Publish.** The release `vX.Y.Z` with the ISO, its `.sha256`, the update file with its `.sha256` and the sources parts (`gh release create vX.Y.Z --verify-tag ...`); then `channel.json` and `channel.json.sig` on the release `channel-stable` (`gh release upload channel-stable ... --clobber`). Boxes on the stable channel find the update at their next daily check and notify their administrators.
+9. **Website.** Pushes to `stable` publish the docs; Actions, Pages, Run workflow on `stable` publishes by hand.
+10. **npm (when the packages changed).** `pithyx-release publish-sdk`, and for a stable version `--latest`. With a security key instead of one-time codes, leave out `--otp`: npm prints a link to confirm in the browser.
+
+A beta version (`X.Y.Z-beta.N`) goes the same way up to `beta` and stops there: `pithyx-release update --version X.Y.Z-beta.N --sign` signs with the beta key, and `pithyx-release publish-beta <file>` publishes it on `beta-X.Y.Z-beta.N` and `channel-beta`.

@@ -173,10 +173,10 @@ install_packages() {
   echo 'zfs-dkms zfs-dkms/note-incompatible-licenses note true' | debconf-set-selections
   # docker.io, docker-cli and docker-compose are Debian's Docker for app backends (D309); jq and nftables are for
   # docker-spike.sh. smbclient and sshpass are for the SMB and SFTP integration test. dnsmasq-base serves DHCP and
-  # router advertisements inside the network test's namespace (integration.sh --network, D337); it runs no service. mmdebstrap to dosfstools build the ISO (image/build.sh, D296), dpkg-dev the Pithyx packages and update files (tools/release, D338). The font and libraries after git are for headless Chromium (Playwright); without any font, text renders invisible.
+  # router advertisements inside the network test's namespace (integration.sh --network, D337); it runs no service. mmdebstrap to dosfstools build the ISO (image/build.sh, D296), dpkg-dev the Pithyx packages and update files (tools/release, D338). gh reads and writes the issues, the backlog (D369). The font and libraries after git are for headless Chromium (Playwright); without any font, text renders invisible.
   apt_install "linux-headers-$(uname -r)" "linux-headers-$arch" dkms zfs-dkms zfsutils-linux \
     mdadm btrfs-progs smartmontools samba nfs-kernel-server docker.io docker-cli docker-compose acl openssh-server "${qemu[@]}" \
-    smbclient sshpass shellcheck git jq nftables dnsmasq-base \
+    smbclient sshpass shellcheck git gh jq nftables dnsmasq-base \
     mmdebstrap uidmap squashfs-tools xorriso mtools dosfstools dpkg-dev \
     fonts-dejavu-core libgbm1 libxkbcommon0 libatk1.0-0t64 libatk-bridge2.0-0t64 libatspi2.0-0t64 \
     libxcomposite1 libxdamage1 libxfixes3 libxrandr2

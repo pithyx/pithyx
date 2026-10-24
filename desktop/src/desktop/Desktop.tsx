@@ -1,4 +1,6 @@
 import {
+  IconApps,
+  IconLogin,
   IconColorSwatch,
   IconDeviceDesktop,
   IconDevices,
@@ -165,6 +167,8 @@ function UserMenu({
   position,
   canMoveTaskbar,
   onTwoFactor,
+  onFileDefaults,
+  onStartupApps,
   onDone,
 }: {
   trigger: ReactNode;
@@ -172,6 +176,8 @@ function UserMenu({
   position: TaskbarPosition;
   canMoveTaskbar: boolean;
   onTwoFactor: () => void;
+  onFileDefaults: () => void;
+  onStartupApps: () => void;
   /** After a choice that changes the desktop (another layout, a taskbar position). */
   onDone: () => void;
 }) {
@@ -196,6 +202,10 @@ function UserMenu({
           onAction={(key) => {
             if (key === 'two-factor') {
               onTwoFactor();
+            } else if (key === 'file-defaults') {
+              onFileDefaults();
+            } else if (key === 'startup-apps') {
+              onStartupApps();
             }
           }}
         >
@@ -239,6 +249,12 @@ function UserMenu({
                 <WallpaperOptions />
               </MenuPopover>
             </SubmenuTrigger>
+            <MenuItem id="file-defaults" icon={<IconApps size={18} stroke={1.75} />}>
+              {t('menu.fileDefaults')}
+            </MenuItem>
+            <MenuItem id="startup-apps" icon={<IconLogin size={18} stroke={1.75} />}>
+              {t('menu.startupApps')}
+            </MenuItem>
             <SubmenuTrigger>
               <MenuItem id="devices" icon={<IconDevices size={18} stroke={1.75} />}>
                 {t('menu.getDesktop')}
@@ -308,6 +324,16 @@ const NotificationToasts = lazy(() =>
 );
 const TotpSetup = lazy(() =>
   import('../auth/TotpSetup').then(({ TotpSetup }) => ({ default: TotpSetup })),
+);
+const StartupAppsDialog = lazy(() =>
+  import('./StartupAppsDialog').then(({ StartupAppsDialog }) => ({
+    default: StartupAppsDialog,
+  })),
+);
+const FileDefaultsDialog = lazy(() =>
+  import('./FileDefaultsDialog').then(({ FileDefaultsDialog }) => ({
+    default: FileDefaultsDialog,
+  })),
 );
 const PowerDialog = lazy(() =>
   import('./PowerDialog').then(({ PowerDialog }) => ({ default: PowerDialog })),
@@ -435,6 +461,8 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   const now = useMinuteClock();
   const appName = useAppName();
   const [totpOpen, setTotpOpen] = useState(false);
+  const [fileDefaultsOpen, setFileDefaultsOpen] = useState(false);
+  const [startupAppsOpen, setStartupAppsOpen] = useState(false);
   const [startOpen, setStartOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [switcherOpen, setSwitcherOpen] = useState(false);
@@ -676,6 +704,14 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
                       closeStart(false);
                       setTotpOpen(true);
                     }}
+                    onFileDefaults={() => {
+                      closeStart(false);
+                      setFileDefaultsOpen(true);
+                    }}
+                    onStartupApps={() => {
+                      closeStart(false);
+                      setStartupAppsOpen(true);
+                    }}
                     onDone={() => {
                       closeStart(false);
                     }}
@@ -758,6 +794,24 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
               <p className={cx(styles.banner, styles.danger)} role="alert">
                 {t('realtime.stopped')}
               </p>
+            )}
+            {startupAppsOpen && (
+              <Suspense>
+                <StartupAppsDialog
+                  onClose={() => {
+                    setStartupAppsOpen(false);
+                  }}
+                />
+              </Suspense>
+            )}
+            {fileDefaultsOpen && (
+              <Suspense>
+                <FileDefaultsDialog
+                  onClose={() => {
+                    setFileDefaultsOpen(false);
+                  }}
+                />
+              </Suspense>
             )}
             {totpOpen && (
               <Suspense>

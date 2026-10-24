@@ -48,7 +48,7 @@ public static class BackupDatabase
     {
         [BackupCategory.Users] =
         [
-            "users", "recovery_codes", "user_appearance", "window_preferences", "desktop_layouts", "desktop_items",
+            "users", "recovery_codes", "user_appearance", "user_file_defaults", "user_startup_apps", "window_preferences", "desktop_layouts", "desktop_items",
             "groups", "group_members", "storage_alert_mutes",
         ],
         [BackupCategory.SharedFolders] = ["shares", "file_services"],

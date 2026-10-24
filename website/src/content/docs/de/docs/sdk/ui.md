@@ -12,7 +12,7 @@ sidebar:
 ## Installieren
 
 ```sh
-npm install @pithyx/ui@next react react-dom
+npm install @pithyx/ui react react-dom
 ```
 
 React und React DOM 19 sind Peer-Abhängigkeiten. Importiere die Token-Datei einmal und umgib deine App mit dem Provider:

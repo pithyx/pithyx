@@ -831,6 +831,24 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/desktop/file-defaults/{extension}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description Saves how the signed-in user opens files of an extension (lowercase, without the dot), for every device: viewer, download or app:<id>. GET /api/desktop returns them as fileDefaults. */
+        put: operations["SetFileDefault"];
+        post?: never;
+        /** @description Forgets the signed-in user's choice for an extension. Forgetting one that does not exist also answers 204. */
+        delete: operations["RemoveFileDefault"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/desktop/items": {
         parameters: {
             query?: never;
@@ -908,6 +926,23 @@ export type paths = {
         };
         get?: never;
         put: operations["SetWindowPreference"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/desktop/startup-apps": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description Replaces the apps the signed-in user opens after signing in, in order, for every device (at most 10). GET /api/desktop returns them as startupApps; the desktop skips apps that are gone or not allowed. */
+        put: operations["SetStartupApps"];
         post?: never;
         delete?: never;
         options?: never;
@@ -3861,6 +3896,8 @@ export type components = {
         DesktopState: {
             /** @description Accent color and wallpaper of the user, the same on every device. */
             appearance: components["schemas"]["Appearance"];
+            /** @description How the user opens files of an extension, by extension; the same on every device. */
+            fileDefaults: components["schemas"]["FileDefault"][];
             layout: null | components["schemas"]["JsonElement"];
             /**
              * Format: int64
@@ -3869,6 +3906,8 @@ export type components = {
             layoutVersion: number;
             /** @description Window preferences of the user for every app, shared across devices. */
             preferences: components["schemas"]["WindowPreference"][];
+            /** @description The apps the user opens after signing in, in order (D373); the same on every device. */
+            startupApps: string[];
         };
         /** @description Another device of the user with a saved layout. */
         DeviceLayout: {
@@ -4058,7 +4097,7 @@ export type components = {
             }[];
         };
         /** @enum {string} */
-        ErrorCode: "app.app.busy" | "app.app.no_previous" | "app.app.not_found" | "app.backend.endpoint_unknown" | "app.backend.missing" | "app.backend.start_failed" | "app.backend.storage_unavailable" | "app.backend.unavailable" | "app.backend.unsupported" | "app.compose.key_unsupported" | "app.compose.reference_unknown" | "app.compose.right_missing" | "app.compose.right_unused" | "app.compose.storage_mismatch" | "app.compose.value_invalid" | "app.compose.yaml_invalid" | "app.docker.unavailable" | "app.elevated.unsupported" | "app.icon.invalid" | "app.image.mismatch" | "app.image.unavailable" | "app.manifest.cron_invalid" | "app.manifest.duplicate" | "app.manifest.id_invalid" | "app.manifest.id_reserved" | "app.manifest.invalid_json" | "app.manifest.pithyx_invalid" | "app.manifest.reference_unknown" | "app.manifest.schema_violation" | "app.manifest.sdk_invalid" | "app.manifest.version_unsupported" | "app.manifest.window_size_invalid" | "app.mapping.invalid" | "app.package.box_too_old" | "app.package.downgrade_unsupported" | "app.package.invalid" | "app.package.layout_invalid" | "app.package.lock_invalid" | "app.package.not_found" | "app.package.too_large" | "app.permission.denied" | "app.permission.not_requested" | "app.pool.fixed" | "app.pool.required" | "app.pool.unavailable" | "app.storage.key_invalid" | "app.storage.not_found" | "app.storage.too_large" | "app.token.invalid" | "auth.account.disabled" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.desktop.not_allowed" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "fileservices.service.unavailable" | "fileservices.workgroup.invalid" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.share.unavailable" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "homes.choice.invalid" | "homes.home.in_use" | "homes.home.name_mismatch" | "homes.home.not_found" | "homes.move.running" | "homes.pool.no_space" | "homes.pool.taken" | "homes.pool.unavailable" | "homes.pool.unchanged" | "homes.quota.invalid" | "installer.check.failed" | "installer.claim.required" | "installer.claim.taken" | "installer.disk.count" | "installer.disk.unsuitable" | "installer.erase.not_confirmed" | "installer.hostname.invalid" | "installer.install.failed" | "installer.install.running" | "installer.keyboard.invalid" | "installer.reboot.not_ready" | "jobs.job.not_found" | "logs.app.invalid" | "logs.archive.pool_unavailable" | "logs.batch.too_large" | "logs.query.invalid" | "logs.settings.invalid" | "network.address.invalid" | "network.apply.failed" | "network.bond.member_invalid" | "network.bond.members_missing" | "network.bond.primary_invalid" | "network.change.empty" | "network.change.not_found" | "network.change.pending" | "network.config.unreachable" | "network.default_interface.invalid" | "network.dns.invalid" | "network.dns.too_many" | "network.firewall.failed" | "network.gateway.invalid" | "network.global.not_changeable" | "network.host_name.invalid" | "network.interface.duplicate" | "network.interface.kind_invalid" | "network.interface.name_invalid" | "network.interface.not_changeable" | "network.interface.unknown" | "network.mtu.invalid" | "network.search_domain.invalid" | "network.search_domain.too_many" | "network.vlan.duplicate" | "network.vlan.id_invalid" | "network.vlan.parent_invalid" | "notifications.message.invalid" | "notifications.notification.not_found" | "permissions.grant.invalid" | "proxy.access.denied" | "proxy.address.denied" | "proxy.address.invalid" | "proxy.auth.required" | "proxy.basic_auth.invalid" | "proxy.basic_auth.password_missing" | "proxy.certificate.missing" | "proxy.certificate.name_mismatch" | "proxy.domain.invalid" | "proxy.domain.taken" | "proxy.domains.missing" | "proxy.domains.too_many" | "proxy.header.invalid" | "proxy.headers.too_many" | "proxy.host.not_found" | "proxy.host.unknown" | "proxy.limit.out_of_range" | "proxy.loop.detected" | "proxy.redirect.not_found" | "proxy.redirect.status_invalid" | "proxy.redirect.target_invalid" | "proxy.sign_in.address_invalid" | "proxy.sign_in.group_not_found" | "proxy.sign_in.user_not_found" | "proxy.stream.name_invalid" | "proxy.stream.not_found" | "proxy.stream.port_in_use" | "proxy.stream.port_privileged" | "proxy.stream.port_reserved" | "proxy.stream.port_taken" | "proxy.stream.protocol_missing" | "proxy.target.invalid" | "proxy.target.loop" | "proxy.target.on_box" | "proxy.target.timeout" | "proxy.target.unavailable" | "proxy.ticket.target_invalid" | "proxy.websockets.disabled" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.command.timed_out" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.disks_missing" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.pool.suspended" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "storage.zfs.unavailable" | "store.app.not_found" | "store.catalog.architecture_missing" | "store.catalog.built_in" | "store.catalog.busy" | "store.catalog.data_version_decreased" | "store.catalog.exists" | "store.catalog.id_reserved" | "store.catalog.invalid_json" | "store.catalog.mismatch" | "store.catalog.not_found" | "store.catalog.rule_violation" | "store.catalog.schema_violation" | "store.catalog.sequence_old" | "store.catalog.signature_invalid" | "store.catalog.unreachable" | "store.catalog.url_invalid" | "store.catalog.version_unsupported" | "store.package.hash_mismatch" | "system.backup.category_missing" | "system.backup.invalid" | "system.backup.password_wrong" | "system.backup.restore_expired" | "system.backup.restore_failed" | "system.backup.restore_running" | "system.backup.too_large" | "system.backup.too_new" | "system.internal.unexpected" | "system.origin.forbidden" | "system.time.apply_failed" | "system.time.server_invalid" | "system.time.servers_too_many" | "system.time.zone_invalid" | "tls.custom.expired" | "tls.custom.invalid" | "tls.custom.key_mismatch" | "tls.issued.not_found" | "tls.name.invalid" | "tls.name.not_permitted" | "tls.names.missing" | "tls.names.too_many" | "tls.validity.out_of_range" | "update.apply.failed" | "update.apply.running" | "update.channel.invalid" | "update.channel.mismatch" | "update.channel.sequence_old" | "update.channel.signature_invalid" | "update.download.mismatch" | "update.file.architecture" | "update.file.channel" | "update.file.hash_mismatch" | "update.file.invalid" | "update.file.minimum" | "update.file.missing_entry" | "update.file.not_found" | "update.file.older" | "update.file.signature_invalid" | "update.file.too_large" | "update.file.unexpected_entry" | "update.none.available" | "update.rollback.unconfirmed" | "update.snapshot.not_found" | "update.source.invalid" | "update.source.unreachable" | "update.space.insufficient" | "update.system.unsupported" | "users.account.refused" | "users.gid.exhausted" | "users.group.builtin" | "users.group.description_invalid" | "users.group.exists" | "users.group.name_invalid" | "users.group.name_reserved" | "users.group.not_found" | "users.group.refused" | "users.uid.exhausted" | "users.user.exists" | "users.user.last_admin" | "users.user.not_found" | "users.user.self";
+        ErrorCode: "app.app.busy" | "app.app.no_previous" | "app.app.not_found" | "app.backend.endpoint_unknown" | "app.backend.missing" | "app.backend.start_failed" | "app.backend.storage_unavailable" | "app.backend.unavailable" | "app.backend.unsupported" | "app.compose.key_unsupported" | "app.compose.reference_unknown" | "app.compose.right_missing" | "app.compose.right_unused" | "app.compose.storage_mismatch" | "app.compose.value_invalid" | "app.compose.yaml_invalid" | "app.docker.unavailable" | "app.elevated.unsupported" | "app.icon.invalid" | "app.image.mismatch" | "app.image.unavailable" | "app.manifest.cron_invalid" | "app.manifest.duplicate" | "app.manifest.id_invalid" | "app.manifest.id_reserved" | "app.manifest.invalid_json" | "app.manifest.pithyx_invalid" | "app.manifest.reference_unknown" | "app.manifest.schema_violation" | "app.manifest.sdk_invalid" | "app.manifest.version_unsupported" | "app.manifest.window_size_invalid" | "app.mapping.invalid" | "app.package.box_too_old" | "app.package.downgrade_unsupported" | "app.package.invalid" | "app.package.layout_invalid" | "app.package.lock_invalid" | "app.package.not_found" | "app.package.too_large" | "app.permission.denied" | "app.permission.not_requested" | "app.pool.fixed" | "app.pool.required" | "app.pool.unavailable" | "app.storage.key_invalid" | "app.storage.not_found" | "app.storage.too_large" | "app.token.invalid" | "auth.account.disabled" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.desktop.not_allowed" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.file_default.invalid" | "desktop.file_default.limit_reached" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "desktop.startup_apps.invalid" | "fileservices.service.unavailable" | "fileservices.workgroup.invalid" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.share.unavailable" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "homes.choice.invalid" | "homes.home.in_use" | "homes.home.name_mismatch" | "homes.home.not_found" | "homes.move.running" | "homes.pool.no_space" | "homes.pool.taken" | "homes.pool.unavailable" | "homes.pool.unchanged" | "homes.quota.invalid" | "installer.check.failed" | "installer.claim.required" | "installer.claim.taken" | "installer.disk.count" | "installer.disk.unsuitable" | "installer.erase.not_confirmed" | "installer.hostname.invalid" | "installer.install.failed" | "installer.install.running" | "installer.keyboard.invalid" | "installer.reboot.not_ready" | "jobs.job.not_found" | "logs.app.invalid" | "logs.archive.pool_unavailable" | "logs.batch.too_large" | "logs.query.invalid" | "logs.settings.invalid" | "network.address.invalid" | "network.apply.failed" | "network.bond.member_invalid" | "network.bond.members_missing" | "network.bond.primary_invalid" | "network.change.empty" | "network.change.not_found" | "network.change.pending" | "network.config.unreachable" | "network.default_interface.invalid" | "network.dns.invalid" | "network.dns.too_many" | "network.firewall.failed" | "network.gateway.invalid" | "network.global.not_changeable" | "network.host_name.invalid" | "network.interface.duplicate" | "network.interface.kind_invalid" | "network.interface.name_invalid" | "network.interface.not_changeable" | "network.interface.unknown" | "network.mtu.invalid" | "network.search_domain.invalid" | "network.search_domain.too_many" | "network.vlan.duplicate" | "network.vlan.id_invalid" | "network.vlan.parent_invalid" | "notifications.message.invalid" | "notifications.notification.not_found" | "permissions.grant.invalid" | "proxy.access.denied" | "proxy.address.denied" | "proxy.address.invalid" | "proxy.auth.required" | "proxy.basic_auth.invalid" | "proxy.basic_auth.password_missing" | "proxy.certificate.missing" | "proxy.certificate.name_mismatch" | "proxy.domain.invalid" | "proxy.domain.taken" | "proxy.domains.missing" | "proxy.domains.too_many" | "proxy.header.invalid" | "proxy.headers.too_many" | "proxy.host.not_found" | "proxy.host.unknown" | "proxy.limit.out_of_range" | "proxy.loop.detected" | "proxy.redirect.not_found" | "proxy.redirect.status_invalid" | "proxy.redirect.target_invalid" | "proxy.sign_in.address_invalid" | "proxy.sign_in.group_not_found" | "proxy.sign_in.user_not_found" | "proxy.stream.name_invalid" | "proxy.stream.not_found" | "proxy.stream.port_in_use" | "proxy.stream.port_privileged" | "proxy.stream.port_reserved" | "proxy.stream.port_taken" | "proxy.stream.protocol_missing" | "proxy.target.invalid" | "proxy.target.loop" | "proxy.target.on_box" | "proxy.target.timeout" | "proxy.target.unavailable" | "proxy.ticket.target_invalid" | "proxy.websockets.disabled" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.command.timed_out" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.disks_missing" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.pool.suspended" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "storage.zfs.unavailable" | "store.app.not_found" | "store.catalog.architecture_missing" | "store.catalog.built_in" | "store.catalog.busy" | "store.catalog.data_version_decreased" | "store.catalog.exists" | "store.catalog.id_reserved" | "store.catalog.invalid_json" | "store.catalog.mismatch" | "store.catalog.not_found" | "store.catalog.rule_violation" | "store.catalog.schema_violation" | "store.catalog.sequence_old" | "store.catalog.signature_invalid" | "store.catalog.unreachable" | "store.catalog.url_invalid" | "store.catalog.version_unsupported" | "store.package.hash_mismatch" | "system.backup.category_missing" | "system.backup.invalid" | "system.backup.password_wrong" | "system.backup.restore_expired" | "system.backup.restore_failed" | "system.backup.restore_running" | "system.backup.too_large" | "system.backup.too_new" | "system.internal.unexpected" | "system.origin.forbidden" | "system.time.apply_failed" | "system.time.server_invalid" | "system.time.servers_too_many" | "system.time.zone_invalid" | "tls.custom.expired" | "tls.custom.invalid" | "tls.custom.key_mismatch" | "tls.issued.not_found" | "tls.name.invalid" | "tls.name.not_permitted" | "tls.names.missing" | "tls.names.too_many" | "tls.validity.out_of_range" | "update.apply.failed" | "update.apply.running" | "update.channel.invalid" | "update.channel.mismatch" | "update.channel.sequence_old" | "update.channel.signature_invalid" | "update.download.mismatch" | "update.file.architecture" | "update.file.channel" | "update.file.hash_mismatch" | "update.file.invalid" | "update.file.minimum" | "update.file.missing_entry" | "update.file.not_found" | "update.file.older" | "update.file.signature_invalid" | "update.file.too_large" | "update.file.unexpected_entry" | "update.none.available" | "update.rollback.unconfirmed" | "update.snapshot.not_found" | "update.source.invalid" | "update.source.unreachable" | "update.space.insufficient" | "update.system.unsupported" | "users.account.refused" | "users.gid.exhausted" | "users.group.builtin" | "users.group.description_invalid" | "users.group.exists" | "users.group.name_invalid" | "users.group.name_reserved" | "users.group.not_found" | "users.group.refused" | "users.uid.exhausted" | "users.user.exists" | "users.user.last_admin" | "users.user.not_found" | "users.user.self";
         /** @description A failed client message. `id` is empty when the message could not be parsed. */
         ErrorMessage: {
             code: components["schemas"]["ErrorCode"];
@@ -4083,6 +4122,17 @@ export type components = {
              * @enum {string}
              */
             type: "event";
+        };
+        /** @description How the user opens files of one extension, chosen with "Always use this app" (D371); the same on every device. */
+        FileDefault: {
+            /** @description The extension in lowercase without the dot, as in the manifest's `fileHandlers`, for example `pdf` or `tar.gz`. */
+            extension: string;
+            /** @description `viewer`, `download` or `app:` and an app id. The desktop ignores an app that is gone or no longer handles the extension. */
+            handler: string;
+        };
+        FileDefaultRequest: {
+            /** @description `viewer`, `download` or `app:` and an app id. */
+            handler: string;
         };
         /** @description A file or folder in a share. */
         FileEntry: {
@@ -6441,6 +6491,16 @@ export type components = {
              */
             usedBytes: number;
         };
+        /** @description Snapshot and event of `storage/snapshots`. */
+        SnapshotChanges: {
+            /** @description The datasets whose snapshots changed; empty in the snapshot of the topic. */
+            datasets: string[];
+            /**
+             * Format: int64
+             * @description Changes whenever a snapshot came, went or changed; compare it, do not count on it.
+             */
+            revision: number;
+        };
         SnapshotCreateRequest: {
             /** @description The dataset to snapshot. */
             dataset: string;
@@ -6521,6 +6581,11 @@ export type components = {
             size: number;
             trustedSignature: boolean;
             version: string;
+        };
+        /** @description The apps the user opens after signing in (D373); the same on every device. */
+        StartupApps: {
+            /** @description App ids in the order they open, each once, at most int StartupApps.Max. Empty opens nothing. */
+            apps: string[];
         };
         /** @description A storage problem that exists now. Alerts are derived from the current state, never stored. */
         StorageAlert: {
@@ -7007,6 +7072,7 @@ export type components = {
             "storage/alerts": components["schemas"]["StorageHealth"];
             "storage/disks": components["schemas"]["DisksChanged"];
             "storage/pools": components["schemas"]["PoolList"];
+            "storage/snapshots": components["schemas"]["SnapshotChanges"];
             "store/admin": components["schemas"]["StoreState"];
             "system/info": components["schemas"]["SystemInfo"];
             "system/network": components["schemas"]["NetworkState"];
@@ -7028,6 +7094,7 @@ export type components = {
             "storage/alerts": components["schemas"]["StorageHealth"];
             "storage/disks": components["schemas"]["DiskList"];
             "storage/pools": components["schemas"]["PoolList"];
+            "storage/snapshots": components["schemas"]["SnapshotChanges"];
             "store/admin": components["schemas"]["StoreState"];
             "system/info": components["schemas"]["SystemInfo"];
             "system/network": components["schemas"]["NetworkState"];
@@ -9194,6 +9261,68 @@ export interface operations {
             };
         };
     };
+    SetFileDefault: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                extension: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FileDefaultRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    RemoveFileDefault: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                extension: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
     ListDesktopItems: {
         parameters: {
             query?: never;
@@ -9400,6 +9529,37 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["WindowPreferenceRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SetStartupApps: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StartupApps"];
             };
         };
         responses: {

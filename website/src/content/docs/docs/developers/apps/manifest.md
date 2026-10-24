@@ -41,7 +41,7 @@ Required fields: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, 
 - `license`: optional SPDX expression. Catalogs require it.
 - `homepage`: optional http or https URL.
 - `entry`: the HTML page, `frontend/<path>.html`, at most 200 characters, no segment starting with a dot.
-- `sdk`: required npm-style version range for the SDK, for example `^1.0.0`. The box checks its syntax ([`app.manifest.sdk_invalid`](/docs/reference/errors/#app.manifest.sdk_invalid)); it does not compare it with the desktop's protocol today. With a release candidate, declare the version you installed, for example `^1.0.0-rc.8`: that range also covers 1.0.0 and every later 1.x, while `^1.0.0` would not match a candidate.
+- `sdk`: required npm-style version range for the SDK, for example `^1.0.0`. The box checks its syntax ([`app.manifest.sdk_invalid`](/docs/reference/errors/#app.manifest.sdk_invalid)); it does not compare it with the desktop's protocol today. An app built during the release candidates may keep `^1.0.0-rc.8`: that range also covers 1.0.0 and every later 1.x.
 - `pithyx`: optional range of box versions the app works with. The box installs the app only if its own version is inside. Catalogs require it. Prerelease versions match by plain SemVer ordering, so `>=0.1.0` includes `0.2.0-beta.1`, but `^0.1.0` does not.
 - `dataVersion`: optional integer from 1 to 2147483647. A catalog downgrade is allowed only between versions with the same `dataVersion`. A rollback to the previous version after an update does not depend on it.
 
@@ -52,8 +52,9 @@ Required fields: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, 
 - `instances`: `single` focuses the user's existing window on this device and passes launch arguments; `multi` opens a new window each time.
 - `defaultSize` and `minSize`: `width` and `height` as integers from 100 to 8192 CSS pixels. `minSize` may not be larger than `defaultSize` in either direction. The default size is used when the user has no remembered size; the minimum applies on screens that can fit it.
 - `loading` (optional): `text`, the line a new window shows while the backend starts, localized like `name` (up to 60 characters; without it the desktop says "Starting <name> ..."), and `untilReady`, whether the placeholder waits for `app.window.ready()` after the app connected. See [Events and context](/docs/sdk/guides/events-and-context/#loading).
+- `suggestAtSignIn` (optional, default false): the app suggests opening after sign-in, for an app people keep open all day such as a chat. The desktop marks it as suggested where users choose the apps that open after signing in (account menu, **Open at sign-in**); it never opens the app on its own.
 
-`fileHandlers` (optional, up to 32) makes the app appear under "Open with" for file types. Each handler has `extensions` (1 to 32 lowercase extensions without a dot, such as `png` or `tar.gz`), and optionally `mimeTypes` (1 to 32) and `isDefault`. An extension can belong to one handler only. The file reaches the app through the `launch` or `openFile` event.
+`fileHandlers` (optional, up to 32) makes the app appear under "Open with" for file types. Each handler has `extensions` (1 to 32 lowercase extensions without a dot, such as `png` or `tar.gz`), and optionally `mimeTypes` (1 to 32) and `isDefault`. With `isDefault`, a double click in Files opens the type in your app, as long as no other installed app sets `isDefault` for it and the user has not chosen another way with "Always open .x files this way". An extension can belong to one handler only. The file reaches the app through the `launch` or `openFile` event.
 
 ## Permissions
 

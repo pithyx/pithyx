@@ -14,7 +14,7 @@ These rules are binding. If a rule blocks you, stop and ask; never work around i
 `/etc/pithyx/environment` says `dev` or `prod`; if it is missing or unclear, assume prod. Every machine has exactly one Pithyx installation (D277).
 
 - **dev** (development VMs, simulation, CI): the machine is yours. Install packages, change services and config, load modules, reboot, create and destroy pools, reset databases, edit any file, without asking. Document afterwards (commit or decision entry).
-- Hard limits in dev: never push or merge to `master`; never delete, force-push or rewrite `origin/master` or `origin/dev`. Never touch the system disk; destructive storage tests use only the disks listed in `/etc/pithyx/test-disks` (scsi_debug disks are free). No secrets in commits or chat; never read password hashes or session tokens from the database, use the API. Commit and push before a reboot.
+- Hard limits in dev: never push or merge to `stable` or `beta`; never delete, force-push or rewrite `origin/stable`, `origin/beta` or `origin/dev`. Never touch the system disk; destructive storage tests use only the disks listed in `/etc/pithyx/test-disks` (scsi_debug disks are free). No secrets in commits or chat; never read password hashes or session tokens from the database, use the API. Commit and push before a reboot.
 - Test pools: `tools/dev-vm/testpool.sh create|destroy|wipe` (refuses non-test disks). After `zpool destroy` run `testpool.sh wipe`.
 - **prod** (real data): read-only. Before any write show the exact command and wait for confirmation; snapshot or backup first. Never `zpool destroy/create`, `mkfs`, `wipefs`, `dd`, `rm -rf` on data, `docker volume rm` or migrations without a confirmed backup.
 - The product does the same: destructive storage actions refuse disks with partitions or data unless the user confirms with the disk serial.
@@ -22,15 +22,15 @@ These rules are binding. If a rule blocks you, stop and ask; never work around i
 
 ## Current state
 
-- Version `1.0.0` (codename Pyxis) is in preparation: released on the stable channel and marked beta (D366); nothing tagged or published yet, the repository is about to go public.
+- Version `1.0.0` (codename Pyxis) is released: the tag `v1.0.0` on `stable`, a GitHub pre-release with the ISO and the GPL sources, on the stable channel and marked beta (D366); fixes come as 1.0.x. The repositories of the organization are public since 2026-10-18, and the docs are published from `stable` at pithyx.org.
 - Built: HTTPS on 7484 with the box as its own certificate authority (D346), the reverse proxy on 443 and 80 with redirect hosts and TCP/UDP streams (D347), storage (ZFS pools, disks, SMART, snapshots, scrubs), users, groups and permissions, home folders (D348), shared folders with SMB, SFTP, WebDAV and FTP, the web desktop with Files and Settings, the app runtime (SDK, manifest, Docker backends, proxy, Store with signed catalogs), network settings, firewall, config backup, the web installer, the ISO build and signed system updates with automatic rollback.
 - Not built: pool encryption, NFS, VMs, support bundles; app rights that need elevation (`docker.socket`, `host.full`) are refused with `app.elevated.unsupported`.
-- Docs pages under `website/` are all `ready` (checked against the code); new pages start as `draft` until checked. `TODO.md` marks what waits "(after 1.0.0)".
-- The migrations are numbered SQL files in `daemon/`; decisions are logged as D-numbers at the end of `TODO.md`, in number order (it conflicts on every merge; keep all entries sorted).
+- Docs pages under `website/` are all `ready` (checked against the code); new pages start as `draft` until checked.
+- The migrations are numbered SQL files in `daemon/`. Decisions are logged as D-numbers in `DECISIONS.md` (D269 on; earlier ones are in their pull requests), in number order, with the next free number at its top.
 
 ## Known pitfalls
 
-- Load spoils timings: check `uptime` before trusting a budget failure. The daemon tests skew the E2E budgets even on pinned cores, so the E2E job starts after the daemon job (D280).
+- Load spoils timings: check `uptime` before trusting a budget failure on a dev VM. In CI the E2E job starts after the daemon job (D280).
 - A manual or nightly CI run has no `BASE_SHA`, so `repo` skips the commit message and sign-off checks there.
 - Known flaky daemon tests are rerun once by `tools/checks/dotnet-test-retry.ts`; the E2E timing budgets are never retried.
 - A daemon refuses a database with unknown schema versions (exit 65).
@@ -38,26 +38,26 @@ These rules are binding. If a rule blocks you, stop and ask; never work around i
 - A package a workflow pushes to GHCR is private, also from a public repository, until it is made public in the web interface.
 - A fresh worktree needs `pnpm install --frozen-lockfile` before the first commit, or the repo-check hook fails.
 - A test that starts its own `smbd` needs `setsid` and a stdin pipe that stays open.
+- Tests with a fake clock: a loop that reads the clock before it arms its timer misses an `Advance` in between, so wake it or advance until the condition holds. Never cancel a pending WebSocket receive to poll (it aborts the socket); keep one receive pending.
 - An interrupted `image/build.sh` can leave mmdebstrap processes and a root file system in `/tmp/mmdebstrap.*`; the script holds a lock on its work directory, so a second run refuses to start.
 
 ## Workflow
 
-- Work through `TODO.md` top to bottom, one step at a time; finish its "Done when" before the next. `[DECISION]` and `[REVIEW]` steps need the maintainer: stop and ask. Check items off in the commit that finishes them.
-- Branches: `master` stable, `dev` beta and integration. Work in `feature/`, `fix/`, `hotfix/<name>`; PRs target `dev`. Never commit directly to `master` or `dev` (lefthook `pre-push` refuses it). New branches: `git branch --unset-upstream` so a bare `git push` never targets `dev`.
+- The backlog is the GitHub issues of `pithyx/pithyx` (labels by kind: `bug`, `enhancement`, `security`, `documentation`, `chore`, `flaky-test`; by area: `area: storage`, `files`, `apps`, `desktop`, `network`, `system`, `ci`; milestones per version and `later`). Work starts from an issue, also for small bugs: write one first (with `gh issue create` or `gh api`, or ask the maintainer to when the session has no GitHub access), and the pull request names it with `Fixes #n`. GitHub closes issues only on merges into the default branch `stable`, so after a merge into `dev` close the issue by hand with a comment naming the pull request. Take the issues of the next milestone first. A choice that needs the maintainer is asked, not guessed; its outcome becomes a decision in `DECISIONS.md`. Security weaknesses never go into a public issue (`SECURITY.md`).
+- Branches (D367): `stable` is stable and the default branch (releases are tagged there; it was `master` until 2026-10-18), `beta` the beta channel, `dev` the owner's test and integration branch. Changes flow feature → `dev` → `beta` → `stable`: `beta` and `stable` change only through pull requests from `dev` and `beta` (a hotfix branches from `stable` and goes back into `beta` and `dev`), guarded by the ruleset and lefthook `pre-push`. Work in `feature/`, `fix/`, `hotfix/<name>`; PRs target `dev`, and small changes may be pushed to `dev` directly. New branches: `git branch --unset-upstream` so a bare `git push` never targets `dev`.
 - Parallel work only in worktrees under `.worktrees/<name>` (`git worktree add .worktrees/<name> -b feature/<name> origin/dev`). Remove worktree and local branch once merged.
 - Commits and PR titles: `<gitmoji> <type>(<scope>): <subject>`, Unicode emoji, English, imperative, no em dashes. E.g. `✨ feat(desktop): add window snapping`, `🐛 fix(daemon): handle missing lsblk serial`, `♻️ refactor(storage): extract zpool parser`, `👷 ci: add DCO check`. Always `git commit -s` (DCO).
-- PR flow: merge `dev` into the branch, push, wait for a green runner run (label `e2e` for larger changes, see CI). Storage, account and command runner changes also attach an `integration.sh` result from a dev VM. Then squash-merge into `dev` (you may once CI is green; `master` always needs the maintainer). The squash subject including ` (#n)` stays at or under 100 characters, and the message ends with `Signed-off-by: Schecher_1 <74829802+Schecher1@users.noreply.github.com>`: GitHub makes the owner's profile name the squash commit's author, and the sign-off check wants both equal (the owner's name is Schecher1 everywhere else; once the GitHub profile name is Schecher1, so is this line). A branch with a migration proves its upgrade on a dev VM (the daemon keeps `pithyx.db.pre-<version>-<time>.bak`).
-- Apps waves: one PR per wave, see `TODO.md` "Working rules" (D313).
-- One PR run per runner host at a time, and only after the previous merge's `dev` run finished; parallel runs break timing budgets.
+- PR flow: merge `dev` into the branch, push, wait for a green CI run (label `e2e` for larger changes, see CI). Storage, account and command runner changes also attach an `integration.sh` result from a dev VM. Then squash-merge into `dev` (you may once CI is green; `beta` and `stable` always need the maintainer). The squash subject including ` (#n)` stays at or under 100 characters, and the message ends with `Signed-off-by: Schecher_1 <74829802+Schecher1@users.noreply.github.com>`: GitHub makes the owner's profile name the squash commit's author, and the sign-off check wants both equal (the owner's name is Schecher1 everywhere else; once the GitHub profile name is Schecher1, so is this line). A branch with a migration proves its upgrade on a dev VM (the daemon keeps `pithyx.db.pre-<version>-<time>.bak`).
+- Apps waves: one PR per wave (D313).
 - Generated files (`openapi.json`, `schema.ts`, `error-codes.ts`, `sdk/src/manifest.generated.ts`) are never merged by hand: take one side and regenerate (build the daemon and run `pnpm --filter @pithyx/api-client generate`; the manifest types come from `sdk/schema/manifest.v1.schema.json`).
 - Every user-visible or developer-relevant change adds a line under `Unreleased` in `CHANGELOG.md` (Keep a Changelog).
-- SemVer for the product; releases tagged on `master` as `vX.Y.Z` with a constellation codename. The npm packages (`sdk/`, `packages/ui`, `packages/cli`) have their own SemVer line, all at the same version, tagged `sdk-vX.Y.Z`; release candidates go to the dist-tag `next`, `latest` only after the maintainer's approval. Only the maintainer publishes, with `tools/release/publish-sdk.sh` (or `tools/release/pithyx-release publish-sdk`, the release tool over every release script, D364) and npm 2FA; no npm token is stored (D306).
+- SemVer for the product; releases tagged on `stable` as `vX.Y.Z` with a constellation codename. The npm packages (`sdk/`, `packages/ui`, `packages/cli`) have their own SemVer line, all at the same version, tagged `sdk-vX.Y.Z`; release candidates go to the dist-tag `next`, `latest` only after the maintainer's approval. Only the maintainer publishes, with `tools/release/publish-sdk.sh` (or `tools/release/pithyx-release publish-sdk`, the release tool over every release script, D364) and npm 2FA; no npm token is stored (D306).
 
 ## Before you commit
 
-- Build, lint, tests green on the runner; generated clients current.
+- Build, lint, tests green in CI; generated clients current.
 - New visible text has `en` and `de` keys; new error codes have translations (the website's error reference is generated from them).
-- `TODO.md` checked off, `CHANGELOG.md` updated.
+- The issue named with `Fixes #n`, `CHANGELOG.md` updated, and a decision the change makes added to `DECISIONS.md`.
 - Docs (D340): every change checks whether the docs under `website/src/content/docs/` describe it. If a page is wrong, update it in the same commit, English and German. If nothing describes it and a user, admin or developer would otherwise guess (new feature or setting, changed behavior, new error code, limitation, manual step), add it to the matching page or area or create a page; a question users will likely ask becomes an FAQ file. Refactors and internal details need no page. How to find and write pages: `website/CLAUDE.md`.
 - No em dashes, no non-English text outside translation files.
 
@@ -75,7 +75,7 @@ website/  landing page and docs at pithyx.org (Astro + Starlight, GitHub Pages, 
 ```
 
 - One monorepo, one product version (the npm packages have their own, see Workflow). Nested rules: `daemon/CLAUDE.md` (architecture, paths, operations, VMs), `desktop/CLAUDE.md` (responsive, accessibility, performance, layout memory), `website/CLAUDE.md` (where docs live and how to write them); equally binding.
-- No developer docs in markdown outside `website/`; the code documents itself. Allowed markdown outside `website/`: README, CLAUDE (root and per top-level folder), CONTRIBUTING, TODO, CHANGELOG, SECURITY, and the GitHub templates GitHub needs in `.github/` (`pull_request_template.md`; the issue forms in `.github/ISSUE_TEMPLATE/` are YAML). No other markdown for agents; state lives in this file.
+- No developer docs in markdown outside `website/`; the code documents itself. Allowed markdown outside `website/`: README, CLAUDE (root and per top-level folder), CONTRIBUTING, DECISIONS, CHANGELOG, SECURITY, and the GitHub templates GitHub needs in `.github/` (`pull_request_template.md`; the issue forms in `.github/ISSUE_TEMPLATE/` are YAML). No other markdown for agents; state lives in this file.
 - `website/` publishes every docs page also as Markdown (`<page>.md`), `/llms.txt` (index), `/llms/<area>.txt` (one area) and `/llms-full.txt` (everything). API and SDK references are generated from OpenAPI and TSDoc.
 - An API change updates daemon, generated client, SDK and desktop in the same commit. Never edit generated files.
 - Committed content is English. Only `i18n/` and translated `website/` pages may be otherwise. Chat with maintainers may be German.
@@ -155,14 +155,14 @@ website/  landing page and docs at pithyx.org (Astro + Starlight, GitHub Pages, 
 
 ## CI
 
-- Jobs in `.github/workflows/ci.yaml` use `${{ vars.CI_RUNNER || 'ubuntu-latest' }}` (the project's self-hosted `pithyx-ci` runners); E2E uses `${{ vars.CI_RUNNER_E2E || vars.CI_RUNNER || 'ubuntu-latest' }}` (`pithyx-e2e`, pinned cores, D280).
-- A pull request from a fork never runs on the self-hosted runners: every job takes `ubuntu-latest` when `github.event.pull_request.head.repo.fork` is true, and runs only after a maintainer approved it (repository setting, Actions, General, "Fork pull request workflows from outside collaborators": "Require approval for all outside collaborators"). No secrets reach fork runs. Those jobs may not need anything only the runner has.
-- The runner has no Docker and no root: no `services:` or `container:`, nothing needing ZFS, disks or root. The maintainers run it: never change it or add workflow workarounds for something missing; tell the maintainer.
+- Every job of `.github/workflows/ci.yaml` and `pages.yaml` runs on GitHub-hosted runners (`ubuntu-latest`, free for the public repository, D368); there are no self-hosted runners.
+- A pull request from a fork runs only after a maintainer approved it (repository setting, Actions, General, "Fork pull request workflows from outside collaborators": "Require approval for all outside collaborators"). No secrets reach fork runs.
+- No `services:` or `container:`, nothing needing ZFS, real disks or root in CI: those tests run on a dev VM.
 - Workflows: top-level `permissions: contents: read`, widened per job only when needed. No `pull_request_target`, no secrets in logs, no fork code without approval.
-- The runner does all build-only work (build, lint, typecheck, unit tests, E2E, perf gate): push, keep working, read the result. Use a dev VM only for ZFS/root tests, image builds and deploys. There is no local CI fallback.
+- CI does all build-only work (build, lint, typecheck, unit tests, E2E, perf gate): push, keep working, read the result. Use a dev VM only for ZFS/root tests, image builds and deploys. There is no local CI fallback.
 - Every PR runs `changes` and `repo` (format, repo rules, shellcheck, commit messages, sign-off), plus `daemon` (without `StorageIntegration`, `DockerIntegration` and `TimingBudget`) and `frontend` when their files changed. That suffices for a small change.
-- Nightly (`schedule`, 01:17 UTC, on `dev` as the default branch, only in `pithyx/pithyx`): the full CI including E2E, perf gate and design checks. The commit message and sign-off checks are skipped there and on manual runs (no range). GitHub disables a schedule after 60 days without repository activity.
-- Caches: pnpm (`setup-node`) and, on GitHub-hosted runners only, NuGet (`setup-dotnet`, keyed on `packages.lock.json`) and the Playwright browsers; the self-hosted runners restore from nuget.org faster than from the cache (D350).
+- Nightly (`schedule`, 01:17 UTC, only in `pithyx/pithyx`; it starts on the default branch `stable`, and every checkout takes `dev`, D367): the full CI including E2E, perf gate and design checks. The commit message and sign-off checks are skipped there and on manual runs (no range). GitHub disables a schedule after 60 days without repository activity.
+- Caches: pnpm (`setup-node`), NuGet (`setup-dotnet`, keyed on `packages.lock.json`) and the Playwright browsers.
 - Flaky daemon tests: the `daemon` job runs `tools/checks/dotnet-test-retry.ts`, which reruns once, alone, only failed tests that are known flakes (message "database is locked", or listed in the script) and logs the rerun as a warning annotation. Any other failed test fails the job at once. Add a test to the list only with its cause in the Known pitfalls; the E2E timing budgets are never retried.
-- Required checks of the branch ruleset (`tools/github/protect-branches.sh`, run once when the repository goes public, by the maintainer): `changes`, `daemon`, `frontend`, `website`, `repo`; a skipped job counts as passed. `e2e` is not required.
-- E2E with perf gate and design checks only on request (D278): label `e2e` (`gh pr edit <n> --add-label e2e`), `gh workflow run CI --ref <branch>`, or any PR to `master`. Add the label for user flows, desktop shell, window manager, sign-in, setup, SDK transport, API contract, loading path or bundle, or several PRs merged in a row. Run it on `dev` before a round is verified on a dev VM.
+- Required checks of the branch ruleset on `stable` and `beta` (`tools/github/protect-branches.sh`, created when the repository went public on 2026-10-18): `changes`, `daemon`, `frontend`, `website`, `repo`; a skipped job counts as passed. `e2e` is not required.
+- E2E with perf gate and design checks only on request (D278): label `e2e` (`gh pr edit <n> --add-label e2e`), `gh workflow run CI --ref <branch>`, or any PR or push to `beta` or `stable`. Add the label for user flows, desktop shell, window manager, sign-in, setup, SDK transport, API contract, loading path or bundle, or several PRs merged in a row. Run it on `dev` before a round is verified on a dev VM.

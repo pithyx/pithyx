@@ -48,6 +48,26 @@ public sealed class TopicHubTests
     }
 
     [Fact]
+    public async Task ThrottleOfAQuietTopicIsReleasedAndANewEventGoesOutAtOnce()
+    {
+        _registry.Add(Topic("stats/cpu", TimeSpan.FromSeconds(1)));
+        var connection = _hub.Connect(_user, "s");
+        await _hub.SubscribeAsync(connection, "c1", "stats/cpu", TestContext.Current.CancellationToken);
+        Drain(connection);
+
+        _hub.Publish("stats/cpu", 1);
+        _hub.Publish("stats/cpu", 2);
+        _time.Advance(TimeSpan.FromSeconds(1));
+        Assert.Equal(1, _hub.ThrottleCount);
+        _time.Advance(TimeSpan.FromSeconds(1));
+        Assert.Equal(0, _hub.ThrottleCount);
+        Assert.Equal([1, 2], Drain(connection).Select(m => m.GetProperty("data").GetInt32()));
+
+        _hub.Publish("stats/cpu", 3);
+        Assert.Equal([3], Drain(connection).Select(m => m.GetProperty("data").GetInt32()));
+    }
+
+    [Fact]
     public async Task WildcardSubscriptionReceivesTopicsCreatedLater()
     {
         var pools = new List<string>();

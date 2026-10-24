@@ -2,12 +2,13 @@ name: Pages
 
 # Builds website/ and publishes it with GitHub Pages at https://pithyx.org (D340). It runs only once the owner has
 # switched Pages on for the public repository and set the repository variable PAGES_ENABLED to true; until then the
-# site is built and checked by the website job in ci.yaml only. From the first release on it deploys from master.
+# site is built and checked by the website job in ci.yaml only. It deploys from stable, so the site shows the released
+# version (D367); the environment github-pages allows only stable.
 # workflow_dispatch is the "Run workflow" button (Actions > Pages) to publish the docs by hand; while PAGES_ENABLED is
 # not true, a manual run skips both jobs, because the free plan has no Pages for a private repository.
 on:
   push:
-    branches: [dev]
+    branches: [stable]
     paths:
       - website/**
       - i18n/**
@@ -27,7 +28,7 @@ concurrency:
 jobs:
   build:
     if: vars.PAGES_ENABLED == 'true'
-    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
@@ -43,7 +44,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     permissions:
       pages: write
       id-token: write
