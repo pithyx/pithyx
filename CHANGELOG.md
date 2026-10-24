@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Changed
+
+- The favicon of the desktop and of pithyx.org is transparent and fills its square, with lighter faces on a dark tab bar, instead of a light tile.
+
 ### Added
 
 - `image/baseline/pithyx-1.1.0-amd64.packages`: the package list of the 1.1.0 image, the base for update files from 1.1.0 on.
