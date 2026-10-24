@@ -6,14 +6,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- `image/baseline/pithyx-1.1.0-amd64.packages`: the package list of the 1.1.0 image, the base for update files from 1.1.0 on.
+
+### Changed
+
+- The favicon of the desktop and of pithyx.org is transparent and fills its square, with lighter faces on a dark tab bar, instead of a light tile.
+
 ### Fixed
 
 - The READMEs of `@pithyx/sdk`, `@pithyx/ui` and `@pithyx/cli` no longer call them release candidates; the packages are at `1.0.1` so npm shows the corrected pages.
 - `pithyx-release publish-sdk --latest` publishes a stable version straight to `latest` instead of failing.
-
-### Added
-
-- `image/baseline/pithyx-1.1.0-amd64.packages`: the package list of the 1.1.0 image, the base for update files from 1.1.0 on.
 
 ## [1.1.0] - 2026-10-24
 
