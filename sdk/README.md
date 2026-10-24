@@ -1,9 +1,7 @@
 # @pithyx/sdk
 
-[![npm](https://img.shields.io/npm/v/@pithyx/sdk/next?label=npm%40next)](https://www.npmjs.com/package/@pithyx/sdk)
+[![npm](https://img.shields.io/npm/v/@pithyx/sdk)](https://www.npmjs.com/package/@pithyx/sdk)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
-
-> **Release candidate.** The API can still change before `1.0.0`.
 
 The SDK for apps on [Pithyx](https://github.com/pithyx/pithyx), the free, self-hosted NAS and server OS with a web desktop. Every Pithyx app uses it, the system apps as well as third-party apps: it is the only way an app talks to the desktop and to the box.
 
@@ -53,7 +51,7 @@ Every page is also available as Markdown (add `.md` to its path), and [pithyx.or
 
 ## Versions
 
-`@pithyx/sdk`, `@pithyx/ui` and `@pithyx/cli` share one version line, separate from the Pithyx product version. Release candidates are published under the dist-tag `next`.
+`@pithyx/sdk`, `@pithyx/ui` and `@pithyx/cli` share one version line, separate from the Pithyx product version, and follow SemVer since `1.0.0`: a breaking change needs a major version. Releases are published under the dist-tag `latest`; a release candidate of a later version goes to `next` first.
 
 ## License
 
