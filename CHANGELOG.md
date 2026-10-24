@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Apps can add entries to the context menu of Files with the manifest's `fileActions`, for example "Extract here" on archives; the app opens with `launch.action` (the share, the folder and the selected names) and works on them with `files.shares` and the user's rights (D375). New error code `app.manifest.permission_missing`.
+
 - `image/baseline/pithyx-1.1.0-amd64.packages`: the package list of the 1.1.0 image, the base for update files from 1.1.0 on.
 
 ### Changed

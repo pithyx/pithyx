@@ -55,6 +55,7 @@ export {
   type DirectoryUser,
   type EventName,
   type Events,
+  type FileActionLaunch,
   type FileRef,
   type GroupRef,
   type HostMessage,

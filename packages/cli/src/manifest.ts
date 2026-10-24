@@ -144,6 +144,27 @@ function semanticIssues(
     });
   });
 
+  const actionIds = new Set<string>();
+  manifest.fileActions?.forEach((action, index) => {
+    if (actionIds.has(action.id)) {
+      issues.push(duplicate(`/fileActions/${String(index)}/id`, action.id));
+    }
+    actionIds.add(action.id);
+    // An action applies to files with these extensions, to folders, or to both.
+    if (action.extensions === undefined && action.folders !== true) {
+      issues.push({
+        code: 'app.manifest.schema_violation',
+        params: { path: `/fileActions/${String(index)}`, keyword: 'required' },
+      });
+    }
+  });
+  if (manifest.fileActions !== undefined && !manifest.permissions.includes('files.shares')) {
+    issues.push({
+      code: 'app.manifest.permission_missing',
+      params: { path: '/fileActions', permission: 'files.shares' },
+    });
+  }
+
   const backend = manifest.backend;
   if (backend !== undefined) {
     const endpoints = new Set(Object.keys(backend.endpoints));

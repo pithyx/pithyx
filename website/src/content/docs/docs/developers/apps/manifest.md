@@ -9,7 +9,7 @@ sidebar:
 
 `pithyx.json` at the package root describes an app: who it is, which window it opens, which permissions it asks for, which folders it wants and, if it has one, how its backend runs. The JSON Schema is `sdk/schema/manifest.v1.schema.json` (published as `@pithyx/sdk/schema/manifest.v1.schema.json`); unknown fields are errors. The schema is a stable contract: a new optional field is a minor change, anything else a major one.
 
-Required fields: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, `sdk`, `permissions` and `window`. Optional: `$schema`, `description`, `license`, `homepage`, `pithyx`, `dataVersion`, `storage`, `fileHandlers` and `backend`. See also the [schema reference](/docs/reference/manifest-schema/) with every field and the [Compose rules](/docs/reference/compose-rules/) for the backend.
+Required fields: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, `sdk`, `permissions` and `window`. Optional: `$schema`, `description`, `license`, `homepage`, `pithyx`, `dataVersion`, `storage`, `fileHandlers`, `fileActions` and `backend`. See also the [schema reference](/docs/reference/manifest-schema/) with every field and the [Compose rules](/docs/reference/compose-rules/) for the backend.
 
 ```json
 {
@@ -55,6 +55,8 @@ Required fields: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, 
 - `suggestAtSignIn` (optional, default false): the app suggests opening after sign-in, for an app people keep open all day such as a chat. The desktop marks it as suggested where users choose the apps that open after signing in (account menu, **Open at sign-in**); it never opens the app on its own.
 
 `fileHandlers` (optional, up to 32) makes the app appear under "Open with" for file types. Each handler has `extensions` (1 to 32 lowercase extensions without a dot, such as `png` or `tar.gz`), and optionally `mimeTypes` (1 to 32) and `isDefault`. With `isDefault`, a double click in Files opens the type in your app, as long as no other installed app sets `isDefault` for it and the user has not chosen another way with "Always open .x files this way". An extension can belong to one handler only. The file reaches the app through the `launch` or `openFile` event.
+
+`fileActions` (optional, up to 16, D375) adds entries to the context menu of files and folders in Files, for example "Extract here" on archives or "Compress to ZIP" on a selection. Each action has an `id` (unique in the app), a `label` like `name`, and says what it applies to: `extensions` (files with these extensions), `folders: true`, or both. `multiple: true` offers it for several selected items at once (otherwise only for exactly one), and `writes: true` only where the user may change files. The desktop shows an action only when every selected item matches. Choosing it opens your app with `launch.action`: the action's `id`, the share as `location`, the `folder` and the `names` of the selected items. Your app reads and writes them with the files API in that share, with the user's rights, so `fileActions` needs the permission `files.shares` (the box refuses the manifest without it with [`app.manifest.permission_missing`](/docs/reference/errors/#app.manifest.permission_missing)).
 
 ## Permissions
 

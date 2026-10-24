@@ -94,6 +94,7 @@ public sealed record UpdateAppRequest(bool Enabled);
 /// <param name="Permissions">The permissions the app holds: those of its manifest that no administrator revoked.</param>
 /// <param name="LogLevel">Whether its debug log entries reach the daemon.</param>
 /// <param name="FileHandlers">The files the app opens, for "Open with".</param>
+/// <param name="FileActions">The app's entries for the context menu of files and folders (D375).</param>
 public sealed record AppSummary(
     string Id,
     string Version,
@@ -104,12 +105,22 @@ public sealed record AppSummary(
     JsonElement Window,
     IReadOnlyList<string> Permissions,
     AppLogLevel LogLevel,
-    IReadOnlyList<AppFileHandler> FileHandlers);
+    IReadOnlyList<AppFileHandler> FileHandlers,
+    IReadOnlyList<AppFileAction> FileActions);
 
 /// <summary>The kinds of files an app opens (<c>fileHandlers</c> of its manifest).</summary>
 /// <param name="Extensions">Lowercase extensions without the dot, for example <c>png</c> or <c>tar.gz</c>.</param>
 /// <param name="IsDefault">Whether the app is the default for these files when it is the only handler.</param>
 public sealed record AppFileHandler(IReadOnlyList<string> Extensions, bool IsDefault);
+
+/// <summary>An entry of the app for the context menu of files and folders (<c>fileActions</c> of its manifest, D375).</summary>
+/// <param name="Id">Sent back to the app in <c>launch.action.id</c>.</param>
+/// <param name="Label">The menu entry by language (<c>en</c> always).</param>
+/// <param name="Extensions">Lowercase extensions of the files it applies to; empty for none.</param>
+/// <param name="Folders">Whether it applies to folders.</param>
+/// <param name="Multiple">Whether it takes several items at once.</param>
+/// <param name="Writes">Whether it writes into the folder of the selection.</param>
+public sealed record AppFileAction(string Id, IReadOnlyDictionary<string, string> Label, IReadOnlyList<string> Extensions, bool Folders, bool Multiple, bool Writes);
 
 /// <summary>The apps the subscriber may use, sorted by id: the snapshot and every event of <c>apps</c>.</summary>
 /// <param name="Apps">Enabled apps the user has a grant for; every enabled app for administrators.</param>

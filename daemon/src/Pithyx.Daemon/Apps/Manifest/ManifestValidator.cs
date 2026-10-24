@@ -140,6 +140,30 @@ public static class ManifestValidator
             }
         }
 
+        if (root.TryGetProperty("fileActions", out var actions))
+        {
+            var actionIds = new HashSet<string>(StringComparer.Ordinal);
+            var index = 0;
+            foreach (var action in actions.EnumerateArray())
+            {
+                var actionId = action.GetProperty("id").GetString()!;
+                if (!actionIds.Add(actionId))
+                {
+                    issues.Add(Duplicate($"/fileActions/{index}/id", actionId));
+                }
+                // An action applies to files with these extensions, to folders, or to both.
+                if (!action.TryGetProperty("extensions", out _) && !(action.TryGetProperty("folders", out var folders) && folders.GetBoolean()))
+                {
+                    issues.Add(new ValidationIssue(ErrorCodes.AppManifestSchemaViolation, ("path", $"/fileActions/{index}"), ("keyword", "required")));
+                }
+                index++;
+            }
+            if (!root.GetProperty("permissions").EnumerateArray().Any(permission => permission.GetString() == "files.shares"))
+            {
+                issues.Add(new ValidationIssue(ErrorCodes.AppManifestPermissionMissing, ("path", "/fileActions"), ("permission", "files.shares")));
+            }
+        }
+
         if (hasBackend)
         {
             issues.AddRange(BackendIssues(backend));

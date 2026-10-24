@@ -101,6 +101,14 @@
         "$ref": "#/$defs/FileHandler"
       }
     },
+    "fileActions": {
+      "description": "Actions the app adds to the context menu of files and folders, for example \"Extract here\" on archives. Needs the permission `files.shares`.",
+      "type": "array",
+      "maxItems": 16,
+      "items": {
+        "$ref": "#/$defs/FileAction"
+      }
+    },
     "backend": {
       "$ref": "#/$defs/BackendManifest"
     }
@@ -360,6 +368,46 @@
         },
         "isDefault": {
           "description": "Whether the app is the default for these files when it is the only handler.",
+          "type": "boolean"
+        }
+      }
+    },
+    "FileAction": {
+      "title": "FileAction",
+      "description": "An entry the desktop adds to the context menu of files and folders in Files, when every selected item matches it. Choosing it opens the app with `launch.action`: the action's `id`, the share, the folder and the names of the selected items, which the app reads and changes through the files API with the user's rights (`files.shares`). `label` is the menu entry, for example \"Extract here\". Give `extensions`, `folders: true` or both.",
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label"],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/Name",
+          "description": "Unique within the app; `launch.action.id` names it."
+        },
+        "label": {
+          "$ref": "#/$defs/LocalizedName"
+        },
+        "extensions": {
+          "description": "Files the action applies to: lowercase extensions without the leading dot, for example `zip` or `tar.gz`.",
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 32,
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "maxLength": 32,
+            "pattern": "^[a-z0-9]+([.+_-][a-z0-9]+)*$"
+          }
+        },
+        "folders": {
+          "description": "Whether the action applies to folders. Default false.",
+          "type": "boolean"
+        },
+        "multiple": {
+          "description": "Whether the action takes several selected items at once; otherwise it is offered for exactly one. Default false.",
+          "type": "boolean"
+        },
+        "writes": {
+          "description": "Whether the action writes into the folder of the selection, so the desktop offers it only where the user may change files. Default false.",
           "type": "boolean"
         }
       }

@@ -73,6 +73,7 @@ Gemeldet von [`validate`](/de/docs/reference/cli/validate/) und [`pack`](/de/doc
 - [`app.manifest.id_invalid`](/de/docs/reference/errors/#app.manifest.id_invalid) (Fehler): Die App-ID {id} ist ungültig. Sie besteht aus der umgekehrten Domain des Autors und dem App-Namen, zum Beispiel com.example.chat.
 - [`app.manifest.id_reserved`](/de/docs/reference/errors/#app.manifest.id_reserved) (Fehler): Die App-ID {id} ist für die Apps reserviert, die mit Pithyx kommen.
 - [`app.manifest.invalid_json`](/de/docs/reference/errors/#app.manifest.invalid_json) (Fehler): Das Manifest der App (pithyx.json) ist kein gültiges JSON.
+- [`app.manifest.permission_missing`](/de/docs/reference/errors/#app.manifest.permission_missing) (Fehler): Das Manifest nutzt {path}, das die Berechtigung {permission} braucht. Ergänze sie unter permissions.
 - [`app.manifest.pithyx_invalid`](/de/docs/reference/errors/#app.manifest.pithyx_invalid) (Fehler): Der Pithyx-Versionsbereich {pithyx} im Manifest ist ungültig.
 - [`app.manifest.reference_unknown`](/de/docs/reference/errors/#app.manifest.reference_unknown) (Fehler): Das Manifest verweist unter {path} auf {name}, das es nicht deklariert.
 - [`app.manifest.schema_violation`](/de/docs/reference/errors/#app.manifest.schema_violation) (Fehler): Das Manifest der App ist unter {path} ungültig ({keyword}).

@@ -164,11 +164,15 @@ public static class ErrorCodes
     public const string AppManifestCronInvalid = "app.manifest.cron_invalid";
 
     /// <summary>
-    /// A value that must be unique in the manifest appears twice (storage ids, schedule ids, file extensions);
+    /// A value that must be unique in the manifest appears twice (storage ids, schedule ids, file extensions, file action ids);
     /// <c>params.path</c> is the second one, <c>params.value</c> the value.
     /// </summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string AppManifestDuplicate = "app.manifest.duplicate";
+
+    /// <summary>A part of the manifest needs a permission the manifest does not request; <c>params.path</c> names the part, <c>params.permission</c> the permission.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AppManifestPermissionMissing = "app.manifest.permission_missing";
 
     /// <summary>The manifest's <c>id</c> is not an app id of D302; <c>params.id</c> is the value.</summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]

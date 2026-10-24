@@ -159,9 +159,11 @@ Reading `app.context` needs no permission and no call. The SDK updates these fie
 
 ## Launch arguments
 
-`app.context.launch` says why the window opened: `{ args, file?, notification? }`. A window the user opened from the desktop or the Store has `{ args: null }`. A click on one of the app's notifications while no window of the app was open starts it with `launch.notification` (`notification`, `action`, `data`). For an app with `"instances": "single"` in the manifest, launching it again focuses the user's window on this device and sends the new arguments as the `launch` event.
+`app.context.launch` says why the window opened: `{ args, file?, notification?, action? }`. A window the user opened from the desktop or the Store has `{ args: null }`. A click on one of the app's notifications while no window of the app was open starts it with `launch.notification` (`notification`, `action`, `data`). For an app with `"instances": "single"` in the manifest, launching it again focuses the user's window on this device and sends the new arguments as the `launch` event.
 
 `launch.file` and the `openFile` event belong to file handlers. When the user chooses your app in "Open with" in the Files app for a file whose extension a `fileHandlers` entry of your manifest names, a new window gets `launch.file`, and an open window of a `single` app gets `openFile` with the file. Both are handles you read with `files.read` (and write with `files.write` if the user may); an app without `files.read` gets no file. Open the file in your `openFile` handler, not only at start.
+
+`launch.action` belongs to the manifest's `fileActions`: the user chose one of your entries in the context menu of Files. It has the action's `id`, the share as `location` (a `ShareLocation`), the `folder` relative to the share and the `names` of the selected files and folders. Work on them with `files.list`, `files.open`, `files.upload` and `files.run` in that location; the user's rights apply. A `single` app gets it with the `launch` event when its window is open already.
 
 ## Notifications
 

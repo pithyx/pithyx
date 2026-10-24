@@ -165,6 +165,13 @@
       },
       "expected": "The Pithyx version range stable in the manifest is not valid."
     },
+    "app.manifest.permission_missing": {
+      "params": {
+        "path": "/fileActions",
+        "permission": "files.shares"
+      },
+      "expected": "The manifest uses /fileActions, which needs the permission files.shares. Add it to permissions."
+    },
     "app.manifest.reference_unknown": {
       "params": {
         "path": "/backend/health/endpoint",

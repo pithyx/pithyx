@@ -9,7 +9,7 @@ sidebar:
 
 `pithyx.json` im Wurzelverzeichnis des Pakets beschreibt eine App: wer sie ist, welches Fenster sie öffnet, welche Berechtigungen sie anfordert, welche Ordner sie haben will und, falls sie eines hat, wie ihr Backend läuft. Das JSON-Schema ist `sdk/schema/manifest.v1.schema.json` (veröffentlicht als `@pithyx/sdk/schema/manifest.v1.schema.json`); unbekannte Felder sind Fehler. Das Schema ist ein stabiler Vertrag: Ein neues optionales Feld ist eine Minor-Änderung, alles andere eine Major-Änderung.
 
-Pflichtfelder: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, `sdk`, `permissions` und `window`. Optional: `$schema`, `description`, `license`, `homepage`, `pithyx`, `dataVersion`, `storage`, `fileHandlers` und `backend`. Siehe auch die [Schema-Referenz](/de/docs/reference/manifest-schema/) mit jedem Feld und die [Compose-Regeln](/de/docs/reference/compose-rules/) für das Backend.
+Pflichtfelder: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, `sdk`, `permissions` und `window`. Optional: `$schema`, `description`, `license`, `homepage`, `pithyx`, `dataVersion`, `storage`, `fileHandlers`, `fileActions` und `backend`. Siehe auch die [Schema-Referenz](/de/docs/reference/manifest-schema/) mit jedem Feld und die [Compose-Regeln](/de/docs/reference/compose-rules/) für das Backend.
 
 ```json
 {
@@ -55,6 +55,8 @@ Pflichtfelder: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, `s
 - `suggestAtSignIn` (optional, Standard false): die App empfiehlt sich zum Öffnen nach der Anmeldung, für eine App, die man den ganzen Tag offen hat, etwa einen Chat. Der Desktop markiert sie dort als empfohlen, wo Benutzer die Apps nach der Anmeldung wählen (Benutzermenü, **Beim Anmelden öffnen**); von selbst öffnet er sie nie.
 
 `fileHandlers` (optional, bis zu 32) lässt die App bei Dateitypen unter "Öffnen mit …" erscheinen. Jeder Handler hat `extensions` (1 bis 32 Erweiterungen in Kleinbuchstaben ohne Punkt, etwa `png` oder `tar.gz`), und optional `mimeTypes` (1 bis 32) und `isDefault`. Mit `isDefault` öffnet ein Doppelklick in Dateien den Typ in deiner App, solange keine andere installierte App `isDefault` dafür setzt und der Benutzer nicht mit ".x-Dateien immer so öffnen" anders gewählt hat. Eine Erweiterung kann nur zu einem Handler gehören. Die Datei erreicht die App über das Ereignis `launch` oder `openFile`.
+
+`fileActions` (optional, bis zu 16, D375) fügt dem Kontextmenü von Dateien und Ordnern in Dateien Einträge hinzu, etwa "Hier entpacken" bei Archiven oder "Als ZIP komprimieren" für eine Auswahl. Jede Aktion hat eine `id` (eindeutig in der App), ein `label` wie `name` und sagt, wofür sie gilt: `extensions` (Dateien mit diesen Erweiterungen), `folders: true` oder beides. Mit `multiple: true` wird sie für mehrere ausgewählte Elemente zugleich angeboten (sonst nur für genau eines), mit `writes: true` nur dort, wo der Benutzer Dateien ändern darf. Der Desktop zeigt eine Aktion nur, wenn jedes ausgewählte Element passt. Wählt man sie, öffnet sich deine App mit `launch.action`: der `id` der Aktion, der Freigabe als `location`, dem `folder` und den `names` der ausgewählten Elemente. Deine App liest und schreibt sie mit der Datei-API in dieser Freigabe, mit den Rechten des Benutzers; deshalb braucht `fileActions` die Berechtigung `files.shares` (ohne sie lehnt die Box das Manifest mit [`app.manifest.permission_missing`](/de/docs/reference/errors/#app.manifest.permission_missing) ab).
 
 ## Berechtigungen
 

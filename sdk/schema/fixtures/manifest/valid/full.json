@@ -26,7 +26,8 @@
     "directory.read",
     "network.internet",
     "network.lan",
-    "files.read"
+    "files.read",
+    "files.shares"
   ],
   "window": {
     "instances": "single",
@@ -69,6 +70,22 @@
       "mimeTypes": [
         "application/x-chatlog"
       ]
+    }
+  ],
+  "fileActions": [
+    {
+      "id": "export-log",
+      "label": {
+        "en": "Export as chat log",
+        "de": "Als Chat-Verlauf exportieren"
+      },
+      "extensions": [
+        "txt",
+        "md"
+      ],
+      "folders": true,
+      "multiple": true,
+      "writes": true
     }
   ],
   "backend": {

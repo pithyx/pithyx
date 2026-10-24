@@ -27,6 +27,7 @@ export const errorCodes = [
   'app.manifest.id_invalid',
   'app.manifest.id_reserved',
   'app.manifest.invalid_json',
+  'app.manifest.permission_missing',
   'app.manifest.pithyx_invalid',
   'app.manifest.reference_unknown',
   'app.manifest.schema_violation',
