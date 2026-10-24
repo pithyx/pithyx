@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Settings > UPS: the box watches a UPS on USB (through its own NUT server) or of another NUT server, notifies the administrators on battery and shuts down cleanly at a charge or runtime limit, when the UPS reports a low battery or when the NUT server's primary forces it; a UPS on USB then cuts its power so the box starts again with the power (D377, #195). New error codes `system.ups.invalid` and `system.ups.unavailable`; the image installs `nut-server` and `nut-client`.
 - Apps can add entries to the context menu of Files with the manifest's `fileActions`, for example "Extract here" on archives; the app opens with `launch.action` (the share, the folder and the selected names) and works on them with `files.shares` and the user's rights (D375). New error code `app.manifest.permission_missing`.
 
 - `pithyx-release sign-remote` (`tools/release/sign-remote.sh`): one command on the machine with the release key fetches an update file from the build machine over SSH, checks it, signs it, writes `channel.json` with the next sequence, copies the result back and with `--publish` uploads it to the release and the channel (D376).

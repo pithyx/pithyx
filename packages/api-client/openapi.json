@@ -6179,6 +6179,76 @@
         }
       }
     },
+    "/api/system/ups": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. The UPS settings (without the password), what the box knows about the UPS right now and whether a UPS on USB is possible. The topic system/ups sends the same.",
+        "operationId": "GetSystemUps",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpsStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Saves the UPS settings and watches the UPS with them at once: off, a UPS on USB through the box's own NUT server, or a UPS of another NUT server. On battery the box shuts down at the charge or runtime limit, when the UPS says its battery is low or when the server's primary forces it.",
+        "operationId": "SetSystemUps",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpsSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpsStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/system/backup": {
       "post": {
         "tags": [
@@ -11940,6 +12010,8 @@
           "system.time.server_invalid",
           "system.time.servers_too_many",
           "system.time.zone_invalid",
+          "system.ups.invalid",
+          "system.ups.unavailable",
           "tls.custom.expired",
           "tls.custom.invalid",
           "tls.custom.key_mismatch",
@@ -19144,6 +19216,7 @@
           "system/processes",
           "system/resources",
           "system/updates",
+          "system/ups",
           "thumbnails/+/+"
         ],
         "type": "object",
@@ -19205,6 +19278,9 @@
           "system/updates": {
             "$ref": "#/components/schemas/UpdateStatus"
           },
+          "system/ups": {
+            "$ref": "#/components/schemas/UpsStatus"
+          },
           "thumbnails/+/+": {
             "$ref": "#/components/schemas/ThumbnailsReady"
           }
@@ -19231,6 +19307,7 @@
           "system/processes",
           "system/resources",
           "system/updates",
+          "system/ups",
           "thumbnails/+/+"
         ],
         "type": "object",
@@ -19291,6 +19368,9 @@
           },
           "system/updates": {
             "$ref": "#/components/schemas/UpdateStatus"
+          },
+          "system/ups": {
+            "$ref": "#/components/schemas/UpsStatus"
           },
           "thumbnails/+/+": {
             "$ref": "#/components/schemas/ThumbnailWatch"
@@ -19875,6 +19955,253 @@
           }
         },
         "description": "Settings &gt; Updates for administrators (topic `system/updates`).\n    `Supported`: Whether updates and rollbacks apply here; false on a machine not laid out by the installer.\n    `UnsupportedReason`: `not_btrfs`, `not_subvolume`, `not_array` or `findmnt`.\n    `RunningJobId`: The job of an update or rollback that runs now.\n    `Snapshots`: The kept snapshots, newest first; each can be restored.\n    `Source`: The update source the box follows (D339); only the recovery menu switches it.\n    `SourceCandidate`: A source file saved in Settings for the recovery menu, or null."
+      },
+      "UpsConnection": {
+        "enum": [
+          "off",
+          "connecting",
+          "connected",
+          "unreachable"
+        ],
+        "description": "Whether the box reaches its UPS."
+      },
+      "UpsMode": {
+        "enum": [
+          "off",
+          "usb",
+          "network"
+        ],
+        "description": "Where the box reads its UPS from (D377): nowhere, a UPS on USB through the box's own NUT server, or another NUT server."
+      },
+      "UpsPower": {
+        "enum": [
+          "unknown",
+          "online",
+          "onBattery"
+        ],
+        "description": "Where the UPS takes its power from."
+      },
+      "UpsSettingsRequest": {
+        "required": [
+          "mode"
+        ],
+        "type": "object",
+        "properties": {
+          "mode": {
+            "description": "Off, a UPS on USB, or a UPS of another NUT server.",
+            "$ref": "#/components/schemas/UpsMode"
+          },
+          "host": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The NUT server of a network UPS (a host name or an address); required for the mode `network`."
+          },
+          "port": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Its port, 1 to 65535.",
+            "format": "int32"
+          },
+          "name": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The UPS's name on that server: letters, digits, dot, dash and underscore, up to 64."
+          },
+          "username": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The NUT user, empty for none; no spaces or quotes, up to 64."
+          },
+          "password": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "A new password; an empty one removes it, a missing one keeps it."
+          },
+          "batteryLow": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The charge limit in percent, 5 to 90.",
+            "format": "int32"
+          },
+          "runtimeLow": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "The runtime limit in minutes, 1 to 60.",
+            "format": "int32"
+          }
+        },
+        "description": "New UPS settings; a missing field keeps its value."
+      },
+      "UpsSettingsView": {
+        "required": [
+          "mode",
+          "host",
+          "port",
+          "name",
+          "username",
+          "hasPassword",
+          "batteryLow",
+          "runtimeLow"
+        ],
+        "type": "object",
+        "properties": {
+          "mode": {
+            "description": "Off, a UPS on USB, or a UPS of another NUT server.",
+            "$ref": "#/components/schemas/UpsMode"
+          },
+          "host": {
+            "type": "string",
+            "description": "The NUT server of a network UPS."
+          },
+          "port": {
+            "type": "integer",
+            "description": "Its port, 3493 unless set.",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string",
+            "description": "The UPS's name on that server."
+          },
+          "username": {
+            "type": "string",
+            "description": "The NUT user the box signs in with, empty for none."
+          },
+          "hasPassword": {
+            "type": "boolean",
+            "description": "Whether a password is saved; the password itself is never sent."
+          },
+          "batteryLow": {
+            "type": "integer",
+            "description": "On battery, the box shuts down at or below this charge in percent (5 to 90).",
+            "format": "int32"
+          },
+          "runtimeLow": {
+            "type": "integer",
+            "description": "On battery, the box shuts down at or below this many minutes of runtime left (1 to 60).",
+            "format": "int32"
+          }
+        },
+        "description": "The UPS settings as administrators see them."
+      },
+      "UpsState": {
+        "required": [
+          "connection",
+          "power",
+          "lowBattery",
+          "charge",
+          "runtime",
+          "load",
+          "model",
+          "problem",
+          "onBatterySince",
+          "shutdownReason"
+        ],
+        "type": "object",
+        "properties": {
+          "connection": {
+            "description": "Off, connecting, connected or unreachable; while unreachable the other values are the last ones read.",
+            "$ref": "#/components/schemas/UpsConnection"
+          },
+          "power": {
+            "description": "On line power or on battery, unknown before the first answer.",
+            "$ref": "#/components/schemas/UpsPower"
+          },
+          "lowBattery": {
+            "type": "boolean",
+            "description": "The UPS says its battery is low."
+          },
+          "charge": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Battery charge in percent, if the UPS reports it.",
+            "format": "int32"
+          },
+          "runtime": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Runtime left on battery in seconds, if the UPS reports it.",
+            "format": "int32"
+          },
+          "load": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "description": "Load in percent of the UPS's capacity, if the UPS reports it.",
+            "format": "int32"
+          },
+          "model": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Manufacturer and model, if the UPS reports them."
+          },
+          "problem": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Why the UPS is unreachable: `refused` (no NUT server answers), `timeout`, `unknown_ups` (the server\nhas no UPS of that name), `driver_not_connected` (no UPS on USB, or its driver failed), `data_stale`,\n`access_denied` (user or password wrong) or `protocol`."
+          },
+          "onBatterySince": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the UPS went on battery, while it is.",
+            "format": "date-time"
+          },
+          "shutdownReason": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Why the box shuts down, once it does: `forced` (the NUT server's primary shuts everything down), `low_battery`, `charge`, `runtime` or `lost` (the UPS was on battery and stopped answering)."
+          }
+        },
+        "description": "What the box knows about its UPS right now."
+      },
+      "UpsStatus": {
+        "required": [
+          "settings",
+          "state",
+          "usbAvailable"
+        ],
+        "type": "object",
+        "properties": {
+          "settings": {
+            "description": "The saved settings, without the password.",
+            "$ref": "#/components/schemas/UpsSettingsView"
+          },
+          "state": {
+            "description": "What the box knows about the UPS right now.",
+            "$ref": "#/components/schemas/UpsState"
+          },
+          "usbAvailable": {
+            "type": "boolean",
+            "description": "The NUT server is installed, so the mode `usb` works (always on an installed box)."
+          }
+        },
+        "description": "Settings &gt; UPS: the settings, the UPS's state and whether this box can drive a UPS on USB."
       },
       "UserDeletion": {
         "required": [

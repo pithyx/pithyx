@@ -149,6 +149,11 @@
       "description": "Pithyx- und Debian-Updates, der Update-Kanal, Rückkehr zu einem Snapshot, die Update-Quelle",
       "keywords": "update aktualisierung version release kanal beta stable debian sicherheit rollback snapshot wiederherstellen zurück quelle fork schlüssel"
     },
+    "ups": {
+      "title": "USV",
+      "description": "Bei einem Stromausfall sauber herunterfahren, mit einer USV an USB oder im Netzwerk",
+      "keywords": "usv ups unterbrechungsfreie stromversorgung akku batterie stromausfall herunterfahren nut network ups tools usb"
+    },
     "backup": {
       "title": "Backup und Wiederherstellung",
       "description": "Konfiguration dieser Box sichern und wiederherstellen",
@@ -950,5 +955,70 @@
       "confirm": "Gib {folder} zur Bestätigung ein",
       "submit": "Home-Ordner löschen"
     }
+  },
+  "ups": {
+    "intro": "Mit einer USV fährt die Box bei einem Stromausfall sauber herunter, bevor der Akku leer ist: Apps und Dateidienste stoppen und die Pools werden ausgehängt. Pithyx liest die USV über NUT (Network UPS Tools).",
+    "stateTitle": "Zustand",
+    "settingsTitle": "USV",
+    "connection": {
+      "off": "Aus",
+      "connecting": "Verbinde",
+      "connected": "Verbunden",
+      "unreachable": "Nicht erreichbar"
+    },
+    "power": "Strom",
+    "powerState": {
+      "unknown": "Unbekannt",
+      "online": "Netzstrom",
+      "onBattery": "Auf Akku"
+    },
+    "onBatterySince": "Auf Akku seit {time}",
+    "charge": "Akku",
+    "runtime": "Restlaufzeit",
+    "minutes": "{count, plural, one {# Minute} other {# Minuten}}",
+    "load": "Last",
+    "model": "Modell",
+    "problem": {
+      "refused": "Unter dieser Adresse und diesem Port antwortet kein NUT-Server.",
+      "timeout": "Der NUT-Server antwortet nicht rechtzeitig.",
+      "unknown_ups": "Der NUT-Server kennt keine USV mit diesem Namen.",
+      "driver_not_connected": "Es wurde keine USV gefunden. Prüf das USB-Kabel oder ob der NUT-Server seine USV sieht.",
+      "data_stale": "Die USV sendet keine Daten mehr.",
+      "access_denied": "Der NUT-Server hat Benutzer oder Passwort abgelehnt.",
+      "protocol": "Der NUT-Server hat mit einem Fehler geantwortet."
+    },
+    "shutdown": {
+      "forced": "Die Box fährt herunter: Der NUT-Server der USV fährt alle Systeme herunter.",
+      "low_battery": "Die Box fährt herunter: Die USV meldet einen schwachen Akku.",
+      "charge": "Die Box fährt herunter: Der Akku hat die Ladegrenze erreicht.",
+      "runtime": "Die Box fährt herunter: Der Akku hat die Laufzeitgrenze erreicht.",
+      "lost": "Die Box fährt herunter: Die USV lief auf Akku und antwortet nicht mehr."
+    },
+    "mode": "USV",
+    "modes": {
+      "off": "Keine USV",
+      "usb": "USV an USB",
+      "network": "USV eines anderen NUT-Servers"
+    },
+    "modeHint": {
+      "off": "Die Box überwacht keine USV.",
+      "usb": "Schließ die USV mit ihrem USB-Kabel an. Die Box findet sie selbst, und nach dem Herunterfahren schaltet die USV ihren Strom ab, damit die Box wieder startet, sobald der Strom zurück ist (wenn ihre Firmware beim Einschalten startet).",
+      "network": "Ein anderer Rechner (ein NAS, ein Router oder ein Server mit NUT) hat die USV. Die Box meldet sich als Secondary an, damit dieser Rechner auf die Box wartet, bevor er den Strom abschaltet."
+    },
+    "host": "NUT-Server",
+    "hostHint": "Hostname oder Adresse des Rechners mit der USV.",
+    "port": "Port",
+    "name": "USV-Name",
+    "nameHint": "Der Name der USV auf diesem Server, wie in seiner ups.conf.",
+    "username": "Benutzer",
+    "usernameHint": "Ein Benutzer aus der upsd.users dieses Servers mit „upsmon secondary“; leer liest die USV ohne Anmeldung.",
+    "password": "Passwort",
+    "passwordKept": "Ein Passwort ist gespeichert; lass das Feld leer, um es zu behalten.",
+    "limits": "Auf Akku fährt die Box herunter, sobald eine dieser Grenzen erreicht ist oder die USV einen schwachen Akku meldet.",
+    "batteryLow": "Akku-Grenze (Prozent)",
+    "batteryLowHint": "5 bis 90; standardmäßig 20.",
+    "runtimeLow": "Laufzeit-Grenze (Minuten)",
+    "runtimeLowHint": "1 bis 60; standardmäßig 5.",
+    "save": "Speichern"
   }
 }

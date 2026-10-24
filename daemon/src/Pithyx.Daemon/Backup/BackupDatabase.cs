@@ -63,7 +63,7 @@ public static class BackupDatabase
     public static readonly FrozenDictionary<BackupCategory, string[]> SettingKeys = new Dictionary<BackupCategory, string[]>
     {
         [BackupCategory.Users] = [Auth.AuthService.RecoveryKeySetting],
-        [BackupCategory.System] = [Logs.LogService.SettingsKey],
+        [BackupCategory.System] = [Logs.LogService.SettingsKey, Ups.UpsService.SettingsKey],
         [BackupCategory.SharedFolders] = [Users.Homes.PoolSetting, Users.Homes.QuotaSetting],
         [BackupCategory.Certificates] = [Tls.BoxCertificates.ExtraNamesSetting],
         [BackupCategory.Apps] = [Apps.AppRegistry.PoolSetting, .. Apps.Catalog.StoreService.BackupSettings],

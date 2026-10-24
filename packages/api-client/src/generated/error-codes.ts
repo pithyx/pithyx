@@ -310,6 +310,8 @@ export const errorCodes = [
   'system.time.server_invalid',
   'system.time.servers_too_many',
   'system.time.zone_invalid',
+  'system.ups.invalid',
+  'system.ups.unavailable',
   'tls.custom.expired',
   'tls.custom.invalid',
   'tls.custom.key_mismatch',
