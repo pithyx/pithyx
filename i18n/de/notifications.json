@@ -179,6 +179,24 @@
         "title": "Eine Systemplatte fehlt",
         "body": "Der {array, select, system {System} other {Swap}}-Spiegel läuft auf {working} von {expected} Platten. Die Box läuft weiter; ersetze die Platte bald."
       }
+    },
+    "ups": {
+      "on_battery": {
+        "title": "Die USV läuft auf Akku",
+        "body": "{charge, select, null {Der Strom ist ausgefallen.} other {Der Strom ist ausgefallen; der Akku steht bei {charge} %.}} Die Box fährt an der Grenze herunter, die in Einstellungen > USV steht."
+      },
+      "online": {
+        "title": "Der Strom ist zurück",
+        "body": "Die USV läuft wieder am Netz{charge, select, null {.} other {; der Akku steht bei {charge} %.}}"
+      },
+      "shutdown": {
+        "title": "Die Box fährt wegen der USV herunter",
+        "body": "{reason, select, forced {Der NUT-Server der USV fährt alle Systeme herunter.} low_battery {Die USV meldet einen schwachen Akku.} charge {Der Akku hat die Ladegrenze erreicht.} runtime {Der Akku hat die Laufzeitgrenze erreicht.} lost {Die USV lief auf Akku und antwortet nicht mehr.} other {Der USV geht gleich der Strom aus.}} Freigaben und Apps stoppen jetzt."
+      },
+      "unreachable": {
+        "title": "Die USV antwortet nicht",
+        "body": "{problem, select, refused {Kein NUT-Server antwortet.} timeout {Der NUT-Server antwortet nicht rechtzeitig.} unknown_ups {Der NUT-Server kennt keine USV mit diesem Namen.} driver_not_connected {Es wurde keine USV gefunden, oder ihr Treiber ist ausgefallen.} data_stale {Die USV sendet keine Daten mehr.} access_denied {Benutzer oder Passwort ist falsch.} other {Der NUT-Server hat mit einem Fehler geantwortet.}} Ohne sie kann die Box bei einem Stromausfall nicht sauber herunterfahren."
+      }
     }
   }
 }

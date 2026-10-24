@@ -1387,6 +1387,14 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string SystemTimeZoneInvalid = "system.time.zone_invalid";
 
+    /// <summary>A UPS setting is out of range or malformed; <c>params.field</c> names it (mode, host, port, name, username, password, batteryLow or runtimeLow).</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string SystemUpsInvalid = "system.ups.invalid";
+
+    /// <summary>A UPS on USB needs the NUT server, which is not installed on this machine.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string SystemUpsUnavailable = "system.ups.unavailable";
+
     /// <summary>The uploaded certificate has not started yet or has ended; <c>params.notAfter</c> is its end.</summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string TlsCustomExpired = "tls.custom.expired";
