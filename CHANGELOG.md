@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+### Added
+
+- `image/baseline/pithyx-1.1.0-amd64.packages`: the package list of the 1.1.0 image, the base for update files from 1.1.0 on.
+
 ## [1.1.0] - 2026-10-24
 
 Codename Carina (D374). Files opens files in the chosen app and takes drops on the path and the sidebar, apps can open after sign-in, snapshots show up live, and the SDK, UI kit and CLI leave the release candidates as 1.0.0. Like 1.0.0 it is marked beta on the stable channel: we consider it stable, but treat it as beta and keep backups. A box on 1.0.0 updates to it with one file; the path was tested from the 1.0.0 image (#187).
