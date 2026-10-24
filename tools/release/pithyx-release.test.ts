@@ -69,6 +69,13 @@ describe('the release plan', () => {
     );
   });
 
+  it('publishes a stable version straight to latest', () => {
+    const stable = { ...facts, sdkVersion: '1.0.1' };
+    expect(commands(plan('publish-sdk', [], { latest: true, otp: '123456' }, stable))).toEqual([
+      '/repo/tools/release/publish-sdk.sh --otp 123456 --latest',
+    ]);
+  });
+
   it('keeps a baseline only of an image that was built', () => {
     expect(commands(plan('baseline', [], {}, facts))).toEqual([
       'cp /repo/image/out/pithyx-1.1.0-beta.1-amd64.packages /repo/image/baseline/pithyx-1.1.0-beta.1-amd64.packages',

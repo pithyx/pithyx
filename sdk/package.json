@@ -1,6 +1,6 @@
 {
   "name": "@pithyx/sdk",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "SDK for building Pithyx apps: the API between an app and the Pithyx desktop",
   "keywords": [
     "pithyx",
