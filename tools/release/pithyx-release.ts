@@ -380,10 +380,15 @@ export function plan(
       if (options['npm-dry-run'] === true) {
         args.push('--dry-run');
       }
+      // A stable version goes straight to latest; publish-sdk.sh refuses it without --latest.
+      const prerelease = facts.sdkVersion.includes('-');
+      if (options.latest === true && !prerelease) {
+        args.push('--latest');
+      }
       const steps: Step[] = [
         { command: script('publish-sdk.sh'), args, why: `the npm packages at ${facts.sdkVersion}` },
       ];
-      if (options.latest === true && options['npm-dry-run'] !== true) {
+      if (options.latest === true && prerelease && options['npm-dry-run'] !== true) {
         // publish-sdk.sh never moves latest to a prerelease; the owner's --latest does it afterwards.
         for (const name of SDK_PACKAGES) {
           steps.push({

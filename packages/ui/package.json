@@ -1,6 +1,6 @@
 {
   "name": "@pithyx/ui",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "React components and design tokens of the Pithyx desktop, for Pithyx apps",
   "keywords": [
     "pithyx",
