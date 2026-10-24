@@ -17,20 +17,21 @@ tools/release/pithyx-release            # the menu
 
 ## Commands
 
-| Command        | What it does                                                                                                                  |
-| -------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| `status`       | The product and npm versions, the checkout, the built packages in `image/out`, ISOs, update files, baselines and the beta key |
-| `checklist`    | The release steps of a version (`--version`, default the product version) and which of them this machine shows done           |
-| `iso`          | `image/build.sh` for a version: the ISO and its package list                                                                  |
-| `update`       | `build-update.sh` against a baseline, and with `--sign` also `sign-update.sh`                                                 |
-| `sign`         | `sign-update.sh` for a file, with the beta key unless `--key` and `--key-id` name another                                     |
-| `channel`      | `build-channel.sh`: `channel.json` and its signature for a file (`--key`, `--key-id`, `--sequence`, `--url`)                  |
-| `publish-beta` | `publish-beta.sh`: the pre-release `beta-<version>` and a new `channel-beta`                                                  |
-| `publish-sdk`  | `publish-sdk.sh` for `@pithyx/sdk`, `@pithyx/ui` and `@pithyx/cli`; `--latest` then moves `latest` to the version             |
-| `sources`      | `collect-sources.ts --pack`: the GPL sources of an image as release parts                                                     |
-| `baseline`     | Copies a built image's package list to `image/baseline/` (commit it)                                                          |
-| `templates`    | `bump-templates.ts` for local clones of the app templates                                                                     |
-| `key`          | `create-key.sh`: a new Ed25519 signing key                                                                                    |
+| Command        | What it does                                                                                                                                                                                                                         |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `status`       | The product and npm versions, the checkout, the built packages in `image/out`, ISOs, update files, baselines and the beta key                                                                                                        |
+| `checklist`    | The release steps of a version (`--version`, default the product version) and which of them this machine shows done                                                                                                                  |
+| `iso`          | `image/build.sh` for a version: the ISO and its package list                                                                                                                                                                         |
+| `update`       | `build-update.sh` against a baseline, and with `--sign` also `sign-update.sh`                                                                                                                                                        |
+| `sign`         | `sign-update.sh` for a file, with the beta key unless `--key` and `--key-id` name another                                                                                                                                            |
+| `sign-remote`  | `sign-remote.sh`: fetches an update file from the build machine over SSH, checks its checksum, signs it here, writes `channel.json` with the next sequence, copies all of it back to `signed/` there and with `--publish` uploads it |
+| `channel`      | `build-channel.sh`: `channel.json` and its signature for a file (`--key`, `--key-id`, `--sequence`, `--url`)                                                                                                                         |
+| `publish-beta` | `publish-beta.sh`: the pre-release `beta-<version>` and a new `channel-beta`                                                                                                                                                         |
+| `publish-sdk`  | `publish-sdk.sh` for `@pithyx/sdk`, `@pithyx/ui` and `@pithyx/cli`; `--latest` then moves `latest` to the version                                                                                                                    |
+| `sources`      | `collect-sources.ts --pack`: the GPL sources of an image as release parts                                                                                                                                                            |
+| `baseline`     | Copies a built image's package list to `image/baseline/` (commit it)                                                                                                                                                                 |
+| `templates`    | `bump-templates.ts` for local clones of the app templates                                                                                                                                                                            |
+| `key`          | `create-key.sh`: a new Ed25519 signing key                                                                                                                                                                                           |
 
 ## What it checks for you
 
@@ -51,8 +52,16 @@ The steps of a release `X.Y.Z`, in order. Building and testing run on a dev VM; 
 4. **Update file.** `pithyx-release update --version X.Y.Z` builds the `.pithyxupdate` against the baseline (`image/baseline/`), and `pithyx-release baseline --version X.Y.Z` keeps the new package list for the next update (commit it on `dev`). For a stable version, `image/test-install.sh --iso <ISO of the previous release> --stable-update <file>` then installs the previous release and updates it with the file before anyone signs it: it signs a copy with a throwaway test key, serves a test `channel-stable` over HTTPS and checks the update online, a further one from an uploaded file, the automatic rollback of a broken one and a rollback in Settings.
 5. **GPL sources.** `pithyx-release sources --version X.Y.Z` packs the Debian sources of the image as `pithyx-X.Y.Z-sources-<n>.tar`.
 6. **Tag.** The maintainer tags the commit the image was built from: `git tag -a vX.Y.Z <commit> -m "Pithyx X.Y.Z <codename>"`, `git push origin vX.Y.Z`.
-7. **Signing (maintainer, own machine).** `pithyx-release sign <file> --key <pithyx-release-1.pem> --key-id pithyx-release-1`, then `pithyx-release channel <file> --key <pem> --key-id pithyx-release-1 --sequence <n>` with the sequence of `channel-stable` plus one. The release key never leaves the maintainer's machine; the ISO itself carries no signature, only its checksum.
-8. **Publish.** The release `vX.Y.Z` with the ISO, its `.sha256`, the update file with its `.sha256` and the sources parts (`gh release create vX.Y.Z --verify-tag ...`); then `channel.json` and `channel.json.sig` on the release `channel-stable` (`gh release upload channel-stable ... --clobber`). Boxes on the stable channel find the update at their next daily check and notify their administrators.
+7. **Signing (maintainer, own machine).** One command on the machine with the release key:
+
+   ```sh
+   tools/release/pithyx-release sign-remote --from build-vm:pithyx/image/out \
+     --version X.Y.Z --key ~/.keys/pithyx-release-1.pem --key-id pithyx-release-1 [--publish]
+   ```
+
+   It fetches `pithyx-X.Y.Z-amd64.pithyxupdate` and its `.sha256` with `scp` and checks the checksum, signs the file, writes and signs `channel.json` with the sequence of the published `channel-<channel>` plus one (`--sequence` sets it), keeps everything in `~/pithyx-release/X.Y.Z/` (`--work`) and copies it back to `image/out/signed/` on the build machine. The connection only goes from the signing machine to the build machine, and the release key never leaves the maintainer's machine; `--from` also takes a local folder. Forks pass their own host, key and `--repo <owner/name>`. The separate steps are `pithyx-release sign` and `pithyx-release channel`. The ISO itself carries no signature, only its checksum.
+
+8. **Publish.** With `--publish`, step 7 uploads the update file and its `.sha256` to the release `vX.Y.Z` (it creates the release as a pre-release when it does not exist, which needs the tag) and `channel.json` with its signature to `channel-stable`, after a question (`--yes` skips it); it needs `gh` signed in. Otherwise by hand: the release `vX.Y.Z` with the ISO, its `.sha256`, the update file with its `.sha256` and the sources parts (`gh release create vX.Y.Z --verify-tag ...`); then `channel.json` and `channel.json.sig` on the release `channel-stable` (`gh release upload channel-stable ... --clobber`). Boxes on the stable channel find the update at their next daily check and notify their administrators.
 9. **Website.** Pushes to `stable` publish the docs; Actions, Pages, Run workflow on `stable` publishes by hand.
 10. **npm (when the packages changed).** `pithyx-release publish-sdk`, and for a stable version `--latest`. With a security key instead of one-time codes, leave out `--otp`: npm prints a link to confirm in the browser.
 

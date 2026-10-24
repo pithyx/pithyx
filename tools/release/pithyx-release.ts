@@ -6,7 +6,7 @@
 //
 // Without a command in a terminal it asks which command to run and for its options, shows the plan and asks before it
 // runs. Commands: status, checklist, iso, update, sign, channel, publish-beta, publish-sdk, sources, baseline,
-// templates, key. `pithyx-release help` lists them with their options.
+// templates, key, sign-remote. `pithyx-release help` lists them with their options.
 import { spawnSync } from 'node:child_process';
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { homedir } from 'node:os';
@@ -72,6 +72,10 @@ const OPTIONS = {
   'npm-dry-run': { type: 'boolean' },
   install: { type: 'boolean' },
   yes: { type: 'boolean' },
+  from: { type: 'string' },
+  repo: { type: 'string' },
+  work: { type: 'string' },
+  publish: { type: 'boolean' },
 } as const;
 
 export type Options = Partial<Record<keyof typeof OPTIONS, string | boolean>>;
@@ -119,6 +123,18 @@ export const COMMANDS: Record<string, CommandInfo> = {
     asks: [
       { name: 'file', question: 'Update file' },
       { name: 'sequence', question: 'Sequence (higher than the current one)' },
+    ],
+  },
+  'sign-remote': {
+    summary:
+      'Fetch an update file from the build machine, sign it here with channel.json (sign-remote.sh)',
+    usage:
+      'sign-remote --from <[user@]host:dir> --key <pem> --key-id <id> [--version <v>] [--sequence <n>] [--repo <owner/name>] [--work <dir>] [--publish [--yes]]',
+    asks: [
+      { name: 'from', question: 'Build machine and folder ([user@]host:dir)' },
+      { name: 'version', question: 'Version' },
+      { name: 'key', question: 'Private key file' },
+      { name: 'key-id', question: 'Key id' },
     ],
   },
   'publish-beta': {
@@ -357,6 +373,34 @@ export function plan(
         args.push('--url', url);
       }
       return [{ command: script('build-channel.sh'), args, why: 'channel.json and its signature' }];
+    }
+    case 'sign-remote': {
+      const from = text(options, 'from');
+      const key = text(options, 'key');
+      const keyId = text(options, 'key-id');
+      if (from === undefined || key === undefined || keyId === undefined) {
+        throw new PlanError(
+          'pithyx-release sign-remote --from <[user@]host:dir> --key <pem> --key-id <id>',
+        );
+      }
+      const version = versionOf(options, facts);
+      const args = ['--from', from, '--version', version, '--key', key, '--key-id', keyId];
+      for (const name of ['sequence', 'repo', 'work'] as const) {
+        const value = text(options, name);
+        if (value !== undefined) {
+          args.push(`--${name}`, value);
+        }
+      }
+      if (options.publish === true) {
+        args.push('--publish', ...(options.yes === true ? ['--yes'] : []));
+      }
+      return [
+        {
+          command: script('sign-remote.sh'),
+          args,
+          why: `the ${version} update file of ${from} signed with ${keyId}, with channel.json${options.publish === true ? ', published' : ''}`,
+        },
+      ];
     }
     case 'publish-beta': {
       const file = positionals[0];
