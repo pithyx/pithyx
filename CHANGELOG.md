@@ -20,6 +20,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- The language list of the sign-in screen chooses the option the keyboard moved to also when Enter follows at once; it could take the option before.
 - The READMEs of `@pithyx/sdk`, `@pithyx/ui` and `@pithyx/cli` no longer call them release candidates; the packages are at `1.0.1` so npm shows the corrected pages.
 - `pithyx-release publish-sdk --latest` publishes a stable version straight to `latest` instead of failing.
 

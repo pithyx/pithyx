@@ -199,6 +199,8 @@ export function LanguageSelect() {
   const [choice, setChoice] = useState<Language | 'auto'>(storedLanguage() ?? 'auto');
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
+  // Keys can arrive faster than React renders (Home, then Enter), so the handlers read the active option from here.
+  const activeIndex = useRef(0);
   const id = useId();
   const root = useRef<HTMLDivElement>(null);
   const button = useRef<HTMLButtonElement>(null);
@@ -224,8 +226,13 @@ export function LanguageSelect() {
     };
   }, [open]);
 
+  function moveTo(index: number) {
+    activeIndex.current = index;
+    setActive(index);
+  }
+
   function show() {
-    setActive(
+    moveTo(
       Math.max(
         0,
         options.findIndex((option) => option.value === choice),
@@ -283,18 +290,18 @@ export function LanguageSelect() {
           onKeyDown={(event) => {
             const last = options.length - 1;
             const moves: Record<string, number> = {
-              ArrowDown: Math.min(active + 1, last),
-              ArrowUp: Math.max(active - 1, 0),
+              ArrowDown: Math.min(activeIndex.current + 1, last),
+              ArrowUp: Math.max(activeIndex.current - 1, 0),
               Home: 0,
               End: last,
             };
             const target = moves[event.key];
             if (target !== undefined) {
               event.preventDefault();
-              setActive(target);
+              moveTo(target);
             } else if (event.key === 'Enter' || event.key === ' ') {
               event.preventDefault();
-              const option = options[active];
+              const option = options[activeIndex.current];
               if (option !== undefined) {
                 choose(option.value);
               }
@@ -317,7 +324,7 @@ export function LanguageSelect() {
               data-active={index === active || undefined}
               className={styles.languageOption}
               onPointerEnter={() => {
-                setActive(index);
+                moveTo(index);
               }}
               onClick={() => {
                 choose(option.value);
