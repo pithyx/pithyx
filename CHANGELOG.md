@@ -6,8 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-10-24
+
+Codename Carina (D374). Files opens files in the chosen app and takes drops on the path and the sidebar, apps can open after sign-in, snapshots show up live, and the SDK, UI kit and CLI leave the release candidates as 1.0.0. Like 1.0.0 it is marked beta on the stable channel: we consider it stable, but treat it as beta and keep backups. A box on 1.0.0 updates to it with one file; the path was tested from the 1.0.0 image (#187).
+
 ### Added
 
+- `@pithyx/sdk`, `@pithyx/ui` and `@pithyx/cli` are at `1.0.0`, out of the release candidates (#193): from here on they follow SemVer, and the docs install them without `@next`.
 - `image/test-install.sh --stable-update <file>`: tests the stable update path from a released ISO with a throwaway key and a local HTTPS channel (online, from a file, automatic rollback, rollback in Settings); 1.0.0 to 1.0.1 passed on 2026-10-24.
 - "Open at sign-in" in the account menu: up to 10 apps that open after each sign-in, for every device; the manifest's optional `window.suggestAtSignIn` marks an app as suggested there (D373).
 - Files: entries and files from the device can be dropped onto a part of the path above the list and onto a share in the sidebar, which the docs already promised for the sidebar.
@@ -379,5 +384,6 @@ The first release, codename Pyxis (D345, D366): the NAS core, the file services,
 - SMB sessions end when their user's groups change (D353): smbd kept a session's groups from its start, so a new right did not apply and a revoked shared folder stayed usable over SMB until the user signed out of the computer. The daemon now ends the user's sessions after the change, and the client reconnects with the current rights.
 - The command log no longer records the output of commands that print secrets: creating a configuration backup ran `pdbedit -L -w` and wrote every user's NT password hash into the Log Center and the log files at Info level. The output of `pdbedit`, `smbpasswd` and `chpasswd` is now always masked, and other callers mark secret output per command (the catalog deploy key's `ssh-keygen`).
 
-[Unreleased]: https://github.com/pithyx/pithyx/compare/v1.0.0...dev
+[Unreleased]: https://github.com/pithyx/pithyx/compare/v1.1.0...dev
+[1.1.0]: https://github.com/pithyx/pithyx/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/pithyx/pithyx/releases/tag/v1.0.0

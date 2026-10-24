@@ -10,7 +10,7 @@ sidebar:
 Der Befehl `pithyx` prüft, entwickelt und paketiert Pithyx-Apps und führt die CI von Katalog-Repositorys aus. Er hat sechs Befehle: `validate`, `lock`, `build`, `pack`, `dev` und `catalog`. Die Befehle nutzen dieselben Validatoren wie die Box, ein Fehler, den du lokal siehst, ist also der Fehler, den die Box melden würde.
 
 ```sh
-npm install --save-dev @pithyx/cli@next
+npm install --save-dev @pithyx/cli
 npx pithyx --help
 ```
 

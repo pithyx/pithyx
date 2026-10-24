@@ -41,7 +41,7 @@ Required fields: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, 
 - `license`: optional SPDX expression. Catalogs require it.
 - `homepage`: optional http or https URL.
 - `entry`: the HTML page, `frontend/<path>.html`, at most 200 characters, no segment starting with a dot.
-- `sdk`: required npm-style version range for the SDK, for example `^1.0.0`. The box checks its syntax ([`app.manifest.sdk_invalid`](/docs/reference/errors/#app.manifest.sdk_invalid)); it does not compare it with the desktop's protocol today. With a release candidate, declare the version you installed, for example `^1.0.0-rc.8`: that range also covers 1.0.0 and every later 1.x, while `^1.0.0` would not match a candidate.
+- `sdk`: required npm-style version range for the SDK, for example `^1.0.0`. The box checks its syntax ([`app.manifest.sdk_invalid`](/docs/reference/errors/#app.manifest.sdk_invalid)); it does not compare it with the desktop's protocol today. An app built during the release candidates may keep `^1.0.0-rc.8`: that range also covers 1.0.0 and every later 1.x.
 - `pithyx`: optional range of box versions the app works with. The box installs the app only if its own version is inside. Catalogs require it. Prerelease versions match by plain SemVer ordering, so `>=0.1.0` includes `0.2.0-beta.1`, but `^0.1.0` does not.
 - `dataVersion`: optional integer from 1 to 2147483647. A catalog downgrade is allowed only between versions with the same `dataVersion`. A rollback to the previous version after an update does not depend on it.
 

@@ -23,7 +23,7 @@ The `pithyx` command for building apps for [Pithyx](https://github.com/pithyx/pi
 ## Install
 
 ```sh
-npm install --save-dev @pithyx/cli@next
+npm install --save-dev @pithyx/cli
 ```
 
 ## Related packages

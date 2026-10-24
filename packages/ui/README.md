@@ -18,7 +18,7 @@ The React components and design tokens of the [Pithyx](https://github.com/pithyx
 ## Install
 
 ```sh
-npm install @pithyx/ui@next react react-dom
+npm install @pithyx/ui react react-dom
 ```
 
 `react` and `react-dom` 19 are peer dependencies.
