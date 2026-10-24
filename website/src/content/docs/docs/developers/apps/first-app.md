@@ -20,8 +20,8 @@ The `pithyx` command has no command that creates a project. Start from any front
 Install the packages and connect:
 
 ```sh
-npm install @pithyx/sdk@next
-npm install --save-dev @pithyx/cli@next
+npm install @pithyx/sdk
+npm install --save-dev @pithyx/cli
 ```
 
 ```ts

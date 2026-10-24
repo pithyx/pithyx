@@ -41,7 +41,7 @@ Pflichtfelder: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, `s
 - `license`: optional, ein SPDX-Ausdruck. Kataloge verlangen ihn.
 - `homepage`: optional, eine http- oder https-URL.
 - `entry`: die HTML-Seite, `frontend/<path>.html`, höchstens 200 Zeichen, kein Segment, das mit einem Punkt beginnt.
-- `sdk`: Pflicht, ein Versionsbereich für das SDK im npm-Stil, zum Beispiel `^1.0.0`. Die Box prüft die Syntax ([`app.manifest.sdk_invalid`](/de/docs/reference/errors/#app.manifest.sdk_invalid)); mit dem Protokoll des Desktops vergleicht sie ihn heute nicht. Mit einem Release Candidate gibst du die installierte Version an, zum Beispiel `^1.0.0-rc.8`: Dieser Bereich umfasst auch 1.0.0 und jede spätere 1.x, während `^1.0.0` keinen Kandidaten trifft.
+- `sdk`: Pflicht, ein Versionsbereich für das SDK im npm-Stil, zum Beispiel `^1.0.0`. Die Box prüft die Syntax ([`app.manifest.sdk_invalid`](/de/docs/reference/errors/#app.manifest.sdk_invalid)); mit dem Protokoll des Desktops vergleicht sie ihn heute nicht. Eine App aus der Zeit der Release Candidates kann `^1.0.0-rc.8` behalten: Dieser Bereich umfasst auch 1.0.0 und jede spätere 1.x.
 - `pithyx`: optional, ein Bereich der Box-Versionen, mit denen die App funktioniert. Die Box installiert die App nur, wenn ihre eigene Version darin liegt. Kataloge verlangen ihn. Vorabversionen werden nach der einfachen SemVer-Reihenfolge verglichen, also schließt `>=0.1.0` die Version `0.2.0-beta.1` ein, `^0.1.0` aber nicht.
 - `dataVersion`: optional, eine ganze Zahl von 1 bis 2147483647. Ein Downgrade aus einem Katalog ist nur zwischen Versionen mit derselben `dataVersion` erlaubt. Ein Rollback auf die vorherige Version nach einem Update hängt nicht davon ab.
 
