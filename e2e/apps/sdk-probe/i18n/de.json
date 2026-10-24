@@ -53,5 +53,6 @@
   },
   "blocked": "gesperrt",
   "reachable": "erreichbar",
-  "failed": "Keine Verbindung zum Desktop."
+  "failed": "Keine Verbindung zum Desktop.",
+  "fileAction": "Dateiaktion"
 }

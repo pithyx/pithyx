@@ -176,8 +176,22 @@ public sealed class AppRegistry(SqliteConnectionFactory connections, PermissionS
             manifest.GetProperty("window").Clone(),
             app.Granted,
             app.LogLevel,
-            FileHandlers(manifest));
+            FileHandlers(manifest),
+            FileActions(manifest));
     }
+
+    private static List<AppFileAction> FileActions(JsonElement manifest) =>
+        manifest.TryGetProperty("fileActions", out var actions)
+            ? [.. actions.EnumerateArray().Select(action => new AppFileAction(
+                action.GetProperty("id").GetString()!,
+                Texts(action.GetProperty("label")),
+                action.TryGetProperty("extensions", out var extensions) ? [.. extensions.EnumerateArray().Select(extension => extension.GetString()!)] : [],
+                Flag(action, "folders"),
+                Flag(action, "multiple"),
+                Flag(action, "writes")))]
+            : [];
+
+    private static bool Flag(JsonElement element, string name) => element.TryGetProperty(name, out var value) && value.GetBoolean();
 
     private static List<AppFileHandler> FileHandlers(JsonElement manifest) =>
         manifest.TryGetProperty("fileHandlers", out var handlers)

@@ -26,6 +26,7 @@ const chat: InstalledApp = {
   permissions: [],
   logLevel: 'info',
   fileHandlers: [],
+  fileActions: [],
 };
 
 afterEach(() => {

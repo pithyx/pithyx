@@ -159,9 +159,11 @@ Wenn deine App zuerst Daten lädt und ein leeres Fenster zeigen würde, setze `w
 
 ## Startargumente
 
-`app.context.launch` sagt, warum das Fenster aufging: `{ args, file?, notification? }`. Ein Fenster, das der Benutzer vom Desktop oder aus dem Store öffnet, hat `{ args: null }`. Ein Klick auf eine Benachrichtigung der App, während kein Fenster der App offen ist, startet sie mit `launch.notification` (`notification`, `action`, `data`). Bei einer App mit `"instances": "single"` im Manifest holt ein erneuter Start das Fenster des Benutzers auf diesem Gerät nach vorn und sendet die neuen Argumente als Ereignis `launch`.
+`app.context.launch` sagt, warum das Fenster aufging: `{ args, file?, notification?, action? }`. Ein Fenster, das der Benutzer vom Desktop oder aus dem Store öffnet, hat `{ args: null }`. Ein Klick auf eine Benachrichtigung der App, während kein Fenster der App offen ist, startet sie mit `launch.notification` (`notification`, `action`, `data`). Bei einer App mit `"instances": "single"` im Manifest holt ein erneuter Start das Fenster des Benutzers auf diesem Gerät nach vorn und sendet die neuen Argumente als Ereignis `launch`.
 
 `launch.file` und das Ereignis `openFile` gehören zu Datei-Handlern. Wählt der Benutzer in der Dateien-App unter "Öffnen mit" deine App für eine Datei, deren Endung ein Eintrag `fileHandlers` deines Manifests nennt, bekommt ein neues Fenster `launch.file`, und ein offenes Fenster einer `single`-App bekommt `openFile` mit der Datei. Beide sind Handles, die du mit `files.read` liest (und mit `files.write` schreibst, wenn der Benutzer darf); eine App ohne `files.read` bekommt keine Datei. Öffne die Datei in deinem `openFile`-Handler, nicht nur beim Start.
+
+`launch.action` gehört zu den `fileActions` des Manifests: Der Benutzer hat im Kontextmenü von Dateien einen deiner Einträge gewählt. Es enthält die `id` der Aktion, die Freigabe als `location` (eine `ShareLocation`), den `folder` relativ zur Freigabe und die `names` der ausgewählten Dateien und Ordner. Arbeite mit ihnen über `files.list`, `files.open`, `files.upload` und `files.run` in dieser Location; es gelten die Rechte des Benutzers. Eine `single`-App bekommt es mit dem Ereignis `launch`, wenn ihr Fenster schon offen ist.
 
 ## Benachrichtigungen
 

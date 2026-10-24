@@ -53,5 +53,6 @@
   },
   "blocked": "blocked",
   "reachable": "reachable",
-  "failed": "Could not connect to the desktop."
+  "failed": "Could not connect to the desktop.",
+  "fileAction": "File action"
 }

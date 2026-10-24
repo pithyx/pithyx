@@ -9349,7 +9349,8 @@
                 "window",
                 "permissions",
                 "logLevel",
-                "fileHandlers"
+                "fileHandlers",
+                "fileActions"
               ],
               "type": "object",
               "properties": {
@@ -9425,6 +9426,54 @@
                     "description": "The kinds of files an app opens (`fileHandlers` of its manifest)."
                   },
                   "description": "The files the app opens, for \"Open with\"."
+                },
+                "fileActions": {
+                  "type": "array",
+                  "items": {
+                    "required": [
+                      "id",
+                      "label",
+                      "extensions",
+                      "folders",
+                      "multiple",
+                      "writes"
+                    ],
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "Sent back to the app in `launch.action.id`."
+                      },
+                      "label": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "type": "string"
+                        },
+                        "description": "The menu entry by language (`en` always)."
+                      },
+                      "extensions": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "Lowercase extensions of the files it applies to; empty for none."
+                      },
+                      "folders": {
+                        "type": "boolean",
+                        "description": "Whether it applies to folders."
+                      },
+                      "multiple": {
+                        "type": "boolean",
+                        "description": "Whether it takes several items at once."
+                      },
+                      "writes": {
+                        "type": "boolean",
+                        "description": "Whether it writes into the folder of the selection."
+                      }
+                    },
+                    "description": "An entry of the app for the context menu of files and folders (`fileActions` of its manifest, D375)."
+                  },
+                  "description": "The app's entries for the context menu of files and folders (D375)."
                 }
               },
               "description": "An installed app as a user who may use it sees it (topic `apps`)."
@@ -11608,6 +11657,7 @@
           "app.manifest.id_invalid",
           "app.manifest.id_reserved",
           "app.manifest.invalid_json",
+          "app.manifest.permission_missing",
           "app.manifest.pithyx_invalid",
           "app.manifest.reference_unknown",
           "app.manifest.schema_violation",

@@ -12,6 +12,7 @@ export interface Issue {
     | 'app.manifest.duplicate'
     | 'app.manifest.reference_unknown'
     | 'app.manifest.cron_invalid'
+    | 'app.manifest.permission_missing'
     | 'app.compose.yaml_invalid'
     | 'app.compose.key_unsupported'
     | 'app.compose.value_invalid'

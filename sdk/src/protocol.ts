@@ -71,6 +71,23 @@ export interface LaunchArgs {
   file?: FileRef;
   /** The user clicked a notification of the app while no window of it was open (see `notificationAction`). */
   notification?: NotificationActivation;
+  /** The user chose one of the manifest's `fileActions` for a selection in Files. */
+  action?: FileActionLaunch;
+}
+
+/**
+ * What a `fileActions` entry hands to the app: the selection as a share, a folder and names. The app reads and changes
+ * them through the files API with the user's rights, which needs `files.shares`.
+ */
+export interface FileActionLaunch {
+  /** The `id` of the action in the manifest. */
+  id: string;
+  /** The share the selection is in. */
+  location: ShareLocation;
+  /** The folder of the selection, relative to the share; `""` is its root. */
+  folder: string;
+  /** The selected files and folders in that folder, by name. */
+  names: string[];
 }
 
 /** One of the user's groups. The built-in group every user belongs to is left out. */

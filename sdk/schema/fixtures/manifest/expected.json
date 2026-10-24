@@ -257,6 +257,33 @@
       }
     }
   ],
+  "file-action-duplicate.json": [
+    {
+      "code": "app.manifest.duplicate",
+      "params": {
+        "path": "/fileActions/1/id",
+        "value": "extract"
+      }
+    }
+  ],
+  "file-action-permission-missing.json": [
+    {
+      "code": "app.manifest.permission_missing",
+      "params": {
+        "path": "/fileActions",
+        "permission": "files.shares"
+      }
+    }
+  ],
+  "file-action-target-missing.json": [
+    {
+      "code": "app.manifest.schema_violation",
+      "params": {
+        "path": "/fileActions/0",
+        "keyword": "required"
+      }
+    }
+  ],
   "health-endpoint-unknown.json": [
     {
       "code": "app.manifest.reference_unknown",

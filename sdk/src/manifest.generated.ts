@@ -95,6 +95,12 @@ export interface AppManifest {
    * @maxItems 32
    */
   fileHandlers?: FileHandler[];
+  /**
+   * Actions the app adds to the context menu of files and folders, for example "Extract here" on archives. Needs the permission `files.shares`.
+   *
+   * @maxItems 16
+   */
+  fileActions?: FileAction[];
   backend?: BackendManifest;
 }
 /**
@@ -228,6 +234,35 @@ export interface FileHandler {
    * Whether the app is the default for these files when it is the only handler.
    */
   isDefault?: boolean;
+}
+/**
+ * An entry the desktop adds to the context menu of files and folders in Files, when every selected item matches it. Choosing it opens the app with `launch.action`: the action's `id`, the share, the folder and the names of the selected items, which the app reads and changes through the files API with the user's rights (`files.shares`). `label` is the menu entry, for example "Extract here". Give `extensions`, `folders: true` or both.
+ */
+export interface FileAction {
+  /**
+   * Unique within the app; `launch.action.id` names it.
+   */
+  id: string;
+  label: LocalizedName;
+  /**
+   * Files the action applies to: lowercase extensions without the leading dot, for example `zip` or `tar.gz`.
+   *
+   * @minItems 1
+   * @maxItems 32
+   */
+  extensions?: string[];
+  /**
+   * Whether the action applies to folders. Default false.
+   */
+  folders?: boolean;
+  /**
+   * Whether the action takes several selected items at once; otherwise it is offered for exactly one. Default false.
+   */
+  multiple?: boolean;
+  /**
+   * Whether the action writes into the folder of the selection, so the desktop offers it only where the user may change files. Default false.
+   */
+  writes?: boolean;
 }
 /**
  * An optional backend of one or more containers, described by a Compose file in the package and reached only through the daemon's proxy.

@@ -160,6 +160,7 @@ describe('default action', () => {
       permissions: [],
       logLevel: 'info',
       fileHandlers: [{ extensions, isDefault: false }],
+      fileActions: [],
     });
     const apps = [app('com.example.draw', ['png', 'tar.gz']), app('com.example.text', ['txt'])];
     expect(openWithChoices(entry('a.PNG'), apps)).toEqual([
@@ -184,6 +185,7 @@ describe('default action', () => {
     permissions: [],
     logLevel: 'info',
     fileHandlers: [{ extensions, isDefault }],
+    fileActions: [],
   });
 
   it('opens a file in the only app that is the default for it, else as before', () => {

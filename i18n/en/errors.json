@@ -41,6 +41,7 @@
       "id_invalid": "The app id {id} is not valid. It is the author's domain reversed plus the app name, for example com.example.chat.",
       "id_reserved": "The app id {id} is reserved for the apps that come with Pithyx.",
       "invalid_json": "The app's manifest (pithyx.json) is not valid JSON.",
+      "permission_missing": "The manifest uses {path}, which needs the permission {permission}. Add it to permissions.",
       "pithyx_invalid": "The Pithyx version range {pithyx} in the manifest is not valid.",
       "reference_unknown": "The manifest refers to {name} at {path}, which it does not declare.",
       "schema_violation": "The app's manifest is not valid at {path} ({keyword}).",

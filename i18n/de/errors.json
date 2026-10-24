@@ -41,6 +41,7 @@
       "id_invalid": "Die App-ID {id} ist ungültig. Sie besteht aus der umgekehrten Domain des Autors und dem App-Namen, zum Beispiel com.example.chat.",
       "id_reserved": "Die App-ID {id} ist für die Apps reserviert, die mit Pithyx kommen.",
       "invalid_json": "Das Manifest der App (pithyx.json) ist kein gültiges JSON.",
+      "permission_missing": "Das Manifest nutzt {path}, das die Berechtigung {permission} braucht. Ergänze sie unter permissions.",
       "pithyx_invalid": "Der Pithyx-Versionsbereich {pithyx} im Manifest ist ungültig.",
       "reference_unknown": "Das Manifest verweist unter {path} auf {name}, das es nicht deklariert.",
       "schema_violation": "Das Manifest der App ist unter {path} ungültig ({keyword}).",

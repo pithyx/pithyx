@@ -22,6 +22,7 @@ export type {
   BackendManifest,
   BackendSchedule,
   ElevatedPermission,
+  FileAction,
   FileHandler,
   LocalizedName,
   LocalizedText,

@@ -36,6 +36,15 @@ export interface AppTarget extends ViewerTarget {
   writable: boolean;
 }
 
+/** A selection in Files handed to an installed app's file action (D375). */
+export interface ActionTarget {
+  app: string;
+  action: string;
+  share: string;
+  folder: string;
+  names: string[];
+}
+
 interface InternalFilesMethods {
   'internal.files.thumbnails': {
     params: { share: string; folder: string; names: string[]; size: ThumbnailSize };
@@ -43,6 +52,7 @@ interface InternalFilesMethods {
   };
   'internal.files.openViewer': { params: ViewerTarget; result: boolean };
   'internal.files.openWithApp': { params: AppTarget; result: boolean };
+  'internal.files.runAction': { params: ActionTarget; result: boolean };
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -65,6 +75,19 @@ function isAppTarget(value: unknown): value is AppTarget {
     Number.isFinite((value as Partial<AppTarget>).size) &&
     typeof (value as Partial<AppTarget>).modified === 'string' &&
     typeof (value as Partial<AppTarget>).writable === 'boolean'
+  );
+}
+
+function isActionTarget(value: unknown): value is ActionTarget {
+  return (
+    isRecord(value) &&
+    typeof value.app === 'string' &&
+    typeof value.action === 'string' &&
+    typeof value.share === 'string' &&
+    typeof value.folder === 'string' &&
+    Array.isArray(value.names) &&
+    value.names.length > 0 &&
+    value.names.every((name) => typeof name === 'string' && name !== '' && !name.includes('/'))
   );
 }
 
@@ -139,6 +162,32 @@ export function filesHost(emit: (event: string, data?: unknown) => void): {
       'internal.files.openViewer': {
         validate: isTarget,
         handle: (params) => openApp(coreAppIds.viewer, undefined, { session: params }),
+      },
+      'internal.files.runAction': {
+        validate: isActionTarget,
+        handle: (params) => {
+          const target = params as ActionTarget;
+          const app = installedApp(target.app);
+          const action = app?.fileActions.find((candidate) => candidate.id === target.action);
+          // Only an action the app declares, for as many items as it takes, of an app that may use shares.
+          if (
+            app === undefined ||
+            action === undefined ||
+            !app.permissions.includes('files.shares') ||
+            (!action.multiple && target.names.length > 1)
+          ) {
+            return false;
+          }
+          return openApp(target.app, {
+            args: null,
+            action: {
+              id: action.id,
+              location: { share: target.share },
+              folder: target.folder,
+              names: target.names,
+            },
+          });
+        },
       },
       'internal.files.openWithApp': {
         validate: isAppTarget,

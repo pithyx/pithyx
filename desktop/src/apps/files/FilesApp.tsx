@@ -36,9 +36,10 @@ import { setClipboard, useFilesClipboard } from './clipboard';
 import { filesCall, onThumbnails, thumbnailUrl } from '../sdk/filesInternal';
 import { choiceExtension, defaultAction, openWithChoices, type OpenWith } from './defaultAction';
 import { chooseFileDefault, useFileDefaults } from './fileDefaults';
-import { useInstalledApps } from '../installed';
+import { manifestText, useInstalledApps } from '../installed';
 import { useAppName } from '../names';
 import styles from './FilesApp.module.css';
+import { actionsFor } from './fileActions';
 import { FilesMenu, type FilesAction } from './FilesMenu';
 import { isEmpty, itemsToDrop, parseDragged, type DraggedEntries, type DropTarget } from './drop';
 import { dragKindOf, ENTRIES_TYPE, FolderView } from './FolderView';
@@ -105,7 +106,7 @@ function codeOf(error: unknown): string | null {
  * through `app.files`, `app.jobs` and `app.trash`.
  */
 export function FilesApp({ app }: { app: PithyxApp }) {
-  const { t } = useTranslation('files');
+  const { t, i18n } = useTranslation('files');
   const client = useQueryClient();
   const [place, setPlace] = useState<Place>(() => restorePlace(app.context.session));
   const [history, setHistory] = useState<{ back: Place[]; forward: Place[] }>({
@@ -704,6 +705,30 @@ export function FilesApp({ app }: { app: PithyxApp }) {
 
   const count = selectedCount(selection, atHomes ? homeEntries.length : folder.total);
   const menuEntry = menu?.entry ?? null;
+  // The apps' file actions for the selected entries (D375); only for a selection of loaded entries named one by one.
+  const selectedItems = toItems(selection);
+  const chosen =
+    menuEntry === null || atHomes || view !== 'folder' || !('names' in selectedItems)
+      ? []
+      : folder.entries.filter((entry) => selectedItems.names.includes(entry.name));
+  const appActions =
+    chosen.length > 0 && chosen.length === count
+      ? actionsFor(chosen, installed ?? [], writable)
+      : [];
+
+  function runAppAction(index: number) {
+    const offered = appActions[index];
+    if (offered === undefined || shareId === null) {
+      return;
+    }
+    void filesCall(app, 'internal.files.runAction', {
+      app: offered.app,
+      action: offered.action.id,
+      share: shareId,
+      folder: path,
+      names: chosen.map((entry) => entry.name),
+    }).catch(report);
+  }
   const cut =
     clipboard?.mode === 'cut' &&
     clipboard.share === shareId &&
@@ -1088,6 +1113,11 @@ export function FilesApp({ app }: { app: PithyxApp }) {
           writable={writable}
           openOnly={atHomes}
           canPaste={clipboard !== null}
+          appActions={appActions.map((offered) => ({
+            label: manifestText(offered.action.label, i18n.language),
+            icon: installed?.find((candidate) => candidate.id === offered.app)?.icon ?? '',
+          }))}
+          onAppAction={runAppAction}
           onAction={act}
           onClose={() => {
             setMenu(null);

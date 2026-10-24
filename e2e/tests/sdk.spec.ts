@@ -1,9 +1,12 @@
+import { mkdirSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { type Page } from '@playwright/test';
 import { expect, test } from './fixtures';
 import { installProbe } from './probe';
 import {
   appWindow,
   openAccountMenu,
+  openFilesInShared,
   openFromDesktop,
   openFromStart,
   signInAsAdmin,
@@ -172,4 +175,32 @@ test('the probe opened directly in a tab runs sandboxed and cannot use the sessi
     ),
   );
   expect(status).not.toBe(200);
+});
+
+test("an app's file action takes the selection in Files", async ({ page }) => {
+  const folder = join(process.env.PITHYX_E2E_DATA ?? '', 'shares', 'shared', 'e2e-action');
+  mkdirSync(join(folder, 'docs'), { recursive: true });
+  writeFileSync(join(folder, 'bundle.zip'), 'zip');
+  writeFileSync(join(folder, 'notes.txt'), 'text');
+  await openFilesInShared(page);
+  const files = page.getByRole('region', { name: /Files$/ });
+  const grid = files.getByRole('grid', { name: 'Folder contents' });
+  await grid.getByRole('row', { name: /^e2e-action/ }).dblclick();
+
+  // A text file matches no action of the probe.
+  await grid.getByRole('row', { name: /^notes\.txt/ }).click({ button: 'right' });
+  await expect(page.getByRole('menu')).toBeVisible();
+  await expect(page.getByRole('menuitem', { name: 'Inspect with the probe' })).toHaveCount(0);
+  await page.keyboard.press('Escape');
+
+  await grid.getByRole('row', { name: /^bundle\.zip/ }).click();
+  await grid.getByRole('row', { name: /^docs/ }).click({ modifiers: ['ControlOrMeta'] });
+  await grid.getByRole('row', { name: /^docs/ }).click({ button: 'right' });
+  await page.getByRole('menuitem', { name: 'Inspect with the probe' }).click();
+
+  const app = page.frameLocator('iframe[src="/apps/com.example.sdk-probe/index.html"]');
+  const fact = app.locator('[data-fact="fileAction"]');
+  await expect(fact).toHaveText(/^inspect e2e-action\//);
+  await expect(fact).toContainText('bundle.zip');
+  await expect(fact).toContainText('docs');
 });
