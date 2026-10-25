@@ -45,6 +45,8 @@ test('the page checks the channel, refuses an untrusted file, installs a verifie
 
   publishBetaChannel();
   await channel.selectOption('beta');
+  // The box saved the channel (the overview shows it); Check now waits for that save by itself (#268).
+  await expect(settings.locator('dd', { hasText: /^Beta$/ })).toBeVisible();
   await settings.getByRole('button', { name: 'Check now' }).click();
   await expect(settings.getByText('Pithyx 0.2.0-beta.3 is available')).toBeVisible();
 

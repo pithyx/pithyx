@@ -1,6 +1,6 @@
 import type { PithyxApp } from '@pithyx/sdk';
 import { Badge, Button, Checkbox, Dialog, Switch, TextField } from '@pithyx/ui';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useIsMutating, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ErrorNotice } from '../../errors/ErrorNotice';
@@ -122,6 +122,11 @@ export function UpdatesPage({ app }: { app: PithyxApp }) {
   );
 }
 
+// A check and a change of the settings must not overlap: a check that starts before a new channel is saved asks the
+// old channel, and its answer would replace the saved state (#268).
+const checkKey = ['settings', 'updates', 'check'];
+const settingsKey = ['settings', 'updates', 'settings'];
+
 function Overview({
   app,
   status,
@@ -136,7 +141,9 @@ function Overview({
   const { t } = useTranslation('settings');
   const locale = useFormatLocale();
   const queryClient = useQueryClient();
+  const saving = useIsMutating({ mutationKey: settingsKey }) > 0;
   const check = useMutation({
+    mutationKey: checkKey,
     mutationFn: () => updatesCall(app, 'internal.admin.updates.check', {}),
     onSuccess: (next) => queryClient.setQueryData(updatesKey, next),
   });
@@ -195,7 +202,7 @@ function Overview({
       <div className={styles.buttons}>
         <Button
           variant="secondary"
-          isDisabled={check.isPending || status.checking}
+          isDisabled={check.isPending || status.checking || saving}
           onPress={() => {
             check.mutate();
           }}
@@ -472,7 +479,9 @@ function History({
 function UpdateSettings({ app, status }: { app: PithyxApp; status: UpdateStatus }) {
   const { t } = useTranslation('settings');
   const queryClient = useQueryClient();
+  const checking = useIsMutating({ mutationKey: checkKey }) > 0 || status.checking;
   const save = useMutation({
+    mutationKey: settingsKey,
     mutationFn: (next: { checkEnabled: boolean; channel: string }) =>
       updatesCall(app, 'internal.admin.updates.settings', next),
     onSuccess: (next) => queryClient.setQueryData(updatesKey, next),
@@ -484,7 +493,7 @@ function UpdateSettings({ app, status }: { app: PithyxApp; status: UpdateStatus 
       </h3>
       <Switch
         isSelected={status.checkEnabled}
-        isDisabled={save.isPending}
+        isDisabled={save.isPending || checking}
         onChange={(checkEnabled) => {
           save.mutate({ checkEnabled, channel: status.channel });
         }}
@@ -496,8 +505,8 @@ function UpdateSettings({ app, status }: { app: PithyxApp; status: UpdateStatus 
         <span className={styles.fieldLabel}>{t('updates.channel')}</span>
         <select
           className={styles.select}
-          value={status.channel}
-          disabled={save.isPending}
+          value={save.isPending ? save.variables.channel : status.channel}
+          disabled={save.isPending || checking}
           onChange={(event) => {
             save.mutate({ checkEnabled: status.checkEnabled, channel: event.target.value });
           }}

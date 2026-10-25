@@ -237,6 +237,37 @@ test('the language list switches the sign-in screen with the mouse and the keybo
   await expect(page.getByRole('button', { name: 'Language: Automatic' })).toBeFocused();
 });
 
+test('a language list that opens under a resting pointer keeps the keyboard choice', async ({
+  page,
+}) => {
+  await page.goto('/');
+  const button = page.getByRole('button', { name: 'Language: Automatic' });
+  await button.click();
+  const box = await page.getByRole('option', { name: 'Deutsch' }).boundingBox();
+  if (box === null) {
+    throw new Error('no option');
+  }
+  const x = box.x + box.width / 2;
+  const y = box.y + box.height / 2;
+  await page.mouse.move(x, y);
+  await page.keyboard.press('Escape');
+  await expect(button).toBeFocused();
+
+  // The list opens again under the resting pointer and Home moves to the first option. The browser reports the
+  // pointer over the new list by itself, without a move, sometimes only after Home (the flake of #276); the test sends
+  // that report after Home itself, and it must not take the option under the pointer.
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('listbox')).toBeFocused();
+  await page.keyboard.press('Home');
+  const deutsch = page.getByRole('option', { name: 'Deutsch' });
+  for (const type of ['pointerover', 'pointerenter', 'pointermove']) {
+    await deutsch.dispatchEvent(type, { clientX: x, clientY: y, bubbles: type !== 'pointerenter' });
+  }
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('heading', { name: 'Welcome back' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Language: Automatic' })).toBeFocused();
+});
+
 test('phones sign in and see the storage app full screen', async ({ browser }) => {
   const context = await browser.newContext({
     viewport: { width: 390, height: 844 },
