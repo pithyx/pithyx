@@ -1,10 +1,12 @@
 import {
   IconApps,
   IconBell,
+  IconCertificate,
   IconLogin,
   IconColorSwatch,
   IconDeviceDesktop,
   IconDevices,
+  IconFingerprint,
   IconLanguage,
   IconLayoutBottombar,
   IconPalette,
@@ -72,7 +74,8 @@ import { requestClose, requestCloseAll } from '../wm/commands';
 import { WindowLayer } from '../wm/WindowLayer';
 import { useMinuteClock } from './clock';
 import styles from './Desktop.module.css';
-import { useFormatLocale } from '../i18n';
+import { loadTranslations, useFormatLocale } from '../i18n';
+import { trustHintDismissed, trustQuery } from '../security/trust';
 
 type User = components['schemas']['UserInfo'];
 
@@ -172,6 +175,8 @@ function UserMenu({
   onFileDefaults,
   onStartupApps,
   onChannels,
+  onPasskeys,
+  onTrust,
   onDone,
 }: {
   trigger: ReactNode;
@@ -182,6 +187,9 @@ function UserMenu({
   onFileDefaults: () => void;
   onStartupApps: () => void;
   onChannels: () => void;
+  onPasskeys: () => void;
+  /** Set while this device does not trust the box. */
+  onTrust: (() => void) | undefined;
   /** After a choice that changes the desktop (another layout, a taskbar position). */
   onDone: () => void;
 }) {
@@ -212,6 +220,10 @@ function UserMenu({
               onStartupApps();
             } else if (key === 'channels') {
               onChannels();
+            } else if (key === 'passkeys') {
+              onPasskeys();
+            } else if (key === 'trust') {
+              onTrust?.();
             }
           }}
         >
@@ -223,6 +235,14 @@ function UserMenu({
             <MenuItem id="two-factor" icon={<IconShieldLock size={18} stroke={1.75} />}>
               {t('menu.twoFactor')}
             </MenuItem>
+            <MenuItem id="passkeys" icon={<IconFingerprint size={18} stroke={1.75} />}>
+              {t('menu.passkeys')}
+            </MenuItem>
+            {onTrust !== undefined && (
+              <MenuItem id="trust" icon={<IconCertificate size={18} stroke={1.75} />}>
+                {t('menu.trust')}
+              </MenuItem>
+            )}
             <SubmenuTrigger>
               <MenuItem id="language" icon={<IconLanguage size={18} stroke={1.75} />}>
                 {t('menu.language')}
@@ -348,6 +368,22 @@ const FileDefaultsDialog = lazy(() =>
   import('./FileDefaultsDialog').then(({ FileDefaultsDialog }) => ({
     default: FileDefaultsDialog,
   })),
+);
+// Passkeys and the trust steps load with their texts when opened; the hint only on a device that does not trust the box.
+const PasskeysDialog = lazy(() =>
+  Promise.all([import('../security/PasskeysDialog'), loadTranslations('security')]).then(
+    ([{ PasskeysDialog }]) => ({ default: PasskeysDialog }),
+  ),
+);
+const TrustDialog = lazy(() =>
+  Promise.all([import('../security/TrustDialog'), loadTranslations('security')]).then(
+    ([{ TrustDialog }]) => ({ default: TrustDialog }),
+  ),
+);
+const TrustHint = lazy(() =>
+  Promise.all([import('../security/TrustHint'), loadTranslations('security')]).then(
+    ([{ TrustHint }]) => ({ default: TrustHint }),
+  ),
 );
 const PowerDialog = lazy(() =>
   import('./PowerDialog').then(({ PowerDialog }) => ({ default: PowerDialog })),
@@ -479,6 +515,11 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   const [fileDefaultsOpen, setFileDefaultsOpen] = useState(false);
   const [startupAppsOpen, setStartupAppsOpen] = useState(false);
   const [channelsOpen, setChannelsOpen] = useState(false);
+  const [passkeysOpen, setPasskeysOpen] = useState(false);
+  const [trustOpen, setTrustOpen] = useState(false);
+  const trust = useQuery(trustQuery);
+  const untrusted = trust.data === 'untrusted';
+  const [showTrustHint] = useState(() => !trustHintDismissed());
   const [startOpen, setStartOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [switcherOpen, setSwitcherOpen] = useState(false);
@@ -732,6 +773,18 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
                       closeStart(false);
                       setChannelsOpen(true);
                     }}
+                    onPasskeys={() => {
+                      closeStart(false);
+                      setPasskeysOpen(true);
+                    }}
+                    onTrust={
+                      untrusted
+                        ? () => {
+                            closeStart(false);
+                            setTrustOpen(true);
+                          }
+                        : undefined
+                    }
                     onDone={() => {
                       closeStart(false);
                     }}
@@ -814,6 +867,37 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
               <p className={cx(styles.banner, styles.danger)} role="alert">
                 {t('realtime.stopped')}
               </p>
+            )}
+            {untrusted && showTrustHint && !trustOpen && (
+              <Suspense>
+                <TrustHint
+                  onTrust={() => {
+                    setTrustOpen(true);
+                  }}
+                />
+              </Suspense>
+            )}
+            {passkeysOpen && (
+              <Suspense>
+                <PasskeysDialog
+                  onClose={() => {
+                    setPasskeysOpen(false);
+                  }}
+                  onTrust={() => {
+                    setPasskeysOpen(false);
+                    setTrustOpen(true);
+                  }}
+                />
+              </Suspense>
+            )}
+            {trustOpen && (
+              <Suspense>
+                <TrustDialog
+                  onClose={() => {
+                    setTrustOpen(false);
+                  }}
+                />
+              </Suspense>
             )}
             {channelsOpen && (
               <Suspense>

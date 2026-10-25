@@ -1,6 +1,7 @@
 import optimizeLocales from '@react-aria/optimize-locales-plugin';
 import babel from '@rolldown/plugin-babel';
 import react, { reactCompilerPreset } from '@vitejs/plugin-react';
+import { createHash } from 'node:crypto';
 import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
 import { brotliCompressSync, constants, gzipSync } from 'node:zlib';
@@ -153,6 +154,29 @@ function precompress(): Plugin {
   };
 }
 
+/**
+ * Writes the service worker (service-worker.js, D380) as sw.js with a cache name of its own for this build, made from
+ * the names of the hashed assets: a new build is a new worker, which drops the old build's cache.
+ */
+function serviceWorker(): Plugin {
+  return {
+    name: 'pithyx-service-worker',
+    apply: 'build',
+    generateBundle(_, bundle) {
+      const assets = Object.keys(bundle)
+        .filter((name) => name.startsWith('assets/'))
+        .sort();
+      const hash = createHash('sha256').update(assets.join('\n')).digest('hex').slice(0, 16);
+      const source = readFileSync(join(import.meta.dirname, 'service-worker.js'), 'utf8');
+      this.emitFile({
+        type: 'asset',
+        fileName: 'sw.js',
+        source: source.replace('__PITHYX_ASSET_CACHE__', `pithyx-assets-${hash}`),
+      });
+    },
+  };
+}
+
 // Where the bundle budgets (tools/checks/bundle-budget.ts) find the chunk graph; outside dist, which the daemon serves.
 export const bundleGraphFile = join(
   import.meta.dirname,
@@ -217,6 +241,7 @@ export default defineConfig({
     react(),
     babel({ presets: [reactCompilerPreset()] }),
     cssModuleTypes(),
+    serviceWorker(),
     precompress(),
     bundleGraph(),
     devCompression(),

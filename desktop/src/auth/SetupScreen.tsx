@@ -1,11 +1,13 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { unwrap, type components } from '@pithyx/api-client';
-import type { SyntheticEvent } from 'react';
+import { lazy, Suspense, useState, type SyntheticEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { describeError } from '../errors/describe';
 import { ErrorNotice } from '../errors/ErrorNotice';
 import { field } from '../forms';
+import { loadTranslations } from '../i18n';
+import { trustQuery } from '../security/trust';
 import { AuthHeader, AuthLayout } from '../shell/AuthLayout';
 import styles from './Auth.module.css';
 import { Button, Field, LanguageSelect, PasswordField } from './controls';
@@ -16,7 +18,12 @@ import { RecoveryKeyCard } from './RecoveryKeyCard';
 
 type User = components['schemas']['UserInfo'];
 
-const STEPS = 2;
+// The last step, on a device that does not trust the box yet, loads with its texts when it is reached.
+const SetupTrustStep = lazy(() =>
+  Promise.all([import('../security/SetupTrustStep'), loadTranslations('security')]).then(
+    ([{ SetupTrustStep }]) => ({ default: SetupTrustStep }),
+  ),
+);
 
 type SetupField = 'username' | 'displayName' | 'password' | 'confirm';
 const FIELD_ORDER: readonly SetupField[] = ['username', 'displayName', 'password', 'confirm'];
@@ -33,7 +40,8 @@ function fieldOf(code: string): SetupField | undefined {
 }
 
 /**
- * First run: create the administrator, then store the recovery key. The setup signs the administrator in.
+ * First run: create the administrator, then store the recovery key, then, on a device that does not trust the box,
+ * the optional trust step (D380). The setup signs the administrator in.
  *
  * The form checks that both passwords match and nothing is left empty, and the password rules shared with the daemon
  * (auth/password); the daemon checks every rule again. Errors are only shown after submitting, so nothing moves
@@ -49,6 +57,9 @@ export function SetupScreen({
   const { t } = useTranslation('auth');
   const form = useFormErrors<SetupField>(FIELD_ORDER);
   const checkPassword = useNewPasswordCheck();
+  const trust = useQuery(trustQuery);
+  const steps = trust.data === 'untrusted' ? 3 : 2;
+  const [trustStep, setTrustStep] = useState(false);
   const setup = useMutation({
     mutationFn: async (body: { username: string; password: string; displayName: string | null }) =>
       unwrap(await api.POST('/api/setup', { body })),
@@ -95,7 +106,7 @@ export function SetupScreen({
       {setup.data === undefined ? (
         <form className={styles.form} onSubmit={submit} noValidate aria-labelledby="setup-title">
           <div className={styles.heading}>
-            <p className={styles.step}>{t('setup.step', { current: 1, total: STEPS })}</p>
+            <p className={styles.step}>{t('setup.step', { current: 1, total: steps })}</p>
             <h1 id="setup-title" className={styles.title}>
               {t('setup.title')}
             </h1>
@@ -142,15 +153,28 @@ export function SetupScreen({
             {setup.isPending ? t('setup.submitting') : t('setup.submit')}
           </Button>
         </form>
+      ) : trustStep ? (
+        <Suspense>
+          <SetupTrustStep
+            step={t('setup.step', { current: 3, total: 3 })}
+            onContinue={() => {
+              onSignedIn(setup.data.user);
+            }}
+          />
+        </Suspense>
       ) : (
         <RecoveryKeyCard
           recoveryKey={setup.data.recoveryKey}
-          step={t('setup.step', { current: 2, total: STEPS })}
+          step={t('setup.step', { current: 2, total: steps })}
           title={t('recoveryKey.title')}
           intro={t('recoveryKey.intro')}
           continueLabel={t('recoveryKey.continue')}
           onContinue={() => {
-            onSignedIn(setup.data.user);
+            if (steps === 3) {
+              setTrustStep(true);
+            } else {
+              onSignedIn(setup.data.user);
+            }
           }}
         />
       )}

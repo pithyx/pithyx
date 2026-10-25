@@ -9,9 +9,6 @@ export type IssuedCertificate = components['schemas']['IssuedCertificate'];
 export type CertificateKeyType = components['schemas']['CertificateKeyType'];
 export type IssueCertificateRequest = components['schemas']['IssueCertificateRequest'];
 
-/** The address any device downloads the box's root from, also before signing in. */
-export const rootCertificateUrl = '/api/system/tls/root-ca.crt';
-
 /** Certificates for administrators, outside the public SDK; the daemon checks the right on every request. */
 interface TlsMethods {
   'internal.admin.tls.settings': { params: Record<string, never>; result: TlsSettings };

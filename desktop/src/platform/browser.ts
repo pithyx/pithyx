@@ -1,3 +1,5 @@
+import type { PasskeyCreationOptions, PasskeyRequestOptions } from './webauthnJson';
+
 /**
  * The one place for browser features that exist only in a secure context (HTTPS with a trusted certificate, or
  * localhost), and for opening other tabs. Pithyx must work fully without a secure context: over plain HTTP by IP
@@ -82,4 +84,110 @@ export function selectContents(element: HTMLElement): void {
  */
 export function openInNewTab(url: string): void {
   window.open(url, '_blank', 'noopener,noreferrer');
+}
+
+/**
+ * Whether this device trusts the box's certificate (D380): `trusted`, `untrusted` (HTTPS with a certificate the
+ * browser warned about), or `unsupported` (plain HTTP, the development server, or a browser without service workers).
+ * Browsers refuse service workers on a connection with a certificate error, so registering the box's worker is the
+ * test, and once it passes the worker runs: trusting the box is what switches it on.
+ */
+export type DeviceTrust = 'trusted' | 'untrusted' | 'unsupported';
+
+let trustCheck: Promise<DeviceTrust> | undefined;
+
+/** The trust of this device, checked once per page; `recheck` asks again after the user installed the root. */
+export function deviceTrust(recheck = false): Promise<DeviceTrust> {
+  if (trustCheck === undefined || recheck) {
+    trustCheck = checkTrust();
+  }
+  return trustCheck;
+}
+
+async function checkTrust(): Promise<DeviceTrust> {
+  if (import.meta.env.DEV || location.protocol !== 'https:') {
+    return 'unsupported';
+  }
+  if (!window.isSecureContext || !('serviceWorker' in navigator)) {
+    return 'untrusted';
+  }
+  try {
+    await navigator.serviceWorker.register('/sw.js', { scope: '/', updateViaCache: 'none' });
+    return 'trusted';
+  } catch {
+    return 'untrusted';
+  }
+}
+
+/** Why passkeys cannot be used here, or `undefined` when they can. */
+export type PasskeyBlocker = 'untrusted' | 'address' | 'browser';
+
+/**
+ * Passkeys need a device that trusts the box, a browser with WebAuthn and the box opened by name: a relying party is
+ * a domain, never an address.
+ */
+export function passkeyBlocker(trust: DeviceTrust): PasskeyBlocker | undefined {
+  const host = location.hostname;
+  if (host.startsWith('[') || /^\d{1,3}(\.\d{1,3}){3}$/.test(host)) {
+    return 'address';
+  }
+  if (trust !== 'trusted') {
+    return 'untrusted';
+  }
+  return typeof window.PublicKeyCredential === 'function' ? undefined : 'browser';
+}
+
+/** Whether the browser offers passkeys in the user name field's autofill. */
+export async function passkeyAutofillAvailable(): Promise<boolean> {
+  try {
+    return (
+      typeof window.PublicKeyCredential === 'function' &&
+      (await window.PublicKeyCredential.isConditionalMediationAvailable())
+    );
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Creates a passkey and returns the authenticator's answer as JSON for the daemon; null when the user cancelled. The
+ * JSON conversion loads with the first passkey, so it stays out of the sign-in bundle.
+ */
+export async function createPasskey(options: PasskeyCreationOptions): Promise<object | null> {
+  const json = await import('./webauthnJson');
+  const credential = await navigator.credentials.create({
+    publicKey: json.creationOptions(options),
+  });
+  return credential instanceof window.PublicKeyCredential
+    ? json.registrationJson(credential)
+    : null;
+}
+
+/**
+ * Asks for a passkey of the box and returns the answer as JSON for the daemon; null when the user cancelled. With
+ * `autofill`, the browser offers the passkeys in the user name field instead of a dialog, until `signal` aborts.
+ */
+export async function getPasskey(
+  options: PasskeyRequestOptions,
+  { autofill = false, signal }: { autofill?: boolean; signal?: AbortSignal } = {},
+): Promise<object | null> {
+  const json = await import('./webauthnJson');
+  let credential: Credential | null;
+  try {
+    credential = await navigator.credentials.get({
+      publicKey: json.requestOptions(options),
+      ...(autofill ? { mediation: 'conditional' as CredentialMediationRequirement } : {}),
+      ...(signal === undefined ? {} : { signal }),
+    });
+  } catch (error) {
+    // Cancelled by the user, timed out or aborted: nothing to report.
+    if (
+      error instanceof DOMException &&
+      (error.name === 'NotAllowedError' || error.name === 'AbortError')
+    ) {
+      return null;
+    }
+    throw error;
+  }
+  return credential instanceof window.PublicKeyCredential ? json.assertionJson(credential) : null;
 }

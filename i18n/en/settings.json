@@ -390,35 +390,7 @@
     },
     "trust": {
       "title": "Trust this box",
-      "explain": "Download the root certificate and install it on every device that uses the box. Afterwards the browser shows no warning, reloads come from its cache and FTPS clients accept the box.",
-      "download": "Download root certificate",
-      "compare": "Before you trust the file on a device, compare its fingerprint with the one above.",
-      "devices": {
-        "windows": {
-          "name": "Windows:",
-          "steps": "Open the file, choose Install Certificate, Local Machine, then the store Trusted Root Certification Authorities."
-        },
-        "macos": {
-          "name": "macOS:",
-          "steps": "Open the file in Keychain Access (keychain System), open the certificate and set Trust to Always Trust."
-        },
-        "ios": {
-          "name": "iPhone and iPad:",
-          "steps": "Open the file in Safari and install the profile under Settings, General, VPN and Device Management, then switch it on under Settings, General, About, Certificate Trust Settings."
-        },
-        "android": {
-          "name": "Android:",
-          "steps": "Settings, Security, Encryption and credentials, Install a certificate, CA certificate, then pick the file."
-        },
-        "linux": {
-          "name": "Linux:",
-          "steps": "Copy the file to /usr/local/share/ca-certificates/ and run sudo update-ca-certificates; browsers with their own store need the step below."
-        },
-        "firefox": {
-          "name": "Firefox:",
-          "steps": "Settings, Privacy and Security, Certificates, View Certificates, Authorities, Import, and trust it to identify websites."
-        }
-      }
+      "compare": "Before you trust the file on a device, compare its fingerprint with the one above."
     },
     "authority": {
       "title": "Certificate authority",

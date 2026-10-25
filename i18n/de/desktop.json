@@ -44,7 +44,9 @@
     "deviceDetailScreen": "{width} × {height}, {count, plural, one {# Fenster} other {# Fenster}}, {time}",
     "fileDefaults": "Standard-Apps",
     "startupApps": "Beim Anmelden öffnen",
-    "channels": "Benachrichtigungskanäle"
+    "channels": "Benachrichtigungskanäle",
+    "passkeys": "Passkeys",
+    "trust": "Diesem Gerät vertrauen"
   },
   "error": {
     "title": "Etwas ist schiefgelaufen",

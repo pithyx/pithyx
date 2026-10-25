@@ -139,6 +139,33 @@ public sealed class AuthService(SqliteConnectionFactory connections, PasswordHas
         return info;
     }
 
+    /// <summary>The account behind a checked passkey, if it may sign in to the desktop.</summary>
+    public async Task<UserInfo> PasskeySignInAsync(long userId, CancellationToken cancellationToken)
+    {
+        var user = await FindByIdAsync(userId, cancellationToken) ?? throw new PithyxException(ErrorCodes.AuthPasskeyInvalid);
+        if (user.DisabledAt is not null)
+        {
+            throw new PithyxException(ErrorCodes.AuthAccountDisabled);
+        }
+        var info = await InfoAsync(user, cancellationToken);
+        if (!info.Permissions.Rights.Contains(Permissions.Resources.DesktopLogin))
+        {
+            throw new PithyxException(ErrorCodes.AuthDesktopNotAllowed);
+        }
+        return info;
+    }
+
+    /// <summary>Checks the signed-in user's password again before a change that needs it.</summary>
+    public async Task<UserInfo> ConfirmPasswordAsync(long userId, string password, CancellationToken cancellationToken)
+    {
+        var user = await FindByIdAsync(userId, cancellationToken) ?? throw new PithyxException(ErrorCodes.AuthSessionExpired);
+        if (!(await hasher.VerifyAsync(password ?? "", user.PasswordHash, cancellationToken)).Valid)
+        {
+            throw new PithyxException(ErrorCodes.AuthCredentialsInvalid);
+        }
+        return await InfoAsync(user, cancellationToken);
+    }
+
     /// <summary>The user as the desktop sees it, with its groups.</summary>
     public async Task<UserInfo?> GetUserAsync(long userId, CancellationToken cancellationToken) =>
         await FindByIdAsync(userId, cancellationToken) is { } user ? await InfoAsync(user, cancellationToken) : null;
@@ -252,8 +279,8 @@ public sealed class AuthService(SqliteConnectionFactory connections, PasswordHas
     }
 
     /// <summary>
-    /// Resets the administrator password with the recovery key, ends all sessions, turns TOTP off (the device may be
-    /// lost) and replaces the recovery key. Returns the new key, which is shown once.
+    /// Resets the administrator password with the recovery key, ends all sessions, turns TOTP off and removes the
+    /// passkeys (the device may be lost) and replaces the recovery key. Returns the new key, which is shown once.
     /// </summary>
     public async Task<(long UserId, string RecoveryKey)> RecoverAsync(RecoverRequest request, CancellationToken cancellationToken)
     {
@@ -286,6 +313,7 @@ public sealed class AuthService(SqliteConnectionFactory connections, PasswordHas
             new { passwordHash, now = SessionService.Format(time.GetUtcNow()), user.Id },
             transaction);
         await ClearTotpAsync(connection, transaction, user.Id);
+        await connection.ExecuteAsync("DELETE FROM passkeys WHERE user_id = @Id", new { user.Id }, transaction);
         await connection.ExecuteAsync("DELETE FROM sessions WHERE user_id = @Id", new { user.Id }, transaction);
         await SetSettingAsync(connection, transaction, RecoveryKeySetting, newKeyHash);
         await transaction.CommitAsync(cancellationToken);

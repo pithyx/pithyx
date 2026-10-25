@@ -333,6 +333,32 @@
       },
       "expected": "The display name can have at most 64 characters and no control characters."
     },
+    "auth.passkey.invalid": {
+      "params": {},
+      "expected": "The passkey was not accepted. It may have been removed or belong to another name of the box."
+    },
+    "auth.passkey.limit": {
+      "params": {
+        "max": 20
+      },
+      "expected": "You can have at most 20 passkeys. Remove one first."
+    },
+    "auth.passkey.name_invalid": {
+      "params": {
+        "maxLength": 64
+      },
+      "expected": "The name needs 1 to 64 characters and no control characters."
+    },
+    "auth.passkey.not_found": {
+      "params": {},
+      "expected": "This passkey does not exist (any more)."
+    },
+    "auth.passkey.unavailable": {
+      "params": {
+        "host": "192.168.1.20"
+      },
+      "expected": "Passkeys need the box opened by its name over HTTPS, not as 192.168.1.20."
+    },
     "auth.password.too_common": {
       "params": {},
       "expected": "This password is too well known. Choose one that is harder to guess."

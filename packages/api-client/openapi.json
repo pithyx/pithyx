@@ -1176,6 +1176,221 @@
         }
       }
     },
+    "/api/auth/passkeys/sign-in/options": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "description": "Options for signing in with a passkey of the name the box was opened under; refused with auth.passkey.unavailable for an address.",
+        "operationId": "PasskeySignInOptions",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasskeyOptions"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/passkeys/sign-in": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "description": "Signs in with a passkey instead of the password and TOTP; the same limits on failed attempts apply.",
+        "operationId": "PasskeySignIn",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasskeySignInRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserInfo"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/passkeys": {
+      "get": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "ListPasskeys",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasskeyList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "CreatePasskey",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasskeyCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasskeyInfo"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/passkeys/options": {
+      "post": {
+        "tags": [
+          "Auth"
+        ],
+        "description": "Options for a new passkey of the signed-in user, after the current password.",
+        "operationId": "PasskeyCreateOptions",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PasskeyOptionsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasskeyOptions"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/auth/passkeys/{id}": {
+      "delete": {
+        "tags": [
+          "Auth"
+        ],
+        "operationId": "DeletePasskey",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/desktop": {
       "get": {
         "tags": [
@@ -12541,6 +12756,11 @@
           "auth.csrf.header_missing",
           "auth.desktop.not_allowed",
           "auth.display_name.invalid",
+          "auth.passkey.invalid",
+          "auth.passkey.limit",
+          "auth.passkey.name_invalid",
+          "auth.passkey.not_found",
+          "auth.passkey.unavailable",
           "auth.password.too_common",
           "auth.password.too_long",
           "auth.password.too_short",
@@ -16083,6 +16303,130 @@
               "type": "string"
             },
             "description": "Where the partition is mounted; empty when it is not."
+          }
+        }
+      },
+      "PasskeyCreateRequest": {
+        "required": [
+          "ceremony",
+          "name",
+          "credential"
+        ],
+        "type": "object",
+        "properties": {
+          "ceremony": {
+            "type": "string",
+            "description": "From the options."
+          },
+          "name": {
+            "type": "string",
+            "description": "1 to 64 characters."
+          },
+          "credential": {
+            "description": "The answer of `navigator.credentials.create` as JSON (`RegistrationResponseJSON`).",
+            "$ref": "#/components/schemas/JsonElement"
+          }
+        }
+      },
+      "PasskeyInfo": {
+        "required": [
+          "id",
+          "name",
+          "rpId",
+          "backedUp",
+          "createdAt",
+          "lastUsedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Stable id.",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name the user gave it, such as the device it lives on."
+          },
+          "rpId": {
+            "type": "string",
+            "description": "The name of the box it belongs to: it works only where the box is opened under this name."
+          },
+          "backedUp": {
+            "type": "boolean",
+            "description": "Whether the authenticator syncs it to other devices."
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "UTC."
+          },
+          "lastUsedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "UTC, or null before its first sign-in."
+          }
+        },
+        "description": "A passkey of the signed-in user (D380)."
+      },
+      "PasskeyList": {
+        "required": [
+          "items"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PasskeyInfo"
+            }
+          }
+        }
+      },
+      "PasskeyOptions": {
+        "required": [
+          "ceremony",
+          "options"
+        ],
+        "type": "object",
+        "properties": {
+          "ceremony": {
+            "type": "string",
+            "description": "Pass back with the authenticator's answer within five minutes; it is used once."
+          },
+          "options": {
+            "description": "The WebAuthn options as JSON (`PublicKeyCredentialCreationOptionsJSON` or `PublicKeyCredentialRequestOptionsJSON`).",
+            "$ref": "#/components/schemas/JsonElement"
+          }
+        }
+      },
+      "PasskeyOptionsRequest": {
+        "required": [
+          "password"
+        ],
+        "type": "object",
+        "properties": {
+          "password": {
+            "type": "string",
+            "description": "The current password: a new passkey signs in without it."
+          }
+        }
+      },
+      "PasskeySignInRequest": {
+        "required": [
+          "ceremony",
+          "credential"
+        ],
+        "type": "object",
+        "properties": {
+          "ceremony": {
+            "type": "string",
+            "description": "From the sign-in options."
+          },
+          "credential": {
+            "description": "The answer of `navigator.credentials.get` as JSON (`AuthenticationResponseJSON`).",
+            "$ref": "#/components/schemas/JsonElement"
           }
         }
       },

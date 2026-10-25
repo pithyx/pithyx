@@ -18,7 +18,7 @@ Der Desktop ist eine React-19-Single-Page-App in `desktop/` (Vite 8, TypeScript,
 - **Installer.** Die Oberfläche des Installers wird nur auf dem Live-System geladen.
 - **Design-Galerie.** `desktop/design.html` (`pnpm design`, Port 5174) zeigt jeden Bildschirm für Layout-Prüfungen. Sie dient nur der Entwicklung.
 - **Dev-Server.** Er leitet `/api` und `/ws` an den Daemon weiter und schreibt den `Origin`-Header von WebSocket-Upgrades um, weil der Daemon nur seinen eigenen Origin akzeptiert.
-- **Sichere Kontexte.** Der Desktop funktioniert über reines HTTP per Adresse. ESLint lehnt `crypto.randomUUID`, `crypto.subtle`, die Clipboard-API, Service Worker, WebAuthn, Benachrichtigungen, `window.open` und ähnliche APIs außerhalb von `desktop/src/platform/browser.ts` ab, das Fallbacks bietet (`randomId`, `copyText`, `openInNewTab`).
+- **Sichere Kontexte.** Der Desktop funktioniert über reines HTTP per Adresse. ESLint lehnt `crypto.randomUUID`, `crypto.subtle`, die Clipboard-API, Service Worker, WebAuthn, Benachrichtigungen, `window.open` und ähnliche APIs außerhalb von `desktop/src/platform/browser.ts` ab, das Fallbacks bietet (`randomId`, `copyText`, `openInNewTab`). `deviceTrust` registriert den Service Worker (`desktop/service-worker.js`, als `sw.js` mit einem Cache-Namen pro Build geschrieben) und erkennt so, ob das Gerät der Box vertraut; Passkeys (`createPasskey`, `getPasskey`, mit der JSON-Umwandlung in `platform/webauthnJson.ts`, die beim ersten Gebrauch lädt) warten darauf.
 - **Texte.** ESLint lehnt außerdem String-Literale in JSX (`i18next/no-literal-string`) und Importe von Icon-Bibliotheken ab, die nicht über `ui/icons.ts` laufen.
 
 ## Shell und Fenstermanager

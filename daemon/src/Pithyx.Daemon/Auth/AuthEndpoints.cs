@@ -13,6 +13,7 @@ public static class AuthEndpoints
         services.AddSingleton<PasswordHasher>();
         services.AddSingleton<SessionService>();
         services.AddSingleton<LoginChallenges>();
+        services.AddSingleton<PasskeyService>();
         services.AddSingleton<LoginRateLimiter>();
         services.AddHostedService<SignInAlerts>();
         services.AddSingleton<AuthService>();
@@ -36,6 +37,17 @@ public static class AuthEndpoints
         auth.MapPost("/totp/enroll", EnrollTotpAsync).WithName("EnrollTotp");
         auth.MapPost("/totp/confirm", ConfirmTotpAsync).WithName("ConfirmTotp");
         auth.MapPost("/totp/disable", DisableTotpAsync).WithName("DisableTotp");
+
+        var passkeys = auth.MapGroup("/passkeys");
+        passkeys.MapPost("/sign-in/options", PasskeySignInOptions).WithName("PasskeySignInOptions").AllowAnonymous()
+            .WithDescription("Options for signing in with a passkey of the name the box was opened under; refused with auth.passkey.unavailable for an address.");
+        passkeys.MapPost("/sign-in", PasskeySignInAsync).WithName("PasskeySignIn").AllowAnonymous()
+            .WithDescription("Signs in with a passkey instead of the password and TOTP; the same limits on failed attempts apply.");
+        passkeys.MapGet("", ListPasskeysAsync).WithName("ListPasskeys");
+        passkeys.MapPost("/options", PasskeyCreateOptionsAsync).WithName("PasskeyCreateOptions")
+            .WithDescription("Options for a new passkey of the signed-in user, after the current password.");
+        passkeys.MapPost("", CreatePasskeyAsync).WithName("CreatePasskey");
+        passkeys.MapDelete("/{id:long}", DeletePasskeyAsync).WithName("DeletePasskey");
     }
 
     /// <summary><c>GET /api/setup</c>, which the live system answers as well: it tells the desktop to show the installer.</summary>
@@ -147,13 +159,59 @@ public static class AuthEndpoints
         return TypedResults.NoContent();
     }
 
+    private static Ok<PasskeyOptions> PasskeySignInOptions(PasskeyService passkeys, HttpContext context)
+    {
+        var (ceremony, options) = passkeys.SignInOptions(PasskeyService.For(context.Request), Address(context));
+        return TypedResults.Ok(new PasskeyOptions(ceremony, options));
+    }
+
+    private static async Task<Ok<UserInfo>> PasskeySignInAsync(
+        PasskeySignInRequest request, PasskeyService passkeys, AuthService auth, SessionService sessions, LoginRateLimiter limiter, HttpContext context, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        // The user is known only from the passkey, so failures count for the address.
+        limiter.EnsureAllowed(context, "");
+        var userId = await CountFailuresAsync(limiter, context, "", () => passkeys.SignInAsync(request.Ceremony, request.Credential, Address(context), cancellationToken));
+        var user = await auth.PasskeySignInAsync(userId, cancellationToken);
+        await StartSessionAsync(context, sessions, user.Id, cancellationToken);
+        return TypedResults.Ok(user);
+    }
+
+    private static async Task<Ok<PasskeyList>> ListPasskeysAsync(PasskeyService passkeys, HttpContext context, CancellationToken cancellationToken) =>
+        TypedResults.Ok(new PasskeyList(await passkeys.ListAsync(CurrentUser.Id(context.User), cancellationToken)));
+
+    private static async Task<Ok<PasskeyOptions>> PasskeyCreateOptionsAsync(
+        PasskeyOptionsRequest request, PasskeyService passkeys, AuthService auth, LoginRateLimiter limiter, HttpContext context, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        var party = PasskeyService.For(context.Request);
+        var userId = CurrentUser.Id(context.User);
+        var username = context.User.Identity?.Name ?? "";
+        limiter.EnsureAllowed(context, username);
+        var user = await CountFailuresAsync(limiter, context, username, () => auth.ConfirmPasswordAsync(userId, request.Password, cancellationToken));
+        var (ceremony, options) = await passkeys.RegistrationOptionsAsync(user.Id, user.Username, user.DisplayName, party, Address(context), cancellationToken);
+        return TypedResults.Ok(new PasskeyOptions(ceremony, options));
+    }
+
+    private static async Task<Ok<PasskeyInfo>> CreatePasskeyAsync(PasskeyCreateRequest request, PasskeyService passkeys, HttpContext context, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        return TypedResults.Ok(await passkeys.RegisterAsync(CurrentUser.Id(context.User), request.Ceremony, request.Name, request.Credential, Address(context), cancellationToken));
+    }
+
+    private static async Task<NoContent> DeletePasskeyAsync(long id, PasskeyService passkeys, HttpContext context, CancellationToken cancellationToken)
+    {
+        await passkeys.DeleteAsync(CurrentUser.Id(context.User), id, cancellationToken);
+        return TypedResults.NoContent();
+    }
+
     private static async Task<T> CountFailuresAsync<T>(LoginRateLimiter limiter, HttpContext context, string username, Func<Task<T>> attempt)
     {
         try
         {
             return await attempt();
         }
-        catch (PithyxException exception) when (exception.Code is ErrorCodes.AuthCredentialsInvalid or ErrorCodes.AuthTotpInvalid or ErrorCodes.AuthRecoveryInvalid)
+        catch (PithyxException exception) when (exception.Code is ErrorCodes.AuthCredentialsInvalid or ErrorCodes.AuthTotpInvalid or ErrorCodes.AuthRecoveryInvalid or ErrorCodes.AuthPasskeyInvalid)
         {
             limiter.RecordFailure(context, username);
             throw;

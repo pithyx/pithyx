@@ -18,7 +18,7 @@ The desktop is a React 19 single-page app in `desktop/` (Vite 8, TypeScript, zus
 - **Installer.** The installer interface is loaded only on the live system.
 - **Design gallery.** `desktop/design.html` (`pnpm design`, port 5174) shows every screen for layout checks. It is for development only.
 - **Dev server.** It proxies `/api` and `/ws` to the daemon and rewrites the `Origin` header of WebSocket upgrades, because the daemon accepts only its own origin.
-- **Secure contexts.** The desktop works on plain HTTP by address. ESLint refuses `crypto.randomUUID`, `crypto.subtle`, the Clipboard API, service workers, WebAuthn, notifications, `window.open` and similar APIs outside `desktop/src/platform/browser.ts`, which offers fallbacks (`randomId`, `copyText`, `openInNewTab`).
+- **Secure contexts.** The desktop works on plain HTTP by address. ESLint refuses `crypto.randomUUID`, `crypto.subtle`, the Clipboard API, service workers, WebAuthn, notifications, `window.open` and similar APIs outside `desktop/src/platform/browser.ts`, which offers fallbacks (`randomId`, `copyText`, `openInNewTab`). `deviceTrust` registers the service worker (`desktop/service-worker.js`, written as `sw.js` with a cache name per build) and so tells whether the device trusts the box; passkeys (`createPasskey`, `getPasskey`, with the JSON conversion in `platform/webauthnJson.ts` loaded on first use) wait for that.
 - **Texts.** ESLint also refuses string literals in JSX (`i18next/no-literal-string`) and imports of icon libraries other than through `ui/icons.ts`.
 
 ## Shell and window manager

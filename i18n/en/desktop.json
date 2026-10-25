@@ -44,7 +44,9 @@
     "deviceDetailScreen": "{width} × {height}, {count, plural, one {# window} other {# windows}}, {time}",
     "fileDefaults": "Default apps",
     "startupApps": "Open at sign-in",
-    "channels": "Notification channels"
+    "channels": "Notification channels",
+    "passkeys": "Passkeys",
+    "trust": "Trust this device"
   },
   "error": {
     "title": "Something went wrong",

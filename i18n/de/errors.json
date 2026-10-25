@@ -98,6 +98,13 @@
     "display_name": {
       "invalid": "Dein Anzeigename darf höchstens {maxLength} Zeichen und keine Steuerzeichen enthalten."
     },
+    "passkey": {
+      "invalid": "Der Passkey wurde nicht angenommen. Vielleicht wurde er entfernt oder gehört zu einem anderen Namen der Box.",
+      "limit": "Du kannst höchstens {max} Passkeys haben. Entferne zuerst einen.",
+      "name_invalid": "Der Name braucht 1 bis {maxLength} Zeichen und keine Steuerzeichen.",
+      "not_found": "Diesen Passkey gibt es nicht (mehr).",
+      "unavailable": "Passkeys brauchen die Box über ihren Namen und HTTPS geöffnet, nicht als {host}."
+    },
     "password": {
       "too_common": "Dieses Passwort ist zu bekannt. Wähle eines, das schwerer zu erraten ist.",
       "too_long": "Dein Passwort darf höchstens {maxLength} Zeichen lang sein.",

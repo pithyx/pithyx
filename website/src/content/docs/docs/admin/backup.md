@@ -25,7 +25,7 @@ The file is encrypted with AES-256-GCM under a key derived from the password wit
 
 Categories you can choose when restoring:
 
-- **Users and groups**: accounts, groups, passwords (also for SMB and SFTP), two-factor sign-in, the recovery key, personal settings, desktop layouts, and the notification channels of the users and of the box.
+- **Users and groups**: accounts, groups, passwords (also for SMB and SFTP), two-factor sign-in, passkeys, the recovery key, personal settings, desktop layouts, and the notification channels of the users and of the box.
 - **Shared folders and file services**: shared folders with their rights and the SMB, SFTP, WebDAV and FTP settings.
 - **Storage settings**: snapshot schedules (restore points), scrub and self-test schedules.
 - **System settings**: language, formats, time zone, time servers, log retention, the UPS and the email server for notifications.
