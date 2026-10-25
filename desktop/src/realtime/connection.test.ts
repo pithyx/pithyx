@@ -67,3 +67,74 @@ describe('server errors', () => {
     expect(useErrorStore.getState().current?.code).toBe('realtime.topic.unknown');
   });
 });
+
+describe('listen', () => {
+  beforeEach(() => {
+    vi.stubGlobal('WebSocket', FakeSocket);
+    vi.stubGlobal('location', { protocol: 'http:', host: 'localhost' });
+  });
+
+  afterEach(() => {
+    realtime.disconnect();
+    vi.unstubAllGlobals();
+  });
+
+  it('gives a listener that joins a subscribed topic its current state', async () => {
+    const socket = connect();
+    const first: unknown[] = [];
+    const stopFirst = realtime.listen('apps/com.example.chat/context', (data) => first.push(data));
+    socket.receive({
+      type: 'snap',
+      topic: 'apps/com.example.chat/context',
+      data: { version: '1.0.0' },
+    });
+    socket.receive({
+      type: 'event',
+      topic: 'apps/com.example.chat/context',
+      data: { version: '1.0.1' },
+    });
+
+    const second: unknown[] = [];
+    const stopSecond = realtime.listen('apps/com.example.chat/context', (data) =>
+      second.push(data),
+    );
+    await Promise.resolve();
+
+    expect(first).toEqual([{ version: '1.0.0' }, { version: '1.0.1' }]);
+    expect(second).toEqual([{ version: '1.0.1' }]);
+    expect(socket.sent.filter((message) => message.type === 'sub')).toHaveLength(1);
+    stopFirst();
+    stopSecond();
+  });
+
+  it('waits for the snapshot when nothing has arrived yet', async () => {
+    const socket = connect();
+    const seen: unknown[] = [];
+    const stop = realtime.listen('apps/com.example.chat/context', (data) => seen.push(data));
+    await Promise.resolve();
+    expect(seen).toEqual([]);
+    socket.receive({
+      type: 'snap',
+      topic: 'apps/com.example.chat/context',
+      data: { version: '1.0.0' },
+    });
+    expect(seen).toEqual([{ version: '1.0.0' }]);
+    stop();
+  });
+
+  it('gives nothing to a listener that left before the state was handed over', async () => {
+    const socket = connect();
+    const stopFirst = realtime.listen('apps/com.example.chat/context', () => undefined);
+    socket.receive({
+      type: 'snap',
+      topic: 'apps/com.example.chat/context',
+      data: { version: '1.0.0' },
+    });
+    const seen: unknown[] = [];
+    const stop = realtime.listen('apps/com.example.chat/context', (data) => seen.push(data));
+    stop();
+    await Promise.resolve();
+    expect(seen).toEqual([]);
+    stopFirst();
+  });
+});

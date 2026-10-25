@@ -71,6 +71,16 @@ class RealtimeConnection {
     set.add(listener);
     this.listeners.set(topic, set);
     const release = this.subscribe(topic as TopicName);
+    // The daemon sends a topic's snapshot once per subscription, so a listener that joins a topic another one holds
+    // starts from the current state instead (a second window of an app waits for its context otherwise).
+    const current = useRealtime.getState().data[topic as TopicName];
+    if (current !== undefined) {
+      queueMicrotask(() => {
+        if (set.has(listener)) {
+          listener(current);
+        }
+      });
+    }
     return () => {
       set.delete(listener);
       if (set.size === 0) {
