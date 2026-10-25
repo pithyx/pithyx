@@ -31,7 +31,7 @@ type Tab = 'installed' | 'updates' | CatalogTab;
 
 type View =
   | { page: 'tabs' }
-  | { page: 'installed'; appId: string }
+  | { page: 'installed'; appId: string; tab: Tab }
   | { page: 'catalog'; entry: StoreAppSummary; tab: Tab }
   | { page: 'settings' };
 
@@ -124,6 +124,7 @@ export function StoreApp({ app }: SdkAppProps) {
           details={current}
           update={updates.find((update) => update.id === current.id)}
           catalogs={catalogs}
+          backLabel={view.page === 'installed' ? t(`tabs.${view.tab}`) : t('detail.back')}
           onBack={back}
           onUninstall={(name) => {
             setUninstalling({ appId: current.id, name });
@@ -134,8 +135,13 @@ export function StoreApp({ app }: SdkAppProps) {
     );
   }
 
+  // An installed app has one page, whichever tab or search it was opened from.
   const openCatalogApp = (entry: StoreAppSummary) => {
-    setView({ page: 'catalog', entry, tab: shown });
+    setView(
+      installed.data?.apps.some((app) => app.id === entry.id) === true
+        ? { page: 'installed', appId: entry.id, tab: shown }
+        : { page: 'catalog', entry, tab: shown },
+    );
   };
 
   return (
@@ -225,7 +231,7 @@ export function StoreApp({ app }: SdkAppProps) {
                       details={entry}
                       update={updates.some((update) => update.id === entry.id)}
                       onOpen={() => {
-                        setView({ page: 'installed', appId: entry.id });
+                        setView({ page: 'installed', appId: entry.id, tab: 'installed' });
                       }}
                     />
                   </li>

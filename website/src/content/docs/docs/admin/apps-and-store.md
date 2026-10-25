@@ -11,7 +11,7 @@ Only administrators install apps, in the Store app. An app is a frontend that th
 
 ## The Store
 
-The Store has the tab **Installed**, **Updates** while updates wait (with their number), **Official** and **Community** while that catalog is on, and **Own** while you added a catalog of your own, and a gear for **Store settings**. Official apps are reviewed, built and signed by the Pithyx project; community apps are from developers outside the project and reviewed by it before they are published; **Own** shows apps of catalogs you added, which the project does not verify. Badges read "Pithyx", "Community" and "Unverified" (also for apps installed from a file). Search covers name, description and developer. Users open installed apps from the Pithyx menu; see [Apps](/docs/user/apps/).
+The Store has the tab **Installed**, **Updates** while updates wait (with their number), **Official** and **Community** while that catalog is on, and **Own** while you added a catalog of your own, and a gear for **Store settings**. Official apps are reviewed, built and signed by the Pithyx project; community apps are from developers outside the project and reviewed by it before they are published; **Own** shows apps of catalogs you added, which the project does not verify. Badges read "Pithyx", "Community" and "Unverified" (also for apps installed from a file). Search covers name, description and developer. An installed app has one page, whichever tab or search you open it from: its actions, permissions, folders and settings, and for an app from a catalog also its screenshots, the link to its source and its versions. Users open installed apps from the Pithyx menu; see [Apps](/docs/user/apps/).
 
 ## Installing from a file
 

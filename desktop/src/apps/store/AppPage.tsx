@@ -19,6 +19,7 @@ import type { AdminAppList, AppDetails, AppUpdate, CatalogInfo, UpdatePolicy } f
 import { storeCall } from '../sdk/store';
 import { describeProblem, formatDate } from '../storage/shared';
 import { AccessSection } from './AccessSection';
+import { CatalogScreenshots, CatalogVersions, useCatalogDetails } from './CatalogAppPage';
 import { InstallDialog } from './InstallDialog';
 import { JobProgress, useAppJob } from './jobs';
 import { iconUrl, manifestFacts } from './model';
@@ -63,12 +64,16 @@ export function useAppChange<T>(
   });
 }
 
-/** One installed app: open, update or remove it, and its permissions, folders, users, logging and details. */
+/**
+ * One installed app, whichever tab it was opened from: open, update or remove it, and its permissions, folders, users,
+ * logging and details, with the screenshots, source and versions of the catalog it came from.
+ */
 export function AppPage({
   app,
   details,
   update,
   catalogs,
+  backLabel,
   onBack,
   onUninstall,
 }: {
@@ -77,6 +82,8 @@ export function AppPage({
   /** A newer version a catalog offers, if any. */
   update: AppUpdate | undefined;
   catalogs: readonly CatalogInfo[];
+  /** The tab the page goes back to. */
+  backLabel: string;
   onBack: () => void;
   /** Opens the removal, which outlives this page: the page goes when the app does. */
   onUninstall: (name: string) => void;
@@ -91,6 +98,12 @@ export function AppPage({
   const description =
     facts.description === null ? null : manifestText(facts.description, i18n.language);
   const appId = details.id;
+  // A catalog that was switched off or removed since has no details; the page shows the app without them.
+  const catalog = useCatalogDetails(
+    app,
+    details.source === 'catalog' ? details.catalog : null,
+    appId,
+  );
   const enabled = useAppChange(
     appId,
     (value: boolean) => storeCall(app, 'internal.admin.apps.setEnabled', { appId, enabled: value }),
@@ -125,7 +138,7 @@ export function AppPage({
       <nav className={styles.crumbs}>
         <button type="button" className={styles.back} onClick={onBack}>
           <IconArrowLeft size={16} stroke={1.75} aria-hidden />
-          {t('detail.back')}
+          {backLabel}
         </button>
       </nav>
       <article className={styles.page} aria-labelledby="store-app-name">
@@ -205,6 +218,7 @@ export function AppPage({
         </header>
         {description !== null && description !== '' && <p>{description}</p>}
         {!details.available && <p className={styles.warning}>{t('detail.unavailable')}</p>}
+        {catalog.data !== undefined && <CatalogScreenshots details={catalog.data} name={name} />}
         <div className={styles.group}>
           <Switch
             isSelected={details.enabled}
@@ -326,6 +340,16 @@ export function AppPage({
                 <dd className={styles.breakable}>{facts.homepage}</dd>
               </>
             )}
+            {catalog.data !== undefined && (
+              <>
+                <dt>{t('catalog.source')}</dt>
+                <dd className={styles.breakable}>
+                  <a href={catalog.data.source} target="_blank" rel="noreferrer">
+                    {t('catalog.sourceLink')}
+                  </a>
+                </dd>
+              </>
+            )}
             <dt>{t('detail.facts.installedAt')}</dt>
             <dd>{formatDate(details.installedAt, locale)}</dd>
             <dt>{t('detail.facts.updatedAt')}</dt>
@@ -336,6 +360,7 @@ export function AppPage({
             <dd className={styles.hash}>{details.sha256}</dd>
           </dl>
         </section>
+        {catalog.data !== undefined && <CatalogVersions details={catalog.data} />}
       </article>
       {updating === 'file' && (
         <InstallDialog

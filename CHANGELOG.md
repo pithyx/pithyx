@@ -27,6 +27,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- Store: an installed app opens the same page from every tab and from search, with its actions (open, update, rollback, uninstall) and settings, and for a catalog app its screenshots, source and versions; from a catalog tab it showed the catalog's page without uninstall and settings (#282).
 - A daemon that cannot write the NUT files in `/etc/nut` at start logs it and keeps running instead of stopping (#262).
 - The language list of the sign-in screen chooses the option the keyboard moved to also when Enter follows at once; it could take the option before.
 - The READMEs of `@pithyx/sdk`, `@pithyx/ui` and `@pithyx/cli` no longer call them release candidates; the packages are at `1.0.1` so npm shows the corrected pages.
