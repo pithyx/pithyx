@@ -23,12 +23,12 @@ pithyx catalog check --base <commit> --author <login> [--index <file>] [--allow-
 
 <!-- generated:cli-options catalog check -->
 
-| Option                | Wert       | Typ     | Standard | Beschreibung                                       |
-| --------------------- | ---------- | ------- | -------- | -------------------------------------------------- |
-| `--base`              | `<commit>` | string  | Pflicht  | In `pithyx --help` nicht beschrieben; siehe unten. |
-| `--author`            | `<login>`  | string  | Pflicht  | In `pithyx --help` nicht beschrieben; siehe unten. |
-| `--index`             | `<file>`   | string  | –        | In `pithyx --help` nicht beschrieben; siehe unten. |
-| `--allow-reserved-id` | –          | boolean | aus      | In `pithyx --help` nicht beschrieben; siehe unten. |
+| Option                | Wert       | Typ     | Standard | Beschreibung                                                                                                                                                                                                                          |
+| --------------------- | ---------- | ------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--base`              | `<commit>` | string  | Pflicht  | In `pithyx --help` nicht beschrieben; siehe unten.                                                                                                                                                                                    |
+| `--author`            | `<login>`  | string  | Pflicht  | In `pithyx --help` nicht beschrieben; siehe unten.                                                                                                                                                                                    |
+| `--index`             | `<file>`   | string  | –        | In `pithyx --help` nicht beschrieben; siehe unten.                                                                                                                                                                                    |
+| `--allow-reserved-id` | –          | boolean | aus      | Let an id start with org.pithyx., which is reserved for the system apps and the official catalog: the app's id (validate, lock, pack, dev; a box still refuses it in a package from a file) or the id of catalog.json (catalog check) |
 
 <!-- /generated -->
 

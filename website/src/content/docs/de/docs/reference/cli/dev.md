@@ -14,7 +14,7 @@ sidebar:
 <!-- generated:cli-synopsis dev -->
 
 ```sh
-pithyx dev [project folder] [--frontend <folder>] [--port <port>] [--host <host>] [--endpoint <n=url>]... [--no-docker]
+pithyx dev [project folder] [--frontend <folder>] [--port <port>] [--host <host>] [--endpoint <n=url>]... [--no-docker] [--allow-reserved-id]
 ```
 
 <!-- /generated -->
@@ -23,13 +23,14 @@ pithyx dev [project folder] [--frontend <folder>] [--port <port>] [--host <host>
 
 <!-- generated:cli-options dev -->
 
-| Option        | Wert       | Typ                  | Standard    | Beschreibung                                                                                                         |
-| ------------- | ---------- | -------------------- | ----------- | -------------------------------------------------------------------------------------------------------------------- |
-| `--frontend`  | `<folder>` | string               | `dist`      | The built frontend                                                                                                   |
-| `--port`      | `<port>`   | string               | `7400`      | The port                                                                                                             |
-| `--host`      | `<host>`   | string               | `127.0.0.1` | The address to listen on                                                                                             |
-| `--endpoint`  | `<n=url>`  | string, wiederholbar | –           | Reach the endpoint n at url instead of through Docker, for example --endpoint api=http://localhost:8080 (repeatable) |
-| `--no-docker` | –          | boolean              | aus         | Do not start the backend; endpoints without --endpoint answer 503                                                    |
+| Option                | Wert       | Typ                  | Standard    | Beschreibung                                                                                                                                                                                                                          |
+| --------------------- | ---------- | -------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--frontend`          | `<folder>` | string               | `dist`      | The built frontend                                                                                                                                                                                                                    |
+| `--port`              | `<port>`   | string               | `7400`      | The port                                                                                                                                                                                                                              |
+| `--host`              | `<host>`   | string               | `127.0.0.1` | The address to listen on                                                                                                                                                                                                              |
+| `--endpoint`          | `<n=url>`  | string, wiederholbar | –           | Reach the endpoint n at url instead of through Docker, for example --endpoint api=http://localhost:8080 (repeatable)                                                                                                                  |
+| `--no-docker`         | –          | boolean              | aus         | Do not start the backend; endpoints without --endpoint answer 503                                                                                                                                                                     |
+| `--allow-reserved-id` | –          | boolean              | aus         | Let an id start with org.pithyx., which is reserved for the system apps and the official catalog: the app's id (validate, lock, pack, dev; a box still refuses it in a package from a file) or the id of catalog.json (catalog check) |
 
 <!-- /generated -->
 

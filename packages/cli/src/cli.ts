@@ -71,6 +71,10 @@ Options:
   --frontend <folder>   The built frontend (default: dist)
   --oci-out <folder>    build: write OCI archives <service>.tar for amd64 and arm64 there
   --pin <prefix>        build: pin to the archives of --oci-out as <prefix>/<id>/<service>:<version>
+  --allow-reserved-id   Let an id start with org.pithyx., which is reserved for the system apps
+                        and the official catalog: the app's id (validate, lock, pack, dev; a box
+                        still refuses it in a package from a file) or the id of catalog.json
+                        (catalog check)
   --catalog <file>      catalog: the catalog.json (default: catalog.json)
   --out <path>          pack: the package file, or a folder for it (default: the project)
   --images              pack: add backend/images/<arch>/<id>.tar for offline installs, saved
@@ -162,7 +166,10 @@ async function main(): Promise<number> {
     console.error(`pithyx ${command} takes one project folder, not: ${rest.join(' ')}`);
     return 2;
   }
-  const projectOptions = { frontend: values.frontend };
+  const projectOptions = {
+    frontend: values.frontend,
+    allowReservedId: values['allow-reserved-id'] === true,
+  };
   switch (command) {
     case 'validate': {
       // Before pithyx build there is only compose.dev.yaml: validate checks it and warns; pack still needs the build.

@@ -14,7 +14,7 @@ sidebar:
 <!-- generated:cli-synopsis pack -->
 
 ```sh
-pithyx pack [project folder] [--frontend <folder>] [--out <path>] [--images]
+pithyx pack [project folder] [--frontend <folder>] [--out <path>] [--images] [--allow-reserved-id]
 ```
 
 <!-- /generated -->
@@ -23,11 +23,12 @@ pithyx pack [project folder] [--frontend <folder>] [--out <path>] [--images]
 
 <!-- generated:cli-options pack -->
 
-| Option       | Wert       | Typ     | Standard    | Beschreibung                                                                                                                                                                                                                                                                         |
-| ------------ | ---------- | ------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `--frontend` | `<folder>` | string  | `dist`      | The built frontend                                                                                                                                                                                                                                                                   |
-| `--out`      | `<path>`   | string  | the project | The package file, or a folder for it                                                                                                                                                                                                                                                 |
-| `--images`   | –          | boolean | aus         | Add backend/images/&lt;arch&gt;/&lt;id&gt;.tar for offline installs, saved with the local docker (save, or pull first, per architecture of the lock). Needs Docker with access to the registries; the images make the package large, and their bytes depend on Docker's save format. |
+| Option                | Wert       | Typ     | Standard    | Beschreibung                                                                                                                                                                                                                                                                         |
+| --------------------- | ---------- | ------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `--frontend`          | `<folder>` | string  | `dist`      | The built frontend                                                                                                                                                                                                                                                                   |
+| `--out`               | `<path>`   | string  | the project | The package file, or a folder for it                                                                                                                                                                                                                                                 |
+| `--images`            | –          | boolean | aus         | Add backend/images/&lt;arch&gt;/&lt;id&gt;.tar for offline installs, saved with the local docker (save, or pull first, per architecture of the lock). Needs Docker with access to the registries; the images make the package large, and their bytes depend on Docker's save format. |
+| `--allow-reserved-id` | –          | boolean | aus         | Let an id start with org.pithyx., which is reserved for the system apps and the official catalog: the app's id (validate, lock, pack, dev; a box still refuses it in a package from a file) or the id of catalog.json (catalog check)                                                |
 
 <!-- /generated -->
 

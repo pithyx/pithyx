@@ -14,7 +14,7 @@ sidebar:
 <!-- generated:cli-synopsis validate -->
 
 ```sh
-pithyx validate [project folder] [--frontend <folder>]
+pithyx validate [project folder] [--frontend <folder>] [--allow-reserved-id]
 ```
 
 <!-- /generated -->
@@ -23,9 +23,10 @@ pithyx validate [project folder] [--frontend <folder>]
 
 <!-- generated:cli-options validate -->
 
-| Option       | Value      | Type   | Default | Description        |
-| ------------ | ---------- | ------ | ------- | ------------------ |
-| `--frontend` | `<folder>` | string | `dist`  | The built frontend |
+| Option                | Value      | Type    | Default | Description                                                                                                                                                                                                                           |
+| --------------------- | ---------- | ------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--frontend`          | `<folder>` | string  | `dist`  | The built frontend                                                                                                                                                                                                                    |
+| `--allow-reserved-id` | –          | boolean | off     | Let an id start with org.pithyx., which is reserved for the system apps and the official catalog: the app's id (validate, lock, pack, dev; a box still refuses it in a package from a file) or the id of catalog.json (catalog check) |
 
 <!-- /generated -->
 

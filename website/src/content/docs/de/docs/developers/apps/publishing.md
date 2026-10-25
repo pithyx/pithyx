@@ -28,6 +28,12 @@ Maschinelle Regeln laufen bei jedem Pull Request (`pithyx catalog check`, siehe 
 - Jede App hat eine `maintainers.json` mit 1 bis 20 GitHub-Logins. Ein Pull Request, der eine App ändert, muss von einem der Maintainer kommen, wie die Datei vor der Änderung aussah. Die Datei einer neuen App muss ihren Autor nennen.
 - Workflows: `check.yaml` (Pull Requests, nur lesend), `publish.yaml` (Pushes auf `master` schreiben `catalog-next`) und `promote.yaml` (manuell, schreibt `catalog` nach der Freigabe in der Umgebung `catalog-release`). Läufe von externen Mitwirkenden warten auf eine Freigabe.
 
+### Apps des offiziellen Katalogs
+
+Eine App in `pithyx/apps-official` hat eine ID in `org.pithyx.*`, die `pithyx validate`, `pithyx pack`, `pithyx dev` und das Vite-Plugin standardmäßig mit [`app.manifest.id_reserved`](/de/docs/reference/errors/#app.manifest.id_reserved) ablehnen. Mit `--allow-reserved-id` (Vite-Plugin: `pithyx({ allowReservedId: true })`) baust und prüfst du sie; die `publish.yaml` des Katalogs packt damit. Alle anderen Prüfungen bleiben.
+
+Eine Box lehnt eine `org.pithyx.*`-ID in einem Paket aus einer Datei ab, auch mit dieser Option; die App kommt also nur über den offiziellen Katalog auf eine Box. Um sie vorher auf einer Box auszuprobieren, packst du eine Kopie, deren `pithyx.json` eine andere ID hat (zum Beispiel `com.example.editor`), und installierst diese Kopie mit **Aus Datei installieren**.
+
 ## Regeln
 
 Aus `sdk/schema/catalog.v1.rules.json`:

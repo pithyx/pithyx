@@ -47,6 +47,11 @@ export interface ProjectOptions {
    * `compose.yaml` (D330), and `pithyx validate` works before `pithyx build`, which needs Docker.
    */
   allowUnbuiltBackend?: boolean | undefined;
+  /**
+   * The id may be in `org.pithyx.*`, which a box refuses for a package from a file: for the apps of the official
+   * catalog, whose CI packs them (D381). Every other check stays.
+   */
+  allowReservedId?: boolean | undefined;
 }
 
 /** The regular files below a folder; hidden ones go to `skipped`, links and special files to `refused`. */
@@ -123,7 +128,9 @@ export function readProject(root: string, options: ProjectOptions = {}): Project
   let manifest: AppManifest | undefined;
   const manifestEntry = entries.find((entry) => entry.path === MANIFEST_FILE);
   if (manifestEntry !== undefined) {
-    const validation = validateManifest(bytes(manifestEntry));
+    const validation = validateManifest(bytes(manifestEntry), {
+      allowReservedId: options.allowReservedId === true,
+    });
     findings.push(...validation.issues.map(error));
     manifest = validation.manifest;
   } else {
