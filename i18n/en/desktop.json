@@ -273,6 +273,8 @@
       "failed": "The files could not be loaded.",
       "noShares": "There are no shared folders you can use.",
       "shares": "Shared folders",
+      "home": "Home",
+      "homes": "homes",
       "location": "Location",
       "entries": "Files and folders",
       "empty": "This folder is empty.",

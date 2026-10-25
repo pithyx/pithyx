@@ -4,7 +4,7 @@ import { Button, Checkbox, Dialog, TextField } from '@pithyx/ui';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../api/client';
-import { IconFile, IconFolder, IconServer2 } from '../../ui/icons';
+import { IconFile, IconFolder, IconHome, IconServer2, IconUsers } from '../../ui/icons';
 import { useDesktop } from '../../wm/store';
 import { useAppName } from '../names';
 import styles from './FileDialog.module.css';
@@ -24,6 +24,23 @@ export function matchesExtensions(name: string, extensions: readonly string[]): 
   );
 }
 
+/**
+ * The top level of the dialog: the user's own home first, then the shared folders; other users' homes (which only
+ * administrators see) sit behind one entry, as in Files, so a box with many users keeps a short list.
+ */
+export function placesOf(shares: readonly Share[]): {
+  own: Share[];
+  shared: Share[];
+  homes: Share[];
+} {
+  const byName = (a: Share, b: Share) => a.name.localeCompare(b.name);
+  return {
+    own: shares.filter((share) => share.kind === 'home'),
+    shared: shares.filter((share) => share.kind !== 'home' && share.kind !== 'userHome'),
+    homes: shares.filter((share) => share.kind === 'userHome').sort(byName),
+  };
+}
+
 /** The path of a name in a folder of a share. */
 export function pathIn(folder: string, name: string): string {
   return folder === '' ? name : `${folder}/${name}`;
@@ -40,6 +57,7 @@ export function FileDialog({ request }: { request: FileDialogRequest }) {
   const app = useDesktop((state) => state.windows[request.windowId]?.app);
   const save = request.kind === 'save';
   const [shareId, setShareId] = useState<number | null>(null);
+  const [inHomes, setInHomes] = useState(false);
   const [folder, setFolder] = useState('');
   const [chosen, setChosen] = useState<readonly string[]>([]);
   const [name, setName] = useState(request.suggestedName);
@@ -49,6 +67,9 @@ export function FileDialog({ request }: { request: FileDialogRequest }) {
     queryFn: async () => unwrap(await api.GET('/api/shares')),
   });
   const share = shares.data?.find((candidate) => candidate.id === shareId);
+  const places = placesOf(shares.data ?? []);
+  const shareName = (candidate: Share) =>
+    candidate.kind === 'home' ? t('appHost.files.home') : candidate.name;
   const listing = useInfiniteQuery({
     queryKey: ['appHost', 'list', shareId, folder],
     enabled: shareId !== null,
@@ -179,25 +200,64 @@ export function FileDialog({ request }: { request: FileDialogRequest }) {
           ) : shares.data.length === 0 ? (
             <p>{t('appHost.files.noShares')}</p>
           ) : (
-            <ul className={styles.list} aria-label={t('appHost.files.shares')}>
-              {shares.data.map((candidate: Share) => (
-                <li key={candidate.id}>
+            <>
+              {inHomes && (
+                <nav className={styles.crumbs} aria-label={t('appHost.files.location')}>
                   <button
                     type="button"
-                    className={styles.row}
-                    disabled={candidate.unavailable != null}
+                    className={styles.crumb}
                     onClick={() => {
-                      setShareId(candidate.id);
-                      setFolder('');
-                      setChosen([]);
+                      setInHomes(false);
                     }}
                   >
-                    <IconServer2 size={18} stroke={1.75} aria-hidden />
-                    <span className={styles.name}>{candidate.name}</span>
+                    {t('appHost.files.shares')}
                   </button>
-                </li>
-              ))}
-            </ul>
+                  <span className={styles.crumb}>{t('appHost.files.homes')}</span>
+                </nav>
+              )}
+              <ul
+                className={styles.list}
+                aria-label={inHomes ? t('appHost.files.homes') : t('appHost.files.shares')}
+              >
+                {(inHomes ? places.homes : [...places.own, ...places.shared]).map((candidate) => (
+                  <li key={candidate.id}>
+                    <button
+                      type="button"
+                      className={styles.row}
+                      disabled={candidate.unavailable != null}
+                      onClick={() => {
+                        setShareId(candidate.id);
+                        setFolder('');
+                        setChosen([]);
+                      }}
+                    >
+                      {candidate.kind === 'home' ? (
+                        <IconHome size={18} stroke={1.75} aria-hidden />
+                      ) : candidate.kind === 'userHome' ? (
+                        <IconFolder size={18} stroke={1.75} aria-hidden />
+                      ) : (
+                        <IconServer2 size={18} stroke={1.75} aria-hidden />
+                      )}
+                      <span className={styles.name}>{shareName(candidate)}</span>
+                    </button>
+                  </li>
+                ))}
+                {!inHomes && places.homes.length > 0 && (
+                  <li>
+                    <button
+                      type="button"
+                      className={styles.row}
+                      onClick={() => {
+                        setInHomes(true);
+                      }}
+                    >
+                      <IconUsers size={18} stroke={1.75} aria-hidden />
+                      <span className={styles.name}>{t('appHost.files.homes')}</span>
+                    </button>
+                  </li>
+                )}
+              </ul>
+            </>
           )
         ) : (
           <>
@@ -207,12 +267,27 @@ export function FileDialog({ request }: { request: FileDialogRequest }) {
                 className={styles.crumb}
                 onClick={() => {
                   setShareId(null);
+                  setInHomes(false);
                   setFolder('');
                   setChosen([]);
                 }}
               >
                 {t('appHost.files.shares')}
               </button>
+              {share.kind === 'userHome' && (
+                <button
+                  type="button"
+                  className={styles.crumb}
+                  onClick={() => {
+                    setShareId(null);
+                    setInHomes(true);
+                    setFolder('');
+                    setChosen([]);
+                  }}
+                >
+                  {t('appHost.files.homes')}
+                </button>
+              )}
               <button
                 type="button"
                 className={styles.crumb}
@@ -220,7 +295,7 @@ export function FileDialog({ request }: { request: FileDialogRequest }) {
                   setFolder('');
                 }}
               >
-                {share.name}
+                {shareName(share)}
               </button>
               {crumbs.map((part, index) => (
                 <button
