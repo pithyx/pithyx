@@ -50,13 +50,23 @@ import { useAppName } from '../names';
 import styles from './FilesApp.module.css';
 import { actionsFor } from './fileActions';
 import { FilesMenu, type FilesAction } from './FilesMenu';
-import { isEmpty, itemsToDrop, parseDragged, type DraggedEntries, type DropTarget } from './drop';
-import { dragKindOf, ENTRIES_TYPE, FolderView } from './FolderView';
+import {
+  ENTRIES_TYPE,
+  isEmpty,
+  itemsToDrop,
+  parseDragged,
+  type DraggedEntries,
+  type DropTarget,
+} from './drop';
+import { dragKindOf, FolderView } from './FolderView';
 import { compareEntries } from './order';
+import { addFileShortcuts } from '../../items/ItemsLayer';
+import { itemsKey } from '../../items/query';
 import { crumbsOf, freeName, joinPath, nameOf, parentOf } from './paths';
 import {
   emptySelection,
   forget,
+  isSelected,
   selectAll,
   selectedCount,
   selectOnly,
@@ -100,6 +110,16 @@ function restorePlace(saved: unknown): Place {
     }
   }
   return { share: null, path: '', view: 'folder' };
+}
+
+function initialSelection(saved: unknown, here: string): { at: string; selection: Selection } {
+  if (typeof saved === 'object' && saved !== null) {
+    const { share, path, select } = saved as Record<string, unknown>;
+    if (typeof share === 'string' && typeof path === 'string' && typeof select === 'string') {
+      return { at: `${share}:${path}:folder`, selection: selectOnly(select) };
+    }
+  }
+  return { at: here, selection: emptySelection };
 }
 
 function dropKey(share: string, path: string): string {
@@ -182,8 +202,11 @@ export function FilesApp({ app }: { app: PithyxApp }) {
   const here = `${shareId ?? ''}:${path}:${view}`;
 
   const [announcement, setAnnouncement] = useState<string | null>(null);
-  // Selection and inline rename belong to one folder; another folder starts empty.
-  const [selectionState, setSelectionState] = useState({ at: here, selection: emptySelection });
+  // Selection and inline rename belong to one folder; another folder starts empty. "Show in Files" on the desktop
+  // opens a window with one entry selected.
+  const [selectionState, setSelectionState] = useState(() =>
+    initialSelection(app.context.session, here),
+  );
   const selection = selectionState.at === here ? selectionState.selection : emptySelection;
   const setSelection = (next: Selection) => {
     setSelectionState({ at: here, selection: next });
@@ -306,6 +329,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     if (running === undefined) {
       return;
     }
+    void client.invalidateQueries({ queryKey: itemsKey });
     if (shareId !== null) {
       void client.invalidateQueries({ queryKey: trashKey(shareId) });
       // Other folders are revalidated when they are visited again; the one on screen follows its live changes.
@@ -503,6 +527,8 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     setSelection(selectOnly(trimmed));
     try {
       await app.files.rename(location, joinPath(path, oldName), trimmed);
+      // Shortcuts on the desktop follow the rename on the daemon.
+      void client.invalidateQueries({ queryKey: itemsKey });
     } catch (error) {
       changeFolder(client, shareId, path, { changed: [entry], removed: [trimmed] });
       setSelection(selectOnly(oldName));
@@ -566,6 +592,13 @@ export function FilesApp({ app }: { app: PithyxApp }) {
     }
   }
 
+  /** The selected names in the folder on screen, also when everything is selected. */
+  function selectedNames(): string[] {
+    return folder.entries
+      .filter((entry) => isSelected(selection, entry.name))
+      .map((entry) => entry.name);
+  }
+
   function selectedEntry(): FileEntry | undefined {
     const name = single(selection);
     return name === null
@@ -603,6 +636,24 @@ export function FilesApp({ app }: { app: PithyxApp }) {
       case 'rename':
         if (entry !== undefined && writable) {
           setRenaming(entry.name);
+        }
+        break;
+      case 'addToDesktop':
+        if (shareId !== null) {
+          const names = selectedNames();
+          const ids = addFileShortcuts(
+            client,
+            Number(shareId),
+            names.map((name) => joinPath(path, name)),
+            {
+              folders: new Set(
+                folder.entries
+                  .filter((entry) => entry.kind !== 'file' && names.includes(entry.name))
+                  .map((entry) => joinPath(path, entry.name)),
+              ),
+            },
+          );
+          setAnnouncement(t('announce.addedToDesktop', { count: ids.length }));
         }
         break;
       case 'versions':

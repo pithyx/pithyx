@@ -55,7 +55,8 @@
     "deletePermanent": "Delete permanently",
     "selectAll": "Select all",
     "versions": "Previous versions",
-    "openWith": "Open with…"
+    "openWith": "Open with…",
+    "addToDesktop": "Add to desktop"
   },
   "dialog": {
     "cancel": "Cancel",
@@ -111,7 +112,8 @@
   },
   "announce": {
     "copied": "{count, plural, one {# item} other {# items}} copied to the clipboard",
-    "cut": "{count, plural, one {# item} other {# items}} cut to the clipboard"
+    "cut": "{count, plural, one {# item} other {# items}} cut to the clipboard",
+    "addedToDesktop": "{count, plural, one {# shortcut} other {# shortcuts}} added to the desktop"
   },
   "loadFailed": "This folder could not be loaded.",
   "details": "Details",

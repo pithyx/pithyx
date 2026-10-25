@@ -9,6 +9,7 @@ import {
   IconFolderPlus,
   IconHistory,
   IconPencil,
+  IconPlus,
   IconScissors,
   IconSquare,
   IconTrash,
@@ -26,6 +27,7 @@ export type FilesAction =
   | 'paste'
   | 'rename'
   | 'versions'
+  | 'addToDesktop'
   | 'delete'
   | 'deletePermanent'
   | 'newFolder'
@@ -120,6 +122,9 @@ export function FilesMenu({
                 {entry.label}
               </MenuItem>
             ))}
+            <MenuItem id="addToDesktop" icon={<IconPlus {...icon} />}>
+              {t('actions.addToDesktop')}
+            </MenuItem>
             <MenuItem id="copy" icon={<IconCopy {...icon} />} shortcut={t('keys.copy')}>
               {t('actions.copy')}
             </MenuItem>

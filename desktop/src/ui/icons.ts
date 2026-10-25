@@ -5,6 +5,7 @@ export { default as IconActivity } from '@tabler/icons-react/dist/esm/icons/Icon
 export { default as IconAlertCircle } from '@tabler/icons-react/dist/esm/icons/IconAlertCircle.mjs';
 export { default as IconAlertTriangle } from '@tabler/icons-react/dist/esm/icons/IconAlertTriangle.mjs';
 export { default as IconApps } from '@tabler/icons-react/dist/esm/icons/IconApps.mjs';
+export { default as IconLinkOff } from '@tabler/icons-react/dist/esm/icons/IconLinkOff.mjs';
 export { default as IconLogin } from '@tabler/icons-react/dist/esm/icons/IconLogin.mjs';
 export { default as IconArrowDown } from '@tabler/icons-react/dist/esm/icons/IconArrowDown.mjs';
 export { default as IconArrowLeft } from '@tabler/icons-react/dist/esm/icons/IconArrowLeft.mjs';
@@ -46,6 +47,7 @@ export { default as IconFileTypePdf } from '@tabler/icons-react/dist/esm/icons/I
 export { default as IconFileZip } from '@tabler/icons-react/dist/esm/icons/IconFileZip.mjs';
 export { default as IconFolder } from '@tabler/icons-react/dist/esm/icons/IconFolder.mjs';
 export { default as IconFolderFilled } from '@tabler/icons-react/dist/esm/icons/IconFolderFilled.mjs';
+export { default as IconFolderSearch } from '@tabler/icons-react/dist/esm/icons/IconFolderSearch.mjs';
 export { default as IconFolderPlus } from '@tabler/icons-react/dist/esm/icons/IconFolderPlus.mjs';
 export { default as IconFolderShare } from '@tabler/icons-react/dist/esm/icons/IconFolderShare.mjs';
 export { default as IconFolders } from '@tabler/icons-react/dist/esm/icons/IconFolders.mjs';
@@ -69,6 +71,7 @@ export { default as IconNetwork } from '@tabler/icons-react/dist/esm/icons/IconN
 export { default as IconNote } from '@tabler/icons-react/dist/esm/icons/IconNote.mjs';
 export { default as IconPalette } from '@tabler/icons-react/dist/esm/icons/IconPalette.mjs';
 export { default as IconPencil } from '@tabler/icons-react/dist/esm/icons/IconPencil.mjs';
+export { default as IconMusic } from '@tabler/icons-react/dist/esm/icons/IconMusic.mjs';
 export { default as IconPhoto } from '@tabler/icons-react/dist/esm/icons/IconPhoto.mjs';
 export { default as IconPhotoPlus } from '@tabler/icons-react/dist/esm/icons/IconPhotoPlus.mjs';
 export { default as IconPlugConnectedX } from '@tabler/icons-react/dist/esm/icons/IconPlugConnectedX.mjs';

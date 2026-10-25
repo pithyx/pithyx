@@ -66,8 +66,15 @@ function codeOf(error: unknown): string | undefined {
   return error instanceof PithyxApiError ? error.code : undefined;
 }
 
-/** Puts a new item on the desktop right away and saves it. Returns its (temporary) id. */
-export function createItem(client: QueryClient, item: NewDesktopItem): number {
+/**
+ * Puts a new item on the desktop right away and saves it. Returns its (temporary) id. A shortcut to a file or folder
+ * may say what its target is, so it shows the right icon before the daemon answers.
+ */
+export function createItem(
+  client: QueryClient,
+  item: NewDesktopItem,
+  target: DesktopItem['target'] = null,
+): number {
   const id = nextTemporaryId--;
   void client.cancelQueries({ queryKey: itemsKey });
   writeItems(client, (items) => [
@@ -78,6 +85,9 @@ export function createItem(client: QueryClient, item: NewDesktopItem): number {
       app: item.app ?? null,
       name: item.name ?? null,
       text: item.text ?? null,
+      share: item.share ?? null,
+      path: item.path ?? null,
+      target,
       column: item.column,
       row: item.row,
       version: 0,
@@ -91,7 +101,9 @@ export function createItem(client: QueryClient, item: NewDesktopItem): number {
       // Changes made while the item was being created stay; they are queued after this write.
       writeItems(client, (items) =>
         items.map((entry) =>
-          entry.id === id ? { ...entry, id: created.id, version: created.version } : entry,
+          entry.id === id
+            ? { ...entry, id: created.id, version: created.version, target: created.target ?? null }
+            : entry,
         ),
       );
     } catch (error) {
