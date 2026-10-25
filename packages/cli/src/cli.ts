@@ -72,7 +72,7 @@ Options:
   --oci-out <folder>    build: write OCI archives <service>.tar for amd64 and arm64 there
   --pin <prefix>        build: pin to the archives of --oci-out as <prefix>/<id>/<service>:<version>
   --allow-reserved-id   Let an id start with org.pithyx., which is reserved for the system apps
-                        and the official catalog: the app's id (validate, lock, pack, dev; a box
+                        and the official catalog: the app's id (validate, lock, build, pack, dev; a box
                         still refuses it in a package from a file) or the id of catalog.json
                         (catalog check)
   --catalog <file>      catalog: the catalog.json (default: catalog.json)
@@ -213,7 +213,11 @@ async function main(): Promise<number> {
       return 0;
     }
     case 'build': {
-      for (const line of await build(folder, { ociOut: values['oci-out'], pin: values.pin })) {
+      for (const line of await build(folder, {
+        ociOut: values['oci-out'],
+        pin: values.pin,
+        allowReservedId: projectOptions.allowReservedId,
+      })) {
         console.log(line);
       }
       return 0;

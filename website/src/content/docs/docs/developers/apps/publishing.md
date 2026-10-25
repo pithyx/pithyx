@@ -30,7 +30,7 @@ Machine rules run on every pull request (`pithyx catalog check`, see below):
 
 ### Apps of the official catalog
 
-An app in `pithyx/apps-official` has an id in `org.pithyx.*`, which `pithyx validate`, `pithyx pack`, `pithyx dev` and the Vite plugin refuse by default with [`app.manifest.id_reserved`](/docs/reference/errors/#app.manifest.id_reserved). Pass `--allow-reserved-id` (Vite plugin: `pithyx({ allowReservedId: true })`) to build and check it; the catalog's `publish.yaml` packs with it. Every other check stays.
+An app in `pithyx/apps-official` has an id in `org.pithyx.*`, which `pithyx validate`, `build`, `pack`, `dev` and the Vite plugin refuse by default with [`app.manifest.id_reserved`](/docs/reference/errors/#app.manifest.id_reserved). Pass `--allow-reserved-id` (Vite plugin: `pithyx({ allowReservedId: true })`) to build and check it; the catalog's `publish.yaml` packs with it. Every other check stays.
 
 A box refuses an `org.pithyx.*` id in a package from a file, also with that option, so the app reaches a box only through the official catalog. To try it on a box first, pack a copy whose `pithyx.json` has another id (for example `com.example.editor`) and install that copy with **Install from file**.
 
