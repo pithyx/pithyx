@@ -186,6 +186,8 @@ public sealed partial class EndpointMatrixTests : IDisposable
         ["RevertNetworkChange"] = Need.Admin,
         ["GetSystemTime"] = Need.Admin,
         ["SetSystemTime"] = Need.Admin,
+        ["GetSystemUps"] = Need.Admin,
+        ["SetSystemUps"] = Need.Admin,
         ["GetSystemRegion"] = Need.Admin,
         ["SetSystemRegion"] = Need.Admin,
         ["GetRootCertificate"] = Need.Anonymous,

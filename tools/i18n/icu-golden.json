@@ -1844,6 +1844,16 @@
       },
       "expected": "The system does not know the time zone “Mars/Olympus”."
     },
+    "system.ups.invalid": {
+      "params": {
+        "field": "batteryLow"
+      },
+      "expected": "The UPS setting “battery limit” is not valid."
+    },
+    "system.ups.unavailable": {
+      "params": {},
+      "expected": "This machine has no NUT server for a UPS on USB."
+    },
     "tls.custom.expired": {
       "params": {
         "notAfter": "2026-01-01T00:00:00.0000000+00:00"

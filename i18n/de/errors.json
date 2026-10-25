@@ -648,6 +648,10 @@
       "server_invalid": "„{server}“ ist weder ein Hostname noch eine Adresse.",
       "servers_too_many": "Gib höchstens {max} Zeitserver an.",
       "zone_invalid": "Das System kennt die Zeitzone „{zone}“ nicht."
+    },
+    "ups": {
+      "invalid": "Die USV-Einstellung „{field, select, mode {Modus} host {Server} port {Port} name {USV-Name} username {Benutzer} password {Passwort} batteryLow {Akku-Grenze} runtimeLow {Laufzeit-Grenze} other {{field}}}“ ist ungültig.",
+      "unavailable": "Auf diesem Rechner gibt es keinen NUT-Server für eine USV an USB."
     }
   },
   "tls": {

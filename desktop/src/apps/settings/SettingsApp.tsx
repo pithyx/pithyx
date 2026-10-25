@@ -4,6 +4,7 @@ import { useEffect, useState, type ComponentType } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   IconArrowLeft,
+  IconBatteryCharging,
   IconCertificate,
   IconCloudDownload,
   IconFolders,
@@ -35,6 +36,7 @@ import styles from './Settings.module.css';
 import { sharesKey } from './shares';
 import { SharesPage } from './SharesPage';
 import { UpdatesPage } from './UpdatesPage';
+import { UpsPage } from './UpsPage';
 
 type PageId =
   | 'info'
@@ -43,6 +45,7 @@ type PageId =
   | 'reverseProxy'
   | 'regional'
   | 'updates'
+  | 'ups'
   | 'backup'
   | 'shares'
   | 'homes'
@@ -65,6 +68,7 @@ const PAGES: readonly SettingsPage[] = [
   { id: 'reverseProxy', category: 'system', icon: IconRoute, Component: ReverseProxyPage },
   { id: 'regional', category: 'system', icon: IconWorld, Component: RegionalPage },
   { id: 'updates', category: 'system', icon: IconCloudDownload, Component: UpdatesPage },
+  { id: 'ups', category: 'system', icon: IconBatteryCharging, Component: UpsPage },
   { id: 'backup', category: 'system', icon: IconRestore, Component: BackupPage },
   { id: 'shares', category: 'sharing', icon: IconFolders, Component: SharesPage },
   { id: 'homes', category: 'sharing', icon: IconHome, Component: HomesPage },

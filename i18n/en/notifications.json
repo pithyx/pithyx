@@ -179,6 +179,24 @@
         "title": "A system disk is missing",
         "body": "The {array, select, system {system} other {swap}} mirror runs on {working} of {expected} disks. The box keeps running; replace the disk soon."
       }
+    },
+    "ups": {
+      "on_battery": {
+        "title": "The UPS runs on battery",
+        "body": "{charge, select, null {The power failed.} other {The power failed; the battery is at {charge} %.}} The box shuts down at the limit set in Settings > UPS."
+      },
+      "online": {
+        "title": "The power is back",
+        "body": "The UPS runs on line power again{charge, select, null {.} other {; the battery is at {charge} %.}}"
+      },
+      "shutdown": {
+        "title": "The box shuts down for the UPS",
+        "body": "{reason, select, forced {The UPS's NUT server shuts every system down.} low_battery {The UPS says its battery is low.} charge {The battery reached the charge limit.} runtime {The battery reached the runtime limit.} lost {The UPS ran on battery and stopped answering.} other {The UPS is about to run out.}} Shares and apps stop now."
+      },
+      "unreachable": {
+        "title": "The UPS does not answer",
+        "body": "{problem, select, refused {No NUT server answers.} timeout {The NUT server does not answer in time.} unknown_ups {The NUT server has no UPS of that name.} driver_not_connected {No UPS was found, or its driver failed.} data_stale {The UPS stopped sending data.} access_denied {The user or password is wrong.} other {The NUT server answered with an error.}} Without it, the box cannot shut down cleanly on a power failure."
+      }
     }
   },
   "proxy": {

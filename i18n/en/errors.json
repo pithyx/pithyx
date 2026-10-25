@@ -648,6 +648,10 @@
       "server_invalid": "“{server}” is neither a host name nor an address.",
       "servers_too_many": "Enter at most {max} time servers.",
       "zone_invalid": "The system does not know the time zone “{zone}”."
+    },
+    "ups": {
+      "invalid": "The UPS setting “{field, select, mode {mode} host {server} port {port} name {UPS name} username {user} password {password} batteryLow {battery limit} runtimeLow {runtime limit} other {{field}}}” is not valid.",
+      "unavailable": "This machine has no NUT server for a UPS on USB."
     }
   },
   "tls": {

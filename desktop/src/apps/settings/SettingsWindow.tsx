@@ -9,6 +9,7 @@ import { proxyHost } from '../sdk/proxy';
 import { systemHost } from '../sdk/system';
 import { tlsHost } from '../sdk/tls';
 import { updatesHost } from '../sdk/updates';
+import { upsHost } from '../sdk/ups';
 import { usersHost } from '../sdk/users';
 import { SettingsApp } from './SettingsApp';
 
@@ -24,11 +25,13 @@ export function SettingsWindow({ windowId }: AppProps) {
         const storage = adminStorageHost(emit);
         const network = networkHost(emit);
         const updates = updatesHost(emit);
+        const ups = upsHost(emit);
         return {
           extensions: {
             ...storage.extensions,
             ...network.extensions,
             ...updates.extensions,
+            ...ups.extensions,
             ...usersHost(),
             ...systemHost(queryClient),
             ...backupHost(),
@@ -39,6 +42,7 @@ export function SettingsWindow({ windowId }: AppProps) {
             storage.close();
             network.close();
             updates.close();
+            ups.close();
           },
         };
       }}
