@@ -117,7 +117,7 @@
     "reverseProxy": {
       "title": "Reverse proxy",
       "description": "Your own domains on ports 443 and 80, redirects and forwarded ports",
-      "keywords": "reverse proxy domain host name vhost https tls sni certificate redirect forward port stream tcp udp websocket basic auth sign-in hsts"
+      "keywords": "reverse proxy domain host name vhost https tls sni certificate redirect forward port stream tcp udp websocket basic auth sign-in hsts lets encrypt acme"
     },
     "regional": {
       "title": "Regional settings",
@@ -502,6 +502,27 @@
       "signInAddress": "Sign-in address",
       "signInAddressHint": "Where hosts with the Pithyx sign-in send visitors, such as https://nas.home.arpa:7484. Leave it empty to use the requested name on port 7484."
     },
+    "acme": {
+      "title": "Let's Encrypt",
+      "explain": "Hosts with a certificate from Let's Encrypt get it over port 80 (HTTP-01) and renew it 30 days before it ends. Let's Encrypt is a free certificate authority on the internet; the box only talks to it for these hosts.",
+      "terms": "Terms of service",
+      "agree": "I agree to the terms of service of the authority",
+      "agreed": "The terms of service are agreed.",
+      "unreachable": "The authority does not answer just now. Check the box's internet connection.",
+      "email": "Email address (optional)",
+      "emailHint": "The authority may write to it about the account.",
+      "directory": "ACME directory",
+      "directoryHint": "Let's Encrypt unless you use another ACME authority; another one needs a new agreement.",
+      "save": "Save",
+      "status": {
+        "pending": "Waiting for the first certificate",
+        "valid": "Valid until {date}",
+        "failed": "The last request failed",
+        "running": "Requesting the certificate",
+        "retry": "Next try: {date}"
+      },
+      "renew": "Renew now"
+    },
     "badges": {
       "disabled": "Off",
       "signIn": "Pithyx sign-in",
@@ -574,8 +595,10 @@
       "label": "Certificate",
       "box": "From the box's certificate authority",
       "custom": "Upload my own",
+      "acme": "From Let's Encrypt",
       "boxHint": "The box makes a certificate for the domains. They must lie in its authority's scope (Settings > Certificates); devices that trust the box's root accept it.",
       "customHint": "A certificate with its chain and unencrypted private key in PEM that covers every domain, for example for a public domain.",
+      "acmeHint": "The box gets a free certificate for public domains and renews it by itself. Each domain must point at the box, and port 80 must reach it from the internet. Agree to the terms in the Let's Encrypt section first.",
       "stored": "A certificate is uploaded. Choose new files only to replace it."
     },
     "tls": {

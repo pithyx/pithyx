@@ -936,6 +936,97 @@
       },
       "expected": "You may not open jellyfin.home.arpa. An administrator can let you in on the proxy host."
     },
+    "proxy.acme.caa": {
+      "params": {
+        "name": "nas.example.com",
+        "detail": "CAA record prevents issuance"
+      },
+      "expected": "The DNS of nas.example.com does not allow this authority to issue certificates (CAA record). CAA record prevents issuance"
+    },
+    "proxy.acme.connection": {
+      "params": {
+        "name": "nas.example.com",
+        "detail": "Timeout during connect"
+      },
+      "expected": "The authority could not reach nas.example.com on port 80. Forward port 80 of your router to the box and check the firewall. Timeout during connect"
+    },
+    "proxy.acme.directory_invalid": {
+      "params": {},
+      "expected": "The ACME directory must be an https address."
+    },
+    "proxy.acme.dns": {
+      "params": {
+        "name": "nas.example.com",
+        "detail": "NXDOMAIN looking up A"
+      },
+      "expected": "nas.example.com has no public DNS record that points to the box. NXDOMAIN looking up A"
+    },
+    "proxy.acme.email_invalid": {
+      "params": {},
+      "expected": "Enter a valid email address, or leave the field empty."
+    },
+    "proxy.acme.failed": {
+      "params": {
+        "name": "nas.example.com",
+        "detail": "Order failed"
+      },
+      "expected": "The authority issued no certificate for nas.example.com. Order failed"
+    },
+    "proxy.acme.name_not_public": {
+      "params": {
+        "name": "nas.local"
+      },
+      "expected": "nas.local is not a public domain. Let's Encrypt only certifies names on the internet; use the box's own certificate for it."
+    },
+    "proxy.acme.name_rejected": {
+      "params": {
+        "name": "nas.example.com",
+        "detail": "Policy forbids issuing for name"
+      },
+      "expected": "The authority does not issue certificates for nas.example.com. Policy forbids issuing for name"
+    },
+    "proxy.acme.not_acme": {
+      "params": {},
+      "expected": "This host does not use a certificate from Let's Encrypt."
+    },
+    "proxy.acme.port_unavailable": {
+      "params": {},
+      "expected": "The box does not answer on port 80 here, where Let's Encrypt checks the domain."
+    },
+    "proxy.acme.rate_limited": {
+      "params": {
+        "name": "nas.example.com",
+        "detail": "too many failed authorizations recently"
+      },
+      "expected": "Too many requests for nas.example.com; the box tries again later. too many failed authorizations recently"
+    },
+    "proxy.acme.running": {
+      "params": {},
+      "expected": "The certificate of this host is being requested already."
+    },
+    "proxy.acme.terms_required": {
+      "params": {},
+      "expected": "Agree to the terms of service of Let's Encrypt first."
+    },
+    "proxy.acme.unauthorized": {
+      "params": {
+        "name": "nas.example.com",
+        "detail": "Invalid response"
+      },
+      "expected": "Another server answered for nas.example.com on port 80. Point the domain at the box and forward port 80 to it. Invalid response"
+    },
+    "proxy.acme.unreachable": {
+      "params": {
+        "detail": "https://acme-v02.api.letsencrypt.org/directory"
+      },
+      "expected": "The ACME authority does not answer (https://acme-v02.api.letsencrypt.org/directory). Check the box's internet connection."
+    },
+    "proxy.acme.wildcard": {
+      "params": {
+        "name": "*.example.com"
+      },
+      "expected": "*.example.com is a wildcard. Let's Encrypt certifies wildcards only through DNS, which the box does not do; list each name instead."
+    },
     "proxy.address.denied": {
       "params": {},
       "expected": "Your address may not open this page."

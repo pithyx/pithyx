@@ -95,7 +95,7 @@ website/  landing page and docs at pithyx.org (Astro + Starlight, GitHub Pages, 
 ## Network
 
 - HTTPS only on the fixed port 7484 (D346); never change it. Ports 80 and 443 serve the reverse proxy's hosts by name and redirect every other name to `https://<host>:7484` (D347), and plain HTTP on 7484 is redirected to `https://`. No HSTS for the box itself (a proxy host may opt in). The installer's live system and simulation stay on plain HTTP.
-- The box is its own certificate authority (root and intermediate with Name Constraints to local names and private addresses unless an administrator lifts them); Settings > Certificates offers the root with per-device instructions, certificates for other devices and an own certificate. Let's Encrypt comes later. Everything works on the untrusted default; passkeys and the service worker switch on only after the trust step.
+- The box is its own certificate authority (root and intermediate with Name Constraints to local names and private addresses unless an administrator lifts them); Settings > Certificates offers the root with per-device instructions, certificates for other devices and an own certificate. Proxy hosts may take certificates from Let's Encrypt over HTTP-01 (D378); the box itself keeps its own. Everything works on the untrusted default; passkeys and the service worker switch on only after the trust step.
 - The UI never assumes a secure context (plain HTTP by IP must work). `crypto.randomUUID`, `crypto.subtle`, Clipboard, service workers, WebAuthn, notifications only through `desktop/src/platform/browser.ts` (fallback or "missing"); ESLint refuses them elsewhere.
 - No subdomains for the core system. IPv6 everywhere IPv4 works.
 
