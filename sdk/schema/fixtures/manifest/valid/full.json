@@ -23,6 +23,7 @@
   "sdk": "^1.0.0",
   "permissions": [
     "notifications",
+    "notifications.external",
     "directory.read",
     "network.internet",
     "network.lan",

@@ -163,6 +163,11 @@
       "title": "Groups",
       "description": "Groups, their members and rights",
       "keywords": "group team members rights permissions"
+    },
+    "notifications": {
+      "title": "Notifications",
+      "description": "The email server and the box's channels for its alerts",
+      "keywords": "notifications email e-mail smtp server webhook ntfy gotify push alerts channels"
     }
   },
   "info": {
@@ -1043,5 +1048,29 @@
     "runtimeLow": "Runtime limit (minutes)",
     "runtimeLowHint": "1 to 60; 5 by default.",
     "save": "Save"
+  },
+  "notifications": {
+    "smtp": {
+      "title": "Email server",
+      "explain": "The box sends emails through this SMTP server, for its own channels and for those of the users.",
+      "host": "Server",
+      "hostHint": "The name or address of the SMTP server. Leave it empty to remove the server.",
+      "port": "Port",
+      "security": "Encryption",
+      "securities": {
+        "tls": "TLS (usually port 465)",
+        "startTls": "STARTTLS (usually port 587)",
+        "none": "None, only in the local network"
+      },
+      "username": "User name (optional)",
+      "password": "Password",
+      "passwordSet": "A password is saved. Type a new one only to replace it.",
+      "from": "Sender address",
+      "save": "Save"
+    },
+    "system": {
+      "title": "Channels of the box",
+      "explain": "These channels get the system's own alerts (storage, updates, the UPS, failed sign-ins and more) once for all administrators. Every user, administrators too, can add their own channels in the user menu."
+    }
   }
 }

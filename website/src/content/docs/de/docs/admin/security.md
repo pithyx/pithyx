@@ -60,6 +60,9 @@ Die Box schickt keine Daten an das Pithyx-Projekt. Das sind die ausgehenden Verb
 - **App-Kataloge**: Git über HTTPS oder SSH zu jedem aktivierten Katalog-Repository (der offizielle und der Community-Katalog sind an und werden standardmäßig von GitHub abgerufen), einmal täglich zur eingestellten Zeit mit einer zufälligen Verzögerung von bis zu einer Stunde, wenn du einen Katalog hinzufügst, und bei **Jetzt prüfen**. Schalte einen Katalog aus, um das zu beenden.
 - **Container-Images** von Katalog-Apps aus der Registry, die der Katalog nennt, außer das Paket bringt sie mit.
 - **Zeit**: Ist **Zeitserver** unter Einstellungen > **Regionale Einstellungen** leer, nutzt die Box die Debian-Vorgaben über systemd-timesyncd, das öffentliche Zeitserver kontaktiert.
+- **Benachrichtigungskanäle**: der E-Mail-Server und die Webhook-Adressen der [Benachrichtigungskanäle](/de/docs/admin/notifications/), wenn es etwas zu senden gibt oder bei **Test senden**.
+- **Let's Encrypt**: die ACME-Zertifizierungsstelle von Reverse-Proxy-Hosts mit einem Zertifikat von ihr, um es zu holen und zu erneuern ([Reverse Proxy](/de/docs/admin/reverse-proxy/#lets-encrypt)).
+- **USV**: der NUT-Server einer USV im Netzwerk, alle 5 Sekunden ([USV](/de/docs/admin/ups/)).
 - **Apps**, denen du die Berechtigung „Internet“ erlaubst, bekommen ein zweites Netzwerk mit ausgehendem Zugriff ins Internet; andere Apps haben keines. Geräte in deinem lokalen Netzwerk erreichen nur Apps mit der Berechtigung „Lokales Netzwerk“.
 
 Logs bleiben auf der Box unter `/var/log/pithyx/`. Geheimnisse werden in Logs maskiert. Passwörter werden als Argon2id-Hashes gespeichert.

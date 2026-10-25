@@ -33,7 +33,7 @@ public sealed class StorageAlertNotifierTests : IAsyncLifetime
         _connections = new SqliteConnectionFactory(Path.Combine(_directory, "pithyx.db"));
         _store = new NotificationStore(_connections);
         var hub = new TopicHub(new TopicRegistry([_store.Definition()]), _time, Options.Create(new JsonOptions()), NullLogger<TopicHub>.Instance);
-        _notifications = new NotificationService(_store, _connections, hub, _time, Options.Create(new JsonOptions()), NullLogger<NotificationService>.Instance);
+        _notifications = new NotificationService(_store, _connections, hub, _time, Options.Create(new JsonOptions()), new NotificationOutbox(), NullLogger<NotificationService>.Instance);
         _notifier = new StorageAlertNotifier(_connections, _notifications, _time, NullLogger<StorageAlertNotifier>.Instance);
     }
 
@@ -166,7 +166,7 @@ public sealed class StorageAlertNotifierTests : IAsyncLifetime
         await _notifier.SyncAsync([Warning()], Tank(85), settled: true, Token);
         using var restartedStore = new NotificationStore(_connections);
         var hub = new TopicHub(new TopicRegistry([restartedStore.Definition()]), _time, Options.Create(new JsonOptions()), NullLogger<TopicHub>.Instance);
-        using var restartedService = new NotificationService(restartedStore, _connections, hub, _time, Options.Create(new JsonOptions()), NullLogger<NotificationService>.Instance);
+        using var restartedService = new NotificationService(restartedStore, _connections, hub, _time, Options.Create(new JsonOptions()), new NotificationOutbox(), NullLogger<NotificationService>.Instance);
         using var restarted = new StorageAlertNotifier(_connections, restartedService, _time, NullLogger<StorageAlertNotifier>.Instance);
 
         // After a restart, pool alerts come before SMART is read, then the settled state.

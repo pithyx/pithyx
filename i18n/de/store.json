@@ -137,7 +137,11 @@
     },
     "notifications": {
       "title": "Benachrichtigungen",
-      "description": "Zeigt dem Nutzer, der sie verwendet, Benachrichtigungen."
+      "description": "Zeigt dem Nutzer, der sie verwendet, Benachrichtigungen.",
+      "external": {
+        "title": "E-Mail und Webhooks",
+        "description": "Seine Benachrichtigungen erreichen auch die E-Mail- und Webhook-Kanäle der Benutzer, nicht nur den Desktop."
+      }
     },
     "directory": {
       "read": {

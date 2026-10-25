@@ -1947,6 +1947,504 @@
         }
       }
     },
+    "/api/notifications/language": {
+      "put": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "The language the signed-in user's desktop uses (en or de), for the emails and webhooks the box writes to them (D379). Without it the system language applies. Others answer 400 notifications.language.unsupported.",
+        "operationId": "SetNotificationLanguage",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationLanguageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/channels": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Lists the signed-in user's own channels, which get the notifications that reach the user: email and webhook channels with what they get and how their last delivery went. Header values never leave the box.",
+        "operationId": "ListNotificationChannels",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationChannelList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Adds one of the signed-in user's own channels, which get the notifications that reach the user. An email channel needs the SMTP server (409 notifications.smtp.missing); invalid fields answer 400 notifications.channel.invalid, too many 409 notifications.channel.limit_reached.",
+        "operationId": "CreateNotificationChannel",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationChannelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationChannel"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/channels/{id}": {
+      "put": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Changes one of the signed-in user's own channels, which get the notifications that reach the user; its kind stays. A header without a value keeps the value saved before.",
+        "operationId": "UpdateNotificationChannel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationChannelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationChannel"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Removes one of the signed-in user's own channels, which get the notifications that reach the user.",
+        "operationId": "DeleteNotificationChannel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/notifications/channels/{id}/test": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Sends a test message through one of the signed-in user's own channels, which get the notifications that reach the user now, also when it is off. A failure answers 502 notifications.channel.failed with the server's words and is kept on the channel.",
+        "operationId": "TestNotificationChannel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationChannel"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/notifications/channels": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Administrators only. Lists the box's channels, which get what the system tells every administrator: email and webhook channels with what they get and how their last delivery went. Header values never leave the box.",
+        "operationId": "ListSystemNotificationChannels",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationChannelList"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Administrators only. Adds one of the box's channels, which get what the system tells every administrator. An email channel needs the SMTP server (409 notifications.smtp.missing); invalid fields answer 400 notifications.channel.invalid, too many 409 notifications.channel.limit_reached.",
+        "operationId": "CreateSystemNotificationChannel",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationChannelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationChannel"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/notifications/channels/{id}": {
+      "put": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Administrators only. Changes one of the box's channels, which get what the system tells every administrator; its kind stays. A header without a value keeps the value saved before.",
+        "operationId": "UpdateSystemNotificationChannel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationChannelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationChannel"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Administrators only. Removes one of the box's channels, which get what the system tells every administrator.",
+        "operationId": "DeleteSystemNotificationChannel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/notifications/channels/{id}/test": {
+      "post": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Administrators only. Sends a test message through one of the box's channels, which get what the system tells every administrator now, also when it is off. A failure answers 502 notifications.channel.failed with the server's words and is kept on the channel.",
+        "operationId": "TestSystemNotificationChannel",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationChannel"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/notifications/smtp": {
+      "get": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Administrators only. The SMTP server email channels send through, without its password.",
+        "operationId": "GetNotificationSmtp",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmtpStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Notifications"
+        ],
+        "description": "Administrators only. Saves the SMTP server; an empty host removes it. A missing password keeps the saved one, an empty one removes it. Invalid fields answer 400 notifications.smtp.invalid.",
+        "operationId": "SetNotificationSmtp",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SmtpRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SmtpStatus"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/shares": {
       "get": {
         "tags": [
@@ -11016,6 +11514,13 @@
         ],
         "description": "The key of a certificate the authority issues."
       },
+      "ChannelKind": {
+        "enum": [
+          "email",
+          "webhook"
+        ],
+        "description": "How a channel delivers: an email through the box's SMTP server, or an HTTP POST."
+      },
       "ClientMessage": {
         "required": [
           "type",
@@ -12151,8 +12656,15 @@
           "network.vlan.duplicate",
           "network.vlan.id_invalid",
           "network.vlan.parent_invalid",
+          "notifications.channel.failed",
+          "notifications.channel.invalid",
+          "notifications.channel.limit_reached",
+          "notifications.channel.not_found",
+          "notifications.language.unsupported",
           "notifications.message.invalid",
           "notifications.notification.not_found",
+          "notifications.smtp.invalid",
+          "notifications.smtp.missing",
           "permissions.grant.invalid",
           "proxy.access.denied",
           "proxy.acme.caa",
@@ -15164,6 +15676,222 @@
         },
         "description": "An entry of a user's notification history. The text is not part of it: the desktop translates `code` with\n`params` from the `notifications` namespace (`&lt;code&gt;.title`, `.body`)."
       },
+      "NotificationCategory": {
+        "enum": [
+          "storage",
+          "updates",
+          "backups",
+          "security",
+          "apps",
+          "system"
+        ],
+        "description": "What a notification is about, so a channel can pick its events."
+      },
+      "NotificationChannel": {
+        "required": [
+          "id",
+          "name",
+          "kind",
+          "enabled",
+          "recipients",
+          "url",
+          "format",
+          "headers",
+          "categories",
+          "minLevel",
+          "lastSentAt",
+          "errorCode",
+          "errorParams"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Stable id.",
+            "format": "int64"
+          },
+          "name": {
+            "type": "string",
+            "description": "The name its owner gave it."
+          },
+          "kind": {
+            "description": "Email or webhook.",
+            "$ref": "#/components/schemas/ChannelKind"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Off keeps it without sending."
+          },
+          "recipients": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The addresses of an email channel."
+          },
+          "url": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The address of a webhook."
+          },
+          "format": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "What a webhook sends.",
+                "$ref": "#/components/schemas/WebhookFormat"
+              }
+            ]
+          },
+          "headers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "The names of the headers a webhook sends; their values never leave the box."
+          },
+          "categories": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationCategory"
+            },
+            "description": "The events it gets."
+          },
+          "minLevel": {
+            "description": "The least serious notification it gets.",
+            "$ref": "#/components/schemas/NotificationLevel"
+          },
+          "lastSentAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When it last delivered something.",
+            "format": "date-time"
+          },
+          "errorCode": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Why the last delivery failed, until one works again."
+          },
+          "errorParams": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "description": "Its parameters."
+          }
+        },
+        "description": "A channel that takes notifications beyond the desktop (D379)."
+      },
+      "NotificationChannelList": {
+        "required": [
+          "items",
+          "emailAvailable",
+          "max"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/NotificationChannel"
+            },
+            "description": "The channels, oldest first."
+          },
+          "emailAvailable": {
+            "type": "boolean",
+            "description": "An administrator set up the SMTP server, so email channels can send."
+          },
+          "max": {
+            "type": "integer",
+            "description": "How many channels there may be.",
+            "format": "int32"
+          }
+        },
+        "description": "A user's channels or those of the box."
+      },
+      "NotificationChannelRequest": {
+        "required": [
+          "name",
+          "kind"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "1 to 60 characters."
+          },
+          "kind": {
+            "description": "Email or webhook; it cannot change later.",
+            "$ref": "#/components/schemas/ChannelKind"
+          },
+          "enabled": {
+            "type": "boolean",
+            "description": "Defaults to on.",
+            "default": true
+          },
+          "recipients": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "For email: 1 to 10 addresses."
+          },
+          "url": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "For a webhook: an `http` or `https` address, never one of the box itself."
+          },
+          "format": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "For a webhook; defaults to `json`.",
+                "$ref": "#/components/schemas/WebhookFormat"
+              }
+            ]
+          },
+          "headers": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/WebhookHeader"
+            },
+            "description": "For a webhook: at most 10 headers."
+          },
+          "categories": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/NotificationCategory"
+            },
+            "description": "The events it gets; at least one."
+          },
+          "minLevel": {
+            "description": "Defaults to `warning`.",
+            "$ref": "#/components/schemas/NotificationLevel"
+          }
+        },
+        "description": "A new or changed channel."
+      },
       "NotificationEvent": {
         "required": [
           "change",
@@ -15264,6 +15992,27 @@
           }
         },
         "description": "Event of the `notifications` topic. Only the user whose notifications changed receives it."
+      },
+      "NotificationLanguageRequest": {
+        "required": [
+          "language"
+        ],
+        "type": "object",
+        "properties": {
+          "language": {
+            "type": "string",
+            "description": "The language the user's desktop uses, `en` or `de`."
+          }
+        },
+        "description": "Body of `PUT /api/notifications/language`."
+      },
+      "NotificationLevel": {
+        "enum": [
+          "info",
+          "warning",
+          "error"
+        ],
+        "description": "How serious a notification is: from its tone, critical is `error`, a warning `warning`, the rest `info`."
       },
       "NotificationList": {
         "required": [
@@ -18079,6 +18828,114 @@
         },
         "description": "SMART health of one disk as last read. The API serves it from memory; reading it never runs a command."
       },
+      "SmtpRequest": {
+        "required": [
+          "host"
+        ],
+        "type": "object",
+        "properties": {
+          "host": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Empty removes the server."
+          },
+          "port": {
+            "type": "integer",
+            "description": "1 to 65535; defaults to 587.",
+            "format": "int32",
+            "default": 587
+          },
+          "security": {
+            "description": "Defaults to STARTTLS.",
+            "$ref": "#/components/schemas/SmtpSecurity"
+          },
+          "username": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The sign-in name, or none."
+          },
+          "password": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "A new password; null keeps the saved one, empty removes it."
+          },
+          "from": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The sender address."
+          }
+        },
+        "description": "A new SMTP server, or none."
+      },
+      "SmtpSecurity": {
+        "enum": [
+          "tls",
+          "startTls",
+          "none"
+        ],
+        "description": "How the box talks to its SMTP server."
+      },
+      "SmtpStatus": {
+        "required": [
+          "configured",
+          "host",
+          "port",
+          "security",
+          "username",
+          "passwordSet",
+          "from"
+        ],
+        "type": "object",
+        "properties": {
+          "configured": {
+            "type": "boolean",
+            "description": "A server is set; email channels can send."
+          },
+          "host": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The server's name or address."
+          },
+          "port": {
+            "type": "integer",
+            "description": "Its port.",
+            "format": "int32"
+          },
+          "security": {
+            "description": "How the box talks to it.",
+            "$ref": "#/components/schemas/SmtpSecurity"
+          },
+          "username": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The sign-in name, if it needs one."
+          },
+          "passwordSet": {
+            "type": "boolean",
+            "description": "A password is saved."
+          },
+          "from": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The sender address."
+          }
+        },
+        "description": "Settings &gt; Notifications, the SMTP server, without its password."
+      },
       "Snapshot": {
         "required": [
           "dataset",
@@ -20874,6 +21731,33 @@
           "SessionEnded",
           "Forbidden"
         ]
+      },
+      "WebhookFormat": {
+        "enum": [
+          "json",
+          "ntfy",
+          null
+        ]
+      },
+      "WebhookHeader": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "The header name."
+          },
+          "value": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Its value; in a request null keeps the value saved before under this name."
+          }
+        },
+        "description": "A header a webhook sends, for example a token."
       },
       "WindowPreference": {
         "required": [

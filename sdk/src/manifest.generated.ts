@@ -5,13 +5,14 @@
  */
 export type AppId = string;
 /**
- * A permission an app declares. Nothing is granted by using an API: the install dialog lists every declared permission, an administrator confirms them for the app, and each one can be revoked later (the app gets `permissionsChange`). Which users may use the app at all is a separate grant per user and group. The daemon checks every permission on every call that reaches data or leaves the window. An update that declares a new permission waits until an administrator confirms it; the old version keeps running. `files.read`: read files the user opens with the app or picks in a desktop file dialog. `files.write`: write those files, and save new files where the user chooses in a desktop save dialog. `files.shares`: browse every shared folder the user may access, with the user's own rights. `notifications`: show notifications. `directory.read`: list all users and groups of the box. `network.internet`: outgoing connections to the internet, from the window (`connect-src https:`) and from the backend. `network.lan`: outgoing connections from the backend to the local network (private, shared and link-local addresses such as `192.168.0.0/16`); without it the backend reaches no other device in the LAN, also with `network.internet`. The box itself is never reachable.
+ * A permission an app declares. Nothing is granted by using an API: the install dialog lists every declared permission, an administrator confirms them for the app, and each one can be revoked later (the app gets `permissionsChange`). Which users may use the app at all is a separate grant per user and group. The daemon checks every permission on every call that reaches data or leaves the window. An update that declares a new permission waits until an administrator confirms it; the old version keeps running. `files.read`: read files the user opens with the app or picks in a desktop file dialog. `files.write`: write those files, and save new files where the user chooses in a desktop save dialog. `files.shares`: browse every shared folder the user may access, with the user's own rights. `notifications`: show notifications. `notifications.external`: let them also reach the email and webhook channels of the users, together with `notifications` (D379). `directory.read`: list all users and groups of the box. `network.internet`: outgoing connections to the internet, from the window (`connect-src https:`) and from the backend. `network.lan`: outgoing connections from the backend to the local network (private, shared and link-local addresses such as `192.168.0.0/16`); without it the backend reaches no other device in the LAN, also with `network.internet`. The box itself is never reachable.
  */
 export type Permission =
   | 'files.read'
   | 'files.write'
   | 'files.shares'
   | 'notifications'
+  | 'notifications.external'
   | 'directory.read'
   | 'network.internet'
   | 'network.lan';

@@ -43,7 +43,8 @@
     "deviceDetail": "{count, plural, one {# Fenster} other {# Fenster}}, {time}",
     "deviceDetailScreen": "{width} × {height}, {count, plural, one {# Fenster} other {# Fenster}}, {time}",
     "fileDefaults": "Standard-Apps",
-    "startupApps": "Beim Anmelden öffnen"
+    "startupApps": "Beim Anmelden öffnen",
+    "channels": "Benachrichtigungskanäle"
   },
   "error": {
     "title": "Etwas ist schiefgelaufen",
@@ -301,5 +302,64 @@
     "intro": "Diese Apps öffnen sich, wenn du dich anmeldest, auf jedem Gerät, in der Reihenfolge, in der du sie angehakt hast. Fenster, die du offen gelassen hast, bleiben, wie sie waren. Höchstens {max} Apps.",
     "suggested": "Von der App empfohlen",
     "close": "Schließen"
+  },
+  "channels": {
+    "title": "Benachrichtigungskanäle",
+    "intro": "Bekomm deine Benachrichtigungen per E-Mail oder über einen Push-Dienst wie ntfy oder Gotify, auch wenn kein Desktop offen ist. Jeder Kanal wählt seine Arten von Ereignissen und wie ernst sie sein müssen.",
+    "none": "Noch keine Kanäle.",
+    "add": "Kanal hinzufügen",
+    "edit": "Bearbeiten",
+    "test": "Test senden",
+    "tested": "Der Test wurde gesendet.",
+    "remove": "Entfernen",
+    "removeTitle": "{name} entfernen?",
+    "removeExplain": "Der Kanal bekommt nichts mehr. Die Benachrichtigungen im Desktop bleiben.",
+    "close": "Schließen",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "newTitle": "Neuer Kanal",
+    "editTitle": "{name} bearbeiten",
+    "name": "Name",
+    "kind": "Art",
+    "kinds": {
+      "email": "E-Mail",
+      "webhook": "Webhook"
+    },
+    "emailMissing": "E-Mail braucht einen E-Mail-Server, den ein Administrator unter Einstellungen > Benachrichtigungen einrichtet.",
+    "recipients": "E-Mail-Adressen",
+    "recipientsHint": "Bis zu 10, durch Kommas getrennt.",
+    "url": "Adresse",
+    "urlHint": "Die Box schickt dorthin einen HTTP-POST, zum Beispiel https://ntfy.example.com/mein-thema.",
+    "format": "Format",
+    "formats": {
+      "json": "JSON (auch für Gotify)",
+      "ntfy": "ntfy"
+    },
+    "headers": "Header",
+    "headersHint": "Zum Beispiel ein Token. Ihre Werte verlassen die Box nie; lass einen Wert leer, um den gespeicherten zu behalten.",
+    "headerName": "Header-Name",
+    "headerValue": "Wert",
+    "headerSaved": "Gespeichert",
+    "addHeader": "Header hinzufügen",
+    "removeHeader": "Header {name} entfernen",
+    "categories": "Ereignisse",
+    "categoryNames": {
+      "storage": "Speicher",
+      "updates": "Updates",
+      "backups": "Backups",
+      "security": "Sicherheit",
+      "apps": "Apps",
+      "system": "System"
+    },
+    "minLevel": "Mindestens",
+    "levels": {
+      "info": "Alles",
+      "warning": "Warnungen und Fehler",
+      "error": "Nur Fehler"
+    },
+    "enabled": "Benachrichtigungen senden",
+    "off": "Aus",
+    "lastSent": "Zuletzt gesendet {date}",
+    "never": "Noch nichts gesendet"
   }
 }

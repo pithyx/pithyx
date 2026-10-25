@@ -359,11 +359,24 @@
     }
   },
   "notifications": {
+    "channel": {
+      "invalid": "The channel was not saved: {field, select, name {its name is empty or longer than 60 characters} kind {its kind or level is unknown} recipients {it needs 1 to 10 valid email addresses} url {its address must start with http:// or https:// and may not be the box itself} format {its format is unknown} headers {a header is invalid, reserved or given twice, or there are more than 10} categories {it needs at least one kind of event} other {a value is invalid}}.",
+      "failed": "The channel could not deliver: {detail}",
+      "limit_reached": "There are already {max} channels. Remove one first.",
+      "not_found": "This channel no longer exists."
+    },
+    "language": {
+      "unsupported": "The box cannot write in the language {language}."
+    },
     "message": {
       "invalid": "The notification was not sent: its {field, select, app {app id is not valid} title {title is empty or longer than {maxLength} characters} other {text is longer than {maxLength} characters}}."
     },
     "notification": {
       "not_found": "This notification no longer exists."
+    },
+    "smtp": {
+      "invalid": "The email server was not saved: {field, select, host {its name is empty or invalid} port {the port must be between 1 and 65535} security {the encryption is unknown} username {the user name is too long} password {the password is too long} from {the sender is not a valid email address} other {a value is invalid}}.",
+      "missing": "Email channels need an email server. An administrator sets it up in Settings > Notifications."
     }
   },
   "permissions": {

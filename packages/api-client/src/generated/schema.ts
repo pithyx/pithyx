@@ -1661,6 +1661,76 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/notifications/channels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Lists the signed-in user's own channels, which get the notifications that reach the user: email and webhook channels with what they get and how their last delivery went. Header values never leave the box. */
+        get: operations["ListNotificationChannels"];
+        put?: never;
+        /** @description Adds one of the signed-in user's own channels, which get the notifications that reach the user. An email channel needs the SMTP server (409 notifications.smtp.missing); invalid fields answer 400 notifications.channel.invalid, too many 409 notifications.channel.limit_reached. */
+        post: operations["CreateNotificationChannel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications/channels/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description Changes one of the signed-in user's own channels, which get the notifications that reach the user; its kind stays. A header without a value keeps the value saved before. */
+        put: operations["UpdateNotificationChannel"];
+        post?: never;
+        /** @description Removes one of the signed-in user's own channels, which get the notifications that reach the user. */
+        delete: operations["DeleteNotificationChannel"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications/channels/{id}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Sends a test message through one of the signed-in user's own channels, which get the notifications that reach the user now, also when it is off. A failure answers 502 notifications.channel.failed with the server's words and is kept on the channel. */
+        post: operations["TestNotificationChannel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/notifications/language": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description The language the signed-in user's desktop uses (en or de), for the emails and webhooks the box writes to them (D379). Without it the system language applies. Others answer 400 notifications.language.unsupported. */
+        put: operations["SetNotificationLanguage"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/notifications/read": {
         parameters: {
             query?: never;
@@ -2394,6 +2464,77 @@ export type paths = {
         put?: never;
         /** @description Administrators only. Checks new settings without applying them: the stored form, the interfaces that change, whether the host name changes, whether this connection's interface changes, and the static addresses to open afterwards. */
         post: operations["CheckNetworkConfig"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/notifications/channels": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. Lists the box's channels, which get what the system tells every administrator: email and webhook channels with what they get and how their last delivery went. Header values never leave the box. */
+        get: operations["ListSystemNotificationChannels"];
+        put?: never;
+        /** @description Administrators only. Adds one of the box's channels, which get what the system tells every administrator. An email channel needs the SMTP server (409 notifications.smtp.missing); invalid fields answer 400 notifications.channel.invalid, too many 409 notifications.channel.limit_reached. */
+        post: operations["CreateSystemNotificationChannel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/notifications/channels/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** @description Administrators only. Changes one of the box's channels, which get what the system tells every administrator; its kind stays. A header without a value keeps the value saved before. */
+        put: operations["UpdateSystemNotificationChannel"];
+        post?: never;
+        /** @description Administrators only. Removes one of the box's channels, which get what the system tells every administrator. */
+        delete: operations["DeleteSystemNotificationChannel"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/notifications/channels/{id}/test": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Sends a test message through one of the box's channels, which get what the system tells every administrator now, also when it is off. A failure answers 502 notifications.channel.failed with the server's words and is kept on the channel. */
+        post: operations["TestSystemNotificationChannel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/system/notifications/smtp": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Administrators only. The SMTP server email channels send through, without its password. */
+        get: operations["GetNotificationSmtp"];
+        /** @description Administrators only. Saves the SMTP server; an empty host removes it. A missing password keeps the saved one, an empty one removes it. Invalid fields answer 400 notifications.smtp.invalid. */
+        put: operations["SetNotificationSmtp"];
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -3863,6 +4004,11 @@ export type components = {
          * @enum {unknown}
          */
         CertificateKeyType: "ecdsa" | "rsa";
+        /**
+         * @description How a channel delivers: an email through the box's SMTP server, or an HTTP POST.
+         * @enum {unknown}
+         */
+        ChannelKind: "email" | "webhook";
         /** @description A message from the client: `sub` or `unsub` for a topic or pattern. */
         ClientMessage: {
             /** @description Chosen by the client; echoed in the ack, snapshots and errors that answer this message. */
@@ -4235,7 +4381,7 @@ export type components = {
             }[];
         };
         /** @enum {string} */
-        ErrorCode: "app.app.busy" | "app.app.no_previous" | "app.app.not_found" | "app.backend.endpoint_unknown" | "app.backend.missing" | "app.backend.start_failed" | "app.backend.storage_unavailable" | "app.backend.unavailable" | "app.backend.unsupported" | "app.compose.key_unsupported" | "app.compose.reference_unknown" | "app.compose.right_missing" | "app.compose.right_unused" | "app.compose.storage_mismatch" | "app.compose.value_invalid" | "app.compose.yaml_invalid" | "app.docker.unavailable" | "app.elevated.unsupported" | "app.icon.invalid" | "app.image.mismatch" | "app.image.unavailable" | "app.manifest.cron_invalid" | "app.manifest.duplicate" | "app.manifest.id_invalid" | "app.manifest.id_reserved" | "app.manifest.invalid_json" | "app.manifest.permission_missing" | "app.manifest.pithyx_invalid" | "app.manifest.reference_unknown" | "app.manifest.schema_violation" | "app.manifest.sdk_invalid" | "app.manifest.version_unsupported" | "app.manifest.window_size_invalid" | "app.mapping.invalid" | "app.package.box_too_old" | "app.package.downgrade_unsupported" | "app.package.invalid" | "app.package.layout_invalid" | "app.package.lock_invalid" | "app.package.not_found" | "app.package.too_large" | "app.permission.denied" | "app.permission.not_requested" | "app.pool.fixed" | "app.pool.required" | "app.pool.unavailable" | "app.storage.key_invalid" | "app.storage.not_found" | "app.storage.too_large" | "app.token.invalid" | "auth.account.disabled" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.desktop.not_allowed" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.file_default.invalid" | "desktop.file_default.limit_reached" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "desktop.startup_apps.invalid" | "fileservices.service.unavailable" | "fileservices.workgroup.invalid" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.share.unavailable" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "homes.choice.invalid" | "homes.home.in_use" | "homes.home.name_mismatch" | "homes.home.not_found" | "homes.move.running" | "homes.pool.no_space" | "homes.pool.taken" | "homes.pool.unavailable" | "homes.pool.unchanged" | "homes.quota.invalid" | "installer.check.failed" | "installer.claim.required" | "installer.claim.taken" | "installer.disk.count" | "installer.disk.unsuitable" | "installer.erase.not_confirmed" | "installer.hostname.invalid" | "installer.install.failed" | "installer.install.running" | "installer.keyboard.invalid" | "installer.reboot.not_ready" | "jobs.job.not_found" | "logs.app.invalid" | "logs.archive.pool_unavailable" | "logs.batch.too_large" | "logs.query.invalid" | "logs.settings.invalid" | "network.address.invalid" | "network.apply.failed" | "network.bond.member_invalid" | "network.bond.members_missing" | "network.bond.primary_invalid" | "network.change.empty" | "network.change.not_found" | "network.change.pending" | "network.config.unreachable" | "network.default_interface.invalid" | "network.dns.invalid" | "network.dns.too_many" | "network.firewall.failed" | "network.gateway.invalid" | "network.global.not_changeable" | "network.host_name.invalid" | "network.interface.duplicate" | "network.interface.kind_invalid" | "network.interface.name_invalid" | "network.interface.not_changeable" | "network.interface.unknown" | "network.mtu.invalid" | "network.search_domain.invalid" | "network.search_domain.too_many" | "network.vlan.duplicate" | "network.vlan.id_invalid" | "network.vlan.parent_invalid" | "notifications.message.invalid" | "notifications.notification.not_found" | "permissions.grant.invalid" | "proxy.access.denied" | "proxy.acme.caa" | "proxy.acme.connection" | "proxy.acme.directory_invalid" | "proxy.acme.dns" | "proxy.acme.email_invalid" | "proxy.acme.failed" | "proxy.acme.name_not_public" | "proxy.acme.name_rejected" | "proxy.acme.not_acme" | "proxy.acme.port_unavailable" | "proxy.acme.rate_limited" | "proxy.acme.running" | "proxy.acme.terms_required" | "proxy.acme.unauthorized" | "proxy.acme.unreachable" | "proxy.acme.wildcard" | "proxy.address.denied" | "proxy.address.invalid" | "proxy.auth.required" | "proxy.basic_auth.invalid" | "proxy.basic_auth.password_missing" | "proxy.certificate.missing" | "proxy.certificate.name_mismatch" | "proxy.domain.invalid" | "proxy.domain.taken" | "proxy.domains.missing" | "proxy.domains.too_many" | "proxy.header.invalid" | "proxy.headers.too_many" | "proxy.host.not_found" | "proxy.host.unknown" | "proxy.limit.out_of_range" | "proxy.loop.detected" | "proxy.redirect.not_found" | "proxy.redirect.status_invalid" | "proxy.redirect.target_invalid" | "proxy.sign_in.address_invalid" | "proxy.sign_in.group_not_found" | "proxy.sign_in.user_not_found" | "proxy.stream.name_invalid" | "proxy.stream.not_found" | "proxy.stream.port_in_use" | "proxy.stream.port_privileged" | "proxy.stream.port_reserved" | "proxy.stream.port_taken" | "proxy.stream.protocol_missing" | "proxy.target.invalid" | "proxy.target.loop" | "proxy.target.on_box" | "proxy.target.timeout" | "proxy.target.unavailable" | "proxy.ticket.target_invalid" | "proxy.websockets.disabled" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.command.timed_out" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.disks_missing" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.pool.suspended" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "storage.zfs.unavailable" | "store.app.not_found" | "store.catalog.architecture_missing" | "store.catalog.built_in" | "store.catalog.busy" | "store.catalog.data_version_decreased" | "store.catalog.exists" | "store.catalog.id_reserved" | "store.catalog.invalid_json" | "store.catalog.mismatch" | "store.catalog.not_found" | "store.catalog.rule_violation" | "store.catalog.schema_violation" | "store.catalog.sequence_old" | "store.catalog.signature_invalid" | "store.catalog.unreachable" | "store.catalog.url_invalid" | "store.catalog.version_unsupported" | "store.package.hash_mismatch" | "system.backup.category_missing" | "system.backup.invalid" | "system.backup.password_wrong" | "system.backup.restore_expired" | "system.backup.restore_failed" | "system.backup.restore_running" | "system.backup.too_large" | "system.backup.too_new" | "system.internal.unexpected" | "system.origin.forbidden" | "system.time.apply_failed" | "system.time.server_invalid" | "system.time.servers_too_many" | "system.time.zone_invalid" | "system.ups.invalid" | "system.ups.unavailable" | "tls.custom.expired" | "tls.custom.invalid" | "tls.custom.key_mismatch" | "tls.issued.not_found" | "tls.name.invalid" | "tls.name.not_permitted" | "tls.names.missing" | "tls.names.too_many" | "tls.validity.out_of_range" | "update.apply.failed" | "update.apply.running" | "update.channel.invalid" | "update.channel.mismatch" | "update.channel.sequence_old" | "update.channel.signature_invalid" | "update.download.mismatch" | "update.file.architecture" | "update.file.channel" | "update.file.hash_mismatch" | "update.file.invalid" | "update.file.minimum" | "update.file.missing_entry" | "update.file.not_found" | "update.file.older" | "update.file.signature_invalid" | "update.file.too_large" | "update.file.unexpected_entry" | "update.none.available" | "update.rollback.unconfirmed" | "update.snapshot.not_found" | "update.source.invalid" | "update.source.unreachable" | "update.space.insufficient" | "update.system.unsupported" | "users.account.refused" | "users.gid.exhausted" | "users.group.builtin" | "users.group.description_invalid" | "users.group.exists" | "users.group.name_invalid" | "users.group.name_reserved" | "users.group.not_found" | "users.group.refused" | "users.uid.exhausted" | "users.user.exists" | "users.user.last_admin" | "users.user.not_found" | "users.user.self";
+        ErrorCode: "app.app.busy" | "app.app.no_previous" | "app.app.not_found" | "app.backend.endpoint_unknown" | "app.backend.missing" | "app.backend.start_failed" | "app.backend.storage_unavailable" | "app.backend.unavailable" | "app.backend.unsupported" | "app.compose.key_unsupported" | "app.compose.reference_unknown" | "app.compose.right_missing" | "app.compose.right_unused" | "app.compose.storage_mismatch" | "app.compose.value_invalid" | "app.compose.yaml_invalid" | "app.docker.unavailable" | "app.elevated.unsupported" | "app.icon.invalid" | "app.image.mismatch" | "app.image.unavailable" | "app.manifest.cron_invalid" | "app.manifest.duplicate" | "app.manifest.id_invalid" | "app.manifest.id_reserved" | "app.manifest.invalid_json" | "app.manifest.permission_missing" | "app.manifest.pithyx_invalid" | "app.manifest.reference_unknown" | "app.manifest.schema_violation" | "app.manifest.sdk_invalid" | "app.manifest.version_unsupported" | "app.manifest.window_size_invalid" | "app.mapping.invalid" | "app.package.box_too_old" | "app.package.downgrade_unsupported" | "app.package.invalid" | "app.package.layout_invalid" | "app.package.lock_invalid" | "app.package.not_found" | "app.package.too_large" | "app.permission.denied" | "app.permission.not_requested" | "app.pool.fixed" | "app.pool.required" | "app.pool.unavailable" | "app.storage.key_invalid" | "app.storage.not_found" | "app.storage.too_large" | "app.token.invalid" | "auth.account.disabled" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.desktop.not_allowed" | "auth.display_name.invalid" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.file_default.invalid" | "desktop.file_default.limit_reached" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "desktop.startup_apps.invalid" | "fileservices.service.unavailable" | "fileservices.workgroup.invalid" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.share.unavailable" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "homes.choice.invalid" | "homes.home.in_use" | "homes.home.name_mismatch" | "homes.home.not_found" | "homes.move.running" | "homes.pool.no_space" | "homes.pool.taken" | "homes.pool.unavailable" | "homes.pool.unchanged" | "homes.quota.invalid" | "installer.check.failed" | "installer.claim.required" | "installer.claim.taken" | "installer.disk.count" | "installer.disk.unsuitable" | "installer.erase.not_confirmed" | "installer.hostname.invalid" | "installer.install.failed" | "installer.install.running" | "installer.keyboard.invalid" | "installer.reboot.not_ready" | "jobs.job.not_found" | "logs.app.invalid" | "logs.archive.pool_unavailable" | "logs.batch.too_large" | "logs.query.invalid" | "logs.settings.invalid" | "network.address.invalid" | "network.apply.failed" | "network.bond.member_invalid" | "network.bond.members_missing" | "network.bond.primary_invalid" | "network.change.empty" | "network.change.not_found" | "network.change.pending" | "network.config.unreachable" | "network.default_interface.invalid" | "network.dns.invalid" | "network.dns.too_many" | "network.firewall.failed" | "network.gateway.invalid" | "network.global.not_changeable" | "network.host_name.invalid" | "network.interface.duplicate" | "network.interface.kind_invalid" | "network.interface.name_invalid" | "network.interface.not_changeable" | "network.interface.unknown" | "network.mtu.invalid" | "network.search_domain.invalid" | "network.search_domain.too_many" | "network.vlan.duplicate" | "network.vlan.id_invalid" | "network.vlan.parent_invalid" | "notifications.channel.failed" | "notifications.channel.invalid" | "notifications.channel.limit_reached" | "notifications.channel.not_found" | "notifications.language.unsupported" | "notifications.message.invalid" | "notifications.notification.not_found" | "notifications.smtp.invalid" | "notifications.smtp.missing" | "permissions.grant.invalid" | "proxy.access.denied" | "proxy.acme.caa" | "proxy.acme.connection" | "proxy.acme.directory_invalid" | "proxy.acme.dns" | "proxy.acme.email_invalid" | "proxy.acme.failed" | "proxy.acme.name_not_public" | "proxy.acme.name_rejected" | "proxy.acme.not_acme" | "proxy.acme.port_unavailable" | "proxy.acme.rate_limited" | "proxy.acme.running" | "proxy.acme.terms_required" | "proxy.acme.unauthorized" | "proxy.acme.unreachable" | "proxy.acme.wildcard" | "proxy.address.denied" | "proxy.address.invalid" | "proxy.auth.required" | "proxy.basic_auth.invalid" | "proxy.basic_auth.password_missing" | "proxy.certificate.missing" | "proxy.certificate.name_mismatch" | "proxy.domain.invalid" | "proxy.domain.taken" | "proxy.domains.missing" | "proxy.domains.too_many" | "proxy.header.invalid" | "proxy.headers.too_many" | "proxy.host.not_found" | "proxy.host.unknown" | "proxy.limit.out_of_range" | "proxy.loop.detected" | "proxy.redirect.not_found" | "proxy.redirect.status_invalid" | "proxy.redirect.target_invalid" | "proxy.sign_in.address_invalid" | "proxy.sign_in.group_not_found" | "proxy.sign_in.user_not_found" | "proxy.stream.name_invalid" | "proxy.stream.not_found" | "proxy.stream.port_in_use" | "proxy.stream.port_privileged" | "proxy.stream.port_reserved" | "proxy.stream.port_taken" | "proxy.stream.protocol_missing" | "proxy.target.invalid" | "proxy.target.loop" | "proxy.target.on_box" | "proxy.target.timeout" | "proxy.target.unavailable" | "proxy.ticket.target_invalid" | "proxy.websockets.disabled" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.command.timed_out" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.disks_missing" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.pool.suspended" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "storage.zfs.unavailable" | "store.app.not_found" | "store.catalog.architecture_missing" | "store.catalog.built_in" | "store.catalog.busy" | "store.catalog.data_version_decreased" | "store.catalog.exists" | "store.catalog.id_reserved" | "store.catalog.invalid_json" | "store.catalog.mismatch" | "store.catalog.not_found" | "store.catalog.rule_violation" | "store.catalog.schema_violation" | "store.catalog.sequence_old" | "store.catalog.signature_invalid" | "store.catalog.unreachable" | "store.catalog.url_invalid" | "store.catalog.version_unsupported" | "store.package.hash_mismatch" | "system.backup.category_missing" | "system.backup.invalid" | "system.backup.password_wrong" | "system.backup.restore_expired" | "system.backup.restore_failed" | "system.backup.restore_running" | "system.backup.too_large" | "system.backup.too_new" | "system.internal.unexpected" | "system.origin.forbidden" | "system.time.apply_failed" | "system.time.server_invalid" | "system.time.servers_too_many" | "system.time.zone_invalid" | "system.ups.invalid" | "system.ups.unavailable" | "tls.custom.expired" | "tls.custom.invalid" | "tls.custom.key_mismatch" | "tls.issued.not_found" | "tls.name.invalid" | "tls.name.not_permitted" | "tls.names.missing" | "tls.names.too_many" | "tls.validity.out_of_range" | "update.apply.failed" | "update.apply.running" | "update.channel.invalid" | "update.channel.mismatch" | "update.channel.sequence_old" | "update.channel.signature_invalid" | "update.download.mismatch" | "update.file.architecture" | "update.file.channel" | "update.file.hash_mismatch" | "update.file.invalid" | "update.file.minimum" | "update.file.missing_entry" | "update.file.not_found" | "update.file.older" | "update.file.signature_invalid" | "update.file.too_large" | "update.file.unexpected_entry" | "update.none.available" | "update.rollback.unconfirmed" | "update.snapshot.not_found" | "update.source.invalid" | "update.source.unreachable" | "update.space.insufficient" | "update.system.unsupported" | "users.account.refused" | "users.gid.exhausted" | "users.group.builtin" | "users.group.description_invalid" | "users.group.exists" | "users.group.name_invalid" | "users.group.name_reserved" | "users.group.not_found" | "users.group.refused" | "users.uid.exhausted" | "users.user.exists" | "users.user.last_admin" | "users.user.not_found" | "users.user.self";
         /** @description A failed client message. `id` is empty when the message could not be parsed. */
         ErrorMessage: {
             code: components["schemas"]["ErrorCode"];
@@ -5330,6 +5476,80 @@ export type components = {
             /** @description How the desktop shows it. */
             tone: components["schemas"]["NotificationTone"];
         };
+        /**
+         * @description What a notification is about, so a channel can pick its events.
+         * @enum {unknown}
+         */
+        NotificationCategory: "storage" | "updates" | "backups" | "security" | "apps" | "system";
+        /** @description A channel that takes notifications beyond the desktop (D379). */
+        NotificationChannel: {
+            /** @description The events it gets. */
+            categories: components["schemas"]["NotificationCategory"][];
+            /** @description Off keeps it without sending. */
+            enabled: boolean;
+            /** @description Why the last delivery failed, until one works again. */
+            errorCode: null | string;
+            /** @description Its parameters. */
+            errorParams: null | Record<string, never>;
+            format: null | components["schemas"]["WebhookFormat"];
+            /** @description The names of the headers a webhook sends; their values never leave the box. */
+            headers: string[];
+            /**
+             * Format: int64
+             * @description Stable id.
+             */
+            id: number;
+            /** @description Email or webhook. */
+            kind: components["schemas"]["ChannelKind"];
+            /**
+             * Format: date-time
+             * @description When it last delivered something.
+             */
+            lastSentAt: null | string;
+            /** @description The least serious notification it gets. */
+            minLevel: components["schemas"]["NotificationLevel"];
+            /** @description The name its owner gave it. */
+            name: string;
+            /** @description The addresses of an email channel. */
+            recipients: string[];
+            /** @description The address of a webhook. */
+            url: null | string;
+        };
+        /** @description A user's channels or those of the box. */
+        NotificationChannelList: {
+            /** @description An administrator set up the SMTP server, so email channels can send. */
+            emailAvailable: boolean;
+            /** @description The channels, oldest first. */
+            items: components["schemas"]["NotificationChannel"][];
+            /**
+             * Format: int32
+             * @description How many channels there may be.
+             */
+            max: number;
+        };
+        /** @description A new or changed channel. */
+        NotificationChannelRequest: {
+            /** @description The events it gets; at least one. */
+            categories?: null | components["schemas"]["NotificationCategory"][];
+            /**
+             * @description Defaults to on.
+             * @default true
+             */
+            enabled: boolean;
+            format?: null | components["schemas"]["WebhookFormat"];
+            /** @description For a webhook: at most 10 headers. */
+            headers?: null | components["schemas"]["WebhookHeader"][];
+            /** @description Email or webhook; it cannot change later. */
+            kind: components["schemas"]["ChannelKind"];
+            /** @description Defaults to `warning`. */
+            minLevel?: components["schemas"]["NotificationLevel"];
+            /** @description 1 to 60 characters. */
+            name: string;
+            /** @description For email: 1 to 10 addresses. */
+            recipients?: null | string[];
+            /** @description For a webhook: an `http` or `https` address, never one of the box itself. */
+            url?: null | string;
+        };
         /** @description Event of the `notifications` topic. Only the user whose notifications changed receives it. */
         NotificationEvent: {
             /**
@@ -5380,6 +5600,16 @@ export type components = {
              */
             readAt: null | string;
         };
+        /** @description Body of `PUT /api/notifications/language`. */
+        NotificationLanguageRequest: {
+            /** @description The language the user's desktop uses, `en` or `de`. */
+            language: string;
+        };
+        /**
+         * @description How serious a notification is: from its tone, critical is `error`, a warning `warning`, the rest `info`.
+         * @enum {unknown}
+         */
+        NotificationLevel: "info" | "warning" | "error";
         /** @description Snapshot of the `notifications` topic and answer of `GET /api/notifications`. */
         NotificationList: {
             /** @description The signed-in user's notifications, newest first; at most 200, none older than 30 days. */
@@ -6599,6 +6829,50 @@ export type components = {
              */
             uncorrectableSectors: null | number;
         };
+        /** @description A new SMTP server, or none. */
+        SmtpRequest: {
+            /** @description The sender address. */
+            from?: null | string;
+            /** @description Empty removes the server. */
+            host: null | string;
+            /** @description A new password; null keeps the saved one, empty removes it. */
+            password?: null | string;
+            /**
+             * Format: int32
+             * @description 1 to 65535; defaults to 587.
+             * @default 587
+             */
+            port: number;
+            /** @description Defaults to STARTTLS. */
+            security?: components["schemas"]["SmtpSecurity"];
+            /** @description The sign-in name, or none. */
+            username?: null | string;
+        };
+        /**
+         * @description How the box talks to its SMTP server.
+         * @enum {unknown}
+         */
+        SmtpSecurity: "tls" | "startTls" | "none";
+        /** @description Settings &gt; Notifications, the SMTP server, without its password. */
+        SmtpStatus: {
+            /** @description A server is set; email channels can send. */
+            configured: boolean;
+            /** @description The sender address. */
+            from: null | string;
+            /** @description The server's name or address. */
+            host: null | string;
+            /** @description A password is saved. */
+            passwordSet: boolean;
+            /**
+             * Format: int32
+             * @description Its port.
+             */
+            port: number;
+            /** @description How the box talks to it. */
+            security: components["schemas"]["SmtpSecurity"];
+            /** @description The sign-in name, if it needs one. */
+            username: null | string;
+        };
         Snapshot: {
             /**
              * Format: date-time
@@ -7702,6 +7976,15 @@ export type components = {
             id: number;
             /** @description The network card or bond that carries the VLAN's tagged frames. */
             parent: string;
+        };
+        /** @enum {unknown} */
+        WebhookFormat: "json" | "ntfy" | null;
+        /** @description A header a webhook sends, for example a token. */
+        WebhookHeader: {
+            /** @description The header name. */
+            name: string;
+            /** @description Its value; in a request null keeps the value saved before under this name. */
+            value?: null | string;
         };
         /** @enum {integer} */
         WebSocketCloseCode: 1000 | 1001 | 1008 | 1009 | 4401 | 4403;
@@ -11447,6 +11730,194 @@ export interface operations {
             };
         };
     };
+    ListNotificationChannels: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationChannelList"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    CreateNotificationChannel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotificationChannelRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationChannel"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    UpdateNotificationChannel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotificationChannelRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationChannel"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    DeleteNotificationChannel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    TestNotificationChannel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationChannel"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SetNotificationLanguage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotificationLanguageRequest"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
     MarkNotificationsRead: {
         parameters: {
             query?: never;
@@ -13098,6 +13569,225 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["NetworkCheck"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    ListSystemNotificationChannels: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationChannelList"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    CreateSystemNotificationChannel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotificationChannelRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationChannel"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    UpdateSystemNotificationChannel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NotificationChannelRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationChannel"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    DeleteSystemNotificationChannel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    TestSystemNotificationChannel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NotificationChannel"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    GetNotificationSmtp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SmtpStatus"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    SetNotificationSmtp: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SmtpRequest"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SmtpStatus"];
                 };
             };
             /** @description Problem details with a stable error code. */

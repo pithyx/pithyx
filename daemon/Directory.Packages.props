@@ -8,6 +8,7 @@
     <PackageVersion Include="Dapper" Version="2.1.89" />
     <!-- 8.0.5 is the last release under MIT; from 9.0.0 on the NuGet binaries carry a maintenance fee EULA. -->
     <PackageVersion Include="JsonSchema.Net" Version="8.0.5" />
+    <PackageVersion Include="MailKit" Version="4.18.2" />
     <PackageVersion Include="Microsoft.AspNetCore.Mvc.Testing" Version="10.0.12" />
     <PackageVersion Include="Microsoft.AspNetCore.OpenApi" Version="10.0.12" />
     <PackageVersion Include="Microsoft.Data.Sqlite" Version="10.0.12" />

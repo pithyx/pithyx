@@ -41,15 +41,17 @@ public sealed partial class NotificationService : IDisposable
     private readonly TopicHub _hub;
     private readonly TimeProvider _time;
     private readonly ILogger<NotificationService> _logger;
+    private readonly NotificationOutbox _outbox;
     private readonly JsonSerializerOptions _storage;
 
     // One writer at a time, so memory and the published events follow the order of the database writes.
     private readonly SemaphoreSlim _writes = new(1, 1);
 
-    public NotificationService(NotificationStore store, SqliteConnectionFactory connections, TopicHub hub, TimeProvider time, IOptions<JsonOptions> json, ILogger<NotificationService> logger)
+    public NotificationService(NotificationStore store, SqliteConnectionFactory connections, TopicHub hub, TimeProvider time, IOptions<JsonOptions> json, NotificationOutbox outbox, ILogger<NotificationService> logger)
     {
         ArgumentNullException.ThrowIfNull(json);
         _store = store;
+        _outbox = outbox;
         _connections = connections;
         _hub = hub;
         _time = time;
@@ -117,6 +119,7 @@ public sealed partial class NotificationService : IDisposable
             });
             _store.Add(userId, notification, dropped);
             _hub.Publish(NotificationStore.Topic, new UserEvent(userId, new NotificationEvent(NotificationChange.Created, notification, dropped, null)));
+            _outbox.Post(new PendingDelivery(userId, draft.Code, notification.Params, draft.Tone, draft.App, now));
             LogCreated(id, draft.Code, userId);
             return notification;
         }
@@ -126,9 +129,15 @@ public sealed partial class NotificationService : IDisposable
         }
     }
 
-    /// <summary>Creates the same notification for every administrator. Returns how many there are.</summary>
+    /// <summary>
+    /// Creates the same notification for every administrator and hands it once to the box's channels (D379). Returns
+    /// how many administrators there are.
+    /// </summary>
     public async Task<int> CreateForAdministratorsAsync(NotificationDraft draft, CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(draft);
+        var parameters = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(JsonSerializer.Serialize(draft.Params, _storage), _storage) ?? [];
+        _outbox.Post(new PendingDelivery(null, draft.Code, parameters, draft.Tone, draft.App, _time.GetUtcNow()));
         List<long> administrators;
         await using (var connection = await _connections.OpenAsync(cancellationToken))
         {

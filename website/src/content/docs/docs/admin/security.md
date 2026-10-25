@@ -60,6 +60,9 @@ The box sends no data to the Pithyx project. These are the outbound connections 
 - **App catalogs**: git over HTTPS or SSH to each enabled catalog repository (the official and the community catalog are on and fetched from GitHub by default), once a day at the set time with a random delay of up to an hour, when you add a catalog, and on **Check now**. Switch a catalog off to stop it.
 - **Container images** of catalog apps from the registry the catalog names, unless the package carries them.
 - **Time**: with **Time servers** in Settings > **Regional settings** empty, the box uses the Debian defaults through systemd-timesyncd, which contacts public time servers.
+- **Notification channels**: the email server and the webhook addresses set up as [notification channels](/docs/admin/notifications/), when there is something to send or on **Send test**.
+- **Let's Encrypt**: the ACME authority of reverse proxy hosts with a certificate from it, to get and renew the certificate ([Reverse proxy](/docs/admin/reverse-proxy/#lets-encrypt)).
+- **UPS**: the NUT server of a UPS in the network, every 5 seconds ([UPS](/docs/admin/ups/)).
 - **Apps** that you allow the permission "Internet" get a second network with outbound access to the internet; other apps have none. Devices in your local network are reachable only for apps with the permission "Local network".
 
 Logs stay on the box under `/var/log/pithyx/`. Secrets are masked in logs. Passwords are stored as Argon2id hashes.

@@ -50,7 +50,7 @@ public sealed class StorageHealthMonitorTests : IAsyncDisposable
         _alerts = new StorageAlertService(_connections, _pools, _disks, _smart, _time, NullLogger<StorageAlertService>.Instance);
         _store = new NotificationStore(_connections);
         var hub = new TopicHub(new TopicRegistry([_alerts.Definition(), _store.Definition()]), _time, Options.Create(new JsonOptions()), NullLogger<TopicHub>.Instance);
-        _notifications = new NotificationService(_store, _connections, hub, _time, Options.Create(new JsonOptions()), NullLogger<NotificationService>.Instance);
+        _notifications = new NotificationService(_store, _connections, hub, _time, Options.Create(new JsonOptions()), new NotificationOutbox(), NullLogger<NotificationService>.Instance);
         _notifier = new StorageAlertNotifier(_connections, _notifications, _time, NullLogger<StorageAlertNotifier>.Instance);
         _monitor = new StorageHealthMonitor(_disks, _pools, _smart, _alerts, _notifier, _schedules, _commands, hub, _time, NullLogger<StorageHealthMonitor>.Instance);
         _commands.Handler = request => request.FileName switch

@@ -7,7 +7,7 @@ sidebar:
   order: 12
 ---
 
-Two administrator apps show what the box is doing: the Log Center (messages from the daemon, the system and apps) and the Resource Monitor (CPU, memory, network, disks and temperatures). Notifications reach people in the desktop only; there is no email or push.
+Two administrator apps show what the box is doing: the Log Center (messages from the daemon, the system and apps) and the Resource Monitor (CPU, memory, network, disks and temperatures). Notifications reach people in the desktop, and by email or webhook through [notification channels](/docs/admin/notifications/).
 
 ## The Log Center
 
@@ -35,4 +35,4 @@ It shows CPU in total and per core, and memory split into Programs, ZFS cache (A
 
 ## Notifications
 
-Each user has a list in the desktop (up to 200 entries, kept 30 days). Administrators get storage alerts (degraded or faulted pools, missing disks, data errors, 80 and 90 percent full, failing SMART values), job results, and the Store notices "App updates" and "Catalog not fetched". Apps with the permission to show notifications can post to the user who uses them.
+Each user has a list in the desktop (up to 200 entries, kept 30 days). Administrators get storage alerts (degraded or faulted pools, missing disks, data errors, 80 and 90 percent full, failing SMART values), job results, and the Store notices "App updates" and "Catalog not fetched". Apps with the permission to show notifications can post to the user who uses them. Administrators also hear about repeated failed sign-ins (five for one name or thirty from one address within five minutes), at most once an hour per address and name. Channels send all of this by email or webhook: see [Notifications by email and webhook](/docs/admin/notifications/).

@@ -74,3 +74,7 @@ Pithyx zeigt keine Liste deiner Sitzungen und kann deine anderen Geräte nicht v
 Datum, Uhrzeit und Zahlenformate folgen der Region und Zeitzone, die ein Administrator in den Einstellungen gesetzt hat.
 
 Deinen Anzeigenamen legt ein Administrator fest; du kannst ihn nicht selbst bearbeiten.
+
+## Benachrichtigungen per E-Mail oder Push
+
+Öffne das Pithyx-Menü, klick auf deinen Namen und wähle **Benachrichtigungskanäle**, um deine Benachrichtigungen auch ohne offenen Desktop zu bekommen: per **E-Mail** (sobald ein Administrator den E-Mail-Server eingerichtet hat) oder als **Webhook** an einen Push-Dienst wie ntfy oder Gotify. Jeder Kanal wählt seine **Ereignisse** und die am wenigsten ernste Benachrichtigung, die er bekommt (**Mindestens**); **Test senden** prüft ihn sofort. Bis zu 10 Kanäle pro Benutzer. Die Nachrichten sind in der Sprache deines Desktops. Details, Formate und Grenzen: [Benachrichtigungen per E-Mail und Webhook](/de/docs/admin/notifications/).

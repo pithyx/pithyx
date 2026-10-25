@@ -11,15 +11,16 @@ An app gets exactly the permissions it declares in `pithyx.json` and an administ
 
 ## The permissions
 
-| Permission         | Lets the app                                                                                                             |
-| ------------------ | ------------------------------------------------------------------------------------------------------------------------ |
-| `files.read`       | read files in shared folders (with `files.shares`) and files the user hands to it                                        |
-| `files.write`      | write those files                                                                                                        |
-| `files.shares`     | list the shared folders the user can use and browse them with the user's rights                                          |
-| `notifications`    | show notifications with `app.notify`                                                                                     |
-| `directory.read`   | list all users and groups with `app.directory.users()` and `groups()`                                                    |
-| `network.internet` | open connections to the internet from the window (`connect-src https:`) and from the backend                             |
-| `network.lan`      | open connections from the backend to other devices in the local network; the window and the box itself stay out of reach |
+| Permission               | Lets the app                                                                                                             |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| `files.read`             | read files in shared folders (with `files.shares`) and files the user hands to it                                        |
+| `files.write`            | write those files                                                                                                        |
+| `files.shares`           | list the shared folders the user can use and browse them with the user's rights                                          |
+| `notifications`          | show notifications with `app.notify`                                                                                     |
+| `notifications.external` | lets them also reach the users' email and webhook channels, together with `notifications`                                |
+| `directory.read`         | list all users and groups with `app.directory.users()` and `groups()`                                                    |
+| `network.internet`       | open connections to the internet from the window (`connect-src https:`) and from the backend                             |
+| `network.lan`            | open connections from the backend to other devices in the local network; the window and the box itself stay out of reach |
 
 Everything else needs no permission: the context, window calls, `app.storage`, `app.session`, logs, the backend and storage requests the administrator mapped. Which users may open the app at all is a separate grant per user and group, not a permission of the app.
 

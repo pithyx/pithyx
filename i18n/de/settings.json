@@ -163,6 +163,11 @@
       "title": "Gruppen",
       "description": "Gruppen, ihre Mitglieder und Rechte",
       "keywords": "gruppe team mitglieder rechte berechtigungen"
+    },
+    "notifications": {
+      "title": "Benachrichtigungen",
+      "description": "Der E-Mail-Server und die Kanäle der Box für ihre Warnungen",
+      "keywords": "benachrichtigungen e-mail email smtp server webhook ntfy gotify push warnungen kanäle"
     }
   },
   "info": {
@@ -1043,5 +1048,29 @@
     "runtimeLow": "Laufzeit-Grenze (Minuten)",
     "runtimeLowHint": "1 bis 60; standardmäßig 5.",
     "save": "Speichern"
+  },
+  "notifications": {
+    "smtp": {
+      "title": "E-Mail-Server",
+      "explain": "Die Box schickt E-Mails über diesen SMTP-Server, für ihre eigenen Kanäle und für die der Benutzer.",
+      "host": "Server",
+      "hostHint": "Name oder Adresse des SMTP-Servers. Lass ihn leer, um den Server zu entfernen.",
+      "port": "Port",
+      "security": "Verschlüsselung",
+      "securities": {
+        "tls": "TLS (meist Port 465)",
+        "startTls": "STARTTLS (meist Port 587)",
+        "none": "Keine, nur im lokalen Netz"
+      },
+      "username": "Benutzername (optional)",
+      "password": "Passwort",
+      "passwordSet": "Ein Passwort ist gespeichert. Gib nur ein neues ein, um es zu ersetzen.",
+      "from": "Absenderadresse",
+      "save": "Speichern"
+    },
+    "system": {
+      "title": "Kanäle der Box",
+      "explain": "Diese Kanäle bekommen die eigenen Warnungen des Systems (Speicher, Updates, die USV, falsche Anmeldungen und mehr) einmal für alle Administratoren. Jeder Benutzer, auch Administratoren, kann im Benutzermenü eigene Kanäle hinzufügen."
+    }
   }
 }

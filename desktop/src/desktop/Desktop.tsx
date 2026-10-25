@@ -1,5 +1,6 @@
 import {
   IconApps,
+  IconBell,
   IconLogin,
   IconColorSwatch,
   IconDeviceDesktop,
@@ -47,6 +48,7 @@ import { DesktopShell } from '../shell/DesktopShell';
 import { itemsQuery, settleItemWrites } from '../items/query';
 import { listenForMetaTap } from '../shell/metaTap';
 import { bannerAlert, useStorageAlerts } from '../shell/storageAlerts';
+import { useReportLanguage } from '../notifications/language';
 import { StartMenu } from '../shell/StartMenu';
 import { Taskbar } from '../shell/Taskbar';
 import type { RunningApp, TaskbarPosition } from '../shell/types';
@@ -169,6 +171,7 @@ function UserMenu({
   onTwoFactor,
   onFileDefaults,
   onStartupApps,
+  onChannels,
   onDone,
 }: {
   trigger: ReactNode;
@@ -178,6 +181,7 @@ function UserMenu({
   onTwoFactor: () => void;
   onFileDefaults: () => void;
   onStartupApps: () => void;
+  onChannels: () => void;
   /** After a choice that changes the desktop (another layout, a taskbar position). */
   onDone: () => void;
 }) {
@@ -206,6 +210,8 @@ function UserMenu({
               onFileDefaults();
             } else if (key === 'startup-apps') {
               onStartupApps();
+            } else if (key === 'channels') {
+              onChannels();
             }
           }}
         >
@@ -254,6 +260,9 @@ function UserMenu({
             </MenuItem>
             <MenuItem id="startup-apps" icon={<IconLogin size={18} stroke={1.75} />}>
               {t('menu.startupApps')}
+            </MenuItem>
+            <MenuItem id="channels" icon={<IconBell size={18} stroke={1.75} />}>
+              {t('menu.channels')}
             </MenuItem>
             <SubmenuTrigger>
               <MenuItem id="devices" icon={<IconDevices size={18} stroke={1.75} />}>
@@ -328,6 +337,11 @@ const TotpSetup = lazy(() =>
 const StartupAppsDialog = lazy(() =>
   import('./StartupAppsDialog').then(({ StartupAppsDialog }) => ({
     default: StartupAppsDialog,
+  })),
+);
+const ChannelsDialog = lazy(() =>
+  import('../notifications/ChannelsDialog').then(({ ChannelsDialog }) => ({
+    default: ChannelsDialog,
   })),
 );
 const FileDefaultsDialog = lazy(() =>
@@ -457,12 +471,14 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   const locale = useFormatLocale();
   const queryClient = useQueryClient();
   const permissions = user.permissions;
+  useReportLanguage(user.id, i18n.language);
   const status = useRealtime((state) => state.status);
   const now = useMinuteClock();
   const appName = useAppName();
   const [totpOpen, setTotpOpen] = useState(false);
   const [fileDefaultsOpen, setFileDefaultsOpen] = useState(false);
   const [startupAppsOpen, setStartupAppsOpen] = useState(false);
+  const [channelsOpen, setChannelsOpen] = useState(false);
   const [startOpen, setStartOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [switcherOpen, setSwitcherOpen] = useState(false);
@@ -712,6 +728,10 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
                       closeStart(false);
                       setStartupAppsOpen(true);
                     }}
+                    onChannels={() => {
+                      closeStart(false);
+                      setChannelsOpen(true);
+                    }}
                     onDone={() => {
                       closeStart(false);
                     }}
@@ -794,6 +814,15 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
               <p className={cx(styles.banner, styles.danger)} role="alert">
                 {t('realtime.stopped')}
               </p>
+            )}
+            {channelsOpen && (
+              <Suspense>
+                <ChannelsDialog
+                  onClose={() => {
+                    setChannelsOpen(false);
+                  }}
+                />
+              </Suspense>
             )}
             {startupAppsOpen && (
               <Suspense>

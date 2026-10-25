@@ -1,6 +1,6 @@
 import type { components } from '@pithyx/api-client';
 import { describe, expect, it } from 'vitest';
-import { jobProgress, kindKey, sourceApp } from './NotificationCenter';
+import { jobProgress, kindKey, messageParams, sourceApp } from './NotificationCenter';
 import { createdNotification } from './notificationFeed';
 
 type Job = components['schemas']['Job'];
@@ -101,5 +101,18 @@ describe('running jobs', () => {
       progress: 75,
     });
     expect(jobProgress(job('running'), 'Copy').progress).toBeNull();
+  });
+});
+
+describe('messageParams', () => {
+  it('keeps strings and numbers and names null and booleans for select', () => {
+    expect(
+      messageParams({ pool: 'tank', percent: 91, charge: null, official: true, nested: {} }),
+    ).toEqual({
+      pool: 'tank',
+      percent: 91,
+      charge: 'null',
+      official: 'true',
+    });
   });
 });

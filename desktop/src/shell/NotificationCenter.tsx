@@ -36,12 +36,17 @@ const TONES = {
   critical: 'danger',
 } as const satisfies Record<DaemonNotification['tone'], NotificationItem['tone']>;
 
-/** The parameters a message can use: strings and numbers. */
-function messageParams(params: Record<string, unknown>): Record<string, MessageParam> {
+/**
+ * The parameters a message can use: strings and numbers, and null and booleans as the words its `select` names (as
+ * the box renders them for email, D379).
+ */
+export function messageParams(params: Record<string, unknown>): Record<string, MessageParam> {
   const result: Record<string, MessageParam> = {};
   for (const [name, value] of Object.entries(params)) {
     if (typeof value === 'string' || typeof value === 'number') {
       result[name] = value;
+    } else if (value === null || typeof value === 'boolean') {
+      result[name] = String(value);
     }
   }
   return result;

@@ -18,6 +18,9 @@ public sealed class LoginRateLimiter(TimeProvider time)
 
     private sealed record Counter(DateTimeOffset WindowStart, int Failures);
 
+    /// <summary>A user name at an address (or an address for every name, with a null name) just reached its limit.</summary>
+    public event Action<SignInBlock>? Blocked;
+
     /// <summary>Throws <c>auth.rate.limited</c> with the seconds until the next attempt is allowed.</summary>
     public void EnsureAllowed(HttpContext context, string username)
     {
@@ -51,12 +54,18 @@ public sealed class LoginRateLimiter(TimeProvider time)
     public void RecordFailure(string address, string username)
     {
         var now = time.GetUtcNow();
-        foreach (var (key, _) in Keys(address, username))
+        var keys = Keys(address, username);
+        for (var i = 0; i < keys.Length; i++)
         {
-            _counters.AddOrUpdate(
+            var (key, limit) = keys[i];
+            var counter = _counters.AddOrUpdate(
                 key,
                 _ => new Counter(now, 1),
                 (_, counter) => counter.WindowStart + Window <= now ? new Counter(now, 1) : counter with { Failures = counter.Failures + 1 });
+            if (counter.Failures == limit)
+            {
+                Blocked?.Invoke(new SignInBlock(address, i == 0 ? username.Trim() : null, limit));
+            }
         }
     }
 
@@ -78,3 +87,6 @@ public sealed class LoginRateLimiter(TimeProvider time)
         }
     }
 }
+
+/// <summary>Failed sign-ins that reached a limit: from an address, for one user name or for any.</summary>
+public sealed record SignInBlock(string Address, string? Username, int Failures);
