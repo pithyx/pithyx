@@ -129,6 +129,75 @@ public sealed class FolderWatchTests : IDisposable
         Assert.All(moved.Events, data => Assert.False(data.GetProperty("resync").GetBoolean()));
     }
 
+    // #243: a batch timer that fired while it was created (a fake clock runs a due callback inline) stayed stored, so
+    // every later change of the folder waited behind it and never arrived.
+    [Fact]
+    public async Task KeepsReportingWhenTheBatchTimerFiresWhileItIsArmed()
+    {
+        var folder = Directory.CreateTempSubdirectory("pithyx-watch-");
+        try
+        {
+            var cache = new FolderCache();
+            using (var root = LinuxFs.OpenRoot(folder.FullName))
+            {
+                cache.Register(1, folder.FullName, LinuxFs.Stat(root, "").Id, "");
+            }
+            var topic = cache.Topics().Single();
+            using var watches = new FolderWatches(cache, new InlineClock());
+            Assert.True(watches.Ensure(topic));
+
+            foreach (var name in new[] { "first.txt", "second.txt" })
+            {
+                await File.WriteAllTextAsync(Path.Combine(folder.FullName, name), "x", Token);
+                using var wait = CancellationTokenSource.CreateLinkedTokenSource(Token);
+                wait.CancelAfter(TimeSpan.FromSeconds(10));
+                FolderEvent change;
+                do
+                {
+                    change = await watches.Events.ReadAsync(wait.Token);
+                }
+                while (!change.Changes.Changed.Any(entry => entry.Name == name));
+            }
+        }
+        finally
+        {
+            folder.Delete(recursive: true);
+        }
+    }
+
+    /// <summary>A clock whose timers fire at once, on the arming thread, whenever they get a due time.</summary>
+    private sealed class InlineClock : TimeProvider
+    {
+        public override ITimer CreateTimer(TimerCallback callback, object? state, TimeSpan dueTime, TimeSpan period)
+        {
+            var timer = new InlineTimer(callback, state);
+            timer.Change(dueTime, period);
+            return timer;
+        }
+
+        private sealed class InlineTimer(TimerCallback callback, object? state) : ITimer
+        {
+            private bool _disposed;
+
+            public bool Change(TimeSpan dueTime, TimeSpan period)
+            {
+                if (!_disposed && dueTime != Timeout.InfiniteTimeSpan)
+                {
+                    callback(state);
+                }
+                return !_disposed;
+            }
+
+            public void Dispose() => _disposed = true;
+
+            public ValueTask DisposeAsync()
+            {
+                _disposed = true;
+                return ValueTask.CompletedTask;
+            }
+        }
+    }
+
     [Fact]
     public async Task HidesUploadsInProgressAndStopsWatchingWithoutSubscribers()
     {
