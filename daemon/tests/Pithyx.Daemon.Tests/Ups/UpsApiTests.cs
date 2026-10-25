@@ -132,7 +132,9 @@ public sealed class UpsApiTests : IAsyncLifetime
         var state = await StateAsync(state => state.GetProperty("shutdownReason").ValueKind == JsonValueKind.String);
 
         Assert.Equal(reason, state.GetProperty("shutdownReason").GetString());
-        Assert.Equal(PowerAction.Shutdown, _factory.Services.GetRequiredService<SystemSettingsService>().SimulatedPower);
+        // The state names the reason a moment before the power action runs.
+        var system = _factory.Services.GetRequiredService<SystemSettingsService>();
+        await EventuallyAsync(() => Task.FromResult(system.SimulatedPower == PowerAction.Shutdown));
         await EventuallyAsync(async () => (await NotificationsAsync()).Contains(UpsService.ShutdownCode));
     }
 
