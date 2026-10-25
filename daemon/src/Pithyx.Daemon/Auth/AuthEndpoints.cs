@@ -14,6 +14,7 @@ public static class AuthEndpoints
         services.AddSingleton<SessionService>();
         services.AddSingleton<LoginChallenges>();
         services.AddSingleton<LoginRateLimiter>();
+        services.AddHostedService<SignInAlerts>();
         services.AddSingleton<AuthService>();
         services.AddAuthentication(SessionAuthenticationHandler.SchemeName)
             .AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, SessionAuthenticationHandler>(SessionAuthenticationHandler.SchemeName, null);

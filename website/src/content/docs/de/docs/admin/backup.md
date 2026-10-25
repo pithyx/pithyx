@@ -25,12 +25,12 @@ Die Datei ist mit AES-256-GCM verschlüsselt, unter einem Schlüssel, der aus de
 
 Kategorien, die du bei der Wiederherstellung wählen kannst:
 
-- **Benutzer und Gruppen**: Konten, Gruppen, Passwörter (auch für SMB und SFTP), Zwei-Faktor-Anmeldung, der Wiederherstellungsschlüssel, persönliche Einstellungen und Desktop-Anordnungen.
+- **Benutzer und Gruppen**: Konten, Gruppen, Passwörter (auch für SMB und SFTP), Zwei-Faktor-Anmeldung, der Wiederherstellungsschlüssel, persönliche Einstellungen, Desktop-Anordnungen und die Benachrichtigungskanäle der Benutzer und der Box.
 - **Freigegebene Ordner und Dateidienste**: freigegebene Ordner mit ihren Rechten und die Einstellungen für SMB, SFTP, WebDAV und FTP.
 - **Speicher-Einstellungen**: Snapshot-Zeitpläne (Wiederherstellungspunkte), Scrub- und Selbsttest-Zeitpläne.
-- **Systemeinstellungen**: Sprache, Formate, Zeitzone, Zeitserver und Aufbewahrung der Logs.
+- **Systemeinstellungen**: Sprache, Formate, Zeitzone, Zeitserver, Aufbewahrung der Logs, die USV und der E-Mail-Server für Benachrichtigungen.
 - **Zertifikate und Schlüssel**: die Zertifizierungsstelle und die Zertifikate der Box, hochgeladene Zertifikate von Hosts des Reverse Proxys und die SSH-Host-Schlüssel, soweit vorhanden.
-- **Reverse Proxy**: Proxy-Hosts (mit Basic-Auth-Benutzern als Hashes), Weiterleitungs-Hosts, Streams, was unbekannte Namen bekommen, und die Anmeldeadresse.
+- **Reverse Proxy**: Proxy-Hosts (mit Basic-Auth-Benutzern als Hashes), Weiterleitungs-Hosts, Streams, was unbekannte Namen bekommen, die Anmeldeadresse und das Let's-Encrypt-Konto (seine Zertifikate kommen mit **Zertifikate und Schlüssel**).
 - **Apps**: die App-Registry, Berechtigungen, Ordnerzuordnungen, Kataloge und der App-Pool. Die Dateien und Daten der Apps bleiben auf dem Pool.
 
 Nicht enthalten: Dateien auf Pools, App-Daten, Logs, Docker-Daten, Sitzungen, Jobs, Benachrichtigungen, der Index des Papierkorbs und die Netzwerkeinstellungen (Karten heißen auf anderer Hardware anders).

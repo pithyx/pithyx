@@ -7,7 +7,7 @@ sidebar:
   order: 12
 ---
 
-Zwei Administrator-Apps zeigen, was die Box tut: das Protokoll-Center (Meldungen des Daemons, des Systems und der Apps) und der Ressourcenmonitor (CPU, Arbeitsspeicher, Netzwerk, Platten und Temperaturen). Benachrichtigungen erreichen Menschen nur im Desktop; es gibt keine E-Mail und keinen Push.
+Zwei Administrator-Apps zeigen, was die Box tut: das Protokoll-Center (Meldungen des Daemons, des Systems und der Apps) und der Ressourcenmonitor (CPU, Arbeitsspeicher, Netzwerk, Platten und Temperaturen). Benachrichtigungen erreichen Menschen im Desktop und über [Benachrichtigungskanäle](/de/docs/admin/notifications/) per E-Mail oder Webhook.
 
 ## Das Protokoll-Center
 
@@ -35,4 +35,4 @@ Er zeigt die CPU insgesamt und pro Kern sowie den Arbeitsspeicher aufgeteilt in 
 
 ## Benachrichtigungen
 
-Jeder Benutzer hat im Desktop eine Liste (bis zu 200 Einträge, 30 Tage aufbewahrt). Administratoren bekommen Speicherwarnungen (beeinträchtigte oder ausgefallene Pools, fehlende Platten, Datenfehler, 80 und 90 Prozent voll, ausfallende SMART-Werte), Job-Ergebnisse und die Store-Hinweise „App-Updates“ und „Katalog nicht abgerufen“. Apps mit der Berechtigung, Benachrichtigungen zu zeigen, können an den Benutzer senden, der sie nutzt.
+Jeder Benutzer hat im Desktop eine Liste (bis zu 200 Einträge, 30 Tage aufbewahrt). Administratoren bekommen Speicherwarnungen (beeinträchtigte oder ausgefallene Pools, fehlende Platten, Datenfehler, 80 und 90 Prozent voll, ausfallende SMART-Werte), Job-Ergebnisse und die Store-Hinweise „App-Updates“ und „Katalog nicht abgerufen“. Apps mit der Berechtigung, Benachrichtigungen zu zeigen, können an den Benutzer senden, der sie nutzt. Administratoren erfahren außerdem von wiederholt falschen Anmeldungen (fünf für einen Namen oder dreißig von einer Adresse innerhalb von fünf Minuten), höchstens einmal pro Stunde je Adresse und Name. Kanäle senden all das per E-Mail oder Webhook: siehe [Benachrichtigungen per E-Mail und Webhook](/de/docs/admin/notifications/).

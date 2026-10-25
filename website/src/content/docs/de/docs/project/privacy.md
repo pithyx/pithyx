@@ -16,6 +16,9 @@ Pithyx ist dafür gebaut, vollständig auf deinem eigenen Rechner zu laufen: Es 
   - **Systemupdates.** Einmal am Tag liest die Box die Kanaldatei ihrer Update-Quelle (standardmäßig die Releases des Projekts auf GitHub) und die Paketlisten von Debian; ein Update, das du installierst, lädt seine Datei von dort.
   - **Kataloge.** Der Store holt jeden aktivierten Katalog mit Git (standardmäßig den offiziellen Katalog des Projekts auf GitHub, täglich geprüft) und lädt App-Images aus der Registry, die im Katalog genannt ist.
   - **Zeitserver.** Ist die Liste der Zeitserver unter Einstellungen > **Regionale Einstellungen** leer, nutzt der Zeitdienst des Systems (systemd-timesyncd) seine Debian-Standardwerte, das sind öffentliche Server.
+  - **Benachrichtigungen.** Nur wenn ein Administrator oder Benutzer sie einrichtet: der E-Mail-Server und die Webhook-Adressen der [Benachrichtigungskanäle](/de/docs/admin/notifications/).
+  - **Let's Encrypt.** Nur für einen Reverse-Proxy-Host mit einem Zertifikat von Let's Encrypt (oder einer anderen ACME-Zertifizierungsstelle, die du nennst): Die Box spricht mit der Zertifizierungsstelle, um es zu holen und zu erneuern.
+  - **USV.** Nur mit einer USV eines anderen NUT-Servers: Die Box liest sie von diesem Server.
   - **Apps.** Eine App mit der Berechtigung `network.internet` kann das Internet erreichen; Apps ohne sie nicht. Andere Geräte in deinem Netzwerk erreicht nur eine App mit der Berechtigung `network.lan`.
 - Ein Administrator kann die tägliche Update-Prüfung und Kataloge ausschalten und eigene Zeitserver setzen. Siehe [Was die Box verlässt](/de/docs/admin/security/#was-die-box-verlässt) und [Apps und Store](/de/docs/admin/apps-and-store/).
 

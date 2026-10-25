@@ -913,6 +913,34 @@
       },
       "expected": "enp2s0 cannot carry the VLAN vlan7: choose a network card or a bond."
     },
+    "notifications.channel.failed": {
+      "params": {
+        "detail": "HTTP 403"
+      },
+      "expected": "The channel could not deliver: HTTP 403"
+    },
+    "notifications.channel.invalid": {
+      "params": {
+        "field": "url"
+      },
+      "expected": "The channel was not saved: its address must start with http:// or https:// and may not be the box itself."
+    },
+    "notifications.channel.limit_reached": {
+      "params": {
+        "max": 10
+      },
+      "expected": "There are already 10 channels. Remove one first."
+    },
+    "notifications.channel.not_found": {
+      "params": {},
+      "expected": "This channel no longer exists."
+    },
+    "notifications.language.unsupported": {
+      "params": {
+        "language": "fr"
+      },
+      "expected": "The box cannot write in the language fr."
+    },
     "notifications.message.invalid": {
       "params": {
         "field": "title",
@@ -923,6 +951,16 @@
     "notifications.notification.not_found": {
       "params": {},
       "expected": "This notification no longer exists."
+    },
+    "notifications.smtp.invalid": {
+      "params": {
+        "field": "from"
+      },
+      "expected": "The email server was not saved: the sender is not a valid email address."
+    },
+    "notifications.smtp.missing": {
+      "params": {},
+      "expected": "Email channels need an email server. An administrator sets it up in Settings > Notifications."
     },
     "permissions.grant.invalid": {
       "params": {

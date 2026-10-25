@@ -102,7 +102,7 @@ website/  landing page and docs at pithyx.org (Astro + Starlight, GitHub Pages, 
 ## Errors and i18n
 
 - Stable codes `area.object.reason` (lowercase, dots, underscores inside words), e.g. `fs.file.not_found`. Defined once as C# constants; the TS union is generated. Exception: SDK transport codes (`sdkErrorCodes` in `sdk/src/errors.ts`), texts under `errors.sdk.*`.
-- RFC 9457 problem details with `code`, `params`, `detail` (English fallback), `requestId`. The API never returns translated text, except out-of-band channels (email, push; none built yet; the SSH MOTD is English for now) rendered server-side in the recipient's language.
+- RFC 9457 problem details with `code`, `params`, `detail` (English fallback), `requestId`. The API never returns translated text, except out-of-band channels (email and webhooks, D379; the SSH MOTD is English for now) rendered server-side in the recipient's language (`Localization/MessageTexts`, the plural rules of each language by hand).
 - No user-visible string literals; keys `area.screen.element`, errors under `errors.<code>`. English reference, German required, ICU plurals and params, German uses informal "du". Never name companies or their products (no other NAS vendors); open-source projects may be named.
 
 ## Tracing and logging

@@ -789,6 +789,34 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string NetworkVlanParentInvalid = "network.vlan.parent_invalid";
 
+    /// <summary>A notification channel is invalid; <c>params.field</c> names the field (name, kind, recipients, url, format, headers, categories).</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string NotificationsChannelInvalid = "notifications.channel.invalid";
+
+    /// <summary>A notification channel could not deliver; <c>params.detail</c> has the server's words or <c>timeout</c>.</summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string NotificationsChannelFailed = "notifications.channel.failed";
+
+    /// <summary>There are already <c>params.max</c> channels.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string NotificationsChannelLimitReached = "notifications.channel.limit_reached";
+
+    /// <summary>No channel with this id belongs to the user (or to the box, for the system's channels).</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string NotificationsChannelNotFound = "notifications.channel.not_found";
+
+    /// <summary>The box speaks no such language; <c>params.language</c> is the one asked for.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string NotificationsLanguageUnsupported = "notifications.language.unsupported";
+
+    /// <summary>The SMTP settings are invalid; <c>params.field</c> names the field (host, port, security, username, password, from).</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string NotificationsSmtpInvalid = "notifications.smtp.invalid";
+
+    /// <summary>An email channel needs the SMTP server an administrator sets up in Settings &gt; Notifications.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string NotificationsSmtpMissing = "notifications.smtp.missing";
+
     /// <summary>An app notification is invalid; <c>params.field</c> names the field (app, title, body), <c>params.maxLength</c> its limit.</summary>
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string NotificationsMessageInvalid = "notifications.message.invalid";

@@ -43,7 +43,8 @@
     "deviceDetail": "{count, plural, one {# window} other {# windows}}, {time}",
     "deviceDetailScreen": "{width} × {height}, {count, plural, one {# window} other {# windows}}, {time}",
     "fileDefaults": "Default apps",
-    "startupApps": "Open at sign-in"
+    "startupApps": "Open at sign-in",
+    "channels": "Notification channels"
   },
   "error": {
     "title": "Something went wrong",
@@ -301,5 +302,64 @@
     "intro": "These apps open when you sign in, on every device, in the order you ticked them. Windows you left open stay as they were. At most {max} apps.",
     "suggested": "Suggested by the app",
     "close": "Close"
+  },
+  "channels": {
+    "title": "Notification channels",
+    "intro": "Get your notifications by email or on a push service such as ntfy or Gotify, also when no desktop is open. Each channel picks its kinds of events and how serious they must be.",
+    "none": "No channels yet.",
+    "add": "Add channel",
+    "edit": "Edit",
+    "test": "Send test",
+    "tested": "The test was sent.",
+    "remove": "Remove",
+    "removeTitle": "Remove {name}?",
+    "removeExplain": "The channel gets nothing any more. The notifications in the desktop stay.",
+    "close": "Close",
+    "save": "Save",
+    "cancel": "Cancel",
+    "newTitle": "New channel",
+    "editTitle": "Edit {name}",
+    "name": "Name",
+    "kind": "Kind",
+    "kinds": {
+      "email": "Email",
+      "webhook": "Webhook"
+    },
+    "emailMissing": "Email needs an email server, which an administrator sets up in Settings > Notifications.",
+    "recipients": "Email addresses",
+    "recipientsHint": "Up to 10, separated by commas.",
+    "url": "Address",
+    "urlHint": "The box sends an HTTP POST there, for example https://ntfy.example.com/my-topic.",
+    "format": "Format",
+    "formats": {
+      "json": "JSON (also for Gotify)",
+      "ntfy": "ntfy"
+    },
+    "headers": "Headers",
+    "headersHint": "For example a token. Their values never leave the box; leave a value empty to keep the saved one.",
+    "headerName": "Header name",
+    "headerValue": "Value",
+    "headerSaved": "Saved",
+    "addHeader": "Add header",
+    "removeHeader": "Remove header {name}",
+    "categories": "Events",
+    "categoryNames": {
+      "storage": "Storage",
+      "updates": "Updates",
+      "backups": "Backups",
+      "security": "Security",
+      "apps": "Apps",
+      "system": "System"
+    },
+    "minLevel": "At least",
+    "levels": {
+      "info": "Everything",
+      "warning": "Warnings and errors",
+      "error": "Errors only"
+    },
+    "enabled": "Send notifications",
+    "off": "Off",
+    "lastSent": "Last sent {date}",
+    "never": "Nothing sent yet"
   }
 }

@@ -62,15 +62,16 @@ Required fields: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, 
 
 `permissions` is a required list (it can be empty) of unique values from this set:
 
-| Permission         | Lets the app                                                                                                                                         |
-| ------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `files.read`       | read files the user opens with it or picks in a desktop file dialog                                                                                  |
-| `files.write`      | write those files and save new files through the desktop save dialog                                                                                 |
-| `files.shares`     | browse every shared folder the user may access, with the user's own rights                                                                           |
-| `notifications`    | show notifications                                                                                                                                   |
-| `directory.read`   | list all users and groups                                                                                                                            |
-| `network.internet` | make outgoing connections to the internet from its window (`connect-src https:`) and its backend                                                     |
-| `network.lan`      | make outgoing connections from its backend to other devices in the local network (private, shared and link-local addresses); never to the box itself |
+| Permission               | Lets the app                                                                                                                                         |
+| ------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `files.read`             | read files the user opens with it or picks in a desktop file dialog                                                                                  |
+| `files.write`            | write those files and save new files through the desktop save dialog                                                                                 |
+| `files.shares`           | browse every shared folder the user may access, with the user's own rights                                                                           |
+| `notifications`          | show notifications                                                                                                                                   |
+| `notifications.external` | lets them also reach the users' email and webhook channels, together with `notifications`                                                            |
+| `directory.read`         | list all users and groups                                                                                                                            |
+| `network.internet`       | make outgoing connections to the internet from its window (`connect-src https:`) and its backend                                                     |
+| `network.lan`            | make outgoing connections from its backend to other devices in the local network (private, shared and link-local addresses); never to the box itself |
 
 An administrator confirms the list at install and can revoke each permission later; the app then receives a `permissionsChange` event. A permission that is new in an update waits for the administrator, and a revoked permission stays revoked across updates. Calling something without the permission fails with [`app.permission.denied`](/docs/reference/errors/#app.permission.denied).
 

@@ -49,7 +49,7 @@ public static class BackupDatabase
         [BackupCategory.Users] =
         [
             "users", "recovery_codes", "user_appearance", "user_file_defaults", "user_startup_apps", "window_preferences", "desktop_layouts", "desktop_items",
-            "groups", "group_members", "storage_alert_mutes",
+            "groups", "group_members", "storage_alert_mutes", "notification_channels", "user_languages",
         ],
         [BackupCategory.SharedFolders] = ["shares", "file_services"],
         [BackupCategory.Storage] = ["snapshot_schedules", "storage_schedules"],
@@ -63,7 +63,7 @@ public static class BackupDatabase
     public static readonly FrozenDictionary<BackupCategory, string[]> SettingKeys = new Dictionary<BackupCategory, string[]>
     {
         [BackupCategory.Users] = [Auth.AuthService.RecoveryKeySetting],
-        [BackupCategory.System] = [Logs.LogService.SettingsKey, Ups.UpsService.SettingsKey],
+        [BackupCategory.System] = [Logs.LogService.SettingsKey, Ups.UpsService.SettingsKey, Notifications.ChannelService.SmtpSettingsKey],
         [BackupCategory.SharedFolders] = [Users.Homes.PoolSetting, Users.Homes.QuotaSetting],
         [BackupCategory.Certificates] = [Tls.BoxCertificates.ExtraNamesSetting],
         [BackupCategory.Apps] = [Apps.AppRegistry.PoolSetting, .. Apps.Catalog.StoreService.BackupSettings],

@@ -137,7 +137,11 @@
     },
     "notifications": {
       "title": "Notifications",
-      "description": "Shows notifications to the user who uses it."
+      "description": "Shows notifications to the user who uses it.",
+      "external": {
+        "title": "Email and webhooks",
+        "description": "Its notifications also reach the email and webhook channels the users set up, not only the desktop."
+      }
     },
     "directory": {
       "read": {

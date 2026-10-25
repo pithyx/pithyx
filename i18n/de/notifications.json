@@ -199,6 +199,23 @@
       }
     }
   },
+  "auth": {
+    "signin": {
+      "blocked": {
+        "title": "Wiederholt falsche Anmeldungen",
+        "body": "{user, select, null {Jemand unter {address} hat sich in {minutes} Minuten {failures}-mal falsch angemeldet und muss warten.} other {Jemand unter {address} hat sich in {minutes} Minuten {failures}-mal falsch als {user} angemeldet und muss warten.}}"
+      }
+    }
+  },
+  "notifications": {
+    "channel": {
+      "test": {
+        "title": "Testbenachrichtigung",
+        "body": "Wenn du das liest, funktioniert der Kanal {name}."
+      },
+      "footer": "Gesendet von Pithyx auf {box}."
+    }
+  },
   "proxy": {
     "acme": {
       "renewal_failed": {

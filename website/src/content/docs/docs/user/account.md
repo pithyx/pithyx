@@ -74,3 +74,7 @@ Open the Pithyx menu, click your name and choose:
 Dates, times and number formats follow the region and time zone an administrator set in Settings.
 
 Your display name is set by an administrator; you cannot edit it yourself.
+
+## Notifications by email or push
+
+Open the Pithyx menu, click your name and choose **Notification channels** to get your notifications also when no desktop is open: by **Email** (once an administrator set up the email server) or as a **Webhook** to a push service such as ntfy or Gotify. Each channel picks its **Events** and the least serious notification it gets (**At least**); **Send test** checks it at once. Up to 10 channels per user. The messages are in the language of your desktop. Details, formats and limits: [Notifications by email and webhook](/docs/admin/notifications/).

@@ -62,15 +62,16 @@ Pflichtfelder: `manifestVersion`, `id`, `version`, `name`, `author`, `entry`, `s
 
 `permissions` ist eine Pflichtliste (sie kann leer sein) eindeutiger Werte aus dieser Menge:
 
-| Berechtigung       | Erlaubt der App                                                                                                                                           |
-| ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `files.read`       | Dateien lesen, die der Benutzer mit ihr öffnet oder in einem Dateidialog des Desktops wählt                                                               |
-| `files.write`      | diese Dateien schreiben und neue Dateien über den Speichern-Dialog des Desktops speichern                                                                 |
-| `files.shares`     | alle freigegebenen Ordner durchsuchen, auf die der Benutzer zugreifen darf, mit dessen eigenen Rechten                                                    |
-| `notifications`    | Benachrichtigungen anzeigen                                                                                                                               |
-| `directory.read`   | alle Benutzer und Gruppen auflisten                                                                                                                       |
-| `network.internet` | ausgehende Verbindungen ins Internet aus ihrem Fenster (`connect-src https:`) und ihrem Backend aufbauen                                                  |
-| `network.lan`      | ausgehende Verbindungen aus ihrem Backend zu anderen Geräten im lokalen Netzwerk aufbauen (private, geteilte und Link-local-Adressen); nie zur Box selbst |
+| Berechtigung             | Erlaubt der App                                                                                                                                           |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `files.read`             | Dateien lesen, die der Benutzer mit ihr öffnet oder in einem Dateidialog des Desktops wählt                                                               |
+| `files.write`            | diese Dateien schreiben und neue Dateien über den Speichern-Dialog des Desktops speichern                                                                 |
+| `files.shares`           | alle freigegebenen Ordner durchsuchen, auf die der Benutzer zugreifen darf, mit dessen eigenen Rechten                                                    |
+| `notifications`          | Benachrichtigungen anzeigen                                                                                                                               |
+| `notifications.external` | lässt sie mit `notifications` auch die E-Mail- und Webhook-Kanäle der Benutzer erreichen                                                                  |
+| `directory.read`         | alle Benutzer und Gruppen auflisten                                                                                                                       |
+| `network.internet`       | ausgehende Verbindungen ins Internet aus ihrem Fenster (`connect-src https:`) und ihrem Backend aufbauen                                                  |
+| `network.lan`            | ausgehende Verbindungen aus ihrem Backend zu anderen Geräten im lokalen Netzwerk aufbauen (private, geteilte und Link-local-Adressen); nie zur Box selbst |
 
 Ein Administrator bestätigt die Liste bei der Installation und kann jede Berechtigung später entziehen; die App bekommt dann ein `permissionsChange`-Ereignis. Eine Berechtigung, die in einem Update neu ist, wartet auf den Administrator, und eine entzogene Berechtigung bleibt über Updates hinweg entzogen. Ein Aufruf ohne die nötige Berechtigung schlägt mit [`app.permission.denied`](/de/docs/reference/errors/#app.permission.denied) fehl.
 

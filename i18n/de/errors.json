@@ -359,11 +359,24 @@
     }
   },
   "notifications": {
+    "channel": {
+      "invalid": "Der Kanal wurde nicht gespeichert: {field, select, name {sein Name ist leer oder länger als 60 Zeichen} kind {seine Art oder Stufe ist unbekannt} recipients {er braucht 1 bis 10 gültige E-Mail-Adressen} url {seine Adresse muss mit http:// oder https:// beginnen und darf nicht die Box selbst sein} format {sein Format ist unbekannt} headers {ein Header ist ungültig, reserviert oder doppelt, oder es sind mehr als 10} categories {er braucht mindestens eine Art von Ereignis} other {ein Wert ist ungültig}}.",
+      "failed": "Der Kanal konnte nicht zustellen: {detail}",
+      "limit_reached": "Es gibt schon {max} Kanäle. Entferne zuerst einen.",
+      "not_found": "Diesen Kanal gibt es nicht mehr."
+    },
+    "language": {
+      "unsupported": "Die Box kann nicht in der Sprache {language} schreiben."
+    },
     "message": {
       "invalid": "Die Benachrichtigung wurde nicht gesendet: {field, select, app {die App-ID ist ungültig} title {der Titel ist leer oder länger als {maxLength} Zeichen} other {der Text ist länger als {maxLength} Zeichen}}."
     },
     "notification": {
       "not_found": "Diese Benachrichtigung gibt es nicht mehr."
+    },
+    "smtp": {
+      "invalid": "Der E-Mail-Server wurde nicht gespeichert: {field, select, host {sein Name ist leer oder ungültig} port {der Port muss zwischen 1 und 65535 liegen} security {die Verschlüsselung ist unbekannt} username {der Benutzername ist zu lang} password {das Passwort ist zu lang} from {der Absender ist keine gültige E-Mail-Adresse} other {ein Wert ist ungültig}}.",
+      "missing": "E-Mail-Kanäle brauchen einen E-Mail-Server. Ein Administrator richtet ihn unter Einstellungen > Benachrichtigungen ein."
     }
   },
   "permissions": {

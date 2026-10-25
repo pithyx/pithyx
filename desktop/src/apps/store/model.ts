@@ -6,6 +6,7 @@ export const KNOWN_PERMISSIONS = [
   'files.write',
   'files.shares',
   'notifications',
+  'notifications.external',
   'directory.read',
   'network.internet',
   'network.lan',

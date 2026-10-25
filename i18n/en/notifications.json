@@ -199,6 +199,23 @@
       }
     }
   },
+  "auth": {
+    "signin": {
+      "blocked": {
+        "title": "Repeated failed sign-ins",
+        "body": "{user, select, null {Somebody at {address} failed to sign in {failures} times within {minutes} minutes and has to wait.} other {Somebody at {address} failed to sign in as {user} {failures} times within {minutes} minutes and has to wait.}}"
+      }
+    }
+  },
+  "notifications": {
+    "channel": {
+      "test": {
+        "title": "Test notification",
+        "body": "If you read this, the channel {name} works."
+      },
+      "footer": "Sent by Pithyx on {box}."
+    }
+  },
   "proxy": {
     "acme": {
       "renewal_failed": {
