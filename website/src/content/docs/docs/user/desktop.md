@@ -111,7 +111,7 @@ The desktop holds at most 200 items. Icons snap to a grid. On small screens they
 
 ## Keyboard shortcuts
 
-These window shortcuts work anywhere on the desktop except while you type in a text field:
+These window shortcuts work anywhere on the desktop except while you type in a text field, and except inside the window of an app from the Store or a file: such an app keeps its keys to itself, so click its title bar first.
 
 | Keys                                  | Action                                                        |
 | ------------------------------------- | ------------------------------------------------------------- |

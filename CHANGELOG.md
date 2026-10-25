@@ -31,6 +31,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The READMEs of `@pithyx/sdk`, `@pithyx/ui` and `@pithyx/cli` no longer call them release candidates; the packages are at `1.0.1` so npm shows the corrected pages.
 - `pithyx-release publish-sdk --latest` publishes a stable version straight to `latest` instead of failing.
 - **Open with** in Files lists each way with its icon and space between them, the apps that are the default for the type first, marks the current default with **Default** and moves between the choices with the arrow keys; the app file dialogs keep space between icon and name again (#274).
+- Docs: a file handle lasts as long as the window's connection (closing, reloading the app or the desktop ends it), the desktop's window shortcuts do not reach an app's frame, how a catalog builds a frontend, and the fields of the install preview (#270).
 - The file dialogs of apps (open and save) show the user's own home first and other users' homes under one entry **homes**, as Files does, instead of every home next to the shared folders; the list no longer scrolls sideways (#273).
 - A second window of a third-party app with `"instances": "multi"` connects to its app; it stayed on the loading placeholder and then showed an empty window, because a window that joined the app's context topic later never got its state (#271).
 

@@ -198,6 +198,7 @@ The desktop adds its own **Open** button to every notification of an app, next t
 
 ## Edge cases
 
+- **Keys** typed in the window stay in the app's frame: the desktop's Alt+Shift window shortcuts work there only after the focus left the frame (for example on the title bar), and the browser keeps Ctrl+N, Ctrl+T, Ctrl+W and Ctrl+Tab for itself. Give your app other shortcuts, such as Ctrl+S, Ctrl+O or Alt with a letter.
 - Events that happen while the window connects are not replayed; the init context already holds their result.
 - `visibilityChange` is the signal to pause timers and animations: a minimized window's frame stays visible to the browser.
 - After `connectionChange` with `online: false`, calls that need the box fail until it is back. Do not retry in a loop; wait for `online: true`.

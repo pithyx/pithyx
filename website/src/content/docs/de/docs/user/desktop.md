@@ -111,7 +111,7 @@ Der Desktop fasst höchstens 200 Elemente. Symbole rasten an einem Raster ein. A
 
 ## Tastenkürzel
 
-Diese Fenster-Tastenkürzel funktionieren überall auf dem Desktop, außer während du in ein Textfeld tippst:
+Diese Fenster-Tastenkürzel funktionieren überall auf dem Desktop, außer während du in ein Textfeld tippst, und außer im Fenster einer App aus dem Store oder aus einer Datei: Eine solche App behält ihre Tasten für sich, klicke also zuerst auf ihre Titelleiste.
 
 | Tasten                                  | Aktion                                                                               |
 | --------------------------------------- | ------------------------------------------------------------------------------------ |
