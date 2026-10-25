@@ -38,6 +38,8 @@ export interface BuildOptions {
   ociOut?: string | undefined;
   /** Pin `compose.yaml` and the lock to the archives in `ociOut` as pushed to `<pin>/<id>/<service>:<version>`. */
   pin?: string | undefined;
+  /** Accept an app id in `org.pithyx.*`, for the apps of the official catalog (D381). */
+  allowReservedId?: boolean | undefined;
 }
 
 /** The image reference of a built service: `<prefix>/<id>/<service>:<version>`. */
@@ -155,8 +157,8 @@ interface Prepared {
 }
 
 /** Reads the project and checks `compose.dev.yaml` as a catalog does; throws with every problem. */
-function prepare(folder: string): Prepared {
-  const project = readProject(folder);
+function prepare(folder: string, allowReservedId: boolean): Prepared {
+  const project = readProject(folder, { allowReservedId });
   const manifest = project.manifest;
   const compose = manifest?.backend?.compose;
   if (manifest === undefined || compose === undefined) {
@@ -231,7 +233,7 @@ async function writePinned(
  * nothing; `pin` then pins `compose.yaml` and the lock to those archives as a registry holds them after a push.
  */
 export async function build(folder: string, options: BuildOptions = {}): Promise<string[]> {
-  const prepared = prepare(folder);
+  const prepared = prepare(folder, options.allowReservedId === true);
   const { manifest, root, services } = prepared;
   const report: string[] = [];
   if (options.pin !== undefined) {

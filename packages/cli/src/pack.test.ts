@@ -176,6 +176,23 @@ describe('pithyx validate', () => {
     expect(lockTarget(readProject(copyProject('plain'), { frontend: 'build' })).kind).toBe('none');
   });
 
+  it('refuses an id in org.pithyx.* unless the official catalog packs it', async () => {
+    const root = copyProject('official');
+    const file = join(root, 'pithyx.json');
+    const manifest = JSON.parse(readFileSync(file, 'utf8')) as { id: string };
+    writeFileSync(file, JSON.stringify({ ...manifest, id: 'org.pithyx.fixture' }));
+    expect(codes(root)).toContain('error app.manifest.id_reserved');
+
+    const allowed = readProject(root, { frontend: 'build', allowReservedId: true });
+    expect(allowed.findings.filter((finding) => finding.level === 'error')).toEqual([]);
+    if (allowed.manifest === undefined) {
+      throw new Error('no manifest');
+    }
+    const target = join(scratch, packageName(allowed.manifest));
+    await pack(allowed, target);
+    expect(target.endsWith('org.pithyx.fixture-1.0.0.pithyxapp')).toBe(true);
+  });
+
   it('checks the manifest and the icon as the box does', () => {
     const root = copyProject('broken');
     writeFileSync(join(root, 'pithyx.json'), '{"manifestVersion": 1}');

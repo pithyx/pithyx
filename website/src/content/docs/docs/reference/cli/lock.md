@@ -14,7 +14,7 @@ sidebar:
 <!-- generated:cli-synopsis lock -->
 
 ```sh
-pithyx lock [project folder] [--frontend <folder>]
+pithyx lock [project folder] [--frontend <folder>] [--allow-reserved-id]
 ```
 
 <!-- /generated -->
@@ -23,9 +23,10 @@ pithyx lock [project folder] [--frontend <folder>]
 
 <!-- generated:cli-options lock -->
 
-| Option       | Value      | Type   | Default | Description        |
-| ------------ | ---------- | ------ | ------- | ------------------ |
-| `--frontend` | `<folder>` | string | `dist`  | The built frontend |
+| Option                | Value      | Type    | Default | Description                                                                                                                                                                                                                                  |
+| --------------------- | ---------- | ------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--frontend`          | `<folder>` | string  | `dist`  | The built frontend                                                                                                                                                                                                                           |
+| `--allow-reserved-id` | –          | boolean | off     | Let an id start with org.pithyx., which is reserved for the system apps and the official catalog: the app's id (validate, lock, build, pack, dev; a box still refuses it in a package from a file) or the id of catalog.json (catalog check) |
 
 <!-- /generated -->
 

@@ -14,7 +14,7 @@ sidebar:
 <!-- generated:cli-synopsis build -->
 
 ```sh
-pithyx build [project folder] [--oci-out <folder>] [--pin <prefix>]
+pithyx build [project folder] [--frontend <folder>] [--oci-out <folder>] [--pin <prefix>] [--allow-reserved-id]
 ```
 
 <!-- /generated -->
@@ -23,10 +23,12 @@ pithyx build [project folder] [--oci-out <folder>] [--pin <prefix>]
 
 <!-- generated:cli-options build -->
 
-| Option      | Value      | Type   | Default | Description                                                                                   |
-| ----------- | ---------- | ------ | ------- | --------------------------------------------------------------------------------------------- |
-| `--oci-out` | `<folder>` | string | –       | Write OCI archives &lt;service&gt;.tar for amd64 and arm64 there                              |
-| `--pin`     | `<prefix>` | string | –       | Pin to the archives of --oci-out as &lt;prefix&gt;/&lt;id&gt;/&lt;service&gt;:&lt;version&gt; |
+| Option                | Value      | Type    | Default | Description                                                                                                                                                                                                                                  |
+| --------------------- | ---------- | ------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--frontend`          | `<folder>` | string  | `dist`  | The built frontend                                                                                                                                                                                                                           |
+| `--oci-out`           | `<folder>` | string  | –       | Write OCI archives &lt;service&gt;.tar for amd64 and arm64 there                                                                                                                                                                             |
+| `--pin`               | `<prefix>` | string  | –       | Pin to the archives of --oci-out as &lt;prefix&gt;/&lt;id&gt;/&lt;service&gt;:&lt;version&gt;                                                                                                                                                |
+| `--allow-reserved-id` | –          | boolean | off     | Let an id start with org.pithyx., which is reserved for the system apps and the official catalog: the app's id (validate, lock, build, pack, dev; a box still refuses it in a package from a file) or the id of catalog.json (catalog check) |
 
 <!-- /generated -->
 
