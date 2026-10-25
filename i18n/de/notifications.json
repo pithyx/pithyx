@@ -198,5 +198,13 @@
         "body": "{problem, select, refused {Kein NUT-Server antwortet.} timeout {Der NUT-Server antwortet nicht rechtzeitig.} unknown_ups {Der NUT-Server kennt keine USV mit diesem Namen.} driver_not_connected {Es wurde keine USV gefunden, oder ihr Treiber ist ausgefallen.} data_stale {Die USV sendet keine Daten mehr.} access_denied {Benutzer oder Passwort ist falsch.} other {Der NUT-Server hat mit einem Fehler geantwortet.}} Ohne sie kann die Box bei einem Stromausfall nicht sauber herunterfahren."
       }
     }
+  },
+  "proxy": {
+    "acme": {
+      "renewal_failed": {
+        "title": "Zertifikat von {name} nicht erneuert",
+        "body": "Let's Encrypt hat es nicht erneuert. Einstellungen > Reverse Proxy zeigt, warum; die Box versucht es später noch einmal, und das aktuelle Zertifikat gilt bis zu seinem Ende."
+      }
+    }
   }
 }

@@ -5608,6 +5608,48 @@
         }
       }
     },
+    "/api/system/proxy/hosts/{id}/certificate": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Asks the ACME authority for the proxy host's certificate now, as a job, regardless of the wait after failures. Refused with proxy.acme.not_acme for a host with another certificate.",
+        "operationId": "RenewProxyHostCertificate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/system/proxy/redirects": {
       "post": {
         "tags": [
@@ -5724,6 +5766,118 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ProxySettings"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/proxy/redirects/{id}/certificate": {
+      "post": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Asks the ACME authority for the redirect host's certificate now, as a job.",
+        "operationId": "RenewProxyRedirectCertificate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Job"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/system/proxy/acme": {
+      "get": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. The ACME authority hosts get certificates from (Let's Encrypt unless changed), the contact address, its current terms of service and whether they are agreed.",
+        "operationId": "GetProxyAcme",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcmeAccount"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "System"
+        ],
+        "description": "Administrators only. Sets the ACME authority and the contact address, and agrees to the authority's current terms of service; another authority needs a new agreement.",
+        "operationId": "SetProxyAcme",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcmeAccountRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcmeAccount"
                 }
               }
             }
@@ -8792,6 +8946,131 @@
           }
         },
         "description": "Confirms a `sub` or `unsub`. For `sub`, the snapshots of matching topics follow."
+      },
+      "AcmeAccount": {
+        "required": [
+          "directory",
+          "email",
+          "termsOfService",
+          "termsAgreed",
+          "reachable"
+        ],
+        "type": "object",
+        "properties": {
+          "directory": {
+            "type": "string",
+            "description": "The authority's directory URL."
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The contact address, or none."
+          },
+          "termsOfService": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The authority's current terms of service, if its directory could be read."
+          },
+          "termsAgreed": {
+            "type": "boolean",
+            "description": "An administrator agreed to the terms; hosts may use the authority."
+          },
+          "reachable": {
+            "type": "boolean",
+            "description": "The directory could be read just now."
+          }
+        },
+        "description": "Settings &gt; Reverse proxy, the certificates from an ACME authority."
+      },
+      "AcmeAccountRequest": {
+        "type": "object",
+        "properties": {
+          "directory": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "An `https` directory URL, or none for Let's Encrypt."
+          },
+          "email": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "A contact address, or none."
+          },
+          "agreeToTerms": {
+            "type": "boolean",
+            "description": "The administrator agrees to the authority's current terms of service.",
+            "default": false
+          }
+        },
+        "description": "New ACME settings."
+      },
+      "AcmeCertificateStatus": {
+        "required": [
+          "status",
+          "notAfter",
+          "attemptedAt",
+          "retryAt",
+          "running",
+          "errorCode",
+          "errorParams"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "`pending` before the first certificate, `valid` or `failed` after the last try."
+          },
+          "notAfter": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The end of the certificate the host presents, if it has one.",
+            "format": "date-time"
+          },
+          "attemptedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the box last asked the authority.",
+            "format": "date-time"
+          },
+          "retryAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "When the box asks again by itself: before the end of the certificate, or later after failures.",
+            "format": "date-time"
+          },
+          "running": {
+            "type": "boolean",
+            "description": "A request to the authority runs now."
+          },
+          "errorCode": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Why the last try failed (an error code of `proxy.acme.*`)."
+          },
+          "errorParams": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "description": "Its parameters, for example the name and the authority's own words."
+          }
+        },
+        "description": "Where the certificate of a host from the ACME authority stands."
       },
       "ActiveCertificateSource": {
         "enum": [
@@ -11876,6 +12155,22 @@
           "notifications.notification.not_found",
           "permissions.grant.invalid",
           "proxy.access.denied",
+          "proxy.acme.caa",
+          "proxy.acme.connection",
+          "proxy.acme.directory_invalid",
+          "proxy.acme.dns",
+          "proxy.acme.email_invalid",
+          "proxy.acme.failed",
+          "proxy.acme.name_not_public",
+          "proxy.acme.name_rejected",
+          "proxy.acme.not_acme",
+          "proxy.acme.port_unavailable",
+          "proxy.acme.rate_limited",
+          "proxy.acme.running",
+          "proxy.acme.terms_required",
+          "proxy.acme.unauthorized",
+          "proxy.acme.unreachable",
+          "proxy.acme.wildcard",
           "proxy.address.denied",
           "proxy.address.invalid",
           "proxy.auth.required",
@@ -15488,7 +15783,8 @@
       "ProxyCertificateSource": {
         "enum": [
           "box",
-          "custom"
+          "custom",
+          "acme"
         ],
         "description": "Which certificate a host presents on 443."
       },
@@ -15537,7 +15833,8 @@
           "accessLog",
           "logSource",
           "createdAt",
-          "updatedAt"
+          "updatedAt",
+          "acme"
         ],
         "type": "object",
         "properties": {
@@ -15682,6 +15979,18 @@
             "type": "string",
             "description": "When it was last saved.",
             "format": "date-time"
+          },
+          "acme": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "With a certificate from the ACME authority: where it stands.",
+                "$ref": "#/components/schemas/AcmeCertificateStatus"
+              }
+            ],
+            "description": "Where the certificate of a host from the ACME authority stands."
           }
         },
         "description": "A proxy host as Settings shows it."
@@ -15871,7 +16180,8 @@
           "certificate",
           "presented",
           "createdAt",
-          "updatedAt"
+          "updatedAt",
+          "acme"
         ],
         "type": "object",
         "properties": {
@@ -15929,6 +16239,18 @@
             "type": "string",
             "description": "When it was last saved.",
             "format": "date-time"
+          },
+          "acme": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "With a certificate from the ACME authority: where it stands.",
+                "$ref": "#/components/schemas/AcmeCertificateStatus"
+              }
+            ],
+            "description": "Where the certificate of a host from the ACME authority stands."
           }
         },
         "description": "A redirect host as Settings shows it."

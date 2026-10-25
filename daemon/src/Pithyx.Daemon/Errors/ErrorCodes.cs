@@ -805,6 +805,70 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.Forbidden)]
     public const string ProxyAccessDenied = "proxy.access.denied";
 
+    /// <summary>The domain's CAA records forbid the ACME authority; <c>params.name</c> is the domain, <c>params.detail</c> the authority's words.</summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string ProxyAcmeCaa = "proxy.acme.caa";
+
+    /// <summary>The ACME authority could not reach the box on port 80 for a domain; <c>params.name</c>, <c>params.detail</c>.</summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string ProxyAcmeConnection = "proxy.acme.connection";
+
+    /// <summary>The ACME directory is not an <c>https</c> URL.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string ProxyAcmeDirectoryInvalid = "proxy.acme.directory_invalid";
+
+    /// <summary>The ACME authority found no DNS record of a domain; <c>params.name</c>, <c>params.detail</c>.</summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string ProxyAcmeDns = "proxy.acme.dns";
+
+    /// <summary>The contact address for the ACME authority is not an email address.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string ProxyAcmeEmailInvalid = "proxy.acme.email_invalid";
+
+    /// <summary>The ACME authority refused a certificate for another reason; <c>params.name</c>, <c>params.detail</c>.</summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string ProxyAcmeFailed = "proxy.acme.failed";
+
+    /// <summary>A public ACME authority never certifies the domain: an address, a single label or a local name; <c>params.name</c> is it.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string ProxyAcmeNameNotPublic = "proxy.acme.name_not_public";
+
+    /// <summary>The ACME authority does not certify the domain by its policy; <c>params.name</c>, <c>params.detail</c>.</summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string ProxyAcmeNameRejected = "proxy.acme.name_rejected";
+
+    /// <summary>The host does not use a certificate from the ACME authority.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string ProxyAcmeNotAcme = "proxy.acme.not_acme";
+
+    /// <summary>The box serves no plain HTTP port for proxy hosts, where the ACME authority checks a domain.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string ProxyAcmePortUnavailable = "proxy.acme.port_unavailable";
+
+    /// <summary>The certificate of the host is being requested from the ACME authority already.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string ProxyAcmeRunning = "proxy.acme.running";
+
+    /// <summary>The ACME authority's rate limit was reached; <c>params.name</c>, <c>params.detail</c>. The box tries again later.</summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string ProxyAcmeRateLimited = "proxy.acme.rate_limited";
+
+    /// <summary>Hosts use the ACME authority only after an administrator agreed to its terms of service.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string ProxyAcmeTermsRequired = "proxy.acme.terms_required";
+
+    /// <summary>Another server than the box answered the ACME authority's check of a domain; <c>params.name</c>, <c>params.detail</c>.</summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string ProxyAcmeUnauthorized = "proxy.acme.unauthorized";
+
+    /// <summary>The ACME authority's directory could not be read; <c>params.detail</c> is the address or the reason.</summary>
+    [ErrorStatus(HttpStatusCode.BadGateway)]
+    public const string ProxyAcmeUnreachable = "proxy.acme.unreachable";
+
+    /// <summary>A wildcard domain needs a DNS-01 check, which the box does not do; <c>params.name</c> is it.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string ProxyAcmeWildcard = "proxy.acme.wildcard";
+
     /// <summary>The proxy host does not let the client's address in (its allowed or denied addresses).</summary>
     [ErrorStatus(HttpStatusCode.Forbidden)]
     public const string ProxyAddressDenied = "proxy.address.denied";

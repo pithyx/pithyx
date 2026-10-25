@@ -198,5 +198,13 @@
         "body": "{problem, select, refused {No NUT server answers.} timeout {The NUT server does not answer in time.} unknown_ups {The NUT server has no UPS of that name.} driver_not_connected {No UPS was found, or its driver failed.} data_stale {The UPS stopped sending data.} access_denied {The user or password is wrong.} other {The NUT server answered with an error.}} Without it, the box cannot shut down cleanly on a power failure."
       }
     }
+  },
+  "proxy": {
+    "acme": {
+      "renewal_failed": {
+        "title": "Certificate of {name} not renewed",
+        "body": "Let's Encrypt did not renew it. Settings > Reverse proxy shows why; the box tries again later, and the current certificate stays until it ends."
+      }
+    }
   }
 }

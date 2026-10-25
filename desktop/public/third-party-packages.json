@@ -1,5 +1,5 @@
 {
-  "inputsHash": "3c35b9f403bfeddedb2a67359a3e4fbaece51249160c5e4d0ca686fd4fd9b9d3",
+  "inputsHash": "40bb91d7c7d549ab5146b90d8c23511567a668386f262cd5ed018fdb4449fee2",
   "entries": [
     {
       "name": "@babel/runtime",
@@ -210,6 +210,20 @@
       "license": "MIT",
       "source": "https://github.com/pmndrs/zustand",
       "licenseFile": "licenses/generated/c1e6e2665635.txt"
+    },
+    {
+      "name": "BouncyCastle.Cryptography",
+      "version": "2.7.0",
+      "license": "MIT",
+      "source": "https://www.bouncycastle.org/stable/nuget/csharp/website",
+      "licenseFile": "licenses/generated/be0592a6c76f.txt"
+    },
+    {
+      "name": "Certes",
+      "version": "4.1.0",
+      "license": "MIT",
+      "source": "https://github.com/fszlin/certes",
+      "licenseFile": "licenses/generated/cb4b2e6d2533.txt"
     },
     {
       "name": "Dapper",

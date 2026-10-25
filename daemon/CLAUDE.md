@@ -31,7 +31,7 @@ Rules for `daemon/`; the root `CLAUDE.md` applies as well.
 ```
 /usr/lib/pithyx/     binaries, read-only
 /etc/pithyx/         bootstrap only
-/var/lib/pithyx/     database and secrets (tls/: the box's certificate authority, its certificate and an uploaded one, D346; proxy-host-<id>.pem and .key: uploaded certificates of the reverse proxy, D347)
+/var/lib/pithyx/     database and secrets (tls/: the box's certificate authority, its certificate and an uploaded one, D346; proxy-host-<id>.pem and .key: uploaded certificates of the reverse proxy, D347; proxy-<host|redirect>-<id>-acme.pem and .key from the ACME authority and acme-account-<hash>.key, D378)
 /var/lib/pithyx/catalogs/<id>/  a catalog's shallow git repository (repo.git) and its verified copy per channel (stable, beta)
 /var/cache/pithyx/   rebuildable, safe to delete
 /var/log/pithyx/     logs: daemon.json files and logs.db (the Log Center, capped at 4 GB)

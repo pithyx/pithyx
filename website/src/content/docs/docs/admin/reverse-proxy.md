@@ -28,6 +28,7 @@ Answers stream through without buffering, so server-sent events and large downlo
 ### HTTPS
 
 - **Certificate**: **From the box's certificate authority** makes a certificate for the host's domains in memory (397 days, renewed 30 days before its end and whenever the authority changes). Every domain must lie inside the authority's scope ([`tls.name.not_permitted`](/docs/reference/errors/#tls.name.not_permitted)); add your own domain to the scope with a new authority in Settings > **Certificates**. **Upload my own** takes a certificate with its chain and unencrypted key in PEM that covers every domain ([`proxy.certificate.name_mismatch`](/docs/reference/errors/#proxy.certificate.name_mismatch)), for example one for a public domain. An expired or broken upload is replaced by the box's own certificate, and the host shows **No certificate** when it has none of its own.
+- **From Let's Encrypt** gets a free certificate that every device trusts, for public domains only; see [Let's Encrypt](#lets-encrypt).
 - The box picks the certificate by the name the browser asks for in the TLS handshake, on 443 and on 7484; a name without a host gets the box's own certificate.
 - **Redirect HTTP to HTTPS** (on by default) answers plain HTTP on 80 with a redirect to 443 (301 for GET and HEAD, 308 otherwise). Switched off, the host also answers on 80.
 - **Offer HTTP/2** (on by default) lets browsers use HTTP/2 on 443.
@@ -64,6 +65,18 @@ The sign-in happens on the box's web interface. If you reach a host from outside
 
 The list shows for each host whether its target answered when the page opened; **Check target** looks again.
 
+### Let's Encrypt
+
+A proxy host or redirect host with the certificate **From Let's Encrypt** gets one certificate for all its domains from Let's Encrypt (or another ACME authority) and renews it by itself a third of its lifetime before the end, 30 days for the usual 90. The box talks to the authority only for these hosts.
+
+1. In the section **Let's Encrypt** of Settings > **Reverse proxy**, read the **Terms of service**, agree to them and save. An email address is optional; the authority may write to it about the account. Another authority goes into **ACME directory** (an `https` address) and needs its own agreement.
+2. Point every domain of the host at the box's public address in DNS, and forward port 80 (and 443 for the visitors) of your router to the box. The authority checks each name over port 80 (HTTP-01); the box answers that check itself, for every host.
+3. Create or edit the host with the certificate **From Let's Encrypt**. The first request starts at once.
+
+The host shows where its certificate stands: waiting for the first one, valid until a date, or why the last request failed with the authority's own words, such as [`proxy.acme.dns`](/docs/reference/errors/#proxy.acme.dns) (a name has no address), [`proxy.acme.connection`](/docs/reference/errors/#proxy.acme.connection) (port 80 does not reach the box from the internet), [`proxy.acme.unauthorized`](/docs/reference/errors/#proxy.acme.unauthorized), [`proxy.acme.caa`](/docs/reference/errors/#proxy.acme.caa) or [`proxy.acme.rate_limited`](/docs/reference/errors/#proxy.acme.rate_limited). After a failure the box tries again after one hour, then waits twice as long each time up to a day; **Renew now** asks at once. Until the first certificate arrives, or when one could not be renewed, the host presents the box's own certificate. A failed renewal notifies the administrators.
+
+Wildcards ([`proxy.acme.wildcard`](/docs/reference/errors/#proxy.acme.wildcard)) and local names such as `nas.home.arpa`, `.local`, names without a dot or IP addresses ([`proxy.acme.name_not_public`](/docs/reference/errors/#proxy.acme.name_not_public)) cannot get a certificate from a public authority; use the box's own authority for those. Without agreed terms a host refuses the choice with [`proxy.acme.terms_required`](/docs/reference/errors/#proxy.acme.terms_required), and without the plain proxy port 80 with [`proxy.acme.port_unavailable`](/docs/reference/errors/#proxy.acme.port_unavailable).
+
 ## Redirect hosts
 
 A redirect host sends browsers from its domains to another address with 301, 302, 307 or 308. With **Keep path and query** a request for `/a?b=1` goes to the target address followed by `/a?b=1`. It presents a certificate on 443 like a proxy host.
@@ -78,8 +91,8 @@ A stream forwards a port of the box, TCP, UDP or both, byte for byte to a host a
 
 ## Security
 
-The proxy runs inside the daemon, which runs as root, and only administrators may set targets. Requests the proxy itself sent are recognized and refused with 508 ([`proxy.loop.detected`](/docs/reference/errors/#proxy.loop.detected)). The settings are in the configuration backup as the part **Reverse proxy**; uploaded certificates come with the part **Certificates** (files `proxy-host-<id>.pem` and `.key` next to the box's own).
+The proxy runs inside the daemon, which runs as root, and only administrators may set targets. Requests the proxy itself sent are recognized and refused with 508 ([`proxy.loop.detected`](/docs/reference/errors/#proxy.loop.detected)). The settings are in the configuration backup as the part **Reverse proxy**; uploaded certificates and those from Let's Encrypt come with the part **Certificates** (files `proxy-host-<id>.pem`, `proxy-host-<id>-acme.pem` (`proxy-redirect-<id>-acme.pem`) and their `.key` next to the box's own, with the account key `acme-account-<hash>.key`).
 
 ## Not built yet
 
-Load balancing with health checks, rules per path, rate limits and Let's Encrypt come later.
+Load balancing with health checks, rules per path, rate limits and certificates over DNS-01 (needed for wildcards) come later.

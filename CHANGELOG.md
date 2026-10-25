@@ -8,6 +8,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Added
 
+- Settings > Reverse proxy: proxy hosts and redirect hosts can take their certificate from Let's Encrypt or another ACME authority, for all their public domains over HTTP-01 on port 80, renewed by themselves, with the state and "Renew now" on each host and a notification when a renewal fails (D378, #194). Migration 0034; new error codes `proxy.acme.*`; `tools/dev-vm/acme-pebble.sh` runs the flow against Pebble.
 - Settings > UPS: the box watches a UPS on USB (through its own NUT server) or of another NUT server, notifies the administrators on battery and shuts down cleanly at a charge or runtime limit, when the UPS reports a low battery or when the NUT server's primary forces it; a UPS on USB then cuts its power so the box starts again with the power (D377, #195). New error codes `system.ups.invalid` and `system.ups.unavailable`; the image installs `nut-server` and `nut-client`.
 - Apps can add entries to the context menu of Files with the manifest's `fileActions`, for example "Extract here" on archives; the app opens with `launch.action` (the share, the folder and the selected names) and works on them with `files.shares` and the user's rights (D375). New error code `app.manifest.permission_missing`.
 

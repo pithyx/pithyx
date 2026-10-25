@@ -375,6 +375,24 @@
     "access": {
       "denied": "Du darfst {host} nicht öffnen. Ein Administrator kann dich beim Proxy-Host zulassen."
     },
+    "acme": {
+      "caa": "Das DNS von {name} erlaubt dieser Zertifizierungsstelle keine Zertifikate (CAA-Eintrag). {detail}",
+      "connection": "Die Zertifizierungsstelle hat {name} auf Port 80 nicht erreicht. Leite Port 80 deines Routers an die Box weiter und prüf die Firewall. {detail}",
+      "directory_invalid": "Das ACME-Verzeichnis muss eine https-Adresse sein.",
+      "dns": "{name} hat keinen öffentlichen DNS-Eintrag, der auf die Box zeigt. {detail}",
+      "email_invalid": "Gib eine gültige E-Mail-Adresse ein oder lass das Feld leer.",
+      "failed": "Die Zertifizierungsstelle hat kein Zertifikat für {name} ausgestellt. {detail}",
+      "name_not_public": "{name} ist keine öffentliche Domain. Let's Encrypt zertifiziert nur Namen im Internet; nutze dafür das eigene Zertifikat der Box.",
+      "name_rejected": "Die Zertifizierungsstelle stellt für {name} keine Zertifikate aus. {detail}",
+      "not_acme": "Dieser Host nutzt kein Zertifikat von Let's Encrypt.",
+      "port_unavailable": "Die Box antwortet hier nicht auf Port 80, wo Let's Encrypt die Domain prüft.",
+      "rate_limited": "Zu viele Anfragen für {name}; die Box versucht es später noch einmal. {detail}",
+      "running": "Das Zertifikat dieses Hosts wird bereits angefordert.",
+      "terms_required": "Stimm zuerst den Nutzungsbedingungen von Let's Encrypt zu.",
+      "unauthorized": "Für {name} hat auf Port 80 ein anderer Server geantwortet. Lass die Domain auf die Box zeigen und leite Port 80 an sie weiter. {detail}",
+      "unreachable": "Die ACME-Zertifizierungsstelle antwortet nicht ({detail}). Prüf die Internetverbindung der Box.",
+      "wildcard": "{name} ist ein Platzhalter. Let's Encrypt zertifiziert Platzhalter nur über DNS, was die Box nicht macht; gib stattdessen jeden Namen einzeln an."
+    },
     "address": {
       "denied": "Deine Adresse darf diese Seite nicht öffnen.",
       "invalid": "„{value}“ ist keine IP-Adresse und kein Bereich wie 192.168.1.0/24."

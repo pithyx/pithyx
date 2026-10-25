@@ -156,3 +156,9 @@ public sealed class ProxyTable
         return target.GetLeftPart(UriPartial.Authority) + combined + (query.HasValue ? query.Value : target.Query);
     }
 }
+
+/// <summary>A route with a certificate from the ACME authority.</summary>
+/// <param name="Name">Its file name, <c>proxy-host-&lt;id&gt;</c> or <c>proxy-redirect-&lt;id&gt;</c>, also its key in <c>proxy_acme</c>.</param>
+/// <param name="Domains">The names the certificate must cover.</param>
+/// <param name="Enabled">The route answers; a disabled one is not renewed.</param>
+public sealed record AcmeRoute(string Name, IReadOnlyList<string> Domains, bool Enabled);
