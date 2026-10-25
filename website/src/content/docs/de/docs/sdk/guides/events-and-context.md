@@ -198,6 +198,7 @@ Der Desktop fügt jeder Benachrichtigung einer App einen eigenen Knopf **Öffnen
 
 ## Sonderfälle
 
+- **Tasten**, die im Fenster getippt werden, bleiben im Frame der App: Die Alt+Shift-Fensterkürzel des Desktops wirken dort erst, wenn der Fokus den Frame verlassen hat (zum Beispiel auf der Titelleiste), und Strg+N, Strg+T, Strg+W und Strg+Tab behält der Browser für sich. Gib deiner App andere Kürzel, etwa Strg+S, Strg+O oder Alt mit einem Buchstaben.
 - Ereignisse, die passieren, während sich das Fenster verbindet, werden nicht nachgeliefert; der Startkontext enthält schon ihr Ergebnis.
 - `visibilityChange` ist das Signal, Timer und Animationen anzuhalten: Der Frame eines minimierten Fensters bleibt für den Browser sichtbar.
 - Nach `connectionChange` mit `online: false` scheitern Aufrufe, die die Box brauchen, bis sie zurück ist. Versuche es nicht in einer Schleife; warte auf `online: true`.

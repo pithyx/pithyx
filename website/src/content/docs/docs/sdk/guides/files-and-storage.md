@@ -191,7 +191,7 @@ Test with `app.supports(method)` before you offer a feature the desktop may not 
 ## Edge cases
 
 - **Paths** are relative to the location, with `/` between names and `""` for the root. A leading or doubled slash, `.`, `..` or a path over 4096 characters is refused with `sdk.request.invalid`. A name has 1 to 255 characters and no `/`.
-- **File handles** belong to the window that opened them and end with it. Store paths, never a `FileRef`; a stale one fails with `sdk.request.invalid`.
+- **File handles** belong to the window's connection to the desktop: closing the window, reloading the app (for example after `appUpdated`) or reloading the desktop ends them, also when the window comes back with its `app.session`. A stale handle fails with `sdk.request.invalid`. Store paths, never a `FileRef`. A file the user picked or opened with the app has no path the app learns, so such a file cannot be reopened after a reload; an app that must reopen files (an editor's tabs, recent files) asks for `files.shares` and lets the user browse with `files.list`, or keeps unsaved text in `app.session` and asks the user to open the file again.
 - **Time limits.** Every call fails after 15 seconds with `sdk.request.timeout` except the ones that last as long as a transfer or as the user takes: `files.upload`, `files.read`, `files.write`, `files.pick` and `files.saveAs`.
 - **Upload progress.** With an `upload` id, `files.upload` sends `uploadProgress` events with the bytes sent, and the upload shows in the taskbar with a cancel button.
 - **Pages.** A `limit` above 1000 is cut to 1000. Pass `nextCursor` as `cursor` for the next page; it stays valid while the folder changes. Symbolic links are listed as `symlink` and never followed.

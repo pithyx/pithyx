@@ -46,7 +46,9 @@ export type SizeClass = 'compact' | 'medium' | 'expanded';
 
 /**
  * A file the user handed to the app (opened with it, or picked in a desktop dialog). The app never learns where the
- * file is: `ref` is an opaque handle, valid for this user and app, that only the SDK file API accepts.
+ * file is: `ref` is an opaque handle that only the SDK file API accepts. It lasts as long as the window's connection:
+ * closing the window, reloading the app or reloading the desktop ends it, and a stale handle fails with
+ * `sdk.request.invalid`.
  */
 export interface FileRef {
   /** Opaque handle; only the SDK file API accepts it. */

@@ -93,7 +93,7 @@ curl -sS --cacert root-ca.crt -c cookies -H 'X-Pithyx-Request: 1' -H 'Content-Ty
   -d '{"username":"admin","password":"..."}' "$BOX/api/auth/login"
 curl -sS --cacert root-ca.crt -b cookies -H 'X-Pithyx-Request: 1' -H 'Content-Type: application/gzip' \
   -X PUT --data-binary @com.example.notes-1.0.0.pithyxapp "$BOX/api/apps/packages"
-# The answer is the preview: packageId, action, permissions, keptData, suggestedAccess, pool.
+# The answer is the preview: packageId, action, manifest (with its permissions), addedPermissions, keptData, suggestedAccess, pool.
 curl -sS --cacert root-ca.crt -b cookies -H 'X-Pithyx-Request: 1' -H 'Content-Type: application/json' \
   -d '{"pool":"tank","access":"everybody"}' "$BOX/api/apps/packages/<packageId>/install"
 # 202 with the job; follow it with GET /api/jobs/<id> until its state is succeeded or failed.
