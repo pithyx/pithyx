@@ -133,9 +133,17 @@ public sealed partial class UpsService(
     {
         if (mode == DaemonMode.Real && UsbAvailable)
         {
-            // A flag left by a shutdown that never came must not cut the power at the next one.
-            File.Delete(UpsRules.KillPowerFlag);
-            await ApplyNutAsync((await SettingsAsync(stoppingToken)).Mode == UpsMode.Usb, stoppingToken);
+            try
+            {
+                // A flag left by a shutdown that never came must not cut the power at the next one.
+                File.Delete(UpsRules.KillPowerFlag);
+                await ApplyNutAsync((await SettingsAsync(stoppingToken)).Mode == UpsMode.Usb, stoppingToken);
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+                // The box keeps running; the UPS watch below still reports what it can reach.
+                LogNutFilesFailed(exception);
+            }
         }
         while (!stoppingToken.IsCancellationRequested)
         {
@@ -374,6 +382,9 @@ public sealed partial class UpsService(
 
     [LoggerMessage(Level = LogLevel.Critical, Message = "Shutting down for the UPS: {Reason} (charge {Charge} %, runtime {Runtime} s)")]
     private partial void LogShutdown(string reason, int? charge, int? runtime);
+
+    [LoggerMessage(Level = LogLevel.Error, Message = "The NUT files in /etc/nut could not be written")]
+    private partial void LogNutFilesFailed(Exception exception);
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "systemctl {Arguments} for the UPS ended with {ExitCode}")]
     private partial void LogNutFailed(string arguments, int exitCode);
