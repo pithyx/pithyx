@@ -30,7 +30,7 @@ The status line shows how many items the folder holds, or how many you selected.
 
 Opening a file depends on its type: pictures, PDFs, text, audio and video open in the Viewer; other files download. An installed app that is the only one to declare itself the default for a file type opens it instead. To choose, right-click and pick **Open with…**, then an installed app that declares it opens this file type, **Viewer** or **Download**; apps that declare themselves the default for the type come first, and **Default** marks what a double click does now. Tick **Always open .x files this way** before you choose, and every file of that type opens this way from then on, on every device you sign in to. Your choices are in the account menu under **Default apps**, where **Forget** goes back to the usual way. A choice of an app that was removed is ignored. Names that start with `.pithyx-upload-` and the folder `.pithyx-trash` are internal and not shown.
 
-Right-click an item for its menu: **Open**, **Download**, **Open with…**, **Copy**, **Cut**, **Rename**, **Previous versions**, **Move to recycle bin** and **Delete permanently**. Right-click an empty spot for **New folder**, **Upload**, **Paste** (after you copied or cut something) and **Select all**. Actions that change something appear only when you may write to the shared folder. Installed apps can add their own entries for the files they handle, for example **Extract here** on an archive; they appear when every selected item fits and work with your rights.
+Right-click an item for its menu: **Open**, **Download**, **Open with…**, **Copy**, **Cut**, **Rename**, **Previous versions**, **Move to recycle bin** and **Delete permanently**. Right-click an empty spot for **New folder**, **New file**, **Upload**, **Paste** (after you copied or cut something) and **Select all**. Actions that change something appear only when you may write to the shared folder. Installed apps can add their own entries for the files they handle, for example **Extract here** on an archive; they appear when every selected item fits and work with your rights.
 
 ### Previous versions
 
@@ -63,6 +63,7 @@ _The dialog when names already exist in the target folder._
 - **Drag and drop:** dragging items onto another folder, a part of the path above the list or a share in the sidebar moves them there (a share you may only read takes nothing). Hold **Ctrl** or **Alt** while dropping to copy.
 - **Rename:** press **F2** or choose **Rename**. A name must not be empty, must not contain `/` and may be at most 255 bytes long.
 - **New folder:** choose **New folder**, then type its name.
+- **New file:** choose **New file** (in the menu of an empty spot or the button above the list), then type its name with the extension, for example `conf.toml`. The file starts empty; double-click it to open it with its default app.
 
 Copying and moving run in the background with progress and a cancel button. One request handles up to 1000 selected items. Symbolic links are not copied. A folder cannot be copied or moved into itself.
 

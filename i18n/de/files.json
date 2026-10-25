@@ -46,6 +46,7 @@
     "download": "Herunterladen",
     "upload": "Hochladen",
     "newFolder": "Neuer Ordner",
+    "newFile": "Neue Datei",
     "rename": "Umbenennen",
     "copy": "Kopieren",
     "cut": "Ausschneiden",
@@ -71,6 +72,7 @@
     "purgeBody": "{count, plural, one {# Element wird} other {# Elemente werden}} endgültig gelöscht. Das lässt sich nicht rückgängig machen.",
     "purgeConfirm": "Endgültig löschen",
     "newFolderName": "Neuer Ordner",
+    "newFileName": "Neue Datei",
     "conflict": {
       "skip": "Überspringen",
       "overwrite": "Ersetzen",

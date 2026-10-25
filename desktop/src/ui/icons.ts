@@ -40,6 +40,7 @@ export { default as IconEyeOff } from '@tabler/icons-react/dist/esm/icons/IconEy
 export { default as IconFilter } from '@tabler/icons-react/dist/esm/icons/IconFilter.mjs';
 export { default as IconFingerprint } from '@tabler/icons-react/dist/esm/icons/IconFingerprint.mjs';
 export { default as IconFile } from '@tabler/icons-react/dist/esm/icons/IconFile.mjs';
+export { default as IconFilePlus } from '@tabler/icons-react/dist/esm/icons/IconFilePlus.mjs';
 export { default as IconFileText } from '@tabler/icons-react/dist/esm/icons/IconFileText.mjs';
 export { default as IconFileTypePdf } from '@tabler/icons-react/dist/esm/icons/IconFileTypePdf.mjs';
 export { default as IconFileZip } from '@tabler/icons-react/dist/esm/icons/IconFileZip.mjs';

@@ -5,6 +5,7 @@ import {
   IconDownload,
   IconExternalLink,
   IconEye,
+  IconFilePlus,
   IconFolderPlus,
   IconHistory,
   IconPencil,
@@ -28,6 +29,7 @@ export type FilesAction =
   | 'delete'
   | 'deletePermanent'
   | 'newFolder'
+  | 'newFile'
   | 'upload'
   | 'selectAll';
 
@@ -163,6 +165,11 @@ export function FilesMenu({
             {writable && (
               <MenuItem id="newFolder" icon={<IconFolderPlus {...icon} />}>
                 {t('actions.newFolder')}
+              </MenuItem>
+            )}
+            {writable && (
+              <MenuItem id="newFile" icon={<IconFilePlus {...icon} />}>
+                {t('actions.newFile')}
               </MenuItem>
             )}
             {writable && (
