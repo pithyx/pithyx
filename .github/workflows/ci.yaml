@@ -87,7 +87,7 @@ jobs:
       # other failure fails the job (tools/checks/dotnet-test-retry.ts).
       - run: >-
           node tools/checks/dotnet-test-retry.ts -- --solution daemon/Pithyx.slnx --configuration Release --no-build
-          --filter-not-trait "Category=StorageIntegration" --filter-not-trait "Category=DockerIntegration" --filter-not-trait "Category=NetworkIntegration" --filter-not-trait "Category=TimingBudget"
+          --filter-not-trait "Category=StorageIntegration" --filter-not-trait "Category=DockerIntegration" --filter-not-trait "Category=NetworkIntegration" --filter-not-trait "Category=TimingBudget" --filter-not-trait "Category=AcmeIntegration"
       # Only whitespace: the build already fails on every style and analyzer warning (EnforceCodeStyleInBuild), and the full
       # format run compiled the solution a second time (D350).
       - run: dotnet format whitespace daemon/Pithyx.slnx --verify-no-changes

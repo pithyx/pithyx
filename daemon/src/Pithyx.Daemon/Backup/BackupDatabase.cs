@@ -67,7 +67,7 @@ public static class BackupDatabase
         [BackupCategory.SharedFolders] = [Users.Homes.PoolSetting, Users.Homes.QuotaSetting],
         [BackupCategory.Certificates] = [Tls.BoxCertificates.ExtraNamesSetting],
         [BackupCategory.Apps] = [Apps.AppRegistry.PoolSetting, .. Apps.Catalog.StoreService.BackupSettings],
-        [BackupCategory.ReverseProxy] = [ReverseProxy.ProxyService.UnknownHostsSetting, ReverseProxy.ProxyService.SignInAddressSetting],
+        [BackupCategory.ReverseProxy] = [ReverseProxy.ProxyService.UnknownHostsSetting, ReverseProxy.ProxyService.SignInAddressSetting, ReverseProxy.AcmeService.SettingsKey],
     }.ToFrozenDictionary();
 
     /// <summary>Tables a restore handles on their own: rights are rebuilt, allocations merged, settings go by key.</summary>
