@@ -3,6 +3,8 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
   <ItemGroup>
+    <!-- ACME (MIT) for certificates from Let's Encrypt for proxy hosts (D378); brings BouncyCastle.Cryptography (MIT). -->
+    <PackageVersion Include="Certes" Version="4.1.0" />
     <PackageVersion Include="Dapper" Version="2.1.89" />
     <!-- 8.0.5 is the last release under MIT; from 9.0.0 on the NuGet binaries carry a maintenance fee EULA. -->
     <PackageVersion Include="JsonSchema.Net" Version="8.0.5" />

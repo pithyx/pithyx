@@ -80,7 +80,7 @@ public static class BackupDatabase
     public static readonly FrozenSet<string> NotBackedUp = new[]
     {
         "sessions", "jobs", "notifications", "storage_alert_notices", "storage_schedule_runs", "trash_items",
-        "network_config", "network_pending", "system_updates", "proxy_sessions",
+        "network_config", "network_pending", "system_updates", "proxy_sessions", "proxy_acme",
     }.ToFrozenSet();
 
     /// <summary>Copies the live database to <paramref name="path"/> without its runtime state.</summary>

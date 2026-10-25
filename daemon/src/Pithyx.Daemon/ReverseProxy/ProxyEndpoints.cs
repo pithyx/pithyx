@@ -10,6 +10,8 @@ public static class ProxyEndpoints
     public static IServiceCollection AddPithyxReverseProxy(this IServiceCollection services)
     {
         services.AddSingleton<ProxyService>();
+        services.AddSingleton<AcmeRuntime>();
+        services.AddSingleton<AcmeService>();
         services.AddSingleton<ProxySignIn>();
         services.AddSingleton<StreamForwarder>();
         return services;
@@ -67,6 +69,11 @@ public static class ProxyEndpoints
             .WithName("CheckProxyTarget")
             .WithDescription("Administrators only. Whether a proxy host's target answers one request, with the host's TLS settings.");
 
+        proxy.MapPost("/hosts/{id:long}/certificate", async Task<Ok<Jobs.Job>> (long id, AcmeService acme, HttpContext context, CancellationToken cancellationToken) =>
+                TypedResults.Ok(await acme.RenewAsync(context.User, ProxyService.RouteName(isHost: true, id), cancellationToken)))
+            .WithName("RenewProxyHostCertificate")
+            .WithDescription("Administrators only. Asks the ACME authority for the proxy host's certificate now, as a job, regardless of the wait after failures. Refused with proxy.acme.not_acme for a host with another certificate.");
+
         proxy.MapPost("/redirects", async Task<Ok<ProxySettings>> (ProxyRedirectRequest request, ProxyService service, StreamForwarder streams, CancellationToken cancellationToken) =>
             {
                 await service.SaveRedirectAsync(null, request, cancellationToken);
@@ -88,6 +95,20 @@ public static class ProxyEndpoints
             })
             .WithName("DeleteProxyRedirect")
             .WithDescription("Administrators only. Removes a redirect host.");
+
+        proxy.MapPost("/redirects/{id:long}/certificate", async Task<Ok<Jobs.Job>> (long id, AcmeService acme, HttpContext context, CancellationToken cancellationToken) =>
+                TypedResults.Ok(await acme.RenewAsync(context.User, ProxyService.RouteName(isHost: false, id), cancellationToken)))
+            .WithName("RenewProxyRedirectCertificate")
+            .WithDescription("Administrators only. Asks the ACME authority for the redirect host's certificate now, as a job.");
+
+        proxy.MapGet("/acme", async Task<Ok<AcmeAccount>> (AcmeService acme, CancellationToken cancellationToken) =>
+                TypedResults.Ok(await acme.AccountAsync(cancellationToken)))
+            .WithName("GetProxyAcme")
+            .WithDescription("Administrators only. The ACME authority hosts get certificates from (Let's Encrypt unless changed), the contact address, its current terms of service and whether they are agreed.");
+        proxy.MapPut("/acme", async Task<Ok<AcmeAccount>> (AcmeAccountRequest request, AcmeService acme, CancellationToken cancellationToken) =>
+                TypedResults.Ok(await acme.SetAccountAsync(request, cancellationToken)))
+            .WithName("SetProxyAcme")
+            .WithDescription("Administrators only. Sets the ACME authority and the contact address, and agrees to the authority's current terms of service; another authority needs a new agreement.");
 
         proxy.MapPost("/streams", async Task<Ok<ProxySettings>> (ProxyStreamRequest request, ProxyService service, StreamForwarder streams, Firewall firewall, CancellationToken cancellationToken) =>
             {

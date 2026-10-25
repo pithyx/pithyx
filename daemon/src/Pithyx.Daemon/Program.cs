@@ -171,6 +171,7 @@ if (!BuildTimeDocument.IsGenerating)
         builder.Services.AddHostedService(services => services.GetRequiredService<BoxCertificates>());
         builder.Services.AddHostedService(services => services.GetRequiredService<Pithyx.Daemon.FileServices.Ftp.FtpServer>());
         builder.Services.AddHostedService(services => services.GetRequiredService<ProxyService>());
+        builder.Services.AddHostedService(services => services.GetRequiredService<Pithyx.Daemon.ReverseProxy.AcmeService>());
         builder.Services.AddHostedService(services => services.GetRequiredService<StreamForwarder>());
     }
 }

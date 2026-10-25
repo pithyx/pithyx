@@ -117,7 +117,7 @@
     "reverseProxy": {
       "title": "Reverse Proxy",
       "description": "Eigene Domains auf den Ports 443 und 80, Weiterleitungen und weitergeleitete Ports",
-      "keywords": "reverse proxy domain hostname vhost https tls sni zertifikat weiterleitung redirect port stream tcp udp websocket basic auth anmeldung hsts"
+      "keywords": "reverse proxy domain hostname vhost https tls sni zertifikat weiterleitung redirect port stream tcp udp websocket basic auth anmeldung hsts lets encrypt acme"
     },
     "regional": {
       "title": "Regionale Einstellungen",
@@ -497,6 +497,27 @@
       "signInAddress": "Anmeldeadresse",
       "signInAddressHint": "Wohin Hosts mit Pithyx-Anmeldung Besucher schicken, zum Beispiel https://nas.home.arpa:7484. Leer lassen, um den aufgerufenen Namen auf Port 7484 zu nehmen."
     },
+    "acme": {
+      "title": "Let's Encrypt",
+      "explain": "Hosts mit einem Zertifikat von Let's Encrypt bekommen es über Port 80 (HTTP-01) und erneuern es 30 Tage vor seinem Ende. Let's Encrypt ist eine kostenlose Zertifizierungsstelle im Internet; die Box spricht nur für diese Hosts mit ihr.",
+      "terms": "Nutzungsbedingungen",
+      "agree": "Ich stimme den Nutzungsbedingungen der Zertifizierungsstelle zu",
+      "agreed": "Den Nutzungsbedingungen ist zugestimmt.",
+      "unreachable": "Die Zertifizierungsstelle antwortet gerade nicht. Prüf die Internetverbindung der Box.",
+      "email": "E-Mail-Adresse (optional)",
+      "emailHint": "Die Zertifizierungsstelle darf dir zu dem Konto schreiben.",
+      "directory": "ACME-Verzeichnis",
+      "directoryHint": "Let's Encrypt, außer du nutzt eine andere ACME-Zertifizierungsstelle; eine andere braucht eine neue Zustimmung.",
+      "save": "Speichern",
+      "status": {
+        "pending": "Wartet auf das erste Zertifikat",
+        "valid": "Gültig bis {date}",
+        "failed": "Die letzte Anfrage ist fehlgeschlagen",
+        "running": "Zertifikat wird angefordert",
+        "retry": "Nächster Versuch: {date}"
+      },
+      "renew": "Jetzt erneuern"
+    },
     "badges": {
       "disabled": "Aus",
       "signIn": "Pithyx-Anmeldung",
@@ -569,8 +590,10 @@
       "label": "Zertifikat",
       "box": "Von der Zertifizierungsstelle der Box",
       "custom": "Eigenes hochladen",
+      "acme": "Von Let's Encrypt",
       "boxHint": "Die Box stellt ein Zertifikat für die Domains aus. Sie müssen im Bereich ihrer Zertifizierungsstelle liegen (Einstellungen > Zertifikate); Geräte, die der Root der Box vertrauen, akzeptieren es.",
       "customHint": "Ein Zertifikat mit Kette und unverschlüsseltem privatem Schlüssel im PEM-Format, das jede Domain abdeckt, zum Beispiel für eine öffentliche Domain.",
+      "acmeHint": "Die Box holt ein kostenloses Zertifikat für öffentliche Domains und erneuert es selbst. Jede Domain muss auf die Box zeigen, und Port 80 muss sie aus dem Internet erreichen. Stimm zuerst im Abschnitt Let's Encrypt den Bedingungen zu.",
       "stored": "Ein Zertifikat ist hochgeladen. Wähle nur dann neue Dateien, wenn du es ersetzen willst."
     },
     "tls": {

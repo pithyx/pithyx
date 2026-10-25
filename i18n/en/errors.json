@@ -375,6 +375,24 @@
     "access": {
       "denied": "You may not open {host}. An administrator can let you in on the proxy host."
     },
+    "acme": {
+      "caa": "The DNS of {name} does not allow this authority to issue certificates (CAA record). {detail}",
+      "connection": "The authority could not reach {name} on port 80. Forward port 80 of your router to the box and check the firewall. {detail}",
+      "directory_invalid": "The ACME directory must be an https address.",
+      "dns": "{name} has no public DNS record that points to the box. {detail}",
+      "email_invalid": "Enter a valid email address, or leave the field empty.",
+      "failed": "The authority issued no certificate for {name}. {detail}",
+      "name_not_public": "{name} is not a public domain. Let's Encrypt only certifies names on the internet; use the box's own certificate for it.",
+      "name_rejected": "The authority does not issue certificates for {name}. {detail}",
+      "not_acme": "This host does not use a certificate from Let's Encrypt.",
+      "port_unavailable": "The box does not answer on port 80 here, where Let's Encrypt checks the domain.",
+      "rate_limited": "Too many requests for {name}; the box tries again later. {detail}",
+      "running": "The certificate of this host is being requested already.",
+      "terms_required": "Agree to the terms of service of Let's Encrypt first.",
+      "unauthorized": "Another server answered for {name} on port 80. Point the domain at the box and forward port 80 to it. {detail}",
+      "unreachable": "The ACME authority does not answer ({detail}). Check the box's internet connection.",
+      "wildcard": "{name} is a wildcard. Let's Encrypt certifies wildcards only through DNS, which the box does not do; list each name instead."
+    },
     "address": {
       "denied": "Your address may not open this page.",
       "invalid": "“{value}” is no IP address and no range such as 192.168.1.0/24."

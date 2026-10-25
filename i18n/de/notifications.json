@@ -180,5 +180,13 @@
         "body": "Der {array, select, system {System} other {Swap}}-Spiegel läuft auf {working} von {expected} Platten. Die Box läuft weiter; ersetze die Platte bald."
       }
     }
+  },
+  "proxy": {
+    "acme": {
+      "renewal_failed": {
+        "title": "Zertifikat von {name} nicht erneuert",
+        "body": "Let's Encrypt hat es nicht erneuert. Einstellungen > Reverse Proxy zeigt, warum; die Box versucht es später noch einmal, und das aktuelle Zertifikat gilt bis zu seinem Ende."
+      }
+    }
   }
 }

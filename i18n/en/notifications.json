@@ -180,5 +180,13 @@
         "body": "The {array, select, system {system} other {swap}} mirror runs on {working} of {expected} disks. The box keeps running; replace the disk soon."
       }
     }
+  },
+  "proxy": {
+    "acme": {
+      "renewal_failed": {
+        "title": "Certificate of {name} not renewed",
+        "body": "Let's Encrypt did not renew it. Settings > Reverse proxy shows why; the box tries again later, and the current certificate stays until it ends."
+      }
+    }
   }
 }

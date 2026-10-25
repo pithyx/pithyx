@@ -2,11 +2,14 @@ import type { PithyxApp } from '@pithyx/sdk';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Badge, Button, Dialog, TextField } from '@pithyx/ui';
+import { Badge, Button, Checkbox, Dialog, TextField } from '@pithyx/ui';
 import { ErrorNotice } from '../../errors/ErrorNotice';
+import { useFormatLocale } from '../../i18n';
 import {
   proxyCall,
   proxyKey,
+  type AcmeAccount,
+  type AcmeCertificateStatus,
   type ProxyHost,
   type ProxyRedirect,
   type ProxySettings,
@@ -38,6 +41,7 @@ export function ReverseProxyPage({ app }: { app: PithyxApp }) {
       {settings.data !== undefined && (
         <div className={styles.form}>
           <OptionsSection app={app} settings={settings.data} />
+          <AcmeSection app={app} />
           <HostsSection app={app} settings={settings.data} />
           <RedirectsSection app={app} settings={settings.data} />
           <StreamsSection app={app} settings={settings.data} />
@@ -119,6 +123,154 @@ function OptionsSection({ app, settings }: { app: PithyxApp; settings: ProxySett
       </form>
       {save.isError && <ErrorNotice error={describeProblem(save.error)} />}
     </section>
+  );
+}
+
+const acmeKey = [...proxyKey, 'acme'] as const;
+
+/** The box's account with the ACME authority: its terms, a contact and which authority (D378). */
+function AcmeSection({ app }: { app: PithyxApp }) {
+  const { t } = useTranslation('settings');
+  const account = useQuery({
+    queryKey: acmeKey,
+    queryFn: () => proxyCall(app, 'internal.admin.proxy.acme', {}),
+  });
+  return (
+    <section className={styles.card} aria-labelledby="proxy-acme">
+      <h3 id="proxy-acme" className={styles.sectionTitle}>
+        {t('proxy.acme.title')}
+      </h3>
+      <p className={styles.muted}>{t('proxy.acme.explain')}</p>
+      {account.isError && <ErrorNotice error={describeProblem(account.error)} />}
+      {account.data !== undefined && (
+        <AcmeForm key={account.dataUpdatedAt} app={app} account={account.data} />
+      )}
+    </section>
+  );
+}
+
+function AcmeForm({ app, account }: { app: PithyxApp; account: AcmeAccount }) {
+  const { t } = useTranslation('settings');
+  const queryClient = useQueryClient();
+  const [email, setEmail] = useState(account.email ?? '');
+  const [directory, setDirectory] = useState(account.directory);
+  const [agree, setAgree] = useState(false);
+  const save = useMutation({
+    mutationFn: () =>
+      proxyCall(app, 'internal.admin.proxy.setAcme', {
+        directory: directory.trim(),
+        email: email.trim() === '' ? null : email.trim(),
+        agreeToTerms: agree,
+      }),
+    onSuccess: (next) => {
+      queryClient.setQueryData(acmeKey, next);
+    },
+  });
+  const unchanged =
+    !agree && email.trim() === (account.email ?? '') && directory.trim() === account.directory;
+  return (
+    <form
+      className={styles.group}
+      onSubmit={(event) => {
+        event.preventDefault();
+        save.mutate();
+      }}
+    >
+      {!account.reachable && (
+        <p className={styles.notice} role="note">
+          {t('proxy.acme.unreachable')}
+        </p>
+      )}
+      {account.termsOfService != null && (
+        <a href={account.termsOfService} target="_blank" rel="noreferrer">
+          {t('proxy.acme.terms')}
+        </a>
+      )}
+      {account.termsAgreed ? (
+        <p className={styles.muted}>{t('proxy.acme.agreed')}</p>
+      ) : (
+        <Checkbox isSelected={agree} isDisabled={!account.reachable} onChange={setAgree}>
+          {t('proxy.acme.agree')}
+        </Checkbox>
+      )}
+      <TextField
+        label={t('proxy.acme.email')}
+        description={t('proxy.acme.emailHint')}
+        value={email}
+        onChange={setEmail}
+        type="email"
+        autoComplete="email"
+        autoCapitalize="none"
+      />
+      <TextField
+        label={t('proxy.acme.directory')}
+        description={t('proxy.acme.directoryHint')}
+        value={directory}
+        onChange={setDirectory}
+        type="url"
+        autoComplete="off"
+        autoCapitalize="none"
+      />
+      <div className={styles.buttons}>
+        <Button type="submit" variant="primary" isDisabled={save.isPending || unchanged}>
+          {t('proxy.acme.save')}
+        </Button>
+      </div>
+      {save.isError && <ErrorNotice error={describeProblem(save.error)} />}
+    </form>
+  );
+}
+
+/** Where the certificate from the ACME authority of a host or redirect stands, with a way to ask again now. */
+function AcmeLine({
+  app,
+  kind,
+  id,
+  acme,
+}: {
+  app: PithyxApp;
+  kind: 'host' | 'redirect';
+  id: number;
+  acme: AcmeCertificateStatus;
+}) {
+  const { t } = useTranslation('settings');
+  const locale = useFormatLocale();
+  const queryClient = useQueryClient();
+  const date = new Intl.DateTimeFormat(locale, { dateStyle: 'medium', timeStyle: 'short' });
+  const renew = useMutation({
+    mutationFn: () => proxyCall(app, 'internal.admin.proxy.renewCertificate', { kind, id }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: proxyKey, exact: true }),
+  });
+  const running = acme.running || renew.isPending;
+  return (
+    <>
+      <span className={styles.detail}>
+        {running
+          ? t('proxy.acme.status.running')
+          : acme.status === 'valid' && acme.notAfter != null
+            ? t('proxy.acme.status.valid', { date: date.format(new Date(acme.notAfter)) })
+            : t(`proxy.acme.status.${acme.status === 'failed' ? 'failed' : 'pending'}`)}
+        {!running && acme.retryAt != null && (
+          <> {t('proxy.acme.status.retry', { date: date.format(new Date(acme.retryAt)) })}</>
+        )}
+      </span>
+      {!running && acme.status === 'failed' && acme.errorCode != null && (
+        <ErrorNotice
+          error={describeProblem({ code: acme.errorCode, params: acme.errorParams ?? {} })}
+        />
+      )}
+      <div className={styles.buttons}>
+        <Button
+          isDisabled={running}
+          onPress={() => {
+            renew.mutate();
+          }}
+        >
+          {t('proxy.acme.renew')}
+        </Button>
+      </div>
+      {renew.isError && <ErrorNotice error={describeProblem(renew.error)} />}
+    </>
   );
 }
 
@@ -247,6 +399,7 @@ function HostEntry({
         )}
       </span>
       <span className={styles.detail}>{t('proxy.hosts.log', { source: host.logSource })}</span>
+      {host.acme != null && <AcmeLine app={app} kind="host" id={host.id} acme={host.acme} />}
       <div className={styles.buttons}>
         <Button onPress={onEdit}>{t('proxy.edit')}</Button>
         {host.enabled && (
@@ -303,6 +456,9 @@ function RedirectsSection({ app, settings }: { app: PithyxApp; settings: ProxySe
                   target: redirect.target,
                 })}
               </span>
+              {redirect.acme != null && (
+                <AcmeLine app={app} kind="redirect" id={redirect.id} acme={redirect.acme} />
+              )}
               <div className={styles.buttons}>
                 <Button
                   onPress={() => {

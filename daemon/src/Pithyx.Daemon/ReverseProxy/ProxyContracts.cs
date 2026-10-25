@@ -23,6 +23,9 @@ public enum ProxyCertificateSource
 
     /// <summary>One an administrator uploaded for the host.</summary>
     Custom,
+
+    /// <summary>One from an ACME authority (Let's Encrypt), requested and renewed by the box over HTTP-01 on port 80 (D378).</summary>
+    Acme,
 }
 
 /// <summary>What 443 and 80 do with a name no enabled host has.</summary>
@@ -135,6 +138,7 @@ public sealed record ProxyHostRequest(
 /// <param name="LogSource">The Log Center's source of its requests.</param>
 /// <param name="CreatedAt">When it was made.</param>
 /// <param name="UpdatedAt">When it was last saved.</param>
+/// <param name="Acme">With a certificate from the ACME authority: where it stands.</param>
 public sealed record ProxyHost(
     long Id,
     IReadOnlyList<string> Domains,
@@ -161,7 +165,8 @@ public sealed record ProxyHost(
     bool AccessLog,
     string LogSource,
     DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    AcmeCertificateStatus? Acme);
 
 /// <summary>A redirect host as an administrator saves it.</summary>
 /// <param name="Domains">1 to 50 DNS names, as for a proxy host.</param>
@@ -193,6 +198,7 @@ public sealed record ProxyRedirectRequest(
 /// <param name="Presented">The certificate it presents now, if the box can make one.</param>
 /// <param name="CreatedAt">When it was made.</param>
 /// <param name="UpdatedAt">When it was last saved.</param>
+/// <param name="Acme">With a certificate from the ACME authority: where it stands.</param>
 public sealed record ProxyRedirect(
     long Id,
     IReadOnlyList<string> Domains,
@@ -203,7 +209,8 @@ public sealed record ProxyRedirect(
     ProxyCertificateSource Certificate,
     CertificateInfo? Presented,
     DateTimeOffset CreatedAt,
-    DateTimeOffset UpdatedAt);
+    DateTimeOffset UpdatedAt,
+    AcmeCertificateStatus? Acme);
 
 /// <summary>A stream as an administrator saves it.</summary>
 /// <param name="Name">What it is for, at most 100 characters.</param>
