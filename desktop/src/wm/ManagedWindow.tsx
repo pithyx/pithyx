@@ -9,6 +9,7 @@ import { useSizeClass } from './sizeClass';
 import { visibleRect } from './state';
 import { dispatch, useDesktop } from './store';
 import type { Rect } from './types';
+import { useWindowUi } from './ui';
 import { WindowMenu } from './WindowMenu';
 import styles from './WindowLayer.module.css';
 
@@ -71,23 +72,29 @@ export function ManagedWindow({ id }: { id: string }) {
       compactActive={focused && sizeClass === 'compact'}
       layer={layer}
       icon={<WindowMenu id={id} app={app} title={title} placement={placement} free={free} />}
-      titlebarProps={
-        expanded
-          ? {
-              className: styles.draggable,
-              onPointerDown: (event) => {
-                if (frame.current !== null) {
-                  startDrag(event, id, frame.current);
-                }
-              },
-              onDoubleClick: (event) => {
-                if ((event.target as Element).closest('button') === null) {
-                  dispatch({ type: 'toggleMaximize', id });
-                }
-              },
+      titlebarProps={{
+        // A right-click on the title bar opens the window menu, as the icon does.
+        onContextMenu: (event) => {
+          if ((event.target as Element).closest('button') === null) {
+            event.preventDefault();
+            request();
+            useWindowUi.setState({ menu: id });
+          }
+        },
+        ...(expanded && {
+          className: styles.draggable,
+          onPointerDown: (event) => {
+            if (frame.current !== null) {
+              startDrag(event, id, frame.current);
             }
-          : undefined
-      }
+          },
+          onDoubleClick: (event) => {
+            if ((event.target as Element).closest('button') === null) {
+              dispatch({ type: 'toggleMaximize', id });
+            }
+          },
+        }),
+      }}
       decorations={
         free &&
         EDGES.map((edge) => (

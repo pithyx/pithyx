@@ -462,7 +462,7 @@ export function ItemsLayer() {
           clearTimeout(longPress.current);
         }}
         onContextMenu={(event) => {
-          // Notes keep the browser's menu for their text (spelling, paste).
+          // Notes have no menu of their own; their text keeps the browser's (spelling, paste), see Desktop.
           if (event.target instanceof Element && event.target.closest('[data-note]') !== null) {
             return;
           }

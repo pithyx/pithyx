@@ -26,6 +26,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- A right-click on another app in the Pithyx menu while one app's menu is open opens the other app's menu; it closed the Pithyx menu and showed the desktop's. The taskbar, the Pithyx menu, the notification panel, the desktop's menus and sticky notes no longer show the browser's own menu (a note's text keeps it), and a right-click on a title bar opens the window menu (#284).
 - A daemon that cannot write the NUT files in `/etc/nut` at start logs it and keeps running instead of stopping (#262).
 - The language list of the sign-in screen chooses the option the keyboard moved to also when Enter follows at once; it could take the option before.
 - The READMEs of `@pithyx/sdk`, `@pithyx/ui` and `@pithyx/cli` no longer call them release candidates; the packages are at `1.0.1` so npm shows the corrected pages.

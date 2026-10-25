@@ -48,7 +48,7 @@ On a wide screen:
 - Drag a window to the left or right edge to fill half of the screen, or to the top edge to maximize it. On very wide screens (2400 pixels or more) the edges give thirds.
 - Drag a maximized or snapped window away from the edge to get its free size back.
 - The title bar has **Minimize**, **Maximize** (or **Restore**) and **Close** buttons.
-- Click the app icon at the left of the title bar for the window menu: **Restore**, **Move**, **Size**, **Minimize**, **Maximize**, **Snap left**, **Snap right** and **Close**. **Move** and **Size** let you use the arrow keys (16 pixels per press, with Shift 1 pixel), **Enter** to confirm and **Escape** to cancel.
+- Click the app icon at the left of the title bar, or right-click the title bar, for the window menu: **Restore**, **Move**, **Size**, **Minimize**, **Maximize**, **Snap left**, **Snap right** and **Close**. **Move** and **Size** let you use the arrow keys (16 pixels per press, with Shift 1 pixel), **Enter** to confirm and **Escape** to cancel.
 
 New windows open slightly offset from each other. You can have at most 50 windows open. Beyond that, opening another app does nothing.
 
@@ -105,6 +105,7 @@ The desktop holds shortcuts to apps and sticky notes. They belong to your accoun
 - Right-click a shortcut for **Open**, **Rename**, **Move** and **Remove from desktop**. **F2** renames, **Del** removes.
 - Drag icons to move them. Drag on an empty spot to select several. Hold **Ctrl** or **Shift** to add to a selection.
 - On a touch screen, press and hold for about half a second to open the menu.
+- While a menu is open, a right-click on something else opens that thing's menu instead. The desktop never shows the browser's own menu, except in text fields such as a note's text.
 - To delete a note, click **Remove note**. A note with text asks **Delete this note?** first. The text is deleted on all your devices.
 
 The desktop holds at most 200 items. Icons snap to a grid. On small screens they flow in rows like a phone home screen.

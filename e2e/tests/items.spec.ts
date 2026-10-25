@@ -210,6 +210,57 @@ test('a right-click while the desktop menu is open moves the menu there', async 
   expect(await rightClicks(page)).toEqual([true, true, true, true, true, true]);
 });
 
+test('a right-click on another item of the shell replaces the open menu, and the shell keeps the browser menu away', async ({
+  page,
+}) => {
+  await recordRightClicks(page);
+  const start = page.getByRole('dialog', { name: 'Pithyx menu' });
+  const taskbar = page.getByRole('navigation', { name: 'Taskbar' });
+  async function rightClick(locator: Locator) {
+    const rect = await box(locator);
+    await page.mouse.click(rect.x + rect.width / 2, rect.y + rect.height / 2, { button: 'right' });
+  }
+
+  await test.step('in the start menu, the menu of the next tile replaces the first', async () => {
+    await page.getByRole('button', { name: 'Pithyx menu' }).click();
+    await rightClick(start.getByRole('row', { name: 'Log Center' }));
+    await expect(page.getByRole('menu', { name: 'Menu for Log Center' })).toBeVisible();
+    await rightClick(start.getByRole('row', { name: 'Storage' }));
+    await expect(page.getByRole('menu', { name: 'Menu for Storage' })).toBeVisible();
+    await expect(page.getByRole('menu')).toHaveCount(1);
+    await expect(start).toBeVisible();
+    await rightClick(page.getByRole('menu', { name: 'Menu for Storage' }));
+    await expect(page.getByRole('menu', { name: 'Menu for Storage' })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await page.keyboard.press('Escape');
+    await expect(start).toHaveCount(0);
+  });
+
+  await test.step('the desktop menu gives way to a title bar, whose window menu gives way to the taskbar', async () => {
+    await icon(page, 'About').dblclick();
+    const about = appWindow(page, 'About Pithyx');
+    await expect(about).toBeVisible();
+    // A corner of the desktop that neither the icons nor the window cover.
+    const desktop = await box(page.getByRole('main', { name: 'Desktop' }));
+    await page.mouse.click(desktop.x + 24, desktop.y + desktop.height - 24, { button: 'right' });
+    await expect(page.getByRole('menu', { name: 'Desktop' })).toBeVisible();
+    await rightClick(about.getByRole('heading', { name: 'About Pithyx' }).first());
+    await expect(page.getByRole('menu', { name: 'Window menu for About Pithyx' })).toBeVisible();
+    await expect(page.getByRole('menu')).toHaveCount(1);
+    await page.keyboard.press('Escape');
+    await rightClick(taskbar.getByRole('button', { name: /^About Pithyx/ }));
+    await expect(page.getByRole('menu', { name: 'Menu for About Pithyx' })).toBeVisible();
+    await page.keyboard.press('Escape');
+  });
+
+  await test.step('the taskbar and the start button never show the browser menu', async () => {
+    await rightClick(page.getByRole('button', { name: 'Pithyx menu' }));
+    await rightClick(taskbar);
+  });
+
+  expect(await rightClicks(page)).toEqual(Array<boolean>(8).fill(true));
+});
+
 test('the start menu and the taskbar put apps on the desktop, and the taskbar closes windows', async ({
   page,
 }) => {

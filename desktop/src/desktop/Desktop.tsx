@@ -63,6 +63,7 @@ import {
 } from '../shell/notificationFeed';
 import { useDismiss } from '../shell/useDismiss';
 import { cx, Menu, MenuItem, MenuPopover, MenuTrigger, UiProvider } from '@pithyx/ui';
+import { keepsBrowserMenu } from '@pithyx/sdk/host';
 import { useBackGesture } from '../wm/backGesture';
 import { applySavedLayout, saveLayoutBeforeSignOut, useLayoutPersistence } from '../wm/persistence';
 import { useSizeClass } from '../wm/sizeClass';
@@ -610,6 +611,19 @@ export function Desktop({ user, entering }: { user: User; entering: boolean }) {
   });
 
   useEffect(() => followNotifications(), []);
+  // The desktop is one surface with its own menus: a right-click never opens the browser's menu, except in text
+  // fields. Popovers render in portals on the body, so the listener sits on the document.
+  useEffect(() => {
+    const onContextMenu = (event: MouseEvent) => {
+      if (!keepsBrowserMenu(event.target)) {
+        event.preventDefault();
+      }
+    };
+    document.addEventListener('contextmenu', onContextMenu);
+    return () => {
+      document.removeEventListener('contextmenu', onContextMenu);
+    };
+  }, []);
 
   // Like the Windows key opens Start, a tap on the Meta key opens and closes the Pithyx menu.
   const toggleStart = useEffectEvent(() => {
