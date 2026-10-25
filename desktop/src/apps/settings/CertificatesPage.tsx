@@ -5,9 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { ErrorNotice } from '../../errors/ErrorNotice';
 import { useFormatLocale } from '../../i18n';
 import { Badge, Button, Dialog, Switch, TextField } from '@pithyx/ui';
-import { buttonStyles, cx } from '@pithyx/ui/native';
+import { TrustSteps } from '../../security/TrustSteps';
 import {
-  rootCertificateUrl,
   tlsCall,
   type CertificateInfo,
   type IssuedCertificate,
@@ -17,8 +16,6 @@ import { describeProblem } from '../storage/shared';
 import styles from './Settings.module.css';
 
 const tlsKey = ['settings', 'system', 'tls'] as const;
-
-const DEVICES = ['windows', 'macos', 'ios', 'android', 'linux', 'firefox'] as const;
 
 /** Names typed into one field, separated by spaces, commas or line breaks. */
 function splitNames(text: string): string[] {
@@ -128,26 +125,14 @@ function TrustSection({ settings }: { settings: TlsSettings }) {
       <h3 id="certificates-trust" className={styles.sectionTitle}>
         {t('certificates.trust.title')}
       </h3>
-      <p className={styles.muted}>{t('certificates.trust.explain')}</p>
-      <div className={styles.buttons}>
-        <a
-          className={cx(buttonStyles.button, buttonStyles.primary)}
-          href={rootCertificateUrl}
-          download
-        >
-          {t('certificates.trust.download')}
-        </a>
-      </div>
-      <CertificateFacts certificate={settings.authority.root} />
-      <p className={styles.muted}>{t('certificates.trust.compare')}</p>
-      <ul className={styles.explainList}>
-        {DEVICES.map((device) => (
-          <li key={device}>
-            <strong>{t(`certificates.trust.devices.${device}.name`)}</strong>{' '}
-            {t(`certificates.trust.devices.${device}.steps`)}
-          </li>
-        ))}
-      </ul>
+      <TrustSteps
+        facts={
+          <>
+            <CertificateFacts certificate={settings.authority.root} />
+            <p className={styles.muted}>{t('certificates.trust.compare')}</p>
+          </>
+        }
+      />
     </section>
   );
 }

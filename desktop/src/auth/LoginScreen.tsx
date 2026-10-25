@@ -1,11 +1,13 @@
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { unwrap, type components } from '@pithyx/api-client';
-import { useState, type SyntheticEvent } from 'react';
+import { lazy, Suspense, useState, type SyntheticEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../api/client';
 import { describeError } from '../errors/describe';
 import { ErrorNotice } from '../errors/ErrorNotice';
 import { field } from '../forms';
+import { passkeyBlocker } from '../platform/browser';
+import { trustQuery } from '../security/trust';
 import { AuthHeader, AuthLayout } from '../shell/AuthLayout';
 import { cx, textFieldStyles } from '@pithyx/ui/native';
 import { IconArrowLeft } from '../ui/icons';
@@ -26,8 +28,9 @@ type Step =
   | { kind: 'recovered'; recoveryKey: string };
 
 /**
- * Sign-in in one card: password, then the TOTP step for users who turned it on. "Forgot password?" explains that
- * users ask an administrator and lets the administrator reset the password with the recovery key.
+ * Sign-in in one card: password, then the TOTP step for users who turned it on, or a passkey on a device that trusts
+ * the box. "Forgot password?" explains that users ask an administrator and lets the administrator reset the password
+ * with the recovery key.
  */
 export function LoginScreen({
   hostname,
@@ -103,6 +106,11 @@ export function LoginScreen({
 
 type PasswordFieldName = 'username' | 'password';
 
+// The passkey button and the autofill load only on a device where passkeys work (D380).
+const PasskeySignIn = lazy(() =>
+  import('./PasskeySignIn').then(({ PasskeySignIn }) => ({ default: PasskeySignIn })),
+);
+
 function PasswordStep({
   continueTo,
   username,
@@ -120,6 +128,9 @@ function PasswordStep({
 }) {
   const { t } = useTranslation('auth');
   const form = useFormErrors<PasswordFieldName>(['username', 'password']);
+  const trust = useQuery(trustQuery);
+  const passkeys = trust.data !== undefined && passkeyBlocker(trust.data) === undefined;
+  const [autofill, setAutofill] = useState(false);
   const login = useMutation({
     mutationFn: async (body: { username: string; password: string }) =>
       unwrap(await api.POST('/api/auth/login', { body })),
@@ -167,7 +178,7 @@ function PasswordStep({
         {...usernameField}
         label={t('login.username')}
         name="username"
-        autoComplete="username"
+        autoComplete={autofill ? 'username webauthn' : 'username'}
         autoCapitalize="none"
         spellCheck={false}
         value={username}
@@ -191,6 +202,17 @@ function PasswordStep({
       <Button type="submit" variant="primary" className={styles.submit} pending={login.isPending}>
         {login.isPending ? t('login.submitting') : t('login.submit')}
       </Button>
+      {passkeys && (
+        <Suspense>
+          <PasskeySignIn
+            onAutofill={setAutofill}
+            onStart={() => {
+              login.reset();
+            }}
+            onSignedIn={onSignedIn}
+          />
+        </Suspense>
+      )}
       <div className={styles.links}>
         <Button variant="quiet" size="sm" onClick={onForgot}>
           {t('login.forgot')}

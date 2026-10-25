@@ -356,6 +356,24 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string AuthDisplayNameInvalid = "auth.display_name.invalid";
 
+    /// <summary>The passkey or the answer of the authenticator was not accepted (unknown, removed, or a failed check).</summary>
+    [ErrorStatus(HttpStatusCode.Unauthorized)]
+    public const string AuthPasskeyInvalid = "auth.passkey.invalid";
+
+    /// <summary>A user has at most this many passkeys (<c>max</c>).</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string AuthPasskeyLimit = "auth.passkey.limit";
+
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AuthPasskeyNameInvalid = "auth.passkey.name_invalid";
+
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string AuthPasskeyNotFound = "auth.passkey.not_found";
+
+    /// <summary>Passkeys need the box opened by name over HTTPS, not by address (<c>host</c>).</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string AuthPasskeyUnavailable = "auth.passkey.unavailable";
+
     [ErrorStatus(HttpStatusCode.BadRequest)]
     public const string AuthPasswordTooCommon = "auth.password.too_common";
 

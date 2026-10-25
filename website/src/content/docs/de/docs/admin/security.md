@@ -1,13 +1,13 @@
 ---
 title: 'Sicherheit'
-description: 'Transport, offene Ports, physischer Zugriff, SSH, Zwei-Faktor-Anmeldung, der Wiederherstellungsschlüssel und was die Box verlässt.'
+description: 'Transport, offene Ports, physischer Zugriff, SSH, Zwei-Faktor-Anmeldung, Passkeys, der Wiederherstellungsschlüssel und was die Box verlässt.'
 status: ready
 audience: admin
 sidebar:
   order: 9
 ---
 
-Pithyx behält alles auf der Box: keine Telemetrie, kein Cloud-Konto, kein Nach-Hause-Telefonieren. Der Web-Desktop spricht HTTPS mit einem Zertifikat der eigenen Zertifizierungsstelle der Box. Diese Seite behandelt Transport, offene Ports, physischen Zugriff, SSH, Zwei-Faktor-Anmeldung, den Wiederherstellungsschlüssel und die wenigen Verbindungen, die die Box von sich aus aufbaut.
+Pithyx behält alles auf der Box: keine Telemetrie, kein Cloud-Konto, kein Nach-Hause-Telefonieren. Der Web-Desktop spricht HTTPS mit einem Zertifikat der eigenen Zertifizierungsstelle der Box. Diese Seite behandelt Transport, offene Ports, physischen Zugriff, SSH, Zwei-Faktor-Anmeldung, Passkeys, den Wiederherstellungsschlüssel und die wenigen Verbindungen, die die Box von sich aus aufbaut.
 
 ## HTTPS und Zertifikate
 
@@ -48,9 +48,15 @@ Jeder Benutzer kann die Zwei-Faktor-Anmeldung (TOTP) im Kontomenü unter **Zwei-
 
 SMB, SFTP, WebDAV und FTP nutzen nur das Passwort.
 
+## Passkeys
+
+Jeder Benutzer kann im Kontomenü unter **Passkeys** Passkeys hinzufügen ([Dein Konto](/de/docs/user/account/#passkeys)). Ein Passkey ersetzt bei der Anmeldung am Desktop Passwort und zweiten Faktor; Dateidienste nutzen weiter das Passwort. Pithyx verlangt auffindbare Anmeldedaten mit Benutzerprüfung (PIN, Fingerabdruck oder Gesicht des Geräts) und keine Attestierung. Es fragt nie einen Metadatendienst, also verlässt nichts die Box. Einen hinzuzufügen braucht das aktuelle Passwort; jeder Benutzer hat bis zu 20.
+
+Ein Passkey ist an den Namen gebunden, unter dem die Box geöffnet wurde (die WebAuthn Relying Party). Er funktioniert also nur dort und nur über HTTPS auf einem Gerät, das der Box vertraut; für eine Adresse lehnt die Box Passkeys mit `auth.passkey.unavailable` ab. Jede Anmeldung nutzt eine einmalige Challenge, die 5 Minuten gilt, und prüft den Signaturzähler. Fehlgeschlagene Passkey-Anmeldungen zählen zur Grenze von 30 pro Adresse in 5 Minuten. Ein deaktiviertes Konto oder eines ohne das Recht zur Desktop-Anmeldung wird nach der Prüfung des Passkeys abgelehnt, wie beim Passwort. Das Zurücksetzen eines Passworts mit dem Wiederherstellungsschlüssel entfernt die Passkeys dieses Administrators. Passkeys gehören zum Konfigurationsbackup (Teil **Benutzer und Gruppen**).
+
 ## Der Wiederherstellungsschlüssel
 
-Die Ersteinrichtung zeigt den Wiederherstellungsschlüssel einmal an (`PTHX-` gefolgt von 26 Zeichen). Er ist der einzige Weg, das Administratorpasswort zurückzusetzen. Wähle dazu auf der Anmeldeseite „Passwort vergessen?“ und gib dann den Schlüssel, den Benutzernamen eines Administrators und ein neues Passwort ein. Das meldet diesen Benutzer überall ab, schaltet seine Zwei-Faktor-Anmeldung aus und stellt einen neuen Wiederherstellungsschlüssel aus; der alte wird ungültig. Es gibt einen Schlüssel für die ganze Box, und er gehört zum Konfigurationsbackup. Ohne den Schlüssel und das Passwort muss das System neu installiert werden. Andere Benutzer bitten einen Administrator um ein neues Passwort.
+Die Ersteinrichtung zeigt den Wiederherstellungsschlüssel einmal an (`PTHX-` gefolgt von 26 Zeichen). Er ist der einzige Weg, das Administratorpasswort zurückzusetzen. Wähle dazu auf der Anmeldeseite „Passwort vergessen?“ und gib dann den Schlüssel, den Benutzernamen eines Administrators und ein neues Passwort ein. Das meldet diesen Benutzer überall ab, schaltet seine Zwei-Faktor-Anmeldung aus, entfernt seine Passkeys und stellt einen neuen Wiederherstellungsschlüssel aus; der alte wird ungültig. Es gibt einen Schlüssel für die ganze Box, und er gehört zum Konfigurationsbackup. Ohne den Schlüssel und das Passwort muss das System neu installiert werden. Andere Benutzer bitten einen Administrator um ein neues Passwort.
 
 ## Was die Box verlässt
 

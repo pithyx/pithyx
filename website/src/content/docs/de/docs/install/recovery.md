@@ -25,7 +25,7 @@ _Passwort vergessen? öffnet dieses Formular. Nur Administratoren setzen hier ih
 4. Die Seite zeigt einen neuen Wiederherstellungsschlüssel. Bewahre ihn auf. Der alte funktioniert nicht mehr.
 5. Melde dich mit dem neuen Passwort an.
 
-Was das Zurücksetzen bewirkt: Es ändert das Passwort, schaltet die Zwei-Faktor-Anmeldung dieses Administrators aus und beendet seine Sitzungen. Es funktioniert für jedes Administratorkonto, auch für ein deaktiviertes. Bei jedem Fehler (Benutzername, Schlüssel oder ein Konto, das kein Administrator ist) erscheint dieselbe Meldung: „Benutzername oder Wiederherstellungsschlüssel ist falsch.“ Nach fünf fehlgeschlagenen Versuchen innerhalb von fünf Minuten pausieren weitere Versuche für kurze Zeit.
+Was das Zurücksetzen bewirkt: Es ändert das Passwort, schaltet die Zwei-Faktor-Anmeldung dieses Administrators aus, entfernt seine Passkeys und beendet seine Sitzungen. Es funktioniert für jedes Administratorkonto, auch für ein deaktiviertes. Bei jedem Fehler (Benutzername, Schlüssel oder ein Konto, das kein Administrator ist) erscheint dieselbe Meldung: „Benutzername oder Wiederherstellungsschlüssel ist falsch.“ Nach fünf fehlgeschlagenen Versuchen innerhalb von fünf Minuten pausieren weitere Versuche für kurze Zeit.
 
 **Ein anderer Administrator** kann dein Passwort auch unter Einstellungen > **Benutzer** setzen, wenn noch einer angemeldet ist.
 

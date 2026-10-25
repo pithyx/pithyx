@@ -390,35 +390,7 @@
     },
     "trust": {
       "title": "Dieser Box vertrauen",
-      "explain": "Lade das Root-Zertifikat herunter und installiere es auf jedem Gerät, das die Box nutzt. Danach zeigt der Browser keine Warnung mehr, lädt aus seinem Cache, und FTPS-Programme akzeptieren die Box.",
-      "download": "Root-Zertifikat herunterladen",
-      "compare": "Bevor du der Datei auf einem Gerät vertraust, vergleiche ihren Fingerabdruck mit dem oben.",
-      "devices": {
-        "windows": {
-          "name": "Windows:",
-          "steps": "Öffne die Datei, wähle Zertifikat installieren, Lokaler Computer und dann den Speicher Vertrauenswürdige Stammzertifizierungsstellen."
-        },
-        "macos": {
-          "name": "macOS:",
-          "steps": "Öffne die Datei in der Schlüsselbundverwaltung (Schlüsselbund System), öffne das Zertifikat und stelle Vertrauen auf Immer vertrauen."
-        },
-        "ios": {
-          "name": "iPhone und iPad:",
-          "steps": "Öffne die Datei in Safari, installiere das Profil unter Einstellungen, Allgemein, VPN und Geräteverwaltung und schalte es unter Einstellungen, Allgemein, Info, Zertifikatsvertrauenseinstellungen ein."
-        },
-        "android": {
-          "name": "Android:",
-          "steps": "Einstellungen, Sicherheit, Verschlüsselung und Anmeldedaten, Zertifikat installieren, CA-Zertifikat, dann die Datei wählen."
-        },
-        "linux": {
-          "name": "Linux:",
-          "steps": "Kopiere die Datei nach /usr/local/share/ca-certificates/ und führe sudo update-ca-certificates aus; Browser mit eigenem Speicher brauchen den Schritt darunter."
-        },
-        "firefox": {
-          "name": "Firefox:",
-          "steps": "Einstellungen, Datenschutz und Sicherheit, Zertifikate, Zertifikate anzeigen, Zertifizierungsstellen, Importieren, und ihm für Websites vertrauen."
-        }
-      }
+      "compare": "Bevor du der Datei auf einem Gerät vertraust, vergleiche ihren Fingerabdruck mit dem oben."
     },
     "authority": {
       "title": "Zertifizierungsstelle",

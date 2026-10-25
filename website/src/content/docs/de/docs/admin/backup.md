@@ -25,7 +25,7 @@ Die Datei ist mit AES-256-GCM verschlüsselt, unter einem Schlüssel, der aus de
 
 Kategorien, die du bei der Wiederherstellung wählen kannst:
 
-- **Benutzer und Gruppen**: Konten, Gruppen, Passwörter (auch für SMB und SFTP), Zwei-Faktor-Anmeldung, der Wiederherstellungsschlüssel, persönliche Einstellungen, Desktop-Anordnungen und die Benachrichtigungskanäle der Benutzer und der Box.
+- **Benutzer und Gruppen**: Konten, Gruppen, Passwörter (auch für SMB und SFTP), Zwei-Faktor-Anmeldung, Passkeys, der Wiederherstellungsschlüssel, persönliche Einstellungen, Desktop-Anordnungen und die Benachrichtigungskanäle der Benutzer und der Box.
 - **Freigegebene Ordner und Dateidienste**: freigegebene Ordner mit ihren Rechten und die Einstellungen für SMB, SFTP, WebDAV und FTP.
 - **Speicher-Einstellungen**: Snapshot-Zeitpläne (Wiederherstellungspunkte), Scrub- und Selbsttest-Zeitpläne.
 - **Systemeinstellungen**: Sprache, Formate, Zeitzone, Zeitserver, Aufbewahrung der Logs, die USV und der E-Mail-Server für Benachrichtigungen.

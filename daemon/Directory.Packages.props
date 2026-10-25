@@ -6,6 +6,8 @@
     <!-- ACME (MIT) for certificates from Let's Encrypt for proxy hosts (D378); brings BouncyCastle.Cryptography (MIT). -->
     <PackageVersion Include="Certes" Version="4.1.0" />
     <PackageVersion Include="Dapper" Version="2.1.89" />
+    <!-- WebAuthn for passkeys (MIT, D380), without its metadata service: the box never fetches anything for it. -->
+    <PackageVersion Include="Fido2" Version="4.3.1" />
     <!-- 8.0.5 is the last release under MIT; from 9.0.0 on the NuGet binaries carry a maintenance fee EULA. -->
     <PackageVersion Include="JsonSchema.Net" Version="8.0.5" />
     <PackageVersion Include="MailKit" Version="4.18.2" />

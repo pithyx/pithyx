@@ -25,7 +25,7 @@ _Forgot password? opens this form. Only administrators can reset their password 
 4. The page shows a new recovery key. Store it. The old one no longer works.
 5. Sign in with the new password.
 
-What the reset does: it changes the password, turns off two-factor sign-in for that administrator and ends their sessions. It works for any administrator account, including a deactivated one. Anything wrong (user name, key, or an account that is not an administrator) gives the same message, "The user name or recovery key is incorrect." After five failed attempts within five minutes, further attempts are paused for a short time.
+What the reset does: it changes the password, turns off two-factor sign-in, removes the passkeys of that administrator and ends their sessions. It works for any administrator account, including a deactivated one. Anything wrong (user name, key, or an account that is not an administrator) gives the same message, "The user name or recovery key is incorrect." After five failed attempts within five minutes, further attempts are paused for a short time.
 
 **Another administrator** can also set your password in Settings > **Users**, if one is still signed in.
 

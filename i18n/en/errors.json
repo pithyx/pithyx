@@ -98,6 +98,13 @@
     "display_name": {
       "invalid": "The display name can have at most {maxLength} characters and no control characters."
     },
+    "passkey": {
+      "invalid": "The passkey was not accepted. It may have been removed or belong to another name of the box.",
+      "limit": "You can have at most {max} passkeys. Remove one first.",
+      "name_invalid": "The name needs 1 to {maxLength} characters and no control characters.",
+      "not_found": "This passkey does not exist (any more).",
+      "unavailable": "Passkeys need the box opened by its name over HTTPS, not as {host}."
+    },
     "password": {
       "too_common": "This password is too well known. Choose one that is harder to guess.",
       "too_long": "The password can have at most {maxLength} characters.",

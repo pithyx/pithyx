@@ -64,6 +64,12 @@ export default defineConfig(
     languageOptions: { globals: globals.node },
   },
   {
+    // The desktop's service worker is plain JavaScript in its own global scope, copied into the build by vite.config.ts.
+    files: ['desktop/service-worker.js'],
+    extends: [tseslint.configs.disableTypeChecked],
+    languageOptions: { globals: globals.serviceworker },
+  },
+  {
     // The mock desktop of `pithyx dev`, a page on the developer's machine.
     files: ['packages/cli/shell/**/*.ts'],
     languageOptions: { globals: globals.browser },

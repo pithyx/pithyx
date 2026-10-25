@@ -1,0 +1,73 @@
+{
+  "trust": {
+    "title": "Diesem Gerät vertrauen",
+    "intro": "Die Box ist ihre eigene Zertifizierungsstelle. Installiere ihr Root-Zertifikat einmal auf diesem Gerät: Der Browser warnt nicht mehr, lädt aus seinem Cache, und du kannst dich mit einem Passkey anmelden.",
+    "download": "Root-Zertifikat herunterladen",
+    "devicesTitle": "So installierst du es auf",
+    "devices": {
+      "windows": {
+        "name": "Windows:",
+        "steps": "Öffne die Datei, wähle Zertifikat installieren, Lokaler Computer und dann den Speicher Vertrauenswürdige Stammzertifizierungsstellen."
+      },
+      "macos": {
+        "name": "macOS:",
+        "steps": "Öffne die Datei in der Schlüsselbundverwaltung (Schlüsselbund System), öffne das Zertifikat und stelle Vertrauen auf Immer vertrauen."
+      },
+      "ios": {
+        "name": "iPhone und iPad:",
+        "steps": "Öffne die Datei in Safari, installiere das Profil unter Einstellungen, Allgemein, VPN und Geräteverwaltung und schalte es unter Einstellungen, Allgemein, Info, Zertifikatsvertrauenseinstellungen ein."
+      },
+      "android": {
+        "name": "Android:",
+        "steps": "Einstellungen, Sicherheit, Verschlüsselung und Anmeldedaten, Zertifikat installieren, CA-Zertifikat, dann die Datei wählen."
+      },
+      "linux": {
+        "name": "Linux:",
+        "steps": "Kopiere die Datei nach /usr/local/share/ca-certificates/ und führe sudo update-ca-certificates aus; Browser mit eigenem Speicher brauchen den Schritt darunter."
+      },
+      "firefox": {
+        "name": "Firefox:",
+        "steps": "Einstellungen, Datenschutz und Sicherheit, Zertifikate, Zertifikate anzeigen, Zertifizierungsstellen, Importieren, und ihm für Websites vertrauen."
+      }
+    },
+    "restart": "Starte danach den Browser neu und öffne die Box wieder über ihren Namen.",
+    "check": "Erneut prüfen",
+    "checking": "Wird geprüft",
+    "trusted": "Dieses Gerät vertraut der Box.",
+    "untrusted": "Dieses Gerät vertraut der Box noch nicht.",
+    "unsupported": "Diese Verbindung lässt sich nicht prüfen: Die Box wurde über einfaches HTTP geöffnet.",
+    "hint": "Dieses Gerät vertraut der Box noch nicht, deshalb warnt der Browser und Passkeys bleiben aus.",
+    "hintAction": "Diesem Gerät vertrauen",
+    "hintDismiss": "Auf diesem Gerät nicht mehr zeigen",
+    "close": "Schließen",
+    "continue": "Weiter zum Desktop"
+  },
+  "passkeys": {
+    "title": "Passkeys",
+    "intro": "Mit einem Passkey meldest du dich ohne Passwort und zweiten Faktor am Desktop an; dein Gerät fragt stattdessen nach PIN, Fingerabdruck oder Gesicht. SMB, SFTP, WebDAV und FTP nutzen weiter dein Passwort.",
+    "empty": "Du hast noch keine Passkeys.",
+    "add": "Passkey hinzufügen",
+    "adding": "Warte auf das Gerät",
+    "name": "Name",
+    "nameHint": "Zum Beispiel das Gerät oder der Passwortmanager, in dem er liegt.",
+    "password": "Aktuelles Passwort",
+    "cancel": "Abbrechen",
+    "save": "Hinzufügen",
+    "remove": "Entfernen",
+    "removeConfirm": "Den Passkey {name} entfernen? Er meldet dich dann nicht mehr an.",
+    "removed": "Der Passkey {name} wurde entfernt.",
+    "added": "Der Passkey {name} wurde hinzugefügt.",
+    "close": "Schließen",
+    "created": "Hinzugefügt {date}",
+    "lastUsed": "Zuletzt benutzt {date}",
+    "neverUsed": "Noch nicht benutzt",
+    "synced": "Synchronisiert",
+    "forName": "Für {host}",
+    "cancelled": "Das Gerät hat keinen Passkey angelegt.",
+    "blocked": {
+      "untrusted": "Passkeys brauchen ein Gerät, das der Box vertraut.",
+      "address": "Passkeys brauchen die Box über ihren Namen geöffnet, nicht über eine Adresse, zum Beispiel {url}.",
+      "browser": "Dieser Browser unterstützt keine Passkeys."
+    }
+  }
+}

@@ -38,7 +38,7 @@ Every request under `/api` that is not `GET`, `HEAD` or `OPTIONS` must carry the
 
 Only failed sign-in attempts count against the rate limit: 5 per client address and user name and 30 per client address in a fixed 5-minute window. The answer is 429 [`auth.rate.limited`](/docs/reference/errors/#auth.rate.limited) with a `Retry-After` header. The same limiter protects the file protocols.
 
-Passwords use Argon2id (64 MiB, 3 passes) and need at least 8 characters. Pithyx has no personal access tokens for scripts; a script signs in like the desktop does. Passkeys are not built.
+Passwords use Argon2id (64 MiB, 3 passes) and need at least 8 characters. Pithyx has no personal access tokens for scripts; a script signs in like the desktop does. Passkeys (D380) sign in to the desktop under `/api/auth/passkeys/`: `sign-in/options` and `sign-in` without a session, and the user's own list, `options` (after the current password), create and delete with one; options and answers travel as the WebAuthn JSON forms.
 
 ## WebSocket and topics
 

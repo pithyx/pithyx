@@ -1,5 +1,5 @@
 {
-  "inputsHash": "3f2379a1e15e27446ffd66d4e70d49a88f13cd463d1bcb01857719a64ae35be4",
+  "inputsHash": "a206350a37fb2c57ebac2528998a70fb6654c6b8f8bef674227b043cf869154f",
   "entries": [
     {
       "name": "@babel/runtime",
@@ -233,6 +233,20 @@
       "licenseFile": "licenses/generated/94e43ffa7562.txt"
     },
     {
+      "name": "Fido2",
+      "version": "4.3.1",
+      "license": "MIT",
+      "source": "https://github.com/passwordless-lib/fido2-net-lib",
+      "licenseFile": "licenses/generated/6a65e771170f.txt"
+    },
+    {
+      "name": "Fido2.Models",
+      "version": "4.3.1",
+      "license": "MIT",
+      "source": "https://github.com/passwordless-lib/fido2-net-lib",
+      "licenseFile": "licenses/generated/e0c250c8de68.txt"
+    },
+    {
       "name": "Humanizer.Core",
       "version": "3.0.1",
       "license": "MIT",
@@ -282,6 +296,20 @@
       "licenseFile": "licenses/generated/fcc7466b3a24.txt"
     },
     {
+      "name": "Microsoft.Bcl.Memory",
+      "version": "9.0.14",
+      "license": "MIT",
+      "source": "https://dot.net/",
+      "licenseFile": "licenses/generated/d7a68596ab69.txt"
+    },
+    {
+      "name": "Microsoft.Bcl.TimeProvider",
+      "version": "8.0.1",
+      "license": "MIT",
+      "source": "https://dot.net/",
+      "licenseFile": "licenses/generated/d7a68596ab69.txt"
+    },
+    {
       "name": "Microsoft.Data.Sqlite",
       "version": "10.0.12",
       "license": "MIT",
@@ -300,6 +328,34 @@
       "version": "10.0.0",
       "license": "MIT",
       "source": "https://dot.net/",
+      "licenseFile": "licenses/generated/fcc7466b3a24.txt"
+    },
+    {
+      "name": "Microsoft.IdentityModel.Abstractions",
+      "version": "8.2.0",
+      "license": "MIT",
+      "source": "https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet",
+      "licenseFile": "licenses/generated/fcc7466b3a24.txt"
+    },
+    {
+      "name": "Microsoft.IdentityModel.JsonWebTokens",
+      "version": "8.2.0",
+      "license": "MIT",
+      "source": "https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet",
+      "licenseFile": "licenses/generated/fcc7466b3a24.txt"
+    },
+    {
+      "name": "Microsoft.IdentityModel.Logging",
+      "version": "8.2.0",
+      "license": "MIT",
+      "source": "https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet",
+      "licenseFile": "licenses/generated/fcc7466b3a24.txt"
+    },
+    {
+      "name": "Microsoft.IdentityModel.Tokens",
+      "version": "8.2.0",
+      "license": "MIT",
+      "source": "https://github.com/AzureAD/azure-activedirectory-identitymodel-extensions-for-dotnet",
       "licenseFile": "licenses/generated/fcc7466b3a24.txt"
     },
     {

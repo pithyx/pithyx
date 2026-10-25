@@ -1,13 +1,13 @@
 ---
 title: 'Security'
-description: 'Transport, open ports, physical access, SSH, two-factor sign-in, the recovery key and what leaves the box.'
+description: 'Transport, open ports, physical access, SSH, two-factor sign-in, passkeys, the recovery key and what leaves the box.'
 status: ready
 audience: admin
 sidebar:
   order: 9
 ---
 
-Pithyx keeps everything on the box: no telemetry, no cloud account, no phone-home. The web desktop speaks HTTPS with a certificate from the box's own certificate authority. This page covers transport, open ports, physical access, SSH, two-factor sign-in, the recovery key and the few connections the box makes on its own.
+Pithyx keeps everything on the box: no telemetry, no cloud account, no phone-home. The web desktop speaks HTTPS with a certificate from the box's own certificate authority. This page covers transport, open ports, physical access, SSH, two-factor sign-in, passkeys, the recovery key and the few connections the box makes on its own.
 
 ## HTTPS and certificates
 
@@ -48,9 +48,15 @@ Every user can turn on two-factor sign-in (TOTP) in the account menu under **Two
 
 SMB, SFTP, WebDAV and FTP use the password only.
 
+## Passkeys
+
+Every user can add passkeys in the account menu under **Passkeys** ([Your account](/docs/user/account/#passkeys)). A passkey replaces both the password and the second factor at the desktop sign-in; file services keep the password. Pithyx asks for discoverable credentials with user verification required (the device's PIN, fingerprint or face) and no attestation. It never asks a metadata service, so nothing leaves the box. Adding one needs the current password; each user has up to 20.
+
+A passkey is bound to the name the box was opened under (the WebAuthn relying party), so it works only there and only over HTTPS on a device that trusts the box; the box refuses passkeys for an address with `auth.passkey.unavailable`. Each sign-in uses a one-time challenge valid for 5 minutes and checks the signature counter. Failed passkey sign-ins count towards the limit of 30 per address in 5 minutes. A deactivated account or one without the desktop sign-in right is refused after the passkey check, as with the password. Resetting a password with the recovery key removes that administrator's passkeys. Passkeys are part of the configuration backup (part **Users and groups**).
+
 ## The recovery key
 
-First setup shows the recovery key once (`PTHX-` followed by 26 characters). It is the only way to reset the administrator password. To use it, choose "Forgot password?" on the sign-in page, then enter the key, the user name of an administrator and a new password. This signs that user out everywhere, turns off two-factor sign-in for that user and issues a new recovery key; the old one stops working. There is one key for the whole box and it is part of the configuration backup. Without the key and the password, the system has to be reinstalled. Other users ask an administrator for a new password.
+First setup shows the recovery key once (`PTHX-` followed by 26 characters). It is the only way to reset the administrator password. To use it, choose "Forgot password?" on the sign-in page, then enter the key, the user name of an administrator and a new password. This signs that user out everywhere, turns off two-factor sign-in and removes the passkeys of that user and issues a new recovery key; the old one stops working. There is one key for the whole box and it is part of the configuration backup. Without the key and the password, the system has to be reinstalled. Other users ask an administrator for a new password.
 
 ## What leaves the box
 
