@@ -145,6 +145,8 @@
     "title": "Open {name} with",
     "viewer": "Viewer",
     "download": "Download",
-    "always": "Always open .{extension} files this way"
+    "always": "Always open .{extension} files this way",
+    "choices": "Ways to open the file",
+    "current": "Default"
   }
 }

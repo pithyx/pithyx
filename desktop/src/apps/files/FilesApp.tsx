@@ -20,6 +20,8 @@ import {
   IconArrowRight,
   IconArrowUp,
   IconChevronRight,
+  IconDownload,
+  IconEye,
   IconFolderPlus,
   IconHome,
   IconLayoutGrid,
@@ -34,7 +36,13 @@ import {
 import { randomId } from '../../platform/browser';
 import { setClipboard, useFilesClipboard } from './clipboard';
 import { filesCall, onThumbnails, thumbnailUrl } from '../sdk/filesInternal';
-import { choiceExtension, defaultAction, openWithChoices, type OpenWith } from './defaultAction';
+import {
+  choiceExtension,
+  currentChoice,
+  defaultAction,
+  openWithChoices,
+  type OpenWith,
+} from './defaultAction';
 import { chooseFileDefault, useFileDefaults } from './fileDefaults';
 import { manifestText, useInstalledApps } from '../installed';
 import { useAppName } from '../names';
@@ -128,6 +136,7 @@ export function FilesApp({ app }: { app: PithyxApp }) {
   const [openWith, setOpenWith] = useState<FileEntry | null>(null);
   const [alwaysUse, setAlwaysUse] = useState(false);
   const installed = useInstalledApps((state) => state.apps);
+  const fileChoices = useFileDefaults((state) => state.choices);
   const appName = useAppName();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [menu, setMenu] = useState<{ x: number; y: number; entry: FileEntry | null } | null>(null);
@@ -1157,32 +1166,87 @@ export function FilesApp({ app }: { app: PithyxApp }) {
           </Button>
         }
       >
-        <div className={styles.openWith}>
-          {openWith !== null &&
-            openWithChoices(openWith, installed ?? []).map((choice) => (
-              <Button
-                key={choice}
-                onPress={() => {
-                  const entry = openWith;
-                  const extension = choiceExtension(entry.name);
-                  setOpenWith(null);
-                  if (alwaysUse && extension !== null) {
-                    chooseFileDefault(extension, choice).catch(report);
-                  }
-                  void openIn(entry, choice);
-                }}
-              >
-                {choice === 'viewer' || choice === 'download'
-                  ? t(`openWith.${choice}`)
-                  : appName(choice.slice('app:'.length))}
-              </Button>
-            ))}
-          {openWith !== null && choiceExtension(openWith.name) !== null && (
-            <Checkbox isSelected={alwaysUse} onChange={setAlwaysUse}>
-              {t('openWith.always', { extension: choiceExtension(openWith.name) })}
-            </Checkbox>
-          )}
-        </div>
+        {openWith !== null && (
+          <div className={styles.openWith}>
+            <ul
+              className={styles.openWithList}
+              aria-label={t('openWith.choices')}
+              onKeyDown={(event) => {
+                // The arrow keys move between the choices, as in a menu.
+                if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') {
+                  return;
+                }
+                const buttons = [...event.currentTarget.querySelectorAll('button')];
+                const index = buttons.indexOf(document.activeElement as HTMLButtonElement);
+                const next =
+                  buttons[
+                    (index + (event.key === 'ArrowDown' ? 1 : -1) + buttons.length) % buttons.length
+                  ];
+                next?.focus();
+                event.preventDefault();
+              }}
+            >
+              {openWithChoices(openWith, installed ?? []).map((choice) => {
+                const appId = choice.startsWith('app:') ? choice.slice('app:'.length) : null;
+                const icon =
+                  appId === null
+                    ? ''
+                    : (installed?.find((candidate) => candidate.id === appId)?.icon ?? '');
+                const current = choice === currentChoice(openWith, installed ?? [], fileChoices);
+                return (
+                  <li key={choice}>
+                    <button
+                      type="button"
+                      className={styles.openWithChoice}
+                      onClick={() => {
+                        const entry = openWith;
+                        const extension = choiceExtension(entry.name);
+                        setOpenWith(null);
+                        if (alwaysUse && extension !== null) {
+                          chooseFileDefault(extension, choice).catch(report);
+                        }
+                        void openIn(entry, choice);
+                      }}
+                    >
+                      {appId === null ? (
+                        <span className={styles.openWithIcon} aria-hidden>
+                          {choice === 'viewer' ? (
+                            <IconEye size={20} stroke={1.75} />
+                          ) : (
+                            <IconDownload size={20} stroke={1.75} />
+                          )}
+                        </span>
+                      ) : (
+                        <img
+                          className={styles.openWithIcon}
+                          src={icon}
+                          alt=""
+                          width={28}
+                          height={28}
+                        />
+                      )}
+                      <span className={styles.openWithName}>
+                        {choice === 'viewer' || choice === 'download'
+                          ? t(`openWith.${choice}`)
+                          : appName(appId ?? '')}
+                      </span>
+                      {current && (
+                        <span className={styles.openWithCurrent}>{t('openWith.current')}</span>
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            {choiceExtension(openWith.name) !== null && (
+              <div className={styles.openWithAlways}>
+                <Checkbox isSelected={alwaysUse} onChange={setAlwaysUse}>
+                  {t('openWith.always', { extension: choiceExtension(openWith.name) })}
+                </Checkbox>
+              </div>
+            )}
+          </div>
+        )}
       </Dialog>
       <Dialog
         isOpen={confirmPermanent !== null}

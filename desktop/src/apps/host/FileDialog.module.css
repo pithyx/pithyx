@@ -1,6 +1,7 @@
+/* The dialog is drawn in a portal of the desktop, where only the desktop's tokens apply, not the SDK's --pithyx-*. */
 .dialog {
   display: grid;
-  gap: var(--pithyx-space);
+  gap: var(--space-2);
   min-width: min(32em, 80vw);
 }
 
@@ -14,25 +15,25 @@
 .crumb {
   padding: 2px 6px;
   border: 0;
-  border-radius: var(--pithyx-radius);
+  border-radius: var(--radius-sm);
   background: transparent;
-  color: var(--pithyx-color-text-muted);
+  color: var(--color-text-muted);
   font: inherit;
   cursor: pointer;
 }
 
 .crumb:hover {
-  background: var(--pithyx-color-hover);
+  background: var(--color-surface-hover);
 }
 
 .crumb:focus-visible {
-  outline: 2px solid var(--pithyx-color-focus);
+  outline: 2px solid var(--color-focus);
   outline-offset: 1px;
 }
 
 /* Inside the list, so the outline never widens the list into a horizontal scroll. */
 .row:focus-visible {
-  outline: 2px solid var(--pithyx-color-focus);
+  outline: 2px solid var(--color-focus);
   outline-offset: -2px;
 }
 
@@ -49,32 +50,32 @@
 .item {
   display: flex;
   align-items: center;
-  gap: var(--pithyx-space);
+  gap: var(--space-2);
 }
 
 .row {
   display: flex;
   flex: 1;
   align-items: center;
-  gap: var(--pithyx-space);
+  gap: var(--space-2);
   min-width: 0;
   min-height: 36px;
   padding: 4px 6px;
   border: 0;
-  border-radius: var(--pithyx-radius);
+  border-radius: var(--radius-sm);
   background: transparent;
-  color: var(--pithyx-color-text);
+  color: var(--color-text);
   font: inherit;
   text-align: start;
   cursor: pointer;
 }
 
 .row:hover:not(:disabled) {
-  background: var(--pithyx-color-hover);
+  background: var(--color-surface-hover);
 }
 
 .row:disabled {
-  color: var(--pithyx-color-text-muted);
+  color: var(--color-text-muted);
   cursor: default;
 }
 

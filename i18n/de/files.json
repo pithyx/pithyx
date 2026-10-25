@@ -145,6 +145,8 @@
     "title": "{name} öffnen mit",
     "viewer": "Betrachter",
     "download": "Herunterladen",
-    "always": ".{extension}-Dateien immer so öffnen"
+    "always": ".{extension}-Dateien immer so öffnen",
+    "choices": "Möglichkeiten, die Datei zu öffnen",
+    "current": "Standard"
   }
 }
