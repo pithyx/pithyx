@@ -30,6 +30,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - The language list of the sign-in screen chooses the option the keyboard moved to also when Enter follows at once; it could take the option before.
 - The READMEs of `@pithyx/sdk`, `@pithyx/ui` and `@pithyx/cli` no longer call them release candidates; the packages are at `1.0.1` so npm shows the corrected pages.
 - `pithyx-release publish-sdk --latest` publishes a stable version straight to `latest` instead of failing.
+- Live changes of an open folder no longer stop for good when the folder's batch timer fires while it is being armed; the timer is stored before it is armed (#243).
 - The language list of the sign-in screen no longer takes the option under a resting mouse pointer when it opens under it; it kept the keyboard's choice only by chance (#276).
 - Settings > Updates: **Check now** waits until a changed channel is saved, and the channel cannot change while a check runs, so a check never asks the old channel and its answer never replaces the new setting (#268).
 - **Open with** in Files lists each way with its icon and space between them, the apps that are the default for the type first, marks the current default with **Default** and moves between the choices with the arrow keys; the app file dialogs keep space between icon and name again (#274).
