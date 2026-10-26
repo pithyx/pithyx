@@ -14,6 +14,9 @@ public static class ShareAvailability
     public const string PoolUnavailable = "pool_unavailable";
     public const string NotMounted = "not_mounted";
 
+    /// <summary>The dataset is encrypted and its pool is locked (D384).</summary>
+    public const string Locked = "locked";
+
     private static readonly HashSet<string> _stopped = new(StringComparer.Ordinal) { "UNAVAIL", "FAULTED", "SUSPENDED", "REMOVED" };
 
     /// <summary>Why the share cannot be reached, or null when it can (or when the pools were never read).</summary>
@@ -34,14 +37,14 @@ public static class ShareAvailability
         {
             return PoolUnavailable;
         }
-        return found.Mounted ? null : NotMounted;
+        return found.Mounted ? null : found.KeyStatus is "unavailable" ? Locked : NotMounted;
     }
 
     /// <summary>What decides the availability of every share dataset; a change means the share lists may differ.</summary>
     public static string Fingerprint(PoolList pools)
     {
         ArgumentNullException.ThrowIfNull(pools);
-        var datasets = pools.Datasets.Where(dataset => dataset.Name.Contains("/pithyx/shares/", StringComparison.Ordinal)).Select(dataset => $"{dataset.Name}={dataset.Mounted}");
+        var datasets = pools.Datasets.Where(dataset => dataset.Name.Contains("/pithyx/shares/", StringComparison.Ordinal)).Select(dataset => $"{dataset.Name}={dataset.Mounted}:{dataset.KeyStatus}");
         var states = pools.Pools.Select(pool => $"{pool.Name}:{_stopped.Contains(pool.State)}");
         return string.Join('|', states.Concat(datasets).Order(StringComparer.Ordinal));
     }

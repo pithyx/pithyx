@@ -64,8 +64,10 @@ public static partial class ZfsPlans
     /// <summary>
     /// The steps to create a pool with the Pithyx dataset layout. Disks that are not empty (confirmed by serial) are
     /// cleared first. Devices are named by their <c>/dev/disk/by-id</c> links, which survive a change of kernel names.
+    /// With <paramref name="hexKey"/>, <c>&lt;pool&gt;/pithyx</c> becomes the encryption root and gets the key on stdin
+    /// (D384), so everything Pithyx stores on the pool is encrypted with it.
     /// </summary>
-    public static IReadOnlyList<PlanStep> CreatePool(string name, string layout, IReadOnlyList<GuardDisk> disks)
+    public static IReadOnlyList<PlanStep> CreatePool(string name, string layout, IReadOnlyList<GuardDisk> disks, string? hexKey = null)
     {
         ArgumentNullException.ThrowIfNull(disks);
         var steps = disks.SelectMany(Clear).ToList();
@@ -80,18 +82,21 @@ public static partial class ZfsPlans
         steps.Add(new PlanStep(
             new CommandRequest("zpool", ["create", .. CreateOptions, name, .. vdevs], TimeSpan.FromMinutes(5)),
             [.. disks.Select(disk => disk.Disk.Id)]));
-        steps.AddRange(Datasets(name).Select(arguments => new PlanStep(new CommandRequest("zfs", ["create", .. arguments]), [])));
+        steps.AddRange(Datasets(name, encrypted: hexKey is not null).Select((arguments, index) => new PlanStep(
+            new CommandRequest("zfs", ["create", .. arguments], StandardInput: index == 0 && hexKey is not null ? EncryptionCommands.Input(hexKey) : null),
+            [])));
         return steps;
     }
 
     /// <summary>
     /// The dataset layout of D100 below a new pool's root, which holds no data: everything Pithyx stores lives in
-    /// <c>&lt;pool&gt;/pithyx</c>, the encryption root of step 9 (D106). Shares mount at <c>/&lt;pool&gt;/&lt;share&gt;</c>,
-    /// homes at <c>/&lt;pool&gt;/homes/&lt;user&gt;</c>, apps, system data and the cache below <c>/&lt;pool&gt;/.pithyx</c>.
+    /// <c>&lt;pool&gt;/pithyx</c>, the encryption root of an encrypted pool (D106, D384). Shares mount at
+    /// <c>/&lt;pool&gt;/&lt;share&gt;</c>, homes at <c>/&lt;pool&gt;/homes/&lt;user&gt;</c>, apps, system data and the cache
+    /// below <c>/&lt;pool&gt;/.pithyx</c>. Children inherit the encryption of <c>&lt;pool&gt;/pithyx</c>.
     /// </summary>
-    public static IReadOnlyList<string[]> Datasets(string pool) =>
+    public static IReadOnlyList<string[]> Datasets(string pool, bool encrypted = false) =>
     [
-        ["-o", "canmount=off", "-o", "mountpoint=none", $"{pool}/pithyx"],
+        [.. encrypted ? EncryptionCommands.RootOptions : [], "-o", "canmount=off", "-o", "mountpoint=none", EncryptionCommands.Root(pool)],
         ["-o", "canmount=off", "-o", $"mountpoint=/{pool}", $"{pool}/pithyx/shares"],
         ["-o", $"mountpoint=/{pool}/homes", $"{pool}/pithyx/homes"],
         ["-o", "canmount=off", "-o", $"mountpoint=/{pool}/.pithyx/apps", $"{pool}/pithyx/apps"],

@@ -1,0 +1,14 @@
+{
+  "command": "zfs",
+  "args": [
+    "get",
+    "-j",
+    "--json-int",
+    "-r",
+    "-t",
+    "filesystem",
+    "canmount,mountpoint,encryption,keystatus",
+    "pithyxteste"
+  ],
+  "exitCode": 0
+}

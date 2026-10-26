@@ -4559,6 +4559,159 @@
         }
       }
     },
+    "/api/storage/encryption/keys": {
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. A new random pool key (D384) for an encrypted pool or a key change. The box keeps nothing: the key is used only when it comes back in the request that creates the pool or changes its key.",
+        "operationId": "CreatePoolKey",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NewPoolKey"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/pools/{pool}/unlock": {
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Loads the key of an encrypted pool, typed or from the key vault, and mounts its datasets; its shares, homes and apps follow. Without a key it takes the vault's, and on an unlocked pool it only mounts what is missing.",
+        "operationId": "UnlockPool",
+        "parameters": [
+          {
+            "name": "pool",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PoolUnlockRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/pools/{pool}/key": {
+      "post": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Replaces the key of an unlocked encrypted pool with a new key from POST /api/storage/encryption/keys, which the user stored first; the old key stops working at once. The key vault then holds the new key, or none.",
+        "operationId": "ChangePoolKey",
+        "parameters": [
+          {
+            "name": "pool",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PoolKeyChange"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storage/pools/{pool}/key/vault": {
+      "delete": {
+        "tags": [
+          "Storage"
+        ],
+        "description": "Administrators only. Deletes the pool's key from the key vault on the system disk. The pool stays unlocked until the box restarts; then it waits for its key to be typed.",
+        "operationId": "RemovePoolKeyFromVault",
+        "parameters": [
+          {
+            "name": "pool",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "default": {
+            "description": "Problem details with a stable error code.",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiProblem"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/storage/plans": {
       "post": {
         "tags": [
@@ -13003,6 +13156,9 @@
           "storage.dataset.unchanged",
           "storage.disk.not_found",
           "storage.disk.refused",
+          "storage.encryption.key_invalid",
+          "storage.encryption.key_required",
+          "storage.encryption.key_wrong",
           "storage.encryption.unavailable",
           "storage.import.device_unknown",
           "storage.import.force_required",
@@ -13018,10 +13174,13 @@
           "storage.pool.encryption_required",
           "storage.pool.expanding",
           "storage.pool.layout_invalid",
+          "storage.pool.locked",
           "storage.pool.name_invalid",
           "storage.pool.name_mismatch",
           "storage.pool.name_taken",
+          "storage.pool.not_encrypted",
           "storage.pool.not_found",
+          "storage.pool.not_locked",
           "storage.pool.not_prepared",
           "storage.pool.read_only",
           "storage.pool.suspended",
@@ -15833,6 +15992,19 @@
           }
         }
       },
+      "NewPoolKey": {
+        "required": [
+          "key"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "The key as the user stores it: `PXPK-` and 56 characters in groups of four. Shown once; the box keeps no copy."
+          }
+        },
+        "description": "Response of `POST /api/storage/encryption/keys`."
+      },
       "NewShare": {
         "required": [
           "name",
@@ -16689,6 +16861,34 @@
               }
             ],
             "description": "A RAID-Z expansion (OpenZFS 2.3): a disk attached to a raidz vdev, onto which ZFS spreads the existing data."
+          },
+          "encryption": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "description": "For a pool Pithyx encrypted (its `&lt;pool&gt;/pithyx` is an encryption root, D384): whether it is locked and whether the key vault holds its key; null for an unencrypted pool.",
+                "$ref": "#/components/schemas/PoolEncryption"
+              }
+            ]
+          }
+        }
+      },
+      "PoolEncryption": {
+        "required": [
+          "locked",
+          "keyInVault"
+        ],
+        "type": "object",
+        "properties": {
+          "locked": {
+            "type": "boolean",
+            "description": "True while its key is not loaded: its datasets are not mounted, and its shares, homes and apps are unavailable."
+          },
+          "keyInVault": {
+            "type": "boolean",
+            "description": "True when the key vault on the system disk holds its key, so the box unlocks it at start."
           }
         }
       },
@@ -16747,6 +16947,24 @@
           }
         },
         "description": "A RAID-Z expansion (OpenZFS 2.3): a disk attached to a raidz vdev, onto which ZFS spreads the existing data."
+      },
+      "PoolKeyChange": {
+        "required": [
+          "key",
+          "keepInVault"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "The new key from `POST /api/storage/encryption/keys`, after the user stored it."
+          },
+          "keepInVault": {
+            "type": "boolean",
+            "description": "True to keep the new key in the key vault; false removes the old one from it."
+          }
+        },
+        "description": "Request of `POST /api/storage/pools/{pool}/key`."
       },
       "PoolList": {
         "required": [
@@ -16827,6 +17045,24 @@
             "format": "int64"
           }
         }
+      },
+      "PoolUnlockRequest": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "The pool's key as typed, or null to take it from the key vault."
+          },
+          "keepInVault": {
+            "type": "boolean",
+            "description": "With a typed key: keep it in the key vault once it opened the pool, so the box unlocks the pool at start.",
+            "default": false
+          }
+        },
+        "description": "Request of `POST /api/storage/pools/{pool}/unlock`."
       },
       "PowerAction": {
         "enum": [
@@ -19856,7 +20092,7 @@
               "null",
               "string"
             ],
-            "description": "The answer to the encryption question of a new pool: `none`, or `key` once the key vault exists."
+            "description": "The answer to the encryption question of a new pool: `none`, or `key` to encrypt it with EncryptionKey (D384)."
           },
           "confirmName": {
             "type": [
@@ -19948,9 +20184,23 @@
               "boolean"
             ],
             "description": "For imports: import a pool that was last used by another system; needs ConfirmName."
+          },
+          "encryptionKey": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "For `encryption: key`: the new pool's key from `POST /api/storage/encryption/keys`, after the user stored it."
+          },
+          "keepKeyInVault": {
+            "type": [
+              "null",
+              "boolean"
+            ],
+            "description": "For `encryption: key`: true to keep the key in the key vault on the system disk, so the box unlocks the pool at start; false to unlock it by hand after every start."
           }
         },
-        "description": "A destructive storage action to plan. Which fields an action needs: `pool.create` Pool, Layout, DiskIds,\nEncryption (and Confirmations for disks that are not empty); `pool.destroy` Pool and ConfirmName;\n`pool.replace` Pool, Vdev and one disk in DiskIds with its serial in Confirmations; `pool.spare.add` Pool\nand one disk; `pool.spare.remove`, `pool.offline` and `pool.online` Pool and Vdev;\n`pool.import.readonly` PoolGuid from the import scan, NewName when the name is taken, and Force with the pool\nname in ConfirmName when the scan says `needsForce`; `pool.import` Pool (imported read-only), and Force with\nConfirmName to force it; `pool.export` Pool; `pool.vdev.add` Pool, Layout (`single`, `mirror`,\n`raidz1` to `raidz3`), DiskIds, Confirmations, and ConfirmName when the preview says so;\n`pool.raidz.expand` Pool, Vdev (the raidz vdev), one disk and ConfirmName;\n`dataset.rename` Pool, Dataset and NewName; `dataset.set` Pool, Dataset and at least one of QuotaBytes,\nReservationBytes, Compression and RecordSizeBytes; `dataset.destroy` Pool, Dataset and ConfirmName;\n`volume.create` Pool, Name, SizeBytes and Sparse; `snapshot.destroy` Pool, Dataset and the snapshot's\nName; `snapshot.rollback` Pool, Dataset, the snapshot's Name and the dataset's full name in ConfirmName."
+        "description": "A destructive storage action to plan. Which fields an action needs: `pool.create` Pool, Layout, DiskIds,\nEncryption (with EncryptionKey and KeepKeyInVault for `key`, and Confirmations for disks that are not empty); `pool.destroy` Pool and ConfirmName;\n`pool.replace` Pool, Vdev and one disk in DiskIds with its serial in Confirmations; `pool.spare.add` Pool\nand one disk; `pool.spare.remove`, `pool.offline` and `pool.online` Pool and Vdev;\n`pool.import.readonly` PoolGuid from the import scan, NewName when the name is taken, and Force with the pool\nname in ConfirmName when the scan says `needsForce`; `pool.import` Pool (imported read-only), and Force with\nConfirmName to force it; `pool.export` Pool; `pool.vdev.add` Pool, Layout (`single`, `mirror`,\n`raidz1` to `raidz3`), DiskIds, Confirmations, and ConfirmName when the preview says so;\n`pool.raidz.expand` Pool, Vdev (the raidz vdev), one disk and ConfirmName;\n`dataset.rename` Pool, Dataset and NewName; `dataset.set` Pool, Dataset and at least one of QuotaBytes,\nReservationBytes, Compression and RecordSizeBytes; `dataset.destroy` Pool, Dataset and ConfirmName;\n`volume.create` Pool, Name, SizeBytes and Sparse; `snapshot.destroy` Pool, Dataset and the snapshot's\nName; `snapshot.rollback` Pool, Dataset, the snapshot's Name and the dataset's full name in ConfirmName."
       },
       "StorageSchedule": {
         "required": [

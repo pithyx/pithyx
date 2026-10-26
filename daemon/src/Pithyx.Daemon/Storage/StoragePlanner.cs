@@ -13,7 +13,8 @@ public sealed class StoragePlanner(
     PoolImportScanner scanner,
     DatasetPlanner datasetPlanner,
     ICommandRunner commands,
-    TimeProvider time)
+    TimeProvider time,
+    Encryption.KeyVault? vault = null)
 {
     /// <param name="Verdicts">The guard's verdict for every disk the plan touches.</param>
     /// <param name="Plan">The plan, or null while a disk is not allowed.</param>
@@ -46,8 +47,11 @@ public sealed class StoragePlanner(
             case "pool.create":
                 ZfsPlans.ValidateName(request.Pool, pools.Current.Pools.Select(pool => pool.Name));
                 ZfsPlans.ValidateLayout(request.Layout ?? "", diskIds.Count);
-                RequireEncryptionAnswer(request.Encryption);
-                return await WithDisksAsync(request, diskIds, confirmations, disks => ZfsPlans.CreatePool(request.Pool, request.Layout!, disks), cancellationToken);
+                {
+                    var key = EncryptionKey(request);
+                    var result = await WithDisksAsync(request, diskIds, confirmations, disks => ZfsPlans.CreatePool(request.Pool, request.Layout!, disks, key), cancellationToken);
+                    return key is not null && request.KeepKeyInVault == true ? KeepingKey(result, request.Pool, key) : result;
+                }
             case "pool.replace":
                 {
                     var leaf = Leaf(Pool(request.Pool), request.Vdev);
@@ -312,18 +316,39 @@ public sealed class StoragePlanner(
         };
     }
 
-    private static void RequireEncryptionAnswer(string? encryption)
-    {
-        switch (encryption)
+    /// <summary>The new pool's key in hex for <c>encryption: key</c>, null for <c>none</c>.</summary>
+    private static string? EncryptionKey(StoragePlanRequest request) =>
+        request.Encryption switch
         {
-            case "none":
-                return;
-            case "key":
-                // Step 9 creates <pool>/pithyx as the encryption root with the key handling; until then only the answer exists.
-                throw new PithyxException(ErrorCodes.StorageEncryptionUnavailable);
-            default:
-                throw new PithyxException(ErrorCodes.StoragePoolEncryptionRequired);
+            "none" => null,
+            "key" when string.IsNullOrWhiteSpace(request.EncryptionKey) =>
+                throw new PithyxException(ErrorCodes.StorageEncryptionKeyRequired, new Dictionary<string, object?> { ["name"] = request.Pool }),
+            "key" => Encryption.PoolKey.ToHex(request.EncryptionKey),
+            _ => throw new PithyxException(ErrorCodes.StoragePoolEncryptionRequired),
+        };
+
+    /// <summary>Puts the new pool's key into the key vault once the pool exists, by the GUID ZFS gave it.</summary>
+    private Result KeepingKey(Result result, string poolName, string hexKey)
+    {
+        if (result.Plan is null)
+        {
+            return result;
         }
+        var keys = vault ?? throw new PithyxException(ErrorCodes.StorageEncryptionUnavailable);
+        return result with
+        {
+            Plan = result.Plan with
+            {
+                AfterRun = _ =>
+                {
+                    var pool = pools.Current.Pools.FirstOrDefault(candidate => candidate.Name == poolName)
+                        ?? throw new PithyxException(ErrorCodes.StoragePoolNotFound, new Dictionary<string, object?> { ["name"] = poolName });
+                    keys.Save(pool.PoolGuid, hexKey);
+                    state.PublishVault();
+                    return Task.CompletedTask;
+                },
+            },
+        };
     }
 
     private static void RequireOneDisk(List<string> diskIds)

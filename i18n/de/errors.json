@@ -213,7 +213,7 @@
       "path_taken": "Unter {path} ist schon etwas anderes eingehängt. Wähle einen anderen Namen.",
       "pool_not_prepared": "Der Pool {pool} hat keinen Platz für freigegebene Ordner (pithyx/shares), deshalb lässt sich dort keiner anlegen.",
       "read_only": "In diesem Share darfst du nur lesen.",
-      "unavailable": "{name} lässt sich gerade nicht öffnen: {reason, select, pool_missing {sein Pool ist nicht angeschlossen} pool_unavailable {sein Pool ist angehalten, weil Platten fehlen} other {sein Ordner ist nicht eingehängt}}. Er kommt von selbst zurück, sobald seine Platten wieder da sind."
+      "unavailable": "{name} lässt sich gerade nicht öffnen: {reason, select, pool_missing {sein Pool ist nicht angeschlossen. Er kommt von selbst zurück, sobald seine Platten wieder da sind} pool_unavailable {sein Pool ist angehalten, weil Platten fehlen. Er kommt von selbst zurück, sobald seine Platten wieder da sind} locked {sein Pool ist gesperrt. Ein Administrator entsperrt ihn in Speicher mit dem Schlüssel des Pools} other {sein Ordner ist nicht eingehängt}}."
     },
     "thumbnail": {
       "not_found": "Für diese Datei gibt es noch keine Vorschau.",
@@ -562,7 +562,10 @@
       "refused": "Die Platte darf nicht verwendet werden: {reason, select, system_disk {sie enthält das System} mounted {ein Dateisystem darauf ist in Benutzung} pool_member {sie gehört zu einem Pool} not_test_disk {sie ist keine eingetragene Testplatte} other {sie ist nicht sicher verwendbar}}."
     },
     "encryption": {
-      "unavailable": "Verschlüsselung kommt mit dem Schlüsseltresor im nächsten Update. Ein Pool lässt sich nur beim Anlegen verschlüsseln; leg ihn also nur dann unverschlüsselt an, wenn das für seine Daten in Ordnung ist."
+      "unavailable": "Diese Box kann keine Pools verschlüsseln. Ein Pool lässt sich nur beim Anlegen verschlüsseln; leg ihn also nur dann unverschlüsselt an, wenn das für seine Daten in Ordnung ist.",
+      "key_invalid": "Das ist kein Pool-Schlüssel. Ein Pool-Schlüssel beginnt mit PXPK und hat danach 56 Zeichen; prüfe ihn auf Tippfehler.",
+      "key_wrong": "Dieser Schlüssel entsperrt den Pool {name} nicht. Er ist ein Pool-Schlüssel, aber von einem anderen Pool oder ein älterer.",
+      "key_required": "Gib den Schlüssel des Pools {name} ein."
     },
     "plan": {
       "action_invalid": "Unbekannte Speicheraktion.",
@@ -582,7 +585,10 @@
       "expanding": "Der Pool {name} wird schon erweitert. Die nächste Platte kannst du hinzufügen, wenn das fertig ist.",
       "read_only": "Der Pool {name} ist schreibgeschützt importiert und lässt sich nicht ändern. Importiere ihn zuerst zur Nutzung.",
       "disks_missing": "Platten von {name} sind nicht angeschlossen, deshalb lässt er sich gerade weder löschen noch abmelden: Der Befehl würde den Pool anhalten und hängen bleiben, bis die Box neu startet. Schließ die Platten erst wieder an, oder starte die Box neu, damit sie den Pool vergisst.",
-      "suspended": "{name} hat alle Lese- und Schreibzugriffe angehalten, weil zu viele seiner Platten fehlen. Löschen oder Abmelden würde jetzt hängen bleiben, bis die Box neu startet. Schließ die Platten wieder an; Pithyx setzt den Pool dann von selbst fort."
+      "suspended": "{name} hat alle Lese- und Schreibzugriffe angehalten, weil zu viele seiner Platten fehlen. Löschen oder Abmelden würde jetzt hängen bleiben, bis die Box neu startet. Schließ die Platten wieder an; Pithyx setzt den Pool dann von selbst fort.",
+      "not_encrypted": "Der Pool {name} ist nicht verschlüsselt.",
+      "locked": "Der Pool {name} ist gesperrt. Entsperre ihn zuerst mit seinem Schlüssel.",
+      "not_locked": "Der Pool {name} ist schon entsperrt. Um seinen Schlüssel im Schlüsseltresor aufzubewahren, ändere den Schlüssel: Der neue kommt in den Tresor."
     },
     "schedule": {
       "invalid": "Dieser Zeitplan lässt sich nicht setzen. Wähle Aus, Wöchentlich oder Monatlich für einen vorhandenen Pool."

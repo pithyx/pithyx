@@ -10,7 +10,7 @@ public sealed record StorageDiskList(IReadOnlyList<StorageDisk> Disks, string En
 
 /// <summary>
 /// A destructive storage action to plan. Which fields an action needs: <c>pool.create</c> Pool, Layout, DiskIds,
-/// Encryption (and Confirmations for disks that are not empty); <c>pool.destroy</c> Pool and ConfirmName;
+/// Encryption (with EncryptionKey and KeepKeyInVault for <c>key</c>, and Confirmations for disks that are not empty); <c>pool.destroy</c> Pool and ConfirmName;
 /// <c>pool.replace</c> Pool, Vdev and one disk in DiskIds with its serial in Confirmations; <c>pool.spare.add</c> Pool
 /// and one disk; <c>pool.spare.remove</c>, <c>pool.offline</c> and <c>pool.online</c> Pool and Vdev;
 /// <c>pool.import.readonly</c> PoolGuid from the import scan, NewName when the name is taken, and Force with the pool
@@ -29,7 +29,9 @@ public sealed record StorageDiskList(IReadOnlyList<StorageDisk> Disks, string En
 /// <param name="DiskIds">The disks to use, by id.</param>
 /// <param name="Name">Name of a new volume (one path component), or the snapshot after <c>@</c> for the snapshot actions. Shared folders are created with <c>POST /api/shares/plans</c>.</param>
 /// <param name="Vdev">GUID of the device to replace, take offline, bring online or remove, or of the raidz vdev to expand.</param>
-/// <param name="Encryption">The answer to the encryption question of a new pool: <c>none</c>, or <c>key</c> once the key vault exists.</param>
+/// <param name="Encryption">The answer to the encryption question of a new pool: <c>none</c>, or <c>key</c> to encrypt it with <paramref name="EncryptionKey"/> (D384).</param>
+/// <param name="EncryptionKey">For <c>encryption: key</c>: the new pool's key from <c>POST /api/storage/encryption/keys</c>, after the user stored it.</param>
+/// <param name="KeepKeyInVault">For <c>encryption: key</c>: true to keep the key in the key vault on the system disk, so the box unlocks the pool at start; false to unlock it by hand after every start.</param>
 /// <param name="ConfirmName">The pool's name, or the dataset's full name, typed by the user where the preview says <c>requiresConfirmName</c> and to destroy.</param>
 /// <param name="Confirmations">Serial numbers the user typed, by disk id.</param>
 /// <param name="Dataset">Full name of the dataset or volume to rename, change or destroy, on <paramref name="Pool"/>.</param>
@@ -61,7 +63,9 @@ public sealed record StoragePlanRequest(
     long? SizeBytes = null,
     bool? Sparse = null,
     string? PoolGuid = null,
-    bool? Force = null);
+    bool? Force = null,
+    string? EncryptionKey = null,
+    bool? KeepKeyInVault = null);
 
 /// <param name="Program">Program name.</param>
 /// <param name="Arguments">Arguments, passed without a shell.</param>
@@ -133,3 +137,17 @@ public sealed record ImportablePool(
     IReadOnlyList<GuardVerdict> Disks,
     IReadOnlyList<string> UnknownDevices,
     bool Allowed);
+
+/// <summary>Response of <c>POST /api/storage/encryption/keys</c>.</summary>
+/// <param name="Key">The key as the user stores it: <c>PXPK-</c> and 56 characters in groups of four. Shown once; the box keeps no copy.</param>
+public sealed record NewPoolKey(string Key);
+
+/// <summary>Request of <c>POST /api/storage/pools/{pool}/unlock</c>.</summary>
+/// <param name="Key">The pool's key as typed, or null to take it from the key vault.</param>
+/// <param name="KeepInVault">With a typed key: keep it in the key vault once it opened the pool, so the box unlocks the pool at start.</param>
+public sealed record PoolUnlockRequest(string? Key = null, bool KeepInVault = false);
+
+/// <summary>Request of <c>POST /api/storage/pools/{pool}/key</c>.</summary>
+/// <param name="Key">The new key from <c>POST /api/storage/encryption/keys</c>, after the user stored it.</param>
+/// <param name="KeepInVault">True to keep the new key in the key vault; false removes the old one from it.</param>
+public sealed record PoolKeyChange(string Key, bool KeepInVault);

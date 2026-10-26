@@ -131,7 +131,7 @@ public sealed class StorageApiTests : IAsyncLifetime
     }
 
     [Fact]
-    public async Task ANewPoolNeedsTheEncryptionAnswerAndEncryptionWaitsForTheKeyVault()
+    public async Task ANewPoolNeedsTheEncryptionAnswerAndAnEncryptedOneAKeyFromTheBox()
     {
         async Task<string> CodeAsync(object request)
         {
@@ -140,8 +140,33 @@ public sealed class StorageApiTests : IAsyncLifetime
         }
 
         Assert.Equal("storage.pool.encryption_required", await CodeAsync(new { action = "pool.create", pool = "tank", layout = "mirror", diskIds = _disks0 }));
-        Assert.Equal("storage.encryption.unavailable", await CodeAsync(new { action = "pool.create", pool = "tank", layout = "mirror", diskIds = _disks0, encryption = "key" }));
+        Assert.Equal("storage.encryption.key_required", await CodeAsync(new { action = "pool.create", pool = "tank", layout = "mirror", diskIds = _disks0, encryption = "key" }));
+        Assert.Equal("storage.encryption.key_invalid", await CodeAsync(new { action = "pool.create", pool = "tank", layout = "mirror", diskIds = _disks0, encryption = "key", encryptionKey = "my password" }));
         Assert.Equal("storage.plan.action_invalid", await CodeAsync(new { action = "pool.import.all", pool = "tank" }));
+
+        using var created = await _admin.PostAsync("/api/storage/encryption/keys", null, Token);
+        Assert.Equal(HttpStatusCode.OK, created.StatusCode);
+        var key = (await created.JsonAsync()).GetProperty("key").GetString()!;
+        var preview = await PreviewAsync(new { action = "pool.create", pool = "tank", layout = "mirror", diskIds = _disks0, encryption = "key", encryptionKey = key, keepKeyInVault = true });
+        var text = preview.GetRawText();
+        Assert.Contains("encryption=aes-256-gcm", text, StringComparison.Ordinal);
+        Assert.DoesNotContain(key, text, StringComparison.Ordinal);
+        Assert.DoesNotContain(Pithyx.Daemon.Storage.Encryption.PoolKey.ToHex(key), text, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task OnlyAdministratorsGetPoolKeysOrUnlockPools()
+    {
+        using var bob = await UserAsync();
+
+        using var key = await bob.PostAsync("/api/storage/encryption/keys", null, Token);
+        using var unlock = await bob.PostAsJsonAsync("/api/storage/pools/pithyxtestm/unlock", new { key = "x" }, Token);
+        using var change = await bob.PostAsJsonAsync("/api/storage/pools/pithyxtestm/key", new { key = "x", keepInVault = true }, Token);
+        using var forget = await bob.DeleteAsync("/api/storage/pools/pithyxtestm/key/vault", Token);
+
+        Assert.All([key, unlock, change, forget], response => Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode));
+        using var plain = await _admin.PostAsJsonAsync("/api/storage/pools/pithyxtestm/unlock", new { }, Token);
+        Assert.Equal("storage.pool.not_encrypted", await plain.ErrorCodeAsync());
     }
 
     [Fact]

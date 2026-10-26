@@ -2055,6 +2055,23 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/storage/encryption/keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. A new random pool key (D384) for an encrypted pool or a key change. The box keeps nothing: the key is used only when it comes back in the request that creates the pool or changes its key. */
+        post: operations["CreatePoolKey"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/storage/import/scan": {
         parameters: {
             query?: never;
@@ -2123,6 +2140,40 @@ export type paths = {
         patch?: never;
         trace?: never;
     };
+    "/api/storage/pools/{pool}/key": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Replaces the key of an unlocked encrypted pool with a new key from POST /api/storage/encryption/keys, which the user stored first; the old key stops working at once. The key vault then holds the new key, or none. */
+        post: operations["ChangePoolKey"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/storage/pools/{pool}/key/vault": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** @description Administrators only. Deletes the pool's key from the key vault on the system disk. The pool stays unlocked until the box restarts; then it waits for its key to be typed. */
+        delete: operations["RemovePoolKeyFromVault"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/storage/pools/{pool}/scrub": {
         parameters: {
             query?: never;
@@ -2152,6 +2203,23 @@ export type paths = {
         put?: never;
         /** @description Administrators only. Pauses the running scrub; starting it again resumes where it stopped. */
         post: operations["PauseScrub"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/storage/pools/{pool}/unlock": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Administrators only. Loads the key of an encrypted pool, typed or from the key vault, and mounts its datasets; its shares, homes and apps follow. Without a key it takes the vault's, and on an unlocked pool it only mounts what is missing. */
+        post: operations["UnlockPool"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4475,7 +4543,7 @@ export type components = {
             }[];
         };
         /** @enum {string} */
-        ErrorCode: "app.app.busy" | "app.app.no_previous" | "app.app.not_found" | "app.backend.endpoint_unknown" | "app.backend.missing" | "app.backend.start_failed" | "app.backend.storage_unavailable" | "app.backend.unavailable" | "app.backend.unsupported" | "app.compose.key_unsupported" | "app.compose.reference_unknown" | "app.compose.right_missing" | "app.compose.right_unused" | "app.compose.storage_mismatch" | "app.compose.value_invalid" | "app.compose.yaml_invalid" | "app.docker.unavailable" | "app.elevated.unsupported" | "app.icon.invalid" | "app.image.mismatch" | "app.image.unavailable" | "app.manifest.cron_invalid" | "app.manifest.duplicate" | "app.manifest.id_invalid" | "app.manifest.id_reserved" | "app.manifest.invalid_json" | "app.manifest.permission_missing" | "app.manifest.pithyx_invalid" | "app.manifest.reference_unknown" | "app.manifest.schema_violation" | "app.manifest.sdk_invalid" | "app.manifest.version_unsupported" | "app.manifest.window_size_invalid" | "app.mapping.invalid" | "app.package.box_too_old" | "app.package.downgrade_unsupported" | "app.package.invalid" | "app.package.layout_invalid" | "app.package.lock_invalid" | "app.package.not_found" | "app.package.too_large" | "app.permission.denied" | "app.permission.not_requested" | "app.pool.fixed" | "app.pool.required" | "app.pool.unavailable" | "app.storage.key_invalid" | "app.storage.not_found" | "app.storage.too_large" | "app.token.invalid" | "auth.account.disabled" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.desktop.not_allowed" | "auth.display_name.invalid" | "auth.passkey.invalid" | "auth.passkey.limit" | "auth.passkey.name_invalid" | "auth.passkey.not_found" | "auth.passkey.unavailable" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.file_default.invalid" | "desktop.file_default.limit_reached" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "desktop.startup_apps.invalid" | "fileservices.service.unavailable" | "fileservices.workgroup.invalid" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.share.unavailable" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "homes.choice.invalid" | "homes.home.in_use" | "homes.home.name_mismatch" | "homes.home.not_found" | "homes.move.running" | "homes.pool.no_space" | "homes.pool.taken" | "homes.pool.unavailable" | "homes.pool.unchanged" | "homes.quota.invalid" | "installer.check.failed" | "installer.claim.required" | "installer.claim.taken" | "installer.disk.count" | "installer.disk.unsuitable" | "installer.erase.not_confirmed" | "installer.hostname.invalid" | "installer.install.failed" | "installer.install.running" | "installer.keyboard.invalid" | "installer.reboot.not_ready" | "jobs.job.not_found" | "logs.app.invalid" | "logs.archive.pool_unavailable" | "logs.batch.too_large" | "logs.query.invalid" | "logs.settings.invalid" | "network.address.invalid" | "network.apply.failed" | "network.bond.member_invalid" | "network.bond.members_missing" | "network.bond.primary_invalid" | "network.change.empty" | "network.change.not_found" | "network.change.pending" | "network.config.unreachable" | "network.default_interface.invalid" | "network.dns.invalid" | "network.dns.too_many" | "network.firewall.failed" | "network.gateway.invalid" | "network.global.not_changeable" | "network.host_name.invalid" | "network.interface.duplicate" | "network.interface.kind_invalid" | "network.interface.name_invalid" | "network.interface.not_changeable" | "network.interface.unknown" | "network.mtu.invalid" | "network.search_domain.invalid" | "network.search_domain.too_many" | "network.vlan.duplicate" | "network.vlan.id_invalid" | "network.vlan.parent_invalid" | "notifications.channel.failed" | "notifications.channel.invalid" | "notifications.channel.limit_reached" | "notifications.channel.not_found" | "notifications.language.unsupported" | "notifications.message.invalid" | "notifications.notification.not_found" | "notifications.smtp.invalid" | "notifications.smtp.missing" | "permissions.grant.invalid" | "proxy.access.denied" | "proxy.acme.caa" | "proxy.acme.connection" | "proxy.acme.directory_invalid" | "proxy.acme.dns" | "proxy.acme.email_invalid" | "proxy.acme.failed" | "proxy.acme.name_not_public" | "proxy.acme.name_rejected" | "proxy.acme.not_acme" | "proxy.acme.port_unavailable" | "proxy.acme.rate_limited" | "proxy.acme.running" | "proxy.acme.terms_required" | "proxy.acme.unauthorized" | "proxy.acme.unreachable" | "proxy.acme.wildcard" | "proxy.address.denied" | "proxy.address.invalid" | "proxy.auth.required" | "proxy.basic_auth.invalid" | "proxy.basic_auth.password_missing" | "proxy.certificate.missing" | "proxy.certificate.name_mismatch" | "proxy.domain.invalid" | "proxy.domain.taken" | "proxy.domains.missing" | "proxy.domains.too_many" | "proxy.header.invalid" | "proxy.headers.too_many" | "proxy.host.not_found" | "proxy.host.unknown" | "proxy.limit.out_of_range" | "proxy.loop.detected" | "proxy.redirect.not_found" | "proxy.redirect.status_invalid" | "proxy.redirect.target_invalid" | "proxy.sign_in.address_invalid" | "proxy.sign_in.group_not_found" | "proxy.sign_in.user_not_found" | "proxy.stream.name_invalid" | "proxy.stream.not_found" | "proxy.stream.port_in_use" | "proxy.stream.port_privileged" | "proxy.stream.port_reserved" | "proxy.stream.port_taken" | "proxy.stream.protocol_missing" | "proxy.target.invalid" | "proxy.target.loop" | "proxy.target.on_box" | "proxy.target.timeout" | "proxy.target.unavailable" | "proxy.ticket.target_invalid" | "proxy.websockets.disabled" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.command.timed_out" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.disks_missing" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_found" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.pool.suspended" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "storage.zfs.unavailable" | "store.app.not_found" | "store.catalog.architecture_missing" | "store.catalog.built_in" | "store.catalog.busy" | "store.catalog.data_version_decreased" | "store.catalog.exists" | "store.catalog.id_reserved" | "store.catalog.invalid_json" | "store.catalog.mismatch" | "store.catalog.not_found" | "store.catalog.rule_violation" | "store.catalog.schema_violation" | "store.catalog.sequence_old" | "store.catalog.signature_invalid" | "store.catalog.unreachable" | "store.catalog.url_invalid" | "store.catalog.version_unsupported" | "store.package.hash_mismatch" | "system.backup.category_missing" | "system.backup.invalid" | "system.backup.password_wrong" | "system.backup.restore_expired" | "system.backup.restore_failed" | "system.backup.restore_running" | "system.backup.too_large" | "system.backup.too_new" | "system.internal.unexpected" | "system.origin.forbidden" | "system.time.apply_failed" | "system.time.server_invalid" | "system.time.servers_too_many" | "system.time.zone_invalid" | "system.ups.invalid" | "system.ups.unavailable" | "tls.custom.expired" | "tls.custom.invalid" | "tls.custom.key_mismatch" | "tls.issued.not_found" | "tls.name.invalid" | "tls.name.not_permitted" | "tls.names.missing" | "tls.names.too_many" | "tls.validity.out_of_range" | "update.apply.failed" | "update.apply.running" | "update.channel.invalid" | "update.channel.mismatch" | "update.channel.sequence_old" | "update.channel.signature_invalid" | "update.download.mismatch" | "update.file.architecture" | "update.file.channel" | "update.file.hash_mismatch" | "update.file.invalid" | "update.file.minimum" | "update.file.missing_entry" | "update.file.not_found" | "update.file.older" | "update.file.signature_invalid" | "update.file.too_large" | "update.file.unexpected_entry" | "update.none.available" | "update.rollback.unconfirmed" | "update.snapshot.not_found" | "update.source.invalid" | "update.source.unreachable" | "update.space.insufficient" | "update.system.unsupported" | "users.account.refused" | "users.gid.exhausted" | "users.group.builtin" | "users.group.description_invalid" | "users.group.exists" | "users.group.name_invalid" | "users.group.name_reserved" | "users.group.not_found" | "users.group.refused" | "users.uid.exhausted" | "users.user.exists" | "users.user.last_admin" | "users.user.not_found" | "users.user.self";
+        ErrorCode: "app.app.busy" | "app.app.no_previous" | "app.app.not_found" | "app.backend.endpoint_unknown" | "app.backend.missing" | "app.backend.start_failed" | "app.backend.storage_unavailable" | "app.backend.unavailable" | "app.backend.unsupported" | "app.compose.key_unsupported" | "app.compose.reference_unknown" | "app.compose.right_missing" | "app.compose.right_unused" | "app.compose.storage_mismatch" | "app.compose.value_invalid" | "app.compose.yaml_invalid" | "app.docker.unavailable" | "app.elevated.unsupported" | "app.icon.invalid" | "app.image.mismatch" | "app.image.unavailable" | "app.manifest.cron_invalid" | "app.manifest.duplicate" | "app.manifest.id_invalid" | "app.manifest.id_reserved" | "app.manifest.invalid_json" | "app.manifest.permission_missing" | "app.manifest.pithyx_invalid" | "app.manifest.reference_unknown" | "app.manifest.schema_violation" | "app.manifest.sdk_invalid" | "app.manifest.version_unsupported" | "app.manifest.window_size_invalid" | "app.mapping.invalid" | "app.package.box_too_old" | "app.package.downgrade_unsupported" | "app.package.invalid" | "app.package.layout_invalid" | "app.package.lock_invalid" | "app.package.not_found" | "app.package.too_large" | "app.permission.denied" | "app.permission.not_requested" | "app.pool.fixed" | "app.pool.required" | "app.pool.unavailable" | "app.storage.key_invalid" | "app.storage.not_found" | "app.storage.too_large" | "app.token.invalid" | "auth.account.disabled" | "auth.challenge.expired" | "auth.credentials.invalid" | "auth.csrf.header_missing" | "auth.desktop.not_allowed" | "auth.display_name.invalid" | "auth.passkey.invalid" | "auth.passkey.limit" | "auth.passkey.name_invalid" | "auth.passkey.not_found" | "auth.passkey.unavailable" | "auth.password.too_common" | "auth.password.too_long" | "auth.password.too_short" | "auth.permission.denied" | "auth.rate.limited" | "auth.recovery.invalid" | "auth.session.expired" | "auth.setup.already_done" | "auth.totp.already_enabled" | "auth.totp.invalid" | "auth.totp.not_enrolled" | "auth.username.invalid" | "auth.username.reserved" | "desktop.device.not_found" | "desktop.file_default.invalid" | "desktop.file_default.limit_reached" | "desktop.item.conflict" | "desktop.item.invalid" | "desktop.item.limit_reached" | "desktop.item.not_found" | "desktop.layout.conflict" | "desktop.layout.invalid" | "desktop.layout.too_large" | "desktop.note.too_long" | "desktop.startup_apps.invalid" | "fileservices.service.unavailable" | "fileservices.workgroup.invalid" | "fs.cursor.invalid" | "fs.entry.access_denied" | "fs.entry.exists" | "fs.entry.is_folder" | "fs.entry.not_folder" | "fs.entry.not_found" | "fs.folder.not_empty" | "fs.io.failed" | "fs.name.invalid" | "fs.operation.into_itself" | "fs.operation.invalid" | "fs.path.invalid" | "fs.range.not_satisfiable" | "fs.share.data_choice_required" | "fs.share.dataset_name_invalid" | "fs.share.description_invalid" | "fs.share.exists" | "fs.share.folder_dev_only" | "fs.share.invalid" | "fs.share.name_mismatch" | "fs.share.name_reserved" | "fs.share.no_dataset" | "fs.share.not_found" | "fs.share.path_taken" | "fs.share.pool_not_prepared" | "fs.share.read_only" | "fs.share.unavailable" | "fs.thumbnail.not_found" | "fs.thumbnail.too_many" | "fs.trash.retention_invalid" | "fs.upload.incomplete" | "fs.version.not_found" | "fs.volume.full" | "fs.volume.read_only" | "homes.choice.invalid" | "homes.home.in_use" | "homes.home.name_mismatch" | "homes.home.not_found" | "homes.move.running" | "homes.pool.no_space" | "homes.pool.taken" | "homes.pool.unavailable" | "homes.pool.unchanged" | "homes.quota.invalid" | "installer.check.failed" | "installer.claim.required" | "installer.claim.taken" | "installer.disk.count" | "installer.disk.unsuitable" | "installer.erase.not_confirmed" | "installer.hostname.invalid" | "installer.install.failed" | "installer.install.running" | "installer.keyboard.invalid" | "installer.reboot.not_ready" | "jobs.job.not_found" | "logs.app.invalid" | "logs.archive.pool_unavailable" | "logs.batch.too_large" | "logs.query.invalid" | "logs.settings.invalid" | "network.address.invalid" | "network.apply.failed" | "network.bond.member_invalid" | "network.bond.members_missing" | "network.bond.primary_invalid" | "network.change.empty" | "network.change.not_found" | "network.change.pending" | "network.config.unreachable" | "network.default_interface.invalid" | "network.dns.invalid" | "network.dns.too_many" | "network.firewall.failed" | "network.gateway.invalid" | "network.global.not_changeable" | "network.host_name.invalid" | "network.interface.duplicate" | "network.interface.kind_invalid" | "network.interface.name_invalid" | "network.interface.not_changeable" | "network.interface.unknown" | "network.mtu.invalid" | "network.search_domain.invalid" | "network.search_domain.too_many" | "network.vlan.duplicate" | "network.vlan.id_invalid" | "network.vlan.parent_invalid" | "notifications.channel.failed" | "notifications.channel.invalid" | "notifications.channel.limit_reached" | "notifications.channel.not_found" | "notifications.language.unsupported" | "notifications.message.invalid" | "notifications.notification.not_found" | "notifications.smtp.invalid" | "notifications.smtp.missing" | "permissions.grant.invalid" | "proxy.access.denied" | "proxy.acme.caa" | "proxy.acme.connection" | "proxy.acme.directory_invalid" | "proxy.acme.dns" | "proxy.acme.email_invalid" | "proxy.acme.failed" | "proxy.acme.name_not_public" | "proxy.acme.name_rejected" | "proxy.acme.not_acme" | "proxy.acme.port_unavailable" | "proxy.acme.rate_limited" | "proxy.acme.running" | "proxy.acme.terms_required" | "proxy.acme.unauthorized" | "proxy.acme.unreachable" | "proxy.acme.wildcard" | "proxy.address.denied" | "proxy.address.invalid" | "proxy.auth.required" | "proxy.basic_auth.invalid" | "proxy.basic_auth.password_missing" | "proxy.certificate.missing" | "proxy.certificate.name_mismatch" | "proxy.domain.invalid" | "proxy.domain.taken" | "proxy.domains.missing" | "proxy.domains.too_many" | "proxy.header.invalid" | "proxy.headers.too_many" | "proxy.host.not_found" | "proxy.host.unknown" | "proxy.limit.out_of_range" | "proxy.loop.detected" | "proxy.redirect.not_found" | "proxy.redirect.status_invalid" | "proxy.redirect.target_invalid" | "proxy.sign_in.address_invalid" | "proxy.sign_in.group_not_found" | "proxy.sign_in.user_not_found" | "proxy.stream.name_invalid" | "proxy.stream.not_found" | "proxy.stream.port_in_use" | "proxy.stream.port_privileged" | "proxy.stream.port_reserved" | "proxy.stream.port_taken" | "proxy.stream.protocol_missing" | "proxy.target.invalid" | "proxy.target.loop" | "proxy.target.on_box" | "proxy.target.timeout" | "proxy.target.unavailable" | "proxy.ticket.target_invalid" | "proxy.websockets.disabled" | "realtime.message.invalid" | "realtime.topic.invalid" | "realtime.topic.unknown" | "realtime.upgrade.required" | "request.body.invalid" | "request.media_type.unsupported" | "request.method.not_allowed" | "request.route.not_found" | "storage.alert.not_found" | "storage.command.failed" | "storage.command.timed_out" | "storage.dataset.compression_invalid" | "storage.dataset.exists" | "storage.dataset.in_use_by_share" | "storage.dataset.limit_invalid" | "storage.dataset.managed" | "storage.dataset.name_invalid" | "storage.dataset.name_mismatch" | "storage.dataset.not_found" | "storage.dataset.property_unsupported" | "storage.dataset.protected" | "storage.dataset.quota_below_used" | "storage.dataset.record_size_invalid" | "storage.dataset.reservation_too_large" | "storage.dataset.unchanged" | "storage.disk.not_found" | "storage.disk.refused" | "storage.encryption.key_invalid" | "storage.encryption.key_required" | "storage.encryption.key_wrong" | "storage.encryption.unavailable" | "storage.import.device_unknown" | "storage.import.force_required" | "storage.import.not_found" | "storage.import.not_importable" | "storage.import.preview_required" | "storage.plan.action_invalid" | "storage.plan.expired" | "storage.plan.not_found" | "storage.plan.stale" | "storage.pool.disk_count" | "storage.pool.disks_missing" | "storage.pool.encryption_required" | "storage.pool.expanding" | "storage.pool.layout_invalid" | "storage.pool.locked" | "storage.pool.name_invalid" | "storage.pool.name_mismatch" | "storage.pool.name_taken" | "storage.pool.not_encrypted" | "storage.pool.not_found" | "storage.pool.not_locked" | "storage.pool.not_prepared" | "storage.pool.read_only" | "storage.pool.suspended" | "storage.schedule.invalid" | "storage.scrub.not_running" | "storage.scrub.running" | "storage.snapshot.confirmation_mismatch" | "storage.snapshot.dataset_not_found" | "storage.snapshot.exists" | "storage.snapshot.held" | "storage.snapshot.newer_exist" | "storage.snapshot.not_found" | "storage.snapshot.not_pithyx" | "storage.snapshot.schedule_invalid" | "storage.vdev.not_found" | "storage.vdev.not_raidz" | "storage.volume.size_invalid" | "storage.volume.too_large" | "storage.zfs.unavailable" | "store.app.not_found" | "store.catalog.architecture_missing" | "store.catalog.built_in" | "store.catalog.busy" | "store.catalog.data_version_decreased" | "store.catalog.exists" | "store.catalog.id_reserved" | "store.catalog.invalid_json" | "store.catalog.mismatch" | "store.catalog.not_found" | "store.catalog.rule_violation" | "store.catalog.schema_violation" | "store.catalog.sequence_old" | "store.catalog.signature_invalid" | "store.catalog.unreachable" | "store.catalog.url_invalid" | "store.catalog.version_unsupported" | "store.package.hash_mismatch" | "system.backup.category_missing" | "system.backup.invalid" | "system.backup.password_wrong" | "system.backup.restore_expired" | "system.backup.restore_failed" | "system.backup.restore_running" | "system.backup.too_large" | "system.backup.too_new" | "system.internal.unexpected" | "system.origin.forbidden" | "system.time.apply_failed" | "system.time.server_invalid" | "system.time.servers_too_many" | "system.time.zone_invalid" | "system.ups.invalid" | "system.ups.unavailable" | "tls.custom.expired" | "tls.custom.invalid" | "tls.custom.key_mismatch" | "tls.issued.not_found" | "tls.name.invalid" | "tls.name.not_permitted" | "tls.names.missing" | "tls.names.too_many" | "tls.validity.out_of_range" | "update.apply.failed" | "update.apply.running" | "update.channel.invalid" | "update.channel.mismatch" | "update.channel.sequence_old" | "update.channel.signature_invalid" | "update.download.mismatch" | "update.file.architecture" | "update.file.channel" | "update.file.hash_mismatch" | "update.file.invalid" | "update.file.minimum" | "update.file.missing_entry" | "update.file.not_found" | "update.file.older" | "update.file.signature_invalid" | "update.file.too_large" | "update.file.unexpected_entry" | "update.none.available" | "update.rollback.unconfirmed" | "update.snapshot.not_found" | "update.source.invalid" | "update.source.unreachable" | "update.space.insufficient" | "update.system.unsupported" | "users.account.refused" | "users.gid.exhausted" | "users.group.builtin" | "users.group.description_invalid" | "users.group.exists" | "users.group.name_invalid" | "users.group.name_reserved" | "users.group.not_found" | "users.group.refused" | "users.uid.exhausted" | "users.user.exists" | "users.user.last_admin" | "users.user.not_found" | "users.user.self";
         /** @description A failed client message. `id` is empty when the message could not be parsed. */
         ErrorMessage: {
             code: components["schemas"]["ErrorCode"];
@@ -5527,6 +5595,11 @@ export type components = {
             /** @description Lowercase letters, digits, underscores and hyphens, starting with a letter or underscore, at most 32 characters; not a system name. */
             name: string;
         };
+        /** @description Response of `POST /api/storage/encryption/keys`. */
+        NewPoolKey: {
+            /** @description The key as the user stores it: `PXPK-` and 56 characters in groups of four. Shown once; the box keeps no copy. */
+            key: string;
+        };
         NewShare: {
             /** @description Letters, digits, spaces, dots, dashes and underscores, 1 to 64 characters, not starting with a dot. */
             name: string;
@@ -5839,6 +5912,7 @@ export type components = {
              * @description Number of files with permanent errors.
              */
             dataErrors: number;
+            encryption?: null | components["schemas"]["PoolEncryption"];
             /** @description A RAID-Z expansion (OpenZFS 2.3): a disk attached to a raidz vdev, onto which ZFS spreads the existing data. */
             expansion?: null | components["schemas"]["PoolExpansion"];
             /**
@@ -5868,6 +5942,12 @@ export type components = {
             /** @description Top-level vdevs, including log, cache, special and spare devices. */
             vdevs: components["schemas"]["Vdev"][];
         };
+        PoolEncryption: {
+            /** @description True when the key vault on the system disk holds its key, so the box unlocks it at start. */
+            keyInVault: boolean;
+            /** @description True while its key is not loaded: its datasets are not mounted, and its shares, homes and apps are unavailable. */
+            locked: boolean;
+        };
         /** @description A RAID-Z expansion (OpenZFS 2.3): a disk attached to a raidz vdev, onto which ZFS spreads the existing data. */
         PoolExpansion: {
             /**
@@ -5896,6 +5976,13 @@ export type components = {
             vdevGuid: null | string;
             /** @description True while it waits for a resilver to finish. */
             waitingForResilver: boolean;
+        };
+        /** @description Request of `POST /api/storage/pools/{pool}/key`. */
+        PoolKeyChange: {
+            /** @description True to keep the new key in the key vault; false removes the old one from it. */
+            keepInVault: boolean;
+            /** @description The new key from `POST /api/storage/encryption/keys`, after the user stored it. */
+            key: string;
         };
         /** @description Snapshot and event of `storage/pools`, and response of `GET /api/storage/pools`. */
         PoolList: {
@@ -5934,6 +6021,16 @@ export type components = {
              * @description Bytes the scan covers.
              */
             toExamineBytes: number;
+        };
+        /** @description Request of `POST /api/storage/pools/{pool}/unlock`. */
+        PoolUnlockRequest: {
+            /**
+             * @description With a typed key: keep it in the key vault once it opened the pool, so the box unlocks the pool at start.
+             * @default false
+             */
+            keepInVault: boolean;
+            /** @description The pool's key as typed, or null to take it from the key vault. */
+            key?: null | string;
         };
         /**
          * @description What the power button does.
@@ -7227,7 +7324,7 @@ export type components = {
         };
         /**
          * @description A destructive storage action to plan. Which fields an action needs: `pool.create` Pool, Layout, DiskIds,
-         *     Encryption (and Confirmations for disks that are not empty); `pool.destroy` Pool and ConfirmName;
+         *     Encryption (with EncryptionKey and KeepKeyInVault for `key`, and Confirmations for disks that are not empty); `pool.destroy` Pool and ConfirmName;
          *     `pool.replace` Pool, Vdev and one disk in DiskIds with its serial in Confirmations; `pool.spare.add` Pool
          *     and one disk; `pool.spare.remove`, `pool.offline` and `pool.online` Pool and Vdev;
          *     `pool.import.readonly` PoolGuid from the import scan, NewName when the name is taken, and Force with the pool
@@ -7255,10 +7352,14 @@ export type components = {
             dataset?: null | string;
             /** @description The disks to use, by id. */
             diskIds?: null | string[];
-            /** @description The answer to the encryption question of a new pool: `none`, or `key` once the key vault exists. */
+            /** @description The answer to the encryption question of a new pool: `none`, or `key` to encrypt it with EncryptionKey (D384). */
             encryption?: null | string;
+            /** @description For `encryption: key`: the new pool's key from `POST /api/storage/encryption/keys`, after the user stored it. */
+            encryptionKey?: null | string;
             /** @description For imports: import a pool that was last used by another system; needs ConfirmName. */
             force?: null | boolean;
+            /** @description For `encryption: key`: true to keep the key in the key vault on the system disk, so the box unlocks the pool at start; false to unlock it by hand after every start. */
+            keepKeyInVault?: null | boolean;
             /** @description `single`, `stripe`, `mirror`, `mirrors` (pairs), `raidz1`, `raidz2` or `raidz3`. */
             layout?: null | string;
             /** @description Name of a new volume (one path component), or the snapshot after `@` for the snapshot actions. Shared folders are created with `POST /api/shares/plans`. */
@@ -12816,6 +12917,35 @@ export interface operations {
             };
         };
     };
+    CreatePoolKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["NewPoolKey"];
+                };
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
     ScanImportablePools: {
         parameters: {
             query?: never;
@@ -12938,6 +13068,68 @@ export interface operations {
             };
         };
     };
+    ChangePoolKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pool: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PoolKeyChange"];
+            };
+        };
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    RemovePoolKeyFromVault: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pool: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
     StartScrub: {
         parameters: {
             query?: never;
@@ -13006,6 +13198,39 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description No Content */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Problem details with a stable error code. */
+            default: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["ApiProblem"];
+                };
+            };
+        };
+    };
+    UnlockPool: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                pool: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["PoolUnlockRequest"];
+            };
+        };
         responses: {
             /** @description No Content */
             204: {

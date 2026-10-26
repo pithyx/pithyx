@@ -1496,7 +1496,7 @@
     },
     "storage.encryption.unavailable": {
       "params": {},
-      "expected": "Encryption comes with the key vault in the next update. A pool can only be encrypted when it is created, so create it without encryption only if that is fine for its data."
+      "expected": "This box cannot encrypt pools. A pool can only be encrypted when it is created, so create it without encryption only if that is fine for its data."
     },
     "storage.import.device_unknown": {
       "params": {
@@ -2185,6 +2185,40 @@
     "users.user.self": {
       "params": {},
       "expected": "You cannot delete your own account."
+    },
+    "storage.encryption.key_invalid": {
+      "params": {},
+      "expected": "This is not a pool key. A pool key starts with PXPK and has 56 more characters; check it for a typo."
+    },
+    "storage.encryption.key_wrong": {
+      "params": {
+        "name": "tank"
+      },
+      "expected": "This key does not unlock pool tank. It is a pool key, but of another pool or an older one."
+    },
+    "storage.encryption.key_required": {
+      "params": {
+        "name": "tank"
+      },
+      "expected": "Enter the key of pool tank."
+    },
+    "storage.pool.not_encrypted": {
+      "params": {
+        "name": "tank"
+      },
+      "expected": "Pool tank is not encrypted."
+    },
+    "storage.pool.locked": {
+      "params": {
+        "name": "tank"
+      },
+      "expected": "Pool tank is locked. Unlock it with its key first."
+    },
+    "storage.pool.not_locked": {
+      "params": {
+        "name": "tank"
+      },
+      "expected": "Pool tank is unlocked already. To keep its key in the key vault, change the key: the new key goes into the vault."
     }
   },
   "cases": [

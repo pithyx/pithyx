@@ -1,0 +1,11 @@
+{
+  "command": "zpool",
+  "args": [
+    "list",
+    "-j",
+    "--json-int",
+    "-o",
+    "name,size,allocated,free,capacity,fragmentation,health,readonly"
+  ],
+  "exitCode": 0
+}

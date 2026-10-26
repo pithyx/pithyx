@@ -213,7 +213,7 @@
       "path_taken": "Something else is already mounted at {path}. Choose another name.",
       "pool_not_prepared": "The pool {pool} has no place for shared folders (pithyx/shares), so none can be created on it.",
       "read_only": "You can only read in this share.",
-      "unavailable": "{name} cannot be opened right now: {reason, select, pool_missing {its pool is not connected} pool_unavailable {its pool stopped because disks are missing} other {its folder is not mounted}}. It comes back on its own once its disks are back."
+      "unavailable": "{name} cannot be opened right now: {reason, select, pool_missing {its pool is not connected. It comes back on its own once its disks are back} pool_unavailable {its pool stopped because disks are missing. It comes back on its own once its disks are back} locked {its pool is locked. An administrator unlocks it in Storage with the pool's key} other {its folder is not mounted}}."
     },
     "thumbnail": {
       "not_found": "There is no preview of this file yet.",
@@ -562,7 +562,10 @@
       "refused": "The disk may not be used: {reason, select, system_disk {it holds the system} mounted {a file system on it is in use} pool_member {it belongs to a pool} not_test_disk {it is not a declared test disk} other {it is not safe to use}}."
     },
     "encryption": {
-      "unavailable": "Encryption comes with the key vault in the next update. A pool can only be encrypted when it is created, so create it without encryption only if that is fine for its data."
+      "unavailable": "This box cannot encrypt pools. A pool can only be encrypted when it is created, so create it without encryption only if that is fine for its data.",
+      "key_invalid": "This is not a pool key. A pool key starts with PXPK and has 56 more characters; check it for a typo.",
+      "key_wrong": "This key does not unlock pool {name}. It is a pool key, but of another pool or an older one.",
+      "key_required": "Enter the key of pool {name}."
     },
     "plan": {
       "action_invalid": "Unknown storage action.",
@@ -582,7 +585,10 @@
       "expanding": "Pool {name} is being expanded already. The next disk can be added when that is done.",
       "read_only": "Pool {name} is imported read-only and cannot be changed. Import it for use first.",
       "disks_missing": "Disks of {name} are not connected, so it cannot be destroyed or exported now: the command would stop the pool and hang until the box restarts. Connect the disks again first, or restart the box to forget the pool.",
-      "suspended": "{name} has stopped all reads and writes because too many of its disks are gone. Destroying or exporting it now would hang until the box restarts. Connect the disks again; Pithyx then resumes the pool on its own."
+      "suspended": "{name} has stopped all reads and writes because too many of its disks are gone. Destroying or exporting it now would hang until the box restarts. Connect the disks again; Pithyx then resumes the pool on its own.",
+      "not_encrypted": "Pool {name} is not encrypted.",
+      "locked": "Pool {name} is locked. Unlock it with its key first.",
+      "not_locked": "Pool {name} is unlocked already. To keep its key in the key vault, change the key: the new key goes into the vault."
     },
     "schedule": {
       "invalid": "This schedule cannot be set. Choose Off, Weekly or Monthly for an existing pool."
