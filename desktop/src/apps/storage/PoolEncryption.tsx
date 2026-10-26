@@ -106,7 +106,8 @@ export function PoolKeyCard({
             {asked.map((group, index) => (
               <TextField
                 key={group}
-                label={t('key.group', { number: group + 1 })}
+                // Numbered as the key prints its groups, PXPK being the first.
+                label={t('key.group', { number: group + 2 })}
                 value={typed[index] ?? ''}
                 onChange={(next) => {
                   const nextTyped: [string, string] =
