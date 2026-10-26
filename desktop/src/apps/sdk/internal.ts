@@ -39,6 +39,7 @@ export type ShareGrants = components['schemas']['ShareGrants'];
 export type SubjectGrant = components['schemas']['SubjectGrant'];
 export type ShareAccess = components['schemas']['ShareAccess'];
 export type SharePlanRequest = components['schemas']['SharePlanRequest'];
+export type NewPoolKey = components['schemas']['NewPoolKey'];
 
 /**
  * Administrative calls of the desktop's own core apps, outside the public SDK: not versioned, never served to a
@@ -66,6 +67,22 @@ export interface InternalMethods {
   'internal.admin.storage.health': { params: Record<string, never>; result: StorageHealth };
   'internal.admin.storage.mute': { params: { key: string; muted: boolean }; result: StorageHealth };
   'internal.admin.storage.scrub': { params: { pool: string; action: ScrubAction }; result: null };
+  /** A new pool key (D384); the box keeps no copy. */
+  'internal.admin.storage.newKey': { params: Record<string, never>; result: NewPoolKey };
+  /** The key from the vault again, after the password and the second factor (D384). */
+  'internal.admin.storage.revealKey': {
+    params: { pool: string; password: string; totpCode?: string };
+    result: NewPoolKey;
+  };
+  'internal.admin.storage.unlock': {
+    params: { pool: string; key?: string; keepInVault?: boolean };
+    result: null;
+  };
+  'internal.admin.storage.changeKey': {
+    params: { pool: string; key: string; keepInVault: boolean };
+    result: null;
+  };
+  'internal.admin.storage.forgetKey': { params: { pool: string }; result: null };
   'internal.admin.storage.schedules': {
     params: Record<string, never>;
     result: StorageScheduleList;
@@ -130,6 +147,10 @@ function isPlanRequest(value: unknown): boolean {
     optionalText(value.layout) &&
     optionalText(value.vdev) &&
     optionalText(value.encryption) &&
+    optionalText(value.encryptionKey) &&
+    (value.keepKeyInVault === undefined ||
+      value.keepKeyInVault === null ||
+      typeof value.keepKeyInVault === 'boolean') &&
     optionalText(value.confirmName) &&
     optionalText(value.poolGuid) &&
     optionalText(value.newName) &&
@@ -420,6 +441,77 @@ export function adminStorageHost(emit: (event: string, data?: unknown) => void):
           const { pool, action } =
             params as InternalMethods['internal.admin.storage.scrub']['params'];
           return scrub(pool, action);
+        }),
+    },
+    'internal.admin.storage.newKey': {
+      validate: isRecord,
+      handle: () => daemon(async () => unwrap(await api.POST('/api/storage/encryption/keys'))),
+    },
+    'internal.admin.storage.revealKey': {
+      validate: (params) =>
+        isRecord(params) &&
+        typeof params.pool === 'string' &&
+        typeof params.password === 'string' &&
+        (params.totpCode === undefined || typeof params.totpCode === 'string'),
+      handle: (params) =>
+        daemon(async () => {
+          const { pool, password, totpCode } =
+            params as InternalMethods['internal.admin.storage.revealKey']['params'];
+          return unwrap(
+            await api.POST('/api/storage/pools/{pool}/key/reveal', {
+              params: { path: { pool } },
+              body: { password, totpCode: totpCode ?? null },
+            }),
+          );
+        }),
+    },
+    'internal.admin.storage.unlock': {
+      validate: (params) =>
+        isRecord(params) &&
+        typeof params.pool === 'string' &&
+        (params.key === undefined || typeof params.key === 'string') &&
+        (params.keepInVault === undefined || typeof params.keepInVault === 'boolean'),
+      handle: (params) =>
+        daemon(async () => {
+          const { pool, key, keepInVault } =
+            params as InternalMethods['internal.admin.storage.unlock']['params'];
+          unwrap(
+            await api.POST('/api/storage/pools/{pool}/unlock', {
+              params: { path: { pool } },
+              body: { key: key ?? null, keepInVault: keepInVault ?? false },
+            }),
+          );
+          return null;
+        }),
+    },
+    'internal.admin.storage.changeKey': {
+      validate: (params) =>
+        isRecord(params) &&
+        typeof params.pool === 'string' &&
+        typeof params.key === 'string' &&
+        typeof params.keepInVault === 'boolean',
+      handle: (params) =>
+        daemon(async () => {
+          const { pool, key, keepInVault } =
+            params as InternalMethods['internal.admin.storage.changeKey']['params'];
+          unwrap(
+            await api.POST('/api/storage/pools/{pool}/key', {
+              params: { path: { pool } },
+              body: { key, keepInVault },
+            }),
+          );
+          return null;
+        }),
+    },
+    'internal.admin.storage.forgetKey': {
+      validate: (params) => isRecord(params) && typeof params.pool === 'string',
+      handle: (params) =>
+        daemon(async () => {
+          const { pool } = params as InternalMethods['internal.admin.storage.forgetKey']['params'];
+          unwrap(
+            await api.DELETE('/api/storage/pools/{pool}/key/vault', { params: { path: { pool } } }),
+          );
+          return null;
         }),
     },
     'internal.admin.storage.schedules': {

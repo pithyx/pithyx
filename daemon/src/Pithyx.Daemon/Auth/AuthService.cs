@@ -166,6 +166,23 @@ public sealed class AuthService(SqliteConnectionFactory connections, PasswordHas
         return await InfoAsync(user, cancellationToken);
     }
 
+    /// <summary>
+    /// The step-up before showing a secret (D384): the signed-in user's password again and, when two-factor sign-in is
+    /// on, a current authenticator code that was not used before.
+    /// </summary>
+    public async Task ConfirmStepUpAsync(long userId, string password, string? totpCode, CancellationToken cancellationToken)
+    {
+        var user = await FindByIdAsync(userId, cancellationToken) ?? throw new PithyxException(ErrorCodes.AuthSessionExpired);
+        if (!(await hasher.VerifyAsync(password ?? "", user.PasswordHash, cancellationToken)).Valid)
+        {
+            throw new PithyxException(ErrorCodes.AuthCredentialsInvalid);
+        }
+        if (user.TotpEnabledAt is not null && (string.IsNullOrWhiteSpace(totpCode) || !await TryUseTotpCodeAsync(user, totpCode, cancellationToken)))
+        {
+            throw new PithyxException(ErrorCodes.AuthTotpInvalid);
+        }
+    }
+
     /// <summary>The user as the desktop sees it, with its groups.</summary>
     public async Task<UserInfo?> GetUserAsync(long userId, CancellationToken cancellationToken) =>
         await FindByIdAsync(userId, cancellationToken) is { } user ? await InfoAsync(user, cancellationToken) : null;

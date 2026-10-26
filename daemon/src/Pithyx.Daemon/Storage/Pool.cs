@@ -13,6 +13,7 @@ namespace Pithyx.Daemon.Storage;
 /// <param name="Scan">The last or running scrub or resilver, if any.</param>
 /// <param name="Vdevs">Top-level vdevs, including log, cache, special and spare devices.</param>
 /// <param name="Expansion">The last or running RAID-Z expansion, if the pool had one.</param>
+/// <param name="Encryption">For a pool Pithyx encrypted (its <c>&lt;pool&gt;/pithyx</c> is an encryption root, D384): whether it is locked and whether the key vault holds its key; null for an unencrypted pool.</param>
 public sealed record Pool(
     string Name,
     string PoolGuid,
@@ -26,7 +27,13 @@ public sealed record Pool(
     long DataErrors,
     PoolScan? Scan,
     IReadOnlyList<Vdev> Vdevs,
-    PoolExpansion? Expansion = null);
+    PoolExpansion? Expansion = null,
+    PoolEncryption? Encryption = null);
+
+/// <param name="Locked">True while its key is not loaded: its datasets are not mounted, and its shares, homes and apps are unavailable.</param>
+/// <param name="KeyInVault">True when the key vault on the system disk holds its key, so the box unlocks it at start.</param>
+/// <param name="VaultFailed">True when the vault's key was tried and did not unlock the pool (wrong, unreadable or damaged): the pool waits for its key to be typed.</param>
+public sealed record PoolEncryption(bool Locked, bool KeyInVault, bool VaultFailed = false);
 
 /// <param name="Name">Vdev name as ZFS shows it: <c>raidz1-0</c>, <c>mirror-1</c> or the device's by-id name.</param>
 /// <param name="VdevGuid">Vdev GUID as decimal text; names a device in commands even when it is missing.</param>

@@ -46,6 +46,25 @@ public sealed class StorageAlertsTests
         Assert.Equal("tank", alert.Params["pool"].GetString());
     }
 
+    [Theory]
+    [InlineData(false, false, false, "warning", "storage.alert.poolLocked")]
+    [InlineData(false, true, false, null, null)]
+    [InlineData(false, true, true, "critical", "storage.alert.poolLockedVault")]
+    [InlineData(true, false, false, null, null)]
+    public void ALockedPoolWarnsWhileItWaitsForItsKeyAndIsCriticalWhenTheVaultFailed(bool readOnly, bool inVault, bool failed, string? severity, string? code)
+    {
+        var alerts = Evaluate(Pool() with { ReadOnly = readOnly, Encryption = new PoolEncryption(true, inVault, failed) });
+
+        if (severity is null)
+        {
+            Assert.Empty(alerts);
+            return;
+        }
+        var alert = Assert.Single(alerts);
+        Assert.Equal(("pool.locked:tank", severity, code), (alert.Key, alert.Severity, alert.Code));
+        Assert.Empty(Evaluate(Pool() with { Encryption = new PoolEncryption(false, inVault, false) }));
+    }
+
     [Fact]
     public void ADegradedPoolIsCritical()
     {

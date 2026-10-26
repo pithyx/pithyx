@@ -1167,9 +1167,50 @@ public static class ErrorCodes
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string StorageDiskRefused = "storage.disk.refused";
 
-    /// <summary>Encryption is chosen when a pool is created, and becomes available with the key vault.</summary>
+    /// <summary>
+    /// Encryption is chosen when a pool is created, and becomes available with the key vault. Pithyx 1.2 encrypts pools
+    /// (D384) and no longer answers with it; the code stays, as every published code does.
+    /// </summary>
     [ErrorStatus(HttpStatusCode.Conflict)]
     public const string StorageEncryptionUnavailable = "storage.encryption.unavailable";
+
+    /// <summary>The text is not a pool key: a key has 56 characters after <c>PXPK</c>, and its last characters check the others, so a typo shows here.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string StorageEncryptionKeyInvalid = "storage.encryption.key_invalid";
+
+    /// <summary>The key is a pool key, but not the one of this pool; <c>params.name</c> is the pool.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string StorageEncryptionKeyWrong = "storage.encryption.key_wrong";
+
+    /// <summary>The action needs the pool's key: an encrypted new pool, or a pool to unlock whose key is not in the key vault. <c>params.name</c> is the pool.</summary>
+    [ErrorStatus(HttpStatusCode.BadRequest)]
+    public const string StorageEncryptionKeyRequired = "storage.encryption.key_required";
+
+    /// <summary>
+    /// The pool's key could not be written to the key vault on the system disk (full, read-only or broken). The pool is
+    /// unlocked; at the next start it waits for its key to be typed. <c>params.name</c> is the pool.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.InternalServerError)]
+    public const string StorageEncryptionVaultFailed = "storage.encryption.vault_failed";
+
+    /// <summary>The key vault holds no key of this pool, so there is nothing to show; <c>params.name</c> is the pool.</summary>
+    [ErrorStatus(HttpStatusCode.NotFound)]
+    public const string StorageEncryptionNotInVault = "storage.encryption.not_in_vault";
+
+    /// <summary>The pool is not encrypted by Pithyx (its <c>&lt;pool&gt;/pithyx</c> has no key of its own); <c>params.name</c> is the pool.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StoragePoolNotEncrypted = "storage.pool.not_encrypted";
+
+    /// <summary>The pool is locked: unlock it with its key first. <c>params.name</c> is the pool.</summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StoragePoolLocked = "storage.pool.locked";
+
+    /// <summary>
+    /// The pool is unlocked already, so ZFS cannot check a key against it: to keep the key in the key vault, change the
+    /// key, which stores the new one. <c>params.name</c> is the pool.
+    /// </summary>
+    [ErrorStatus(HttpStatusCode.Conflict)]
+    public const string StoragePoolNotLocked = "storage.pool.not_locked";
 
     /// <summary>A device of the pool is on no disk the daemon knows, so the disk guard cannot check it; <c>params.device</c> names it.</summary>
     [ErrorStatus(HttpStatusCode.Conflict)]

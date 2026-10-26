@@ -54,11 +54,6 @@
         "body": "Disk {disk} (serial {serial}) reports {reallocated, number} reallocated, {pending, number} pending and {uncorrectable, number} uncorrectable sectors and {mediaErrors, number} media errors{selfTest, select, failed {; its last self-test failed} other {}}. Plan to replace it.",
         "action": "Open Storage"
       },
-      "resolved": {
-        "title": "Resolved: {problem}",
-        "body": "The storage problem is gone.",
-        "action": "Open Storage"
-      },
       "poolSuspended": {
         "title": "Pool {pool} has stopped",
         "body": "Too many disks of {pool} are gone, so ZFS stopped all reads and writes to protect the data. Connect the disks again: Pithyx resumes the pool on its own. Other pools keep working; do not destroy or export this one until then.",
@@ -67,6 +62,21 @@
       "diskMissing": {
         "title": "Disk {disk} of {pool} is not connected",
         "body": "Disk {disk} disappeared from {pool}. If it was unplugged by mistake, connect it again: Pithyx adds it back and ZFS copies what it missed. Otherwise replace it.",
+        "action": "Open Storage"
+      },
+      "poolLocked": {
+        "title": "Pool {pool} is locked",
+        "body": "{pool} waits for its key. Its shared folders, home folders and apps are unavailable until an administrator unlocks it in Storage.",
+        "action": "Open Storage"
+      },
+      "poolLockedVault": {
+        "title": "Pool {pool} could not be unlocked",
+        "body": "The key in the key vault did not unlock {pool}. Its data is untouched, but its shared folders, home folders and apps are unavailable until an administrator unlocks it in Storage with the stored key.",
+        "action": "Open Storage"
+      },
+      "resolved": {
+        "title": "Resolved: {problem}",
+        "body": "The storage problem is gone.",
         "action": "Open Storage"
       }
     }

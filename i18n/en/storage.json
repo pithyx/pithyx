@@ -117,6 +117,7 @@
       "disks": "Disks",
       "layout": "Layout",
       "encryption": "Encryption",
+      "key": "Key",
       "review": "Name and check"
     },
     "recommend": {
@@ -152,7 +153,14 @@
       "none": "No encryption",
       "noneHint": "Anyone with the disks can read the data. Fine for media and backups of other encrypted data.",
       "key": "Encrypt with a key",
-      "keyLater": "Comes with the key vault in the next update. To encrypt this pool, wait for it: a pool created now stays unencrypted."
+      "keyHint": "Without the key, nobody can read the data on the disks, not even you: the box shows the key once, and you store it, printed or in a password manager.",
+      "unlock": "How should the pool unlock?",
+      "vault": "Automatically at every start, from the key vault",
+      "manual": "By hand after every start",
+      "manualHint": "After every start the pool stays locked until an administrator types its key in Storage. Until then its shared folders, home folders and apps are unavailable. This also protects the data when the whole box is stolen.",
+      "summaryNone": "Not encrypted.",
+      "summaryVault": "Encrypted; the box unlocks it at every start with the key from its key vault.",
+      "summaryManual": "Encrypted; it stays locked after every start until its key is typed."
     },
     "layouts": {
       "single": {
@@ -545,5 +553,79 @@
       "explain": "Limits, compression and names of the datasets behind your shared folders and volumes, and of datasets that Pithyx did not create.",
       "button": "Show datasets"
     }
+  },
+  "vault": {
+    "hint": "The box keeps the key in a vault on its system disk and unlocks the pool at every start. That protects the data on disks that are stolen or thrown away, but not when the whole box is stolen. The vault is never part of a configuration backup, so keep your own copy of the key."
+  },
+  "key": {
+    "intro": "This is the pool's key. It is shown only now. Without it, nobody can read the pool's data after a reinstall, on another box or when the key vault is lost. Download or print it and keep it away from the box.",
+    "label": "Pool key",
+    "copy": "Copy key",
+    "copied": "Copied",
+    "copyManually": "The key is selected. Copy it with Ctrl+C or the context menu.",
+    "download": "Download",
+    "print": "Print",
+    "confirm": "I stored the key somewhere safe, away from the box.",
+    "sheet": {
+      "title": "Pithyx pool key",
+      "pool": "Pool: {pool}",
+      "date": "Created: {date}",
+      "hint": "This key unlocks the pool's data. Keep it safe and away from the box; whoever has it and the disks can read the data. Type it in Storage to unlock the pool.",
+      "emergency": "Without Pithyx: on any Linux with OpenZFS 2.x, connect all disks of the pool and run these commands as root. Paste this hex key when zfs load-key asks for it:",
+      "emergencyHint": "Then the pool's data is below the mount points it shows with zfs list. -f is needed when the pool was last used by another system."
+    },
+    "introShown": "This is the pool's key from the key vault. Download or print it and keep it away from the box.",
+    "verify": "To make sure the stored copy is complete, type these two groups of four from it.",
+    "group": "Group {number}",
+    "groupWrong": "This group does not match the key."
+  },
+  "unlock": {
+    "title": "Unlock {pool}",
+    "intro": "Type the pool's key, the one you downloaded or printed when the pool was created or its key changed.",
+    "introVaultFailed": "The key in the key vault did not unlock the pool, for example because the key was changed on another box. Type the pool's key.",
+    "key": "Key",
+    "keyHint": "Starts with PXPK. Dashes, spaces and upper or lower case do not matter.",
+    "keep": "Keep the key in the key vault and unlock the pool automatically at every start",
+    "cancel": "Cancel",
+    "submit": "Unlock",
+    "mountFailed": "The key opened the pool, but not every dataset could be mounted (the log has the details). Press Unlock again to mount what is missing."
+  },
+  "changeKey": {
+    "title": "Change the key of {pool}",
+    "intro": "The pool gets a new key, and the old one stops working at once. The data stays as it is. Store the new key first; only then does the pool take it.",
+    "create": "Create a new key",
+    "submit": "Change key",
+    "cancel": "Cancel",
+    "keep": "Keep the new key in the key vault and unlock the pool automatically at every start"
+  },
+  "forgetKey": {
+    "title": "Remove the key of {pool} from the key vault?",
+    "intro": "The pool stays unlocked until the box restarts. After that it stays locked until an administrator types its key in Storage, and its shared folders, home folders and apps are unavailable until then.",
+    "warning": "Make sure you have the pool's key. Without it, the pool's data cannot be read again.",
+    "cancel": "Cancel",
+    "submit": "Remove from vault"
+  },
+  "encryption": {
+    "encrypted": "Encrypted",
+    "locked": "Locked",
+    "lockedHint": "This pool is locked. Its shared folders, home folders and apps are unavailable until it is unlocked with its key.",
+    "lockedVaultHint": "This pool is locked: the key in the key vault did not unlock it. Its shared folders, home folders and apps are unavailable until it is unlocked with its key.",
+    "unlock": "Unlock…",
+    "inVault": "Encrypted; unlocks at every start with the key from the key vault.",
+    "byHand": "Encrypted; stays locked after every start until its key is typed.",
+    "change": "Change key…",
+    "forget": "Remove key from vault…",
+    "opening": "This pool is being unlocked with the key from the key vault.",
+    "reveal": "Show key…"
+  },
+  "reveal": {
+    "title": "Show the key of {pool}",
+    "intro": "The box shows the key from its key vault after you confirm it is you. Use this when the stored copy is lost, and store the key again.",
+    "vaultFailed": "The key in the vault did not unlock this pool the last time. It may be damaged or belong to an older key.",
+    "password": "Your password",
+    "code": "Code from your authenticator app",
+    "cancel": "Cancel",
+    "submit": "Show key",
+    "close": "Close"
   }
 }

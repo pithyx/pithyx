@@ -29,7 +29,7 @@ Wer die Konsole der Box bedienen kann, vor Ort oder über die Fernwartung (BMC, 
 
 Jede Box schreibt bei der Installation ihre eigene ZFS-Host-ID, damit zwei vom selben Stick installierte Boxen nie als dasselbe System gelten. Ein Pool von vor einer Neuinstallation gilt deshalb als von einem anderen System benutzt und braucht den erzwungenen Import (siehe [Wiederherstellung](/de/docs/install/recovery/#die-pools-wieder-importieren)).
 
-Pool-Verschlüsselung gibt es in dieser Version nicht; der Speicher-Assistent sagt, sie kommt mit dem Schlüsseltresor. Ein Schlüssel in einem Tresor auf der Systemplatte schützt nur gegen gestohlene Platten, nicht gegen jemanden, der die ganze Box oder ihre Konsole hat.
+Ein Pool lässt sich beim Anlegen verschlüsseln ([Verschlüsselung](/de/docs/admin/storage/#verschlüsselung)). Liegt sein Schlüssel im Schlüsseltresor auf der Systemplatte, entsperrt die Box ihn bei jedem Start: Das schützt nur gegen gestohlene Platten, nicht gegen jemanden, der die ganze Box oder ihre Konsole hat. Ein Pool, der nach jedem Start von Hand entsperrt wird, schützt die Daten auch auf einer gestohlenen Box.
 
 ## SSH
 

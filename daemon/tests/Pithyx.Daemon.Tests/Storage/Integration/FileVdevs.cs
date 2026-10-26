@@ -74,15 +74,17 @@ internal sealed class FileVdevs : IAsyncDisposable
 
     /// <summary>
     /// Creates a single-file pool whose datasets mount below a temporary altroot (<see cref="AltRoot"/>), never on the
-    /// host's own folders, with the Pithyx dataset layout of a new pool.
+    /// host's own folders, with the Pithyx dataset layout of a new pool, encrypted with <paramref name="hexKey"/> when
+    /// one is given, exactly as the plan's commands do it.
     /// </summary>
-    public async Task CreateLayoutPoolAsync()
+    public async Task CreateLayoutPoolAsync(string? hexKey = null)
     {
         System.IO.Directory.CreateDirectory(AltRoot);
         await RunAsync("zpool", ["create", "-R", AltRoot, .. ZfsPlans.CreateOptions, PoolName, .. Files]);
-        foreach (var arguments in ZfsPlans.Datasets(PoolName))
+        foreach (var step in ZfsPlans.CreatePool(PoolName, "single", [], hexKey).Where(step => step.Command.Arguments[0] == "create" && step.Command.FileName == "zfs"))
         {
-            await RunAsync("zfs", ["create", .. arguments]);
+            var result = await Commands.RunAsync(step.Command, Token);
+            Assert.True(result.ExitCode == 0, $"zfs {string.Join(' ', step.Command.Arguments)} failed with {result.ExitCode}: {result.StandardError}");
         }
     }
 

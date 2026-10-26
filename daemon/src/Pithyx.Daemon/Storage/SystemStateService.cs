@@ -27,7 +27,8 @@ public sealed partial class SystemStateService(
     TopicHub hub,
     TimeProvider time,
     ILogger<SystemStateService> logger,
-    StorageUsage? usage = null) : BackgroundService
+    StorageUsage? usage = null,
+    Encryption.KeyVault? vault = null) : BackgroundService
 {
     public static readonly CommandRequest Lsblk = new("lsblk", ["-J", "-b", "-O"]);
     public static readonly CommandRequest UdevMonitor = new("udevadm", ["monitor", "--udev", "--subsystem-match=block"]);
@@ -319,6 +320,9 @@ public sealed partial class SystemStateService(
         }
     }
 
+    /// <summary>Publishes the pools again after the key vault changed, without reading them (<see cref="Pool.Encryption"/>).</summary>
+    public void PublishVault() => PublishPools(read: false);
+
     private async Task<bool> ReadPoolsAsync(CancellationToken cancellationToken)
     {
         try
@@ -414,7 +418,10 @@ public sealed partial class SystemStateService(
             {
                 _serials.Remove(gone);
             }
-            derived = PoolHealth.Apply(last, connected, facts.SuspendedPools(last.Pools.Select(pool => pool.Name)), _reconnecting, _serials);
+            derived = Zfs.EncryptionCommands.Apply(
+                PoolHealth.Apply(last, connected, facts.SuspendedPools(last.Pools.Select(pool => pool.Name)), _reconnecting, _serials),
+                guid => vault?.Has(guid) == true,
+                guid => vault?.Failed(guid) == true);
         }
         if (pools.Replace(derived, read))
         {

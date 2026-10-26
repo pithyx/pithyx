@@ -23,6 +23,7 @@ using Pithyx.Daemon.Realtime;
 using Pithyx.Daemon.ReverseProxy;
 using Pithyx.Daemon.Shares;
 using Pithyx.Daemon.Storage;
+using Pithyx.Daemon.Storage.Encryption;
 using Pithyx.Daemon.Storage.Health;
 using Pithyx.Daemon.Storage.Snapshots;
 using Pithyx.Daemon.Storage.Zfs;
@@ -144,6 +145,8 @@ builder.Services.AddSingleton<PoolImportScanner>();
 builder.Services.AddSingleton<StoragePlanner>();
 builder.Services.AddSingleton<CommandPlanStore>();
 builder.Services.AddSingleton<CommandPlanRunner>();
+builder.Services.AddSingleton(new KeyVault(Path.Combine(Path.GetDirectoryName(paths.DatabasePath) ?? ".", "pool-keys")));
+builder.Services.AddSingleton<PoolEncryptionService>();
 builder.Services.AddSingleton<SystemStateService>();
 builder.Services.AddPithyxSnapshots();
 builder.Services.AddPithyxStorageHealth();
@@ -155,6 +158,7 @@ if (!BuildTimeDocument.IsGenerating)
     if (!installer.Active)
     {
         builder.Services.AddPithyxStorageHealthMonitor();
+        builder.Services.AddHostedService(services => services.GetRequiredService<PoolEncryptionService>());
     }
     if (mode == DaemonMode.Real && !installer.Active)
     {

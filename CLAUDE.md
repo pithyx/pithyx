@@ -23,8 +23,8 @@ These rules are binding. If a rule blocks you, stop and ask; never work around i
 ## Current state
 
 - Version `1.0.0` (codename Pyxis) is released: the tag `v1.0.0` on `stable`, a GitHub pre-release with the ISO and the GPL sources, on the stable channel and marked beta (D366); fixes come as 1.0.x. The repositories of the organization are public since 2026-10-18, and the docs are published from `stable` at pithyx.org.
-- Built: HTTPS on 7484 with the box as its own certificate authority (D346), the reverse proxy on 443 and 80 with redirect hosts and TCP/UDP streams (D347), storage (ZFS pools, disks, SMART, snapshots, scrubs), users, groups and permissions, home folders (D348), shared folders with SMB, SFTP, WebDAV and FTP, the web desktop with Files and Settings, the app runtime (SDK, manifest, Docker backends, proxy, Store with signed catalogs), network settings, firewall, config backup, the web installer, the ISO build and signed system updates with automatic rollback.
-- Not built: pool encryption, NFS, VMs, support bundles; app rights that need elevation (`docker.socket`, `host.full`) are refused with `app.elevated.unsupported`.
+- Built: HTTPS on 7484 with the box as its own certificate authority (D346), the reverse proxy on 443 and 80 with redirect hosts and TCP/UDP streams (D347), storage (ZFS pools, disks, SMART, snapshots, scrubs, pool encryption with the key vault, D384), users, groups and permissions, home folders (D348), shared folders with SMB, SFTP, WebDAV and FTP, the web desktop with Files and Settings, the app runtime (SDK, manifest, Docker backends, proxy, Store with signed catalogs), network settings, firewall, config backup, the web installer, the ISO build and signed system updates with automatic rollback.
+- Not built: unlocking encrypted pools from a USB key (#297), NFS, VMs, support bundles; app rights that need elevation (`docker.socket`, `host.full`) are refused with `app.elevated.unsupported`.
 - Docs pages under `website/` are all `ready` (checked against the code); new pages start as `draft` until checked.
 - The migrations are numbered SQL files in `daemon/`. Decisions are logged as D-numbers in `DECISIONS.md` (D269 on; earlier ones are in their pull requests), in number order, with the next free number at its top.
 
@@ -118,7 +118,7 @@ website/  landing page and docs at pithyx.org (Astro + Starlight, GitHub Pages, 
 - TOTP 2FA per user. Passkeys (D380) sign in to the desktop instead of the password and TOTP, only on a device that trusts the box and under the box's name. Login forms have correct `autocomplete` attributes.
 - No password reset without proof: only the recovery key from setup, otherwise reinstall.
 - No Secure Boot (installer detects it and asks to disable). SSH off by default; its MOTD (`/etc/update-motd.d/10-pithyx`, run by pam_motd) shows the ASCII logo, the version and a warning, in English. The ASCII logo (`image/rootfs/usr/lib/pithyx/logo.txt`: the isometric box with the lid shut and the word mark PITHYX, at most 72 columns) also appears on the console after boot and in the installer's console (D294); the SSH MOTD uses the same file; it is the only allowed ASCII art.
-- Pool encryption: ZFS native. Unlock manually, from a key vault on the system disk (UI explains it only protects against stolen disks) or a USB key.
+- Pool encryption (D384): ZFS native on `<pool>/pithyx`, with a key the box generates and shows once. Unlock manually, from the key vault on the system disk (UI explains it only protects against stolen disks) or a USB key (#297, not built yet). Keys go to ZFS only on stdin and never into a log, a backup or a pool.
 
 ## Apps
 

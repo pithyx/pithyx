@@ -81,7 +81,8 @@ public sealed class AppFiles(
             {
                 ShareAvailability.PoolMissing => "poolMissing",
                 ShareAvailability.PoolUnavailable => "poolUnavailable",
-                ShareAvailability.NotMounted => "notMounted",
+                // The SDK's reasons stay as published (SDK 1.0): a locked pool's share is one that is not mounted.
+                ShareAvailability.NotMounted or ShareAvailability.Locked => "notMounted",
                 _ => null,
             },
             share.Kind))];

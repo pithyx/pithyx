@@ -29,7 +29,7 @@ Whoever can use the box's console, in person or through remote management (BMC, 
 
 Each box writes its own ZFS host id during the installation, so two boxes installed from the same stick never claim to be the same system. A pool from before a reinstall therefore counts as used by another system and needs the forced import (see [Recovery](/docs/install/recovery/#importing-the-pools-again)).
 
-Pool encryption is not available in this version; the storage wizard says it comes with the key vault. A key kept in a vault on the system disk protects only against stolen disks, not against someone who has the whole box or its console.
+A pool can be encrypted when it is created ([Encryption](/docs/admin/storage/#encryption)). With its key in the key vault on the system disk, the box unlocks it at every start: that protects only against stolen disks, not against someone who has the whole box or its console. A pool unlocked by hand after every start also protects the data on a stolen box.
 
 ## SSH
 

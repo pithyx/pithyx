@@ -52,7 +52,7 @@ Die Referenzmaschine ist ein Intel N100 oder N305 mit 8 GB Arbeitsspeicher. Der 
 | RAID-Z2         | 4                         |
 | RAID-Z3         | 5                         |
 
-Neue Pools werden mit 4-KiB-Sektoren (`ashift=12`), `lz4`-Kompression und `atime=off` angelegt. Ein Pool-Name beginnt mit einem Kleinbuchstaben und darf Kleinbuchstaben, Ziffern, Bindestriche und Unterstriche enthalten, bis zu 32 Zeichen. Pools sind nicht verschlüsselt. Siehe [Speicher und Pools](/de/docs/admin/storage/).
+Neue Pools werden mit 4-KiB-Sektoren (`ashift=12`), `lz4`-Kompression und `atime=off` angelegt. Ein Pool-Name beginnt mit einem Kleinbuchstaben und darf Kleinbuchstaben, Ziffern, Bindestriche und Unterstriche enthalten, bis zu 32 Zeichen. Ein Pool lässt sich beim Anlegen verschlüsseln. Siehe [Speicher und Pools](/de/docs/admin/storage/#verschlüsselung).
 
 ## Netzwerk
 

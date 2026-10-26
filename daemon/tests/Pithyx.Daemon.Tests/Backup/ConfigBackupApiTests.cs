@@ -171,6 +171,24 @@ public sealed class ConfigBackupApiTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task TheKeyVaultOfEncryptedPoolsIsNeverInABackup()
+    {
+        // D384: a backup lying on a pool must never unlock it.
+        var hex = new string('c', 64);
+        var vault = Path.Combine(_factory.DataDirectory, "pool-keys");
+        Directory.CreateDirectory(vault);
+        await File.WriteAllTextAsync(Path.Combine(vault, "1234567890.key"), hex + "\n", Token);
+
+        var archive = await CreateAsync();
+
+        var envelope = Pithyx.Daemon.Backup.BackupArchive.Parse(archive)!;
+        var key = await _factory.Services.GetRequiredService<Pithyx.Daemon.Auth.PasswordHasher>().DeriveKeyAsync(BackupPassword, envelope.Salt, envelope.MemoryKib, envelope.Passes, Token);
+        var entries = Pithyx.Daemon.Backup.BackupArchive.Unpack(Pithyx.Daemon.Backup.BackupArchive.Open(envelope, key)!);
+        Assert.DoesNotContain(entries.Keys, name => name.Contains("pool-keys", StringComparison.Ordinal) || name.EndsWith(".key", StringComparison.Ordinal) && name.Contains("1234567890", StringComparison.Ordinal));
+        Assert.All(entries.Values, content => Assert.DoesNotContain(hex, System.Text.Encoding.UTF8.GetString(content), StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task OnlyAdministratorsBackUpOrRestore()
     {
         var anna = await _factory.InsertUserAsync("anna");

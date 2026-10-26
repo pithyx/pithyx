@@ -55,4 +55,4 @@ Restore points are daily snapshots; the newest 7 are kept (a box that was off fo
 
 ## Encryption over SMB
 
-The per-folder switch **Require encryption over SMB** sets `server smb encrypt = required` for that folder; otherwise a connection is encrypted when the client asks for it. The server always requires SMB 3 and signing. This is separate from pool encryption, which is not available (see [Storage](/docs/admin/storage/#encryption)).
+The per-folder switch **Require encryption over SMB** sets `server smb encrypt = required` for that folder; otherwise a connection is encrypted when the client asks for it. The server always requires SMB 3 and signing. This is separate from pool encryption, which encrypts the data on the disks (see [Storage](/docs/admin/storage/#encryption)).

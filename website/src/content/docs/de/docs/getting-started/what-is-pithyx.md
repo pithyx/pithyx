@@ -16,7 +16,7 @@ Pithyx 1.0 ist als Beta gekennzeichnet: Wir halten es für stabil, aber es hat s
 ## Was du bekommst
 
 - **Ein Web-Desktop.** Fenster, eine Taskleiste, Desktop-Verknüpfungen und Notizen, im Browser auf PC, Tablet oder Handy. Siehe [Der Desktop](/de/docs/user/desktop/).
-- **Speicher mit ZFS.** Du baust in der App „Speicher“ aus deinen Festplatten Pools und legst darauf freigegebene Ordner an. Neue Pools nutzen Kompression und sind nicht verschlüsselt. Siehe [Speicher und Pools](/de/docs/admin/storage/).
+- **Speicher mit ZFS.** Du baust in der App „Speicher“ aus deinen Festplatten Pools und legst darauf freigegebene Ordner an. Neue Pools nutzen Kompression und lassen sich mit einem Schlüssel verschlüsseln. Siehe [Speicher und Pools](/de/docs/admin/storage/).
 - **Dateifreigabe.** Freigegebene Ordner sind über SMB, SFTP, WebDAV und FTP erreichbar. SMB ist standardmäßig an; die anderen schaltest du in den Einstellungen ein. Siehe [Von anderen Geräten zugreifen](/de/docs/user/file-access/).
 - **Benutzer und Gruppen.** Jeder Benutzer ist ein echtes Konto auf der Box. Rechte werden an Benutzer und Gruppen vergeben; ein Benutzer erhält die Vereinigung aller seiner Rechte. Administratoren dürfen alles. Siehe [Benutzer und Gruppen](/de/docs/admin/users-and-groups/).
 - **Apps.** Apps öffnen sich in Fenstern auf dem Desktop. Eine App ist ein Frontend mit einem optionalen Backend in Containern. Administratoren installieren Apps aus einer Datei oder aus einem Katalog im Store; der offizielle und der Community-Katalog sind standardmäßig an. Siehe [Apps benutzen](/de/docs/user/apps/).
@@ -40,7 +40,7 @@ Details findest du unter [Architektur des Daemons](/de/docs/developers/daemon/ar
 - Es ist noch nichts für Daten, die du dir nicht leisten kannst zu verlieren (siehe die Warnung oben).
 - Es ist ein System für frische Installationen. Es gibt keinen Import aus anderen NAS-Systemen.
 - Der Installer stellt kein Backup wieder her und importiert keine Pools. Beides passiert nach der ersten Anmeldung.
-- Es bietet kein NFS. Pools sind noch nicht verschlüsselt.
+- Es bietet kein NFS.
 - Es braucht einen 64-Bit-x86-Computer mit UEFI und ausgeschaltetem Secure Boot. Es gibt keinen Installer für 32-Bit-Rechner, Legacy-BIOS oder Raspberry Pi. Siehe [Hardware-Anforderungen](/de/docs/getting-started/requirements/).
 - Es unterstützt nur kabelgebundene Netzwerke. WLAN wird nicht unterstützt.
 - Es kündigt sich nicht im Netzwerk an, du findest die Box also über ihre Adresse.
