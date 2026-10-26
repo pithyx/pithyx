@@ -63,7 +63,7 @@ _Der Dialog, wenn es die Namen im Zielordner schon gibt._
 - **Ziehen und Ablegen:** Elemente auf einen anderen Ordner, einen Teil des Pfads über der Liste oder eine Freigabe in der Seitenleiste zu ziehen, verschiebt sie dorthin (eine Freigabe, die du nur lesen darfst, nimmt nichts an). Halte beim Ablegen **Strg** oder **Alt** gedrückt, um zu kopieren.
 - **Umbenennen:** Drücke **F2** oder wähle **Umbenennen**. Ein Name darf nicht leer sein, kein `/` enthalten und höchstens 255 Bytes lang sein.
 - **Neuer Ordner:** Wähle **Neuer Ordner** und tippe dann seinen Namen.
-- **Neue Datei:** Wähle **Neue Datei** (im Menü einer freien Stelle oder über die Schaltfläche über der Liste) und tippe dann ihren Namen mit Endung, zum Beispiel `conf.toml`. Die Datei ist zunächst leer; ein Doppelklick öffnet sie mit ihrer Standard-App.
+- **Neue Datei:** Klicke mit der rechten Maustaste auf eine freie Stelle, wähle **Neue Datei** und tippe dann ihren Namen mit Endung, zum Beispiel `conf.toml`. Die Datei ist zunächst leer; ein Doppelklick öffnet sie mit ihrer Standard-App.
 
 Kopieren und Verschieben laufen im Hintergrund, mit Fortschritt und einer Abbrechen-Schaltfläche. Eine Anfrage verarbeitet bis zu 1000 ausgewählte Elemente. Symbolische Links werden nicht kopiert. Ein Ordner lässt sich nicht in sich selbst kopieren oder verschieben.
 
