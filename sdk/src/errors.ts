@@ -25,6 +25,8 @@ export const sdkErrorCodes = [
   'sdk.backend.endpoint_unknown',
   /** A request to the app's backend did not reach the box (`params.endpoint`), for example while it restarts. */
   'sdk.backend.unreachable',
+  /** A request of the desktop did not reach the box, for example while the connection is lost or the box restarts. */
+  'sdk.box.unreachable',
 ] as const;
 
 /** A code of the SDK's own transport errors, translated under `errors.sdk.*`. */

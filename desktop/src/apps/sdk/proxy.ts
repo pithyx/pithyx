@@ -1,8 +1,9 @@
-import { PithyxApiError, unwrap, type components } from '@pithyx/api-client';
+import { unwrap, type components } from '@pithyx/api-client';
 import type { MethodName, PithyxApp } from '@pithyx/sdk';
-import { PithyxError, type HostExtensions } from '@pithyx/sdk/host';
+import { type HostExtensions } from '@pithyx/sdk/host';
 import { api } from '../../api/client';
 import { realtime } from '../../realtime/connection';
+import { daemon } from './daemonError';
 
 /** The query of Settings > Reverse proxy. */
 export const proxyKey = ['settings', 'system', 'proxy'] as const;
@@ -60,21 +61,6 @@ const hasId = (value: unknown): value is { id: number } =>
 
 const optionalId = (value: Record<string, unknown>) =>
   value.id === undefined || typeof value.id === 'number';
-
-async function daemon<T>(call: () => Promise<T>): Promise<T> {
-  try {
-    return await call();
-  } catch (error) {
-    throw error instanceof PithyxApiError
-      ? new PithyxError({
-          code: error.code,
-          params: error.params,
-          detail: error.message,
-          requestId: error.requestId,
-        })
-      : error;
-  }
-}
 
 /** Follows a job on its topic until it succeeded or failed. */
 function ended(job: Job): Promise<Job> {

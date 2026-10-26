@@ -1,10 +1,11 @@
-import { unwrap, PithyxApiError, type components } from '@pithyx/api-client';
+import { unwrap, type components } from '@pithyx/api-client';
 import type { EventName, MethodName, PithyxApp } from '@pithyx/sdk';
-import { PithyxError, type HostExtensions } from '@pithyx/sdk/host';
+import { type HostExtensions } from '@pithyx/sdk/host';
 import { api } from '../../api/client';
 import { realtime } from '../../realtime/connection';
 import { openApp } from '../../wm/store';
 import { coreAppIds } from '../ids';
+import { daemon } from './daemonError';
 
 export type StorageDiskList = components['schemas']['StorageDiskList'];
 export type StorageDisk = components['schemas']['StorageDisk'];
@@ -296,21 +297,6 @@ async function scrub(pool: string, action: ScrubAction): Promise<null> {
         : await api.DELETE('/api/storage/pools/{pool}/scrub', options),
   );
   return null;
-}
-
-async function daemon<T>(call: () => Promise<T>): Promise<T> {
-  try {
-    return await call();
-  } catch (error) {
-    throw error instanceof PithyxApiError
-      ? new PithyxError({
-          code: error.code,
-          params: error.params,
-          detail: error.message,
-          requestId: error.requestId,
-        })
-      : error;
-  }
 }
 
 /**

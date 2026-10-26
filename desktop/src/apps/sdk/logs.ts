@@ -1,8 +1,9 @@
-import { PithyxApiError, unwrap, type components, type ErrorCode } from '@pithyx/api-client';
+import { unwrap, type components, type ErrorCode } from '@pithyx/api-client';
 import type { MethodName, PithyxApp } from '@pithyx/sdk';
-import { PithyxError, type HostExtensions } from '@pithyx/sdk/host';
+import { type HostExtensions } from '@pithyx/sdk/host';
 import { api } from '../../api/client';
 import type { DescribedError } from '../../errors/describe';
+import { daemon } from './daemonError';
 
 export type LogEntry = components['schemas']['LogEntry'];
 export type LogPage = components['schemas']['LogPage'];
@@ -58,21 +59,6 @@ function isSettings(value: unknown): value is LogSettings {
     Number.isSafeInteger(value.archiveRetentionDays) &&
     Number.isSafeInteger(value.archiveMaxBytes)
   );
-}
-
-async function daemon<T>(call: () => Promise<T>): Promise<T> {
-  try {
-    return await call();
-  } catch (error) {
-    throw error instanceof PithyxApiError
-      ? new PithyxError({
-          code: error.code,
-          params: error.params,
-          detail: error.message,
-          requestId: error.requestId,
-        })
-      : error;
-  }
 }
 
 /** The query string of a filter; arrays repeat their key, as the daemon expects. */

@@ -30,6 +30,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- A request that does not reach the box (the connection is lost or the box restarts) says the box could not be reached and to try again; it said there was an error on the server with the details in the logs, where there is none. Apps get it as the new SDK code `sdk.box.unreachable` for calls the desktop passes on to the box (#302).
 - A right-click on another app in the Pithyx menu while one app's menu is open opens the other app's menu; it closed the Pithyx menu and showed the desktop's. The taskbar, the Pithyx menu, the notification panel, the desktop's menus and sticky notes no longer show the browser's own menu (a note's text keeps it), and a right-click on a title bar opens the window menu (#284).
 - Store: an installed app opens the same page from every tab and from search, with its actions (open, update, rollback, uninstall) and settings, and for a catalog app its screenshots, source and versions; from a catalog tab it showed the catalog's page without uninstall and settings (#282).
 - A sticky note dropped on the desktop stays where it was dropped and settles into its cell; it showed in its old place for a moment first (#283).

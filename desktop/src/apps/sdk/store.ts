@@ -186,7 +186,7 @@ function upload(file: Blob, name: string): Promise<AppPackagePreview> {
     };
     request.onerror = () => {
       endTransfer(transfer);
-      reject(new PithyxError({ code: 'system.internal.unexpected', params: {} }));
+      reject(new PithyxError({ code: 'sdk.box.unreachable', params: {} }));
     };
     request.send(file);
   });

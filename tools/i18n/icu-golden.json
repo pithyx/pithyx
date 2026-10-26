@@ -1342,6 +1342,10 @@
       },
       "expected": "The app could not reach its backend (api). Check the connection to the box."
     },
+    "sdk.box.unreachable": {
+      "params": {},
+      "expected": "The box could not be reached. Check the connection and try again."
+    },
     "sdk.method.unknown": {
       "params": {
         "method": "storage.get"
