@@ -120,11 +120,23 @@ An encrypted pool on another box, or after a reinstall, is imported like any oth
 
 **Change key…** on an unlocked pool makes a new key, shows it like the wizard and changes the pool's key only after you confirmed you stored it; the old key stops working at once. The data is not rewritten. The dialog also decides whether the new key goes into the vault.
 
-**Remove key from vault…** deletes the pool's key from the vault. The pool stays unlocked until the box restarts and then waits for its key. Destroying a pool also deletes its key from the vault. To put a key into the vault, unlock the pool with the box set to keep it, or change the key: ZFS cannot check a typed key against a pool that is unlocked already ([`storage.pool.not_locked`](/docs/reference/errors/#storage.pool.not_locked)).
+**Remove key from vault…** deletes the pool's key from the vault. The pool stays unlocked until the box restarts and then waits for its key. Destroying a pool also deletes its key from the vault. To put a key into the vault, choose **Unlock…**, type the key and tick the vault option: the key is checked against the pool first, also when the pool is unlocked already. Changing the key stores the new one, too.
 
 **Show key…** shows the key from the vault again after your password and, with two-factor sign-in on, an authenticator code; use it when your copy is lost.
 
-Keys go to ZFS on standard input, never as a command argument, and never appear in a log, a plan or the pool itself. Administrators get a storage alert while a pool waits for its key. What to do when something goes wrong, including opening a pool without Pithyx: [Encrypted pools: when something goes wrong](/docs/admin/encryption-emergencies/).
+### USB stick
+
+**Write key to USB stick…** on the card of an encrypted pool writes its key to a USB stick, a memory card or another removable disk with a FAT, exFAT or ext file system: a file `pithyx-keys/<pool GUID>.key` that holds the key in hex, next to whatever else is on the stick. Pithyx never formats a stick, and it only offers sticks nothing else uses (none mounted elsewhere, none part of a pool). The key is the one you type, or the vault's after your password and, with two-factor sign-in on, an authenticator code. Either is checked against the pool before it is written, and the file is read back before the dialog says it is done. **Remove the key from the key vault afterwards** is ticked: with the key still in the vault, the box would unlock the pool without the stick.
+
+Whenever a stick with the key is plugged in, at start or later, the box unlocks the pool that waits for it; it mounts the stick read-only only while it reads the file. Then the stick can be pulled: **the pool stays unlocked until the box restarts**, and the card and a notification say so. After a restart the pool waits for the stick again. Any stick with the file works, so a second stick can be a spare.
+
+:::caution[Whoever has the stick and the disks has the data]
+Like the vault, a stick protects the data on stolen disks; it protects the data on a stolen box only while the stick is not with the box. Keep it apart from the box, and keep your copy of the key as well: a stick can break.
+:::
+
+A stick whose key does not open the pool (an older key after **Change key…**, or a damaged file) leaves the pool locked and untouched, with a critical storage alert: unlock it with the key, then write the key to the stick again. **Change key…** warns when a stick holds the current key.
+
+Keys go to ZFS on standard input, never as a command argument, and never appear in a log, a plan or the pool itself. Administrators get a storage alert while a pool waits for its key or its stick. What to do when something goes wrong, including opening a pool without Pithyx: [Encrypted pools: when something goes wrong](/docs/admin/encryption-emergencies/).
 
 ## Health and warnings
 

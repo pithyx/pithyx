@@ -40,6 +40,7 @@ export type SubjectGrant = components['schemas']['SubjectGrant'];
 export type ShareAccess = components['schemas']['ShareAccess'];
 export type SharePlanRequest = components['schemas']['SharePlanRequest'];
 export type NewPoolKey = components['schemas']['NewPoolKey'];
+export type UsbStick = components['schemas']['UsbStick'];
 
 /**
  * Administrative calls of the desktop's own core apps, outside the public SDK: not versioned, never served to a
@@ -83,6 +84,20 @@ export interface InternalMethods {
     result: null;
   };
   'internal.admin.storage.forgetKey': { params: { pool: string }; result: null };
+  /** The USB sticks a pool key can be written to (D385). */
+  'internal.admin.storage.usbSticks': { params: Record<string, never>; result: UsbStick[] };
+  /** Writes the typed key, or the vault's after the password and the second factor, to a USB stick (D385). */
+  'internal.admin.storage.writeKeyToUsb': {
+    params: {
+      pool: string;
+      device: string;
+      key?: string;
+      password?: string;
+      totpCode?: string;
+      removeFromVault: boolean;
+    };
+    result: null;
+  };
   'internal.admin.storage.schedules': {
     params: Record<string, never>;
     result: StorageScheduleList;
@@ -510,6 +525,38 @@ export function adminStorageHost(emit: (event: string, data?: unknown) => void):
           const { pool } = params as InternalMethods['internal.admin.storage.forgetKey']['params'];
           unwrap(
             await api.DELETE('/api/storage/pools/{pool}/key/vault', { params: { path: { pool } } }),
+          );
+          return null;
+        }),
+    },
+    'internal.admin.storage.usbSticks': {
+      validate: isRecord,
+      handle: () => daemon(async () => unwrap(await api.GET('/api/storage/usb-sticks')).sticks),
+    },
+    'internal.admin.storage.writeKeyToUsb': {
+      validate: (params) =>
+        isRecord(params) &&
+        typeof params.pool === 'string' &&
+        typeof params.device === 'string' &&
+        (params.key === undefined || typeof params.key === 'string') &&
+        (params.password === undefined || typeof params.password === 'string') &&
+        (params.totpCode === undefined || typeof params.totpCode === 'string') &&
+        typeof params.removeFromVault === 'boolean',
+      handle: (params) =>
+        daemon(async () => {
+          const { pool, device, key, password, totpCode, removeFromVault } =
+            params as InternalMethods['internal.admin.storage.writeKeyToUsb']['params'];
+          unwrap(
+            await api.POST('/api/storage/pools/{pool}/key/usb', {
+              params: { path: { pool } },
+              body: {
+                device,
+                key: key ?? null,
+                password: password ?? null,
+                totpCode: totpCode ?? null,
+                removeFromVault,
+              },
+            }),
           );
           return null;
         }),

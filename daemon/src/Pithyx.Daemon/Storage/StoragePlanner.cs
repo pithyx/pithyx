@@ -85,7 +85,7 @@ public sealed class StoragePlanner(
                     }
                     var datasets = pools.Current.Datasets.Where(dataset => dataset.Pool == pool.Name).Select(dataset => dataset.Name).ToList();
                     // A destroyed pool's key opens nothing any more, so it leaves the vault with the pool.
-                    return Releasing(Plan(request, ZfsPlans.DestroyPool(pool.Name)) with { Datasets = datasets, RequiresConfirmName = true }, () => vault?.Remove(pool.PoolGuid));
+                    return Releasing(Plan(request, ZfsPlans.DestroyPool(pool.Name)) with { Datasets = datasets, RequiresConfirmName = true }, () => vault?.RemovePool(pool.PoolGuid));
                 }
             case "pool.export":
                 {

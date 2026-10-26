@@ -588,7 +588,8 @@
     "keep": "Schlüssel im Schlüsseltresor aufbewahren und den Pool bei jedem Start automatisch entsperren",
     "cancel": "Abbrechen",
     "submit": "Entsperren",
-    "mountFailed": "Der Schlüssel hat den Pool geöffnet, aber nicht jedes Dataset ließ sich einhängen (Details im Protokoll). Drücke erneut auf Entsperren, um den Rest einzuhängen."
+    "mountFailed": "Der Schlüssel hat den Pool geöffnet, aber nicht jedes Dataset ließ sich einhängen (Details im Protokoll). Drücke erneut auf Entsperren, um den Rest einzuhängen.",
+    "introUsbFailed": "Die Schlüsseldatei auf dem USB-Stick hat diesen Pool nicht entsperrt. Gib den Schlüssel ein, den du aufbewahrt hast."
   },
   "changeKey": {
     "title": "Schlüssel von {pool} ändern",
@@ -596,7 +597,8 @@
     "create": "Neuen Schlüssel erzeugen",
     "submit": "Schlüssel ändern",
     "cancel": "Abbrechen",
-    "keep": "Neuen Schlüssel im Schlüsseltresor aufbewahren und den Pool bei jedem Start automatisch entsperren"
+    "keep": "Neuen Schlüssel im Schlüsseltresor aufbewahren und den Pool bei jedem Start automatisch entsperren",
+    "usbOld": "Der USB-Stick {stick} enthält den aktuellen Schlüssel. Nach dem Ändern öffnet er nichts mehr; schreibe den neuen Schlüssel danach auf den Stick."
   },
   "forgetKey": {
     "title": "Schlüssel von {pool} aus dem Schlüsseltresor entfernen?",
@@ -616,7 +618,13 @@
     "change": "Schlüssel ändern…",
     "forget": "Schlüssel aus dem Tresor entfernen…",
     "opening": "Dieser Pool wird mit dem Schlüssel aus dem Schlüsseltresor entsperrt.",
-    "reveal": "Schlüssel anzeigen…"
+    "reveal": "Schlüssel anzeigen…",
+    "lockedUsbHint": "Dieser Pool ist gesperrt und wartet auf seinen USB-Stick {stick}. Stecke den Stick ein oder entsperre den Pool mit seinem Schlüssel.",
+    "lockedUsbFailedHint": "Dieser Pool ist gesperrt: Die Schlüsseldatei auf dem USB-Stick hat ihn nicht entsperrt (ein älterer Schlüssel oder eine beschädigte Datei). Entsperre ihn mit seinem Schlüssel und schreibe den Schlüssel danach erneut auf den Stick.",
+    "unlockedFromUsb": "Vom USB-Stick entsperrt. Du kannst den Stick jetzt abziehen und sicher aufbewahren: Der Pool bleibt entsperrt, bis die Box neu startet, und braucht dann wieder den Stick.",
+    "onStick": "Verschlüsselt; entsperrt sich, sobald der USB-Stick {stick} mit seinem Schlüssel steckt, oder mit dem eingegebenen Schlüssel.",
+    "alsoOnStick": "Sein Schlüssel liegt auch auf dem USB-Stick {stick}.",
+    "writeUsb": "Schlüssel auf USB-Stick schreiben…"
   },
   "reveal": {
     "title": "Schlüssel von {pool} anzeigen",
@@ -627,5 +635,27 @@
     "cancel": "Abbrechen",
     "submit": "Schlüssel anzeigen",
     "close": "Schließen"
+  },
+  "usb": {
+    "title": "Schlüssel von {pool} auf einen USB-Stick schreiben",
+    "intro": "Pithyx schreibt den Schlüssel in den Ordner pithyx-keys auf dem Stick und lässt alles andere darauf, wie es ist. Sobald der Stick steckt, entsperrt die Box den Pool. Danach kann der Stick abgezogen werden: Der Pool bleibt bis zum nächsten Neustart entsperrt.",
+    "warning": "Wer diesen Stick und die Platten des Pools hat, kann seine Daten lesen. Bewahre den Stick getrennt von der Box auf, wenn er nicht gebraucht wird, und bewahre auch den Schlüssel weiter auf: Ein Stick kann kaputtgehen.",
+    "stick": "USB-Stick",
+    "stickOption": "{name} · {size} · {fileSystem}",
+    "readOnly": "schreibgeschützt",
+    "none": "Kein USB-Stick gefunden. Stecke einen Stick mit FAT-, exFAT- oder ext-Dateisystem ein; Pithyx formatiert ihn nie. Ein Stick, der anderweitig benutzt wird, wird nicht angeboten.",
+    "source": "Schlüssel",
+    "sourceVault": "Der Schlüssel aus dem Schlüsseltresor",
+    "sourceTyped": "Schlüssel eingeben",
+    "vaultHint": "Der Schlüssel aus dem Tresor verlässt die Box auf dem Stick, deshalb wird dein Passwort erneut abgefragt.",
+    "password": "Dein Passwort",
+    "code": "Code aus deiner Authenticator-App",
+    "key": "Pool-Schlüssel",
+    "keyHint": "Der Schlüssel, den du aufbewahrt hast, beginnend mit PXPK. Er wird am Pool geprüft, bevor er geschrieben wird.",
+    "removeFromVault": "Schlüssel danach aus dem Schlüsseltresor entfernen, sodass nur der Stick oder der eingegebene Schlüssel den Pool beim Start entsperrt",
+    "cancel": "Abbrechen",
+    "submit": "Schlüssel schreiben",
+    "close": "Schließen",
+    "done": "Der Schlüssel liegt auf {stick}. Du kannst den Stick jetzt abziehen. Stecke ihn nach einem Neustart ein, um {pool} zu entsperren."
   }
 }

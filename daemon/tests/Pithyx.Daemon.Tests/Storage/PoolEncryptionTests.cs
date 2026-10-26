@@ -34,6 +34,7 @@ public sealed partial class PoolEncryptionTests : IDisposable
     private readonly SystemStateService _state;
     private readonly StorageFacts _facts;
     private readonly KeyVault _vault;
+    private readonly UsbKeyDrive _drive;
     private readonly PoolEncryptionService _encryption;
     private readonly string _directory = Directory.CreateTempSubdirectory("pithyx-encryption-").FullName;
     private readonly string _key = PoolKey.New();
@@ -50,7 +51,8 @@ public sealed partial class PoolEncryptionTests : IDisposable
         _vault = new KeyVault(Path.Combine(_directory, "pool-keys"));
         var hub = new TopicHub(new TopicRegistry([_disks.Definition(), _pools.Definition()]), _time, Options.Create(new JsonOptions()), NullLogger<TopicHub>.Instance);
         _state = new SystemStateService(_commands, _disks, _pools, new ZfsBackend(_commands), new DiskProbe(_commands), _facts, hub, _time, NullLogger<SystemStateService>.Instance, vault: _vault);
-        _encryption = new PoolEncryptionService(_commands, _pools, _state, _facts, _vault, NullLogger<PoolEncryptionService>.Instance);
+        _drive = new UsbKeyDrive(_commands, Path.Combine(_directory, "usb-key"), NullLogger<UsbKeyDrive>.Instance);
+        _encryption = new PoolEncryptionService(_commands, _pools, _disks, _state, _facts, _vault, _drive, _time, NullLogger<PoolEncryptionService>.Instance);
         _commands.Results["lsblk"] = Ok(Read("default", "lsblk"));
         _commands.Results["blkid"] = new CommandResult(2, "", "", TimeSpan.Zero);
         _commands.Results["wipefs"] = Ok("");
@@ -60,6 +62,8 @@ public sealed partial class PoolEncryptionTests : IDisposable
         {
             { FileName: "zfs", Arguments: ["load-key" or "change-key", ..] } when _keyCommandsHang => throw new TimeoutException(),
             { FileName: "zfs", Arguments: ["load-key", Root] } => LoadKey(request.StandardInput),
+            { FileName: "zfs", Arguments: ["load-key", "-n", Root] } => CheckKey(request.StandardInput),
+            { FileName: "mount" or "umount" } => Stick(request),
             { FileName: "zfs", Arguments: ["change-key", .., Root] } => ChangeKey(request.StandardInput),
             { FileName: "zfs", Arguments: ["mount", var dataset] } when _failingMounts.Contains(dataset) =>
                 new CommandResult(1, "", $"cannot mount '{dataset}': directory is not empty\n", TimeSpan.Zero),
@@ -89,6 +93,11 @@ public sealed partial class PoolEncryptionTests : IDisposable
         Pools("zfs-encrypted");
         return Ok("");
     }
+
+    private CommandResult CheckKey(string? input) =>
+        input == EncryptionCommands.Input(_loadedKey)
+            ? Ok("1 / 1 key(s) successfully verified\n")
+            : new CommandResult(255, "", $"Key load error: Incorrect key provided for '{Root}'.\n0 / 1 key(s) successfully verified\n", TimeSpan.Zero);
 
     private CommandResult ChangeKey(string? input)
     {
@@ -256,18 +265,25 @@ public sealed partial class PoolEncryptionTests : IDisposable
     }
 
     [Fact]
-    public async Task AnUnlockedPoolKeepsNoUncheckedKeyButMountsWhatIsMissing()
+    public async Task AnUnlockedPoolKeepsATypedKeyOnlyOnceItIsCheckedAndMountsWhatIsMissing()
     {
         Pools("zfs-encrypted");
         await PoolAsync();
 
-        Assert.Equal("storage.pool.not_locked", await ErrorAsync(() => _encryption.UnlockAsync(PoolName, _key, true, Token)));
         Assert.Equal("storage.pool.not_locked", await ErrorAsync(() => _encryption.UnlockAsync(PoolName, null, true, Token)));
+        Assert.Equal("storage.encryption.key_wrong", await ErrorAsync(() => _encryption.UnlockAsync(PoolName, PoolKey.New(), true, Token)));
         Assert.False(_vault.Has(Guid));
         await _encryption.UnlockAsync(PoolName, null, false, Token);
         await _encryption.UnlockAsync(PoolName, PoolKey.New(), false, Token);
+        Assert.False(_vault.Has(Guid));
 
-        Assert.DoesNotContain(_commands.Calls, call => call.Arguments is ["load-key", ..]);
+        await _encryption.UnlockAsync(PoolName, _key, true, Token);
+
+        Assert.Equal(PoolKey.ToHex(_key), _vault.Read(Guid));
+        Assert.True(_pools.Current.Pools.Single().Encryption!.KeyInVault);
+        // Checked with load-key -n only: a loaded key is never loaded again.
+        Assert.DoesNotContain(_commands.Calls, call => call.Arguments is ["load-key", Root]);
+        Assert.Equal(2, _commands.Calls.Count(call => call.Arguments is ["load-key", "-n", Root]));
         // Everything of the recorded pool is mounted already.
         Assert.Empty(Mounted());
         Assert.Equal("storage.pool.not_found", await ErrorAsync(() => _encryption.UnlockAsync("nope", null, false, Token)));
@@ -327,6 +343,7 @@ public sealed partial class PoolEncryptionTests : IDisposable
         if (keyStored)
         {
             _vault.Save(Guid, PoolKey.ToHex(_key));
+            _vault.SaveUsb(Guid, new PoolUsbKey("PXKEYS", "28000", _time.GetUtcNow()));
         }
         Pools("zfs-encrypted");
         await PoolAsync();
@@ -338,6 +355,7 @@ public sealed partial class PoolEncryptionTests : IDisposable
         await new CommandPlanRunner(_commands, _state, _facts, _time).RunAsync(plan, null, Token);
 
         Assert.False(_vault.Has(Guid));
+        Assert.Null(_vault.Usb(Guid));
     }
 
     [Fact]
@@ -447,10 +465,10 @@ public sealed partial class PoolEncryptionTests : IDisposable
         _commands.ClearCalls();
         _vault.Save(Guid, PoolKey.ToHex(_key));
         await _encryption.UnlockAsync(PoolName, _key, true, Token);
-        Assert.Equal("storage.pool.not_locked", await ErrorAsync(() => _encryption.UnlockAsync(PoolName, PoolKey.New(), true, Token)));
+        Assert.Equal("storage.encryption.key_wrong", await ErrorAsync(() => _encryption.UnlockAsync(PoolName, PoolKey.New(), true, Token)));
 
         Assert.Equal([$"{Root}/homes/alice"], Mounted());
-        Assert.DoesNotContain(_commands.Calls, call => call.Arguments is ["load-key", ..]);
+        Assert.DoesNotContain(_commands.Calls, call => call.Arguments is ["load-key", Root]);
     }
 
     [Fact]
@@ -525,7 +543,7 @@ public sealed partial class PoolEncryptionTests : IDisposable
         Dataset Dataset(string name, string encryption, string? keyStatus, string? root) =>
             new(name, "tank", "filesystem", 0, 0, 0, null, false, encryption, keyStatus, root, null, null, null, null, null, null, 0);
         var pool = Pithyx.Daemon.Tests.Storage.Health.StorageAlertsTests.Pool();
-        PoolEncryption? Of(params Dataset[] datasets) => EncryptionCommands.Apply(new PoolList([pool], datasets), _ => true, _ => true).Pools.Single().Encryption;
+        PoolEncryption? Of(params Dataset[] datasets) => EncryptionCommands.Apply(new PoolList([pool], datasets), _ => new KeySources(true, true)).Pools.Single().Encryption;
 
         Assert.Null(Of(Dataset("tank/data", "aes-256-gcm", "unavailable", "tank/data")));
         Assert.Null(Of(Dataset("tank/pithyx", "off", null, null), Dataset("tank/pithyx/shares/x", "aes-256-gcm", "unavailable", "tank/pithyx/shares/x")));

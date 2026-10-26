@@ -112,6 +112,8 @@ The words Pithyx uses in its interface and documentation, in alphabetical order.
 
 **Update policy.** How the box handles app updates: automatic, notify or none.
 
+**USB key.** A USB stick or memory card holding the key file of an encrypted pool (`pithyx-keys/<pool GUID>.key`). While it is plugged in, the box unlocks the pool; it can be pulled afterwards, and the pool stays unlocked until the next start. See [USB stick](/docs/admin/storage/#usb-stick).
+
 **Vdev.** A group of disks inside a pool, such as one mirror.
 
 **Window lease.** The counting of open windows of an app that keeps an `onDemand` backend running.

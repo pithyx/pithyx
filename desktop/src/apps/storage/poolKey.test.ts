@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { keyGroups, keySheet, normalizeGroup, pickTwo } from './poolKey';
+import { keyGroups, keySheet, normalizeGroup, pickTwo, stickName } from './poolKey';
 import type { Translate } from './shared';
 
 const key = 'PXPK-0123-4567-89AB-CDEF-GHJK-MNPQ-RSTV-WXYZ-0000-1111-2222-3333-4444-5555';
@@ -47,5 +47,16 @@ describe('the key sheet', () => {
 
   it('names a placeholder in the commands while the pool has no name yet', () => {
     expect(keySheet(t, '', { key, hex }, 'today')).toContain('  zfs load-key <pool>/pithyx');
+  });
+});
+
+describe('USB stick names', () => {
+  const stick = { device: '/dev/sdh1', label: 'PXKEYS', vendor: 'Linux', model: 'scsi_debug' };
+
+  it('names a stick by its label, else vendor and model, else its device, as the daemon does', () => {
+    expect(stickName(stick)).toBe('PXKEYS');
+    expect(stickName({ ...stick, label: '  ' })).toBe('Linux scsi_debug');
+    expect(stickName({ ...stick, label: null, vendor: null })).toBe('scsi_debug');
+    expect(stickName({ ...stick, label: null, vendor: ' ', model: null })).toBe('/dev/sdh1');
   });
 });

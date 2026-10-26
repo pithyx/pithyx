@@ -569,6 +569,12 @@
       "vault_failed": "Der Schlüssel des Pools {name} konnte nicht im Schlüsseltresor auf der Systemplatte abgelegt werden. Der Pool ist jetzt entsperrt; nach dem nächsten Start wartet er auf seinen Schlüssel, bewahre den Schlüssel also auf. Prüfe die Systemplatte im Protokoll und entsperre den Pool oder ändere den Schlüssel erneut, um ihn im Tresor aufzubewahren.",
       "not_in_vault": "Der Schlüsseltresor enthält keinen Schlüssel des Pools {name}. Nur der Schlüssel, den du selbst aufbewahrt hast, kann ihn öffnen."
     },
+    "usb": {
+      "not_found": "Dieser USB-Stick kann keinen Pool-Schlüssel aufnehmen ({device}): Er ist weg, oder er hat kein freies FAT-, exFAT- oder ext-Dateisystem. Stecke ihn erneut ein oder nimm einen anderen Stick.",
+      "read_only": "Der USB-Stick {stick} ist schreibgeschützt. Schalte den Schreibschutz aus oder nimm einen anderen Stick.",
+      "unreadable": "Der USB-Stick {stick} ließ sich nicht öffnen ({reason}). Auf ihm wurde nichts verändert. Prüfe den Stick an einem Computer oder nimm einen anderen.",
+      "write_failed": "Der Schlüssel konnte nicht auf den USB-Stick {stick} geschrieben werden ({reason}). Verlass dich nicht auf diesen Stick: Prüfe ihn an einem Computer oder nimm einen anderen, und bewahre den Schlüssel weiter auf."
+    },
     "plan": {
       "action_invalid": "Unbekannte Speicheraktion.",
       "expired": "Dieser Plan ist älter als 10 Minuten. Zeig ihn noch einmal an, damit die Platten erneut geprüft werden.",
@@ -590,7 +596,7 @@
       "suspended": "{name} hat alle Lese- und Schreibzugriffe angehalten, weil zu viele seiner Platten fehlen. Löschen oder Abmelden würde jetzt hängen bleiben, bis die Box neu startet. Schließ die Platten wieder an; Pithyx setzt den Pool dann von selbst fort.",
       "not_encrypted": "Der Pool {name} ist nicht verschlüsselt.",
       "locked": "Der Pool {name} ist gesperrt. Entsperre ihn zuerst mit seinem Schlüssel.",
-      "not_locked": "Der Pool {name} ist schon entsperrt. Um seinen Schlüssel im Schlüsseltresor aufzubewahren, ändere den Schlüssel: Der neue kommt in den Tresor."
+      "not_locked": "Der Pool {name} ist schon entsperrt. Um seinen Schlüssel im Schlüsseltresor aufzubewahren, gib den Schlüssel ein: Er wird geprüft und dann aufbewahrt."
     },
     "schedule": {
       "invalid": "Dieser Zeitplan lässt sich nicht setzen. Wähle Aus, Wöchentlich oder Monatlich für einen vorhandenen Pool."

@@ -112,6 +112,8 @@ Die Wörter, die Pithyx in seiner Oberfläche und Dokumentation verwendet, in de
 
 **Update-Regel (Update policy).** Wie die Box mit App-Updates umgeht: automatisch, benachrichtigen oder nichts.
 
+**USB-Schlüssel (USB key).** Ein USB-Stick oder eine Speicherkarte mit der Schlüsseldatei eines verschlüsselten Pools (`pithyx-keys/<Pool-GUID>.key`). Steckt er, entsperrt die Box den Pool; danach kann er abgezogen werden, und der Pool bleibt bis zum nächsten Start entsperrt. Siehe [USB-Stick](/de/docs/admin/storage/#usb-stick).
+
 **Vdev.** Eine Gruppe von Platten innerhalb eines Pools, etwa ein Spiegel.
 
 **Fenster-Lease (Window lease).** Das Zählen offener Fenster einer App, das ein `onDemand`-Backend am Laufen hält.

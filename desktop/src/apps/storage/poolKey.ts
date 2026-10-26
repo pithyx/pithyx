@@ -1,4 +1,4 @@
-import type { NewPoolKey } from '../sdk/internal';
+import type { NewPoolKey, UsbStick } from '../sdk/internal';
 import type { Translate } from './shared';
 
 /** The 14 groups of four after the prefix. */
@@ -40,4 +40,17 @@ export function keySheet(t: Translate, pool: string, poolKey: NewPoolKey, date: 
     '',
     t('key.sheet.emergencyHint'),
   ];
+}
+
+/** How a stick is named, as the daemon names it: its label, else vendor and model, else its device. */
+export function stickName(stick: Pick<UsbStick, 'device' | 'label' | 'vendor' | 'model'>): string {
+  const label = stick.label?.trim() ?? '';
+  if (label !== '') {
+    return label;
+  }
+  const name = [stick.vendor, stick.model]
+    .map((part) => part?.trim() ?? '')
+    .filter((part) => part !== '')
+    .join(' ');
+  return name === '' ? stick.device : name;
 }

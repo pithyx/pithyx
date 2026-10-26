@@ -181,6 +181,26 @@ public sealed class StorageApiTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task WritingTheVaultsKeyToAStickNeedsThePasswordAgainButATypedKeyDoesNot()
+    {
+        async Task<string> WriteAsync(object body)
+        {
+            using var response = await _admin.PostAsJsonAsync("/api/storage/pools/pithyxtestm/key/usb", body, Token);
+            return await response.ErrorCodeAsync();
+        }
+
+        Assert.Equal("auth.credentials.invalid", await WriteAsync(new { device = "/dev/sdh1" }));
+        Assert.Equal("auth.credentials.invalid", await WriteAsync(new { device = "/dev/sdh1", password = "wrong" }));
+        // Past the step-up, or with a typed key, the pool decides: the simulated pools are not encrypted.
+        Assert.Equal("storage.pool.not_encrypted", await WriteAsync(new { device = "/dev/sdh1", password = AdminPassword }));
+        Assert.Equal("storage.pool.not_encrypted", await WriteAsync(new { device = "/dev/sdh1", key = "PXPK-typed" }));
+
+        using var sticks = await _admin.GetAsync("/api/storage/usb-sticks", Token);
+        Assert.Equal(HttpStatusCode.OK, sticks.StatusCode);
+        Assert.Equal(0, (await sticks.JsonAsync()).GetProperty("sticks").GetArrayLength());
+    }
+
+    [Fact]
     public async Task OnlyAdministratorsGetPoolKeysOrUnlockPools()
     {
         using var bob = await UserAsync();
@@ -190,8 +210,10 @@ public sealed class StorageApiTests : IAsyncLifetime
         using var change = await bob.PostAsJsonAsync("/api/storage/pools/pithyxtestm/key", new { key = "x", keepInVault = true }, Token);
         using var forget = await bob.DeleteAsync("/api/storage/pools/pithyxtestm/key/vault", Token);
         using var reveal = await bob.PostAsJsonAsync("/api/storage/pools/pithyxtestm/key/reveal", new { password = AdminPassword }, Token);
+        using var sticks = await bob.GetAsync("/api/storage/usb-sticks", Token);
+        using var usb = await bob.PostAsJsonAsync("/api/storage/pools/pithyxtestm/key/usb", new { device = "/dev/sdh1", key = "x" }, Token);
 
-        Assert.All([key, unlock, change, forget, reveal], response => Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode));
+        Assert.All([key, unlock, change, forget, reveal, sticks, usb], response => Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode));
         using var plain = await _admin.PostAsJsonAsync("/api/storage/pools/pithyxtestm/unlock", new { }, Token);
         Assert.Equal("storage.pool.not_encrypted", await plain.ErrorCodeAsync());
     }
