@@ -137,5 +137,21 @@ test('an administrator adds a catalog in the Store settings and installs an app 
     await expect(
       store.getByRole('combobox', { name: 'When a catalog has a newer version' }),
     ).toHaveValue('box');
+    await expect(
+      store.getByRole('link', { name: 'Source of this version in the catalog' }),
+    ).toBeVisible();
+  });
+
+  await test.step('the catalog tab opens the same page of the installed app', async () => {
+    await store.getByRole('button', { name: 'Installed', exact: true }).click();
+    await store.getByRole('tab', { name: 'Own' }).click();
+    await store.getByRole('searchbox', { name: 'Search apps' }).fill('demo');
+    await store.getByRole('button', { name: /SDK demo/ }).click();
+    await expect(store.getByText('Installed from the catalog com.example.e2e')).toBeVisible();
+    await expect(store.getByRole('button', { name: 'Uninstall' })).toBeVisible();
+    await expect(
+      store.getByRole('combobox', { name: 'When a catalog has a newer version' }),
+    ).toBeVisible();
+    await expect(store.getByRole('button', { name: 'Own', exact: true })).toBeVisible();
   });
 });

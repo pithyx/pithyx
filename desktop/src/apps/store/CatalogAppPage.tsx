@@ -8,7 +8,7 @@ import { useFormatLocale } from '../../i18n';
 import { AppIcon } from '../../shell/AppIcon';
 import { IconArrowLeft, IconDownload, IconExternalLink } from '../../ui/icons';
 import { manifestText } from '../installed';
-import { storeCall, type StoreAppSummary } from '../sdk/store';
+import { storeCall, type StoreAppDetails, type StoreAppSummary } from '../sdk/store';
 import { describeProblem, formatDate } from '../storage/shared';
 import { SourceBadge } from './CatalogBrowser';
 import { InstallDialog } from './InstallDialog';
@@ -32,14 +32,9 @@ export function CatalogAppPage({
   onBack: () => void;
 }) {
   const { t, i18n } = useTranslation('store');
-  const locale = useFormatLocale();
   // Whether the dialog updates is fixed when it opens: the page learns of the install before the dialog closes.
   const [installing, setInstalling] = useState<{ update: boolean } | null>(null);
-  const details = useQuery({
-    queryKey: ['store', 'details', entry.catalog, entry.id],
-    queryFn: () =>
-      storeCall(app, 'internal.admin.store.details', { catalog: entry.catalog, appId: entry.id }),
-  });
+  const details = useCatalogDetails(app, entry.catalog, entry.id);
   const summary = details.data?.app ?? entry;
   const facts = details.data === undefined ? null : manifestFacts(details.data.manifest);
   const name = manifestText(summary.name, i18n.language);
@@ -111,25 +106,7 @@ export function CatalogAppPage({
         {details.isError && <ErrorNotice error={describeProblem(details.error)} />}
         {details.data !== undefined && facts !== null && (
           <>
-            {details.data.screenshots.length > 0 && (
-              <section className={styles.group} aria-labelledby="store-screenshots">
-                <h3 id="store-screenshots" className={styles.sectionTitle}>
-                  {t('catalog.screenshots')}
-                </h3>
-                <ul className={styles.screenshots}>
-                  {details.data.screenshots.map((url, index) => (
-                    <li key={url}>
-                      <img
-                        className={styles.screenshot}
-                        src={url}
-                        alt={t('catalog.screenshot', { name, number: index + 1 })}
-                        loading="lazy"
-                      />
-                    </li>
-                  ))}
-                </ul>
-              </section>
-            )}
+            <CatalogScreenshots details={details.data} name={name} />
             {facts.root && <p className={styles.warning}>{t('install.root')}</p>}
             {facts.elevated.length > 0 && (
               <p className={styles.warning}>
@@ -184,24 +161,7 @@ export function CatalogAppPage({
                 </dd>
               </dl>
             </section>
-            <section className={styles.group} aria-labelledby="store-catalog-versions">
-              <h3 id="store-catalog-versions" className={styles.sectionTitle}>
-                {t('catalog.versions')}
-              </h3>
-              <ul className={styles.permissions}>
-                {details.data.versions.map((version) => (
-                  <li key={version.version} className={styles.permission}>
-                    <span className={styles.permissionText}>
-                      <span className={styles.permissionTitle}>{version.version}</span>
-                      <span className={styles.muted}>
-                        {formatDate(version.publishedAt, locale)}
-                        {!version.fits && ` · ${t('catalog.needs', { range: version.pithyx })}`}
-                      </span>
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            </section>
+            <CatalogVersions details={details.data} />
           </>
         )}
       </article>
@@ -221,5 +181,68 @@ export function CatalogAppPage({
         />
       )}
     </div>
+  );
+}
+
+/** The details query of a catalog app, shared by its catalog page and the page of the installed app. */
+export function useCatalogDetails(app: PithyxApp, catalog: string | null, appId: string) {
+  return useQuery({
+    queryKey: ['store', 'details', catalog, appId],
+    queryFn: () =>
+      storeCall(app, 'internal.admin.store.details', { catalog: catalog ?? '', appId }),
+    enabled: catalog !== null,
+  });
+}
+
+/** The screenshots a catalog shows for an app. */
+export function CatalogScreenshots({ details, name }: { details: StoreAppDetails; name: string }) {
+  const { t } = useTranslation('store');
+  if (details.screenshots.length === 0) {
+    return null;
+  }
+  return (
+    <section className={styles.group} aria-labelledby="store-screenshots">
+      <h3 id="store-screenshots" className={styles.sectionTitle}>
+        {t('catalog.screenshots')}
+      </h3>
+      <ul className={styles.screenshots}>
+        {details.screenshots.map((url, index) => (
+          <li key={url}>
+            <img
+              className={styles.screenshot}
+              src={url}
+              alt={t('catalog.screenshot', { name, number: index + 1 })}
+              loading="lazy"
+            />
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/** Every version a catalog published of an app, with the ones this box cannot run marked. */
+export function CatalogVersions({ details }: { details: StoreAppDetails }) {
+  const { t } = useTranslation('store');
+  const locale = useFormatLocale();
+  return (
+    <section className={styles.group} aria-labelledby="store-catalog-versions">
+      <h3 id="store-catalog-versions" className={styles.sectionTitle}>
+        {t('catalog.versions')}
+      </h3>
+      <ul className={styles.permissions}>
+        {details.versions.map((version) => (
+          <li key={version.version} className={styles.permission}>
+            <span className={styles.permissionText}>
+              <span className={styles.permissionTitle}>{version.version}</span>
+              <span className={styles.muted}>
+                {formatDate(version.publishedAt, locale)}
+                {!version.fits && ` · ${t('catalog.needs', { range: version.pithyx })}`}
+              </span>
+            </span>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
